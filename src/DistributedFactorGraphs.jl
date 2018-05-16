@@ -5,5 +5,6 @@ using
   DocStringExtensions
 
 
+include("FGOSUtils.jl")
 
 end
