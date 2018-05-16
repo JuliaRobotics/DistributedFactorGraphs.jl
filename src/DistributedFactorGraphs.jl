@@ -5,6 +5,7 @@ using
   DocStringExtensions
 
 
+include("FactorGraphTypes.jl")
 include("FGOSUtils.jl")
 
 end
