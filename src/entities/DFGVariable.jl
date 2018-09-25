@@ -1,12 +1,35 @@
+
+### TODO: Discussions
+# * What is sofftype, and do we want to make it extensible now?
+# * Using longs (not GUIDS) for ID's - that work with everyone?
+# * BigData and SmallData are referenced in DFGVariable but I don't
+#   believe they should be retrieved every time. Thoughts?
+# * Is ContinuousScalar used anywhere? Seems like == ContinuousMultivariate(1)
+###
+
+abstract type InferenceVariable end
+
+struct ContinuousScalar <: InferenceVariable
+  dims::Int
+  labels::Vector{String}
+  ContinuousScalar() = new(1, String[])
+end
+struct ContinuousMultivariate <: InferenceVariable
+  dims::Int
+  labels::Vector{String}
+  ContinuousMultivariate() = new()
+  ContinuousMultivariate(x) = new(x, String[])
+end
+
 """
 A variable in a factor graph.
 """
 mutable struct DFGVariable
     id::Int64
     label::String
-    nodedata::VariableNodeData
-    bigdata::Vector{String} #Big data entries
-    smalldata::Dict{String, Any} # All small data.
+    nodeData::VariableNodeData
+    bigData::Vector{String} #Big data entries
+    smallData::Dict{String, Any} # All small data.
 end
 
 """
@@ -24,7 +47,7 @@ mutable struct VariableNodeData
   BayesNetVertID::Int
   separator::Array{Int,1}
   groundtruth::VoidUnion{ Dict{ Tuple{Symbol, Vector{Float64}} } } # not packed yet
-  softtype
+  softtype::InferenceVariable
   initialized::Bool
   VariableNodeData() = new()
   function VariableNodeData(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11)
@@ -42,7 +65,7 @@ mutable struct VariableNodeData
                    x9::Int,
                    x10::Vector{Int},
                    x11::VoidUnion{ Dict{ Tuple{Symbol, Vector{Float64}} } },
-                   x12,
+                   x12::InferenceVariable,
                    x13::Bool) =
     new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13)
 end
@@ -85,4 +108,71 @@ mutable struct PackedVariableNodeData
                          x14::Vector{Int},
                          x15::String,
                          x16::Bool) = new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16)
+end
+
+"""
+Converter: VariableNodeData -> PackedVariableNodeData
+"""
+function convert(::Type{PackedVariableNodeData}, d::VariableNodeData)
+  return PackedVariableNodeData(d.initval[:],size(d.initval,1),
+                              d.initstdev[:],size(d.initstdev,1),
+                              d.val[:],size(d.val,1),
+                              d.bw[:], size(d.bw,1),
+                              d.BayesNetOutVertIDs,
+                              d.dimIDs, d.dims, d.eliminated,
+                              d.BayesNetVertID, d.separator,
+                              string(d.softtype), d.initialized)
+end
+"""
+Converter: PackedVariableNodeData -> VariableNodeData
+"""
+function convert(::Type{VariableNodeData}, d::PackedVariableNodeData)
+
+  r1 = d.diminitval
+  c1 = r1 > 0 ? floor(Int,length(d.vecinitval)/r1) : 0
+  M1 = reshape(d.vecinitval,r1,c1)
+
+  r2 = d.diminitdev
+  c2 = r2 > 0 ? floor(Int,length(d.vecinitstdev)/r2) : 0
+  M2 = reshape(d.vecinitstdev,r2,c2)
+
+  r3 = d.dimval
+  c3 = r3 > 0 ? floor(Int,length(d.vecval)/r3) : 0
+  M3 = reshape(d.vecval,r3,c3)
+
+  r4 = d.dimbw
+  c4 = r4 > 0 ? floor(Int,length(d.vecbw)/r4) : 0
+  M4 = reshape(d.vecbw,r4,c4)
+
+  # TODO -- allow out of module type allocation (future feature, not currently in use)
+  st = IncrementalInference.ContinuousMultivariate # eval(parse(d.softtype))
+
+  return VariableNodeData(M1,M2,M3,M4, d.BayesNetOutVertIDs,
+    d.dimIDs, d.dims, d.eliminated, d.BayesNetVertID, d.separator,
+    nothing, st, d.initialized )
+end
+
+"""
+Comparator for VariableNodeData.
+"""
+function compare(a::VariableNodeData,b::VariableNodeData)
+    TP = true
+    TP = TP && a.initval == b.initval
+    TP = TP && a.initstdev == b.initstdev
+    TP = TP && a.val == b.val
+    TP = TP && a.bw == b.bw
+    TP = TP && a.BayesNetOutVertIDs == b.BayesNetOutVertIDs
+    TP = TP && a.dimIDs == b.dimIDs
+    TP = TP && a.dims == b.dims
+    TP = TP && a.eliminated == b.eliminated
+    TP = TP && a.BayesNetVertID == b.BayesNetVertID
+    TP = TP && a.separator == b.separator
+    return TP
+end
+
+"""
+Comparator overload for VariableNodeData.
+"""
+function ==(a::VariableNodeData,b::VariableNodeData, nt::Symbol=:var)
+  return DistributedFactorGraphs.compare(a,b)
 end
