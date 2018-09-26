@@ -1,11 +1,8 @@
 ### Discussion
 # * Do edgeIds need to be defined twice - both in DFGFactor and GFND?
 #   The higher up the better.
+# * What is GenericWrapParam? Looks like it should have been deprecated.
 ###
-
-abstract type InferenceType end
-abstract type PackedInferenceType end
-abstract type FunctorInferenceType <: Function end
 
 """
 Data stored in a factor in the factor graph.
@@ -24,7 +21,7 @@ end
 """
 A single factor comprised of data and an undirected set of edge IDs.
 """
-mutable struct DFGFactor
+mutable struct DFGFactor <: DFGNode
     id::Int64
     label::String
     edgeIds::Vector{Int64}
@@ -52,12 +49,12 @@ end
 
 
 # Functor version -- TODO, abstraction can be improved here
-function convert{T <: FunctorInferenceType, P <: PackedInferenceType}(::Type{FunctionNodeData{GenericWrapParam{T}}}, d::PackedFunctionNodeData{P})
-  usrfnc = convert(T, d.fnc)
-  gwpf = prepgenericwrapper(Graphs.ExVertex[], usrfnc, getSample)
-  return FunctionNodeData{GenericWrapParam{T}}(d.fncargvID, d.eliminated, d.potentialused, d.edgeIDs,
-          Symbol(d.frommodule), gwpf) #{T}
-end
+# function convert{T <: FunctorInferenceType, P <: PackedInferenceType}(::Type{FunctionNodeData{GenericWrapParam{T}}}, d::PackedFunctionNodeData{P})
+#   usrfnc = convert(T, d.fnc)
+#   gwpf = prepgenericwrapper(Graphs.ExVertex[], usrfnc, getSample)
+#   return FunctionNodeData{GenericWrapParam{T}}(d.fncargvID, d.eliminated, d.potentialused, d.edgeIDs,
+#           Symbol(d.frommodule), gwpf) #{T}
+# end
 function convert{P <: PackedInferenceType, T <: FunctorInferenceType}(::Type{PackedFunctionNodeData{P}}, d::FunctionNodeData{T})
   return PackedFunctionNodeData{P}(d.fncargvID, d.eliminated, d.potentialused, d.edgeIDs,
           string(d.frommodule), convert(P, d.fnc.usrfnc!))
@@ -76,7 +73,7 @@ function compare{T,S}(a::GenericFunctionNodeData{T,S},b::GenericFunctionNodeData
   return TP
 end
 
-function ==(a::VariableNodeData,b::VariableNodeData, nt::Symbol=:var)
+function =={T,S}(a::GenericFunctionNodeData{T,S},b::GenericFunctionNodeData{T,S}, nt::Symbol=:var)
   return IncrementalInference.compare(a,b)
 end
 

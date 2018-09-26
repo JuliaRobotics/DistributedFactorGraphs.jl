@@ -7,8 +7,6 @@
 # * Is ContinuousScalar used anywhere? Seems like == ContinuousMultivariate(1)
 ###
 
-abstract type InferenceVariable end
-
 struct ContinuousScalar <: InferenceVariable
   dims::Int
   labels::Vector{String}
@@ -19,17 +17,6 @@ struct ContinuousMultivariate <: InferenceVariable
   labels::Vector{String}
   ContinuousMultivariate() = new()
   ContinuousMultivariate(x) = new(x, String[])
-end
-
-"""
-A variable in a factor graph.
-"""
-mutable struct DFGVariable
-    id::Int64
-    label::String
-    nodeData::VariableNodeData
-    bigDataEntries::Vector{String} #Big data entries
-    smallData::Dict{String, Any} # All small data.
 end
 
 """
@@ -46,7 +33,7 @@ mutable struct VariableNodeData
   eliminated::Bool
   BayesNetVertID::Int
   separator::Array{Int,1}
-  groundtruth::VoidUnion{ Dict{ Tuple{Symbol, Vector{Float64}} } } # not packed yet
+  groundtruth::Union{Void, Dict{ Tuple{Symbol, Vector{Float64}} } } # not packed yet
   softtype::InferenceVariable
   initialized::Bool
   VariableNodeData() = new()
@@ -64,10 +51,21 @@ mutable struct VariableNodeData
                    x8::Bool,
                    x9::Int,
                    x10::Vector{Int},
-                   x11::VoidUnion{ Dict{ Tuple{Symbol, Vector{Float64}} } },
+                   x11::Union{Void, Dict{ Tuple{Symbol, Vector{Float64}} } },
                    x12::InferenceVariable,
                    x13::Bool) =
     new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13)
+end
+
+"""
+A variable in a factor graph.
+"""
+mutable struct DFGVariable <: DFGNode
+    id::Int64
+    label::String
+    nodeData::VariableNodeData
+    bigDataEntries::Vector{String} #Big data entries
+    smallData::Dict{String, Any} # All small data.
 end
 
 """
