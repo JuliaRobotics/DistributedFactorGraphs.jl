@@ -1,11 +1,11 @@
 module DistributedFactorGraphs
 
 using
-  Graphs,
   DocStringExtensions
 
-
-include("FactorGraphTypes.jl")
-include("FGOSUtils.jl")
+# Entities
+include("entities/DFGFactor.jl")
+include("entities/DFGVariable.jl")
+include("entities/DFGAPI.jl")
 
 end

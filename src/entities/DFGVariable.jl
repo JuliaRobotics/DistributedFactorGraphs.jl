@@ -28,7 +28,7 @@ mutable struct DFGVariable
     id::Int64
     label::String
     nodeData::VariableNodeData
-    bigData::Vector{String} #Big data entries
+    bigDataEntries::Vector{String} #Big data entries
     smallData::Dict{String, Any} # All small data.
 end
 

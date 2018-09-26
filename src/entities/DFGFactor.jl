@@ -3,15 +3,9 @@
 #   The higher up the better.
 ###
 
-"""
-A single factor comprised of data and an undirected set of edge IDs.
-"""
-mutable struct DFGFactor
-    id::Int64
-    label::String
-    edgeIds::Vector{Int64}
-    nodeData::GenericFunctionNodeData
-end
+abstract type InferenceType end
+abstract type PackedInferenceType end
+abstract type FunctorInferenceType <: Function end
 
 """
 Data stored in a factor in the factor graph.
@@ -25,6 +19,16 @@ mutable struct GenericFunctionNodeData{T, S}
   fnc::T
   GenericFunctionNodeData{T, S}() where {T, S} = new()
   GenericFunctionNodeData{T, S}(x1, x2, x3, x4, x5, x6) where {T, S} = new(x1, x2, x3, x4, x5, x6)
+end
+
+"""
+A single factor comprised of data and an undirected set of edge IDs.
+"""
+mutable struct DFGFactor
+    id::Int64
+    label::String
+    edgeIds::Vector{Int64}
+    nodeData::GenericFunctionNodeData
 end
 
 FunctionNodeData{T <: Union{InferenceType, FunctorInferenceType}} = GenericFunctionNodeData{T, Symbol}
