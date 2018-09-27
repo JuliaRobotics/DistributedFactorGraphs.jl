@@ -3,7 +3,7 @@ function addV!(d::DFGAPI, v::DFGVariable)::DFGVariable
     return v
 end
 
-function addF!(d::DFGAPI, f::DFGFactor)::DFGVariable
+function addF!(d::DFGAPI, f::DFGFactor)::DFGFactor
     return f
 end
 
@@ -17,12 +17,12 @@ function getV(d::DFGAPI, vLabel::String)::DFGVariable
 end
 
 function getF(d::DFGAPI, fId::Int64)::DFGFactor
-    return DFGFactor(fId, "x0f0", GenericFunctionNodeData())
+    return DFGFactor(fId, "x0f0", [], GenericFunctionNodeData{Int64, Symbol}())
 end
 
 # How do I use this?
 function getF(d::DFGAPI, fLabel::String)::DFGFactor
-    return DFGFactor(1, fLabel, [0], GenericFunctionNodeData())
+    return DFGFactor(1, fLabel, [0], GenericFunctionNodeData{Int64, Symbol}())
 end
 
 function updateV!(d::DFGAPI, v::DFGVariable)::DFGVariable
@@ -34,20 +34,20 @@ function updateF!(d::DFGAPI, f::DFGFactor)::DFGFactor
 end
 
 function deleteV!(d::DFGAPI, vId::Int64)::DFGVariable
-    return v
+    return DFGVariable(vId, "x0", VariableNodeData(), Vector{String}(), Dict{String, Any}())
 end
 function deleteV!(d::DFGAPI, vLabel::String)::DFGVariable
-    return v
+    return DFGVariable(0, vLabel, VariableNodeData(), Vector{String}(), Dict{String, Any}())
 end
 function deleteV!(d::DFGAPI, v::DFGVariable)::DFGVariable
     return v
 end
 
 function deleteF!(d::DFGAPI, fId::Int64)::DFGFactor
-    return f
+    return DFGFactor(fId, "x0f0", [0], GenericFunctionNodeData{Int64, Symbol}())
 end
 function deleteF!(d::DFGAPI, fLabel::String)::DFGFactor
-    return f
+    return DFGFactor(1, fLabel, [0], GenericFunctionNodeData{Int64, Symbol}())
 end
 function deleteF!(d::DFGAPI, f::DFGFactor)::DFGFactor
     return f
@@ -59,20 +59,32 @@ function neighbors(d::DFGAPI, v::DFGVariable)::Dict{String, DFGVariable}
 end
 
 # Returns a flat dictionary of the vertices, keyed by ID.
-# Assuming only variables here - think maybe not, should be variables+factors?
-function ls(d::DFGAPI, v::DFGVariable)::Dict{Int64, DFGVariable}
-    return Dict{String, DFGVariable}()
+# Assuming only variables here for now - think maybe not, should be variables+factors?
+function ls(d::DFGAPI)::Dict{Int64, DFGVariable}
+    return Dict{Int64, DFGVariable}()
 end
 
-function subGraph(d::DFGAPI, v::DFGVariable)::Dict{Int64, DFGNode}
-    return Dict{Int64, DFGNode}()
+# Returns a flat dictionary of the vertices around v, keyed by ID.
+# Assuming only variables here for now - think maybe not, should be variables+factors?
+function ls(d::DFGAPI, v::DFGVariable, variableDistance=1)::Dict{Int64, DFGVariable}
+    return Dict{Int64, DFGVariable}()
 end
 
-function adjacencyMatrix(d::DFGAPI)::Matrix{DFGNode}()
+# Returns a flat dictionary of the vertices around v, keyed by ID.
+# Assuming only variables here for now - think maybe not, should be variables+factors?
+function ls(d::DFGAPI, vId::Int64, variableDistance=1)::Dict{Int64, DFGVariable}
+    return Dict{Int64, DFGVariable}()
+end
+
+function subGraph(d::DFGAPI, vIds::Vector{Int64})::Dict{Int64, DFGVariable}
+    return Dict{Int64, DFGVariable}()
+end
+
+function adjacencyMatrix(d::DFGAPI)::Matrix{DFGNode}
     return Matrix{DFGNode}(0,0)
 end
 
-mockAPI = DFGAPI(
+dfg = DFGAPI(
     "",
     addV!,
     addF!,
