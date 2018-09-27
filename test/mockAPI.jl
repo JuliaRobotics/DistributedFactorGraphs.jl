@@ -71,3 +71,20 @@ end
 function adjacencyMatrix(d::DFGAPI)::Matrix{DFGNode}()
     return Matrix{DFGNode}(0,0)
 end
+
+mockAPI = DFGAPI(
+    "",
+    addV!,
+    addF!,
+    getV,
+    getF,
+    updateV!,
+    updateF!,
+    deleteV!,
+    deleteF!,
+    neighbors,
+    ls,
+    subGraph,
+    adjacencyMatrix,
+    Dict{String, Any}()
+)

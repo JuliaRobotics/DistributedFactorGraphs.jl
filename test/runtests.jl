@@ -1,6 +1,10 @@
 using Base: Test
 using DistributedFactorGraphs
 
-@testset "placeholder" begin
+
+@testset "MockAPI" begin
+    include("mockAPI.jl")
+
+
   @test true
 end
