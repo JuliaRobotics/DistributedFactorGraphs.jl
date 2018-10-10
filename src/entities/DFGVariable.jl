@@ -1,12 +1,4 @@
 
-### TODO: Discussions
-# * What is sofftype, and do we want to make it extensible now?
-# * Using longs (not GUIDS) for ID's - that work with everyone?
-# * BigData and SmallData are referenced in DFGVariable but I don't
-#   believe they should be retrieved every time. Thoughts?
-# * Is ContinuousScalar used anywhere? Seems like == ContinuousMultivariate(1)
-###
-
 struct ContinuousScalar <: InferenceVariable
   dims::Int
   labels::Vector{String}
@@ -66,6 +58,7 @@ mutable struct DFGVariable <: DFGNode
     nodeData::VariableNodeData
     bigDataEntries::Vector{String} #Big data entries
     smallData::Dict{String, Any} # All small data.
+    DFGVariable(label) = new(-1, label, VariableNodeData(), Vector{String}(), Dict{String, Any}())
 end
 
 """

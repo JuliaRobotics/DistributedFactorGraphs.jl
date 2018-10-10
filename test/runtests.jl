@@ -17,8 +17,8 @@ using DistributedFactorGraphs
     @test dfg.updateV!(dfg, v) == v
     @test dfg.updateF!(dfg, f) == f
     @test dfg.deleteV!(dfg, v) == v
-    @test dfg.deleteV!(dfg, v) == v
-    @test dfg.deleteV!(dfg, v) == v
+    @test dfg.deleteV!(dfg, "x0").label == "x0"
+    @test dfg.deleteV!(dfg, 0).id == 0
     @test dfg.deleteF!(dfg, f) == f
     @test length(dfg.ls(dfg)) == 0
     @test length(dfg.ls(dfg, v)) == 0

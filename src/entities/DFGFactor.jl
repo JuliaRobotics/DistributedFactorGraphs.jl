@@ -1,9 +1,3 @@
-### Discussion
-# * Do edgeIds need to be defined twice - both in DFGFactor and GFND?
-#   The higher up the better.
-# * What is GenericWrapParam? Looks like it should have been deprecated.
-###
-
 """
 Data stored in a factor in the factor graph.
 """
@@ -11,7 +5,7 @@ mutable struct GenericFunctionNodeData{T, S}
   fncargvID::Array{Int,1}
   eliminated::Bool
   potentialused::Bool
-  edgeIDs::Array{Int,1}
+  edgeIDs::Vector{Int64}
   frommodule::S #Union{Symbol, AbstractString}
   fnc::T
   GenericFunctionNodeData{T, S}() where {T, S} = new()
@@ -26,6 +20,7 @@ mutable struct DFGFactor <: DFGNode
     label::String
     edgeIds::Vector{Int64}
     nodeData::GenericFunctionNodeData
+    DFGFactor(label, factorFunction::R) where {R <: Union{FunctorInferenceType, InferenceType}} = new(-1, label, Vector{Int64}(), )
 end
 
 FunctionNodeData{T <: Union{InferenceType, FunctorInferenceType}} = GenericFunctionNodeData{T, Symbol}
