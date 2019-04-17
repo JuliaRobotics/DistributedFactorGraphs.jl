@@ -65,8 +65,9 @@ adjMat = getAdjacencyMatrixDataFrame(dfg)
 @test getNeighbors(dfg, verts[1]) == [:x1x2f1]
 neighbors = getNeighbors(dfg, getFactor(dfg, :x1x2f1))
 @test all([v in [:x1, :x2] for v in neighbors])
-# Testing alias
+# Testing aliases
 @test getNeighbors(dfg, getFactor(dfg, :x1x2f1)) == ls(dfg, getFactor(dfg, :x1x2f1))
+@test getNeighbors(dfg, :x1x2f1) == ls(dfg, :x1x2f1)
 
 # Subgraphs
 dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
@@ -78,3 +79,17 @@ dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 1, true)
 # Test adding to the dfg
 dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2, true, dfgSubgraph)
 @test all([v in [:x1, :x1x2f1, :x2] for v in map(n -> n.label, [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])])
+
+# Adjacency matrix
+varLabels = sort(map(v->v.label, getVariables(dfg)))
+factLabels = sort(map(f->f.label, getFactors(dfg)))
+adjDf = DataFrame(:Factor => Union{Missing, Symbol}[])
+for varLabel in varLabels
+    adjDf[varLabel] = Union{Missing, Symbol}[]
+end
+for (i, factLabel) in enumerate(factLabels)
+    global adjDf
+    push!(adjDf, [factLabel, missings(length(varLabels))...])
+    factVars = getNeighbors(dfg, getFactor(dfg, factLabel))
+    map(vLabel -> adjDf[vLabel][i] = factLabel, factVars)
+end

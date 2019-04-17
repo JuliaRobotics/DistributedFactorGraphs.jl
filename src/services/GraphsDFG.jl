@@ -180,10 +180,21 @@ function getNeighbors(dfg::GraphsDFG, node::T)::Vector{Symbol}  where T <: DFGNo
     neighbors = in_neighbors(vert, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
     return map(n -> n.dfgNode.label, neighbors)
 end
+function getNeighbors(dfg::GraphsDFG, label::Symbol)::Vector{Symbol}  where T <: DFGNode
+    if !haskey(dfg.labelDict, label)
+        error("Variable/factor with label '$(label)' does not exist in the factor graph")
+    end
+    vert = dfg.g.vertices[dfg.labelDict[label]]
+    neighbors = in_neighbors(vert, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
+    return map(n -> n.dfgNode.label, neighbors)
+end
 
-# Alias
+# Aliases
 function ls(dfg::GraphsDFG, node::T)::Vector{Symbol} where T <: DFGNode
     return getNeighbors(dfg, node)
+end
+function ls(dfg::GraphsDFG, label::Symbol)::Vector{Symbol} where T <: DFGNode
+    return getNeighbors(dfg, label)
 end
 
 function _copyIntoGraph!(sourceDFG::GraphsDFG, destDFG::GraphsDFG, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false)::Nothing
@@ -267,9 +278,18 @@ function __init__()
         if isdefined(Main, :DataFrames)
             export getAdjacencyMatrixDataFrame
             function getAdjacencyMatrixDataFrame(dfg::GraphsDFG)::Main.DataFrames.DataFrame
-                colNames = map(n -> n.dfgNode.label, vertices(dfg.g))
-                adjMat = adjacency_matrix(dfg.g)
-                return Main.DataFrames.DataFrame(adjMat, colNames)
+                varLabels = sort(map(v->v.label, getVariables(dfg)))
+                factLabels = sort(map(f->f.label, getFactors(dfg)))
+                adjDf = DataFrames.DataFrame(:Factor => Union{Missing, Symbol}[])
+                for varLabel in varLabels
+                    adjDf[varLabel] = Union{Missing, Symbol}[]
+                end
+                for (i, factLabel) in enumerate(factLabels)
+                    push!(adjDf, [factLabel, DataFrames.missings(length(varLabels))...])
+                    factVars = getNeighbors(dfg, getFactor(dfg, factLabel))
+                    map(vLabel -> adjDf[vLabel][i] = factLabel, factVars)
+                end
+                return adjDf
             end
         end
     end
