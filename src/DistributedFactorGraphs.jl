@@ -1,18 +1,3 @@
-### TODO: Discussions
-# * What is sofftype, and do we want to make it extensible now?
-# * Using longs (not GUIDS) for ID's - that work with everyone?
-# * BigData and SmallData are referenced in DFGVariable but I don't
-#   believe they should be retrieved every time. Thoughts?
-# * Is ContinuousScalar used anywhere? Seems like == ContinuousMultivariate(1)
-# * Right now InferenceVariable is declared here. Is that fair?
-#   I.e. IncrementalInference's InferenceVariable type hierarchy starts here
-
-### Discussion
-# * Do edgeIds need to be defined twice - both in DFGFactor and GFND?
-#   The higher up the better.
-# * What is GenericWrapParam? Looks like it should have been deprecated.
-###
-###
 module DistributedFactorGraphs
 
 using Base
@@ -21,25 +6,26 @@ using Requires
 
 # Entities
 include("entities/AbstractTypes.jl")
-# include("entities/DFGFactor.jl")
-# include("entities/DFGVariable.jl")
-# include("entities/DFGAPI.jl")
-# include("entities/DistributedFactorGraph.jl")
-# include("services/DistributedFactorGraph.jl")
+include("entities/DFGFactor.jl")
+include("entities/DFGVariable.jl")
 
 export AbstractDFG
-# export DistributedFactorGraph
-
 export DFGNode
-export DFGFactor#, GenericFunctionNodeData, FunctionNodeData, PackedFunctionNodeData
-export DFGVariable#, ContinuousScalar, ContinuousMultivariate, VariableNodeData, PackedVariableNodeData
+export DFGFactor
+export DFGVariable
 
 # Exports for actual graph operations - we need a complete list here
-export addVariable, addFactor
-# export addV!, addF!, getV, getF, deleteV!, deleteF!, neighbors, ls, subgraph, adjacencyMatrix
-
-# Basis of variable and factor - moved from IncrementalInference
-# export InferenceType, PackedInferenceType, FunctorInferenceType, InferenceVariable
+export addVariable!
+export addFactor!
+export ls, lsf, getVariables, getFactors
+export getVariable, getFactor
+export updateVariable, updateFactor
+export getAdjacencyMatrix
+export getAdjacencyMatrixDataFrame
+export getNeighbors
+export getSubgraphAroundNode
+export getSubgraph
+export isFullyConnected
 
 # Include the Graphs.jl API.
 include("services/GraphsDFG.jl")

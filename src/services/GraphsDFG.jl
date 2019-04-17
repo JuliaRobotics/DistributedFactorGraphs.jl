@@ -1,5 +1,5 @@
 
-module GraphsJlAPI
+module GraphsJl
 
 using Graphs
 using Requires

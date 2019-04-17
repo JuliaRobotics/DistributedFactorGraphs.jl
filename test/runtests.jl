@@ -1,7 +1,7 @@
 using Test
 using DataFrames
 using DistributedFactorGraphs
-using DistributedFactorGraphs.GraphsJlAPI
+using DistributedFactorGraphs.GraphsJl
 
 dfg = GraphsDFG()
 v1 = DFGVariable(:a)
