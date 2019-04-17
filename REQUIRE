@@ -4,3 +4,4 @@ LightGraphs 1.2.0
 MetaGraphs 0.6.1
 Requires 0.5.2
 DataFrames
+JSON2

@@ -20,6 +20,7 @@ export addFactor!
 export ls, lsf, getVariables, getFactors
 export getVariable, getFactor
 export updateVariable, updateFactor
+export getAdjacencyMatrix
 export getAdjacencyMatrixDataFrame
 export getNeighbors
 export getSubgraphAroundNode
@@ -270,8 +271,22 @@ function getSubGraph(dfg::GraphsDFG, variableFactorLabels::Vector{Symbol}, inclu
     _copyIntoGraph!(dfg, addToDFG, variableFactorLabels, includeOrphanFactors)
     return addToDFG
 end
-#
 
+function getAdjacencyMatrix(dfg::GraphsDFG)::Matrix{Union{Nothing, Symbol}}
+    varLabels = sort(map(v->v.label, getVariables(dfg)))
+    factLabels = sort(map(f->f.label, getFactors(dfg)))
+    vDict = Dict(varLabels .=> [1:length(varLabels)...].+1)
+
+    adjMat = Matrix{Union{Nothing, Symbol}}(nothing, length(factLabels)+1, length(varLabels)+1)
+    # Set row/col headings
+    adjMat[2:end, 1] = factLabels
+    adjMat[1, 2:end] = varLabels
+    for (fIndex, factLabel) in enumerate(factLabels)
+        factVars = getNeighbors(dfg, getFactor(dfg, factLabel))
+        map(vLabel -> adjMat[fIndex+1,vDict[vLabel]] = factLabel, factVars)
+    end
+    return adjMat
+end
 
 function __init__()
     @require DataFrames="a93c6f00-e57d-5684-b7b6-d8193f3e46c0" begin
