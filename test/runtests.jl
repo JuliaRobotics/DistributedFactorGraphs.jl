@@ -92,11 +92,11 @@ end
     # Subgraphs
     dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
     # Only returns x1 and x2
-    @test all([v in [:x1, :x1x2f1, :x2] for v in map(n -> n.label, [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])])
+    @test setdiff([:x1, :x1x2f1, :x2], map(n -> n.label, [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])) == []
     # Test include orphan factorsVoid
     dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 1, true)
-    @test all([v in [:x1, :x1x2f1] for v in map(n -> n.label, [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])])
+    @test setdiff([:x1, :x1x2f1], map(n -> n.label, [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])) == []
     # Test adding to the dfg
     dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2, true, dfgSubgraph)
-    @test all([v in [:x1, :x1x2f1, :x2] for v in map(n -> n.label, [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])])
+    @test setdiff([:x1, :x1x2f1, :x2], map(n -> n.label, [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])) == []
 end
