@@ -1,3 +1,7 @@
+"""
+    $(SIGNATURES)
+Fundamental structure for a DFG factor.
+"""
 mutable struct DFGFactor <: DFGNode
     label::Symbol
     #TODO: Populate

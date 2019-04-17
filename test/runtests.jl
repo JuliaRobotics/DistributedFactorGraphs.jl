@@ -37,9 +37,9 @@ end
 
     # Sets
     v1Prime = deepcopy(v1)
-    @test updateVariable(dfg, v1Prime) != v1
+    @test updateVariable!(dfg, v1Prime) != v1
     f1Prime = deepcopy(f1)
-    @test updateFactor(dfg, f1Prime) != f1
+    @test updateFactor!(dfg, f1Prime) != f1
 end
 
 # Deletions
