@@ -1,6 +1,5 @@
-
 module GraphsJlAPI
-    using Graphs
+    using MetaGraphs
     using DistributedFactorGraphs
     using Base.show
 
@@ -22,6 +21,10 @@ module GraphsJlAPI
 
     function getV(d::DFGAPI, vId::Int64)::DFGVariable
         return DFGVariable(vId, "x0", VariableNodeData(), Vector{String}(), Dict{String, Any}())
+    end
+
+    function getV(d::DFGAPI, vLabel::Symbol)::DFGVariable
+        return getV(d, String(vLabel))
     end
 
     function getV(d::DFGAPI, vLabel::String)::DFGVariable

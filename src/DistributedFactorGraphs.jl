@@ -17,29 +17,31 @@ module DistributedFactorGraphs
 
 using Base
 using DocStringExtensions
+using Requires
 
 # Entities
 include("entities/AbstractTypes.jl")
-include("entities/DFGFactor.jl")
-include("entities/DFGVariable.jl")
-include("entities/DFGAPI.jl")
-include("entities/DistributedFactorGraph.jl")
-include("services/DistributedFactorGraph.jl")
+# include("entities/DFGFactor.jl")
+# include("entities/DFGVariable.jl")
+# include("entities/DFGAPI.jl")
+# include("entities/DistributedFactorGraph.jl")
+# include("services/DistributedFactorGraph.jl")
 
-export DFGAPI
-export DistributedFactorGraph
+export AbstractDFG
+# export DistributedFactorGraph
 
 export DFGNode
-export DFGFactor, GenericFunctionNodeData, FunctionNodeData, PackedFunctionNodeData
-export DFGVariable, ContinuousScalar, ContinuousMultivariate, VariableNodeData, PackedVariableNodeData
+export DFGFactor#, GenericFunctionNodeData, FunctionNodeData, PackedFunctionNodeData
+export DFGVariable#, ContinuousScalar, ContinuousMultivariate, VariableNodeData, PackedVariableNodeData
 
 # Exports for actual graph operations - we need a complete list here
-export addV!, addF!, getV, getF, deleteV!, deleteF!, neightbors, ls, subgraph, adjacencyMatrix
+export addVariable, addFactor
+# export addV!, addF!, getV, getF, deleteV!, deleteF!, neighbors, ls, subgraph, adjacencyMatrix
 
 # Basis of variable and factor - moved from IncrementalInference
-export InferenceType, PackedInferenceType, FunctorInferenceType, InferenceVariable
+# export InferenceType, PackedInferenceType, FunctorInferenceType, InferenceVariable
 
 # Include the Graphs.jl API.
-include("services/GraphsjlAPI.jl")
+include("services/GraphsDFG.jl")
 
 end

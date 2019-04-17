@@ -14,6 +14,36 @@ function _validate(dfg::DistributedFactorGraph)::Void
     end
 end
 
+function getV(dfg::DistributedFactorGraph, vId::Int64)::DFGVariable
+    return DFGVariable("x0")
+end
+
+function getV(dfg::DistributedFactorGraph, vLabel::String)::DFGVariable
+    _validate(dfg)
+    return DFGVariable(vLabel)
+end
+
+function getVs(dfg::DistributedFactorGraph, regex::String)::Vector{DFGVariable}
+    _validate(dfg)
+    return [DFGVariable("x0")]
+end
+
+function getF(dfg::DistributedFactorGraph, fId::Int64)::DFGFactor
+    _validate(dfg)
+    return DFGFactor(fId, "x0f0", [], GenericFunctionNodeData{Int64, Symbol}())
+end
+
+function getF(dfg::DistributedFactorGraph, fLabel::String)::DFGFactor
+    _validate(dfg)
+    return DFGFactor(1, fLabel, [0], GenericFunctionNodeData{Int64, Symbol}())
+end
+
+function getFs(dfg::DistributedFactorGraph, regex::String)::Vector{DFGFactor}
+    _validate(dfg)
+    return [DFGFactor("x0x1f0", [0, 1], GenericFunctionNodeData{Int64, Symbol}())]
+end
+
+
 function addV!(dfg::DistributedFactorGraph, v::DFGVariable)::DFGVariable
     _validate(dfg)
     # Principal
@@ -52,30 +82,44 @@ function addF!(dfg::DistributedFactorGraph, f::DFGFactor)::DFGFactor
     return f
 end
 
-function addF!(dfg::DistributedFactorGraph, labelVariables::Vector{Symbol}, factorFunc::R)::DFGFactor where {R <: Union{FunctorInferenceType, InferenceType}}
-    variables = map(label -> gtV(dfg, label), labelVariables)
+function parseusermultihypo(multihypo::Union{Tuple,Vector{Float64}})
+  mh = nothing
+  if multihypo != nothing
+    multihypo2 = Float64[multihypo...]
+    # verts = Symbol.(multihypo[1,:])
+    for i in 1:length(multihypo)
+      if multihypo[i] > 0.999999
+        multihypo2[i] = 0.0
+      end
+    end
+    mh = Categorical(Float64[multihypo2...] )
+  end
+  return mh
+end
+
+function addF!(
+        dfg::DistributedFactorGraph,
+        labelVariables::Vector{Symbol},
+        factorFunc::R;
+        multihypo::Union{Nothing,Tuple,Vector{Float64}}=nothing)::DFGFactor
+        where {R <: Union{FunctorInferenceType, InferenceType}}
+    variables = map(label -> getV(dfg, String(label)), labelVariables)
     factName = _constructFactorName(dfg, labelVariables)
-    f = DFGFactor(-1, factName, map(v -> v.id, variables), factorFunc)
+
+    # Create the FunctionNodeData
+    ftyp = typeof(factorFunc) # maybe this can be T
+    # @show "setDefaultFactorNode!", usrfnc, ftyp, T
+    mhcat = parseusermultihypo(multihypo)
+    # gwpf = prepgenericwrapper(Xi, usrfnc, getSample, multihypo=mhcat)
+    ccw = prepgenericconvolution(Xi, usrfnc, multihypo=mhcat, threadmodel=threadmodel)
+
+    m = Symbol(ftyp.name.module)
+
+    # experimental wip
+    data_ccw = FunctionNodeData{CommonConvWrapper{T}}(Int[], false, false, Int[], m, ccw)
+
+    f = DFGFactor(-1, factName, map(v -> v.id, variables), data_ccw)
     return f
-end
-
-function getV(vId::Int64)::DFGVariable
-    return DFGVariable(vId, "x0", VariableNodeData(), Vector{String}(), Dict{String, Any}())
-end
-
-function getV(d::DFGAPI, vLabel::String)::DFGVariable
-    _validate(dfg)
-    return DFGVariable(0, vLabel, VariableNodeData(), Vector{String}(), Dict{String, Any}())
-end
-
-function getF(d::DFGAPI, fId::Int64)::DFGFactor
-    _validate(dfg)
-    return DFGFactor(fId, "x0f0", [], GenericFunctionNodeData{Int64, Symbol}())
-end
-
-function getF(d::DFGAPI, fLabel::String)::DFGFactor
-    _validate(dfg)
-    return DFGFactor(1, fLabel, [0], GenericFunctionNodeData{Int64, Symbol}())
 end
 
 function updateV!(d::DFGAPI, v::DFGVariable)::DFGVariable

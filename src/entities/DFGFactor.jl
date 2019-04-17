@@ -20,7 +20,8 @@ mutable struct DFGFactor <: DFGNode
     label::String
     edgeIds::Vector{Int64}
     nodeData::GenericFunctionNodeData
-    DFGFactor(label, factorFunction::R) where {R <: Union{FunctorInferenceType, InferenceType}} = new(-1, label, Vector{Int64}(), )
+    DFGFactor(label::String, factorFunction::R) where {R <: Union{FunctorInferenceType, InferenceType}} = new(-1, label, Vector{Int64}(), factorFunction)
+    DFGFactor(label::String, edgeIds::Vector{Int64}, factorFunction::R) where {R <: Union{FunctorInferenceType, InferenceType}} = new(-1, label, edgeIds, factorFunction)
 end
 
 FunctionNodeData{T <: Union{InferenceType, FunctorInferenceType}} = GenericFunctionNodeData{T, Symbol}
