@@ -28,8 +28,5 @@ makedocs(
 deploydocs(
     repo   = "github.com/JuliaRobotics/DistributedFactorGraphs.jl.git",
     target = "build",
-    deps   = Deps.pip("mkdocs", "python-markdown-math"),
-    make   = nothing,
-    julia  = "1.0",
-    osname = "linux"
+    deps   = Deps.pip("mkdocs", "python-markdown-math")
 )
