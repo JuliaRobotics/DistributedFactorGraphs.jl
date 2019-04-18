@@ -52,8 +52,10 @@ end
 @testset "Connectivity Test" begin
     global dfg,v1,v2,f1
     @test isFullyConnected(dfg) == true
+    @test hasOrphans(dfg) == false
     addVariable!(dfg, DFGVariable(:orphan))
     @test isFullyConnected(dfg) == false
+    @test hasOrphans(dfg) == true
 end
 
 # Adjacency matrices

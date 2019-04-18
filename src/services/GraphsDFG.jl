@@ -27,7 +27,7 @@ export getAdjacencyMatrixDataFrame
 export getNeighbors
 export getSubgraphAroundNode
 export getSubgraph
-export isFullyConnected
+export isFullyConnected, hasOrphans
 
 mutable struct GraphsDFG <: AbstractDFG
     g::FGType
@@ -251,6 +251,9 @@ Checks if the graph is fully connected, returns true if so.
 function isFullyConnected(dfg::GraphsDFG)::Bool
     return length(connected_components(dfg.g)) == 1
 end
+
+#Alias
+hasOrphans(dfg::GraphsDFG)::Bool = !isFullyConnected(dfg)
 
 """
     $(SIGNATURES)
