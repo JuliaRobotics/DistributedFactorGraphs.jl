@@ -3,11 +3,13 @@ os:
     - linux
 julia:
     - 1.0
+    - 1.1
     - nightly
 notifications:
     email: false
 matrix:
   allow_failures:
+    - julia: 1.1
     - julia: nightly
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
