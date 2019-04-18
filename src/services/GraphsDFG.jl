@@ -253,6 +253,10 @@ function isFullyConnected(dfg::GraphsDFG)::Bool
 end
 
 #Alias
+"""
+    $(SIGNATURES)
+Checks if the graph is not fully connected, returns true if it is not contiguous.
+"""
 hasOrphans(dfg::GraphsDFG)::Bool = !isFullyConnected(dfg)
 
 """

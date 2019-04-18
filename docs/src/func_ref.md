@@ -49,6 +49,7 @@ getAdjacencyMatrix
 ### Validating Factor Graph Connectivity
 ```@docs
 isFullyConnected
+hasOrphans
 ```
 
 ### Copying Subgraphs
