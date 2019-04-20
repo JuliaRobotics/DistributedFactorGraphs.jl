@@ -15,6 +15,23 @@ mutable struct GraphsNode
 end
 const FGType = Graphs.GenericIncidenceList{GraphsNode,Graphs.Edge{GraphsNode},Dict{Int,GraphsNode},Dict{Int,Array{Graphs.Edge{GraphsNode},1}}}
 
+# For visualization
+import Graphs: attributes, vertex_index
+# Export attributes, these are enumerates as properties for the variables and factors
+# REF: http://www.graphviz.org/documentation/
+function attributes(v::GraphsNode, g::T)::AttributeDict where T <:GenericIncidenceList
+    AttributeDict(
+        "label" => v.dfgNode.label,
+        "color" => typeof(v.dfgNode) == DFGVariable ? "red" : "blue",
+        "shape" => typeof(v.dfgNode) == DFGVariable ? "box" : "ellipse",
+        "fillcolor" => typeof(v.dfgNode) == DFGVariable ? "red" : "blue"
+        )
+end
+
+# This is insanely important - if we don't provide a valid index, the edges don't work correctly.
+vertex_index(v::GraphsNode) = v.index
+
+# Exports
 export GraphsDFG
 export addVariable!
 export addFactor!
@@ -28,6 +45,7 @@ export getNeighbors
 export getSubgraphAroundNode
 export getSubgraph
 export isFullyConnected, hasOrphans
+export toDot, toDotFile
 
 mutable struct GraphsDFG <: AbstractDFG
     g::FGType
@@ -80,7 +98,7 @@ function addFactor!(dfg::GraphsDFG, factor::DFGFactor, variables::Vector{DFGVari
     # Add the edges...
     for variable in variables
         v = dfg.g.vertices[variable._internalId]
-        edge = Graphs.make_edge(dfg.g, f, v)
+        edge = Graphs.make_edge(dfg.g, v, f)
         Graphs.add_edge!(dfg.g, edge)
     end
     return true
@@ -407,6 +425,30 @@ function getAdjacencyMatrix(dfg::GraphsDFG)::Matrix{Union{Nothing, Symbol}}
         map(vLabel -> adjMat[fIndex+1,vDict[vLabel]] = factLabel, factVars)
     end
     return adjMat
+end
+
+"""
+    $(SIGNATURES)
+Produces a dot-format of the graph for visualization.
+"""
+function toDot(dfg::GraphsDFG)::String
+    m = PipeBuffer()
+    write(m,Graphs.to_dot(dfg.g))
+    data = take!(m)
+    close(m)
+    return String(data)
+end
+
+"""
+    $(SIGNATURES)
+Produces a dot file of the graph for visualization.
+Download XDot to see the data
+"""
+function toDotFile(dfg::GraphsDFG, fileName::String)::Nothing
+    open(fileName, "w") do fid
+        write(fid,Graphs.to_dot(dfg.g))
+    end
+    return nothing
 end
 
 function __init__()

@@ -58,6 +58,12 @@ getSubgraphAroundNode
 getSubgraph
 ```
 
+### Visualization
+```@docs
+toDot
+toDotFile
+```
+
 ### DataFrame Extension Functions
 ```@docs
 getAdjacencyMatrixDataFrame
