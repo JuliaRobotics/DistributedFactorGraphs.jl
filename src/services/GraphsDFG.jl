@@ -62,7 +62,7 @@ end
     $(SIGNATURES)
 Add a DFGFactor to a DFG.
 """
-function addFactor!(dfg::GraphsDFG, factor::DFGFactor, variables::Vector{DFGVariable})::Bool
+function addFactor!(dfg::GraphsDFG, variables::Vector{DFGVariable}, factor::DFGFactor)::Bool
     if haskey(dfg.labelDict, factor.label)
         error("Factor '$(factor.label)' already exists in the factor graph")
     end
