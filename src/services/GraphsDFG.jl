@@ -328,7 +328,7 @@ function _copyIntoGraph!(sourceDFG::GraphsDFG, destDFG::GraphsDFG, variableFacto
 
             # Only if we have all of them should we add it (otherwise strange things may happen on evaluation)
             if includeOrphanFactors || length(factVariables) == length(variables)
-                addFactor!(destDFG, deepcopy(factor.dfgNode), factVariables)
+                addFactor!(destDFG, factVariables, deepcopy(factor.dfgNode))
             end
         end
     end
