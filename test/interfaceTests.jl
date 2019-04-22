@@ -1,7 +1,7 @@
 dfg = testDFGAPI()
 v1 = DFGVariable(:a)
 v2 = DFGVariable(:b)
-f1 = DFGFactor(:f1)
+f1 = DFGFactor{Int, :Symbol}(:f1)
 @testset "Creating Graphs" begin
     global dfg,v1,v2,f1
     addVariable!(dfg, v1)

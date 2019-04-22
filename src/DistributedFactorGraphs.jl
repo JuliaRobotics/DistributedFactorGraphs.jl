@@ -3,6 +3,8 @@ module DistributedFactorGraphs
 using Base
 using DocStringExtensions
 using Requires
+using Dates
+using Distributions
 
 # Entities
 include("entities/AbstractTypes.jl")
