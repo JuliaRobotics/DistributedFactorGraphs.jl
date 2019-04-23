@@ -64,7 +64,7 @@ label(v::DFGVariable) = v.label
 timestamp(v::DFGVariable) = v.timestamp
 tags(v::DFGVariable) = v.tags
 estimates(v::DFGVariable) = v.estimateDict
-estimate(v::DFGVariable, key::Symbol) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
+estimate(v::DFGVariable, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
 #solverData(v::DFGVariable) = haskey(v.solverDataDict, :default) ? v.solverDataDict[:default] : nothing
 solverData(v::DFGVariable, key::Symbol=:default) = haskey(v.solverDataDict, key) ? v.solverDataDict[key] : nothing
 solverDataDict(v::DFGVariable) = v.solverDataDict
