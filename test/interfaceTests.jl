@@ -1,14 +1,14 @@
 dfg = testDFGAPI()
 v1 = DFGVariable(:a)
 v2 = DFGVariable(:b)
-f1 = DFGFactor(:f1)
+f1 = DFGFactor{Int, :Symbol}(:f1)
 @testset "Creating Graphs" begin
     global dfg,v1,v2,f1
     addVariable!(dfg, v1)
     @test_throws Exception addVariable!(dfg, v1)
     addVariable!(dfg, v2)
     addFactor!(dfg, [v1, v2], f1)
-    @test_throws Exception addFactor!(dfg, DFGFactor("f2"), [v1, DFGVariable("Nope")])
+    @test_throws Exception addFactor!(dfg, DFGFactor{Int, :Symbol}("f2"), [v1, DFGVariable("Nope")])
 end
 
 @testset "Listing Nodes" begin
@@ -21,7 +21,7 @@ end
 end
 
 # Gets
-@testset "Gets and Sets" begin
+@testset "Gets, Sets, and Accessors" begin
     global dfg,v1,v2,f1
     @test getVariable(dfg, v1.label) == v1
     @test getFactor(dfg, f1.label) == f1
@@ -35,6 +35,20 @@ end
     @test updateVariable!(dfg, v1Prime) != v1
     f1Prime = deepcopy(f1)
     @test updateFactor!(dfg, f1Prime) != f1
+
+    # Accessors
+    @test label(v1) == v1.label
+    @test timestamp(v1) == v1.timestamp
+    @test estimates(v1) == v1.estimateDict
+    @test estimate(v1, :notfound) == nothing
+    @test solverData(v1) == v1.solverDataDict[:default]
+    @test solverData(v1, :default) == v1.solverDataDict[:default]
+    @test solverDataDict(v1) == v1.solverDataDict
+    @test id(v1) == v1._internalId
+
+    @test label(f1) == f1.label
+    @test data(f1) == f1.data
+    @test id(f1) == f1._internalId
 end
 
 # Deletions
@@ -71,7 +85,7 @@ numNodes = 10
 dfg = testDFGAPI()
 verts = map(n -> DFGVariable(Symbol("x$n")), 1:numNodes)
 map(v -> addVariable!(dfg, v), verts)
-map(n -> addFactor!(dfg, [verts[n], verts[n+1]], DFGFactor(Symbol("x$(n)x$(n+1)f1"))), 1:(numNodes-1))
+map(n -> addFactor!(dfg, [verts[n], verts[n+1]], DFGFactor{Int, :Symbol}(Symbol("x$(n)x$(n+1)f1"))), 1:(numNodes-1))
 # map(n -> addFactor!(dfg, [verts[n], verts[n+2]], DFGFactor(Symbol("x$(n)x$(n+2)f2"))), 1:2:(numNodes-2))
 
 @testset "Getting Neighbors" begin
