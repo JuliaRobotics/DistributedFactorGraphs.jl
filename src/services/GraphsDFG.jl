@@ -22,9 +22,9 @@ import Graphs: attributes, vertex_index
 function attributes(v::GraphsNode, g::T)::AttributeDict where T <:GenericIncidenceList
     AttributeDict(
         "label" => v.dfgNode.label,
-        "color" => typeof(v.dfgNode) == DFGVariable ? "red" : "blue",
-        "shape" => typeof(v.dfgNode) == DFGVariable ? "box" : "ellipse",
-        "fillcolor" => typeof(v.dfgNode) == DFGVariable ? "red" : "blue"
+        "color" => v.dfgNode isa DFGVariable ? "red" : "blue",
+        "shape" => v.dfgNode isa DFGVariable ? "box" : "ellipse",
+        "fillcolor" => v.dfgNode isa DFGVariable ? "red" : "blue"
         )
 end
 
@@ -226,7 +226,7 @@ List the DFGVariables in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the variables.
 """
 function ls(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGVariable}
-    variables = map(v -> v.dfgNode, filter(n -> typeof(n.dfgNode) == DFGVariable, collect(values(dfg.g.vertices))))
+    variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGVariable, vertices(dfg.g)))
     if regexFilter != nothing
         variables = filter(v -> occursin(regexFilter, String(v.label)), variables)
     end
@@ -247,7 +247,7 @@ List the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
 function lsf(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGFactor}
-    factors = map(v -> v.dfgNode, filter(n -> typeof(n.dfgNode) == DFGFactor, collect(values(dfg.g.vertices))))
+    factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGFactor, vertices(dfg.g)))
     if regexFilter != nothing
         factors = filter(f -> occursin(regexFilter, String(f.label)), factors)
     end
@@ -321,8 +321,8 @@ end
 function _copyIntoGraph!(sourceDFG::GraphsDFG, destDFG::GraphsDFG, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false)::Nothing
     # Split into variables and factors
     verts = map(id -> sourceDFG.g.vertices[sourceDFG.labelDict[id]], variableFactorLabels)
-    sourceVariables = filter(n -> typeof(n.dfgNode) == DFGVariable, verts)
-    sourceFactors = filter(n -> typeof(n.dfgNode) == DFGFactor, verts)
+    sourceVariables = filter(n -> n.dfgNode isa DFGVariable, verts)
+    sourceFactors = filter(n -> n.dfgNode isa DFGFactor, verts)
 
     # Now we have to add all variables first,
     for variable in sourceVariables

@@ -8,7 +8,7 @@ f1 = DFGFactor{Int, :Symbol}(:f1)
     @test_throws Exception addVariable!(dfg, v1)
     addVariable!(dfg, v2)
     addFactor!(dfg, [v1, v2], f1)
-    @test_throws Exception addFactor!(dfg, DFGFactor("f2"), [v1, DFGVariable("Nope")])
+    @test_throws Exception addFactor!(dfg, DFGFactor{Int, :Symbol}("f2"), [v1, DFGVariable("Nope")])
 end
 
 @testset "Listing Nodes" begin
@@ -71,7 +71,7 @@ numNodes = 10
 dfg = testDFGAPI()
 verts = map(n -> DFGVariable(Symbol("x$n")), 1:numNodes)
 map(v -> addVariable!(dfg, v), verts)
-map(n -> addFactor!(dfg, [verts[n], verts[n+1]], DFGFactor(Symbol("x$(n)x$(n+1)f1"))), 1:(numNodes-1))
+map(n -> addFactor!(dfg, [verts[n], verts[n+1]], DFGFactor{Int, :Symbol}(Symbol("x$(n)x$(n+1)f1"))), 1:(numNodes-1))
 # map(n -> addFactor!(dfg, [verts[n], verts[n+2]], DFGFactor(Symbol("x$(n)x$(n+2)f2"))), 1:2:(numNodes-2))
 
 @testset "Getting Neighbors" begin
