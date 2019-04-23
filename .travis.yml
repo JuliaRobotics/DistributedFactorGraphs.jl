@@ -16,10 +16,10 @@ matrix:
     - julia: 1.1
     - julia: nightly
 
-script:
-  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - julia --project --check-bounds=yes -e 'using UUIDs; write("Project.toml", replace(read("Project.toml", String), r"uuid = .*?\n" =>"uuid = \"$(uuid4())\"\n"));
-import Pkg; Pkg.build("DistributedFactorGraphs"); Pkg.test("DistributedFactorGraphs"; coverage=true)'
+# script:
+#   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+#   - julia --project --check-bounds=yes -e 'using UUIDs; write("Project.toml", replace(read("Project.toml", String), r"uuid = .*?\n" =>"uuid = \"$(uuid4())\"\n"));
+# import Pkg; Pkg.build("DistributedFactorGraphs"); Pkg.test("DistributedFactorGraphs"; coverage=true)'
 
 # script:
 #   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
