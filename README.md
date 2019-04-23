@@ -20,3 +20,4 @@ DistributedFactorGraphs.jl has not been registered yet, and should be installed 
 ```julia
 Pkg.clone("https://github.com/JuliaRobotics/DistributedFactorGraphs.jl.git")
 ```
+
