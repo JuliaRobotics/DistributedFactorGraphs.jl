@@ -27,3 +27,7 @@ mutable struct DFGFactor{T, S} <: DFGNode
     DFGFactor{T, S}(label::Symbol) where {T, S} = new{T, S}(label, GenericFunctionNodeData{T, S}(), 0)
     DFGFactor{T, S}(label::Symbol, _internalId::Int64) where {T, S} = new{T, S}(label, GenericFunctionNodeData{T, S}(), _internalId)
 end
+
+label(f::F) where F <: DFGFactor = f.label
+data(f::F) where F <: DFGFactor = f.data
+id(f::F) where F <: DFGFactor = f._internalId

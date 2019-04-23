@@ -21,7 +21,7 @@ end
 end
 
 # Gets
-@testset "Gets and Sets" begin
+@testset "Gets, Sets, and Accessors" begin
     global dfg,v1,v2,f1
     @test getVariable(dfg, v1.label) == v1
     @test getFactor(dfg, f1.label) == f1
@@ -35,6 +35,20 @@ end
     @test updateVariable!(dfg, v1Prime) != v1
     f1Prime = deepcopy(f1)
     @test updateFactor!(dfg, f1Prime) != f1
+
+    # Accessors
+    @test label(v1) == v1.label
+    @test timestamp(v1) == v1.timestamp
+    @test estimates(v1) == v1.estimateDict
+    @test estimate(v1, :notfound) == nothing
+    @test solverData(v1) == v1.solverDataDict[:default]
+    @test solverData(v1, :default) == v1.solverDataDict[:default]
+    @test solverDataDict(v1) == v1.solverDataDict
+    @test id(v1) == v1._internalId
+
+    @test label(f1) == f1.label
+    @test data(f1) == f1.data
+    @test id(f1) == f1._internalId
 end
 
 # Deletions
