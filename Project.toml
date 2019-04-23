@@ -1,0 +1,18 @@
+name = "DistributedFactorGraphs"
+uuid = "b5cc3c7e-6572-11e9-2517-99fb8daf2f04"
+version = "0.0.0"
+
+[deps]
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
+Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
+Requires = "ae029012-a4dd-5104-9daa-d747884805df"
+
+[compat]
+julia = "1.0, 1.1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
