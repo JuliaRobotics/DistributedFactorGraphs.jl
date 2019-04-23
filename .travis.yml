@@ -1,19 +1,30 @@
 language: julia
+
 os:
     - linux
+
 julia:
     - 1.0
     - 1.1
     - nightly
+
 notifications:
     email: false
+
 matrix:
   allow_failures:
     - julia: 1.1
     - julia: nightly
+
+# script:
+#   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+#   - julia --check-bounds=yes -e 'using Pkg; Pkg.clone(pwd()); Pkg.build("DistributedFactorGraphs"); Pkg.test("DistributedFactorGraphs"; coverage=true)'
+
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - julia --check-bounds=yes -e 'using Pkg; Pkg.clone(pwd()); Pkg.build("DistributedFactorGraphs"); Pkg.test("DistributedFactorGraphs"; coverage=true)'
+  - julia --project --check-bounds=yes -e 'using UUIDs; write("Project.toml", replace(read("Project.toml", String), r"uuid = .*?\n" =>"uuid = \"$(uuid4())\"\n"));
+import Pkg; Pkg.build("DistributedFactorGraphs"); Pkg.test("DistributedFactorGraphs"; coverage=true)'
+
 after_success:
     - julia -e 'using Pkg; cd(Pkg.dir("DistributedFactorGraphs")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder()); Codecov.submit(process_folder())'
 
