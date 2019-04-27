@@ -18,6 +18,10 @@ export DFGVariable
 export label, timestamp, tags, estimates, estimate, solverData, solverDataDict, id, smallData, bigData
 export label, data, id
 
+# Solver (IIF) Exports
+export VariableNodeData
+export GenericFunctionNodeData#, FunctionNodeData
+
 # Include the Graphs.jl API.
 include("services/GraphsDFG.jl")
 
