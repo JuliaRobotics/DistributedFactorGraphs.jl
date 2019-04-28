@@ -36,6 +36,42 @@ mutable struct VariableNodeData
     new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13)
 end
 
+"""
+$(TYPEDEF)
+"""
+mutable struct PackedVariableNodeData
+  vecval::Array{Float64,1}
+  dimval::Int
+  vecbw::Array{Float64,1}
+  dimbw::Int
+  BayesNetOutVertIDs::Array{Int,1}
+  dimIDs::Array{Int,1}
+  dims::Int
+  eliminated::Bool
+  BayesNetVertID::Int
+  separator::Array{Int,1}
+  # groundtruth::NothingUnion{ Dict{ Tuple{Symbol, Vector{Float64}} } }
+  softtype::String
+  initialized::Bool
+  ismargin::Bool
+  dontmargin::Bool
+  PackedVariableNodeData() = new()
+  PackedVariableNodeData(x5::Vector{Float64},
+                         x6::Int,
+                         x7::Vector{Float64},
+                         x8::Int,
+                         x9::Vector{Int},
+                         x10::Vector{Int},
+                         x11::Int,
+                         x12::Bool,
+                         x13::Int,
+                         x14::Vector{Int},
+                         x15::String,
+                         x16::Bool,
+                         x17::Bool,
+                         x18::Bool ) = new(x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16,x17,x18)
+end
+
 struct VariableEstimate
   estimate::Vector{Float64}
   type::Symbol
