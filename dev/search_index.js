@@ -9,11 +9,11 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "#GraffSDK.jl-Documentation-1",
+    "location": "#Introduction-1",
     "page": "Home",
-    "title": "GraffSDK.jl Documentation",
+    "title": "Introduction",
     "category": "section",
-    "text": "This package is a Julia SDK for SlamInDb/Graff."
+    "text": "This package is a specialized Julia graphing wrapper."
 },
 
 {
@@ -21,7 +21,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Home",
     "title": "Installation",
     "category": "section",
-    "text": "This package is not yet registered with JuliaLang/METADATA.jl, but can be easily installed in Julia 0.6 with:Pkg.clone(\"https://github.com/GearsAD/GraffSDK.jl.git\")\nPkg.build(\"GraffSDK\")"
+    "text": "This package is not yet registered with JuliaLang/METADATA.jl, but can be easily installed in Julia 0.6 with:julia> ]add https://github.com/GearsAD/GraffSDK.jl.git"
 },
 
 {
