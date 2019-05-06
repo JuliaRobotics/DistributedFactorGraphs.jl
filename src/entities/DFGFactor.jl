@@ -22,10 +22,13 @@ Fundamental structure for a DFG factor.
 """
 mutable struct DFGFactor{T, S} <: DFGNode
     label::Symbol
+    tags::Vector{Symbol}
     data::GenericFunctionNodeData{T, S}
+    ready::Int
+    backendset::Int
     _internalId::Int64
-    DFGFactor{T, S}(label::Symbol) where {T, S} = new{T, S}(label, GenericFunctionNodeData{T, S}(), 0)
-    DFGFactor{T, S}(label::Symbol, _internalId::Int64) where {T, S} = new{T, S}(label, GenericFunctionNodeData{T, S}(), _internalId)
+    DFGFactor{T, S}(label::Symbol) where {T, S} = new{T, S}(label, Symbol[], GenericFunctionNodeData{T, S}(), 0, 0, 0)
+    DFGFactor{T, S}(label::Symbol, _internalId::Int64) where {T, S} = new{T, S}(label, Symbol[], GenericFunctionNodeData{T, S}(), 0, 0, _internalId)
 end
 
 # const FunctionNodeData{T} = GenericFunctionNodeData{T, Symbol}

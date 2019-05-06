@@ -15,9 +15,15 @@ end
     global dfg,v1,v2,f1
     @test length(ls(dfg)) == 2
     @test length(lsf(dfg)) == 1
+    @test setdiff([:a, :b], getVariableIds(dfg)) == []
+    @test getFactorIds(dfg) == [:f1]
     # Regexes
     @test ls(dfg, r"a") == [v1]
     @test lsf(dfg, r"f*") == [f1]
+    # Accessors
+    @test getAddHistory(dfg) == [:a, :b, :f1]
+    @test getDescription(dfg) != nothing
+    @test getLabelDict(dfg) != nothing
 end
 
 # Gets
@@ -41,8 +47,8 @@ end
     @test timestamp(v1) == v1.timestamp
     @test estimates(v1) == v1.estimateDict
     @test estimate(v1, :notfound) == nothing
-    @test solverData(v1) == v1.solverDataDict[:default]
-    @test solverData(v1, :default) == v1.solverDataDict[:default]
+    @test solverData(v1) === v1.solverDataDict[:default]
+    @test solverData(v1, :default) === v1.solverDataDict[:default]
     @test solverDataDict(v1) == v1.solverDataDict
     @test id(v1) == v1._internalId
 
