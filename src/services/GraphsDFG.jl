@@ -33,6 +33,8 @@ vertex_index(v::GraphsNode) = v.index
 
 # Exports
 export GraphsDFG
+export getLabelDict, getDescription, setDescription, getInnerGraph, getAddHistory, getSolverParams, setSolverParams
+
 export getAddHistory, getDescription, getLabelDict
 export addVariable!, addFactor!
 export ls, lsf, getVariables, getFactors, getVariableIds, getFactorIds
@@ -53,19 +55,23 @@ mutable struct GraphsDFG <: AbstractDFG
     nodeCounter::Int64
     labelDict::Dict{Symbol, Int64}
     addHistory::Vector{Symbol} #TODO: Discuss more - is this an audit trail?
+    solverParams::Any # Solver parameters
 end
 
 """
     $(SIGNATURES)
 Create a new in-memory Graphs.jl-based DFG factor graph.
 """
-GraphsDFG() = GraphsDFG(Graphs.incdict(GraphsNode,is_directed=false), "Graphs.jl implementation", 0, Dict{Symbol, Int64}(), Symbol[])
+GraphsDFG() = GraphsDFG(Graphs.incdict(GraphsNode,is_directed=false), "Graphs.jl implementation", 0, Dict{Symbol, Int64}(), Symbol[], nothing)
 
 # Accessors
 getLabelDict(dfg::GraphsDFG) = dfg.labelDict
 getDescription(dfg::GraphsDFG) = dfg.description
+setDescription(dfg::GraphsDFG, description::String) = dfg.description = description
 getInnerGraph(dfg::GraphsDFG) = dfg.g
 getAddHistory(dfg::GraphsDFG) = dfg.addHistory
+getSolverParams(dfg::GraphsDFG) = dfg.solverParams
+setSolverParams(dfg::GraphsDFG, solverParams::Any) = dfg.solverParams = solverParams
 
 """
     $(SIGNATURES)
