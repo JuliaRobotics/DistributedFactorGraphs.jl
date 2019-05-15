@@ -57,12 +57,6 @@ end
     @test id(f1) == f1._internalId
 end
 
-# Deletions
-# Not supported at present
-@testset "Deletions" begin
-    @warn "Deletions with Graph.jl is not supported at present"
-end
-
 # Connectivity test
 @testset "Connectivity Test" begin
     global dfg,v1,v2,f1
@@ -85,6 +79,16 @@ end
     adjDf = getAdjacencyMatrixDataFrame(dfg)
     @test size(adjDf) == (1,4)
 end
+
+# Deletions
+# Not supported at present
+@testset "Deletions" begin
+    deleteFactor!(dfg, :f1)
+    @test getFactorIds(dfg) == []
+    deleteVariable!(dfg, :b)
+    @test setdiff([:a, :orphan], getVariableIds(dfg)) == []
+end
+
 
 # Now make a complex graph for connectivity tests
 numNodes = 10

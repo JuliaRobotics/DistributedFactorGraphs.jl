@@ -8,7 +8,7 @@ function pack(dfg::Union{G, Nothing}, d::VariableNodeData)::PackedVariableNodeDa
                                 d.BayesNetOutVertIDs,
                                 d.dimIDs, d.dims, d.eliminated,
                                 d.BayesNetVertID, d.separator,
-                                string(d.softtype), d.initialized, d.ismargin, d.dontmargin)
+                                string(d.softtype), d.initialized, d.partialinit, d.ismargin, d.dontmargin)
 end
 
 function unpack(dfg::Union{G, Nothing}, d::PackedVariableNodeData)::VariableNodeData where G <: AbstractDFG
@@ -41,7 +41,7 @@ function unpack(dfg::Union{G, Nothing}, d::PackedVariableNodeData)::VariableNode
 
   return VariableNodeData(M3,M4, d.BayesNetOutVertIDs,
     d.dimIDs, d.dims, d.eliminated, d.BayesNetVertID, d.separator,
-    nothing, st, d.initialized, d.ismargin, d.dontmargin )
+    nothing, st, d.initialized, d.partialinit, d.ismargin, d.dontmargin )
 end
 
 function compare(a::VariableNodeData,b::VariableNodeData)
@@ -54,6 +54,7 @@ function compare(a::VariableNodeData,b::VariableNodeData)
     TP = TP && a.eliminated == b.eliminated
     TP = TP && a.BayesNetVertID == b.BayesNetVertID
     TP = TP && a.separator == b.separator
+    TP = TP && a.partialinit == b.partialinit
     TP = TP && a.ismargin == b.ismargin
     TP = TP && a.softtype == b.softtype
     return TP

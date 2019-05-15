@@ -209,7 +209,10 @@ function deleteVariable!(dfg::GraphsDFG, label::Symbol)::DFGVariable
     if !haskey(dfg.labelDict, label)
         error("Variable label '$(label)' does not exist in the factor graph")
     end
-    @error "Delete is not supported in Graphs.jl implementation at present"
+    variable = dfg.g.vertices[dfg.labelDict[label]].dfgNode
+    delete_vertex!(dfg.g.vertices[dfg.labelDict[label]], dfg.g)
+    delete!(dfg.labelDict, label)
+    return variable
 end
 
 #Alias
@@ -227,7 +230,10 @@ function deleteFactor!(dfg::GraphsDFG, label::Symbol)::DFGFactor
     if !haskey(dfg.labelDict, label)
         error("Factor label '$(label)' does not exist in the factor graph")
     end
-    @error "Delete is not supported in Graphs.jl implementation at present"
+    factor = dfg.g.vertices[dfg.labelDict[label]].dfgNode
+    delete_vertex!(dfg.g.vertices[dfg.labelDict[label]], dfg.g)
+    delete!(dfg.labelDict, label)
+    return factor
 end
 
 # Alias

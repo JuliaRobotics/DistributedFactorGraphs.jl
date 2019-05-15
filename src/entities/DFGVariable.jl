@@ -13,6 +13,7 @@ mutable struct VariableNodeData
   groundtruth::Union{Nothing, Dict{ Tuple{Symbol, Vector{Float64}} } } # not packed yet
   softtype
   initialized::Bool
+  partialinit::Bool
   ismargin::Bool
   dontmargin::Bool
   VariableNodeData() = new()
@@ -32,8 +33,9 @@ mutable struct VariableNodeData
                    x10,
                    x11::Bool,
                    x12::Bool,
-                   x13::Bool) =
-    new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13)
+                   x13::Bool,
+                   x14::Bool) =
+    new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14)
 end
 
 """
@@ -53,6 +55,7 @@ mutable struct PackedVariableNodeData
   # groundtruth::NothingUnion{ Dict{ Tuple{Symbol, Vector{Float64}} } }
   softtype::String
   initialized::Bool
+  partialinit::Bool
   ismargin::Bool
   dontmargin::Bool
   PackedVariableNodeData() = new()
@@ -69,7 +72,8 @@ mutable struct PackedVariableNodeData
                          x15::String,
                          x16::Bool,
                          x17::Bool,
-                         x18::Bool ) = new(x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16,x17,x18)
+                         x18::Bool,
+                         x19::Bool ) = new(x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16,x17,x18,x19)
 end
 
 struct VariableEstimate
