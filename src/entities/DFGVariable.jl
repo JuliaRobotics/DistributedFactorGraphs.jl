@@ -4,12 +4,12 @@ $(TYPEDEF)
 mutable struct VariableNodeData
   val::Array{Float64,2}
   bw::Array{Float64,2}
-  BayesNetOutVertIDs::Array{Int,1}
+  BayesNetOutVertIDs::Array{Symbol,1}
   dimIDs::Array{Int,1} # Likely deprecate
   dims::Int
   eliminated::Bool
-  BayesNetVertID::Int
-  separator::Array{Int,1}
+  BayesNetVertID::Union{Nothing, Symbol}
+  separator::Array{Symbol,1}
   groundtruth::Union{Nothing, Dict{ Tuple{Symbol, Vector{Float64}} } } # not packed yet
   softtype
   initialized::Bool
@@ -23,12 +23,12 @@ mutable struct VariableNodeData
   # end
   VariableNodeData(x1::Array{Float64,2},
                    x2::Array{Float64,2},
-                   x3::Vector{Int},
+                   x3::Vector{Symbol},
                    x4::Vector{Int},
                    x5::Int,
                    x6::Bool,
-                   x7::Int,
-                   x8::Vector{Int},
+                   x7::Union{Nothing, Symbol},
+                   x8::Vector{Symbol},
                    x9::Union{Nothing, Dict{ Tuple{Symbol, Vector{Float64}} } },
                    x10,
                    x11::Bool,

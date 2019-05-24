@@ -24,6 +24,10 @@ end
     @test getAddHistory(dfg) == [:a, :b, :f1]
     @test getDescription(dfg) != nothing
     @test getLabelDict(dfg) != nothing
+    # Existence
+    @test exists(dfg, :a) == true
+    @test exists(dfg, v1) == true
+    @test exists(dfg, :nope) == false
 end
 
 # Gets

@@ -33,6 +33,7 @@ vertex_index(v::GraphsNode) = v.index
 
 # Exports
 export GraphsDFG
+export exists
 export getLabelDict, getDescription, setDescription, getInnerGraph, getAddHistory, getSolverParams, setSolverParams
 
 export getAddHistory, getDescription, getLabelDict
@@ -72,6 +73,16 @@ getInnerGraph(dfg::GraphsDFG) = dfg.g
 getAddHistory(dfg::GraphsDFG) = dfg.addHistory
 getSolverParams(dfg::GraphsDFG) = dfg.solverParams
 setSolverParams(dfg::GraphsDFG, solverParams::Any) = dfg.solverParams = solverParams
+
+"""
+    $(SIGNATURES)
+True if the variable or factor exists in the graph.
+"""
+function exists(dfg::GraphsDFG, node::N) where N <: DFGNode
+    return haskey(dfg.labelDict, node.label)
+end
+exists(dfg::GraphsDFG, nId::Symbol) = haskey(dfg.labelDict, nId)
+
 
 """
     $(SIGNATURES)
@@ -241,7 +252,7 @@ end
     $(SIGNATURES)
 Delete the referened DFGFactor from the DFG.
 """
-deleteFactor!(dfg::GraphsDFG, factor::DFGFactor)::DFGFactor = deleteFactor(dfg, factor.label)
+deleteFactor!(dfg::GraphsDFG, factor::DFGFactor)::DFGFactor = deleteFactor!(dfg, factor.label)
 
 # # Returns a flat vector of the vertices, keyed by ID.
 # # Assuming only variables here for now - think maybe not, should be variables+factors?
