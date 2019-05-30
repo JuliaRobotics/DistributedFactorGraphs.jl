@@ -253,7 +253,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Reference",
     "title": "DistributedFactorGraphs.GraphsJl.getNeighbors",
     "category": "function",
-    "text": "getNeighbors(dfg, node)\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor.\n\n\n\n\n\ngetNeighbors(dfg, label)\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.\n\n\n\n\n\n"
+    "text": "getNeighbors(dfg, node; ready, backendset)\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor.\n\n\n\n\n\ngetNeighbors(dfg, label; ready, backendset)\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.\n\n\n\n\n\n"
 },
 
 {
