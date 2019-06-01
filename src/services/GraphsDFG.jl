@@ -118,6 +118,7 @@ function addFactor!(dfg::GraphsDFG, variables::Vector{DFGVariable}, factor::DFGF
     end
     dfg.nodeCounter += 1
     factor._internalId = dfg.nodeCounter
+    factor._variableOrderSymbols = map(v->v.label, variables)
     fNode = GraphsNode(dfg.nodeCounter, factor)
     f = Graphs.add_vertex!(dfg.g, fNode)
     # Add index
@@ -343,6 +344,11 @@ function getNeighbors(dfg::GraphsDFG, node::T; ready::Union{Nothing, Int}=nothin
     # Additional filtering
     neighbors = ready != nothing ? filter(v -> v.ready == ready, neighbors) : neighbors
     neighbors = backendset != nothing ? filter(v -> v.backendset == backendset, neighbors) : neighbors
+    # Variable sorting (order is important)
+    if node isa DFGFactor
+        order = intersect(node._variableOrderSymbols, map(v->v.dfgNode.label, neighbors))
+        return order
+    end
 
     return map(n -> n.dfgNode.label, neighbors)
 end
@@ -359,6 +365,12 @@ function getNeighbors(dfg::GraphsDFG, label::Symbol; ready::Union{Nothing, Int}=
     # Additional filtering
     neighbors = ready != nothing ? filter(v -> v.ready == ready, neighbors) : neighbors
     neighbors = backendset != nothing ? filter(v -> v.backendset == backendset, neighbors) : neighbors
+    # Variable sorting when using a factor (function order is important)
+    if vert.dfgNode isa DFGFactor
+        vert.dfgNode._variableOrderSymbols
+        order = intersect(vert.dfgNode._variableOrderSymbols, map(v->v.dfgNode.label, neighbors))
+        return order
+    end
 
     return map(n -> n.dfgNode.label, neighbors)
 end
