@@ -504,8 +504,13 @@ end
     $(SIGNATURES)
 Produces a dot file of the graph for visualization.
 Download XDot to see the data
+
+Note
+- Default location "/tmp/dfg.dot" -- MIGHT BE REMOVED
+- Can be viewed with the `xdot` system application.
+- Based on graphviz.org
 """
-function toDotFile(dfg::GraphsDFG, fileName::String)::Nothing
+function toDotFile(dfg::GraphsDFG, fileName::String="/tmp/dfg.dot")::Nothing
     open(fileName, "w") do fid
         write(fid,Graphs.to_dot(dfg.g))
     end
