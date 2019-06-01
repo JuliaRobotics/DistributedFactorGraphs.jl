@@ -296,6 +296,9 @@ function lsf(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector
     end
     return factors
 end
+function lsf(dfg::GraphsDFG, label::Symbol)::Vector{Symbol}
+  return GraphsJl.getNeighbors(dfg, label)
+end
 
 # Alias
 """

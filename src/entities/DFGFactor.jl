@@ -2,7 +2,7 @@
 $(TYPEDEF)
 """
 mutable struct GenericFunctionNodeData{T, S}
-  fncargvID::Array{Int,1}
+  fncargvID::Vector{Symbol}
   eliminated::Bool
   potentialused::Bool
   edgeIDs::Array{Int,1}
