@@ -1,9 +1,9 @@
 using Documenter
 using DataFrames
-using DistributedFactorGraphs, DistributedFactorGraphs.GraphsJl
+using DistributedFactorGraphs
 
 makedocs(
-    modules = [DistributedFactorGraphs, DistributedFactorGraphs.GraphsJl],
+    modules = [DistributedFactorGraphs],
     format = Documenter.HTML(),
     sitename = "DistributedFactorGraphs.jl",
     pages = Any[
