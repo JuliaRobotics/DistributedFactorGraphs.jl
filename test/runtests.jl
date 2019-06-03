@@ -1,7 +1,6 @@
 using Test
 using DataFrames
 using DistributedFactorGraphs
-using DistributedFactorGraphs.GraphsJl
 
 # Test each interface
 apis = [GraphsDFG]
