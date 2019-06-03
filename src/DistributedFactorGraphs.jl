@@ -31,4 +31,7 @@ include("services/GraphsDFG.jl")
 include("services/AbstractDFG.jl")
 include("services/DFGVariable.jl")
 
+# not sure where to put
+include("NeedsAHome.jl")
+
 end
