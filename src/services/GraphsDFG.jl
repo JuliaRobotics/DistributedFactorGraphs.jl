@@ -293,7 +293,7 @@ function lsf(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector
     return factors
 end
 function lsf(dfg::GraphsDFG, label::Symbol)::Vector{Symbol}
-  return GraphsJl.getNeighbors(dfg, label)
+  return getNeighbors(dfg, label)
 end
 
 # Alias
