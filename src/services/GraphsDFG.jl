@@ -1,9 +1,4 @@
-module GraphsJl
-
 using Graphs
-using Requires
-using DocStringExtensions
-using DistributedFactorGraphs
 
 """
 $(SIGNATURES)
@@ -554,6 +549,4 @@ function __init__()
             end
         end
     end
-end
-
 end

@@ -5,6 +5,7 @@ using DocStringExtensions
 using Requires
 using Dates
 using Distributions
+using Reexport
 
 # Entities
 include("entities/AbstractTypes.jl")
