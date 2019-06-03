@@ -8,7 +8,7 @@ mutable struct VariableNodeData
   dimIDs::Array{Int,1} # Likely deprecate
   dims::Int
   eliminated::Bool
-  BayesNetVertID::Union{Nothing, Symbol}
+  BayesNetVertID::Union{Nothing, Symbol} # TODO Drop union type from here
   separator::Array{Symbol,1}
   groundtruth::Union{Nothing, Dict{ Tuple{Symbol, Vector{Float64}} } } # not packed yet
   softtype

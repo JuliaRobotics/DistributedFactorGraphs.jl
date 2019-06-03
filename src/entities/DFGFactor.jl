@@ -2,7 +2,7 @@
 $(TYPEDEF)
 """
 mutable struct GenericFunctionNodeData{T, S}
-  fncargvID::Array{Int,1}
+  fncargvID::Vector{Symbol}
   eliminated::Bool
   potentialused::Bool
   edgeIDs::Array{Int,1}
@@ -27,8 +27,9 @@ mutable struct DFGFactor{T, S} <: DFGNode
     ready::Int
     backendset::Int
     _internalId::Int64
-    DFGFactor{T, S}(label::Symbol) where {T, S} = new{T, S}(label, Symbol[], GenericFunctionNodeData{T, S}(), 0, 0, 0)
-    DFGFactor{T, S}(label::Symbol, _internalId::Int64) where {T, S} = new{T, S}(label, Symbol[], GenericFunctionNodeData{T, S}(), 0, 0, _internalId)
+    _variableOrderSymbols::Vector{Symbol}
+    DFGFactor{T, S}(label::Symbol) where {T, S} = new{T, S}(label, Symbol[], GenericFunctionNodeData{T, S}(), 0, 0, 0, Symbol[])
+    DFGFactor{T, S}(label::Symbol, _internalId::Int64) where {T, S} = new{T, S}(label, Symbol[], GenericFunctionNodeData{T, S}(), 0, 0, _internalId, Symbol[])
 end
 
 # const FunctionNodeData{T} = GenericFunctionNodeData{T, Symbol}

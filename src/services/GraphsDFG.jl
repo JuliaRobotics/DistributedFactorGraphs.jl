@@ -1,9 +1,4 @@
-module GraphsJl
-
 using Graphs
-using Requires
-using DocStringExtensions
-using DistributedFactorGraphs
 
 """
 $(SIGNATURES)
@@ -118,6 +113,7 @@ function addFactor!(dfg::GraphsDFG, variables::Vector{DFGVariable}, factor::DFGF
     end
     dfg.nodeCounter += 1
     factor._internalId = dfg.nodeCounter
+    factor._variableOrderSymbols = map(v->v.label, variables)
     fNode = GraphsNode(dfg.nodeCounter, factor)
     f = Graphs.add_vertex!(dfg.g, fNode)
     # Add index
@@ -296,6 +292,9 @@ function lsf(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector
     end
     return factors
 end
+function lsf(dfg::GraphsDFG, label::Symbol)::Vector{Symbol}
+  return GraphsJl.getNeighbors(dfg, label)
+end
 
 # Alias
 """
@@ -340,6 +339,11 @@ function getNeighbors(dfg::GraphsDFG, node::T; ready::Union{Nothing, Int}=nothin
     # Additional filtering
     neighbors = ready != nothing ? filter(v -> v.ready == ready, neighbors) : neighbors
     neighbors = backendset != nothing ? filter(v -> v.backendset == backendset, neighbors) : neighbors
+    # Variable sorting (order is important)
+    if node isa DFGFactor
+        order = intersect(node._variableOrderSymbols, map(v->v.dfgNode.label, neighbors))
+        return order
+    end
 
     return map(n -> n.dfgNode.label, neighbors)
 end
@@ -356,6 +360,12 @@ function getNeighbors(dfg::GraphsDFG, label::Symbol; ready::Union{Nothing, Int}=
     # Additional filtering
     neighbors = ready != nothing ? filter(v -> v.ready == ready, neighbors) : neighbors
     neighbors = backendset != nothing ? filter(v -> v.backendset == backendset, neighbors) : neighbors
+    # Variable sorting when using a factor (function order is important)
+    if vert.dfgNode isa DFGFactor
+        vert.dfgNode._variableOrderSymbols
+        order = intersect(vert.dfgNode._variableOrderSymbols, map(v->v.dfgNode.label, neighbors))
+        return order
+    end
 
     return map(n -> n.dfgNode.label, neighbors)
 end
@@ -501,8 +511,13 @@ end
     $(SIGNATURES)
 Produces a dot file of the graph for visualization.
 Download XDot to see the data
+
+Note
+- Default location "/tmp/dfg.dot" -- MIGHT BE REMOVED
+- Can be viewed with the `xdot` system application.
+- Based on graphviz.org
 """
-function toDotFile(dfg::GraphsDFG, fileName::String)::Nothing
+function toDotFile(dfg::GraphsDFG, fileName::String="/tmp/dfg.dot")::Nothing
     open(fileName, "w") do fid
         write(fid,Graphs.to_dot(dfg.g))
     end
@@ -534,6 +549,4 @@ function __init__()
             end
         end
     end
-end
-
 end

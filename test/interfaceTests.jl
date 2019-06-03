@@ -104,10 +104,12 @@ map(n -> addFactor!(dfg, [verts[n], verts[n+1]], DFGFactor{Int, :Symbol}(Symbol(
 
 @testset "Getting Neighbors" begin
     global dfg,verts
+    # Trivial test to validate that intersect([], []) returns order of first parameter
+    @test intersect([:x3, :x2, :x1], [:x1, :x2]) == [:x2, :x1]
     # Get neighbors tests
     @test getNeighbors(dfg, verts[1]) == [:x1x2f1]
     neighbors = getNeighbors(dfg, getFactor(dfg, :x1x2f1))
-    @test all([v in [:x1, :x2] for v in neighbors])
+    @test neighbors == [:x1, :x2]
     # Testing aliases
     @test getNeighbors(dfg, getFactor(dfg, :x1x2f1)) == ls(dfg, getFactor(dfg, :x1x2f1))
     @test getNeighbors(dfg, :x1x2f1) == ls(dfg, :x1x2f1)
