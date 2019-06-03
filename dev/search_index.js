@@ -177,9 +177,9 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "func_ref/#DistributedFactorGraphs.GraphsJl.GraphsDFG",
+    "location": "func_ref/#DistributedFactorGraphs.GraphsDFG",
     "page": "Reference",
-    "title": "DistributedFactorGraphs.GraphsJl.GraphsDFG",
+    "title": "DistributedFactorGraphs.GraphsDFG",
     "category": "type",
     "text": "GraphsDFG()\n\n\nCreate a new in-memory Graphs.jl-based DFG factor graph.\n\n\n\n\n\n"
 },
@@ -193,17 +193,17 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "func_ref/#DistributedFactorGraphs.GraphsJl.addVariable!",
+    "location": "func_ref/#DistributedFactorGraphs.addVariable!",
     "page": "Reference",
-    "title": "DistributedFactorGraphs.GraphsJl.addVariable!",
+    "title": "DistributedFactorGraphs.addVariable!",
     "category": "function",
     "text": "addVariable!(dfg, variable)\n\n\nAdd a DFGVariable to a DFG.\n\n\n\n\n\n"
 },
 
 {
-    "location": "func_ref/#DistributedFactorGraphs.GraphsJl.addFactor!",
+    "location": "func_ref/#DistributedFactorGraphs.addFactor!",
     "page": "Reference",
-    "title": "DistributedFactorGraphs.GraphsJl.addFactor!",
+    "title": "DistributedFactorGraphs.addFactor!",
     "category": "function",
     "text": "addFactor!(dfg, variables, factor)\n\n\nAdd a DFGFactor to a DFG.\n\n\n\n\n\n"
 },
@@ -217,57 +217,57 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "func_ref/#DistributedFactorGraphs.GraphsJl.getVariables",
+    "location": "func_ref/#DistributedFactorGraphs.getVariables",
     "page": "Reference",
-    "title": "DistributedFactorGraphs.GraphsJl.getVariables",
+    "title": "DistributedFactorGraphs.getVariables",
     "category": "function",
     "text": "getVariables(dfg)\ngetVariables(dfg, regexFilter)\n\n\nList the DFGVariables in the DFG. Optionally specify a label regular expression to retrieves a subset of the variables.\n\n\n\n\n\n"
 },
 
 {
-    "location": "func_ref/#DistributedFactorGraphs.GraphsJl.getFactors",
+    "location": "func_ref/#DistributedFactorGraphs.getFactors",
     "page": "Reference",
-    "title": "DistributedFactorGraphs.GraphsJl.getFactors",
+    "title": "DistributedFactorGraphs.getFactors",
     "category": "function",
     "text": "getFactors(dfg)\ngetFactors(dfg, regexFilter)\n\n\nList the DFGFactors in the DFG. Optionally specify a label regular expression to retrieves a subset of the factors.\n\n\n\n\n\n"
 },
 
 {
-    "location": "func_ref/#DistributedFactorGraphs.GraphsJl.getVariable",
+    "location": "func_ref/#DistributedFactorGraphs.getVariable",
     "page": "Reference",
-    "title": "DistributedFactorGraphs.GraphsJl.getVariable",
+    "title": "DistributedFactorGraphs.getVariable",
     "category": "function",
     "text": "getVariable(dfg, variableId)\n\n\nGet a DFGVariable from a DFG using its underlying integer ID.\n\n\n\n\n\ngetVariable(dfg, label)\n\n\nGet a DFGVariable from a DFG using its label.\n\n\n\n\n\n"
 },
 
 {
-    "location": "func_ref/#DistributedFactorGraphs.GraphsJl.getFactor",
+    "location": "func_ref/#DistributedFactorGraphs.getFactor",
     "page": "Reference",
-    "title": "DistributedFactorGraphs.GraphsJl.getFactor",
+    "title": "DistributedFactorGraphs.getFactor",
     "category": "function",
     "text": "getFactor(dfg, factorId)\n\n\nGet a DFGFactor from a DFG using its underlying integer ID.\n\n\n\n\n\ngetFactor(dfg, label)\n\n\nGet a DFGFactor from a DFG using its label.\n\n\n\n\n\n"
 },
 
 {
-    "location": "func_ref/#DistributedFactorGraphs.GraphsJl.getNeighbors",
+    "location": "func_ref/#DistributedFactorGraphs.getNeighbors",
     "page": "Reference",
-    "title": "DistributedFactorGraphs.GraphsJl.getNeighbors",
+    "title": "DistributedFactorGraphs.getNeighbors",
     "category": "function",
     "text": "getNeighbors(dfg, node; ready, backendset)\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor.\n\n\n\n\n\ngetNeighbors(dfg, label; ready, backendset)\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.\n\n\n\n\n\n"
 },
 
 {
-    "location": "func_ref/#DistributedFactorGraphs.GraphsJl.ls",
+    "location": "func_ref/#DistributedFactorGraphs.ls",
     "page": "Reference",
-    "title": "DistributedFactorGraphs.GraphsJl.ls",
+    "title": "DistributedFactorGraphs.ls",
     "category": "function",
     "text": "ls(dfg)\nls(dfg, regexFilter)\n\n\nList the DFGVariables in the DFG. Optionally specify a label regular expression to retrieves a subset of the variables.\n\n\n\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor.\n\n\n\n\n\nls(dfg, label)\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.\n\n\n\n\n\n"
 },
 
 {
-    "location": "func_ref/#DistributedFactorGraphs.GraphsJl.lsf",
+    "location": "func_ref/#DistributedFactorGraphs.lsf",
     "page": "Reference",
-    "title": "DistributedFactorGraphs.GraphsJl.lsf",
+    "title": "DistributedFactorGraphs.lsf",
     "category": "function",
     "text": "lsf(dfg)\nlsf(dfg, regexFilter)\n\n\nList the DFGFactors in the DFG. Optionally specify a label regular expression to retrieves a subset of the factors.\n\n\n\n\n\n"
 },
@@ -281,17 +281,17 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "func_ref/#DistributedFactorGraphs.GraphsJl.updateVariable!",
+    "location": "func_ref/#DistributedFactorGraphs.updateVariable!",
     "page": "Reference",
-    "title": "DistributedFactorGraphs.GraphsJl.updateVariable!",
+    "title": "DistributedFactorGraphs.updateVariable!",
     "category": "function",
     "text": "updateVariable!(dfg, variable)\n\n\nUpdate a complete DFGVariable in the DFG.\n\n\n\n\n\n"
 },
 
 {
-    "location": "func_ref/#DistributedFactorGraphs.GraphsJl.updateFactor!",
+    "location": "func_ref/#DistributedFactorGraphs.updateFactor!",
     "page": "Reference",
-    "title": "DistributedFactorGraphs.GraphsJl.updateFactor!",
+    "title": "DistributedFactorGraphs.updateFactor!",
     "category": "function",
     "text": "updateFactor!(dfg, factor)\n\n\nUpdate a complete DFGFactor in the DFG.\n\n\n\n\n\n"
 },
@@ -305,17 +305,17 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "func_ref/#DistributedFactorGraphs.GraphsJl.deleteVariable!",
+    "location": "func_ref/#DistributedFactorGraphs.deleteVariable!",
     "page": "Reference",
-    "title": "DistributedFactorGraphs.GraphsJl.deleteVariable!",
+    "title": "DistributedFactorGraphs.deleteVariable!",
     "category": "function",
     "text": "deleteVariable!(dfg, label)\n\n\nDelete a DFGVariable from the DFG using its label.\n\n\n\n\n\ndeleteVariable!(dfg, variable)\n\n\nDelete a referenced DFGVariable from the DFG.\n\n\n\n\n\n"
 },
 
 {
-    "location": "func_ref/#DistributedFactorGraphs.GraphsJl.deleteFactor!",
+    "location": "func_ref/#DistributedFactorGraphs.deleteFactor!",
     "page": "Reference",
-    "title": "DistributedFactorGraphs.GraphsJl.deleteFactor!",
+    "title": "DistributedFactorGraphs.deleteFactor!",
     "category": "function",
     "text": "deleteFactor!(dfg, label)\n\n\nDelete a DFGFactor from the DFG using its label.\n\n\n\n\n\ndeleteFactor!(dfg, factor)\n\n\nDelete the referened DFGFactor from the DFG.\n\n\n\n\n\n"
 },
@@ -329,9 +329,9 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "func_ref/#DistributedFactorGraphs.GraphsJl.getAdjacencyMatrix",
+    "location": "func_ref/#DistributedFactorGraphs.getAdjacencyMatrix",
     "page": "Reference",
-    "title": "DistributedFactorGraphs.GraphsJl.getAdjacencyMatrix",
+    "title": "DistributedFactorGraphs.getAdjacencyMatrix",
     "category": "function",
     "text": "getAdjacencyMatrix(dfg)\n\n\nGet an adjacency matrix for the DFG, returned as a Matrix{Union{Nothing, Symbol}}. Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor. The first row and first column are factor and variable headings respectively.\n\n\n\n\n\n"
 },
@@ -345,17 +345,17 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "func_ref/#DistributedFactorGraphs.GraphsJl.isFullyConnected",
+    "location": "func_ref/#DistributedFactorGraphs.isFullyConnected",
     "page": "Reference",
-    "title": "DistributedFactorGraphs.GraphsJl.isFullyConnected",
+    "title": "DistributedFactorGraphs.isFullyConnected",
     "category": "function",
     "text": "isFullyConnected(dfg)\n\n\nChecks if the graph is fully connected, returns true if so.\n\n\n\n\n\n"
 },
 
 {
-    "location": "func_ref/#DistributedFactorGraphs.GraphsJl.hasOrphans",
+    "location": "func_ref/#DistributedFactorGraphs.hasOrphans",
     "page": "Reference",
-    "title": "DistributedFactorGraphs.GraphsJl.hasOrphans",
+    "title": "DistributedFactorGraphs.hasOrphans",
     "category": "function",
     "text": "hasOrphans(dfg)\n\n\nChecks if the graph is not fully connected, returns true if it is not contiguous.\n\n\n\n\n\n"
 },
@@ -369,17 +369,17 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "func_ref/#DistributedFactorGraphs.GraphsJl.getSubgraphAroundNode",
+    "location": "func_ref/#DistributedFactorGraphs.getSubgraphAroundNode",
     "page": "Reference",
-    "title": "DistributedFactorGraphs.GraphsJl.getSubgraphAroundNode",
+    "title": "DistributedFactorGraphs.getSubgraphAroundNode",
     "category": "function",
     "text": "getSubgraphAroundNode(dfg, node)\ngetSubgraphAroundNode(dfg, node, distance)\ngetSubgraphAroundNode(dfg, node, distance, includeOrphanFactors)\ngetSubgraphAroundNode(dfg, node, distance, includeOrphanFactors, addToDFG)\n\n\nRetrieve a deep subgraph copy around a given variable or factor. Optionally provide a distance to specify the number of edges should be followed. Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created. Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.\n\n\n\n\n\n"
 },
 
 {
-    "location": "func_ref/#DistributedFactorGraphs.GraphsJl.getSubgraph",
+    "location": "func_ref/#DistributedFactorGraphs.getSubgraph",
     "page": "Reference",
-    "title": "DistributedFactorGraphs.GraphsJl.getSubgraph",
+    "title": "DistributedFactorGraphs.getSubgraph",
     "category": "function",
     "text": "getSubgraph(dfg, variableFactorLabels)\ngetSubgraph(dfg, variableFactorLabels, includeOrphanFactors)\ngetSubgraph(dfg, variableFactorLabels, includeOrphanFactors, addToDFG)\n\n\nGet a deep subgraph copy from the DFG given a list of variables and factors. Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created. Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.\n\n\n\n\n\n"
 },
@@ -393,19 +393,19 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "func_ref/#DistributedFactorGraphs.GraphsJl.toDot",
+    "location": "func_ref/#DistributedFactorGraphs.toDot",
     "page": "Reference",
-    "title": "DistributedFactorGraphs.GraphsJl.toDot",
+    "title": "DistributedFactorGraphs.toDot",
     "category": "function",
     "text": "toDot(dfg)\n\n\nProduces a dot-format of the graph for visualization.\n\n\n\n\n\n"
 },
 
 {
-    "location": "func_ref/#DistributedFactorGraphs.GraphsJl.toDotFile",
+    "location": "func_ref/#DistributedFactorGraphs.toDotFile",
     "page": "Reference",
-    "title": "DistributedFactorGraphs.GraphsJl.toDotFile",
+    "title": "DistributedFactorGraphs.toDotFile",
     "category": "function",
-    "text": "toDotFile(dfg, fileName)\n\n\nProduces a dot file of the graph for visualization. Download XDot to see the data\n\n\n\n\n\n"
+    "text": "toDotFile(dfg)\ntoDotFile(dfg, fileName)\n\n\nProduces a dot file of the graph for visualization. Download XDot to see the data\n\nNote\n\nDefault location \"/tmp/dfg.dot\" – MIGHT BE REMOVED\nCan be viewed with the xdot system application.\nBased on graphviz.org\n\n\n\n\n\n"
 },
 
 {
