@@ -15,6 +15,6 @@ end
 
 Return `::Bool` on whether `dfg` contains the variable `lbl::Symbol`.
 """
-function hasVariable(dfg::G, lbl::Symbol)::Bool where {G <: AbstractDFG}
-  haskey(dfg.labelDict, label) # haskey(vertices(dfg.g), lbl)
+function hasVariable(dfg::G, label::Symbol)::Bool where {G <: AbstractDFG}
+  return haskey(dfg.labelDict, label) # haskey(vertices(dfg.g), label)
 end
