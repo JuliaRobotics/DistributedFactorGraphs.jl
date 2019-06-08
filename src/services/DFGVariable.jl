@@ -41,7 +41,7 @@ function unpack(dfg::Union{G, Nothing}, d::PackedVariableNodeData)::VariableNode
 
   return VariableNodeData(M3,M4, d.BayesNetOutVertIDs,
     d.dimIDs, d.dims, d.eliminated, d.BayesNetVertID, d.separator,
-    nothing, st, d.initialized, d.partialinit, d.ismargin, d.dontmargin )
+    st, d.initialized, d.partialinit, d.ismargin, d.dontmargin )
 end
 
 function compare(a::VariableNodeData,b::VariableNodeData)

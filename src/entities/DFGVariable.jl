@@ -8,34 +8,29 @@ mutable struct VariableNodeData
   dimIDs::Array{Int,1} # Likely deprecate
   dims::Int
   eliminated::Bool
-  BayesNetVertID::Union{Nothing, Symbol} # TODO Drop union type from here
+  BayesNetVertID::Symbol #  Union{Nothing, }
   separator::Array{Symbol,1}
-  groundtruth::Union{Nothing, Dict{ Tuple{Symbol, Vector{Float64}} } } # not packed yet
   softtype
   initialized::Bool
   partialinit::Bool
   ismargin::Bool
   dontmargin::Bool
   VariableNodeData() = new()
-  # function VariableNodeData(x1,x2,x3,x4,x5,x6,x7,x8,x9)
-  #   @warn "Deprecated use of VariableNodeData(11 param), use 13 parameters instead"
-  #   new(x1,x2,x3,x4,x5,x6,x7,x8,x9, nothing, true, false, false) # TODO ensure this is initialized true is working for most cases
-  # end
   VariableNodeData(x1::Array{Float64,2},
                    x2::Array{Float64,2},
                    x3::Vector{Symbol},
                    x4::Vector{Int},
                    x5::Int,
                    x6::Bool,
-                   x7::Union{Nothing, Symbol},
+                   x7::Symbol,
                    x8::Vector{Symbol},
-                   x9::Union{Nothing, Dict{ Tuple{Symbol, Vector{Float64}} } },
+                   # x9::Dict{ Tuple{Symbol, Vector{Float64}} }, # Union{Nothing, },
                    x10,
                    x11::Bool,
                    x12::Bool,
                    x13::Bool,
                    x14::Bool) =
-    new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14)
+    new(x1,x2,x3,x4,x5,x6,x7,x8,x10,x11,x12,x13,x14)
 end
 
 """
@@ -46,34 +41,33 @@ mutable struct PackedVariableNodeData
   dimval::Int
   vecbw::Array{Float64,1}
   dimbw::Int
-  BayesNetOutVertIDs::Array{Int,1}
+  BayesNetOutVertIDs::Array{Symbol,1} # Int
   dimIDs::Array{Int,1}
   dims::Int
   eliminated::Bool
-  BayesNetVertID::Int
-  separator::Array{Int,1}
-  # groundtruth::NothingUnion{ Dict{ Tuple{Symbol, Vector{Float64}} } }
+  BayesNetVertID::Symbol # Int
+  separator::Array{Symbol,1} # Int
   softtype::String
   initialized::Bool
   partialinit::Bool
   ismargin::Bool
   dontmargin::Bool
   PackedVariableNodeData() = new()
-  PackedVariableNodeData(x5::Vector{Float64},
-                         x6::Int,
-                         x7::Vector{Float64},
-                         x8::Int,
-                         x9::Vector{Int},
-                         x10::Vector{Int},
-                         x11::Int,
+  PackedVariableNodeData(x1::Vector{Float64},
+                         x2::Int,
+                         x3::Vector{Float64},
+                         x4::Int,
+                         x5::Vector{Symbol}, # Int
+                         x6::Vector{Int},
+                         x7::Int,
+                         x8::Bool,
+                         x9::Symbol, # Int
+                         x10::Vector{Symbol}, # Int
+                         x11::String,
                          x12::Bool,
-                         x13::Int,
-                         x14::Vector{Int},
-                         x15::String,
-                         x16::Bool,
-                         x17::Bool,
-                         x18::Bool,
-                         x19::Bool ) = new(x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16,x17,x18,x19)
+                         x13::Bool,
+                         x14::Bool,
+                         x15::Bool ) = new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15)
 end
 
 struct VariableEstimate
