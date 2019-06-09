@@ -61,8 +61,8 @@ mutable struct GraphsDFG{T<:AbstractParams} <: AbstractDFG
                  d::String="Graphs.jl implementation",
                  n::Int64=0,
                  l::Dict{Symbol, Int64}=Dict{Symbol, Int64}(),
-                 a::Vector{Symbol}=Symbol[],
-                 s::T=NoSolverParams()) where T <: AbstractParams = new{T}(g, d, n, l, a, s)
+                 a::Vector{Symbol}=Symbol[];
+                 params::T=NoSolverParams()) where T <: AbstractParams = new{T}(g, d, n, l, a, params)
 end
 
 
