@@ -7,6 +7,7 @@ julia:
     - 0.7
     - 1.0
     - 1.1
+    - 1.2
     - nightly
 
 notifications:
@@ -14,6 +15,7 @@ notifications:
 
 matrix:
   allow_failures:
+    - julia: 1.2
     - julia: nightly
 
 # script:
