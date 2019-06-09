@@ -12,8 +12,13 @@ using Test
 
 # Create connection
 cgDFG = CloudGraphsDFG("localhost", 7474, "neo4j", "test",
+    "testUser", "testRobot", "testSession",
     IncrementalInference.encodePackedType,
     IncrementalInference.getpackedtype,
     IncrementalInference.decodePackedType)
 
 using RoME
+exists(cgDFG, :x0)
+
+addVariable!(cgDFG, :x0, Pose2) # , labels=["POSE"]
+addFactor!(cgDFG, [:x0], PriorPose2(MvNormal(zeros(3), 0.01*eye(3))) )

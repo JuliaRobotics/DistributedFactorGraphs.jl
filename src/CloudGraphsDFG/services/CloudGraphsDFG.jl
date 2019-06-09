@@ -2,18 +2,18 @@
     $(SIGNATURES)
 Create a new CloudGraphs-based DFG factor graph using a Neo4j.Connection.
 """
-function CloudGraphsDFG(neo4jConnection::Neo4j.Connection, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc; description::String="CloudGraphs DFG", solverParams::Any=nothing, userId::String="", robotId::String="", sessionId::String="")
+function CloudGraphsDFG(neo4jConnection::Neo4j.Connection, userId::String, robotId::String, sessionId::String, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc; description::String="CloudGraphs DFG", solverParams::Any=nothing)
     graph = Neo4j.getgraph(neo4jConnection)
     neo4jInstance = Neo4jInstance(neo4jConnection, graph)
-    return CloudGraphsDFG(neo4jInstance, description, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, Dict{Symbol, Int64}(), Dict{Symbol, DFGVariable}(), Dict{Symbol, DFGFactor}(), userId, robotId, sessionId, Symbol[], solverParams)
+    return CloudGraphsDFG(neo4jInstance, description, userId, robotId, sessionId, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, Dict{Symbol, Int64}(), Dict{Symbol, DFGVariable}(), Dict{Symbol, DFGFactor}(), Symbol[], solverParams)
 end
 """
     $(SIGNATURES)
 Create a new CloudGraphs-based DFG factor graph by specifying the Neo4j connection information.
 """
-function CloudGraphsDFG(host::String, port::Int, user::String, password::String, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc; description::String="CloudGraphs DFG", solverParams::Any=nothing, userId::String="", robotId::String="", sessionId::String="")
-    neo4jConnection = Neo4j.Connection(host, port=port, user=user, password=password);
-    return CloudGraphsDFG(neo4jConnection, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, description=description, solverParams=solverParams, userId=userId, robotId=robotId, sessionId=sessionId)
+function CloudGraphsDFG(host::String, port::Int, dbUser::String, dbPassword::String, userId::String, robotId::String, sessionId::String, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc; description::String="CloudGraphs DFG", solverParams::Any=nothing)
+    neo4jConnection = Neo4j.Connection(host, port=port, user=dbUser, password=dbPassword);
+    return CloudGraphsDFG(neo4jConnection, userId, robotId, sessionId, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, description=description, solverParams=solverParams)
 end
 
 # Accessors
@@ -32,7 +32,7 @@ function exists(dfg::CloudGraphsDFG, nId::Symbol)
     # If in the dictionary, then shortcut return true
     haskey(dfg.labelDict, nId) && return true
     # Otherwise try get it
-    nodeId = _tryGetNeoNodeIdFromNodeLabel(neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, nId)
+    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, nId)
     if nodeId != nothing
         push!(variableCache, nId, nodeId)
         return true
@@ -49,22 +49,22 @@ end
 Add a DFGVariable to a DFG.
 """
 function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::Bool
-    if exists(dfg.labelDict, variable.label)
+    if haskey(dfg.labelDict, variable.label) # It's in our local cache
         error("Variable '$(variable.label)' already exists in the factor graph")
     end
-    variable._internalId = dfg.nodeCounter
-    v = GraphsNode(dfg.nodeCounter, variable)
     props = Dict{String, String}()
-    props["label"] = variable.label
+    props["label"] = string(variable.label)
     props["timestamp"] = string(variable.timestamp)
     props["tags"] = JSON2.write(variable.tags)
     props["estimateDict"] = JSON2.write(variable.estimateDict)
     props["solverDataDict"] = JSON2.write(keys(variable.solverDataDict) .=> map(vnd -> dfg.encodePackedTypeFunc(vnd), values(variable.solverDataDict)))
-    props["_internalId"] = variable._internalId
+    # We don't have this yet
+    # props["_internalId"] = variable._internalId
     @show props
     # Don't handle big data at the moment.
 
-    neo4jNode = Neo4j.createnode(dfg.neo4jInstance.graph, props);
+    @show neo4jNode = Neo4j.createnode(dfg.neo4jInstance.graph, props);
+    variable._internalId = neo4jNode.id
     Neo4j.setnodelabels(neo4jNode, variable.tags)
     @show neo4jNode
 

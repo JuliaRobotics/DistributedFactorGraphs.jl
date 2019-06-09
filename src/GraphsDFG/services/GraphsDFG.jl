@@ -1,14 +1,3 @@
-using Graphs
-
-"""
-$(SIGNATURES)
-Encapsulation structure for a DFGNode (Variable or Factor) in Graphs.jl graph.
-"""
-mutable struct GraphsNode
-    index::Int
-    dfgNode::DFGNode
-end
-const FGType = Graphs.GenericIncidenceList{GraphsNode,Graphs.Edge{GraphsNode},Dict{Int,GraphsNode},Dict{Int,Array{Graphs.Edge{GraphsNode},1}}}
 
 # For visualization
 import Graphs: attributes, vertex_index
@@ -25,34 +14,6 @@ end
 
 # This is insanely important - if we don't provide a valid index, the edges don't work correctly.
 vertex_index(v::GraphsNode) = v.index
-
-# Exports
-export GraphsDFG
-export exists
-export getLabelDict, getDescription, setDescription, getInnerGraph, getAddHistory, getSolverParams, setSolverParams
-
-export getAddHistory, getDescription, getLabelDict
-export addVariable!, addFactor!
-export ls, lsf, getVariables, getFactors, getVariableIds, getFactorIds
-export getVariable, getFactor
-export updateVariable!, updateFactor!
-export deleteVariable!, deleteFactor!
-export getAdjacencyMatrix
-export getAdjacencyMatrixDataFrame
-export getNeighbors
-export getSubgraphAroundNode
-export getSubgraph
-export isFullyConnected, hasOrphans
-export toDot, toDotFile
-
-mutable struct GraphsDFG <: AbstractDFG
-    g::FGType
-    description::String
-    nodeCounter::Int64
-    labelDict::Dict{Symbol, Int64}
-    addHistory::Vector{Symbol} #TODO: Discuss more - is this an audit trail?
-    solverParams::Any # Solver parameters
-end
 
 """
     $(SIGNATURES)
