@@ -27,7 +27,7 @@ end
 vertex_index(v::GraphsNode) = v.index
 
 # Exports
-export GraphsDFG
+export GraphsDFG, InMemoryParams
 export exists
 export getLabelDict, getDescription, setDescription, getInnerGraph, getAddHistory, getSolverParams, setSolverParams
 
@@ -45,20 +45,37 @@ export getSubgraph
 export isFullyConnected, hasOrphans
 export toDot, toDotFile
 
-mutable struct GraphsDFG <: AbstractDFG
+abstract type SolverParams end
+
+mutable struct InMemoryParams <: SolverParams
+  qfl::Int
+  isfixedlag::Bool
+end
+
+mutable struct GraphsDFG{T<:SolverParams} <: AbstractDFG
     g::FGType
     description::String
     nodeCounter::Int64
     labelDict::Dict{Symbol, Int64}
     addHistory::Vector{Symbol} #TODO: Discuss more - is this an audit trail?
-    solverParams::Any # Solver parameters
+    solverParams::T # Solver parameters
+end
+
+function GraphsDFG(g::FGType,
+                   d::String,
+                   n::Int64,
+                   l::Dict{Symbol, Int64},
+                   a::Vector{Symbol},
+                   s::T=InMemoryParams(999999999, false)) where T <: SolverParams
+  #
+  GraphsDFG{T}(g, d, n, l, a, s)
 end
 
 """
     $(SIGNATURES)
 Create a new in-memory Graphs.jl-based DFG factor graph.
 """
-GraphsDFG() = GraphsDFG(Graphs.incdict(GraphsNode,is_directed=false), "Graphs.jl implementation", 0, Dict{Symbol, Int64}(), Symbol[], nothing)
+GraphsDFG() = GraphsDFG(Graphs.incdict(GraphsNode,is_directed=false), "Graphs.jl implementation", 0, Dict{Symbol, Int64}(), Symbol[])
 
 # Accessors
 getLabelDict(dfg::GraphsDFG) = dfg.labelDict
