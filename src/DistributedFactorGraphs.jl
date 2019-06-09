@@ -26,9 +26,12 @@ export GenericFunctionNodeData#, FunctionNodeData
 export getSerializationModule, setSerializationModule!
 export pack, unpack
 
-# Include the Graphs.jl API.
-include("services/GraphsDFG.jl")
 include("services/AbstractDFG.jl")
 include("services/DFGVariable.jl")
+
+# Include the Graphs.jl API.
+include("GraphsDFG/GraphsDFG.jl")
+# Include the Cloudgraphs API
+include("CloudGraphsDFG/CloudGraphsDFG.jl")
 
 end
