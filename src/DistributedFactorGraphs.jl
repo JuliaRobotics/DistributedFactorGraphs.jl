@@ -6,6 +6,7 @@ using Requires
 using Dates
 using Distributions
 using Reexport
+using JLD2
 
 # Entities
 include("entities/AbstractTypes.jl")
