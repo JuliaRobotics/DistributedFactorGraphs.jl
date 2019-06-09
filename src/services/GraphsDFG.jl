@@ -27,7 +27,7 @@ end
 vertex_index(v::GraphsNode) = v.index
 
 # Exports
-export GraphsDFG, InMemoryParams
+export GraphsDFG, NoSolverParams, AbstractParams
 export exists
 export getLabelDict, getDescription, setDescription, getInnerGraph, getAddHistory, getSolverParams, setSolverParams
 
@@ -45,37 +45,32 @@ export getSubgraph
 export isFullyConnected, hasOrphans
 export toDot, toDotFile
 
-abstract type SolverParams end
+abstract type AbstractParams end
 
-mutable struct InMemoryParams <: SolverParams
-  qfl::Int
-  isfixedlag::Bool
+mutable struct NoSolverParams <: AbstractParams
 end
 
-mutable struct GraphsDFG{T<:SolverParams} <: AbstractDFG
+mutable struct GraphsDFG{T<:AbstractParams} <: AbstractDFG
     g::FGType
     description::String
     nodeCounter::Int64
     labelDict::Dict{Symbol, Int64}
     addHistory::Vector{Symbol} #TODO: Discuss more - is this an audit trail?
     solverParams::T # Solver parameters
+    GraphsDFG{T}(g::FGType=Graphs.incdict(GraphsNode,is_directed=false),
+                 d::String="Graphs.jl implementation",
+                 n::Int64=0,
+                 l::Dict{Symbol, Int64}=Dict{Symbol, Int64}(),
+                 a::Vector{Symbol}=Symbol[],
+                 s::T=NoSolverParams()) where T <: AbstractParams = new{T}(g, d, n, l, a, s)
 end
 
-function GraphsDFG(g::FGType,
-                   d::String,
-                   n::Int64,
-                   l::Dict{Symbol, Int64},
-                   a::Vector{Symbol},
-                   s::T=InMemoryParams(999999999, false)) where T <: SolverParams
-  #
-  GraphsDFG{T}(g, d, n, l, a, s)
-end
 
-"""
-    $(SIGNATURES)
-Create a new in-memory Graphs.jl-based DFG factor graph.
-"""
-GraphsDFG() = GraphsDFG(Graphs.incdict(GraphsNode,is_directed=false), "Graphs.jl implementation", 0, Dict{Symbol, Int64}(), Symbol[])
+# """
+#     $(SIGNATURES)
+# Create a new in-memory Graphs.jl-based DFG factor graph.
+# """
+# GraphsDFG() = GraphsDFG(Graphs.incdict(GraphsNode,is_directed=false), "Graphs.jl implementation", 0, Dict{Symbol, Int64}(), Symbol[], NoSolverParams())
 
 # Accessors
 getLabelDict(dfg::GraphsDFG) = dfg.labelDict
@@ -84,7 +79,7 @@ setDescription(dfg::GraphsDFG, description::String) = dfg.description = descript
 getInnerGraph(dfg::GraphsDFG) = dfg.g
 getAddHistory(dfg::GraphsDFG) = dfg.addHistory
 getSolverParams(dfg::GraphsDFG) = dfg.solverParams
-setSolverParams(dfg::GraphsDFG, solverParams::Any) = dfg.solverParams = solverParams
+setSolverParams(dfg::GraphsDFG, solverParams) = dfg.solverParams = solverParams
 
 """
     $(SIGNATURES)
@@ -445,7 +440,7 @@ Optionally provide a distance to specify the number of edges should be followed.
 Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
 Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
 """
-function getSubgraphAroundNode(dfg::GraphsDFG, node::T, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::GraphsDFG=GraphsDFG())::GraphsDFG where T <: DFGNode
+function getSubgraphAroundNode(dfg::GraphsDFG{P}, node::T, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::GraphsDFG=GraphsDFG{P}())::GraphsDFG where {P <: AbstractParams, T <: DFGNode}
     if !haskey(dfg.labelDict, node.label)
         error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
     end
