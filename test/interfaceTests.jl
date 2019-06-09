@@ -21,7 +21,7 @@ end
     @test ls(dfg, r"a") == [v1]
     @test lsf(dfg, r"f*") == [f1]
     # Accessors
-    @test getAddHistory(dfg) == [:a, :b, :f1]
+    @test getAddHistory(dfg) == [:a, :b] #, :f1
     @test getDescription(dfg) != nothing
     @test getLabelDict(dfg) != nothing
     # Existence

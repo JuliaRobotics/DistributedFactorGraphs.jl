@@ -137,7 +137,7 @@ function addFactor!(dfg::GraphsDFG, variables::Vector{DFGVariable}, factor::DFGF
         Graphs.add_edge!(dfg.g, edge)
     end
     # Track insertion
-    push!(dfg.addHistory, factor.label)
+    # push!(dfg.addHistory, factor.label)
 
     return true
 end
