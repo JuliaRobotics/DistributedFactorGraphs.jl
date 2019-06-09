@@ -6,6 +6,7 @@ os:
 julia:
     - 1.0
     - 1.1
+    - 1.2
     - nightly
 
 notifications:
@@ -13,7 +14,6 @@ notifications:
 
 matrix:
   allow_failures:
-    - julia: 1.1
     - julia: nightly
 
 # script:
