@@ -273,12 +273,16 @@ deleteFactor!(dfg::GraphsDFG, factor::DFGFactor)::DFGFactor = deleteFactor!(dfg,
 List the DFGVariables in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the variables.
 """
-function ls(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGVariable}
+function ls(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{DFGVariable}
     variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGVariable, vertices(dfg.g)))
     if regexFilter != nothing
         variables = filter(v -> occursin(regexFilter, String(v.label)), variables)
     end
-    return variables
+	if length(tags) > 0
+        mask = map(v -> length(intersect(v.tags, tags)) > 0, variables )
+        return variables[mask]
+    end
+	return variables
 end
 
 # Alias
@@ -287,14 +291,28 @@ end
 List the DFGVariables in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the variables.
 """
-getVariables(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGVariable} = ls(dfg, regexFilter)
+getVariables(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{DFGVariable} = ls(dfg, regexFilter, tags=tags)
 
 """
     $(SIGNATURES)
 Get a list of IDs of the DFGVariables in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the variables.
+
+Example
+```julia
+getVariableIds(dfg, r"l", tags=[:APRILTAG;])
+```
+
+Related
+
+ls
 """
-getVariableIds(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{Symbol} = map(v -> v.label, ls(dfg, regexFilter))
+function getVariableIds(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{Symbol}
+  vars = ls(dfg, regexFilter, tags=tags)
+  # mask = map(v -> length(intersect(v.tags, tags)) > 0, vars )
+  map(v -> v.label, vars)
+end
+
 
 """
     $(SIGNATURES)
@@ -341,6 +359,36 @@ end
 Checks if the graph is not fully connected, returns true if it is not contiguous.
 """
 hasOrphans(dfg::GraphsDFG)::Bool = !isFullyConnected(dfg)
+
+
+"""
+    $(SIGNATURES)
+Test if all elements of the string is a number:  Ex, "123" is true, "1_2" is false.
+"""
+allnums(str::S) where {S <: AbstractString} = occursin(Regex(string(["[0-9]" for j in 1:length(str)]...)), str)
+# occursin(r"_+|,+|-+", node_idx)
+
+isnestednum(str::S; delim='_') where {S <: AbstractString} = occursin(Regex("[0-9]+$(delim)[0-9]+"), str)
+
+function sortnestedperm(strs::Vector{<:AbstractString}; delim='_')
+  str12 = split.(strs, delim)
+  sp1 = sortperm(parse.(Int,getindex.(str12,2)))
+  sp2 = sortperm(parse.(Int,getindex.(str12,1)[sp1]))
+  return sp1[sp2]
+end
+
+# function sortVariableLabels(usl::Vector{Symbol})::Vector{Symbol}
+# 	# x, l = String[], String[]
+# 	# xval = Int[]
+# 	# xstr = String[]
+# 	# xvalnested = String[]
+# 	# xstrnested = String[]
+# 	# canparse1 = true
+# 	# nestedparse1 = true
+# 	# idx = 0
+#
+# end
+
 
 """
     $(SIGNATURES)
