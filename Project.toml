@@ -1,6 +1,6 @@
 name = "DistributedFactorGraphs"
 uuid = "b5cc3c7e-6572-11e9-2517-99fb8daf2f04"
-version = "0.0.1"
+version = "0.1.1"
 
 [deps]
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
@@ -14,7 +14,12 @@ Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 
 [compat]
-julia = "1"
+Distributions = "≥ 0.18"
+DocStringExtensions = "≥ 0.7"
+Graphs = "≥ 0.10.3"
+Reexport = "≥ 0.2"
+Requires = "≥ 0.5"
+julia = "0.7, 1"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

@@ -15,12 +15,6 @@ end
 # This is insanely important - if we don't provide a valid index, the edges don't work correctly.
 vertex_index(v::GraphsNode) = v.index
 
-"""
-    $(SIGNATURES)
-Create a new in-memory Graphs.jl-based DFG factor graph.
-"""
-GraphsDFG() = GraphsDFG(Graphs.incdict(GraphsNode,is_directed=false), "Graphs.jl implementation", 0, Dict{Symbol, Int64}(), Symbol[], nothing)
-
 # Accessors
 getLabelDict(dfg::GraphsDFG) = dfg.labelDict
 getDescription(dfg::GraphsDFG) = dfg.description
@@ -28,7 +22,11 @@ setDescription(dfg::GraphsDFG, description::String) = dfg.description = descript
 getInnerGraph(dfg::GraphsDFG) = dfg.g
 getAddHistory(dfg::GraphsDFG) = dfg.addHistory
 getSolverParams(dfg::GraphsDFG) = dfg.solverParams
-setSolverParams(dfg::GraphsDFG, solverParams::Any) = dfg.solverParams = solverParams
+
+# setSolverParams(dfg::GraphsDFG, solverParams) = dfg.solverParams = solverParams
+function setSolverParams(dfg::GraphsDFG, solverParams::P) where P <: AbstractParams
+  dfg.solverParams = solverParams
+end
 
 """
     $(SIGNATURES)
@@ -86,7 +84,7 @@ function addFactor!(dfg::GraphsDFG, variables::Vector{DFGVariable}, factor::DFGF
         Graphs.add_edge!(dfg.g, edge)
     end
     # Track insertion
-    push!(dfg.addHistory, factor.label)
+    # push!(dfg.addHistory, factor.label)
 
     return true
 end
@@ -254,7 +252,7 @@ function lsf(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector
     return factors
 end
 function lsf(dfg::GraphsDFG, label::Symbol)::Vector{Symbol}
-  return GraphsJl.getNeighbors(dfg, label)
+  return getNeighbors(dfg, label)
 end
 
 # Alias
@@ -389,7 +387,7 @@ Optionally provide a distance to specify the number of edges should be followed.
 Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
 Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
 """
-function getSubgraphAroundNode(dfg::GraphsDFG, node::T, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::GraphsDFG=GraphsDFG())::GraphsDFG where T <: DFGNode
+function getSubgraphAroundNode(dfg::GraphsDFG{P}, node::T, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::GraphsDFG=GraphsDFG{P}())::GraphsDFG where {P <: AbstractParams, T <: DFGNode}
     if !haskey(dfg.labelDict, node.label)
         error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
     end
