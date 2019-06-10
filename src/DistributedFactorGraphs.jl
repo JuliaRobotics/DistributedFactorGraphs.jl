@@ -13,6 +13,7 @@ include("entities/DFGFactor.jl")
 include("entities/DFGVariable.jl")
 
 export AbstractDFG
+export AbstractParams, NoSolverParams
 export DFGNode
 export DFGFactor
 export DFGVariable
