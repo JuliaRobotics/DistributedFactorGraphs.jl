@@ -177,14 +177,6 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "func_ref/#DistributedFactorGraphs.GraphsDFG",
-    "page": "Reference",
-    "title": "DistributedFactorGraphs.GraphsDFG",
-    "category": "type",
-    "text": "GraphsDFG()\n\n\nCreate a new in-memory Graphs.jl-based DFG factor graph.\n\n\n\n\n\n"
-},
-
-{
     "location": "func_ref/#Graph-Types-1",
     "page": "Reference",
     "title": "Graph Types",
