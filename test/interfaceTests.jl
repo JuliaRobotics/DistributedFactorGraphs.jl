@@ -1,4 +1,4 @@
-dfg = testDFGAPI()
+dfg = testDFGAPI{NoSolverParams}()
 v1 = DFGVariable(:a)
 v2 = DFGVariable(:b)
 f1 = DFGFactor{Int, :Symbol}(:f1)
@@ -21,7 +21,7 @@ end
     @test ls(dfg, r"a") == [v1]
     @test lsf(dfg, r"f*") == [f1]
     # Accessors
-    @test getAddHistory(dfg) == [:a, :b, :f1]
+    @test getAddHistory(dfg) == [:a, :b] #, :f1
     @test getDescription(dfg) != nothing
     @test getLabelDict(dfg) != nothing
     # Existence
@@ -96,7 +96,7 @@ end
 
 # Now make a complex graph for connectivity tests
 numNodes = 10
-dfg = testDFGAPI()
+dfg = testDFGAPI{NoSolverParams}()
 verts = map(n -> DFGVariable(Symbol("x$n")), 1:numNodes)
 map(v -> addVariable!(dfg, v), verts)
 map(n -> addFactor!(dfg, [verts[n], verts[n+1]], DFGFactor{Int, :Symbol}(Symbol("x$(n)x$(n+1)f1"))), 1:(numNodes-1))
@@ -132,4 +132,5 @@ end
     @test toDot(dfg) == "graph graphname {\n18 [\"label\"=\"x8x9f1\",\"shape\"=\"ellipse\",\"fillcolor\"=\"blue\",\"color\"=\"blue\"]\n2 [\"label\"=\"x2\",\"shape\"=\"box\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n2 -- 11\n2 -- 12\n16 [\"label\"=\"x6x7f1\",\"shape\"=\"ellipse\",\"fillcolor\"=\"blue\",\"color\"=\"blue\"]\n11 [\"label\"=\"x1x2f1\",\"shape\"=\"ellipse\",\"fillcolor\"=\"blue\",\"color\"=\"blue\"]\n7 [\"label\"=\"x7\",\"shape\"=\"box\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n7 -- 16\n7 -- 17\n9 [\"label\"=\"x9\",\"shape\"=\"box\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n9 -- 18\n9 -- 19\n10 [\"label\"=\"x10\",\"shape\"=\"box\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n10 -- 19\n19 [\"label\"=\"x9x10f1\",\"shape\"=\"ellipse\",\"fillcolor\"=\"blue\",\"color\"=\"blue\"]\n17 [\"label\"=\"x7x8f1\",\"shape\"=\"ellipse\",\"fillcolor\"=\"blue\",\"color\"=\"blue\"]\n8 [\"label\"=\"x8\",\"shape\"=\"box\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n8 -- 17\n8 -- 18\n6 [\"label\"=\"x6\",\"shape\"=\"box\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n6 -- 15\n6 -- 16\n4 [\"label\"=\"x4\",\"shape\"=\"box\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n4 -- 13\n4 -- 14\n3 [\"label\"=\"x3\",\"shape\"=\"box\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n3 -- 12\n3 -- 13\n5 [\"label\"=\"x5\",\"shape\"=\"box\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n5 -- 14\n5 -- 15\n13 [\"label\"=\"x3x4f1\",\"shape\"=\"ellipse\",\"fillcolor\"=\"blue\",\"color\"=\"blue\"]\n14 [\"label\"=\"x4x5f1\",\"shape\"=\"ellipse\",\"fillcolor\"=\"blue\",\"color\"=\"blue\"]\n15 [\"label\"=\"x5x6f1\",\"shape\"=\"ellipse\",\"fillcolor\"=\"blue\",\"color\"=\"blue\"]\n12 [\"label\"=\"x2x3f1\",\"shape\"=\"ellipse\",\"fillcolor\"=\"blue\",\"color\"=\"blue\"]\n1 [\"label\"=\"x1\",\"shape\"=\"box\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n1 -- 11\n}\n"
 
     @test toDotFile(dfg, "something.dot") == nothing
+    Base.rm("something.dot")
 end
