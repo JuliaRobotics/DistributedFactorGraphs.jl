@@ -46,12 +46,12 @@ mutable struct PackedVariableNodeData
   dimval::Int
   vecbw::Array{Float64,1}
   dimbw::Int
-  BayesNetOutVertIDs::Array{Int,1}
+  BayesNetOutVertIDs::Array{Symbol,1}
   dimIDs::Array{Int,1}
   dims::Int
   eliminated::Bool
-  BayesNetVertID::Int
-  separator::Array{Int,1}
+  BayesNetVertID::Union{Nothing, Symbol}
+  separator::Array{Symbol,1}
   # groundtruth::NothingUnion{ Dict{ Tuple{Symbol, Vector{Float64}} } }
   softtype::String
   initialized::Bool
@@ -63,12 +63,12 @@ mutable struct PackedVariableNodeData
                          x6::Int,
                          x7::Vector{Float64},
                          x8::Int,
-                         x9::Vector{Int},
+                         x9::Vector{Symbol},
                          x10::Vector{Int},
                          x11::Int,
                          x12::Bool,
-                         x13::Int,
-                         x14::Vector{Int},
+                         x13::Union{Nothing, Symbol},
+                         x14::Vector{Symbol},
                          x15::String,
                          x16::Bool,
                          x17::Bool,

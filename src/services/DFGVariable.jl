@@ -1,7 +1,7 @@
 using Base
 import Base.==
 
-function pack(dfg::Union{G, Nothing}, d::VariableNodeData)::PackedVariableNodeData where G <: AbstractDFG
+function pack(dfg::G, d::VariableNodeData)::PackedVariableNodeData where G <: AbstractDFG
   @debug "Dispatching conversion variable -> packed variable for type $(string(d.softtype))"
   return PackedVariableNodeData(d.val[:],size(d.val,1),
                                 d.bw[:], size(d.bw,1),
@@ -11,7 +11,7 @@ function pack(dfg::Union{G, Nothing}, d::VariableNodeData)::PackedVariableNodeDa
                                 string(d.softtype), d.initialized, d.partialinit, d.ismargin, d.dontmargin)
 end
 
-function unpack(dfg::Union{G, Nothing}, d::PackedVariableNodeData)::VariableNodeData where G <: AbstractDFG
+function unpack(dfg::G, d::PackedVariableNodeData)::VariableNodeData where G <: AbstractDFG
   r3 = d.dimval
   c3 = r3 > 0 ? floor(Int,length(d.vecval)/r3) : 0
   M3 = reshape(d.vecval,r3,c3)

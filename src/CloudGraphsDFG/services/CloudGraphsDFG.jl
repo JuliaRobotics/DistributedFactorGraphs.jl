@@ -34,7 +34,7 @@ function exists(dfg::CloudGraphsDFG, nId::Symbol)
     # Otherwise try get it
     nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, nId)
     if nodeId != nothing
-        push!(variableCache, nId, nodeId)
+        push!(dfg.labelDict, nId=>nodeId)
         return true
     end
     return false
@@ -49,28 +49,29 @@ end
 Add a DFGVariable to a DFG.
 """
 function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::Bool
-    if haskey(dfg.labelDict, variable.label) # It's in our local cache
+    if haskey(dfg.labelDict, variable.label) || exists(dfg, variable) # It's in our local cache or in DB already
         error("Variable '$(variable.label)' already exists in the factor graph")
     end
-    props = Dict{String, String}()
+    props = Dict{String, Any}()
     props["label"] = string(variable.label)
     props["timestamp"] = string(variable.timestamp)
     props["tags"] = JSON2.write(variable.tags)
     props["estimateDict"] = JSON2.write(variable.estimateDict)
-    props["solverDataDict"] = JSON2.write(keys(variable.solverDataDict) .=> map(vnd -> dfg.encodePackedTypeFunc(vnd), values(variable.solverDataDict)))
-    # We don't have this yet
-    # props["_internalId"] = variable._internalId
-    @show props
+    props["solverDataDict"] = JSON2.write(Dict(keys(variable.solverDataDict) .=> map(vnd -> pack(dfg, vnd), values(variable.solverDataDict))))
+    if variable.smallData != nothing
+        props["smallData"] = JSON2.write(variable.smallData)
+    end
+    props["ready"] = variable.ready
+    props["backendset"] = variable.backendset
     # Don't handle big data at the moment.
 
-    @show neo4jNode = Neo4j.createnode(dfg.neo4jInstance.graph, props);
+    neo4jNode = Neo4j.createnode(dfg.neo4jInstance.graph, props);
     variable._internalId = neo4jNode.id
-    Neo4j.setnodelabels(neo4jNode, variable.tags)
-    @show neo4jNode
+    Neo4j.updatenodelabels(neo4jNode, union([string(variable.label), "VARIABLE", dfg.userId, dfg.robotId, dfg.sessionId], variable.tags))
 
     # Graphs.add_vertex!(dfg.g, v)
     push!(dfg.labelDict, variable.label=>variable._internalId)
-    push!(dfg.variableCache, variable.label=>variable._internalId)
+    push!(dfg.variableCache, variable.label=>variable)
     # Track insertion
     push!(dfg.addHistory, variable.label)
 
@@ -108,33 +109,59 @@ end
 #
 #     return true
 # end
-#
-# """
-#     $(SIGNATURES)
-# Get a DFGVariable from a DFG using its underlying integer ID.
-# """
-# function getVariable(dfg::CloudGraphsDFG, variableId::Int64)::DFGVariable
-#     @warn "This may be slow, rather use by getVariable(dfg, label)"
-#     #TODO: This may be slow (O(n)), can we make it better?
-#     if !(variableId in values(dfg.labelDict))
-#         error("Variable ID '$(variableId)' does not exist in the factor graph")
-#     end
-#     return dfg.g.vertices[variableId].dfgNode
-# end
-#
-# """
-#     $(SIGNATURES)
-# Get a DFGVariable from a DFG using its label.
-# """
-# function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGVariable
-#     if typeof(label) == String
-#         label = Symbol(label)
-#     end
-#     if !haskey(dfg.labelDict, label)
-#         error("Variable label '$(label)' does not exist in the factor graph")
-#     end
-#     return dfg.g.vertices[dfg.labelDict[label]].dfgNode
-# end
+
+"""
+    $(SIGNATURES)
+Get a DFGVariable from a DFG using its label.
+"""
+function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String}, skipCache::Bool=false)::DFGVariable
+    if typeof(label) == String
+        label = Symbol(label)
+    end
+    skipCache && haskey(dfg.variableCache, label) && return variableCache[label]
+    # Else try get it
+    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, label)
+    props = getnodeproperties(dfg.neo4jInstance.graph, nodeId)
+    # Time to do deserialization
+    # props["label"] = Symbol(variable.label)
+    timestamp = DateTime(props["timestamp"])
+    tags =  JSON2.read(props["tags"], Vector{Symbol})
+    estimateDict = JSON2.read(props["estimateDict"], Dict{Symbol, VariableEstimate})
+    smallData = nothing
+    if haskey(props, "smalldata")
+        smallData = JSON2.read(props["smallData"])
+    end
+
+    packed = JSON2.read(props["solverDataDict"], Dict{String, PackedVariableNodeData})
+    solverData = Dict(Symbol.(keys(packed)) .=> map(p -> unpack(dfg, p), values(packed)))
+
+    # Rebuild DFGVariable
+    variable = DFGVariable(label, nodeId)
+    variable.timestamp = timestamp
+    variable.tags = tags
+    variable.estimateDict = estimateDict
+    variable.solverDataDict = solverData
+    variable.smallData = smallData
+    variable.ready = props["ready"]
+    variable.backendset = props["backendset"]
+
+    # Add to cache
+    return variable
+end
+
+"""
+    $(SIGNATURES)
+Get a DFGVariable from a DFG using its underlying integer ID.
+"""
+function getVariable(dfg::CloudGraphsDFG, variableId::Int64)::DFGVariable
+    @warn "This may be slow, rather use by getVariable(dfg, label)"
+    #TODO: This may be slow (O(n)), can we make it better?
+    if !(variableId in values(dfg.labelDict))
+        error("Variable ID '$(variableId)' does not exist in the factor graph")
+    end
+    return dfg.g.vertices[variableId].dfgNode
+end
+
 #
 # """
 #     $(SIGNATURES)
@@ -187,19 +214,25 @@ end
 #     return factor
 # end
 #
-# """
-#     $(SIGNATURES)
-# Delete a DFGVariable from the DFG using its label.
-# """
-# function deleteVariable!(dfg::CloudGraphsDFG, label::Symbol)::DFGVariable
-#     if !haskey(dfg.labelDict, label)
-#         error("Variable label '$(label)' does not exist in the factor graph")
-#     end
-#     variable = dfg.g.vertices[dfg.labelDict[label]].dfgNode
-#     delete_vertex!(dfg.g.vertices[dfg.labelDict[label]], dfg.g)
-#     delete!(dfg.labelDict, label)
-#     return variable
-# end
+"""
+    $(SIGNATURES)
+Delete a DFGVariable from the DFG using its label.
+"""
+function deleteVariable!(dfg::CloudGraphsDFG, label::Symbol)::DFGVariable
+    if !haskey(dfg.labelDict, label) || !exists(dfg, label)
+        error("Variable label '$(label)' does not exist in the factor graph")
+    end
+    # Get variable
+    variable = getVariable(dfg, label)
+    # Delete
+    deletenode(dfg.neo4jInstance.graph, dfg.labelDict[label])
+    # Clean up caches
+    delete!(dfg.labelDict, label)
+    delete!(dfg.variableCache, label)
+    # Clearing history
+    dfg.addHistory = setdiff(dfg.addHistory, [label])
+    return variable
+end
 #
 # #Alias
 # """

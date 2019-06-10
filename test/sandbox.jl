@@ -18,7 +18,22 @@ cgDFG = CloudGraphsDFG("localhost", 7474, "neo4j", "test",
     IncrementalInference.decodePackedType)
 
 using RoME
-exists(cgDFG, :x0)
+if exists(cgDFG, :x0)
+    getVariable(cgDFG, :x0)
+    # deleteVariable!(cgDFG, :x0)
+end
+@test !exists(cgDFG, :x0)
+addVariable!(cgDFG, :x0, Pose2)
 
-addVariable!(cgDFG, :x0, Pose2) # , labels=["POSE"]
+
+@test addVariable!(cgDFG, :x0, Pose2) == true
+@test exists(cgDFG, :x0)
+
+json = "{\"default\":{\"vecval\":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],\"dimval\":3,\"vecbw\":[0.0,0.0,0.0],\"dimbw\":3,\"BayesNetOutVertIDs\":[],\"dimIDs\":[0,1,2],\"dims\":3,\"eliminated\":false,\"BayesNetVertID\":\"_null\",\"separator\":[],\"softtype\":\"Pose2(3, String[], (:Euclid, :Euclid, :Circular))\",\"initialized\":false,\"partialinit\":false,\"ismargin\":false,\"dontmargin\":false}}"
+using JSON2
+packed = JSON2.read(json, Dict{String, PackedVariableNodeData})
+# IncrementalInference.decodePackedType(packed["default"], "VariableNodeData")
+# unpack(cgDFG, packed["default"])
+solverData = Dict(Symbol.(keys(packed)) .=> map(p -> unpack(cgDFG, p), values(packed)))
+
 addFactor!(cgDFG, [:x0], PriorPose2(MvNormal(zeros(3), 0.01*eye(3))) )
