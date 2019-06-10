@@ -86,13 +86,13 @@ mutable struct DFGVariable <: DFGNode
     tags::Vector{Symbol}
     estimateDict::Dict{Symbol, VariableEstimate}
     solverDataDict::Dict{Symbol, VariableNodeData}
-    smallData::Any
+    smallData::Dict{String, String}
     bigData::Any
     ready::Int
     backendset::Int
     _internalId::Int64
-    DFGVariable(label::Symbol, _internalId::Int64) = new(label, now(), Symbol[], Dict{Symbol, VariableEstimate}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), nothing, nothing, 0, 0, _internalId)
-    DFGVariable(label::Symbol) = new(label, now(), Symbol[], Dict{Symbol, VariableEstimate}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), nothing, nothing, 0, 0, 0)
+    DFGVariable(label::Symbol, _internalId::Int64) = new(label, now(), Symbol[], Dict{Symbol, VariableEstimate}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), Dict{String, String}(), nothing, 0, 0, _internalId)
+    DFGVariable(label::Symbol) = new(label, now(), Symbol[], Dict{Symbol, VariableEstimate}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), Dict{String, String}(), nothing, 0, 0, 0)
 end
 
 # Accessors

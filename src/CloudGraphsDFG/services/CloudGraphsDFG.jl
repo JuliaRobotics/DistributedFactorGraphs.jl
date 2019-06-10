@@ -58,9 +58,7 @@ function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::Bool
     props["tags"] = JSON2.write(variable.tags)
     props["estimateDict"] = JSON2.write(variable.estimateDict)
     props["solverDataDict"] = JSON2.write(Dict(keys(variable.solverDataDict) .=> map(vnd -> pack(dfg, vnd), values(variable.solverDataDict))))
-    if variable.smallData != nothing
-        props["smallData"] = JSON2.write(variable.smallData)
-    end
+    props["smallData"] = JSON2.write(variable.smallData)
     props["ready"] = variable.ready
     props["backendset"] = variable.backendset
     # Don't handle big data at the moment.
@@ -128,9 +126,7 @@ function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String}, skipCach
     tags =  JSON2.read(props["tags"], Vector{Symbol})
     estimateDict = JSON2.read(props["estimateDict"], Dict{Symbol, VariableEstimate})
     smallData = nothing
-    if haskey(props, "smalldata")
-        smallData = JSON2.read(props["smallData"])
-    end
+    smallData = JSON2.read(props["smallData"], Dict{String, String})
 
     packed = JSON2.read(props["solverDataDict"], Dict{String, PackedVariableNodeData})
     solverData = Dict(Symbol.(keys(packed)) .=> map(p -> unpack(dfg, p), values(packed)))
