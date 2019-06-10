@@ -79,7 +79,11 @@ setDescription(dfg::GraphsDFG, description::String) = dfg.description = descript
 getInnerGraph(dfg::GraphsDFG) = dfg.g
 getAddHistory(dfg::GraphsDFG) = dfg.addHistory
 getSolverParams(dfg::GraphsDFG) = dfg.solverParams
-setSolverParams(dfg::GraphsDFG, solverParams) = dfg.solverParams = solverParams
+
+# setSolverParams(dfg::GraphsDFG, solverParams) = dfg.solverParams = solverParams
+function setSolverParams(dfg::GraphsDFG, solverParams::P) where P <: AbstractParams
+  dfg.solverParams = solverParams
+end
 
 """
     $(SIGNATURES)
