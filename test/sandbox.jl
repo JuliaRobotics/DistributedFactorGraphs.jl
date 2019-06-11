@@ -19,17 +19,22 @@ cgDFG = CloudGraphsDFG("localhost", 7474, "neo4j", "test",
 
 using RoME
 if exists(cgDFG, :x0)
-    getVariable(cgDFG, :x0)
-    # deleteVariable!(cgDFG, :x0)
+    vExisting = deleteVariable!(cgDFG, :x0)
+    @test vExisting.label == :x0
 end
 @test !exists(cgDFG, :x0)
-addVariable!(cgDFG, :x0, Pose2)
-
-
-@test addVariable!(cgDFG, :x0, Pose2) == true
+@test addVariable!(cgDFG, :x0, Pose2) != nothing
+@test_throws Exception addVariable!(cgDFG, :x0, Pose2)
 @test exists(cgDFG, :x0)
+@test getVariable(cgDFG, :x0) != nothing
+variable = getVariable(cgDFG, :x0)
+push!(variable.tags, :EXTRAEXTRA)
+updateVariable!(cgDFG, variable)
+variableBack = getVariable(cgDFG, :x0, true)
+@test variableBack.tags == variable.tags
+@test deleteVariable!(cgDFG, :x0).label == :x0
 
-json = "{\"default\":{\"vecval\":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],\"dimval\":3,\"vecbw\":[0.0,0.0,0.0],\"dimbw\":3,\"BayesNetOutVertIDs\":[],\"dimIDs\":[0,1,2],\"dims\":3,\"eliminated\":false,\"BayesNetVertID\":\"_null\",\"separator\":[],\"softtype\":\"Pose2(3, String[], (:Euclid, :Euclid, :Circular))\",\"initialized\":false,\"partialinit\":false,\"ismargin\":false,\"dontmargin\":false}}"
+
 using JSON2
 packed = JSON2.read(json, Dict{String, PackedVariableNodeData})
 # IncrementalInference.decodePackedType(packed["default"], "VariableNodeData")
