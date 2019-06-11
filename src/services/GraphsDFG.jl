@@ -378,6 +378,12 @@ function sortnestedperm(strs::Vector{<:AbstractString}; delim='_')
   return sp1[sp2]
 end
 
+function getFirstNumericalOffset(st::AS) where AS <: AbstractString
+  i = 1
+  while !allnums(st[i:i])  i+=1; end
+  return i
+end
+
 """
     $SIGNATURES
 
