@@ -43,6 +43,21 @@ function exists(dfg::CloudGraphsDFG, node::N) where N <: DFGNode
     return exists(dfg, node.label)
 end
 
+"""
+    $(SIGNATURES)
+DANGER: Clears the whole session from the database.
+"""
+function clearSession!(dfg::CloudGraphsDFG)::Nothing
+    # Perform detach+deletion
+    _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId)) detach delete node ")
+
+    # Clearing history
+    dfg.addHistory = Symbol[]
+    empty!(dfg.variableCache)
+    empty!(dfg.factorCache)
+    empty!(dfg.labelDict)
+    return nothing
+end
 
 """
     $(SIGNATURES)
@@ -76,37 +91,34 @@ function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::Bool
     return true
 end
 
-# """
-#     $(SIGNATURES)
-# Add a DFGFactor to a DFG.
-# """
-# function addFactor!(dfg::CloudGraphsDFG, variables::Vector{DFGVariable}, factor::DFGFactor)::Bool
-#     if haskey(dfg.labelDict, factor.label)
-#         error("Factor '$(factor.label)' already exists in the factor graph")
-#     end
-#     for v in variables
-#         if !(v.label in keys(dfg.labelDict))
-#             error("Variable '$(v.label)' not found in graph when creating Factor '$(factor.label)'")
-#         end
-#     end
-#     dfg.nodeCounter += 1
-#     factor._internalId = dfg.nodeCounter
-#     factor._variableOrderSymbols = map(v->v.label, variables)
-#     fNode = GraphsNode(dfg.nodeCounter, factor)
-#     f = Graphs.add_vertex!(dfg.g, fNode)
-#     # Add index
-#     push!(dfg.labelDict, factor.label=>factor._internalId)
-#     # Add the edges...
-#     for variable in variables
-#         v = dfg.g.vertices[variable._internalId]
-#         edge = Graphs.make_edge(dfg.g, v, f)
-#         Graphs.add_edge!(dfg.g, edge)
-#     end
-#     # Track insertion
-#     push!(dfg.addHistory, factor.label)
-#
-#     return true
-# end
+"""
+    $(SIGNATURES)
+Add a DFGFactor to a DFG.
+"""
+function addFactor!(dfg::CloudGraphsDFG, variables::Vector{DFGVariable}, factor::DFGFactor)::Bool
+    if haskey(dfg.labelDict, factor.label) || exists(dfg, factor) # It's in our local cache or in DB already
+        error("Variable '$(factor.label)' already exists in the factor graph")
+    end
+    props = Dict{String, Any}()
+    props["label"] = string(factor.label)
+    props["tags"] = JSON2.write(factor.tags)
+    # props["data"] = JSON2.write(Dict(keys(factor.solverDataDict) .=> map(vnd -> pack(dfg, vnd), values(variable.solverDataDict))))
+    props["_variableOrderSymbols"] = JSON2.write(factor._variableOrderSymbols)
+    props["backendset"] = factor.backendset
+    # Don't handle big data at the moment.
+
+    neo4jNode = Neo4j.createnode(dfg.neo4jInstance.graph, props);
+    factor._internalId = neo4jNode.id
+    Neo4j.updatenodelabels(neo4jNode, union([string(factor.label), "FACTOR", dfg.userId, dfg.robotId, dfg.sessionId], factor.tags))
+
+    # Graphs.add_vertex!(dfg.g, v)
+    push!(dfg.labelDict, factor.label=>factor._internalId)
+    push!(dfg.factorCache, factor.label=>factor)
+    # Track insertion
+    push!(dfg.addHistory, factor.label)
+
+    return true
+end
 
 """
     $(SIGNATURES)
@@ -253,13 +265,13 @@ function deleteVariable!(dfg::CloudGraphsDFG, label::Symbol)::DFGVariable
     haskey(dfg.labelDict, label) && delete!(dfg.labelDict, label)
     return variable
 end
-#
-# #Alias
-# """
-#     $(SIGNATURES)
-# Delete a referenced DFGVariable from the DFG.
-# """
-# deleteVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariable = deleteVariable(dfg, variable.label)
+
+#Alias
+"""
+    $(SIGNATURES)
+Delete a referenced DFGVariable from the DFG.
+"""
+deleteVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariable = deleteVariable!(dfg, variable.label)
 #
 # """
 #     $(SIGNATURES)
@@ -304,13 +316,20 @@ end
 # Optionally specify a label regular expression to retrieves a subset of the variables.
 # """
 # getVariables(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGVariable} = ls(dfg, regexFilter)
-#
-# """
-#     $(SIGNATURES)
-# Get a list of IDs of the DFGVariables in the DFG.
-# Optionally specify a label regular expression to retrieves a subset of the variables.
-# """
-# getVariableIds(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{Symbol} = map(v -> v.label, ls(dfg, regexFilter))
+
+"""
+    $(SIGNATURES)
+Get a list of IDs of the DFGVariables in the DFG.
+Optionally specify a label regular expression to retrieves a subset of the variables.
+"""
+function getVariableIds(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{Symbol}
+    # Optimized for DB call
+    if regexFilter == nothing
+        return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):VARIABLE)")
+    else
+        return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):VARIABLE) where node.label =~ '$(regexFilter.pattern)'")
+    end
+end
 #
 # """
 #     $(SIGNATURES)
@@ -335,14 +354,21 @@ end
 # Optionally specify a label regular expression to retrieves a subset of the factors.
 # """
 # getFactors(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGFactor} = lsf(dfg, regexFilter)
-#
-# """
-#     $(SIGNATURES)
-# Get a list of the IDs of the DFGFactors in the DFG.
-# Optionally specify a label regular expression to retrieves a subset of the factors.
-# """
-# getFactorIds(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{Symbol} = map(f -> f.label, lsf(dfg, regexFilter))
-#
+
+"""
+    $(SIGNATURES)
+Get a list of the IDs of the DFGFactors in the DFG.
+Optionally specify a label regular expression to retrieves a subset of the factors.
+"""
+function getFactorIds(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{Symbol}
+    # Optimized for DB call
+    if regexFilter == nothing
+        return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):FACTOR)")
+    else
+        return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):FACTOR) where node.label =~ '$(regexFilter.pattern)'")
+    end
+end
+
 # """
 #     $(SIGNATURES)
 # Checks if the graph is fully connected, returns true if so.

@@ -10,6 +10,30 @@ Will return all sessions because of 'node:Session'.
 If orderProperty is not ==, then 'order by n.{orderProperty} will be appended to the query'.
 So can make orderProperty = label or id.
 """
+function _getLabelsFromCyphonQuery(neo4jInstance::Neo4jInstance, matchCondition::String, orderProperty::String="")::Vector{Symbol}
+    # 2. Perform the transaction
+    loadtx = transaction(neo4jInstance.connection)
+    query = "match $matchCondition return node.label $(orderProperty != "" ? "order by node.$orderProperty" : "")";
+    nodes = loadtx(query; submit=true)
+    if length(nodes.errors) > 0
+        error(string(nodes.errors))
+    end
+    nodeIds = map(node -> node["row"][1], nodes.results[1]["data"])
+    # Have to finish the transaction
+    commit(loadtx)
+    return Symbol.(nodeIds)
+end
+
+"""
+$(SIGNATURES)
+Returns the list of CloudGraph nodes that matches the Cyphon query.
+The nodes of interest should be labelled 'node' because the query will use the return of id(node)
+#Example
+matchCondition = '(u:User)-[:ROBOT]->(n:Robot:NewRobot)-[:SESSION]->(node:Session)'.
+Will return all sessions because of 'node:Session'.
+If orderProperty is not ==, then 'order by n.{orderProperty} will be appended to the query'.
+So can make orderProperty = label or id.
+"""
 function _getNeoNodesFromCyphonQuery(neo4jInstance::Neo4jInstance, matchCondition::String, orderProperty::String="")::Vector{Neo4j.Node}
     # 2. Perform the transaction
     loadtx = transaction(neo4jInstance.connection)

@@ -11,6 +11,7 @@ include("services/CloudGraphsDFG.jl")
 # Exports
 export Neo4jInstance, CloudGraphsDFG
 export exists
+export clearSession!
 export getLabelDict, getDescription, setDescription, getInnerGraph, getAddHistory, getSolverParams, setSolverParams
 
 export getAddHistory, getDescription, getLabelDict

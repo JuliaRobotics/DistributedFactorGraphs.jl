@@ -16,6 +16,8 @@ cgDFG = CloudGraphsDFG("localhost", 7474, "neo4j", "test",
     IncrementalInference.encodePackedType,
     IncrementalInference.getpackedtype,
     IncrementalInference.decodePackedType)
+# DANGER: Clear everything from session
+clearSession!(cgDFG)
 
 using RoME
 if exists(cgDFG, :x0)
@@ -27,12 +29,34 @@ end
 @test_throws Exception addVariable!(cgDFG, :x0, Pose2)
 @test exists(cgDFG, :x0)
 @test getVariable(cgDFG, :x0) != nothing
+@test getVariableIds(cgDFG) == [:x0]
+@test getVariableIds(cgDFG, r"x.*") == [:x0]
+@test getVariableIds(cgDFG, r"y.*") == []
 variable = getVariable(cgDFG, :x0)
 push!(variable.tags, :EXTRAEXTRA)
 updateVariable!(cgDFG, variable)
 variableBack = getVariable(cgDFG, :x0, true)
 @test variableBack.tags == variable.tags
 @test deleteVariable!(cgDFG, :x0).label == :x0
+
+# Things that should pass
+helloVariable = addVariable!(cgDFG, :hellothisIsALabel_Something, Pose2)
+@test helloVariable != nothing
+@test getVariableIds(cgDFG, r".*thisIsALabel.*") == [:hellothisIsALabel_Something]
+@test deleteVariable!(cgDFG, helloVariable).label == helloVariable.label
+
+# TODO: Comparisons
+# Comparisons
+
+# Factors
+x0 = addVariable!(cgDFG, :x0, Pose2)
+x1 = addVariable!(cgDFG, :x1, Pose2)
+l1 = addVariable!(cgDFG, :l1, Pose2)
+prior = PriorPose2( MvNormal([10; 10; pi/6.0], Matrix(Diagonal([0.1;0.1;0.05].^2))))
+addFactor!(cgDFG, [:x0], prior )
+
+pp = Pose2Pose2(MvNormal([10.0;0;pi/3], Matrix(Diagonal([0.1;0.1;0.1].^2))))
+p2br = Pose2Point2BearingRange(Normal(0,0.1),Normal(20.0,1.0))
 
 
 using JSON2
