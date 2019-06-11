@@ -110,16 +110,10 @@ end
 
 """
     $(SIGNATURES)
-Get a DFGVariable from a DFG using its label.
+Get a DFGVariable from a DFG using its underlying integer ID.
 """
-function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String}, skipCache::Bool=false)::DFGVariable
-    if typeof(label) == String
-        label = Symbol(label)
-    end
-    skipCache && haskey(dfg.variableCache, label) && return variableCache[label]
-    # Else try get it
-    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, label)
-    props = getnodeproperties(dfg.neo4jInstance.graph, nodeId)
+function getVariable(dfg::CloudGraphsDFG, variableId::Int64)::DFGVariable
+    props = getnodeproperties(dfg.neo4jInstance.graph, variableId)
     # Time to do deserialization
     # props["label"] = Symbol(variable.label)
     timestamp = DateTime(props["timestamp"])
@@ -132,7 +126,7 @@ function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String}, skipCach
     solverData = Dict(Symbol.(keys(packed)) .=> map(p -> unpack(dfg, p), values(packed)))
 
     # Rebuild DFGVariable
-    variable = DFGVariable(label, nodeId)
+    variable = DFGVariable(Symbol(props["label"]), variableId)
     variable.timestamp = timestamp
     variable.tags = tags
     variable.estimateDict = estimateDict
@@ -142,20 +136,28 @@ function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String}, skipCach
     variable.backendset = props["backendset"]
 
     # Add to cache
+    push!(dfg.variableCache, variable.label=>variable)
+
     return variable
 end
 
+
 """
     $(SIGNATURES)
-Get a DFGVariable from a DFG using its underlying integer ID.
+Get a DFGVariable from a DFG using its label.
 """
-function getVariable(dfg::CloudGraphsDFG, variableId::Int64)::DFGVariable
-    @warn "This may be slow, rather use by getVariable(dfg, label)"
-    #TODO: This may be slow (O(n)), can we make it better?
-    if !(variableId in values(dfg.labelDict))
-        error("Variable ID '$(variableId)' does not exist in the factor graph")
+function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String}, skipCache::Bool=false)::DFGVariable
+    if typeof(label) == String
+        label = Symbol(label)
     end
-    return dfg.g.vertices[variableId].dfgNode
+    !skipCache && haskey(dfg.variableCache, label) && return dfg.variableCache[label]
+    # Else try get it
+    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, label)
+    if nodeId == nothing
+        error("Unable to retrieve the ID for variable '$label'. Please check your connection to the database and that the variable exists.")
+    end
+
+    return getVariable(dfg, nodeId)
 end
 
 #
@@ -185,19 +187,35 @@ end
 #     end
 #     return dfg.g.vertices[dfg.labelDict[label]].dfgNode
 # end
-#
-# """
-#     $(SIGNATURES)
-# Update a complete DFGVariable in the DFG.
-# """
-# function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariable
-#     if !haskey(dfg.labelDict, variable.label)
-#         error("Variable label '$(variable.label)' does not exist in the factor graph")
-#     end
-#     dfg.g.vertices[dfg.labelDict[variable.label]].dfgNode = variable
-#     return variable
-# end
-#
+
+"""
+    $(SIGNATURES)
+Update a complete DFGVariable in the DFG.
+"""
+function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariable
+    if !exists(dfg, variable)
+        @warn "Variable '$(variable.label)' doesn't exist in the graph, so adding it."
+        addVariable(dfg, variable)
+    else
+        nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, variable.label)
+        neo4jNode = Neo4j.getnode(dfg.neo4jInstance.graph, nodeId)
+        props = getnodeproperties(dfg.neo4jInstance.graph, nodeId)
+
+        props["label"] = string(variable.label)
+        props["timestamp"] = string(variable.timestamp)
+        props["tags"] = JSON2.write(variable.tags)
+        props["estimateDict"] = JSON2.write(variable.estimateDict)
+        props["solverDataDict"] = JSON2.write(Dict(keys(variable.solverDataDict) .=> map(vnd -> pack(dfg, vnd), values(variable.solverDataDict))))
+        props["smallData"] = JSON2.write(variable.smallData)
+        props["ready"] = variable.ready
+        props["backendset"] = variable.backendset
+        # Don't handle big data at the moment.
+        Neo4j.updatenodeproperties(neo4jNode, props)
+        Neo4j.updatenodelabels(neo4jNode, union([string(variable.label), "VARIABLE", dfg.userId, dfg.robotId, dfg.sessionId], variable.tags))
+    end
+    return variable
+end
+
 # """
 #     $(SIGNATURES)
 # Update a complete DFGFactor in the DFG.
@@ -215,18 +233,24 @@ end
 Delete a DFGVariable from the DFG using its label.
 """
 function deleteVariable!(dfg::CloudGraphsDFG, label::Symbol)::DFGVariable
-    if !haskey(dfg.labelDict, label) || !exists(dfg, label)
-        error("Variable label '$(label)' does not exist in the factor graph")
+    variable = nothing
+    if haskey(dfg.variableCache, label)
+        variable = dfg.variableCache[label]
+    else
+        # Else try get it
+        variable = getVariable(dfg, label)
     end
-    # Get variable
-    variable = getVariable(dfg, label)
-    # Delete
-    deletenode(dfg.neo4jInstance.graph, dfg.labelDict[label])
-    # Clean up caches
-    delete!(dfg.labelDict, label)
-    delete!(dfg.variableCache, label)
+    if variable == nothing
+        error("Unable to retrieve the ID for variable '$label'. Please check your connection to the database and that the variable exists.")
+    end
+
+    # Perform detach+deletion
+    _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node) where id(node)=$(variable._internalId) detach delete node ")
+
     # Clearing history
     dfg.addHistory = setdiff(dfg.addHistory, [label])
+    haskey(dfg.variableCache, label) && delete!(dfg.variableCache, label)
+    haskey(dfg.labelDict, label) && delete!(dfg.labelDict, label)
     return variable
 end
 #
