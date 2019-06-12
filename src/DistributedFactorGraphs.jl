@@ -32,6 +32,7 @@ include("services/AbstractDFG.jl")
 include("services/DFGVariable.jl")
 
 # not sure where to put
+include("Common.jl")
 include("NeedsAHome.jl")
 
 end
