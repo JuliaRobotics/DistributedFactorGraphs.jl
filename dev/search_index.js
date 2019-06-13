@@ -213,7 +213,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Reference",
     "title": "DistributedFactorGraphs.getVariables",
     "category": "function",
-    "text": "getVariables(dfg)\ngetVariables(dfg, regexFilter)\n\n\nList the DFGVariables in the DFG. Optionally specify a label regular expression to retrieves a subset of the variables.\n\n\n\n\n\n"
+    "text": "getVariables(dfg)\ngetVariables(dfg, regexFilter; tags)\n\n\nList the DFGVariables in the DFG. Optionally specify a label regular expression to retrieves a subset of the variables.\n\n\n\n\n\n"
 },
 
 {
@@ -253,7 +253,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Reference",
     "title": "DistributedFactorGraphs.ls",
     "category": "function",
-    "text": "ls(dfg)\nls(dfg, regexFilter)\n\n\nList the DFGVariables in the DFG. Optionally specify a label regular expression to retrieves a subset of the variables.\n\n\n\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor.\n\n\n\n\n\nls(dfg, label)\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.\n\n\n\n\n\n"
+    "text": "ls(dfg)\nls(dfg, regexFilter; tags)\n\n\nList the DFGVariables in the DFG. Optionally specify a label regular expression to retrieves a subset of the variables.\n\n\n\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor.\n\n\n\n\n\nls(dfg, label)\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.\n\n\n\n\n\n"
 },
 
 {
