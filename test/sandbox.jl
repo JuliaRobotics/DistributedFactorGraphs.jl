@@ -16,7 +16,8 @@ cgDFG = CloudGraphsDFG("localhost", 7474, "neo4j", "test",
     IncrementalInference.encodePackedType,
     IncrementalInference.getpackedtype,
     IncrementalInference.decodePackedType)
-# DANGER: Clear everything from session
+
+# DANGER: Clear everything from session + Neo4j database
 clearSession!(cgDFG)
 
 using RoME
@@ -49,20 +50,50 @@ helloVariable = addVariable!(cgDFG, :hellothisIsALabel_Something, Pose2)
 # Comparisons
 
 # Factors
-x0 = addVariable!(cgDFG, :x0, Pose2)
 x1 = addVariable!(cgDFG, :x1, Pose2)
+x2 = addVariable!(cgDFG, :x2, Pose2)
+x3 = addVariable!(cgDFG, :x3, Pose2)
 l1 = addVariable!(cgDFG, :l1, Pose2)
+l2 = addVariable!(cgDFG, :l2, Pose2)
+
 prior = PriorPose2( MvNormal([10; 10; pi/6.0], Matrix(Diagonal([0.1;0.1;0.05].^2))))
 addFactor!(cgDFG, [:x0], prior )
 
 pp = Pose2Pose2(MvNormal([10.0;0;pi/3], Matrix(Diagonal([0.1;0.1;0.1].^2))))
 p2br = Pose2Point2BearingRange(Normal(0,0.1),Normal(20.0,1.0))
 
+# FYI deep copies not required, since no per factor specific data in pp
+addFactor!(cgDFG, [:x1, :x2], pp, autoinit=false)
+addFactor!(cgDFG, [:x2, :x3], pp, autoinit=false)
+addFactor!(cgDFG, [:x1, :l1], p2br, autoinit=false)
+addFactor!(cgDFG, [:x2, :l1], p2br, autoinit=false)
+addFactor!(cgDFG, [:x3, :l2], p2br, autoinit=false)
 
-using JSON2
-packed = JSON2.read(json, Dict{String, PackedVariableNodeData})
-# IncrementalInference.decodePackedType(packed["default"], "VariableNodeData")
-# unpack(cgDFG, packed["default"])
-solverData = Dict(Symbol.(keys(packed)) .=> map(p -> unpack(cgDFG, p), values(packed)))
+@test setdiff(getNeighbors(cgDFG, :x2), [:x2l1f1, :x2x3f1, :x1x2f1]) == []
 
-addFactor!(cgDFG, [:x0], PriorPose2(MvNormal(zeros(3), 0.01*eye(3))) )
+# Show it
+DFG.toDotFile(dfg, "/tmp/testRmMarg.dot")
+
+
+# ##### Testing
+# newFactor = DFGFactor{CommonConvWrapper{typeof(prior)}, Symbol}(Symbol("x0f0"))
+# # newFactor.tags = union([:abc], [:FACTOR]) # TODO: And session info
+# # addNewFncVertInGraph!(fgl, newvert, currid, namestring, ready)
+# ccw = IncrementalInference.prepgenericconvolution([x0], prior, multihypo=nothing, threadmodel=SingleThreaded)
+# data_ccw = FunctionNodeData{CommonConvWrapper{typeof(prior)}}(Int[], false, false, Int[], Symbol(:test), ccw)
+# newData = IncrementalInference.setDefaultFactorNode!(cgDFG, newFactor, [x0], deepcopy(prior), multihypo=nothing, threadmodel=SingleThreaded)
+# # packedType = encodePackedType(newData)
+# #Testing
+# fnctype = newData.fnc.usrfnc!
+# fnc = getfield(IncrementalInference.getmodule(fnctype), Symbol("Packed$(IncrementalInference.getname(fnctype))"))
+# packed = convert(PackedFunctionNodeData{fnc}, newData)
+# using JSON2
+# j = JSON2.write(packed)
+# retPacked = JSON2.read(j, GenericFunctionNodeData{PackedPriorPose2,String})
+# retUnpacked = convert(GenericFunctionNodeData{IncrementalInference.getname(fnctype)}, retPacked)
+# # TODO: Need to remove this...
+# for vert in Xi
+#   push!(newData.fncargvID, vert.label) # vert._internalId # YUCK :/ -- Yup, this is a problem
+# end
+#
+#

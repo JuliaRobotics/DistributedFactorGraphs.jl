@@ -91,6 +91,20 @@ function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::Bool
     return true
 end
 
+function _getmodule(t::T) where T
+  T.name.module
+end
+function _getname(t::T) where T
+  T.name.name
+end
+
+const FunctionNodeData{T} = GenericFunctionNodeData{T, Symbol}
+FunctionNodeData(x1, x2, x3, x4, x5::Symbol, x6::T, x7::String="", x8::Vector{Int}=Int[]) where {T <: Union{FunctorInferenceType, ConvolutionObject}}= GenericFunctionNodeData{T, Symbol}(x1, x2, x3, x4, x5, x6, x7, x8)
+
+const PackedFunctionNodeData{T} = GenericFunctionNodeData{T, <: AbstractString}
+PackedFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, x7::String="", x8::Vector{Int}=Int[]) where {T <: PackedInferenceType, S <: AbstractString} = GenericFunctionNodeData(x1, x2, x3, x4, x5, x6, x7, x8)
+
+
 """
     $(SIGNATURES)
 Add a DFGFactor to a DFG.
@@ -102,7 +116,13 @@ function addFactor!(dfg::CloudGraphsDFG, variables::Vector{DFGVariable}, factor:
     props = Dict{String, Any}()
     props["label"] = string(factor.label)
     props["tags"] = JSON2.write(factor.tags)
-    # props["data"] = JSON2.write(Dict(keys(factor.solverDataDict) .=> map(vnd -> pack(dfg, vnd), values(variable.solverDataDict))))
+    # Pack the node data
+    fnctype = factor.data.fnc.usrfnc!
+    packtype = getfield(_getmodule(fnctype), Symbol("Packed$(_getname(fnctype))"))
+    packed = convert(PackedFunctionNodeData{packtype}, factor.data)
+    props["data"] = JSON2.write(packed)
+    # Include the type
+    props["fnctype"] = String(_getname(fnctype))
     props["_variableOrderSymbols"] = JSON2.write(factor._variableOrderSymbols)
     props["backendset"] = factor.backendset
     # Don't handle big data at the moment.
@@ -111,15 +131,21 @@ function addFactor!(dfg::CloudGraphsDFG, variables::Vector{DFGVariable}, factor:
     factor._internalId = neo4jNode.id
     Neo4j.updatenodelabels(neo4jNode, union([string(factor.label), "FACTOR", dfg.userId, dfg.robotId, dfg.sessionId], factor.tags))
 
+    # Add all the relationships - get them to cache them + make sure the links are correct
+    for variable in variables
+        v = getVariable(dfg, variable.label)
+        vNode = Neo4j.getnode(dfg.neo4jInstance.graph, v._internalId)
+        Neo4j.createrel(neo4jNode, vNode, "FACTORGRAPH")
+    end
+
     # Graphs.add_vertex!(dfg.g, v)
     push!(dfg.labelDict, factor.label=>factor._internalId)
     push!(dfg.factorCache, factor.label=>factor)
-    # Track insertion
-    push!(dfg.addHistory, factor.label)
+    # Track insertion only for variables
+    # push!(dfg.addHistory, factor.label
 
     return true
 end
-
 """
     $(SIGNATURES)
 Get a DFGVariable from a DFG using its underlying integer ID.
@@ -185,20 +211,24 @@ end
 #     end
 #     return dfg.g.vertices[factorId].dfgNode
 # end
-#
-# """
-#     $(SIGNATURES)
-# Get a DFGFactor from a DFG using its label.
-# """
-# function getFactor(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGFactor
-#     if typeof(label) == String
-#         label = Symbol(label)
-#     end
-#     if !haskey(dfg.labelDict, label)
-#         error("Factor label '$(label)' does not exist in the factor graph")
-#     end
-#     return dfg.g.vertices[dfg.labelDict[label]].dfgNode
-# end
+
+"""
+    $(SIGNATURES)
+Get a DFGFactor from a DFG using its label.
+"""
+function getFactor(dfg::CloudGraphsDFG, label::Union{Symbol, String}, skipCache::Bool=false)::DFGFactor
+    if typeof(label) == String
+        label = Symbol(label)
+    end
+    !skipCache && haskey(dfg.factorCache, label) && return dfg.factorCache[label]
+    # Else try get it
+    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, label)
+    if nodeId == nothing
+        error("Unable to retrieve the ID for factor '$label'. Please check your connection to the database and that the factor exists.")
+    end
+
+    return getFactor(dfg, nodeId)
+end
 
 """
     $(SIGNATURES)
@@ -405,28 +435,22 @@ end
 #
 #     return map(n -> n.dfgNode.label, neighbors)
 # end
-# """
-#     $(SIGNATURES)
-# Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
-# """
-# function getNeighbors(dfg::CloudGraphsDFG, label::Symbol; ready::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}  where T <: DFGNode
-#     if !haskey(dfg.labelDict, label)
-#         error("Variable/factor with label '$(label)' does not exist in the factor graph")
-#     end
-#     vert = dfg.g.vertices[dfg.labelDict[label]]
-#     neighbors = in_neighbors(vert, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
-#     # Additional filtering
-#     neighbors = ready != nothing ? filter(v -> v.ready == ready, neighbors) : neighbors
-#     neighbors = backendset != nothing ? filter(v -> v.backendset == backendset, neighbors) : neighbors
-#     # Variable sorting when using a factor (function order is important)
-#     if vert.dfgNode isa DFGFactor
-#         vert.dfgNode._variableOrderSymbols
-#         order = intersect(vert.dfgNode._variableOrderSymbols, map(v->v.dfgNode.label, neighbors))
-#         return order
-#     end
-#
-#     return map(n -> n.dfgNode.label, neighbors)
-# end
+"""
+    $(SIGNATURES)
+Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
+"""
+function getNeighbors(dfg::CloudGraphsDFG, label::Symbol; ready::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}
+    query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(label))--(node) where node:VARIABLE or node:FACTOR "
+    if ready != nothing || backendset != nothing
+        if ready != nothing
+            query = query + "and node.ready = $(ready)"
+        end
+        if backendset != nothing
+            query = query + "and node.backendset = $(backendset)"
+        end
+    end
+    return _getLabelsFromCyphonQuery(dfg.neo4jInstance, query)
+end
 #
 # # Aliases
 # """
