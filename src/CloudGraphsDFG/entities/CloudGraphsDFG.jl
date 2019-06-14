@@ -17,4 +17,5 @@ mutable struct CloudGraphsDFG <: AbstractDFG
     factorCache::Dict{Symbol, DFGFactor}
     addHistory::Vector{Symbol} #TODO: Discuss more - is this an audit trail?
     solverParams::Any # Solver parameters
+    useCache::Bool
 end
