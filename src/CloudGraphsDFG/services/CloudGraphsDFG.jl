@@ -1,3 +1,12 @@
+## Utility functions for getting type names and modules (from IncrementalInference)
+function _getmodule(t::T) where T
+  T.name.module
+end
+function _getname(t::T) where T
+  T.name.name
+end
+## End
+
 """
     $(SIGNATURES)
 Create a new CloudGraphs-based DFG factor graph using a Neo4j.Connection.
@@ -30,7 +39,7 @@ True if the variable or factor exists in the graph.
 """
 function exists(dfg::CloudGraphsDFG, nId::Symbol)
     # If in the dictionary, then shortcut return true
-    haskey(dfg.labelDict, nId) && return true
+    dfg.useCache && haskey(dfg.labelDict, nId) && return true
     # Otherwise try get it
     nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, nId)
     if nodeId != nothing
@@ -64,8 +73,10 @@ end
 Add a DFGVariable to a DFG.
 """
 function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::Bool
-    if haskey(dfg.labelDict, variable.label) || exists(dfg, variable) # It's in our local cache or in DB already
-        error("Variable '$(variable.label)' already exists in the factor graph")
+    if exists(dfg, variable)
+        @warn "Variable '$(variable.label)' already exists in the graph, so updating it."
+        updateVariable(dfg, variable)
+        return true
     end
     props = Dict{String, Any}()
     props["label"] = string(variable.label)
@@ -91,27 +102,15 @@ function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::Bool
     return true
 end
 
-function _getmodule(t::T) where T
-  T.name.module
-end
-function _getname(t::T) where T
-  T.name.name
-end
-
-const FunctionNodeData{T} = GenericFunctionNodeData{T, Symbol}
-FunctionNodeData(x1, x2, x3, x4, x5::Symbol, x6::T, x7::String="", x8::Vector{Int}=Int[]) where {T <: Union{FunctorInferenceType, ConvolutionObject}}= GenericFunctionNodeData{T, Symbol}(x1, x2, x3, x4, x5, x6, x7, x8)
-
-const PackedFunctionNodeData{T} = GenericFunctionNodeData{T, <: AbstractString}
-PackedFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, x7::String="", x8::Vector{Int}=Int[]) where {T <: PackedInferenceType, S <: AbstractString} = GenericFunctionNodeData(x1, x2, x3, x4, x5, x6, x7, x8)
-
-
 """
     $(SIGNATURES)
 Add a DFGFactor to a DFG.
 """
 function addFactor!(dfg::CloudGraphsDFG, variables::Vector{DFGVariable}, factor::DFGFactor)::Bool
-    if haskey(dfg.labelDict, factor.label) || exists(dfg, factor) # It's in our local cache or in DB already
-        error("Variable '$(factor.label)' already exists in the factor graph")
+    if exists(dfg, factor)
+        @warn "Factor '$(factor.label)' already exist in the graph, so updating it."
+        updateFactor(dfg, variables, factor)
+        return true
     end
     props = Dict{String, Any}()
     props["label"] = string(factor.label)
@@ -262,23 +261,23 @@ function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariabl
     if !exists(dfg, variable)
         @warn "Variable '$(variable.label)' doesn't exist in the graph, so adding it."
         addVariable(dfg, variable)
-    else
-        nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, variable.label)
-        neo4jNode = Neo4j.getnode(dfg.neo4jInstance.graph, nodeId)
-        props = getnodeproperties(dfg.neo4jInstance.graph, nodeId)
-
-        props["label"] = string(variable.label)
-        props["timestamp"] = string(variable.timestamp)
-        props["tags"] = JSON2.write(variable.tags)
-        props["estimateDict"] = JSON2.write(variable.estimateDict)
-        props["solverDataDict"] = JSON2.write(Dict(keys(variable.solverDataDict) .=> map(vnd -> pack(dfg, vnd), values(variable.solverDataDict))))
-        props["smallData"] = JSON2.write(variable.smallData)
-        props["ready"] = variable.ready
-        props["backendset"] = variable.backendset
-        # Don't handle big data at the moment.
-        Neo4j.updatenodeproperties(neo4jNode, props)
-        Neo4j.updatenodelabels(neo4jNode, union([string(variable.label), "VARIABLE", dfg.userId, dfg.robotId, dfg.sessionId], variable.tags))
+        return variable
     end
+    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, variable.label)
+    neo4jNode = Neo4j.getnode(dfg.neo4jInstance.graph, nodeId)
+    props = getnodeproperties(dfg.neo4jInstance.graph, nodeId)
+
+    props["label"] = string(variable.label)
+    props["timestamp"] = string(variable.timestamp)
+    props["tags"] = JSON2.write(variable.tags)
+    props["estimateDict"] = JSON2.write(variable.estimateDict)
+    props["solverDataDict"] = JSON2.write(Dict(keys(variable.solverDataDict) .=> map(vnd -> pack(dfg, vnd), values(variable.solverDataDict))))
+    props["smallData"] = JSON2.write(variable.smallData)
+    props["ready"] = variable.ready
+    props["backendset"] = variable.backendset
+    # Don't handle big data at the moment.
+    Neo4j.updatenodeproperties(neo4jNode, props)
+    Neo4j.updatenodelabels(neo4jNode, union([string(variable.label), "VARIABLE", dfg.userId, dfg.robotId, dfg.sessionId], variable.tags))
     return variable
 end
 
@@ -290,52 +289,28 @@ function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor
     if !exists(dfg, factor)
         @warn "Factor '$(factor.label)' doesn't exist in the graph, so adding it."
         addFactor(dfg, factor)
-    else
-        nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, factor.label)
-        neo4jNode = Neo4j.getnode(dfg.neo4jInstance.graph, nodeId)
-        props = getnodeproperties(dfg.neo4jInstance.graph, nodeId)
-
-        props["label"] = string(variable.label)
-        props["timestamp"] = string(variable.timestamp)
-        props["tags"] = JSON2.write(variable.tags)
-        props["estimateDict"] = JSON2.write(variable.estimateDict)
-        props["solverDataDict"] = JSON2.write(Dict(keys(variable.solverDataDict) .=> map(vnd -> pack(dfg, vnd), values(variable.solverDataDict))))
-        props["smallData"] = JSON2.write(variable.smallData)
-        props["ready"] = variable.ready
-        props["backendset"] = variable.backendset
-        # Don't handle big data at the moment.
-        Neo4j.updatenodeproperties(neo4jNode, props)
-        Neo4j.updatenodelabels(neo4jNode, union([string(variable.label), "VARIABLE", dfg.userId, dfg.robotId, dfg.sessionId], variable.tags))
+        return factor
     end
-    return variable
+    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, factor.label)
+    neo4jNode = Neo4j.getnode(dfg.neo4jInstance.graph, nodeId)
+    props = getnodeproperties(dfg.neo4jInstance.graph, nodeId)
 
-    @show props = getnodeproperties(dfg.neo4jInstance.graph, factorId)
-
-    label = props["label"]
-    tags = JSON2.read(props["tags"], Vector{Symbol})
-
-    data = props["data"]
-    datatype = props["fnctype"]
-    fulltype = getfield(Main, Symbol(datatype))
-    packtype = getfield(Main, Symbol("Packed"*datatype))
-    packed = JSON2.read(data, GenericFunctionNodeData{packtype,String})
-    fullFactor = dfg.decodePackedTypeFunc(packed, "")
-
+    props["label"] = string(factor.label)
+    props["tags"] = JSON2.write(factor.tags)
+    # Pack the node data
+    fnctype = factor.data.fnc.usrfnc!
+    packtype = getfield(_getmodule(fnctype), Symbol("Packed$(_getname(fnctype))"))
+    packed = convert(PackedFunctionNodeData{packtype}, factor.data)
+    props["data"] = JSON2.write(packed)
     # Include the type
-    _variableOrderSymbols = JSON2.read(props["_variableOrderSymbols"], Vector{Symbol})
-    backendset = props["backendset"]
-    ready = props["ready"]
+    props["fnctype"] = String(_getname(fnctype))
+    props["_variableOrderSymbols"] = JSON2.write(factor._variableOrderSymbols)
+    props["backendset"] = factor.backendset
+    props["ready"] = factor.ready
+    # Don't handle big data at the moment.
 
-    # Rebuild DFGVariable
-    factor = DFGFactor{typeof(fullFactor.fnc), Symbol}(Symbol(label), factorId)
-    factor.tags = tags
-    factor.data = fullFactor
-    factor._variableOrderSymbols = _variableOrderSymbols
-    factor.ready = ready
-    factor.backendset = backendset
-
-    # Add to cache
-    push!(dfg.factorCache, factor.label=>factor)
+    Neo4j.updatenodeproperties(neo4jNode, props)
+    Neo4j.updatenodelabels(neo4jNode, union([string(variable.label), "VARIABLE", dfg.userId, dfg.robotId, dfg.sessionId], variable.tags))
 
     return factor
 end
@@ -343,11 +318,42 @@ end
 
 """
     $(SIGNATURES)
+Update a complete DFGFactor in the DFG and update it's relationships.
+"""
+function updateFactor!(dfg::CloudGraphsDFG, variables::Vector{DFGVariable}, factor::DFGFactor)::DFGFactor
+    # Update the body
+    updateFactor!(dfg, factor)
+
+    # Now update the relationships
+    existingNeighbors = getNeighbors(dfg, factor)
+    if setdiff(existingNeighbors, map(v->v.label, variables)) == []
+        # Done, otherwise we need to remake the edges.
+        return factor
+    end
+    # Delete existing relationships
+    fNode = Neo4j.getnode(dfg.neo4jInstance.graph, factor._internalId)
+    for relationship in Neo4j.getrels(fNode)
+        if relationship.reltype == "FACTORGRAPH"
+            Neo4j.deleterel(relationship)
+        end
+    end
+    # Make new ones
+    for variable in variables
+        v = getVariable(dfg, variable.label)
+        vNode = Neo4j.getnode(dfg.neo4jInstance.graph, v._internalId)
+        Neo4j.createrel(neo4jNode, vNode, "FACTORGRAPH")
+    end
+
+    return factor
+end
+
+"""
+    $(SIGNATURES)
 Delete a DFGVariable from the DFG using its label.
 """
 function deleteVariable!(dfg::CloudGraphsDFG, label::Symbol)::DFGVariable
     variable = nothing
-    if haskey(dfg.variableCache, label)
+    if dfg.useCache && haskey(dfg.variableCache, label)
         variable = dfg.variableCache[label]
     else
         # Else try get it
@@ -358,7 +364,7 @@ function deleteVariable!(dfg::CloudGraphsDFG, label::Symbol)::DFGVariable
     end
 
     # Perform detach+deletion
-    _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node) where id(node)=$(variable._internalId) detach delete node ")
+    _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:VARIABLE) where id(node)=$(variable._internalId) detach delete node ")
 
     # Clearing history
     dfg.addHistory = setdiff(dfg.addHistory, [label])
@@ -373,28 +379,40 @@ end
 Delete a referenced DFGVariable from the DFG.
 """
 deleteVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariable = deleteVariable!(dfg, variable.label)
-#
-# """
-#     $(SIGNATURES)
-# Delete a DFGFactor from the DFG using its label.
-# """
-# function deleteFactor!(dfg::CloudGraphsDFG, label::Symbol)::DFGFactor
-#     if !haskey(dfg.labelDict, label)
-#         error("Factor label '$(label)' does not exist in the factor graph")
-#     end
-#     factor = dfg.g.vertices[dfg.labelDict[label]].dfgNode
-#     delete_vertex!(dfg.g.vertices[dfg.labelDict[label]], dfg.g)
-#     delete!(dfg.labelDict, label)
-#     return factor
-# end
-#
-# # Alias
-# """
-#     $(SIGNATURES)
-# Delete the referened DFGFactor from the DFG.
-# """
-# deleteFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor = deleteFactor!(dfg, factor.label)
-#
+
+"""
+    $(SIGNATURES)
+Delete a DFGFactor from the DFG using its label.
+"""
+function deleteFactor!(dfg::CloudGraphsDFG, label::Symbol)::DFGFactor
+    factor = nothing
+    if dfg.useCache && haskey(dfg.factoreCache, label)
+        factor = dfg.factorCache[label]
+    else
+        # Else try get it
+        factor = getFactor(dfg, label)
+    end
+    if factor == nothing
+        error("Unable to retrieve the ID for factor '$label'. Please check your connection to the database and that the factor exists.")
+    end
+
+    # Perform detach+deletion
+    _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:FACTOR) where id(node)=$(factor._internalId) detach delete node ")
+
+    # Clearing history
+    dfg.addHistory = setdiff(dfg.addHistory, [label])
+    haskey(dfg.factorCache, label) && delete!(dfg.factorCache, label)
+    haskey(dfg.labelDict, label) && delete!(dfg.labelDict, label)
+    return factor
+end
+
+# Alias
+"""
+    $(SIGNATURES)
+Delete the referened DFGFactor from the DFG.
+"""
+deleteFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor = deleteFactor!(dfg, factor.label)
+
 # # # Returns a flat vector of the vertices, keyed by ID.
 # # # Assuming only variables here for now - think maybe not, should be variables+factors?
 # """
