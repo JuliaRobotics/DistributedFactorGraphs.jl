@@ -87,6 +87,7 @@ x1Ret = getVariable(cgDFG, :x1)
 # Factors: Just the body
 updateFactor!(cgDFG, factor)
 # Factors: And now the links
+updateFactor!(cgDFG, [x1, x2, x3], factor)
 updateFactor!(cgDFG, [:x1, :x2, :x3], factor)
 @test setdiff(getNeighbors(cgDFG, factor.label), [:x1, :x2, :x3]) == []
 

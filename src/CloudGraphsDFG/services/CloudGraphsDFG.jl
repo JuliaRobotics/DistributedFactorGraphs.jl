@@ -156,6 +156,15 @@ end
 
 """
     $(SIGNATURES)
+Add a DFGFactor to a DFG.
+"""
+function addFactor!(dfg::CloudGraphsDFG, variableIds::Vector{Symbol}, factor::DFGFactor)::Bool
+    variables = map(vId -> getVariable(dfg, vId), variableIds)
+    return addFactor!(dfg, variables, factor)
+end
+
+"""
+    $(SIGNATURES)
 Get a DFGVariable from a DFG using its underlying integer ID.
 """
 function getVariable(dfg::CloudGraphsDFG, variableId::Int64)::DFGVariable
@@ -283,6 +292,7 @@ function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariabl
     props["ready"] = variable.ready
     props["backendset"] = variable.backendset
     # Don't handle big data at the moment.
+
     Neo4j.updatenodeproperties(neo4jNode, props)
     Neo4j.updatenodelabels(neo4jNode, union([string(variable.label), "VARIABLE", dfg.userId, dfg.robotId, dfg.sessionId], variable.tags))
     return variable
@@ -352,6 +362,15 @@ function updateFactor!(dfg::CloudGraphsDFG, variables::Vector{DFGVariable}, fact
     end
 
     return factor
+end
+
+"""
+    $(SIGNATURES)
+Update a complete DFGFactor in the DFG and update it's relationships.
+"""
+function updateFactor!(dfg::CloudGraphsDFG, variableIds::Vector{Symbol}, factor::DFGFactor)::DFGFactor
+    variables = map(vId -> getVariable(dfg, vId), variableIds)
+    return updateFactor!(dfg, variables, factor)
 end
 
 """
@@ -510,27 +529,28 @@ end
 # """
 # hasOrphans(dfg::CloudGraphsDFG)::Bool = !isFullyConnected(dfg)
 #
-# """
-#     $(SIGNATURES)
-# Retrieve a list of labels of the immediate neighbors around a given variable or factor.
-# """
-# function getNeighbors(dfg::CloudGraphsDFG, node::T; ready::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}  where T <: DFGNode
-#     if !haskey(dfg.labelDict, node.label)
-#         error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
-#     end
-#     vert = dfg.g.vertices[dfg.labelDict[node.label]]
-#     neighbors = in_neighbors(vert, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
-#     # Additional filtering
-#     neighbors = ready != nothing ? filter(v -> v.ready == ready, neighbors) : neighbors
-#     neighbors = backendset != nothing ? filter(v -> v.backendset == backendset, neighbors) : neighbors
-#     # Variable sorting (order is important)
-#     if node isa DFGFactor
-#         order = intersect(node._variableOrderSymbols, map(v->v.dfgNode.label, neighbors))
-#         return order
-#     end
-#
-#     return map(n -> n.dfgNode.label, neighbors)
-# end
+"""
+    $(SIGNATURES)
+Retrieve a list of labels of the immediate neighbors around a given variable or factor.
+"""
+function getNeighbors(dfg::CloudGraphsDFG, node::T; ready::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}  where T <: DFGNode
+    if !haskey(dfg.labelDict, node.label)
+        error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
+    end
+    vert = dfg.g.vertices[dfg.labelDict[node.label]]
+    neighbors = in_neighbors(vert, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
+    # Additional filtering
+    neighbors = ready != nothing ? filter(v -> v.ready == ready, neighbors) : neighbors
+    neighbors = backendset != nothing ? filter(v -> v.backendset == backendset, neighbors) : neighbors
+    # Variable sorting (order is important)
+    if node isa DFGFactor
+        order = intersect(node._variableOrderSymbols, map(v->v.dfgNode.label, neighbors))
+        return order
+    end
+
+    return map(n -> n.dfgNode.label, neighbors)
+end
+
 """
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
@@ -545,7 +565,10 @@ function getNeighbors(dfg::CloudGraphsDFG, label::Symbol; ready::Union{Nothing, 
             query = query + "and node.backendset = $(backendset)"
         end
     end
-    return _getLabelsFromCyphonQuery(dfg.neo4jInstance, query)
+    neighbors = _getLabelsFromCyphonQuery(dfg.neo4jInstance, query)
+    # TODO: Variable ordering
+
+    return neighbors
 end
 #
 # # Aliases
