@@ -25,7 +25,7 @@ export setSolverData
 export label, data, id
 
 # Solver (IIF) Exports
-export VariableNodeData, PackedVariableNodeData
+export VariableNodeData, PackedVariableNodeData, VariableEstimate
 export GenericFunctionNodeData#, FunctionNodeData
 export getSerializationModule, setSerializationModule!
 export pack, unpack

@@ -5,6 +5,13 @@ end
 function _getname(t::T) where T
   T.name.name
 end
+
+# Simply for convenience -don't export 
+const PackedFunctionNodeData{T} = GenericFunctionNodeData{T, <: AbstractString}
+PackedFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, x7::String="", x8::Vector{Int}=Int[]) where {T <: PackedInferenceType, S <: AbstractString} = GenericFunctionNodeData(x1, x2, x3, x4, x5, x6, x7, x8)
+const FunctionNodeData{T} = GenericFunctionNodeData{T, Symbol}
+FunctionNodeData(x1, x2, x3, x4, x5::Symbol, x6::T, x7::String="", x8::Vector{Int}=Int[]) where {T <: Union{FunctorInferenceType, ConvolutionObject}}= GenericFunctionNodeData{T, Symbol}(x1, x2, x3, x4, x5, x6, x7, x8)
+
 ## End
 
 """
@@ -260,7 +267,7 @@ Update a complete DFGVariable in the DFG.
 function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariable
     if !exists(dfg, variable)
         @warn "Variable '$(variable.label)' doesn't exist in the graph, so adding it."
-        addVariable(dfg, variable)
+        addVariable!(dfg, variable)
         return variable
     end
     nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, variable.label)
@@ -288,7 +295,7 @@ Update a complete DFGFactor in the DFG.
 function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor
     if !exists(dfg, factor)
         @warn "Factor '$(factor.label)' doesn't exist in the graph, so adding it."
-        addFactor(dfg, factor)
+        addFactor!(dfg, factor)
         return factor
     end
     nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, factor.label)
