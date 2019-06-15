@@ -62,18 +62,23 @@ addFactor!(cgDFG, [:x1], prior )
 
 pp = Pose2Pose2(MvNormal([10.0;0;pi/3], Matrix(Diagonal([0.1;0.1;0.1].^2))))
 p2br = Pose2Point2BearingRange(Normal(0,0.1),Normal(20.0,1.0))
-
 factor = addFactor!(cgDFG, [:x1, :x2], pp, autoinit=false)
-addFactor!(cgDFG, [:x2, :x3], pp, autoinit=false)
-addFactor!(cgDFG, [:x1, :l1], p2br, autoinit=false)
-addFactor!(cgDFG, [:x2, :l1], p2br, autoinit=false)
-addFactor!(cgDFG, [:x3, :l2], p2br, autoinit=false)
-
-@test setdiff(getNeighbors(cgDFG, :x2), [:x2l1f1, :x2x3f1, :x1x2f1]) == []
+x2x3f1 = addFactor!(cgDFG, [:x2, :x3], pp, autoinit=false)
+x1l1f1 = addFactor!(cgDFG, [:x1, :l1], p2br, autoinit=false)
+x2l1f1 = addFactor!(cgDFG, [:x2, :l1], p2br, autoinit=false)
+x3l2f1 = addFactor!(cgDFG, [:x3, :l2], p2br, autoinit=false)
 
 # Testing getFactor
 retFactor = getFactor(cgDFG, :x1f1)
 retFactor = getFactor(cgDFG, :x1x2f1)
+
+# Testing variable orderings
+factRet = getFactor(cgDFG, :x2x3f1)
+@test factRet._variableOrderSymbols ==[:x2, :x3]
+
+# Testing neighbors
+@test setdiff(getNeighbors(cgDFG, :x2), [:x2l1f1, :x2x3f1, :x1x2f1]) == []
+@test getNeighbors(cgDFG, :x2) == getNeighbors(cgDFG, x2)
 
 # Test update
 # Variables

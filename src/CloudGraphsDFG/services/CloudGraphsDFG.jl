@@ -12,6 +12,23 @@ PackedFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, x7::String="", x8::Vector{I
 const FunctionNodeData{T} = GenericFunctionNodeData{T, Symbol}
 FunctionNodeData(x1, x2, x3, x4, x5::Symbol, x6::T, x7::String="", x8::Vector{Int}=Int[]) where {T <: Union{FunctorInferenceType, ConvolutionObject}}= GenericFunctionNodeData{T, Symbol}(x1, x2, x3, x4, x5, x6, x7, x8)
 
+function _getNodeType(dfg::CloudGraphsDFG, nodeLabel::Symbol)::Symbol
+    dfg.useCache && haskey(dfg.variableDict, nodeLabel) && return :VARIABLE
+    dfg.useCache && haskey(dfg.factorDict, nodeLabel) && return :FACTOR
+    nodeId = nothing
+    if dfg.useCache && haskey(dfg.labelDict)
+        nodeId = dfg.labelDict[nodeLabel]
+    else
+        nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, nodeLabel)
+    end
+    # Erk, little expensive to do this...
+    nodeId == nothing && error("Cannot find node with label '$nodeLabel'!")
+    labels = getnodelabels(getnode(dfg.neo4jInstance.graph, nodeId))
+    "VARIABLE" in labels && return :VARIABLE
+    "FACTOR" in labels && return :FACTOR
+    error("Node with label '$nodeLabel' has neither FACTOR nor VARIABLE labels")
+end
+
 ## End
 
 """
@@ -119,6 +136,11 @@ function addFactor!(dfg::CloudGraphsDFG, variables::Vector{DFGVariable}, factor:
         updateFactor(dfg, variables, factor)
         return true
     end
+
+    # Update the variable ordering
+    factor._variableOrderSymbols = map(v->v.label, variables)
+
+    # Construct the properties to save
     props = Dict{String, Any}()
     props["label"] = string(factor.label)
     props["tags"] = JSON2.write(factor.tags)
@@ -220,7 +242,7 @@ end
 Get a DFGFactor from a DFG using its underlying integer ID.
 """
 function getFactor(dfg::CloudGraphsDFG, factorId::Int64)::DFGFactor
-    @show props = getnodeproperties(dfg.neo4jInstance.graph, factorId)
+    props = getnodeproperties(dfg.neo4jInstance.graph, factorId)
 
     label = props["label"]
     tags = JSON2.read(props["tags"], Vector{Symbol})
@@ -534,21 +556,21 @@ end
 Retrieve a list of labels of the immediate neighbors around a given variable or factor.
 """
 function getNeighbors(dfg::CloudGraphsDFG, node::T; ready::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}  where T <: DFGNode
-    if !haskey(dfg.labelDict, node.label)
-        error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
+    query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(node.label))--(node) where node:VARIABLE or node:FACTOR "
+    if ready != nothing || backendset != nothing
+        if ready != nothing
+            query = query + "and node.ready = $(ready)"
+        end
+        if backendset != nothing
+            query = query + "and node.backendset = $(backendset)"
+        end
     end
-    vert = dfg.g.vertices[dfg.labelDict[node.label]]
-    neighbors = in_neighbors(vert, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
-    # Additional filtering
-    neighbors = ready != nothing ? filter(v -> v.ready == ready, neighbors) : neighbors
-    neighbors = backendset != nothing ? filter(v -> v.backendset == backendset, neighbors) : neighbors
-    # Variable sorting (order is important)
+    neighbors = _getLabelsFromCyphonQuery(dfg.neo4jInstance, query)
+    # If factor, need to do variable ordering
     if node isa DFGFactor
         order = intersect(node._variableOrderSymbols, map(v->v.dfgNode.label, neighbors))
-        return order
     end
-
-    return map(n -> n.dfgNode.label, neighbors)
+    return neighbors
 end
 
 """
@@ -566,27 +588,30 @@ function getNeighbors(dfg::CloudGraphsDFG, label::Symbol; ready::Union{Nothing, 
         end
     end
     neighbors = _getLabelsFromCyphonQuery(dfg.neo4jInstance, query)
-    # TODO: Variable ordering
-
+    # If factor, need to do variable ordering
+    if _getNodeType(dfg, label) == :FACTOR
+        factor = getFactor(dfg, label)
+        order = intersect(factor._variableOrderSymbols, map(v->v.dfgNode.label, neighbors))
+    end
     return neighbors
 end
-#
-# # Aliases
-# """
-#     $(SIGNATURES)
-# Retrieve a list of labels of the immediate neighbors around a given variable or factor.
-# """
-# function ls(dfg::CloudGraphsDFG, node::T)::Vector{Symbol} where T <: DFGNode
-#     return getNeighbors(dfg, node)
-# end
-# """
-#     $(SIGNATURES)
-# Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
-# """
-# function ls(dfg::CloudGraphsDFG, label::Symbol)::Vector{Symbol} where T <: DFGNode
-#     return getNeighbors(dfg, label)
-# end
-#
+
+# Aliases
+"""
+    $(SIGNATURES)
+Retrieve a list of labels of the immediate neighbors around a given variable or factor.
+"""
+function ls(dfg::CloudGraphsDFG, node::T)::Vector{Symbol} where T <: DFGNode
+    return getNeighbors(dfg, node)
+end
+"""
+    $(SIGNATURES)
+Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
+"""
+function ls(dfg::CloudGraphsDFG, label::Symbol)::Vector{Symbol} where T <: DFGNode
+    return getNeighbors(dfg, label)
+end
+
 # function _copyIntoGraph!(sourceDFG::CloudGraphsDFG, destDFG::CloudGraphsDFG, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false)::Nothing
 #     # Split into variables and factors
 #     verts = map(id -> sourceDFG.g.vertices[sourceDFG.labelDict[id]], variableFactorLabels)
