@@ -37,7 +37,7 @@ end
 variable = getVariable(cgDFG, :x0)
 push!(variable.tags, :EXTRAEXTRA)
 updateVariable!(cgDFG, variable)
-variableBack = getVariable(cgDFG, :x0, true)
+variableBack = getVariable(cgDFG, :x0,)
 @test variableBack.tags == variable.tags
 @test deleteVariable!(cgDFG, :x0).label == :x0
 
@@ -60,29 +60,9 @@ l2 = addVariable!(cgDFG, :l2, Pose2)
 prior = PriorPose2( MvNormal([10; 10; pi/6.0], Matrix(Diagonal([0.1;0.1;0.05].^2))))
 addFactor!(cgDFG, [:x1], prior )
 
-retFactor = getFactor(cgDFG, :x1f1)
-#skipCache
-retFactor = getFactor(cgDFG, :x1f1)
-
-# TESTING
-using JSON2
-props = Dict{String,Any}("label"=>"x1f1","ready"=>0,"_variableOrderSymbols"=>"[]","data"=>"{\"fncargvID\":[\"x1\"],\"eliminated\":false,\"potentialused\":false,\"edgeIDs\":[],\"frommodule\":\"RoME\",\"fnc\":{\"str\":\"FullNormal(\\ndim: 3\\nμ: [10.0, 10.0, 0.523599]\\nΣ: [0.01 0.0 0.0; 0.0 0.01 0.0; 0.0 0.0 0.0025]\\n)\\n\"},\"multihypo\":\"\",\"certainhypo\":[1]}","backendset"=>0,"tags"=>"[\"FACTOR\"]","fnctype"=>"PriorPose2")
-data = "{\"fncargvID\":[\"x1\"],\"eliminated\":false,\"potentialused\":false,\"edgeIDs\":[],\"frommodule\":\"RoME\",\"fnc\":{\"str\":\"FullNormal(\\ndim: 3\\nμ: [10.0, 10.0, 0.523599]\\nΣ: [0.01 0.0 0.0; 0.0 0.01 0.0; 0.0 0.0 0.0025]\\n)\\n\"},\"multihypo\":\"\",\"certainhypo\":[1]}"
-datatype = "PriorPose2"
-packtype = getfield(Main, Symbol("Packed$(datatype)"))
-fulltype = getfield(Main, Symbol(datatype))
-packed = JSON2.read(data, GenericFunctionNodeData{packtype,String})
-
-tada = cgDFG.decodePackedTypeFunc(packed, "")
-# usrtyp = convert(FunctorInferenceType, packed.fnc)
-# fulltype = GenericFunctionNodeData{CommonConvWrapper{usrtyp}, Symbol}
-# tada = convert(fulltype, packed)
-
-
 pp = Pose2Pose2(MvNormal([10.0;0;pi/3], Matrix(Diagonal([0.1;0.1;0.1].^2))))
 p2br = Pose2Point2BearingRange(Normal(0,0.1),Normal(20.0,1.0))
 
-# FYI deep copies not required, since no per factor specific data in pp
 factor = addFactor!(cgDFG, [:x1, :x2], pp, autoinit=false)
 addFactor!(cgDFG, [:x2, :x3], pp, autoinit=false)
 addFactor!(cgDFG, [:x1, :l1], p2br, autoinit=false)
@@ -91,11 +71,24 @@ addFactor!(cgDFG, [:x3, :l2], p2br, autoinit=false)
 
 @test setdiff(getNeighbors(cgDFG, :x2), [:x2l1f1, :x2x3f1, :x1x2f1]) == []
 
+# Testing getFactor
+retFactor = getFactor(cgDFG, :x1f1)
 retFactor = getFactor(cgDFG, :x1x2f1)
 
-# TODO: Updates
+# Test update
+# Variables
 ve = VariableEstimate([0.1, 0.2, 0.3], :testKey, :testKey)
 push!(x1.estimateDict, :testKey => ve)
+updateVariable!(cgDFG, x1)
+x1Ret = getVariable(cgDFG, :x1)
+@test haskey(x1Ret.estimateDict, :testKey)
+@test x1Ret.estimateDict[:testKey].estimate == ve.estimate
+
+# Factors: Just the body
+updateFactor!(cgDFG, factor)
+# Factors: And now the links
+updateFactor!(cgDFG, [:x1, :x2, :x3], factor)
+@test setdiff(getNeighbors(cgDFG, factor.label), [:x1, :x2, :x3]) == []
 
 # Show it
 DFG.toDotFile(dfg, "/tmp/testRmMarg.dot")

@@ -6,7 +6,7 @@ function _getname(t::T) where T
   T.name.name
 end
 
-# Simply for convenience -don't export 
+# Simply for convenience -don't export
 const PackedFunctionNodeData{T} = GenericFunctionNodeData{T, <: AbstractString}
 PackedFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, x7::String="", x8::Vector{Int}=Int[]) where {T <: PackedInferenceType, S <: AbstractString} = GenericFunctionNodeData(x1, x2, x3, x4, x5, x6, x7, x8)
 const FunctionNodeData{T} = GenericFunctionNodeData{T, Symbol}
@@ -317,7 +317,7 @@ function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor
     # Don't handle big data at the moment.
 
     Neo4j.updatenodeproperties(neo4jNode, props)
-    Neo4j.updatenodelabels(neo4jNode, union([string(variable.label), "VARIABLE", dfg.userId, dfg.robotId, dfg.sessionId], variable.tags))
+    Neo4j.updatenodelabels(neo4jNode, union([string(factor.label), "FACTOR", dfg.userId, dfg.robotId, dfg.sessionId], factor.tags))
 
     return factor
 end
@@ -329,7 +329,7 @@ Update a complete DFGFactor in the DFG and update it's relationships.
 """
 function updateFactor!(dfg::CloudGraphsDFG, variables::Vector{DFGVariable}, factor::DFGFactor)::DFGFactor
     # Update the body
-    updateFactor!(dfg, factor)
+    factor = updateFactor!(dfg, factor)
 
     # Now update the relationships
     existingNeighbors = getNeighbors(dfg, factor)
