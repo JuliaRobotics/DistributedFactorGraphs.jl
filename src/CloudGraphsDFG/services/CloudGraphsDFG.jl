@@ -659,41 +659,25 @@ function _copyIntoGraph!(sourceDFG::CloudGraphsDFG, destDFG::CloudGraphsDFG, var
     return nothing
 end
 
-# """
-#     $(SIGNATURES)
-# Retrieve a deep subgraph copy around a given variable or factor.
-# Optionally provide a distance to specify the number of edges should be followed.
-# Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
-# Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
-# """
-# function getSubgraphAroundNode(dfg::CloudGraphsDFG, node::T, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::CloudGraphsDFG=CloudGraphsDFG())::CloudGraphsDFG where T <: DFGNode
-#     if !haskey(dfg.labelDict, node.label)
-#         error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
-#     end
-#
-#     # Build a list of all unique neighbors inside 'distance'
-#     neighborList = Dict{Symbol, Any}()
-#     push!(neighborList, node.label => dfg.g.vertices[dfg.labelDict[node.label]])
-#     curList = Dict{Symbol, Any}(node.label => dfg.g.vertices[dfg.labelDict[node.label]])
-#     for dist in 1:distance
-#         newNeighbors = Dict{Symbol, Any}()
-#         for (key, node) in curList
-#             neighbors = in_neighbors(node, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
-#             for neighbor in neighbors
-#                 if !haskey(neighborList, neighbor.dfgNode.label)
-#                     push!(neighborList, neighbor.dfgNode.label => neighbor)
-#                     push!(newNeighbors, neighbor.dfgNode.label => neighbor)
-#                 end
-#             end
-#         end
-#         curList = newNeighbors
-#     end
-#
-#     # Copy the section of graph we want
-#     _copyIntoGraph!(dfg, addToDFG, collect(keys(neighborList)), includeOrphanFactors)
-#     return addToDFG
-# end
-#
+"""
+    $(SIGNATURES)
+Retrieve a deep subgraph copy around a given variable or factor.
+Optionally provide a distance to specify the number of edges should be followed.
+Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
+Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
+Note: Currently only supports distance <= 25. Please write an issue against DistributedFactorGraphs if this is a challenge.
+"""
+function getSubgraphAroundNode(dfg::CloudGraphsDFG, node::T, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::CloudGraphsDFG=CloudGraphsDFG())::CloudGraphsDFG where T <: DFGNode
+    distance < 1 && error("getSubgraphAroundNode() only works for distance > 0")
+
+    # Thank you Neo4j for 0..* awesomeness!!
+    neighborList = _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(node.label))-[FACTORGRAPH*0..$distance]-(node)")
+
+    # Copy the section of graph we want
+    _copyIntoGraph!(dfg, addToDFG, neighborList, includeOrphanFactors)
+    return addToDFG
+end
+
 # """
 #     $(SIGNATURES)
 # Get a deep subgraph copy from the DFG given a list of variables and factors.

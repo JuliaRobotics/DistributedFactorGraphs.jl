@@ -83,7 +83,7 @@ end
     @test getFactor(cgDFG, :x1x2f1) != nothing
 
     # Testing variable orderings
-    @test factRet._variableOrderSymbols ==[:x2, :x3]
+    @test getFactor(cgDFG, :x2x3f1)._variableOrderSymbols ==[:x2, :x3]
 end
 
 @testset "ls() and getNeighbors() tests" begin
@@ -148,6 +148,27 @@ end
     @test setdiff(map(v->v.label, getVariables(cgDFGCopy)), map(v->v.label, getVariables(cgDFG))) == []
     @test setdiff(map(f->f.label, getFactors(cgDFGCopy)), map(f->f.label, getFactors(cgDFG))) == []
 end
+
+@testset "getSubgraphAroundNode" begin
+cgDFGCopy = CloudGraphsDFG("localhost", 7474, "neo4j", "test",
+    "testUser", "testRobot", "testSessionSGCopy",
+    IncrementalInference.encodePackedType,
+    IncrementalInference.getpackedtype,
+    IncrementalInference.decodePackedType)
+# DANGER: Clear everything from session + Neo4j database
+clearSession!(cgDFGCopy)
+
+# Single neighbors around :x2
+sg = getSubgraphAroundNode(cgDFG, getVariable(cgDFG, :x2), 1, true, cgDFGCopy)
+@test getVariableIds(cgDFGCopy) == [:x2]
+@test setdiff(getFactorIds(cgDFGCopy), [:x2l1f1, :x1x2f1, :x2x3f1]) == []
+# In-place update with distance = 2
+getSubgraphAroundNode(cgDFG, getVariable(cgDFG, :x2), 2, true, cgDFGCopy)
+@test getVariableIds(cgDFGCopy) == [:x2]
+@test setdiff(getFactorIds(cgDFGCopy), [:x2l1f1, :x1x2f1, :x2x3f1]) == []
+
+# TODO: The graph is not fully connected when in-place copy is done
+# TODO FIX ABOVE
 
 # Show it
 DFG.toDotFile(dfg, "/tmp/testRmMarg.dot")
