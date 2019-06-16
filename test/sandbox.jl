@@ -170,6 +170,7 @@ getSubgraphAroundNode(cgDFG, getVariable(cgDFG, :x2), 2, true, cgDFGCopy)
 # TODO: The graph is not fully connected when in-place copy is done
 # TODO FIX ABOVE
 
+
 # Show it
 DFG.toDotFile(dfg, "/tmp/testRmMarg.dot")
 
