@@ -91,7 +91,7 @@ cgDFGCopy = CloudGraphsDFG("localhost", 7474, "neo4j", "test",
 clearSession!(cgDFGCopy)
 DistributedFactorGraphs._copyIntoGraph!(cgDFG, cgDFGCopy, union(getVariableIds(cgDFG), getFactorIds(cgDFG)), false)
 # Should be able to copy again
-copySession!!(cgDFG, cgDFGCopy, union(getVariableIds(cgDFG), getFactorIds(cgDFG)), false)
+copySession!(cgDFG, cgDFGCopy, union(getVariableIds(cgDFG), getFactorIds(cgDFG)), false)
 end
 
 # Testing getFactor
