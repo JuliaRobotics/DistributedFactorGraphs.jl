@@ -1,5 +1,6 @@
 # Additional exports
 export copySession!
+export clearSession!
 
 ## Utility functions for getting type names and modules (from IncrementalInference)
 function _getmodule(t::T) where T
@@ -100,7 +101,7 @@ end
 DANGER: Copies and overwrites the destination session
 """
 function copySession!(sourceDFG::CloudGraphsDFG, destDFG::CloudGraphsDFG)::Nothing
-    _copyIntoGraph!(sourceDFG, destDFG, union(getVariableIds(cgDFG), getFactorIds(cgDFG)), true)
+    _copyIntoGraph!(sourceDFG, destDFG, union(getVariableIds(sourceDFG), getFactorIds(sourceDFG)), true)
     return nothing
 end
 
@@ -532,7 +533,7 @@ getFactors(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vec
 Get neighbors around a given node. TODO: Refactor this
 """
 function lsf(dfg::CloudGraphsDFG, label::Symbol)::Vector{Symbol}
-  return GraphsJl.getNeighbors(dfg, label)
+  return getNeighbors(dfg, label)
 end
 
 """
@@ -604,7 +605,7 @@ function getNeighbors(dfg::CloudGraphsDFG, label::Symbol; ready::Union{Nothing, 
     # If factor, need to do variable ordering
     if _getNodeType(dfg, label) == :FACTOR
         factor = getFactor(dfg, label)
-        order = intersect(factor._variableOrderSymbols, map(v->v.dfgNode.label, neighbors))
+        order = intersect(factor._variableOrderSymbols, neighbors)
     end
     return neighbors
 end
