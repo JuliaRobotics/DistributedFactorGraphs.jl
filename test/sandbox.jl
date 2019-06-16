@@ -68,6 +68,32 @@ x1l1f1 = addFactor!(cgDFG, [:x1, :l1], p2br, autoinit=false)
 x2l1f1 = addFactor!(cgDFG, [:x2, :l1], p2br, autoinit=false)
 x3l2f1 = addFactor!(cgDFG, [:x3, :l2], p2br, autoinit=false)
 
+@testset "ls() tests" begin
+    # Not fast though, TODO: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/39
+    vars = getVariables(cgDFG)
+    vars2 = ls(cgDFG)
+    @test map(v->v.label, vars) == map(v->v.label, vars2)
+    @test setdiff(map(v->v.label, vars), [:x1, :x2, :x3, :l1, :l2]) == []
+
+    facts = getFactors(cgDFG)
+    facts2 = lsf(cgDFG)
+    @test map(v->v.label, facts) == map(v->v.label, facts2)
+    @test setdiff(map(f->f.label, facts), [:x1x2f1, :x1f1, :x2l1f1, :x2x3f1, :x3l2f1, :x1l1f1]) == []
+end
+
+@testset "_copyIntoGraph! and copySession!() tests" begin
+cgDFGCopy = CloudGraphsDFG("localhost", 7474, "neo4j", "test",
+    "testUser", "testRobot", "testSessionCopy",
+    IncrementalInference.encodePackedType,
+    IncrementalInference.getpackedtype,
+    IncrementalInference.decodePackedType)
+# DANGER: Clear everything from session + Neo4j database
+clearSession!(cgDFGCopy)
+DistributedFactorGraphs._copyIntoGraph!(cgDFG, cgDFGCopy, union(getVariableIds(cgDFG), getFactorIds(cgDFG)), false)
+# Should be able to copy again
+copySession!!(cgDFG, cgDFGCopy, union(getVariableIds(cgDFG), getFactorIds(cgDFG)), false)
+end
+
 # Testing getFactor
 retFactor = getFactor(cgDFG, :x1f1)
 retFactor = getFactor(cgDFG, :x1x2f1)
@@ -77,8 +103,11 @@ factRet = getFactor(cgDFG, :x2x3f1)
 @test factRet._variableOrderSymbols ==[:x2, :x3]
 
 # Testing neighbors
-@test setdiff(getNeighbors(cgDFG, :x2), [:x2l1f1, :x2x3f1, :x1x2f1]) == []
-@test getNeighbors(cgDFG, :x2) == getNeighbors(cgDFG, x2)
+@testset "getNeighbors() tests" begin
+    @test setdiff(getNeighbors(cgDFG, :x2), [:x2l1f1, :x2x3f1, :x1x2f1]) == []
+    @test getNeighbors(cgDFG, :x2) == getNeighbors(cgDFG, x2)
+    @test lsf(cgDFG, :x2) == getNeighbors(cgDFG, :x2)
+end
 
 # Test update
 # Variables
@@ -95,6 +124,8 @@ updateFactor!(cgDFG, factor)
 updateFactor!(cgDFG, [x1, x2, x3], factor)
 updateFactor!(cgDFG, [:x1, :x2, :x3], factor)
 @test setdiff(getNeighbors(cgDFG, factor.label), [:x1, :x2, :x3]) == []
+
+# Test ready and backendset filtering
 
 # Show it
 DFG.toDotFile(dfg, "/tmp/testRmMarg.dot")

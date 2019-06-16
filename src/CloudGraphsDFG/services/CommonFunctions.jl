@@ -236,13 +236,13 @@ $(SIGNATURES)
 Try get a Neo4j node ID from a node label.
 """
 function _tryGetNeoNodeIdFromNodeLabel(neo4jInstance::Neo4jInstance, userId::String, robotId::String, sessionId::String, nodeLabel::Symbol)::Union{Nothing, Int}
-    @info "Looking up symbolic node ID where n.label = '$nodeLabel'..."
+    @debug "Looking up symbolic node ID where n.label = '$nodeLabel'..."
     nodes = _getNeoNodesFromCyphonQuery(neo4jInstance, "(node:$userId:$robotId:$sessionId) where exists(node.label) and node.label = \"$(string(nodeLabel))\"")
     if(length(nodes) != 1)
         return nothing
     end
     nodeId = nodes[1].id
-    @info "Found NeoNode ID = $nodeId..."
+    @debug "Found NeoNode ID = $nodeId..."
     return nodeId
 end
 

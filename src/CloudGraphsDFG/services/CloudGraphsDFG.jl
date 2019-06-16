@@ -1,3 +1,6 @@
+# Additional exports
+export copySession!
+
 ## Utility functions for getting type names and modules (from IncrementalInference)
 function _getmodule(t::T) where T
   T.name.module
@@ -94,12 +97,21 @@ end
 
 """
     $(SIGNATURES)
+DANGER: Copies and overwrites the destination session
+"""
+function copySession!(sourceDFG::CloudGraphsDFG, destDFG::CloudGraphsDFG)::Nothing
+    _copyIntoGraph!(sourceDFG, destDFG, union(getVariableIds(cgDFG), getFactorIds(cgDFG)), true)
+    return nothing
+end
+
+"""
+    $(SIGNATURES)
 Add a DFGVariable to a DFG.
 """
 function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::Bool
     if exists(dfg, variable)
         @warn "Variable '$(variable.label)' already exists in the graph, so updating it."
-        updateVariable(dfg, variable)
+        updateVariable!(dfg, variable)
         return true
     end
     props = Dict{String, Any}()
@@ -133,7 +145,7 @@ Add a DFGFactor to a DFG.
 function addFactor!(dfg::CloudGraphsDFG, variables::Vector{DFGVariable}, factor::DFGFactor)::Bool
     if exists(dfg, factor)
         @warn "Factor '$(factor.label)' already exist in the graph, so updating it."
-        updateFactor(dfg, variables, factor)
+        updateFactor!(dfg, variables, factor)
         return true
     end
 
@@ -461,28 +473,25 @@ Delete the referened DFGFactor from the DFG.
 """
 deleteFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor = deleteFactor!(dfg, factor.label)
 
-# # # Returns a flat vector of the vertices, keyed by ID.
-# # # Assuming only variables here for now - think maybe not, should be variables+factors?
-# """
-#     $(SIGNATURES)
-# List the DFGVariables in the DFG.
-# Optionally specify a label regular expression to retrieves a subset of the variables.
-# """
-# function ls(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGVariable}
-#     variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGVariable, vertices(dfg.g)))
-#     if regexFilter != nothing
-#         variables = filter(v -> occursin(regexFilter, String(v.label)), variables)
-#     end
-#     return variables
-# end
-#
-# # Alias
-# """
-#     $(SIGNATURES)
-# List the DFGVariables in the DFG.
-# Optionally specify a label regular expression to retrieves a subset of the variables.
-# """
-# getVariables(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGVariable} = ls(dfg, regexFilter)
+# Returns a flat vector of the vertices, keyed by ID.
+# Assuming only variables here for now - think maybe not, should be variables+factors?
+"""
+    $(SIGNATURES)
+List the DFGVariables in the DFG.
+Optionally specify a label regular expression to retrieves a subset of the variables.
+"""
+function ls(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGVariable}
+    variableIds = getVariableIds(dfg, regexFilter)
+    return map(vId->getVariable(dfg, vId), variableIds)
+end
+
+# Alias
+"""
+    $(SIGNATURES)
+List the DFGVariables in the DFG.
+Optionally specify a label regular expression to retrieves a subset of the variables.
+"""
+getVariables(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGVariable} = ls(dfg, regexFilter)
 
 """
     $(SIGNATURES)
@@ -497,30 +506,34 @@ function getVariableIds(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=
         return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):VARIABLE) where node.label =~ '$(regexFilter.pattern)'")
     end
 end
-#
-# """
-#     $(SIGNATURES)
-# List the DFGFactors in the DFG.
-# Optionally specify a label regular expression to retrieves a subset of the factors.
-# """
-# function lsf(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGFactor}
-#     factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGFactor, vertices(dfg.g)))
-#     if regexFilter != nothing
-#         factors = filter(f -> occursin(regexFilter, String(f.label)), factors)
-#     end
-#     return factors
-# end
-# function lsf(dfg::CloudGraphsDFG, label::Symbol)::Vector{Symbol}
-#   return GraphsJl.getNeighbors(dfg, label)
-# end
-#
-# # Alias
-# """
-#     $(SIGNATURES)
-# List the DFGFactors in the DFG.
-# Optionally specify a label regular expression to retrieves a subset of the factors.
-# """
-# getFactors(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGFactor} = lsf(dfg, regexFilter)
+
+"""
+    $(SIGNATURES)
+List the DFGFactors in the DFG.
+Optionally specify a label regular expression to retrieves a subset of the factors.
+"""
+function lsf(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGFactor}
+    factorIds = getFactorIds(dfg, regexFilter)
+    return map(vId->getFactor(dfg, vId), factorIds)
+end
+
+# Alias
+"""
+    $(SIGNATURES)
+List the DFGFactors in the DFG.
+Optionally specify a label regular expression to retrieves a subset of the factors.
+"""
+getFactors(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGFactor} = lsf(dfg, regexFilter)
+
+# Alias - getNeighbors
+#TODO: Refactor this
+"""
+    $(SIGNATURES)
+Get neighbors around a given node. TODO: Refactor this
+"""
+function lsf(dfg::CloudGraphsDFG, label::Symbol)::Vector{Symbol}
+  return GraphsJl.getNeighbors(dfg, label)
+end
 
 """
     $(SIGNATURES)
@@ -567,7 +580,7 @@ function getNeighbors(dfg::CloudGraphsDFG, node::T; ready::Union{Nothing, Int}=n
     end
     neighbors = _getLabelsFromCyphonQuery(dfg.neo4jInstance, query)
     # If factor, need to do variable ordering
-    if node isa DFGFactor
+    if T == DFGFactor
         order = intersect(node._variableOrderSymbols, map(v->v.dfgNode.label, neighbors))
     end
     return neighbors
@@ -612,41 +625,39 @@ function ls(dfg::CloudGraphsDFG, label::Symbol)::Vector{Symbol} where T <: DFGNo
     return getNeighbors(dfg, label)
 end
 
-# function _copyIntoGraph!(sourceDFG::CloudGraphsDFG, destDFG::CloudGraphsDFG, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false)::Nothing
-#     # Split into variables and factors
-#     verts = map(id -> sourceDFG.g.vertices[sourceDFG.labelDict[id]], variableFactorLabels)
-#     sourceVariables = filter(n -> n.dfgNode isa DFGVariable, verts)
-#     sourceFactors = filter(n -> n.dfgNode isa DFGFactor, verts)
-#
-#     # Now we have to add all variables first,
-#     for variable in sourceVariables
-#         if !haskey(destDFG.labelDict, variable.dfgNode.label)
-#             addVariable!(destDFG, deepcopy(variable.dfgNode))
-#         end
-#     end
-#     # And then all factors to the destDFG.
-#     for factor in sourceFactors
-#         if !haskey(destDFG.labelDict, factor.dfgNode.label)
-#             # Get the original factor variables (we need them to create it)
-#             variables = in_neighbors(factor, sourceDFG.g)
-#             # Find the labels and associated variables in our new subgraph
-#             factVariables = DFGVariable[]
-#             for variable in variables
-#                 if haskey(destDFG.labelDict, variable.dfgNode.label)
-#                     push!(factVariables, getVariable(destDFG, variable.dfgNode.label))
-#                     #otherwise ignore
-#                 end
-#             end
-#
-#             # Only if we have all of them should we add it (otherwise strange things may happen on evaluation)
-#             if includeOrphanFactors || length(factVariables) == length(variables)
-#                 addFactor!(destDFG, factVariables, deepcopy(factor.dfgNode))
-#             end
-#         end
-#     end
-#     return nothing
-# end
-#
+function _copyIntoGraph!(sourceDFG::CloudGraphsDFG, destDFG::CloudGraphsDFG, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false)::Nothing
+    # Split into variables and factors
+    sourceVariables = map(vId->getVariable(sourceDFG, vId), intersect(getVariableIds(sourceDFG), variableFactorLabels))
+    sourceFactors = map(fId->getFactor(sourceDFG, fId), intersect(getFactorIds(sourceDFG), variableFactorLabels))
+    if length(sourceVariables) + length(sourceFactors) != length(variableFactorLabels)
+        rem = setdiff(sourceVariables, variableFactorLabels)
+        rem = setdiff(sourceFactors, variableFactorLabels)
+        error("Cannot copy because cannot find the following nodes in the source graph: $rem")
+    end
+
+    # Now we have to add all variables first,
+    for variable in sourceVariables
+        addVariable!(destDFG, deepcopy(variable))
+    end
+    # And then all factors to the destDFG.
+    for factor in sourceFactors
+        # Get the original factor variables (we need them to create it)
+        sourceFactorVariableIds = getNeighbors(sourceDFG, factor)
+        # Find the labels and associated variables in our new subgraph
+        factVariableIds = Symbol[]
+        for variable in sourceFactorVariableIds
+            if exists(destDFG, variable)
+                push!(factVariableIds, variable)
+            end
+        end
+        # Only if we have all of them should we add it (otherwise strange things may happen on evaluation)
+        if includeOrphanFactors || length(factVariableIds) == length(sourceFactorVariableIds)
+            addFactor!(destDFG, factVariableIds, deepcopy(factor))
+        end
+    end
+    return nothing
+end
+
 # """
 #     $(SIGNATURES)
 # Retrieve a deep subgraph copy around a given variable or factor.
