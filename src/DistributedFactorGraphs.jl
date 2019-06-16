@@ -38,6 +38,7 @@ include("GraphsDFG/GraphsDFG.jl")
 # Include the Cloudgraphs API
 include("CloudGraphsDFG/CloudGraphsDFG.jl")
 # not sure where to put
+include("Common.jl")
 include("NeedsAHome.jl")
 
 end
