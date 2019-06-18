@@ -791,6 +791,8 @@ function getAdjacencyMatrix(dfg::CloudGraphsDFG)::Matrix{Union{Nothing, Symbol}}
     loadtx = transaction(dfg.neo4jInstance.connection)
     query = "START n=node(*) MATCH (n:VARIABLE:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId))-[r:FACTORGRAPH]-(m:FACTOR:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId)) RETURN n.label as variable, m.label as factor;"
     nodes = loadtx(query; submit=true)
+    # Have to finish the transaction
+    commit(loadtx)
     if length(nodes.errors) > 0
         error(string(nodes.errors))
     end
@@ -800,13 +802,7 @@ function getAdjacencyMatrix(dfg::CloudGraphsDFG)::Matrix{Union{Nothing, Symbol}}
     for i = 1:length(varRel)
         adjMat[fDict[factRel[i]], vDict[varRel[i]]] = factRel[i]
     end
-    # Have to finish the transaction
-    commit(loadtx)
 
-    # for (fIndex, factLabel) in enumerate(factLabels)
-    #     factVars = getNeighbors(dfg, getFactor(dfg, factLabel))
-    #     map(vLabel -> adjMat[fIndex+1,vDict[vLabel]] = factLabel, factVars)
-    # end
     return adjMat
 end
 
