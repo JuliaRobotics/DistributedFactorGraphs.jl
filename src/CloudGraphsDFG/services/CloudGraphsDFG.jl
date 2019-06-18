@@ -1,6 +1,8 @@
 # Additional exports
 export copySession!
-export clearSession!
+# Please be careful with these
+# With great power comes great "Oh crap, I deleted everything..."
+export clearSession!!, clearRobot!!, clearUser!!
 
 ## Utility functions for getting type names and modules (from IncrementalInference)
 function _getmodule(t::T) where T
@@ -53,6 +55,22 @@ function CloudGraphsDFG(host::String, port::Int, dbUser::String, dbPassword::Str
     return CloudGraphsDFG(neo4jConnection, userId, robotId, sessionId, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, description=description, solverParams=solverParams, useCache=useCache)
 end
 
+"""
+    $(SIGNATURES)
+Gets an empty and unique CloudGraphsDFG derived from an existing DFG.
+"""
+function _getDuplicatedEmptyDFG(dfg::CloudGraphsDFG)::CloudGraphsDFG
+    count = 0
+    sessionId = dfg.sessionId*"_$count"
+    while true #do..while loop
+        count += 1
+        sessionId = dfg.sessionId*"_$count"
+        length(_getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId):$(dfg.robotId):$(sessionId))")) == 0 && break
+    end
+    @debug "Unique+empty copy session name: $sessionId"
+    return CloudGraphsDFG(dfg.neo4jInstance.connection, dfg.userId, dfg.robotId, sessionId, dfg.encodePackedTypeFunc, dfg.getPackedTypeFunc, dfg.decodePackedTypeFunc, solverParams=deepcopy(dfg.solverParams), description="(Copy of) $(dfg.description)", useCache=dfg.useCache)
+end
+
 # Accessors
 getLabelDict(dfg::CloudGraphsDFG) = dfg.labelDict
 getDescription(dfg::CloudGraphsDFG) = dfg.description
@@ -84,7 +102,7 @@ end
     $(SIGNATURES)
 DANGER: Clears the whole session from the database.
 """
-function clearSession!(dfg::CloudGraphsDFG)::Nothing
+function clearSession!!(dfg::CloudGraphsDFG)::Nothing
     # Perform detach+deletion
     _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId)) detach delete node ")
 
@@ -98,12 +116,53 @@ end
 
 """
     $(SIGNATURES)
-DANGER: Copies and overwrites the destination session
+DANGER: Clears the whole robot + sessions from the database.
 """
-function copySession!(sourceDFG::CloudGraphsDFG, destDFG::CloudGraphsDFG)::Nothing
-    _copyIntoGraph!(sourceDFG, destDFG, union(getVariableIds(sourceDFG), getFactorIds(sourceDFG)), true)
+function clearRobot!!(dfg::CloudGraphsDFG)::Nothing
+    # Perform detach+deletion
+    _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId):$(dfg.robotId)) detach delete node ")
+
+    # Clearing history
+    dfg.addHistory = Symbol[]
+    empty!(dfg.variableCache)
+    empty!(dfg.factorCache)
+    empty!(dfg.labelDict)
     return nothing
 end
+
+"""
+    $(SIGNATURES)
+DANGER: Clears the whole user + robot + sessions from the database.
+"""
+function clearUser!!(dfg::CloudGraphsDFG)::Nothing
+    # Perform detach+deletion
+    _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId)) detach delete node ")
+
+    # Clearing history
+    dfg.addHistory = Symbol[]
+    empty!(dfg.variableCache)
+    empty!(dfg.factorCache)
+    empty!(dfg.labelDict)
+    return nothing
+end
+
+"""
+    $(SIGNATURES)
+DANGER: Copies and overwrites the destination session.
+If no destination specified then it creates a unique one.
+"""
+function copySession!(sourceDFG::CloudGraphsDFG, destDFG::Union{Nothing, CloudGraphsDFG})::CloudGraphsDFG
+    if destDFG == nothing
+        destDFG = _getDuplicatedEmptyDFG(sourceDFG)
+    end
+    _copyIntoGraph!(sourceDFG, destDFG, union(getVariableIds(sourceDFG), getFactorIds(sourceDFG)), true)
+    return destDFG
+end
+"""
+    $(SIGNATURES)
+DANGER: Copies the source to a new unique destination.
+"""
+copySession!(sourceDFG::CloudGraphsDFG)::CloudGraphsDFG = copySession!(sourceDFG, nothing)
 
 """
     $(SIGNATURES)
@@ -315,6 +374,9 @@ function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariabl
         return variable
     end
     nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, variable.label)
+    # Update the node ID
+    variable._internalId = nodeId
+
     neo4jNode = Neo4j.getnode(dfg.neo4jInstance.graph, nodeId)
     props = getnodeproperties(dfg.neo4jInstance.graph, nodeId)
 
@@ -344,6 +406,8 @@ function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor
         return factor
     end
     nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, factor.label)
+    # Update the _internalId
+    factor._internalId = nodeId
     neo4jNode = Neo4j.getnode(dfg.neo4jInstance.graph, nodeId)
     props = getnodeproperties(dfg.neo4jInstance.graph, nodeId)
 
@@ -376,12 +440,16 @@ function updateFactor!(dfg::CloudGraphsDFG, variables::Vector{DFGVariable}, fact
     # Update the body
     factor = updateFactor!(dfg, factor)
 
+    @show "HERE WITH $(factor.label)!"
+    @show map(v->v.label, variables)
+
     # Now update the relationships
-    existingNeighbors = getNeighbors(dfg, factor)
-    if setdiff(existingNeighbors, map(v->v.label, variables)) == []
+    @show existingNeighbors = getNeighbors(dfg, factor)
+    if symdiff(existingNeighbors, map(v->v.label, variables)) == []
         # Done, otherwise we need to remake the edges.
         return factor
     end
+    @show "HERE WITH $(factor.label)!"
     # Delete existing relationships
     fNode = Neo4j.getnode(dfg.neo4jInstance.graph, factor._internalId)
     for relationship in Neo4j.getrels(fNode)
@@ -393,7 +461,8 @@ function updateFactor!(dfg::CloudGraphsDFG, variables::Vector{DFGVariable}, fact
     for variable in variables
         v = getVariable(dfg, variable.label)
         vNode = Neo4j.getnode(dfg.neo4jInstance.graph, v._internalId)
-        Neo4j.createrel(neo4jNode, vNode, "FACTORGRAPH")
+        @info "Creating REL between factor $(fNode) and variable $(vNode)"
+        Neo4j.createrel(fNode, vNode, "FACTORGRAPH")
     end
 
     return factor
@@ -428,7 +497,7 @@ function deleteVariable!(dfg::CloudGraphsDFG, label::Symbol)::DFGVariable
     _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:VARIABLE) where id(node)=$(variable._internalId) detach delete node ")
 
     # Clearing history
-    dfg.addHistory = setdiff(dfg.addHistory, [label])
+    dfg.addHistory = symdiff(dfg.addHistory, [label])
     haskey(dfg.variableCache, label) && delete!(dfg.variableCache, label)
     haskey(dfg.labelDict, label) && delete!(dfg.labelDict, label)
     return variable
@@ -461,7 +530,7 @@ function deleteFactor!(dfg::CloudGraphsDFG, label::Symbol)::DFGFactor
     _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:FACTOR) where id(node)=$(factor._internalId) detach delete node ")
 
     # Clearing history
-    dfg.addHistory = setdiff(dfg.addHistory, [label])
+    dfg.addHistory = symdiff(dfg.addHistory, [label])
     haskey(dfg.factorCache, label) && delete!(dfg.factorCache, label)
     haskey(dfg.labelDict, label) && delete!(dfg.labelDict, label)
     return factor
@@ -627,12 +696,13 @@ function ls(dfg::CloudGraphsDFG, label::Symbol)::Vector{Symbol} where T <: DFGNo
 end
 
 function _copyIntoGraph!(sourceDFG::CloudGraphsDFG, destDFG::CloudGraphsDFG, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false)::Nothing
+    @show variableFactorLabels
     # Split into variables and factors
     sourceVariables = map(vId->getVariable(sourceDFG, vId), intersect(getVariableIds(sourceDFG), variableFactorLabels))
     sourceFactors = map(fId->getFactor(sourceDFG, fId), intersect(getFactorIds(sourceDFG), variableFactorLabels))
     if length(sourceVariables) + length(sourceFactors) != length(variableFactorLabels)
-        rem = setdiff(sourceVariables, variableFactorLabels)
-        rem = setdiff(sourceFactors, variableFactorLabels)
+        rem = symdiff(map(v->v.label, sourceVariables), variableFactorLabels)
+        rem = symdiff(map(f->f.label, sourceFactors), variableFactorLabels)
         error("Cannot copy because cannot find the following nodes in the source graph: $rem")
     end
 
@@ -665,10 +735,14 @@ Retrieve a deep subgraph copy around a given variable or factor.
 Optionally provide a distance to specify the number of edges should be followed.
 Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
 Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
-Note: Currently only supports distance <= 25. Please write an issue against DistributedFactorGraphs if this is a challenge.
 """
-function getSubgraphAroundNode(dfg::CloudGraphsDFG, node::T, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::CloudGraphsDFG=CloudGraphsDFG())::CloudGraphsDFG where T <: DFGNode
+function getSubgraphAroundNode(dfg::CloudGraphsDFG, node::T, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::Union{Nothing, CloudGraphsDFG}=nothing)::CloudGraphsDFG where T <: DFGNode
     distance < 1 && error("getSubgraphAroundNode() only works for distance > 0")
+
+    # Making a copy session if not specified
+    if addToDFG == nothing
+        addToDFG = _getDuplicatedEmptyDFG(dfg)
+    end
 
     # Thank you Neo4j for 0..* awesomeness!!
     neighborList = _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(node.label))-[FACTORGRAPH*0..$distance]-(node)")
@@ -678,22 +752,22 @@ function getSubgraphAroundNode(dfg::CloudGraphsDFG, node::T, distance::Int64=1, 
     return addToDFG
 end
 
-# """
-#     $(SIGNATURES)
-# Get a deep subgraph copy from the DFG given a list of variables and factors.
-# Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
-# Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
-# """
-# function getSubgraph(dfg::CloudGraphsDFG, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false, addToDFG::CloudGraphsDFG=CloudGraphsDFG())::CloudGraphsDFG
-#     for label in variableFactorLabels
-#         if !haskey(dfg.labelDict, label)
-#             error("Variable/factor with label '$(label)' does not exist in the factor graph")
-#         end
-#     end
-#
-#     _copyIntoGraph!(dfg, addToDFG, variableFactorLabels, includeOrphanFactors)
-#     return addToDFG
-# end
+"""
+    $(SIGNATURES)
+Get a deep subgraph copy from the DFG given a list of variables and factors.
+Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
+Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
+"""
+function getSubgraph(dfg::CloudGraphsDFG, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false, addToDFG::Union{Nothing, CloudGraphsDFG}=nothing)::CloudGraphsDFG
+    # Making a copy session if not specified
+    if addToDFG == nothing
+        addToDFG = _getDuplicatedEmptyDFG(dfg)
+    end
+
+    _copyIntoGraph!(dfg, addToDFG, variableFactorLabels, includeOrphanFactors)
+
+    return addToDFG
+end
 #
 # """
 #     $(SIGNATURES)

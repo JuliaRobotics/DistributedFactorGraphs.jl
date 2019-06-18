@@ -11,7 +11,7 @@ using IncrementalInference
 using Test
 using RoME
 
-# DANGER: Clear everything from session + Neo4j database
+# DANGER: Clear everything from robot+session + Neo4j database
 @testset "Setup and clearing the existing graph" begin
     # Create connection
     # Caching: Off
@@ -21,7 +21,7 @@ using RoME
         IncrementalInference.getpackedtype,
         IncrementalInference.decodePackedType)
 
-    clearSession!(cgDFG)
+    clearRobot!!(cgDFG)
     @test any(cgDFG.variableCache) == false
     @test any(cgDFG.factorCache) == false
     @test any(cgDFG.labelDict) == false
@@ -93,14 +93,14 @@ end
     vars = getVariables(cgDFG)
     vars2 = ls(cgDFG)
     @test map(v->v.label, vars) == map(v->v.label, vars2)
-    @test setdiff(map(v->v.label, vars), [:x1, :x2, :x3, :l1, :l2]) == []
+    @test symdiff(map(v->v.label, vars), [:x1, :x2, :x3, :l1, :l2]) == []
 
     facts = getFactors(cgDFG)
     facts2 = lsf(cgDFG)
     @test map(v->v.label, facts) == map(v->v.label, facts2)
-    @test setdiff(map(f->f.label, facts), [:x1x2f1, :x1f1, :x2l1f1, :x2x3f1, :x3l2f1, :x1l1f1]) == []
+    @test symdiff(map(f->f.label, facts), [:x1x2f1, :x1f1, :x2l1f1, :x2x3f1, :x3l2f1, :x1l1f1]) == []
 
-    @test setdiff(getNeighbors(cgDFG, :x2), [:x2l1f1, :x2x3f1, :x1x2f1]) == []
+    @test symdiff(getNeighbors(cgDFG, :x2), [:x2l1f1, :x2x3f1, :x1x2f1]) == []
     @test getNeighbors(cgDFG, :x2) == getNeighbors(cgDFG, x2)
     @test lsf(cgDFG, :x2) == getNeighbors(cgDFG, :x2)
 
@@ -127,49 +127,46 @@ end
     # Factors: And now the links
     updateFactor!(cgDFG, [x1, x2, x3], x1x2f1)
     updateFactor!(cgDFG, [:x1, :x2, :x3], x1x2f1)
-    @test setdiff(getNeighbors(cgDFG, x1x2f1.label), [:x1, :x2, :x3]) == []
+    @test symdiff(getNeighbors(cgDFG, x1x2f1.label), [:x1, :x2, :x3]) == []
 end
 
-@testset "_copyIntoGraph! and copySession!() tests" begin
-    cgDFGCopy = CloudGraphsDFG("localhost", 7474, "neo4j", "test",
-        "testUser", "testRobot", "testSessionCopy",
-        IncrementalInference.encodePackedType,
-        IncrementalInference.getpackedtype,
-        IncrementalInference.decodePackedType)
+@testset "copySession!() tests" begin
+# Should be able to copy
+    cgDFGCopy = copySession!(cgDFG)
+    @info "Copied session destination = $(cgDFGCopy.sessionId)"
+    @test symdiff(map(v->v.label, getVariables(cgDFGCopy)), map(v->v.label, getVariables(cgDFG))) == []
+    @test symdiff(map(f->f.label, getFactors(cgDFGCopy)), map(f->f.label, getFactors(cgDFG))) == []
 
-    # DANGER: Clear everything from session + Neo4j database
-    clearSession!(cgDFGCopy)
-    DistributedFactorGraphs._copyIntoGraph!(cgDFG, cgDFGCopy, union(getVariableIds(cgDFG), getFactorIds(cgDFG)), false)
-    @test setdiff(map(v->v.label, getVariables(cgDFGCopy)), map(v->v.label, getVariables(cgDFG))) == []
-    @test setdiff(map(f->f.label, getFactors(cgDFGCopy)), map(f->f.label, getFactors(cgDFG))) == []
-
-    # Should be able to copy again
-    copySession!(cgDFG, cgDFGCopy)
-    @test setdiff(map(v->v.label, getVariables(cgDFGCopy)), map(v->v.label, getVariables(cgDFG))) == []
-    @test setdiff(map(f->f.label, getFactors(cgDFGCopy)), map(f->f.label, getFactors(cgDFG))) == []
+    clearSession!!(cgDFGCopy)
 end
 
-@testset "getSubgraphAroundNode" begin
-cgDFGCopy = CloudGraphsDFG("localhost", 7474, "neo4j", "test",
-    "testUser", "testRobot", "testSessionSGCopy",
-    IncrementalInference.encodePackedType,
-    IncrementalInference.getpackedtype,
-    IncrementalInference.decodePackedType)
-# DANGER: Clear everything from session + Neo4j database
-clearSession!(cgDFGCopy)
+@testset "getSubgraphAroundNode() tests" begin
+    cgDFGCopy = getSubgraphAroundNode(cgDFG, getVariable(cgDFG, :x2), 2)
+    @info "Subgraph session: $(cgDFGCopy.sessionId)"
+    # Checking that the extents do have links (was an issue)
+    @test symdiff(getVariableIds(cgDFGCopy), [:l1, :x1, :x3, :x2]) == []
+    @test symdiff(getFactorIds(cgDFGCopy), [:x1x2f1, :x2x3f1, :x2l1f1]) == []
+    @test getNeighbors(cgDFGCopy, :l1) == [:x2l1f1]
+    clearSession!!(cgDFGCopy)
 
-# Single neighbors around :x2
-sg = getSubgraphAroundNode(cgDFG, getVariable(cgDFG, :x2), 1, true, cgDFGCopy)
-@test getVariableIds(cgDFGCopy) == [:x2]
-@test setdiff(getFactorIds(cgDFGCopy), [:x2l1f1, :x1x2f1, :x2x3f1]) == []
-# In-place update with distance = 2
-getSubgraphAroundNode(cgDFG, getVariable(cgDFG, :x2), 2, true, cgDFGCopy)
-@test getVariableIds(cgDFGCopy) == [:x2]
-@test setdiff(getFactorIds(cgDFGCopy), [:x2l1f1, :x1x2f1, :x2x3f1]) == []
+    # Right, now trying to update and produce same result
+    cgDFGCopy = getSubgraphAroundNode(cgDFG, getVariable(cgDFG, :x2), 1, true)
+    @info "Subgraph session: $(cgDFGCopy.sessionId)"
+    @test symdiff(getVariableIds(cgDFGCopy), [:x2]) == []
+    @test symdiff(getFactorIds(cgDFGCopy), [:x1x2f1, :x2x3f1, :x2l1f1]) == []
 
-# TODO: The graph is not fully connected when in-place copy is done
-# TODO FIX ABOVE
+    # Increase range to 2 and update existing
+    cgDFGCopy = getSubgraphAroundNode(cgDFG, getVariable(cgDFG, :x2), 2, true, cgDFGCopy)
+    @info "Subgraph session: $(cgDFGCopy.sessionId)"
+    @test symdiff(getVariableIds(cgDFGCopy), [:l1, :x1, :x3, :x2]) == []
+    @test symdiff(getFactorIds(cgDFGCopy), [:x1x2f1, :x2x3f1, :x2l1f1]) == []
+    # Check that we copied a linked subset of the graph
+    @test getNeighbors(cgDFGCopy, :l1) == [:x2l1f1]
+    @test symdiff(getNeighbors(cgDFGCopy, :x1x2f1), [:x1, :x2, :x3]) == []
 
+    # Final cleanup
+    # clearSession!!(cgDFGCopy)
+end
 
 # Show it
 DFG.toDotFile(dfg, "/tmp/testRmMarg.dot")

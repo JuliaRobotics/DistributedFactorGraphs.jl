@@ -1,3 +1,5 @@
+import Base.show
+
 mutable struct Neo4jInstance
   connection::Neo4j.Connection
   graph::Neo4j.Graph
@@ -18,4 +20,11 @@ mutable struct CloudGraphsDFG <: AbstractDFG
     addHistory::Vector{Symbol} #TODO: Discuss more - is this an audit trail?
     solverParams::Any # Solver parameters
     useCache::Bool
+end
+
+function show(io::IO, c::CloudGraphsDFG)
+    println("CloudGraphsDFG:")
+    println(" - Neo4J instance: $(c.neo4jInstance.connection.host)")
+    println(" - Session: $(c.userId):$(c.robotId):$(c.sessionId)")
+    println(" - Caching: $(c.useCache)")
 end
