@@ -168,6 +168,29 @@ end
     # clearSession!!(cgDFGCopy)
 end
 
+global cgDFG = CloudGraphsDFG("localhost", 7474, "neo4j", "test",
+    "testUser", "testRobot", "testSession",
+    IncrementalInference.encodePackedType,
+    IncrementalInference.getpackedtype,
+    IncrementalInference.decodePackedType)
+
+
+@testset "getAdjacencyMatrix test" begin
+    adjMat = getAdjacencyMatrix(cgDFG)
+    # Note that by this point, :x3 is bound to :x1x2f1, which is counterintuitive but that's tests for you
+    expected =
+    [nothing  :l1      :l2      :x1      :x2      :x3;
+    :x1f1    nothing  nothing  :x1f1    nothing  nothing;
+    :x1l1f1  :x1l1f1  nothing  :x1l1f1  nothing  nothing;
+    :x1x2f1  nothing  nothing  :x1x2f1  :x1x2f1  :x1x2f1;
+    :x2l1f1  :x2l1f1  nothing  nothing  :x2l1f1  nothing;
+    :x2x3f1  nothing  nothing  nothing  :x2x3f1  :x2x3f1;
+    :x3l2f1  nothing  :x3l2f1  nothing  nothing  :x3l2f1]
+
+    @test adjMat == expected
+end
+
+
 # Show it
 DFG.toDotFile(dfg, "/tmp/testRmMarg.dot")
 

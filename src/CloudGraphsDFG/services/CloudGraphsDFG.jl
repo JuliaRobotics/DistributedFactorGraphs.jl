@@ -768,29 +768,48 @@ function getSubgraph(dfg::CloudGraphsDFG, variableFactorLabels::Vector{Symbol}, 
 
     return addToDFG
 end
-#
-# """
-#     $(SIGNATURES)
-# Get an adjacency matrix for the DFG, returned as a Matrix{Union{Nothing, Symbol}}.
-# Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor.
-# The first row and first column are factor and variable headings respectively.
-# """
-# function getAdjacencyMatrix(dfg::CloudGraphsDFG)::Matrix{Union{Nothing, Symbol}}
-#     varLabels = sort(map(v->v.label, getVariables(dfg)))
-#     factLabels = sort(map(f->f.label, getFactors(dfg)))
-#     vDict = Dict(varLabels .=> [1:length(varLabels)...].+1)
-#
-#     adjMat = Matrix{Union{Nothing, Symbol}}(nothing, length(factLabels)+1, length(varLabels)+1)
-#     # Set row/col headings
-#     adjMat[2:end, 1] = factLabels
-#     adjMat[1, 2:end] = varLabels
-#     for (fIndex, factLabel) in enumerate(factLabels)
-#         factVars = getNeighbors(dfg, getFactor(dfg, factLabel))
-#         map(vLabel -> adjMat[fIndex+1,vDict[vLabel]] = factLabel, factVars)
-#     end
-#     return adjMat
-# end
-#
+
+"""
+    $(SIGNATURES)
+Get an adjacency matrix for the DFG, returned as a Matrix{Union{Nothing, Symbol}}.
+Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor.
+The first row and first column are factor and variable headings respectively.
+This is optimized for database usage.
+"""
+function getAdjacencyMatrix(dfg::CloudGraphsDFG)::Matrix{Union{Nothing, Symbol}}
+    varLabels = sort(getVariableIds(dfg))
+    factLabels = sort(getFactorIds(dfg))
+    vDict = Dict(varLabels .=> [1:length(varLabels)...].+1)
+    fDict = Dict(factLabels .=> [1:length(factLabels)...].+1)
+
+    adjMat = Matrix{Union{Nothing, Symbol}}(nothing, length(factLabels)+1, length(varLabels)+1)
+    # Set row/col headings
+    adjMat[2:end, 1] = factLabels
+    adjMat[1, 2:end] = varLabels
+
+    # Now ask for all relationships for this session graph
+    loadtx = transaction(dfg.neo4jInstance.connection)
+    query = "START n=node(*) MATCH (n:VARIABLE:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId))-[r:FACTORGRAPH]-(m:FACTOR:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId)) RETURN n.label as variable, m.label as factor;"
+    nodes = loadtx(query; submit=true)
+    if length(nodes.errors) > 0
+        error(string(nodes.errors))
+    end
+    # Add in the relationships
+    @show varRel = Symbol.(map(node -> node["row"][1], nodes.results[1]["data"]))
+    @show factRel = Symbol.(map(node -> node["row"][2], nodes.results[1]["data"]))
+    for i = 1:length(varRel)
+        adjMat[fDict[factRel[i]], vDict[varRel[i]]] = factRel[i]
+    end
+    # Have to finish the transaction
+    commit(loadtx)
+
+    # for (fIndex, factLabel) in enumerate(factLabels)
+    #     factVars = getNeighbors(dfg, getFactor(dfg, factLabel))
+    #     map(vLabel -> adjMat[fIndex+1,vDict[vLabel]] = factLabel, factVars)
+    # end
+    return adjMat
+end
+
 # """
 #     $(SIGNATURES)
 # Produces a dot-format of the graph for visualization.
