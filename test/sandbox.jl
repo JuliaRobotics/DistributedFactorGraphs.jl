@@ -190,31 +190,15 @@ global cgDFG = CloudGraphsDFG("localhost", 7474, "neo4j", "test",
     @test adjMat == expected
 end
 
+@testset "isFullyConnected, hasOrphans tests" begin
+    @test isFullyConnected(cgDFG) == true
+    @test hasOrphans(cgDFG) == false
+
+    # Now let's add an orphan
+    lOrphan = addVariable!(cgDFG, :lOrphan, Pose2)
+    @test isFullyConnected(cgDFG) == false
+    @test hasOrphans(cgDFG) == true
+end
 
 # Show it
 DFG.toDotFile(dfg, "/tmp/testRmMarg.dot")
-
-
-# ##### Testing
-newFactor = DFGFactor{CommonConvWrapper{typeof(prior)}, Symbol}(Symbol("x0f0"))
-# # newFactor.tags = union([:abc], [:FACTOR]) # TODO: And session info
-# # addNewFncVertInGraph!(fgl, newvert, currid, namestring, ready)
-ccw = IncrementalInference.prepgenericconvolution([x1], prior, multihypo=nothing, threadmodel=SingleThreaded)
-data_ccw = FunctionNodeData{CommonConvWrapper{typeof(prior)}}(Int[], false, false, Int[], Symbol(:test), ccw)
-newData = IncrementalInference.setDefaultFactorNode!(cgDFG, newFactor, [x1], deepcopy(prior), multihypo=nothing, threadmodel=SingleThreaded)
-# packedType = encodePackedType(newData)
-# #Testing
-fnctype = newData.fnc.usrfnc!
-fnc = getfield(IncrementalInference.getmodule(fnctype), Symbol("Packed$(IncrementalInference.getname(fnctype))"))
-packed = convert(PackedFunctionNodeData{fnc}, newData)
-using JSON2
-j = JSON2.write(packed)
-retPacked = JSON2.read(j, GenericFunctionNodeData{PackedPriorPose2,String})
-# retUnpacked = convert(GenericFunctionNodeData{IncrementalInference.getname(fnctype)}, retPacked)
-retUnpacked = convert(PriorPose2, retPacked.fnc)
-# # TODO: Need to remove this...
-# for vert in Xi
-#   push!(newData.fncargvID, vert.label) # vert._internalId # YUCK :/ -- Yup, this is a problem
-# end
-#
-#

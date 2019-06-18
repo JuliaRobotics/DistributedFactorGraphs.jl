@@ -619,21 +619,33 @@ function getFactorIds(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=no
     end
 end
 
-# """
-#     $(SIGNATURES)
-# Checks if the graph is fully connected, returns true if so.
-# """
-# function isFullyConnected(dfg::CloudGraphsDFG)::Bool
-#     return length(connected_components(dfg.g)) == 1
-# end
-#
-# #Alias
-# """
-#     $(SIGNATURES)
-# Checks if the graph is not fully connected, returns true if it is not contiguous.
-# """
-# hasOrphans(dfg::CloudGraphsDFG)::Bool = !isFullyConnected(dfg)
-#
+"""
+    $(SIGNATURES)
+Checks if the graph is fully connected, returns true if so.
+"""
+function isFullyConnected(dfg::CloudGraphsDFG)::Bool
+    # If the total number of nodes == total number of distinct connected nodes, then it is fully connected
+    # Total nodes
+    varIds = getVariableIds(dfg)
+    factIds = getFactorIds(dfg)
+    totalNodes = length(varIds) + length(factIds)
+    if length(varIds) == 0
+        return false
+    end
+
+    # Total connected nodes - thank you Neo4j for 0..* awesomeness!!
+    connectedList = _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(varIds[1]))-[FACTORGRAPH*]-(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId))")
+
+    return length(connectedList) == totalNodes
+end
+
+#Alias
+"""
+    $(SIGNATURES)
+Checks if the graph is not fully connected, returns true if it is not contiguous.
+"""
+hasOrphans(dfg::CloudGraphsDFG)::Bool = !isFullyConnected(dfg)
+
 """
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor.
@@ -745,7 +757,7 @@ function getSubgraphAroundNode(dfg::CloudGraphsDFG, node::T, distance::Int64=1, 
     end
 
     # Thank you Neo4j for 0..* awesomeness!!
-    neighborList = _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(node.label))-[FACTORGRAPH*0..$distance]-(node)")
+    neighborList = _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(node.label))-[FACTORGRAPH*0..$distance]-(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId))")
 
     # Copy the section of graph we want
     _copyIntoGraph!(dfg, addToDFG, neighborList, includeOrphanFactors)
