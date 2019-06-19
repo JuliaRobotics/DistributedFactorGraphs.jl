@@ -1,3 +1,14 @@
+
+# Originally from IncrementalInference
+
+abstract type InferenceType end
+abstract type PackedInferenceType end
+
+abstract type FunctorInferenceType <: Function end
+
+abstract type InferenceVariable end
+abstract type ConvolutionObject <: Function end
+
 """
 $(TYPEDEF)
 """

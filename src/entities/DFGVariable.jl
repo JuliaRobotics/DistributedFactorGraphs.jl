@@ -15,7 +15,8 @@ mutable struct VariableNodeData
   partialinit::Bool
   ismargin::Bool
   dontmargin::Bool
-  VariableNodeData() = new()
+  # A valid, packable default constructor is needed.
+  VariableNodeData() = new(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], "", false, false, false, false)
   VariableNodeData(x1::Array{Float64,2},
                    x2::Array{Float64,2},
                    x3::Vector{Symbol},
@@ -86,13 +87,13 @@ mutable struct DFGVariable <: DFGNode
     tags::Vector{Symbol}
     estimateDict::Dict{Symbol, VariableEstimate}
     solverDataDict::Dict{Symbol, VariableNodeData}
-    smallData::Any
+    smallData::Dict{String, String}
     bigData::Any
     ready::Int
     backendset::Int
     _internalId::Int64
-    DFGVariable(label::Symbol, _internalId::Int64) = new(label, now(), Symbol[], Dict{Symbol, VariableEstimate}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), nothing, nothing, 0, 0, _internalId)
-    DFGVariable(label::Symbol) = new(label, now(), Symbol[], Dict{Symbol, VariableEstimate}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), nothing, nothing, 0, 0, 0)
+    DFGVariable(label::Symbol, _internalId::Int64) = new(label, now(), Symbol[], Dict{Symbol, VariableEstimate}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), Dict{String, String}(), nothing, 0, 0, _internalId)
+    DFGVariable(label::Symbol) = new(label, now(), Symbol[], Dict{Symbol, VariableEstimate}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), Dict{String, String}(), nothing, 0, 0, 0)
 end
 
 # Accessors

@@ -2,20 +2,19 @@ dfg = testDFGAPI{NoSolverParams}()
 v1 = DFGVariable(:a)
 v2 = DFGVariable(:b)
 f1 = DFGFactor{Int, :Symbol}(:f1)
-@testset "Creating Graphs" begin
-    global dfg,v1,v2,f1
-    addVariable!(dfg, v1)
-    @test_throws Exception addVariable!(dfg, v1)
-    addVariable!(dfg, v2)
-    addFactor!(dfg, [v1, v2], f1)
-    @test_throws Exception addFactor!(dfg, DFGFactor{Int, :Symbol}("f2"), [v1, DFGVariable("Nope")])
-end
+# @testset "Creating Graphs" begin
+global dfg,v1,v2,f1
+addVariable!(dfg, v1)
+addVariable!(dfg, v2)
+addFactor!(dfg, [v1, v2], f1)
+@test_throws Exception addFactor!(dfg, DFGFactor{Int, :Symbol}("f2"), [v1, DFGVariable("Nope")])
+# end
 
 @testset "Listing Nodes" begin
     global dfg,v1,v2,f1
     @test length(ls(dfg)) == 2
     @test length(lsf(dfg)) == 1
-    @test setdiff([:a, :b], getVariableIds(dfg)) == []
+    @test symdiff([:a, :b], getVariableIds(dfg)) == []
     @test getFactorIds(dfg) == [:f1]
     # Regexes
     @test ls(dfg, r"a") == [v1]
@@ -90,7 +89,7 @@ end
     deleteFactor!(dfg, :f1)
     @test getFactorIds(dfg) == []
     deleteVariable!(dfg, :b)
-    @test setdiff([:a, :orphan], getVariableIds(dfg)) == []
+    @test symdiff([:a, :orphan], getVariableIds(dfg)) == []
 end
 
 
@@ -119,13 +118,13 @@ end
     # Subgraphs
     dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
     # Only returns x1 and x2
-    @test setdiff([:x1, :x1x2f1, :x2], map(n -> n.label, [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])) == []
+    @test symdiff([:x1, :x1x2f1, :x2], map(n -> n.label, [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])) == []
     # Test include orphan factorsVoid
     dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 1, true)
-    @test setdiff([:x1, :x1x2f1], map(n -> n.label, [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])) == []
+    @test symdiff([:x1, :x1x2f1], map(n -> n.label, [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])) == []
     # Test adding to the dfg
     dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2, true, dfgSubgraph)
-    @test setdiff([:x1, :x1x2f1, :x2], map(n -> n.label, [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])) == []
+    @test symdiff([:x1, :x1x2f1, :x2], map(n -> n.label, [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])) == []
 end
 
 @testset "Producing Dot Files" begin

@@ -1,17 +1,17 @@
 using Base
 import Base.==
 
-function pack(dfg::Union{G, Nothing}, d::VariableNodeData)::PackedVariableNodeData where G <: AbstractDFG
+function pack(dfg::G, d::VariableNodeData)::PackedVariableNodeData where G <: AbstractDFG
   @debug "Dispatching conversion variable -> packed variable for type $(string(d.softtype))"
   return PackedVariableNodeData(d.val[:],size(d.val,1),
                                 d.bw[:], size(d.bw,1),
                                 d.BayesNetOutVertIDs,
                                 d.dimIDs, d.dims, d.eliminated,
                                 d.BayesNetVertID, d.separator,
-                                string(d.softtype), d.initialized, d.partialinit, d.ismargin, d.dontmargin)
+                                d.softtype != nothing ? string(d.softtype) : nothing, d.initialized, d.partialinit, d.ismargin, d.dontmargin)
 end
 
-function unpack(dfg::Union{G, Nothing}, d::PackedVariableNodeData)::VariableNodeData where G <: AbstractDFG
+function unpack(dfg::G, d::PackedVariableNodeData)::VariableNodeData where G <: AbstractDFG
   r3 = d.dimval
   c3 = r3 > 0 ? floor(Int,length(d.vecval)/r3) : 0
   M3 = reshape(d.vecval,r3,c3)
@@ -26,10 +26,12 @@ function unpack(dfg::Union{G, Nothing}, d::PackedVariableNodeData)::VariableNode
   mainmod = getSerializationModule(dfg)
   mainmod == nothing && error("Serialization module is null - please call setSerializationNamespace!(\"Main\" => Main) in your main program.")
   try
-      unpackedTypeName = split(d.softtype, "(")[1]
-      unpackedTypeName = split(unpackedTypeName, '.')[end]
-      @debug "DECODING Softtype = $unpackedTypeName"
-      st = getfield(mainmod, Symbol(unpackedTypeName))()
+      if d.softtype != ""
+          unpackedTypeName = split(d.softtype, "(")[1]
+          unpackedTypeName = split(unpackedTypeName, '.')[end]
+          @debug "DECODING Softtype = $unpackedTypeName"
+          st = getfield(mainmod, Symbol(unpackedTypeName))()
+      end
   catch ex
       @error "Unable to deserialize soft type $(d.softtype)"
       io = IOBuffer()

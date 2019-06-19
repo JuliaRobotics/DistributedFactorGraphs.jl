@@ -13,24 +13,30 @@ include("entities/DFGFactor.jl")
 include("entities/DFGVariable.jl")
 
 export AbstractDFG
+export AbstractParams, NoSolverParams
 export DFGNode
+
 export DFGFactor
+export InferenceType, PackedInferenceType, FunctorInferenceType, InferenceVariable, ConvolutionObject
+
 export DFGVariable
 export label, timestamp, tags, estimates, estimate, solverData, solverDataDict, id, smallData, bigData
 export setSolverData
 export label, data, id
 
 # Solver (IIF) Exports
-export VariableNodeData, PackedVariableNodeData
+export VariableNodeData, PackedVariableNodeData, VariableEstimate
 export GenericFunctionNodeData#, FunctionNodeData
 export getSerializationModule, setSerializationModule!
 export pack, unpack
 
-# Include the Graphs.jl API.
-include("services/GraphsDFG.jl")
 include("services/AbstractDFG.jl")
 include("services/DFGVariable.jl")
 
+# Include the Graphs.jl API.
+include("GraphsDFG/GraphsDFG.jl")
+# Include the Cloudgraphs API
+include("CloudGraphsDFG/CloudGraphsDFG.jl")
 # not sure where to put
 include("Common.jl")
 include("NeedsAHome.jl")
