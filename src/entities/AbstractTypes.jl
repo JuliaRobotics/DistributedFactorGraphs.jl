@@ -12,3 +12,8 @@ Abstract parent struct for a DFG graph.
 """
 abstract type AbstractDFG
 end
+
+abstract type AbstractParams end
+
+mutable struct NoSolverParams <: AbstractParams
+end

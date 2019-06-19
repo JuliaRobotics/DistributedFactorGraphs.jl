@@ -5,7 +5,7 @@ mutable struct Neo4jInstance
   graph::Neo4j.Graph
 end
 
-mutable struct CloudGraphsDFG <: AbstractDFG
+mutable struct CloudGraphsDFG{T <: AbstractParams} <: AbstractDFG
     neo4jInstance::Neo4jInstance
     description::String
     userId::String
@@ -18,7 +18,7 @@ mutable struct CloudGraphsDFG <: AbstractDFG
     variableCache::Dict{Symbol, DFGVariable}
     factorCache::Dict{Symbol, DFGFactor}
     addHistory::Vector{Symbol} #TODO: Discuss more - is this an audit trail?
-    solverParams::Any # Solver parameters
+    solverParams::T # Solver parameters
     useCache::Bool
 end
 

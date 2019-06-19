@@ -41,18 +41,18 @@ end
     $(SIGNATURES)
 Create a new CloudGraphs-based DFG factor graph using a Neo4j.Connection.
 """
-function CloudGraphsDFG(neo4jConnection::Neo4j.Connection, userId::String, robotId::String, sessionId::String, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc; description::String="CloudGraphs DFG", solverParams::Any=nothing, useCache::Bool=false)
+function CloudGraphsDFG{T}(neo4jConnection::Neo4j.Connection, userId::String, robotId::String, sessionId::String, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc; description::String="CloudGraphs DFG", solverParams::T=NoSolverParams(), useCache::Bool=false) where T <: AbstractParams
     graph = Neo4j.getgraph(neo4jConnection)
     neo4jInstance = Neo4jInstance(neo4jConnection, graph)
-    return CloudGraphsDFG(neo4jInstance, description, userId, robotId, sessionId, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, Dict{Symbol, Int64}(), Dict{Symbol, DFGVariable}(), Dict{Symbol, DFGFactor}(), Symbol[], solverParams, useCache)
+    return CloudGraphsDFG{T}(neo4jInstance, description, userId, robotId, sessionId, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, Dict{Symbol, Int64}(), Dict{Symbol, DFGVariable}(), Dict{Symbol, DFGFactor}(), Symbol[], solverParams, useCache)
 end
 """
     $(SIGNATURES)
 Create a new CloudGraphs-based DFG factor graph by specifying the Neo4j connection information.
 """
-function CloudGraphsDFG(host::String, port::Int, dbUser::String, dbPassword::String, userId::String, robotId::String, sessionId::String, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc; description::String="CloudGraphs DFG", solverParams::Any=nothing, useCache::Bool=false)
+function CloudGraphsDFG{T}(host::String, port::Int, dbUser::String, dbPassword::String, userId::String, robotId::String, sessionId::String, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc; description::String="CloudGraphs DFG", solverParams::T=NoSolverParams(), useCache::Bool=false) where T <: AbstractParams
     neo4jConnection = Neo4j.Connection(host, port=port, user=dbUser, password=dbPassword);
-    return CloudGraphsDFG(neo4jConnection, userId, robotId, sessionId, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, description=description, solverParams=solverParams, useCache=useCache)
+    return CloudGraphsDFG{T}(neo4jConnection, userId, robotId, sessionId, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, description=description, solverParams=solverParams, useCache=useCache)
 end
 
 """
@@ -68,7 +68,7 @@ function _getDuplicatedEmptyDFG(dfg::CloudGraphsDFG)::CloudGraphsDFG
         length(_getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId):$(dfg.robotId):$(sessionId))")) == 0 && break
     end
     @debug "Unique+empty copy session name: $sessionId"
-    return CloudGraphsDFG(dfg.neo4jInstance.connection, dfg.userId, dfg.robotId, sessionId, dfg.encodePackedTypeFunc, dfg.getPackedTypeFunc, dfg.decodePackedTypeFunc, solverParams=deepcopy(dfg.solverParams), description="(Copy of) $(dfg.description)", useCache=dfg.useCache)
+    return CloudGraphsDFG{typeof(dfg.solverParams)}(dfg.neo4jInstance.connection, dfg.userId, dfg.robotId, sessionId, dfg.encodePackedTypeFunc, dfg.getPackedTypeFunc, dfg.decodePackedTypeFunc, solverParams=deepcopy(dfg.solverParams), description="(Copy of) $(dfg.description)", useCache=dfg.useCache)
 end
 
 # Accessors
@@ -77,7 +77,9 @@ getDescription(dfg::CloudGraphsDFG) = dfg.description
 setDescription(dfg::CloudGraphsDFG, description::String) = dfg.description = description
 getAddHistory(dfg::CloudGraphsDFG) = dfg.addHistory
 getSolverParams(dfg::CloudGraphsDFG) = dfg.solverParams
-setSolverParams(dfg::CloudGraphsDFG, solverParams::Any) = dfg.solverParams = solverParams
+function setSolverParams(dfg::CloudGraphsDFG, solverParams::T) where T <: AbstractParams
+    dfg.solverParams = solverParams
+end
 
 """
     $(SIGNATURES)
@@ -440,16 +442,12 @@ function updateFactor!(dfg::CloudGraphsDFG, variables::Vector{DFGVariable}, fact
     # Update the body
     factor = updateFactor!(dfg, factor)
 
-    @show "HERE WITH $(factor.label)!"
-    @show map(v->v.label, variables)
-
     # Now update the relationships
-    @show existingNeighbors = getNeighbors(dfg, factor)
+    existingNeighbors = getNeighbors(dfg, factor)
     if symdiff(existingNeighbors, map(v->v.label, variables)) == []
         # Done, otherwise we need to remake the edges.
         return factor
     end
-    @show "HERE WITH $(factor.label)!"
     # Delete existing relationships
     fNode = Neo4j.getnode(dfg.neo4jInstance.graph, factor._internalId)
     for relationship in Neo4j.getrels(fNode)
@@ -707,39 +705,8 @@ function ls(dfg::CloudGraphsDFG, label::Symbol)::Vector{Symbol} where T <: DFGNo
     return getNeighbors(dfg, label)
 end
 
-function _copyIntoGraph!(sourceDFG::CloudGraphsDFG, destDFG::CloudGraphsDFG, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false)::Nothing
-    @show variableFactorLabels
-    # Split into variables and factors
-    sourceVariables = map(vId->getVariable(sourceDFG, vId), intersect(getVariableIds(sourceDFG), variableFactorLabels))
-    sourceFactors = map(fId->getFactor(sourceDFG, fId), intersect(getFactorIds(sourceDFG), variableFactorLabels))
-    if length(sourceVariables) + length(sourceFactors) != length(variableFactorLabels)
-        rem = symdiff(map(v->v.label, sourceVariables), variableFactorLabels)
-        rem = symdiff(map(f->f.label, sourceFactors), variableFactorLabels)
-        error("Cannot copy because cannot find the following nodes in the source graph: $rem")
-    end
-
-    # Now we have to add all variables first,
-    for variable in sourceVariables
-        addVariable!(destDFG, deepcopy(variable))
-    end
-    # And then all factors to the destDFG.
-    for factor in sourceFactors
-        # Get the original factor variables (we need them to create it)
-        sourceFactorVariableIds = getNeighbors(sourceDFG, factor)
-        # Find the labels and associated variables in our new subgraph
-        factVariableIds = Symbol[]
-        for variable in sourceFactorVariableIds
-            if exists(destDFG, variable)
-                push!(factVariableIds, variable)
-            end
-        end
-        # Only if we have all of them should we add it (otherwise strange things may happen on evaluation)
-        if includeOrphanFactors || length(factVariableIds) == length(sourceFactorVariableIds)
-            addFactor!(destDFG, factVariableIds, deepcopy(factor))
-        end
-    end
-    return nothing
-end
+## This is moved to services/AbstractDFG.jl
+# function _copyIntoGraph!(sourceDFG::CloudGraphsDFG, destDFG::CloudGraphsDFG, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false)::Nothing
 
 """
     $(SIGNATURES)
@@ -809,8 +776,8 @@ function getAdjacencyMatrix(dfg::CloudGraphsDFG)::Matrix{Union{Nothing, Symbol}}
         error(string(nodes.errors))
     end
     # Add in the relationships
-    @show varRel = Symbol.(map(node -> node["row"][1], nodes.results[1]["data"]))
-    @show factRel = Symbol.(map(node -> node["row"][2], nodes.results[1]["data"]))
+    varRel = Symbol.(map(node -> node["row"][1], nodes.results[1]["data"]))
+    factRel = Symbol.(map(node -> node["row"][2], nodes.results[1]["data"]))
     for i = 1:length(varRel)
         adjMat[fDict[factRel[i]], vDict[varRel[i]]] = factRel[i]
     end

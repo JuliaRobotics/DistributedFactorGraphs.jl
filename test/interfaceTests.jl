@@ -2,14 +2,13 @@ dfg = testDFGAPI{NoSolverParams}()
 v1 = DFGVariable(:a)
 v2 = DFGVariable(:b)
 f1 = DFGFactor{Int, :Symbol}(:f1)
-@testset "Creating Graphs" begin
-    global dfg,v1,v2,f1
-    addVariable!(dfg, v1)
-    @test_throws Exception addVariable!(dfg, v1)
-    addVariable!(dfg, v2)
-    addFactor!(dfg, [v1, v2], f1)
-    @test_throws Exception addFactor!(dfg, DFGFactor{Int, :Symbol}("f2"), [v1, DFGVariable("Nope")])
-end
+# @testset "Creating Graphs" begin
+global dfg,v1,v2,f1
+addVariable!(dfg, v1)
+addVariable!(dfg, v2)
+addFactor!(dfg, [v1, v2], f1)
+@test_throws Exception addFactor!(dfg, DFGFactor{Int, :Symbol}("f2"), [v1, DFGVariable("Nope")])
+# end
 
 @testset "Listing Nodes" begin
     global dfg,v1,v2,f1

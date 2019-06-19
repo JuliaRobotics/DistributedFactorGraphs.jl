@@ -8,7 +8,7 @@ function pack(dfg::G, d::VariableNodeData)::PackedVariableNodeData where G <: Ab
                                 d.BayesNetOutVertIDs,
                                 d.dimIDs, d.dims, d.eliminated,
                                 d.BayesNetVertID, d.separator,
-                                string(d.softtype), d.initialized, d.partialinit, d.ismargin, d.dontmargin)
+                                d.softtype != nothing ? string(d.softtype) : nothing, d.initialized, d.partialinit, d.ismargin, d.dontmargin)
 end
 
 function unpack(dfg::G, d::PackedVariableNodeData)::VariableNodeData where G <: AbstractDFG
@@ -26,10 +26,12 @@ function unpack(dfg::G, d::PackedVariableNodeData)::VariableNodeData where G <: 
   mainmod = getSerializationModule(dfg)
   mainmod == nothing && error("Serialization module is null - please call setSerializationNamespace!(\"Main\" => Main) in your main program.")
   try
-      unpackedTypeName = split(d.softtype, "(")[1]
-      unpackedTypeName = split(unpackedTypeName, '.')[end]
-      @debug "DECODING Softtype = $unpackedTypeName"
-      st = getfield(mainmod, Symbol(unpackedTypeName))()
+      if d.softtype != ""
+          unpackedTypeName = split(d.softtype, "(")[1]
+          unpackedTypeName = split(unpackedTypeName, '.')[end]
+          @debug "DECODING Softtype = $unpackedTypeName"
+          st = getfield(mainmod, Symbol(unpackedTypeName))()
+      end
   catch ex
       @error "Unable to deserialize soft type $(d.softtype)"
       io = IOBuffer()

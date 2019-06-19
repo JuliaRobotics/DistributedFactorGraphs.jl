@@ -3,6 +3,9 @@ language: julia
 os:
     - linux
 
+services:
+    - neo4j
+
 julia:
     - 1.0
     - 1.1

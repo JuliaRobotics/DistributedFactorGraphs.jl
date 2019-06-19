@@ -15,7 +15,8 @@ mutable struct VariableNodeData
   partialinit::Bool
   ismargin::Bool
   dontmargin::Bool
-  VariableNodeData() = new()
+  # A valid, packable default constructor is needed.
+  VariableNodeData() = new(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], "", false, false, false, false)
   VariableNodeData(x1::Array{Float64,2},
                    x2::Array{Float64,2},
                    x3::Vector{Symbol},

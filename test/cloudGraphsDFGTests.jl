@@ -17,8 +17,8 @@ using RoME
     # Caching: Off
     global cgDFG = CloudGraphsDFG("localhost", 7474, "neo4j", "test",
         "testUser", "testRobot", "testSession",
-        IncrementalInference.encodePackedType,
-        IncrementalInference.getpackedtype,
+        nothing,
+        nothing,
         IncrementalInference.decodePackedType)
 
     clearRobot!!(cgDFG)
@@ -170,8 +170,8 @@ end
 
 global cgDFG = CloudGraphsDFG("localhost", 7474, "neo4j", "test",
     "testUser", "testRobot", "testSession",
-    IncrementalInference.encodePackedType,
-    IncrementalInference.getpackedtype,
+    nothing,
+    nothing,
     IncrementalInference.decodePackedType)
 
 
@@ -201,4 +201,4 @@ end
 end
 
 # Show it
-DFG.toDotFile(dfg, "/tmp/testRmMarg.dot")
+# DFG.toDotFile(dfg, "/tmp/testRmMarg.dot")
