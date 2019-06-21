@@ -1,5 +1,4 @@
 using Neo4j
-using JSON2
 
 # Entities
 include("entities/CloudGraphsDFG.jl")
