@@ -209,14 +209,12 @@ Delete the referened DFGFactor from the DFG.
 """
 deleteFactor!(dfg::GraphsDFG, factor::DFGFactor)::DFGFactor = deleteFactor!(dfg, factor.label)
 
-# # Returns a flat vector of the vertices, keyed by ID.
-# # Assuming only variables here for now - think maybe not, should be variables+factors?
 """
     $(SIGNATURES)
 List the DFGVariables in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the variables.
 """
-function ls(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{DFGVariable}
+function getVariables(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{DFGVariable}
     variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGVariable, vertices(dfg.g)))
     if regexFilter != nothing
         variables = filter(v -> occursin(regexFilter, String(v.label)), variables)
@@ -227,14 +225,6 @@ function ls(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Ve
     end
 	return variables
 end
-
-# Alias
-"""
-    $(SIGNATURES)
-List the DFGVariables in the DFG.
-Optionally specify a label regular expression to retrieves a subset of the variables.
-"""
-getVariables(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{DFGVariable} = ls(dfg, regexFilter, tags=tags)
 
 """
     $(SIGNATURES)
@@ -251,42 +241,54 @@ Related
 ls
 """
 function getVariableIds(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{Symbol}
-  vars = ls(dfg, regexFilter, tags=tags)
+  vars = getVariables(dfg, regexFilter, tags=tags)
   # mask = map(v -> length(intersect(v.tags, tags)) > 0, vars )
   map(v -> v.label, vars)
-end
-
-
-"""
-    $(SIGNATURES)
-List the DFGFactors in the DFG.
-Optionally specify a label regular expression to retrieves a subset of the factors.
-"""
-function lsf(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGFactor}
-    factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGFactor, vertices(dfg.g)))
-    if regexFilter != nothing
-        factors = filter(f -> occursin(regexFilter, String(f.label)), factors)
-    end
-    return factors
-end
-function lsf(dfg::GraphsDFG, label::Symbol)::Vector{Symbol}
-  return getNeighbors(dfg, label)
 end
 
 # Alias
 """
     $(SIGNATURES)
+List the DFGVariables in the DFG.
+Optionally specify a label regular expression to retrieves a subset of the variables.
+"""
+ls(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{Symbol} = getVariableIds(dfg, regexFilter, tags=tags)
+
+"""
+    $(SIGNATURES)
 List the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
-getFactors(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGFactor} = lsf(dfg, regexFilter)
+function getFactors(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGFactor}
+	factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGFactor, vertices(dfg.g)))
+	if regexFilter != nothing
+		factors = filter(f -> occursin(regexFilter, String(f.label)), factors)
+	end
+	return factors
+end
 
 """
     $(SIGNATURES)
 Get a list of the IDs of the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
-getFactorIds(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{Symbol} = map(f -> f.label, lsf(dfg, regexFilter))
+getFactorIds(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{Symbol} = map(f -> f.label, getFactors(dfg, regexFilter))
+
+"""
+    $(SIGNATURES)
+List the DFGFactors in the DFG.
+Optionally specify a label regular expression to retrieves a subset of the factors.
+"""
+# Alias
+lsf(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{Symbol} = getFactorIds(dfg, regexFilter)
+
+"""
+	$(SIGNATURES)
+Alias for getNeighbors - returns neighbors around a given node label.
+"""
+function lsf(dfg::GraphsDFG, label::Symbol)::Vector{Symbol}
+  return getNeighbors(dfg, label)
+end
 
 """
     $(SIGNATURES)

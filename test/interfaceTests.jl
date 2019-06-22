@@ -17,8 +17,8 @@ addFactor!(dfg, [v1, v2], f1)
     @test symdiff([:a, :b], getVariableIds(dfg)) == []
     @test getFactorIds(dfg) == [:f1]
     # Regexes
-    @test ls(dfg, r"a") == [v1]
-    @test lsf(dfg, r"f*") == [f1]
+    @test ls(dfg, r"a") == [v1.label]
+    @test lsf(dfg, r"f*") == [f1.label]
     # Accessors
     @test getAddHistory(dfg) == [:a, :b] #, :f1
     @test getDescription(dfg) != nothing
@@ -118,13 +118,13 @@ end
     # Subgraphs
     dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
     # Only returns x1 and x2
-    @test symdiff([:x1, :x1x2f1, :x2], map(n -> n.label, [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])) == []
+    @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
     # Test include orphan factorsVoid
     dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 1, true)
-    @test symdiff([:x1, :x1x2f1], map(n -> n.label, [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])) == []
+    @test symdiff([:x1, :x1x2f1], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
     # Test adding to the dfg
     dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2, true, dfgSubgraph)
-    @test symdiff([:x1, :x1x2f1, :x2], map(n -> n.label, [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])) == []
+    @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
 end
 
 @testset "Producing Dot Files" begin
