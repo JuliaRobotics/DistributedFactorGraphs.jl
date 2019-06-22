@@ -15,7 +15,7 @@ using RoME
 @testset "Setup and clearing the existing graph" begin
     # Create connection
     # Caching: Off
-    global cgDFG = CloudGraphsDFG("localhost", 7474, "neo4j", "test",
+    global cgDFG = CloudGraphsDFG{NoSolverParams}("localhost", 7474, "neo4j", "test",
         "testUser", "testRobot", "testSession",
         nothing,
         nothing,
@@ -167,13 +167,6 @@ end
     # Final cleanup
     # clearSession!!(cgDFGCopy)
 end
-
-global cgDFG = CloudGraphsDFG("localhost", 7474, "neo4j", "test",
-    "testUser", "testRobot", "testSession",
-    nothing,
-    nothing,
-    IncrementalInference.decodePackedType)
-
 
 @testset "getAdjacencyMatrix test" begin
     adjMat = getAdjacencyMatrix(cgDFG)

@@ -7,6 +7,7 @@ using Dates
 using Distributions
 using Reexport
 using JSON2
+using LinearAlgebra
 
 # Entities
 include("entities/AbstractTypes.jl")
@@ -31,11 +32,31 @@ export GenericFunctionNodeData#, FunctionNodeData
 export getSerializationModule, setSerializationModule!
 export pack, unpack
 
+# Comparators
+# some utils
+export
+    compareField,
+    compareFields,
+    compareAll,
+    compareAllSpecial,
+    compareVariable,
+    compareFactor,
+    compareAllVariables,
+    compareSimilarVariables,
+    compareSubsetFactorGraph,
+    compareSimilarFactors,
+    compareFactorGraphs
+
+
+# Common includes
 include("services/AbstractDFG.jl")
 include("services/DFGVariable.jl")
 
 # Include the Graphs.jl API.
 include("GraphsDFG/GraphsDFG.jl")
+
+# Comparators
+include("services/Comparators.jl")
 
 function __init__()
     @require DataFrames="a93c6f00-e57d-5684-b7b6-d8193f3e46c0" begin
