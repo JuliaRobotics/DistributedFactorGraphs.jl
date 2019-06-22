@@ -1,54 +1,74 @@
-# add more julia processes
-using Distributed
-nprocs() < 4 ? addprocs(5-nprocs()) : nothing
-
-# tell Julia that you want to use these modules/namespaces
+using Revise
 using Neo4j # So that DFG initializes the database driver.
 using RoME
 using DistributedFactorGraphs
-## Inter-operating visualization packages for Caesar/RoME/IncrementalInference exist
-# using RoMEPlotting
-
+using Test
 
 # start with an empty factor graph object
 # fg = initfg()
-global cgDFG = CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
+cloudFg = CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
     "testUser", "testRobot", "testSession",
     nothing,
     nothing,
     IncrementalInference.decodePackedType,
-    solverParams=SolverParams(0, nothing, nothing, false, 0, false))
-fg = cgDFG
-clearSession!!(fg)
-# fg = initfg()
+    IncrementalInference.rebuildFactorMetadata!,
+    solverParams=SolverParams())
+clearSession!!(cloudFg)
+# cloudFg = initfg()
 
 # Add the first pose :x0
-addVariable!(fg, :x0, Pose2)
+x0 = addVariable!(cloudFg, :x0, Pose2)
+IncrementalInference.compareVariable(x0, getVariable(cloudFg, :x0))
 
 # Add at a fixed location PriorPose2 to pin :x0 to a starting location (10,10, pi/4)
-prior = addFactor!(fg, [:x0], PriorPose2( MvNormal([10; 10; pi/6.0], Matrix(Diagonal([0.1;0.1;0.05].^2))) ) )
+prior = addFactor!(cloudFg, [:x0], PriorPose2( MvNormal([10; 10; 1.0/8.0], Matrix(Diagonal([0.1;0.1;0.05].^2))) ) )
+# retPrior = getFactor(cloudFg, :x0f1)
+# Do the check
+# IncrementalInference.compareFactor(prior, retPrior)
+# Testing
 
-# Drive around in a hexagon
+# retPrior.data.fnc.cpt = prior.data.fnc.cpt
+# # This one
+# prior.data.fnc.cpt[1].factormetadata
+# deserialized: Any[Pose2(3, String[], (:Euclid, :Euclid, :Circular))]
+# vs.
+# original: Pose2[Pose2(3, String[], (:Euclid, :Euclid, :Circular))]
+
+# Drive around in a hexagon in the cloud
 for i in 0:5
     psym = Symbol("x$i")
     nsym = Symbol("x$(i+1)")
-    addVariable!(fg, nsym, Pose2)
+    addVariable!(cloudFg, nsym, Pose2)
     pp = Pose2Pose2(MvNormal([10.0;0;pi/3], Matrix(Diagonal([0.1;0.1;0.1].^2))))
-    addFactor!(fg, [psym;nsym], pp )
+    addFactor!(cloudFg, [psym;nsym], pp )
 end
 
-retPrior = getFactor(fg, :x0f1)
-IncrementalInference.compareFactor(prior, retPrior)
+# Right, let's copy it into local memory for solving...
+localFg = GraphsDFG{SolverParams}(params=SolverParams())
+DistributedFactorGraphs._copyIntoGraph!(cloudFg, localFg, union(getVariableIds(fg), getFactorIds(fg)), true)
+# Some checks
+@test getVariableIds(localFg) == getVariableIds(cloudFg)
+@test getFactorIds(localFg) == getFactorIds(cloudFg)
+@test isFullyConnected(localFg)
+# Show it
+toDotFile(localFg, "/tmp/localfg.dot")
 
-# for factId in getFactorIds(fg)
-#     @show getFactor(fg, factId)
-# end
-
+# Alrighty! At this point, we should be able to solve locally...
 # perform inference, and remember first runs are slower owing to Julia's just-in-time compiling
-batchSolve!(fg, drawpdf=true, show=true)
+batchSolve!(localFg, drawpdf=true, show=true)
+# Erm, whut? Error = mcmcIterationIDs -- unaccounted variables
+
+#### WIP and general debugging
+
+# Testing with GenericMarginal
+# This will not work because GenericMarginal *shouldn't* really be persisted.
+# That would mean we're decomposing the cloud graph...
+# genmarg = GenericMarginal()
+# Xi = [getVariable(fg, :x0)]
+# addFactor!(fg, Xi, genmarg, autoinit=false)
 
 # For Juno/Jupyter style use
-pl = drawPoses(fg, meanmax=:mean)
+pl = drawPoses(localFg, meanmax=:mean)
 plotPose(fg, :x6)
 # For scripting use-cases you can export the image
 Gadfly.draw(Gadfly.PDF("/tmp/test1.pdf", 20cm, 10cm),pl)  # or PNG(...)

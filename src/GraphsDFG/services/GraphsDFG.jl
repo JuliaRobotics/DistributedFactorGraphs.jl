@@ -91,6 +91,15 @@ end
 
 """
     $(SIGNATURES)
+Add a DFGFactor to a DFG.
+"""
+function addFactor!(dfg::GraphsDFG, variableIds::Vector{Symbol}, factor::DFGFactor)::Bool
+    variables = map(vId -> getVariable(dfg, vId), variableIds)
+    return addFactor!(dfg, variables, factor)
+end
+
+"""
+    $(SIGNATURES)
 Get a DFGVariable from a DFG using its underlying integer ID.
 """
 function getVariable(dfg::GraphsDFG, variableId::Int64)::DFGVariable
