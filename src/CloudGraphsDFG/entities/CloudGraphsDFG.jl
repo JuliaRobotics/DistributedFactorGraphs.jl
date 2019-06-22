@@ -14,6 +14,7 @@ mutable struct CloudGraphsDFG{T <: AbstractParams} <: AbstractDFG
     encodePackedTypeFunc
     getPackedTypeFunc
     decodePackedTypeFunc
+    rebuildFactorMetadata!
     labelDict::Dict{Symbol, Int64}
     variableCache::Dict{Symbol, DFGVariable}
     factorCache::Dict{Symbol, DFGFactor}
@@ -23,8 +24,8 @@ mutable struct CloudGraphsDFG{T <: AbstractParams} <: AbstractDFG
 end
 
 function show(io::IO, c::CloudGraphsDFG)
-    println("CloudGraphsDFG:")
-    println(" - Neo4J instance: $(c.neo4jInstance.connection.host)")
-    println(" - Session: $(c.userId):$(c.robotId):$(c.sessionId)")
-    println(" - Caching: $(c.useCache)")
+    println(io, "CloudGraphsDFG:")
+    println(io, " - Neo4J instance: $(c.neo4jInstance.connection.host)")
+    println(io, " - Session: $(c.userId):$(c.robotId):$(c.sessionId)")
+    println(io, " - Caching: $(c.useCache)")
 end
