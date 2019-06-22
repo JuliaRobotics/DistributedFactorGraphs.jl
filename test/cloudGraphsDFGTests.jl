@@ -6,6 +6,7 @@
 # Run: sudo docker run --publish=7474:7474 --publish=7687:7687 --env NEO4J_AUTH=neo4j/test neo4j
 
 using Revise
+using Neo4j
 using DistributedFactorGraphs
 using IncrementalInference
 using Test
@@ -15,7 +16,7 @@ using RoME
 @testset "Setup and clearing the existing graph" begin
     # Create connection
     # Caching: Off
-    global cgDFG = CloudGraphsDFG("localhost", 7474, "neo4j", "test",
+    global cgDFG = CloudGraphsDFG{NoSolverParams}("localhost", 7474, "neo4j", "test",
         "testUser", "testRobot", "testSession",
         nothing,
         nothing,
@@ -92,12 +93,12 @@ end
     # Not fast though, TODO: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/39
     vars = getVariables(cgDFG)
     vars2 = ls(cgDFG)
-    @test map(v->v.label, vars) == map(v->v.label, vars2)
+    @test map(v->v.label, vars) == vars2
     @test symdiff(map(v->v.label, vars), [:x1, :x2, :x3, :l1, :l2]) == []
 
     facts = getFactors(cgDFG)
     facts2 = lsf(cgDFG)
-    @test map(v->v.label, facts) == map(v->v.label, facts2)
+    @test map(v->v.label, facts) == facts2
     @test symdiff(map(f->f.label, facts), [:x1x2f1, :x1f1, :x2l1f1, :x2x3f1, :x3l2f1, :x1l1f1]) == []
 
     @test symdiff(getNeighbors(cgDFG, :x2), [:x2l1f1, :x2x3f1, :x1x2f1]) == []
@@ -167,13 +168,6 @@ end
     # Final cleanup
     # clearSession!!(cgDFGCopy)
 end
-
-global cgDFG = CloudGraphsDFG("localhost", 7474, "neo4j", "test",
-    "testUser", "testRobot", "testSession",
-    nothing,
-    nothing,
-    IncrementalInference.decodePackedType)
-
 
 @testset "getAdjacencyMatrix test" begin
     adjMat = getAdjacencyMatrix(cgDFG)
