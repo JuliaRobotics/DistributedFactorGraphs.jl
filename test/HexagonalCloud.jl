@@ -52,17 +52,19 @@ DistributedFactorGraphs._copyIntoGraph!(cloudFg, localFg, union(getVariableIds(c
 @test symdiff(getFactorIds(localFg), getFactorIds(cloudFg)) == []
 @test isFullyConnected(localFg)
 # Show it
-toDotFile(localFg, "/tmp/localfg.dot")
+toDotFile(localFg, "/tmp/localfg.dot")  # @async run(`xdot /tmp/localfg.dot`)
 
 # Alrighty! At this point, we should be able to solve locally...
 # perform inference, and remember first runs are slower owing to Julia's just-in-time compiling
-batchSolve!(localFg, drawpdf=true, show=true)
+tree = wipeBuildNewTree!(localFg, drawpdf=true, show=true)
 # Erm, whut? Error = mcmcIterationIDs -- unaccounted variables
+# batchSolve!(localFg, drawpdf=true, show=true)
 
 # Trying new method.
-tree, smtasks = batchSolve!(localFg, treeinit=true, drawpdf=true, show=true,
-                            returntasks=true, limititers=50,
-                            upsolve=true, downsolve=true  )
+localFg.solverParams.drawtree = true
+localFg.solverParams.showtree = true
+
+tree, smt, hist = solveTree!(localFg)
 
 #### WIP and general debugging
 
