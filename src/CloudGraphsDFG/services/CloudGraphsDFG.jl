@@ -12,7 +12,7 @@ function _getname(t::T) where T
   T.name.name
 end
 
-# Simply for convenience -don't export
+# Simply for convenience - don't export
 const PackedFunctionNodeData{T} = GenericFunctionNodeData{T, <: AbstractString}
 PackedFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, x7::String="", x8::Vector{Int}=Int[]) where {T <: PackedInferenceType, S <: AbstractString} = GenericFunctionNodeData(x1, x2, x3, x4, x5, x6, x7, x8)
 const FunctionNodeData{T} = GenericFunctionNodeData{T, Symbol}
@@ -541,25 +541,15 @@ Delete the referened DFGFactor from the DFG.
 """
 deleteFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor = deleteFactor!(dfg, factor.label)
 
-# Returns a flat vector of the vertices, keyed by ID.
-# Assuming only variables here for now - think maybe not, should be variables+factors?
 """
     $(SIGNATURES)
 List the DFGVariables in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the variables.
 """
-function ls(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGVariable}
+function getVariables(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGVariable}
     variableIds = getVariableIds(dfg, regexFilter)
     return map(vId->getVariable(dfg, vId), variableIds)
 end
-
-# Alias
-"""
-    $(SIGNATURES)
-List the DFGVariables in the DFG.
-Optionally specify a label regular expression to retrieves a subset of the variables.
-"""
-getVariables(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGVariable} = ls(dfg, regexFilter)
 
 """
     $(SIGNATURES)
@@ -575,32 +565,22 @@ function getVariableIds(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=
     end
 end
 
-"""
-    $(SIGNATURES)
-List the DFGFactors in the DFG.
-Optionally specify a label regular expression to retrieves a subset of the factors.
-"""
-function lsf(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGFactor}
-    factorIds = getFactorIds(dfg, regexFilter)
-    return map(vId->getFactor(dfg, vId), factorIds)
-end
-
 # Alias
 """
     $(SIGNATURES)
+List the DFGVariables in the DFG.
+Optionally specify a label regular expression to retrieves a subset of the variables.
+"""
+ls(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{Symbol} = getVariableIds(dfg, regexFilter)
+
+"""
+    $(SIGNATURES)
 List the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
-getFactors(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGFactor} = lsf(dfg, regexFilter)
-
-# Alias - getNeighbors
-#TODO: Refactor this
-"""
-    $(SIGNATURES)
-Get neighbors around a given node. TODO: Refactor this
-"""
-function lsf(dfg::CloudGraphsDFG, label::Symbol)::Vector{Symbol}
-  return getNeighbors(dfg, label)
+function getFactors(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGFactor}
+    factorIds = getFactorIds(dfg, regexFilter)
+    return map(vId->getFactor(dfg, vId), factorIds)
 end
 
 """
@@ -615,6 +595,23 @@ function getFactorIds(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=no
     else
         return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):FACTOR) where node.label =~ '$(regexFilter.pattern)'")
     end
+end
+
+# Alias
+"""
+    $(SIGNATURES)
+List the DFGFactors in the DFG.
+Optionally specify a label regular expression to retrieves a subset of the factors.
+"""
+lsf(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{Symbol} = getFactorIds(dfg, regexFilter)
+
+# Alias - getNeighbors
+"""
+    $(SIGNATURES)
+Get neighbors around a given node. TODO: Refactor this
+"""
+function lsf(dfg::CloudGraphsDFG, label::Symbol)::Vector{Symbol}
+  return getNeighbors(dfg, label)
 end
 
 """
