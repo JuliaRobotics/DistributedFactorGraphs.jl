@@ -1,5 +1,5 @@
 """
-$(SIGNATURES)
+$(TYPEDEF)
 Encapsulation structure for a DFGNode (Variable or Factor) in Graphs.jl graph.
 """
 mutable struct GraphsNode
