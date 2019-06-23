@@ -261,7 +261,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Reference",
     "title": "DistributedFactorGraphs.lsf",
     "category": "function",
-    "text": "lsf(dfg)\nlsf(dfg, regexFilter)\n\n\nList the DFGFactors in the DFG. Optionally specify a label regular expression to retrieves a subset of the factors.\n\n\n\n\n\n"
+    "text": "lsf(dfg, label)\n\n\nAlias for getNeighbors - returns neighbors around a given node label.\n\n\n\n\n\n"
 },
 
 {
