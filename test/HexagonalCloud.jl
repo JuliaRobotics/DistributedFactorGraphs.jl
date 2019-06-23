@@ -13,6 +13,7 @@ cloudFg = CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
     IncrementalInference.decodePackedType,
     IncrementalInference.rebuildFactorMetadata!,
     solverParams=SolverParams())
+# cloudFg = GraphsDFG{SolverParams}(params=SolverParams())
 clearSession!!(cloudFg)
 # cloudFg = initfg()
 
@@ -45,10 +46,10 @@ end
 
 # Right, let's copy it into local memory for solving...
 localFg = GraphsDFG{SolverParams}(params=SolverParams())
-DistributedFactorGraphs._copyIntoGraph!(cloudFg, localFg, union(getVariableIds(fg), getFactorIds(fg)), true)
+DistributedFactorGraphs._copyIntoGraph!(cloudFg, localFg, union(getVariableIds(cloudFg), getFactorIds(cloudFg)), true)
 # Some checks
-@test getVariableIds(localFg) == getVariableIds(cloudFg)
-@test getFactorIds(localFg) == getFactorIds(cloudFg)
+@test symdiff(getVariableIds(localFg), getVariableIds(cloudFg)) == []
+@test symdiff(getFactorIds(localFg), getFactorIds(cloudFg)) == []
 @test isFullyConnected(localFg)
 # Show it
 toDotFile(localFg, "/tmp/localfg.dot")
@@ -57,6 +58,11 @@ toDotFile(localFg, "/tmp/localfg.dot")
 # perform inference, and remember first runs are slower owing to Julia's just-in-time compiling
 batchSolve!(localFg, drawpdf=true, show=true)
 # Erm, whut? Error = mcmcIterationIDs -- unaccounted variables
+
+# Trying new method.
+tree, smtasks = batchSolve!(localFg, treeinit=true, drawpdf=true, show=true,
+                            returntasks=true, limititers=50,
+                            upsolve=true, downsolve=true  )
 
 #### WIP and general debugging
 
