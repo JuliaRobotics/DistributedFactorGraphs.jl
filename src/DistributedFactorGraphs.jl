@@ -20,6 +20,8 @@ export DFGNode
 export DFGFactor
 export InferenceType, PackedInferenceType, FunctorInferenceType, InferenceVariable, ConvolutionObject
 
+export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
+
 export DFGVariable
 export label, timestamp, tags, estimates, estimate, solverData, solverDataDict, id, smallData, bigData
 export setSolverData
@@ -30,11 +32,6 @@ export VariableNodeData, PackedVariableNodeData, VariableEstimate
 export GenericFunctionNodeData#, FunctionNodeData
 export getSerializationModule, setSerializationModule!
 export pack, unpack
-
-export isPrior, lsfPriors
-export getData
-export getVariableType, getSofttype
-export getFactorType, getfnctype
 
 include("services/AbstractDFG.jl")
 include("services/DFGVariable.jl")

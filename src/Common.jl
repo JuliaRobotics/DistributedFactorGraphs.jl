@@ -1,5 +1,10 @@
 
 export sortVarNested
+export isPrior, lsfPriors
+export getData
+export getVariableType, getSofttype
+export getFactorType, getfnctype
+
 
 """
     $(SIGNATURES)
@@ -175,7 +180,7 @@ end
 
 Return the DFGVariable softtype in factor graph `dfg<:AbstractDFG` and label `::Symbol`.
 """
-getVariableType(var::DFGVariable; solveKey::Symbol=:default) = getSofttype(var, solvekey=solvekey)
+getVariableType(var::DFGVariable; solveKey::Symbol=:default) = getSofttype(var, solvekey=solveKey)
 function getVariableType(dfg::G, lbl::Symbol; solveKey::Symbol=:default) where G <: AbstractDFG
   getVariableType(getVariable(dfg, lbl), solveKey=solveKey)
 end
