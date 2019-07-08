@@ -32,6 +32,7 @@ export getSerializationModule, setSerializationModule!
 export pack, unpack
 
 export isPrior, lsfPriors
+export getData
 export getVariableType, getSofttype
 export getFactorType, getfnctype
 

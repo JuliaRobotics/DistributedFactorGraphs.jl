@@ -79,6 +79,14 @@ end
 """
     $SIGNATURES
 
+Retrieve data structure stored in a node.
+"""
+getData(v::DFGFactor)::GenericFunctionNodeData = v.data
+getData(v::DFGVariable; solveKey::Symbol=:default)::VariableNodeData = v.solverDataDict[solveKey]
+
+"""
+    $SIGNATURES
+
 Return the factor type used in a `::DFGFactor`.
 
 Notes:
