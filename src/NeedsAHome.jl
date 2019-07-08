@@ -36,7 +36,5 @@ function isInitialized(fct::DFGFactor; key::Symbol=:default)::Bool
   return fct.solverDataDict[key].initialized
 end
 function isInitialized(dfg::G, label::Symbol; key::Symbol=:default)::Bool where G <: AbstractDFG
-  # nothing to do for factors
-  # return dfg.g.vertices[dfg.labelDict[label]].dfgNode.solverDataDict[key].initialized
-  return true
+  return isInitialized(getVariable(dfg, label), key=key)
 end

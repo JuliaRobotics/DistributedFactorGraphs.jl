@@ -1,5 +1,11 @@
 
 export sortVarNested
+export isPrior, lsfPriors
+export getData
+export getVariableType, getSofttype
+export getFactorType, getfnctype
+export lsTypes, lsfTypes
+
 
 """
     $(SIGNATURES)
@@ -74,4 +80,153 @@ function sortVarNested(vars::Vector{Symbol})::Vector{Symbol}
 	  end
 	end
 	return retvars
+end
+
+"""
+    $SIGNATURES
+
+Retrieve data structure stored in a node.
+"""
+getData(v::DFGFactor)::GenericFunctionNodeData = v.data
+getData(v::DFGVariable; solveKey::Symbol=:default)::VariableNodeData = v.solverDataDict[solveKey]
+
+"""
+    $SIGNATURES
+
+Return the factor type used in a `::DFGFactor`.
+
+Notes:
+- OBSOLETE, use newer getFactorType instead.
+
+Related
+
+getFactorType
+"""
+function getfnctype(data::GenericFunctionNodeData)
+  # TODO what is this?
+  if typeof(data).name.name == :VariableNodeData
+    return VariableNodeData
+  end
+
+  # this looks right
+  return data.fnc.usrfnc!
+end
+function getfnctype(fact::DFGFactor; solveKey::Symbol=:default)
+  data = getData(fact) # TODO , solveKey=solveKey)
+  return getfnctype(data)
+end
+function getfnctype(dfg::T, lbl::Symbol; solveKey::Symbol=:default) where T <: AbstractDFG
+  getfnctype(getFactor(dfg, exvertid))
+end
+
+"""
+    $SIGNATURES
+
+Return user factor type from factor graph identified by label `::Symbol`.
+
+Notes
+- Replaces older `getfnctype`.
+"""
+getFactorType(data::GenericFunctionNodeData) = data.fnc.usrfnc!
+getFactorType(fct::DFGFactor) = getFactorType(getData(fct))
+function getFactorType(dfg::G, lbl::Symbol) where G <: AbstractDFG
+  getFactorType(getFactor(dfg, lbl))
+end
+
+
+"""
+    $SIGNATURES
+
+Return `::Bool` on whether given factor `fc::Symbol` is a prior in factor graph `dfg`.
+"""
+function isPrior(dfg::G, fc::Symbol)::Bool where G <: AbstractDFG
+  fco = getFactor(dfg, fc)
+  getfnctype(fco) isa FunctorSingleton
+end
+
+"""
+    $SIGNATURES
+
+Return vector of prior factor symbol labels in factor graph `dfg`.
+"""
+function lsfPriors(dfg::G)::Vector{Symbol} where G <: AbstractDFG
+  priors = Symbol[]
+  fcts = lsf(dfg)
+  for fc in fcts
+    if isPrior(dfg, fc)
+      push!(priors, fc)
+    end
+  end
+  return priors
+end
+
+"""
+   $(SIGNATURES)
+
+Variable nodes softtype information holding a variety of meta data associated with the type of variable stored in that node of the factor graph.
+
+Related
+
+getVariableType
+"""
+function getSofttype(vnd::VariableNodeData)
+  return vnd.softtype
+end
+function getSofttype(v::DFGVariable; solveKey::Symbol=:default)
+  return getSofttype(getData(v, solveKey=solveKey))
+end
+
+"""
+    $SIGNATURES
+
+Return the DFGVariable softtype in factor graph `dfg<:AbstractDFG` and label `::Symbol`.
+"""
+getVariableType(var::DFGVariable; solveKey::Symbol=:default) = getSofttype(var, solveKey=solveKey)
+function getVariableType(dfg::G, lbl::Symbol; solveKey::Symbol=:default) where G <: AbstractDFG
+  getVariableType(getVariable(dfg, lbl), solveKey=solveKey)
+end
+
+
+"""
+    $SIGNATURES
+
+Return `::Dict{Symbol, Vector{String}}` of all unique factor types in factor graph.
+"""
+function lsfTypes(dfg::G)::Dict{Symbol, Vector{String}} where G <: AbstractDFG
+  alltypes = Dict{Symbol,Vector{String}}()
+  for fc in lsf(dfg)
+    Tt = typeof(getFactorType(dfg, fc))
+    sTt = string(Tt)
+    name = Symbol(Tt.name)
+    if !haskey(alltypes, name)
+      alltypes[name] = String[string(Tt)]
+    else
+      if sum(alltypes[name] .== sTt) == 0
+        push!(alltypes[name], sTt)
+      end
+    end
+  end
+  return alltypes
+end
+
+"""
+    $SIGNATURES
+
+Return `::Dict{Symbol, Vector{String}}` of all unique variable types in factor graph.
+"""
+function lsTypes(dfg::G)::Dict{Symbol, Vector{String}} where G <: AbstractDFG
+  alltypes = Dict{Symbol,Vector{String}}()
+  for fc in ls(dfg)
+    Tt = typeof(getVariableType(dfg, fc))
+    sTt = string(Tt)
+    name = Symbol(Tt.name)
+    if !haskey(alltypes, name)
+      alltypes[name] = String[string(Tt)]
+    else
+      if sum(alltypes[name] .== sTt) == 0
+        push!(alltypes[name], sTt)
+      end
+    end
+  end
+  return alltypes
 end

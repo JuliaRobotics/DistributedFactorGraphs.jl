@@ -20,6 +20,8 @@ export DFGNode
 export DFGFactor
 export InferenceType, PackedInferenceType, FunctorInferenceType, InferenceVariable, ConvolutionObject
 
+export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
+
 export DFGVariable
 export label, timestamp, tags, estimates, estimate, solverData, solverDataDict, id, smallData, bigData
 export setSolverData

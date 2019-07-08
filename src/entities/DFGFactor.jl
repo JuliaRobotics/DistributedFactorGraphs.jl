@@ -9,6 +9,10 @@ abstract type FunctorInferenceType <: Function end
 abstract type InferenceVariable end
 abstract type ConvolutionObject <: Function end
 
+abstract type FunctorSingleton <: FunctorInferenceType end
+abstract type FunctorPairwise <: FunctorInferenceType end
+abstract type FunctorPairwiseMinimize <: FunctorInferenceType end
+
 """
 $(TYPEDEF)
 """
