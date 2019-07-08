@@ -4,6 +4,7 @@ export isPrior, lsfPriors
 export getData
 export getVariableType, getSofttype
 export getFactorType, getfnctype
+export lsTypes, lsfTypes
 
 
 """
@@ -180,7 +181,52 @@ end
 
 Return the DFGVariable softtype in factor graph `dfg<:AbstractDFG` and label `::Symbol`.
 """
-getVariableType(var::DFGVariable; solveKey::Symbol=:default) = getSofttype(var, solvekey=solveKey)
+getVariableType(var::DFGVariable; solveKey::Symbol=:default) = getSofttype(var, solveKey=solveKey)
 function getVariableType(dfg::G, lbl::Symbol; solveKey::Symbol=:default) where G <: AbstractDFG
   getVariableType(getVariable(dfg, lbl), solveKey=solveKey)
+end
+
+
+"""
+    $SIGNATURES
+
+Return `::Dict{Symbol, Vector{String}}` of all unique factor types in factor graph.
+"""
+function lsfTypes(dfg::G)::Dict{Symbol, Vector{String}} where G <: AbstractDFG
+  alltypes = Dict{Symbol,Vector{String}}()
+  for fc in lsf(dfg)
+    Tt = typeof(getFactorType(dfg, fc))
+    sTt = string(Tt)
+    name = Symbol(Tt.name)
+    if !haskey(alltypes, name)
+      alltypes[name] = String[string(Tt)]
+    else
+      if sum(alltypes[name] .== sTt) == 0
+        push!(alltypes[name], sTt)
+      end
+    end
+  end
+  return alltypes
+end
+
+"""
+    $SIGNATURES
+
+Return `::Dict{Symbol, Vector{String}}` of all unique variable types in factor graph.
+"""
+function lsTypes(dfg::G)::Dict{Symbol, Vector{String}} where G <: AbstractDFG
+  alltypes = Dict{Symbol,Vector{String}}()
+  for fc in ls(dfg)
+    Tt = typeof(getVariableType(dfg, fc))
+    sTt = string(Tt)
+    name = Symbol(Tt.name)
+    if !haskey(alltypes, name)
+      alltypes[name] = String[string(Tt)]
+    else
+      if sum(alltypes[name] .== sTt) == 0
+        push!(alltypes[name], sTt)
+      end
+    end
+  end
+  return alltypes
 end
