@@ -32,6 +32,8 @@ export getSerializationModule, setSerializationModule!
 export pack, unpack
 
 export isPrior, lsfPriors
+export getVariableType, getSofttype
+export getFactorType, getfnctype
 
 include("services/AbstractDFG.jl")
 include("services/DFGVariable.jl")

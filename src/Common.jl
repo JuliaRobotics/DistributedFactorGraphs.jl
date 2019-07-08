@@ -76,6 +76,49 @@ function sortVarNested(vars::Vector{Symbol})::Vector{Symbol}
 	return retvars
 end
 
+"""
+    $SIGNATURES
+
+Return the factor type used in a `::DFGFactor`.
+
+Notes:
+- OBSOLETE, use newer getFactorType instead.
+
+Related
+
+getFactorType
+"""
+function getfnctype(data::GenericFunctionNodeData)
+  # TODO what is this?
+  if typeof(data).name.name == :VariableNodeData
+    return VariableNodeData
+  end
+
+  # this looks right
+  return data.fnc.usrfnc!
+end
+function getfnctype(fact::DFGFactor; solveKey::Symbol=:default)
+  data = getData(fact) # TODO , solveKey=solveKey)
+  return getfnctype(data)
+end
+function getfnctype(dfg::T, lbl::Symbol; solveKey::Symbol=:default) where T <: AbstractDFG
+  getfnctype(getFactor(dfg, exvertid))
+end
+
+"""
+    $SIGNATURES
+
+Return user factor type from factor graph identified by label `::Symbol`.
+
+Notes
+- Replaces older `getfnctype`.
+"""
+getFactorType(data::GenericFunctionNodeData) = data.fnc.usrfnc!
+getFactorType(fct::DFGFactor) = getFactorType(getData(fct))
+function getFactorType(dfg::G, lbl::Symbol) where G <: AbstractDFG
+  getFactorType(getFactor(dfg, lbl))
+end
+
 
 """
     $SIGNATURES
@@ -101,4 +144,30 @@ function lsfPriors(dfg::G)::Vector{Symbol} where G <: AbstractDFG
     end
   end
   return priors
+end
+
+"""
+   $(SIGNATURES)
+
+Variable nodes softtype information holding a variety of meta data associated with the type of variable stored in that node of the factor graph.
+
+Related
+
+getVariableType
+"""
+function getSofttype(vnd::VariableNodeData)
+  return vnd.softtype
+end
+function getSofttype(v::DFGVariable; solveKey::Symbol=:default)
+  return getSofttype(getData(v, solveKey=solveKey))
+end
+
+"""
+    $SIGNATURES
+
+Return the DFGVariable softtype in factor graph `dfg<:AbstractDFG` and label `::Symbol`.
+"""
+getVariableType(var::DFGVariable; solveKey::Symbol=:default) = getSofttype(var, solvekey=solvekey)
+function getVariableType(dfg::G, lbl::Symbol; solveKey::Symbol=:default) where G <: AbstractDFG
+  getVariableType(getVariable(dfg, lbl), solveKey=solveKey)
 end
