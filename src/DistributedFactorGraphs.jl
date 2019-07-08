@@ -31,6 +31,8 @@ export GenericFunctionNodeData#, FunctionNodeData
 export getSerializationModule, setSerializationModule!
 export pack, unpack
 
+export isPrior, lsfPriors
+
 include("services/AbstractDFG.jl")
 include("services/DFGVariable.jl")
 
