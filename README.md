@@ -70,3 +70,5 @@ To run the image with user `neo4j` and password `test`:
 ```bash
 docker run --publish=7474:7474 --publish=7687:7687 --env NEO4J_AUTH=neo4j/test neo4j
 ```
+
+> **Note** If you just installed docker and having permission issues, please see [this ask Ubuntu forum](https://askubuntu.com/questions/941816/permission-denied-when-running-docker-after-installing-it-as-a-snap).
