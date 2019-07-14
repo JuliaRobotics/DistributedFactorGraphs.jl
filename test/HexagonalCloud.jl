@@ -14,6 +14,7 @@ cloudFg = CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
     IncrementalInference.rebuildFactorMetadata!,
     solverParams=SolverParams())
 # cloudFg = GraphsDFG{SolverParams}(params=SolverParams())
+# cloudFg = GraphsDFG{SolverParams}(params=SolverParams())
 clearSession!!(cloudFg)
 # cloudFg = initfg()
 
@@ -58,6 +59,8 @@ toDotFile(localFg, "/tmp/localfg.dot")
 # perform inference, and remember first runs are slower owing to Julia's just-in-time compiling
 # Can do with graph too!
 tree, smt, hist = solveTree!(localFg)
+
+wipeBuildNewTree!(localFg)
 tree, smt, hist = solveTree!(localFg, tree) # Recycle
 # batchSolve!(localFg, drawpdf=true, show=true)
 # Erm, whut? Error = mcmcIterationIDs -- unaccounted variables
