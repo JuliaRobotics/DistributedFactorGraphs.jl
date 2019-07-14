@@ -62,3 +62,11 @@ function _copyIntoGraph!(sourceDFG::G, destDFG::H, variableFactorLabels::Vector{
     end
     return nothing
 end
+
+## Utility functions for getting type names and modules (from IncrementalInference)
+function _getmodule(t::T) where T
+  T.name.module
+end
+function _getname(t::T) where T
+  T.name.name
+end
