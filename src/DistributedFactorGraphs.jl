@@ -34,22 +34,6 @@ export GenericFunctionNodeData#, FunctionNodeData
 export getSerializationModule, setSerializationModule!
 export pack, unpack
 
-# Comparators
-# some utils
-export
-    compareField,
-    compareFields,
-    compareAll,
-    compareAllSpecial,
-    compareVariable,
-    compareFactor,
-    compareAllVariables,
-    compareSimilarVariables,
-    compareSubsetFactorGraph,
-    compareSimilarFactors,
-    compareFactorGraphs
-
-
 # Common includes
 include("services/AbstractDFG.jl")
 include("services/DFGVariable.jl")
