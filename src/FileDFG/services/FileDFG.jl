@@ -12,6 +12,30 @@ function _packVariable(dfg::G, v::DFGVariable)::Dict{String, Any} where G <: Abs
     return props
 end
 
+function _unpackVariable(dfg::G, packedProps::Dict{String, Any})::DFGVariable where G <: AbstractDFG
+    label = Symbol(packedProps["label"])
+    timestamp = DateTime(packedProps["timestamp"])
+    tags =  JSON2.read(packedProps["tags"], Vector{Symbol})
+    estimateDict = JSON2.read(packedProps["estimateDict"], Dict{Symbol, VariableEstimate})
+    smallData = nothing
+    smallData = JSON2.read(packedProps["smallData"], Dict{String, String})
+
+    packed = JSON2.read(packedProps["solverDataDict"], Dict{String, PackedVariableNodeData})
+    solverData = Dict(Symbol.(keys(packed)) .=> map(p -> unpack(dfg, p), values(packed)))
+
+    # Rebuild DFGVariable
+    variable = DFGVariable(Symbol(packedProps["label"]))
+    variable.timestamp = timestamp
+    variable.tags = tags
+    variable.estimateDict = estimateDict
+    variable.solverDataDict = solverData
+    variable.smallData = smallData
+    variable.ready = packedProps["ready"]
+    variable.backendset = packedProps["backendset"]
+
+    return variable
+end
+
 function _packFactor(dfg::G, f::DFGFactor)::Dict{String, Any} where G <: AbstractDFG
     # Construct the properties to save
     props = Dict{String, Any}()
@@ -29,6 +53,39 @@ function _packFactor(dfg::G, f::DFGFactor)::Dict{String, Any} where G <: Abstrac
     props["ready"] = f.ready
 
     return props
+end
+
+
+function _unpackFactor(dfg::G, packedProps::Dict{String, Any}, iifModule)::DFGFactor where G <: AbstractDFG
+    label = packedProps["label"]
+    tags = JSON2.read(packedProps["tags"], Vector{Symbol})
+
+    data = packedProps["data"]
+    datatype = packedProps["fnctype"]
+    packtype = getfield(Main, Symbol("Packed"*datatype))
+    packed = JSON2.read(data, GenericFunctionNodeData{packtype,String})
+    fullFactor = iifModule.decodePackedType(dfg, packed)
+    # fullFactor = dfg.decodePackedTypeFunc(dfg, packed)
+
+    # Include the type
+    _variableOrderSymbols = JSON2.read(packedProps["_variableOrderSymbols"], Vector{Symbol})
+    backendset = packedProps["backendset"]
+    ready = packedProps["ready"]
+
+    # Rebuild DFGVariable
+    factor = DFGFactor{typeof(fullFactor.fnc), Symbol}(Symbol(label))
+    factor.tags = tags
+    factor.data = fullFactor
+    factor._variableOrderSymbols = _variableOrderSymbols
+    factor.ready = ready
+    factor.backendset = backendset
+
+    # GUARANTEED never to bite us in the ass in the future...
+    # ... TODO: refactor if changed: https://github.com/JuliaRobotics/IncrementalInference.jl/issues/350
+    getData(factor).fncargvID = _variableOrderSymbols
+
+    # Note, once inserted, you still need to call IIF.rebuildFactorMetadata!
+    return factor
 end
 
 function saveDFG(dfg::G, folder::String) where G <: AbstractDFG
@@ -62,6 +119,43 @@ function saveDFG(dfg::G, folder::String) where G <: AbstractDFG
     end
 end
 
-function loadDFG(folderName::String, dfgLoadInto::G=GraphsDFG{NoSolverParams}()) where G <: AbstractDFG
+function loadDFG(folder::String, iifModule, dfgLoadInto::G=GraphsDFG{NoSolverParams}()) where G <: AbstractDFG
+    variables = DFGVariable[]
+    factors = DFGFactor[]
+    varFolder = "$folder/variables"
+    factorFolder = "$folder/factors"
+    # Folder preparations
+    !isdir(folder) && error("Can't load DFG graph - folder '$folder' doesn't exist")
+    !isdir(varFolder) && error("Can't load DFG graph - folder '$folder' doesn't exist")
+    !isdir(factorFolder) && error("Can't load DFG graph - folder '$folder' doesn't exist")
+
+    varFiles = readdir(varFolder)
+    factorFiles = readdir(factorFolder)
+    for varFile in varFiles
+        io = open("$varFolder/$varFile")
+        packedData = JSON2.read(io, Dict{String, Any})
+        push!(variables, _unpackVariable(dfgLoadInto, packedData))
+    end
+    @info "Loaded $(length(variables)) variables - $(map(v->v.label, variables))"
+    @info "Inserting variables into graph..."
+    # Adding variables
+    map(v->addVariable!(dfgLoadInto, v), variables)
+
+    for factorFile in factorFiles
+        io = open("$factorFolder/$factorFile")
+        packedData = JSON2.read(io, Dict{String, Any})
+        push!(factors, _unpackFactor(dfgLoadInto, packedData, iifModule))
+    end
+    @info "Loaded $(length(variables)) factors - $(map(f->f.label, factors))"
+    @info "Inserting factors into graph..."
+    # # Adding factors
+    map(f->addFactor!(dfgLoadInto, f._variableOrderSymbols, f), factors)
+
+    # Finally, rebuild the CCW's for the factors to completely reinflate them
+    @info "Rebuilding CCW's for the factors..."
+    for factor in factors
+        iifModule.rebuildFactorMetadata!(dfgLoadInto, factor)
+    end
+
     return dfgLoadInto
 end
