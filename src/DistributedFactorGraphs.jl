@@ -57,9 +57,6 @@ include("services/DFGVariable.jl")
 # Include the Graphs.jl API.
 include("GraphsDFG/GraphsDFG.jl")
 
-# Comparators
-include("services/Comparators.jl")
-
 function __init__()
     @require DataFrames="a93c6f00-e57d-5684-b7b6-d8193f3e46c0" begin
         if isdefined(Main, :DataFrames)
