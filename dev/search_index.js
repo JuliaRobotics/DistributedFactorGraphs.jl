@@ -197,7 +197,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Reference",
     "title": "DistributedFactorGraphs.addFactor!",
     "category": "function",
-    "text": "addFactor!(dfg, variables, factor)\n\n\nAdd a DFGFactor to a DFG.\n\n\n\n\n\n"
+    "text": "addFactor!(dfg, variables, factor)\n\n\nAdd a DFGFactor to a DFG.\n\n\n\n\n\naddFactor!(dfg, variableIds, factor)\n\n\nAdd a DFGFactor to a DFG.\n\n\n\n\n\n"
 },
 
 {
