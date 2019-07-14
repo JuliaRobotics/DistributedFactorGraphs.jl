@@ -41,18 +41,18 @@ end
     $(SIGNATURES)
 Create a new CloudGraphs-based DFG factor graph using a Neo4j.Connection.
 """
-function CloudGraphsDFG{T}(neo4jConnection::Neo4j.Connection, userId::String, robotId::String, sessionId::String, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc; description::String="CloudGraphs DFG", solverParams::T=NoSolverParams(), useCache::Bool=false) where T <: AbstractParams
+function CloudGraphsDFG{T}(neo4jConnection::Neo4j.Connection, userId::String, robotId::String, sessionId::String, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, rebuildFactorMetadata!; description::String="CloudGraphs DFG", solverParams::T=NoSolverParams(), useCache::Bool=false) where T <: AbstractParams
     graph = Neo4j.getgraph(neo4jConnection)
     neo4jInstance = Neo4jInstance(neo4jConnection, graph)
-    return CloudGraphsDFG{T}(neo4jInstance, description, userId, robotId, sessionId, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, Dict{Symbol, Int64}(), Dict{Symbol, DFGVariable}(), Dict{Symbol, DFGFactor}(), Symbol[], solverParams, useCache)
+    return CloudGraphsDFG{T}(neo4jInstance, description, userId, robotId, sessionId, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, rebuildFactorMetadata!, Dict{Symbol, Int64}(), Dict{Symbol, DFGVariable}(), Dict{Symbol, DFGFactor}(), Symbol[], solverParams, useCache)
 end
 """
     $(SIGNATURES)
 Create a new CloudGraphs-based DFG factor graph by specifying the Neo4j connection information.
 """
-function CloudGraphsDFG{T}(host::String, port::Int, dbUser::String, dbPassword::String, userId::String, robotId::String, sessionId::String, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc; description::String="CloudGraphs DFG", solverParams::T=NoSolverParams(), useCache::Bool=false) where T <: AbstractParams
+function CloudGraphsDFG{T}(host::String, port::Int, dbUser::String, dbPassword::String, userId::String, robotId::String, sessionId::String, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, rebuildFactorMetadata!; description::String="CloudGraphs DFG", solverParams::T=NoSolverParams(), useCache::Bool=false) where T <: AbstractParams
     neo4jConnection = Neo4j.Connection(host, port=port, user=dbUser, password=dbPassword);
-    return CloudGraphsDFG{T}(neo4jConnection, userId, robotId, sessionId, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, description=description, solverParams=solverParams, useCache=useCache)
+    return CloudGraphsDFG{T}(neo4jConnection, userId, robotId, sessionId, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, rebuildFactorMetadata!, description=description, solverParams=solverParams, useCache=useCache)
 end
 
 """
@@ -323,10 +323,10 @@ function getFactor(dfg::CloudGraphsDFG, factorId::Int64)::DFGFactor
 
     data = props["data"]
     datatype = props["fnctype"]
-    fulltype = getfield(Main, Symbol(datatype))
+    # fulltype = getfield(Main, Symbol(datatype))
     packtype = getfield(Main, Symbol("Packed"*datatype))
     packed = JSON2.read(data, GenericFunctionNodeData{packtype,String})
-    fullFactor = dfg.decodePackedTypeFunc(packed, "")
+    fullFactor = dfg.decodePackedTypeFunc(dfg, packed)
 
     # Include the type
     _variableOrderSymbols = JSON2.read(props["_variableOrderSymbols"], Vector{Symbol})
@@ -340,6 +340,12 @@ function getFactor(dfg::CloudGraphsDFG, factorId::Int64)::DFGFactor
     factor._variableOrderSymbols = _variableOrderSymbols
     factor.ready = ready
     factor.backendset = backendset
+
+    # Lastly, rebuild the metadata
+    factor = dfg.rebuildFactorMetadata!(dfg, factor)
+    # GUARANTEED never to bite us in the ass in the future...
+    # ... TODO: refactor if changed: https://github.com/JuliaRobotics/IncrementalInference.jl/issues/350 
+    getData(factor).fncargvID = _variableOrderSymbols
 
     # Add to cache
     push!(dfg.factorCache, factor.label=>factor)

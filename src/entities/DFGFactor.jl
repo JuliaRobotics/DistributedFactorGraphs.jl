@@ -47,9 +47,6 @@ mutable struct DFGFactor{T, S} <: DFGNode
     DFGFactor{T, S}(label::Symbol, _internalId::Int64) where {T, S} = new{T, S}(label, Symbol[], GenericFunctionNodeData{T, S}(), 0, 0, _internalId, Symbol[])
 end
 
-# const FunctionNodeData{T} = GenericFunctionNodeData{T, Symbol}
-# FunctionNodeData(x1, x2, x3, x4, x5::Symbol, x6::T, x7::String="", x8::Vector{Int}=Int[]) where {T <: Union{FunctorInferenceType, ConvolutionObject}}= GenericFunctionNodeData{T, Symbol}(x1, x2, x3, x4, x5, x6, x7, x8)
-
 label(f::F) where F <: DFGFactor = f.label
 data(f::F) where F <: DFGFactor = f.data
 id(f::F) where F <: DFGFactor = f._internalId

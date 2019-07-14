@@ -7,6 +7,7 @@ using Dates
 using Distributions
 using Reexport
 using JSON2
+using LinearAlgebra
 
 # Entities
 include("entities/AbstractTypes.jl")
@@ -33,6 +34,7 @@ export GenericFunctionNodeData#, FunctionNodeData
 export getSerializationModule, setSerializationModule!
 export pack, unpack
 
+# Common includes
 include("services/AbstractDFG.jl")
 include("services/DFGVariable.jl")
 
