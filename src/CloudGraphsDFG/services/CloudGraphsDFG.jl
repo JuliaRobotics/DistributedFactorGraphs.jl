@@ -329,7 +329,7 @@ function getFactor(dfg::CloudGraphsDFG, factorId::Int64)::DFGFactor
 
     # Lastly, rebuild the metadata
     factor = dfg.rebuildFactorMetadata!(dfg, factor)
-    # GUARANTEED never to bite us in the ass in the future...
+    # GUARANTEED never to bite us in the future...
     # ... TODO: refactor if changed: https://github.com/JuliaRobotics/IncrementalInference.jl/issues/350
     getData(factor).fncargvID = _variableOrderSymbols
 
