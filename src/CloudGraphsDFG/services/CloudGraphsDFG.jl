@@ -4,20 +4,6 @@ export copySession!
 # With great power comes great "Oh crap, I deleted everything..."
 export clearSession!!, clearRobot!!, clearUser!!
 
-## Utility functions for getting type names and modules (from IncrementalInference)
-function _getmodule(t::T) where T
-  T.name.module
-end
-function _getname(t::T) where T
-  T.name.name
-end
-
-# Simply for convenience - don't export
-const PackedFunctionNodeData{T} = GenericFunctionNodeData{T, <: AbstractString}
-PackedFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, x7::String="", x8::Vector{Int}=Int[]) where {T <: PackedInferenceType, S <: AbstractString} = GenericFunctionNodeData(x1, x2, x3, x4, x5, x6, x7, x8)
-const FunctionNodeData{T} = GenericFunctionNodeData{T, Symbol}
-FunctionNodeData(x1, x2, x3, x4, x5::Symbol, x6::T, x7::String="", x8::Vector{Int}=Int[]) where {T <: Union{FunctorInferenceType, ConvolutionObject}}= GenericFunctionNodeData{T, Symbol}(x1, x2, x3, x4, x5, x6, x7, x8)
-
 function _getNodeType(dfg::CloudGraphsDFG, nodeLabel::Symbol)::Symbol
     dfg.useCache && haskey(dfg.variableDict, nodeLabel) && return :VARIABLE
     dfg.useCache && haskey(dfg.factorDict, nodeLabel) && return :FACTOR
@@ -343,8 +329,8 @@ function getFactor(dfg::CloudGraphsDFG, factorId::Int64)::DFGFactor
 
     # Lastly, rebuild the metadata
     factor = dfg.rebuildFactorMetadata!(dfg, factor)
-    # GUARANTEED never to bite us in the ass in the future...
-    # ... TODO: refactor if changed: https://github.com/JuliaRobotics/IncrementalInference.jl/issues/350 
+    # GUARANTEED never to bite us in the future...
+    # ... TODO: refactor if changed: https://github.com/JuliaRobotics/IncrementalInference.jl/issues/350
     getData(factor).fncargvID = _variableOrderSymbols
 
     # Add to cache

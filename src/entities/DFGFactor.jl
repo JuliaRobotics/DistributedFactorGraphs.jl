@@ -50,3 +50,9 @@ end
 label(f::F) where F <: DFGFactor = f.label
 data(f::F) where F <: DFGFactor = f.data
 id(f::F) where F <: DFGFactor = f._internalId
+
+# Simply for convenience - don't export
+const PackedFunctionNodeData{T} = GenericFunctionNodeData{T, <: AbstractString}
+PackedFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, x7::String="", x8::Vector{Int}=Int[]) where {T <: PackedInferenceType, S <: AbstractString} = GenericFunctionNodeData(x1, x2, x3, x4, x5, x6, x7, x8)
+const FunctionNodeData{T} = GenericFunctionNodeData{T, Symbol}
+FunctionNodeData(x1, x2, x3, x4, x5::Symbol, x6::T, x7::String="", x8::Vector{Int}=Int[]) where {T <: Union{FunctorInferenceType, ConvolutionObject}}= GenericFunctionNodeData{T, Symbol}(x1, x2, x3, x4, x5, x6, x7, x8)
