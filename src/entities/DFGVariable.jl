@@ -12,7 +12,7 @@ mutable struct VariableNodeData
   separator::Array{Symbol,1}
   softtype
   initialized::Bool
-  partialinit::Bool
+  inferdim::Float64
   ismargin::Bool
   dontmargin::Bool
   # A valid, packable default constructor is needed.
@@ -28,7 +28,7 @@ mutable struct VariableNodeData
                    # x9::Dict{ Tuple{Symbol, Vector{Float64}} }, # Union{Nothing, },
                    x10,
                    x11::Bool,
-                   x12::Bool,
+                   x12::Float64,
                    x13::Bool,
                    x14::Bool) =
     new(x1,x2,x3,x4,x5,x6,x7,x8,x10,x11,x12,x13,x14)
@@ -50,7 +50,7 @@ mutable struct PackedVariableNodeData
   separator::Array{Symbol,1} # Int
   softtype::String
   initialized::Bool
-  partialinit::Bool
+  inferdim::Float64
   ismargin::Bool
   dontmargin::Bool
   PackedVariableNodeData() = new()
@@ -66,7 +66,7 @@ mutable struct PackedVariableNodeData
                          x10::Vector{Symbol}, # Int
                          x11::String,
                          x12::Bool,
-                         x13::Bool,
+                         x13::Float64,
                          x14::Bool,
                          x15::Bool ) = new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15)
 end
