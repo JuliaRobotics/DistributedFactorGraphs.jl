@@ -8,7 +8,7 @@ function pack(dfg::G, d::VariableNodeData)::PackedVariableNodeData where G <: Ab
                                 d.BayesNetOutVertIDs,
                                 d.dimIDs, d.dims, d.eliminated,
                                 d.BayesNetVertID, d.separator,
-                                d.softtype != nothing ? string(d.softtype) : nothing, d.initialized, d.partialinit, d.ismargin, d.dontmargin)
+                                d.softtype != nothing ? string(d.softtype) : nothing, d.initialized, d.inferdim, d.ismargin, d.dontmargin)
 end
 
 function unpack(dfg::G, d::PackedVariableNodeData)::VariableNodeData where G <: AbstractDFG
@@ -43,7 +43,7 @@ function unpack(dfg::G, d::PackedVariableNodeData)::VariableNodeData where G <: 
 
   return VariableNodeData(M3,M4, d.BayesNetOutVertIDs,
     d.dimIDs, d.dims, d.eliminated, d.BayesNetVertID, d.separator,
-    st, d.initialized, d.partialinit, d.ismargin, d.dontmargin )
+    st, d.initialized, d.inferdim, d.ismargin, d.dontmargin )
 end
 
 function compare(a::VariableNodeData,b::VariableNodeData)
@@ -56,7 +56,7 @@ function compare(a::VariableNodeData,b::VariableNodeData)
     TP = TP && a.eliminated == b.eliminated
     TP = TP && a.BayesNetVertID == b.BayesNetVertID
     TP = TP && a.separator == b.separator
-    TP = TP && a.partialinit == b.partialinit
+    TP = TP && abs(a.inferdim - b.inferdim) < 1e-14
     TP = TP && a.ismargin == b.ismargin
     TP = TP && a.softtype == b.softtype
     return TP
