@@ -44,6 +44,9 @@ include("GraphsDFG/GraphsDFG.jl")
 # Include the FilesDFG API.
 include("FileDFG/FileDFG.jl")
 
+# Include the LightGraphs.jl (MetaGraphs.jl) API.
+include("LightGraphsDFG/LightGraphsDFG.jl")
+
 export saveDFG, loadDFG
 
 function __init__()
