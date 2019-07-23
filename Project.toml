@@ -23,7 +23,7 @@ Graphs = "≥ 0.10.3"
 Reexport = "≥ 0.2"
 Requires = "≥ 0.5"
 julia = "0.7, 1"
-# MetaGraphs = "≥0.6.2"
+MetaGraphs = "≥ 0.6.2"
 
 [extras]
 IncrementalInference = "904591bb-b899-562f-9e6f-b8df64c7d480"
