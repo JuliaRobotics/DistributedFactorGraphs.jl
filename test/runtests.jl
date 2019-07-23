@@ -2,6 +2,12 @@ using Test
 using DataFrames
 using DistributedFactorGraphs
 
+#FIXME REMOVE when MetaGraphs tags new release
+using Pkg
+MG_master = PackageSpec(name="MetaGraphs", rev="master")
+Pkg.add(MG_master)
+#____ REMOVE when MetaGraphs tags new release
+
 # Test each interface
 apis = [GraphsDFG, LightGraphsDFG]
 # apis = [graphsDFG, cgDFG]

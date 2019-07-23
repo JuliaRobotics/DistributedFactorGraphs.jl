@@ -114,7 +114,6 @@ map(n -> addFactor!(dfg, [verts[n], verts[n+1]], DFGFactor{Int, :Symbol}(Symbol(
     @test getNeighbors(dfg, :x1x2f1) == ls(dfg, :x1x2f1)
 end
 
-#TODO Subgraphs for LightGraphsDFG
 @testset "Getting Subgraphs" begin
     # Subgraphs
     dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
