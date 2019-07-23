@@ -106,7 +106,7 @@ function addFactor!(dfg::LightGraphsDFG, variables::Vector{DFGVariable}, factor:
 
 	props = Dict(:factor=>factor)
 
-	retval = add_vertex!(dfg.g, :label, factor.label)
+	retval = MetaGraphs.add_vertex!(dfg.g, :label, factor.label)
 	retval && set_props!(dfg.g, nv(dfg.g), props)
 
     # Add index
@@ -116,7 +116,7 @@ function addFactor!(dfg::LightGraphsDFG, variables::Vector{DFGVariable}, factor:
         # v = dfg.g.vertices[variable._internalId]
         # edge = Graphs.make_edge(dfg.g, v, f)
         # Graphs.add_edge!(dfg.g, edge)
-		retval && add_edge!(dfg.g, dfg.g[variable.label,:label], dfg.g[factor.label,:label])
+		retval && MetaGraphs.add_edge!(dfg.g, dfg.g[variable.label,:label], dfg.g[factor.label,:label])
     end
     # Track insertion
     # push!(dfg.addHistory, factor.label)
@@ -191,7 +191,7 @@ function updateVariable!(dfg::LightGraphsDFG, variable::DFGVariable)::DFGVariabl
         error("Variable label '$(variable.label)' does not exist in the factor graph")
     end
     # dfg.g.vertices[dfg.labelDict[variable.label]].dfgNode = variable
-	set_props!(dfg.g, dfg.g[label,:label], :variable, variable)
+	set_prop!(dfg.g, dfg.g[variable.label,:label], :variable, variable)
     return variable
 end
 
@@ -204,7 +204,7 @@ function updateFactor!(dfg::LightGraphsDFG, factor::DFGFactor)::DFGFactor
         error("Factor label '$(factor.label)' does not exist in the factor graph")
     end
     # dfg.g.vertices[dfg.labelDict[factor.label]].dfgNode = factor
-	set_props!(dfg.g, dfg.g[label,:label], :factor, factor)
+	set_prop!(dfg.g, dfg.g[factor.label,:label], :factor, factor)
     return factor
 end
 
@@ -242,7 +242,7 @@ function deleteFactor!(dfg::LightGraphsDFG, label::Symbol)::DFGFactor
     # factor = dfg.g.vertices[dfg.labelDict[label]].dfgNode
     # delete_vertex!(dfg.g.vertices[dfg.labelDict[label]], dfg.g)
 	factor = get_prop(dfg.g, dfg.g[label,:label], :factor)
-	rem_vertex!(dfg.g, dfg.g[label,:label])
+	MetaGraphs.rem_vertex!(dfg.g, dfg.g[label,:label])
     delete!(dfg.labelDict, label)
     return factor
 end
@@ -345,7 +345,7 @@ end
 Checks if the graph is fully connected, returns true if so.
 """
 function isFullyConnected(dfg::LightGraphsDFG)::Bool
-    return length(connected_components(dfg.g)) == 1
+    return length(LightGraphs.connected_components(dfg.g)) == 1
 end
 
 #Alias
@@ -364,18 +364,20 @@ function getNeighbors(dfg::LightGraphsDFG, node::T; ready::Union{Nothing, Int}=n
     if !haskey(dfg.labelDict, node.label)
         error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
     end
-    vert = dfg.g.vertices[dfg.labelDict[node.label]]
-    neighbors = in_neighbors(vert, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
+    # vert = dfg.g.vertices[dfg.labelDict[node.label]]
+    # neighbors = in_neighbors(vert, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
+	neighbors = map(idx->get_prop(dfg.g, idx, :label),  LightGraphs.neighbors(dfg.g, dfg.g[node.label,:label]))
     # Additional filtering
-    neighbors = ready != nothing ? filter(v -> v.ready == ready, neighbors) : neighbors
-    neighbors = backendset != nothing ? filter(v -> v.backendset == backendset, neighbors) : neighbors
+	#TODO ready and backendset
+    # neighbors = ready != nothing ? filter(v -> v.ready == ready, neighbors) : neighbors
+    # neighbors = backendset != nothing ? filter(v -> v.backendset == backendset, neighbors) : neighbors
     # Variable sorting (order is important)
     if node isa DFGFactor
-        order = intersect(node._variableOrderSymbols, map(v->v.dfgNode.label, neighbors))
+        order = intersect(node._variableOrderSymbols, neighbors)#map(v->v.dfgNode.label, neighbors))
         return order
     end
 
-    return map(n -> n.dfgNode.label, neighbors)
+    return neighbors#map(n -> n.dfgNode.label, neighbors)
 end
 """
     $(SIGNATURES)
@@ -385,19 +387,23 @@ function getNeighbors(dfg::LightGraphsDFG, label::Symbol; ready::Union{Nothing, 
     if !haskey(dfg.labelDict, label)
         error("Variable/factor with label '$(label)' does not exist in the factor graph")
     end
-    vert = dfg.g.vertices[dfg.labelDict[label]]
-    neighbors = in_neighbors(vert, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
+    # vert = dfg.g.vertices[dfg.labelDict[label]]
+    # neighbors = in_neighbors(vert, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
     # Additional filtering
-    neighbors = ready != nothing ? filter(v -> v.ready == ready, neighbors) : neighbors
-    neighbors = backendset != nothing ? filter(v -> v.backendset == backendset, neighbors) : neighbors
+	# TODO ready and backendset
+    # neighbors = ready != nothing ? filter(v -> v.ready == ready, neighbors) : neighbors
+    # neighbors = backendset != nothing ? filter(v -> v.backendset == backendset, neighbors) : neighbors
     # Variable sorting when using a factor (function order is important)
-    if vert.dfgNode isa DFGFactor
-        vert.dfgNode._variableOrderSymbols
-        order = intersect(vert.dfgNode._variableOrderSymbols, map(v->v.dfgNode.label, neighbors))
-        return order
-    end
+    # if vert.dfgNode isa DFGFactor
+    #     vert.dfgNode._variableOrderSymbols
+    #     order = intersect(vert.dfgNode._variableOrderSymbols, map(v->v.dfgNode.label, neighbors))
+    #     return order
+    # end
+	# return map(n -> n.dfgNode.label, neighbors)
 
-    return map(n -> n.dfgNode.label, neighbors)
+	neighbors = map(idx->get_prop(dfg.g, idx, :label),  LightGraphs.neighbors(dfg.g, dfg.g[label,:label]))
+	return neighbors
+
 end
 
 # Aliases
@@ -451,6 +457,8 @@ function _copyIntoGraph!(sourceDFG::LightGraphsDFG, destDFG::LightGraphsDFG, var
     return nothing
 end
 
+
+#TODO TODO TODO TODO TODO TODO TODO TODO
 """
     $(SIGNATURES)
 Retrieve a deep subgraph copy around a given variable or factor.
@@ -525,16 +533,19 @@ function getAdjacencyMatrix(dfg::LightGraphsDFG)::Matrix{Union{Nothing, Symbol}}
     return adjMat
 end
 
+
 """
     $(SIGNATURES)
 Produces a dot-format of the graph for visualization.
 """
 function toDot(dfg::LightGraphsDFG)::String
-    m = PipeBuffer()
-    write(m,Graphs.to_dot(dfg.g))
-    data = take!(m)
-    close(m)
-    return String(data)
+    # m = PipeBuffer()
+    # write(m,Graphs.to_dot(dfg.g))
+    # data = take!(m)
+    # close(m)
+    # return String(data)
+	@error "toDot(dfg::LightGraphsDFG) is not sopported yet"
+	return nothing
 end
 
 """
@@ -548,11 +559,16 @@ Note
 - Based on graphviz.org
 """
 function toDotFile(dfg::LightGraphsDFG, fileName::String="/tmp/dfg.dot")::Nothing
-    open(fileName, "w") do fid
-        write(fid,Graphs.to_dot(dfg.g))
-    end
-    return nothing
+    # open(fileName, "w") do fid
+    #     write(fid,Graphs.to_dot(dfg.g))
+    # end
+    # return nothing
+	#TODO
+	@error "toDotFile(dfg::LightGraphsDFG,filename) is not sopported yet"
+	return nothing
 end
+
+
 
 # function __init__()
 #     @require DataFrames="a93c6f00-e57d-5684-b7b6-d8193f3e46c0" begin
@@ -580,7 +596,3 @@ end
 #         end
 #     end
 # end
-
-
-
-#################################################################################

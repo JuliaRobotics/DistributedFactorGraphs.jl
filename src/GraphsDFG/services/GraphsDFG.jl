@@ -304,7 +304,7 @@ end
 Checks if the graph is fully connected, returns true if so.
 """
 function isFullyConnected(dfg::GraphsDFG)::Bool
-    return length(connected_components(dfg.g)) == 1
+    return length(Graphs.connected_components(dfg.g)) == 1
 end
 
 #Alias
