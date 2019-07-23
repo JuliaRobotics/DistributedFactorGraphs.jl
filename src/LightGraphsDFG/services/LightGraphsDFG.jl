@@ -476,7 +476,6 @@ function _copyIntoGraph!(sourceDFG::LightGraphsDFG, destDFG::LightGraphsDFG, ns:
             end
         end
     end
-	@show "Using ME!"
     return nothing
 end
 
