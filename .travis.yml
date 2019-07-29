@@ -18,6 +18,7 @@ notifications:
 matrix:
   allow_failures:
     - julia: nightly
+    - julia: 1.2
 
 # script:
 #   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
