@@ -1,5 +1,5 @@
 # Accessors
-getLabelDict(dfg::LightGraphsDFG) = dfg.labelDict
+getLabelDict(dfg::LightGraphsDFG) = dfg.g.metaindex[:label]
 getDescription(dfg::LightGraphsDFG) = dfg.description
 setDescription(dfg::LightGraphsDFG, description::String) = dfg.description = description
 getInnerGraph(dfg::LightGraphsDFG) = dfg.g
@@ -16,9 +16,9 @@ end
 True if the variable or factor exists in the graph.
 """
 function exists(dfg::LightGraphsDFG, node::N) where N <: DFGNode
-    return haskey(dfg.labelDict, node.label)
+    return haskey(dfg.g.metaindex[:label], node.label)
 end
-exists(dfg::LightGraphsDFG, nId::Symbol) = haskey(dfg.labelDict, nId)
+exists(dfg::LightGraphsDFG, nId::Symbol) = haskey(dfg.g.metaindex[:label], nId)
 
 
 """
@@ -26,10 +26,9 @@ exists(dfg::LightGraphsDFG, nId::Symbol) = haskey(dfg.labelDict, nId)
 Add a DFGVariable to a DFG.
 """
 function addVariable!(dfg::LightGraphsDFG, variable::DFGVariable)::Bool
-    if haskey(dfg.labelDict, variable.label)
+    if haskey(dfg.g.metaindex[:label], variable.label)
         error("Variable '$(variable.label)' already exists in the factor graph")
     end
-    dfg.nodeCounter += 1
 
 	#NOTE Internal ID always set to zero as it is not needed?
     variable._internalId = 0
@@ -43,8 +42,6 @@ function addVariable!(dfg::LightGraphsDFG, variable::DFGVariable)::Bool
 	MetaGraphs.add_vertex!(dfg.g, :label, variable.label) || return false
 	MetaGraphs.set_props!(dfg.g, nv(dfg.g), props) || return false
 
-	#TODO die ID gaan heeltyd verander, ek dink sover gebruik label direk as index
-    push!(dfg.labelDict, variable.label=>variable._internalId)
     # Track insertion
     push!(dfg.addHistory, variable.label)
 
@@ -56,43 +53,37 @@ end
 Add a DFGFactor to a DFG.
 """
 function addFactor!(dfg::LightGraphsDFG, variables::Vector{DFGVariable}, factor::DFGFactor)::Bool
-    if haskey(dfg.labelDict, factor.label)
+    if haskey(dfg.g.metaindex[:label], factor.label)
         error("Factor '$(factor.label)' already exists in the factor graph")
     end
     for v in variables
-        if !(v.label in keys(dfg.labelDict))
+        if !(v.label in keys(dfg.g.metaindex[:label]))
             error("Variable '$(v.label)' not found in graph when creating Factor '$(factor.label)'")
         end
     end
-    dfg.nodeCounter += 1
-    factor._internalId = dfg.nodeCounter
-    factor._variableOrderSymbols = map(v->v.label, variables)
-    # fNode = LightGraphsNode(dfg.nodeCounter, factor)
-    # f = Graphs.add_vertex!(dfg.g, fNode)
 
-	#TODO something like this or the next props definition
+	#NOTE Internal ID always set to zero as it is not needed?
+    factor._internalId = 0
+    factor._variableOrderSymbols = map(v->v.label, variables)
+
+	#NOTE something like this or the next props definition
 	# props = Dict{:Symbol, Any}()
 	# props[:tags] = factor.tags
 	# props[:factor] = factor
 
 	props = Dict(:factor=>factor)
 
-	retval = MetaGraphs.add_vertex!(dfg.g, :label, factor.label)
-	retval && set_props!(dfg.g, nv(dfg.g), props)
+	MetaGraphs.add_vertex!(dfg.g, :label, factor.label) || return false
+	set_props!(dfg.g, nv(dfg.g), props) || return false
 
     # Add index
-    push!(dfg.labelDict, factor.label=>factor._internalId)
+    # push!(dfg.labels, factor.label)
     # Add the edges...
     for variable in variables
-        # v = dfg.g.vertices[variable._internalId]
-        # edge = Graphs.make_edge(dfg.g, v, f)
-        # Graphs.add_edge!(dfg.g, edge)
-		retval && MetaGraphs.add_edge!(dfg.g, dfg.g[variable.label,:label], dfg.g[factor.label,:label])
+		MetaGraphs.add_edge!(dfg.g, dfg.g[variable.label,:label], dfg.g[factor.label,:label]) || return false
     end
-    # Track insertion
-    # push!(dfg.addHistory, factor.label)
 
-    return retval
+    return true
 end
 
 """
@@ -124,7 +115,7 @@ function getVariable(dfg::LightGraphsDFG, label::Union{Symbol, String})::DFGVari
     if typeof(label) == String
         label = Symbol(label)
     end
-    if !haskey(dfg.labelDict, label)
+    if !haskey(dfg.g.metaindex[:label], label)
         error("Variable label '$(label)' does not exist in the factor graph")
     end
     return get_prop(dfg.g, dfg.g[label,:label], :variable)
@@ -135,14 +126,14 @@ end
 Get a DFGFactor from a DFG using its underlying integer ID.
 """
 function getFactor(dfg::LightGraphsDFG, factorId::Int64)::DFGFactor
-    # if !(factorId in values(dfg.labelDict))
+    # if !(factorId in values(dfg.g.metaindex[:label]))
     #     error("Factor ID '$(factorId)' does not exist in the factor graph")
     # end
     return get_prop(dfg.g, factorId, :factor)
 end
 
 function getFactor(g::MetaGraph, factorId::Int64)::DFGFactor
-    # if !(factorId in values(dfg.labelDict))
+    # if !(factorId in values(dfg.g.metaindex[:label]))
     #     error("Factor ID '$(factorId)' does not exist in the factor graph")
     # end
     return get_prop(g, factorId, :factor)
@@ -156,7 +147,7 @@ function getFactor(dfg::LightGraphsDFG, label::Union{Symbol, String})::DFGFactor
     if typeof(label) == String
         label = Symbol(label)
     end
-    if !haskey(dfg.labelDict, label)
+    if !haskey(dfg.g.metaindex[:label], label)
         error("Factor label '$(label)' does not exist in the factor graph")
     end
     return get_prop(dfg.g, dfg.g[label,:label], :factor)
@@ -167,10 +158,9 @@ end
 Update a complete DFGVariable in the DFG.
 """
 function updateVariable!(dfg::LightGraphsDFG, variable::DFGVariable)::DFGVariable
-    if !haskey(dfg.labelDict, variable.label)
+    if !haskey(dfg.g.metaindex[:label], variable.label)
         error("Variable label '$(variable.label)' does not exist in the factor graph")
     end
-    # dfg.g.vertices[dfg.labelDict[variable.label]].dfgNode = variable
 	set_prop!(dfg.g, dfg.g[variable.label,:label], :variable, variable)
     return variable
 end
@@ -180,10 +170,9 @@ end
 Update a complete DFGFactor in the DFG.
 """
 function updateFactor!(dfg::LightGraphsDFG, factor::DFGFactor)::DFGFactor
-    if !haskey(dfg.labelDict, factor.label)
+    if !haskey(dfg.g.metaindex[:label], factor.label)
         error("Factor label '$(factor.label)' does not exist in the factor graph")
     end
-    # dfg.g.vertices[dfg.labelDict[factor.label]].dfgNode = factor
 	set_prop!(dfg.g, dfg.g[factor.label,:label], :factor, factor)
     return factor
 end
@@ -193,14 +182,12 @@ end
 Delete a DFGVariable from the DFG using its label.
 """
 function deleteVariable!(dfg::LightGraphsDFG, label::Symbol)::DFGVariable
-    if !haskey(dfg.labelDict, label)
+    if !haskey(dfg.g.metaindex[:label], label)
         error("Variable label '$(label)' does not exist in the factor graph")
     end
-    # variable = dfg.g.vertices[dfg.labelDict[label]].dfgNode
-    # delete_vertex!(dfg.g.vertices[dfg.labelDict[label]], dfg.g)
 	variable = get_prop(dfg.g, dfg.g[label,:label], :variable)
 	rem_vertex!(dfg.g, dfg.g[label,:label])
-    delete!(dfg.labelDict, label)
+
     return variable
 end
 
@@ -216,14 +203,11 @@ deleteVariable!(dfg::LightGraphsDFG, variable::DFGVariable)::DFGVariable = delet
 Delete a DFGFactor from the DFG using its label.
 """
 function deleteFactor!(dfg::LightGraphsDFG, label::Symbol)::DFGFactor
-    if !haskey(dfg.labelDict, label)
+    if !haskey(dfg.g.metaindex[:label], label)
         error("Factor label '$(label)' does not exist in the factor graph")
     end
-    # factor = dfg.g.vertices[dfg.labelDict[label]].dfgNode
-    # delete_vertex!(dfg.g.vertices[dfg.labelDict[label]], dfg.g)
 	factor = get_prop(dfg.g, dfg.g[label,:label], :factor)
 	MetaGraphs.rem_vertex!(dfg.g, dfg.g[label,:label])
-    delete!(dfg.labelDict, label)
     return factor
 end
 
@@ -359,11 +343,10 @@ end
 Retrieve a list of labels of the immediate neighbors around a given variable or factor.
 """
 function getNeighbors(dfg::LightGraphsDFG, node::T; ready::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}  where T <: DFGNode
-    if !haskey(dfg.labelDict, node.label)
+    if !haskey(dfg.g.metaindex[:label], node.label)
         error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
     end
-    # vert = dfg.g.vertices[dfg.labelDict[node.label]]
-    # neighbors = in_neighbors(vert, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
+
 	neighbors = map(idx->get_prop(dfg.g, idx, :label),  LightGraphs.neighbors(dfg.g, dfg.g[node.label,:label]))
     # Additional filtering
     neighbors = ready != nothing ? filter(lbl -> _isready(dfg, dfg.g[lbl,:label], ready), neighbors) : neighbors
@@ -375,14 +358,14 @@ function getNeighbors(dfg::LightGraphsDFG, node::T; ready::Union{Nothing, Int}=n
         return order
     end
 
-    return neighbors#map(n -> n.dfgNode.label, neighbors)
+    return neighbors
 end
 """
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
 """
 function getNeighbors(dfg::LightGraphsDFG, label::Symbol; ready::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}  where T <: DFGNode
-    if !haskey(dfg.labelDict, label)
+    if !haskey(dfg.g.metaindex[:label], label)
         error("Variable/factor with label '$(label)' does not exist in the factor graph")
     end
 
@@ -433,14 +416,14 @@ function _copyIntoGraph!(sourceDFG::LightGraphsDFG, destDFG::LightGraphsDFG, ns:
 
 	# Now we have to add all variables first,
 	for v in variables
-	    if !haskey(destDFG.labelDict, v.label)
+	    if !haskey(destDFG.g.metaindex[:label], v.label)
 	        addVariable!(destDFG, deepcopy(v))
 	    end
 	end
 
     # And then all factors to the destDFG.
     for f in factors
-        if !haskey(destDFG.labelDict, f.label)
+        if !haskey(destDFG.g.metaindex[:label], f.label)
             # Get the original factor variables (we need them to create it)
             # variables = in_neighbors(factor, sourceDFG.g)
 			# variables = getNeighbors(sourceDFG, f)
@@ -450,7 +433,7 @@ function _copyIntoGraph!(sourceDFG::LightGraphsDFG, destDFG::LightGraphsDFG, ns:
             # Find the labels and associated variables in our new subgraph
             factVariables = DFGVariable[]
             for v in variables
-                if haskey(destDFG.labelDict, v.label)
+                if haskey(destDFG.g.metaindex[:label], v.label)
                     push!(factVariables, getVariable(destDFG, v.label))
                     #otherwise ignore
                 end
@@ -474,7 +457,7 @@ Optionally provide an existing subgraph addToDFG, the extracted nodes will be co
 Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
 """
 function getSubgraphAroundNode(dfg::LightGraphsDFG{P}, node::T, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::LightGraphsDFG=LightGraphsDFG{P}())::LightGraphsDFG where {P <: AbstractParams, T <: DFGNode}
-    if !haskey(dfg.labelDict, node.label)
+    if !haskey(dfg.g.metaindex[:label], node.label)
         error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
     end
 
@@ -495,7 +478,7 @@ Note: By default orphaned factors (where the subgraph does not contain all the r
 """
 function getSubgraph(dfg::LightGraphsDFG, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false, addToDFG::LightGraphsDFG=LightGraphsDFG())::LightGraphsDFG
     for label in variableFactorLabels
-        if !haskey(dfg.labelDict, label)
+        if !haskey(dfg.g.metaindex[:label], label)
             error("Variable/factor with label '$(label)' does not exist in the factor graph")
         end
     end
