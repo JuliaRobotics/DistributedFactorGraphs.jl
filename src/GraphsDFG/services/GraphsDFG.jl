@@ -326,8 +326,8 @@ function getNeighbors(dfg::GraphsDFG, node::T; ready::Union{Nothing, Int}=nothin
     vert = dfg.g.vertices[dfg.labelDict[node.label]]
     neighbors = in_neighbors(vert, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
     # Additional filtering
-    neighbors = ready != nothing ? filter(v -> v.ready == ready, neighbors) : neighbors
-    neighbors = backendset != nothing ? filter(v -> v.backendset == backendset, neighbors) : neighbors
+    neighbors = ready != nothing ? filter(v -> v.dfgNode.ready == ready, neighbors) : neighbors
+    neighbors = backendset != nothing ? filter(v -> v.dfgNode.backendset == backendset, neighbors) : neighbors
     # Variable sorting (order is important)
     if node isa DFGFactor
         order = intersect(node._variableOrderSymbols, map(v->v.dfgNode.label, neighbors))
@@ -347,8 +347,8 @@ function getNeighbors(dfg::GraphsDFG, label::Symbol; ready::Union{Nothing, Int}=
     vert = dfg.g.vertices[dfg.labelDict[label]]
     neighbors = in_neighbors(vert, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
     # Additional filtering
-    neighbors = ready != nothing ? filter(v -> v.ready == ready, neighbors) : neighbors
-    neighbors = backendset != nothing ? filter(v -> v.backendset == backendset, neighbors) : neighbors
+    neighbors = ready != nothing ? filter(v -> v.dfgNode.ready == ready, neighbors) : neighbors
+    neighbors = backendset != nothing ? filter(v -> v.dfgNode.backendset == backendset, neighbors) : neighbors
     # Variable sorting when using a factor (function order is important)
     if vert.dfgNode isa DFGFactor
         vert.dfgNode._variableOrderSymbols
