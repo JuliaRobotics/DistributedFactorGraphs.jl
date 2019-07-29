@@ -1,19 +1,3 @@
-# For visualization
-# import Graphs: attributes, vertex_index
-# # Export attributes, these are enumerates as properties for the variables and factors
-# # REF: http://www.graphviz.org/documentation/
-# function attributes(v::LightGraphsNode, g::T)::AttributeDict where T <:GenericIncidenceList
-#     AttributeDict(
-#         "label" => v.dfgNode.label,
-#         "color" => v.dfgNode isa DFGVariable ? "red" : "blue",
-#         "shape" => v.dfgNode isa DFGVariable ? "box" : "ellipse",
-#         "fillcolor" => v.dfgNode isa DFGVariable ? "red" : "blue"
-#         )
-# end
-#
-# # This is insanely important - if we don't provide a valid index, the edges don't work correctly.
-# vertex_index(v::LightGraphsNode) = v.index
-
 # Accessors
 getLabelDict(dfg::LightGraphsDFG) = dfg.labelDict
 getDescription(dfg::LightGraphsDFG) = dfg.description
@@ -47,37 +31,24 @@ function addVariable!(dfg::LightGraphsDFG, variable::DFGVariable)::Bool
     end
     dfg.nodeCounter += 1
 
-	#TODO kyk na nv(fg) dink nie die gaan in LightGraphs werk nie
-    variable._internalId = dfg.nodeCounter
-	# ek dink die node id gaan verlore gaan
-	# v = LightGraphsNode(dfg.nodeCounter, variable)
-	#dalk eerder op die baseer?
+	#NOTE Internal ID always set to zero as it is not needed?
+    variable._internalId = 0
 
-	#TODO ons kan of aparte velde stoor of die variable net so
-	if false
-		props = Dict{Symbol, Any}()
-	    props[:timestamp] = variable.timestamp
-	    props[:tags] = variable.tags
-	    props[:estimateDict] = variable.estimateDict
-	    props[:solverDataDict] = variable.solverDataDict
-	    props[:smallData] = variable.smallData
-	    props[:ready] = variable.ready
-	    props[:backendset] = variable.backendset
-	else
-		# props = Dict{:Symbol, Any}()
-		# props[:tags] = variable.tags
-		# props[:variable] = variable
-		props = Dict(:variable=>variable)
-	end
-	retval = MetaGraphs.add_vertex!(dfg.g, :label, variable.label)
-	retval && MetaGraphs.set_props!(dfg.g, nv(dfg.g), props)
+	#If other properties are needed in the graph itself, maybe :tags
+	# props = Dict{:Symbol, Any}()
+	# props[:tags] = variable.tags
+	# props[:variable] = variable
+	props = Dict(:variable=>variable)
+
+	MetaGraphs.add_vertex!(dfg.g, :label, variable.label) || return false
+	MetaGraphs.set_props!(dfg.g, nv(dfg.g), props) || return false
 
 	#TODO die ID gaan heeltyd verander, ek dink sover gebruik label direk as index
     push!(dfg.labelDict, variable.label=>variable._internalId)
     # Track insertion
     push!(dfg.addHistory, variable.label)
 
-    return retval
+    return true
 end
 
 """
@@ -191,8 +162,6 @@ function getFactor(dfg::LightGraphsDFG, label::Union{Symbol, String})::DFGFactor
     return get_prop(dfg.g, dfg.g[label,:label], :factor)
 end
 
-
-## TODO UNTESTED!!!!!!!!!!!!!!
 """
     $(SIGNATURES)
 Update a complete DFGVariable in the DFG.
@@ -366,7 +335,25 @@ Checks if the graph is not fully connected, returns true if it is not contiguous
 """
 hasOrphans(dfg::LightGraphsDFG)::Bool = !isFullyConnected(dfg)
 
+function _isready(dfg::LightGraphsDFG, idx::Int, ready::Int)::Bool
+	p = props(dfg.g, idx)
+	haskey(p, :variable) && (return p[:variable].ready == ready)
+	haskey(p, :factor) && (return p[:factor].ready == ready)
 
+	#TODO should this be an error?
+	@warn "Node not a factor or variable"
+	return false
+end
+
+function _isbackendset(dfg::LightGraphsDFG, idx::Int, backendset::Int)::Bool
+	p = props(dfg.g, idx)
+	haskey(p, :variable) && (return p[:variable].ready == backendset)
+	haskey(p, :factor) && (return p[:factor].ready == backendset)
+
+	#TODO should this be an error?
+	@warn "Node not a factor or variable"
+	return false
+end
 """
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor.
@@ -379,9 +366,9 @@ function getNeighbors(dfg::LightGraphsDFG, node::T; ready::Union{Nothing, Int}=n
     # neighbors = in_neighbors(vert, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
 	neighbors = map(idx->get_prop(dfg.g, idx, :label),  LightGraphs.neighbors(dfg.g, dfg.g[node.label,:label]))
     # Additional filtering
-	#TODO ready and backendset
-    # neighbors = ready != nothing ? filter(v -> v.ready == ready, neighbors) : neighbors
-    # neighbors = backendset != nothing ? filter(v -> v.backendset == backendset, neighbors) : neighbors
+    neighbors = ready != nothing ? filter(lbl -> _isready(dfg, dfg.g[lbl,:label], ready), neighbors) : neighbors
+	neighbors = backendset != nothing ? filter(lbl -> _isbackendset(dfg, dfg.g[lbl,:label], backendset), neighbors) : neighbors
+
     # Variable sorting (order is important)
     if node isa DFGFactor
         order = intersect(node._variableOrderSymbols, neighbors)#map(v->v.dfgNode.label, neighbors))
@@ -398,21 +385,20 @@ function getNeighbors(dfg::LightGraphsDFG, label::Symbol; ready::Union{Nothing, 
     if !haskey(dfg.labelDict, label)
         error("Variable/factor with label '$(label)' does not exist in the factor graph")
     end
-    # vert = dfg.g.vertices[dfg.labelDict[label]]
-    # neighbors = in_neighbors(vert, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
-    # Additional filtering
-	# TODO ready and backendset
-    # neighbors = ready != nothing ? filter(v -> v.ready == ready, neighbors) : neighbors
-    # neighbors = backendset != nothing ? filter(v -> v.backendset == backendset, neighbors) : neighbors
-    # Variable sorting when using a factor (function order is important)
-    # if vert.dfgNode isa DFGFactor
-    #     vert.dfgNode._variableOrderSymbols
-    #     order = intersect(vert.dfgNode._variableOrderSymbols, map(v->v.dfgNode.label, neighbors))
-    #     return order
-    # end
-	# return map(n -> n.dfgNode.label, neighbors)
 
+    # neighbors = in_neighbors(vert, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
 	neighbors = map(idx->get_prop(dfg.g, idx, :label),  LightGraphs.neighbors(dfg.g, dfg.g[label,:label]))
+    # Additional filtering
+	neighbors = ready != nothing ? filter(lbl -> _isready(dfg, dfg.g[lbl,:label], ready), neighbors) : neighbors
+	neighbors = backendset != nothing ? filter(lbl -> _isbackendset(dfg, dfg.g[lbl,:label], backendset), neighbors) : neighbors
+
+    # Variable sorting when using a factor (function order is important)
+    if has_prop(dfg.g, dfg.g[label,:label], :factor)
+		node = get_prop(dfg.g, dfg.g[label,:label], :factor)
+		order = intersect(node._variableOrderSymbols, neighbors)
+        return order
+    end
+
 	return neighbors
 
 end
@@ -492,29 +478,11 @@ function getSubgraphAroundNode(dfg::LightGraphsDFG{P}, node::T, distance::Int64=
         error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
     end
 
-    # Build a list of all unique neighbors inside 'distance'
-    # neighborList = Dict{Symbol, Any}()
-    # push!(neighborList, node.label => dfg.g.vertices[dfg.labelDict[node.label]])
-	# curList = Dict{Symbol, Any}(node.label => dfg.g.vertices[dfg.labelDict[node.label]])
-	# for dist in 1:distance
-	# 	newNeighbors = Dict{Symbol, Any}()
-	# 	for (key, node) in curList
-	# 		neighbors = in_neighbors(node, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
-	# 		for neighbor in neighbors
-	# 			if !haskey(neighborList, neighbor.dfgNode.label)
-	# 				push!(neighborList, neighbor.dfgNode.label => neighbor)
-	# 				push!(newNeighbors, neighbor.dfgNode.label => neighbor)
-	# 			end
-	# 		end
-	# 	end
-	# 	curList = newNeighbors
-	# end
-	# Copy the section of graph we want
-	# _copyIntoGraph!(dfg, addToDFG, collect(keys(neighborList)), includeOrphanFactors)
-
+    # Get a list of all unique neighbors inside 'distance'
 	ns = neighborhood(dfg.g, dfg.g[node.label,:label], distance)
+
+	# Copy the section of graph we want
 	# _copyIntoGraph!(dfg, addToDFG, map(n->get_prop(dfg.g, n, :label), ns), includeOrphanFactors)
-	#TODO overwrite copyIntoGraph for speed with Int
 	_copyIntoGraph!(dfg, addToDFG, ns, includeOrphanFactors)
     return addToDFG
 end
@@ -592,32 +560,3 @@ function toDotFile(dfg::LightGraphsDFG, fileName::String="/tmp/dfg.dot")::Nothin
 	@error "toDotFile(dfg::LightGraphsDFG,filename) is not sopported yet"
 	return nothing
 end
-
-
-
-# function __init__()
-#     @require DataFrames="a93c6f00-e57d-5684-b7b6-d8193f3e46c0" begin
-#         if isdefined(Main, :DataFrames)
-#             """
-#                 $(SIGNATURES)
-#             Get an adjacency matrix for the DFG as a DataFrame.
-#             Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor.
-#             The first column is the factor headings.
-#             """
-#             function getAdjacencyMatrixDataFrame(dfg::LightGraphsDFG)::Main.DataFrames.DataFrame
-#                 varLabels = sort(map(v->v.label, getVariables(dfg)))
-#                 factLabels = sort(map(f->f.label, getFactors(dfg)))
-#                 adjDf = DataFrames.DataFrame(:Factor => Union{Missing, Symbol}[])
-#                 for varLabel in varLabels
-#                     adjDf[varLabel] = Union{Missing, Symbol}[]
-#                 end
-#                 for (i, factLabel) in enumerate(factLabels)
-#                     push!(adjDf, [factLabel, DataFrames.missings(length(varLabels))...])
-#                     factVars = getNeighbors(dfg, getFactor(dfg, factLabel))
-#                     map(vLabel -> adjDf[vLabel][i] = factLabel, factVars)
-#                 end
-#                 return adjDf
-#             end
-#         end
-#     end
-# end

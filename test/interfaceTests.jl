@@ -112,6 +112,18 @@ map(n -> addFactor!(dfg, [verts[n], verts[n+1]], DFGFactor{Int, :Symbol}(Symbol(
     # Testing aliases
     @test getNeighbors(dfg, getFactor(dfg, :x1x2f1)) == ls(dfg, getFactor(dfg, :x1x2f1))
     @test getNeighbors(dfg, :x1x2f1) == ls(dfg, :x1x2f1)
+
+    # TODO @Dehann, I don't know exactly what wil be in it, so testing with 0 and 1
+    # ready and backendset
+    @test getNeighbors(dfg, :x5, ready=1) == Symbol[]
+    @test getNeighbors(dfg, :x5, ready=0) == [:x4x5f1,:x5x6f1]
+    @test getNeighbors(dfg, :x5, backendset=1) == Symbol[]
+    @test getNeighbors(dfg, :x5, backendset=0) == [:x4x5f1,:x5x6f1]
+    @test getNeighbors(dfg, verts[1], ready=0) == [:x1x2f1]
+    @test getNeighbors(dfg, verts[1], ready=1) == Symbol[]
+    @test getNeighbors(dfg, verts[1], backendset=0) == [:x1x2f1]
+    @test getNeighbors(dfg, verts[1], backendset=1) == Symbol[]
+
 end
 
 @testset "Getting Subgraphs" begin
