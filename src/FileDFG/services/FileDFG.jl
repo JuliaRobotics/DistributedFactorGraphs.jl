@@ -82,7 +82,7 @@ function _unpackFactor(dfg::G, packedProps::Dict{String, Any}, iifModule)::DFGFa
 
     # GUARANTEED never to bite us in the ass in the future...
     # ... TODO: refactor if changed: https://github.com/JuliaRobotics/IncrementalInference.jl/issues/350
-    getData(factor).fncargvID = _variableOrderSymbols
+    @show factor.data.fncargvID = deepcopy(_variableOrderSymbols)
 
     # Note, once inserted, you still need to call IIF.rebuildFactorMetadata!
     return factor
@@ -156,6 +156,12 @@ function loadDFG(folder::String, iifModule, dfgLoadInto::G=GraphsDFG{NoSolverPar
     for factor in factors
         iifModule.rebuildFactorMetadata!(dfgLoadInto, factor)
     end
+
+    # PATCH - To update the fncargvID for factors, it's being cleared somewhere in rebuildFactorMetadata.
+    # TEMPORARY
+    # TODO: Remove
+    map(f->getData(f).fncargvID = f._variableOrderSymbols, getFactors(dfgLoadInto))
+
 
     return dfgLoadInto
 end
