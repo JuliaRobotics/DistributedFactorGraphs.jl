@@ -1,6 +1,7 @@
 # DistributedFactorGraphs.jl
 
 [![Build Status](https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl.svg?branch=master)](https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl)
+[![Codecov Status](https://codecov.io/gh/JuliaRobotics/DistributedFactorGraphs.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaRobotics/DistributedFactorGraphs.jl)
 [![Coverage Status](https://img.shields.io/coveralls/JuliaRobotics/DistributedFactorGraphs.jl.svg)](https://coveralls.io/r/JuliaRobotics/DistributedFactorGraphs.jl?branch=master)
 [![docs](https://img.shields.io/badge/docs-latest-blue.svg)](http://juliarobotics.github.io/DistributedFactorGraphs.jl/latest/)
 
