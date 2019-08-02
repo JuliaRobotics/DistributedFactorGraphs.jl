@@ -16,10 +16,10 @@ mutable struct LightGraphsDFG{T <: AbstractParams} <: AbstractDFG
     userId::String
     robotId::String
     sessionId::String
-    #TODO Remove nodeCounter
-    nodeCounter::Int64 #TODO pos 'n paar van die veranderlikes dalk aan na MetaGraphs calls
-    #TODO verander na label vector of gebruik matagrapsh sin
-    labelDict::Dict{Symbol, Int64}
+    #NOTE Removed nodeCounter
+    # nodeCounter::Int64
+    #NOTE using matagraphs labels
+    # labelDict::Dict{Symbol, Int64}
     addHistory::Vector{Symbol} #TODO: Discuss more - is this an audit trail?
     solverParams::T # Solver parameters
 end
@@ -29,15 +29,27 @@ function LightGraphsDFG{T}(g::LFGType=MetaGraph(),
                            d::String="LightGraphs.jl implementation",
                            userId::String="User ID",
                            robotId::String="Robot ID",
-                           sessionId::String="Session ID",
-                           n::Int64=0,
-                           l::Dict{Symbol, Int64}=Dict{Symbol, Int64}(),
-                           a::Vector{Symbol}=Symbol[];
+                           sessionId::String="Session ID";
                            params::T=NoSolverParams()) where T <: AbstractParams
     set_prop!(g, :description, d)
     set_prop!(g, :userId, userId)
     set_prop!(g, :robotId, robotId)
     set_prop!(g, :sessionId, sessionId)
     set_indexing_prop!(g, :label)
-    LightGraphsDFG{T}(g, d, userId, robotId, sessionId, n, l, a, params)
+    LightGraphsDFG{T}(g, d, userId, robotId, sessionId, Symbol[], params)
+end
+
+Base.propertynames(x::LightGraphsDFG, private::Bool=false) =
+    (:g, :description, :userId, :robotId, :sessionId, :nodeCounter, :labelDict, :addHistory, :solverParams)
+        # (private ? fieldnames(typeof(x)) : ())...)
+
+Base.getproperty(x::LightGraphsDFG,f::Symbol) = begin
+    if f == :nodeCounter
+        nv(x.g)
+    elseif f == :labelDict
+        @warn "Read only! using internal labelDict"
+        x.g.metaindex[:label]
+    else
+        getfield(x,f)
+    end
 end
