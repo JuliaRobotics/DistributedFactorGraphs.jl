@@ -43,9 +43,17 @@ function _packFactor(dfg::G, f::DFGFactor)::Dict{String, Any} where G <: Abstrac
     props["tags"] = JSON2.write(f.tags)
     # Pack the node data
     fnctype = f.data.fnc.usrfnc!
-    packtype = getfield(_getmodule(fnctype), Symbol("Packed$(_getname(fnctype))"))
-    packed = convert(PackedFunctionNodeData{packtype}, f.data)
-    props["data"] = JSON2.write(packed)
+    try
+        packtype = getfield(_getmodule(fnctype), Symbol("Packed$(_getname(fnctype))"))
+        packed = convert(PackedFunctionNodeData{packtype}, f.data)
+        props["data"] = JSON2.write(packed)
+    catch ex
+        io = IOBuffer()
+        showerror(io, ex, catch_backtrace())
+        err = String(take!(io))
+        msg = "Error while packing '$(f.label)' as '$fnctype', please check the unpacking/packing converters for this factor - \r\n$err"
+        error(msg)
+    end
     # Include the type
     props["fnctype"] = String(_getname(fnctype))
     props["_variableOrderSymbols"] = JSON2.write(f._variableOrderSymbols)
@@ -61,11 +69,21 @@ function _unpackFactor(dfg::G, packedProps::Dict{String, Any}, iifModule)::DFGFa
     tags = JSON2.read(packedProps["tags"], Vector{Symbol})
 
     data = packedProps["data"]
+    @debug "Decoding $label..."
     datatype = packedProps["fnctype"]
     packtype = getfield(Main, Symbol("Packed"*datatype))
-    packed = JSON2.read(data, GenericFunctionNodeData{packtype,String})
-    fullFactor = iifModule.decodePackedType(dfg, packed)
-    # fullFactor = dfg.decodePackedTypeFunc(dfg, packed)
+    packed = nothing
+    fullFactor = nothing
+    try
+        packed = JSON2.read(data, GenericFunctionNodeData{packtype,String})
+        fullFactor = iifModule.decodePackedType(dfg, packed)
+    catch ex
+        io = IOBuffer()
+        showerror(io, ex, catch_backtrace())
+        err = String(take!(io))
+        msg = "Error while unpacking '$label' as '$datatype', please check the unpacking/packing converters for this factor - \r\n$err"
+        error(msg)
+    end
 
     # Include the type
     _variableOrderSymbols = JSON2.read(packedProps["_variableOrderSymbols"], Vector{Symbol})
