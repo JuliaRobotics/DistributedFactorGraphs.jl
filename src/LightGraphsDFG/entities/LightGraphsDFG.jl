@@ -25,18 +25,18 @@ mutable struct LightGraphsDFG{T <: AbstractParams} <: AbstractDFG
 end
 
 #TODO? do we not want props such as userId, robotId, sessionId, etc...
-function LightGraphsDFG{T}(g::LFGType=MetaGraph(),
-                           d::String="LightGraphs.jl implementation",
+function LightGraphsDFG{T}(g::LFGType=MetaGraph();
+                           description::String="LightGraphs.jl implementation",
                            userId::String="User ID",
                            robotId::String="Robot ID",
-                           sessionId::String="Session ID";
+                           sessionId::String="Session ID",
                            params::T=NoSolverParams()) where T <: AbstractParams
-    set_prop!(g, :description, d)
+    set_prop!(g, :description, description)
     set_prop!(g, :userId, userId)
     set_prop!(g, :robotId, robotId)
     set_prop!(g, :sessionId, sessionId)
     set_indexing_prop!(g, :label)
-    LightGraphsDFG{T}(g, d, userId, robotId, sessionId, Symbol[], params)
+    LightGraphsDFG{T}(g, description, userId, robotId, sessionId, Symbol[], params)
 end
 
 Base.propertynames(x::LightGraphsDFG, private::Bool=false) =
