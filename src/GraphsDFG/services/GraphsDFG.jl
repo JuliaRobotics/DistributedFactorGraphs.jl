@@ -195,7 +195,7 @@ end
     $(SIGNATURES)
 Delete a referenced DFGVariable from the DFG.
 """
-deleteVariable!(dfg::GraphsDFG, variable::DFGVariable)::DFGVariable = deleteVariable(dfg, variable.label)
+deleteVariable!(dfg::GraphsDFG, variable::DFGVariable)::DFGVariable = deleteVariable!(dfg, variable.label)
 
 """
     $(SIGNATURES)
@@ -224,7 +224,7 @@ List the DFGVariables in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the variables.
 """
 function getVariables(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{DFGVariable}
-    variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGVariable, vertices(dfg.g)))
+    variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGVariable, Graphs.vertices(dfg.g)))
     if regexFilter != nothing
         variables = filter(v -> occursin(regexFilter, String(v.label)), variables)
     end
@@ -269,7 +269,7 @@ List the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
 function getFactors(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGFactor}
-	factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGFactor, vertices(dfg.g)))
+	factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGFactor, Graphs.vertices(dfg.g)))
 	if regexFilter != nothing
 		factors = filter(f -> occursin(regexFilter, String(f.label)), factors)
 	end
@@ -304,7 +304,7 @@ end
 Checks if the graph is fully connected, returns true if so.
 """
 function isFullyConnected(dfg::GraphsDFG)::Bool
-    return length(connected_components(dfg.g)) == 1
+    return length(Graphs.connected_components(dfg.g)) == 1
 end
 
 #Alias
@@ -326,8 +326,8 @@ function getNeighbors(dfg::GraphsDFG, node::T; ready::Union{Nothing, Int}=nothin
     vert = dfg.g.vertices[dfg.labelDict[node.label]]
     neighbors = in_neighbors(vert, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
     # Additional filtering
-    neighbors = ready != nothing ? filter(v -> v.ready == ready, neighbors) : neighbors
-    neighbors = backendset != nothing ? filter(v -> v.backendset == backendset, neighbors) : neighbors
+    neighbors = ready != nothing ? filter(v -> v.dfgNode.ready == ready, neighbors) : neighbors
+    neighbors = backendset != nothing ? filter(v -> v.dfgNode.backendset == backendset, neighbors) : neighbors
     # Variable sorting (order is important)
     if node isa DFGFactor
         order = intersect(node._variableOrderSymbols, map(v->v.dfgNode.label, neighbors))
@@ -347,8 +347,8 @@ function getNeighbors(dfg::GraphsDFG, label::Symbol; ready::Union{Nothing, Int}=
     vert = dfg.g.vertices[dfg.labelDict[label]]
     neighbors = in_neighbors(vert, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
     # Additional filtering
-    neighbors = ready != nothing ? filter(v -> v.ready == ready, neighbors) : neighbors
-    neighbors = backendset != nothing ? filter(v -> v.backendset == backendset, neighbors) : neighbors
+    neighbors = ready != nothing ? filter(v -> v.dfgNode.ready == ready, neighbors) : neighbors
+    neighbors = backendset != nothing ? filter(v -> v.dfgNode.backendset == backendset, neighbors) : neighbors
     # Variable sorting when using a factor (function order is important)
     if vert.dfgNode isa DFGFactor
         vert.dfgNode._variableOrderSymbols
@@ -451,7 +451,7 @@ Get a deep subgraph copy from the DFG given a list of variables and factors.
 Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
 Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
 """
-function getSubgraph(dfg::GraphsDFG, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false, addToDFG::GraphsDFG=GraphsDFG())::GraphsDFG
+function getSubgraph(dfg::GraphsDFG, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false, addToDFG::GraphsDFG=GraphsDFG{AbstractParams}())::GraphsDFG
     for label in variableFactorLabels
         if !haskey(dfg.labelDict, label)
             error("Variable/factor with label '$(label)' does not exist in the factor graph")

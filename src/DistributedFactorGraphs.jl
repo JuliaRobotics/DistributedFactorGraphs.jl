@@ -44,6 +44,9 @@ include("GraphsDFG/GraphsDFG.jl")
 # Include the FilesDFG API.
 include("FileDFG/FileDFG.jl")
 
+# Include the LightGraphs.jl (MetaGraphs.jl) API.
+include("LightGraphsDFG/LightGraphsDFG.jl")
+
 export saveDFG, loadDFG
 
 function __init__()
@@ -55,7 +58,7 @@ function __init__()
             Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor.
             The first column is the factor headings.
             """
-            function getAdjacencyMatrixDataFrame(dfg::GraphsDFG)::Main.DataFrames.DataFrame
+            function getAdjacencyMatrixDataFrame(dfg::Union{GraphsDFG, LightGraphsDFG})::Main.DataFrames.DataFrame
                 varLabels = sort(map(v->v.label, getVariables(dfg)))
                 factLabels = sort(map(f->f.label, getFactors(dfg)))
                 adjDf = DataFrames.DataFrame(:Factor => Union{Missing, Symbol}[])

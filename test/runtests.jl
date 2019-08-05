@@ -3,7 +3,7 @@ using DataFrames
 using DistributedFactorGraphs
 
 # Test each interface
-apis = [GraphsDFG]
+apis = [GraphsDFG, LightGraphsDFG]
 # apis = [graphsDFG, cgDFG]
 for api in apis
     @testset "Testing Driver: $(api)" begin
