@@ -1,12 +1,8 @@
-using Revise
-using Neo4j # So that DFG initializes the database driver.
 using RoME
 using DistributedFactorGraphs
-using Test
 
 # start with an empty factor graph object
-# fg = initfg()
-fg = LightGraphsDFG{SolverParams}(    solverParams=SolverParams())
+fg = LightGraphsDFG{SolverParams}(    params=SolverParams())
 
 # Add the first pose :x0
 x0 = addVariable!(fg, :x0, Pose2)

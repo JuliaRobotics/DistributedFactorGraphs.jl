@@ -42,7 +42,9 @@ function _copyIntoGraph!(sourceDFG::G, destDFG::H, variableFactorLabels::Vector{
 
     # Now we have to add all variables first,
     for variable in sourceVariables
-        addVariable!(destDFG, deepcopy(variable))
+        if !exists(destDFG, variable)
+            addVariable!(destDFG, deepcopy(variable))
+        end
     end
     # And then all factors to the destDFG.
     for factor in sourceFactors
@@ -57,7 +59,9 @@ function _copyIntoGraph!(sourceDFG::G, destDFG::H, variableFactorLabels::Vector{
         end
         # Only if we have all of them should we add it (otherwise strange things may happen on evaluation)
         if includeOrphanFactors || length(factVariableIds) == length(sourceFactorVariableIds)
-            addFactor!(destDFG, factVariableIds, deepcopy(factor))
+            if !exists(destDFG, factor)
+                addFactor!(destDFG, factVariableIds, deepcopy(factor))
+            end
         end
     end
     return nothing
