@@ -2,6 +2,12 @@ dfg = testDFGAPI{NoSolverParams}()
 v1 = DFGVariable(:a)
 v2 = DFGVariable(:b)
 f1 = DFGFactor{Int, :Symbol}(:f1)
+
+#add tags for filters
+append!(v1.tags,[:VARIABLE, :POSE])
+append!(v2.tags, [:VARIABLE, :LANDMARK])
+append!(f1.tags, [:FACTOR])
+
 # @testset "Creating Graphs" begin
 global dfg,v1,v2,f1
 addVariable!(dfg, v1)
@@ -10,12 +16,40 @@ addFactor!(dfg, [v1, v2], f1)
 @test_throws Exception addFactor!(dfg, DFGFactor{Int, :Symbol}("f2"), [v1, DFGVariable("Nope")])
 # end
 
+@testset "Adding Removing Nodes" begin
+    dfg2 = testDFGAPI{NoSolverParams}()
+    v1 = DFGVariable(:a)
+    v2 = DFGVariable(:b)
+    v3 = DFGVariable(:c)
+    f1 = DFGFactor{Int, :Symbol}(:f1)
+    f2 = DFGFactor{Int, :Symbol}(:f2)
+    # @testset "Creating Graphs" begin
+    @test addVariable!(dfg2, v1)
+    @test addVariable!(dfg2, v2)
+    @test_throws ErrorException updateVariable!(dfg2, v3)
+    @test addVariable!(dfg2, v3)
+    @test_throws ErrorException addVariable!(dfg2, v3)
+    @test addFactor!(dfg2, [v1, v2], f1)
+    @test_throws ErrorException addFactor!(dfg2, [v1, v2], f1)
+    @test_throws ErrorException updateFactor!(dfg2, f2)
+    @test addFactor!(dfg2, [:b, :c], f2)
+    @test deleteVariable!(dfg2, v3) == v3
+    @test symdiff(ls(dfg2),[:a,:b]) == []
+    @test deleteFactor!(dfg2, f2) == f2
+    @test lsf(dfg2) == [:f1]
+end
+
 @testset "Listing Nodes" begin
     global dfg,v1,v2,f1
     @test length(ls(dfg)) == 2
     @test length(lsf(dfg)) == 1
     @test symdiff([:a, :b], getVariableIds(dfg)) == []
     @test getFactorIds(dfg) == [:f1]
+    #
+    @test lsf(dfg, :a) == [f1.label]
+    #tags
+    @test ls(dfg, tags=[:POSE]) == [:a]
+    @test symdiff(ls(dfg, tags=[:POSE, :LANDMARK]), ls(dfg, tags=[:VARIABLE])) == []
     # Regexes
     @test ls(dfg, r"a") == [v1.label]
     @test lsf(dfg, r"f*") == [f1.label]
@@ -136,6 +170,10 @@ end
     @test symdiff([:x1, :x1x2f1], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
     # Test adding to the dfg
     dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2, true, dfgSubgraph)
+    @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+    #
+    dfgSubgraph = getSubgraph(dfg,[:x1, :x2, :x1x2f1])
+    # Only returns x1 and x2
     @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
 end
 

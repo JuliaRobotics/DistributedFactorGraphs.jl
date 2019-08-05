@@ -196,7 +196,7 @@ end
     $(SIGNATURES)
 Delete a referenced DFGVariable from the DFG.
 """
-deleteVariable!(dfg::LightGraphsDFG, variable::DFGVariable)::DFGVariable = deleteVariable(dfg, variable.label)
+deleteVariable!(dfg::LightGraphsDFG, variable::DFGVariable)::DFGVariable = deleteVariable!(dfg, variable.label)
 
 """
     $(SIGNATURES)
@@ -476,7 +476,7 @@ Get a deep subgraph copy from the DFG given a list of variables and factors.
 Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
 Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
 """
-function getSubgraph(dfg::LightGraphsDFG, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false, addToDFG::LightGraphsDFG=LightGraphsDFG())::LightGraphsDFG
+function getSubgraph(dfg::LightGraphsDFG, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false, addToDFG::LightGraphsDFG=LightGraphsDFG{AbstractParams}())::LightGraphsDFG
     for label in variableFactorLabels
         if !haskey(dfg.g.metaindex[:label], label)
             error("Variable/factor with label '$(label)' does not exist in the factor graph")
