@@ -12,6 +12,14 @@ for api in apis
     end
 end
 
+if !(get(ENV, "TRAVIS", "") == "true")
+    @testset "Local Testsets" begin
+        @testset "HexagonalLightGraphs" begin
+            include("HexagonalLightGraphs.jl")
+        end
+    end
+end
+
 # Test other interfaces that are not yet compatible for the general tests.
 # @testset "CloudGraphsDFG Drive: " begin
 #     include("cloudGraphsDFGTests.jl")

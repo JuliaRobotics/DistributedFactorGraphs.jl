@@ -470,6 +470,22 @@ function getSubgraphAroundNode(dfg::LightGraphsDFG{P}, node::T, distance::Int64=
     return addToDFG
 end
 
+
+function getSubgraphAroundNode(dfg::LightGraphsDFG{<:AbstractParams}, node::DFGNode, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::AbstractDFG=LightGraphsDFG{AbstractParams}())::AbstractDFG
+    if !haskey(dfg.g.metaindex[:label], node.label)
+        error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
+    end
+
+    # Get a list of all unique neighbors inside 'distance'
+	ns = neighborhood(dfg.g, dfg.g[node.label,:label], distance)
+
+	# Copy the section of graph we want
+	_copyIntoGraph!(dfg, addToDFG, map(n->get_prop(dfg.g, n, :label), ns), includeOrphanFactors)
+	# _copyIntoGraph!(dfg, addToDFG, ns, includeOrphanFactors)
+    return addToDFG
+end
+
+
 """
     $(SIGNATURES)
 Get a deep subgraph copy from the DFG given a list of variables and factors.
