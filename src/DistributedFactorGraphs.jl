@@ -75,11 +75,17 @@ function __init__()
         end
     end
 
+#FIXME JT not sure how to handle this
+#=
   @require Neo4j="d2adbeaf-5838-5367-8a2f-e46d570981db" begin
     # Include the Cloudgraphs API
     include("CloudGraphsDFG/CloudGraphsDFG.jl")
   end
+=#
 end
+
+#FIXME JT not sure how to handle this, is it not lightweitgh enought to always include?
+include("CloudGraphsDFG/CloudGraphsDFG.jl")
 
 # not sure where to put
 include("Common.jl")

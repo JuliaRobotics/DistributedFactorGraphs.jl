@@ -53,3 +53,14 @@ Base.getproperty(x::LightGraphsDFG,f::Symbol) = begin
         getfield(x,f)
     end
 end
+
+"""
+$(TYPEDEF)
+Basic Structure for just the LightGraphs object and keys
+"""
+struct LightGraphsSkeleton
+    G::LightGraphs.SimpleGraph
+    labels::Dict{Symbol, Int}
+end
+
+LightGraphsSkeleton(dfg::LightGraphsDFG) = LightGraphsSkeleton(dfg.g.graph, dfg.g.metaindex[:label])

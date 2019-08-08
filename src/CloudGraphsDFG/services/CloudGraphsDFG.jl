@@ -720,6 +720,19 @@ function getSubgraphAroundNode(dfg::CloudGraphsDFG, node::T, distance::Int64=1, 
     return addToDFG
 end
 
+function getSubgraphAroundNode(dfg::CloudGraphsDFG{<:AbstractParams}, node::DFGNode, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::AbstractDFG=LightGraphsDFG{AbstractParams}())::AbstractDFG
+    distance < 1 && error("getSubgraphAroundNode() only works for distance > 0")
+
+
+    # Thank you Neo4j for 0..* awesomeness!!
+    neighborList = _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(node.label))-[FACTORGRAPH*0..$distance]-(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId))")
+
+    # Copy the section of graph we want
+    _copyIntoGraph!(dfg, addToDFG, neighborList, includeOrphanFactors)
+    return addToDFG
+end
+
+
 """
     $(SIGNATURES)
 Get a deep subgraph copy from the DFG given a list of variables and factors.

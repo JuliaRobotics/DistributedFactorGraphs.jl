@@ -531,13 +531,12 @@ end
 Produces a dot-format of the graph for visualization.
 """
 function toDot(dfg::LightGraphsDFG)::String
-    # m = PipeBuffer()
-    # write(m,Graphs.to_dot(dfg.g))
-    # data = take!(m)
-    # close(m)
-    # return String(data)
-	@error "toDot(dfg::LightGraphsDFG) is not sopported yet"
-	return nothing
+	@error "toDot(dfg::LightGraphsDFG) is not sopported yet, see https://github.com/JuliaGraphs/MetaGraphs.jl/issues/86"
+    m = PipeBuffer()
+    MetaGraphs.savedot(m, dfg.g)
+    data = take!(m)
+    close(m)
+    return String(data)
 end
 
 """
@@ -551,11 +550,9 @@ Note
 - Based on graphviz.org
 """
 function toDotFile(dfg::LightGraphsDFG, fileName::String="/tmp/dfg.dot")::Nothing
-    # open(fileName, "w") do fid
-    #     write(fid,Graphs.to_dot(dfg.g))
-    # end
-    # return nothing
-	#TODO
-	@error "toDotFile(dfg::LightGraphsDFG,filename) is not sopported yet"
-	return nothing
+	@error "toDotFile(dfg::LightGraphsDFG,filename) is not sopported yet, see https://github.com/JuliaGraphs/MetaGraphs.jl/issues/86"
+    open(fileName, "w") do fid
+        MetaGraphs.savedot(fid, dfg.g)
+    end
+    return nothing
 end
