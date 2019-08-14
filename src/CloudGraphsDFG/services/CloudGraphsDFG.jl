@@ -704,7 +704,7 @@ Optionally provide a distance to specify the number of edges should be followed.
 Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
 Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
 """
-function getSubgraphAroundNode(dfg::CloudGraphsDFG, node::T, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::Union{Nothing, CloudGraphsDFG}=nothing)::CloudGraphsDFG where T <: DFGNode
+function getSubgraphAroundNode(dfg::CloudGraphsDFG, node::DFGNode, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::Union{Nothing, CloudGraphsDFG}=nothing)::CloudGraphsDFG
     distance < 1 && error("getSubgraphAroundNode() only works for distance > 0")
 
     # Making a copy session if not specified
@@ -720,7 +720,7 @@ function getSubgraphAroundNode(dfg::CloudGraphsDFG, node::T, distance::Int64=1, 
     return addToDFG
 end
 
-function getSubgraphAroundNode(dfg::CloudGraphsDFG{<:AbstractParams}, node::DFGNode, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::AbstractDFG=LightGraphsDFG{AbstractParams}())::AbstractDFG
+function getSubgraphAroundNode(dfg::CloudGraphsDFG{<:AbstractParams}, node::DFGNode, distance::Int64, includeOrphanFactors::Bool, addToDFG::LightGraphsDFG{AbstractParams})::AbstractDFG
     distance < 1 && error("getSubgraphAroundNode() only works for distance > 0")
 
 
