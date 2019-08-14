@@ -525,6 +525,10 @@ function getAdjacencyMatrix(dfg::LightGraphsDFG)::Matrix{Union{Nothing, Symbol}}
     return adjMat
 end
 
+function exp_getAdjacencyMatrix(dfg::LightGraphsDFG)
+    adj = LightGraphs.adjacency_matrix(dfg.g)
+	return adj, dfg.g.metaindex[:label]
+end
 
 """
     $(SIGNATURES)
