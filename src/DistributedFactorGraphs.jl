@@ -47,6 +47,10 @@ include("FileDFG/FileDFG.jl")
 # Include the LightGraphs.jl (MetaGraphs.jl) API.
 include("LightGraphsDFG/LightGraphsDFG.jl")
 
+include("SymbolDFG/SymbolDFG.jl")
+@reexport using .SymbolDFGs
+
+
 export saveDFG, loadDFG
 
 function __init__()

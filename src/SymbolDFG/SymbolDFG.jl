@@ -3,6 +3,20 @@ module SymbolDFGs
 using LightGraphs
 using DocStringExtensions
 
+# import DFG functions to exstend
+import ...DistributedFactorGraphs:  setSolverParams,
+                                    getInnerGraph,
+                                    getFactor,
+                                    setDescription,
+                                    getLabelDict,
+                                    addVariable!,
+                                    getVariable,
+                                    getAddHistory,
+                                    addFactor!,
+                                    getSolverParams,
+                                    exists,
+                                    getDescription
+
 include("SymbolFactorGraphs/SymbolFactorGraphs.jl")
 using .SymbolFactorGraphs
 
