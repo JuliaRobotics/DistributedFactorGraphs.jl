@@ -471,7 +471,7 @@ function getSubgraphAroundNode(dfg::LightGraphsDFG{P}, node::T, distance::Int64=
 end
 
 
-function getSubgraphAroundNode(dfg::LightGraphsDFG{<:AbstractParams}, node::DFGNode, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::AbstractDFG=LightGraphsDFG{AbstractParams}())::AbstractDFG
+function getSubgraphAroundNode(dfg::LightGraphsDFG{<:AbstractParams}, node::DFGNode, distance::Int64, includeOrphanFactors::Bool, addToDFG::AbstractDFG)::AbstractDFG
     if !haskey(dfg.g.metaindex[:label], node.label)
         error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
     end
