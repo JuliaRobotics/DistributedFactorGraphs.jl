@@ -331,8 +331,8 @@ end
 
 function _isbackendset(dfg::LightGraphsDFG, idx::Int, backendset::Int)::Bool
 	p = props(dfg.g, idx)
-	haskey(p, :variable) && (return p[:variable].ready == backendset)
-	haskey(p, :factor) && (return p[:factor].ready == backendset)
+	haskey(p, :variable) && (return p[:variable].backendset == backendset)
+	haskey(p, :factor) && (return p[:factor].backendset == backendset)
 
 	#TODO should this be an error?
 	@warn "Node not a factor or variable"
