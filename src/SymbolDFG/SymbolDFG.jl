@@ -15,7 +15,20 @@ import ...DistributedFactorGraphs:  setSolverParams,
                                     addFactor!,
                                     getSolverParams,
                                     exists,
-                                    getDescription
+                                    getDescription,
+                                    updateVariable!,
+                                    updateFactor!,
+                                    deleteVariable!,
+                                    deleteFactor!,
+                                    getVariables,
+                                    getVariableIds,
+                                    ls,
+                                    getFactors,
+                                    getFactorIds,
+                                    lsf,
+                                    isFullyConnected,
+                                    hasOrphans,
+                                    getNeighbors
 
 include("SymbolFactorGraphs/SymbolFactorGraphs.jl")
 using .SymbolFactorGraphs

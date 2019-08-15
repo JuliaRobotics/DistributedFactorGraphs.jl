@@ -1,7 +1,7 @@
 import ...DistributedFactorGraphs: DFGVariable, DFGFactor
 
 # Accessors
-getLabelDict(dfg::SymbolDFG) = dfg.g.labelDict
+getLabelDict(dfg::SymbolDFG) = dfg.labelDict
 getDescription(dfg::SymbolDFG) = dfg.description
 setDescription(dfg::SymbolDFG, description::String) = dfg.description = description
 getInnerGraph(dfg::SymbolDFG) = dfg.g
@@ -38,6 +38,10 @@ exists(dfg::SymbolDFG, nId::Symbol) = haskey(dfg.g.fadjdict, nId)
 Add a DFGVariable to a DFG.
 """
 function addVariable!(dfg::SymbolDFG, variable::DFGVariable)::Bool
+	#TODO should this be an error
+	if haskey(dfg.g.variables, variable.label)
+		error("Variable '$(variable.label)' already exists in the factor graph")
+	end
 
 	#NOTE Internal ID always set to zero as it is not needed?
     variable._internalId = 0
@@ -58,6 +62,10 @@ function addFactor!(dfg::SymbolDFG, variables::Vector{DFGVariable}, factor::DFGF
     # if haskey(dfg.g.metaindex[:label], factor.label)
     #     error("Factor '$(factor.label)' already exists in the factor graph")
     # end
+	#TODO should this be an error
+	if haskey(dfg.g.factors, factor.label)
+		error("Factor '$(factor.label)' already exists in the factor graph")
+	end
     # for v in variables
     #     if !(v.label in keys(dfg.g.metaindex[:label]))
     #         error("Variable '$(v.label)' not found in graph when creating Factor '$(factor.label)'")
@@ -80,7 +88,10 @@ end
 Add a DFGFactor to a DFG.
 """
 function addFactor!(dfg::SymbolDFG, variableLabels::Vector{Symbol}, factor::DFGFactor)::Bool
-
+	#TODO should this be an error
+	if haskey(dfg.g.factors, factor.label)
+        error("Factor '$(factor.label)' already exists in the factor graph")
+    end
 	factor._internalId = 0
 
     factor._variableOrderSymbols = variableLabels
@@ -110,16 +121,15 @@ end
 getFactor(dfg::SymbolDFG, label::String) = getFactor(dfg, Symbol(label))
 
 
-#=
 """
     $(SIGNATURES)
 Update a complete DFGVariable in the DFG.
 """
 function updateVariable!(dfg::SymbolDFG, variable::DFGVariable)::DFGVariable
-    if !haskey(dfg.g.metaindex[:label], variable.label)
+    if !haskey(dfg.g.variables, variable.label)
         error("Variable label '$(variable.label)' does not exist in the factor graph")
     end
-	set_prop!(dfg.g, dfg.g[variable.label,:label], :variable, variable)
+	dfg.g.variables[variable.label] = variable
     return variable
 end
 
@@ -128,10 +138,10 @@ end
 Update a complete DFGFactor in the DFG.
 """
 function updateFactor!(dfg::SymbolDFG, factor::DFGFactor)::DFGFactor
-    if !haskey(dfg.g.metaindex[:label], factor.label)
+    if !haskey(dfg.g.factors, factor.label)
         error("Factor label '$(factor.label)' does not exist in the factor graph")
     end
-	set_prop!(dfg.g, dfg.g[factor.label,:label], :factor, factor)
+	dfg.g.factors[factor.label] = factor
     return factor
 end
 
@@ -140,11 +150,11 @@ end
 Delete a DFGVariable from the DFG using its label.
 """
 function deleteVariable!(dfg::SymbolDFG, label::Symbol)::DFGVariable
-    if !haskey(dfg.g.metaindex[:label], label)
+    if !haskey(dfg.g.variables, label)
         error("Variable label '$(label)' does not exist in the factor graph")
     end
-	variable = get_prop(dfg.g, dfg.g[label,:label], :variable)
-	rem_vertex!(dfg.g, dfg.g[label,:label])
+	variable = dfg.g.variables[label]
+	rem_vertex!(dfg.g, label)
 
     return variable
 end
@@ -161,11 +171,11 @@ deleteVariable!(dfg::SymbolDFG, variable::DFGVariable)::DFGVariable = deleteVari
 Delete a DFGFactor from the DFG using its label.
 """
 function deleteFactor!(dfg::SymbolDFG, label::Symbol)::DFGFactor
-    if !haskey(dfg.g.metaindex[:label], label)
+    if !haskey(dfg.g.factors, label)
         error("Factor label '$(label)' does not exist in the factor graph")
     end
-	factor = get_prop(dfg.g, dfg.g[label,:label], :factor)
-	MetaGraphs.rem_vertex!(dfg.g, dfg.g[label,:label])
+	factor = dfg.g.factors[label]
+	variable = rem_vertex!(dfg.g, label)
     return factor
 end
 
@@ -184,8 +194,7 @@ Optionally specify a label regular expression to retrieves a subset of the varia
 function getVariables(dfg::SymbolDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{DFGVariable}
 
 	# variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGVariable, vertices(dfg.g)))
-	variableIds = collect(filter_vertices(dfg.g, :variable))
-	variables = map(vId->getVariable(dfg, vId), variableIds)
+	variables = collect(values(dfg.g.variables))
     if regexFilter != nothing
         variables = filter(v -> occursin(regexFilter, String(v.label)), variables)
     end
@@ -210,11 +219,7 @@ Related
 
 ls
 """
-function getVariableIds(dfg::SymbolDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{Symbol}
-  vars = getVariables(dfg, regexFilter, tags=tags)
-  # mask = map(v -> length(intersect(v.tags, tags)) > 0, vars )
-  map(v -> v.label, vars)
-end
+getVariableIds(dfg::SymbolDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{Symbol} = map(v -> v.label, getVariables(dfg, regexFilter, tags=tags))
 
 # Alias
 """
@@ -231,8 +236,7 @@ Optionally specify a label regular expression to retrieves a subset of the facto
 """
 function getFactors(dfg::SymbolDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGFactor}
 	# factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGFactor, vertices(dfg.g)))
-	factorIds = collect(filter_vertices(dfg.g, :factor))
-	factors = map(vId->getFactor(dfg, vId), factorIds)
+	factors = collect(values(dfg.g.factors))
 	if regexFilter != nothing
 		factors = filter(f -> occursin(regexFilter, String(f.label)), factors)
 	end
@@ -267,7 +271,7 @@ end
 Checks if the graph is fully connected, returns true if so.
 """
 function isFullyConnected(dfg::SymbolDFG)::Bool
-    return length(LightGraphs.connected_components(dfg.g)) == 1
+    return length(connected_components(dfg.g)) == 1
 end
 
 #Alias
@@ -277,70 +281,71 @@ Checks if the graph is not fully connected, returns true if it is not contiguous
 """
 hasOrphans(dfg::SymbolDFG)::Bool = !isFullyConnected(dfg)
 
-function _isready(dfg::SymbolDFG, idx::Int, ready::Int)::Bool
-	p = props(dfg.g, idx)
-	haskey(p, :variable) && (return p[:variable].ready == ready)
-	haskey(p, :factor) && (return p[:factor].ready == ready)
+function _isready(dfg::SymbolDFG, label::Symbol, ready::Int)::Bool
 
-	#TODO should this be an error?
-	@warn "Node not a factor or variable"
+	haskey(dfg.g.variables, label) && (return dfg.g.variables[label].ready == ready)
+	haskey(dfg.g.factors, label) && (return dfg.g.factors[label].ready == ready)
+
+	#TODO should this be a breaking error?
+	@error "Node not in factor or variable"
 	return false
 end
 
-function _isbackendset(dfg::SymbolDFG, idx::Int, backendset::Int)::Bool
-	p = props(dfg.g, idx)
-	haskey(p, :variable) && (return p[:variable].ready == backendset)
-	haskey(p, :factor) && (return p[:factor].ready == backendset)
+function _isbackendset(dfg::SymbolDFG, label::Symbol, backendset::Int)::Bool
+	haskey(dfg.g.variables, label) && (return dfg.g.variables[label].backendset == backendset)
+	haskey(dfg.g.factors, label) && (return dfg.g.factors[label].backendset == backendset)
 
-	#TODO should this be an error?
-	@warn "Node not a factor or variable"
+	#TODO should this be a breaking error?
+	@error "Node not a factor or variable"
 	return false
 end
+
 """
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor.
 """
-function getNeighbors(dfg::SymbolDFG, node::T; ready::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}  where T <: DFGNode
-    if !haskey(dfg.g.metaindex[:label], node.label)
+function getNeighbors(dfg::SymbolDFG, node::DFGNode; ready::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}
+	label = node.label
+    if !haskey(dfg.g.fadjdict, label)
         error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
     end
 
-	neighbors = map(idx->get_prop(dfg.g, idx, :label),  LightGraphs.neighbors(dfg.g, dfg.g[node.label,:label]))
+	neighbors_ll =  outneighbors(dfg.g, label)
     # Additional filtering
-    neighbors = ready != nothing ? filter(lbl -> _isready(dfg, dfg.g[lbl,:label], ready), neighbors) : neighbors
-	neighbors = backendset != nothing ? filter(lbl -> _isbackendset(dfg, dfg.g[lbl,:label], backendset), neighbors) : neighbors
+    ready != nothing && filter!(lbl -> _isready(dfg, lbl, ready), neighbors_ll)
+	backendset != nothing && filter!(lbl -> _isbackendset(dfg, lbl, backendset), neighbors_ll)
 
     # Variable sorting (order is important)
     if node isa DFGFactor
-        order = intersect(node._variableOrderSymbols, neighbors)#map(v->v.dfgNode.label, neighbors))
+        order = intersect(node._variableOrderSymbols, neighbors_ll)#map(v->v.dfgNode.label, neighbors))
         return order
     end
 
-    return neighbors
+    return neighbors_ll
 end
+
+
 """
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
 """
 function getNeighbors(dfg::SymbolDFG, label::Symbol; ready::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}  where T <: DFGNode
-    if !haskey(dfg.g.metaindex[:label], label)
+	if !haskey(dfg.g.fadjdict, label)
         error("Variable/factor with label '$(label)' does not exist in the factor graph")
     end
 
-    # neighbors = in_neighbors(vert, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
-	neighbors = map(idx->get_prop(dfg.g, idx, :label),  LightGraphs.neighbors(dfg.g, dfg.g[label,:label]))
+	neighbors_ll =  outneighbors(dfg.g, label)
     # Additional filtering
-	neighbors = ready != nothing ? filter(lbl -> _isready(dfg, dfg.g[lbl,:label], ready), neighbors) : neighbors
-	neighbors = backendset != nothing ? filter(lbl -> _isbackendset(dfg, dfg.g[lbl,:label], backendset), neighbors) : neighbors
+    ready != nothing && filter!(lbl -> _isready(dfg, lbl, ready), neighbors_ll)
+	backendset != nothing && filter!(lbl -> _isbackendset(dfg, lbl, backendset), neighbors_ll)
 
-    # Variable sorting when using a factor (function order is important)
-    if has_prop(dfg.g, dfg.g[label,:label], :factor)
-		node = get_prop(dfg.g, dfg.g[label,:label], :factor)
-		order = intersect(node._variableOrderSymbols, neighbors)
+    # Variable sorting (order is important)
+    if haskey(dfg.g.factors, label)
+        order = intersect(dfg.g.factors[label]._variableOrderSymbols, neighbors_ll)#map(v->v.dfgNode.label, neighbors))
         return order
     end
 
-	return neighbors
+    return neighbors_ll
 
 end
 
@@ -360,6 +365,7 @@ function ls(dfg::SymbolDFG, label::Symbol)::Vector{Symbol} where T <: DFGNode
     return getNeighbors(dfg, label)
 end
 
+#=
 function _copyIntoGraph!(sourceDFG::SymbolDFG, destDFG::SymbolDFG, ns::Vector{Int}, includeOrphanFactors::Bool=false)::Nothing
 	# Split into variables and factors
 	subgraph = sourceDFG.g[ns]

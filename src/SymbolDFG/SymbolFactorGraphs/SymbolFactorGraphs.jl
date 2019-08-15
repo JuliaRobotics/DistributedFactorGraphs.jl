@@ -2,7 +2,7 @@ module SymbolFactorGraphs
 
 using LightGraphs
 
-import LightGraphs: nv, ne, vertices, is_directed, has_edge, edges, inneighbors, outneighbors, rem_vertex!
+import LightGraphs: nv, ne, vertices, is_directed, has_edge, edges, inneighbors, outneighbors, rem_vertex!, neighbors
 
 import ...DistributedFactorGraphs: DFGNode
 
@@ -17,6 +17,11 @@ export
 
 const AbstractNodeType = DFGNode
 
+import Base: zero
+const UnionNothingSymbol = Union{Nothing, Symbol}
+zero(UnionNothingSymbol) = nothing
+
+
 include("symboledge.jl")
 
 
@@ -25,7 +30,7 @@ include("symboledge.jl")
 
 A type representing an undirected bipartite factor graph based on `label::Symbol`.
 """
-mutable struct SymbolFactorGraph{V <: AbstractNodeType, F <: AbstractNodeType} <: AbstractGraph{Int}
+mutable struct SymbolFactorGraph{V <: AbstractNodeType, F <: AbstractNodeType} <: AbstractGraph{UnionNothingSymbol}
     ne::Int
     fadjdict::Dict{Symbol,Vector{Symbol}} # [variable src id]: (dst, dst, dst)
     variables::Dict{Symbol,V}
@@ -40,9 +45,11 @@ ne(g::SymbolFactorGraph) = g.ne
 
 vertices(g::SymbolFactorGraph) = keys(g.fadjdict)
 
-inneighbors(g::SymbolFactorGraph, v::Symbol) = badj(g, v)
+inneighbors(g::SymbolFactorGraph, v::Symbol) = copy(badj(g, v))
 
-outneighbors(g::SymbolFactorGraph, v::Symbol) = fadj(g, v)
+outneighbors(g::SymbolFactorGraph, v::Symbol) = copy(fadj(g, v))
+
+neighbors(g::SymbolFactorGraph, v::Symbol) = copy(fadj(g, v))
 
 """
     is_directed(g)
