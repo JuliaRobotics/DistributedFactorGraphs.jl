@@ -28,7 +28,8 @@ import ...DistributedFactorGraphs:  setSolverParams,
                                     lsf,
                                     isFullyConnected,
                                     hasOrphans,
-                                    getNeighbors
+                                    getNeighbors,
+                                    getAdjacencyMatrix
 
 include("SymbolFactorGraphs/SymbolFactorGraphs.jl")
 using .SymbolFactorGraphs

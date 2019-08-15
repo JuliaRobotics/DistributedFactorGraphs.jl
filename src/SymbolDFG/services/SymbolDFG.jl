@@ -466,7 +466,7 @@ function getSubgraph(dfg::SymbolDFG, variableFactorLabels::Vector{Symbol}, inclu
     _copyIntoGraph!(dfg, addToDFG, variableFactorLabels, includeOrphanFactors)
     return addToDFG
 end
-
+=#
 """
     $(SIGNATURES)
 Get an adjacency matrix for the DFG, returned as a Matrix{Union{Nothing, Symbol}}.
@@ -489,7 +489,7 @@ function getAdjacencyMatrix(dfg::SymbolDFG)::Matrix{Union{Nothing, Symbol}}
     return adjMat
 end
 
-
+#=
 """
     $(SIGNATURES)
 Produces a dot-format of the graph for visualization.
