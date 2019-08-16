@@ -17,19 +17,17 @@ end
     $(SIGNATURES)
 True if the variable or factor exists in the graph.
 """
-function exists(dfg::SymbolDFG{P,V,F}, node::N) where {P <:AbstractParams, V <: DFGNode, F <: DFGNode, N <: DFGNode}
-    # TODO just checking for key, maybe check equallity?
-    if N == V
-        return haskey(dfg.g.variables, node.label)
-    elseif N == F
-        return haskey(dfg.g.variables, node.label)
-    else
-        @error "Node $(N) not a variable or a factor of type $(V),$(F)"
-        return false
-    end
-
+function exists(dfg::SymbolDFG{P,V,F}, node::V) where {P <:AbstractParams, V <: DFGNode, F <: DFGNode, N <: DFGNode}
+	return haskey(dfg.g.variables, node.label)
 end
+
+function exists(dfg::SymbolDFG{P,V,F}, node::F) where {P <:AbstractParams, V <: DFGNode, F <: DFGNode, N <: DFGNode}
+	return haskey(dfg.g.factors, node.label)
+end
+
 exists(dfg::SymbolDFG, nId::Symbol) = haskey(dfg.g.fadjdict, nId)
+
+exists(dfg::SymbolDFG, node::DFGNode) = exists(dfg, node.label)
 
 
 
@@ -365,47 +363,34 @@ function ls(dfg::SymbolDFG, label::Symbol)::Vector{Symbol} where T <: DFGNode
     return getNeighbors(dfg, label)
 end
 
-#=
-function _copyIntoGraph!(sourceDFG::SymbolDFG, destDFG::SymbolDFG, ns::Vector{Int}, includeOrphanFactors::Bool=false)::Nothing
-	# Split into variables and factors
-	subgraph = sourceDFG.g[ns]
-	sourceVariableIds = collect(filter_vertices(subgraph, :variable))
-	sourceFactorIds = collect(filter_vertices(subgraph, :factor))
-	# or copy out of sourceDFG.
-	# sourceFactorIds = intersect(ns, collect(filter_vertices(sourceDFG.g, :factor)))
+# function _copyIntoGraph!(sourceDFG{AbstractParam,DFGVariable,DFGFactor}::SymbolDFG, destDFG{AbstractParam,DFGVariable,DFGFactor}::SymbolDFG, labels::Vector{Symbol}, includeOrphanFactors::Bool=false)::Nothing
+function _copyIntoGraph!(sourceDFG::SymbolDFG, destDFG::SymbolDFG, labels::Vector{Symbol}, includeOrphanFactors::Bool=false)::Nothing
 
-	#get factor and variable nodes
-	variables = map(vId->getVariable(subgraph, vId), sourceVariableIds)
-	factors = map(fId->getFactor(subgraph, fId), sourceFactorIds)
-
-	# Now we have to add all variables first,
-	for v in variables
-	    if !haskey(destDFG.g.metaindex[:label], v.label)
-	        addVariable!(destDFG, deepcopy(v))
+	# Add all variables first,
+	for v in values(sourceDFG.g.variables)
+	    if v.label in labels
+			exists(destDFG, v) ? (@warn "_copyIntoGraph $(v.label) exists, ignoring") : addVariable!(destDFG, deepcopy(v))
 	    end
 	end
 
     # And then all factors to the destDFG.
-    for f in factors
-        if !haskey(destDFG.g.metaindex[:label], f.label)
+    for f in values(sourceDFG.g.factors)
+        if f.label in labels
             # Get the original factor variables (we need them to create it)
-            # variables = in_neighbors(factor, sourceDFG.g)
-			# variables = getNeighbors(sourceDFG, f)
-			varIds = LightGraphs.neighbors(sourceDFG.g, sourceDFG.g[f.label,:label])
-			variables = map(vId->getVariable(sourceDFG.g, vId), varIds)
+			neigh_labels = outneighbors(sourceDFG.g, f.label)
 
             # Find the labels and associated variables in our new subgraph
             factVariables = DFGVariable[]
-            for v in variables
-                if haskey(destDFG.g.metaindex[:label], v.label)
-                    push!(factVariables, getVariable(destDFG, v.label))
+            for v_lab in neigh_labels
+                if haskey(destDFG.g.variables, v_lab)
+                    push!(factVariables, getVariable(destDFG, v_lab))
                     #otherwise ignore
                 end
             end
 
             # Only if we have all of them should we add it (otherwise strange things may happen on evaluation)
-            if includeOrphanFactors || length(factVariables) == length(variables)
-                addFactor!(destDFG, factVariables, deepcopy(f))
+            if includeOrphanFactors || length(factVariables) == length(neigh_labels)
+                exists(destDFG, f.label) ? (@warn "_copyIntoGraph $(f.label) exists, ignoring") : addFactor!(destDFG, factVariables, deepcopy(f))
             end
         end
     end
@@ -420,32 +405,34 @@ Optionally provide a distance to specify the number of edges should be followed.
 Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
 Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
 """
-function getSubgraphAroundNode(dfg::SymbolDFG{P}, node::T, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::SymbolDFG=SymbolDFG{P}())::SymbolDFG where {P <: AbstractParams, T <: DFGNode}
-    if !haskey(dfg.g.metaindex[:label], node.label)
+function getSubgraphAroundNode(dfg::SymbolDFG, node::DFGNode, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::SymbolDFG=SymbolDFG{AbstractParams}())::SymbolDFG
+    if !exists(dfg,node.label)
         error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
     end
 
-    # Get a list of all unique neighbors inside 'distance'
-	ns = neighborhood(dfg.g, dfg.g[node.label,:label], distance)
+	nodelabel = node.label
+	# Build a list of all unique neighbors inside 'distance'
+	neighborList = Symbol[nodelabel]
 
-	# Copy the section of graph we want
+	curList = Symbol[nodelabel]
+
+	for dist in 1:distance
+		newNeighbors = Symbol[]
+		for cl in curList
+			neighbors = outneighbors(dfg.g, cl)
+			for neighbor in neighbors
+				if !(neighbor in neighborList)
+					push!(neighborList, neighbor)
+					push!(newNeighbors, neighbor)
+				end
+			end
+		end
+		curList = newNeighbors
+	end
+
+
 	# _copyIntoGraph!(dfg, addToDFG, map(n->get_prop(dfg.g, n, :label), ns), includeOrphanFactors)
-	_copyIntoGraph!(dfg, addToDFG, ns, includeOrphanFactors)
-    return addToDFG
-end
-
-
-function getSubgraphAroundNode(dfg::SymbolDFG{<:AbstractParams}, node::DFGNode, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::AbstractDFG=SymbolDFG{AbstractParams}())::AbstractDFG
-    if !haskey(dfg.g.metaindex[:label], node.label)
-        error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
-    end
-
-    # Get a list of all unique neighbors inside 'distance'
-	ns = neighborhood(dfg.g, dfg.g[node.label,:label], distance)
-
-	# Copy the section of graph we want
-	_copyIntoGraph!(dfg, addToDFG, map(n->get_prop(dfg.g, n, :label), ns), includeOrphanFactors)
-	# _copyIntoGraph!(dfg, addToDFG, ns, includeOrphanFactors)
+	_copyIntoGraph!(dfg, addToDFG, neighborList, includeOrphanFactors)
     return addToDFG
 end
 
@@ -458,7 +445,7 @@ Note: By default orphaned factors (where the subgraph does not contain all the r
 """
 function getSubgraph(dfg::SymbolDFG, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false, addToDFG::SymbolDFG=SymbolDFG{AbstractParams}())::SymbolDFG
     for label in variableFactorLabels
-        if !haskey(dfg.g.metaindex[:label], label)
+        if !exists(dfg, label)
             error("Variable/factor with label '$(label)' does not exist in the factor graph")
         end
     end
@@ -466,7 +453,7 @@ function getSubgraph(dfg::SymbolDFG, variableFactorLabels::Vector{Symbol}, inclu
     _copyIntoGraph!(dfg, addToDFG, variableFactorLabels, includeOrphanFactors)
     return addToDFG
 end
-=#
+
 """
     $(SIGNATURES)
 Get an adjacency matrix for the DFG, returned as a Matrix{Union{Nothing, Symbol}}.

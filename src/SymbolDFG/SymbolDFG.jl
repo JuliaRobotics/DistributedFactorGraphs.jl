@@ -29,6 +29,8 @@ import ...DistributedFactorGraphs:  setSolverParams,
                                     isFullyConnected,
                                     hasOrphans,
                                     getNeighbors,
+                                    getSubgraphAroundNode,
+                                    getSubgraph,
                                     getAdjacencyMatrix
 
 include("SymbolFactorGraphs/SymbolFactorGraphs.jl")

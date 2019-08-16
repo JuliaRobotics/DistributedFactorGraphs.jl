@@ -2,7 +2,7 @@ module SymbolFactorGraphs
 
 using LightGraphs
 
-import LightGraphs: nv, ne, vertices, is_directed, has_edge, edges, inneighbors, outneighbors, rem_vertex!, neighbors
+import LightGraphs: nv, ne, vertices, is_directed, has_edge, edges, inneighbors, outneighbors, rem_vertex!, neighbors, connected_components
 
 import ...DistributedFactorGraphs: DFGNode
 
@@ -422,6 +422,50 @@ function rem_vertex!(g::SymbolFactorGraph, v::Symbol)
     return true
 end
 
+function _connected_components!(label::Dict{Symbol, T}, g::SymbolFactorGraph) where T <: UnionNothingSymbol
+    nvg = nv(g)
 
+    for u in vertices(g)
+        label[u] != nothing && continue
+        label[u] = u
+        Q = Vector{T}()
+        push!(Q, u)
+        while !isempty(Q)
+            src = popfirst!(Q)
+            for vertex in neighbors(g, src)
+                if label[vertex] == zero(T)
+                    push!(Q, vertex)
+                    label[vertex] = u
+                end
+            end
+        end
+    end
+    return label
+end
+
+function _components(labels::Dict{Symbol, UnionNothingSymbol})
+
+    d = Dict{Symbol,Int}()
+    c = Vector{Vector{Symbol}}()
+    i = 1 #one(T)
+    for (v, l) in enumerate(labels)
+        index = get!(d, l.second, i)
+        if length(c) >= index
+            push!(c[index], l.first)
+        else
+            push!(c, [l.first])
+            i += 1
+        end
+    end
+    return c, d
+end
+
+function connected_components(g::SymbolFactorGraph)
+    # label = zeros(T, nv(g))
+    label = Dict{Symbol, UnionNothingSymbol}(l=>nothing for l in vertices(g))
+    _connected_components!(label, g)
+    c, d = _components(label)
+    return c
+end
 
 end
