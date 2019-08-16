@@ -178,7 +178,7 @@ end
 end
 
 @testset "Producing Dot Files" begin
-    if testDFGAPI == LightGraphsDFG
+    if testDFGAPI != GraphsDFG
         @warn "Skipping LightGraphsDFG toDot functions"
         @test_skip 1==0#toDot(dfg)
         @test_skip 1==0#toDotFile(dfg, "something.dot")
