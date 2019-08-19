@@ -45,11 +45,11 @@ ne(g::SymbolFactorGraph) = g.ne
 
 vertices(g::SymbolFactorGraph) = keys(g.fadjdict)
 
-inneighbors(g::SymbolFactorGraph, v::Symbol) = copy(badj(g, v))
+inneighbors(g::SymbolFactorGraph, v::Symbol) = (badj(g, v))
 
-outneighbors(g::SymbolFactorGraph, v::Symbol) = copy(fadj(g, v))
+outneighbors(g::SymbolFactorGraph, v::Symbol) = (fadj(g, v))
 
-neighbors(g::SymbolFactorGraph, v::Symbol) = copy(fadj(g, v))
+neighbors(g::SymbolFactorGraph, v::Symbol) = (fadj(g, v))
 
 """
     is_directed(g)

@@ -308,7 +308,7 @@ function getNeighbors(dfg::SymbolDFG, node::DFGNode; ready::Union{Nothing, Int}=
         error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
     end
 
-	neighbors_ll =  outneighbors(dfg.g, label)
+	neighbors_ll =  copy(outneighbors(dfg.g, label))
     # Additional filtering
     ready != nothing && filter!(lbl -> _isready(dfg, lbl, ready), neighbors_ll)
 	backendset != nothing && filter!(lbl -> _isbackendset(dfg, lbl, backendset), neighbors_ll)
@@ -332,7 +332,7 @@ function getNeighbors(dfg::SymbolDFG, label::Symbol; ready::Union{Nothing, Int}=
         error("Variable/factor with label '$(label)' does not exist in the factor graph")
     end
 
-	neighbors_ll =  outneighbors(dfg.g, label)
+	neighbors_ll =  copy(outneighbors(dfg.g, label))
     # Additional filtering
     ready != nothing && filter!(lbl -> _isready(dfg, lbl, ready), neighbors_ll)
 	backendset != nothing && filter!(lbl -> _isbackendset(dfg, lbl, backendset), neighbors_ll)
