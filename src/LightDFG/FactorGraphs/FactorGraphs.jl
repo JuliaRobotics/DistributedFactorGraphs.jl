@@ -5,8 +5,8 @@ import Base:
     eltype, show, ==, Pair,
     Tuple, copy, length, size,
     issubset, zero, getindex
-import Random:
-    randstring, seed!
+# import Random:
+#     randstring, seed!
 
 import LightGraphs:
     AbstractGraph, src, dst, edgetype, nv,
