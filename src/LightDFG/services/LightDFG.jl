@@ -466,6 +466,18 @@ function getAdjacencyMatrix(dfg::LightDFG)::Matrix{Union{Nothing, Symbol}}
     return adjMat
 end
 
+function getAdjacencyMatrixSparse(dfg::LightDFG)::Tuple{LightGraphs.SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}
+	varLabels = collect(keys(dfg.g.variables))
+    factLabels = collect(keys(dfg.g.factors))
+	varIndex = [dfg.g.labels[s] for s in varLabels]
+	factIndex = [dfg.g.labels[s] for s in factLabels]
+
+	adj = adjacency_matrix(dfg.g)
+
+	adjvf = adj[factIndex, varIndex]
+	return adjvf, varLabels, factLabels
+end
+
 #=
 """
     $(SIGNATURES)

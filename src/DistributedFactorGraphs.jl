@@ -38,6 +38,10 @@ export pack, unpack
 include("services/AbstractDFG.jl")
 include("services/DFGVariable.jl")
 
+#TODO @sam I'm just doing it like this at the moment because I don't know a better way.
+include("services/interfaces.jl")
+export getAdjacencyMatrixSparse
+
 # Include the Graphs.jl API.
 include("GraphsDFG/GraphsDFG.jl")
 
