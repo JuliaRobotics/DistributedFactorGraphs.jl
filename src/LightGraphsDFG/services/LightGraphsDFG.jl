@@ -525,6 +525,15 @@ function getAdjacencyMatrix(dfg::LightGraphsDFG)::Matrix{Union{Nothing, Symbol}}
     return adjMat
 end
 
+function getAdjacencyMatrixSparse(dfg::LightGraphsDFG)
+    adj = LightGraphs.adjacency_matrix(dfg.g)
+	v_labels = getVariableIds(dfg)
+	f_labels = getFactorIds(dfg)
+	v_index = [dfg.g[s,:label] for s in v_labels]
+	f_index = [dfg.g[s,:label] for s in f_labels]
+	adjvf = adj[f_index, v_index]
+	return adjvf, v_labels, f_labels
+end
 
 """
     $(SIGNATURES)
