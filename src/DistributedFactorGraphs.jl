@@ -86,6 +86,12 @@ function __init__()
     include("CloudGraphsDFG/CloudGraphsDFG.jl")
   end
 =#
+
+    @require GraphPlot = "a2cc645c-3eea-5389-862e-a155d0052231" begin
+        include("DFGPlots/DFGPlots.jl")
+        @reexport using .DFGPlots
+    end
+
 end
 
 #FIXME JT not sure how to handle this, is it not lightweitgh enought to always include?
