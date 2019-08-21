@@ -720,7 +720,7 @@ function getSubgraphAroundNode(dfg::CloudGraphsDFG, node::DFGNode, distance::Int
     return addToDFG
 end
 
-function getSubgraphAroundNode(dfg::CloudGraphsDFG{<:AbstractParams}, node::DFGNode, distance::Int64, includeOrphanFactors::Bool, addToDFG::LightGraphsDFG{AbstractParams})::AbstractDFG
+function getSubgraphAroundNode(dfg::CloudGraphsDFG{<:AbstractParams}, node::DFGNode, distance::Int64, includeOrphanFactors::Bool, addToDFG::MetaGraphsDFG{AbstractParams})::AbstractDFG
     distance < 1 && error("getSubgraphAroundNode() only works for distance > 0")
 
 
