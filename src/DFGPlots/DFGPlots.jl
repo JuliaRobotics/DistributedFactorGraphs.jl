@@ -28,7 +28,7 @@ DFGPlotProps() = DFGPlotProps(  (var=colorant"seagreen", fac=colorant"cyan3"),
                                 true)
 
 
-function dfgplot(dfg::LightGraphsDFG)
+function dfgplot(dfg::MetaGraphsDFG)
 
     nodesize = [has_prop(dfg.g,i,:factor) ? 0.3 : 1.0 for i=vertices(dfg.g)]
     nodelabel = [has_prop(dfg.g,i,:factor) ? "" : string(get_prop(dfg.g,i,:label)) for i=vertices(dfg.g)]
@@ -38,14 +38,14 @@ function dfgplot(dfg::LightGraphsDFG)
 
 end
 
-function gplot(dfg::LightGraphsDFG; keyargs...)
+function gplot(dfg::MetaGraphsDFG; keyargs...)
     gplot(dfg.g; keyargs...)
 end
 
 function dfgplot(dfg::AbstractDFG)
     # TODO implement convert functions
     @warn "TODO Implement convert"
-    ldfg = LightGraphsDFG{AbstractParams}()
+    ldfg = MetaGraphsDFG{AbstractParams}()
     DistributedFactorGraphs._copyIntoGraph!(dfg, ldfg, union(getVariableIds(dfg), getFactorIds(dfg)), true)
 
     nodesize = [has_prop(ldfg.g,i,:factor) ? 0.3 : 1.0 for i=vertices(ldfg.g)]
