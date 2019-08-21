@@ -1,8 +1,10 @@
 module SymbolDFGs
 
 using LightGraphs
+using SparseArrays
 using DocStringExtensions
 
+import ...DistributedFactorGraphs: AbstractDFG, DFGNode, AbstractParams, NoSolverParams, DFGVariable, DFGFactor
 # import DFG functions to exstend
 import ...DistributedFactorGraphs:  setSolverParams,
                                     getInnerGraph,
@@ -31,7 +33,8 @@ import ...DistributedFactorGraphs:  setSolverParams,
                                     getNeighbors,
                                     getSubgraphAroundNode,
                                     getSubgraph,
-                                    getAdjacencyMatrix
+                                    getAdjacencyMatrix,
+                                    getAdjacencyMatrixSparse
 
 include("SymbolFactorGraphs/SymbolFactorGraphs.jl")
 using .SymbolFactorGraphs
@@ -44,21 +47,5 @@ include("services/SymbolDFG.jl")
 # Exports
 export SymbolDFG
 
-export exists
-export getLabelDict, getDescription, setDescription, getInnerGraph, getAddHistory, getSolverParams, setSolverParams
-#
-export getAddHistory, getDescription, getLabelDict
-export addVariable!, addFactor!
-export ls, lsf, getVariables, getFactors, getVariableIds, getFactorIds
-export getVariable, getFactor
-export updateVariable!, updateFactor!
-export deleteVariable!, deleteFactor!
-export getAdjacencyMatrix
-export getAdjacencyMatrixDataFrame
-export getNeighbors
-export getSubgraphAroundNode
-export getSubgraph
-export isFullyConnected, hasOrphans
-export toDot, toDotFile
 
 end

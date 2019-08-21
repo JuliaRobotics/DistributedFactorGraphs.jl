@@ -1,7 +1,4 @@
 
-import ...DistributedFactorGraphs: AbstractDFG, DFGNode, AbstractParams, NoSolverParams, DFGVariable, DFGFactor
-
-
 mutable struct SymbolDFG{T <: AbstractParams, V <: DFGNode, F <:DFGNode} <: AbstractDFG
     g::SymbolFactorGraph{V,F}
     description::String

@@ -484,6 +484,21 @@ function getAdjacencyMatrix(dfg::GraphsDFG)::Matrix{Union{Nothing, Symbol}}
     return adjMat
 end
 
+function getAdjacencyMatrixSparse(dfg::GraphsDFG)::Tuple{LightGraphs.SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}
+	varLabels = map(v->v.label, getVariables(dfg))
+	factLabels = map(f->f.label, getFactors(dfg))
+
+	vDict = Dict(varLabels .=> [1:length(varLabels)...])
+
+	adjMat = spzeros(Int, length(factLabels), length(varLabels))
+
+	for (fIndex, factLabel) in enumerate(factLabels)
+		factVars = getNeighbors(dfg, getFactor(dfg, factLabel))
+	    map(vLabel -> adjMat[fIndex,vDict[vLabel]] = 1, factVars)
+	end
+	return adjMat, varLabels, factLabels
+end
+
 """
     $(SIGNATURES)
 Produces a dot-format of the graph for visualization.

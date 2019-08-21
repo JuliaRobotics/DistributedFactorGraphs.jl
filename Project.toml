@@ -15,6 +15,7 @@ MetaGraphs = "626554b9-1ddb-594c-aa3c-2596fe9399a5"
 Neo4j = "d2adbeaf-5838-5367-8a2f-e46d570981db"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 Requires = "ae029012-a4dd-5104-9daa-d747884805df"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [compat]
 Distributions = "≥ 0.18"

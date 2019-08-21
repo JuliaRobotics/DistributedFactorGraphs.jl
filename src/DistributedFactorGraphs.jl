@@ -8,6 +8,7 @@ using Distributions
 using Reexport
 using JSON2
 using LinearAlgebra
+using SparseArrays
 
 # Entities
 include("entities/AbstractTypes.jl")

@@ -110,8 +110,8 @@ end
     # Normal
     adjMat = getAdjacencyMatrix(dfg)
     @test size(adjMat) == (2,4)
-    @test adjMat[1, :] == [nothing, :a, :b, :orphan]
-    @test adjMat[2, :] == [:f1, :f1, :f1, nothing]
+    @test symdiff(adjMat[1, :], [nothing, :a, :b, :orphan]) == Symbol[]
+    @test symdiff(adjMat[2, :], [:f1, :f1, :f1, nothing]) == Symbol[]
     #sparse
     adjMat, v_ll, f_ll = getAdjacencyMatrixSparse(dfg)
     @test size(adjMat) == (1,3)
