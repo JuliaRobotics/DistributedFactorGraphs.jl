@@ -2,11 +2,11 @@ using LightGraphs
 using MetaGraphs
 
 # Imports
-include("entities/LightGraphsDFG.jl")
-include("services/LightGraphsDFG.jl")
+include("entities/MetaGraphsDFG.jl")
+include("services/MetaGraphsDFG.jl")
 
 # Exports
-export LightGraphsDFG
+export MetaGraphsDFG
 export exists
 export getLabelDict, getDescription, setDescription, getInnerGraph, getAddHistory, getSolverParams, setSolverParams
 #
