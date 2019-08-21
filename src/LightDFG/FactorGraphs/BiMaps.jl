@@ -45,7 +45,7 @@ end
 Base.haskey(b::BiDictMap, s::Symbol) = haskey(b.sym_int, s)
 Base.haskey(b::BiDictMap, i::Int) = haskey(b.int_sym, i)
 
-
+Base.length(b::BiDictMap) = length(b.int_sym)
 Base.firstindex(v::BiDictMap) = 1
 Base.lastindex(v::BiDictMap) = length(v.int_sym)
 Base.iterate(v::BiDictMap, i=1) = (length(v.int_sym) < i ? nothing : (v.int_sym[i], i + 1))

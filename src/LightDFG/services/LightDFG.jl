@@ -217,7 +217,19 @@ Related
 
 ls
 """
-getVariableIds(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{Symbol} = map(v -> v.label, getVariables(dfg, regexFilter, tags=tags))
+
+function getVariableIds(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{Symbol}
+
+	# variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGVariable, vertices(dfg.g)))
+	if length(tags) > 0
+		return map(v -> v.label, getVariables(dfg, regexFilter, tags=tags))
+	else
+		variables = collect(keys(dfg.g.variables))
+		regexFilter != nothing && (variables = filter(v -> occursin(regexFilter, String(v)), variables))
+		return variables
+    end
+end
+
 
 # Alias
 """
@@ -246,8 +258,14 @@ end
 Get a list of the IDs of the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
-getFactorIds(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{Symbol} = map(f -> f.label, getFactors(dfg, regexFilter))
-
+function getFactorIds(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{Symbol}
+	# factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGFactor, vertices(dfg.g)))
+	factors = collect(keys(dfg.g.factors))
+	if regexFilter != nothing
+		factors = filter(f -> occursin(regexFilter, String(f)), factors)
+	end
+	return factors
+end
 """
     $(SIGNATURES)
 List the DFGFactors in the DFG.
