@@ -510,8 +510,8 @@ Rows are all factors, columns are all variables, and each cell contains either n
 The first row and first column are factor and variable headings respectively.
 """
 function getAdjacencyMatrix(dfg::LightGraphsDFG)::Matrix{Union{Nothing, Symbol}}
-    varLabels = sort(map(v->v.label, getVariables(dfg)))
-    factLabels = sort(map(f->f.label, getFactors(dfg)))
+    varLabels = map(v->v.label, getVariables(dfg))
+    factLabels = map(f->f.label, getFactors(dfg))
     vDict = Dict(varLabels .=> [1:length(varLabels)...].+1)
 
     adjMat = Matrix{Union{Nothing, Symbol}}(nothing, length(factLabels)+1, length(varLabels)+1)
@@ -525,7 +525,7 @@ function getAdjacencyMatrix(dfg::LightGraphsDFG)::Matrix{Union{Nothing, Symbol}}
     return adjMat
 end
 
-function getAdjacencyMatrixSparse(dfg::LightGraphsDFG)
+function getAdjacencyMatrixSparse(dfg::LightGraphsDFG)::Tuple{LightGraphs.SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}
     adj = LightGraphs.adjacency_matrix(dfg.g)
 	v_labels = getVariableIds(dfg)
 	f_labels = getFactorIds(dfg)

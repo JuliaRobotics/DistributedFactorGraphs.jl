@@ -1,4 +1,3 @@
-import ...DistributedFactorGraphs: DFGVariable, DFGFactor
 
 # Accessors
 getLabelDict(dfg::SymbolDFG) = dfg.labelDict
@@ -461,8 +460,8 @@ Rows are all factors, columns are all variables, and each cell contains either n
 The first row and first column are factor and variable headings respectively.
 """
 function getAdjacencyMatrix(dfg::SymbolDFG)::Matrix{Union{Nothing, Symbol}}
-    varLabels = sort(map(v->v.label, getVariables(dfg)))
-    factLabels = sort(map(f->f.label, getFactors(dfg)))
+    varLabels = map(v->v.label, getVariables(dfg))
+    factLabels = map(f->f.label, getFactors(dfg))
     vDict = Dict(varLabels .=> [1:length(varLabels)...].+1)
 
     adjMat = Matrix{Union{Nothing, Symbol}}(nothing, length(factLabels)+1, length(varLabels)+1)
@@ -476,6 +475,21 @@ function getAdjacencyMatrix(dfg::SymbolDFG)::Matrix{Union{Nothing, Symbol}}
     return adjMat
 end
 
+
+function getAdjacencyMatrixSparse(dfg::SymbolDFG)::Tuple{LightGraphs.SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}
+	varLabels = collect(keys(dfg.g.variables))
+	factLabels = collect(keys(dfg.g.factors))
+
+	vDict = Dict(varLabels .=> [1:length(varLabels)...])
+
+	adjMat = spzeros(Int, length(factLabels), length(varLabels))
+
+	for (fIndex, factLabel) in enumerate(factLabels)
+	    factVars = outneighbors(dfg.g, factLabel)
+	    map(vLabel -> adjMat[fIndex,vDict[vLabel]] = 1, factVars)
+	end
+	return adjMat, varLabels, factLabels
+end
 #=
 """
     $(SIGNATURES)
