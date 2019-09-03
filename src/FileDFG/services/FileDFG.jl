@@ -137,7 +137,10 @@ function saveDFG(dfg::G, folder::String) where G <: AbstractDFG
     end
 end
 
-function loadDFG(folder::String, iifModule, dfgLoadInto::G=GraphsDFG{NoSolverParams}()) where G <: AbstractDFG
+function loadDFG(folder::String,
+                 iifModule,
+                 dfgLoadInto::G=GraphsDFG{NoSolverParams}()) where G <: AbstractDFG
+    #
     variables = DFGVariable[]
     factors = DFGFactor[]
     varFolder = "$folder/variables"
