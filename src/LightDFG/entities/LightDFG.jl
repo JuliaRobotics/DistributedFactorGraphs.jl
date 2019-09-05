@@ -24,7 +24,9 @@ function LightDFG{T,V,F}(g::FactorGraph{Int,V,F}=FactorGraph{Int,V,F}();
     LightDFG{T,V,F}(g, description, userId, robotId, sessionId, Symbol[], params)
 end
 
-LightDFG{T}(g::FactorGraph{Int,DFGVariable,DFGFactor}=FactorGraph{Int,DFGVariable,DFGFactor}(); kwargs...) where T <: AbstractParams = LightDFG{T,DFGVariable,DFGFactor}(g, kwargs...)
+# LightDFG{T}(; kwargs...) where T <: AbstractParams = LightDFG{T,DFGVariable,DFGFactor}(;kwargs...)
+
+LightDFG{T}(g::FactorGraph{Int,DFGVariable,DFGFactor}=FactorGraph{Int,DFGVariable,DFGFactor}(); kwargs...) where T <: AbstractParams = LightDFG{T,DFGVariable,DFGFactor}(g; kwargs...)
 
 Base.propertynames(x::LightDFG, private::Bool=false) =
     (:g, :description, :userId, :robotId, :sessionId, :nodeCounter, :labelDict, :addHistory, :solverParams)

@@ -5,7 +5,7 @@ export getData
 export getVariableType, getSofttype
 export getFactorType, getfnctype
 export lsTypes, lsfTypes
-
+export lsWho, lsfWho
 
 """
     $(SIGNATURES)

@@ -24,7 +24,7 @@ function SymbolDFG{T,V,F}(g::SymbolFactorGraph{V,F}=SymbolFactorGraph{V,F}();
     SymbolDFG{T,V,F}(g, description, userId, robotId, sessionId, Symbol[], params)
 end
 
-SymbolDFG{T}(g::SymbolFactorGraph{DFGVariable,DFGFactor}=SymbolFactorGraph{DFGVariable,DFGFactor}(); kwargs...) where T <: AbstractParams = SymbolDFG{T,DFGVariable,DFGFactor}(g, kwargs...)
+SymbolDFG{T}(g::SymbolFactorGraph{DFGVariable,DFGFactor}=SymbolFactorGraph{DFGVariable,DFGFactor}(); kwargs...) where T <: AbstractParams = SymbolDFG{T,DFGVariable,DFGFactor}(g; kwargs...)
 
 Base.propertynames(x::SymbolDFG, private::Bool=false) =
     (:g, :description, :userId, :robotId, :sessionId, :nodeCounter, :labelDict, :addHistory, :solverParams)
