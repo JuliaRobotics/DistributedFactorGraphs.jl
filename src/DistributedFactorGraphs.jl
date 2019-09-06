@@ -35,13 +35,12 @@ export GenericFunctionNodeData#, FunctionNodeData
 export getSerializationModule, setSerializationModule!
 export pack, unpack
 
+#Interfaces
+export getAdjacencyMatrixSparse
+
 # Common includes
 include("services/AbstractDFG.jl")
 include("services/DFGVariable.jl")
-
-#TODO @sam I'm just doing it like this at the moment because I don't know a better way.
-include("services/interfaces.jl")
-export getAdjacencyMatrixSparse
 
 # Include the Graphs.jl API.
 include("GraphsDFG/GraphsDFG.jl")
@@ -86,13 +85,10 @@ function __init__()
         end
     end
 
-#FIXME JT not sure how to handle this
-#=
-  @require Neo4j="d2adbeaf-5838-5367-8a2f-e46d570981db" begin
-    # Include the Cloudgraphs API
-    include("CloudGraphsDFG/CloudGraphsDFG.jl")
-  end
-=#
+    @require Neo4j="d2adbeaf-5838-5367-8a2f-e46d570981db" begin
+        # Include the Cloudgraphs API
+        include("CloudGraphsDFG/CloudGraphsDFG.jl")
+    end
 
     @require GraphPlot = "a2cc645c-3eea-5389-862e-a155d0052231" begin
         include("DFGPlots/DFGPlots.jl")
@@ -101,8 +97,6 @@ function __init__()
 
 end
 
-#FIXME JT not sure how to handle this, is it not lightweitgh enought to always include?
-include("CloudGraphsDFG/CloudGraphsDFG.jl")
 
 # not sure where to put
 include("Common.jl")
