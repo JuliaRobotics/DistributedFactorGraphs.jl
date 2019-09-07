@@ -8,6 +8,7 @@ using Distributions
 using Reexport
 using JSON2
 using LinearAlgebra
+using SparseArrays
 
 # Entities
 include("entities/AbstractTypes.jl")
@@ -34,6 +35,9 @@ export GenericFunctionNodeData#, FunctionNodeData
 export getSerializationModule, setSerializationModule!
 export pack, unpack
 
+#Interfaces
+export getAdjacencyMatrixSparse
+
 # Common includes
 include("services/AbstractDFG.jl")
 include("services/DFGVariable.jl")
@@ -45,7 +49,13 @@ include("GraphsDFG/GraphsDFG.jl")
 include("FileDFG/FileDFG.jl")
 
 # Include the LightGraphs.jl (MetaGraphs.jl) API.
-include("LightGraphsDFG/LightGraphsDFG.jl")
+include("MetaGraphsDFG/MetaGraphsDFG.jl")
+
+include("SymbolDFG/SymbolDFG.jl")
+@reexport using .SymbolDFGs
+
+include("LightDFG/LightDFG.jl")
+@reexport using .LightDFGs
 
 export saveDFG, loadDFG
 
@@ -58,7 +68,7 @@ function __init__()
             Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor.
             The first column is the factor headings.
             """
-            function getAdjacencyMatrixDataFrame(dfg::Union{GraphsDFG, LightGraphsDFG})::Main.DataFrames.DataFrame
+            function getAdjacencyMatrixDataFrame(dfg::Union{GraphsDFG, MetaGraphsDFG, SymbolDFG, LightDFG})::Main.DataFrames.DataFrame
                 varLabels = sort(map(v->v.label, getVariables(dfg)))
                 factLabels = sort(map(f->f.label, getFactors(dfg)))
                 adjDf = DataFrames.DataFrame(:Factor => Union{Missing, Symbol}[])
@@ -75,17 +85,18 @@ function __init__()
         end
     end
 
-  @require Neo4j="d2adbeaf-5838-5367-8a2f-e46d570981db" begin
-    # Include the Cloudgraphs API
-    include("CloudGraphsDFG/CloudGraphsDFG.jl")
-  end
+    @require Neo4j="d2adbeaf-5838-5367-8a2f-e46d570981db" begin
+        # Include the Cloudgraphs API
+        include("CloudGraphsDFG/CloudGraphsDFG.jl")
+    end
 
-  @require GraphPlot = "a2cc645c-3eea-5389-862e-a155d0052231" begin
-      include("DFGPlots/DFGPlots.jl")
-      @reexport using .DFGPlots
-  end
+    @require GraphPlot = "a2cc645c-3eea-5389-862e-a155d0052231" begin
+        include("DFGPlots/DFGPlots.jl")
+        @reexport using .DFGPlots
+    end
 
 end
+
 
 # not sure where to put
 include("Common.jl")

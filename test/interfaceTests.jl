@@ -110,8 +110,18 @@ end
     # Normal
     adjMat = getAdjacencyMatrix(dfg)
     @test size(adjMat) == (2,4)
-    @test adjMat[1, :] == [nothing, :a, :b, :orphan]
-    @test adjMat[2, :] == [:f1, :f1, :f1, nothing]
+    @test symdiff(adjMat[1, :], [nothing, :a, :b, :orphan]) == Symbol[]
+    @test symdiff(adjMat[2, :], [:f1, :f1, :f1, nothing]) == Symbol[]
+    #sparse
+    adjMat, v_ll, f_ll = getAdjacencyMatrixSparse(dfg)
+    @test size(adjMat) == (1,3)
+    #TODO hoe om te toets, volgorde nie altyd dieselfde nie
+    # @test adjMat[1, 1] == 0
+    # @test adjMat[1, 2] == 1
+    # @test adjMat[1, 3] == 1
+    @test symdiff(v_ll, [:a, :b, :orphan]) == Symbol[]
+    @test symdiff(f_ll, [:f1, :f1, :f1]) == Symbol[]
+
     # Dataframe
     adjDf = getAdjacencyMatrixDataFrame(dfg)
     @test size(adjDf) == (1,4)
@@ -184,8 +194,8 @@ end
 end
 
 @testset "Producing Dot Files" begin
-    if testDFGAPI == LightGraphsDFG
-        @warn "Skipping LightGraphsDFG toDot functions"
+    if testDFGAPI != GraphsDFG
+        @warn "Skipping non Graphs.jl toDot functions"
         @test_skip 1==0#toDot(dfg)
         @test_skip 1==0#toDotFile(dfg, "something.dot")
     else

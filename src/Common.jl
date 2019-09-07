@@ -5,7 +5,7 @@ export getData
 export getVariableType, getSofttype
 export getFactorType, getfnctype
 export lsTypes, lsfTypes
-
+export lsWho, lsfWho
 
 """
     $(SIGNATURES)
@@ -229,4 +229,36 @@ function lsTypes(dfg::G)::Dict{Symbol, Vector{String}} where G <: AbstractDFG
     end
   end
   return alltypes
+end
+
+
+"""
+    $(SIGNATURES)
+Gives back all factor labels that fit the bill:
+	lsWho(dfg, :Pose3)
+"""
+function lsWho(dfg::AbstractDFG, type::Symbol; solveKey::Symbol=:default)::Vector{Symbol}
+    vars = getVariables(dfg)
+	labels = Symbol[]
+    for v in vars
+		varType = typeof(getVariableType(v, solveKey=solveKey)).name |> Symbol
+		varType == type && push!(labels, v.label)
+	end
+	return labels
+end
+
+
+"""
+    $(SIGNATURES)
+Gives back all factor labels that fit the bill:
+	lsfWho(dfg, :Point2Point2)
+"""
+function lsfWho(dfg::AbstractDFG, type::Symbol)::Vector{Symbol}
+	facs = getFactors(dfg)
+	labels = Symbol[]
+    for f in facs
+		facType = typeof(getFactorType(f)).name |> Symbol
+		facType == type && push!(labels, f.label)
+	end
+	return labels
 end

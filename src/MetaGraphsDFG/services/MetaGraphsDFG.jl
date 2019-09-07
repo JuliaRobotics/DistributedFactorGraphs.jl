@@ -1,13 +1,13 @@
 # Accessors
-getLabelDict(dfg::LightGraphsDFG) = dfg.g.metaindex[:label]
-getDescription(dfg::LightGraphsDFG) = dfg.description
-setDescription(dfg::LightGraphsDFG, description::String) = dfg.description = description
-getInnerGraph(dfg::LightGraphsDFG) = dfg.g
-getAddHistory(dfg::LightGraphsDFG) = dfg.addHistory
-getSolverParams(dfg::LightGraphsDFG) = dfg.solverParams
+getLabelDict(dfg::MetaGraphsDFG) = dfg.g.metaindex[:label]
+getDescription(dfg::MetaGraphsDFG) = dfg.description
+setDescription(dfg::MetaGraphsDFG, description::String) = dfg.description = description
+getInnerGraph(dfg::MetaGraphsDFG) = dfg.g
+getAddHistory(dfg::MetaGraphsDFG) = dfg.addHistory
+getSolverParams(dfg::MetaGraphsDFG) = dfg.solverParams
 
-# setSolverParams(dfg::LightGraphsDFG, solverParams) = dfg.solverParams = solverParams
-function setSolverParams(dfg::LightGraphsDFG, solverParams::P) where P <: AbstractParams
+# setSolverParams(dfg::MetaGraphsDFG, solverParams) = dfg.solverParams = solverParams
+function setSolverParams(dfg::MetaGraphsDFG, solverParams::P) where P <: AbstractParams
   dfg.solverParams = solverParams
 end
 
@@ -15,17 +15,17 @@ end
     $(SIGNATURES)
 True if the variable or factor exists in the graph.
 """
-function exists(dfg::LightGraphsDFG, node::N) where N <: DFGNode
+function exists(dfg::MetaGraphsDFG, node::N) where N <: DFGNode
     return haskey(dfg.g.metaindex[:label], node.label)
 end
-exists(dfg::LightGraphsDFG, nId::Symbol) = haskey(dfg.g.metaindex[:label], nId)
+exists(dfg::MetaGraphsDFG, nId::Symbol) = haskey(dfg.g.metaindex[:label], nId)
 
 
 """
     $(SIGNATURES)
 Add a DFGVariable to a DFG.
 """
-function addVariable!(dfg::LightGraphsDFG, variable::DFGVariable)::Bool
+function addVariable!(dfg::MetaGraphsDFG, variable::DFGVariable)::Bool
     if haskey(dfg.g.metaindex[:label], variable.label)
         error("Variable '$(variable.label)' already exists in the factor graph")
     end
@@ -52,7 +52,7 @@ end
     $(SIGNATURES)
 Add a DFGFactor to a DFG.
 """
-function addFactor!(dfg::LightGraphsDFG, variables::Vector{DFGVariable}, factor::DFGFactor)::Bool
+function addFactor!(dfg::MetaGraphsDFG, variables::Vector{DFGVariable}, factor::DFGFactor)::Bool
     if haskey(dfg.g.metaindex[:label], factor.label)
         error("Factor '$(factor.label)' already exists in the factor graph")
     end
@@ -90,7 +90,7 @@ end
     $(SIGNATURES)
 Add a DFGFactor to a DFG.
 """
-function addFactor!(dfg::LightGraphsDFG, variableIds::Vector{Symbol}, factor::DFGFactor)::Bool
+function addFactor!(dfg::MetaGraphsDFG, variableIds::Vector{Symbol}, factor::DFGFactor)::Bool
     variables = map(vId -> getVariable(dfg, vId), variableIds)
     return addFactor!(dfg, variables, factor)
 end
@@ -99,7 +99,7 @@ end
     $(SIGNATURES)
 Get a DFGVariable from a DFG using its underlying integer ID.
 """
-function getVariable(dfg::LightGraphsDFG, variableId::Int64)::DFGVariable
+function getVariable(dfg::MetaGraphsDFG, variableId::Int64)::DFGVariable
     return get_prop(dfg.g, variableId, :variable)
 end
 
@@ -111,7 +111,7 @@ end
     $(SIGNATURES)
 Get a DFGVariable from a DFG using its label.
 """
-function getVariable(dfg::LightGraphsDFG, label::Union{Symbol, String})::DFGVariable
+function getVariable(dfg::MetaGraphsDFG, label::Union{Symbol, String})::DFGVariable
     if typeof(label) == String
         label = Symbol(label)
     end
@@ -125,7 +125,7 @@ end
     $(SIGNATURES)
 Get a DFGFactor from a DFG using its underlying integer ID.
 """
-function getFactor(dfg::LightGraphsDFG, factorId::Int64)::DFGFactor
+function getFactor(dfg::MetaGraphsDFG, factorId::Int64)::DFGFactor
     # if !(factorId in values(dfg.g.metaindex[:label]))
     #     error("Factor ID '$(factorId)' does not exist in the factor graph")
     # end
@@ -143,7 +143,7 @@ end
     $(SIGNATURES)
 Get a DFGFactor from a DFG using its label.
 """
-function getFactor(dfg::LightGraphsDFG, label::Union{Symbol, String})::DFGFactor
+function getFactor(dfg::MetaGraphsDFG, label::Union{Symbol, String})::DFGFactor
     if typeof(label) == String
         label = Symbol(label)
     end
@@ -157,7 +157,7 @@ end
     $(SIGNATURES)
 Update a complete DFGVariable in the DFG.
 """
-function updateVariable!(dfg::LightGraphsDFG, variable::DFGVariable)::DFGVariable
+function updateVariable!(dfg::MetaGraphsDFG, variable::DFGVariable)::DFGVariable
     if !haskey(dfg.g.metaindex[:label], variable.label)
         error("Variable label '$(variable.label)' does not exist in the factor graph")
     end
@@ -169,7 +169,7 @@ end
     $(SIGNATURES)
 Update a complete DFGFactor in the DFG.
 """
-function updateFactor!(dfg::LightGraphsDFG, factor::DFGFactor)::DFGFactor
+function updateFactor!(dfg::MetaGraphsDFG, factor::DFGFactor)::DFGFactor
     if !haskey(dfg.g.metaindex[:label], factor.label)
         error("Factor label '$(factor.label)' does not exist in the factor graph")
     end
@@ -181,7 +181,7 @@ end
     $(SIGNATURES)
 Delete a DFGVariable from the DFG using its label.
 """
-function deleteVariable!(dfg::LightGraphsDFG, label::Symbol)::DFGVariable
+function deleteVariable!(dfg::MetaGraphsDFG, label::Symbol)::DFGVariable
     if !haskey(dfg.g.metaindex[:label], label)
         error("Variable label '$(label)' does not exist in the factor graph")
     end
@@ -196,13 +196,13 @@ end
     $(SIGNATURES)
 Delete a referenced DFGVariable from the DFG.
 """
-deleteVariable!(dfg::LightGraphsDFG, variable::DFGVariable)::DFGVariable = deleteVariable!(dfg, variable.label)
+deleteVariable!(dfg::MetaGraphsDFG, variable::DFGVariable)::DFGVariable = deleteVariable!(dfg, variable.label)
 
 """
     $(SIGNATURES)
 Delete a DFGFactor from the DFG using its label.
 """
-function deleteFactor!(dfg::LightGraphsDFG, label::Symbol)::DFGFactor
+function deleteFactor!(dfg::MetaGraphsDFG, label::Symbol)::DFGFactor
     if !haskey(dfg.g.metaindex[:label], label)
         error("Factor label '$(label)' does not exist in the factor graph")
     end
@@ -216,14 +216,14 @@ end
     $(SIGNATURES)
 Delete the referened DFGFactor from the DFG.
 """
-deleteFactor!(dfg::LightGraphsDFG, factor::DFGFactor)::DFGFactor = deleteFactor!(dfg, factor.label)
+deleteFactor!(dfg::MetaGraphsDFG, factor::DFGFactor)::DFGFactor = deleteFactor!(dfg, factor.label)
 
 """
     $(SIGNATURES)
 List the DFGVariables in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the variables.
 """
-function getVariables(dfg::LightGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{DFGVariable}
+function getVariables(dfg::MetaGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{DFGVariable}
 
 	# variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGVariable, vertices(dfg.g)))
 	variableIds = collect(filter_vertices(dfg.g, :variable))
@@ -252,7 +252,7 @@ Related
 
 ls
 """
-function getVariableIds(dfg::LightGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{Symbol}
+function getVariableIds(dfg::MetaGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{Symbol}
   vars = getVariables(dfg, regexFilter, tags=tags)
   # mask = map(v -> length(intersect(v.tags, tags)) > 0, vars )
   map(v -> v.label, vars)
@@ -264,14 +264,14 @@ end
 List the DFGVariables in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the variables.
 """
-ls(dfg::LightGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{Symbol} = getVariableIds(dfg, regexFilter, tags=tags)
+ls(dfg::MetaGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{Symbol} = getVariableIds(dfg, regexFilter, tags=tags)
 
 """
     $(SIGNATURES)
 List the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
-function getFactors(dfg::LightGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGFactor}
+function getFactors(dfg::MetaGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGFactor}
 	# factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGFactor, vertices(dfg.g)))
 	factorIds = collect(filter_vertices(dfg.g, :factor))
 	factors = map(vId->getFactor(dfg, vId), factorIds)
@@ -286,7 +286,7 @@ end
 Get a list of the IDs of the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
-getFactorIds(dfg::LightGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{Symbol} = map(f -> f.label, getFactors(dfg, regexFilter))
+getFactorIds(dfg::MetaGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{Symbol} = map(f -> f.label, getFactors(dfg, regexFilter))
 
 """
     $(SIGNATURES)
@@ -294,13 +294,13 @@ List the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
 # Alias
-lsf(dfg::LightGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{Symbol} = getFactorIds(dfg, regexFilter)
+lsf(dfg::MetaGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{Symbol} = getFactorIds(dfg, regexFilter)
 
 """
 	$(SIGNATURES)
 Alias for getNeighbors - returns neighbors around a given node label.
 """
-function lsf(dfg::LightGraphsDFG, label::Symbol)::Vector{Symbol}
+function lsf(dfg::MetaGraphsDFG, label::Symbol)::Vector{Symbol}
   return getNeighbors(dfg, label)
 end
 
@@ -308,7 +308,7 @@ end
     $(SIGNATURES)
 Checks if the graph is fully connected, returns true if so.
 """
-function isFullyConnected(dfg::LightGraphsDFG)::Bool
+function isFullyConnected(dfg::MetaGraphsDFG)::Bool
     return length(LightGraphs.connected_components(dfg.g)) == 1
 end
 
@@ -317,9 +317,9 @@ end
     $(SIGNATURES)
 Checks if the graph is not fully connected, returns true if it is not contiguous.
 """
-hasOrphans(dfg::LightGraphsDFG)::Bool = !isFullyConnected(dfg)
+hasOrphans(dfg::MetaGraphsDFG)::Bool = !isFullyConnected(dfg)
 
-function _isready(dfg::LightGraphsDFG, idx::Int, ready::Int)::Bool
+function _isready(dfg::MetaGraphsDFG, idx::Int, ready::Int)::Bool
 	p = props(dfg.g, idx)
 	haskey(p, :variable) && (return p[:variable].ready == ready)
 	haskey(p, :factor) && (return p[:factor].ready == ready)
@@ -329,7 +329,7 @@ function _isready(dfg::LightGraphsDFG, idx::Int, ready::Int)::Bool
 	return false
 end
 
-function _isbackendset(dfg::LightGraphsDFG, idx::Int, backendset::Int)::Bool
+function _isbackendset(dfg::MetaGraphsDFG, idx::Int, backendset::Int)::Bool
 	p = props(dfg.g, idx)
 	haskey(p, :variable) && (return p[:variable].backendset == backendset)
 	haskey(p, :factor) && (return p[:factor].backendset == backendset)
@@ -342,7 +342,7 @@ end
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor.
 """
-function getNeighbors(dfg::LightGraphsDFG, node::T; ready::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}  where T <: DFGNode
+function getNeighbors(dfg::MetaGraphsDFG, node::T; ready::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}  where T <: DFGNode
     if !haskey(dfg.g.metaindex[:label], node.label)
         error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
     end
@@ -364,7 +364,7 @@ end
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
 """
-function getNeighbors(dfg::LightGraphsDFG, label::Symbol; ready::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}  where T <: DFGNode
+function getNeighbors(dfg::MetaGraphsDFG, label::Symbol; ready::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}  where T <: DFGNode
     if !haskey(dfg.g.metaindex[:label], label)
         error("Variable/factor with label '$(label)' does not exist in the factor graph")
     end
@@ -391,18 +391,18 @@ end
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor.
 """
-function ls(dfg::LightGraphsDFG, node::T)::Vector{Symbol} where T <: DFGNode
+function ls(dfg::MetaGraphsDFG, node::T)::Vector{Symbol} where T <: DFGNode
     return getNeighbors(dfg, node)
 end
 """
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
 """
-function ls(dfg::LightGraphsDFG, label::Symbol)::Vector{Symbol} where T <: DFGNode
+function ls(dfg::MetaGraphsDFG, label::Symbol)::Vector{Symbol} where T <: DFGNode
     return getNeighbors(dfg, label)
 end
 
-function _copyIntoGraph!(sourceDFG::LightGraphsDFG, destDFG::LightGraphsDFG, ns::Vector{Int}, includeOrphanFactors::Bool=false)::Nothing
+function _copyIntoGraph!(sourceDFG::MetaGraphsDFG, destDFG::MetaGraphsDFG, ns::Vector{Int}, includeOrphanFactors::Bool=false)::Nothing
 	# Split into variables and factors
 	subgraph = sourceDFG.g[ns]
 	sourceVariableIds = collect(filter_vertices(subgraph, :variable))
@@ -456,7 +456,7 @@ Optionally provide a distance to specify the number of edges should be followed.
 Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
 Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
 """
-function getSubgraphAroundNode(dfg::LightGraphsDFG{P}, node::T, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::LightGraphsDFG=LightGraphsDFG{P}())::LightGraphsDFG where {P <: AbstractParams, T <: DFGNode}
+function getSubgraphAroundNode(dfg::MetaGraphsDFG{P}, node::T, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::MetaGraphsDFG=MetaGraphsDFG{P}())::MetaGraphsDFG where {P <: AbstractParams, T <: DFGNode}
     if !haskey(dfg.g.metaindex[:label], node.label)
         error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
     end
@@ -471,7 +471,7 @@ function getSubgraphAroundNode(dfg::LightGraphsDFG{P}, node::T, distance::Int64=
 end
 
 
-function getSubgraphAroundNode(dfg::LightGraphsDFG{<:AbstractParams}, node::DFGNode, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::AbstractDFG=LightGraphsDFG{AbstractParams}())::AbstractDFG
+function getSubgraphAroundNode(dfg::MetaGraphsDFG{<:AbstractParams}, node::DFGNode, distance::Int64, includeOrphanFactors::Bool, addToDFG::AbstractDFG)::AbstractDFG
     if !haskey(dfg.g.metaindex[:label], node.label)
         error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
     end
@@ -492,7 +492,7 @@ Get a deep subgraph copy from the DFG given a list of variables and factors.
 Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
 Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
 """
-function getSubgraph(dfg::LightGraphsDFG, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false, addToDFG::LightGraphsDFG=LightGraphsDFG{AbstractParams}())::LightGraphsDFG
+function getSubgraph(dfg::MetaGraphsDFG, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false, addToDFG::MetaGraphsDFG=MetaGraphsDFG{AbstractParams}())::MetaGraphsDFG
     for label in variableFactorLabels
         if !haskey(dfg.g.metaindex[:label], label)
             error("Variable/factor with label '$(label)' does not exist in the factor graph")
@@ -509,9 +509,9 @@ Get an adjacency matrix for the DFG, returned as a Matrix{Union{Nothing, Symbol}
 Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor.
 The first row and first column are factor and variable headings respectively.
 """
-function getAdjacencyMatrix(dfg::LightGraphsDFG)::Matrix{Union{Nothing, Symbol}}
-    varLabels = sort(map(v->v.label, getVariables(dfg)))
-    factLabels = sort(map(f->f.label, getFactors(dfg)))
+function getAdjacencyMatrix(dfg::MetaGraphsDFG)::Matrix{Union{Nothing, Symbol}}
+    varLabels = map(v->v.label, getVariables(dfg))
+    factLabels = map(f->f.label, getFactors(dfg))
     vDict = Dict(varLabels .=> [1:length(varLabels)...].+1)
 
     adjMat = Matrix{Union{Nothing, Symbol}}(nothing, length(factLabels)+1, length(varLabels)+1)
@@ -525,19 +525,27 @@ function getAdjacencyMatrix(dfg::LightGraphsDFG)::Matrix{Union{Nothing, Symbol}}
     return adjMat
 end
 
+function getAdjacencyMatrixSparse(dfg::MetaGraphsDFG)::Tuple{LightGraphs.SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}
+    adj = LightGraphs.adjacency_matrix(dfg.g)
+	v_labels = getVariableIds(dfg)
+	f_labels = getFactorIds(dfg)
+	v_index = [dfg.g[s,:label] for s in v_labels]
+	f_index = [dfg.g[s,:label] for s in f_labels]
+	adjvf = adj[f_index, v_index]
+	return adjvf, v_labels, f_labels
+end
 
 """
     $(SIGNATURES)
 Produces a dot-format of the graph for visualization.
 """
-function toDot(dfg::LightGraphsDFG)::String
-    # m = PipeBuffer()
-    # write(m,Graphs.to_dot(dfg.g))
-    # data = take!(m)
-    # close(m)
-    # return String(data)
-	@error "toDot(dfg::LightGraphsDFG) is not sopported yet"
-	return nothing
+function toDot(dfg::MetaGraphsDFG)::String
+	@error "toDot(dfg::MetaGraphsDFG) is not sopported yet, see https://github.com/JuliaGraphs/MetaGraphs.jl/issues/86"
+    m = PipeBuffer()
+    MetaGraphs.savedot(m, dfg.g)
+    data = take!(m)
+    close(m)
+    return String(data)
 end
 
 """
@@ -550,12 +558,10 @@ Note
 - Can be viewed with the `xdot` system application.
 - Based on graphviz.org
 """
-function toDotFile(dfg::LightGraphsDFG, fileName::String="/tmp/dfg.dot")::Nothing
-    # open(fileName, "w") do fid
-    #     write(fid,Graphs.to_dot(dfg.g))
-    # end
-    # return nothing
-	#TODO
-	@error "toDotFile(dfg::LightGraphsDFG,filename) is not sopported yet"
-	return nothing
+function toDotFile(dfg::MetaGraphsDFG, fileName::String="/tmp/dfg.dot")::Nothing
+	@error "toDotFile(dfg::MetaGraphsDFG,filename) is not sopported yet, see https://github.com/JuliaGraphs/MetaGraphs.jl/issues/86"
+    open(fileName, "w") do fid
+        MetaGraphs.savedot(fid, dfg.g)
+    end
+    return nothing
 end

@@ -10,7 +10,7 @@ end
 
 const LFGType = MetaGraph{Int64,Float64}
 
-mutable struct LightGraphsDFG{T <: AbstractParams} <: AbstractDFG
+mutable struct MetaGraphsDFG{T <: AbstractParams} <: AbstractDFG
     g::LFGType
     description::String
     userId::String
@@ -25,7 +25,7 @@ mutable struct LightGraphsDFG{T <: AbstractParams} <: AbstractDFG
 end
 
 #TODO? do we not want props such as userId, robotId, sessionId, etc...
-function LightGraphsDFG{T}(g::LFGType=MetaGraph();
+function MetaGraphsDFG{T}(g::LFGType=MetaGraph();
                            description::String="LightGraphs.jl implementation",
                            userId::String="User ID",
                            robotId::String="Robot ID",
@@ -36,14 +36,14 @@ function LightGraphsDFG{T}(g::LFGType=MetaGraph();
     set_prop!(g, :robotId, robotId)
     set_prop!(g, :sessionId, sessionId)
     set_indexing_prop!(g, :label)
-    LightGraphsDFG{T}(g, description, userId, robotId, sessionId, Symbol[], params)
+    MetaGraphsDFG{T}(g, description, userId, robotId, sessionId, Symbol[], params)
 end
 
-Base.propertynames(x::LightGraphsDFG, private::Bool=false) =
+Base.propertynames(x::MetaGraphsDFG, private::Bool=false) =
     (:g, :description, :userId, :robotId, :sessionId, :nodeCounter, :labelDict, :addHistory, :solverParams)
         # (private ? fieldnames(typeof(x)) : ())...)
 
-Base.getproperty(x::LightGraphsDFG,f::Symbol) = begin
+Base.getproperty(x::MetaGraphsDFG,f::Symbol) = begin
     if f == :nodeCounter
         nv(x.g)
     elseif f == :labelDict
@@ -53,3 +53,14 @@ Base.getproperty(x::LightGraphsDFG,f::Symbol) = begin
         getfield(x,f)
     end
 end
+
+"""
+$(TYPEDEF)
+Basic Structure for just the LightGraphs object and keys
+"""
+struct LightGraphsSkeleton
+    G::LightGraphs.SimpleGraph
+    labels::Dict{Symbol, Int}
+end
+
+LightGraphsSkeleton(dfg::MetaGraphsDFG) = LightGraphsSkeleton(dfg.g.graph, dfg.g.metaindex[:label])
