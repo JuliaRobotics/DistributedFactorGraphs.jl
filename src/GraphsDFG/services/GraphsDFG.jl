@@ -391,18 +391,18 @@ function _copyIntoGraph!(sourceDFG::GraphsDFG, destDFG::GraphsDFG, variableFacto
     for factor in sourceFactors
         if !haskey(destDFG.labelDict, factor.dfgNode.label)
             # Get the original factor variables (we need them to create it)
-            variables = in_neighbors(factor, sourceDFG.g)
-            # Find the labels and associated variables in our new subgraph
+            neighVarIds = getNeighbors(sourceDFG, factor.dfgNode.label) #OLD: in_neighbors(factor, sourceDFG.g)
+            # Find the labels and associated neighVarIds in our new subgraph
             factVariables = DFGVariable[]
-            for variable in variables
-                if haskey(destDFG.labelDict, variable.dfgNode.label)
-                    push!(factVariables, getVariable(destDFG, variable.dfgNode.label))
+            for neighVarId in neighVarIds
+                if haskey(destDFG.labelDict, neighVarId)
+                    push!(factVariables, getVariable(destDFG, neighVarId))
                     #otherwise ignore
                 end
             end
 
             # Only if we have all of them should we add it (otherwise strange things may happen on evaluation)
-            if includeOrphanFactors || length(factVariables) == length(variables)
+            if includeOrphanFactors || length(factVariables) == length(neighVarIds)
                 addFactor!(destDFG, factVariables, deepcopy(factor.dfgNode))
             end
         end
