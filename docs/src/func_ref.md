@@ -63,8 +63,3 @@ getSubgraph
 toDot
 toDotFile
 ```
-
-### DataFrame Extension Functions
-```@docs
-getAdjacencyMatrixDataFrame
-```
