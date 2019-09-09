@@ -75,6 +75,7 @@ struct VariableEstimate
   estimate::Vector{Float64}
   type::Symbol
   key::Symbol
+  lastUpdatedTimestamp::DateTime
 end
 
 """
@@ -104,6 +105,7 @@ estimates(v::DFGVariable) = v.estimateDict
 estimate(v::DFGVariable, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
 #solverData(v::DFGVariable) = haskey(v.solverDataDict, :default) ? v.solverDataDict[:default] : nothing
 solverData(v::DFGVariable, key::Symbol=:default) = haskey(v.solverDataDict, key) ? v.solverDataDict[key] : nothing
+getData(v::DFGVariable; solveKey::Symbol=:default)::VariableNodeData = v.solverDataDict[solveKey]
 setSolverData(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v.solverDataDict[key] = data
 solverDataDict(v::DFGVariable) = v.solverDataDict
 id(v::DFGVariable) = v._internalId
