@@ -191,6 +191,10 @@ end
     dfgSubgraph = getSubgraph(dfg,[:x1, :x2, :x1x2f1])
     # Only returns x1 and x2
     @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+
+    # test to catch out of order error DFG #95
+    dfgSubgraph = getSubgraphAroundNode(dfg, verts[2], 2)
+    @test getFactor(dfgSubgraph, :x1x2f1)._variableOrderSymbols == [:x1,:x2]
 end
 
 @testset "Producing Dot Files" begin
