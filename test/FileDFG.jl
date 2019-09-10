@@ -1,4 +1,3 @@
-using Revise
 using Test
 using DistributedFactorGraphs
 using IncrementalInference, RoME

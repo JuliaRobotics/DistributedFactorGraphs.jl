@@ -16,7 +16,6 @@ export getVariable, getFactor
 export updateVariable!, updateFactor!
 export deleteVariable!, deleteFactor!
 export getAdjacencyMatrix
-export getAdjacencyMatrixDataFrame
 export getNeighbors
 export getSubgraphAroundNode
 export getSubgraph

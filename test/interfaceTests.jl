@@ -4,7 +4,7 @@ v2 = DFGVariable(:b)
 f1 = DFGFactor{Int, :Symbol}(:f1)
 
 #add tags for filters
-append!(v1.tags,[:VARIABLE, :POSE])
+append!(v1.tags, [:VARIABLE, :POSE])
 append!(v2.tags, [:VARIABLE, :LANDMARK])
 append!(f1.tags, [:FACTOR])
 
@@ -121,10 +121,6 @@ end
     # @test adjMat[1, 3] == 1
     @test symdiff(v_ll, [:a, :b, :orphan]) == Symbol[]
     @test symdiff(f_ll, [:f1, :f1, :f1]) == Symbol[]
-
-    # Dataframe
-    adjDf = getAdjacencyMatrixDataFrame(dfg)
-    @test size(adjDf) == (1,4)
 end
 
 # Deletions
@@ -191,6 +187,17 @@ end
     dfgSubgraph = getSubgraph(dfg,[:x1, :x2, :x1x2f1])
     # Only returns x1 and x2
     @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+
+    # DFG issue #95 - confirming that getSubgraphAroundNode retains order
+    # REF: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/95
+    for fId in getVariableIds(dfg)
+        # Get a subgraph of this and it's related factors+variables
+        dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
+        # For each factor check that the order the copied graph == original
+        for fact in getFactors(dfgSubgraph)
+            @test fact._variableOrderSymbols == getFactor(dfg, fact.label)._variableOrderSymbols
+        end
+    end
 end
 
 @testset "Producing Dot Files" begin

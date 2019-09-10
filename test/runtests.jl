@@ -1,5 +1,4 @@
 using Test
-using DataFrames
 using DistributedFactorGraphs
 
 # Test each interface
@@ -10,6 +9,11 @@ for api in apis
         include("interfaceTests.jl")
     end
 end
+
+# Test extensions
+# @testset "DFG Extensions" begin
+#     include("FileDFG.jl")
+# end
 
 # if !(get(ENV, "TRAVIS", "") == "true")
 #     @testset "Local Testsets" begin

@@ -391,18 +391,18 @@ function _copyIntoGraph!(sourceDFG::GraphsDFG, destDFG::GraphsDFG, variableFacto
     for factor in sourceFactors
         if !haskey(destDFG.labelDict, factor.dfgNode.label)
             # Get the original factor variables (we need them to create it)
-            variables = in_neighbors(factor, sourceDFG.g)
-            # Find the labels and associated variables in our new subgraph
+            neighVarIds = getNeighbors(sourceDFG, factor.dfgNode.label) #OLD: in_neighbors(factor, sourceDFG.g)
+            # Find the labels and associated neighVarIds in our new subgraph
             factVariables = DFGVariable[]
-            for variable in variables
-                if haskey(destDFG.labelDict, variable.dfgNode.label)
-                    push!(factVariables, getVariable(destDFG, variable.dfgNode.label))
+            for neighVarId in neighVarIds
+                if haskey(destDFG.labelDict, neighVarId)
+                    push!(factVariables, getVariable(destDFG, neighVarId))
                     #otherwise ignore
                 end
             end
 
             # Only if we have all of them should we add it (otherwise strange things may happen on evaluation)
-            if includeOrphanFactors || length(factVariables) == length(variables)
+            if includeOrphanFactors || length(factVariables) == length(neighVarIds)
                 addFactor!(destDFG, factVariables, deepcopy(factor.dfgNode))
             end
         end
@@ -527,30 +527,3 @@ function toDotFile(dfg::GraphsDFG, fileName::String="/tmp/dfg.dot")::Nothing
     end
     return nothing
 end
-
-# function __init__()
-#     @require DataFrames="a93c6f00-e57d-5684-b7b6-d8193f3e46c0" begin
-#         if isdefined(Main, :DataFrames)
-#             """
-#                 $(SIGNATURES)
-#             Get an adjacency matrix for the DFG as a DataFrame.
-#             Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor.
-#             The first column is the factor headings.
-#             """
-#             function getAdjacencyMatrixDataFrame(dfg::GraphsDFG)::Main.DataFrames.DataFrame
-#                 varLabels = sort(map(v->v.label, getVariables(dfg)))
-#                 factLabels = sort(map(f->f.label, getFactors(dfg)))
-#                 adjDf = DataFrames.DataFrame(:Factor => Union{Missing, Symbol}[])
-#                 for varLabel in varLabels
-#                     adjDf[varLabel] = Union{Missing, Symbol}[]
-#                 end
-#                 for (i, factLabel) in enumerate(factLabels)
-#                     push!(adjDf, [factLabel, DataFrames.missings(length(varLabels))...])
-#                     factVars = getNeighbors(dfg, getFactor(dfg, factLabel))
-#                     map(vLabel -> adjDf[vLabel][i] = factLabel, factVars)
-#                 end
-#                 return adjDf
-#             end
-#         end
-#     end
-# end
