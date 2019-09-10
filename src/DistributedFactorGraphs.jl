@@ -25,7 +25,7 @@ export InferenceType, PackedInferenceType, FunctorInferenceType, InferenceVariab
 export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
 
 export DFGVariable
-export label, timestamp, tags, estimates, estimate, solverData, getData, solverDataDict, id, smallData, bigData
+export label, timestamp, tags, estimates, estimate, solverData, getData, solverDataDict, internalId, smallData, bigData
 export setSolverData
 export label, data, id
 

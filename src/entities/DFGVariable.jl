@@ -72,10 +72,11 @@ mutable struct PackedVariableNodeData
 end
 
 struct VariableEstimate
-  estimate::Vector{Float64}
+  solverKey::Symbol
   type::Symbol
-  key::Symbol
+  estimate::Vector{Float64}
   lastUpdatedTimestamp::DateTime
+  VariableEstimate(solverKey::Symbol, type::Symbol, estimate::Vector{Float64}, lastUpdatedTimestamp::DateTime=now()) = new(solverKey, type, estimate, lastUpdatedTimestamp)
 end
 
 """
@@ -86,14 +87,14 @@ mutable struct DFGVariable <: DFGNode
     label::Symbol
     timestamp::DateTime
     tags::Vector{Symbol}
-    estimateDict::Dict{Symbol, VariableEstimate}
+    estimateDict::Dict{Symbol, Dict{Symbol, VariableEstimate}}
     solverDataDict::Dict{Symbol, VariableNodeData}
     smallData::Dict{String, String}
     bigData::Any
     ready::Int
     backendset::Int
     _internalId::Int64
-    DFGVariable(label::Symbol, _internalId::Int64) = new(label, now(), Symbol[], Dict{Symbol, VariableEstimate}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), Dict{String, String}(), nothing, 0, 0, _internalId)
+    DFGVariable(label::Symbol, _internalId::Int64) = new(label, now(), Symbol[], Dict{Symbol, Dict{Symbol, VariableEstimate}}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), Dict{String, String}(), nothing, 0, 0, _internalId)
     DFGVariable(label::Symbol) = new(label, now(), Symbol[], Dict{Symbol, VariableEstimate}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), Dict{String, String}(), nothing, 0, 0, 0)
 end
 
@@ -103,12 +104,11 @@ timestamp(v::DFGVariable) = v.timestamp
 tags(v::DFGVariable) = v.tags
 estimates(v::DFGVariable) = v.estimateDict
 estimate(v::DFGVariable, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
-#solverData(v::DFGVariable) = haskey(v.solverDataDict, :default) ? v.solverDataDict[:default] : nothing
 solverData(v::DFGVariable, key::Symbol=:default) = haskey(v.solverDataDict, key) ? v.solverDataDict[key] : nothing
 getData(v::DFGVariable; solveKey::Symbol=:default)::VariableNodeData = v.solverDataDict[solveKey]
 setSolverData(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v.solverDataDict[key] = data
 solverDataDict(v::DFGVariable) = v.solverDataDict
-id(v::DFGVariable) = v._internalId
+internalId(v::DFGVariable) = v._internalId
 # Todo: Complete this.
 smallData(v::DFGVariable) = v.smallData
 bigData(v::DFGVariable) = v.bigData

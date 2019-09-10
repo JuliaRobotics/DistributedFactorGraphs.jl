@@ -49,7 +49,7 @@ end
 
 label(f::F) where F <: DFGFactor = f.label
 data(f::F) where F <: DFGFactor = f.data
-id(f::F) where F <: DFGFactor = f._internalId
+internalId(f::F) where F <: DFGFactor = f._internalId
 
 # Simply for convenience - don't export
 const PackedFunctionNodeData{T} = GenericFunctionNodeData{T, <: AbstractString}

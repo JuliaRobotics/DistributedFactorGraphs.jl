@@ -87,11 +87,11 @@ end
     @test solverData(v1) === v1.solverDataDict[:default]
     @test solverData(v1, :default) === v1.solverDataDict[:default]
     @test solverDataDict(v1) == v1.solverDataDict
-    @test id(v1) == v1._internalId
+    @test internalId(v1) == v1._internalId
 
     @test label(f1) == f1.label
     @test data(f1) == f1.data
-    @test id(f1) == f1._internalId
+    @test internalId(f1) == f1._internalId
 end
 
 # Connectivity test

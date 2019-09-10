@@ -255,7 +255,7 @@ function getVariable(dfg::CloudGraphsDFG, variableId::Int64)::DFGVariable
     # props["label"] = Symbol(variable.label)
     timestamp = DateTime(props["timestamp"])
     tags =  JSON2.read(props["tags"], Vector{Symbol})
-    estimateDict = JSON2.read(props["estimateDict"], Dict{Symbol, VariableEstimate})
+    estimateDict = JSON2.read(props["estimateDict"], Dict{Symbol, Dict{Symbol, VariableEstimate}})
     smallData = nothing
     smallData = JSON2.read(props["smallData"], Dict{String, String})
 
