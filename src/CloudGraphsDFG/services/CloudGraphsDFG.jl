@@ -391,6 +391,20 @@ end
 
 """
     $(SIGNATURES)
+Update solver and estimate data for a variable (variable can be from another graph).
+"""
+function updateVariableSolverData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable)::DFGVariable
+    if !exists(dfg, sourceVariable)
+        error("Source variable '$(variable.label)' doesn't exist in the graph.")
+    end
+    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, sourceVariable.label)
+    Neo4j.setnodeproperty(dfg.neo4jInstance.graph, nodeId, "estimateDict", JSON2.write(sourceVariable.estimateDict))
+    Neo4j.setnodeproperty(dfg.neo4jInstance.graph, nodeId, "solverDataDict", JSON2.write(Dict(keys(sourceVariable.solverDataDict) .=> map(vnd -> pack(dfg, vnd), values(sourceVariable.solverDataDict)))))
+    return sourceVariable
+end
+
+"""
+    $(SIGNATURES)
 Update a complete DFGFactor in the DFG.
 """
 function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor
