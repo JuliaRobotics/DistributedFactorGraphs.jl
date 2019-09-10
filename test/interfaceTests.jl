@@ -4,7 +4,7 @@ v2 = DFGVariable(:b)
 f1 = DFGFactor{Int, :Symbol}(:f1)
 
 #add tags for filters
-append!(v1.tags,[:VARIABLE, :POSE])
+append!(v1.tags, [:VARIABLE, :POSE])
 append!(v2.tags, [:VARIABLE, :LANDMARK])
 append!(f1.tags, [:FACTOR])
 
@@ -121,10 +121,6 @@ end
     # @test adjMat[1, 3] == 1
     @test symdiff(v_ll, [:a, :b, :orphan]) == Symbol[]
     @test symdiff(f_ll, [:f1, :f1, :f1]) == Symbol[]
-
-    # Dataframe
-    adjDf = getAdjacencyMatrixDataFrame(dfg)
-    @test size(adjDf) == (1,4)
 end
 
 # Deletions

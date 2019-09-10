@@ -60,31 +60,6 @@ include("LightDFG/LightDFG.jl")
 export saveDFG, loadDFG
 
 function __init__()
-    @require DataFrames="a93c6f00-e57d-5684-b7b6-d8193f3e46c0" begin
-        if isdefined(Main, :DataFrames)
-            """
-                $(SIGNATURES)
-            Get an adjacency matrix for the DFG as a DataFrame.
-            Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor.
-            The first column is the factor headings.
-            """
-            function getAdjacencyMatrixDataFrame(dfg::Union{GraphsDFG, MetaGraphsDFG, SymbolDFG, LightDFG})::Main.DataFrames.DataFrame
-                varLabels = sort(map(v->v.label, getVariables(dfg)))
-                factLabels = sort(map(f->f.label, getFactors(dfg)))
-                adjDf = DataFrames.DataFrame(:Factor => Union{Missing, Symbol}[])
-                for varLabel in varLabels
-                    adjDf[varLabel] = Union{Missing, Symbol}[]
-                end
-                for (i, factLabel) in enumerate(factLabels)
-                    push!(adjDf, [factLabel, DataFrames.missings(length(varLabels))...])
-                    factVars = getNeighbors(dfg, getFactor(dfg, factLabel))
-                    map(vLabel -> adjDf[vLabel][i] = factLabel, factVars)
-                end
-                return adjDf
-            end
-        end
-    end
-
     @require Neo4j="d2adbeaf-5838-5367-8a2f-e46d570981db" begin
         # Include the Cloudgraphs API
         include("CloudGraphsDFG/CloudGraphsDFG.jl")
