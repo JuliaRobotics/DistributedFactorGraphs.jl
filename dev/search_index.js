@@ -408,12 +408,4 @@ var documenterSearchIndex = {"docs": [
     "text": "toDot\ntoDotFile"
 },
 
-{
-    "location": "func_ref/#DataFrame-Extension-Functions-1",
-    "page": "Reference",
-    "title": "DataFrame Extension Functions",
-    "category": "section",
-    "text": "getAdjacencyMatrixDataFrame"
-},
-
 ]}
