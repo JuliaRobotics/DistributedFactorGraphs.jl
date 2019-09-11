@@ -166,6 +166,19 @@ end
 
 """
     $(SIGNATURES)
+Update solver and estimate data for a variable (variable can be from another graph).
+"""
+function updateVariableSolverData!(dfg::GraphsDFG, sourceVariable::DFGVariable)::DFGVariable
+    if !haskey(dfg.labelDict, sourceVariable.label)
+        error("Source variable '$(sourceVariable.label)' doesn't exist in the graph.")
+    end
+	dfg.g.vertices[dfg.labelDict[variable.label]].dfgNode.estimateDict = deepcopy(variable.estimateDict)
+	dfg.g.vertices[dfg.labelDict[variable.label]].dfgNode.solverDataDict = deepcopy(variable.solverDataDict)
+    return sourceVariable
+end
+
+"""
+    $(SIGNATURES)
 Update a complete DFGFactor in the DFG.
 """
 function updateFactor!(dfg::GraphsDFG, factor::DFGFactor)::DFGFactor

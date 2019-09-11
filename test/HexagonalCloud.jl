@@ -1,4 +1,4 @@
-using Revise
+# using Revise
 using Neo4j # So that DFG initializes the database driver.
 using RoME
 using DistributedFactorGraphs
@@ -14,13 +14,10 @@ cloudFg = CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
     IncrementalInference.rebuildFactorMetadata!,
     solverParams=SolverParams())
 # cloudFg = GraphsDFG{SolverParams}(params=SolverParams())
-# cloudFg = GraphsDFG{SolverParams}(params=SolverParams())
 clearSession!!(cloudFg)
-# cloudFg = initfg()
 
 # Add the first pose :x0
 x0 = addVariable!(cloudFg, :x0, Pose2)
-IncrementalInference.compareVariable(x0, getVariable(cloudFg, :x0))
 
 # Add at a fixed location PriorPose2 to pin :x0 to a starting location (10,10, pi/4)
 prior = addFactor!(cloudFg, [:x0], PriorPose2( MvNormal([10; 10; 1.0/8.0], Matrix(Diagonal([0.1;0.1;0.05].^2))) ) )
@@ -44,20 +41,9 @@ DistributedFactorGraphs._copyIntoGraph!(cloudFg, localFg, union(getVariableIds(c
 # Show it
 toDotFile(localFg, "/tmp/localfg.dot")
 
-# Alrighty! At this point, we should be able to solve locally...
-# perform inference, and remember first runs are slower owing to Julia's just-in-time compiling
-# Can do with graph too!
-# tree, smt, hist = solveTree!(localFg)
-
-# wipeBuildNewTree!(localFg)
-tree, smt, hist = solveTree!(localFg, tree) # Recycle
-# batchSolve!(localFg, drawpdf=true, show=true)
-# Erm, whut? Error = mcmcIterationIDs -- unaccounted variables
-
-# Trying new method.
-# tree, smtasks = batchSolve!(localFg, treeinit=true, drawpdf=true, show=true,
-                            # returntasks=true, limititers=50,
-                            # upsolve=true, downsolve=true  )
+tree, smtasks = batchSolve!(localFg, treeinit=true, drawpdf=false, show=false,
+                            returntasks=true, limititers=50,
+                            upsolve=true, downsolve=true  )
 
 # Testing writing estimates
 for variable in getVariables(localFg)
@@ -65,9 +51,5 @@ for variable in getVariables(localFg)
     variable.estimateDict[:default] = Dict{Symbol, VariableEstimate}(:Mean => VariableEstimate(:default, :Mean, means, now()))
 end
 
-x0 = getVariable(localFg, :x0)
-data = getData(x0)
-# Update back to cloud.
-for variable in getVariables(localFg)
-    updateVariableSolverData!(cloudFg, variable)
-end
+# Push updates back to cloud.
+updateGraphSolverData!(localFg, cloudFg, ls(localFg))

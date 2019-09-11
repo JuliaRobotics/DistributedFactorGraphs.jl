@@ -395,7 +395,7 @@ Update solver and estimate data for a variable (variable can be from another gra
 """
 function updateVariableSolverData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable)::DFGVariable
     if !exists(dfg, sourceVariable)
-        error("Source variable '$(variable.label)' doesn't exist in the graph.")
+        error("Source variable '$(sourceVariable.label)' doesn't exist in the graph.")
     end
     nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, sourceVariable.label)
     Neo4j.setnodeproperty(dfg.neo4jInstance.graph, nodeId, "estimateDict", JSON2.write(sourceVariable.estimateDict))

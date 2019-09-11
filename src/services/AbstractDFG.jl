@@ -67,6 +67,19 @@ function _copyIntoGraph!(sourceDFG::G, destDFG::H, variableFactorLabels::Vector{
     return nothing
 end
 
+"""
+    $(SIGNATURES)
+Common function to update all solver data and estimates from one graph to another.
+This should be used to push local solve data back into a cloud graph, for example.
+"""
+function updateGraphSolverData!(sourceDFG::G, destDFG::H, varSyms::Vector{Symbol})::Nothing where {G <: AbstractDFG, H <: AbstractDFG}
+    # Update all variables in the destination
+    # (For now... we may change this soon)
+    for variableId in varSyms
+        updateVariableSolverData!(destDFG, getVariable(sourceDFG, variableId))
+    end
+end
+
 ## Utility functions for getting type names and modules (from IncrementalInference)
 function _getmodule(t::T) where T
   T.name.module
