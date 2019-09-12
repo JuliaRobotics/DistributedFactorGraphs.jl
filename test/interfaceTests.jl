@@ -96,16 +96,44 @@ end
 
 @testset "Updating Nodes" begin
     global dfg
-    v1 = getVariable(dfg, :a)
-    newv1 = deepcopy(v1)
-    newv1.estimateDict[:default] = Dict{Symbol, VariableEstimate}(
+    #get the variable
+    var = getVariable(dfg, :a)
+    #make a copy and simulate external changes
+    newvar = deepcopy(var)
+    newvar.estimateDict[:default] = Dict{Symbol, VariableEstimate}(
         :max => VariableEstimate(:default, :max, [100.0]),
         :mean => VariableEstimate(:default, :mean, [50.0]),
         :ppe => VariableEstimate(:default, :ppe, [75.0]))
-    updateVariableSolverData!(dfg, newv1)
-    #TODO maybe implement ==; @test newv1==v1
+    #update
+    updateVariableSolverData!(dfg, newvar)
+    #TODO maybe implement ==; @test newvar==var
+    Base.:(==)(varest1::VariableEstimate, varest2::VariableEstimate) = begin
+        varest1.lastUpdatedTimestamp == varest2.lastUpdatedTimestamp || return false
+        varest1.type == varest2.type || return false
+        varest1.solverKey == varest2.solverKey || return false
+        varest1.estimate == varest2.estimate || return false
+        return true
+    end
     #For now spot check
-    @test newv1.solverDataDict == v1.solverDataDict
+    @test newvar.solverDataDict == var.solverDataDict
+    @test newvar.estimateDict == var.estimateDict
+
+    #delete :default and replace to see if new ones can be added
+    delete!(newvar.estimateDict,:default)
+    newvar.estimateDict[:second] = Dict{Symbol, VariableEstimate}(
+        :max => VariableEstimate(:default, :max, [10.0]),
+        :mean => VariableEstimate(:default, :mean, [5.0]),
+        :ppe => VariableEstimate(:default, :ppe, [7.0]))
+
+    updateVariableSolverData!(dfg, newvar)
+
+    #FIXME
+    if testDFGAPI != GraphsDFG
+        @test symdiff(collect(keys(var.estimateDict)),Symbol[:default, :second]) == Symbol[]
+    else
+        @error "FIXME: $(keys(var.estimateDict)) should be [:default, :second]"
+        @test_skip symdiff(collect(keys(var.estimateDict)),Symbol[:default, :second]) == Symbol[]
+    end
 end
 
 # Connectivity test
