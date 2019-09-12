@@ -81,6 +81,7 @@ end
 
     # Accessors
     @test label(v1) == v1.label
+    @test tags(v1) = v1.tags
     @test timestamp(v1) == v1.timestamp
     @test estimates(v1) == v1.estimateDict
     @test estimate(v1, :notfound) == nothing
@@ -90,6 +91,7 @@ end
     @test id(v1) == v1._internalId
 
     @test label(f1) == f1.label
+    @test tags(f1) = f1.tags
     @test data(f1) == f1.data
     @test id(f1) == f1._internalId
 end

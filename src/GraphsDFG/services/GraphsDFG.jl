@@ -527,3 +527,5 @@ function toDotFile(dfg::GraphsDFG, fileName::String="/tmp/dfg.dot")::Nothing
     end
     return nothing
 end
+
+function getSummary()::

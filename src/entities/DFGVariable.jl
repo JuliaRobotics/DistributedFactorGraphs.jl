@@ -110,3 +110,20 @@ id(v::DFGVariable) = v._internalId
 # Todo: Complete this.
 smallData(v::DFGVariable) = v.smallData
 bigData(v::DFGVariable) = v.bigData
+
+"""
+    $(SIGNATURES)
+Structure for first-class citizens of a DFGVariable.
+"""
+struct DFGVariableSummary <: DFGNode
+    label::Symbol
+    timestamp::DateTime
+    tags::Vector{Symbol}
+    estimateDict::Dict{Symbol, Dict{Symbol, VariableEstimate}}
+    _internalId::Int64
+end
+label(v::DFGVariableSummary) = v.label
+timestamp(v::DFGVariableSummary) = v.timestamp
+tags(v::DFGVariableSummary) = v.tags
+estimates(v::DFGVariableSummary) = v.estimateDict
+internalId(v::DFGVariableSummary) = v._internalId
