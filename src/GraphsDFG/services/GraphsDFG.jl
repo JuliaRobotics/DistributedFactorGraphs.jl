@@ -172,8 +172,8 @@ function updateVariableSolverData!(dfg::GraphsDFG, sourceVariable::DFGVariable):
     if !haskey(dfg.labelDict, sourceVariable.label)
         error("Source variable '$(sourceVariable.label)' doesn't exist in the graph.")
     end
-	dfg.g.vertices[dfg.labelDict[variable.label]].dfgNode.estimateDict = deepcopy(variable.estimateDict)
-	dfg.g.vertices[dfg.labelDict[variable.label]].dfgNode.solverDataDict = deepcopy(variable.solverDataDict)
+	dfg.g.vertices[dfg.labelDict[sourceVariable.label]].dfgNode.estimateDict = deepcopy(sourceVariable.estimateDict)
+	dfg.g.vertices[dfg.labelDict[sourceVariable.label]].dfgNode.solverDataDict = deepcopy(sourceVariable.solverDataDict)
     return sourceVariable
 end
 

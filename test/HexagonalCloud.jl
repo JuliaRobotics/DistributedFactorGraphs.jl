@@ -1,9 +1,8 @@
-# using Revise
+using Revise
 using Neo4j # So that DFG initializes the database driver.
 using RoME
 using DistributedFactorGraphs
 using Test, Dates
-
 # start with an empty factor graph object
 # fg = initfg()
 cloudFg = CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
@@ -34,6 +33,9 @@ end
 # Right, let's copy it into local memory for solving...
 localFg = GraphsDFG{SolverParams}(params=SolverParams())
 DistributedFactorGraphs._copyIntoGraph!(cloudFg, localFg, union(getVariableIds(cloudFg), getFactorIds(cloudFg)), true)
+# Duplicate for later
+localFgCopy = deepcopy(localFg)
+
 # Some checks
 @test symdiff(getVariableIds(localFg), getVariableIds(cloudFg)) == []
 @test symdiff(getFactorIds(localFg), getFactorIds(cloudFg)) == []
@@ -41,15 +43,24 @@ DistributedFactorGraphs._copyIntoGraph!(cloudFg, localFg, union(getVariableIds(c
 # Show it
 toDotFile(localFg, "/tmp/localfg.dot")
 
-tree, smtasks = batchSolve!(localFg, treeinit=true, drawpdf=false, show=false,
-                            returntasks=true, limititers=50,
-                            upsolve=true, downsolve=true  )
+tree, smtasks = solveTree!(localFg)
 
-# Testing writing estimates
+# solveTree!(cloudFg)
+
+# Checking estimates
 for variable in getVariables(localFg)
-    means = mean(getData(variable).val, dims=2)[:]
-    variable.estimateDict[:default] = Dict{Symbol, VariableEstimate}(:Mean => VariableEstimate(:default, :Mean, means, now()))
+    @show variable.label
+    @show variable.estimateDict
+
+    # means = mean(getData(variable).val, dims=2)[:]
+    # variable.estimateDict[:default] = Dict{Symbol, VariableEstimate}(:Mean => VariableEstimate(:default, :Mean, means, now()))
 end
+
+bel = getKDE(getVariable(localFg, :x0))
+bel
 
 # Push updates back to cloud.
 updateGraphSolverData!(localFg, cloudFg, ls(localFg))
+
+# Pull back to local
+updateGraphSolverData!(cloudFg, localFgCopy, ls(cloudFg))
