@@ -69,6 +69,20 @@ end
 
 """
     $(SIGNATURES)
+Update solver and estimate data for a variable (variable can be from another graph).
+"""
+function updateVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable)::DFGVariable
+    if !exists(dfg, sourceVariable)
+        error("Source variable '$(sourceVariable.label)' doesn't exist in the graph.")
+    end
+    var = getVariable(dfg, sourceVariable.label)
+    merge!(var.estimateDict, sourceVariable.estimateDict)
+    merge!(var.solverDataDict, sourceVariable.solverDataDict)
+    return sourceVariable
+end
+
+"""
+    $(SIGNATURES)
 Common function to update all solver data and estimates from one graph to another.
 This should be used to push local solve data back into a cloud graph, for example.
 """
