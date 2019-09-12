@@ -94,6 +94,20 @@ end
     @test internalId(f1) == f1._internalId
 end
 
+@testset "Updating Nodes" begin
+    global dfg
+    v1 = getVariable(dfg, :a)
+    newv1 = deepcopy(v1)
+    newv1.estimateDict[:default] = Dict{Symbol, VariableEstimate}(
+        :max => VariableEstimate(:default, :max, [100.0]),
+        :mean => VariableEstimate(:default, :mean, [50.0]),
+        :ppe => VariableEstimate(:default, :ppe, [75.0]))
+    updateVariableSolverData!(dfg, newv1)
+    #TODO maybe implement ==; @test newv1==v1
+    #For now spot check
+    @test newv1.solverDataDict == v1.solverDataDict
+end
+
 # Connectivity test
 @testset "Connectivity Test" begin
     global dfg,v1,v2,f1
