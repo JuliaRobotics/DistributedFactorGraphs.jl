@@ -182,3 +182,39 @@ end
 Display and return to console the user factor identified by tag name.
 """
 showFactor(fgl::G, fsym::Symbol) where G <: AbstractDFG = @show getFactor(fgl,fsym)
+
+
+"""
+    $(SIGNATURES)
+Produces a dot-format of the graph for visualization.
+"""
+function toDot(dfg::AbstractDFG)::String
+    @warn "Falling Back to convert to GraphsDFG"
+    #TODO implement convert
+    graphsdfg = GraphsDFG{AbstractParams}()
+    DistributedFactorGraphs._copyIntoGraph!(dfg, graphsdfg, union(getVariableIds(dfg), getFactorIds(dfg)), true)
+
+    return toDot(graphsdfg)
+end
+
+"""
+    $(SIGNATURES)
+Produces a dot file of the graph for visualization.
+Download XDot to see the data
+
+Note
+- Default location "/tmp/dfg.dot" -- MIGHT BE REMOVED
+- Can be viewed with the `xdot` system application.
+- Based on graphviz.org
+"""
+function toDotFile(dfg::AbstractDFG, fileName::String="/tmp/dfg.dot")::Nothing
+    @warn "Falling Back to convert to GraphsDFG"
+    #TODO implement convert
+    graphsdfg = GraphsDFG{AbstractParams}()
+    DistributedFactorGraphs._copyIntoGraph!(dfg, graphsdfg, union(getVariableIds(dfg), getFactorIds(dfg)), true)
+
+    open(fileName, "w") do fid
+        write(fid,Graphs.to_dot(graphsdfg.g))
+    end
+    return nothing
+end
