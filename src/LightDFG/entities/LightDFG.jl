@@ -37,7 +37,8 @@ Base.getproperty(x::LightDFG,f::Symbol) = begin
         @error "Depreciated? returning number of nodes"
         nv(x.g)
     elseif f == :labelDict
-        @error "Depreciated? Concider using exists(dfg,label) instead. Returing internals copy"
+        @error "Depreciated? Consider using exists(dfg,label) instead. Returning internals copy"
+        #TODO: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/111
         copy(x.g.labels.sym_int)
     else
         getfield(x,f)

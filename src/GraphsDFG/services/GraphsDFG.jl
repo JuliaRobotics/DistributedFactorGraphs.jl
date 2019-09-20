@@ -447,19 +447,14 @@ end
 
 """
     $(SIGNATURES)
-Get a deep subgraph copy from the DFG given a list of variables and factors.
-Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
-Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
+Gets an empty and unique CloudGraphsDFG derived from an existing DFG.
 """
-function getSubgraph(dfg::GraphsDFG, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false, addToDFG::GraphsDFG=GraphsDFG{AbstractParams}())::GraphsDFG
-    for label in variableFactorLabels
-        if !haskey(dfg.labelDict, label)
-            error("Variable/factor with label '$(label)' does not exist in the factor graph")
-        end
-    end
-
-    _copyIntoGraph!(dfg, addToDFG, variableFactorLabels, includeOrphanFactors)
-    return addToDFG
+function _getDuplicatedEmptyDFG(dfg::GraphsDFG)::GraphsDFG
+    newDfg = GraphsDFG{typeof(dfg.solverParams)}(;
+		userId=dfg.userId, robotId=dfg.robotId, sessionId=dfg.sessionId,
+		params=deepcopy(dfg.solverParams))
+	newDfg.description ="(Copy of) $(dfg.description)"
+	return newDfg
 end
 
 """
