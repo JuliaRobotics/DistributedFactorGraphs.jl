@@ -22,10 +22,20 @@ setDescription(dfg::GraphsDFG, description::String) = dfg.description = descript
 getInnerGraph(dfg::GraphsDFG) = dfg.g
 getAddHistory(dfg::GraphsDFG) = dfg.addHistory
 getSolverParams(dfg::GraphsDFG) = dfg.solverParams
+function setSolverParams(dfg::GraphsDFG, solverParams::T) where T <: AbstractParams
+    dfg.solverParams = solverParams
+end
 
-# setSolverParams(dfg::GraphsDFG, solverParams) = dfg.solverParams = solverParams
-function setSolverParams(dfg::GraphsDFG, solverParams::P) where P <: AbstractParams
-  dfg.solverParams = solverParams
+"""
+    $(SIGNATURES)
+Gets an empty and unique CloudGraphsDFG derived from an existing DFG.
+"""
+function _getDuplicatedEmptyDFG(dfg::GraphsDFG)::GraphsDFG
+    newDfg = GraphsDFG{typeof(dfg.solverParams)}(;
+		userId=dfg.userId, robotId=dfg.robotId, sessionId=dfg.sessionId,
+		params=deepcopy(dfg.solverParams))
+	newDfg.description ="(Copy of) $(dfg.description)"
+	return newDfg
 end
 
 """
@@ -443,18 +453,6 @@ function getSubgraphAroundNode(dfg::GraphsDFG{P}, node::T, distance::Int64=1, in
     # Copy the section of graph we want
     _copyIntoGraph!(dfg, addToDFG, collect(keys(neighborList)), includeOrphanFactors)
     return addToDFG
-end
-
-"""
-    $(SIGNATURES)
-Gets an empty and unique CloudGraphsDFG derived from an existing DFG.
-"""
-function _getDuplicatedEmptyDFG(dfg::GraphsDFG)::GraphsDFG
-    newDfg = GraphsDFG{typeof(dfg.solverParams)}(;
-		userId=dfg.userId, robotId=dfg.robotId, sessionId=dfg.sessionId,
-		params=deepcopy(dfg.solverParams))
-	newDfg.description ="(Copy of) $(dfg.description)"
-	return newDfg
 end
 
 """

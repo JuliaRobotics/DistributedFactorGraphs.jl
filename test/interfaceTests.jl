@@ -92,6 +92,9 @@ end
     @test label(f1) == f1.label
     @test data(f1) == f1.data
     @test id(f1) == f1._internalId
+
+    @test getSolverParams(dfg) != nothing
+    @test setSolverParams(dfg, getSolverParams(dfg)) == getSolverParams(dfg)
 end
 
 # Connectivity test

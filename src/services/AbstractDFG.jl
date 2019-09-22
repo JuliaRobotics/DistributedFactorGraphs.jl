@@ -1,3 +1,4 @@
+## ===== Interface for an AbstractDFG =====
 
 """
     $(SIGNATURES)
@@ -25,15 +26,28 @@ function getSerializationModule(dfg::G)::Module where G <: AbstractDFG
     return Main
 end
 
-## Utility functions for getting type names and modules (from IncrementalInference)
-function _getmodule(t::T) where T
-  T.name.module
+# Accessors
+function getLabelDict(dfg::G) where G <: AbstractDFG
+	error("getLabelDict not implemented for $(typeof(dfg))")
 end
-function _getname(t::T) where T
-  T.name.name
+function getDescription(dfg::G) where G <: AbstractDFG
+	error("getDescription not implemented for $(typeof(dfg))")
 end
-
-## Interface for an AbstractDFG
+function setDescription(dfg::G, description::String) where G <: AbstractDFG
+	error("setDescription not implemented for $(typeof(dfg))")
+end
+function getInnerGraph(dfg::G) where G <: AbstractDFG
+	error("getInnerGraph not implemented for $(typeof(dfg))")
+end
+function getAddHistory(dfg::G) where G <: AbstractDFG
+	error("getAddHistory not implemented for $(typeof(dfg))")
+end
+function getSolverParams(dfg::G) where G <: AbstractDFG
+	error("getSolverParams not implemented for $(typeof(dfg))")
+end
+function setSolverParams(dfg::G, solverParams::T) where {G <: AbstractDFG, T <: AbstractParams}
+	error("setSolverParams not implemented for $(typeof(dfg))")
+end
 
 """
     $(SIGNATURES)
