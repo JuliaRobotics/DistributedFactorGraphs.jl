@@ -232,10 +232,38 @@ function lsTypes(dfg::G)::Dict{Symbol, Vector{String}} where G <: AbstractDFG
 end
 
 
+function ls(dfg::G, ::Type{T}; solveKey::Symbol=:default) where {G <: AbstractDFG, T <: InferenceVariable}
+  xx = getVariables(dfg)
+  mask = getVariableType.(xx, solveKey=solveKey) .|> typeof .== T
+  vxx = view(xx, mask)
+  map(x->x.label, vxx)
+end
+
+
+function ls(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: FunctorInferenceType}
+  xx = getFactors(dfg)
+  names = getfield.(typeof.(getFactorType.(xx)), :name) .|> Symbol
+  vxx = view(xx, names .== Symbol(T))
+  map(x->x.label, vxx)
+end
+
+function lsf(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: FunctorInferenceType}
+  ls(dfg, T)
+end
+
+
 """
     $(SIGNATURES)
 Gives back all factor labels that fit the bill:
 	lsWho(dfg, :Pose3)
+
+Dev Notes
+- Cloud versions will benefit from less data transfer
+ - `ls(dfg::C, ::T) where {C <: CloudDFG, T <: ..}`
+
+Related
+
+ls, lsf, lsfPriors
 """
 function lsWho(dfg::AbstractDFG, type::Symbol; solveKey::Symbol=:default)::Vector{Symbol}
     vars = getVariables(dfg)
@@ -252,6 +280,14 @@ end
     $(SIGNATURES)
 Gives back all factor labels that fit the bill:
 	lsfWho(dfg, :Point2Point2)
+
+Dev Notes
+- Cloud versions will benefit from less data transfer
+ - `ls(dfg::C, ::T) where {C <: CloudDFG, T <: ..}`
+
+Related
+
+ls, lsf, lsfPriors
 """
 function lsfWho(dfg::AbstractDFG, type::Symbol)::Vector{Symbol}
 	facs = getFactors(dfg)
