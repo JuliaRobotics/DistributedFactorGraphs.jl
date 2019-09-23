@@ -70,14 +70,17 @@ end
 """
     $(SIGNATURES)
 Update solver and estimate data for a variable (variable can be from another graph).
+Note: Makes a copy of the estimates and solver data so that there is no coupling
+between graphs.
 """
 function updateVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable)::DFGVariable
     if !exists(dfg, sourceVariable)
         error("Source variable '$(sourceVariable.label)' doesn't exist in the graph.")
     end
     var = getVariable(dfg, sourceVariable.label)
-    merge!(var.estimateDict, sourceVariable.estimateDict)
-    merge!(var.solverDataDict, sourceVariable.solverDataDict)
+    # We don't know which graph this came from, must be copied!
+    merge!(var.estimateDict, deepcopy(sourceVariable.estimateDict))
+    merge!(var.solverDataDict, deepcopy(sourceVariable.solverDataDict))
     return sourceVariable
 end
 

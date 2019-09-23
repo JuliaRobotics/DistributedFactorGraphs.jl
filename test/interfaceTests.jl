@@ -17,7 +17,7 @@ addFactor!(dfg, [v1, v2], f1)
 # end
 
 @testset "Adding Removing Nodes" begin
-    dfg2 = testDFGAPI{NoSolverParams}()
+    dfg2 = GraphsDFG{NoSolverParams}()
     v1 = DFGVariable(:a)
     v2 = DFGVariable(:b)
     v3 = DFGVariable(:c)
@@ -100,7 +100,7 @@ end
     var = getVariable(dfg, :a)
     #make a copy and simulate external changes
     newvar = deepcopy(var)
-    newvar.estimateDict[:default] = Dict{Symbol, VariableEstimate}(
+    estimates(newvar)[:default] = Dict{Symbol, VariableEstimate}(
         :max => VariableEstimate(:default, :max, [100.0]),
         :mean => VariableEstimate(:default, :mean, [50.0]),
         :ppe => VariableEstimate(:default, :ppe, [75.0]))
@@ -115,25 +115,23 @@ end
         return true
     end
     #For now spot check
-    @test newvar.solverDataDict == var.solverDataDict
-    @test newvar.estimateDict == var.estimateDict
+    @test solverDataDict(newvar) == solverDataDict(var)
+    @test estimates(newvar) == estimates(var)
 
-    #delete :default and replace to see if new ones can be added
-    delete!(newvar.estimateDict,:default)
-    newvar.estimateDict[:second] = Dict{Symbol, VariableEstimate}(
+    # Delete :default and replace to see if new ones can be added
+    delete!(estimates(newvar), :default)
+    estimates(newvar)[:second] = Dict{Symbol, VariableEstimate}(
         :max => VariableEstimate(:default, :max, [10.0]),
         :mean => VariableEstimate(:default, :mean, [5.0]),
         :ppe => VariableEstimate(:default, :ppe, [7.0]))
 
+    # Persist to the original variable.
     updateVariableSolverData!(dfg, newvar)
-
-    #FIXME
-    if testDFGAPI != GraphsDFG
-        @test symdiff(collect(keys(var.estimateDict)),Symbol[:default, :second]) == Symbol[]
-    else
-        @error "FIXME: $(keys(var.estimateDict)) should be [:default, :second]"
-        @test_skip symdiff(collect(keys(var.estimateDict)),Symbol[:default, :second]) == Symbol[]
-    end
+    # At this point newvar will have only :second, and var should have both (it is the reference)
+    @test symdiff(collect(keys(estimates(var))), [:default, :second]) == Symbol[]
+    @test symdiff(collect(keys(estimates(newvar))), [:second]) == Symbol[]
+    # Get the source too.
+    @test symdiff(collect(keys(estimates(getVariable(dfg, :a)))), [:default, :second]) == Symbol[]
 end
 
 # Connectivity test
