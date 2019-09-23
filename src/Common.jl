@@ -7,6 +7,14 @@ export getFactorType, getfnctype
 export lsTypes, lsfTypes
 export lsWho, lsfWho
 
+## Utility functions for getting type names and modules (from IncrementalInference)
+function _getmodule(t::T) where T
+  T.name.module
+end
+function _getname(t::T) where T
+  T.name.name
+end
+
 """
     $(SIGNATURES)
 Test if all elements of the string is a number:  Ex, "123" is true, "1_2" is false.

@@ -92,6 +92,9 @@ end
     @test label(f1) == f1.label
     @test data(f1) == f1.data
     @test id(f1) == f1._internalId
+
+    @test getSolverParams(dfg) != nothing
+    @test setSolverParams(dfg, getSolverParams(dfg)) == getSolverParams(dfg)
 end
 
 # Connectivity test
@@ -115,16 +118,17 @@ end
     #sparse
     adjMat, v_ll, f_ll = getAdjacencyMatrixSparse(dfg)
     @test size(adjMat) == (1,3)
-    #TODO hoe om te toets, volgorde nie altyd dieselfde nie
-    # @test adjMat[1, 1] == 0
-    # @test adjMat[1, 2] == 1
-    # @test adjMat[1, 3] == 1
+
+    # Checking the elements of adjacency, its not sorted so need indexing function
+    indexOf = (arr, el1) -> findfirst(el2->el2==el1, arr)
+    @test adjMat[1, indexOf(v_ll, :orphan)] == 0
+    @test adjMat[1, indexOf(v_ll, :a)] == 1
+    @test adjMat[1, indexOf(v_ll, :b)] == 1
     @test symdiff(v_ll, [:a, :b, :orphan]) == Symbol[]
     @test symdiff(f_ll, [:f1, :f1, :f1]) == Symbol[]
 end
 
 # Deletions
-# Not supported at present
 @testset "Deletions" begin
     deleteFactor!(dfg, :f1)
     @test getFactorIds(dfg) == []
@@ -142,7 +146,6 @@ verts[7].ready = 1
 verts[8].backendset = 1
 map(v -> addVariable!(dfg, v), verts)
 map(n -> addFactor!(dfg, [verts[n], verts[n+1]], DFGFactor{Int, :Symbol}(Symbol("x$(n)x$(n+1)f1"))), 1:(numNodes-1))
-# map(n -> addFactor!(dfg, [verts[n], verts[n+2]], DFGFactor(Symbol("x$(n)x$(n+2)f2"))), 1:2:(numNodes-2))
 
 @testset "Getting Neighbors" begin
     global dfg,verts
