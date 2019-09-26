@@ -1,7 +1,6 @@
 
 export sortVarNested, sortDFG
 export isPrior, lsfPriors
-export getData
 export getVariableType, getSofttype
 export getFactorType, getfnctype
 export lsTypes, lsfTypes
@@ -107,14 +106,6 @@ Related
 ls, lsf
 """
 sortDFG(vars::Vector{Symbol})::Vector{Symbol} = sortVarNested(vars)
-
-"""
-    $SIGNATURES
-
-Retrieve data structure stored in a node.
-"""
-getData(v::DFGFactor)::GenericFunctionNodeData = v.data
-getData(v::DFGVariable; solveKey::Symbol=:default)::VariableNodeData = v.solverDataDict[solveKey]
 
 """
     $SIGNATURES

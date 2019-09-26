@@ -25,9 +25,13 @@ export InferenceType, PackedInferenceType, FunctorInferenceType, InferenceVariab
 export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
 
 export DFGVariable
-export label, timestamp, tags, estimates, estimate, solverData, solverDataDict, id, smallData, bigData
+export label, timestamp, tags, estimates, estimate, solverData, getData, solverDataDict, internalId, smallData, bigData
 export setSolverData
 export label, data, id
+
+# Services/AbstractDFG Exports
+export hasFactor, hasVariable, isInitialized, getFactorFunction, isVariable, isFactor
+export updateGraphSolverData!
 
 # Solver (IIF) Exports
 export VariableNodeData, PackedVariableNodeData, VariableEstimate
@@ -72,9 +76,7 @@ function __init__()
 
 end
 
-
-# not sure where to put
+# To be moved as necessary.
 include("Common.jl")
-include("NeedsAHome.jl")
 
 end

@@ -1,6 +1,7 @@
 using Test
 using DistributedFactorGraphs
 using IncrementalInference, RoME
+using Dates
 
 # Make a simple graph
 dfg = GraphsDFG{SolverParams}(params=SolverParams())
@@ -17,7 +18,7 @@ for i in 0:5
     addFactor!(dfg, [psym;nsym], pp )
 end
 
-# Save it
+# Save with no solution
 saveFolder = "/tmp/fileDFG"
 saveDFG(dfg, saveFolder)
 @test readdir("$saveFolder/variables") == ["x0.json", "x1.json", "x2.json", "x3.json", "x4.json", "x5.json", "x6.json"]
@@ -27,4 +28,27 @@ retDFG = loadDFG(saveFolder, IncrementalInference)
 @test symdiff(ls(dfg), ls(dfg)) == []
 @test symdiff(lsf(dfg), lsf(retDFG)) == []
 
+# Now solve the graph and update the solver results
+# TODO: When PPE estimates are available, make the update happen here
+for variable in getVariables(dfg)
+    variable.estimateDict[:default] = Dict{Symbol, VariableEstimate}(:MAP => VariableEstimate(:default, :MAP, round.(rand(3)*1000), now()))
+end
+saveDFG(dfg, saveFolder)
+retDFG = loadDFG(saveFolder, IncrementalInference)
+for retVar in getVariables(retDFG)
+    origVar = getVariable(dfg, retVar.label).estimateDict[:default][:MAP]
+    @test retVar.estimateDict[:default][:MAP].estimate == origVar.estimate
+    @test retVar.estimateDict[:default][:MAP].type == origVar.type
+    @test retVar.estimateDict[:default][:MAP].solverKey == origVar.solverKey
+end
+
+# Now saving solverDataDict
+tree, smtasks = batchSolve!(dfg, treeinit=true, drawpdf=false, show=false,
+                            returntasks=true, limititers=50,
+                            upsolve=true, downsolve=true  )
+saveDFG(dfg, saveFolder)
+retDFG = loadDFG(saveFolder, IncrementalInference)
+x0 = getVariable(dfg, :x0)
+x0ret = getVariable(retDFG, :x0)
+solverData(x0) == solverData(x0ret)
 # Success!

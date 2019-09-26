@@ -17,7 +17,7 @@ addFactor!(dfg, [v1, v2], f1)
 # end
 
 @testset "Adding Removing Nodes" begin
-    dfg2 = testDFGAPI{NoSolverParams}()
+    dfg2 = GraphsDFG{NoSolverParams}()
     v1 = DFGVariable(:a)
     v2 = DFGVariable(:b)
     v3 = DFGVariable(:c)
@@ -85,16 +85,60 @@ end
     @test estimates(v1) == v1.estimateDict
     @test estimate(v1, :notfound) == nothing
     @test solverData(v1) === v1.solverDataDict[:default]
+    @test getData(v1) === v1.solverDataDict[:default]
     @test solverData(v1, :default) === v1.solverDataDict[:default]
     @test solverDataDict(v1) == v1.solverDataDict
-    @test id(v1) == v1._internalId
+    @test internalId(v1) == v1._internalId
 
     @test label(f1) == f1.label
+    @test solverData(f1) == f1.data
+    # Deprecated functions
     @test data(f1) == f1.data
-    @test id(f1) == f1._internalId
+    @test getData(f1) == f1.data
+    @test internalId(f1) == f1._internalId
 
     @test getSolverParams(dfg) != nothing
     @test setSolverParams(dfg, getSolverParams(dfg)) == getSolverParams(dfg)
+end
+
+@testset "Updating Nodes" begin
+    global dfg
+    #get the variable
+    var = getVariable(dfg, :a)
+    #make a copy and simulate external changes
+    newvar = deepcopy(var)
+    estimates(newvar)[:default] = Dict{Symbol, VariableEstimate}(
+        :max => VariableEstimate(:default, :max, [100.0]),
+        :mean => VariableEstimate(:default, :mean, [50.0]),
+        :ppe => VariableEstimate(:default, :ppe, [75.0]))
+    #update
+    updateVariableSolverData!(dfg, newvar)
+    #TODO maybe implement ==; @test newvar==var
+    Base.:(==)(varest1::VariableEstimate, varest2::VariableEstimate) = begin
+        varest1.lastUpdatedTimestamp == varest2.lastUpdatedTimestamp || return false
+        varest1.type == varest2.type || return false
+        varest1.solverKey == varest2.solverKey || return false
+        varest1.estimate == varest2.estimate || return false
+        return true
+    end
+    #For now spot check
+    @test solverDataDict(newvar) == solverDataDict(var)
+    @test estimates(newvar) == estimates(var)
+
+    # Delete :default and replace to see if new ones can be added
+    delete!(estimates(newvar), :default)
+    estimates(newvar)[:second] = Dict{Symbol, VariableEstimate}(
+        :max => VariableEstimate(:default, :max, [10.0]),
+        :mean => VariableEstimate(:default, :mean, [5.0]),
+        :ppe => VariableEstimate(:default, :ppe, [7.0]))
+
+    # Persist to the original variable.
+    updateVariableSolverData!(dfg, newvar)
+    # At this point newvar will have only :second, and var should have both (it is the reference)
+    @test symdiff(collect(keys(estimates(var))), [:default, :second]) == Symbol[]
+    @test symdiff(collect(keys(estimates(newvar))), [:second]) == Symbol[]
+    # Get the source too.
+    @test symdiff(collect(keys(estimates(getVariable(dfg, :a)))), [:default, :second]) == Symbol[]
 end
 
 # Connectivity test

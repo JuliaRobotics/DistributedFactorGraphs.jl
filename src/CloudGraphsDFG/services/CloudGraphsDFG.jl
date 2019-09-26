@@ -255,7 +255,7 @@ function getVariable(dfg::CloudGraphsDFG, variableId::Int64)::DFGVariable
     # props["label"] = Symbol(variable.label)
     timestamp = DateTime(props["timestamp"])
     tags =  JSON2.read(props["tags"], Vector{Symbol})
-    estimateDict = JSON2.read(props["estimateDict"], Dict{Symbol, VariableEstimate})
+    estimateDict = JSON2.read(props["estimateDict"], Dict{Symbol, Dict{Symbol, VariableEstimate}})
     smallData = nothing
     smallData = JSON2.read(props["smallData"], Dict{String, String})
 
@@ -387,6 +387,20 @@ function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariabl
     Neo4j.updatenodeproperties(neo4jNode, props)
     Neo4j.updatenodelabels(neo4jNode, union([string(variable.label), "VARIABLE", dfg.userId, dfg.robotId, dfg.sessionId], variable.tags))
     return variable
+end
+
+"""
+    $(SIGNATURES)
+Update solver and estimate data for a variable (variable can be from another graph).
+"""
+function updateVariableSolverData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable)::DFGVariable
+    if !exists(dfg, sourceVariable)
+        error("Source variable '$(sourceVariable.label)' doesn't exist in the graph.")
+    end
+    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, sourceVariable.label)
+    Neo4j.setnodeproperty(dfg.neo4jInstance.graph, nodeId, "estimateDict", JSON2.write(sourceVariable.estimateDict))
+    Neo4j.setnodeproperty(dfg.neo4jInstance.graph, nodeId, "solverDataDict", JSON2.write(Dict(keys(sourceVariable.solverDataDict) .=> map(vnd -> pack(dfg, vnd), values(sourceVariable.solverDataDict)))))
+    return sourceVariable
 end
 
 """
