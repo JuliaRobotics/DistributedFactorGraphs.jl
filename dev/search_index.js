@@ -389,7 +389,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Reference",
     "title": "DistributedFactorGraphs.toDot",
     "category": "function",
-    "text": "Produces a dot-format of the graph for visualization.\n\n\n\n\n\ntoDot(dfg)\n\n\nProduces a dot-format of the graph for visualization.\n\n\n\n\n\ntoDot(dfg)\n\n\nProduces a dot-format of the graph for visualization.\n\n\n\n\n\n"
+    "text": "toDot(dfg)\n\n\nProduces a dot-format of the graph for visualization.\n\n\n\n\n\ntoDot(dfg)\n\n\nProduces a dot-format of the graph for visualization.\n\n\n\n\n\ntoDot(dfg)\n\n\nProduces a dot-format of the graph for visualization.\n\n\n\n\n\n"
 },
 
 {
