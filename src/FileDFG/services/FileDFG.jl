@@ -16,7 +16,7 @@ function _unpackVariable(dfg::G, packedProps::Dict{String, Any})::DFGVariable wh
     label = Symbol(packedProps["label"])
     timestamp = DateTime(packedProps["timestamp"])
     tags =  JSON2.read(packedProps["tags"], Vector{Symbol})
-    estimateDict = JSON2.read(packedProps["estimateDict"], Dict{Symbol, VariableEstimate})
+    estimateDict = JSON2.read(packedProps["estimateDict"], Dict{Symbol, Dict{Symbol, VariableEstimate}})
     smallData = nothing
     smallData = JSON2.read(packedProps["smallData"], Dict{String, String})
 
@@ -137,10 +137,7 @@ function saveDFG(dfg::G, folder::String) where G <: AbstractDFG
     end
 end
 
-function loadDFG(folder::String,
-                 iifModule,
-                 dfgLoadInto::G=GraphsDFG{NoSolverParams}()) where G <: AbstractDFG
-    #
+function loadDFG(folder::String, iifModule, dfgLoadInto::G=GraphsDFG{NoSolverParams}()) where G <: AbstractDFG
     variables = DFGVariable[]
     factors = DFGFactor[]
     varFolder = "$folder/variables"

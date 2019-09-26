@@ -339,29 +339,6 @@ end
 
 """
     $(SIGNATURES)
-Produces a dot-format of the graph for visualization.
-"""
-function toDot(dfg::G)::String where G <: AbstractDFG
-	error("toDot not implemented for $(typeof(dfg))")
-end
-
-"""
-    $(SIGNATURES)
-Produces a dot file of the graph for visualization.
-Download XDot to see the data
-
-Note
-- Default location "/tmp/dfg.dot" -- MIGHT BE REMOVED
-- Can be viewed with the `xdot` system application.
-- Based on graphviz.org
-"""
-function toDotFile(dfg::G, fileName::String="/tmp/dfg.dot")::Nothing where G <: AbstractDFG
-	error("toDotFile not implemented for $(typeof(dfg))")
-end
-
-
-"""
-    $(SIGNATURES)
 Common function for copying nodes from one graph into another graph.
 This is overridden in specialized implementations for performance.
 """
@@ -404,9 +381,147 @@ end
 
 """
     $(SIGNATURES)
+Update solver and estimate data for a variable (variable can be from another graph).
+Note: Makes a copy of the estimates and solver data so that there is no coupling
+between graphs.
+"""
+function updateVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable)::DFGVariable
+    if !exists(dfg, sourceVariable)
+        error("Source variable '$(sourceVariable.label)' doesn't exist in the graph.")
+    end
+    var = getVariable(dfg, sourceVariable.label)
+    # We don't know which graph this came from, must be copied!
+    merge!(var.estimateDict, deepcopy(sourceVariable.estimateDict))
+    merge!(var.solverDataDict, deepcopy(sourceVariable.solverDataDict))
+    return sourceVariable
+end
+
+"""
+    $(SIGNATURES)
+Common function to update all solver data and estimates from one graph to another.
+This should be used to push local solve data back into a cloud graph, for example.
+"""
+function updateGraphSolverData!(sourceDFG::G, destDFG::H, varSyms::Vector{Symbol})::Nothing where {G <: AbstractDFG, H <: AbstractDFG}
+    # Update all variables in the destination
+    # (For now... we may change this soon)
+    for variableId in varSyms
+        updateVariableSolverData!(destDFG, getVariable(sourceDFG, variableId))
+    end
+end
+
+"""
+    $(SIGNATURES)
 Get an adjacency matrix for the DFG, returned as a tuple: adjmat::SparseMatrixCSC{Int}, var_labels::Vector{Symbol) fac_labels::Vector{Symbol).
 Rows are the factors, columns are the variables, with the corresponding labels in fac_labels,var_labels.
 """
 function getAdjacencyMatrixSparse(dfg::G) where G <: AbstractDFG
     error("getAdjacencyMatrixSparse not implemented for $(typeof(dfg))")
+end
+
+"""
+    $SIGNATURES
+
+Return boolean whether a factor `label` is present in `<:AbstractDFG`.
+"""
+function hasFactor(dfg::G, label::Symbol)::Bool where {G <: AbstractDFG}
+  return haskey(dfg.labelDict, label)
+end
+
+"""
+    $(SIGNATURES)
+
+Return `::Bool` on whether `dfg` contains the variable `lbl::Symbol`.
+"""
+function hasVariable(dfg::G, label::Symbol)::Bool where {G <: AbstractDFG}
+  return haskey(dfg.labelDict, label) # haskey(vertices(dfg.g), label)
+end
+
+
+"""
+    $SIGNATURES
+
+Returns state of vertex data `.initialized` flag.
+
+Notes:
+- used by both factor graph variable and Bayes tree clique logic.
+TODO: Refactor
+"""
+function isInitialized(var::DFGVariable; key::Symbol=:default)::Bool
+  return var.solverDataDict[key].initialized
+end
+function isInitialized(fct::DFGFactor; key::Symbol=:default)::Bool
+  return fct.solverDataDict[key].initialized
+end
+function isInitialized(dfg::G, label::Symbol; key::Symbol=:default)::Bool where G <: AbstractDFG
+  return isInitialized(getVariable(dfg, label), key=key)
+end
+
+
+"""
+    $SIGNATURES
+
+Return whether `sym::Symbol` represents a variable vertex in the graph.
+"""
+isVariable(dfg::G, sym::Symbol) where G <: AbstractDFG = hasVariable(dfg, sym)
+
+"""
+    $SIGNATURES
+
+Return whether `sym::Symbol` represents a factor vertex in the graph.
+"""
+isFactor(dfg::G, sym::Symbol) where G <: AbstractDFG = hasFactor(dfg, sym)
+
+"""
+    $SIGNATURES
+
+Return reference to the user factor in `<:AbstractDFG` identified by `::Symbol`.
+"""
+getFactorFunction(fcd::GenericFunctionNodeData) = fcd.fnc.usrfnc!
+getFactorFunction(fc::DFGFactor) = getFactorFunction(getData(fc))
+function getFactorFunction(dfg::G, fsym::Symbol) where G <: AbstractDFG
+  getFactorFunction(getFactor(dfg, fsym))
+end
+
+
+"""
+    $SIGNATURES
+
+Display and return to console the user factor identified by tag name.
+"""
+showFactor(fgl::G, fsym::Symbol) where G <: AbstractDFG = @show getFactor(fgl,fsym)
+
+
+"""
+    $(SIGNATURES)
+Produces a dot-format of the graph for visualization.
+"""
+function toDot(dfg::AbstractDFG)::String
+    @warn "Falling Back to convert to GraphsDFG"
+    #TODO implement convert
+    graphsdfg = GraphsDFG{AbstractParams}()
+    DistributedFactorGraphs._copyIntoGraph!(dfg, graphsdfg, union(getVariableIds(dfg), getFactorIds(dfg)), true)
+
+    return toDot(graphsdfg)
+end
+
+"""
+    $(SIGNATURES)
+Produces a dot file of the graph for visualization.
+Download XDot to see the data
+
+Note
+- Default location "/tmp/dfg.dot" -- MIGHT BE REMOVED
+- Can be viewed with the `xdot` system application.
+- Based on graphviz.org
+"""
+function toDotFile(dfg::AbstractDFG, fileName::String="/tmp/dfg.dot")::Nothing
+    @warn "Falling Back to convert to GraphsDFG"
+    #TODO implement convert
+    graphsdfg = GraphsDFG{AbstractParams}()
+    DistributedFactorGraphs._copyIntoGraph!(dfg, graphsdfg, union(getVariableIds(dfg), getFactorIds(dfg)), true)
+
+    open(fileName, "w") do fid
+        write(fid,Graphs.to_dot(graphsdfg.g))
+    end
+    return nothing
 end
