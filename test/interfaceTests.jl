@@ -174,6 +174,12 @@ end
     @test getFactorIds(dfg) == []
     deleteVariable!(dfg, :b)
     @test symdiff([:a, :orphan], getVariableIds(dfg)) == []
+    #delete last also for the LightGraphs implementation coverage
+    deleteVariable!(dfg, :orphan)
+    @test symdiff([:a], getVariableIds(dfg)) == []
+    deleteVariable!(dfg, :a)
+    @test getVariableIds(dfg) == []
+
 end
 
 
