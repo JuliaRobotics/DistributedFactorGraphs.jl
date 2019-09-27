@@ -17,7 +17,7 @@ addFactor!(dfg, [v1, v2], f1)
 # end
 
 @testset "Adding Removing Nodes" begin
-    dfg2 = GraphsDFG{NoSolverParams}()
+    dfg2 = testDFGAPI{NoSolverParams}()
     v1 = DFGVariable(:a)
     v2 = DFGVariable(:b)
     v3 = DFGVariable(:c)
@@ -174,6 +174,12 @@ end
     @test getFactorIds(dfg) == []
     deleteVariable!(dfg, :b)
     @test symdiff([:a, :orphan], getVariableIds(dfg)) == []
+    #delete last also for the LightGraphs implementation coverage
+    deleteVariable!(dfg, :orphan)
+    @test symdiff([:a], getVariableIds(dfg)) == []
+    deleteVariable!(dfg, :a)
+    @test getVariableIds(dfg) == []
+
 end
 
 

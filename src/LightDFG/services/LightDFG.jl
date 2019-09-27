@@ -1,7 +1,7 @@
 
 
 # Accessors
-getLabelDict(dfg::LightDFG) = dfg.labelDict
+getLabelDict(dfg::LightDFG) = copy(dfg.g.labels.sym_int)
 getDescription(dfg::LightDFG) = dfg.description
 setDescription(dfg::LightDFG, description::String) = dfg.description = description
 getInnerGraph(dfg::LightDFG) = dfg.g
