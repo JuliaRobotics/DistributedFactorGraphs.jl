@@ -17,7 +17,7 @@ addFactor!(dfg, [v1, v2], f1)
 # end
 
 @testset "Adding Removing Nodes" begin
-    dfg2 = GraphsDFG{NoSolverParams}()
+    dfg2 = testDFGAPI{NoSolverParams}()
     v1 = DFGVariable(:a)
     v2 = DFGVariable(:b)
     v3 = DFGVariable(:c)

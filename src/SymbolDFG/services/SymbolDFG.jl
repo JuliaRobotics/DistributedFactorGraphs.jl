@@ -1,6 +1,6 @@
 
 # Accessors
-getLabelDict(dfg::SymbolDFG) = dfg.labelDict
+getLabelDict(dfg::SymbolDFG) = copy(dfg.g.fadjdict)
 getDescription(dfg::SymbolDFG) = dfg.description
 setDescription(dfg::SymbolDFG, description::String) = dfg.description = description
 getInnerGraph(dfg::SymbolDFG) = dfg.g
