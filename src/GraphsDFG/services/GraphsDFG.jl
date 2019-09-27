@@ -528,4 +528,6 @@ function toDotFile(dfg::GraphsDFG, fileName::String="/tmp/dfg.dot")::Nothing
     return nothing
 end
 
-function getSummary()::
+function getSummary()
+	error("TODO")
+end
