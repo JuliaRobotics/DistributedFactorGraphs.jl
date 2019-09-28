@@ -7,7 +7,7 @@ function attributes(v::GraphsNode, g::T)::AttributeDict where T <:GenericInciden
     AttributeDict(
         "label" => v.dfgNode.label,
         "color" => v.dfgNode isa DFGVariable ? "red" : "blue",
-        "shape" => v.dfgNode isa DFGVariable ? "box" : "ellipse",
+        "shape" => v.dfgNode isa DFGVariable ? "ellipse" : "box",
         "fillcolor" => v.dfgNode isa DFGVariable ? "red" : "blue"
         )
 end
