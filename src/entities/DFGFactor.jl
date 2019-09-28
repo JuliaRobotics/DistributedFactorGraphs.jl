@@ -1,4 +1,3 @@
-
 # Originally from IncrementalInference
 
 abstract type InferenceType end
@@ -48,8 +47,34 @@ mutable struct DFGFactor{T, S} <: DFGNode
 end
 
 label(f::F) where F <: DFGFactor = f.label
-data(f::F) where F <: DFGFactor = f.data
 tags(f::F) where F <: DFGFactor = f.tags
+"""
+    $SIGNATURES
+
+Retrieve solver data structure stored in a factor.
+"""
+function solverData(f::F) where F <: DFGFactor
+  return f.data
+end
+"""
+    $SIGNATURES
+
+Retrieve solver data structure stored in a factor.
+"""
+function data(f::DFGFactor)::GenericFunctionNodeData
+  @warn "data() is deprecated, please use solverData()"
+  return f.data
+end
+"""
+    $SIGNATURES
+
+Retrieve solver data structure stored in a factor.
+"""
+function getData(f::DFGFactor)::GenericFunctionNodeData
+  @warn "getData is deprecated, please use solverData()"
+  return f.data
+end
+
 internalId(f::F) where F <: DFGFactor = f._internalId
 
 # Simply for convenience - don't export

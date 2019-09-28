@@ -25,9 +25,13 @@ export InferenceType, PackedInferenceType, FunctorInferenceType, InferenceVariab
 export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
 
 export DFGVariable
-export label, timestamp, tags, estimates, estimate, solverData, solverDataDict, id, smallData, bigData
+export label, timestamp, tags, estimates, estimate, solverData, getData, solverDataDict, internalId, smallData, bigData
 export setSolverData
 export label, data, id
+
+# Services/AbstractDFG Exports
+export hasFactor, hasVariable, isInitialized, getFactorFunction, isVariable, isFactor
+export updateGraphSolverData!
 
 # Solver (IIF) Exports
 export VariableNodeData, PackedVariableNodeData, VariableEstimate
@@ -37,6 +41,9 @@ export pack, unpack
 
 #Interfaces
 export getAdjacencyMatrixSparse
+
+# File import and export
+export saveDFG, loadDFG
 
 # Common includes
 include("services/AbstractDFG.jl")
@@ -57,8 +64,6 @@ include("SymbolDFG/SymbolDFG.jl")
 include("LightDFG/LightDFG.jl")
 @reexport using .LightDFGs
 
-export saveDFG, loadDFG
-
 function __init__()
     @require Neo4j="d2adbeaf-5838-5367-8a2f-e46d570981db" begin
         # Include the Cloudgraphs API
@@ -72,9 +77,7 @@ function __init__()
 
 end
 
-
-# not sure where to put
+# To be moved as necessary.
 include("Common.jl")
-include("NeedsAHome.jl")
 
 end

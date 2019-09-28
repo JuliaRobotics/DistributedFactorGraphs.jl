@@ -47,7 +47,7 @@ end
     @test getFactorIds(dfg) == [:f1]
     #
     @test lsf(dfg, :a) == [f1.label]
-    #tags
+    # Tags
     @test ls(dfg, tags=[:POSE]) == [:a]
     @test symdiff(ls(dfg, tags=[:POSE, :LANDMARK]), ls(dfg, tags=[:VARIABLE])) == []
     # Regexes
@@ -61,6 +61,11 @@ end
     @test exists(dfg, :a) == true
     @test exists(dfg, v1) == true
     @test exists(dfg, :nope) == false
+    # Sorting of results
+    # TODO - this function needs to be cleaned up
+    unsorted = [:x1_3;:x1_6;:l1;:april1] #this will not work for :x1x2f1
+    @test sortDFG(unsorted) == sortVarNested(unsorted)
+    @test_skip sortDFG([:x1x2f1, :x1l1f1]) == [:x1l1f1, :x1x2f1]
 end
 
 # Gets
@@ -86,14 +91,62 @@ end
     @test estimates(v1) == v1.estimateDict
     @test estimate(v1, :notfound) == nothing
     @test solverData(v1) === v1.solverDataDict[:default]
+    @test getData(v1) === v1.solverDataDict[:default]
     @test solverData(v1, :default) === v1.solverDataDict[:default]
     @test solverDataDict(v1) == v1.solverDataDict
-    @test id(v1) == v1._internalId
+    @test internalId(v1) == v1._internalId
 
     @test label(f1) == f1.label
-    @test tags(f1) = f1.tags
+    @test tags(f1) == f1.tags
+    @test solverData(f1) == f1.data
+    # Deprecated functions
     @test data(f1) == f1.data
-    @test id(f1) == f1._internalId
+    @test getData(f1) == f1.data
+    # Internal function
+    @test internalId(f1) == f1._internalId
+
+    @test getSolverParams(dfg) != nothing
+    @test setSolverParams(dfg, getSolverParams(dfg)) == getSolverParams(dfg)
+end
+
+@testset "Updating Nodes" begin
+    global dfg
+    #get the variable
+    var = getVariable(dfg, :a)
+    #make a copy and simulate external changes
+    newvar = deepcopy(var)
+    estimates(newvar)[:default] = Dict{Symbol, VariableEstimate}(
+        :max => VariableEstimate(:default, :max, [100.0]),
+        :mean => VariableEstimate(:default, :mean, [50.0]),
+        :ppe => VariableEstimate(:default, :ppe, [75.0]))
+    #update
+    updateVariableSolverData!(dfg, newvar)
+    #TODO maybe implement ==; @test newvar==var
+    Base.:(==)(varest1::VariableEstimate, varest2::VariableEstimate) = begin
+        varest1.lastUpdatedTimestamp == varest2.lastUpdatedTimestamp || return false
+        varest1.type == varest2.type || return false
+        varest1.solverKey == varest2.solverKey || return false
+        varest1.estimate == varest2.estimate || return false
+        return true
+    end
+    #For now spot check
+    @test solverDataDict(newvar) == solverDataDict(var)
+    @test estimates(newvar) == estimates(var)
+
+    # Delete :default and replace to see if new ones can be added
+    delete!(estimates(newvar), :default)
+    estimates(newvar)[:second] = Dict{Symbol, VariableEstimate}(
+        :max => VariableEstimate(:default, :max, [10.0]),
+        :mean => VariableEstimate(:default, :mean, [5.0]),
+        :ppe => VariableEstimate(:default, :ppe, [7.0]))
+
+    # Persist to the original variable.
+    updateVariableSolverData!(dfg, newvar)
+    # At this point newvar will have only :second, and var should have both (it is the reference)
+    @test symdiff(collect(keys(estimates(var))), [:default, :second]) == Symbol[]
+    @test symdiff(collect(keys(estimates(newvar))), [:second]) == Symbol[]
+    # Get the source too.
+    @test symdiff(collect(keys(estimates(getVariable(dfg, :a)))), [:default, :second]) == Symbol[]
 end
 
 # Connectivity test
@@ -117,21 +170,28 @@ end
     #sparse
     adjMat, v_ll, f_ll = getAdjacencyMatrixSparse(dfg)
     @test size(adjMat) == (1,3)
-    #TODO hoe om te toets, volgorde nie altyd dieselfde nie
-    # @test adjMat[1, 1] == 0
-    # @test adjMat[1, 2] == 1
-    # @test adjMat[1, 3] == 1
+
+    # Checking the elements of adjacency, its not sorted so need indexing function
+    indexOf = (arr, el1) -> findfirst(el2->el2==el1, arr)
+    @test adjMat[1, indexOf(v_ll, :orphan)] == 0
+    @test adjMat[1, indexOf(v_ll, :a)] == 1
+    @test adjMat[1, indexOf(v_ll, :b)] == 1
     @test symdiff(v_ll, [:a, :b, :orphan]) == Symbol[]
     @test symdiff(f_ll, [:f1, :f1, :f1]) == Symbol[]
 end
 
 # Deletions
-# Not supported at present
 @testset "Deletions" begin
     deleteFactor!(dfg, :f1)
     @test getFactorIds(dfg) == []
     deleteVariable!(dfg, :b)
     @test symdiff([:a, :orphan], getVariableIds(dfg)) == []
+    #delete last also for the LightGraphs implementation coverage
+    deleteVariable!(dfg, :orphan)
+    @test symdiff([:a], getVariableIds(dfg)) == []
+    deleteVariable!(dfg, :a)
+    @test getVariableIds(dfg) == []
+
 end
 
 
@@ -144,7 +204,6 @@ verts[7].ready = 1
 verts[8].backendset = 1
 map(v -> addVariable!(dfg, v), verts)
 map(n -> addFactor!(dfg, [verts[n], verts[n+1]], DFGFactor{Int, :Symbol}(Symbol("x$(n)x$(n+1)f1"))), 1:(numNodes-1))
-# map(n -> addFactor!(dfg, [verts[n], verts[n+2]], DFGFactor(Symbol("x$(n)x$(n+2)f2"))), 1:2:(numNodes-2))
 
 @testset "Getting Neighbors" begin
     global dfg,verts
