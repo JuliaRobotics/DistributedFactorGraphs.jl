@@ -525,3 +525,11 @@ function toDotFile(dfg::AbstractDFG, fileName::String="/tmp/dfg.dot")::Nothing
     end
     return nothing
 end
+
+function getSummary(dfg::G)::AbstractDFGSummary where {G <: AbstractDFG}
+	error("getSummary not implemented for $(typeof(dfg))")
+end
+
+function getSummaryGraph(dfg::G) where {G <: AbstractDFG}
+	error("getSummaryGraph not implemented for $(typeof(dfg))")
+end

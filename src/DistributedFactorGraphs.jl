@@ -11,23 +11,18 @@ using LinearAlgebra
 using SparseArrays
 
 # Entities
-include("entities/AbstractTypes.jl")
+include("entities/AbstractDFG.jl")
 include("entities/DFGFactor.jl")
 include("entities/DFGVariable.jl")
+include("entities/AbstractDFGSummary.jl")
 
 export AbstractDFG
 export AbstractParams, NoSolverParams
-export DFGNode
-
-export DFGFactor
+export DFGNode, DFGVariable, DFGFactor
 export InferenceType, PackedInferenceType, FunctorInferenceType, InferenceVariable, ConvolutionObject
-
 export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
-
-export DFGVariable
-export label, timestamp, tags, estimates, estimate, solverData, getData, solverDataDict, internalId, smallData, bigData
-export setSolverData
-export label, data, id
+export label, timestamp, tags, estimates, estimate, data, solverData, getData, solverDataDict, setSolverData, internalId, smallData, bigData
+export DFGVariableSummary, DFGFactorSummary, AbstractDFGSummary
 
 # Services/AbstractDFG Exports
 export hasFactor, hasVariable, isInitialized, getFactorFunction, isVariable, isFactor

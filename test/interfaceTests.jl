@@ -86,7 +86,7 @@ end
 
     # Accessors
     @test label(v1) == v1.label
-    @test tags(v1) = v1.tags
+    @test tags(v1) == v1.tags
     @test timestamp(v1) == v1.timestamp
     @test estimates(v1) == v1.estimateDict
     @test estimate(v1, :notfound) == nothing
