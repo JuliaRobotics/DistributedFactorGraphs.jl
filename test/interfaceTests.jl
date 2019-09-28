@@ -261,6 +261,13 @@ end
     end
 end
 
+@testset "Summary Graphs" begin
+    summary = getSummary(dfg)
+    @test summary != nothing
+    # summaryGraph = getSummaryGraph(dfg)
+    # @test summaryGraph != nothing
+end
+
 @testset "Producing Dot Files" begin
     if testDFGAPI != GraphsDFG
         @warn "Skipping non Graphs.jl toDot functions"

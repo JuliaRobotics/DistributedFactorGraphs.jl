@@ -1,4 +1,5 @@
+import Base: convert
 
-function convert(::DFGFactorSummary, v::DFGFactor)
-    return DFGFactorSummary(v.label, deepcopy(v.tags), v._internalId, deepcopy(_variableOrderSymbols))
+function convert(::Type{DFGFactorSummary}, f::DFGFactor)
+    return DFGFactorSummary(f.label, deepcopy(f.tags), f._internalId, deepcopy(f._variableOrderSymbols))
 end

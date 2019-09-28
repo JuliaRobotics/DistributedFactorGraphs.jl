@@ -40,9 +40,13 @@ export getAdjacencyMatrixSparse
 # File import and export
 export saveDFG, loadDFG
 
+# Summary functions
+export getSummary, getSummaryGraph
+
 # Common includes
 include("services/AbstractDFG.jl")
 include("services/DFGVariable.jl")
+include("services/DFGFactor.jl")
 
 # Include the Graphs.jl API.
 include("GraphsDFG/GraphsDFG.jl")

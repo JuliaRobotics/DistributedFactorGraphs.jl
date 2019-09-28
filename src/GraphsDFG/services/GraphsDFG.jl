@@ -431,3 +431,18 @@ function toDotFile(dfg::GraphsDFG, fileName::String="/tmp/dfg.dot")::Nothing
     end
     return nothing
 end
+
+function getSummary(dfg::GraphsDFG)::AbstractDFGSummary
+	vars = map(v -> convert(DFGVariableSummary, v), getVariables(dfg))
+	facts = map(f -> convert(DFGFactorSummary, f), getFactors(dfg))
+	return AbstractDFGSummary(
+		Dict(map(v->v.label, vars) .=> vars),
+		Dict(map(f->f.label, facts) .=> facts),
+		"userId",
+		"robotId",
+		"sessionId")
+end
+
+function getSummaryGraph(dfg::GraphsDFG)
+	error("getSummaryGraph not implemented for $(typeof(dfg))")
+end
