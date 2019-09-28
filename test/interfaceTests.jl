@@ -47,7 +47,7 @@ end
     @test getFactorIds(dfg) == [:f1]
     #
     @test lsf(dfg, :a) == [f1.label]
-    #tags
+    # Tags
     @test ls(dfg, tags=[:POSE]) == [:a]
     @test symdiff(ls(dfg, tags=[:POSE, :LANDMARK]), ls(dfg, tags=[:VARIABLE])) == []
     # Regexes
@@ -61,6 +61,11 @@ end
     @test exists(dfg, :a) == true
     @test exists(dfg, v1) == true
     @test exists(dfg, :nope) == false
+    # Sorting of results
+    # TODO - this function needs to be cleaned up
+    unsorted = [:x1_3;:x1_6;:l1;:april1] #this will not work for :x1x2f1
+    @test sortDFG(unsorted) == sortVarNested(unsorted)
+    @test_skip sortDFG([:x1x2f1, :x1l1f1]) == [:x1l1f1, :x1x2f1]
 end
 
 # Gets
@@ -95,6 +100,7 @@ end
     # Deprecated functions
     @test data(f1) == f1.data
     @test getData(f1) == f1.data
+    # Internal function
     @test internalId(f1) == f1._internalId
 
     @test getSolverParams(dfg) != nothing
