@@ -42,6 +42,9 @@ export pack, unpack
 #Interfaces
 export getAdjacencyMatrixSparse
 
+# File import and export
+export saveDFG, loadDFG
+
 # Common includes
 include("services/AbstractDFG.jl")
 include("services/DFGVariable.jl")
@@ -60,8 +63,6 @@ include("SymbolDFG/SymbolDFG.jl")
 
 include("LightDFG/LightDFG.jl")
 @reexport using .LightDFGs
-
-export saveDFG, loadDFG
 
 function __init__()
     @require Neo4j="d2adbeaf-5838-5367-8a2f-e46d570981db" begin

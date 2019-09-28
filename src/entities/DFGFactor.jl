@@ -1,4 +1,3 @@
-
 # Originally from IncrementalInference
 
 abstract type InferenceType end
@@ -48,7 +47,33 @@ mutable struct DFGFactor{T, S} <: DFGNode
 end
 
 label(f::F) where F <: DFGFactor = f.label
-data(f::F) where F <: DFGFactor = f.data
+"""
+    $SIGNATURES
+
+Retrieve solver data structure stored in a factor.
+"""
+function solverData(f::F) where F <: DFGFactor
+  return f.data
+end
+"""
+    $SIGNATURES
+
+Retrieve solver data structure stored in a factor.
+"""
+function data(f::DFGFactor)::GenericFunctionNodeData
+  @warn "data() is deprecated, please use solverData()"
+  return f.data
+end
+"""
+    $SIGNATURES
+
+Retrieve solver data structure stored in a factor.
+"""
+function getData(f::DFGFactor)::GenericFunctionNodeData
+  @warn "getData is deprecated, please use solverData()"
+  return f.data
+end
+
 internalId(f::F) where F <: DFGFactor = f._internalId
 
 # Simply for convenience - don't export
@@ -56,10 +81,3 @@ const PackedFunctionNodeData{T} = GenericFunctionNodeData{T, <: AbstractString}
 PackedFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, x7::String="", x8::Vector{Int}=Int[]) where {T <: PackedInferenceType, S <: AbstractString} = GenericFunctionNodeData(x1, x2, x3, x4, x5, x6, x7, x8)
 const FunctionNodeData{T} = GenericFunctionNodeData{T, Symbol}
 FunctionNodeData(x1, x2, x3, x4, x5::Symbol, x6::T, x7::String="", x8::Vector{Int}=Int[]) where {T <: Union{FunctorInferenceType, ConvolutionObject}}= GenericFunctionNodeData{T, Symbol}(x1, x2, x3, x4, x5, x6, x7, x8)
-
-"""
-    $SIGNATURES
-
-Retrieve data structure stored in a node.
-"""
-getData(v::DFGFactor)::GenericFunctionNodeData = v.data

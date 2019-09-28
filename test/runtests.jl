@@ -1,4 +1,5 @@
 using Test
+using GraphPlot # For plotting tests
 using DistributedFactorGraphs
 
 # Test each interface
@@ -8,4 +9,10 @@ for api in apis
         global testDFGAPI = api
         include("interfaceTests.jl")
     end
+end
+
+# Test special cases
+
+@testset "Plotting Tests" begin
+    include("plottingTest.jl")
 end
