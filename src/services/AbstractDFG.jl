@@ -85,7 +85,7 @@ end
     $(SIGNATURES)
 Get a DFGVariable from a DFG using its underlying integer ID.
 """
-function getVariable(dfg::G, variableId::Int64)::DFGVariable where G <: AbstractDFG
+function getVariable(dfg::G, variableId::Int64)::AbstractDFGVariable where G <: AbstractDFG
 	error("getVariable not implemented for $(typeof(dfg))")
 end
 
@@ -93,7 +93,7 @@ end
     $(SIGNATURES)
 Get a DFGVariable from a DFG using its label.
 """
-function getVariable(dfg::G, label::Union{Symbol, String})::DFGVariable where G <: AbstractDFG
+function getVariable(dfg::G, label::Union{Symbol, String})::AbstractDFGVariable where G <: AbstractDFG
 	return getVariable(dfg, Symbol(label))
 end
 
@@ -101,7 +101,7 @@ end
     $(SIGNATURES)
 Get a DFGFactor from a DFG using its underlying integer ID.
 """
-function getFactor(dfg::G, factorId::Int64)::DFGFactor where G <: AbstractDFG
+function getFactor(dfg::G, factorId::Int64)::AbstractDFGFactor where G <: AbstractDFG
 	error("getFactor not implemented for $(typeof(dfg))")
 end
 
@@ -109,7 +109,7 @@ end
     $(SIGNATURES)
 Get a DFGFactor from a DFG using its label.
 """
-function getFactor(dfg::G, label::Union{Symbol, String})::DFGFactor where G <: AbstractDFG
+function getFactor(dfg::G, label::Union{Symbol, String})::AbstractDFGFactor where G <: AbstractDFG
 	return getFactor(dfg, Symbol(label))
 end
 
@@ -117,7 +117,7 @@ end
     $(SIGNATURES)
 Update a complete DFGVariable in the DFG.
 """
-function updateVariable!(dfg::G, variable::V)::DFGVariable where {G <: AbstractDFG, V <: AbstractDFGVariable}
+function updateVariable!(dfg::G, variable::V)::AbstractDFGVariable where {G <: AbstractDFG, V <: AbstractDFGVariable}
 	error("updateVariable! not implemented for $(typeof(dfg))")
 end
 
@@ -125,7 +125,7 @@ end
     $(SIGNATURES)
 Update a complete DFGFactor in the DFG.
 """
-function updateFactor!(dfg::G, factor::F)::DFGFactor where {G <: AbstractDFG, F <: AbstractDFGFactor}
+function updateFactor!(dfg::G, factor::F)::AbstractDFGFactor where {G <: AbstractDFG, F <: AbstractDFGFactor}
 	error("updateFactor! not implemented for $(typeof(dfg))")
 end
 
@@ -470,13 +470,14 @@ Returns state of vertex data `.initialized` flag.
 
 Notes:
 - used by both factor graph variable and Bayes tree clique logic.
-TODO: Refactor
 """
 function isInitialized(var::DFGVariable; key::Symbol=:default)::Bool
-  return var.solverDataDict[key].initialized
+  solverData(var, key) && return solverData(var, key).initialized
+  return false
 end
 function isInitialized(fct::DFGFactor; key::Symbol=:default)::Bool
-  return fct.solverDataDict[key].initialized
+  solverData(var, key) && return solverData(fct, key).initialized
+  return false
 end
 function isInitialized(dfg::G, label::Symbol; key::Symbol=:default)::Bool where G <: AbstractDFG
   return isInitialized(getVariable(dfg, label), key=key)

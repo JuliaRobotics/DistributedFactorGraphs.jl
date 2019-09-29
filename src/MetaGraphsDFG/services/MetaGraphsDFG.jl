@@ -557,7 +557,7 @@ Note
 - Based on graphviz.org
 """
 function toDotFile(dfg::MetaGraphsDFG, fileName::String="/tmp/dfg.dot")::Nothing
-	@error "toDotFile(dfg::MetaGraphsDFG,filename) is not sopported yet, see https://github.com/JuliaGraphs/MetaGraphs.jl/issues/86"
+	@error "toDotFile(dfg::MetaGraphsDFG,filename) is not supported yet, see https://github.com/JuliaGraphs/MetaGraphs.jl/issues/86"
     open(fileName, "w") do fid
         MetaGraphs.savedot(fid, dfg.g)
     end
