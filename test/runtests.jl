@@ -6,6 +6,7 @@ using DistributedFactorGraphs
 apis = [GraphsDFG, MetaGraphsDFG, SymbolDFG, LightDFG]
 for api in apis
     @testset "Testing Driver: $(api)" begin
+        @info "Testing Driver: $(api)"
         global testDFGAPI = api
         include("interfaceTests.jl")
     end

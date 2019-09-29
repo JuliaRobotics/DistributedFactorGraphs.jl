@@ -191,7 +191,6 @@ end
     @test symdiff([:a], getVariableIds(dfg)) == []
     deleteVariable!(dfg, :a)
     @test getVariableIds(dfg) == []
-
 end
 
 
@@ -261,11 +260,28 @@ end
     end
 end
 
-@testset "Summary Graphs" begin
+@testset "Summaries and Summary Graphs" begin
+    factorFields = fieldnames(DFGFactorSummary)
+    variableFields = fieldnames(DFGVariableSummary)
+
     summary = getSummary(dfg)
-    @test summary != nothing
-    # summaryGraph = getSummaryGraph(dfg)
-    # @test summaryGraph != nothing
+    @test symdiff(collect(keys(summary.variables)), ls(dfg)) == Symbol[]
+    @test symdiff(collect(keys(summary.factors)), lsf(dfg)) == Symbol[]
+
+    summaryGraph = getSummaryGraph(dfg)
+    @test symdiff(ls(summaryGraph), ls(dfg)) == Symbol[]
+    @test symdiff(lsf(summaryGraph), lsf(dfg)) == Symbol[]
+    # Check all fields are equal for all variables
+    for v in ls(summaryGraph)
+        for field in variableFields
+            @test getfield(getVariable(dfg, v), field) == getfield(getVariable(summaryGraph, v), field)
+        end
+    end
+    for f in lsf(summaryGraph)
+        for field in factorFields
+            @test getfield(getFactor(dfg, f), field) == getfield(getFactor(summaryGraph, f), field)
+        end
+    end
 end
 
 @testset "Producing Dot Files" begin

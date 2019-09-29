@@ -83,7 +83,7 @@ end
     $(SIGNATURES)
 Fundamental structure for a DFG variable.
 """
-mutable struct DFGVariable <: DFGNode
+mutable struct DFGVariable <: AbstractDFGVariable
     label::Symbol
     timestamp::DateTime
     tags::Vector{Symbol}
@@ -135,7 +135,7 @@ bigData(v::DFGVariable) = v.bigData
     $(SIGNATURES)
 Structure for first-class citizens of a DFGVariable.
 """
-struct DFGVariableSummary <: DFGNode
+mutable struct DFGVariableSummary <: AbstractDFGVariable
     label::Symbol
     timestamp::DateTime
     tags::Vector{Symbol}

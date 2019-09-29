@@ -1,19 +1,30 @@
 
+"""
+    $(SIGNATURES)
+
+An in-memory DistributedFactorGraph based on LightGraphs.jl with parameters:
+- T: Solver parameters (defaults to `NoSolverParams()`)
+- V: Variable type
+- F: Factor type
+"""
 mutable struct LightDFG{T <: AbstractParams, V <: DFGNode, F <:DFGNode} <: AbstractDFG
     g::FactorGraph{Int, V, F}
     description::String
     userId::String
     robotId::String
     sessionId::String
-    #NOTE does not exist
-    # nodeCounter::Int64
-    #NOTE does not exist
-    # labelDict::Dict{Symbol, Int64}
     addHistory::Vector{Symbol} #TODO: Discuss more - is this an audit trail?
     solverParams::T # Solver parameters
 end
 
-#TODO? do we not want props such as userId, robotId, sessionId, etc...
+"""
+    $(SIGNATURES)
+
+Create an in-memory LightDFG with the following parameters:
+- T: Solver parameters (defaults to `NoSolverParams()`)
+- V: Variable type
+- F: Factor type
+"""
 function LightDFG{T,V,F}(g::FactorGraph{Int,V,F}=FactorGraph{Int,V,F}();
                            description::String="LightGraphs.jl implementation",
                            userId::String="User ID",
@@ -25,7 +36,14 @@ function LightDFG{T,V,F}(g::FactorGraph{Int,V,F}=FactorGraph{Int,V,F}();
 end
 
 # LightDFG{T}(; kwargs...) where T <: AbstractParams = LightDFG{T,DFGVariable,DFGFactor}(;kwargs...)
+"""
+    $(SIGNATURES)
 
+Create an in-memory LightDFG with the following parameters:
+- T: Solver parameters (defaults to `NoSolverParams()`)
+- V: Variable type
+- F: Factor type
+"""
 LightDFG{T}(g::FactorGraph{Int,DFGVariable,DFGFactor}=FactorGraph{Int,DFGVariable,DFGFactor}(); kwargs...) where T <: AbstractParams = LightDFG{T,DFGVariable,DFGFactor}(g; kwargs...)
 
 Base.propertynames(x::LightDFG, private::Bool=false) =

@@ -34,7 +34,7 @@ end
     $(SIGNATURES)
 Fundamental structure for a DFG factor.
 """
-mutable struct DFGFactor{T, S} <: DFGNode
+mutable struct DFGFactor{T, S} <: AbstractDFGFactor
     label::Symbol
     tags::Vector{Symbol}
     data::GenericFunctionNodeData{T, S}
@@ -87,7 +87,7 @@ FunctionNodeData(x1, x2, x3, x4, x5::Symbol, x6::T, x7::String="", x8::Vector{In
     $(SIGNATURES)
 Structure for first-class citizens of a DFGFactor.
 """
-struct DFGFactorSummary <: DFGNode
+mutable struct DFGFactorSummary <: AbstractDFGFactor
     label::Symbol
     tags::Vector{Symbol}
     _internalId::Int64

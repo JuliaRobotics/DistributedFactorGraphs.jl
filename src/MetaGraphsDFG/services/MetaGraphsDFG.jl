@@ -31,7 +31,7 @@ function addVariable!(dfg::MetaGraphsDFG, variable::DFGVariable)::Bool
     end
 
 	#NOTE Internal ID always set to zero as it is not needed?
-    variable._internalId = 0
+    # variable._internalId = 0
 
 	#If other properties are needed in the graph itself, maybe :tags
 	# props = Dict{:Symbol, Any}()
@@ -62,8 +62,6 @@ function addFactor!(dfg::MetaGraphsDFG, variables::Vector{DFGVariable}, factor::
         end
     end
 
-	#NOTE Internal ID always set to zero as it is not needed?
-    factor._internalId = 0
     factor._variableOrderSymbols = map(v->v.label, variables)
 
 	#NOTE something like this or the next props definition

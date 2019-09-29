@@ -12,19 +12,13 @@ addVariable!(dfg, v2)
 addVariable!(dfg, v3)
 addFactor!(dfg, [v1, v2], f1)
 addFactor!(dfg, [:b, :c], f2)
-
-getSummary(dfg)
-# getSummaryGraph(dfg)
-
-import Base: convert
-function convert(::Type{DFGVariableSummary}, v::DFGVariable)
-    return DFGVariableSummary(v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.estimateDict), v._internalId)
-end
-
-function convert(::Type{DFGFactorSummary}, f::DFGFactor)
-    return DFGFactorSummary(f.label, deepcopy(f.tags), f._internalId, deepcopy(f._variableOrderSymbols))
-end
-
-
-v = convert(DFGVariableSummary, v1)
-convert(DFGFactorSummary, f1)
+dfg
+dfg.g.inclist
+fieldnames(typeof(dfg.g))
+dfg.g.vertices
+summ = getSummary(dfg)
+summaryGraph = getSummaryGraph(dfg)
+ls(summaryGraph)
+lsf(summaryGraph)
+getVariable(summaryGraph, :a)
+getFactor(summaryGraph, :f1)
