@@ -58,6 +58,12 @@ getSubgraphAroundNode
 getSubgraph
 ```
 
+### Summaries
+```@docs
+getSummary
+getSummaryGraph
+```
+
 ### Visualization and Plotting
 ```@docs
 toDot
