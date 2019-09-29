@@ -86,7 +86,6 @@ function addFactor!(dfg::SymbolDFG, variableLabels::Vector{Symbol}, factor::DFGF
 	if haskey(dfg.g.factors, factor.label)
         error("Factor '$(factor.label)' already exists in the factor graph")
     end
-	# factor._internalId = 0
 
     factor._variableOrderSymbols = variableLabels
 

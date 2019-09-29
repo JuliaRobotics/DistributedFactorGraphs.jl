@@ -70,9 +70,6 @@ function addFactor!(dfg::LightDFG, variables::Vector{V}, factor::F)::Bool where 
     #     end
     # end
 
-	#NOTE Internal ID always set to zero as it is not needed?
-    # factor._internalId = 0
-
 	variableLabels = map(v->v.label, variables)
 
     factor._variableOrderSymbols = copy(variableLabels)
@@ -90,7 +87,6 @@ function addFactor!(dfg::LightDFG, variableLabels::Vector{Symbol}, factor::F)::B
 	if haskey(dfg.g.factors, factor.label)
         error("Factor '$(factor.label)' already exists in the factor graph")
     end
-	# factor._internalId = 0
 
     factor._variableOrderSymbols = variableLabels
 
