@@ -7,7 +7,7 @@ An in-memory DistributedFactorGraph based on LightGraphs.jl with parameters:
 - V: Variable type
 - F: Factor type
 """
-mutable struct LightDFG{T <: AbstractParams, V <: DFGNode, F <:DFGNode} <: AbstractDFG
+mutable struct LightDFG{T <: AbstractParams, V <: AbstractDFGVariable, F <:AbstractDFGFactor} <: AbstractDFG
     g::FactorGraph{Int, V, F}
     description::String
     userId::String
@@ -30,7 +30,7 @@ function LightDFG{T,V,F}(g::FactorGraph{Int,V,F}=FactorGraph{Int,V,F}();
                            userId::String="User ID",
                            robotId::String="Robot ID",
                            sessionId::String="Session ID",
-                           params::T=NoSolverParams()) where {T <: AbstractParams, V <:DFGNode, F<:DFGNode}
+                           params::T=NoSolverParams()) where {T <: AbstractParams, V <:AbstractDFGVariable, F<:AbstractDFGFactor}
 
     LightDFG{T,V,F}(g, description, userId, robotId, sessionId, Symbol[], params)
 end

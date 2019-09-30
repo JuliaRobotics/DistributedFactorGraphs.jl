@@ -17,11 +17,11 @@ end
     $(SIGNATURES)
 True if the variable or factor exists in the graph.
 """
-function exists(dfg::LightDFG{P,V,F}, node::V) where {P <:AbstractParams, V <: DFGNode, F <: DFGNode, N <: DFGNode}
+function exists(dfg::LightDFG{P,V,F}, node::V) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
 	return haskey(dfg.g.variables, node.label)
 end
 
-function exists(dfg::LightDFG{P,V,F}, node::F) where {P <:AbstractParams, V <: DFGNode, F <: DFGNode, N <: DFGNode}
+function exists(dfg::LightDFG{P,V,F}, node::F) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
 	return haskey(dfg.g.factors, node.label)
 end
 
@@ -279,7 +279,7 @@ function getNeighbors(dfg::LightDFG, node::DFGNode; ready::Union{Nothing, Int}=n
 	backendset != nothing && filter!(lbl -> _isbackendset(dfg, lbl, backendset), neighbors_ll)
 
     # Variable sorting (order is important)
-    if node isa DFGFactor
+    if typeof(node) <: AbstractDFGFactor
         order = intersect(node._variableOrderSymbols, neighbors_ll)#map(v->v.dfgNode.label, neighbors))
         return order
     end
@@ -292,7 +292,7 @@ end
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
 """
-function getNeighbors(dfg::LightDFG, label::Symbol; ready::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}  where T <: DFGNode
+function getNeighbors(dfg::LightDFG, label::Symbol; ready::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}
 	if !exists(dfg, label)
         error("Variable/factor with label '$(label)' does not exist in the factor graph")
     end
@@ -313,9 +313,7 @@ function getNeighbors(dfg::LightDFG, label::Symbol; ready::Union{Nothing, Int}=n
 
 end
 
-# Aliases
-
-function _copyIntoGraph!(sourceDFG::LightDFG, destDFG::LightDFG, ns::Vector{Int}, includeOrphanFactors::Bool=false)::Nothing
+function _copyIntoGraph!(sourceDFG::LightDFG{<:AbstractParams, V, F}, destDFG::LightDFG{<:AbstractParams, V, F}, ns::Vector{Int}, includeOrphanFactors::Bool=false)::Nothing where {V <: AbstractDFGVariable, F <: AbstractDFGFactor}
 	#kan ek die in bulk copy, soos graph en dan nuwe map maak
 	# Add all variables first,
 	labels = [sourceDFG.g.labels[i] for i in ns]
@@ -334,7 +332,7 @@ function _copyIntoGraph!(sourceDFG::LightDFG, destDFG::LightDFG, ns::Vector{Int}
 
 			neigh_labels = [sourceDFG.g.labels[i] for i in neigh_ints]
             # Find the labels and associated variables in our new subgraph
-            factVariables = DFGVariable[]
+            factVariables = V[]
             for v_lab in neigh_labels
                 if haskey(destDFG.g.variables, v_lab)
                     push!(factVariables, getVariable(destDFG, v_lab))
@@ -359,7 +357,7 @@ Optionally provide a distance to specify the number of edges should be followed.
 Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
 Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
 """
-function getSubgraphAroundNode(dfg::LightDFG, node::DFGNode, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::LightDFG=LightDFG{AbstractParams}())::LightDFG
+function getSubgraphAroundNode(dfg::LightDFG{P,V,F}, node::DFGNode, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::LightDFG=LightDFG{P,V,F}())::LightDFG where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
     if !exists(dfg,node.label)
         error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
     end
@@ -372,7 +370,8 @@ function getSubgraphAroundNode(dfg::LightDFG, node::DFGNode, distance::Int64=1, 
 	return addToDFG
 
 end
-
+# dfg::LightDFG{P,V,F}
+# where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
 
 """
     $(SIGNATURES)
@@ -380,9 +379,9 @@ Get a deep subgraph copy from the DFG given a list of variables and factors.
 Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
 Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
 """
-function getSubgraph(dfg::LightDFG, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false, addToDFG::LightDFG=LightDFG{AbstractParams}())::LightDFG
-    for label in variableFactorLabels
-        if !exists(dfg, label)
+function getSubgraph(dfg::LightDFG{P,V,F}, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false, addToDFG::LightDFG=LightDFG{P,V,F}())::LightDFG where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
+	for label in variableFactorLabels
+		if !exists(dfg, label)
             error("Variable/factor with label '$(label)' does not exist in the factor graph")
         end
     end

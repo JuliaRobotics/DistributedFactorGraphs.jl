@@ -146,4 +146,5 @@ label(v::DFGVariableSummary) = v.label
 timestamp(v::DFGVariableSummary) = v.timestamp
 tags(v::DFGVariableSummary) = v.tags
 estimates(v::DFGVariableSummary) = v.estimateDict
+estimate(v::DFGVariableSummary, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
 internalId(v::DFGVariableSummary) = v._internalId

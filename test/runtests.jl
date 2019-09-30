@@ -17,3 +17,8 @@ end
 @testset "Plotting Tests" begin
     include("plottingTest.jl")
 end
+
+@testset "SummaryDFG test" begin
+    @info "Testing LightDFG Variable and Factor Subtypes"
+    include("LightDFGSummaryTypes.jl")
+end
