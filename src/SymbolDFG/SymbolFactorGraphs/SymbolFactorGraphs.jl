@@ -15,7 +15,11 @@ export
     # addVariable!,
     # addFactor!
 
-const AbstractNodeType = DFGNode
+# import DistributedFactorGraphs: DFGNode
+# const AbstractNodeType = DFGNode
+import DistributedFactorGraphs: AbstractDFGVariable, AbstractDFGFactor
+const AbstractVariableType = AbstractDFGVariable
+const AbstractFactorType = AbstractDFGFactor
 
 import Base: zero
 const UnionNothingSymbol = Union{Nothing, Symbol}
@@ -30,7 +34,7 @@ include("symboledge.jl")
 
 A type representing an undirected bipartite factor graph based on `label::Symbol`.
 """
-mutable struct SymbolFactorGraph{V <: AbstractNodeType, F <: AbstractNodeType} <: AbstractGraph{UnionNothingSymbol}
+mutable struct SymbolFactorGraph{V <: AbstractVariableType, F <: AbstractFactorType} <: AbstractGraph{UnionNothingSymbol}
     ne::Int
     fadjdict::Dict{Symbol,Vector{Symbol}} # [variable src id]: (dst, dst, dst)
     variables::Dict{Symbol,V}
@@ -85,10 +89,10 @@ If not specified, the element type `T` is the type of `nv,nf`.
 
 ## Examples
 ```jldoctest
-# SymbolFactorGraph{AbstractNodeType,AbstractNodeType}()
+# SymbolFactorGraph{AbstractVariableType,AbstractFactorType}()
 ```
 """
-function SymbolFactorGraph{V, F}(nv::Int=100, nf::Int=100) where {V <: AbstractNodeType, F <: AbstractNodeType}
+function SymbolFactorGraph{V, F}(nv::Int=100, nf::Int=100) where {V <: AbstractVariableType, F <: AbstractFactorType}
     fadjdict = Dict{Symbol,Vector{Symbol}}()
         sizehint!(fadjdict, nv + nf)
     variables = Dict{Symbol,V}()
@@ -100,7 +104,7 @@ end
 
 
 
-# SymbolFactorGraph{V, F}() where {V<:AbstractNodeType,F<:AbstractNodeType}= SymbolFactorGraph{Int, V, F}()
+# SymbolFactorGraph{V, F}() where {V<:AbstractVariableType,F<:AbstractFactorType}= SymbolFactorGraph{Int, V, F}()
 
 # SimpleGraph(UInt8)
 """
@@ -110,13 +114,13 @@ Construct an empty `SymbolFactorGraph{T}` with 0 vertices and 0 edges.
 
 ## Examples
 ```jldoctest
-julia> SymbolFactorGraph(Int,AbstractNodeType, AbstractNodeType)
-SymbolFactorGraph{Int64,AbstractNodeType,AbstractNodeType}(0, 0, Union{Nothing, FGNode{AbstractNodeType,Int64}}[], Union{Nothing, FGNode{AbstractNodeType,Int64}}[])
+julia> SymbolFactorGraph(Int,AbstractVariableType, AbstractFactorType)
+SymbolFactorGraph{Int64,AbstractVariableType,AbstractFactorType}(0, 0, Union{Nothing, FGNode{AbstractVariableType,Int64}}[], Union{Nothing, FGNode{AbstractFactorType,Int64}}[])
 ```
 """
-# SymbolFactorGraph(::Type{T}, ::Type{V}, ::Type{F}) where {T <: Integer, V<:AbstractNodeType,F<:AbstractNodeType} = SymbolFactorGraph{T, V, F}(zero(T), zero(T))
+# SymbolFactorGraph(::Type{T}, ::Type{V}, ::Type{F}) where {T <: Integer, V<:AbstractVariableType,F<:AbstractFactorType} = SymbolFactorGraph{T, V, F}(zero(T), zero(T))
 
-# SymbolFactorGraph(Int,AbstractNodeType, AbstractNodeType)
+# SymbolFactorGraph(Int,AbstractVariableType, AbstractFactorType)
 
 
 #= #############################################################################
