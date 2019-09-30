@@ -107,6 +107,15 @@ end
 
     @test getSolverParams(dfg) != nothing
     @test setSolverParams(dfg, getSolverParams(dfg)) == getSolverParams(dfg)
+
+    #solver data is initialized
+    @test !isInitialized(dfg, :a)
+    @test !isInitialized(v2)
+
+    #TODO Should the next test work?
+    @test_broken !isInitialized(dfg, :f1)
+    @test_broken !isInitialized(f1)
+    
 end
 
 @testset "Updating Nodes" begin
