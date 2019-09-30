@@ -533,11 +533,12 @@ function getAdjacencyMatrixSparse(dfg::MetaGraphsDFG)::Tuple{LightGraphs.SparseM
 	return adjvf, v_labels, f_labels
 end
 
+#FIXME remove _ when issue #86 is resolved, for now force dispach to generic toDot
 """
     $(SIGNATURES)
 Produces a dot-format of the graph for visualization.
 """
-function toDot(dfg::MetaGraphsDFG)::String
+function _toDot(dfg::MetaGraphsDFG)::String
 	@error "toDot(dfg::MetaGraphsDFG) is not sopported yet, see https://github.com/JuliaGraphs/MetaGraphs.jl/issues/86"
     m = PipeBuffer()
     MetaGraphs.savedot(m, dfg.g)
@@ -556,7 +557,7 @@ Note
 - Can be viewed with the `xdot` system application.
 - Based on graphviz.org
 """
-function toDotFile(dfg::MetaGraphsDFG, fileName::String="/tmp/dfg.dot")::Nothing
+function _toDotFile(dfg::MetaGraphsDFG, fileName::String="/tmp/dfg.dot")::Nothing
 	@error "toDotFile(dfg::MetaGraphsDFG,filename) is not supported yet, see https://github.com/JuliaGraphs/MetaGraphs.jl/issues/86"
     open(fileName, "w") do fid
         MetaGraphs.savedot(fid, dfg.g)
