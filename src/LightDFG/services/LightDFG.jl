@@ -35,7 +35,7 @@ exists(dfg::LightDFG, node::DFGNode) = exists(dfg, node.label)
     $(SIGNATURES)
 Add a DFGVariable to a DFG.
 """
-function addVariable!(dfg::LightDFG, variable::V)::Bool where V <: AbstractDFGVariable
+function addVariable!(dfg::LightDFG{<:AbstractParams, V, <:AbstractDFGFactor}, variable::V)::Bool where V <: AbstractDFGVariable
 	#TODO should this be an error
 	if haskey(dfg.g.variables, variable.label)
 		error("Variable '$(variable.label)' already exists in the factor graph")
@@ -56,7 +56,7 @@ end
     $(SIGNATURES)
 Add a DFGFactor to a DFG.
 """
-function addFactor!(dfg::LightDFG, variables::Vector{V}, factor::F)::Bool where {V <: AbstractDFGVariable, F <: AbstractDFGFactor}
+function addFactor!(dfg::LightDFG{<:AbstractParams, V, F}, variables::Vector{V}, factor::F)::Bool where {V <: AbstractDFGVariable, F <: AbstractDFGFactor}
     # if haskey(dfg.g.metaindex[:label], factor.label)
     #     error("Factor '$(factor.label)' already exists in the factor graph")
     # end
@@ -82,7 +82,7 @@ end
     $(SIGNATURES)
 Add a DFGFactor to a DFG.
 """
-function addFactor!(dfg::LightDFG, variableLabels::Vector{Symbol}, factor::F)::Bool where F <: AbstractDFGFactor
+function addFactor!(dfg::LightDFG{<:AbstractParams, <:AbstractDFGVariable, F}, variableLabels::Vector{Symbol}, factor::F)::Bool where F <: AbstractDFGFactor
 	#TODO should this be an error
 	if haskey(dfg.g.factors, factor.label)
         error("Factor '$(factor.label)' already exists in the factor graph")
