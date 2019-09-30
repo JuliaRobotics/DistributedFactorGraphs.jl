@@ -22,10 +22,20 @@ setDescription(dfg::GraphsDFG, description::String) = dfg.description = descript
 getInnerGraph(dfg::GraphsDFG) = dfg.g
 getAddHistory(dfg::GraphsDFG) = dfg.addHistory
 getSolverParams(dfg::GraphsDFG) = dfg.solverParams
+function setSolverParams(dfg::GraphsDFG, solverParams::T) where T <: AbstractParams
+    dfg.solverParams = solverParams
+end
 
-# setSolverParams(dfg::GraphsDFG, solverParams) = dfg.solverParams = solverParams
-function setSolverParams(dfg::GraphsDFG, solverParams::P) where P <: AbstractParams
-  dfg.solverParams = solverParams
+"""
+    $(SIGNATURES)
+Gets an empty and unique CloudGraphsDFG derived from an existing DFG.
+"""
+function _getDuplicatedEmptyDFG(dfg::GraphsDFG)::GraphsDFG
+    newDfg = GraphsDFG{typeof(dfg.solverParams)}(;
+		userId=dfg.userId, robotId=dfg.robotId, sessionId=dfg.sessionId,
+		params=deepcopy(dfg.solverParams))
+	newDfg.description ="(Copy of) $(dfg.description)"
+	return newDfg
 end
 
 """
@@ -190,13 +200,6 @@ function deleteVariable!(dfg::GraphsDFG, label::Symbol)::DFGVariable
     return variable
 end
 
-#Alias
-"""
-    $(SIGNATURES)
-Delete a referenced DFGVariable from the DFG.
-"""
-deleteVariable!(dfg::GraphsDFG, variable::DFGVariable)::DFGVariable = deleteVariable!(dfg, variable.label)
-
 """
     $(SIGNATURES)
 Delete a DFGFactor from the DFG using its label.
@@ -210,13 +213,6 @@ function deleteFactor!(dfg::GraphsDFG, label::Symbol)::DFGFactor
     delete!(dfg.labelDict, label)
     return factor
 end
-
-# Alias
-"""
-    $(SIGNATURES)
-Delete the referened DFGFactor from the DFG.
-"""
-deleteFactor!(dfg::GraphsDFG, factor::DFGFactor)::DFGFactor = deleteFactor!(dfg, factor.label)
 
 """
     $(SIGNATURES)
@@ -237,34 +233,6 @@ end
 
 """
     $(SIGNATURES)
-Get a list of IDs of the DFGVariables in the DFG.
-Optionally specify a label regular expression to retrieves a subset of the variables.
-
-Example
-```julia
-getVariableIds(dfg, r"l", tags=[:APRILTAG;])
-```
-
-Related
-
-ls
-"""
-function getVariableIds(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{Symbol}
-  vars = getVariables(dfg, regexFilter, tags=tags)
-  # mask = map(v -> length(intersect(v.tags, tags)) > 0, vars )
-  map(v -> v.label, vars)
-end
-
-# Alias
-"""
-    $(SIGNATURES)
-List the DFGVariables in the DFG.
-Optionally specify a label regular expression to retrieves a subset of the variables.
-"""
-ls(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{Symbol} = getVariableIds(dfg, regexFilter, tags=tags)
-
-"""
-    $(SIGNATURES)
 List the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
@@ -278,42 +246,11 @@ end
 
 """
     $(SIGNATURES)
-Get a list of the IDs of the DFGFactors in the DFG.
-Optionally specify a label regular expression to retrieves a subset of the factors.
-"""
-getFactorIds(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{Symbol} = map(f -> f.label, getFactors(dfg, regexFilter))
-
-"""
-    $(SIGNATURES)
-List the DFGFactors in the DFG.
-Optionally specify a label regular expression to retrieves a subset of the factors.
-"""
-# Alias
-lsf(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{Symbol} = getFactorIds(dfg, regexFilter)
-
-"""
-	$(SIGNATURES)
-Alias for getNeighbors - returns neighbors around a given node label.
-"""
-function lsf(dfg::GraphsDFG, label::Symbol)::Vector{Symbol}
-  return getNeighbors(dfg, label)
-end
-
-"""
-    $(SIGNATURES)
 Checks if the graph is fully connected, returns true if so.
 """
 function isFullyConnected(dfg::GraphsDFG)::Bool
     return length(Graphs.connected_components(dfg.g)) == 1
 end
-
-#Alias
-"""
-    $(SIGNATURES)
-Checks if the graph is not fully connected, returns true if it is not contiguous.
-"""
-hasOrphans(dfg::GraphsDFG)::Bool = !isFullyConnected(dfg)
-
 
 """
     $(SIGNATURES)
@@ -359,56 +296,40 @@ function getNeighbors(dfg::GraphsDFG, label::Symbol; ready::Union{Nothing, Int}=
     return map(n -> n.dfgNode.label, neighbors)
 end
 
-# Aliases
-"""
-    $(SIGNATURES)
-Retrieve a list of labels of the immediate neighbors around a given variable or factor.
-"""
-function ls(dfg::GraphsDFG, node::T)::Vector{Symbol} where T <: DFGNode
-    return getNeighbors(dfg, node)
-end
-"""
-    $(SIGNATURES)
-Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
-"""
-function ls(dfg::GraphsDFG, label::Symbol)::Vector{Symbol} where T <: DFGNode
-    return getNeighbors(dfg, label)
-end
-
-function _copyIntoGraph!(sourceDFG::GraphsDFG, destDFG::GraphsDFG, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false)::Nothing
-    # Split into variables and factors
-    verts = map(id -> sourceDFG.g.vertices[sourceDFG.labelDict[id]], variableFactorLabels)
-    sourceVariables = filter(n -> n.dfgNode isa DFGVariable, verts)
-    sourceFactors = filter(n -> n.dfgNode isa DFGFactor, verts)
-
-    # Now we have to add all variables first,
-    for variable in sourceVariables
-        if !haskey(destDFG.labelDict, variable.dfgNode.label)
-            addVariable!(destDFG, deepcopy(variable.dfgNode))
-        end
-    end
-    # And then all factors to the destDFG.
-    for factor in sourceFactors
-        if !haskey(destDFG.labelDict, factor.dfgNode.label)
-            # Get the original factor variables (we need them to create it)
-            neighVarIds = getNeighbors(sourceDFG, factor.dfgNode.label) #OLD: in_neighbors(factor, sourceDFG.g)
-            # Find the labels and associated neighVarIds in our new subgraph
-            factVariables = DFGVariable[]
-            for neighVarId in neighVarIds
-                if haskey(destDFG.labelDict, neighVarId)
-                    push!(factVariables, getVariable(destDFG, neighVarId))
-                    #otherwise ignore
-                end
-            end
-
-            # Only if we have all of them should we add it (otherwise strange things may happen on evaluation)
-            if includeOrphanFactors || length(factVariables) == length(neighVarIds)
-                addFactor!(destDFG, factVariables, deepcopy(factor.dfgNode))
-            end
-        end
-    end
-    return nothing
-end
+# function _copyIntoGraph!(sourceDFG::GraphsDFG, destDFG::GraphsDFG, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false)::Nothing
+#     # Split into variables and factors
+#     verts = map(id -> sourceDFG.g.vertices[sourceDFG.labelDict[id]], variableFactorLabels)
+#     sourceVariables = filter(n -> n.dfgNode isa DFGVariable, verts)
+#     sourceFactors = filter(n -> n.dfgNode isa DFGFactor, verts)
+#
+#     # Now we have to add all variables first,
+#     for variable in sourceVariables
+#         if !haskey(destDFG.labelDict, variable.dfgNode.label)
+#             addVariable!(destDFG, deepcopy(variable.dfgNode))
+#         end
+#     end
+#     # And then all factors to the destDFG.
+#     for factor in sourceFactors
+#         if !haskey(destDFG.labelDict, factor.dfgNode.label)
+#             # Get the original factor variables (we need them to create it)
+#             neighVarIds = getNeighbors(sourceDFG, factor.dfgNode.label) #OLD: in_neighbors(factor, sourceDFG.g)
+#             # Find the labels and associated neighVarIds in our new subgraph
+#             factVariables = DFGVariable[]
+#             for neighVarId in neighVarIds
+#                 if haskey(destDFG.labelDict, neighVarId)
+#                     push!(factVariables, getVariable(destDFG, neighVarId))
+#                     #otherwise ignore
+#                 end
+#             end
+#
+#             # Only if we have all of them should we add it (otherwise strange things may happen on evaluation)
+#             if includeOrphanFactors || length(factVariables) == length(neighVarIds)
+#                 addFactor!(destDFG, factVariables, deepcopy(factor.dfgNode))
+#             end
+#         end
+#     end
+#     return nothing
+# end
 
 """
     $(SIGNATURES)
@@ -447,110 +368,8 @@ end
 
 """
     $(SIGNATURES)
-Get a deep subgraph copy from the DFG given a list of variables and factors.
-Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
-Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
-"""
-function getSubgraph(dfg::GraphsDFG, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false, addToDFG::GraphsDFG=GraphsDFG{AbstractParams}())::GraphsDFG
-    for label in variableFactorLabels
-        if !haskey(dfg.labelDict, label)
-            error("Variable/factor with label '$(label)' does not exist in the factor graph")
-        end
-    end
-
-    _copyIntoGraph!(dfg, addToDFG, variableFactorLabels, includeOrphanFactors)
-    return addToDFG
-end
-
-"""
-    $(SIGNATURES)
-Get an adjacency matrix for the DFG, returned as a Matrix{Union{Nothing, Symbol}}.
-Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor.
-The first row and first column are factor and variable headings respectively.
-"""
-function getAdjacencyMatrix(dfg::GraphsDFG)::Matrix{Union{Nothing, Symbol}}
-    varLabels = sort(map(v->v.label, getVariables(dfg)))
-    factLabels = sort(map(f->f.label, getFactors(dfg)))
-    vDict = Dict(varLabels .=> [1:length(varLabels)...].+1)
-
-    adjMat = Matrix{Union{Nothing, Symbol}}(nothing, length(factLabels)+1, length(varLabels)+1)
-    # Set row/col headings
-    adjMat[2:end, 1] = factLabels
-    adjMat[1, 2:end] = varLabels
-    for (fIndex, factLabel) in enumerate(factLabels)
-        factVars = getNeighbors(dfg, getFactor(dfg, factLabel))
-        map(vLabel -> adjMat[fIndex+1,vDict[vLabel]] = factLabel, factVars)
-    end
-    return adjMat
-end
-
-function getAdjacencyMatrixSparse(dfg::GraphsDFG)::Tuple{LightGraphs.SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}
-	varLabels = map(v->v.label, getVariables(dfg))
-	factLabels = map(f->f.label, getFactors(dfg))
-
-	vDict = Dict(varLabels .=> [1:length(varLabels)...])
-
-	adjMat = spzeros(Int, length(factLabels), length(varLabels))
-
-	for (fIndex, factLabel) in enumerate(factLabels)
-		factVars = getNeighbors(dfg, getFactor(dfg, factLabel))
-	    map(vLabel -> adjMat[fIndex,vDict[vLabel]] = 1, factVars)
-	end
-	return adjMat, varLabels, factLabels
-end
-
-"""
-    $(SIGNATURES)
 Produces a dot-format of the graph for visualization.
 """
 function toDot(dfg::GraphsDFG)::String
-    m = PipeBuffer()
-    write(m,Graphs.to_dot(dfg.g))
-    data = take!(m)
-    close(m)
-    return String(data)
+	return Graphs.to_dot(dfg.g)
 end
-
-"""
-    $(SIGNATURES)
-Produces a dot file of the graph for visualization.
-Download XDot to see the data
-
-Note
-- Default location "/tmp/dfg.dot" -- MIGHT BE REMOVED
-- Can be viewed with the `xdot` system application.
-- Based on graphviz.org
-"""
-function toDotFile(dfg::GraphsDFG, fileName::String="/tmp/dfg.dot")::Nothing
-    open(fileName, "w") do fid
-        write(fid,Graphs.to_dot(dfg.g))
-    end
-    return nothing
-end
-
-# function __init__()
-#     @require DataFrames="a93c6f00-e57d-5684-b7b6-d8193f3e46c0" begin
-#         if isdefined(Main, :DataFrames)
-#             """
-#                 $(SIGNATURES)
-#             Get an adjacency matrix for the DFG as a DataFrame.
-#             Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor.
-#             The first column is the factor headings.
-#             """
-#             function getAdjacencyMatrixDataFrame(dfg::GraphsDFG)::Main.DataFrames.DataFrame
-#                 varLabels = sort(map(v->v.label, getVariables(dfg)))
-#                 factLabels = sort(map(f->f.label, getFactors(dfg)))
-#                 adjDf = DataFrames.DataFrame(:Factor => Union{Missing, Symbol}[])
-#                 for varLabel in varLabels
-#                     adjDf[varLabel] = Union{Missing, Symbol}[]
-#                 end
-#                 for (i, factLabel) in enumerate(factLabels)
-#                     push!(adjDf, [factLabel, DataFrames.missings(length(varLabels))...])
-#                     factVars = getNeighbors(dfg, getFactor(dfg, factLabel))
-#                     map(vLabel -> adjDf[vLabel][i] = factLabel, factVars)
-#                 end
-#                 return adjDf
-#             end
-#         end
-#     end
-# end

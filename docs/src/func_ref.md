@@ -58,13 +58,15 @@ getSubgraphAroundNode
 getSubgraph
 ```
 
-### Visualization
+### Summaries
+```@docs
+getSummary
+getSummaryGraph
+```
+
+### Visualization and Plotting
 ```@docs
 toDot
 toDotFile
-```
-
-### DataFrame Extension Functions
-```@docs
-getAdjacencyMatrixDataFrame
+dfgplot
 ```

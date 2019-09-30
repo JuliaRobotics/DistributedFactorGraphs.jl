@@ -1,11 +1,18 @@
 
-export sortVarNested
+export sortVarNested, sortDFG
 export isPrior, lsfPriors
-export getData
 export getVariableType, getSofttype
 export getFactorType, getfnctype
 export lsTypes, lsfTypes
 export lsWho, lsfWho
+
+## Utility functions for getting type names and modules (from IncrementalInference)
+function _getmodule(t::T) where T
+  T.name.module
+end
+function _getname(t::T) where T
+  T.name.name
+end
 
 """
     $(SIGNATURES)
@@ -85,10 +92,20 @@ end
 """
     $SIGNATURES
 
-Retrieve data structure stored in a node.
+Sort variable (factor) lists in a meaningful way, for example `[:april;:x1_3;:x1_6;]`
+
+Notes
+- Not fool proof, but does better than native sort.
+
+Example
+
+`sortDFG(ls(dfg))`
+
+Related
+
+ls, lsf
 """
-getData(v::DFGFactor)::GenericFunctionNodeData = v.data
-getData(v::DFGVariable; solveKey::Symbol=:default)::VariableNodeData = v.solverDataDict[solveKey]
+sortDFG(vars::Vector{Symbol})::Vector{Symbol} = sortVarNested(vars)
 
 """
     $SIGNATURES
@@ -232,10 +249,38 @@ function lsTypes(dfg::G)::Dict{Symbol, Vector{String}} where G <: AbstractDFG
 end
 
 
+function ls(dfg::G, ::Type{T}; solveKey::Symbol=:default) where {G <: AbstractDFG, T <: InferenceVariable}
+  xx = getVariables(dfg)
+  mask = getVariableType.(xx, solveKey=solveKey) .|> typeof .== T
+  vxx = view(xx, mask)
+  map(x->x.label, vxx)
+end
+
+
+function ls(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: FunctorInferenceType}
+  xx = getFactors(dfg)
+  names = getfield.(typeof.(getFactorType.(xx)), :name) .|> Symbol
+  vxx = view(xx, names .== Symbol(T))
+  map(x->x.label, vxx)
+end
+
+function lsf(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: FunctorInferenceType}
+  ls(dfg, T)
+end
+
+
 """
     $(SIGNATURES)
 Gives back all factor labels that fit the bill:
 	lsWho(dfg, :Pose3)
+
+Dev Notes
+- Cloud versions will benefit from less data transfer
+ - `ls(dfg::C, ::T) where {C <: CloudDFG, T <: ..}`
+
+Related
+
+ls, lsf, lsfPriors
 """
 function lsWho(dfg::AbstractDFG, type::Symbol; solveKey::Symbol=:default)::Vector{Symbol}
     vars = getVariables(dfg)
@@ -252,6 +297,14 @@ end
     $(SIGNATURES)
 Gives back all factor labels that fit the bill:
 	lsfWho(dfg, :Point2Point2)
+
+Dev Notes
+- Cloud versions will benefit from less data transfer
+ - `ls(dfg::C, ::T) where {C <: CloudDFG, T <: ..}`
+
+Related
+
+ls, lsf, lsfPriors
 """
 function lsfWho(dfg::AbstractDFG, type::Symbol)::Vector{Symbol}
 	facs = getFactors(dfg)

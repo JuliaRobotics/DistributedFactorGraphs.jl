@@ -63,8 +63,8 @@ getDescription(dfg::CloudGraphsDFG) = dfg.description
 setDescription(dfg::CloudGraphsDFG, description::String) = dfg.description = description
 getAddHistory(dfg::CloudGraphsDFG) = dfg.addHistory
 getSolverParams(dfg::CloudGraphsDFG) = dfg.solverParams
-function setSolverParams(dfg::CloudGraphsDFG, solverParams::T) where T <: AbstractParams
-    dfg.solverParams = solverParams
+function setSolverParams(dfg::CloudGraphsDFG, solverParams::T)::T where T <: AbstractParams
+    return dfg.solverParams = solverParams
 end
 
 """
@@ -255,7 +255,7 @@ function getVariable(dfg::CloudGraphsDFG, variableId::Int64)::DFGVariable
     # props["label"] = Symbol(variable.label)
     timestamp = DateTime(props["timestamp"])
     tags =  JSON2.read(props["tags"], Vector{Symbol})
-    estimateDict = JSON2.read(props["estimateDict"], Dict{Symbol, VariableEstimate})
+    estimateDict = JSON2.read(props["estimateDict"], Dict{Symbol, Dict{Symbol, VariableEstimate}})
     smallData = nothing
     smallData = JSON2.read(props["smallData"], Dict{String, String})
 
@@ -387,6 +387,20 @@ function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariabl
     Neo4j.updatenodeproperties(neo4jNode, props)
     Neo4j.updatenodelabels(neo4jNode, union([string(variable.label), "VARIABLE", dfg.userId, dfg.robotId, dfg.sessionId], variable.tags))
     return variable
+end
+
+"""
+    $(SIGNATURES)
+Update solver and estimate data for a variable (variable can be from another graph).
+"""
+function updateVariableSolverData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable)::DFGVariable
+    if !exists(dfg, sourceVariable)
+        error("Source variable '$(sourceVariable.label)' doesn't exist in the graph.")
+    end
+    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, sourceVariable.label)
+    Neo4j.setnodeproperty(dfg.neo4jInstance.graph, nodeId, "estimateDict", JSON2.write(sourceVariable.estimateDict))
+    Neo4j.setnodeproperty(dfg.neo4jInstance.graph, nodeId, "solverDataDict", JSON2.write(Dict(keys(sourceVariable.solverDataDict) .=> map(vnd -> pack(dfg, vnd), values(sourceVariable.solverDataDict)))))
+    return sourceVariable
 end
 
 """
@@ -704,25 +718,11 @@ Optionally provide a distance to specify the number of edges should be followed.
 Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
 Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
 """
-function getSubgraphAroundNode(dfg::CloudGraphsDFG, node::DFGNode, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::Union{Nothing, CloudGraphsDFG}=nothing)::CloudGraphsDFG
+function getSubgraphAroundNode(dfg::CloudGraphsDFG, node::DFGNode, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::AbstractDFG=_getDuplicatedEmptyDFG(dfg))::AbstractDFG
     distance < 1 && error("getSubgraphAroundNode() only works for distance > 0")
 
     # Making a copy session if not specified
-    if addToDFG == nothing
-        addToDFG = _getDuplicatedEmptyDFG(dfg)
-    end
-
-    # Thank you Neo4j for 0..* awesomeness!!
-    neighborList = _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(node.label))-[FACTORGRAPH*0..$distance]-(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId))")
-
-    # Copy the section of graph we want
-    _copyIntoGraph!(dfg, addToDFG, neighborList, includeOrphanFactors)
-    return addToDFG
-end
-
-function getSubgraphAroundNode(dfg::CloudGraphsDFG{<:AbstractParams}, node::DFGNode, distance::Int64, includeOrphanFactors::Bool, addToDFG::MetaGraphsDFG{AbstractParams})::AbstractDFG
-    distance < 1 && error("getSubgraphAroundNode() only works for distance > 0")
-
+    #moved to parameter addToDFG::AbstractDFG=_getDuplicatedEmptyDFG(dfg)
 
     # Thank you Neo4j for 0..* awesomeness!!
     neighborList = _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(node.label))-[FACTORGRAPH*0..$distance]-(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId))")
@@ -739,11 +739,11 @@ Get a deep subgraph copy from the DFG given a list of variables and factors.
 Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
 Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
 """
-function getSubgraph(dfg::CloudGraphsDFG, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false, addToDFG::Union{Nothing, CloudGraphsDFG}=nothing)::CloudGraphsDFG
+function getSubgraph(dfg::CloudGraphsDFG,
+                     variableFactorLabels::Vector{Symbol},
+                     includeOrphanFactors::Bool=false,
+                     addToDFG::G=_getDuplicatedEmptyDFG(dfg) )::G where {G <: AbstractDFG}
     # Making a copy session if not specified
-    if addToDFG == nothing
-        addToDFG = _getDuplicatedEmptyDFG(dfg)
-    end
 
     _copyIntoGraph!(dfg, addToDFG, variableFactorLabels, includeOrphanFactors)
 
@@ -787,6 +787,33 @@ function getAdjacencyMatrix(dfg::CloudGraphsDFG)::Matrix{Union{Nothing, Symbol}}
     return adjMat
 end
 
+function getAdjacencyMatrixSparse(dfg::CloudGraphsDFG)::Tuple{SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}
+    varLabels = getVariableIds(dfg)
+    factLabels = sort(getFactorIds(dfg))
+    vDict = Dict(varLabels .=> [1:length(varLabels)...].+1)
+    fDict = Dict(factLabels .=> [1:length(factLabels)...].+1)
+
+    adjMat = spzeros(Int, length(factLabels)+1, length(varLabels)+1)
+
+    # Now ask for all relationships for this session graph
+    loadtx = transaction(dfg.neo4jInstance.connection)
+    query = "START n=node(*) MATCH (n:VARIABLE:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId))-[r:FACTORGRAPH]-(m:FACTOR:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId)) RETURN n.label as variable, m.label as factor;"
+    nodes = loadtx(query; submit=true)
+    # Have to finish the transaction
+    commit(loadtx)
+    if length(nodes.errors) > 0
+        error(string(nodes.errors))
+    end
+    # Add in the relationships
+    varRel = Symbol.(map(node -> node["row"][1], nodes.results[1]["data"]))
+    factRel = Symbol.(map(node -> node["row"][2], nodes.results[1]["data"]))
+    for i = 1:length(varRel)
+        adjMat[fDict[factRel[i]], vDict[varRel[i]]] = 1
+    end
+
+    return adjMat, varLabels, factLabels
+end
+
 # """
 #     $(SIGNATURES)
 # Produces a dot-format of the graph for visualization.
@@ -814,31 +841,4 @@ end
 #         write(fid,Graphs.to_dot(dfg.g))
 #     end
 #     return nothing
-# end
-#
-# function __init__()
-#     @require DataFrames="a93c6f00-e57d-5684-b7b6-d8193f3e46c0" begin
-#         if isdefined(Main, :DataFrames)
-#             """
-#                 $(SIGNATURES)
-#             Get an adjacency matrix for the DFG as a DataFrame.
-#             Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor.
-#             The first column is the factor headings.
-#             """
-#             function getAdjacencyMatrixDataFrame(dfg::CloudGraphsDFG)::Main.DataFrames.DataFrame
-#                 varLabels = sort(map(v->v.label, getVariables(dfg)))
-#                 factLabels = sort(map(f->f.label, getFactors(dfg)))
-#                 adjDf = DataFrames.DataFrame(:Factor => Union{Missing, Symbol}[])
-#                 for varLabel in varLabels
-#                     adjDf[varLabel] = Union{Missing, Symbol}[]
-#                 end
-#                 for (i, factLabel) in enumerate(factLabels)
-#                     push!(adjDf, [factLabel, DataFrames.missings(length(varLabels))...])
-#                     factVars = getNeighbors(dfg, getFactor(dfg, factLabel))
-#                     map(vLabel -> adjDf[vLabel][i] = factLabel, factVars)
-#                 end
-#                 return adjDf
-#             end
-#         end
-#     end
 # end

@@ -13,10 +13,9 @@ export getAddHistory, getDescription, getLabelDict
 export addVariable!, addFactor!
 export ls, lsf, getVariables, getFactors, getVariableIds, getFactorIds
 export getVariable, getFactor
-export updateVariable!, updateFactor!
+export updateVariable!, updateFactor!, updateVariableSolverData!
 export deleteVariable!, deleteFactor!
 export getAdjacencyMatrix
-export getAdjacencyMatrixDataFrame
 export getNeighbors
 export getSubgraphAroundNode
 export getSubgraph

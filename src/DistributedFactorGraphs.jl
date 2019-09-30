@@ -11,23 +11,22 @@ using LinearAlgebra
 using SparseArrays
 
 # Entities
-include("entities/AbstractTypes.jl")
+include("entities/AbstractDFG.jl")
 include("entities/DFGFactor.jl")
 include("entities/DFGVariable.jl")
+include("entities/AbstractDFGSummary.jl")
 
 export AbstractDFG
 export AbstractParams, NoSolverParams
-export DFGNode
-
-export DFGFactor
+export DFGNode, DFGVariable, DFGFactor
 export InferenceType, PackedInferenceType, FunctorInferenceType, InferenceVariable, ConvolutionObject
-
 export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
+export label, timestamp, tags, estimates, estimate, data, solverData, getData, solverDataDict, setSolverData, internalId, smallData, bigData
+export DFGVariableSummary, DFGFactorSummary, AbstractDFGSummary
 
-export DFGVariable
-export label, timestamp, tags, estimates, estimate, solverData, solverDataDict, id, smallData, bigData
-export setSolverData
-export label, data, id
+# Services/AbstractDFG Exports
+export hasFactor, hasVariable, isInitialized, getFactorFunction, isVariable, isFactor
+export updateGraphSolverData!
 
 # Solver (IIF) Exports
 export VariableNodeData, PackedVariableNodeData, VariableEstimate
@@ -38,9 +37,16 @@ export pack, unpack
 #Interfaces
 export getAdjacencyMatrixSparse
 
+# File import and export
+export saveDFG, loadDFG
+
+# Summary functions
+export getSummary, getSummaryGraph
+
 # Common includes
 include("services/AbstractDFG.jl")
 include("services/DFGVariable.jl")
+include("services/DFGFactor.jl")
 
 # Include the Graphs.jl API.
 include("GraphsDFG/GraphsDFG.jl")
@@ -57,34 +63,7 @@ include("SymbolDFG/SymbolDFG.jl")
 include("LightDFG/LightDFG.jl")
 @reexport using .LightDFGs
 
-export saveDFG, loadDFG
-
 function __init__()
-    @require DataFrames="a93c6f00-e57d-5684-b7b6-d8193f3e46c0" begin
-        if isdefined(Main, :DataFrames)
-            """
-                $(SIGNATURES)
-            Get an adjacency matrix for the DFG as a DataFrame.
-            Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor.
-            The first column is the factor headings.
-            """
-            function getAdjacencyMatrixDataFrame(dfg::Union{GraphsDFG, MetaGraphsDFG, SymbolDFG, LightDFG})::Main.DataFrames.DataFrame
-                varLabels = sort(map(v->v.label, getVariables(dfg)))
-                factLabels = sort(map(f->f.label, getFactors(dfg)))
-                adjDf = DataFrames.DataFrame(:Factor => Union{Missing, Symbol}[])
-                for varLabel in varLabels
-                    adjDf[varLabel] = Union{Missing, Symbol}[]
-                end
-                for (i, factLabel) in enumerate(factLabels)
-                    push!(adjDf, [factLabel, DataFrames.missings(length(varLabels))...])
-                    factVars = getNeighbors(dfg, getFactor(dfg, factLabel))
-                    map(vLabel -> adjDf[vLabel][i] = factLabel, factVars)
-                end
-                return adjDf
-            end
-        end
-    end
-
     @require Neo4j="d2adbeaf-5838-5367-8a2f-e46d570981db" begin
         # Include the Cloudgraphs API
         include("CloudGraphsDFG/CloudGraphsDFG.jl")
@@ -97,9 +76,7 @@ function __init__()
 
 end
 
-
-# not sure where to put
+# To be moved as necessary.
 include("Common.jl")
-include("NeedsAHome.jl")
 
 end

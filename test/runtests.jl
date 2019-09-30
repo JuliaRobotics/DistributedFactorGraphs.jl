@@ -1,46 +1,24 @@
 using Test
-using DataFrames
+using GraphPlot # For plotting tests
 using DistributedFactorGraphs
 
 # Test each interface
 apis = [GraphsDFG, MetaGraphsDFG, SymbolDFG, LightDFG]
 for api in apis
     @testset "Testing Driver: $(api)" begin
+        @info "Testing Driver: $(api)"
         global testDFGAPI = api
         include("interfaceTests.jl")
     end
 end
 
-# if !(get(ENV, "TRAVIS", "") == "true")
-#     @testset "Local Testsets" begin
-#         @testset "HexagonalLightGraphs" begin
-#             include("HexagonalLightGraphs.jl")
-#         end
-#     end
-# end
+# Test special cases
 
-# Test other interfaces that are not yet compatible for the general tests.
-# @testset "CloudGraphsDFG Drive: " begin
-#     include("cloudGraphsDFGTests.jl")
-# end
+@testset "Plotting Tests" begin
+    include("plottingTest.jl")
+end
 
-# function decodePackedType(packeddata::GenericFunctionNodeData{Symbol,<:AbstractString}, notused::String)
-#   usrtyp = convert(FunctorInferenceType, packeddata.fnc)
-#   fulltype = FunctionNodeData{Symbol}
-#   return convert(fulltype, packeddata)
-# end
-#
-# cgDFG = CloudGraphsDFG("localhost", 7474, "neo4j", "test",
-#     "testUser", "testRobot", "testSession",
-#     nothing,
-#     nothing,
-#     decodePackedType)
-# if haskey(ENV, "TRAVIS")
-#     cgDFG = CloudGraphsDFG("localhost", 7474, "neo4j", "neo4j",
-#         "testUser", "testRobot", "testSession",
-#         nothing,
-#         nothing,
-#         decodePackedType)
-# end
-# # Completely wipe out the graph before testing.
-# clearRobot!!(cgDFG)
+@testset "SummaryDFG test" begin
+    @info "Testing LightDFG Variable and Factor Subtypes"
+    include("LightDFGSummaryTypes.jl")
+end
