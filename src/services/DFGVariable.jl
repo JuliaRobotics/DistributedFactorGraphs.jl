@@ -1,5 +1,4 @@
-using Base
-import Base.==
+import Base: ==, convert
 
 function pack(dfg::G, d::VariableNodeData)::PackedVariableNodeData where G <: AbstractDFG
   @debug "Dispatching conversion variable -> packed variable for type $(string(d.softtype))"
@@ -46,7 +45,7 @@ function unpack(dfg::G, d::PackedVariableNodeData)::VariableNodeData where G <: 
     st, d.initialized, d.inferdim, d.ismargin, d.dontmargin )
 end
 
-function compare(a::VariableNodeData,b::VariableNodeData)
+function compare(a::VariableNodeData, b::VariableNodeData)
     TP = true
     TP = TP && a.val == b.val
     TP = TP && a.bw == b.bw
@@ -64,4 +63,8 @@ end
 
 function ==(a::VariableNodeData,b::VariableNodeData, nt::Symbol=:var)
   return DistributedFactorGraphs.compare(a,b)
+end
+
+function convert(::Type{DFGVariableSummary}, v::DFGVariable)
+    return DFGVariableSummary(v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.estimateDict), v._internalId)
 end
