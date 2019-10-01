@@ -789,11 +789,11 @@ end
 
 function getAdjacencyMatrixSparse(dfg::CloudGraphsDFG)::Tuple{SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}
     varLabels = getVariableIds(dfg)
-    factLabels = sort(getFactorIds(dfg))
-    vDict = Dict(varLabels .=> [1:length(varLabels)...].+1)
-    fDict = Dict(factLabels .=> [1:length(factLabels)...].+1)
+    factLabels = getFactorIds(dfg)
+    vDict = Dict(varLabels .=> [1:length(varLabels)...])
+    fDict = Dict(factLabels .=> [1:length(factLabels)...])
 
-    adjMat = spzeros(Int, length(factLabels)+1, length(varLabels)+1)
+    adjMat = spzeros(Int, length(factLabels), length(varLabels))
 
     # Now ask for all relationships for this session graph
     loadtx = transaction(dfg.neo4jInstance.connection)
