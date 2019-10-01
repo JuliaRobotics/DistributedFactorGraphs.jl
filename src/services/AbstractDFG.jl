@@ -472,12 +472,22 @@ Notes:
 - used by both factor graph variable and Bayes tree clique logic.
 """
 function isInitialized(var::DFGVariable; key::Symbol=:default)::Bool
-  solverData(var, key) != nothing && return solverData(var, key).initialized
-  return false
+  	data = solverData(var, key)
+  	if data == nothing
+		@error "Variable does not have solver data $(key)"
+		return false
+  	else
+  		return solverData(var, key).initialized
+	end
 end
 function isInitialized(fct::DFGFactor; key::Symbol=:default)::Bool
-  solverData(var, key) != nothing && return solverData(fct, key).initialized
-  return false
+	data = solverData(var, key)
+  	if data == nothing
+		@error "Factor does not have solver data $(key)"
+		return false
+  	else
+  		return solverData(fct, key).initialized
+	end
 end
 function isInitialized(dfg::G, label::Symbol; key::Symbol=:default)::Bool where G <: AbstractDFG
   return isInitialized(getVariable(dfg, label), key=key)
