@@ -472,11 +472,11 @@ Notes:
 - used by both factor graph variable and Bayes tree clique logic.
 """
 function isInitialized(var::DFGVariable; key::Symbol=:default)::Bool
-  solverData(var, key) && return solverData(var, key).initialized
+  solverData(var, key) != nothing && return solverData(var, key).initialized
   return false
 end
 function isInitialized(fct::DFGFactor; key::Symbol=:default)::Bool
-  solverData(var, key) && return solverData(fct, key).initialized
+  solverData(var, key) != nothing && return solverData(fct, key).initialized
   return false
 end
 function isInitialized(dfg::G, label::Symbol; key::Symbol=:default)::Bool where G <: AbstractDFG
