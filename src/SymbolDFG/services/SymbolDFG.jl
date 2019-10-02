@@ -41,7 +41,7 @@ function addVariable!(dfg::SymbolDFG, variable::DFGVariable)::Bool
 	end
 
 	#NOTE Internal ID always set to zero as it is not needed?
-    variable._internalId = 0
+    # variable._internalId = 0
 
 	SymbolFactorGraphs.addVariable!(dfg.g, variable) || return false
 
@@ -69,9 +69,6 @@ function addFactor!(dfg::SymbolDFG, variables::Vector{DFGVariable}, factor::DFGF
     #     end
     # end
 
-	#NOTE Internal ID always set to zero as it is not needed?
-    factor._internalId = 0
-
 	variableLabels = map(v->v.label, variables)
 
     factor._variableOrderSymbols = copy(variableLabels)
@@ -89,7 +86,6 @@ function addFactor!(dfg::SymbolDFG, variableLabels::Vector{Symbol}, factor::DFGF
 	if haskey(dfg.g.factors, factor.label)
         error("Factor '$(factor.label)' already exists in the factor graph")
     end
-	factor._internalId = 0
 
     factor._variableOrderSymbols = variableLabels
 

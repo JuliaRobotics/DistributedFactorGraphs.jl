@@ -85,7 +85,7 @@ end
     $(SIGNATURES)
 Fundamental structure for a DFG variable.
 """
-mutable struct DFGVariable <: DFGNode
+mutable struct DFGVariable <: AbstractDFGVariable
     label::Symbol
     timestamp::DateTime
     tags::Vector{Symbol}
@@ -106,11 +106,47 @@ timestamp(v::DFGVariable) = v.timestamp
 tags(v::DFGVariable) = v.tags
 estimates(v::DFGVariable) = v.estimateDict
 estimate(v::DFGVariable, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
+"""
+    $SIGNATURES
+
+Retrieve solver data structure stored in a variable.
+"""
 solverData(v::DFGVariable, key::Symbol=:default) = haskey(v.solverDataDict, key) ? v.solverDataDict[key] : nothing
-getData(v::DFGVariable; solveKey::Symbol=:default)::VariableNodeData = v.solverDataDict[solveKey]
+"""
+    $SIGNATURES
+
+Retrieve data structure stored in a variable.
+"""
+function getData(v::DFGVariable; solveKey::Symbol=:default)::VariableNodeData
+  @warn "getData is deprecated, please use solverData()"
+  return v.solverDataDict[solveKey]
+end
+"""
+    $SIGNATURES
+
+Set solver data structure stored in a variable.
+"""
 setSolverData(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v.solverDataDict[key] = data
 solverDataDict(v::DFGVariable) = v.solverDataDict
 internalId(v::DFGVariable) = v._internalId
 # Todo: Complete this.
 smallData(v::DFGVariable) = v.smallData
 bigData(v::DFGVariable) = v.bigData
+
+"""
+    $(SIGNATURES)
+Structure for first-class citizens of a DFGVariable.
+"""
+mutable struct DFGVariableSummary <: AbstractDFGVariable
+    label::Symbol
+    timestamp::DateTime
+    tags::Vector{Symbol}
+    estimateDict::Dict{Symbol, Dict{Symbol, VariableEstimate}}
+    _internalId::Int64
+end
+label(v::DFGVariableSummary) = v.label
+timestamp(v::DFGVariableSummary) = v.timestamp
+tags(v::DFGVariableSummary) = v.tags
+estimates(v::DFGVariableSummary) = v.estimateDict
+estimate(v::DFGVariableSummary, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
+internalId(v::DFGVariableSummary) = v._internalId
