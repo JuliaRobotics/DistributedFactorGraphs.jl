@@ -253,7 +253,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Reference",
     "title": "DistributedFactorGraphs.ls",
     "category": "function",
-    "text": "ls(dfg)\nls(dfg, regexFilter; tags)\n\n\nList the DFGVariables in the DFG. Optionally specify a label regular expression to retrieves a subset of the variables.\n\n\n\n\n\nls(dfg, node)\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor.\n\n\n\n\n\nls(dfg, label)\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.\n\n\n\n\n\nList the DFGVariables in the DFG. Optionally specify a label regular expression to retrieves a subset of the variables.\n\n\n\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor.\n\n\n\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.\n\n\n\n\n\nls(dfg)\nls(dfg, regexFilter; tags)\n\n\nList the DFGVariables in the DFG. Optionally specify a label regular expression to retrieves a subset of the variables.\n\n\n\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor.\n\n\n\n\n\nls(dfg, label)\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.\n\n\n\n\n\n"
+    "text": "List the DFGVariables in the DFG. Optionally specify a label regular expression to retrieves a subset of the variables.\n\n\n\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor.\n\n\n\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.\n\n\n\n\n\nls(dfg)\nls(dfg, regexFilter; tags)\n\n\nList the DFGVariables in the DFG. Optionally specify a label regular expression to retrieves a subset of the variables.\n\n\n\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor.\n\n\n\n\n\nls(dfg, label)\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.\n\n\n\n\n\nls(dfg)\nls(dfg, regexFilter; tags)\n\n\nList the DFGVariables in the DFG. Optionally specify a label regular expression to retrieves a subset of the variables.\n\n\n\n\n\nls(dfg, node)\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor.\n\n\n\n\n\nls(dfg, label)\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.\n\n\n\n\n\n"
 },
 
 {
@@ -261,7 +261,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Reference",
     "title": "DistributedFactorGraphs.lsf",
     "category": "function",
-    "text": "lsf(dfg, label)\n\n\nAlias for getNeighbors - returns neighbors around a given node label.\n\n\n\n\n\nAlias for getNeighbors - returns neighbors around a given node label.\n\n\n\n\n\nlsf(dfg, label)\n\n\nAlias for getNeighbors - returns neighbors around a given node label.\n\n\n\n\n\n"
+    "text": "Alias for getNeighbors - returns neighbors around a given node label.\n\n\n\n\n\nlsf(dfg, label)\n\n\nAlias for getNeighbors - returns neighbors around a given node label.\n\n\n\n\n\nlsf(dfg, label)\n\n\nAlias for getNeighbors - returns neighbors around a given node label.\n\n\n\n\n\n"
 },
 
 {
@@ -301,7 +301,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Reference",
     "title": "DistributedFactorGraphs.deleteVariable!",
     "category": "function",
-    "text": "deleteVariable!(dfg, label)\n\n\nDelete a DFGVariable from the DFG using its label.\n\n\n\n\n\ndeleteVariable!(dfg, variable)\n\n\nDelete a referenced DFGVariable from the DFG.\n\n\n\n\n\nDelete a DFGVariable from the DFG using its label.\n\n\n\n\n\nDelete a referenced DFGVariable from the DFG.\n\n\n\n\n\ndeleteVariable!(dfg, label)\n\n\nDelete a DFGVariable from the DFG using its label.\n\n\n\n\n\ndeleteVariable!(dfg, label)\n\n\nDelete a DFGVariable from the DFG using its label.\n\n\n\n\n\ndeleteVariable!(dfg, variable)\n\n\nDelete a referenced DFGVariable from the DFG.\n\n\n\n\n\ndeleteVariable!(dfg, label)\n\n\nDelete a DFGVariable from the DFG using its label.\n\n\n\n\n\n"
+    "text": "deleteVariable!(dfg, label)\n\n\nDelete a DFGVariable from the DFG using its label.\n\n\n\n\n\nDelete a DFGVariable from the DFG using its label.\n\n\n\n\n\nDelete a referenced DFGVariable from the DFG.\n\n\n\n\n\ndeleteVariable!(dfg, label)\n\n\nDelete a DFGVariable from the DFG using its label.\n\n\n\n\n\ndeleteVariable!(dfg, label)\n\n\nDelete a DFGVariable from the DFG using its label.\n\n\n\n\n\ndeleteVariable!(dfg, variable)\n\n\nDelete a referenced DFGVariable from the DFG.\n\n\n\n\n\ndeleteVariable!(dfg, label)\n\n\nDelete a DFGVariable from the DFG using its label.\n\n\n\n\n\ndeleteVariable!(dfg, variable)\n\n\nDelete a referenced DFGVariable from the DFG.\n\n\n\n\n\n"
 },
 
 {
@@ -309,7 +309,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Reference",
     "title": "DistributedFactorGraphs.deleteFactor!",
     "category": "function",
-    "text": "deleteFactor!(dfg, label)\n\n\nDelete a DFGFactor from the DFG using its label.\n\n\n\n\n\ndeleteFactor!(dfg, factor)\n\n\nDelete the referened DFGFactor from the DFG.\n\n\n\n\n\nDelete a DFGFactor from the DFG using its label.\n\n\n\n\n\nDelete the referened DFGFactor from the DFG.\n\n\n\n\n\ndeleteFactor!(dfg, label)\n\n\nDelete a DFGFactor from the DFG using its label.\n\n\n\n\n\ndeleteFactor!(dfg, label)\n\n\nDelete a DFGFactor from the DFG using its label.\n\n\n\n\n\ndeleteFactor!(dfg, factor)\n\n\nDelete the referened DFGFactor from the DFG.\n\n\n\n\n\ndeleteFactor!(dfg, label)\n\n\nDelete a DFGFactor from the DFG using its label.\n\n\n\n\n\n"
+    "text": "deleteFactor!(dfg, label)\n\n\nDelete a DFGFactor from the DFG using its label.\n\n\n\n\n\nDelete a DFGFactor from the DFG using its label.\n\n\n\n\n\nDelete the referened DFGFactor from the DFG.\n\n\n\n\n\ndeleteFactor!(dfg, label)\n\n\nDelete a DFGFactor from the DFG using its label.\n\n\n\n\n\ndeleteFactor!(dfg, label)\n\n\nDelete a DFGFactor from the DFG using its label.\n\n\n\n\n\ndeleteFactor!(dfg, factor)\n\n\nDelete the referened DFGFactor from the DFG.\n\n\n\n\n\ndeleteFactor!(dfg, label)\n\n\nDelete a DFGFactor from the DFG using its label.\n\n\n\n\n\ndeleteFactor!(dfg, factor)\n\n\nDelete the referened DFGFactor from the DFG.\n\n\n\n\n\n"
 },
 
 {
@@ -349,7 +349,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Reference",
     "title": "DistributedFactorGraphs.hasOrphans",
     "category": "function",
-    "text": "hasOrphans(dfg)\n\n\nChecks if the graph is not fully connected, returns true if it is not contiguous.\n\n\n\n\n\nChecks if the graph is not fully connected, returns true if it is not contiguous.\n\n\n\n\n\nhasOrphans(dfg)\n\n\nChecks if the graph is not fully connected, returns true if it is not contiguous.\n\n\n\n\n\n"
+    "text": "Checks if the graph is not fully connected, returns true if it is not contiguous.\n\n\n\n\n\nhasOrphans(dfg)\n\n\nChecks if the graph is not fully connected, returns true if it is not contiguous.\n\n\n\n\n\nhasOrphans(dfg)\n\n\nChecks if the graph is not fully connected, returns true if it is not contiguous.\n\n\n\n\n\n"
 },
 
 {
