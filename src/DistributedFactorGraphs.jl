@@ -18,7 +18,7 @@ include("entities/AbstractDFGSummary.jl")
 
 export AbstractDFG
 export AbstractParams, NoSolverParams
-export DFGNode, DFGVariable, DFGFactor
+export DFGNode, DFGVariable, DFGFactor, AbstractDFGVariable, AbstractDFGFactor
 export InferenceType, PackedInferenceType, FunctorInferenceType, InferenceVariable, ConvolutionObject
 export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
 export label, timestamp, tags, estimates, estimate, data, solverData, getData, solverDataDict, setSolverData, internalId, smallData, bigData
@@ -81,4 +81,6 @@ end
 # To be moved as necessary.
 include("Common.jl")
 
+#experimental skeleton
+include("SkeletonDFGDev.jl")
 end
