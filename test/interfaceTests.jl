@@ -118,6 +118,50 @@ end
     
 end
 
+@testset "BigData" begin
+    oid = zeros(UInt8,12); oid[12] = 0x01
+    de1 = MongodbBigDataEntry(:key1, NTuple{12,UInt8}(oid))
+
+    oid = zeros(UInt8,12); oid[12] = 0x02
+    de2 = MongodbBigDataEntry(:key2, NTuple{12,UInt8}(oid))
+
+    oid = zeros(UInt8,12); oid[12] = 0x03
+    de2_update = MongodbBigDataEntry(:key2, NTuple{12,UInt8}(oid))
+
+    #add
+    v1 = getVariable(dfg, :a)
+    @test addBigDataEntry!(v1, de1)
+    @test addBigDataEntry!(dfg, :a, de2)
+    @test addBigDataEntry!(v1, de1)
+
+    #get
+    @test deepcopy(de1) == getBigDataEntry(v1, :key1)
+    @test deepcopy(de2) == getBigDataEntry(dfg, :a, :key2)
+    @test_throws Any getBigDataEntry(v2, :key1)
+    @test_throws Any getBigDataEntry(dfg, :b, :key1)
+
+    #update
+    @test updateBigDataEntry!(dfg, :a, de2_update)
+    @test deepcopy(de2_update) == getBigDataEntry(dfg, :a, :key2)
+    @test !updateBigDataEntry!(dfg, :b, de2_update)
+
+    #list
+    entries = getBigDataEntries(dfg, :a)
+    @test length(entries) == 2
+    @test symdiff(map(e->e.key, entries), [:key1, :key2]) == Symbol[]
+    @test length(getBigDataEntries(dfg, :b)) == 0
+
+    @test symdiff(getBigDataKeys(dfg, :a), [:key1, :key2]) == Symbol[]
+    @test getBigDataKeys(dfg, :b) == Symbol[]
+
+    #delete
+    @test deepcopy(de1) == deleteBigDataEntry!(v1, :key1)
+    @test getBigDataKeys(v1) == Symbol[:key2]
+    #delete from dfg
+    @test deepcopy(de2_update) == deleteBigDataEntry!(dfg, :a, :key2)
+    @test getBigDataKeys(v1) == Symbol[]
+end
+
 @testset "Updating Nodes" begin
     global dfg
     #get the variable
