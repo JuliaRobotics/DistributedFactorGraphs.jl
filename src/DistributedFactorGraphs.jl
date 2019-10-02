@@ -48,6 +48,8 @@ include("services/AbstractDFG.jl")
 include("services/DFGVariable.jl")
 include("services/DFGFactor.jl")
 
+include("BigData.jl")
+
 # Include the Graphs.jl API.
 include("GraphsDFG/GraphsDFG.jl")
 

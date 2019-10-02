@@ -80,8 +80,9 @@ struct VariableEstimate
 end
 
 """
-    $(SIGNATURES)
-Fundamental structure for a DFG variable.
+    $(TYPEDEF)
+Fundamental structure for a DFG variable with fields:
+$(TYPEDFIELDS)
 """
 mutable struct DFGVariable <: AbstractDFGVariable
     label::Symbol
@@ -90,13 +91,21 @@ mutable struct DFGVariable <: AbstractDFGVariable
     estimateDict::Dict{Symbol, Dict{Symbol, VariableEstimate}}
     solverDataDict::Dict{Symbol, VariableNodeData}
     smallData::Dict{String, String}
-    bigData::Any
+    bigData::Dict{Symbol, AbstractBigDataEntry}
     ready::Int
     backendset::Int
     _internalId::Int64
-    DFGVariable(label::Symbol, _internalId::Int64) = new(label, now(), Symbol[], Dict{Symbol, Dict{Symbol, VariableEstimate}}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), Dict{String, String}(), nothing, 0, 0, _internalId)
-    DFGVariable(label::Symbol) = new(label, now(), Symbol[], Dict{Symbol, VariableEstimate}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), Dict{String, String}(), nothing, 0, 0, 0)
 end
+
+"""
+    $SIGNATURES
+DFGVariable constructors.
+"""
+DFGVariable(label::Symbol, _internalId::Int64) =
+        DFGVariable(label, now(), Symbol[], Dict{Symbol, Dict{Symbol, VariableEstimate}}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), Dict{String, String}(), Dict{Symbol,AbstractBigDataEntry}(), 0, 0, _internalId)
+
+DFGVariable(label::Symbol) =
+        DFGVariable(label, now(), Symbol[], Dict{Symbol, VariableEstimate}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), Dict{String, String}(), Dict{Symbol,AbstractBigDataEntry}(), 0, 0, 0)
 
 # Accessors
 label(v::DFGVariable) = v.label
