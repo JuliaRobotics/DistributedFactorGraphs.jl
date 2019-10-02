@@ -15,6 +15,8 @@ mutable struct VariableNodeData
   inferdim::Float64
   ismargin::Bool
   dontmargin::Bool
+  # Tonio surprise TODO
+  # frontalonly::Bool
   # A valid, packable default constructor is needed.
   VariableNodeData() = new(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], "", false, false, false, false)
   VariableNodeData(x1::Array{Float64,2},

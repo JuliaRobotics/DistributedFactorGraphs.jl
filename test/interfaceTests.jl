@@ -303,7 +303,7 @@ end
     addVariable!(dotdfg, v2)
     addFactor!(dotdfg, [v1, v2], f1)
 
-    @test toDot(dotdfg) == "graph graphname {\n2 [\"label\"=\"b\",\"shape\"=\"box\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n2 -- 3\n3 [\"label\"=\"f1\",\"shape\"=\"ellipse\",\"fillcolor\"=\"blue\",\"color\"=\"blue\"]\n1 [\"label\"=\"a\",\"shape\"=\"box\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n1 -- 3\n}\n"
+    @test toDot(dotdfg) == "graph graphname {\n2 [\"label\"=\"b\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n2 -- 3\n3 [\"label\"=\"f1\",\"shape\"=\"box\",\"fillcolor\"=\"blue\",\"color\"=\"blue\"]\n1 [\"label\"=\"a\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n1 -- 3\n}\n"
     @test toDotFile(dotdfg, "something.dot") == nothing
     Base.rm("something.dot")
 
