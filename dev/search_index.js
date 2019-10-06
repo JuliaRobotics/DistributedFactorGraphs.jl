@@ -197,7 +197,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Reference",
     "title": "DistributedFactorGraphs.addFactor!",
     "category": "function",
-    "text": "addFactor!(dfg, variables, factor)\n\n\nAdd a DFGFactor to a DFG.\n\n\n\n\n\naddFactor!(dfg, variableLabels, factor)\n\n\nAdd a DFGFactor to a DFG.\n\n\n\n\n\naddFactor!(dfg, variables, factor)\n\n\nAdd a DFGFactor to a DFG.\n\n\n\n\n\naddFactor!(dfg, variableIds, factor)\n\n\nAdd a DFGFactor to a DFG.\n\n\n\n\n\naddFactor!(dfg, variables, factor)\n\n\nAdd a DFGFactor to a DFG.\n\n\n\n\n\naddFactor!(dfg, variableIds, factor)\n\n\nAdd a DFGFactor to a DFG.\n\n\n\n\n\naddFactor!(dfg, variables, factor)\n\n\nAdd a DFGFactor to a DFG.\n\n\n\n\n\naddFactor!(dfg, variableIds, factor)\n\n\nAdd a DFGFactor to a DFG.\n\n\n\n\n\naddFactor!(dfg, variables, factor)\n\n\nAdd a DFGFactor to a DFG.\n\n\n\n\n\naddFactor!(dfg, variableLabels, factor)\n\n\nAdd a DFGFactor to a DFG.\n\n\n\n\n\n"
+    "text": "addFactor!(dfg, variables, factor)\n\n\nAdd a DFGFactor to a DFG.\n\n\n\n\n\naddFactor!(dfg, variableLabels, factor)\n\n\nAdd a DFGFactor to a DFG.\n\n\n\n\n\naddFactor!(dfg, variables, factor)\n\n\nAdd a DFGFactor to a DFG.\n\n\n\n\n\naddFactor!(dfg, variableLabels, factor)\n\n\nAdd a DFGFactor to a DFG.\n\n\n\n\n\naddFactor!(dfg, variables, factor)\n\n\nAdd a DFGFactor to a DFG.\n\n\n\n\n\naddFactor!(dfg, variableIds, factor)\n\n\nAdd a DFGFactor to a DFG.\n\n\n\n\n\naddFactor!(dfg, variables, factor)\n\n\nAdd a DFGFactor to a DFG.\n\n\n\n\n\naddFactor!(dfg, variableIds, factor)\n\n\nAdd a DFGFactor to a DFG.\n\n\n\n\n\naddFactor!(dfg, variables, factor)\n\n\nAdd a DFGFactor to a DFG.\n\n\n\n\n\naddFactor!(dfg, variableIds, factor)\n\n\nAdd a DFGFactor to a DFG.\n\n\n\n\n\n"
 },
 
 {
@@ -221,7 +221,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Reference",
     "title": "DistributedFactorGraphs.getFactors",
     "category": "function",
-    "text": "getFactors(dfg)\ngetFactors(dfg, regexFilter)\n\n\nList the DFGFactors in the DFG. Optionally specify a label regular expression to retrieves a subset of the factors.\n\n\n\n\n\nList the DFGFactors in the DFG. Optionally specify a label regular expression to retrieves a subset of the factors.\n\n\n\n\n\ngetFactors(dfg)\ngetFactors(dfg, regexFilter)\n\n\nList the DFGFactors in the DFG. Optionally specify a label regular expression to retrieves a subset of the factors.\n\n\n\n\n\ngetFactors(dfg)\ngetFactors(dfg, regexFilter)\n\n\nList the DFGFactors in the DFG. Optionally specify a label regular expression to retrieves a subset of the factors.\n\n\n\n\n\ngetFactors(dfg)\ngetFactors(dfg, regexFilter)\n\n\nList the DFGFactors in the DFG. Optionally specify a label regular expression to retrieves a subset of the factors.\n\n\n\n\n\n"
+    "text": "getFactors(dfg)\ngetFactors(dfg, regexFilter)\n\n\nList the DFGFactors in the DFG. Optionally specify a label regular expression to retrieves a subset of the factors.\n\n\n\n\n\ngetFactors(dfg)\ngetFactors(dfg, regexFilter)\n\n\nList the DFGFactors in the DFG. Optionally specify a label regular expression to retrieves a subset of the factors.\n\n\n\n\n\nList the DFGFactors in the DFG. Optionally specify a label regular expression to retrieves a subset of the factors.\n\n\n\n\n\ngetFactors(dfg)\ngetFactors(dfg, regexFilter)\n\n\nList the DFGFactors in the DFG. Optionally specify a label regular expression to retrieves a subset of the factors.\n\n\n\n\n\ngetFactors(dfg)\ngetFactors(dfg, regexFilter)\n\n\nList the DFGFactors in the DFG. Optionally specify a label regular expression to retrieves a subset of the factors.\n\n\n\n\n\n"
 },
 
 {
@@ -229,7 +229,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Reference",
     "title": "DistributedFactorGraphs.getVariable",
     "category": "function",
-    "text": "getVariable(dfg, label)\n\n\nGet a DFGVariable from a DFG using its label.\n\n\n\n\n\ngetVariable(dfg, variableId)\n\n\nGet a DFGVariable from a DFG using its underlying integer ID.\n\n\n\n\n\ngetVariable(dfg, label)\n\n\nGet a DFGVariable from a DFG using its label.\n\n\n\n\n\ngetVariable(dfg, variableId)\n\n\nGet a DFGVariable from a DFG using its underlying integer ID.\n\n\n\n\n\ngetVariable(dfg, label)\n\n\nGet a DFGVariable from a DFG using its label.\n\n\n\n\n\ngetVariable(dfg, variableId)\n\n\nGet a DFGVariable from a DFG using its underlying integer ID.\n\n\n\n\n\ngetVariable(dfg, label)\n\n\nGet a DFGVariable from a DFG using its label.\n\n\n\n\n\ngetVariable(dfg, label)\n\n\nGet a DFGVariable from a DFG using its label.\n\n\n\n\n\n"
+    "text": "getVariable(dfg, label)\n\n\nGet a DFGVariable from a DFG using its label.\n\n\n\n\n\ngetVariable(dfg, label)\n\n\nGet a DFGVariable from a DFG using its label.\n\n\n\n\n\ngetVariable(dfg, variableId)\n\n\nGet a DFGVariable from a DFG using its underlying integer ID.\n\n\n\n\n\ngetVariable(dfg, label)\n\n\nGet a DFGVariable from a DFG using its label.\n\n\n\n\n\ngetVariable(dfg, variableId)\n\n\nGet a DFGVariable from a DFG using its underlying integer ID.\n\n\n\n\n\ngetVariable(dfg, label)\n\n\nGet a DFGVariable from a DFG using its label.\n\n\n\n\n\ngetVariable(dfg, variableId)\n\n\nGet a DFGVariable from a DFG using its underlying integer ID.\n\n\n\n\n\ngetVariable(dfg, label)\n\n\nGet a DFGVariable from a DFG using its label.\n\n\n\n\n\n"
 },
 
 {
@@ -237,7 +237,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Reference",
     "title": "DistributedFactorGraphs.getFactor",
     "category": "function",
-    "text": "getFactor(dfg, label)\n\n\nGet a DFGFactor from a DFG using its label.\n\n\n\n\n\nGet a DFGFactor from a DFG using its underlying integer ID.\n\n\n\n\n\nGet a DFGFactor from a DFG using its label.\n\n\n\n\n\ngetFactor(dfg, factorId)\n\n\nGet a DFGFactor from a DFG using its underlying integer ID.\n\n\n\n\n\ngetFactor(dfg, label)\n\n\nGet a DFGFactor from a DFG using its label.\n\n\n\n\n\ngetFactor(dfg, factorId)\n\n\nGet a DFGFactor from a DFG using its underlying integer ID.\n\n\n\n\n\ngetFactor(dfg, label)\n\n\nGet a DFGFactor from a DFG using its label.\n\n\n\n\n\ngetFactor(dfg, label)\n\n\nGet a DFGFactor from a DFG using its label.\n\n\n\n\n\n"
+    "text": "getFactor(dfg, label)\n\n\nGet a DFGFactor from a DFG using its label.\n\n\n\n\n\ngetFactor(dfg, label)\n\n\nGet a DFGFactor from a DFG using its label.\n\n\n\n\n\nGet a DFGFactor from a DFG using its underlying integer ID.\n\n\n\n\n\nGet a DFGFactor from a DFG using its label.\n\n\n\n\n\ngetFactor(dfg, factorId)\n\n\nGet a DFGFactor from a DFG using its underlying integer ID.\n\n\n\n\n\ngetFactor(dfg, label)\n\n\nGet a DFGFactor from a DFG using its label.\n\n\n\n\n\ngetFactor(dfg, factorId)\n\n\nGet a DFGFactor from a DFG using its underlying integer ID.\n\n\n\n\n\ngetFactor(dfg, label)\n\n\nGet a DFGFactor from a DFG using its label.\n\n\n\n\n\n"
 },
 
 {
@@ -253,7 +253,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Reference",
     "title": "DistributedFactorGraphs.ls",
     "category": "function",
-    "text": "List the DFGVariables in the DFG. Optionally specify a label regular expression to retrieves a subset of the variables.\n\n\n\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor.\n\n\n\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.\n\n\n\n\n\nls(dfg)\nls(dfg, regexFilter; tags)\n\n\nList the DFGVariables in the DFG. Optionally specify a label regular expression to retrieves a subset of the variables.\n\n\n\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor.\n\n\n\n\n\nls(dfg, label)\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.\n\n\n\n\n\nls(dfg)\nls(dfg, regexFilter; tags)\n\n\nList the DFGVariables in the DFG. Optionally specify a label regular expression to retrieves a subset of the variables.\n\n\n\n\n\nls(dfg, node)\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor.\n\n\n\n\n\nls(dfg, label)\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.\n\n\n\n\n\n"
+    "text": "ls(dfg)\nls(dfg, regexFilter; tags)\n\n\nList the DFGVariables in the DFG. Optionally specify a label regular expression to retrieves a subset of the variables.\n\n\n\n\n\nls(dfg, node)\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor.\n\n\n\n\n\nls(dfg, label)\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.\n\n\n\n\n\nList the DFGVariables in the DFG. Optionally specify a label regular expression to retrieves a subset of the variables.\n\n\n\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor.\n\n\n\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.\n\n\n\n\n\nls(dfg)\nls(dfg, regexFilter; tags)\n\n\nList the DFGVariables in the DFG. Optionally specify a label regular expression to retrieves a subset of the variables.\n\n\n\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor.\n\n\n\n\n\nls(dfg, label)\n\n\nRetrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.\n\n\n\n\n\n"
 },
 
 {
@@ -261,7 +261,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Reference",
     "title": "DistributedFactorGraphs.lsf",
     "category": "function",
-    "text": "Alias for getNeighbors - returns neighbors around a given node label.\n\n\n\n\n\nlsf(dfg, label)\n\n\nAlias for getNeighbors - returns neighbors around a given node label.\n\n\n\n\n\nlsf(dfg, label)\n\n\nAlias for getNeighbors - returns neighbors around a given node label.\n\n\n\n\n\n"
+    "text": "lsf(dfg, label)\n\n\nAlias for getNeighbors - returns neighbors around a given node label.\n\n\n\n\n\nAlias for getNeighbors - returns neighbors around a given node label.\n\n\n\n\n\nlsf(dfg, label)\n\n\nAlias for getNeighbors - returns neighbors around a given node label.\n\n\n\n\n\n"
 },
 
 {
@@ -277,7 +277,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Reference",
     "title": "DistributedFactorGraphs.updateVariable!",
     "category": "function",
-    "text": "updateVariable!(dfg, variable)\n\n\nUpdate a complete DFGVariable in the DFG.\n\n\n\n\n\nUpdate a complete DFGVariable in the DFG.\n\n\n\n\n\nupdateVariable!(dfg, variable)\n\n\nUpdate a complete DFGVariable in the DFG.\n\n\n\n\n\nupdateVariable!(dfg, variable)\n\n\nUpdate a complete DFGVariable in the DFG.\n\n\n\n\n\nupdateVariable!(dfg, variable)\n\n\nUpdate a complete DFGVariable in the DFG.\n\n\n\n\n\n"
+    "text": "updateVariable!(dfg, variable)\n\n\nUpdate a complete DFGVariable in the DFG.\n\n\n\n\n\nupdateVariable!(dfg, variable)\n\n\nUpdate a complete DFGVariable in the DFG.\n\n\n\n\n\nUpdate a complete DFGVariable in the DFG.\n\n\n\n\n\nupdateVariable!(dfg, variable)\n\n\nUpdate a complete DFGVariable in the DFG.\n\n\n\n\n\nupdateVariable!(dfg, variable)\n\n\nUpdate a complete DFGVariable in the DFG.\n\n\n\n\n\n"
 },
 
 {
@@ -301,7 +301,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Reference",
     "title": "DistributedFactorGraphs.deleteVariable!",
     "category": "function",
-    "text": "deleteVariable!(dfg, label)\n\n\nDelete a DFGVariable from the DFG using its label.\n\n\n\n\n\nDelete a DFGVariable from the DFG using its label.\n\n\n\n\n\nDelete a referenced DFGVariable from the DFG.\n\n\n\n\n\ndeleteVariable!(dfg, label)\n\n\nDelete a DFGVariable from the DFG using its label.\n\n\n\n\n\ndeleteVariable!(dfg, label)\n\n\nDelete a DFGVariable from the DFG using its label.\n\n\n\n\n\ndeleteVariable!(dfg, variable)\n\n\nDelete a referenced DFGVariable from the DFG.\n\n\n\n\n\ndeleteVariable!(dfg, label)\n\n\nDelete a DFGVariable from the DFG using its label.\n\n\n\n\n\ndeleteVariable!(dfg, variable)\n\n\nDelete a referenced DFGVariable from the DFG.\n\n\n\n\n\n"
+    "text": "deleteVariable!(dfg, label)\n\n\nDelete a DFGVariable from the DFG using its label.\n\n\n\n\n\ndeleteVariable!(dfg, label)\n\n\nDelete a DFGVariable from the DFG using its label.\n\n\n\n\n\ndeleteVariable!(dfg, variable)\n\n\nDelete a referenced DFGVariable from the DFG.\n\n\n\n\n\nDelete a DFGVariable from the DFG using its label.\n\n\n\n\n\nDelete a referenced DFGVariable from the DFG.\n\n\n\n\n\ndeleteVariable!(dfg, label)\n\n\nDelete a DFGVariable from the DFG using its label.\n\n\n\n\n\ndeleteVariable!(dfg, label)\n\n\nDelete a DFGVariable from the DFG using its label.\n\n\n\n\n\ndeleteVariable!(dfg, variable)\n\n\nDelete a referenced DFGVariable from the DFG.\n\n\n\n\n\n"
 },
 
 {
@@ -309,7 +309,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Reference",
     "title": "DistributedFactorGraphs.deleteFactor!",
     "category": "function",
-    "text": "deleteFactor!(dfg, label)\n\n\nDelete a DFGFactor from the DFG using its label.\n\n\n\n\n\nDelete a DFGFactor from the DFG using its label.\n\n\n\n\n\nDelete the referened DFGFactor from the DFG.\n\n\n\n\n\ndeleteFactor!(dfg, label)\n\n\nDelete a DFGFactor from the DFG using its label.\n\n\n\n\n\ndeleteFactor!(dfg, label)\n\n\nDelete a DFGFactor from the DFG using its label.\n\n\n\n\n\ndeleteFactor!(dfg, factor)\n\n\nDelete the referened DFGFactor from the DFG.\n\n\n\n\n\ndeleteFactor!(dfg, label)\n\n\nDelete a DFGFactor from the DFG using its label.\n\n\n\n\n\ndeleteFactor!(dfg, factor)\n\n\nDelete the referened DFGFactor from the DFG.\n\n\n\n\n\n"
+    "text": "deleteFactor!(dfg, label)\n\n\nDelete a DFGFactor from the DFG using its label.\n\n\n\n\n\ndeleteFactor!(dfg, label)\n\n\nDelete a DFGFactor from the DFG using its label.\n\n\n\n\n\ndeleteFactor!(dfg, factor)\n\n\nDelete the referened DFGFactor from the DFG.\n\n\n\n\n\nDelete a DFGFactor from the DFG using its label.\n\n\n\n\n\nDelete the referened DFGFactor from the DFG.\n\n\n\n\n\ndeleteFactor!(dfg, label)\n\n\nDelete a DFGFactor from the DFG using its label.\n\n\n\n\n\ndeleteFactor!(dfg, label)\n\n\nDelete a DFGFactor from the DFG using its label.\n\n\n\n\n\ndeleteFactor!(dfg, factor)\n\n\nDelete the referened DFGFactor from the DFG.\n\n\n\n\n\n"
 },
 
 {
@@ -325,7 +325,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Reference",
     "title": "DistributedFactorGraphs.getAdjacencyMatrix",
     "category": "function",
-    "text": "getAdjacencyMatrix(dfg)\n\n\nGet an adjacency matrix for the DFG, returned as a Matrix{Union{Nothing, Symbol}}. Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor. The first row and first column are factor and variable headings respectively.\n\n\n\n\n\nGet an adjacency matrix for the DFG, returned as a Matrix{Union{Nothing, Symbol}}. Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor. The first row and first column are factor and variable headings respectively.\n\n\n\n\n\ngetAdjacencyMatrix(dfg)\n\n\nGet an adjacency matrix for the DFG, returned as a Matrix{Union{Nothing, Symbol}}. Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor. The first row and first column are factor and variable headings respectively.\n\n\n\n\n\ngetAdjacencyMatrix(dfg)\n\n\nGet an adjacency matrix for the DFG, returned as a Matrix{Union{Nothing, Symbol}}. Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor. The first row and first column are factor and variable headings respectively.\n\n\n\n\n\n"
+    "text": "getAdjacencyMatrix(dfg)\n\n\nGet an adjacency matrix for the DFG, returned as a Matrix{Union{Nothing, Symbol}}. Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor. The first row and first column are factor and variable headings respectively.\n\n\n\n\n\ngetAdjacencyMatrix(dfg)\n\n\nGet an adjacency matrix for the DFG, returned as a Matrix{Union{Nothing, Symbol}}. Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor. The first row and first column are factor and variable headings respectively.\n\n\n\n\n\nGet an adjacency matrix for the DFG, returned as a Matrix{Union{Nothing, Symbol}}. Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor. The first row and first column are factor and variable headings respectively.\n\n\n\n\n\ngetAdjacencyMatrix(dfg)\n\n\nGet an adjacency matrix for the DFG, returned as a Matrix{Union{Nothing, Symbol}}. Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor. The first row and first column are factor and variable headings respectively.\n\n\n\n\n\n"
 },
 
 {
@@ -341,7 +341,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Reference",
     "title": "DistributedFactorGraphs.isFullyConnected",
     "category": "function",
-    "text": "isFullyConnected(dfg)\n\n\nChecks if the graph is fully connected, returns true if so.\n\n\n\n\n\nChecks if the graph is fully connected, returns true if so.\n\n\n\n\n\nisFullyConnected(dfg)\n\n\nChecks if the graph is fully connected, returns true if so.\n\n\n\n\n\nisFullyConnected(dfg)\n\n\nChecks if the graph is fully connected, returns true if so.\n\n\n\n\n\nisFullyConnected(dfg)\n\n\nChecks if the graph is fully connected, returns true if so.\n\n\n\n\n\n"
+    "text": "isFullyConnected(dfg)\n\n\nChecks if the graph is fully connected, returns true if so.\n\n\n\n\n\nisFullyConnected(dfg)\n\n\nChecks if the graph is fully connected, returns true if so.\n\n\n\n\n\nChecks if the graph is fully connected, returns true if so.\n\n\n\n\n\nisFullyConnected(dfg)\n\n\nChecks if the graph is fully connected, returns true if so.\n\n\n\n\n\nisFullyConnected(dfg)\n\n\nChecks if the graph is fully connected, returns true if so.\n\n\n\n\n\n"
 },
 
 {
@@ -349,7 +349,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Reference",
     "title": "DistributedFactorGraphs.hasOrphans",
     "category": "function",
-    "text": "Checks if the graph is not fully connected, returns true if it is not contiguous.\n\n\n\n\n\nhasOrphans(dfg)\n\n\nChecks if the graph is not fully connected, returns true if it is not contiguous.\n\n\n\n\n\nhasOrphans(dfg)\n\n\nChecks if the graph is not fully connected, returns true if it is not contiguous.\n\n\n\n\n\n"
+    "text": "hasOrphans(dfg)\n\n\nChecks if the graph is not fully connected, returns true if it is not contiguous.\n\n\n\n\n\nChecks if the graph is not fully connected, returns true if it is not contiguous.\n\n\n\n\n\nhasOrphans(dfg)\n\n\nChecks if the graph is not fully connected, returns true if it is not contiguous.\n\n\n\n\n\n"
 },
 
 {
