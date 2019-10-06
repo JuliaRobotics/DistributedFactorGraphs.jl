@@ -60,6 +60,7 @@ end
 """
     $(SIGNATURES)
 Add a DFGVariable to a DFG.
+Returns: true if added, false if not.
 """
 function addVariable!(dfg::G, variable::V)::Bool where {G <: AbstractDFG, V <: AbstractDFGVariable}
 	error("addVariable! not implemented for $(typeof(dfg))")
@@ -68,6 +69,7 @@ end
 """
     $(SIGNATURES)
 Add a DFGFactor to a DFG.
+Returns: true if added, false if not.
 """
 function addFactor!(dfg::G, variables::Vector{V}, factor::F)::Bool where {G <: AbstractDFG, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
 	error("addFactor! not implemented for $(typeof(dfg))")
@@ -76,6 +78,7 @@ end
 """
     $(SIGNATURES)
 Add a DFGFactor to a DFG.
+Returns: true if added, false if not.
 """
 function addFactor!(dfg::G, variableIds::Vector{Symbol}, factor::F)::Bool where {G <: AbstractDFG, F <: AbstractDFGFactor}
 	error("addFactor! not implemented for $(typeof(dfg))")
@@ -84,56 +87,63 @@ end
 """
     $(SIGNATURES)
 Get a DFGVariable from a DFG using its underlying integer ID.
+Returns: DFGVariable if available, nothing if not.
 """
-function getVariable(dfg::G, variableId::Int64)::AbstractDFGVariable where G <: AbstractDFG
+function getVariable(dfg::G, variableId::Int64)::Union{Nothing, AbstractDFGVariable} where G <: AbstractDFG
 	error("getVariable not implemented for $(typeof(dfg))")
 end
 
 """
     $(SIGNATURES)
 Get a DFGVariable from a DFG using its label.
+Returns: DFGVariable if available, nothing if not.
 """
-function getVariable(dfg::G, label::Union{Symbol, String})::AbstractDFGVariable where G <: AbstractDFG
+function getVariable(dfg::G, label::Union{Symbol, String})::Union{Nothing, AbstractDFGVariable} where G <: AbstractDFG
 	return getVariable(dfg, Symbol(label))
 end
 
 """
     $(SIGNATURES)
 Get a DFGFactor from a DFG using its underlying integer ID.
+Returns: DFGFactor if available, nothing if not.
 """
-function getFactor(dfg::G, factorId::Int64)::AbstractDFGFactor where G <: AbstractDFG
+function getFactor(dfg::G, factorId::Int64)::Union{Nothing, AbstractDFGFactor} where G <: AbstractDFG
 	error("getFactor not implemented for $(typeof(dfg))")
 end
 
 """
     $(SIGNATURES)
 Get a DFGFactor from a DFG using its label.
+Returns: DFGFactor if available, nothing if not.
 """
-function getFactor(dfg::G, label::Union{Symbol, String})::AbstractDFGFactor where G <: AbstractDFG
+function getFactor(dfg::G, label::Union{Symbol, String})::Union{Nothing, AbstractDFGFactor} where G <: AbstractDFG
 	return getFactor(dfg, Symbol(label))
 end
 
 """
     $(SIGNATURES)
 Update a complete DFGVariable in the DFG.
+Returns: True if updated, false if not.
 """
-function updateVariable!(dfg::G, variable::V)::AbstractDFGVariable where {G <: AbstractDFG, V <: AbstractDFGVariable}
+function updateVariable!(dfg::G, variable::V)::Bool where {G <: AbstractDFG, V <: AbstractDFGVariable}
 	error("updateVariable! not implemented for $(typeof(dfg))")
 end
 
 """
     $(SIGNATURES)
 Update a complete DFGFactor in the DFG.
+Returns: True if updated, false if not.
 """
-function updateFactor!(dfg::G, factor::F)::AbstractDFGFactor where {G <: AbstractDFG, F <: AbstractDFGFactor}
+function updateFactor!(dfg::G, factor::F)::Bool where {G <: AbstractDFG, F <: AbstractDFGFactor}
 	error("updateFactor! not implemented for $(typeof(dfg))")
 end
 
 """
     $(SIGNATURES)
 Delete a DFGVariable from the DFG using its label.
+Returns: True if deleted, false if not.
 """
-function deleteVariable!(dfg::G, label::Symbol)::AbstractDFGVariable where G <: AbstractDFG
+function deleteVariable!(dfg::G, label::Symbol)::Bool where G <: AbstractDFG
 	error("deleteVariable! not implemented for $(typeof(dfg))")
 end
 
@@ -141,16 +151,18 @@ end
 """
     $(SIGNATURES)
 Delete a referenced DFGVariable from the DFG.
+Returns: True if deleted, false if not.
 """
-function deleteVariable!(dfg::G, variable::V)::AbstractDFGVariable where {G <: AbstractDFG, V <: AbstractDFGVariable}
+function deleteVariable!(dfg::G, variable::V)::Bool where {G <: AbstractDFG, V <: AbstractDFGVariable}
 	return deleteVariable!(dfg, variable.label)
 end
 
 """
     $(SIGNATURES)
 Delete a DFGFactor from the DFG using its label.
+Returns: True if deleted, false if not.
 """
-function deleteFactor!(dfg::G, label::Symbol)::AbstractDFGFactor where G <: AbstractDFG
+function deleteFactor!(dfg::G, label::Symbol)::Bool where G <: AbstractDFG
 	error("deleteFactors not implemented for $(typeof(dfg))")
 end
 
@@ -158,8 +170,9 @@ end
 """
     $(SIGNATURES)
 Delete the referened DFGFactor from the DFG.
+Returns: True if deleted, false if not.
 """
-function deleteFactor!(dfg::G, factor::F)::AbstractDFGFactor where {G <: AbstractDFG, F <: AbstractDFGFactor}
+function deleteFactor!(dfg::G, factor::F)::Bool where {G <: AbstractDFG, F <: AbstractDFGFactor}
 	return deleteFactor!(dfg, factor.label)
 end
 
