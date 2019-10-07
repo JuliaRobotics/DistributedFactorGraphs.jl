@@ -54,7 +54,7 @@ function _getDuplicatedEmptyDFG(dfg::CloudGraphsDFG)::CloudGraphsDFG
         length(_getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId):$(dfg.robotId):$(sessionId))")) == 0 && break
     end
     @debug "Unique+empty copy session name: $sessionId"
-    return CloudGraphsDFG{typeof(dfg.solverParams)}(dfg.neo4jInstance.connection, dfg.userId, dfg.robotId, sessionId, dfg.encodePackedTypeFunc, dfg.getPackedTypeFunc, dfg.decodePackedTypeFunc, solverParams=deepcopy(dfg.solverParams), description="(Copy of) $(dfg.description)", useCache=dfg.useCache)
+    return CloudGraphsDFG{typeof(dfg.solverParams)}(dfg.neo4jInstance.connection, dfg.userId, dfg.robotId, sessionId, dfg.encodePackedTypeFunc, dfg.getPackedTypeFunc, dfg.decodePackedTypeFunc, dfg.rebuildFactorMetadata!, solverParams=deepcopy(dfg.solverParams), description="(Copy of) $(dfg.description)", useCache=dfg.useCache)
 end
 
 # Accessors
@@ -158,9 +158,7 @@ Add a DFGVariable to a DFG.
 """
 function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::Bool
     if exists(dfg, variable)
-        @warn "Variable '$(variable.label)' already exists in the graph, so updating it."
-        updateVariable!(dfg, variable)
-        return true
+        error("Variable '$(variable.label)' already exists in the factor graph")
     end
     props = Dict{String, Any}()
     props["label"] = string(variable.label)
@@ -192,9 +190,7 @@ Add a DFGFactor to a DFG.
 """
 function addFactor!(dfg::CloudGraphsDFG, variables::Vector{DFGVariable}, factor::DFGFactor)::Bool
     if exists(dfg, factor)
-        @warn "Factor '$(factor.label)' already exist in the graph, so updating it."
-        updateFactor!(dfg, variables, factor)
-        return true
+        error("Factor '$(variable.label)' already exists in the factor graph")
     end
 
     # Update the variable ordering
@@ -363,9 +359,7 @@ Update a complete DFGVariable in the DFG.
 """
 function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariable
     if !exists(dfg, variable)
-        @warn "Variable '$(variable.label)' doesn't exist in the graph, so adding it."
-        addVariable!(dfg, variable)
-        return variable
+        error("Variable label '$(variable.label)' does not exist in the factor graph")
     end
     nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, variable.label)
     # Update the node ID
@@ -409,9 +403,7 @@ Update a complete DFGFactor in the DFG.
 """
 function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor
     if !exists(dfg, factor)
-        @warn "Factor '$(factor.label)' doesn't exist in the graph, so adding it."
-        addFactor!(dfg, factor)
-        return factor
+        error("Factor label '$(factor.label)' does not exist in the factor graph")
     end
     nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, factor.label)
     # Update the _internalId
