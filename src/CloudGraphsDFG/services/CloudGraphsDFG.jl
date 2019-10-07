@@ -647,10 +647,10 @@ function getNeighbors(dfg::CloudGraphsDFG, node::T; ready::Union{Nothing, Int}=n
     query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(node.label))--(node) where node:VARIABLE or node:FACTOR "
     if ready != nothing || backendset != nothing
         if ready != nothing
-            query = query + "and node.ready = $(ready)"
+            query = query * "and node.ready = $(ready)"
         end
         if backendset != nothing
-            query = query + "and node.backendset = $(backendset)"
+            query = query * "and node.backendset = $(backendset)"
         end
     end
     neighbors = _getLabelsFromCyphonQuery(dfg.neo4jInstance, query)
@@ -669,10 +669,10 @@ function getNeighbors(dfg::CloudGraphsDFG, label::Symbol; ready::Union{Nothing, 
     query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(label))--(node) where node:VARIABLE or node:FACTOR "
     if ready != nothing || backendset != nothing
         if ready != nothing
-            query = query + "and node.ready = $(ready)"
+            query = query * "and node.ready = $(ready)"
         end
         if backendset != nothing
-            query = query + "and node.backendset = $(backendset)"
+            query = query * "and node.backendset = $(backendset)"
         end
     end
     neighbors = _getLabelsFromCyphonQuery(dfg.neo4jInstance, query)
