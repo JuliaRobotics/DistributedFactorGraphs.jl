@@ -115,7 +115,17 @@ end
     #TODO Should the next test work?
     @test_broken !isInitialized(dfg, :f1)
     @test_broken !isInitialized(f1)
-    
+
+    # Session, robot, and user small data tests
+    smallUserData = Dict{Symbol, String}(:a => "42", :b => "Hello")
+    smallRobotData = Dict{Symbol, String}(:a => "43", :b => "Hello")
+    smallSessionData = Dict{Symbol, String}(:a => "44", :b => "Hello")
+    setUserData(dfg, deepcopy(smallUserData))
+    setRobotData(dfg, deepcopy(smallRobotData))
+    setSessionData(dfg, deepcopy(smallSessionData))
+    @test getUserData(dfg) == smallUserData
+    @test getRobotData(dfg) == smallRobotData
+    @test getSessionData(dfg) == smallSessionData
 end
 
 @testset "Updating Nodes" begin
