@@ -4,11 +4,23 @@ using Neo4j
 using DistributedFactorGraphs
 using IncrementalInference
 
-apis = [GraphsDFG, MetaGraphsDFG, SymbolDFG, LightDFG, CloudGraphsDFG]
+apis = [
+    GraphsDFG{NoSolverParams}(),
+    LightDFG{NoSolverParams}(),
+    MetaGraphsDFG{NoSolverParams}(),
+    SymbolDFG{NoSolverParams}(),
+    # CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
+    #                             "testUser", "testRobot", "testSession",
+    #                             nothing,
+    #                             nothing,
+    #                             IncrementalInference.decodePackedType,
+    #                             IncrementalInference.rebuildFactorMetadata!,
+    #                             solverParams=SolverParams())
+        ]
 for api in apis
     @testset "Testing Driver: $(api)" begin
         @info "Testing Driver: $(api)"
-        global testDFGAPI = api
+        global dfg = api
         include("iifInterfaceTests.jl")
     end
 end

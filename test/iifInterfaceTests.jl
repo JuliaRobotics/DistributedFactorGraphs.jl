@@ -5,20 +5,8 @@
 # using Test
 # testDFGAPI = CloudGraphsDFG
 
-if testDFGAPI == CloudGraphsDFG
-    DistributedFactorGraphs.CloudGraphsDFG{SolverParams}() = CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
-                                                                    "testUser", "testRobot", "testSession",
-                                                                    nothing,
-                                                                    nothing,
-                                                                    IncrementalInference.decodePackedType,
-                                                                    IncrementalInference.rebuildFactorMetadata!,
-                                                                    solverParams=SolverParams())
-
-
-    dfg = testDFGAPI{SolverParams}()
+if typeof(dfg) == CloudGraphsDFG
     clearRobot!!(dfg)
-else
-    dfg = testDFGAPI{NoSolverParams}()
 end
 
 
@@ -44,8 +32,8 @@ end
 
 @testset "Adding Removing Nodes" begin
     #TODO should errors vs updates be consistant between DFG types
-    if testDFGAPI != CloudGraphsDFG
-        dfg2 = testDFGAPI{NoSolverParams}()
+    if typeof(dfg) != CloudGraphsDFG
+        dfg2 = DistributedFactorGraphs._getDuplicatedEmptyDFG(dfg)
         v1 = DFGVariable(:a)
         v2 = DFGVariable(:b)
         v3 = DFGVariable(:c)
@@ -66,7 +54,7 @@ end
         @test deleteFactor!(dfg2, f2) == f2
         @test lsf(dfg2) == [:abf1]
     else
-        dfg2 = testDFGAPI{SolverParams}()
+        dfg2 = DistributedFactorGraphs._getDuplicatedEmptyDFG(dfg)
         v1 = DFGVariable(:a)
         v2 = DFGVariable(:b)
         v3 = DFGVariable(:c)
@@ -254,11 +242,9 @@ end
 # Now make a complex graph for connectivity tests
 numNodes = 10
 
-if testDFGAPI == CloudGraphsDFG
-    dfg = testDFGAPI{SolverParams}()
-    clearRobot!!(dfg)
-else
-    dfg = testDFGAPI{NoSolverParams}()
+dfg = DistributedFactorGraphs._getDuplicatedEmptyDFG(dfg)
+if typeof(dfg) == CloudGraphsDFG
+    clearSession!!(dfg)
 end
 
 #change ready and backendset for x7,x8 for improved tests on x7x8f1
