@@ -45,34 +45,36 @@ global dfg,v1,v2,f1
     @test lsf(dfg2) == [:v1v2f1]
 end
 
-# @testset "Listing Nodes" begin
-#     global dfg,v1,v2,f1
-#     @test length(ls(dfg)) == 2
-#     @test length(lsf(dfg)) == 1
-#     @test symdiff([:a, :b], getVariableIds(dfg)) == []
-#     @test getFactorIds(dfg) == [:abf1]
-#     #
-#     @test lsf(dfg, :a) == [f1.label]
-#     # Tags
-#     @test ls(dfg, tags=[:POSE]) == [:a]
-#     @test symdiff(ls(dfg, tags=[:POSE, :LANDMARK]), ls(dfg, tags=[:VARIABLE])) == []
-#     # Regexes
-#     @test ls(dfg, r"a") == [v1.label]
-#     @test lsf(dfg, r"f*") == [f1.label]
-#     # Accessors
-#     @test getAddHistory(dfg) == [:a, :b] #, :abf1
-#     @test getDescription(dfg) != nothing
-#     @test getLabelDict(dfg) != nothing
-#     # Existence
-#     @test exists(dfg, :a) == true
-#     @test exists(dfg, v1) == true
-#     @test exists(dfg, :nope) == false
-#     # Sorting of results
-#     # TODO - this function needs to be cleaned up
-#     unsorted = [:x1_3;:x1_6;:l1;:april1] #this will not work for :x1x2f1
-#     @test sortDFG(unsorted) == sortVarNested(unsorted)
-#     @test_skip sortDFG([:x1x2f1, :x1l1f1]) == [:x1l1f1, :x1x2f1]
-# end
+@testset "Listing Nodes" begin
+    global dfg,v1,v2,f1
+    @test length(ls(dfg)) == 2
+    @test length(lsf(dfg)) == 1 # Unless we add the prior!
+    @test symdiff([:v1, :v2], getVariableIds(dfg)) == []
+    @test getFactorIds(dfg) == [:v1v2f1] # Unless we add the prior!
+    #
+    @test lsf(dfg, :v1) == [f1.label]
+    # Tags
+    @test ls(dfg, tags=[:POSE]) == [:v1]
+    @test symdiff(ls(dfg, tags=[:POSE, :LANDMARK]), ls(dfg, tags=[:VARIABLE])) == []
+    # Regexes
+    @test ls(dfg, r"v1") == [v1.label]
+    # TODO: Check that this regular expression works on everything else!
+    # REF: https://stackoverflow.com/questions/23834692/using-regular-expression-in-neo4j
+    @test lsf(dfg, r"v1v2.*") == [f1.label]
+    # Accessors
+    @test getAddHistory(dfg) == [:v1, :v2] #, :abf1
+    @test getDescription(dfg) != nothing
+    @test getLabelDict(dfg) != nothing
+    # Existence
+    @test exists(dfg, :v1) == true
+    @test exists(dfg, v1) == true
+    @test exists(dfg, :nope) == false
+    # Sorting of results
+    # TODO - this function needs to be cleaned up
+    unsorted = [:x1_3;:x1_6;:l1;:april1] #this will not work for :x1x2f1
+    @test sortDFG(unsorted) == sortVarNested(unsorted)
+    @test_skip sortDFG([:x1x2f1, :x1l1f1]) == [:x1l1f1, :x1x2f1]
+end
 #
 # # Gets
 # @testset "Gets, Sets, and Accessors" begin

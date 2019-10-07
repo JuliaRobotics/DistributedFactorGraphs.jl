@@ -8,7 +8,7 @@ using IncrementalInference
 # Can do duplicates with different parameters.
 apis = [
     # GraphsDFG{NoSolverParams}(),
-    # LightDFG{NoSolverParams}(),
+    LightDFG{NoSolverParams}(),
     # MetaGraphsDFG{NoSolverParams}(),
     # SymbolDFG{NoSolverParams}(),
     CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",

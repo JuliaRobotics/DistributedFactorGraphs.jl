@@ -544,9 +544,15 @@ deleteFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor = deleteFactor!
 List the DFGVariables in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the variables.
 """
-function getVariables(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGVariable}
+function getVariables(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{DFGVariable}
     variableIds = getVariableIds(dfg, regexFilter)
-    return map(vId->getVariable(dfg, vId), variableIds)
+    # TODO: Optimize to use tags in query here!
+    variables = map(vId->getVariable(dfg, vId), variableIds)
+    if length(tags) > 0
+        mask = map(v -> length(intersect(v.tags, tags)) > 0, variables )
+        return variables[mask]
+    end
+    return variables
 end
 
 """
