@@ -449,7 +449,7 @@ Return boolean whether a factor `label` is present in `<:AbstractDFG`.
 """
 function hasFactor(dfg::G, label::Symbol)::Bool where {G <: AbstractDFG}
 	@warn "hasFactor() deprecated, please use exists()"
-	return haskey(dfg.labelDict, label)
+	return exists(dfg, label)
 end
 
 """
@@ -459,7 +459,7 @@ Return `::Bool` on whether `dfg` contains the variable `lbl::Symbol`.
 """
 function hasVariable(dfg::G, label::Symbol)::Bool where {G <: AbstractDFG}
 	@warn "hasVariable() deprecated, please use exists()"
-	return haskey(dfg.labelDict, label) # haskey(vertices(dfg.g), label)
+	return exists(dfg, label) # haskey(vertices(dfg.g), label)
 end
 
 
