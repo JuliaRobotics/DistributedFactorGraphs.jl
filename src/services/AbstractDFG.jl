@@ -49,6 +49,26 @@ function setSolverParams(dfg::G, solverParams::T) where {G <: AbstractDFG, T <: 
 	error("setSolverParams not implemented for $(typeof(dfg))")
 end
 
+# Get user, robot, and session "small" data.
+function getUserData(dfg::G)::Dict{Symbol, String} where {G <: AbstractDFG}
+	error("getUserData not implemented for $(typeof(dfg))")
+end
+function setUserData(dfg::G, data::Dict{Symbol, String})::Bool where {G <: AbstractDFG}
+	error("setUserData not implemented for $(typeof(dfg))")
+end
+function getRobotData(dfg::G)::Dict{Symbol, String} where {G <: AbstractDFG}
+	error("getRobotData not implemented for $(typeof(dfg))")
+end
+function setRobotData(dfg::G, data::Dict{Symbol, String})::Bool where {G <: AbstractDFG}
+	error("setRobotData not implemented for $(typeof(dfg))")
+end
+function getSessionData(dfg::G)::Dict{Symbol, String} where {G <: AbstractDFG}
+	error("getSessionData not implemented for $(typeof(dfg))")
+end
+function setSessionData(dfg::G, data::Dict{Symbol, String})::Bool where {G <: AbstractDFG}
+	error("setSessionData not implemented for $(typeof(dfg))")
+end
+
 """
     $(SIGNATURES)
 True if the variable or factor exists in the graph.
