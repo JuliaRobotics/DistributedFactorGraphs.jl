@@ -8,6 +8,12 @@ append!(v1.tags, [:VARIABLE, :POSE])
 append!(v2.tags, [:VARIABLE, :LANDMARK])
 append!(f1.tags, [:FACTOR])
 
+#add types for softtypes
+st1 = (a=1,b=2)
+st2 = (a=1.0,b=2.0)
+v1.solverDataDict[:default].softtype = deepcopy(st1)
+v2.solverDataDict[:default].softtype = deepcopy(st2)
+
 # @testset "Creating Graphs" begin
 global dfg,v1,v2,f1
 addVariable!(dfg, v1)
@@ -95,6 +101,10 @@ end
     @test solverData(v1, :default) === v1.solverDataDict[:default]
     @test solverDataDict(v1) == v1.solverDataDict
     @test internalId(v1) == v1._internalId
+
+    @test softtype(v1) == Symbol(typeof(st1))
+    @test softtype(v2) == Symbol(typeof(st2))
+    @test getSofttype(v1) == st1
 
     @test label(f1) == f1.label
     @test tags(f1) == f1.tags
@@ -210,6 +220,11 @@ verts = map(n -> DFGVariable(Symbol("x$n")), 1:numNodes)
 #change ready and backendset for x7,x8 for improved tests on x7x8f1
 verts[7].ready = 1
 verts[8].backendset = 1
+
+#force softytypes to first 2 vertices.
+verts[1].solverDataDict[:default].softtype = deepcopy(st1)
+verts[2].solverDataDict[:default].softtype = deepcopy(st2)
+
 map(v -> addVariable!(dfg, v), verts)
 map(n -> addFactor!(dfg, [verts[n], verts[n+1]], DFGFactor{Int, :Symbol}(Symbol("x$(n)x$(n+1)f1"))), 1:(numNodes-1))
 
@@ -286,7 +301,7 @@ end
             if field != :softtypename
                 @test getfield(getVariable(dfg, v), field) == getfield(getVariable(summaryGraph, v), field)
             else
-                @info "skipping softtypename check"
+                @test softtype(getVariable(dfg, v)) == softtype(getVariable(summaryGraph, v))
             end
         end
     end

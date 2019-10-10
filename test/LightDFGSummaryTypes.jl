@@ -13,6 +13,9 @@ append!(v1.tags, [:VARIABLE, :POSE])
 append!(v2.tags, [:VARIABLE, :LANDMARK])
 append!(f1.tags, [:FACTOR])
 
+#Force softtypename
+v1.softtypename = :Pose2
+
 # @testset "Creating Graphs" begin
 global dfg,v1,v2,f1
 addVariable!(dfg, v1)
@@ -95,6 +98,7 @@ end
     @test timestamp(v1) == v1.timestamp
     @test estimates(v1) == v1.estimateDict
     @test estimate(v1, :notfound) == nothing
+    @test softtype(v1) == :Pose2
     # @test solverData(v1) === v1.solverDataDict[:default]
     # @test getData(v1) === v1.solverDataDict[:default]
     # @test solverData(v1, :default) === v1.solverDataDict[:default]
