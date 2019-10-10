@@ -70,17 +70,25 @@ include("LightDFG/LightDFG.jl")
 @reexport using .LightDFGs
 
 function __init__()
-    @require Neo4j="d2adbeaf-5838-5367-8a2f-e46d570981db" begin
-        # Include the Cloudgraphs API
-        include("CloudGraphsDFG/CloudGraphsDFG.jl")
-    end
+    @info "Looking for @require modules"
+    #FIXME still can't figure @require out
+    # @require Neo4j="d2adbeaf-5838-5367-8a2f-e46d570981db" begin
+    #     @info "Including CloudGraphsDFG"
+    #     # Include the Cloudgraphs API
+    #     include("CloudGraphsDFG/CloudGraphsDFG.jl")
+    # end
 
     @require GraphPlot = "a2cc645c-3eea-5389-862e-a155d0052231" begin
+        @info "Including Plots"
         include("DFGPlots/DFGPlots.jl")
         @reexport using .DFGPlots
     end
 
 end
+
+#FIXME still can't figure @require out
+# Include the Cloudgraphs API
+include("CloudGraphsDFG/CloudGraphsDFG.jl")
 
 # To be moved as necessary.
 include("Common.jl")
