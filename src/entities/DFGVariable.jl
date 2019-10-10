@@ -117,6 +117,14 @@ timestamp(v::DFGVariable) = v.timestamp
 tags(v::DFGVariable) = v.tags
 estimates(v::DFGVariable) = v.estimateDict
 estimate(v::DFGVariable, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
+
+"""
+    $SIGNATURES
+
+Retrieve the soft type name symbol for a DFGVariable or DFGVariableSummary. ie :Point2, Pose2, etc.
+"""
+softtype(v::DFGVariable)::Symbol = Symbol(typeof(getSofttype(v)))
+
 """
     $SIGNATURES
 
