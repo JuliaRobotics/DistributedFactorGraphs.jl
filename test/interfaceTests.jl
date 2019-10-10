@@ -9,8 +9,8 @@ append!(v2.tags, [:VARIABLE, :LANDMARK])
 append!(f1.tags, [:FACTOR])
 
 #add types for softtypes
-st1 = (a=1,b=2)
-st2 = (a=1.0,b=2.0)
+st1 = "Type1"
+st2 = "Type2"
 v1.solverDataDict[:default].softtype = deepcopy(st1)
 v2.solverDataDict[:default].softtype = deepcopy(st2)
 
