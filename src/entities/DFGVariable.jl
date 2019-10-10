@@ -10,7 +10,7 @@ mutable struct VariableNodeData
   eliminated::Bool
   BayesNetVertID::Symbol #  Union{Nothing, }
   separator::Array{Symbol,1}
-  softtype
+  softtype  # Perhaps this should move up to DFGVariable level
   initialized::Bool
   inferdim::Float64
   ismargin::Bool
@@ -73,9 +73,20 @@ mutable struct PackedVariableNodeData
                          x15::Bool ) = new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15)
 end
 
+"""
+    $TYPEDEF
+
+Data container to store Parameteric Point Estimate (PPE) from a variety of types.
+
+Notes
+- `ppeType` is something like `:max/:mean/:modefit` etc.
+- `solveKey` is from super-solve concept, starting with `:default`,
+- `estimate` is the actual numerical estimate value,
+- Additional information such as how the data is represented (ie softtype) is stored alongside this data container in the `DFGVariableSummary` container.
+"""
 struct VariableEstimate
   solverKey::Symbol
-  type::Symbol
+  ppeType::Symbol
   estimate::Vector{Float64}
   lastUpdatedTimestamp::DateTime
   VariableEstimate(solverKey::Symbol, type::Symbol, estimate::Vector{Float64}, lastUpdatedTimestamp::DateTime=now()) = new(solverKey, type, estimate, lastUpdatedTimestamp)
@@ -142,6 +153,7 @@ mutable struct DFGVariableSummary <: AbstractDFGVariable
     timestamp::DateTime
     tags::Vector{Symbol}
     estimateDict::Dict{Symbol, Dict{Symbol, VariableEstimate}}
+    softtypename::Symbol
     _internalId::Int64
 end
 label(v::DFGVariableSummary) = v.label
@@ -149,4 +161,5 @@ timestamp(v::DFGVariableSummary) = v.timestamp
 tags(v::DFGVariableSummary) = v.tags
 estimates(v::DFGVariableSummary) = v.estimateDict
 estimate(v::DFGVariableSummary, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
+softtype(v::DFGVariableSummary)::Symbol = v.softtypename
 internalId(v::DFGVariableSummary) = v._internalId

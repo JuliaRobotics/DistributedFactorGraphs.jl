@@ -115,7 +115,7 @@ end
     #TODO Should the next test work?
     @test_broken !isInitialized(dfg, :f1)
     @test_broken !isInitialized(f1)
-    
+
 end
 
 @testset "Updating Nodes" begin
@@ -127,13 +127,13 @@ end
     estimates(newvar)[:default] = Dict{Symbol, VariableEstimate}(
         :max => VariableEstimate(:default, :max, [100.0]),
         :mean => VariableEstimate(:default, :mean, [50.0]),
-        :ppe => VariableEstimate(:default, :ppe, [75.0]))
+        :modefit => VariableEstimate(:default, :modefit, [75.0]))
     #update
     updateVariableSolverData!(dfg, newvar)
     #TODO maybe implement ==; @test newvar==var
     Base.:(==)(varest1::VariableEstimate, varest2::VariableEstimate) = begin
         varest1.lastUpdatedTimestamp == varest2.lastUpdatedTimestamp || return false
-        varest1.type == varest2.type || return false
+        varest1.ppeType == varest2.ppeType || return false
         varest1.solverKey == varest2.solverKey || return false
         varest1.estimate == varest2.estimate || return false
         return true
@@ -147,7 +147,7 @@ end
     estimates(newvar)[:second] = Dict{Symbol, VariableEstimate}(
         :max => VariableEstimate(:default, :max, [10.0]),
         :mean => VariableEstimate(:default, :mean, [5.0]),
-        :ppe => VariableEstimate(:default, :ppe, [7.0]))
+        :modefit => VariableEstimate(:default, :modefit, [7.0]))
 
     # Persist to the original variable.
     updateVariableSolverData!(dfg, newvar)
@@ -283,7 +283,11 @@ end
     # Check all fields are equal for all variables
     for v in ls(summaryGraph)
         for field in variableFields
-            @test getfield(getVariable(dfg, v), field) == getfield(getVariable(summaryGraph, v), field)
+            if field != :softtypename
+                @test getfield(getVariable(dfg, v), field) == getfield(getVariable(summaryGraph, v), field)
+            else
+                @info "skipping softtypename check"
+            end
         end
     end
     for f in lsf(summaryGraph)

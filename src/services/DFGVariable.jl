@@ -66,5 +66,5 @@ function ==(a::VariableNodeData,b::VariableNodeData, nt::Symbol=:var)
 end
 
 function convert(::Type{DFGVariableSummary}, v::DFGVariable)
-    return DFGVariableSummary(v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.estimateDict), v._internalId)
+    return DFGVariableSummary(v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.estimateDict), Symbol(typeof(getSofttype(v))), v._internalId)
 end
