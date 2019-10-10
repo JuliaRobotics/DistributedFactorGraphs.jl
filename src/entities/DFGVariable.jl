@@ -1,7 +1,7 @@
 """
 $(TYPEDEF)
 """
-mutable struct VariableNodeData
+mutable struct VariableNodeData{T<:Any}
   val::Array{Float64,2}
   bw::Array{Float64,2}
   BayesNetOutVertIDs::Array{Symbol,1}
@@ -10,7 +10,7 @@ mutable struct VariableNodeData
   eliminated::Bool
   BayesNetVertID::Symbol #  Union{Nothing, }
   separator::Array{Symbol,1}
-  softtype
+  softtype::T
   initialized::Bool
   inferdim::Float64
   ismargin::Bool
@@ -18,23 +18,9 @@ mutable struct VariableNodeData
   # Tonio surprise TODO
   # frontalonly::Bool
   # A valid, packable default constructor is needed.
-  VariableNodeData() = new(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], "", false, false, false, false)
-  VariableNodeData(x1::Array{Float64,2},
-                   x2::Array{Float64,2},
-                   x3::Vector{Symbol},
-                   x4::Vector{Int},
-                   x5::Int,
-                   x6::Bool,
-                   x7::Symbol,
-                   x8::Vector{Symbol},
-                   # x9::Dict{ Tuple{Symbol, Vector{Float64}} }, # Union{Nothing, },
-                   x10,
-                   x11::Bool,
-                   x12::Float64,
-                   x13::Bool,
-                   x14::Bool) =
-    new(x1,x2,x3,x4,x5,x6,x7,x8,x10,x11,x12,x13,x14)
+
 end
+VariableNodeData() = VariableNodeData(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], "", false, 0.0, false, false)
 
 """
 $(TYPEDEF)
@@ -78,8 +64,8 @@ struct VariableEstimate
   type::Symbol
   estimate::Vector{Float64}
   lastUpdatedTimestamp::DateTime
-  VariableEstimate(solverKey::Symbol, type::Symbol, estimate::Vector{Float64}, lastUpdatedTimestamp::DateTime=now()) = new(solverKey, type, estimate, lastUpdatedTimestamp)
 end
+VariableEstimate(solverKey::Symbol, type::Symbol, estimate::Vector{Float64}) = VariableEstimate(solverKey, type, estimate, now())
 
 """
     $(TYPEDEF)
@@ -127,7 +113,12 @@ solverData(v::DFGVariable, key::Symbol=:default) = haskey(v.solverDataDict, key)
 Retrieve data structure stored in a variable.
 """
 function getData(v::DFGVariable; solveKey::Symbol=:default)::VariableNodeData
-  @warn "getData is deprecated, please use solverData()"
+  #FIXME but back in later, it just slows everything down
+  if !(@isdefined getDataWarnOnce)
+    @warn "getData is deprecated, please use solverData(), future warnings in getData is suppressed"
+    global getDataWarnOnce = true
+  end
+  # @warn "getData is deprecated, please use solverData()"
   return v.solverDataDict[solveKey]
 end
 """
