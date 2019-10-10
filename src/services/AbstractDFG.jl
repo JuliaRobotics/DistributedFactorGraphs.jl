@@ -525,7 +525,7 @@ function isInitialized(var::DFGVariable; key::Symbol=:default)::Bool
 	end
 end
 
-function isInitialized(dfg::G, label::Symbol; key::Symbol=:default)::Bool where G <: AbstractDFG
+function isInitialized(dfg::AbstractDFG, label::Symbol; key::Symbol=:default)::Bool
   return isInitialized(getVariable(dfg, label), key=key)
 end
 
