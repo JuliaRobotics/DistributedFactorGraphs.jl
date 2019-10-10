@@ -85,6 +85,14 @@ function setSessionData(dfg::AbstractDFG, data::Dict{Symbol, String})::Bool
 	return true
 end
 
+pushUserData!(dfg::AbstractDFG, pair::Pair{Symbol,String}) = push!(dfg.userData, pair)
+pushRobotData!(dfg::AbstractDFG, pair::Pair{Symbol,String}) = push!(dfg.userData, pair)
+pushSessionData!(dfg::AbstractDFG, pair::Pair{Symbol,String}) = push!(dfg.userData, pair)
+
+popUserData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.userData, key)
+popRobotData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.userData, key)
+popSessionData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.userData, key)
+
 """
     $(SIGNATURES)
 True if the variable or factor exists in the graph.

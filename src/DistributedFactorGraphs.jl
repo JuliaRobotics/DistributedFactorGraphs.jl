@@ -26,6 +26,7 @@ export DFGVariableSummary, DFGFactorSummary, AbstractDFGSummary
 
 #graph small data
 export getUserData, setUserData, getRobotData, setRobotData, getSessionData, setSessionData
+export pushUserData!, pushRobotData!, pushSessionData!, popUserData!, popRobotData!, popSessionData!
 
 # Services/AbstractDFG Exports
 export hasFactor, hasVariable, isInitialized, getFactorFunction, isVariable, isFactor
