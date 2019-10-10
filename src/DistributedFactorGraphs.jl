@@ -24,6 +24,9 @@ export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
 export label, timestamp, tags, estimates, estimate, data, softtype, solverData, getData, solverDataDict, setSolverData, internalId, smallData, bigData
 export DFGVariableSummary, DFGFactorSummary, AbstractDFGSummary
 
+#graph small data
+export getUserData, setUserData, getRobotData, setRobotData, getSessionData, setSessionData
+
 # Services/AbstractDFG Exports
 export hasFactor, hasVariable, isInitialized, getFactorFunction, isVariable, isFactor
 export updateGraphSolverData!

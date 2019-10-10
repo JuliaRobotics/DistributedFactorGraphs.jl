@@ -50,23 +50,39 @@ function setSolverParams(dfg::G, solverParams::T) where {G <: AbstractDFG, T <: 
 end
 
 # Get user, robot, and session "small" data.
-function getUserData(dfg::G)::Dict{Symbol, String} where {G <: AbstractDFG}
-	error("getUserData not implemented for $(typeof(dfg))")
+# function getUserData(dfg::G)::Dict{Symbol, String} where {G <: AbstractDFG}
+# 	error("getUserData not implemented for $(typeof(dfg))")
+# end
+# function setUserData(dfg::G, data::Dict{Symbol, String})::Bool where {G <: AbstractDFG}
+# 	error("setUserData not implemented for $(typeof(dfg))")
+# end
+# function getRobotData(dfg::G)::Dict{Symbol, String} where {G <: AbstractDFG}
+# 	error("getRobotData not implemented for $(typeof(dfg))")
+# end
+# function setRobotData(dfg::G, data::Dict{Symbol, String})::Bool where {G <: AbstractDFG}
+# 	error("setRobotData not implemented for $(typeof(dfg))")
+# end
+# function getSessionData(dfg::G)::Dict{Symbol, String} where {G <: AbstractDFG}
+# 	error("getSessionData not implemented for $(typeof(dfg))")
+# end
+# function setSessionData(dfg::G, data::Dict{Symbol, String})::Bool where {G <: AbstractDFG}
+# 	error("setSessionData not implemented for $(typeof(dfg))")
+# end
+
+getUserData(dfg::AbstractDFG)::Dict{Symbol, String} = return dfg.userData
+function setUserData(dfg::AbstractDFG, data::Dict{Symbol, String})::Bool
+	dfg.userData = data
+	return true
 end
-function setUserData(dfg::G, data::Dict{Symbol, String})::Bool where {G <: AbstractDFG}
-	error("setUserData not implemented for $(typeof(dfg))")
+getRobotData(dfg::AbstractDFG)::Dict{Symbol, String} = return dfg.robotData
+function setRobotData(dfg::AbstractDFG, data::Dict{Symbol, String})::Bool
+	dfg.robotData = data
+	return true
 end
-function getRobotData(dfg::G)::Dict{Symbol, String} where {G <: AbstractDFG}
-	error("getRobotData not implemented for $(typeof(dfg))")
-end
-function setRobotData(dfg::G, data::Dict{Symbol, String})::Bool where {G <: AbstractDFG}
-	error("setRobotData not implemented for $(typeof(dfg))")
-end
-function getSessionData(dfg::G)::Dict{Symbol, String} where {G <: AbstractDFG}
-	error("getSessionData not implemented for $(typeof(dfg))")
-end
-function setSessionData(dfg::G, data::Dict{Symbol, String})::Bool where {G <: AbstractDFG}
-	error("setSessionData not implemented for $(typeof(dfg))")
+getSessionData(dfg::AbstractDFG)::Dict{Symbol, String} = return dfg.sessionData
+function setSessionData(dfg::AbstractDFG, data::Dict{Symbol, String})::Bool
+	dfg.sessionData = data
+	return true
 end
 
 """
