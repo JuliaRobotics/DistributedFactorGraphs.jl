@@ -4,7 +4,7 @@ function convert(::Type{DFGFactorSummary}, f::DFGFactor)
     return DFGFactorSummary(f.label, deepcopy(f.tags), f._internalId, deepcopy(f._variableOrderSymbols))
 end
 
-function pack(dfg::G, f::DFGFactor)::Dict{String, Any} where G <: AbstractDFG
+function packFactor(dfg::G, f::DFGFactor)::Dict{String, Any} where G <: AbstractDFG
     # Construct the properties to save
     props = Dict{String, Any}()
     props["label"] = string(f.label)
@@ -31,7 +31,7 @@ function pack(dfg::G, f::DFGFactor)::Dict{String, Any} where G <: AbstractDFG
     return props
 end
 
-function unpack(dfg::G, packedProps::Dict{String, Any}, iifModule)::DFGFactor where G <: AbstractDFG
+function unpackFactor(dfg::G, packedProps::Dict{String, Any}, iifModule)::DFGFactor where G <: AbstractDFG
     label = packedProps["label"]
     tags = JSON2.read(packedProps["tags"], Vector{Symbol})
 

@@ -1,6 +1,6 @@
 import Base: ==, convert
 
-function pack(dfg::G, v::DFGVariable)::Dict{String, Any} where G <: AbstractDFG
+function packVariable(dfg::G, v::DFGVariable)::Dict{String, Any} where G <: AbstractDFG
     props = Dict{String, Any}()
     props["label"] = string(v.label)
     props["timestamp"] = string(v.timestamp)
@@ -13,7 +13,7 @@ function pack(dfg::G, v::DFGVariable)::Dict{String, Any} where G <: AbstractDFG
     return props
 end
 
-function unpack(dfg::G, packedProps::Dict{String, Any})::DFGVariable where G <: AbstractDFG
+function unpackVariable(dfg::G, packedProps::Dict{String, Any})::DFGVariable where G <: AbstractDFG
     label = Symbol(packedProps["label"])
     timestamp = DateTime(packedProps["timestamp"])
     tags =  JSON2.read(packedProps["tags"], Vector{Symbol})

@@ -23,7 +23,7 @@ function saveDFG(dfg::G, folder::String) where G <: AbstractDFG
     end
     # Factors
     for f in factors
-        #fPacked = packFactor(dfg, f)
+        fPacked = packFactor(dfg, f)
         io = open("$folder/factors/$(f.label).json", "w")
         JSON2.write(io, fPacked)
         close(io)
