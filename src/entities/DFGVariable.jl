@@ -59,6 +59,8 @@ mutable struct PackedVariableNodeData
                          x15::Bool ) = new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15)
 end
 
+
+abstract type AbstractVariableEstimate end
 """
     $TYPEDEF
 
@@ -70,7 +72,7 @@ Notes
 - `estimate` is the actual numerical estimate value,
 - Additional information such as how the data is represented (ie softtype) is stored alongside this data container in the `DFGVariableSummary` container.
 """
-struct VariableEstimate
+struct VariableEstimate <: AbstractVariableEstimate
   solverKey::Symbol
   ppeType::Symbol
   estimate::Vector{Float64}
@@ -87,7 +89,7 @@ mutable struct DFGVariable <: AbstractDFGVariable
     label::Symbol
     timestamp::DateTime
     tags::Vector{Symbol}
-    estimateDict::Dict{Symbol, Dict{Symbol, VariableEstimate}}
+    estimateDict::Dict{Symbol, Dict{Symbol, <: AbstractVariableEstimate}}
     solverDataDict::Dict{Symbol, VariableNodeData}
     smallData::Dict{String, String}
     bigData::Dict{Symbol, AbstractBigDataEntry}
@@ -160,7 +162,7 @@ mutable struct DFGVariableSummary <: AbstractDFGVariable
     label::Symbol
     timestamp::DateTime
     tags::Vector{Symbol}
-    estimateDict::Dict{Symbol, Dict{Symbol, VariableEstimate}}
+    estimateDict::Dict{Symbol, Dict{Symbol, <:AbstractVariableEstimate}}
     softtypename::Symbol
     _internalId::Int64
 end
