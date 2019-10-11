@@ -9,8 +9,12 @@ append!(v2.tags, [:VARIABLE, :LANDMARK])
 append!(f1.tags, [:FACTOR])
 
 #add types for softtypes
-st1 = "Type1"
-st2 = "Type2"
+struct TestInferenceVariable1 <: InferenceVariable end
+struct TestInferenceVariable2 <: InferenceVariable end
+
+st1 = TestInferenceVariable1()
+st2 = TestInferenceVariable2()
+
 v1.solverDataDict[:default].softtype = deepcopy(st1)
 v2.solverDataDict[:default].softtype = deepcopy(st2)
 
