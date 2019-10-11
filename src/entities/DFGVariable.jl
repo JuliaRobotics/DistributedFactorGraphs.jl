@@ -1,7 +1,11 @@
+#TODO don't know what to do if it is uninitalized
+#so for now defining a Singleton for the default
+struct SingletonInferenceVariable <: InferenceVariable end
+
 """
 $(TYPEDEF)
 """
-mutable struct VariableNodeData{T<:Any}
+mutable struct VariableNodeData #TODO v0.5.0 {T<:InferenceVariable}
   val::Array{Float64,2}
   bw::Array{Float64,2}
   BayesNetOutVertIDs::Array{Symbol,1}
@@ -10,7 +14,7 @@ mutable struct VariableNodeData{T<:Any}
   eliminated::Bool
   BayesNetVertID::Symbol #  Union{Nothing, }
   separator::Array{Symbol,1}
-  softtype::T # Perhaps this should move up to DFGVariable level
+  softtype::InferenceVariable #TODO v0.5.0 T
   initialized::Bool
   inferdim::Float64
   ismargin::Bool
@@ -20,7 +24,7 @@ mutable struct VariableNodeData{T<:Any}
   # A valid, packable default constructor is needed.
 
 end
-VariableNodeData() = VariableNodeData(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], "", false, 0.0, false, false)
+VariableNodeData() = VariableNodeData(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], SingletonInferenceVariable(), false, 0.0, false, false)
 
 """
 $(TYPEDEF)
