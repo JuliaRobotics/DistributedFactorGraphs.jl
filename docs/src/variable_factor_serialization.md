@@ -10,7 +10,7 @@ Packing is done with the exposed functions `packVariable()::Dict{String, Any}` a
 as you would normally.
 
 For example:
-```
+```julia
 using DistributedFactorGraphs
 using IncrementalInference, RoME
 
@@ -36,7 +36,7 @@ upFactor = unpackFactor(dfg, pFactor, IncrementalInference)
 
 As a more complex example, we can use JSON2 to stringify the data and write it to a folder of files as FileDFG does:
 
-```
+```julia
 using DistributedFactorGraphs
 using IncrementalInference, RoME
 
