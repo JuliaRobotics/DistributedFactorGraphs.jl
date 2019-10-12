@@ -34,7 +34,7 @@ upFactor = unpackFactor(dfg, pFactor, IncrementalInference)
 # to make it useable. Please add an issue if this poses a problem or causes issues.
 ```
 
-As a more complex example, we can use JSON2 to stringify the data and write it to a file as FileDFG does:
+As a more complex example, we can use JSON2 to stringify the data and write it to a folder of files as FileDFG does:
 
 ```
 using DistributedFactorGraphs
