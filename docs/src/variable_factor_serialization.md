@@ -3,11 +3,13 @@
 If you are transferring variables and factors over a wire you need to serialize
 and deserialize variables and factors.
 
-## Packing
+## Packing and Unpacking
 
 Packing is done with the exposed functions `packVariable()::Dict{String, Any}` and
 `packFactor()::Dict{String, Any}`. You can then serialize this into a string or JSON
 as you would normally.
+
+> Note: When you deserialize a factor and want to use it for solving, you must call IncrementalInference.rebuildFactorMetadata!(dfgLoadInto, factor) to reinflate it completely. Please review [FileDFG service](src/FileDFG/services/FileDFG.jl) for an example.
 
 For example:
 ```julia
@@ -63,5 +65,4 @@ for f in getFactors(dfg)
     JSON2.write(io, fPacked)
     close(io)
 end
-
 ```
