@@ -301,7 +301,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Reference",
     "title": "DistributedFactorGraphs.deleteVariable!",
     "category": "function",
-    "text": "Delete a DFGVariable from the DFG using its label.\n\n\n\n\n\nDelete a referenced DFGVariable from the DFG.\n\n\n\n\n\ndeleteVariable!(dfg, label)\n\n\nDelete a DFGVariable from the DFG using its label.\n\n\n\n\n\ndeleteVariable!(dfg, label)\n\n\nDelete a DFGVariable from the DFG using its label.\n\n\n\n\n\ndeleteVariable!(dfg, variable)\n\n\nDelete a referenced DFGVariable from the DFG.\n\n\n\n\n\ndeleteVariable!(dfg, label)\n\n\nDelete a DFGVariable from the DFG using its label.\n\n\n\n\n\ndeleteVariable!(dfg, label)\n\n\nDelete a DFGVariable from the DFG using its label.\n\n\n\n\n\ndeleteVariable!(dfg, variable)\n\n\nDelete a referenced DFGVariable from the DFG.\n\n\n\n\n\n"
+    "text": "Delete a DFGVariable from the DFG using its label.\n\n\n\n\n\nDelete a referenced DFGVariable from the DFG.\n\n\n\n\n\ndeleteVariable!(dfg, label)\n\n\nDelete a DFGVariable from the DFG using its label.\n\n\n\n\n\ndeleteVariable!(dfg, label)\n\n\nDelete a DFGVariable from the DFG using its label.\n\n\n\n\n\ndeleteVariable!(dfg, variable)\n\n\nDelete a referenced DFGVariable from the DFG.\n\n\n\n\n\ndeleteVariable!(dfg, label)\n\n\nDelete a DFGVariable from the DFG using its label.\n\n\n\n\n\ndeleteVariable!(dfg, variable)\n\n\nDelete a referenced DFGVariable from the DFG.\n\n\n\n\n\ndeleteVariable!(dfg, label)\n\n\nDelete a DFGVariable from the DFG using its label.\n\n\n\n\n\n"
 },
 
 {
@@ -309,7 +309,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Reference",
     "title": "DistributedFactorGraphs.deleteFactor!",
     "category": "function",
-    "text": "Delete a DFGFactor from the DFG using its label.\n\n\n\n\n\nDelete the referened DFGFactor from the DFG.\n\n\n\n\n\ndeleteFactor!(dfg, label)\n\n\nDelete a DFGFactor from the DFG using its label.\n\n\n\n\n\ndeleteFactor!(dfg, label)\n\n\nDelete a DFGFactor from the DFG using its label.\n\n\n\n\n\ndeleteFactor!(dfg, factor)\n\n\nDelete the referened DFGFactor from the DFG.\n\n\n\n\n\ndeleteFactor!(dfg, label)\n\n\nDelete a DFGFactor from the DFG using its label.\n\n\n\n\n\ndeleteFactor!(dfg, label)\n\n\nDelete a DFGFactor from the DFG using its label.\n\n\n\n\n\ndeleteFactor!(dfg, factor)\n\n\nDelete the referened DFGFactor from the DFG.\n\n\n\n\n\n"
+    "text": "Delete a DFGFactor from the DFG using its label.\n\n\n\n\n\nDelete the referened DFGFactor from the DFG.\n\n\n\n\n\ndeleteFactor!(dfg, label)\n\n\nDelete a DFGFactor from the DFG using its label.\n\n\n\n\n\ndeleteFactor!(dfg, label)\n\n\nDelete a DFGFactor from the DFG using its label.\n\n\n\n\n\ndeleteFactor!(dfg, factor)\n\n\nDelete the referened DFGFactor from the DFG.\n\n\n\n\n\ndeleteFactor!(dfg, label)\n\n\nDelete a DFGFactor from the DFG using its label.\n\n\n\n\n\ndeleteFactor!(dfg, factor)\n\n\nDelete the referened DFGFactor from the DFG.\n\n\n\n\n\ndeleteFactor!(dfg, label)\n\n\nDelete a DFGFactor from the DFG using its label.\n\n\n\n\n\n"
 },
 
 {
