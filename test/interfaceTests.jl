@@ -9,8 +9,20 @@ append!(v2.tags, [:VARIABLE, :LANDMARK])
 append!(f1.tags, [:FACTOR])
 
 #add types for softtypes
-st1 = (a=1,b=2)
-st2 = (a=1.0,b=2.0)
+# Simple test for the soft type.
+mutable struct TestSoftType <: InferenceVariable
+    a
+    b
+    TestSoftType(a, b) = new(a, b)
+end
+import Base.==
+function ==(a::TestSoftType, b::TestSoftType)::Bool
+    a.a != b.a && return false
+    a.b != b.b && return false
+    return true
+end
+st1 = TestSoftType(1,2)
+st2 = TestSoftType(1.0,2.0)
 v1.solverDataDict[:default].softtype = deepcopy(st1)
 v2.solverDataDict[:default].softtype = deepcopy(st2)
 
