@@ -1,4 +1,3 @@
-dfg = testDFGAPI{NoSolverParams}()
 v1 = DFGVariable(:a)
 v2 = DFGVariable(:b)
 f1 = DFGFactor{Int, :Symbol}(:f1)
@@ -17,7 +16,7 @@ addFactor!(dfg, [v1, v2], f1)
 # end
 
 @testset "Adding Removing Nodes" begin
-    dfg2 = testDFGAPI{NoSolverParams}()
+    dfg2 = DistributedFactorGraphs._getDuplicatedEmptyDFG(dfg)
     v1 = DFGVariable(:a)
     v2 = DFGVariable(:b)
     v3 = DFGVariable(:c)
@@ -203,7 +202,7 @@ end
 
 # Now make a complex graph for connectivity tests
 numNodes = 10
-dfg = testDFGAPI{NoSolverParams}()
+dfg = DistributedFactorGraphs._getDuplicatedEmptyDFG(dfg)
 verts = map(n -> DFGVariable(Symbol("x$n")), 1:numNodes)
 #change ready and backendset for x7,x8 for improved tests on x7x8f1
 verts[7].ready = 1
@@ -293,7 +292,7 @@ end
 
 @testset "Producing Dot Files" begin
     # create a simpler graph for dot testing
-    dotdfg = testDFGAPI{NoSolverParams}()
+    dotdfg = DistributedFactorGraphs._getDuplicatedEmptyDFG(dfg)
     v1 = DFGVariable(:a)
     v2 = DFGVariable(:b)
     f1 = DFGFactor{Int, :Symbol}(:f1)

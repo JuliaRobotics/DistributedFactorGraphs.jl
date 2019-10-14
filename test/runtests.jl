@@ -7,7 +7,7 @@ using IncrementalInference
 # Instantiate the APIs that you would like to test here
 # Can do duplicates with different parameters.
 apis = [
-    # GraphsDFG{NoSolverParams}(),
+    GraphsDFG{NoSolverParams}(),
     LightDFG{NoSolverParams}(),
     # MetaGraphsDFG{NoSolverParams}(),
     # SymbolDFG{NoSolverParams}(),
@@ -22,11 +22,17 @@ apis = [
 for api in apis
     @testset "Testing Driver: $(typeof(api))" begin
         @info "Testing Driver: $(api)"
-        global dfg = api
+        global dfg = deepcopy(api)
+        include("interfaceTests.jl")
+    end
+end
+for api in apis
+    @testset "Testing Driver: $(typeof(api))" begin
+        @info "Testing Driver: $(api)"
+        global dfg = deepcopy(api)
         include("iifInterfaceTests.jl")
     end
 end
-
 # Test each interface
 # apis = [GraphsDFG, MetaGraphsDFG, SymbolDFG, LightDFG]
 # for api in apis
