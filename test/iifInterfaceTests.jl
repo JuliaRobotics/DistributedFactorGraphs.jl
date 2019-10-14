@@ -94,9 +94,9 @@ end
     @test symdiff([:a, :b], getVariableIds(dfg)) == []
     @test getFactorIds(dfg) == [:abf1] # Unless we add the prior!
     #
-    @test lsf(dfg, :v1) == [f1.label]
+    @test lsf(dfg, :a) == [f1.label]
     # Tags
-    @test ls(dfg, tags=[:POSE]) == [:v1]
+    @test ls(dfg, tags=[:POSE]) == [:a]
     @test symdiff(ls(dfg, tags=[:POSE, :LANDMARK]), ls(dfg, tags=[:VARIABLE])) == []
     # Regexes
     @test ls(dfg, r"a") == [v1.label]
@@ -106,11 +106,11 @@ end
     @test lsf(dfg, r"abf.*") == [f1.label]
 
     # Accessors
-    @test getAddHistory(dfg) == [:v1, :v2] #, :abf1
+    @test getAddHistory(dfg) == [:a, :b] #, :abf1
     @test getDescription(dfg) != nothing
     @test getLabelDict(dfg) != nothing
     # Existence
-    @test exists(dfg, :v1) == true
+    @test exists(dfg, :a) == true
     @test exists(dfg, v1) == true
     @test exists(dfg, :nope) == false
     # Sorting of results
