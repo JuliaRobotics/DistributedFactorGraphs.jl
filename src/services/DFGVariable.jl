@@ -102,6 +102,12 @@ function ==(a::VariableNodeData,b::VariableNodeData, nt::Symbol=:var)
   return DistributedFactorGraphs.compare(a,b)
 end
 
+function ==(a::PointParametricEstimates, b::PointParametricEstimates)::Bool
+  a.estimates != b.estimates && return false
+  a.lastUpdatedTimestamp != b.lastUpdatedTimestamp && return false
+  return true
+end
+
 function convert(::Type{DFGVariableSummary}, v::DFGVariable)
     return DFGVariableSummary(v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.estimateDict), Symbol(typeof(getSofttype(v))), v._internalId)
 end

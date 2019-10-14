@@ -23,13 +23,14 @@ export InferenceType, PackedInferenceType, FunctorInferenceType, InferenceVariab
 export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
 export label, timestamp, tags, estimates, estimate, data, softtype, solverData, getData, solverDataDict, setSolverData, internalId, smallData, bigData
 export DFGVariableSummary, DFGFactorSummary, AbstractDFGSummary
+export PointParametricEstimates
 
 # Services/AbstractDFG Exports
 export hasFactor, hasVariable, isInitialized, getFactorFunction, isVariable, isFactor
 export updateGraphSolverData!
 
 # Solver (IIF) Exports
-export VariableNodeData, PackedVariableNodeData, VariableEstimate
+export VariableNodeData, PackedVariableNodeData, timate
 export GenericFunctionNodeData#, FunctionNodeData
 export getSerializationModule, setSerializationModule!
 export pack, unpack

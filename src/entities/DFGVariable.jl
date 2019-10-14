@@ -78,24 +78,16 @@ mutable struct PackedVariableNodeData
 end
 
 
-abstract type AbstractVariableEstimate end
 """
     $TYPEDEF
 
 Data container to store Parameteric Point Estimate (PPE) from a variety of types.
-
-Notes
-- `ppeType` is something like `:max/:mean/:modefit` etc.
-- `solveKey` is from super-solve concept, starting with `:default`,
-- `estimate` is the actual numerical estimate value,
-- Additional information such as how the data is represented (ie softtype) is stored alongside this data container in the `DFGVariableSummary` container.
 """
-struct VariableEstimate <: AbstractVariableEstimate
-  solverKey::Symbol
-  ppeType::Symbol
-  estimate::Vector{Float64}
+struct PointParametricEstimates
+  # Put other fields here.
+  estimates::Dict{Symbol, Vector{Float64}}
   lastUpdatedTimestamp::DateTime
-  VariableEstimate(solverKey::Symbol, type::Symbol, estimate::Vector{Float64}, lastUpdatedTimestamp::DateTime=now()) = new(solverKey, type, estimate, lastUpdatedTimestamp)
+  PointParametricEstimates(lastUpdatedTimestamp::DateTime=now()) = new(Dict{Symbol, Vector{Float64}}(), lastUpdatedTimestamp)
 end
 
 """
@@ -106,15 +98,15 @@ mutable struct DFGVariable <: AbstractDFGVariable
     label::Symbol
     timestamp::DateTime
     tags::Vector{Symbol}
-    estimateDict::Dict{Symbol, Dict{Symbol, <: AbstractVariableEstimate}}
+    estimateDict::Dict{Symbol, PointParametricEstimates}
     solverDataDict::Dict{Symbol, VariableNodeData}
     smallData::Dict{String, String}
     bigData::Any
     ready::Int
     backendset::Int
     _internalId::Int64
-    DFGVariable(label::Symbol, _internalId::Int64) = new(label, now(), Symbol[], Dict{Symbol, Dict{Symbol, VariableEstimate}}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), Dict{String, String}(), nothing, 0, 0, _internalId)
-    DFGVariable(label::Symbol) = new(label, now(), Symbol[], Dict{Symbol, VariableEstimate}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), Dict{String, String}(), nothing, 0, 0, 0)
+    DFGVariable(label::Symbol, _internalId::Int64) = new(label, now(), Symbol[], Dict{Symbol, PointParametricEstimates}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), Dict{String, String}(), nothing, 0, 0, _internalId)
+    DFGVariable(label::Symbol) = new(label, now(), Symbol[], Dict{Symbol, PointParametricEstimates}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), Dict{String, String}(), nothing, 0, 0, 0)
 end
 
 # Accessors
@@ -166,7 +158,7 @@ mutable struct DFGVariableSummary <: AbstractDFGVariable
     label::Symbol
     timestamp::DateTime
     tags::Vector{Symbol}
-    estimateDict::Dict{Symbol, Dict{Symbol, <:AbstractVariableEstimate}}
+    estimateDict::Dict{Symbol, PointParametricEstimates}
     softtypename::Symbol
     _internalId::Int64
 end
