@@ -4,6 +4,7 @@ using Colors
 using LightGraphs
 using MetaGraphs
 using GraphPlot
+using DocStringExtensions
 import GraphPlot: gplot
 
 using ...DistributedFactorGraphs
@@ -28,6 +29,26 @@ DFGPlotProps() = DFGPlotProps(  (var=colorant"seagreen", fac=colorant"cyan3"),
                                 true)
 
 
+
+"""
+    $(SIGNATURES)
+Plots the structure of the factor graph. GraphPlot must be imported before DistributedFactorGraphs for these functions to be available.
+Returns the plot context.
+
+E.g.
+```
+using GraphPlot
+using DistributedFactorGraphs, DistributedFactorGraphs.DFGPlots
+# ... Make graph...
+# Using GraphViz plotting
+dfgplot(fg)
+# Save to PDFG
+using Compose
+draw(PDF("/tmp/graph.pdf", 16cm, 16cm), dfgplot(fg))
+```
+
+More information at [GraphPlot.jl](https://github.com/JuliaGraphs/GraphPlot.jl)
+"""
 function dfgplot(dfg::LightDFG, p::DFGPlotProps = DFGPlotProps())
 
     nodetypes = [haskey(dfg.g.variables, s) for s in dfg.g.labels]
@@ -46,8 +67,27 @@ function dfgplot(dfg::LightDFG, p::DFGPlotProps = DFGPlotProps())
 
 end
 
-function dfgplot(dfg::MetaGraphsDFG, p::DFGPlotProps = DFGPlotProps())
+"""
+    $(SIGNATURES)
+Plots the structure of the factor graph. GraphPlot must be imported before DistributedFactoGraphs for these functions to be available.
+Returns the plot context.
 
+E.g.
+```
+using GraphPlot
+using DistributedFactorGraphs, DistributedFactorGraphs.DFGPlots
+# ... Make graph...
+# Using GraphViz plotting
+dfgplot(fg)
+# Save to PDFG
+using Compose
+draw(PDF("/tmp/graph.pdf", 16cm, 16cm), dfgplot(fg))
+```
+
+More information at [GraphPlot.jl](https://github.com/JuliaGraphs/GraphPlot.jl)
+"""
+function dfgplot(dfg::DistributedFactorGraphs.MetaGraphsDFG, p::DFGPlotProps = DFGPlotProps())
+    @info "Deprecated, please use GraphsDFG or LightDFG."
     nodesize = [has_prop(dfg.g,i,:factor) ?  p.nodesize.fac : p.nodesize.var for i=vertices(dfg.g)]
     if p.drawlabels
         nodelabel = [has_prop(dfg.g,i,:factor) ? "" : string(get_prop(dfg.g,i,:label)) for i=vertices(dfg.g)]
@@ -60,17 +100,36 @@ function dfgplot(dfg::MetaGraphsDFG, p::DFGPlotProps = DFGPlotProps())
 
 end
 
+"""
+    $(SIGNATURES)
+Plots the structure of the factor graph. GraphPlot must be imported before DistributedFactoGraphs for these functions to be available.
+Returns the plot context.
+
+E.g.
+```
+using GraphPlot
+using DistributedFactorGraphs, DistributedFactorGraphs.DFGPlots
+# ... Make graph...
+# Using GraphViz plotting
+dfgplot(fg)
+# Save to PDFG
+using Compose
+draw(PDF("/tmp/graph.pdf", 16cm, 16cm), dfgplot(fg))
+```
+
+More information at [GraphPlot.jl](https://github.com/JuliaGraphs/GraphPlot.jl)
+"""
 function dfgplot(dfg::AbstractDFG, p::DFGPlotProps = DFGPlotProps())
     # TODO implement convert functions
     @warn "TODO Implement convert"
-    ldfg = MetaGraphsDFG{AbstractParams}()
+    ldfg = LightDFG{AbstractParams}()
     DistributedFactorGraphs._copyIntoGraph!(dfg, ldfg, union(getVariableIds(dfg), getFactorIds(dfg)), true)
 
     dfgplot(ldfg, p)
-
 end
 
-function gplot(dfg::MetaGraphsDFG; keyargs...)
+function gplot(dfg::DistributedFactorGraphs.MetaGraphsDFG; keyargs...)
+    @info "Deprecated, please use GraphsDFG or LightDFG."
     gplot(dfg.g; keyargs...)
 end
 

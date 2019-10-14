@@ -1,7 +1,12 @@
-dfg = testDFGAPI{NoSolverParams}()
-v1 = DFGVariable(:a)
-v2 = DFGVariable(:b)
-f1 = DFGFactor{Int, :Symbol}(:f1)
+dfg = LightDFG{NoSolverParams, DFGVariableSummary, DFGFactorSummary}()
+
+DistributedFactorGraphs.DFGVariableSummary(label::Symbol) = DFGVariableSummary(label, DistributedFactorGraphs.now(), Symbol[], Dict{Symbol, VariableEstimate}(), 0)
+
+DistributedFactorGraphs.DFGFactorSummary(label::Symbol) = DFGFactorSummary(label, Symbol[], 0, Symbol[])
+
+v1 = DFGVariableSummary(:a)
+v2 = DFGVariableSummary(:b)
+f1 = DFGFactorSummary(:f1)
 
 #add tags for filters
 append!(v1.tags, [:VARIABLE, :POSE])
@@ -13,16 +18,16 @@ global dfg,v1,v2,f1
 addVariable!(dfg, v1)
 addVariable!(dfg, v2)
 addFactor!(dfg, [v1, v2], f1)
-@test_throws Exception addFactor!(dfg, DFGFactor{Int, :Symbol}("f2"), [v1, DFGVariable("Nope")])
+@test_throws Exception addFactor!(dfg, DFGFactorSummary("f2"), [v1, DFGVariableSummary("Nope")])
 # end
 
 @testset "Adding Removing Nodes" begin
-    dfg2 = testDFGAPI{NoSolverParams}()
-    v1 = DFGVariable(:a)
-    v2 = DFGVariable(:b)
-    v3 = DFGVariable(:c)
-    f1 = DFGFactor{Int, :Symbol}(:f1)
-    f2 = DFGFactor{Int, :Symbol}(:f2)
+    dfg2 = LightDFG{NoSolverParams, DFGVariableSummary, DFGFactorSummary}()
+    v1 = DFGVariableSummary(:a)
+    v2 = DFGVariableSummary(:b)
+    v3 = DFGVariableSummary(:c)
+    f1 = DFGFactorSummary(:f1)
+    f2 = DFGFactorSummary(:f2)
     # @testset "Creating Graphs" begin
     @test addVariable!(dfg2, v1)
     @test addVariable!(dfg2, v2)
@@ -90,32 +95,23 @@ end
     @test timestamp(v1) == v1.timestamp
     @test estimates(v1) == v1.estimateDict
     @test estimate(v1, :notfound) == nothing
-    @test solverData(v1) === v1.solverDataDict[:default]
-    @test getData(v1) === v1.solverDataDict[:default]
-    @test solverData(v1, :default) === v1.solverDataDict[:default]
-    @test solverDataDict(v1) == v1.solverDataDict
+    # @test solverData(v1) === v1.solverDataDict[:default]
+    # @test getData(v1) === v1.solverDataDict[:default]
+    # @test solverData(v1, :default) === v1.solverDataDict[:default]
+    # @test solverDataDict(v1) == v1.solverDataDict
     @test internalId(v1) == v1._internalId
 
     @test label(f1) == f1.label
     @test tags(f1) == f1.tags
-    @test solverData(f1) == f1.data
+    # @test solverData(f1) == f1.data
     # Deprecated functions
-    @test data(f1) == f1.data
-    @test getData(f1) == f1.data
+    # @test data(f1) == f1.data
+    # @test getData(f1) == f1.data
     # Internal function
     @test internalId(f1) == f1._internalId
 
     @test getSolverParams(dfg) != nothing
     @test setSolverParams(dfg, getSolverParams(dfg)) == getSolverParams(dfg)
-
-    #solver data is initialized
-    @test !isInitialized(dfg, :a)
-    @test !isInitialized(v2)
-
-    #TODO Should the next test work?
-    @test_broken !isInitialized(dfg, :f1)
-    @test_broken !isInitialized(f1)
-    
 end
 
 @testset "Updating Nodes" begin
@@ -139,7 +135,7 @@ end
         return true
     end
     #For now spot check
-    @test solverDataDict(newvar) == solverDataDict(var)
+    # @test solverDataDict(newvar) == solverDataDict(var)
     @test estimates(newvar) == estimates(var)
 
     # Delete :default and replace to see if new ones can be added
@@ -163,7 +159,7 @@ end
     global dfg,v1,v2,f1
     @test isFullyConnected(dfg) == true
     @test hasOrphans(dfg) == false
-    addVariable!(dfg, DFGVariable(:orphan))
+    addVariable!(dfg, DFGVariableSummary(:orphan))
     @test isFullyConnected(dfg) == false
     @test hasOrphans(dfg) == true
 end
@@ -205,13 +201,13 @@ end
 
 # Now make a complex graph for connectivity tests
 numNodes = 10
-dfg = testDFGAPI{NoSolverParams}()
-verts = map(n -> DFGVariable(Symbol("x$n")), 1:numNodes)
+dfg = LightDFG{NoSolverParams, DFGVariableSummary, DFGFactorSummary}()
+verts = map(n -> DFGVariableSummary(Symbol("x$n")), 1:numNodes)
 #change ready and backendset for x7,x8 for improved tests on x7x8f1
-verts[7].ready = 1
-verts[8].backendset = 1
+# verts[7].ready = 1
+# verts[8].backendset = 1
 map(v -> addVariable!(dfg, v), verts)
-map(n -> addFactor!(dfg, [verts[n], verts[n+1]], DFGFactor{Int, :Symbol}(Symbol("x$(n)x$(n+1)f1"))), 1:(numNodes-1))
+map(n -> addFactor!(dfg, [verts[n], verts[n+1]], DFGFactorSummary(Symbol("x$(n)x$(n+1)f1"))), 1:(numNodes-1))
 
 @testset "Getting Neighbors" begin
     global dfg,verts
@@ -226,18 +222,18 @@ map(n -> addFactor!(dfg, [verts[n], verts[n+1]], DFGFactor{Int, :Symbol}(Symbol(
     @test getNeighbors(dfg, :x1x2f1) == ls(dfg, :x1x2f1)
 
     # ready and backendset
-    @test getNeighbors(dfg, :x5, ready=1) == Symbol[]
-    @test getNeighbors(dfg, :x5, ready=0) == [:x4x5f1,:x5x6f1]
-    @test getNeighbors(dfg, :x5, backendset=1) == Symbol[]
-    @test getNeighbors(dfg, :x5, backendset=0) == [:x4x5f1,:x5x6f1]
-    @test getNeighbors(dfg, :x7x8f1, ready=0) == [:x8]
-    @test getNeighbors(dfg, :x7x8f1, backendset=0) == [:x7]
-    @test getNeighbors(dfg, :x7x8f1, ready=1) == [:x7]
-    @test getNeighbors(dfg, :x7x8f1, backendset=1) == [:x8]
-    @test getNeighbors(dfg, verts[1], ready=0) == [:x1x2f1]
-    @test getNeighbors(dfg, verts[1], ready=1) == Symbol[]
-    @test getNeighbors(dfg, verts[1], backendset=0) == [:x1x2f1]
-    @test getNeighbors(dfg, verts[1], backendset=1) == Symbol[]
+    # @test getNeighbors(dfg, :x5, ready=1) == Symbol[]
+    # @test getNeighbors(dfg, :x5, ready=0) == [:x4x5f1,:x5x6f1]
+    # @test getNeighbors(dfg, :x5, backendset=1) == Symbol[]
+    # @test getNeighbors(dfg, :x5, backendset=0) == [:x4x5f1,:x5x6f1]
+    # @test getNeighbors(dfg, :x7x8f1, ready=0) == [:x8]
+    # @test getNeighbors(dfg, :x7x8f1, backendset=0) == [:x7]
+    # @test getNeighbors(dfg, :x7x8f1, ready=1) == [:x7]
+    # @test getNeighbors(dfg, :x7x8f1, backendset=1) == [:x8]
+    # @test getNeighbors(dfg, verts[1], ready=0) == [:x1x2f1]
+    # @test getNeighbors(dfg, verts[1], ready=1) == Symbol[]
+    # @test getNeighbors(dfg, verts[1], backendset=0) == [:x1x2f1]
+    # @test getNeighbors(dfg, verts[1], backendset=1) == Symbol[]
 
 end
 
@@ -293,18 +289,18 @@ end
     end
 end
 
-@testset "Producing Dot Files" begin
-    # create a simpler graph for dot testing
-    dotdfg = testDFGAPI{NoSolverParams}()
-    v1 = DFGVariable(:a)
-    v2 = DFGVariable(:b)
-    f1 = DFGFactor{Int, :Symbol}(:f1)
-    addVariable!(dotdfg, v1)
-    addVariable!(dotdfg, v2)
-    addFactor!(dotdfg, [v1, v2], f1)
-
-    @test toDot(dotdfg) == "graph graphname {\n2 [\"label\"=\"b\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n2 -- 3\n3 [\"label\"=\"f1\",\"shape\"=\"box\",\"fillcolor\"=\"blue\",\"color\"=\"blue\"]\n1 [\"label\"=\"a\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n1 -- 3\n}\n"
-    @test toDotFile(dotdfg, "something.dot") == nothing
-    Base.rm("something.dot")
-
-end
+# @testset "Producing Dot Files" begin
+#     # create a simpler graph for dot testing
+#     dotdfg = LightDFG{NoSolverParams, DFGVariableSummary, DFGFactorSummary}()
+#     v1 = DFGVariableSummary(:a)
+#     v2 = DFGVariableSummary(:b)
+#     f1 = DFGFactorSummary(:f1)
+#     addVariable!(dotdfg, v1)
+#     addVariable!(dotdfg, v2)
+#     addFactor!(dotdfg, [v1, v2], f1)
+#
+#     @test toDot(dotdfg) == "graph graphname {\n2 [\"label\"=\"b\",\"shape\"=\"box\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n2 -- 3\n3 [\"label\"=\"f1\",\"shape\"=\"ellipse\",\"fillcolor\"=\"blue\",\"color\"=\"blue\"]\n1 [\"label\"=\"a\",\"shape\"=\"box\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n1 -- 3\n}\n"
+#     @test toDotFile(dotdfg, "something.dot") == nothing
+#     Base.rm("something.dot")
+#
+# end

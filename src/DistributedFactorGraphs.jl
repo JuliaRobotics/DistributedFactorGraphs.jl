@@ -11,23 +11,18 @@ using LinearAlgebra
 using SparseArrays
 
 # Entities
-include("entities/AbstractTypes.jl")
+include("entities/AbstractDFG.jl")
 include("entities/DFGFactor.jl")
 include("entities/DFGVariable.jl")
+include("entities/AbstractDFGSummary.jl")
 
 export AbstractDFG
 export AbstractParams, NoSolverParams
-export DFGNode
-
-export DFGFactor
+export DFGNode, DFGVariable, DFGFactor
 export InferenceType, PackedInferenceType, FunctorInferenceType, InferenceVariable, ConvolutionObject
-
 export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
-
-export DFGVariable
-export label, timestamp, tags, estimates, estimate, solverData, getData, solverDataDict, internalId, smallData, bigData
-export setSolverData
-export label, data, id
+export label, timestamp, tags, estimates, estimate, data, solverData, getData, solverDataDict, setSolverData, internalId, smallData, bigData
+export DFGVariableSummary, DFGFactorSummary, AbstractDFGSummary
 
 # Services/AbstractDFG Exports
 export hasFactor, hasVariable, isInitialized, getFactorFunction, isVariable, isFactor
@@ -38,13 +33,23 @@ export VariableNodeData, PackedVariableNodeData, VariableEstimate
 export GenericFunctionNodeData#, FunctionNodeData
 export getSerializationModule, setSerializationModule!
 export pack, unpack
+# Resolve with above
+export packVariable, unpackVariable, packFactor, unpackFactor
+
 
 #Interfaces
 export getAdjacencyMatrixSparse
 
+# File import and export
+export saveDFG, loadDFG
+
+# Summary functions
+export getSummary, getSummaryGraph
+
 # Common includes
 include("services/AbstractDFG.jl")
 include("services/DFGVariable.jl")
+include("services/DFGFactor.jl")
 
 # Include the Graphs.jl API.
 include("GraphsDFG/GraphsDFG.jl")
@@ -56,12 +61,10 @@ include("FileDFG/FileDFG.jl")
 include("MetaGraphsDFG/MetaGraphsDFG.jl")
 
 include("SymbolDFG/SymbolDFG.jl")
-@reexport using .SymbolDFGs
+using .SymbolDFGs
 
 include("LightDFG/LightDFG.jl")
 @reexport using .LightDFGs
-
-export saveDFG, loadDFG
 
 function __init__()
     @require Neo4j="d2adbeaf-5838-5367-8a2f-e46d570981db" begin

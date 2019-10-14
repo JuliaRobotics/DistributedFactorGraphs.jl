@@ -31,19 +31,22 @@ export
     filter_vertices,
     reverse
 
-import DistributedFactorGraphs: DFGNode
-const AbstractNodeType = DFGNode
+# import DistributedFactorGraphs: DFGNode
+# const AbstractNodeType = DFGNode
+import DistributedFactorGraphs: AbstractDFGVariable, AbstractDFGFactor
+const AbstractVariableType = AbstractDFGVariable
+const AbstractFactorType = AbstractDFGFactor
 
 include("BiMaps.jl")
 
-struct FactorGraph{T <: Integer,V <: AbstractNodeType, F <: AbstractNodeType} <: AbstractGraph{T}
+struct FactorGraph{T <: Integer,V <: AbstractVariableType, F <: AbstractFactorType} <: AbstractGraph{T}
     graph::SimpleGraph{T}
     labels::BiDictMap{T}
     variables::Dict{Symbol,V}
     factors::Dict{Symbol,F}
 end
 
-function FactorGraph{T, V, F}(nv::Int=100, nf::Int=100) where {T <: Integer, V <: AbstractNodeType, F <: AbstractNodeType}
+function FactorGraph{T, V, F}(nv::Int=100, nf::Int=100) where {T <: Integer, V <: AbstractVariableType, F <: AbstractFactorType}
     fadjlist = Vector{Vector{T}}()
         sizehint!(fadjlist, nv + nf)
     g = SimpleGraph{T}(0, fadjlist)
@@ -55,10 +58,10 @@ function FactorGraph{T, V, F}(nv::Int=100, nf::Int=100) where {T <: Integer, V <
     return FactorGraph{T, V, F}(g, labels, variables, factors)
 end
 
-# fg = FactorGraph{Int, AbstractNodeType, AbstractNodeType}()
+# fg = FactorGraph{Int, AbstractVariableType, AbstractFactorType}()
 
-FactorGraph() = FactorGraph{Int, AbstractNodeType, AbstractNodeType}()
-FactorGraph{V,F}() where {V <: AbstractNodeType, F <: AbstractNodeType} = FactorGraph{Int, V, F}()
+FactorGraph() = FactorGraph{Int, AbstractVariableType, AbstractFactorType}()
+FactorGraph{V,F}() where {V <: AbstractVariableType, F <: AbstractFactorType} = FactorGraph{Int, V, F}()
 
 
 function show(io::IO, g::FactorGraph)

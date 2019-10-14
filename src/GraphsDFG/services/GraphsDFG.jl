@@ -7,7 +7,7 @@ function attributes(v::GraphsNode, g::T)::AttributeDict where T <:GenericInciden
     AttributeDict(
         "label" => v.dfgNode.label,
         "color" => v.dfgNode isa DFGVariable ? "red" : "blue",
-        "shape" => v.dfgNode isa DFGVariable ? "box" : "ellipse",
+        "shape" => v.dfgNode isa DFGVariable ? "ellipse" : "box",
         "fillcolor" => v.dfgNode isa DFGVariable ? "red" : "blue"
         )
 end
@@ -368,66 +368,8 @@ end
 
 """
     $(SIGNATURES)
-Get an adjacency matrix for the DFG, returned as a Matrix{Union{Nothing, Symbol}}.
-Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor.
-The first row and first column are factor and variable headings respectively.
-"""
-function getAdjacencyMatrix(dfg::GraphsDFG)::Matrix{Union{Nothing, Symbol}}
-    varLabels = sort(map(v->v.label, getVariables(dfg)))
-    factLabels = sort(map(f->f.label, getFactors(dfg)))
-    vDict = Dict(varLabels .=> [1:length(varLabels)...].+1)
-
-    adjMat = Matrix{Union{Nothing, Symbol}}(nothing, length(factLabels)+1, length(varLabels)+1)
-    # Set row/col headings
-    adjMat[2:end, 1] = factLabels
-    adjMat[1, 2:end] = varLabels
-    for (fIndex, factLabel) in enumerate(factLabels)
-        factVars = getNeighbors(dfg, getFactor(dfg, factLabel))
-        map(vLabel -> adjMat[fIndex+1,vDict[vLabel]] = factLabel, factVars)
-    end
-    return adjMat
-end
-
-function getAdjacencyMatrixSparse(dfg::GraphsDFG)::Tuple{LightGraphs.SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}
-	varLabels = map(v->v.label, getVariables(dfg))
-	factLabels = map(f->f.label, getFactors(dfg))
-
-	vDict = Dict(varLabels .=> [1:length(varLabels)...])
-
-	adjMat = spzeros(Int, length(factLabels), length(varLabels))
-
-	for (fIndex, factLabel) in enumerate(factLabels)
-		factVars = getNeighbors(dfg, getFactor(dfg, factLabel))
-	    map(vLabel -> adjMat[fIndex,vDict[vLabel]] = 1, factVars)
-	end
-	return adjMat, varLabels, factLabels
-end
-
-"""
-    $(SIGNATURES)
 Produces a dot-format of the graph for visualization.
 """
 function toDot(dfg::GraphsDFG)::String
-    m = PipeBuffer()
-    write(m,Graphs.to_dot(dfg.g))
-    data = take!(m)
-    close(m)
-    return String(data)
-end
-
-"""
-    $(SIGNATURES)
-Produces a dot file of the graph for visualization.
-Download XDot to see the data
-
-Note
-- Default location "/tmp/dfg.dot" -- MIGHT BE REMOVED
-- Can be viewed with the `xdot` system application.
-- Based on graphviz.org
-"""
-function toDotFile(dfg::GraphsDFG, fileName::String="/tmp/dfg.dot")::Nothing
-    open(fileName, "w") do fid
-        write(fid,Graphs.to_dot(dfg.g))
-    end
-    return nothing
+	return Graphs.to_dot(dfg.g)
 end

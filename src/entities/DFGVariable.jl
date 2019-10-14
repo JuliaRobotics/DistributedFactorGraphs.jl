@@ -1,7 +1,11 @@
+#TODO don't know what to do if it is uninitalized
+#so for now defining a Singleton for the default
+struct SingletonInferenceVariable <: InferenceVariable end
+
 """
 $(TYPEDEF)
 """
-mutable struct VariableNodeData
+mutable struct VariableNodeData #TODO v0.5.0 {T<:InferenceVariable}
   val::Array{Float64,2}
   bw::Array{Float64,2}
   BayesNetOutVertIDs::Array{Symbol,1}
@@ -10,13 +14,15 @@ mutable struct VariableNodeData
   eliminated::Bool
   BayesNetVertID::Symbol #  Union{Nothing, }
   separator::Array{Symbol,1}
-  softtype
+  softtype::InferenceVariable #TODO v0.5.0 T
   initialized::Bool
   inferdim::Float64
   ismargin::Bool
   dontmargin::Bool
+  # Tonio surprise TODO
+  # frontalonly::Bool
   # A valid, packable default constructor is needed.
-  VariableNodeData() = new(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], "", false, false, false, false)
+  VariableNodeData() = new(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], SingletonInferenceVariable(), false, false, false, false)
   VariableNodeData(x1::Array{Float64,2},
                    x2::Array{Float64,2},
                    x3::Vector{Symbol},
@@ -83,7 +89,7 @@ end
     $(SIGNATURES)
 Fundamental structure for a DFG variable.
 """
-mutable struct DFGVariable <: DFGNode
+mutable struct DFGVariable <: AbstractDFGVariable
     label::Symbol
     timestamp::DateTime
     tags::Vector{Symbol}
@@ -104,11 +110,47 @@ timestamp(v::DFGVariable) = v.timestamp
 tags(v::DFGVariable) = v.tags
 estimates(v::DFGVariable) = v.estimateDict
 estimate(v::DFGVariable, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
+"""
+    $SIGNATURES
+
+Retrieve solver data structure stored in a variable.
+"""
 solverData(v::DFGVariable, key::Symbol=:default) = haskey(v.solverDataDict, key) ? v.solverDataDict[key] : nothing
-getData(v::DFGVariable; solveKey::Symbol=:default)::VariableNodeData = v.solverDataDict[solveKey]
+"""
+    $SIGNATURES
+
+Retrieve data structure stored in a variable.
+"""
+function getData(v::DFGVariable; solveKey::Symbol=:default)::VariableNodeData
+  @warn "getData is deprecated, please use solverData()"
+  return v.solverDataDict[solveKey]
+end
+"""
+    $SIGNATURES
+
+Set solver data structure stored in a variable.
+"""
 setSolverData(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v.solverDataDict[key] = data
 solverDataDict(v::DFGVariable) = v.solverDataDict
 internalId(v::DFGVariable) = v._internalId
 # Todo: Complete this.
 smallData(v::DFGVariable) = v.smallData
 bigData(v::DFGVariable) = v.bigData
+
+"""
+    $(SIGNATURES)
+Structure for first-class citizens of a DFGVariable.
+"""
+mutable struct DFGVariableSummary <: AbstractDFGVariable
+    label::Symbol
+    timestamp::DateTime
+    tags::Vector{Symbol}
+    estimateDict::Dict{Symbol, Dict{Symbol, VariableEstimate}}
+    _internalId::Int64
+end
+label(v::DFGVariableSummary) = v.label
+timestamp(v::DFGVariableSummary) = v.timestamp
+tags(v::DFGVariableSummary) = v.tags
+estimates(v::DFGVariableSummary) = v.estimateDict
+estimate(v::DFGVariableSummary, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
+internalId(v::DFGVariableSummary) = v._internalId

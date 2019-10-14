@@ -1,4 +1,5 @@
-export sortVarNested
+
+export sortVarNested, sortDFG
 export isPrior, lsfPriors
 export getVariableType, getSofttype
 export getFactorType, getfnctype
@@ -87,6 +88,24 @@ function sortVarNested(vars::Vector{Symbol})::Vector{Symbol}
 	end
 	return retvars
 end
+
+"""
+    $SIGNATURES
+
+Sort variable (factor) lists in a meaningful way, for example `[:april;:x1_3;:x1_6;]`
+
+Notes
+- Not fool proof, but does better than native sort.
+
+Example
+
+`sortDFG(ls(dfg))`
+
+Related
+
+ls, lsf
+"""
+sortDFG(vars::Vector{Symbol})::Vector{Symbol} = sortVarNested(vars)
 
 """
     $SIGNATURES

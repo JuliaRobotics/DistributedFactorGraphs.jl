@@ -1,5 +1,41 @@
-using Base
-import Base.==
+import Base: ==, convert
+
+function packVariable(dfg::G, v::DFGVariable)::Dict{String, Any} where G <: AbstractDFG
+    props = Dict{String, Any}()
+    props["label"] = string(v.label)
+    props["timestamp"] = string(v.timestamp)
+    props["tags"] = JSON2.write(v.tags)
+    props["estimateDict"] = JSON2.write(v.estimateDict)
+    props["solverDataDict"] = JSON2.write(Dict(keys(v.solverDataDict) .=> map(vnd -> pack(dfg, vnd), values(v.solverDataDict))))
+    props["smallData"] = JSON2.write(v.smallData)
+    props["ready"] = v.ready
+    props["backendset"] = v.backendset
+    return props
+end
+
+function unpackVariable(dfg::G, packedProps::Dict{String, Any})::DFGVariable where G <: AbstractDFG
+    label = Symbol(packedProps["label"])
+    timestamp = DateTime(packedProps["timestamp"])
+    tags =  JSON2.read(packedProps["tags"], Vector{Symbol})
+    estimateDict = JSON2.read(packedProps["estimateDict"], Dict{Symbol, Dict{Symbol, VariableEstimate}})
+    smallData = nothing
+    smallData = JSON2.read(packedProps["smallData"], Dict{String, String})
+
+    packed = JSON2.read(packedProps["solverDataDict"], Dict{String, PackedVariableNodeData})
+    solverData = Dict(Symbol.(keys(packed)) .=> map(p -> unpack(dfg, p), values(packed)))
+
+    # Rebuild DFGVariable
+    variable = DFGVariable(Symbol(packedProps["label"]))
+    variable.timestamp = timestamp
+    variable.tags = tags
+    variable.estimateDict = estimateDict
+    variable.solverDataDict = solverData
+    variable.smallData = smallData
+    variable.ready = packedProps["ready"]
+    variable.backendset = packedProps["backendset"]
+
+    return variable
+end
 
 function pack(dfg::G, d::VariableNodeData)::PackedVariableNodeData where G <: AbstractDFG
   @debug "Dispatching conversion variable -> packed variable for type $(string(d.softtype))"
@@ -46,7 +82,7 @@ function unpack(dfg::G, d::PackedVariableNodeData)::VariableNodeData where G <: 
     st, d.initialized, d.inferdim, d.ismargin, d.dontmargin )
 end
 
-function compare(a::VariableNodeData,b::VariableNodeData)
+function compare(a::VariableNodeData, b::VariableNodeData)
     TP = true
     TP = TP && a.val == b.val
     TP = TP && a.bw == b.bw
@@ -64,4 +100,8 @@ end
 
 function ==(a::VariableNodeData,b::VariableNodeData, nt::Symbol=:var)
   return DistributedFactorGraphs.compare(a,b)
+end
+
+function convert(::Type{DFGVariableSummary}, v::DFGVariable)
+    return DFGVariableSummary(v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.estimateDict), v._internalId)
 end
