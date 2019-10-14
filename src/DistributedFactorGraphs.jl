@@ -30,7 +30,7 @@ export hasFactor, hasVariable, isInitialized, getFactorFunction, isVariable, isF
 export updateGraphSolverData!
 
 # Solver (IIF) Exports
-export VariableNodeData, PackedVariableNodeData, timate
+export VariableNodeData, PackedVariableNodeData
 export GenericFunctionNodeData#, FunctionNodeData
 export getSerializationModule, setSerializationModule!
 export pack, unpack
