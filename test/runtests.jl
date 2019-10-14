@@ -20,7 +20,7 @@ apis = [
                                 solverParams=SolverParams())
         ]
 for api in apis
-    @testset "Testing Driver: $(api)" begin
+    @testset "Testing Driver: $(typeof(api))" begin
         @info "Testing Driver: $(api)"
         global dfg = api
         include("iifInterfaceTests.jl")
