@@ -32,7 +32,7 @@ DFGPlotProps() = DFGPlotProps(  (var=colorant"seagreen", fac=colorant"cyan3"),
 
 """
     $(SIGNATURES)
-Plots the structure of the factor graph. GraphPlot must be imported before DistributedFactoGraphs for these functions to be available.
+Plots the structure of the factor graph. GraphPlot must be imported before DistributedFactorGraphs for these functions to be available.
 Returns the plot context.
 
 E.g.
@@ -86,8 +86,8 @@ draw(PDF("/tmp/graph.pdf", 16cm, 16cm), dfgplot(fg))
 
 More information at [GraphPlot.jl](https://github.com/JuliaGraphs/GraphPlot.jl)
 """
-function dfgplot(dfg::MetaGraphsDFG, p::DFGPlotProps = DFGPlotProps())
-
+function dfgplot(dfg::DistributedFactorGraphs.MetaGraphsDFG, p::DFGPlotProps = DFGPlotProps())
+    @info "Deprecated, please use GraphsDFG or LightDFG."
     nodesize = [has_prop(dfg.g,i,:factor) ?  p.nodesize.fac : p.nodesize.var for i=vertices(dfg.g)]
     if p.drawlabels
         nodelabel = [has_prop(dfg.g,i,:factor) ? "" : string(get_prop(dfg.g,i,:label)) for i=vertices(dfg.g)]
@@ -122,13 +122,14 @@ More information at [GraphPlot.jl](https://github.com/JuliaGraphs/GraphPlot.jl)
 function dfgplot(dfg::AbstractDFG, p::DFGPlotProps = DFGPlotProps())
     # TODO implement convert functions
     @warn "TODO Implement convert"
-    ldfg = MetaGraphsDFG{AbstractParams}()
+    ldfg = LightDFG{AbstractParams}()
     DistributedFactorGraphs._copyIntoGraph!(dfg, ldfg, union(getVariableIds(dfg), getFactorIds(dfg)), true)
 
     dfgplot(ldfg, p)
 end
 
-function gplot(dfg::MetaGraphsDFG; keyargs...)
+function gplot(dfg::DistributedFactorGraphs.MetaGraphsDFG; keyargs...)
+    @info "Deprecated, please use GraphsDFG or LightDFG."
     gplot(dfg.g; keyargs...)
 end
 

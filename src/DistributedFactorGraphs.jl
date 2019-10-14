@@ -33,6 +33,9 @@ export VariableNodeData, PackedVariableNodeData, VariableEstimate
 export GenericFunctionNodeData#, FunctionNodeData
 export getSerializationModule, setSerializationModule!
 export pack, unpack
+# Resolve with above
+export packVariable, unpackVariable, packFactor, unpackFactor
+
 
 #Interfaces
 export getAdjacencyMatrixSparse
@@ -58,7 +61,7 @@ include("FileDFG/FileDFG.jl")
 include("MetaGraphsDFG/MetaGraphsDFG.jl")
 
 include("SymbolDFG/SymbolDFG.jl")
-@reexport using .SymbolDFGs
+# @reexport using .SymbolDFGs
 
 include("LightDFG/LightDFG.jl")
 @reexport using .LightDFGs

@@ -9,8 +9,8 @@ using IncrementalInference
 apis = [
     GraphsDFG{NoSolverParams}(),
     LightDFG{NoSolverParams}(),
-    # MetaGraphsDFG{NoSolverParams}(),
-    # SymbolDFG{NoSolverParams}(),
+    DistributedFactorGraphs.MetaGraphsDFG{NoSolverParams}(),
+    DistributedFactorGraphs.SymbolDFG{NoSolverParams}(),
     # CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
     #                             "testUser", "testRobot", "testSession",
     #                             nothing,
@@ -26,6 +26,20 @@ for api in apis
         include("interfaceTests.jl")
     end
 end
+
+apis = [
+    GraphsDFG{NoSolverParams}(),
+    LightDFG{NoSolverParams}(),
+    # MetaGraphsDFG{NoSolverParams}(),
+    # SymbolDFG{NoSolverParams}(),
+    # CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
+    #                             "testUser", "testRobot", "testSession",
+    #                             nothing,
+    #                             nothing,
+    #                             IncrementalInference.decodePackedType,
+    #                             IncrementalInference.rebuildFactorMetadata!,
+    #                             solverParams=SolverParams())
+        ]
 for api in apis
     @testset "Testing Driver: $(typeof(api))" begin
         @info "Testing Driver: $(api)"
@@ -33,15 +47,12 @@ for api in apis
         include("iifInterfaceTests.jl")
     end
 end
-# Test each interface
-# apis = [GraphsDFG, MetaGraphsDFG, SymbolDFG, LightDFG]
-# for api in apis
-#     @testset "Testing Driver: $(api)" begin
-#         @info "Testing Driver: $(api)"
-#         global testDFGAPI = api
-#         include("interfaceTests.jl")
-#     end
-# end
+
+# Test that we don't export LightDFG and MetaGraphsDFG
+@testset "Deprecated Drivers Test" begin
+    @test_throws UndefVarError SymbolDFG{NoSolverParams}()
+    @test_throws UndefVarError MetaGraphsDFG{NoSolverParams}()
+end
 
 # Test special cases
 
