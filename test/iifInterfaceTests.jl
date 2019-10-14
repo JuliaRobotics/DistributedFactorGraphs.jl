@@ -149,6 +149,10 @@ end
     @test solverDataDict(v1) == v1.solverDataDict
     @test internalId(v1) == v1._internalId
 
+    @test softtype(v1) == :ContinuousScalar#Symbol(typeof(st1))
+    @test softtype(v2) == :ContinuousScalar#Symbol(typeof(st2))
+    @test typeof(getSofttype(v1)) == typeof(ContinuousScalar())
+
     @test label(f1) == f1.label
     @test tags(f1) == f1.tags
     @test solverData(f1) == f1.data
@@ -167,6 +171,61 @@ end
 
     @test !isInitialized(v2, key=:second)
 
+    # Session, robot, and user small data tests
+    smallUserData = Dict{Symbol, String}(:a => "42", :b => "Hello")
+    smallRobotData = Dict{Symbol, String}(:a => "43", :b => "Hello")
+    smallSessionData = Dict{Symbol, String}(:a => "44", :b => "Hello")
+    setUserData(dfg, deepcopy(smallUserData))
+    setRobotData(dfg, deepcopy(smallRobotData))
+    setSessionData(dfg, deepcopy(smallSessionData))
+    @test getUserData(dfg) == smallUserData
+    @test getRobotData(dfg) == smallRobotData
+    @test getSessionData(dfg) == smallSessionData
+
+end
+
+@testset "BigData" begin
+    oid = zeros(UInt8,12); oid[12] = 0x01
+    de1 = MongodbBigDataEntry(:key1, NTuple{12,UInt8}(oid))
+
+    oid = zeros(UInt8,12); oid[12] = 0x02
+    de2 = MongodbBigDataEntry(:key2, NTuple{12,UInt8}(oid))
+
+    oid = zeros(UInt8,12); oid[12] = 0x03
+    de2_update = MongodbBigDataEntry(:key2, NTuple{12,UInt8}(oid))
+
+    #add
+    v1 = getVariable(dfg, :a)
+    @test addBigDataEntry!(v1, de1)
+    @test addBigDataEntry!(dfg, :a, de2)
+    @test addBigDataEntry!(v1, de1)
+
+    #get
+    @test deepcopy(de1) == getBigDataEntry(v1, :key1)
+    @test deepcopy(de2) == getBigDataEntry(dfg, :a, :key2)
+    @test_throws Any getBigDataEntry(v2, :key1)
+    @test_throws Any getBigDataEntry(dfg, :b, :key1)
+
+    #update
+    @test updateBigDataEntry!(dfg, :a, de2_update)
+    @test deepcopy(de2_update) == getBigDataEntry(dfg, :a, :key2)
+    @test !updateBigDataEntry!(dfg, :b, de2_update)
+
+    #list
+    entries = getBigDataEntries(dfg, :a)
+    @test length(entries) == 2
+    @test symdiff(map(e->e.key, entries), [:key1, :key2]) == Symbol[]
+    @test length(getBigDataEntries(dfg, :b)) == 0
+
+    @test symdiff(getBigDataKeys(dfg, :a), [:key1, :key2]) == Symbol[]
+    @test getBigDataKeys(dfg, :b) == Symbol[]
+
+    #delete
+    @test deepcopy(de1) == deleteBigDataEntry!(v1, :key1)
+    @test getBigDataKeys(v1) == Symbol[:key2]
+    #delete from dfg
+    @test deepcopy(de2_update) == deleteBigDataEntry!(dfg, :a, :key2)
+    @test getBigDataKeys(v1) == Symbol[]
 end
 
 @testset "Updating Nodes" begin
@@ -178,13 +237,13 @@ end
     estimates(newvar)[:default] = Dict{Symbol, VariableEstimate}(
         :max => VariableEstimate(:default, :max, [100.0]),
         :mean => VariableEstimate(:default, :mean, [50.0]),
-        :ppe => VariableEstimate(:default, :ppe, [75.0]))
+        :modefit => VariableEstimate(:default, :modefit, [75.0]))
     #update
     updateVariableSolverData!(dfg, newvar)
     #TODO maybe implement ==; @test newvar==var
     Base.:(==)(varest1::VariableEstimate, varest2::VariableEstimate) = begin
         varest1.lastUpdatedTimestamp == varest2.lastUpdatedTimestamp || return false
-        varest1.type == varest2.type || return false
+        varest1.ppeType == varest2.ppeType || return false
         varest1.solverKey == varest2.solverKey || return false
         varest1.estimate == varest2.estimate || return false
         return true
@@ -198,7 +257,7 @@ end
     estimates(newvar)[:second] = Dict{Symbol, VariableEstimate}(
         :max => VariableEstimate(:default, :max, [10.0]),
         :mean => VariableEstimate(:default, :mean, [5.0]),
-        :ppe => VariableEstimate(:default, :ppe, [7.0]))
+        :modefit => VariableEstimate(:default, :modefit, [7.0]))
 
     # Persist to the original variable.
     updateVariableSolverData!(dfg, newvar)
@@ -348,8 +407,12 @@ end
     # Check all fields are equal for all variables
     for v in ls(summaryGraph)
         for field in variableFields
+            if field != :softtypename
             @test getfield(getVariable(dfg, v), field) == getfield(getVariable(summaryGraph, v), field)
+            else
+                @test softtype(getVariable(dfg, v)) == softtype(getVariable(summaryGraph, v))
         end
+    end
     end
     for f in lsf(summaryGraph)
         for field in factorFields

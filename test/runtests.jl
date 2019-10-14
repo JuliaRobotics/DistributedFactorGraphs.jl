@@ -2,30 +2,31 @@ using Test
 using GraphPlot # For plotting tests
 using Neo4j
 using DistributedFactorGraphs
-# using IncrementalInference
+using IncrementalInference
 
 # Instantiate the APIs that you would like to test here
 # Can do duplicates with different parameters.
-# apis = [
-#     GraphsDFG{NoSolverParams}(),
-#     LightDFG{NoSolverParams}(),
-#     MetaGraphsDFG{NoSolverParams}(),
-#     SymbolDFG{NoSolverParams}(),
-#     CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
-#                                 "testUser", "testRobot", "testSession",
-#                                 nothing,
-#                                 nothing,
-#                                 IncrementalInference.decodePackedType,
-#                                 IncrementalInference.rebuildFactorMetadata!,
-#                                 solverParams=SolverParams())
-# ]
-# for api in apis
-#     @testset "Testing Driver: $(typeof(api))" begin
-#         @info "Testing Driver: $(api)"
-#         global dfg = api
-#         include("iifInterfaceTests.jl")
-#     end
-# end
+apis = [
+    GraphsDFG{NoSolverParams}(),
+    LightDFG{NoSolverParams}(),
+    DistributedFactorGraphs.MetaGraphsDFG{NoSolverParams}(),
+    DistributedFactorGraphs.SymbolDFG{NoSolverParams}(),
+    #skip cloud until Neo4j runs on travis
+    # CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
+    #                             "testUser", "testRobot", "testSession",
+    #                             nothing,
+    #                             nothing,
+    #                             IncrementalInference.decodePackedType,
+    #                             IncrementalInference.rebuildFactorMetadata!,
+    #                             solverParams=SolverParams())
+]
+for api in apis
+    @testset "Testing Driver: $(typeof(api))" begin
+        @info "Testing Driver: $(api)"
+        global dfg = api
+        include("iifInterfaceTests.jl")
+    end
+end
 
 # Test each interface
 # Still test LightDFG and MetaGraphsDFG for the moment until we remove in 0.4.2
