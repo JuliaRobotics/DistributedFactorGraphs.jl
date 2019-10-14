@@ -7,10 +7,10 @@ using IncrementalInference
 # Instantiate the APIs that you would like to test here
 # Can do duplicates with different parameters.
 apis = [
-    GraphsDFG{NoSolverParams}(),
+    # GraphsDFG{NoSolverParams}(),
     LightDFG{NoSolverParams}(),
-    MetaGraphsDFG{NoSolverParams}(),
-    SymbolDFG{NoSolverParams}(),
+    # MetaGraphsDFG{NoSolverParams}(),
+    # SymbolDFG{NoSolverParams}(),
     CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
                                 "testUser", "testRobot", "testSession",
                                 nothing,
@@ -18,7 +18,7 @@ apis = [
                                 IncrementalInference.decodePackedType,
                                 IncrementalInference.rebuildFactorMetadata!,
                                 solverParams=SolverParams())
-]
+        ]
 for api in apis
     @testset "Testing Driver: $(typeof(api))" begin
         @info "Testing Driver: $(api)"
