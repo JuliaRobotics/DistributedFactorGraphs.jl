@@ -6,7 +6,8 @@ include("entities/MetaGraphsDFG.jl")
 include("services/MetaGraphsDFG.jl")
 
 # Exports
-export MetaGraphsDFG
+# Deprecated - 
+# export MetaGraphsDFG
 export exists
 export getLabelDict, getDescription, setDescription, getInnerGraph, getAddHistory, getSolverParams, setSolverParams
 #

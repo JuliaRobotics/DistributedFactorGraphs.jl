@@ -61,7 +61,7 @@ include("FileDFG/FileDFG.jl")
 include("MetaGraphsDFG/MetaGraphsDFG.jl")
 
 include("SymbolDFG/SymbolDFG.jl")
-@reexport using .SymbolDFGs
+# @reexport using .SymbolDFGs
 
 include("LightDFG/LightDFG.jl")
 @reexport using .LightDFGs
