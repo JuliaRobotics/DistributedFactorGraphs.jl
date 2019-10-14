@@ -1,4 +1,4 @@
-# module SymbolDFGs
+module SymbolDFGs
 
 using LightGraphs
 using SparseArrays
@@ -45,7 +45,7 @@ include("entities/SymbolDFG.jl")
 include("services/SymbolDFG.jl")
 
 # Exports
-# export SymbolDFG
+export SymbolDFG
 
 
-# end
+end
