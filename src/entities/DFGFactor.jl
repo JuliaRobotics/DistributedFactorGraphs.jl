@@ -71,7 +71,12 @@ end
 Retrieve solver data structure stored in a factor.
 """
 function getData(f::DFGFactor)::GenericFunctionNodeData
-  @warn "getData is deprecated, please use solverData()"
+  #FIXME but back in later, it just slows everything down
+  if !(@isdefined getDataWarnOnce)
+    @warn "getData is deprecated, please use solverData(), future warnings in getData is suppressed"
+    global getDataWarnOnce = true
+  end
+  # @warn "getData is deprecated, please use solverData()"
   return f.data
 end
 

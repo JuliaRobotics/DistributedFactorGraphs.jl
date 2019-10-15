@@ -8,6 +8,16 @@ append!(v1.tags, [:VARIABLE, :POSE])
 append!(v2.tags, [:VARIABLE, :LANDMARK])
 append!(f1.tags, [:FACTOR])
 
+#add types for softtypes
+struct TestInferenceVariable1 <: InferenceVariable end
+struct TestInferenceVariable2 <: InferenceVariable end
+
+st1 = TestInferenceVariable1()
+st2 = TestInferenceVariable2()
+
+v1.solverDataDict[:default].softtype = deepcopy(st1)
+v2.solverDataDict[:default].softtype = deepcopy(st2)
+
 # @testset "Creating Graphs" begin
 global dfg,v1,v2,f1
 addVariable!(dfg, v1)
@@ -96,6 +106,10 @@ end
     @test solverDataDict(v1) == v1.solverDataDict
     @test internalId(v1) == v1._internalId
 
+    @test softtype(v1) == Symbol(typeof(st1))
+    @test softtype(v2) == Symbol(typeof(st2))
+    @test getSofttype(v1) == st1
+
     @test label(f1) == f1.label
     @test tags(f1) == f1.tags
     @test solverData(f1) == f1.data
@@ -113,6 +127,17 @@ end
     @test !isInitialized(v2)
 
     @test !isInitialized(v2, key=:second)
+
+    # Session, robot, and user small data tests
+    smallUserData = Dict{Symbol, String}(:a => "42", :b => "Hello")
+    smallRobotData = Dict{Symbol, String}(:a => "43", :b => "Hello")
+    smallSessionData = Dict{Symbol, String}(:a => "44", :b => "Hello")
+    setUserData(dfg, deepcopy(smallUserData))
+    setRobotData(dfg, deepcopy(smallRobotData))
+    setSessionData(dfg, deepcopy(smallSessionData))
+    @test getUserData(dfg) == smallUserData
+    @test getRobotData(dfg) == smallRobotData
+    @test getSessionData(dfg) == smallSessionData
 
 end
 
@@ -169,13 +194,13 @@ end
     estimates(newvar)[:default] = Dict{Symbol, VariableEstimate}(
         :max => VariableEstimate(:default, :max, [100.0]),
         :mean => VariableEstimate(:default, :mean, [50.0]),
-        :ppe => VariableEstimate(:default, :ppe, [75.0]))
+        :modefit => VariableEstimate(:default, :modefit, [75.0]))
     #update
     updateVariableSolverData!(dfg, newvar)
     #TODO maybe implement ==; @test newvar==var
     Base.:(==)(varest1::VariableEstimate, varest2::VariableEstimate) = begin
         varest1.lastUpdatedTimestamp == varest2.lastUpdatedTimestamp || return false
-        varest1.type == varest2.type || return false
+        varest1.ppeType == varest2.ppeType || return false
         varest1.solverKey == varest2.solverKey || return false
         varest1.estimate == varest2.estimate || return false
         return true
@@ -189,7 +214,7 @@ end
     estimates(newvar)[:second] = Dict{Symbol, VariableEstimate}(
         :max => VariableEstimate(:default, :max, [10.0]),
         :mean => VariableEstimate(:default, :mean, [5.0]),
-        :ppe => VariableEstimate(:default, :ppe, [7.0]))
+        :modefit => VariableEstimate(:default, :modefit, [7.0]))
 
     # Persist to the original variable.
     updateVariableSolverData!(dfg, newvar)
@@ -252,6 +277,11 @@ verts = map(n -> DFGVariable(Symbol("x$n")), 1:numNodes)
 #change ready and backendset for x7,x8 for improved tests on x7x8f1
 verts[7].ready = 1
 verts[8].backendset = 1
+
+#force softytypes to first 2 vertices.
+verts[1].solverDataDict[:default].softtype = deepcopy(st1)
+verts[2].solverDataDict[:default].softtype = deepcopy(st2)
+
 map(v -> addVariable!(dfg, v), verts)
 map(n -> addFactor!(dfg, [verts[n], verts[n+1]], DFGFactor{Int, :Symbol}(Symbol("x$(n)x$(n+1)f1"))), 1:(numNodes-1))
 
@@ -325,7 +355,11 @@ end
     # Check all fields are equal for all variables
     for v in ls(summaryGraph)
         for field in variableFields
-            @test getfield(getVariable(dfg, v), field) == getfield(getVariable(summaryGraph, v), field)
+            if field != :softtypename
+                @test getfield(getVariable(dfg, v), field) == getfield(getVariable(summaryGraph, v), field)
+            else
+                @test softtype(getVariable(dfg, v)) == softtype(getVariable(summaryGraph, v))
+            end
         end
     end
     for f in lsf(summaryGraph)
@@ -345,7 +379,7 @@ end
     addVariable!(dotdfg, v2)
     addFactor!(dotdfg, [v1, v2], f1)
 
-    @test toDot(dotdfg) == "graph graphname {\n2 [\"label\"=\"b\",\"shape\"=\"box\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n2 -- 3\n3 [\"label\"=\"f1\",\"shape\"=\"ellipse\",\"fillcolor\"=\"blue\",\"color\"=\"blue\"]\n1 [\"label\"=\"a\",\"shape\"=\"box\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n1 -- 3\n}\n"
+    @test toDot(dotdfg) == "graph graphname {\n2 [\"label\"=\"b\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n2 -- 3\n3 [\"label\"=\"f1\",\"shape\"=\"box\",\"fillcolor\"=\"blue\",\"color\"=\"blue\"]\n1 [\"label\"=\"a\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n1 -- 3\n}\n"
     @test toDotFile(dotdfg, "something.dot") == nothing
     Base.rm("something.dot")
 

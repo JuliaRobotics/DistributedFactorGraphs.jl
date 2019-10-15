@@ -518,3 +518,15 @@ function toDotFile(dfg::SymbolDFG, fileName::String="/tmp/dfg.dot")::Nothing
     return nothing
 end
 =#
+
+"""
+    $(SIGNATURES)
+Gets an empty and unique CloudGraphsDFG derived from an existing DFG.
+"""
+function _getDuplicatedEmptyDFG(dfg::SymbolDFG{T,V,F})::SymbolDFG where {T <: AbstractParams, V <: DFGNode, F <:DFGNode}
+    newDfg = SymbolDFG{T, V, F}(;
+		userId=dfg.userId, robotId=dfg.robotId, sessionId=dfg.sessionId,
+		params=deepcopy(dfg.solverParams))
+	newDfg.description ="(Copy of) $(dfg.description)"
+	return newDfg
+end

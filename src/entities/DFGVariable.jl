@@ -1,7 +1,11 @@
+#TODO don't know what to do if it is uninitalized
+#so for now defining a Singleton for the default
+struct SingletonInferenceVariable <: InferenceVariable end
+
 """
 $(TYPEDEF)
 """
-mutable struct VariableNodeData
+mutable struct VariableNodeData #TODO v0.5.0 {T<:InferenceVariable}
   val::Array{Float64,2}
   bw::Array{Float64,2}
   BayesNetOutVertIDs::Array{Symbol,1}
@@ -10,29 +14,17 @@ mutable struct VariableNodeData
   eliminated::Bool
   BayesNetVertID::Symbol #  Union{Nothing, }
   separator::Array{Symbol,1}
-  softtype
+  softtype::InferenceVariable #TODO v0.5.0 T
   initialized::Bool
   inferdim::Float64
   ismargin::Bool
   dontmargin::Bool
+  # Tonio surprise TODO
+  # frontalonly::Bool
   # A valid, packable default constructor is needed.
-  VariableNodeData() = new(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], "", false, false, false, false)
-  VariableNodeData(x1::Array{Float64,2},
-                   x2::Array{Float64,2},
-                   x3::Vector{Symbol},
-                   x4::Vector{Int},
-                   x5::Int,
-                   x6::Bool,
-                   x7::Symbol,
-                   x8::Vector{Symbol},
-                   # x9::Dict{ Tuple{Symbol, Vector{Float64}} }, # Union{Nothing, },
-                   x10,
-                   x11::Bool,
-                   x12::Float64,
-                   x13::Bool,
-                   x14::Bool) =
-    new(x1,x2,x3,x4,x5,x6,x7,x8,x10,x11,x12,x13,x14)
+
 end
+VariableNodeData() = VariableNodeData(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], SingletonInferenceVariable(), false, 0.0, false, false)
 
 """
 $(TYPEDEF)
@@ -71,13 +63,26 @@ mutable struct PackedVariableNodeData
                          x15::Bool ) = new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15)
 end
 
-struct VariableEstimate
+
+abstract type AbstractVariableEstimate end
+"""
+    $TYPEDEF
+
+Data container to store Parameteric Point Estimate (PPE) from a variety of types.
+
+Notes
+- `ppeType` is something like `:max/:mean/:modefit` etc.
+- `solveKey` is from super-solve concept, starting with `:default`,
+- `estimate` is the actual numerical estimate value,
+- Additional information such as how the data is represented (ie softtype) is stored alongside this data container in the `DFGVariableSummary` container.
+"""
+struct VariableEstimate <: AbstractVariableEstimate
   solverKey::Symbol
-  type::Symbol
+  ppeType::Symbol
   estimate::Vector{Float64}
   lastUpdatedTimestamp::DateTime
-  VariableEstimate(solverKey::Symbol, type::Symbol, estimate::Vector{Float64}, lastUpdatedTimestamp::DateTime=now()) = new(solverKey, type, estimate, lastUpdatedTimestamp)
 end
+VariableEstimate(solverKey::Symbol, type::Symbol, estimate::Vector{Float64}) = VariableEstimate(solverKey, type, estimate, now())
 
 """
     $(TYPEDEF)
@@ -88,7 +93,7 @@ mutable struct DFGVariable <: AbstractDFGVariable
     label::Symbol
     timestamp::DateTime
     tags::Vector{Symbol}
-    estimateDict::Dict{Symbol, Dict{Symbol, VariableEstimate}}
+    estimateDict::Dict{Symbol, Dict{Symbol, <: AbstractVariableEstimate}}
     solverDataDict::Dict{Symbol, VariableNodeData}
     smallData::Dict{String, String}
     bigData::Dict{Symbol, AbstractBigDataEntry}
@@ -113,6 +118,14 @@ timestamp(v::DFGVariable) = v.timestamp
 tags(v::DFGVariable) = v.tags
 estimates(v::DFGVariable) = v.estimateDict
 estimate(v::DFGVariable, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
+
+"""
+    $SIGNATURES
+
+Retrieve the soft type name symbol for a DFGVariable or DFGVariableSummary. ie :Point2, Pose2, etc.
+"""
+softtype(v::DFGVariable)::Symbol = Symbol(typeof(getSofttype(v)))
+
 """
     $SIGNATURES
 
@@ -125,7 +138,12 @@ solverData(v::DFGVariable, key::Symbol=:default) = haskey(v.solverDataDict, key)
 Retrieve data structure stored in a variable.
 """
 function getData(v::DFGVariable; solveKey::Symbol=:default)::VariableNodeData
-  @warn "getData is deprecated, please use solverData()"
+  #FIXME but back in later, it just slows everything down
+  if !(@isdefined getDataWarnOnce)
+    @warn "getData is deprecated, please use solverData(), future warnings in getData is suppressed"
+    global getDataWarnOnce = true
+  end
+  # @warn "getData is deprecated, please use solverData()"
   return v.solverDataDict[solveKey]
 end
 """
@@ -148,7 +166,8 @@ mutable struct DFGVariableSummary <: AbstractDFGVariable
     label::Symbol
     timestamp::DateTime
     tags::Vector{Symbol}
-    estimateDict::Dict{Symbol, Dict{Symbol, VariableEstimate}}
+    estimateDict::Dict{Symbol, Dict{Symbol, <:AbstractVariableEstimate}}
+    softtypename::Symbol
     _internalId::Int64
 end
 label(v::DFGVariableSummary) = v.label
@@ -156,4 +175,5 @@ timestamp(v::DFGVariableSummary) = v.timestamp
 tags(v::DFGVariableSummary) = v.tags
 estimates(v::DFGVariableSummary) = v.estimateDict
 estimate(v::DFGVariableSummary, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
+softtype(v::DFGVariableSummary)::Symbol = v.softtypename
 internalId(v::DFGVariableSummary) = v._internalId

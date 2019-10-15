@@ -5,6 +5,9 @@ mutable struct SymbolDFG{T <: AbstractParams, V <: DFGNode, F <:DFGNode} <: Abst
     userId::String
     robotId::String
     sessionId::String
+    userData::Dict{Symbol, String}
+    robotData::Dict{Symbol, String}
+    sessionData::Dict{Symbol, String}
     #NOTE does not exist
     # nodeCounter::Int64
     #NOTE does not exist
@@ -19,9 +22,12 @@ function SymbolDFG{T,V,F}(g::SymbolFactorGraph{V,F}=SymbolFactorGraph{V,F}();
                            userId::String="User ID",
                            robotId::String="Robot ID",
                            sessionId::String="Session ID",
+                           userData::Dict{Symbol, String} = Dict{Symbol, String}(),
+                           robotData::Dict{Symbol, String} = Dict{Symbol, String}(),
+                           sessionData::Dict{Symbol, String} = Dict{Symbol, String}(),
                            params::T=NoSolverParams()) where {T <: AbstractParams, V <:DFGNode, F<:DFGNode}
 
-    SymbolDFG{T,V,F}(g, description, userId, robotId, sessionId, Symbol[], params)
+    SymbolDFG{T,V,F}(g, description, userId, robotId, sessionId, userData, robotData, sessionData, Symbol[], params)
 end
 
 SymbolDFG{T}(g::SymbolFactorGraph{DFGVariable,DFGFactor}=SymbolFactorGraph{DFGVariable,DFGFactor}(); kwargs...) where T <: AbstractParams = SymbolDFG{T,DFGVariable,DFGFactor}(g; kwargs...)
