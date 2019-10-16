@@ -1,12 +1,6 @@
 using Test
 using GraphPlot # For plotting tests
 using Neo4j
-#############
-neo4jConnection = Neo4j.Connection("localhost", port=7474, user="neo4j", password="test");
-graph = getgraph(neo4jConnection);
-@info "NEO4J graph: $graph"
-#############
-#=
 using DistributedFactorGraphs
 using IncrementalInference
 
@@ -15,16 +9,15 @@ using IncrementalInference
 apis = [
     GraphsDFG{NoSolverParams}(),
     LightDFG{NoSolverParams}(),
-    DistributedFactorGraphs.MetaGraphsDFG{NoSolverParams}(),
-    DistributedFactorGraphs.SymbolDFG{NoSolverParams}(),
-    #skip cloud until Neo4j runs on travis
-    # CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
-    #                             "testUser", "testRobot", "testSession",
-    #                             nothing,
-    #                             nothing,
-    #                             IncrementalInference.decodePackedType,
-    #                             IncrementalInference.rebuildFactorMetadata!,
-    #                             solverParams=SolverParams())
+    # DistributedFactorGraphs.MetaGraphsDFG{NoSolverParams}(),
+    # DistributedFactorGraphs.SymbolDFG{NoSolverParams}(),
+    CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
+                                "testUser", "testRobot", "testSession",
+                                nothing,
+                                nothing,
+                                IncrementalInference.decodePackedType,
+                                IncrementalInference.rebuildFactorMetadata!,
+                                solverParams=SolverParams())
 ]
 for api in apis
     @testset "Testing Driver: $(typeof(api))" begin
@@ -65,4 +58,3 @@ end
     @info "Testing LightDFG Variable and Factor Subtypes"
     include("LightDFGSummaryTypes.jl")
 end
-=#
