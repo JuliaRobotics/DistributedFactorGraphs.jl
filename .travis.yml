@@ -20,6 +20,9 @@ matrix:
   allow_failures:
     - julia: nightly
 
+before_script:
+    - sleep 10
+    - curl -v POST http://neo4j:neo4j@localhost:7474/user/neo4j/password -d"password=test"
 # script:
 #   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
 #   - julia --project --check-bounds=yes -e 'using UUIDs; write("Project.toml", replace(read("Project.toml", String), r"uuid = .*?\n" =>"uuid = \"$(uuid4())\"\n"));

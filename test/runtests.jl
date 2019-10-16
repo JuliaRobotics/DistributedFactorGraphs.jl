@@ -1,6 +1,12 @@
 using Test
 using GraphPlot # For plotting tests
 using Neo4j
+#############
+neo4jConnection = Neo4j.Connection("localhost", port=7474, user="neo4j", password="test");
+graph = getgraph(neo4jConnection);
+@info "NEO4J graph: $graph"
+#############
+#=
 using DistributedFactorGraphs
 using IncrementalInference
 
@@ -59,3 +65,4 @@ end
     @info "Testing LightDFG Variable and Factor Subtypes"
     include("LightDFGSummaryTypes.jl")
 end
+=#
