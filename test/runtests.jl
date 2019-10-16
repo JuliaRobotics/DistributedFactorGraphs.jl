@@ -37,10 +37,6 @@ if haskey(Pkg.installed(), "IncrementalInference")
     @info "------------------------------------------------------------------------"
     @info "Neo4J Travis Test"
     @info "------------------------------------------------------------------------"
-    using Neo4j
-    neo4jConnection = Neo4j.Connection("localhost", port=7474, user="neo4j", password="neo4j");
-    graph = getgraph(neo4jConnection);
-    @info "NEO4J graph:" + graph
 
     apis = [
         GraphsDFG{NoSolverParams}(),
