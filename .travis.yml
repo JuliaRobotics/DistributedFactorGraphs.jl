@@ -1,4 +1,6 @@
 language: julia
+sudo: required
+dist: trusty
 
 os:
     - linux
@@ -19,6 +21,9 @@ notifications:
 matrix:
   allow_failures:
     - julia: nightly
+
+before_script:
+  - curl http://neo4j:neo4j@localhost:7474/db/data/labels
 
 # script:
 #   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
@@ -53,4 +58,4 @@ jobs:
       os: linux
       script:
         - julia -e 'import Pkg; Pkg.add("IncrementalInference"); Pkg.test("DistributedFactorGraphs")'
-      after_success: skip      
+      after_success: skip
