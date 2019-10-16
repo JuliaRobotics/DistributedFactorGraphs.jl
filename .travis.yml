@@ -47,3 +47,10 @@ jobs:
                                                Pkg.instantiate()'
         - julia --project=docs/ docs/make.jl
       after_success: skip
+
+    - stage: "IIF Driver Tests"
+      julia: 1.2
+      os: linux
+      script:
+        - julia -e 'import Pkg; Pkg.add("IncrementalInference"); Pkg.test("DistributedFactorGraphs")'
+      after_success: skip      
