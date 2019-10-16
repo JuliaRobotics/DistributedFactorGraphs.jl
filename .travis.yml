@@ -1,12 +1,8 @@
 language: julia
 sudo: required
-dist: trusty
 
 os:
     - linux
-
-services:
-    - neo4j
 
 julia:
     - 1.0
@@ -21,6 +17,13 @@ notifications:
 matrix:
   allow_failures:
     - julia: nightly
+
+before_install:
+  - wget dist.neo4j.org/neo4j-community-3.3.5-unix.tar.gz
+  - tar -xzf neo4j-community-3.3.5-unix.tar.gz
+  - sed -i 's/#dbms.security.auth_enabled=false/dbms.security.auth_enabled=false/g' neo4j-community-3.3.5/conf/neo4j.conf
+  - sed -i 's/dbms.security.auth_enabled=true/dbms.security.auth_enabled=false/g' neo4j-community-3.3.5/conf/neo4j.conf
+  - neo4j-community-3.3.5/bin/neo4j start
 
 before_script:
   - curl http://neo4j:neo4j@localhost:7474/db/data/labels
