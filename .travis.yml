@@ -23,6 +23,8 @@ before_install:
   - tar -xzf neo4j-community-3.3.5-unix.tar.gz
   - sed -i 's/#dbms.security.auth_enabled=false/dbms.security.auth_enabled=false/g' neo4j-community-3.3.5/conf/neo4j.conf
   - sed -i 's/dbms.security.auth_enabled=true/dbms.security.auth_enabled=false/g' neo4j-community-3.3.5/conf/neo4j.conf
+  - export JAVA_HOME=/home/jdk/jdk1.7.0_45
+  - export PATH=$JAVA_HOME/bin:$PATH
   - neo4j-community-3.3.5/bin/neo4j start
 
 before_script:
