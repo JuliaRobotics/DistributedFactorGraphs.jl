@@ -12,19 +12,19 @@ using Pkg
 
 # Instantiate the APIs that you would like to test here
 # Can do duplicates with different parameters.
-apis = [
-    GraphsDFG{NoSolverParams}(),
-    LightDFG{NoSolverParams}(),
-    DistributedFactorGraphs.MetaGraphsDFG{NoSolverParams}(),
-    DistributedFactorGraphs.SymbolDFG{NoSolverParams}()
-        ]
-for api in apis
-    @testset "Testing Driver: $(typeof(api))" begin
-        @info "Testing Driver: $(api)"
-        global dfg = deepcopy(api)
-        include("interfaceTests.jl")
-    end
-end
+# apis = [
+#     GraphsDFG{NoSolverParams}(),
+#     LightDFG{NoSolverParams}(),
+#     DistributedFactorGraphs.MetaGraphsDFG{NoSolverParams}(),
+#     DistributedFactorGraphs.SymbolDFG{NoSolverParams}()
+#         ]
+# for api in apis
+#     @testset "Testing Driver: $(typeof(api))" begin
+#         @info "Testing Driver: $(api)"
+#         global dfg = deepcopy(api)
+#         include("interfaceTests.jl")
+#     end
+# end
 
 if haskey(Pkg.installed(), "IncrementalInference")
     @info "------------------------------------------------------------------------"
@@ -34,17 +34,17 @@ if haskey(Pkg.installed(), "IncrementalInference")
     using IncrementalInference
 
     apis = [
-        GraphsDFG{NoSolverParams}(),
-        LightDFG{NoSolverParams}(),
+        # GraphsDFG{NoSolverParams}(),
+        # LightDFG{NoSolverParams}(),
         # MetaGraphsDFG{NoSolverParams}(),
         # SymbolDFG{NoSolverParams}(),
-        # CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
-        #                             "testUser", "testRobot", "testSession",
-        #                             nothing,
-        #                             nothing,
-        #                             IncrementalInference.decodePackedType,
-        #                             IncrementalInference.rebuildFactorMetadata!,
-        #                             solverParams=SolverParams())
+        CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
+                                    "testUser", "testRobot", "testSession",
+                                    nothing,
+                                    nothing,
+                                    IncrementalInference.decodePackedType,
+                                    IncrementalInference.rebuildFactorMetadata!,
+                                    solverParams=SolverParams())
             ]
     for api in apis
         @testset "Testing Driver: $(typeof(api))" begin
@@ -58,18 +58,18 @@ else
 end
 
 # Test that we don't export LightDFG and MetaGraphsDFG
-@testset "Deprecated Drivers Test" begin
-    @test_throws UndefVarError SymbolDFG{NoSolverParams}()
-    @test_throws UndefVarError MetaGraphsDFG{NoSolverParams}()
-end
-
-# Test special cases
-
-@testset "Plotting Tests" begin
-    include("plottingTest.jl")
-end
-
-@testset "SummaryDFG test" begin
-    @info "Testing LightDFG Variable and Factor Subtypes"
-    include("LightDFGSummaryTypes.jl")
-end
+# @testset "Deprecated Drivers Test" begin
+#     @test_throws UndefVarError SymbolDFG{NoSolverParams}()
+#     @test_throws UndefVarError MetaGraphsDFG{NoSolverParams}()
+# end
+#
+# # Test special cases
+#
+# @testset "Plotting Tests" begin
+#     include("plottingTest.jl")
+# end
+#
+# @testset "SummaryDFG test" begin
+#     @info "Testing LightDFG Variable and Factor Subtypes"
+#     include("LightDFGSummaryTypes.jl")
+# end

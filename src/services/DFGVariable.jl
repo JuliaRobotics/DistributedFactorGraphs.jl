@@ -92,16 +92,62 @@ function compare(a::VariableNodeData, b::VariableNodeData)
     TP = TP && a.eliminated == b.eliminated
     TP = TP && a.BayesNetVertID == b.BayesNetVertID
     TP = TP && a.separator == b.separator
+    TP = TP && a.initialized == b.initialized
     TP = TP && abs(a.inferdim - b.inferdim) < 1e-14
     TP = TP && a.ismargin == b.ismargin
-    TP = TP && a.softtype == b.softtype
+    TP = TP && a.dontmargin == b.dontmargin
+    TP = TP && typeof(a.softtype) == typeof(b.softtype) # Can't do equals, need to check type.
     return TP
 end
 
+"""
+    $(SIGNATURES)
+Equality check for VariableNodeData.
+"""
 function ==(a::VariableNodeData,b::VariableNodeData, nt::Symbol=:var)
   return DistributedFactorGraphs.compare(a,b)
 end
 
+"""
+    $(SIGNATURES)
+Equality check for VariableEstimate.
+"""
+function ==(a::VariableEstimate, b::VariableEstimate)::Bool
+  a.solverKey != b.solverKey && return false
+  a.type != b.type && return false
+  a.estimate != b.estimate && return false
+  a.lastUpdatedTimestamp != b.lastUpdatedTimestamp && return false
+  return true
+end
+
+"""
+    $(SIGNATURES)
+Equality check for DFGVariable.
+"""
+function ==(a::DFGVariable, b::DFGVariable)::Bool
+  a.label != b.label && return false
+  a.timestamp != b.timestamp && return false
+  a.tags != b.tags && return false
+  symdiff(keys(a.estimateDict), keys(b.estimateDict)) != Set(Symbol[]) && return false
+  for k in keys(a.estimateDict)
+    a.estimateDict[k] != b.estimateDict[k] && return false
+  end
+  symdiff(keys(a.solverDataDict), keys(b.solverDataDict)) != [] && return false
+  for k in keys(a.solverDataDict)
+    a.solverDataDict[k] != b.solverDataDict[k] && return false
+  end
+  a.smallData != b.smallData && return false
+  a.bigData != b.bigData && return false
+  a.ready != b.ready && return false
+  a.backendset != b.backendset && return false
+  a._internalId != b._internalId && return false
+  return true
+end
+
+"""
+    $(SIGNATURES)
+Convert a DFGVariable to a DFGVariableSummary.
+"""
 function convert(::Type{DFGVariableSummary}, v::DFGVariable)
     return DFGVariableSummary(v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.estimateDict), v._internalId)
 end
