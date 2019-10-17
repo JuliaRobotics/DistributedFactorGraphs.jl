@@ -2,7 +2,7 @@ using Test
 using GraphPlot # For plotting tests
 using Neo4j
 using DistributedFactorGraphs
-using IncrementalInference
+using Pkg
 
 # Instantiate the APIs that you would like to test here
 # Can do duplicates with different parameters.
@@ -27,25 +27,39 @@ for api in apis
     end
 end
 
-apis = [
-    GraphsDFG{NoSolverParams}(),
-    LightDFG{NoSolverParams}(),
-    # MetaGraphsDFG{NoSolverParams}(),
-    # SymbolDFG{NoSolverParams}(),
-    # CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
-    #                             "testUser", "testRobot", "testSession",
-    #                             nothing,
-    #                             nothing,
-    #                             IncrementalInference.decodePackedType,
-    #                             IncrementalInference.rebuildFactorMetadata!,
-    #                             solverParams=SolverParams())
-        ]
-for api in apis
-    @testset "Testing Driver: $(typeof(api))" begin
-        @info "Testing Driver: $(api)"
-        global dfg = deepcopy(api)
-        include("iifInterfaceTests.jl")
+if haskey(Pkg.installed(), "IncrementalInference")
+    @info "------------------------------------------------------------------------"
+    @info "These tests are using IncrementalInference to do additional driver tests"
+    @info "------------------------------------------------------------------------"
+
+    using IncrementalInference
+
+    @info "------------------------------------------------------------------------"
+    @info "Neo4J Travis Test"
+    @info "------------------------------------------------------------------------"
+
+    apis = [
+        GraphsDFG{NoSolverParams}(),
+        LightDFG{NoSolverParams}(),
+        # MetaGraphsDFG{NoSolverParams}(),
+        # SymbolDFG{NoSolverParams}(),
+        # CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
+        #                             "testUser", "testRobot", "testSession",
+        #                             nothing,
+        #                             nothing,
+        #                             IncrementalInference.decodePackedType,
+        #                             IncrementalInference.rebuildFactorMetadata!,
+        #                             solverParams=SolverParams())
+            ]
+    for api in apis
+        @testset "Testing Driver: $(typeof(api))" begin
+            @info "Testing Driver: $(api)"
+            global dfg = deepcopy(api)
+            include("iifInterfaceTests.jl")
+        end
     end
+else
+    @warn "Skipping IncrementalInference driver tests"
 end
 
 # Test that we don't export LightDFG and MetaGraphsDFG

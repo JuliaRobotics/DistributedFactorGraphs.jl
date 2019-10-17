@@ -3,7 +3,7 @@
 ## Requires local Neo4j with user/pass neo4j:test
 # To run the Docker image
 # Install: docker pull neo4j
-# Run: sudo docker run --publish=7474:7474 --publish=7687:7687 --env NEO4J_AUTH=neo4j/test neo4j
+# Run: sudo docker run --publish=7474:7474 --publish=7687:7687 --env NEO4J_AUTH=neo4j/neo4j neo4j
 
 using Revise
 using Neo4j
