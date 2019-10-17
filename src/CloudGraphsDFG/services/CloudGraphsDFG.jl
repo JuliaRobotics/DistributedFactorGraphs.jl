@@ -67,6 +67,11 @@ function setSolverParams(dfg::CloudGraphsDFG, solverParams::T)::T where T <: Abs
     return dfg.solverParams = solverParams
 end
 
+function getSerializationModule(dfg::CloudGraphsDFG)::Module where G <: AbstractDFG
+    # TODO: If we need to specialize this for RoME etc, here is where we'll change it.
+    return Main
+end
+
 """
     $(SIGNATURES)
 True if the variable or factor exists in the graph.
