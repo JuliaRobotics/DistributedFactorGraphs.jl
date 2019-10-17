@@ -33,10 +33,6 @@ if haskey(Pkg.installed(), "IncrementalInference")
 
     using IncrementalInference
 
-    @info "------------------------------------------------------------------------"
-    @info "Neo4J Travis Test"
-    @info "------------------------------------------------------------------------"
-
     apis = [
         GraphsDFG{NoSolverParams}(),
         LightDFG{NoSolverParams}(),

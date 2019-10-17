@@ -22,6 +22,7 @@ matrix:
   allow_failures:
     - julia: nightly
 
+# Set the password for Neo4j to neo4j:test
 before_script:
     - sleep 10
     - curl -v POST http://neo4j:neo4j@localhost:7474/user/neo4j/password -d"password=test"
