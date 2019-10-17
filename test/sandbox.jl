@@ -3,9 +3,13 @@ using Neo4j
 using DistributedFactorGraphs
 using IncrementalInference
 using Test
+using Logging
+# Debug logging
+logger = SimpleLogger(stdout, Logging.Debug)
+global_logger(logger)
 
 dfg = CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
-                            "testUser", "testRobot", "testSession",
+                            "testUser", "testRobot", "sandbox",
                             nothing,
                             nothing,
                             IncrementalInference.decodePackedType,
@@ -16,30 +20,9 @@ v1 = addVariable!(dfg, :a, ContinuousScalar, labels = [:POSE])
 v2 = addVariable!(dfg, :b, ContinuousScalar, labels = [:LANDMARK])
 f1 = addFactor!(dfg, [:a; :b], LinearConditional(Normal(50.0,2.0)) )
 v1 == deepcopy(v1)
+v1 == getVariable(dfg, :a)
 
-function al(a, b)
-  a.label != b.label && return false
-  a.timestamp != b.timestamp && return false
-  a.tags != b.tags && return false
-  symdiff(keys(a.estimateDict), keys(b.estimateDict)) != Set(Symbol[]) && return false
-  for k in keys(a.estimateDict)
-    a.estimateDict[k] != b.estimateDict[k] && return false
-  end
-  symdiff(keys(a.solverDataDict), keys(b.solverDataDict)) != Set(Symbol[]) && return false
-  for k in keys(a.solverDataDict)
-    a.solverDataDict[k] != b.solverDataDict[k] && return false
-  end
-  return true
-end
-al(a, b)
-a = v1
-b = deepcopy(v1)
-
-a.smallData != b.smallData && return false
-a.bigData != b.bigData && return false
-a.ready != b.ready && return false
-a.backendset != b.backendset && return false
-a._internalId != b._internalId && return false
+isFullyConnected(dfg)
 
 T = typeof(dfg)
 if T <: CloudGraphsDFG
