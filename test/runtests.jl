@@ -4,20 +4,19 @@ using Neo4j
 using DistributedFactorGraphs
 using Pkg
 
+## To run the IIF tests, you need a local Neo4j with user/pass neo4j:test
+# To run a Docker image
+# Install: docker pull neo4j
+# Run: docker run --publish=7474:7474 --publish=7687:7687 --env NEO4J_AUTH=neo4j/test neo4j
+##
+
 # Instantiate the APIs that you would like to test here
 # Can do duplicates with different parameters.
 apis = [
     GraphsDFG{NoSolverParams}(),
     LightDFG{NoSolverParams}(),
     DistributedFactorGraphs.MetaGraphsDFG{NoSolverParams}(),
-    DistributedFactorGraphs.SymbolDFG{NoSolverParams}(),
-    # CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
-    #                             "testUser", "testRobot", "testSession",
-    #                             nothing,
-    #                             nothing,
-    #                             IncrementalInference.decodePackedType,
-    #                             IncrementalInference.rebuildFactorMetadata!,
-    #                             solverParams=SolverParams())
+    DistributedFactorGraphs.SymbolDFG{NoSolverParams}()
         ]
 for api in apis
     @testset "Testing Driver: $(typeof(api))" begin
