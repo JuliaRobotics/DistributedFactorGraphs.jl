@@ -39,7 +39,7 @@ jobs:
       julia: 1.0
       os: linux
       script:
-        - julia -e 'import Pkg; Pkg.add("Documenter"); Pkg.add("DataFrames")'
+        - julia -e 'import Pkg; Pkg.add("Documenter"); Pkg.add("Neo4j"); Pkg.add("GraphPlot")'
         - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd()));
                                                Pkg.instantiate()'
         - julia --project=docs/ docs/make.jl
@@ -50,4 +50,5 @@ jobs:
       os: linux
       script:
         - julia -e 'import Pkg; Pkg.add("IncrementalInference"); Pkg.test("DistributedFactorGraphs")'
-      after_success: skip
+      after_success:
+        - julia -e 'using Pkg; cd(Pkg.dir("DistributedFactorGraphs")); Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder()); Coveralls.submit(process_folder())'
