@@ -2,9 +2,6 @@ language: julia
 sudo: required
 dist: trusty
 
-sudo: required
-dist: trusty
-
 os:
     - linux
 
