@@ -57,13 +57,13 @@ if get(ENV, "IIF_TEST", "") == "true"
         LightDFG{NoSolverParams}(),
         # DistributedFactorGraphs.MetaGraphsDFG{NoSolverParams}(),
         # DistributedFactorGraphs.SymbolDFG{NoSolverParams}(),
-        # CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
-        #                             "testUser", "testRobot", "testSession",
-        #                             nothing,
-        #                             nothing,
-        #                             IncrementalInference.decodePackedType,
-        #                             IncrementalInference.rebuildFactorMetadata!,
-        #                             solverParams=SolverParams())
+        CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
+                                    "testUser", "testRobot", "testSession",
+                                    nothing,
+                                    nothing,
+                                    IncrementalInference.decodePackedType,
+                                    IncrementalInference.rebuildFactorMetadata!,
+                                    solverParams=SolverParams())
             ]
     for api in apis
         @testset "Testing Driver: $(typeof(api))" begin
