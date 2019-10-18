@@ -43,7 +43,9 @@ end
 end
 
 
-if haskey(Pkg.installed(), "IncrementalInference")
+if (get(ENV, "IIF_TEST", "") == "true"
+
+    Pkg.add("IncrementalInference")
     @info "------------------------------------------------------------------------"
     @info "These tests are using IncrementalInference to do additional driver tests"
     @info "------------------------------------------------------------------------"
