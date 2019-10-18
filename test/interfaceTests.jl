@@ -82,7 +82,11 @@ end
 @testset "Gets, Sets, and Accessors" begin
     global dfg,v1,v2,f1
     @test getVariable(dfg, v1.label) == v1
+    @test getVariable(dfg, v2.label) != v1
     @test getFactor(dfg, f1.label) == f1
+    f2 = deepcopy(f1)
+    f2.label = :something
+    @test f2 != f1
     @test_throws Exception getVariable(dfg, :nope)
     @test_throws Exception getVariable(dfg, "nope")
     @test_throws Exception getFactor(dfg, :nope)
