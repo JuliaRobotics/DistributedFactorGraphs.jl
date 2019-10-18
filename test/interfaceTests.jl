@@ -94,9 +94,11 @@ end
 
     # Sets
     v1Prime = deepcopy(v1)
-    @test updateVariable!(dfg, v1Prime) != v1
+    #updateVariable! returns the variable updated, so should be equal
+    @test updateVariable!(dfg, v1Prime) == v1
     f1Prime = deepcopy(f1)
-    @test updateFactor!(dfg, f1Prime) != f1
+    #updateFactor! returns the factor updated, so should be equal
+    @test updateFactor!(dfg, f1Prime) == f1Prime #TODO compare with f1  
 
     # Accessors
     @test label(v1) == v1.label

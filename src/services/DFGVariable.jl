@@ -117,7 +117,7 @@ Equality check for VariableEstimate.
 """
 function ==(a::VariableEstimate, b::VariableEstimate)::Bool
   a.solverKey != b.solverKey && @debug("solverKey are not equal")==nothing && return false
-  a.type != b.type && @debug("type is not equal")==nothing && return false
+  a.ppeType != b.ppeType && @debug("type is not equal")==nothing && return false
   a.estimate != b.estimate && @debug("estimate are not equal")==nothing && return false
   a.lastUpdatedTimestamp != b.lastUpdatedTimestamp && @debug("lastUpdatedTimestamp is not equal")==nothing && return false
   return true

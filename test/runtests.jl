@@ -10,29 +10,6 @@ using Pkg
 # Run: docker run --publish=7474:7474 --publish=7687:7687 --env NEO4J_AUTH=neo4j/test neo4j
 ##
 
-# Instantiate the APIs that you would like to test here
-# Can do duplicates with different parameters.
-apis = [
-    GraphsDFG{NoSolverParams}(),
-    LightDFG{NoSolverParams}(),
-    # DistributedFactorGraphs.MetaGraphsDFG{NoSolverParams}(),
-    # DistributedFactorGraphs.SymbolDFG{NoSolverParams}(),
-    CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
-                                "testUser", "testRobot", "testSession",
-                                nothing,
-                                nothing,
-                                IncrementalInference.decodePackedType,
-                                IncrementalInference.rebuildFactorMetadata!,
-                                solverParams=SolverParams())
-]
-for api in apis
-    @testset "Testing Driver: $(typeof(api))" begin
-        @info "Testing Driver: $(api)"
-        global dfg = api
-        include("iifInterfaceTests.jl")
-    end
-end
-
 # Test each interface
 # Still test LightDFG and MetaGraphsDFG for the moment until we remove in 0.4.2
 apis = [
@@ -54,6 +31,18 @@ end
     @test_throws UndefVarError MetaGraphsDFG{NoSolverParams}()
 end
 
+# Test special cases
+
+@testset "Plotting Tests" begin
+    include("plottingTest.jl")
+end
+
+@testset "SummaryDFG test" begin
+    @info "Testing LightDFG Variable and Factor Subtypes"
+    include("LightDFGSummaryTypes.jl")
+end
+
+
 if haskey(Pkg.installed(), "IncrementalInference")
     @info "------------------------------------------------------------------------"
     @info "These tests are using IncrementalInference to do additional driver tests"
@@ -62,10 +51,10 @@ if haskey(Pkg.installed(), "IncrementalInference")
     using IncrementalInference
 
     apis = [
-        # GraphsDFG{NoSolverParams}(),
-        # LightDFG{NoSolverParams}(),
-        # MetaGraphsDFG{NoSolverParams}(),
-        # SymbolDFG{NoSolverParams}(),
+        GraphsDFG{NoSolverParams}(),
+        LightDFG{NoSolverParams}(),
+        # DistributedFactorGraphs.MetaGraphsDFG{NoSolverParams}(),
+        # DistributedFactorGraphs.SymbolDFG{NoSolverParams}(),
         CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
                                     "testUser", "testRobot", "testSession",
                                     nothing,
@@ -83,21 +72,4 @@ if haskey(Pkg.installed(), "IncrementalInference")
     end
 else
     @warn "Skipping IncrementalInference driver tests"
-end
-
-Test that we don't export LightDFG and MetaGraphsDFG
-@testset "Deprecated Drivers Test" begin
-    @test_throws UndefVarError SymbolDFG{NoSolverParams}()
-    @test_throws UndefVarError MetaGraphsDFG{NoSolverParams}()
-end
-
-# Test special cases
-
-@testset "Plotting Tests" begin
-    include("plottingTest.jl")
-end
-
-@testset "SummaryDFG test" begin
-    @info "Testing LightDFG Variable and Factor Subtypes"
-    include("LightDFGSummaryTypes.jl")
 end
