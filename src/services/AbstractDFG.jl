@@ -543,7 +543,6 @@ Note
 - Based on graphviz.org
 """
 function toDotFile(dfg::AbstractDFG, fileName::String="/tmp/dfg.dot")::Nothing
-    @warn "Falling Back to convert to GraphsDFG"
     #TODO implement convert
     graphsdfg = GraphsDFG{AbstractParams}()
     DistributedFactorGraphs._copyIntoGraph!(dfg, graphsdfg, union(getVariableIds(dfg), getFactorIds(dfg)), true)

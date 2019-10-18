@@ -77,6 +77,10 @@ function unpack(dfg::G, d::PackedVariableNodeData)::VariableNodeData where G <: 
   end
   @debug "Net conversion result: $st"
 
+  if st == nothing
+      error("The variable doesn't seem to have a softtype. It needs to set up with an InferenceVariable from IIF. This will happen if you use DFG to add serialized variables directly and try use them. Please use IncrementalInference.addVariable().")
+  end
+
   return VariableNodeData(M3,M4, d.BayesNetOutVertIDs,
     d.dimIDs, d.dims, d.eliminated, d.BayesNetVertID, d.separator,
     st, d.initialized, d.inferdim, d.ismargin, d.dontmargin )
