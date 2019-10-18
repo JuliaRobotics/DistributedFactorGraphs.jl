@@ -1,7 +1,7 @@
 global dfg,v1,v2,f1
 
 if typeof(dfg) <: CloudGraphsDFG
-    @warn "TEST: Nuking all data for robot $(dfg.robotId)!"
+    @warn "TEST: Nuking all data for user '$(dfg.userId)', robot '$(dfg.robotId)'!"
     clearRobot!!(dfg)
 end
 
@@ -248,104 +248,104 @@ end
 end
 
 
-# Now make a complex graph for connectivity tests
-numNodes = 10
-#the deletions in last test should have cleared out the fg
-# dfg = DistributedFactorGraphs._getDuplicatedEmptyDFG(dfg)
-# if typeof(dfg) <: CloudGraphsDFG
-#     clearSession!!(dfg)
+# # Now make a complex graph for connectivity tests
+# numNodes = 10
+# #the deletions in last test should have cleared out the fg
+# # dfg = DistributedFactorGraphs._getDuplicatedEmptyDFG(dfg)
+# # if typeof(dfg) <: CloudGraphsDFG
+# #     clearSession!!(dfg)
+# # end
+#
+# #change ready and backendset for x7,x8 for improved tests on x7x8f1
+# verts = map(n -> addVariable!(dfg, Symbol("x$n"), ContinuousScalar, labels = [:POSE]), 1:numNodes)
+# #TODO fix this to use accessors
+# verts[7].ready = 1
+# # verts[7].backendset = 0
+# verts[8].ready = 0
+# verts[8].backendset = 1
+# #call update to set it on cloud
+# updateVariable!(dfg, verts[7])
+# updateVariable!(dfg, verts[8])
+#
+# facts = map(n -> addFactor!(dfg, [verts[n], verts[n+1]], LinearConditional(Normal(50.0,2.0))), 1:(numNodes-1))
+#
+# @testset "Getting Neighbors" begin
+#     global dfg,verts
+#     # Trivial test to validate that intersect([], []) returns order of first parameter
+#     @test intersect([:x3, :x2, :x1], [:x1, :x2]) == [:x2, :x1]
+#     # Get neighbors tests
+#     @test getNeighbors(dfg, verts[1]) == [:x1x2f1]
+#     neighbors = getNeighbors(dfg, getFactor(dfg, :x1x2f1))
+#     @test neighbors == [:x1, :x2]
+#     # Testing aliases
+#     @test getNeighbors(dfg, getFactor(dfg, :x1x2f1)) == ls(dfg, getFactor(dfg, :x1x2f1))
+#     @test getNeighbors(dfg, :x1x2f1) == ls(dfg, :x1x2f1)
+#
+#     # ready and backendset
+#     @test getNeighbors(dfg, :x5, ready=1) == Symbol[]
+#     #TODO Confirm: test failed on GraphsDFG, don't know if the order is important for isa variable.
+#     @test symdiff(getNeighbors(dfg, :x5, ready=0), [:x4x5f1,:x5x6f1]) == []
+#     @test getNeighbors(dfg, :x5, backendset=1) == Symbol[]
+#     @test symdiff(getNeighbors(dfg, :x5, backendset=0),[:x4x5f1,:x5x6f1]) == []
+#     @test getNeighbors(dfg, :x7x8f1, ready=0) == [:x8]
+#     @test getNeighbors(dfg, :x7x8f1, backendset=0) == [:x7]
+#     @test getNeighbors(dfg, :x7x8f1, ready=1) == [:x7]
+#     @test getNeighbors(dfg, :x7x8f1, backendset=1) == [:x8]
+#     @test getNeighbors(dfg, verts[1], ready=0) == [:x1x2f1]
+#     @test getNeighbors(dfg, verts[1], ready=1) == Symbol[]
+#     @test getNeighbors(dfg, verts[1], backendset=0) == [:x1x2f1]
+#     @test getNeighbors(dfg, verts[1], backendset=1) == Symbol[]
+#
 # end
-
-#change ready and backendset for x7,x8 for improved tests on x7x8f1
-verts = map(n -> addVariable!(dfg, Symbol("x$n"), ContinuousScalar, labels = [:POSE]), 1:numNodes)
-#TODO fix this to use accessors
-verts[7].ready = 1
-# verts[7].backendset = 0
-verts[8].ready = 0
-verts[8].backendset = 1
-#call update to set it on cloud
-updateVariable!(dfg, verts[7])
-updateVariable!(dfg, verts[8])
-
-facts = map(n -> addFactor!(dfg, [verts[n], verts[n+1]], LinearConditional(Normal(50.0,2.0))), 1:(numNodes-1))
-
-@testset "Getting Neighbors" begin
-    global dfg,verts
-    # Trivial test to validate that intersect([], []) returns order of first parameter
-    @test intersect([:x3, :x2, :x1], [:x1, :x2]) == [:x2, :x1]
-    # Get neighbors tests
-    @test getNeighbors(dfg, verts[1]) == [:x1x2f1]
-    neighbors = getNeighbors(dfg, getFactor(dfg, :x1x2f1))
-    @test neighbors == [:x1, :x2]
-    # Testing aliases
-    @test getNeighbors(dfg, getFactor(dfg, :x1x2f1)) == ls(dfg, getFactor(dfg, :x1x2f1))
-    @test getNeighbors(dfg, :x1x2f1) == ls(dfg, :x1x2f1)
-
-    # ready and backendset
-    @test getNeighbors(dfg, :x5, ready=1) == Symbol[]
-    #TODO Confirm: test failed on GraphsDFG, don't know if the order is important for isa variable.
-    @test symdiff(getNeighbors(dfg, :x5, ready=0), [:x4x5f1,:x5x6f1]) == []
-    @test getNeighbors(dfg, :x5, backendset=1) == Symbol[]
-    @test symdiff(getNeighbors(dfg, :x5, backendset=0),[:x4x5f1,:x5x6f1]) == []
-    @test getNeighbors(dfg, :x7x8f1, ready=0) == [:x8]
-    @test getNeighbors(dfg, :x7x8f1, backendset=0) == [:x7]
-    @test getNeighbors(dfg, :x7x8f1, ready=1) == [:x7]
-    @test getNeighbors(dfg, :x7x8f1, backendset=1) == [:x8]
-    @test getNeighbors(dfg, verts[1], ready=0) == [:x1x2f1]
-    @test getNeighbors(dfg, verts[1], ready=1) == Symbol[]
-    @test getNeighbors(dfg, verts[1], backendset=0) == [:x1x2f1]
-    @test getNeighbors(dfg, verts[1], backendset=1) == Symbol[]
-
-end
-
-@testset "Getting Subgraphs" begin
-    # Subgraphs
-    dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
-    # Only returns x1 and x2
-    @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
-    # Test include orphan factorsVoid
-    dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 1, true)
-    @test symdiff([:x1, :x1x2f1], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
-    # Test adding to the dfg
-    dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2, true, dfgSubgraph)
-    @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
-    #
-    dfgSubgraph = getSubgraph(dfg,[:x1, :x2, :x1x2f1])
-    # Only returns x1 and x2
-    @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
-
-    # DFG issue #95 - confirming that getSubgraphAroundNode retains order
-    # REF: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/95
-    for fId in getVariableIds(dfg)
-        # Get a subgraph of this and it's related factors+variables
-        dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
-        # For each factor check that the order the copied graph == original
-        for fact in getFactors(dfgSubgraph)
-            @test fact._variableOrderSymbols == getFactor(dfg, fact.label)._variableOrderSymbols
-        end
-    end
-end
-
-@testset "Summaries and Summary Graphs" begin
-    factorFields = fieldnames(DFGFactorSummary)
-    variableFields = fieldnames(DFGVariableSummary)
-
-    summary = getSummary(dfg)
-    @test symdiff(collect(keys(summary.variables)), ls(dfg)) == Symbol[]
-    @test symdiff(collect(keys(summary.factors)), lsf(dfg)) == Symbol[]
-
-    summaryGraph = getSummaryGraph(dfg)
-    @test symdiff(ls(summaryGraph), ls(dfg)) == Symbol[]
-    @test symdiff(lsf(summaryGraph), lsf(dfg)) == Symbol[]
-    # Check all fields are equal for all variables
-    for v in ls(summaryGraph)
-        for field in variableFields
-            @test getfield(getVariable(dfg, v), field) == getfield(getVariable(summaryGraph, v), field)
-        end
-    end
-    for f in lsf(summaryGraph)
-        for field in factorFields
-            @test getfield(getFactor(dfg, f), field) == getfield(getFactor(summaryGraph, f), field)
-        end
-    end
-end
+#
+# @testset "Getting Subgraphs" begin
+#     # Subgraphs
+#     dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
+#     # Only returns x1 and x2
+#     @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+#     # Test include orphan factorsVoid
+#     dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 1, true)
+#     @test symdiff([:x1, :x1x2f1], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+#     # Test adding to the dfg
+#     dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2, true, dfgSubgraph)
+#     @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+#     #
+#     dfgSubgraph = getSubgraph(dfg,[:x1, :x2, :x1x2f1])
+#     # Only returns x1 and x2
+#     @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+#
+#     # DFG issue #95 - confirming that getSubgraphAroundNode retains order
+#     # REF: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/95
+#     for fId in getVariableIds(dfg)
+#         # Get a subgraph of this and it's related factors+variables
+#         dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
+#         # For each factor check that the order the copied graph == original
+#         for fact in getFactors(dfgSubgraph)
+#             @test fact._variableOrderSymbols == getFactor(dfg, fact.label)._variableOrderSymbols
+#         end
+#     end
+# end
+#
+# @testset "Summaries and Summary Graphs" begin
+#     factorFields = fieldnames(DFGFactorSummary)
+#     variableFields = fieldnames(DFGVariableSummary)
+#
+#     summary = getSummary(dfg)
+#     @test symdiff(collect(keys(summary.variables)), ls(dfg)) == Symbol[]
+#     @test symdiff(collect(keys(summary.factors)), lsf(dfg)) == Symbol[]
+#
+#     summaryGraph = getSummaryGraph(dfg)
+#     @test symdiff(ls(summaryGraph), ls(dfg)) == Symbol[]
+#     @test symdiff(lsf(summaryGraph), lsf(dfg)) == Symbol[]
+#     # Check all fields are equal for all variables
+#     for v in ls(summaryGraph)
+#         for field in variableFields
+#             @test getfield(getVariable(dfg, v), field) == getfield(getVariable(summaryGraph, v), field)
+#         end
+#     end
+#     for f in lsf(summaryGraph)
+#         for field in factorFields
+#             @test getfield(getFactor(dfg, f), field) == getfield(getFactor(summaryGraph, f), field)
+#         end
+#     end
+# end

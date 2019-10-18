@@ -22,7 +22,9 @@ v3 = addVariable!(dfg, :c, ContinuousScalar, labels = [:LANDMARK])
 v4 = addVariable!(dfg, :d, ContinuousScalar, labels = [:LANDMARK])
 f1 = addFactor!(dfg, [:a; :b, :c, :d], LinearConditional(Normal(50.0,2.0)) )
 v1 == deepcopy(v1)
-v1 == getVariable(dfg, :a)
+v1_back == getVariable(dfg, :a)
+getNeighbors(f1)
+f1._variableOrderSymbols
 
 T = typeof(dfg)
 if T <: CloudGraphsDFG

@@ -523,7 +523,6 @@ showFactor(fgl::G, fsym::Symbol) where G <: AbstractDFG = @show getFactor(fgl,fs
 Produces a dot-format of the graph for visualization.
 """
 function toDot(dfg::AbstractDFG)::String
-    @warn "Falling Back to convert to GraphsDFG"
     #TODO implement convert
     graphsdfg = GraphsDFG{AbstractParams}()
     DistributedFactorGraphs._copyIntoGraph!(dfg, graphsdfg, union(getVariableIds(dfg), getFactorIds(dfg)), true)

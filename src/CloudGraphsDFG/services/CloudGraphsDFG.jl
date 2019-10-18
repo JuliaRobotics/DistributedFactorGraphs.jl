@@ -636,7 +636,7 @@ function isFullyConnected(dfg::CloudGraphsDFG)::Bool
 
     # Total connected nodes - thank you Neo4j for 0..* awesomeness!!
     query = """
-        match (n:testUser:testRobot:sandbox:a)-[FACTORGRAPH*]-(node:testUser:testRobot:sandbox)
+        match (n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(varIds[1]))-[FACTORGRAPH*]-(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId))
         WHERE n:VARIABLE OR n:FACTOR OR node:VARIABLE OR node:FACTOR
         WITH collect(n)+collect(node) as nodelist
         unwind nodelist as nodes
