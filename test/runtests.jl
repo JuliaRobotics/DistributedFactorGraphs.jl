@@ -43,7 +43,7 @@ end
 end
 
 
-if (get(ENV, "IIF_TEST", "") == "true"
+if get(ENV, "IIF_TEST", "") == "true"
 
     Pkg.add("IncrementalInference")
     @info "------------------------------------------------------------------------"
