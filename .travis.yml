@@ -20,7 +20,20 @@ julia:
 
 env:
     - IIF_TEST=false
-    - IIF_TEST=true
+
+jobs:
+  include:
+    - julia: 1.2
+      env: IIF_TEST=true
+    - stage: "Documentation"
+      julia: 1.0
+      os: linux
+      script:
+        - julia -e 'import Pkg; Pkg.add("Documenter"); Pkg.add("Neo4j"); Pkg.add("GraphPlot")'
+        - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd()));
+                                               Pkg.instantiate()'
+        - julia --project=docs/ docs/make.jl
+      after_success: skip
 
 notifications:
     email: false
@@ -37,15 +50,3 @@ before_script:
 
 after_success:
     - julia -e 'using Pkg; cd(Pkg.dir("DistributedFactorGraphs")); Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder()); Coveralls.submit(process_folder())'
-
-jobs:
-  include:
-    - stage: "Documentation"
-      julia: 1.0
-      os: linux
-      script:
-        - julia -e 'import Pkg; Pkg.add("Documenter"); Pkg.add("Neo4j"); Pkg.add("GraphPlot")'
-        - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd()));
-                                               Pkg.instantiate()'
-        - julia --project=docs/ docs/make.jl
-      after_success: skip
