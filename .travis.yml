@@ -1,4 +1,6 @@
 language: julia
+sudo: required
+dist: trusty
 
 os:
     - linux
@@ -13,37 +15,35 @@ julia:
     - 1.3
     - nightly
 
+env:
+    - IIF_TEST=false
+
+jobs:
+  include:
+    - julia: 1.2
+      env: IIF_TEST=true
+    - stage: "Documentation"
+      julia: 1.0
+      os: linux
+      script:
+        - julia -e 'import Pkg; Pkg.add("Documenter"); Pkg.add("Neo4j"); Pkg.add("GraphPlot")'
+        - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd()));
+                                               Pkg.instantiate()'
+        - julia --project=docs/ docs/make.jl
+      after_success: skip
+
 notifications:
     email: false
 
 matrix:
   allow_failures:
-    - julia: nightly
+  - julia: nightly
+  - env: IIF_TEST=true
 
-# script:
-#   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-#   - julia --project --check-bounds=yes -e 'using UUIDs; write("Project.toml", replace(read("Project.toml", String), r"uuid = .*?\n" =>"uuid = \"$(uuid4())\"\n"));
-# import Pkg; Pkg.build("DistributedFactorGraphs"); Pkg.test("DistributedFactorGraphs"; coverage=true)'
-
-# script:
-#   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-#   - julia --check-bounds=yes -e 'using Pkg; Pkg.clone(pwd()); Pkg.build("DistributedFactorGraphs"); Pkg.test("DistributedFactorGraphs"; coverage=true)'
-
-# can be used if master of package is required
-# script:
-#     - julia --project --color=yes --check-bounds=yes -e 'using Pkg; Pkg.add(PackageSpec(name="MetaGraphs", rev="master")); Pkg.build(); Pkg.test(coverage=true)'
+# Set the password for Neo4j to neo4j:test
+before_script:
+    - sleep 10
+    - curl -v POST http://neo4j:neo4j@localhost:7474/user/neo4j/password -d"password=test"
 
 after_success:
     - julia -e 'using Pkg; cd(Pkg.dir("DistributedFactorGraphs")); Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder()); Coveralls.submit(process_folder())'
-
-jobs:
-  include:
-    - stage: "Documentation"
-      julia: 1.0
-      os: linux
-      script:
-        - julia -e 'import Pkg; Pkg.add("Documenter"); Pkg.add("DataFrames")'
-        - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd()));
-                                               Pkg.instantiate()'
-        - julia --project=docs/ docs/make.jl
-      after_success: skip

@@ -16,6 +16,9 @@ mutable struct MetaGraphsDFG{T <: AbstractParams} <: AbstractDFG
     userId::String
     robotId::String
     sessionId::String
+    userData::Dict{Symbol, String}
+    robotData::Dict{Symbol, String}
+    sessionData::Dict{Symbol, String}
     #NOTE Removed nodeCounter
     # nodeCounter::Int64
     #NOTE using matagraphs labels
@@ -30,13 +33,16 @@ function MetaGraphsDFG{T}(g::LFGType=MetaGraph();
                            userId::String="User ID",
                            robotId::String="Robot ID",
                            sessionId::String="Session ID",
+                           userData::Dict{Symbol, String} = Dict{Symbol, String}(),
+                           robotData::Dict{Symbol, String} = Dict{Symbol, String}(),
+                           sessionData::Dict{Symbol, String} = Dict{Symbol, String}(),
                            params::T=NoSolverParams()) where T <: AbstractParams
     set_prop!(g, :description, description)
     set_prop!(g, :userId, userId)
     set_prop!(g, :robotId, robotId)
     set_prop!(g, :sessionId, sessionId)
     set_indexing_prop!(g, :label)
-    MetaGraphsDFG{T}(g, description, userId, robotId, sessionId, Symbol[], params)
+    MetaGraphsDFG{T}(g, description, userId, robotId, sessionId, userData, robotData, sessionData, Symbol[], params)
 end
 
 Base.propertynames(x::MetaGraphsDFG, private::Bool=false) =

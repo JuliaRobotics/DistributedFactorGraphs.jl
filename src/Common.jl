@@ -129,7 +129,7 @@ function getfnctype(data::GenericFunctionNodeData)
   return data.fnc.usrfnc!
 end
 function getfnctype(fact::DFGFactor; solveKey::Symbol=:default)
-  data = getData(fact) # TODO , solveKey=solveKey)
+  data = solverData(fact) # TODO , solveKey=solveKey)
   return getfnctype(data)
 end
 function getfnctype(dfg::T, lbl::Symbol; solveKey::Symbol=:default) where T <: AbstractDFG
@@ -145,7 +145,7 @@ Notes
 - Replaces older `getfnctype`.
 """
 getFactorType(data::GenericFunctionNodeData) = data.fnc.usrfnc!
-getFactorType(fct::DFGFactor) = getFactorType(getData(fct))
+getFactorType(fct::DFGFactor) = getFactorType(solverData(fct))
 function getFactorType(dfg::G, lbl::Symbol) where G <: AbstractDFG
   getFactorType(getFactor(dfg, lbl))
 end
@@ -190,7 +190,7 @@ function getSofttype(vnd::VariableNodeData)
   return vnd.softtype
 end
 function getSofttype(v::DFGVariable; solveKey::Symbol=:default)
-  return getSofttype(getData(v, solveKey=solveKey))
+  return getSofttype(solverData(v, solveKey))
 end
 
 """

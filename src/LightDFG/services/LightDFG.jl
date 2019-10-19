@@ -13,6 +13,23 @@ function setSolverParams(dfg::LightDFG, solverParams::P) where P <: AbstractPara
   dfg.solverParams = solverParams
 end
 
+# Get user, robot, and session "small" data.
+getUserData(dfg::LightDFG)::Dict{Symbol, String} = return dfg.userData
+function setUserData(dfg::LightDFG, data::Dict{Symbol, String})::Bool
+	dfg.userData = data
+	return true
+end
+getRobotData(dfg::LightDFG)::Dict{Symbol, String} = return dfg.robotData
+function setRobotData(dfg::LightDFG, data::Dict{Symbol, String})::Bool
+	dfg.robotData = data
+	return true
+end
+getSessionData(dfg::LightDFG)::Dict{Symbol, String} = return dfg.sessionData
+function setSessionData(dfg::LightDFG, data::Dict{Symbol, String})::Bool
+	dfg.sessionData = data
+	return true
+end
+
 """
     $(SIGNATURES)
 True if the variable or factor exists in the graph.
@@ -425,4 +442,16 @@ function getAdjacencyMatrixSparse(dfg::LightDFG)::Tuple{LightGraphs.SparseMatrix
 
 	adjvf = adj[factIndex, varIndex]
 	return adjvf, varLabels, factLabels
+end
+
+"""
+    $(SIGNATURES)
+Gets an empty and unique CloudGraphsDFG derived from an existing DFG.
+"""
+function _getDuplicatedEmptyDFG(dfg::LightDFG{P,V,F})::LightDFG where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
+    newDfg = LightDFG{P,V,F}(;
+		userId=dfg.userId, robotId=dfg.robotId, sessionId=dfg.sessionId,
+		params=deepcopy(dfg.solverParams))
+	newDfg.description ="(Copy of) $(dfg.description)"
+	return newDfg
 end
