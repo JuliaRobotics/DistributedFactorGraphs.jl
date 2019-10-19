@@ -146,7 +146,7 @@ copySession!(sourceDFG::CloudGraphsDFG)::CloudGraphsDFG = copySession!(sourceDFG
 Return whether `sym::Symbol` represents a variable vertex in the graph.
 """
 isVariable(dfg::CloudGraphsDFG, sym::Symbol)::Bool =
-    "VARIABLE" in _getNodeTags(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, sym)
+    "VARIABLE" in _getNodeTags(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, String(sym)])
 
 """
     $SIGNATURES
@@ -154,7 +154,23 @@ isVariable(dfg::CloudGraphsDFG, sym::Symbol)::Bool =
 Return whether `sym::Symbol` represents a factor vertex in the graph.
 """
 isFactor(dfg::CloudGraphsDFG, sym::Symbol)::Bool =
-    "FACTOR" in _getNodeTags(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, sym)
+    "FACTOR" in _getNodeTags(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, String(sym)])
+
+getUserData(dfg::CloudGraphsDFG)::Dict{Symbol, String} = _getNodeProperty(dfg.neo4jInstance, [dfg.userId, "USER"])
+function setUserData(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
+	error("Not implemented yet")
+	return true
+end
+getRobotData(dfg::CloudGraphsDFG)::Dict{Symbol, String} = _getNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, "ROBOT"])
+function setRobotData(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
+	error("Not implemented yet")
+	return true
+end
+getSessionData(dfg::CloudGraphsDFG)::Dict{Symbol, String} = _getNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, "SESSION"])
+function setSessionData(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
+	error("Not implemented yet")
+	return true
+end
 
 """
     $(SIGNATURES)
@@ -695,7 +711,7 @@ function getNeighbors(dfg::CloudGraphsDFG, label::Symbol; ready::Union{Nothing, 
     # If factor, need to do variable ordering
     if isFactor(dfg, label)
         # Server is authority
-        serverOrder = Symbol.(JSON2.read(_getNodeProperty(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, label, "_variableOrderSymbols")))
+        serverOrder = Symbol.(JSON2.read(_getNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, String(label)], "_variableOrderSymbols")))
         neighbors = intersect(serverOrder, neighbors)
     end
     return neighbors

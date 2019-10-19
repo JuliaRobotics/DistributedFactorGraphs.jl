@@ -37,10 +37,10 @@ end
 $(SIGNATURES)
 Get a node property - returns nothing if not found
 """
-function _getNodeProperty(neo4jInstance::Neo4jInstance, userId::String, robotId::String, sessionId::String, nodeId::Symbol, property::String)
-    query = "match (n:$userId:$robotId:$sessionId:$nodeId) return n.$property"
+function _getNodeProperty(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String}, property::String)
+    query = "match (n:$(join(nodeLabels, ":"))) return n.$property"
     result = DistributedFactorGraphs._queryNeo4j(neo4jInstance, query)
-    
+
     return result.results[1]["data"][1]["row"][1]
 end
 
@@ -48,8 +48,8 @@ end
 $(SIGNATURES)
 Get a node's tags
 """
-function _getNodeTags(neo4jInstance::Neo4jInstance, userId::String, robotId::String, sessionId::String, nodeId::Symbol)::Union{Nothing, Vector{String}}
-    query = "match (n:$userId:$robotId:$sessionId:$nodeId) return labels(n)"
+function _getNodeTags(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String})::Union{Nothing, Vector{String}}
+    query = "match (n:$(join(nodeLabels, ":"))) return labels(n)"
     result = DistributedFactorGraphs._queryNeo4j(neo4jInstance, query)
     length(result.results[1]["data"]) != 1 && return nothing
     return result.results[1]["data"][1]["row"][1]

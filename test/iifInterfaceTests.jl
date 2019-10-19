@@ -125,8 +125,7 @@ end
 @testset "Gets, Sets, and Accessors" begin
     global dfg,v1,v2,f1
     @test getVariable(dfg, v1.label) == v1
-    #TODO compare factor
-    @test_skip getFactor(dfg, f1.label) == f1
+    @test getFactor(dfg, f1.label) == f1
     @test_throws Exception getVariable(dfg, :nope)
     @test_throws Exception getVariable(dfg, "nope")
     @test_throws Exception getFactor(dfg, :nope)
@@ -137,8 +136,8 @@ end
     @test updateVariable!(dfg, v1Prime) == v1 #Maybe move to crud
     @test updateVariable!(dfg, v1Prime) == getVariable(dfg, v1.label)
     f1Prime = deepcopy(f1)
-    @test_skip updateFactor!(dfg, f1Prime) == f1 #Maybe move to crud
-    @test_skip updateFactor!(dfg, f1Prime) == getFactor(dfg, f1.label)
+    @test updateFactor!(dfg, f1Prime) == f1 #Maybe move to crud
+    @test updateFactor!(dfg, f1Prime) == getFactor(dfg, f1.label)
 
     # Accessors
     @test label(v1) == v1.label
