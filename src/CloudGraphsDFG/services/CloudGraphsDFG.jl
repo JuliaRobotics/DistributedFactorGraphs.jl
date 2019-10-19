@@ -670,8 +670,8 @@ function getNeighbors(dfg::CloudGraphsDFG, node::T; ready::Union{Nothing, Int}=n
     end
     neighbors = _getLabelsFromCyphonQuery(dfg.neo4jInstance, query)
     # If factor, need to do variable ordering
-    if T == DFGFactor
-        order = intersect(node._variableOrderSymbols, map(v->v.dfgNode.label, neighbors))
+    if T <: DFGFactor
+        neighbors = intersect(node._variableOrderSymbols, neighbors)
     end
     return neighbors
 end
@@ -693,8 +693,9 @@ function getNeighbors(dfg::CloudGraphsDFG, label::Symbol; ready::Union{Nothing, 
     neighbors = _getLabelsFromCyphonQuery(dfg.neo4jInstance, query)
     # If factor, need to do variable ordering
     if _getNodeType(dfg, label) == :FACTOR
+        # TODO: Implement shortcut for this.
         factor = getFactor(dfg, label)
-        order = intersect(factor._variableOrderSymbols, neighbors)
+        neighbors = intersect(factor._variableOrderSymbols, neighbors)
     end
     return neighbors
 end
