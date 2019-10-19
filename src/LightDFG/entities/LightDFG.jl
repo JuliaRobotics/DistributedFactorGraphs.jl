@@ -13,6 +13,9 @@ mutable struct LightDFG{T <: AbstractParams, V <: AbstractDFGVariable, F <:Abstr
     userId::String
     robotId::String
     sessionId::String
+    userData::Dict{Symbol, String}
+    robotData::Dict{Symbol, String}
+    sessionData::Dict{Symbol, String}
     addHistory::Vector{Symbol} #TODO: Discuss more - is this an audit trail?
     solverParams::T # Solver parameters
 end
@@ -30,9 +33,12 @@ function LightDFG{T,V,F}(g::FactorGraph{Int,V,F}=FactorGraph{Int,V,F}();
                            userId::String="User ID",
                            robotId::String="Robot ID",
                            sessionId::String="Session ID",
+                           userData::Dict{Symbol, String} = Dict{Symbol, String}(),
+                           robotData::Dict{Symbol, String} = Dict{Symbol, String}(),
+                           sessionData::Dict{Symbol, String} = Dict{Symbol, String}(),
                            params::T=NoSolverParams()) where {T <: AbstractParams, V <:AbstractDFGVariable, F<:AbstractDFGFactor}
 
-    LightDFG{T,V,F}(g, description, userId, robotId, sessionId, Symbol[], params)
+    LightDFG{T,V,F}(g, description, userId, robotId, sessionId, userData, robotData, sessionData, Symbol[], params)
 end
 
 # LightDFG{T}(; kwargs...) where T <: AbstractParams = LightDFG{T,DFGVariable,DFGFactor}(;kwargs...)

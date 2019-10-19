@@ -26,6 +26,23 @@ function setSolverParams(dfg::GraphsDFG, solverParams::T) where T <: AbstractPar
     dfg.solverParams = solverParams
 end
 
+# Get user, robot, and session "small" data.
+getUserData(dfg::GraphsDFG)::Dict{Symbol, String} = return dfg.userData
+function setUserData(dfg::GraphsDFG, data::Dict{Symbol, String})::Bool
+	dfg.userData = data
+	return true
+end
+getRobotData(dfg::GraphsDFG)::Dict{Symbol, String} = return dfg.robotData
+function setRobotData(dfg::GraphsDFG, data::Dict{Symbol, String})::Bool
+	dfg.robotData = data
+	return true
+end
+getSessionData(dfg::GraphsDFG)::Dict{Symbol, String} = return dfg.sessionData
+function setSessionData(dfg::GraphsDFG, data::Dict{Symbol, String})::Bool
+	dfg.sessionData = data
+	return true
+end
+
 """
     $(SIGNATURES)
 Gets an empty and unique CloudGraphsDFG derived from an existing DFG.

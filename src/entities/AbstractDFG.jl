@@ -39,3 +39,9 @@ Empty structure for solver parameters.
 """
 mutable struct NoSolverParams <: AbstractParams
 end
+
+"""
+    $(TYPEDEF)
+Abstract parent struct for big data entry.
+"""
+abstract type AbstractBigDataEntry end
