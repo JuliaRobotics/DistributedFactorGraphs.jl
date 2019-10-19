@@ -49,10 +49,24 @@ export saveDFG, loadDFG
 # Summary functions
 export getSummary, getSummaryGraph
 
+# Comparisons
+export compareField,
+    compareFields,
+    compareAll,
+    compareAllSpecial,
+    compareVariable,
+    compareFactor,
+    compareAllVariables,
+    compareSimilarVariables,
+    compareSubsetFactorGraph,
+    compareSimilarFactors,
+    compareFactorGraphs
+
 # Common includes
 include("services/AbstractDFG.jl")
 include("services/DFGVariable.jl")
 include("services/DFGFactor.jl")
+include("services/CompareUtils.jl")
 
 include("BigData.jl")
 

@@ -5,6 +5,7 @@ include("entities/CloudGraphsDFG.jl")
 
 # Services
 include("services/CommonFunctions.jl")
+include("services/CGStructure.jl")
 include("services/CloudGraphsDFG.jl")
 
 # Exports

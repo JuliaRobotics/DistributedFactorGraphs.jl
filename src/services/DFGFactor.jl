@@ -73,31 +73,18 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any}, iifModule)::DFGFac
     return factor
 end
 
-# function ==(a::GenericFunctionNodeData{T1, S1}, b::GenericFunctionNodeData{T2, S2})
-#     T1 != T2 && @debug("T-Types are not the same")==nothing && return false
-#     S1 != S2 && @debug("S-Types are not the same")==nothing && return false
-#     a.fncargvID != a.fncargvID && @debug("fncargvID are not the same")==nothing && return false
-#     a.eliminated != b.eliminated && @debug("eliminated are not the same")==nothing && return false
-#     a.potentialused != b.potentialused && @debug("potentialused are not the same")==nothing && return false
-#     a.edgeIDs != b.edgeIDs && @debug("edgeIDs are not the same")==nothing && return false
-#     a.frommodule != b.frommodule && @debug("frommodule are not the same")==nothing && return false
-#     a.fnc != b.fnc && @debug("fnc are not the same")==nothing && return false
-#     a.multihypo != b.multihypo && @debug("multihypo are not the same")==nothing && return false
-#     a.certainhypo != b.certainhypo && @debug("certainhypo are not the same")==nothing && return false
-#     return true
-# end
-#
-# """
-#     $(SIGNATURES)
-# Equality check for DFGFactor.
-# """
-# function ==(a::DFGFactor, b::DFGFactor)::Bool
-#   a.label != b.label && @debug("label is not equal")==nothing && return false
-#   a.tags != b.tags && @debug("tags is not equal")==nothing && return false
-#   a.data != b.data && @debug("data is not equal")==nothing && return false
-#   a.ready != b.ready && @debug("ready is not equal")==nothing && return false
-#   a.backendset != b.backendset && @debug("backendset is not equal")==nothing && return false
-#   a._internalId != b._internalId && @debug("_internalId is not equal")==nothing && return false
-#   a._variableOrderSymbols != b._variableOrderSymbols && @debug("_variableOrderSymbols is not equal")==nothing && return false
-#   return true
-# end
+"""
+    $(SIGNATURES)
+Equality check for DFGFactor.
+"""
+function ==(a::DFGFactor, b::DFGFactor)::Bool
+    return compareFactor(a, b)
+  a.label != b.label && @debug("label is not equal")==nothing && return false
+  a.tags != b.tags && @debug("tags is not equal")==nothing && return false
+  a.data != b.data && @debug("data is not equal")==nothing && return false
+  a.ready != b.ready && @debug("ready is not equal")==nothing && return false
+  a.backendset != b.backendset && @debug("backendset is not equal")==nothing && return false
+  a._internalId != b._internalId && @debug("_internalId is not equal")==nothing && return false
+  a._variableOrderSymbols != b._variableOrderSymbols && @debug("_variableOrderSymbols is not equal")==nothing && return false
+  return true
+end

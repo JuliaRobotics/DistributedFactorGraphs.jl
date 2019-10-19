@@ -4,6 +4,7 @@ export copySession!
 # With great power comes great "Oh crap, I deleted everything..."
 export clearSession!!, clearRobot!!, clearUser!!
 
+
 """
     $(SIGNATURES)
 DANGER: Clears the whole session from the database.
