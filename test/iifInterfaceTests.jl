@@ -1,10 +1,3 @@
-# using GraphPlot
-# using Neo4j
-using DistributedFactorGraphs
-# using IncrementalInference
-# using Test
-# dfg = apis[2]
-
 global dfg,v1,v2,f1
 
 if typeof(dfg) <: CloudGraphsDFG

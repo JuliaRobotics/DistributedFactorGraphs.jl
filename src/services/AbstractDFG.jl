@@ -36,9 +36,6 @@ end
 function setDescription(dfg::G, description::String) where G <: AbstractDFG
 	error("setDescription not implemented for $(typeof(dfg))")
 end
-function getInnerGraph(dfg::G) where G <: AbstractDFG
-	error("getInnerGraph not implemented for $(typeof(dfg))")
-end
 function getAddHistory(dfg::G) where G <: AbstractDFG
 	error("getAddHistory not implemented for $(typeof(dfg))")
 end

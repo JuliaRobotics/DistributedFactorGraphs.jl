@@ -7,7 +7,7 @@ include("services/GraphsDFG.jl")
 # Exports
 export GraphsDFG
 export exists
-export getLabelDict, getDescription, setDescription, getInnerGraph, getAddHistory, getSolverParams, setSolverParams
+export getLabelDict, getDescription, setDescription, getAddHistory, getSolverParams, setSolverParams
 
 export getAddHistory, getDescription, getLabelDict
 export addVariable!, addFactor!

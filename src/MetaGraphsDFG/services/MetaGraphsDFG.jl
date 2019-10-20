@@ -2,7 +2,6 @@
 getLabelDict(dfg::MetaGraphsDFG) = copy(dfg.g.metaindex[:label])
 getDescription(dfg::MetaGraphsDFG) = dfg.description
 setDescription(dfg::MetaGraphsDFG, description::String) = dfg.description = description
-getInnerGraph(dfg::MetaGraphsDFG) = dfg.g
 getAddHistory(dfg::MetaGraphsDFG) = dfg.addHistory
 getSolverParams(dfg::MetaGraphsDFG) = dfg.solverParams
 
