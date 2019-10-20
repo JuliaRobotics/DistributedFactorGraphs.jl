@@ -1,5 +1,8 @@
 
 function compareField(Allc, Bllc, syms)::Bool
+  (!isdefined(Allc, syms) && !isdefined(Bllc, syms)) && return true
+  !isdefined(Allc, syms) && return false
+  !isdefined(Bllc, syms) && return false
   return eval(:($Allc.$syms == $Bllc.$syms))
 end
 
@@ -101,6 +104,9 @@ function compareAll(Al::T, Bl::T; show::Bool=true, skip::Vector{Symbol}=Symbol[]
   for field in fieldnames(T)
     field in skip && continue
     @debug("  Checking field: $field")
+    (!isdefined(Al, field) && !isdefined(Al, field)) && return true
+    !isdefined(Al, field) && return false
+    !isdefined(Bl, field) && return false
     Ad = eval(:($Al.$field))
     Bd = eval(:($Bl.$field))
     !compareAll(Ad, Bd, show=show, skip=skip) && return false
@@ -126,8 +132,8 @@ function compareVariable(A::DFGVariable,
   union!(skiplist, skip)
   TP = TP && compareAll(A.solverDataDict, B.solverDataDict, skip=skiplist, show=show)
 
-  Ad = getData(A)
-  Bd = getData(B)
+  Ad = solverData(A)
+  Bd = solverData(B)
 
   # TP = TP && compareAll(A.attributes, B.attributes, skip=[:softtype;], show=show)
   varskiplist = union(varskiplist, [:softtype;:_internalId])
@@ -161,23 +167,22 @@ function compareFactor(A::DFGFactor,
                        skipsamples::Bool=true,
                        skipcompute::Bool=true  )
   #
-  @info show
   TP =  compareAll(A, B, skip=union([:attributes;:data;:_variableOrderSymbols;:_internalId],skip), show=show)
   # TP = TP & compareAll(A.attributes, B.attributes, skip=[:data;], show=show)
-  TP = TP & compareAllSpecial(getData(A), getData(B), skip=union([:fnc;:_internalId], skip), show=show)
-  TP = TP & compareAllSpecial(getData(A).fnc, getData(B).fnc, skip=union([:cpt;:measurement;:params;:varidx;:threadmodel], skip), show=show)
-  TP = TP & (skipsamples || compareAll(getData(A).fnc.measurement, getData(B).fnc.measurement, show=show, skip=skip))
-  TP = TP & (skipcompute || compareAll(getData(A).fnc.params, getData(B).fnc.params, show=show, skip=skip))
-  TP = TP & (skipcompute || compareAll(getData(A).fnc.varidx, getData(B).fnc.varidx, show=show, skip=skip))
+  TP = TP & compareAllSpecial(solverData(A), solverData(B), skip=union([:fnc;:_internalId], skip), show=show)
+  TP = TP & compareAllSpecial(solverData(A).fnc, solverData(B).fnc, skip=union([:cpt;:measurement;:params;:varidx;:threadmodel], skip), show=show)
+  TP = TP & (skipsamples || compareAll(solverData(A).fnc.measurement, solverData(B).fnc.measurement, show=show, skip=skip))
+  TP = TP & (skipcompute || compareAll(solverData(A).fnc.params, solverData(B).fnc.params, show=show, skip=skip))
+  TP = TP & (skipcompute || compareAll(solverData(A).fnc.varidx, solverData(B).fnc.varidx, show=show, skip=skip))
 
   return TP
 end
-  # Ad = getData(A)
-  # Bd = getData(B)
+  # Ad = solverData(A)
+  # Bd = solverData(B)
   # TP =  compareAll(A, B, skip=[:attributes;:data], show=show)
   # TP &= compareAll(A.attributes, B.attributes, skip=[:data;], show=show)
-  # TP &= compareAllSpecial(getData(A).fnc, getData(B).fnc, skip=[:cpt;], show=show)
-  # TP &= compareAll(getData(A).fnc.cpt, getData(B).fnc.cpt, show=show)
+  # TP &= compareAllSpecial(solverData(A).fnc, solverData(B).fnc, skip=[:cpt;], show=show)
+  # TP &= compareAll(solverData(A).fnc.cpt, solverData(B).fnc.cpt, show=show)
 
 
 """

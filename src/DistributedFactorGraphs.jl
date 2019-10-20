@@ -30,7 +30,7 @@ export pushUserData!, pushRobotData!, pushSessionData!, popUserData!, popRobotDa
 
 # Services/AbstractDFG Exports
 export hasFactor, hasVariable, isInitialized, getFactorFunction, isVariable, isFactor
-export updateGraphSolverData!
+export mergeUpdateVariableSolverData!, mergeUpdateGraphSolverData!
 
 # Solver (IIF) Exports
 export VariableNodeData, PackedVariableNodeData, VariableEstimate
@@ -50,7 +50,8 @@ export saveDFG, loadDFG
 export getSummary, getSummaryGraph
 
 # Comparisons
-export compareField,
+export
+    compareField,
     compareFields,
     compareAll,
     compareAllSpecial,
@@ -85,14 +86,17 @@ using .SymbolDFGs
 include("LightDFG/LightDFG.jl")
 @reexport using .LightDFGs
 
+#supported in Memory fg types
+const InMemoryDFGTypes = Union{GraphsDFG, LightDFG}
+export InMemoryDFGTypes
+
 function __init__()
     @info "Looking for @require modules"
-    #FIXME still can't figure @require out
-    # @require Neo4j="d2adbeaf-5838-5367-8a2f-e46d570981db" begin
-    #     @info "Including CloudGraphsDFG"
-    #     # Include the Cloudgraphs API
-    #     include("CloudGraphsDFG/CloudGraphsDFG.jl")
-    # end
+    @require Neo4j="d2adbeaf-5838-5367-8a2f-e46d570981db" begin
+        @info "Including CloudGraphsDFG"
+        # Include the Cloudgraphs API
+        include("CloudGraphsDFG/CloudGraphsDFG.jl")
+    end
 
     @require GraphPlot = "a2cc645c-3eea-5389-862e-a155d0052231" begin
         @info "Including Plots"
@@ -101,10 +105,6 @@ function __init__()
     end
 
 end
-
-#FIXME still can't figure @require out
-# Include the Cloudgraphs API
-include("CloudGraphsDFG/CloudGraphsDFG.jl")
 
 # To be moved as necessary.
 include("Common.jl")

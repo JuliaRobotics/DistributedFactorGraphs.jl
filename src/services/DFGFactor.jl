@@ -79,12 +79,4 @@ Equality check for DFGFactor.
 """
 function ==(a::DFGFactor, b::DFGFactor)::Bool
     return compareFactor(a, b)
-  a.label != b.label && @debug("label is not equal")==nothing && return false
-  a.tags != b.tags && @debug("tags is not equal")==nothing && return false
-  a.data != b.data && @debug("data is not equal")==nothing && return false
-  a.ready != b.ready && @debug("ready is not equal")==nothing && return false
-  a.backendset != b.backendset && @debug("backendset is not equal")==nothing && return false
-  a._internalId != b._internalId && @debug("_internalId is not equal")==nothing && return false
-  a._variableOrderSymbols != b._variableOrderSymbols && @debug("_variableOrderSymbols is not equal")==nothing && return false
-  return true
 end

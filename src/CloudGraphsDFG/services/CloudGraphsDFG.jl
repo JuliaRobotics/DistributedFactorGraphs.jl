@@ -318,13 +318,17 @@ end
     $(SIGNATURES)
 Update solver and estimate data for a variable (variable can be from another graph).
 """
-function updateVariableSolverData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable)::DFGVariable
+function mergeUpdateVariableSolverData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable)::DFGVariable
     if !exists(dfg, sourceVariable)
         error("Source variable '$(sourceVariable.label)' doesn't exist in the graph.")
     end
-    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, sourceVariable.label)
-    Neo4j.setnodeproperty(dfg.neo4jInstance.graph, nodeId, "estimateDict", JSON2.write(sourceVariable.estimateDict))
-    Neo4j.setnodeproperty(dfg.neo4jInstance.graph, nodeId, "solverDataDict", JSON2.write(Dict(keys(sourceVariable.solverDataDict) .=> map(vnd -> pack(dfg, vnd), values(sourceVariable.solverDataDict)))))
+    var = getVariable(dfg, sourceVariable.label)
+    newEsts = merge!(var.estimateDict, deepcopy(sourceVariable.estimateDict))
+    newSolveData = merge!(var.solverDataDict, sourceVariable.solverDataDict)
+    Neo4j.setnodeproperty(dfg.neo4jInstance.graph, var._internalId, "estimateDict",
+        JSON2.write(newEsts))
+    Neo4j.setnodeproperty(dfg.neo4jInstance.graph, var._internalId, "solverDataDict",
+        JSON2.write(Dict(keys(newSolveData) .=> map(vnd -> pack(dfg, vnd), values(newSolveData)))))
     return sourceVariable
 end
 
