@@ -1,6 +1,6 @@
 dfg = LightDFG{NoSolverParams, DFGVariableSummary, DFGFactorSummary}()
 
-DistributedFactorGraphs.DFGVariableSummary(label::Symbol) = DFGVariableSummary(label, DistributedFactorGraphs.now(), Symbol[], Dict{Symbol, VariableEstimate}(), 0)
+DistributedFactorGraphs.DFGVariableSummary(label::Symbol) = DFGVariableSummary(label, DistributedFactorGraphs.now(), Symbol[], Dict{Symbol, VariableEstimate}(), :NA, 0)
 
 DistributedFactorGraphs.DFGFactorSummary(label::Symbol) = DFGFactorSummary(label, Symbol[], 0, Symbol[])
 
@@ -12,6 +12,9 @@ f1 = DFGFactorSummary(:f1)
 append!(v1.tags, [:VARIABLE, :POSE])
 append!(v2.tags, [:VARIABLE, :LANDMARK])
 append!(f1.tags, [:FACTOR])
+
+#Force softtypename
+v1.softtypename = :Pose2
 
 # @testset "Creating Graphs" begin
 global dfg,v1,v2,f1
@@ -95,6 +98,7 @@ end
     @test timestamp(v1) == v1.timestamp
     @test estimates(v1) == v1.estimateDict
     @test estimate(v1, :notfound) == nothing
+    @test softtype(v1) == :Pose2
     # @test solverData(v1) === v1.solverDataDict[:default]
     # @test getData(v1) === v1.solverDataDict[:default]
     # @test solverData(v1, :default) === v1.solverDataDict[:default]
@@ -123,13 +127,13 @@ end
     estimates(newvar)[:default] = Dict{Symbol, VariableEstimate}(
         :max => VariableEstimate(:default, :max, [100.0]),
         :mean => VariableEstimate(:default, :mean, [50.0]),
-        :ppe => VariableEstimate(:default, :ppe, [75.0]))
+        :modefit => VariableEstimate(:default, :modefit, [75.0]))
     #update
     updateVariableSolverData!(dfg, newvar)
     #TODO maybe implement ==; @test newvar==var
     Base.:(==)(varest1::VariableEstimate, varest2::VariableEstimate) = begin
         varest1.lastUpdatedTimestamp == varest2.lastUpdatedTimestamp || return false
-        varest1.type == varest2.type || return false
+        varest1.ppeType == varest2.ppeType || return false
         varest1.solverKey == varest2.solverKey || return false
         varest1.estimate == varest2.estimate || return false
         return true

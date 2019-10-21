@@ -7,7 +7,7 @@ function attributes(v::GraphsNode, g::T)::AttributeDict where T <:GenericInciden
     AttributeDict(
         "label" => v.dfgNode.label,
         "color" => v.dfgNode isa DFGVariable ? "red" : "blue",
-        "shape" => v.dfgNode isa DFGVariable ? "box" : "ellipse",
+        "shape" => v.dfgNode isa DFGVariable ? "ellipse" : "box",
         "fillcolor" => v.dfgNode isa DFGVariable ? "red" : "blue"
         )
 end
@@ -24,6 +24,23 @@ getAddHistory(dfg::GraphsDFG) = dfg.addHistory
 getSolverParams(dfg::GraphsDFG) = dfg.solverParams
 function setSolverParams(dfg::GraphsDFG, solverParams::T) where T <: AbstractParams
     dfg.solverParams = solverParams
+end
+
+# Get user, robot, and session "small" data.
+getUserData(dfg::GraphsDFG)::Dict{Symbol, String} = return dfg.userData
+function setUserData(dfg::GraphsDFG, data::Dict{Symbol, String})::Bool
+	dfg.userData = data
+	return true
+end
+getRobotData(dfg::GraphsDFG)::Dict{Symbol, String} = return dfg.robotData
+function setRobotData(dfg::GraphsDFG, data::Dict{Symbol, String})::Bool
+	dfg.robotData = data
+	return true
+end
+getSessionData(dfg::GraphsDFG)::Dict{Symbol, String} = return dfg.sessionData
+function setSessionData(dfg::GraphsDFG, data::Dict{Symbol, String})::Bool
+	dfg.sessionData = data
+	return true
 end
 
 """

@@ -264,7 +264,7 @@ end
 Checks if the graph is fully connected, returns true if so.
 """
 function isFullyConnected(dfg::SymbolDFG)::Bool
-    return length(connected_components(dfg.g)) == 1
+    return length(LightGraphs.connected_components(dfg.g)) == 1
 end
 
 #Alias
@@ -518,3 +518,15 @@ function toDotFile(dfg::SymbolDFG, fileName::String="/tmp/dfg.dot")::Nothing
     return nothing
 end
 =#
+
+"""
+    $(SIGNATURES)
+Gets an empty and unique CloudGraphsDFG derived from an existing DFG.
+"""
+function _getDuplicatedEmptyDFG(dfg::SymbolDFG{T,V,F})::SymbolDFG where {T <: AbstractParams, V <: DFGNode, F <:DFGNode}
+    newDfg = SymbolDFG{T, V, F}(;
+		userId=dfg.userId, robotId=dfg.robotId, sessionId=dfg.sessionId,
+		params=deepcopy(dfg.solverParams))
+	newDfg.description ="(Copy of) $(dfg.description)"
+	return newDfg
+end

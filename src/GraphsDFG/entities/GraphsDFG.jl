@@ -14,6 +14,9 @@ mutable struct GraphsDFG{T <: AbstractParams} <: AbstractDFG
     userId::String
     robotId::String
     sessionId::String
+    userData::Dict{Symbol, String}
+    robotData::Dict{Symbol, String}
+    sessionData::Dict{Symbol, String}
     nodeCounter::Int64
     labelDict::Dict{Symbol, Int64}
     addHistory::Vector{Symbol} #TODO: Discuss more - is this an audit trail?
@@ -28,4 +31,7 @@ GraphsDFG{T}(   g::FGType=Graphs.incdict(GraphsNode,is_directed=false),
                 userId::String = "UserID",
                 robotId::String = "robotID",
                 sessionId::String = "sessionID",
-                params::T=NoSolverParams()) where T <: AbstractParams = GraphsDFG{T}(g, d, userId, robotId, sessionId, n, l, a, params)
+                userData::Dict{Symbol, String} = Dict{Symbol, String}(),
+                robotData::Dict{Symbol, String} = Dict{Symbol, String}(),
+                sessionData::Dict{Symbol, String} = Dict{Symbol, String}(),
+                params::T=NoSolverParams()) where T <: AbstractParams = GraphsDFG{T}(g, d, userId, robotId, sessionId, userData, robotData, sessionData, n, l, a, params)

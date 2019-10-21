@@ -2,6 +2,22 @@ alphaOnlyMatchRegex = r"^[a-zA-Z0-9_]*$"
 
 """
 $(SIGNATURES)
+Returns the transaction for a given query.
+NOTE: Must commit(transaction) after you're done.
+"""
+function _queryNeo4j(neo4jInstance::Neo4jInstance, query::String)
+    loadtx = transaction(neo4jInstance.connection)
+    result = loadtx(query; submit=true)
+    if length(result.errors) > 0
+        error(string(result.errors))
+    end
+    # Have to finish the transaction
+    commit(loadtx)
+    return result
+end
+
+"""
+$(SIGNATURES)
 Returns the list of CloudGraph nodes that matches the Cyphon query.
 The nodes of interest should be labelled 'node' because the query will use the return of id(node)
 #Example
@@ -11,16 +27,9 @@ If orderProperty is not ==, then 'order by n.{orderProperty} will be appended to
 So can make orderProperty = label or id.
 """
 function _getLabelsFromCyphonQuery(neo4jInstance::Neo4jInstance, matchCondition::String, orderProperty::String="")::Vector{Symbol}
-    # 2. Perform the transaction
-    loadtx = transaction(neo4jInstance.connection)
     query = "match $matchCondition return distinct(node.label) $(orderProperty != "" ? "order by node.$orderProperty" : "")";
-    nodes = loadtx(query; submit=true)
-    if length(nodes.errors) > 0
-        error(string(nodes.errors))
-    end
-    nodeIds = map(node -> node["row"][1], nodes.results[1]["data"])
-    # Have to finish the transaction
-    commit(loadtx)
+    result = _queryNeo4j(neo4jInstance, query)
+    nodeIds = map(node -> node["row"][1], result.results[1]["data"])
     return Symbol.(nodeIds)
 end
 

@@ -11,6 +11,12 @@ import ...DistributedFactorGraphs:  setSolverParams,
                                     getFactor,
                                     setDescription,
                                     getLabelDict,
+                                    getUserData,
+                                    setUserData,
+                                    getRobotData,
+                                    setRobotData,
+                                    getSessionData,
+                                    setSessionData,
                                     addVariable!,
                                     getVariable,
                                     getAddHistory,
@@ -34,7 +40,8 @@ import ...DistributedFactorGraphs:  setSolverParams,
                                     getSubgraphAroundNode,
                                     getSubgraph,
                                     getAdjacencyMatrix,
-                                    getAdjacencyMatrixSparse
+                                    getAdjacencyMatrixSparse,
+                                    _getDuplicatedEmptyDFG
 
 include("FactorGraphs/FactorGraphs.jl")
 using .FactorGraphs
