@@ -264,7 +264,7 @@ end
 Checks if the graph is fully connected, returns true if so.
 """
 function isFullyConnected(dfg::SymbolDFG)::Bool
-    return length(connected_components(dfg.g)) == 1
+    return length(LightGraphs.connected_components(dfg.g)) == 1
 end
 
 #Alias

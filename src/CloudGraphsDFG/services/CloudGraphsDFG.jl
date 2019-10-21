@@ -67,6 +67,11 @@ function setSolverParams(dfg::CloudGraphsDFG, solverParams::T)::T where T <: Abs
     return dfg.solverParams = solverParams
 end
 
+function getSerializationModule(dfg::CloudGraphsDFG)::Module where G <: AbstractDFG
+    # TODO: If we need to specialize this for RoME etc, here is where we'll change it.
+    return Main
+end
+
 """
     $(SIGNATURES)
 True if the variable or factor exists in the graph.
@@ -627,15 +632,19 @@ function isFullyConnected(dfg::CloudGraphsDFG)::Bool
     # Total nodes
     varIds = getVariableIds(dfg)
     factIds = getFactorIds(dfg)
-    totalNodes = length(varIds) + length(factIds)
-    if length(varIds) == 0
-        return false
-    end
+    length(varIds) + length(factIds) == 0 && return false
 
     # Total connected nodes - thank you Neo4j for 0..* awesomeness!!
-    connectedList = _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(varIds[1]))-[FACTORGRAPH*]-(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId))")
-
-    return length(connectedList) == totalNodes
+    query = """
+        match (n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(varIds[1]))-[FACTORGRAPH*]-(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId))
+        WHERE n:VARIABLE OR n:FACTOR OR node:VARIABLE OR node:FACTOR
+        WITH collect(n)+collect(node) as nodelist
+        unwind nodelist as nodes
+        return count(distinct nodes)"""
+    @debug "[Querying] $query"
+    result = _queryNeo4j(dfg.neo4jInstance, query)
+    # Neo4j.jl data structure sometimes feels brittle... like below
+    return result.results[1]["data"][1]["row"][1] == length(varIds) + length(factIds)
 end
 
 #Alias
