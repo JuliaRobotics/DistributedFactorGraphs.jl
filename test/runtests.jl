@@ -71,6 +71,12 @@ if get(ENV, "IIF_TEST", "") == "true"
             global dfg = deepcopy(api)
             include("iifInterfaceTests.jl")
         end
+
+        @testset "FileDFG Testing Driver: $(typeof(api))" begin
+            @info "FileDFG Testing Driver: $(typeof(api))"
+            global dfg = deepcopy(api)
+            include("fileDFGTests.jl")
+        end
     end
 else
     @warn "Skipping IncrementalInference driver tests"

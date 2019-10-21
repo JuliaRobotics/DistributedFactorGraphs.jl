@@ -1,24 +1,3 @@
-# using Revise
-# using Neo4j
-
-# Debug logging
-# using DistributedFactorGraphs
-using Test
-using Logging
-using Neo4j
-using DistributedFactorGraphs
-using IncrementalInference
-logger = SimpleLogger(stdout, Logging.Debug)
-global_logger(logger)
-
-dfg = CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
-                            "testUser", "testRobot", "testSession",
-                            nothing,
-                            nothing,
-                            IncrementalInference.decodePackedType,
-                            IncrementalInference.rebuildFactorMetadata!,
-                            solverParams=SolverParams())
-
 if typeof(dfg) <: CloudGraphsDFG
     @warn "TEST: Nuking all data for user '$(dfg.userId)', robot '$(dfg.robotId)'!"
     clearRobot!!(dfg)
@@ -44,7 +23,8 @@ facts = map(n -> addFactor!(dfg, [verts[n], verts[n+1]], LinearConditional(Norma
 saveFolder = "/tmp/fileDFG"
 saveDFG(dfg, saveFolder)
 
-retDFG = loadDFG(saveFolder, Main)
+copyDfg = DistributedFactorGraphs._getDuplicatedEmptyDFG(dfg)
+retDFG = loadDFG(saveFolder, Main, copyDfg)
 @test symdiff(ls(dfg), ls(retDFG)) == []
 @test symdiff(lsf(dfg), lsf(retDFG)) == []
 for var in ls(dfg)
