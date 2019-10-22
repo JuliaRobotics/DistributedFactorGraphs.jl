@@ -45,7 +45,9 @@ end
 
 if get(ENV, "IIF_TEST", "") == "true"
 
-    Pkg.add("IncrementalInference")
+    # Pkg.add("IncrementalInference")
+    # TODO: Remove this once we move to v0.5.0
+    Pkg.add(PackageSpec(name="IncrementalInference", rev="enhancement/compare_move_dfg"))
     @info "------------------------------------------------------------------------"
     @info "These tests are using IncrementalInference to do additional driver tests"
     @info "------------------------------------------------------------------------"
