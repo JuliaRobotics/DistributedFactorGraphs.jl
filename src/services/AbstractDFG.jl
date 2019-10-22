@@ -449,7 +449,7 @@ Return boolean whether a factor `label` is present in `<:AbstractDFG`.
 """
 function hasFactor(dfg::G, label::Symbol)::Bool where {G <: AbstractDFG}
 	@warn "hasFactor() deprecated, please use exists()"
-	return haskey(dfg.labelDict, label)
+	return exists(dfg, label)
 end
 
 """
@@ -459,7 +459,7 @@ Return `::Bool` on whether `dfg` contains the variable `lbl::Symbol`.
 """
 function hasVariable(dfg::G, label::Symbol)::Bool where {G <: AbstractDFG}
 	@warn "hasVariable() deprecated, please use exists()"
-	return haskey(dfg.labelDict, label) # haskey(vertices(dfg.g), label)
+	return exists(dfg, label) # haskey(vertices(dfg.g), label)
 end
 
 
@@ -472,14 +472,16 @@ Notes:
 - used by both factor graph variable and Bayes tree clique logic.
 """
 function isInitialized(var::DFGVariable; key::Symbol=:default)::Bool
-  solverData(var, key) != nothing && return solverData(var, key).initialized
-  return false
+  	data = solverData(var, key)
+  	if data == nothing
+		@error "Variable does not have solver data $(key)"
+		return false
+  	else
+  		return data.initialized
+	end
 end
-function isInitialized(fct::DFGFactor; key::Symbol=:default)::Bool
-  solverData(var, key) != nothing && return solverData(fct, key).initialized
-  return false
-end
-function isInitialized(dfg::G, label::Symbol; key::Symbol=:default)::Bool where G <: AbstractDFG
+
+function isInitialized(dfg::AbstractDFG, label::Symbol; key::Symbol=:default)::Bool
   return isInitialized(getVariable(dfg, label), key=key)
 end
 
@@ -523,7 +525,6 @@ showFactor(fgl::G, fsym::Symbol) where G <: AbstractDFG = @show getFactor(fgl,fs
 Produces a dot-format of the graph for visualization.
 """
 function toDot(dfg::AbstractDFG)::String
-    @warn "Falling Back to convert to GraphsDFG"
     #TODO implement convert
     graphsdfg = GraphsDFG{AbstractParams}()
     DistributedFactorGraphs._copyIntoGraph!(dfg, graphsdfg, union(getVariableIds(dfg), getFactorIds(dfg)), true)
@@ -543,7 +544,6 @@ Note
 - Based on graphviz.org
 """
 function toDotFile(dfg::AbstractDFG, fileName::String="/tmp/dfg.dot")::Nothing
-    @warn "Falling Back to convert to GraphsDFG"
     #TODO implement convert
     graphsdfg = GraphsDFG{AbstractParams}()
     DistributedFactorGraphs._copyIntoGraph!(dfg, graphsdfg, union(getVariableIds(dfg), getFactorIds(dfg)), true)
