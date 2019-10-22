@@ -71,7 +71,7 @@ function loadDFG(folder::String, iifModule, dfgLoadInto::G=GraphsDFG{NoSolverPar
     # PATCH - To update the fncargvID for factors, it's being cleared somewhere in rebuildFactorMetadata.
     # TEMPORARY
     # TODO: Remove
-    map(f->getData(f).fncargvID = f._variableOrderSymbols, getFactors(dfgLoadInto))
+    map(f->solverData(f).fncargvID = f._variableOrderSymbols, getFactors(dfgLoadInto))
 
 
     return dfgLoadInto
