@@ -144,9 +144,8 @@ end
     @test solverDataDict(v1) == v1.solverDataDict
     @test internalId(v1) == v1._internalId
 
-    # NOTE: Removed until v0.5
-    @test_skip v1.softtype == :ContinuousScalar#Symbol(typeof(st1))
-    @test_skip v2.softtype == :ContinuousScalar#Symbol(typeof(st2))
+    @test softtype(v1) == :ContinuousScalar#Symbol(typeof(st1))
+    @test softtype(v2) == :ContinuousScalar#Symbol(typeof(st2))
     @test typeof(getSofttype(v1)) == typeof(ContinuousScalar())
 
     @test label(f1) == f1.label

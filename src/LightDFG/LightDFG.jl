@@ -34,7 +34,8 @@ import ...DistributedFactorGraphs:  setSolverParams,
                                     getSubgraphAroundNode,
                                     getSubgraph,
                                     getAdjacencyMatrix,
-                                    getAdjacencyMatrixSparse
+                                    getAdjacencyMatrixSparse,
+                                    _getDuplicatedEmptyDFG
 
 include("FactorGraphs/FactorGraphs.jl")
 using .FactorGraphs

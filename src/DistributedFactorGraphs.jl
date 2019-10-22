@@ -21,7 +21,7 @@ export AbstractParams, NoSolverParams
 export DFGNode, DFGVariable, DFGFactor
 export InferenceType, PackedInferenceType, FunctorInferenceType, InferenceVariable, ConvolutionObject
 export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
-export label, timestamp, tags, estimates, estimate, data, solverData, getData, solverDataDict, setSolverData, internalId, smallData, bigData
+export label, timestamp, tags, estimates, estimate, data, softtype, solverData, getData, solverDataDict, setSolverData, internalId, smallData, bigData
 export DFGVariableSummary, DFGFactorSummary, AbstractDFGSummary
 
 # Services/AbstractDFG Exports
@@ -70,6 +70,7 @@ include("CloudGraphsDFG/CloudGraphsDFG.jl")
 
 function __init__()
     @require GraphPlot = "a2cc645c-3eea-5389-862e-a155d0052231" begin
+        @info "Including Plots"
         include("DFGPlots/DFGPlots.jl")
         @reexport using .DFGPlots
     end

@@ -564,3 +564,15 @@ function _toDotFile(dfg::MetaGraphsDFG, fileName::String="/tmp/dfg.dot")::Nothin
     end
     return nothing
 end
+
+"""
+    $(SIGNATURES)
+Gets an empty and unique CloudGraphsDFG derived from an existing DFG.
+"""
+function _getDuplicatedEmptyDFG(dfg::MetaGraphsDFG{P})::MetaGraphsDFG where {P <: AbstractParams}
+    newDfg = MetaGraphsDFG{P}(;
+		userId=dfg.userId, robotId=dfg.robotId, sessionId=dfg.sessionId,
+		params=deepcopy(dfg.solverParams))
+	newDfg.description ="(Copy of) $(dfg.description)"
+	return newDfg
+end
