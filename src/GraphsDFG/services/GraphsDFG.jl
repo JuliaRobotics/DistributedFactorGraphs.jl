@@ -19,7 +19,6 @@ vertex_index(v::GraphsNode) = v.index
 getLabelDict(dfg::GraphsDFG) = dfg.labelDict
 getDescription(dfg::GraphsDFG) = dfg.description
 setDescription(dfg::GraphsDFG, description::String) = dfg.description = description
-getInnerGraph(dfg::GraphsDFG) = dfg.g
 getAddHistory(dfg::GraphsDFG) = dfg.addHistory
 getSolverParams(dfg::GraphsDFG) = dfg.solverParams
 function setSolverParams(dfg::GraphsDFG, solverParams::T) where T <: AbstractParams

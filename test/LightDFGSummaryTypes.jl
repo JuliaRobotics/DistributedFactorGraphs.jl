@@ -129,7 +129,7 @@ end
         :mean => VariableEstimate(:default, :mean, [50.0]),
         :modefit => VariableEstimate(:default, :modefit, [75.0]))
     #update
-    updateVariableSolverData!(dfg, newvar)
+    mergeUpdateVariableSolverData!(dfg, newvar)
     #TODO maybe implement ==; @test newvar==var
     Base.:(==)(varest1::VariableEstimate, varest2::VariableEstimate) = begin
         varest1.lastUpdatedTimestamp == varest2.lastUpdatedTimestamp || return false
@@ -150,7 +150,7 @@ end
         :ppe => VariableEstimate(:default, :ppe, [7.0]))
 
     # Persist to the original variable.
-    updateVariableSolverData!(dfg, newvar)
+    mergeUpdateVariableSolverData!(dfg, newvar)
     # At this point newvar will have only :second, and var should have both (it is the reference)
     @test symdiff(collect(keys(estimates(var))), [:default, :second]) == Symbol[]
     @test symdiff(collect(keys(estimates(newvar))), [:second]) == Symbol[]

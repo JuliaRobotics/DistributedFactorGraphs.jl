@@ -35,6 +35,34 @@ end
 
 """
 $(SIGNATURES)
+Get a node property - returns nothing if not found
+"""
+function _getNodeProperty(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String}, property::String)
+    query = "match (n:$(join(nodeLabels, ":"))) return n.$property"
+    result = DistributedFactorGraphs._queryNeo4j(neo4jInstance, query)
+
+    return result.results[1]["data"][1]["row"][1]
+end
+
+"""
+$(SIGNATURES)
+Get a node's tags
+"""
+function _getNodeTags(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String})::Union{Nothing, Vector{String}}
+    query = "match (n:$(join(nodeLabels, ":"))) return labels(n)"
+    result = DistributedFactorGraphs._queryNeo4j(neo4jInstance, query)
+    length(result.results[1]["data"]) != 1 && return nothing
+    return result.results[1]["data"][1]["row"][1]
+end
+
+function _getNodeCount(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String})::Int
+    query = "match (n:$(join(nodeLabels, ":"))) return count(n)"
+    result = DistributedFactorGraphs._queryNeo4j(neo4jInstance, query)
+    length(result.results[1]["data"]) != 1 && return 0
+    return parse(Int, result.results[1]["data"][1]["row"][1])
+end
+"""
+$(SIGNATURES)
 Returns the list of CloudGraph nodes that matches the Cyphon query.
 The nodes of interest should be labelled 'node' because the query will use the return of id(node)
 #Example
@@ -73,23 +101,11 @@ end
 
 """
 $(SIGNATURES)
-Utility function to get all robots for a user.
-"""
-function _getRobotNeoNodesForUser(userId::String)::Vector{Neo4j.Node}
-    # 2. Perform the transaction
-    cloudGraph = Main.App.NaviConfig.cgConnection
-    nodes = _getNeoNodesFromCyphonQuery("(u:USER:$userId)-[:ROBOT]->(node:ROBOT)", "id")
-    return nodes
-end
-
-"""
-$(SIGNATURES)
 Utility function to get a user root node given an ID.
 """
-function _getUserNeoNode(userId::String)::Neo4j.Node
+function _getUserNeoNode(neo4jInstance::Neo4jInstance, userId::String)::Neo4j.Node
     # 2. Perform the transaction
-    cloudGraph = Main.App.NaviConfig.cgConnection
-    nodes = _getNeoNodesFromCyphonQuery("(node:USER:$userId)")
+    nodes = _getNeoNodesFromCyphonQuery(neo4jInstance, "(node:USER:$userId)")
     if(length(nodes) != 1)
         error("Expected one user node with labels $userId and USER, received $(length(nodes)).")
     end
@@ -101,10 +117,9 @@ end
 $(SIGNATURES)
 Utility function to get a Neo4j node sessions for a robot.
 """
-function _getSessionNeoNodesForRobot(userId::String, robotId::String)::Vector{Neo4j.Node}
+function _getSessionNeoNodesForRobot(neo4jInstance::Neo4jInstance, userId::String, robotId::String)::Vector{Neo4j.Node}
     # 2. Perform the transaction
-    cloudGraph = Main.App.NaviConfig.cgConnection
-    nodes = _getNeoNodesFromCyphonQuery("(u:USER:$userId)-[:ROBOT]->(r:ROBOT:$robotId)-[:SESSION]->(node:SESSION)", "id")
+    nodes = _getNeoNodesFromCyphonQuery(neo4jInstance, "(u:USER:$userId)-[:ROBOT]->(r:ROBOT:$robotId)-[:SESSION]->(node:SESSION)", "id")
     return nodes
 end
 
@@ -113,11 +128,15 @@ $(SIGNATURES)
 Bind the SESSION node to the inital variable.
 Doesn't check existence so please don't call twice.
 """
-function _bindSessionNodeToInitialVariable(userId::String, robotId::String, sessionId::String, initialVariableLabel::String)::Nothing
+function _bindSessionNodeToInitialVariable(neo4jInstance::Neo4jInstance, userId::String, robotId::String, sessionId::String, initialVariableLabel::String)::Nothing
     # 2. Perform the transaction
-    cloudGraph = Main.App.NaviConfig.cgConnection
-    loadtx = transaction(cloudGraph.neo4j.connection)
-    query = "match (session:SESSION:$userId:$robotId:$sessionId),(var:VARIABLE:$userId:$robotId:$sessionId {label: '$initialVariableLabel'}) CREATE (session)-[:VARIABLE]->(var) return id(var)";
+    loadtx = transaction(neo4jInstance.connection)
+    query = """
+    match (session:SESSION:$userId:$robotId:$sessionId),
+    (var:VARIABLE:$userId:$robotId:$sessionId
+    {label: '$initialVariableLabel'})
+    CREATE (session)-[:VARIABLE]->(var) return id(var)
+    """;
     loadtx(query; submit=true)
     commit(loadtx)
     return nothing

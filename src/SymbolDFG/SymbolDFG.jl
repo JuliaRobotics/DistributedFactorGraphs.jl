@@ -7,7 +7,6 @@ using DocStringExtensions
 import ...DistributedFactorGraphs: AbstractDFG, DFGNode, AbstractParams, NoSolverParams, DFGVariable, DFGFactor
 # import DFG functions to exstend
 import ...DistributedFactorGraphs:  setSolverParams,
-                                    getInnerGraph,
                                     getFactor,
                                     setDescription,
                                     getLabelDict,
