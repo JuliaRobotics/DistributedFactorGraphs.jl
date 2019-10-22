@@ -8,6 +8,16 @@ append!(v1.tags, [:VARIABLE, :POSE])
 append!(v2.tags, [:VARIABLE, :LANDMARK])
 append!(f1.tags, [:FACTOR])
 
+#add types for softtypes
+struct TestInferenceVariable1 <: InferenceVariable end
+struct TestInferenceVariable2 <: InferenceVariable end
+
+st1 = TestInferenceVariable1()
+st2 = TestInferenceVariable2()
+
+v1.solverDataDict[:default].softtype = deepcopy(st1)
+v2.solverDataDict[:default].softtype = deepcopy(st2)
+
 # @testset "Creating Graphs" begin
 global dfg,v1,v2,f1
 addVariable!(dfg, v1)
@@ -80,9 +90,11 @@ end
 
     # Sets
     v1Prime = deepcopy(v1)
-    @test updateVariable!(dfg, v1Prime) != v1
+    #updateVariable! returns the variable updated, so should be equal
+    @test updateVariable!(dfg, v1Prime) == v1Prime
     f1Prime = deepcopy(f1)
-    @test updateFactor!(dfg, f1Prime) != f1
+    #updateFactor! returns the factor updated, so should be equal
+    @test updateFactor!(dfg, f1Prime) == f1Prime
 
     # Accessors
     @test label(v1) == v1.label
@@ -95,6 +107,10 @@ end
     @test solverData(v1, :default) === v1.solverDataDict[:default]
     @test solverDataDict(v1) == v1.solverDataDict
     @test internalId(v1) == v1._internalId
+
+    @test softtype(v1) == Symbol(typeof(st1))
+    @test softtype(v2) == Symbol(typeof(st2))
+    @test getSofttype(v1) == st1
 
     @test label(f1) == f1.label
     @test tags(f1) == f1.tags
@@ -112,11 +128,10 @@ end
     @test !isInitialized(dfg, :a)
     @test !isInitialized(v2)
 
-    #TODO Should the next test work?
-    @test_broken !isInitialized(dfg, :f1)
-    @test_broken !isInitialized(f1)
-    
+    @test !isInitialized(v2, key=:second)
+
 end
+
 
 @testset "Updating Nodes" begin
     global dfg
@@ -127,13 +142,13 @@ end
     estimates(newvar)[:default] = Dict{Symbol, VariableEstimate}(
         :max => VariableEstimate(:default, :max, [100.0]),
         :mean => VariableEstimate(:default, :mean, [50.0]),
-        :ppe => VariableEstimate(:default, :ppe, [75.0]))
+        :modefit => VariableEstimate(:default, :modefit, [75.0]))
     #update
     updateVariableSolverData!(dfg, newvar)
     #TODO maybe implement ==; @test newvar==var
     Base.:(==)(varest1::VariableEstimate, varest2::VariableEstimate) = begin
         varest1.lastUpdatedTimestamp == varest2.lastUpdatedTimestamp || return false
-        varest1.type == varest2.type || return false
+        varest1.ppeType == varest2.ppeType || return false
         varest1.solverKey == varest2.solverKey || return false
         varest1.estimate == varest2.estimate || return false
         return true
@@ -147,7 +162,7 @@ end
     estimates(newvar)[:second] = Dict{Symbol, VariableEstimate}(
         :max => VariableEstimate(:default, :max, [10.0]),
         :mean => VariableEstimate(:default, :mean, [5.0]),
-        :ppe => VariableEstimate(:default, :ppe, [7.0]))
+        :modefit => VariableEstimate(:default, :modefit, [7.0]))
 
     # Persist to the original variable.
     updateVariableSolverData!(dfg, newvar)
@@ -210,6 +225,11 @@ verts = map(n -> DFGVariable(Symbol("x$n")), 1:numNodes)
 #change ready and backendset for x7,x8 for improved tests on x7x8f1
 verts[7].ready = 1
 verts[8].backendset = 1
+
+#force softytypes to first 2 vertices.
+verts[1].solverDataDict[:default].softtype = deepcopy(st1)
+verts[2].solverDataDict[:default].softtype = deepcopy(st2)
+
 map(v -> addVariable!(dfg, v), verts)
 map(n -> addFactor!(dfg, [verts[n], verts[n+1]], DFGFactor{Int, :Symbol}(Symbol("x$(n)x$(n+1)f1"))), 1:(numNodes-1))
 
@@ -283,7 +303,11 @@ end
     # Check all fields are equal for all variables
     for v in ls(summaryGraph)
         for field in variableFields
-            @test getfield(getVariable(dfg, v), field) == getfield(getVariable(summaryGraph, v), field)
+            if field != :softtypename
+                @test getfield(getVariable(dfg, v), field) == getfield(getVariable(summaryGraph, v), field)
+            else
+                @test softtype(getVariable(dfg, v)) == softtype(getVariable(summaryGraph, v))
+            end
         end
     end
     for f in lsf(summaryGraph)

@@ -77,31 +77,52 @@ function unpack(dfg::G, d::PackedVariableNodeData)::VariableNodeData where G <: 
   end
   @debug "Net conversion result: $st"
 
+  if st == nothing
+      error("The variable doesn't seem to have a softtype. It needs to set up with an InferenceVariable from IIF. This will happen if you use DFG to add serialized variables directly and try use them. Please use IncrementalInference.addVariable().")
+  end
+
   return VariableNodeData(M3,M4, d.BayesNetOutVertIDs,
     d.dimIDs, d.dims, d.eliminated, d.BayesNetVertID, d.separator,
     st, d.initialized, d.inferdim, d.ismargin, d.dontmargin )
 end
 
 function compare(a::VariableNodeData, b::VariableNodeData)
-    TP = true
-    TP = TP && a.val == b.val
-    TP = TP && a.bw == b.bw
-    TP = TP && a.BayesNetOutVertIDs == b.BayesNetOutVertIDs
-    TP = TP && a.dimIDs == b.dimIDs
-    TP = TP && a.dims == b.dims
-    TP = TP && a.eliminated == b.eliminated
-    TP = TP && a.BayesNetVertID == b.BayesNetVertID
-    TP = TP && a.separator == b.separator
-    TP = TP && abs(a.inferdim - b.inferdim) < 1e-14
-    TP = TP && a.ismargin == b.ismargin
-    TP = TP && a.softtype == b.softtype
-    return TP
+    a.val != b.val && @debug("val is not equal")==nothing && return false
+    a.bw != b.bw && @debug("bw is not equal")==nothing && return false
+    a.BayesNetOutVertIDs != b.BayesNetOutVertIDs && @debug("BayesNetOutVertIDs is not equal")==nothing && return false
+    a.dimIDs != b.dimIDs && @debug("dimIDs is not equal")==nothing && return false
+    a.dims != b.dims && @debug("dims is not equal")==nothing && return false
+    a.eliminated != b.eliminated && @debug("eliminated is not equal")==nothing && return false
+    a.BayesNetVertID != b.BayesNetVertID && @debug("BayesNetVertID is not equal")==nothing && return false
+    a.separator != b.separator && @debug("separator is not equal")==nothing && return false
+    a.initialized != b.initialized && @debug("initialized is not equal")==nothing && return false
+    abs(a.inferdim - b.inferdim) > 1e-14 && @debug("inferdim is not equal")==nothing && return false
+    a.ismargin != b.ismargin && @debug("ismargin is not equal")==nothing && return false
+    a.dontmargin != b.dontmargin && @debug("dontmargin is not equal")==nothing && return false
+    typeof(a.softtype) != typeof(b.softtype) && @debug("softtype is not equal")==nothing && return false
+    return true
 end
 
+"""
+    $(SIGNATURES)
+Equality check for VariableNodeData.
+"""
 function ==(a::VariableNodeData,b::VariableNodeData, nt::Symbol=:var)
   return DistributedFactorGraphs.compare(a,b)
 end
 
+"""
+    $(SIGNATURES)
+Equality check for VariableEstimate.
+"""
+function ==(a::VariableEstimate, b::VariableEstimate)::Bool
+  a.solverKey != b.solverKey && @debug("solverKey are not equal")==nothing && return false
+  a.ppeType != b.ppeType && @debug("ppeType is not equal")==nothing && return false
+  a.estimate != b.estimate && @debug("estimate are not equal")==nothing && return false
+  a.lastUpdatedTimestamp != b.lastUpdatedTimestamp && @debug("lastUpdatedTimestamp is not equal")==nothing && return false
+  return true
+end
+
 function convert(::Type{DFGVariableSummary}, v::DFGVariable)
-    return DFGVariableSummary(v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.estimateDict), v._internalId)
+    return DFGVariableSummary(v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.estimateDict), Symbol(typeof(getSofttype(v))), v._internalId)
 end
