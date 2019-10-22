@@ -1,6 +1,6 @@
 name = "DistributedFactorGraphs"
 uuid = "b5cc3c7e-6572-11e9-2517-99fb8daf2f04"
-version = "0.4.1"
+version = "0.5.0"
 
 [deps]
 Colors = "5ae59095-9a9b-59fe-a467-6f913c188581"
@@ -13,24 +13,25 @@ JSON2 = "2535ab7d-5cd8-5a07-80ac-9b1792aadce3"
 LightGraphs = "093fc24a-ae57-5d10-9952-331d41423f4d"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MetaGraphs = "626554b9-1ddb-594c-aa3c-2596fe9399a5"
+Neo4j = "d2adbeaf-5838-5367-8a2f-e46d570981db"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [compat]
-Distributions = "≥ 0.18"
-DocStringExtensions = "≥ 0.7"
-Graphs = "≥ 0.10.3"
-MetaGraphs = "≥ 0.6.4"
-Reexport = "≥ 0.2"
-Requires = "≥ 0.5"
+Distributions = "0.18, 0.19, 0.20, 0.21, 0.22, 0.23, 0.24, 0.25, 1"
+DocStringExtensions = "0.7, 0.8, 0.9, 0.10, 1"
+Graphs = "0.10.2, 0.11, 1"
+MetaGraphs = "^0.6.3"
+Neo4j = "2"
+Reexport = "0.2, 0.3, 0.4, 0.5, 1"
+Requires = "0.5, 0.6, 0.7, 0.8, 0.9, 0.10, 1"
 julia = "0.7, 1"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 GraphPlot = "a2cc645c-3eea-5389-862e-a155d0052231"
-Neo4j = "d2adbeaf-5838-5367-8a2f-e46d570981db"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 
 [targets]
-test = ["Test", "GraphPlot", "Neo4j", "Pkg"]
+test = ["Test", "GraphPlot", "Pkg"]
