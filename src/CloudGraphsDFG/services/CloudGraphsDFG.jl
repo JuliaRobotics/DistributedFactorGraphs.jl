@@ -318,7 +318,7 @@ end
     $(SIGNATURES)
 Update solver and estimate data for a variable (variable can be from another graph).
 """
-function mergeUpdateVariableSolverData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable)::DFGVariable
+function updateVariableSolverData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable)::DFGVariable
     if !exists(dfg, sourceVariable)
         error("Source variable '$(sourceVariable.label)' doesn't exist in the graph.")
     end

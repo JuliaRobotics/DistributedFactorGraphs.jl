@@ -12,38 +12,38 @@ using Pkg
 
 # Test each interface
 # Still test LightDFG and MetaGraphsDFG for the moment until we remove in 0.4.2
-# apis = [
-#     GraphsDFG,
-#     DistributedFactorGraphs.MetaGraphsDFG,
-#     DistributedFactorGraphs.SymbolDFG,
-#     LightDFG]
-# for api in apis
-#     @testset "Testing Driver: $(api)" begin
-#         @info "Testing Driver: $(api)"
-#         global testDFGAPI = api
-#         include("interfaceTests.jl")
-#     end
-# end
-#
-# # Test that we don't export LightDFG and MetaGraphsDFG
-# @testset "Deprecated Drivers Test" begin
-#     @test_throws UndefVarError SymbolDFG{NoSolverParams}()
-#     @test_throws UndefVarError MetaGraphsDFG{NoSolverParams}()
-# end
-#
-# # Test special cases
-#
-# @testset "Plotting Tests" begin
-#     include("plottingTest.jl")
-# end
-#
-# @testset "SummaryDFG test" begin
-#     @info "Testing LightDFG Variable and Factor Subtypes"
-#     include("LightDFGSummaryTypes.jl")
-# end
+apis = [
+    GraphsDFG,
+    DistributedFactorGraphs.MetaGraphsDFG,
+    DistributedFactorGraphs.SymbolDFG,
+    LightDFG]
+for api in apis
+    @testset "Testing Driver: $(api)" begin
+        @info "Testing Driver: $(api)"
+        global testDFGAPI = api
+        include("interfaceTests.jl")
+    end
+end
+
+# Test that we don't export LightDFG and MetaGraphsDFG
+@testset "Deprecated Drivers Test" begin
+    @test_throws UndefVarError SymbolDFG{NoSolverParams}()
+    @test_throws UndefVarError MetaGraphsDFG{NoSolverParams}()
+end
+
+# Test special cases
+
+@testset "Plotting Tests" begin
+    include("plottingTest.jl")
+end
+
+@testset "SummaryDFG test" begin
+    @info "Testing LightDFG Variable and Factor Subtypes"
+    include("LightDFGSummaryTypes.jl")
+end
 
 
-# if get(ENV, "IIF_TEST", "") == "true"
+if get(ENV, "IIF_TEST", "") == "true"
 
     Pkg.add("IncrementalInference")
     @info "------------------------------------------------------------------------"
@@ -53,8 +53,8 @@ using Pkg
     using IncrementalInference
 
     apis = [
-        # GraphsDFG{NoSolverParams}(),
-        # LightDFG{NoSolverParams}(),
+        GraphsDFG{NoSolverParams}(),
+        LightDFG{NoSolverParams}(),
         # DistributedFactorGraphs.MetaGraphsDFG{NoSolverParams}(),
         # DistributedFactorGraphs.SymbolDFG{NoSolverParams}(),
         CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
@@ -72,6 +72,6 @@ using Pkg
             include("iifInterfaceTests.jl")
         end
     end
-# else
-#     @warn "Skipping IncrementalInference driver tests"
-# end
+else
+    @warn "Skipping IncrementalInference driver tests"
+end

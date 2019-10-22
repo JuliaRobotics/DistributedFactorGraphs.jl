@@ -66,12 +66,9 @@ using .SymbolDFGs
 include("LightDFG/LightDFG.jl")
 @reexport using .LightDFGs
 
-function __init__()
-    @require Neo4j="d2adbeaf-5838-5367-8a2f-e46d570981db" begin
-        # Include the Cloudgraphs API
-        include("CloudGraphsDFG/CloudGraphsDFG.jl")
-    end
+include("CloudGraphsDFG/CloudGraphsDFG.jl")
 
+function __init__()
     @require GraphPlot = "a2cc645c-3eea-5389-862e-a155d0052231" begin
         include("DFGPlots/DFGPlots.jl")
         @reexport using .DFGPlots
