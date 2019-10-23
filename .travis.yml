@@ -31,6 +31,7 @@ jobs:
                                                Pkg.instantiate()'
         - julia --project=docs/ docs/make.jl
       after_success: skip
+  fast_finish: true
 
 notifications:
     email: false
@@ -39,9 +40,6 @@ matrix:
   allow_failures:
   - julia: nightly
   - env: IIF_TEST=true
-
-jobs:
-  fast_finish: true
 
 # Set the password for Neo4j to neo4j:test
 before_script:
