@@ -2,6 +2,7 @@ using Neo4j
 
 # Entities
 include("entities/CloudGraphsDFG.jl")
+include("entities/CGStructure.jl")
 
 # Services
 include("services/CommonFunctions.jl")

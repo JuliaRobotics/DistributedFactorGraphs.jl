@@ -106,7 +106,11 @@ function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::Bool
     variable._internalId = neo4jNode.id
     Neo4j.updatenodelabels(neo4jNode, union([string(variable.label), "VARIABLE", dfg.userId, dfg.robotId, dfg.sessionId], variable.tags))
 
-    # Graphs.add_vertex!(dfg.g, v)
+    # Make sure that if there exists a SESSION sentinel that it is attached.
+    # TODO: Optimize this.
+    _bindSessionNodeToInitialVariable(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, string(variable.label))
+
+    # Update our internal dictionaries.
     push!(dfg.labelDict, variable.label=>variable._internalId)
     push!(dfg.variableCache, variable.label=>variable)
     # Track insertion

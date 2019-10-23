@@ -18,6 +18,20 @@ end
 
 """
 $(SIGNATURES)
+Create a node and optionally specify a parent.
+Note: Using symbols so that the labels obey Neo4j requirements
+"""
+function _createNode(neo4jInstance::Neo4jInstance, labels::Vector{String}, properties::Dict{String, Any}, parentNode::Union{Nothing, Neo4j.Node}, relationshipLabel::Symbol=:NOTHING)::Neo4j.Node
+    createdNode = Neo4j.createnode(neo4jInstance.graph, properties)
+    addnodelabels(createdNode, labels)
+    parentNode == nothing && return createdNode
+    # Otherwise create the relationship
+    createrel(parentNode, createdNode, String(relationshipLabel))
+    return createdNode
+end
+
+"""
+$(SIGNATURES)
 Returns the list of CloudGraph nodes that matches the Cyphon query.
 The nodes of interest should be labelled 'node' because the query will use the return of id(node)
 #Example
@@ -61,6 +75,7 @@ function _getNodeCount(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String})
     length(result.results[1]["data"]) != 1 && return 0
     return parse(Int, result.results[1]["data"][1]["row"][1])
 end
+
 """
 $(SIGNATURES)
 Returns the list of CloudGraph nodes that matches the Cyphon query.
@@ -126,7 +141,7 @@ end
 """
 $(SIGNATURES)
 Bind the SESSION node to the inital variable.
-Doesn't check existence so please don't call twice.
+Checks for existence.
 """
 function _bindSessionNodeToInitialVariable(neo4jInstance::Neo4jInstance, userId::String, robotId::String, sessionId::String, initialVariableLabel::String)::Nothing
     # 2. Perform the transaction
@@ -135,6 +150,7 @@ function _bindSessionNodeToInitialVariable(neo4jInstance::Neo4jInstance, userId:
     match (session:SESSION:$userId:$robotId:$sessionId),
     (var:VARIABLE:$userId:$robotId:$sessionId
     {label: '$initialVariableLabel'})
+    WHERE NOT (session)-[:VARIABLE]->()
     CREATE (session)-[:VARIABLE]->(var) return id(var)
     """;
     loadtx(query; submit=true)
@@ -391,32 +407,6 @@ function _validateHttpInputs(requiredInputs::Vector{Symbol}, params::Dict{Symbol
         push!(rets, input)
     end
     return rets
-end
-
-function _isCallIsFromApiGateway(params::Dict{Symbol, Any})::Bool
-    # Simple security for making sure only API gateway is used because it populates this header.
-    testEndpoint = true
-    if haskey(ENV, "securityDisabled")
-        if ENV["securityDisabled"] == "true"
-            testEndpoint = false
-        end
-    end
-    if testEndpoint == true
-        requestKey = :REQUEST
-        if !haskey(params, requestKey)
-            return false
-        end
-        request = params[requestKey]
-        request.headers
-        if !haskey(request.headers, "secapi")
-            return false #Response(401)
-        end
-        if request.headers["secapi"] != "001ac"
-            return false
-        end
-    end
-    # Otherwise ok.
-    return true
 end
 
 function readAndReturnFile(filename::String, mimeType::String="application/octet-stream")::HTTP.Response
