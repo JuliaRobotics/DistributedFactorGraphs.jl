@@ -40,6 +40,9 @@ matrix:
   - julia: nightly
   - env: IIF_TEST=true
 
+jobs:
+  fast_finish: true
+
 # Set the password for Neo4j to neo4j:test
 before_script:
     - sleep 10
