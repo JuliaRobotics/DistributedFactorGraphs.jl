@@ -22,6 +22,7 @@ jobs:
   include:
     - julia: 1.2
       env: IIF_TEST=true
+      if: NOT branch =~ ^release.*$
     - stage: "Documentation"
       julia: 1.0
       os: linux
@@ -39,7 +40,7 @@ notifications:
 matrix:
   allow_failures:
   - julia: nightly
-  - env: IIF_TEST=true
+# - env: IIF_TEST=true
 
 # Set the password for Neo4j to neo4j:test
 before_script:
