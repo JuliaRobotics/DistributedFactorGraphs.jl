@@ -114,6 +114,15 @@ function addFactor!(dfg::LightDFG{<:AbstractParams, <:AbstractDFGVariable, F}, v
 end
 
 
+function addFactor!(dfg::LightDFG{<:AbstractParams, <:AbstractDFGVariable, F}, factor::F)::Bool where F <: AbstractDFGFactor
+	#TODO should this be an error
+	if haskey(dfg.g.factors, factor.label)
+        error("Factor '$(factor.label)' already exists in the factor graph")
+    end
+
+    return FactorGraphs.addFactor!(dfg.g, variableLabels, factor)
+end
+
 """
     $(SIGNATURES)
 Get a DFGVariable from a DFG using its label.
