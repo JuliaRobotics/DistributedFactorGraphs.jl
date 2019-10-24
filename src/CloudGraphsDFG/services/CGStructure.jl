@@ -3,7 +3,7 @@ export copySession!
 # Please be careful with these
 # With great power comes great "Oh crap, I deleted everything..."
 export clearSession!!, clearRobot!!, clearUser!!
-export createSession, createRobot, createUser
+export createSession, createRobot, createUser, createDfgSessionIfNotExist
 export existsSession, existsRobot, existsUser
 export getSession, getRobot, getUser
 export updateSession, updateRobot, updateUser
@@ -20,13 +20,13 @@ function _convertNodeToDict(abstractNode::N)::Dict{String, Any} where N <: Abstr
 	cp = deepcopy(abstractNode)
 	data = length(cp.data) != 0 ? JSON2.write(cp.data) : "{}"
 	ser = JSON2.read(JSON2.write(abstractNode), Dict{String, Any})
-	ser["data"] = data
+	ser["data"] = base64encode(data)
 	return ser
 end
 
 #TODO: Refactor, #HACK :D (but it works!)
 function _convertDictToSession(dict::Dict{String, Any})::Session
-	sessionData = JSON2.read(dict["data"], Dict{Symbol, String})
+	sessionData = JSON2.read(String(base64decode(dict["data"])), Dict{Symbol, String})
 	session = Session(
 		Symbol(dict["id"]),
 		Symbol(dict["robotId"]),
@@ -84,9 +84,37 @@ function createSession(dfg::CloudGraphsDFG, session::Session)::Session
 	return session
 end
 
+"""
+$(SIGNATURES)
+Shortcut method to create the user, robot, and session if it doesn't already exist.
+"""
+function createDfgSessionIfNotExist(dfg::CloudGraphsDFG)::Session
+	strip(dfg.userId) == "" && error("User ID is not populated in DFG.")
+	strip(dfg.robotId) == "" && error("Robot ID is not populated in DFG.")
+	strip(dfg.sessionId) == "" && error("Session ID is not populated in DFG.")
+	user = User(Symbol(dfg.userId), dfg.userId, "Description for $(dfg.userId)", Dict{Symbol, String}())
+	robot = Robot(Symbol(dfg.robotId), Symbol(dfg.userId), dfg.robotId, "Description for $(dfg.userId):$(dfg.robotId)", Dict{Symbol, String}())
+	session = Session(Symbol(dfg.sessionId), Symbol(dfg.robotId), Symbol(dfg.userId), dfg.sessionId, "Description for $(dfg.userId):$(dfg.robotId):$(dfg.sessionId)", Dict{Symbol, String}())
+
+	_getNodeCount(dfg.neo4jInstance, [dfg.userId, "USER"]) == 0 && createUser(dfg, user)
+	_getNodeCount(dfg.neo4jInstance, [dfg.userId, dfg.robotId, "ROBOT"]) == 0 && createRobot(dfg, robot)
+	if _getNodeCount(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, "SESSION"]) == 0
+		return createSession(dfg, session)
+	else
+		return getSession(dfg)
+	end
+end
+
 function listSessions(dfg::CloudGraphsDFG)::Vector{Session}
 	sessionNodes = _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:SESSION:$(dfg.robotId):$(dfg.userId))")
 	return map(s -> _convertDictToSession(Neo4j.getnodeproperties(s)), sessionNodes)
+end
+
+function getSession(dfg::CloudGraphsDFG)::Union{Nothing, Session}
+	sessionNode = _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:SESSION:$(dfg.sessionId):$(dfg.robotId):$(dfg.userId))")
+	length(sessionNode) == 0 && return nothing
+	length(sessionNode) > 1 && error("There look to be $(length(sessionNode)) sessions identified for $(dfg.sessionId):$(dfg.robotId):$(dfg.userId)")
+	return _convertDictToSession(Neo4j.getnodeproperties(sessionNode[1]))
 end
 
 """
@@ -156,18 +184,27 @@ DANGER: Copies the source to a new unique destination.
 copySession!(sourceDFG::CloudGraphsDFG)::CloudGraphsDFG = copySession!(sourceDFG, nothing)
 
 
-getUserData(dfg::CloudGraphsDFG)::Dict{Symbol, String} = _getNodeProperty(dfg.neo4jInstance, [dfg.userId, "USER"])
+function getUserData(dfg::CloudGraphsDFG)::Dict{Symbol, String}
+	propVal = _getNodeProperty(dfg.neo4jInstance, [dfg.userId, "USER"], "data")
+	return JSON2.read(String(base64decode(propVal)), Dict{Symbol, String})
+end
 function setUserData(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
-	error("Not implemented yet")
-	return true
+	count = _setNodeProperty(dfg.neo4jInstance, [dfg.userId, "USER"], "data", base64encode(JSON2.write(data)))
+	return count == 1
 end
-getRobotData(dfg::CloudGraphsDFG)::Dict{Symbol, String} = _getNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, "ROBOT"])
+function getRobotData(dfg::CloudGraphsDFG)::Dict{Symbol, String}
+	propVal = _getNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, "ROBOT"], "data")
+	return JSON2.read(String(base64decode(propVal)), Dict{Symbol, String})
+end
 function setRobotData(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
-	error("Not implemented yet")
-	return true
+	count = _setNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, "ROBOT"], "data", base64encode(JSON2.write(data)))
+	return count == 1
 end
-getSessionData(dfg::CloudGraphsDFG)::Dict{Symbol, String} = _getNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, "SESSION"])
+function getSessionData(dfg::CloudGraphsDFG)::Dict{Symbol, String}
+	propVal = _getNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, "SESSION"], "data")
+	return JSON2.read(String(base64decode(propVal)), Dict{Symbol, String})
+end
 function setSessionData(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
-	error("Not implemented yet")
-	return true
+	count = _setNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, "SESSION"], "data", base64encode(JSON2.write(data)))
+	return count == 1
 end

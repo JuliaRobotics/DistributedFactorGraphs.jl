@@ -13,20 +13,39 @@ dfg = CloudGraphsDFG{NoSolverParams}("localhost", 7474, "neo4j", "test",
 # Nuke the user
 clearUser!!(dfg)
 @test listSessions(dfg) == []
+# Create sentinel nodes using shortcut
+createDfgSessionIfNotExist(dfg)
+@test map(s -> s.id, listSessions(dfg)) == [:testSession]
+# Test that we can call it again.
+createDfgSessionIfNotExist(dfg)
+# And nuke it so we can try the longer functions.
+clearUser!!(dfg)
 
 # User, robot, and session
 # TODO: Make easier ways to initialize these.
-# NOTE: Wouldn't try the data parameter yet, maybe just leave blank..
-user = User(:Bob, "Bob Zack", "Description", Dict{String, String}())
-robot = Robot(:testRobot, user.id, "Test robot", "Description", Dict{String, String}())
-session = Session(:testSession, robot.id, user.id, "Test Session", "Description", Dict{String, String}())
+user = User(:Bob, "Bob Zack", "Description", Dict{Symbol, String}())
+robot = Robot(:testRobot, user.id, "Test robot", "Description", Dict{Symbol, String}())
+session = Session(:testSession, robot.id, user.id, "Test Session", "Description", Dict{Symbol, String}())
 
-# Test of the 'serializer' and 'deserializer'
-dictUser = DistributedFactorGraphs._convertNodeToDict(user)
+@test createUser(dfg, user) == user
+@test createRobot(dfg, robot) == robot
+@test createSession(dfg, session) == session
 
-createUser(dfg, user)
-createRobot(dfg, robot)
-createSession(dfg, session)
+@test getUserData(dfg) == Dict{Symbol, String}()
+@test getRobotData(dfg) == Dict{Symbol, String}()
+@test getSessionData(dfg) == Dict{Symbol, String}()
+
+# User/robot/session data
+user.data = Dict{Symbol, String}(:a => "Hello", :b => "Goodbye")
+robot.data = Dict{Symbol, String}(:c => "Hello", :d => "Goodbye")
+session.data = Dict{Symbol, String}(:e => "Hello", :f => "Goodbye")
+
+setUserData(dfg, user.data)
+setRobotData(dfg, robot.data)
+setSessionData(dfg, session.data)
+@test getUserData(dfg) == user.data
+@test getRobotData(dfg) == robot.data
+@test getSessionData(dfg) == session.data
 
 # Add some nodes.
 v1 = addVariable!(dfg, :a, ContinuousScalar, labels = [:POSE])

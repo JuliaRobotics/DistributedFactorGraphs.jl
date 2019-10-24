@@ -43,7 +43,7 @@ end
 end
 
 
-if get(ENV, "IIF_TEST", "") == "true"
+# if get(ENV, "IIF_TEST", "") == "true"
 
     # Pkg.add("IncrementalInference")
     # TODO: Remove this once we move to v0.5.0
@@ -74,6 +74,6 @@ if get(ENV, "IIF_TEST", "") == "true"
             include("iifInterfaceTests.jl")
         end
     end
-else
-    @warn "Skipping IncrementalInference driver tests"
-end
+# else
+#     @warn "Skipping IncrementalInference driver tests"
+# end
