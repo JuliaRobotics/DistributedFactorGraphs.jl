@@ -1,5 +1,4 @@
 using Documenter
-using DataFrames
 using DistributedFactorGraphs
 
 makedocs(
