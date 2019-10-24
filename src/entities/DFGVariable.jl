@@ -70,20 +70,20 @@ abstract type AbstractPointParametricEst end
 
 Data container to store Parameteric Point Estimate (PPE) for mean and max.
 """
-struct MeanMaxEst <: AbstractPointParametricEst
+struct MeanMaxPPE <: AbstractPointParametricEst
     solverKey::Symbol #repeated because of Sam's request
     max::Vector{Float64}
     mean::Vector{Float64}
     lastUpdatedTimestamp::DateTime
 end
-MeanMaxEst(solverKey::Symbol,max::Vector{Float64},mean::Vector{Float64}) = MeanMaxEst(solverKey, max, mean, now())
+MeanMaxPPE(solverKey::Symbol,max::Vector{Float64},mean::Vector{Float64}) = MeanMaxPPE(solverKey, max, mean, now())
 
 getMaxEstimate(est::AbstractPointParametricEst) = est.max
 getMeanEstimate(est::AbstractPointParametricEst) = est.mean
 getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimestamp
 
 
-VariableEstimate(params...) = errror("VariableEstimate is depreciated, please use MeanMaxEst")
+VariableEstimate(params...) = errror("VariableEstimate is depreciated, please use MeanMaxPPE")
 
 
 """
