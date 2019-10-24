@@ -95,7 +95,7 @@ mutable struct DFGVariable <: AbstractDFGVariable
     label::Symbol
     timestamp::DateTime
     tags::Vector{Symbol}
-    estimateDict::Dict{Symbol, <: AbstractVariableEstimate}
+    estimateDict::Dict{Symbol, <: AbstractPointParametricEst}
     solverDataDict::Dict{Symbol, VariableNodeData}
     smallData::Dict{String, String}
     bigData::Dict{Symbol, AbstractBigDataEntry}
@@ -163,7 +163,7 @@ mutable struct DFGVariableSummary <: AbstractDFGVariable
     label::Symbol
     timestamp::DateTime
     tags::Vector{Symbol}
-    estimateDict::Dict{Symbol, <:AbstractVariableEstimate}
+    estimateDict::Dict{Symbol, <:AbstractPointParametricEst}
     softtypename::Symbol
     _internalId::Int64
 end
