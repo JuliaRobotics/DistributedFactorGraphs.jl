@@ -95,6 +95,4 @@ include("CloudGraphsDFG/CloudGraphsDFG.jl")
 # To be moved as necessary.
 include("Common.jl")
 
-#experimental skeleton
-include("SkeletonDFGDev.jl")
 end
