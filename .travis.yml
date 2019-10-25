@@ -22,15 +22,15 @@ jobs:
   include:
     - julia: 1.2
       env: IIF_TEST=true
+      if: NOT branch =~ ^release.*$
     - stage: "Documentation"
       julia: 1.0
       os: linux
       script:
-        - julia -e 'import Pkg; Pkg.add("Documenter"); Pkg.add("Neo4j"); Pkg.add("GraphPlot")'
-        - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd()));
-                                               Pkg.instantiate()'
+        - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
         - julia --project=docs/ docs/make.jl
       after_success: skip
+  fast_finish: true
 
 notifications:
     email: false
@@ -38,7 +38,7 @@ notifications:
 matrix:
   allow_failures:
   - julia: nightly
-  - env: IIF_TEST=true
+# - env: IIF_TEST=true
 
 # Set the password for Neo4j to neo4j:test
 before_script:
