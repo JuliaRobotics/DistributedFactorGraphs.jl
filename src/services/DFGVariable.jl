@@ -113,7 +113,7 @@ function ==(a::VariableNodeData,b::VariableNodeData, nt::Symbol=:var)
 end
 
 """
-    $(SIGNATURES)
+    ==(x::T, y::T) where T <: AbstractPointParametricEst
 Equality check for AbstractPointParametricEst.
 """
 @generated function ==(x::T, y::T) where T <: AbstractPointParametricEst
