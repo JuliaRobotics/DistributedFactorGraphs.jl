@@ -72,3 +72,11 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any}, iifModule)::DFGFac
     # Note, once inserted, you still need to call IIF.rebuildFactorMetadata!
     return factor
 end
+
+"""
+    $(SIGNATURES)
+Equality check for DFGFactor.
+"""
+function ==(a::DFGFactor, b::DFGFactor)::Bool
+    return compareFactor(a, b)
+end

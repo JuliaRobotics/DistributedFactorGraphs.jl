@@ -1,27 +1,3 @@
-# Additional exports
-export copySession!
-# Please be careful with these
-# With great power comes great "Oh crap, I deleted everything..."
-export clearSession!!, clearRobot!!, clearUser!!
-
-function _getNodeType(dfg::CloudGraphsDFG, nodeLabel::Symbol)::Symbol
-    dfg.useCache && haskey(dfg.variableDict, nodeLabel) && return :VARIABLE
-    dfg.useCache && haskey(dfg.factorDict, nodeLabel) && return :FACTOR
-    nodeId = nothing
-    if dfg.useCache && haskey(dfg.labelDict)
-        nodeId = dfg.labelDict[nodeLabel]
-    else
-        nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, nodeLabel)
-    end
-    # Erk, little expensive to do this...
-    nodeId == nothing && error("Cannot find node with label '$nodeLabel'!")
-    labels = getnodelabels(getnode(dfg.neo4jInstance.graph, nodeId))
-    "VARIABLE" in labels && return :VARIABLE
-    "FACTOR" in labels && return :FACTOR
-    error("Node with label '$nodeLabel' has neither FACTOR nor VARIABLE labels")
-end
-
-## End
 
 """
     $(SIGNATURES)
@@ -92,70 +68,20 @@ function exists(dfg::CloudGraphsDFG, node::N) where N <: DFGNode
 end
 
 """
-    $(SIGNATURES)
-DANGER: Clears the whole session from the database.
-"""
-function clearSession!!(dfg::CloudGraphsDFG)::Nothing
-    # Perform detach+deletion
-    _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId)) detach delete node ")
+    $SIGNATURES
 
-    # Clearing history
-    dfg.addHistory = Symbol[]
-    empty!(dfg.variableCache)
-    empty!(dfg.factorCache)
-    empty!(dfg.labelDict)
-    return nothing
-end
+Return whether `sym::Symbol` represents a variable vertex in the graph.
+"""
+isVariable(dfg::CloudGraphsDFG, sym::Symbol)::Bool =
+    "VARIABLE" in _getNodeTags(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, String(sym)])
 
 """
-    $(SIGNATURES)
-DANGER: Clears the whole robot + sessions from the database.
-"""
-function clearRobot!!(dfg::CloudGraphsDFG)::Nothing
-    # Perform detach+deletion
-    _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId):$(dfg.robotId)) detach delete node ")
+    $SIGNATURES
 
-    # Clearing history
-    dfg.addHistory = Symbol[]
-    empty!(dfg.variableCache)
-    empty!(dfg.factorCache)
-    empty!(dfg.labelDict)
-    return nothing
-end
-
+Return whether `sym::Symbol` represents a factor vertex in the graph.
 """
-    $(SIGNATURES)
-DANGER: Clears the whole user + robot + sessions from the database.
-"""
-function clearUser!!(dfg::CloudGraphsDFG)::Nothing
-    # Perform detach+deletion
-    _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId)) detach delete node ")
-
-    # Clearing history
-    dfg.addHistory = Symbol[]
-    empty!(dfg.variableCache)
-    empty!(dfg.factorCache)
-    empty!(dfg.labelDict)
-    return nothing
-end
-
-"""
-    $(SIGNATURES)
-DANGER: Copies and overwrites the destination session.
-If no destination specified then it creates a unique one.
-"""
-function copySession!(sourceDFG::CloudGraphsDFG, destDFG::Union{Nothing, CloudGraphsDFG})::CloudGraphsDFG
-    if destDFG == nothing
-        destDFG = _getDuplicatedEmptyDFG(sourceDFG)
-    end
-    _copyIntoGraph!(sourceDFG, destDFG, union(getVariableIds(sourceDFG), getFactorIds(sourceDFG)), true)
-    return destDFG
-end
-"""
-    $(SIGNATURES)
-DANGER: Copies the source to a new unique destination.
-"""
-copySession!(sourceDFG::CloudGraphsDFG)::CloudGraphsDFG = copySession!(sourceDFG, nothing)
+isFactor(dfg::CloudGraphsDFG, sym::Symbol)::Bool =
+    "FACTOR" in _getNodeTags(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, String(sym)])
 
 """
     $(SIGNATURES)
@@ -332,7 +258,7 @@ function getFactor(dfg::CloudGraphsDFG, factorId::Int64)::DFGFactor
     factor = dfg.rebuildFactorMetadata!(dfg, factor)
     # GUARANTEED never to bite us in the future...
     # ... TODO: refactor if changed: https://github.com/JuliaRobotics/IncrementalInference.jl/issues/350
-    getData(factor).fncargvID = _variableOrderSymbols
+    solverData(factor).fncargvID = _variableOrderSymbols
 
     # Add to cache
     push!(dfg.factorCache, factor.label=>factor)
@@ -392,13 +318,17 @@ end
     $(SIGNATURES)
 Update solver and estimate data for a variable (variable can be from another graph).
 """
-function updateVariableSolverData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable)::DFGVariable
+function mergeUpdateVariableSolverData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable)::DFGVariable
     if !exists(dfg, sourceVariable)
         error("Source variable '$(sourceVariable.label)' doesn't exist in the graph.")
     end
-    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, sourceVariable.label)
-    Neo4j.setnodeproperty(dfg.neo4jInstance.graph, nodeId, "estimateDict", JSON2.write(sourceVariable.estimateDict))
-    Neo4j.setnodeproperty(dfg.neo4jInstance.graph, nodeId, "solverDataDict", JSON2.write(Dict(keys(sourceVariable.solverDataDict) .=> map(vnd -> pack(dfg, vnd), values(sourceVariable.solverDataDict)))))
+    var = getVariable(dfg, sourceVariable.label)
+    newEsts = merge!(var.estimateDict, deepcopy(sourceVariable.estimateDict))
+    newSolveData = merge!(var.solverDataDict, sourceVariable.solverDataDict)
+    Neo4j.setnodeproperty(dfg.neo4jInstance.graph, var._internalId, "estimateDict",
+        JSON2.write(newEsts))
+    Neo4j.setnodeproperty(dfg.neo4jInstance.graph, var._internalId, "solverDataDict",
+        JSON2.write(Dict(keys(newSolveData) .=> map(vnd -> pack(dfg, vnd), values(newSolveData)))))
     return sourceVariable
 end
 
@@ -659,19 +589,20 @@ hasOrphans(dfg::CloudGraphsDFG)::Bool = !isFullyConnected(dfg)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor.
 """
 function getNeighbors(dfg::CloudGraphsDFG, node::T; ready::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}  where T <: DFGNode
-    query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(node.label))--(node) where node:VARIABLE or node:FACTOR "
+    query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(node.label))--(node) where (node:VARIABLE or node:FACTOR) "
     if ready != nothing || backendset != nothing
         if ready != nothing
-            query = query * "and node.ready = $(ready)"
+            query = query * " and node.ready = $(ready)"
         end
         if backendset != nothing
-            query = query * "and node.backendset = $(backendset)"
+            query = query * " and node.backendset = $(backendset)"
         end
     end
+    @debug "[Query] $query"
     neighbors = _getLabelsFromCyphonQuery(dfg.neo4jInstance, query)
     # If factor, need to do variable ordering
-    if T == DFGFactor
-        order = intersect(node._variableOrderSymbols, map(v->v.dfgNode.label, neighbors))
+    if T <: DFGFactor
+        neighbors = intersect(node._variableOrderSymbols, neighbors)
     end
     return neighbors
 end
@@ -681,20 +612,22 @@ end
 Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
 """
 function getNeighbors(dfg::CloudGraphsDFG, label::Symbol; ready::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}
-    query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(label))--(node) where node:VARIABLE or node:FACTOR "
+    query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(label))--(node) where (node:VARIABLE or node:FACTOR) "
     if ready != nothing || backendset != nothing
         if ready != nothing
-            query = query * "and node.ready = $(ready)"
+            query = query * " and node.ready = $(ready)"
         end
         if backendset != nothing
-            query = query * "and node.backendset = $(backendset)"
+            query = query * " and node.backendset = $(backendset)"
         end
     end
+    @debug "[Query] $query"
     neighbors = _getLabelsFromCyphonQuery(dfg.neo4jInstance, query)
     # If factor, need to do variable ordering
-    if _getNodeType(dfg, label) == :FACTOR
-        factor = getFactor(dfg, label)
-        order = intersect(factor._variableOrderSymbols, neighbors)
+    if isFactor(dfg, label)
+        # Server is authority
+        serverOrder = Symbol.(JSON2.read(_getNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, String(label)], "_variableOrderSymbols")))
+        neighbors = intersect(serverOrder, neighbors)
     end
     return neighbors
 end

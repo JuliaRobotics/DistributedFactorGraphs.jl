@@ -36,9 +36,6 @@ end
 function setDescription(dfg::G, description::String) where G <: AbstractDFG
 	error("setDescription not implemented for $(typeof(dfg))")
 end
-function getInnerGraph(dfg::G) where G <: AbstractDFG
-	error("getInnerGraph not implemented for $(typeof(dfg))")
-end
 function getAddHistory(dfg::G) where G <: AbstractDFG
 	error("getAddHistory not implemented for $(typeof(dfg))")
 end
@@ -415,11 +412,11 @@ end
 
 """
     $(SIGNATURES)
-Update solver and estimate data for a variable (variable can be from another graph).
+Merges and updates solver and estimate data for a variable (variable can be from another graph).
 Note: Makes a copy of the estimates and solver data so that there is no coupling
 between graphs.
 """
-function updateVariableSolverData!(dfg::AbstractDFG, sourceVariable::AbstractDFGVariable)::AbstractDFGVariable
+function mergeUpdateVariableSolverData!(dfg::AbstractDFG, sourceVariable::AbstractDFGVariable)::AbstractDFGVariable
     if !exists(dfg, sourceVariable)
         error("Source variable '$(sourceVariable.label)' doesn't exist in the graph.")
     end
@@ -436,11 +433,11 @@ end
 Common function to update all solver data and estimates from one graph to another.
 This should be used to push local solve data back into a cloud graph, for example.
 """
-function updateGraphSolverData!(sourceDFG::G, destDFG::H, varSyms::Vector{Symbol})::Nothing where {G <: AbstractDFG, H <: AbstractDFG}
+function mergeUpdateGraphSolverData!(sourceDFG::G, destDFG::H, varSyms::Vector{Symbol})::Nothing where {G <: AbstractDFG, H <: AbstractDFG}
     # Update all variables in the destination
     # (For now... we may change this soon)
     for variableId in varSyms
-        updateVariableSolverData!(destDFG, getVariable(sourceDFG, variableId))
+        mergeUpdateVariableSolverData!(destDFG, getVariable(sourceDFG, variableId))
     end
 end
 
@@ -550,7 +547,7 @@ isFactor(dfg::G, sym::Symbol) where G <: AbstractDFG = hasFactor(dfg, sym)
 Return reference to the user factor in `<:AbstractDFG` identified by `::Symbol`.
 """
 getFactorFunction(fcd::GenericFunctionNodeData) = fcd.fnc.usrfnc!
-getFactorFunction(fc::DFGFactor) = getFactorFunction(getData(fc))
+getFactorFunction(fc::DFGFactor) = getFactorFunction(solverData(fc))
 function getFactorFunction(dfg::G, fsym::Symbol) where G <: AbstractDFG
   getFactorFunction(getFactor(dfg, fsym))
 end
