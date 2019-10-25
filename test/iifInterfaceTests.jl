@@ -234,10 +234,7 @@ end
     var = getVariable(dfg, :a)
     #make a copy and simulate external changes
     newvar = deepcopy(var)
-    estimates(newvar)[:default] = Dict{Symbol, VariableEstimate}(
-        :max => VariableEstimate(:default, :max, [100.0]),
-        :mean => VariableEstimate(:default, :mean, [50.0]),
-        :modefit => VariableEstimate(:default, :modefit, [75.0]))
+    estimates(newvar)[:default] = MeanMaxPPE(:default, [100.0], [50.0])
     #update
     mergeUpdateVariableSolverData!(dfg, newvar)
 
@@ -246,10 +243,7 @@ end
     @test estimates(newvar) == estimates(var)
 
     # Add a new estimate.
-    estimates(newvar)[:second] = Dict{Symbol, VariableEstimate}(
-        :max => VariableEstimate(:default, :max, [10.0]),
-        :mean => VariableEstimate(:default, :mean, [5.0]),
-        :modefit => VariableEstimate(:default, :modefit, [7.0]))
+    estimates(newvar)[:second] = MeanMaxPPE(:second, [10.0], [5.0])
 
     # Confirm they're different
     @test estimates(newvar) != estimates(var)

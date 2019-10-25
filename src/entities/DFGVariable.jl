@@ -78,8 +78,8 @@ struct MeanMaxPPE <: AbstractPointParametricEst
 end
 MeanMaxPPE(solverKey::Symbol,max::Vector{Float64},mean::Vector{Float64}) = MeanMaxPPE(solverKey, max, mean, now())
 
-getMaxEstimate(est::AbstractPointParametricEst) = est.max
-getMeanEstimate(est::AbstractPointParametricEst) = est.mean
+getMaxPPE(est::AbstractPointParametricEst) = est.max
+getMeanPPE(est::AbstractPointParametricEst) = est.mean
 getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimestamp
 
 
@@ -109,10 +109,10 @@ end
 DFGVariable constructors.
 """
 DFGVariable(label::Symbol, _internalId::Int64) =
-        DFGVariable(label, now(), Symbol[], Dict{Symbol, Dict{Symbol, VariableEstimate}}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), Dict{String, String}(), Dict{Symbol,AbstractBigDataEntry}(), 0, 0, _internalId)
+        DFGVariable(label, now(), Symbol[], Dict{Symbol, MeanMaxPPE}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), Dict{String, String}(), Dict{Symbol,AbstractBigDataEntry}(), 0, 0, _internalId)
 
 DFGVariable(label::Symbol) =
-        DFGVariable(label, now(), Symbol[], Dict{Symbol, VariableEstimate}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), Dict{String, String}(), Dict{Symbol,AbstractBigDataEntry}(), 0, 0, 0)
+        DFGVariable(label, now(), Symbol[], Dict{Symbol, MeanMaxPPE}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), Dict{String, String}(), Dict{Symbol,AbstractBigDataEntry}(), 0, 0, 0)
 
 # Accessors
 label(v::DFGVariable) = v.label
