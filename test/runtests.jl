@@ -38,11 +38,6 @@ end
 end
 
 @testset "LightDFG subtype tests" begin
-    #TODO maybe move to CompareUtils.jl
-    @generated function Base.:(==)(x::T, y::T) where T <: Union{DFGFactorSummary, DFGVariableSummary, SkeletonDFGVariable, SkeletonDFGFactor}
-        mapreduce(n -> :(x.$n == y.$n), (a,b)->:($a && $b), fieldnames(x))
-    end
-
     for type in [(var=DFGVariableSummary, fac=DFGFactorSummary), (var=SkeletonDFGVariable,fac=SkeletonDFGFactor)]
         @testset "$(type.var) and $(type.fac) tests" begin
             @info "Testing $(type.var) and $(type.fac)"
