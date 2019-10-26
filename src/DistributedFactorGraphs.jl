@@ -36,12 +36,15 @@ export hasFactor, hasVariable, isInitialized, getFactorFunction, isVariable, isF
 export mergeUpdateVariableSolverData!, mergeUpdateGraphSolverData!
 
 # Solver (IIF) Exports
-export VariableNodeData, PackedVariableNodeData, VariableEstimate
+export VariableNodeData, PackedVariableNodeData
 export GenericFunctionNodeData#, FunctionNodeData
 export getSerializationModule, setSerializationModule!
 export pack, unpack
 # Resolve with above
 export packVariable, unpackVariable, packFactor, unpackFactor
+
+#PPE exports
+export MeanMaxPPE
 
 #Interfaces
 export getAdjacencyMatrixSparse

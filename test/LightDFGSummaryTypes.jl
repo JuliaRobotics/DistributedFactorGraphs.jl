@@ -1,7 +1,6 @@
 
 dfg = LightDFG{NoSolverParams, VARTYPE, FACTYPE}()
-
-DistributedFactorGraphs.DFGVariableSummary(label::Symbol) = DFGVariableSummary(label, DistributedFactorGraphs.now(), Symbol[], Dict{Symbol, VariableEstimate}(), :NA, 0)
+DistributedFactorGraphs.DFGVariableSummary(label::Symbol) = DFGVariableSummary(label, DistributedFactorGraphs.now(), Symbol[], Dict{Symbol, MeanMaxPPE}(), :NA, 0)
 DistributedFactorGraphs.DFGFactorSummary(label::Symbol) = DFGFactorSummary(label, Symbol[], 0, Symbol[])
 
 v1 = VARTYPE(:a)
@@ -125,35 +124,21 @@ end
 
 @testset "Updating Nodes" begin
     if VARTYPE == DFGVariableSummary
-        global dfg
+            global dfg
         #get the variable
         var = getVariable(dfg, :a)
         #make a copy and simulate external changes
         newvar = deepcopy(var)
-        estimates(newvar)[:default] = Dict{Symbol, VariableEstimate}(
-            :max => VariableEstimate(:default, :max, [100.0]),
-            :mean => VariableEstimate(:default, :mean, [50.0]),
-            :modefit => VariableEstimate(:default, :modefit, [75.0]))
+        estimates(newvar)[:default] = MeanMaxPPE(:default, [100.0], [50.0])
         #update
         mergeUpdateVariableSolverData!(dfg, newvar)
-        # #TODO maybe implement ==; @test newvar==var
-        # Base.:(==)(varest1::VariableEstimate, varest2::VariableEstimate) = begin
-        #     varest1.lastUpdatedTimestamp == varest2.lastUpdatedTimestamp || return false
-        #     varest1.ppeType == varest2.ppeType || return false
-        #     varest1.solverKey == varest2.solverKey || return false
-        #     varest1.estimate == varest2.estimate || return false
-        #     return true
-        # end
         #For now spot check
         # @test solverDataDict(newvar) == solverDataDict(var)
         @test estimates(newvar) == estimates(var)
 
         # Delete :default and replace to see if new ones can be added
         delete!(estimates(newvar), :default)
-        estimates(newvar)[:second] = Dict{Symbol, VariableEstimate}(
-            :max => VariableEstimate(:default, :max, [10.0]),
-            :mean => VariableEstimate(:default, :mean, [5.0]),
-            :ppe => VariableEstimate(:default, :ppe, [7.0]))
+        estimates(newvar)[:second] = MeanMaxPPE(:second, [10.0], [5.0])
 
         # Persist to the original variable.
         mergeUpdateVariableSolverData!(dfg, newvar)
