@@ -18,11 +18,14 @@ include("entities/AbstractDFGSummary.jl")
 
 export AbstractDFG
 export AbstractParams, NoSolverParams
-export DFGNode, DFGVariable, DFGFactor
+export DFGNode, DFGVariable, DFGFactor, AbstractDFGVariable, AbstractDFGFactor
 export InferenceType, PackedInferenceType, FunctorInferenceType, InferenceVariable, ConvolutionObject
 export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
 export label, timestamp, tags, estimates, estimate, data, softtype, solverData, getData, solverDataDict, setSolverData, internalId, smallData, bigData
 export DFGVariableSummary, DFGFactorSummary, AbstractDFGSummary
+
+#Skeleton types
+export SkeletonDFGVariable, SkeletonDFGFactor
 
 #graph small data
 export getUserData, setUserData, getRobotData, setRobotData, getSessionData, setSessionData

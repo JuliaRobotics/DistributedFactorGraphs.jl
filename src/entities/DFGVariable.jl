@@ -174,3 +174,22 @@ estimates(v::DFGVariableSummary) = v.estimateDict
 estimate(v::DFGVariableSummary, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
 softtype(v::DFGVariableSummary)::Symbol = v.softtypename
 internalId(v::DFGVariableSummary) = v._internalId
+
+
+
+# SKELETON DFG
+"""
+	$(TYPEDEF)
+Skeleton factor with essentials.
+"""
+struct SkeletonDFGFactor <: AbstractDFGFactor
+    label::Symbol
+	tags::Vector{Symbol}
+	_variableOrderSymbols::Vector{Symbol}
+end
+
+#NOTE I feel like a want to force a variableOrderSymbols
+SkeletonDFGFactor(label::Symbol, variableOrderSymbols::Vector{Symbol} = Symbol[]) = SkeletonDFGFactor(label, Symbol[], variableOrderSymbols)
+
+label(f::SkeletonDFGFactor) = f.label
+tags(f::SkeletonDFGFactor) = f.tags

@@ -120,6 +120,10 @@ Equality check for AbstractPointParametricEst.
     mapreduce(n -> :(x.$n == y.$n), (a,b)->:($a && $b), fieldnames(x))
 end
 
+@generated function Base.:(==)(x::T, y::T) where T <: Union{DFGFactorSummary, DFGVariableSummary, SkeletonDFGVariable, SkeletonDFGFactor}
+    mapreduce(n -> :(x.$n == y.$n), (a,b)->:($a && $b), fieldnames(x))
+end
+
 """
     $(SIGNATURES)
 Equality check for DFGVariable.

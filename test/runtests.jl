@@ -37,11 +37,16 @@ end
     include("plottingTest.jl")
 end
 
-@testset "SummaryDFG test" begin
-    @info "Testing LightDFG Variable and Factor Subtypes"
-    include("LightDFGSummaryTypes.jl")
+@testset "LightDFG subtype tests" begin
+    for type in [(var=DFGVariableSummary, fac=DFGFactorSummary), (var=SkeletonDFGVariable,fac=SkeletonDFGFactor)]
+        @testset "$(type.var) and $(type.fac) tests" begin
+            @info "Testing $(type.var) and $(type.fac)"
+            global VARTYPE = type.var
+            global FACTYPE = type.fac
+            include("LightDFGSummaryTypes.jl")
+        end
+    end
 end
-
 
 if get(ENV, "IIF_TEST", "") == "true"
 
