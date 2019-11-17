@@ -18,6 +18,17 @@ st2 = TestInferenceVariable2()
 v1.solverDataDict[:default].softtype = deepcopy(st1)
 v2.solverDataDict[:default].softtype = deepcopy(st2)
 
+# NOTE: Just for testing
+# Override compareAllSpecial for testing our DFGFactor{Int, :Symbol}
+# as we don't have IIF which overloads with the proper compareSpecial(::CommonConvWrapper)
+import DistributedFactorGraphs: compareAllSpecial
+function compareAllSpecial(A::T1, B::T2;
+                    skip=Symbol[], show::Bool=true) where {T1 <: Int, T2 <: Int}
+  #
+  T1 != T2 && return false
+  return compareAll(A, B, skip=skip, show=show)
+end
+
 # @testset "Creating Graphs" begin
 global dfg,v1,v2,f1
 addVariable!(dfg, v1)
@@ -98,7 +109,7 @@ end
     @test updateVariable!(dfg, v1Prime) == v1
     f1Prime = deepcopy(f1)
     #updateFactor! returns the factor updated, so should be equal
-    @test updateFactor!(dfg, f1Prime) == f1Prime #TODO compare with f1  
+    @test updateFactor!(dfg, f1Prime) == f1
 
     # Accessors
     @test label(v1) == v1.label
@@ -197,33 +208,20 @@ end
     var = getVariable(dfg, :a)
     #make a copy and simulate external changes
     newvar = deepcopy(var)
-    estimates(newvar)[:default] = Dict{Symbol, VariableEstimate}(
-        :max => VariableEstimate(:default, :max, [100.0]),
-        :mean => VariableEstimate(:default, :mean, [50.0]),
-        :modefit => VariableEstimate(:default, :modefit, [75.0]))
+    estimates(newvar)[:default] = MeanMaxPPE(:default, [100.0], [50.0])
     #update
-    updateVariableSolverData!(dfg, newvar)
-    #TODO maybe implement ==; @test newvar==var
-    Base.:(==)(varest1::VariableEstimate, varest2::VariableEstimate) = begin
-        varest1.lastUpdatedTimestamp == varest2.lastUpdatedTimestamp || return false
-        varest1.ppeType == varest2.ppeType || return false
-        varest1.solverKey == varest2.solverKey || return false
-        varest1.estimate == varest2.estimate || return false
-        return true
-    end
+    mergeUpdateVariableSolverData!(dfg, newvar)
+
     #For now spot check
     @test solverDataDict(newvar) == solverDataDict(var)
     @test estimates(newvar) == estimates(var)
 
     # Delete :default and replace to see if new ones can be added
     delete!(estimates(newvar), :default)
-    estimates(newvar)[:second] = Dict{Symbol, VariableEstimate}(
-        :max => VariableEstimate(:default, :max, [10.0]),
-        :mean => VariableEstimate(:default, :mean, [5.0]),
-        :modefit => VariableEstimate(:default, :modefit, [7.0]))
+    estimates(newvar)[:second] = MeanMaxPPE(:second, [10.0], [5.0])
 
     # Persist to the original variable.
-    updateVariableSolverData!(dfg, newvar)
+    mergeUpdateVariableSolverData!(dfg, newvar)
     # At this point newvar will have only :second, and var should have both (it is the reference)
     @test symdiff(collect(keys(estimates(var))), [:default, :second]) == Symbol[]
     @test symdiff(collect(keys(estimates(newvar))), [:second]) == Symbol[]

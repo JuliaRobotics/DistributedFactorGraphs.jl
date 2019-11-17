@@ -17,7 +17,8 @@ function unpackVariable(dfg::G, packedProps::Dict{String, Any})::DFGVariable whe
     label = Symbol(packedProps["label"])
     timestamp = DateTime(packedProps["timestamp"])
     tags =  JSON2.read(packedProps["tags"], Vector{Symbol})
-    estimateDict = JSON2.read(packedProps["estimateDict"], Dict{Symbol, Dict{Symbol, VariableEstimate}})
+    #TODO this will work for some time, but unpacking in an <: AbstractPointParametricEst would be lekker.
+    estimateDict = JSON2.read(packedProps["estimateDict"], Dict{Symbol, MeanMaxPPE})
     smallData = nothing
     smallData = JSON2.read(packedProps["smallData"], Dict{String, String})
 
@@ -112,15 +113,15 @@ function ==(a::VariableNodeData,b::VariableNodeData, nt::Symbol=:var)
 end
 
 """
-    $(SIGNATURES)
-Equality check for VariableEstimate.
+    ==(x::T, y::T) where T <: AbstractPointParametricEst
+Equality check for AbstractPointParametricEst.
 """
-function ==(a::VariableEstimate, b::VariableEstimate)::Bool
-  a.solverKey != b.solverKey && @debug("solverKey are not equal")==nothing && return false
-  a.ppeType != b.ppeType && @debug("type is not equal")==nothing && return false
-  a.estimate != b.estimate && @debug("estimate are not equal")==nothing && return false
-  a.lastUpdatedTimestamp != b.lastUpdatedTimestamp && @debug("lastUpdatedTimestamp is not equal")==nothing && return false
-  return true
+@generated function ==(x::T, y::T) where T <: AbstractPointParametricEst
+    mapreduce(n -> :(x.$n == y.$n), (a,b)->:($a && $b), fieldnames(x))
+end
+
+@generated function Base.:(==)(x::T, y::T) where T <: Union{DFGFactorSummary, DFGVariableSummary, SkeletonDFGVariable, SkeletonDFGFactor}
+    mapreduce(n -> :(x.$n == y.$n), (a,b)->:($a && $b), fieldnames(x))
 end
 
 """
@@ -128,23 +129,7 @@ end
 Equality check for DFGVariable.
 """
 function ==(a::DFGVariable, b::DFGVariable)::Bool
-  a.label != b.label && @debug("label is not equal")==nothing && return false
-  a.timestamp != b.timestamp && @debug("timestamp is not equal")==nothing && return false
-  a.tags != b.tags && @debug("tags is not equal")==nothing && return false
-  symdiff(keys(a.estimateDict), keys(b.estimateDict)) != Set(Symbol[]) && @debug("estimateDict keys are not equal")==nothing && return false
-  for k in keys(a.estimateDict)
-    a.estimateDict[k] != b.estimateDict[k] && @debug("estimateDict[$k] is not equal")==nothing && return false
-  end
-  symdiff(keys(a.solverDataDict), keys(b.solverDataDict)) != Set(Symbol[]) && @debug("solverDataDict keys are not equal")==nothing && return false
-  for k in keys(a.solverDataDict)
-    a.solverDataDict[k] != b.solverDataDict[k] && @debug("solverDataDict[$k] is not equal")==nothing && return false
-  end
-  a.smallData != b.smallData && @debug("smallData is not equal")==nothing && return false
-  a.bigData != b.bigData && @debug("bigData is not equal")==nothing && return false
-  a.ready != b.ready && @debug("ready is not equal")==nothing && return false
-  a.backendset != b.backendset && @debug("backendset is not equal")==nothing && return false
-  a._internalId != b._internalId && @debug("_internalId is not equal")==nothing && return false
-  return true
+    return compareVariable(a, b)
 end
 
 """

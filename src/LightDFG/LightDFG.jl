@@ -7,7 +7,6 @@ import ...DistributedFactorGraphs: AbstractDFG, DFGNode, AbstractDFGVariable, Ab
 
 # import DFG functions to extend
 import ...DistributedFactorGraphs:  setSolverParams,
-                                    getInnerGraph,
                                     getFactor,
                                     setDescription,
                                     getLabelDict,

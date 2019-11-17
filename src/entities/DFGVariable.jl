@@ -29,7 +29,8 @@ VariableNodeData(params...) = VariableNodeData{InferenceVariable}(params...)
 
 function VariableNodeData()
     st = stacktrace()
-    @warn "VariableNodeData() is depreciated please use VariableNodeData{T}() or VariableNodeData(softtype::T) where T <: InferenceVariable\n$st"
+    @warn "VariableNodeData() is depreciated please use VariableNodeData{T}() or VariableNodeData(softtype::T) where T <: InferenceVariable. Enable DEBUG logging for stack trace."
+		@debug st
     VariableNodeData{InferenceVariable}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], SingletonInferenceVariable(), false, 0.0, false, false)
 end
 
@@ -76,26 +77,28 @@ mutable struct PackedVariableNodeData
                          x15::Bool ) = new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15)
 end
 
-
-abstract type AbstractVariableEstimate end
+# AbstractPointParametricEst interface
+abstract type AbstractPointParametricEst end
 """
     $TYPEDEF
 
-Data container to store Parameteric Point Estimate (PPE) from a variety of types.
-
-Notes
-- `ppeType` is something like `:max/:mean/:modefit` etc.
-- `solveKey` is from super-solve concept, starting with `:default`,
-- `estimate` is the actual numerical estimate value,
-- Additional information such as how the data is represented (ie softtype) is stored alongside this data container in the `DFGVariableSummary` container.
+Data container to store Parameteric Point Estimate (PPE) for mean and max.
 """
-struct VariableEstimate <: AbstractVariableEstimate
-  solverKey::Symbol
-  ppeType::Symbol
-  estimate::Vector{Float64}
-  lastUpdatedTimestamp::DateTime
+struct MeanMaxPPE <: AbstractPointParametricEst
+    solverKey::Symbol #repeated because of Sam's request
+    max::Vector{Float64}
+    mean::Vector{Float64}
+    lastUpdatedTimestamp::DateTime
 end
-VariableEstimate(solverKey::Symbol, type::Symbol, estimate::Vector{Float64}) = VariableEstimate(solverKey, type, estimate, now())
+MeanMaxPPE(solverKey::Symbol,max::Vector{Float64},mean::Vector{Float64}) = MeanMaxPPE(solverKey, max, mean, now())
+
+getMaxPPE(est::AbstractPointParametricEst) = est.max
+getMeanPPE(est::AbstractPointParametricEst) = est.mean
+getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimestamp
+
+
+VariableEstimate(params...) = errror("VariableEstimate is depreciated, please use MeanMaxPPE")
+
 
 """
     $(TYPEDEF)
@@ -106,8 +109,8 @@ mutable struct DFGVariable <: AbstractDFGVariable
     label::Symbol
     timestamp::DateTime
     tags::Vector{Symbol}
-    estimateDict::Dict{Symbol, Dict{Symbol, <: AbstractVariableEstimate}}
-    solverDataDict::Dict{Symbol, VariableNodeData}  #TODO v0.5.0 Dict{Symbol, VariableNodeData{<:InferenceVariable}}
+    estimateDict::Dict{Symbol, <: AbstractPointParametricEst}
+    solverDataDict::Dict{Symbol, VariableNodeData}
     smallData::Dict{String, String}
     bigData::Dict{Symbol, AbstractBigDataEntry}
     ready::Int
@@ -120,18 +123,19 @@ end
 DFGVariable constructors.
 """
 function DFGVariable(label::Symbol, _internalId::Int64 = 0) #where {T <:InferenceVariable}
-    st = stacktrace()
-    @warn "DFGVariable(label::Symbol, _internalId::Int64 = 0) is depreciated please use DFGVariable(label::Symbol, softtype::T, _internalId::Int64 = 0) where T <: InferenceVariable\n$st"
+	st = stacktrace()
+    @warn "DFGVariable(label::Symbol, _internalId::Int64 = 0) is depreciated please use DFGVariable(label::Symbol, softtype::T, _internalId::Int64 = 0) where T <: InferenceVariable. Enable DEBUG logging for the stack trace."
+		@debug st
     T = InferenceVariable
     DFGVariable(label, now(), Symbol[],
-                  Dict{Symbol, Dict{Symbol, VariableEstimate}}(),
+                  Dict{Symbol, MeanMaxPPE}(),
                   Dict{Symbol, VariableNodeData{T}}(:default => VariableNodeData()),
                   Dict{String, String}(),
                   Dict{Symbol,AbstractBigDataEntry}(), 0, 0, _internalId)
 end
 DFGVariable(label::Symbol, softtype::T, _internalId::Int64 = 0) where {T <: InferenceVariable}  =
     DFGVariable(label, now(), Symbol[],
-              Dict{Symbol, Dict{Symbol, VariableEstimate}}(),
+              Dict{Symbol, MeanMaxPPE}(),
               Dict{Symbol, VariableNodeData{T}}(:default => VariableNodeData{T}()),
               Dict{String, String}(),
               Dict{Symbol,AbstractBigDataEntry}(), 0, 0, _internalId)
@@ -169,12 +173,7 @@ solverData(v::DFGVariable, key::Symbol=:default) = haskey(v.solverDataDict, key)
 Retrieve data structure stored in a variable.
 """
 function getData(v::DFGVariable; solveKey::Symbol=:default)::VariableNodeData
-  #FIXME but back in later, it just slows everything down
-  if !(@isdefined getDataWarnOnce)
-    @warn "getData is deprecated, please use solverData(), future warnings in getData is suppressed"
-    global getDataWarnOnce = true
-  end
-  # @warn "getData is deprecated, please use solverData()"
+  @warn "getData is deprecated, please use solverData()"
   return v.solverDataDict[solveKey]
 end
 """
@@ -197,7 +196,7 @@ mutable struct DFGVariableSummary <: AbstractDFGVariable
     label::Symbol
     timestamp::DateTime
     tags::Vector{Symbol}
-    estimateDict::Dict{Symbol, Dict{Symbol, <:AbstractVariableEstimate}}
+    estimateDict::Dict{Symbol, <:AbstractPointParametricEst}
     softtypename::Symbol
     _internalId::Int64
 end
@@ -208,3 +207,22 @@ estimates(v::DFGVariableSummary) = v.estimateDict
 estimate(v::DFGVariableSummary, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
 softtype(v::DFGVariableSummary)::Symbol = v.softtypename
 internalId(v::DFGVariableSummary) = v._internalId
+
+
+
+# SKELETON DFG
+"""
+	$(TYPEDEF)
+Skeleton factor with essentials.
+"""
+struct SkeletonDFGFactor <: AbstractDFGFactor
+    label::Symbol
+	tags::Vector{Symbol}
+	_variableOrderSymbols::Vector{Symbol}
+end
+
+#NOTE I feel like a want to force a variableOrderSymbols
+SkeletonDFGFactor(label::Symbol, variableOrderSymbols::Vector{Symbol} = Symbol[]) = SkeletonDFGFactor(label, Symbol[], variableOrderSymbols)
+
+label(f::SkeletonDFGFactor) = f.label
+tags(f::SkeletonDFGFactor) = f.tags

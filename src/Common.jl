@@ -1,10 +1,15 @@
 
+import Base: *
+
 export sortVarNested, sortDFG
 export isPrior, lsfPriors
 export getVariableType, getSofttype
 export getFactorType, getfnctype
 export lsTypes, lsfTypes
 export lsWho, lsfWho
+export *
+
+*(a::Symbol, b::AbstractString)::Symbol = Symbol(string(a,b))
 
 ## Utility functions for getting type names and modules (from IncrementalInference)
 function _getmodule(t::T) where T

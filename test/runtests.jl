@@ -7,7 +7,7 @@ using Pkg
 ## To run the IIF tests, you need a local Neo4j with user/pass neo4j:test
 # To run a Docker image
 # Install: docker pull neo4j
-# Run: docker run --publish=7474:7474 --publish=7687:7687 --env NEO4J_AUTH=neo4j/test neo4j
+# Run: docker run -d --publish=7474:7474 --publish=7687:7687 --env NEO4J_AUTH=neo4j/test neo4j
 ##
 
 # Test each interface
@@ -37,15 +37,22 @@ end
     include("plottingTest.jl")
 end
 
-@testset "SummaryDFG test" begin
-    @info "Testing LightDFG Variable and Factor Subtypes"
-    include("LightDFGSummaryTypes.jl")
+@testset "LightDFG subtype tests" begin
+    for type in [(var=DFGVariableSummary, fac=DFGFactorSummary), (var=SkeletonDFGVariable,fac=SkeletonDFGFactor)]
+        @testset "$(type.var) and $(type.fac) tests" begin
+            @info "Testing $(type.var) and $(type.fac)"
+            global VARTYPE = type.var
+            global FACTYPE = type.fac
+            include("LightDFGSummaryTypes.jl")
+        end
+    end
 end
-
 
 if get(ENV, "IIF_TEST", "") == "true"
 
     Pkg.add("IncrementalInference")
+    # TODO: Remove this once we move to v0.5.0
+    Pkg.add(PackageSpec(name="IncrementalInference", rev="enhancement/compare_move_dfg"))
     @info "------------------------------------------------------------------------"
     @info "These tests are using IncrementalInference to do additional driver tests"
     @info "------------------------------------------------------------------------"
@@ -71,6 +78,17 @@ if get(ENV, "IIF_TEST", "") == "true"
             global dfg = deepcopy(api)
             include("iifInterfaceTests.jl")
         end
+
+        @testset "FileDFG Testing Driver: $(typeof(api))" begin
+            @info "FileDFG Testing Driver: $(typeof(api))"
+            global dfg = deepcopy(api)
+            include("fileDFGTests.jl")
+        end
+    end
+
+    @testset "CGStructure Tests for CGDFG" begin
+        # Run the CGStructure tests
+        include("CGStructureTests.jl")
     end
 else
     @warn "Skipping IncrementalInference driver tests"

@@ -4,7 +4,6 @@
 getLabelDict(dfg::LightDFG) = copy(dfg.g.labels.sym_int)
 getDescription(dfg::LightDFG) = dfg.description
 setDescription(dfg::LightDFG, description::String) = dfg.description = description
-getInnerGraph(dfg::LightDFG) = dfg.g
 getAddHistory(dfg::LightDFG) = dfg.addHistory
 getSolverParams(dfg::LightDFG) = dfg.solverParams
 
@@ -89,8 +88,9 @@ function addFactor!(dfg::LightDFG{<:AbstractParams, V, F}, variables::Vector{V},
 
 	variableLabels = map(v->v.label, variables)
 
-    factor._variableOrderSymbols = copy(variableLabels)
-
+	resize!(factor._variableOrderSymbols, length(variableLabels))
+	factor._variableOrderSymbols .= variableLabels
+    # factor._variableOrderSymbols = copy(variableLabels)
 
     return FactorGraphs.addFactor!(dfg.g, variableLabels, factor)
 end
@@ -105,11 +105,22 @@ function addFactor!(dfg::LightDFG{<:AbstractParams, <:AbstractDFGVariable, F}, v
         error("Factor '$(factor.label)' already exists in the factor graph")
     end
 
-    factor._variableOrderSymbols = variableLabels
+	resize!(factor._variableOrderSymbols, length(variableLabels))
+	factor._variableOrderSymbols .= variableLabels
+	# factor._variableOrderSymbols = copy(variableLabels)
 
     return FactorGraphs.addFactor!(dfg.g, variableLabels, factor)
 end
 
+
+function addFactor!(dfg::LightDFG{<:AbstractParams, <:AbstractDFGVariable, F}, factor::F)::Bool where F <: AbstractDFGFactor
+	#TODO should this be an error
+	if haskey(dfg.g.factors, factor.label)
+        error("Factor '$(factor.label)' already exists in the factor graph")
+    end
+
+    return FactorGraphs.addFactor!(dfg.g, variableLabels, factor)
+end
 
 """
     $(SIGNATURES)

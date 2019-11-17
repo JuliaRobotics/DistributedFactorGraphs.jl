@@ -30,7 +30,7 @@ function saveDFG(dfg::G, folder::String) where G <: AbstractDFG
     end
 end
 
-function loadDFG(folder::String, iifModule, dfgLoadInto::G=GraphsDFG{NoSolverParams}()) where G <: AbstractDFG
+function loadDFG(folder::String, iifModule, dfgLoadInto::G) where G <: AbstractDFG
     variables = DFGVariable[]
     factors = DFGFactor[]
     varFolder = "$folder/variables"
@@ -70,9 +70,8 @@ function loadDFG(folder::String, iifModule, dfgLoadInto::G=GraphsDFG{NoSolverPar
 
     # PATCH - To update the fncargvID for factors, it's being cleared somewhere in rebuildFactorMetadata.
     # TEMPORARY
-    # TODO: Remove
-    map(f->getData(f).fncargvID = f._variableOrderSymbols, getFactors(dfgLoadInto))
-
+    # TODO: Remove in future
+    map(f->solverData(f).fncargvID = f._variableOrderSymbols, getFactors(dfgLoadInto))
 
     return dfgLoadInto
 end

@@ -1,15 +1,9 @@
-# using GraphPlot
-# using Neo4j
-# using DistributedFactorGraphs
-# using IncrementalInference
-# using Test
-# dfg = apis[2]
-
 global dfg,v1,v2,f1
 
 if typeof(dfg) <: CloudGraphsDFG
-    @warn "TEST: Nuking all data for user '$(dfg.userId)', robot '$(dfg.robotId)'!"
-    clearRobot!!(dfg)
+    @warn "TEST: Nuking all data for user '$(dfg.userId)'!"
+    clearUser!!(dfg)
+    createDfgSessionIfNotExist(dfg)
 end
 
 # Building simple graph...
@@ -125,8 +119,7 @@ end
 @testset "Gets, Sets, and Accessors" begin
     global dfg,v1,v2,f1
     @test getVariable(dfg, v1.label) == v1
-    #TODO compare factor
-    @test_skip getFactor(dfg, f1.label) == f1
+    @test getFactor(dfg, f1.label) == f1
     @test_throws Exception getVariable(dfg, :nope)
     @test_throws Exception getVariable(dfg, "nope")
     @test_throws Exception getFactor(dfg, :nope)
@@ -137,8 +130,8 @@ end
     @test updateVariable!(dfg, v1Prime) == v1 #Maybe move to crud
     @test updateVariable!(dfg, v1Prime) == getVariable(dfg, v1.label)
     f1Prime = deepcopy(f1)
-    @test_skip updateFactor!(dfg, f1Prime) == f1 #Maybe move to crud
-    @test_skip updateFactor!(dfg, f1Prime) == getFactor(dfg, f1.label)
+    @test updateFactor!(dfg, f1Prime) == f1 #Maybe move to crud
+    @test updateFactor!(dfg, f1Prime) == getFactor(dfg, f1.label)
 
     # Accessors
     @test label(v1) == v1.label
@@ -175,60 +168,65 @@ end
     @test !isInitialized(v2, key=:second)
 
     # Session, robot, and user small data tests
-    smallUserData = Dict{Symbol, String}(:a => "42", :b => "Hello")
-    smallRobotData = Dict{Symbol, String}(:a => "43", :b => "Hello")
-    smallSessionData = Dict{Symbol, String}(:a => "44", :b => "Hello")
-    setUserData(dfg, deepcopy(smallUserData))
-    setRobotData(dfg, deepcopy(smallRobotData))
-    setSessionData(dfg, deepcopy(smallSessionData))
-    @test getUserData(dfg) == smallUserData
-    @test getRobotData(dfg) == smallRobotData
-    @test getSessionData(dfg) == smallSessionData
-
+    # NOTE: CloudGraphDFG isnt supporting this yet.
+    if !(typeof(dfg) <: CloudGraphsDFG)
+        smallUserData = Dict{Symbol, String}(:a => "42", :b => "Hello")
+        smallRobotData = Dict{Symbol, String}(:a => "43", :b => "Hello")
+        smallSessionData = Dict{Symbol, String}(:a => "44", :b => "Hello")
+        setUserData(dfg, deepcopy(smallUserData))
+        setRobotData(dfg, deepcopy(smallRobotData))
+        setSessionData(dfg, deepcopy(smallSessionData))
+        @test getUserData(dfg) == smallUserData
+        @test getRobotData(dfg) == smallRobotData
+        @test getSessionData(dfg) == smallSessionData
+    end
 end
 
 @testset "BigData" begin
-    oid = zeros(UInt8,12); oid[12] = 0x01
-    de1 = MongodbBigDataEntry(:key1, NTuple{12,UInt8}(oid))
+    # NOTE: CloudGraphDFG isnt supporting this yet.
+    if !(typeof(dfg) <: CloudGraphsDFG)
+        oid = zeros(UInt8,12); oid[12] = 0x01
+        de1 = MongodbBigDataEntry(:key1, NTuple{12,UInt8}(oid))
 
-    oid = zeros(UInt8,12); oid[12] = 0x02
-    de2 = MongodbBigDataEntry(:key2, NTuple{12,UInt8}(oid))
+        oid = zeros(UInt8,12); oid[12] = 0x02
+        de2 = MongodbBigDataEntry(:key2, NTuple{12,UInt8}(oid))
 
-    oid = zeros(UInt8,12); oid[12] = 0x03
-    de2_update = MongodbBigDataEntry(:key2, NTuple{12,UInt8}(oid))
+        oid = zeros(UInt8,12); oid[12] = 0x03
+        de2_update = MongodbBigDataEntry(:key2, NTuple{12,UInt8}(oid))
 
-    #add
-    v1 = getVariable(dfg, :a)
-    @test addBigDataEntry!(v1, de1)
-    @test addBigDataEntry!(dfg, :a, de2)
-    @test addBigDataEntry!(v1, de1)
+        #add
+        v1 = getVariable(dfg, :a)
+        @test addBigDataEntry!(v1, de1)
+        @test addBigDataEntry!(dfg, :a, de2)
+        @test addBigDataEntry!(v1, de1)
 
-    #get
-    @test deepcopy(de1) == getBigDataEntry(v1, :key1)
-    @test deepcopy(de2) == getBigDataEntry(dfg, :a, :key2)
-    @test_throws Any getBigDataEntry(v2, :key1)
-    @test_throws Any getBigDataEntry(dfg, :b, :key1)
+        #get
+        @test deepcopy(de1) == getBigDataEntry(v1, :key1)
+        @test deepcopy(de2) == getBigDataEntry(dfg, :a, :key2)
+        @test_throws Any getBigDataEntry(v2, :key1)
+        @test_throws Any getBigDataEntry(dfg, :b, :key1)
 
-    #update
-    @test updateBigDataEntry!(dfg, :a, de2_update)
-    @test deepcopy(de2_update) == getBigDataEntry(dfg, :a, :key2)
-    @test !updateBigDataEntry!(dfg, :b, de2_update)
+        #update
+        @test updateBigDataEntry!(dfg, :a, de2_update)
+        @test deepcopy(de2_update) == getBigDataEntry(dfg, :a, :key2)
+        @test !updateBigDataEntry!(dfg, :b, de2_update)
 
-    #list
-    entries = getBigDataEntries(dfg, :a)
-    @test length(entries) == 2
-    @test symdiff(map(e->e.key, entries), [:key1, :key2]) == Symbol[]
-    @test length(getBigDataEntries(dfg, :b)) == 0
+        #list
+        entries = getBigDataEntries(dfg, :a)
+        @test length(entries) == 2
+        @test symdiff(map(e->e.key, entries), [:key1, :key2]) == Symbol[]
+        @test length(getBigDataEntries(dfg, :b)) == 0
 
-    @test symdiff(getBigDataKeys(dfg, :a), [:key1, :key2]) == Symbol[]
-    @test getBigDataKeys(dfg, :b) == Symbol[]
+        @test symdiff(getBigDataKeys(dfg, :a), [:key1, :key2]) == Symbol[]
+        @test getBigDataKeys(dfg, :b) == Symbol[]
 
-    #delete
-    @test deepcopy(de1) == deleteBigDataEntry!(v1, :key1)
-    @test getBigDataKeys(v1) == Symbol[:key2]
-    #delete from dfg
-    @test deepcopy(de2_update) == deleteBigDataEntry!(dfg, :a, :key2)
-    @test getBigDataKeys(v1) == Symbol[]
+        #delete
+        @test deepcopy(de1) == deleteBigDataEntry!(v1, :key1)
+        @test getBigDataKeys(v1) == Symbol[:key2]
+        #delete from dfg
+        @test deepcopy(de2_update) == deleteBigDataEntry!(dfg, :a, :key2)
+        @test getBigDataKeys(v1) == Symbol[]
+    end
 end
 
 @testset "Updating Nodes and Estimates" begin
@@ -237,27 +235,21 @@ end
     var = getVariable(dfg, :a)
     #make a copy and simulate external changes
     newvar = deepcopy(var)
-    estimates(newvar)[:default] = Dict{Symbol, VariableEstimate}(
-        :max => VariableEstimate(:default, :max, [100.0]),
-        :mean => VariableEstimate(:default, :mean, [50.0]),
-        :modefit => VariableEstimate(:default, :modefit, [75.0]))
+    estimates(newvar)[:default] = MeanMaxPPE(:default, [100.0], [50.0])
     #update
-    updateVariableSolverData!(dfg, newvar)
+    mergeUpdateVariableSolverData!(dfg, newvar)
 
     #Check if variable is updated
     var = getVariable(dfg, :a)
     @test estimates(newvar) == estimates(var)
 
     # Add a new estimate.
-    estimates(newvar)[:second] = Dict{Symbol, VariableEstimate}(
-        :max => VariableEstimate(:default, :max, [10.0]),
-        :mean => VariableEstimate(:default, :mean, [5.0]),
-        :modefit => VariableEstimate(:default, :modefit, [7.0]))
+    estimates(newvar)[:second] = MeanMaxPPE(:second, [10.0], [5.0])
 
     # Confirm they're different
     @test estimates(newvar) != estimates(var)
     # Persist it.
-    updateVariableSolverData!(dfg, newvar)
+    mergeUpdateVariableSolverData!(dfg, newvar)
     # Get the latest
     var = getVariable(dfg, :a)
     @test symdiff(collect(keys(estimates(var))), [:default, :second]) == Symbol[]
@@ -271,7 +263,7 @@ end
     #confirm delete
     @test symdiff(collect(keys(estimates(newvar))), [:second]) == Symbol[]
     # Persist it.
-    updateVariableSolverData!(dfg, newvar)
+    mergeUpdateVariableSolverData!(dfg, newvar)
 
     # Get the latest and confirm they're the same, :second
     var = getVariable(dfg, :a)
