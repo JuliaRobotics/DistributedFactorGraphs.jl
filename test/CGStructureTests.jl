@@ -1,9 +1,5 @@
-using DistributedFactorGraphs
-using IncrementalInference
-using Test
-
 dfg = CloudGraphsDFG{NoSolverParams}("localhost", 7474, "neo4j", "test",
-                            "Bob", "testRobot", "testSession",
+                            "testUser", "testRobot", "testSession",
                             nothing,
                             nothing,
                             IncrementalInference.decodePackedType,
@@ -12,10 +8,14 @@ dfg = CloudGraphsDFG{NoSolverParams}("localhost", 7474, "neo4j", "test",
 
 # Nuke the user
 clearUser!!(dfg)
-@test listSessions(dfg) == []
+@test lsSessions(dfg) == []
+@test lsRobots(dfg) == []
+@test !(Symbol(dfg.userId) in map(u -> u.id, lsUsers(dfg)))
 # Create sentinel nodes using shortcut
 createDfgSessionIfNotExist(dfg)
-@test map(s -> s.id, listSessions(dfg)) == [:testSession]
+@test map(s -> s.id, lsSessions(dfg)) == [Symbol(dfg.sessionId)]
+@test map(s -> s.id, lsRobots(dfg)) == [Symbol(dfg.robotId)]
+@test Symbol(dfg.userId) in map(u -> u.id, lsUsers(dfg))
 # Test that we can call it again.
 createDfgSessionIfNotExist(dfg)
 # And nuke it so we can try the longer functions.
@@ -23,13 +23,23 @@ clearUser!!(dfg)
 
 # User, robot, and session
 # TODO: Make easier ways to initialize these.
-user = User(:Bob, "Bob Zack", "Description", Dict{Symbol, String}())
-robot = Robot(:testRobot, user.id, "Test robot", "Description", Dict{Symbol, String}())
-session = Session(:testSession, robot.id, user.id, "Test Session", "Description", Dict{Symbol, String}())
+user = User(Symbol(dfg.userId), "Bob Zack", "Description", Dict{Symbol, String}())
+robot = Robot(Symbol(dfg.robotId), user.id, "Test robot", "Description", Dict{Symbol, String}())
+session = Session(Symbol(dfg.sessionId), robot.id, user.id, "Test Session", "Description", Dict{Symbol, String}())
 
 @test createUser(dfg, user) == user
 @test createRobot(dfg, robot) == robot
 @test createSession(dfg, session) == session
+@test map(s -> s.id, lsSessions(dfg)) == [Symbol(dfg.sessionId)]
+@test map(s -> s.id, lsRobots(dfg)) == [Symbol(dfg.robotId)]
+@test Symbol(dfg.userId) in map(u -> u.id, lsUsers(dfg))
+
+# Test errors
+dfgError = deepcopy(dfg)
+# User/robot/session ID's can't start with numbers and can't have spaces.
+dfgError.userId = "1testNope"
+user = User(Symbol(dfgError.userId), "Bob Zack", "Description", Dict{Symbol, String}())
+@test_throws Exception createUser(dfgError, user)
 
 @test getUserData(dfg) == Dict{Symbol, String}()
 @test getRobotData(dfg) == Dict{Symbol, String}()
@@ -54,7 +64,7 @@ v3 = addVariable!(dfg, :c, ContinuousScalar, labels = [:LANDMARK])
 f1 = addFactor!(dfg, [:a; :b], LinearConditional(Normal(50.0,2.0)) )
 f2 = addFactor!(dfg, [:b; :c], LinearConditional(Normal(50.0,2.0)) )
 
-sessions = listSessions(dfg)
+sessions = lsSessions(dfg)
 @test map(s -> s.id, sessions) == [session.id]
 
 # Pull and solve this graph
@@ -83,3 +93,5 @@ f2 = addFactor!(dfgOrphaned, [:b; :c], LinearConditional(Normal(50.0,2.0)) )
 dfgLocal = GraphsDFG{SolverParams}(params=SolverParams())
 DistributedFactorGraphs.getSubgraph(dfgOrphaned, union(ls(dfgOrphaned), lsf(dfgOrphaned)), true, dfgLocal)
 tree, smtasks = solveTree!(dfgLocal)
+
+# If this passes without errors and we solve the graph, then all good.
