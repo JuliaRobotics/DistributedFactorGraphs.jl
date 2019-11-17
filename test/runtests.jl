@@ -10,6 +10,10 @@ using Pkg
 # Run: docker run -d --publish=7474:7474 --publish=7687:7687 --env NEO4J_AUTH=neo4j/test neo4j
 ##
 
+# If you want to enable debugging logging (very verbose!)
+# logger = SimpleLogger(stdout, Logging.Debug)
+# global_logger(logger)
+
 # Test each interface
 # Still test LightDFG and MetaGraphsDFG for the moment until we remove in 0.4.2
 apis = [
