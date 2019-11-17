@@ -47,6 +47,7 @@ function _getLabelsFromCyphonQuery(neo4jInstance::Neo4jInstance, matchCondition:
     return Symbol.(nodeIds)
 end
 
+
 """
 $(SIGNATURES)
 Get a node property - returns nothing if not found
@@ -54,7 +55,20 @@ Get a node property - returns nothing if not found
 function _getNodeProperty(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String}, property::String)
     query = "match (n:$(join(nodeLabels, ":"))) return n.$property"
     result = DistributedFactorGraphs._queryNeo4j(neo4jInstance, query)
+    length(result.results[1]["data"]) != 1 && return 0
+    length(result.results[1]["data"][1]["row"]) != 1 && return 0
+    return result.results[1]["data"][1]["row"][1]
+end
 
+"""
+$(SIGNATURES)
+Set a node property - returns count of changed nodes.
+"""
+function _setNodeProperty(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String}, property::String, value::String)
+    query = "match (n:$(join(nodeLabels, ":"))) set n.$property = \"$value\" return count(n)"
+    result = DistributedFactorGraphs._queryNeo4j(neo4jInstance, query)
+    length(result.results[1]["data"]) != 1 && return 0
+    length(result.results[1]["data"][1]["row"]) != 1 && return 0
     return result.results[1]["data"][1]["row"][1]
 end
 
@@ -73,7 +87,8 @@ function _getNodeCount(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String})
     query = "match (n:$(join(nodeLabels, ":"))) return count(n)"
     result = DistributedFactorGraphs._queryNeo4j(neo4jInstance, query)
     length(result.results[1]["data"]) != 1 && return 0
-    return parse(Int, result.results[1]["data"][1]["row"][1])
+    length(result.results[1]["data"][1]["row"]) != 1 && return 0
+    return result.results[1]["data"][1]["row"][1]
 end
 
 """

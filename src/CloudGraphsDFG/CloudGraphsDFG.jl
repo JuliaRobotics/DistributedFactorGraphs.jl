@@ -1,4 +1,5 @@
 using Neo4j
+using Base64
 
 # Entities
 include("entities/CloudGraphsDFG.jl")
