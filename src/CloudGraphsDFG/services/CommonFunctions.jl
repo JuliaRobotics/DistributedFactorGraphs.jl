@@ -142,85 +142,6 @@ function _bindSessionNodeToInitialVariable(neo4jInstance::Neo4jInstance, userId:
     return nothing
 end
 
-# """
-# $(SIGNATURES)
-# Create a session for a robot.
-# """
-# function _createSessionForRobot(userId::String, robotId::String, newSession::SessionDetailsRequest)::SessionDetailsResponse
-#     # 1. Make sure the session doesn't exist.
-#     sessions = _getSessionNeoNodesForRobot(userId, robotId)
-#     for session in sessions
-#         sessionLabels = getnodelabels(session)
-#         if(newSession.id in sessionLabels)
-#             error("Session $newSession.id cannot be created for robot $robotId, it already exists")
-#         end
-#     end
-#     # 1b. Get the parent robot Neo4j node.
-#     robotNode = _getRobotNeoNodeForUser(userId, robotId)
-#
-#     # 2. Create the correct response.
-#     props = JSON.parse(JSON.json(newSession))
-#     props["createdTimestamp"] = string(Dates.now(Dates.UTC))
-#     props["lastSolvedTimestamp"] = string(Dates.DateTime(0))
-#     props["userId"] = userId
-#     props["robotId"] = robotId
-#     props["solveCount"] = 1
-#     props["solveTimes"] = [0]
-#     props["isSolverEnabled"] = true # If false then the pilotfish won't pick up on it.
-#
-#     # 3. Create the session
-#     cloudGraph = Main.App.NaviConfig.cgConnection
-#     createdSessionNode = Neo4j.createnode(cloudGraph.neo4j.graph, props)
-#     addnodelabels(createdSessionNode, ["SESSION", newSession.id, userId, robotId])
-#     createrel(robotNode, createdSessionNode, "SESSION") #From USER to ROBOT
-#
-#     # 4. Initialize the factor graph
-#     # Now start up our factor graph.
-#     newSession.initialPoseType
-#     if newSession.initialPoseType != nothing
-#         labels=[newSession.id, robotId, userId]
-#         fg = Caesar.initfg(sessionname=newSession.id, cloudgraph=cloudGraph)
-#         # TODO: Cache refactoring discussion.
-#         fg.stateless = true # so that we don't update local elements
-#
-#         poseType = nothing
-#         if newSession.initialPoseType != "" && newSession.shouldInitialize
-#             poseType = eval(Meta.parse(newSession.initialPoseType))
-#             # Initialize the factor graph and insert first pose.
-#             nodesyms = initFactorGraph!(fg, labels=labels, ready=0, firstPoseType=poseType)
-#             varSymbol  = nodesyms[1]
-#             factSymbol = nodesyms[2]
-#
-#             # Create a relationship for session -> first pose
-#             _bindSessionNodeToInitialVariable(userId, robotId, newSession.id, String(varSymbol))
-#
-#             # Set the node symbols to ready
-#             _setReadyStatus(userId, robotId, newSession.id, string.(nodesyms), true)
-#         end
-#     end
-#
-#     # 5. Format the result
-#     props["nodeCount"] = 0
-#     props["userId"] = userId
-#     props["robotId"] = robotId
-#     props["links"] = Dict{String, String}("self" => "/api/v0/users/$userId/robots/$robotId/sessions/$(newSession.id)", "nodes" => "/api/v0/users/$userId/robots/$robotId/sessions/$(newSession.id)/nodes")
-#     model = Unmarshal.unmarshal(SessionDetailsResponse, props)
-#     return model
-# end
-
-# """
-# $(SIGNATURES)
-# Function to delete a session.
-# """
-# function _deleteSession(userId::String, robotId::String, sessionId::String)::Nothing
-#     cloudGraph = Main.App.NaviConfig.cgConnection
-#     loadtx = transaction(cloudGraph.neo4j.connection)
-#     query = "match (n:$userId:$robotId:$sessionId) detach delete n";
-#     nodes = loadtx(query; submit=true)
-#     commit(loadtx)
-#     return nothing
-# end
-
 """
 $(SIGNATURES)
 Utility function to get a Neo4j node for a session.
@@ -235,29 +156,6 @@ function _getSessionNeoNodeForRobot(userId::String, robotId::String, sessionId::
     end
     error("Cannot find session $sessionId associated with robot $robotId and user $userId")
 end
-
-# """
-# $(SIGNATURES)
-# Returns all Synchrony nodes for a given session.
-# """
-# function _getSynchronyNodesForSession(userId::String, robotId::String, sessionId::String)::Vector{NodeModel}
-#     # 2. Perform the transaction
-#     cloudGraph = Main.App.NaviConfig.cgConnection
-#     loadtx = transaction(cloudGraph.neo4j.connection)
-#     query = "match (n:$userId:$robotId:$sessionId:VARIABLE) return id(n), n.label, n.MAP_est";
-#     nodes = loadtx(query; submit=true)
-#     # Have to finish the transaction
-#     commit(loadtx)
-#
-#     if length(nodes.results[1]["data"]) == 0
-#         return Vector{NodeModel}() # Empty
-#     end
-#
-#     # 3. Format the result
-#     # Convert the mapEsts
-#     nodes = map(r -> NodeModel(r["row"][1], r["row"][2], r["row"][3] != nothing ? Float64.(r["row"][3]) : nothing, Dict{String, String}("self" => "/api/v0/users/$userId/robots/$robotId/sessions/$sessionId/nodes/$(r["row"][1])")), nodes.results[1]["data"])
-#     return nodes
-# end
 
 """
 $(SIGNATURES)
