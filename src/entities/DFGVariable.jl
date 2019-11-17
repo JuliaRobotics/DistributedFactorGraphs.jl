@@ -30,7 +30,7 @@ VariableNodeData(params...) = VariableNodeData{InferenceVariable}(params...)
 function VariableNodeData()
     st = stacktrace()
     @warn "VariableNodeData() is depreciated please use VariableNodeData{T}() or VariableNodeData(softtype::T) where T <: InferenceVariable. Enable DEBUG logging for stack trace."
-		@debug st
+    @debug st
     VariableNodeData{InferenceVariable}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], SingletonInferenceVariable(), false, 0.0, false, false)
 end
 
@@ -125,7 +125,7 @@ DFGVariable constructors.
 function DFGVariable(label::Symbol, _internalId::Int64 = 0) #where {T <:InferenceVariable}
 	st = stacktrace()
     @warn "DFGVariable(label::Symbol, _internalId::Int64 = 0) is depreciated please use DFGVariable(label::Symbol, softtype::T, _internalId::Int64 = 0) where T <: InferenceVariable. Enable DEBUG logging for the stack trace."
-		@debug st
+	@debug st
     T = InferenceVariable
     DFGVariable(label, now(), Symbol[],
                   Dict{Symbol, MeanMaxPPE}(),
