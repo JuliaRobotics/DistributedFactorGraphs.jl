@@ -186,7 +186,8 @@ function getVariable(dfg::CloudGraphsDFG, variableId::Int64)::DFGVariable
     # props["label"] = Symbol(variable.label)
     timestamp = DateTime(props["timestamp"])
     tags =  JSON2.read(props["tags"], Vector{Symbol})
-    estimateDict = JSON2.read(props["estimateDict"], Dict{Symbol, Dict{Symbol, VariableEstimate}})
+    #TODO this will work for some time, but unpacking in an <: AbstractPointParametricEst would be lekker.
+    estimateDict = JSON2.read(props["estimateDict"], Dict{Symbol, MeanMaxPPE})
     smallData = nothing
     smallData = JSON2.read(props["smallData"], Dict{String, String})
 

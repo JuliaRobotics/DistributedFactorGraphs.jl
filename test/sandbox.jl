@@ -1,15 +1,18 @@
 # using Revise
+# using Neo4j
+
+# Debug logging
+# using DistributedFactorGraphs
+using Test
+using Logging
 using Neo4j
 using DistributedFactorGraphs
 using IncrementalInference
-using Test
-using Logging
-# Debug logging
 logger = SimpleLogger(stdout, Logging.Debug)
 global_logger(logger)
 
 dfg = CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
-                            "1testUser", "testRobot", "testSession",
+                            "testUser", "testRobot", "testSession",
                             nothing,
                             nothing,
                             IncrementalInference.decodePackedType,
