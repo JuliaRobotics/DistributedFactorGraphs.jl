@@ -7,8 +7,12 @@ using Pkg
 ## To run the IIF tests, you need a local Neo4j with user/pass neo4j:test
 # To run a Docker image
 # Install: docker pull neo4j
-# Run: docker run --publish=7474:7474 --publish=7687:7687 --env NEO4J_AUTH=neo4j/test neo4j
+# Run: docker run -d --publish=7474:7474 --publish=7687:7687 --env NEO4J_AUTH=neo4j/test neo4j
 ##
+
+# If you want to enable debugging logging (very verbose!)
+# logger = SimpleLogger(stdout, Logging.Debug)
+# global_logger(logger)
 
 # Test each interface
 # Still test LightDFG and MetaGraphsDFG for the moment until we remove in 0.4.2
@@ -50,7 +54,7 @@ end
 
 if get(ENV, "IIF_TEST", "") == "true"
 
-    # Pkg.add("IncrementalInference")
+    Pkg.add("IncrementalInference")
     # TODO: Remove this once we move to v0.5.0
     Pkg.add(PackageSpec(name="IncrementalInference", rev="enhancement/compare_move_dfg"))
     @info "------------------------------------------------------------------------"
@@ -84,6 +88,11 @@ if get(ENV, "IIF_TEST", "") == "true"
             global dfg = deepcopy(api)
             include("fileDFGTests.jl")
         end
+    end
+
+    @testset "CGStructure Tests for CGDFG" begin
+        # Run the CGStructure tests
+        include("CGStructureTests.jl")
     end
 else
     @warn "Skipping IncrementalInference driver tests"

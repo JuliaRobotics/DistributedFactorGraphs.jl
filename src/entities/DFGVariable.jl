@@ -5,7 +5,7 @@ struct SingletonInferenceVariable <: InferenceVariable end
 """
 $(TYPEDEF)
 """
-mutable struct VariableNodeData #TODO v0.5.0 {T<:InferenceVariable}
+mutable struct VariableNodeData{T<:InferenceVariable}
   val::Array{Float64,2}
   bw::Array{Float64,2}
   BayesNetOutVertIDs::Array{Symbol,1}
@@ -14,7 +14,7 @@ mutable struct VariableNodeData #TODO v0.5.0 {T<:InferenceVariable}
   eliminated::Bool
   BayesNetVertID::Symbol #  Union{Nothing, }
   separator::Array{Symbol,1}
-  softtype::InferenceVariable #TODO v0.5.0 T
+  softtype::T
   initialized::Bool
   inferdim::Float64
   ismargin::Bool
@@ -24,7 +24,21 @@ mutable struct VariableNodeData #TODO v0.5.0 {T<:InferenceVariable}
   # A valid, packable default constructor is needed.
 
 end
-VariableNodeData() = VariableNodeData(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], SingletonInferenceVariable(), false, 0.0, false, false)
+
+VariableNodeData(params...) = VariableNodeData{InferenceVariable}(params...)
+
+function VariableNodeData()
+    st = stacktrace()
+    @warn "VariableNodeData() is depreciated please use VariableNodeData{T}() or VariableNodeData(softtype::T) where T <: InferenceVariable. Enable DEBUG logging for stack trace."
+    @debug st
+    VariableNodeData{InferenceVariable}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], SingletonInferenceVariable(), false, 0.0, false, false)
+end
+
+VariableNodeData{T}() where {T <:InferenceVariable} =
+        VariableNodeData{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], T(), false, 0.0, false, false)
+
+VariableNodeData(softtype::T) where T <: InferenceVariable =
+        VariableNodeData{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], softtype, false, 0.0, false, false)
 
 """
 $(TYPEDEF)
@@ -72,11 +86,12 @@ Data container to store Parameteric Point Estimate (PPE) for mean and max.
 """
 struct MeanMaxPPE <: AbstractPointParametricEst
     solverKey::Symbol #repeated because of Sam's request
+	suggested::Vector{Float64}
     max::Vector{Float64}
     mean::Vector{Float64}
     lastUpdatedTimestamp::DateTime
 end
-MeanMaxPPE(solverKey::Symbol,max::Vector{Float64},mean::Vector{Float64}) = MeanMaxPPE(solverKey, max, mean, now())
+MeanMaxPPE(solverKey::Symbol, suggested::Vector{Float64}, max::Vector{Float64},mean::Vector{Float64}) = MeanMaxPPE(solverKey, suggested, max, mean, now())
 
 getMaxPPE(est::AbstractPointParametricEst) = est.max
 getMeanPPE(est::AbstractPointParametricEst) = est.mean
@@ -108,11 +123,30 @@ end
     $SIGNATURES
 DFGVariable constructors.
 """
-DFGVariable(label::Symbol, _internalId::Int64) =
-        DFGVariable(label, now(), Symbol[], Dict{Symbol, MeanMaxPPE}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), Dict{String, String}(), Dict{Symbol,AbstractBigDataEntry}(), 0, 0, _internalId)
+function DFGVariable(label::Symbol, _internalId::Int64 = 0) #where {T <:InferenceVariable}
+	st = stacktrace()
+    @warn "DFGVariable(label::Symbol, _internalId::Int64 = 0) is depreciated please use DFGVariable(label::Symbol, softtype::T, _internalId::Int64 = 0) where T <: InferenceVariable. Enable DEBUG logging for the stack trace."
+	@debug st
+    T = InferenceVariable
+    DFGVariable(label, now(), Symbol[],
+                  Dict{Symbol, MeanMaxPPE}(),
+                  Dict{Symbol, VariableNodeData{T}}(:default => VariableNodeData()),
+                  Dict{String, String}(),
+                  Dict{Symbol,AbstractBigDataEntry}(), 0, 0, _internalId)
+end
+DFGVariable(label::Symbol, softtype::T, _internalId::Int64 = 0) where {T <: InferenceVariable}  =
+    DFGVariable(label, now(), Symbol[],
+              Dict{Symbol, MeanMaxPPE}(),
+              Dict{Symbol, VariableNodeData{T}}(:default => VariableNodeData{T}()),
+              Dict{String, String}(),
+              Dict{Symbol,AbstractBigDataEntry}(), 0, 0, _internalId)
 
-DFGVariable(label::Symbol) =
-        DFGVariable(label, now(), Symbol[], Dict{Symbol, MeanMaxPPE}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), Dict{String, String}(), Dict{Symbol,AbstractBigDataEntry}(), 0, 0, 0)
+# DFGVariable(label::Symbol, _internalId::Int64) =
+#         DFGVariable(label, now(), Symbol[], Dict{Symbol, Dict{Symbol, VariableEstimate}}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), Dict{String, String}(), Dict{Symbol,AbstractBigDataEntry}(), 0, 0, _internalId)
+#
+# DFGVariable(label::Symbol) =
+#         DFGVariable(label, now(), Symbol[], Dict{Symbol, VariableEstimate}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), Dict{String, String}(), Dict{Symbol,AbstractBigDataEntry}(), 0, 0, 0)
+#
 
 # Accessors
 label(v::DFGVariable) = v.label

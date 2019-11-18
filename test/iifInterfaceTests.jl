@@ -1,8 +1,9 @@
 global dfg,v1,v2,f1
 
 if typeof(dfg) <: CloudGraphsDFG
-    @warn "TEST: Nuking all data for user '$(dfg.userId)', robot '$(dfg.robotId)'!"
-    clearRobot!!(dfg)
+    @warn "TEST: Nuking all data for user '$(dfg.userId)'!"
+    clearUser!!(dfg)
+    createDfgSessionIfNotExist(dfg)
 end
 
 # Building simple graph...
@@ -234,7 +235,7 @@ end
     var = getVariable(dfg, :a)
     #make a copy and simulate external changes
     newvar = deepcopy(var)
-    estimates(newvar)[:default] = MeanMaxPPE(:default, [100.0], [50.0])
+    estimates(newvar)[:default] = MeanMaxPPE(:default, [150.0], [100.0], [50.0])
     #update
     mergeUpdateVariableSolverData!(dfg, newvar)
 
@@ -243,7 +244,7 @@ end
     @test estimates(newvar) == estimates(var)
 
     # Add a new estimate.
-    estimates(newvar)[:second] = MeanMaxPPE(:second, [10.0], [5.0])
+    estimates(newvar)[:second] = MeanMaxPPE(:second, [15.0], [10.0], [5.0])
 
     # Confirm they're different
     @test estimates(newvar) != estimates(var)

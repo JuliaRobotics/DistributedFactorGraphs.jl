@@ -1,16 +1,17 @@
 dfg = testDFGAPI{NoSolverParams}()
-v1 = DFGVariable(:a)
-v2 = DFGVariable(:b)
+
+#add types for softtypes
+struct TestInferenceVariable1 <: InferenceVariable end
+struct TestInferenceVariable2 <: InferenceVariable end
+
+v1 = DFGVariable(:a, TestInferenceVariable1())
+v2 = DFGVariable(:b, TestInferenceVariable2())
 f1 = DFGFactor{Int, :Symbol}(:f1)
 
 #add tags for filters
 append!(v1.tags, [:VARIABLE, :POSE])
 append!(v2.tags, [:VARIABLE, :LANDMARK])
 append!(f1.tags, [:FACTOR])
-
-#add types for softtypes
-struct TestInferenceVariable1 <: InferenceVariable end
-struct TestInferenceVariable2 <: InferenceVariable end
 
 st1 = TestInferenceVariable1()
 st2 = TestInferenceVariable2()
@@ -39,9 +40,9 @@ addFactor!(dfg, [v1, v2], f1)
 
 @testset "Adding Removing Nodes" begin
     dfg2 = testDFGAPI{NoSolverParams}()
-    v1 = DFGVariable(:a)
-    v2 = DFGVariable(:b)
-    v3 = DFGVariable(:c)
+    v1 = DFGVariable(:a, TestInferenceVariable1())
+    v2 = DFGVariable(:b, TestInferenceVariable1())
+    v3 = DFGVariable(:c, TestInferenceVariable1())
     f1 = DFGFactor{Int, :Symbol}(:f1)
     f2 = DFGFactor{Int, :Symbol}(:f2)
     # @testset "Creating Graphs" begin
@@ -208,7 +209,7 @@ end
     var = getVariable(dfg, :a)
     #make a copy and simulate external changes
     newvar = deepcopy(var)
-    estimates(newvar)[:default] = MeanMaxPPE(:default, [100.0], [50.0])
+    estimates(newvar)[:default] = MeanMaxPPE(:default, [150.0], [100.0], [50.0])
     #update
     mergeUpdateVariableSolverData!(dfg, newvar)
 
@@ -218,7 +219,7 @@ end
 
     # Delete :default and replace to see if new ones can be added
     delete!(estimates(newvar), :default)
-    estimates(newvar)[:second] = MeanMaxPPE(:second, [10.0], [5.0])
+    estimates(newvar)[:second] = MeanMaxPPE(:second, [15.0], [10.0], [5.0])
 
     # Persist to the original variable.
     mergeUpdateVariableSolverData!(dfg, newvar)
@@ -277,14 +278,15 @@ end
 # Now make a complex graph for connectivity tests
 numNodes = 10
 dfg = testDFGAPI{NoSolverParams}()
-verts = map(n -> DFGVariable(Symbol("x$n")), 1:numNodes)
+verts = map(n -> DFGVariable(Symbol("x$n"), TestInferenceVariable1()), 1:numNodes)
 #change ready and backendset for x7,x8 for improved tests on x7x8f1
 verts[7].ready = 1
 verts[8].backendset = 1
 
-#force softytypes to first 2 vertices.
-verts[1].solverDataDict[:default].softtype = deepcopy(st1)
-verts[2].solverDataDict[:default].softtype = deepcopy(st2)
+# Can't change the softtypes now.
+# #force softytypes to first 2 vertices.
+# verts[1].solverDataDict[:default].softtype = deepcopy(st1)
+# verts[2].solverDataDict[:default].softtype = deepcopy(st2)
 
 map(v -> addVariable!(dfg, v), verts)
 map(n -> addFactor!(dfg, [verts[n], verts[n+1]], DFGFactor{Int, :Symbol}(Symbol("x$(n)x$(n+1)f1"))), 1:(numNodes-1))
@@ -376,8 +378,8 @@ end
 @testset "Producing Dot Files" begin
     # create a simpler graph for dot testing
     dotdfg = testDFGAPI{NoSolverParams}()
-    v1 = DFGVariable(:a)
-    v2 = DFGVariable(:b)
+    v1 = DFGVariable(:a, TestInferenceVariable1())
+    v2 = DFGVariable(:b, TestInferenceVariable1())
     f1 = DFGFactor{Int, :Symbol}(:f1)
     addVariable!(dotdfg, v1)
     addVariable!(dotdfg, v2)

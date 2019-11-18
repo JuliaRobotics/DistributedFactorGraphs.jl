@@ -106,7 +106,11 @@ function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::Bool
     variable._internalId = neo4jNode.id
     Neo4j.updatenodelabels(neo4jNode, union([string(variable.label), "VARIABLE", dfg.userId, dfg.robotId, dfg.sessionId], variable.tags))
 
-    # Graphs.add_vertex!(dfg.g, v)
+    # Make sure that if there exists a SESSION sentinel that it is attached.
+    # TODO: Optimize this.
+    _bindSessionNodeToInitialVariable(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, string(variable.label))
+
+    # Update our internal dictionaries.
     push!(dfg.labelDict, variable.label=>variable._internalId)
     push!(dfg.variableCache, variable.label=>variable)
     # Track insertion
@@ -568,7 +572,7 @@ function isFullyConnected(dfg::CloudGraphsDFG)::Bool
     # Total connected nodes - thank you Neo4j for 0..* awesomeness!!
     query = """
         match (n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(varIds[1]))-[FACTORGRAPH*]-(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId))
-        WHERE n:VARIABLE OR n:FACTOR OR node:VARIABLE OR node:FACTOR
+        WHERE (n:VARIABLE OR n:FACTOR OR node:VARIABLE OR node:FACTOR) and not (node:SESSION)
         WITH collect(n)+collect(node) as nodelist
         unwind nodelist as nodes
         return count(distinct nodes)"""
@@ -662,11 +666,9 @@ Note: By default orphaned factors (where the subgraph does not contain all the r
 function getSubgraphAroundNode(dfg::CloudGraphsDFG, node::DFGNode, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::AbstractDFG=_getDuplicatedEmptyDFG(dfg))::AbstractDFG
     distance < 1 && error("getSubgraphAroundNode() only works for distance > 0")
 
-    # Making a copy session if not specified
-    #moved to parameter addToDFG::AbstractDFG=_getDuplicatedEmptyDFG(dfg)
-
     # Thank you Neo4j for 0..* awesomeness!!
-    neighborList = _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(node.label))-[FACTORGRAPH*0..$distance]-(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId))")
+    neighborList = _getLabelsFromCyphonQuery(dfg.neo4jInstance,
+        "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(node.label))-[FACTORGRAPH*0..$distance]-(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId)) WHERE (n:VARIABLE OR n:FACTOR OR node:VARIABLE OR node:FACTOR) and not (node:SESSION)")
 
     # Copy the section of graph we want
     _copyIntoGraph!(dfg, addToDFG, neighborList, includeOrphanFactors)

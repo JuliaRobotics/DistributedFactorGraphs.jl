@@ -1,7 +1,9 @@
 using Neo4j
+using Base64
 
 # Entities
 include("entities/CloudGraphsDFG.jl")
+include("entities/CGStructure.jl")
 
 # Services
 include("services/CommonFunctions.jl")
