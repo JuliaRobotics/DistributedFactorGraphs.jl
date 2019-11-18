@@ -58,6 +58,7 @@ export getSummary, getSummaryGraph
 
 # Comparisons
 export
+    compare,
     compareField,
     compareFields,
     compareAll,
