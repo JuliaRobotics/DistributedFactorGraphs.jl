@@ -219,7 +219,7 @@ function compareAllVariables(fgA::G1,
 
   # compare each variable is the same in both A and B
   for var in vars
-    TP = TP && compareVariable(DFG.getVariable(fgA, var), DFG.getVariable(fgB, var), skipsamples=skipsamples, skip=skip)
+    TP = TP && compareVariable(getVariable(fgA, var), getVariable(fgB, var), skipsamples=skipsamples, skip=skip)
   end
 
   # return comparison result
@@ -254,7 +254,7 @@ function compareSimilarVariables(fgA::G1,
   # compare the common set
   for var in xlAB
     @info var
-    TP &= compareVariable(DFG.getVariable(fgA, var), DFG.getVariable(fgB, var), skipsamples=skipsamples, skip=skip)
+    TP &= compareVariable(getVariable(fgA, var), getVariable(fgB, var), skipsamples=skipsamples, skip=skip)
   end
 
   # return comparison result
@@ -285,7 +285,7 @@ function compareSimilarFactors(fgA::G1,
 
   # compare the common set
   for var in xlAB
-    TP = TP && compareFactor(DFG.getFactor(fgA, var), getFactor(fgB, var), skipsamples=skipsamples, skipcompute=skipcompute, show=show)
+    TP = TP && compareFactor(getFactor(fgA, var), getFactor(fgB, var), skipsamples=skipsamples, skipcompute=skipcompute, show=show)
   end
 
   # return comparison result
