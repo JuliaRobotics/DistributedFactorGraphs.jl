@@ -111,7 +111,7 @@ mutable struct DFGVariable <: AbstractDFGVariable
     timestamp::DateTime
     tags::Vector{Symbol}
     estimateDict::Dict{Symbol, <: AbstractPointParametricEst}
-    solverDataDict::Dict{Symbol, VariableNodeData}
+    solverDataDict::Dict{Symbol, VariableNodeData{<:InferenceVariable}}
     smallData::Dict{String, String}
     bigData::Dict{Symbol, AbstractBigDataEntry}
     ready::Int
