@@ -29,7 +29,7 @@ VariableNodeData(params...) = VariableNodeData{InferenceVariable}(params...)
 
 function VariableNodeData()
     st = stacktrace()
-    @warn "VariableNodeData() is depreciated please use VariableNodeData{T}() or VariableNodeData(softtype::T) where T <: InferenceVariable. Enable DEBUG logging for stack trace."
+    @warn "VariableNodeData() is deprecated please use VariableNodeData{T}() or VariableNodeData(softtype::T) where T <: InferenceVariable. Enable DEBUG logging for stack trace."
     @debug st
     VariableNodeData{InferenceVariable}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], SingletonInferenceVariable(), false, 0.0, false, false)
 end
