@@ -106,12 +106,12 @@ VariableEstimate(params...) = errror("VariableEstimate is depreciated, please us
 Fundamental structure for a DFG variable with fields:
 $(TYPEDFIELDS)
 """
-mutable struct DFGVariable <: AbstractDFGVariable
+mutable struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
     label::Symbol
     timestamp::DateTime
     tags::Vector{Symbol}
     estimateDict::Dict{Symbol, <: AbstractPointParametricEst}
-    solverDataDict::Dict{Symbol, <:InferenceVariable}
+    solverDataDict::Dict{Symbol, VariableNodeData{T}}
     smallData::Dict{String, String}
     bigData::Dict{Symbol, AbstractBigDataEntry}
     ready::Int
