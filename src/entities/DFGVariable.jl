@@ -4,6 +4,8 @@ struct SingletonInferenceVariable <: InferenceVariable end
 
 """
 $(TYPEDEF)
+
+Main data container for Level2 data -- see developer wiki.
 """
 mutable struct VariableNodeData{T<:InferenceVariable}
   val::Array{Float64,2}
