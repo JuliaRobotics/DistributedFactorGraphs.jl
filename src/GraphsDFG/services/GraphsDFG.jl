@@ -235,11 +235,20 @@ end
 List the DFGVariables in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the variables.
 """
-function getVariables(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{DFGVariable}
-    variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGVariable, Graphs.vertices(dfg.g)))
+function getVariables(dfg::GraphsDFG,
+                      regexFilter::Union{Nothing, Regex}=nothing;
+                      tags::Vector{Symbol}=Symbol[],
+                      solvable::Int=0  )::Vector{DFGVariable}
+    #
+    variables = map(v -> v.dfgNode, filter(n -> (n.dfgNode isa DFGVariable) && (solvable <= isSolvable(n.dfgNode)), Graphs.vertices(dfg.g)))
+    # filter on solvable
+
+    # filter on regex
     if regexFilter != nothing
         variables = filter(v -> occursin(regexFilter, String(v.label)), variables)
     end
+
+    # filter on tags
 	if length(tags) > 0
         mask = map(v -> length(intersect(v.tags, tags)) > 0, variables )
         return variables[mask]
