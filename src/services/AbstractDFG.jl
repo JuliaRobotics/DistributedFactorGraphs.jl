@@ -328,6 +328,20 @@ function ls(dfg::G, label::Symbol)::Vector{Symbol} where G <: AbstractDFG
 end
 
 """
+    $SIGNATURES
+
+Variables or factors may or may not be 'solvable', depending on a user definition.  Useful for ensuring atomic transactions.
+
+DevNotes:
+- Will be renamed to `var.solvable` -- see DFG #201
+
+Related
+
+isSolveInProgress
+"""
+isSolvable(var::Union{DFGVariable, DFGFactor}) = var.ready
+
+"""
     $(SIGNATURES)
 Gets an empty and unique CloudGraphsDFG derived from an existing DFG.
 """
