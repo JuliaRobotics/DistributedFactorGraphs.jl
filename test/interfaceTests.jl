@@ -280,8 +280,8 @@ numNodes = 10
 dfg = testDFGAPI{NoSolverParams}()
 verts = map(n -> DFGVariable(Symbol("x$n"), TestInferenceVariable1()), 1:numNodes)
 #change ready and backendset for x7,x8 for improved tests on x7x8f1
-verts[7].ready = 1
-verts[8].backendset = 1
+verts[7].solvable = 1
+verts[8].solveInProgress = 1
 
 # Can't change the softtypes now.
 # #force softytypes to first 2 vertices.
@@ -308,7 +308,7 @@ map(n -> addFactor!(dfg, [verts[n], verts[n+1]], DFGFactor{Int, :Symbol}(Symbol(
     @test getNeighbors(dfg, :x5, ready=0) == [:x4x5f1,:x5x6f1]
     @test getNeighbors(dfg, :x5, backendset=1) == Symbol[]
     @test getNeighbors(dfg, :x5, backendset=0) == [:x4x5f1,:x5x6f1]
-    @test getNeighbors(dfg, :x7x8f1, ready=0) == [:x8]
+    @test getNeighbors(dfg, :x7x8f1, ready=0) == [:x7, :x8]
     @test getNeighbors(dfg, :x7x8f1, backendset=0) == [:x7]
     @test getNeighbors(dfg, :x7x8f1, ready=1) == [:x7]
     @test getNeighbors(dfg, :x7x8f1, backendset=1) == [:x8]

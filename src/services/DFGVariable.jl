@@ -8,8 +8,8 @@ function packVariable(dfg::G, v::DFGVariable)::Dict{String, Any} where G <: Abst
     props["estimateDict"] = JSON2.write(v.estimateDict)
     props["solverDataDict"] = JSON2.write(Dict(keys(v.solverDataDict) .=> map(vnd -> pack(dfg, vnd), values(v.solverDataDict))))
     props["smallData"] = JSON2.write(v.smallData)
-    props["ready"] = v.ready
-    props["backendset"] = v.backendset
+    props["solvable"] = v.solvable
+    props["solveInProgress"] = v.solveInProgress
     return props
 end
 
@@ -32,8 +32,8 @@ function unpackVariable(dfg::G, packedProps::Dict{String, Any})::DFGVariable whe
     variable.estimateDict = estimateDict
     variable.solverDataDict = solverData
     variable.smallData = smallData
-    variable.ready = packedProps["ready"]
-    variable.backendset = packedProps["backendset"]
+    variable.solvable = packedProps["solvable"]
+    variable.solveInProgress = packedProps["solveInProgress"]
 
     return variable
 end

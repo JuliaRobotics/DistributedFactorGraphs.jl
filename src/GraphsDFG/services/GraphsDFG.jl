@@ -235,11 +235,20 @@ end
 List the DFGVariables in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the variables.
 """
-function getVariables(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{DFGVariable}
-    variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGVariable, Graphs.vertices(dfg.g)))
+function getVariables(dfg::GraphsDFG,
+                      regexFilter::Union{Nothing, Regex}=nothing;
+                      tags::Vector{Symbol}=Symbol[],
+                      solvable::Int=0  )::Vector{DFGVariable}
+    #
+    variables = map(v -> v.dfgNode, filter(n -> (n.dfgNode isa DFGVariable) && (solvable <= isSolvable(n.dfgNode)), Graphs.vertices(dfg.g)))
+    # filter on solvable
+
+    # filter on regex
     if regexFilter != nothing
         variables = filter(v -> occursin(regexFilter, String(v.label)), variables)
     end
+
+    # filter on tags
 	if length(tags) > 0
         mask = map(v -> length(intersect(v.tags, tags)) > 0, variables )
         return variables[mask]
@@ -279,8 +288,8 @@ function getNeighbors(dfg::GraphsDFG, node::T; ready::Union{Nothing, Int}=nothin
     vert = dfg.g.vertices[dfg.labelDict[node.label]]
     neighbors = in_neighbors(vert, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
     # Additional filtering
-    neighbors = ready != nothing ? filter(v -> v.dfgNode.ready == ready, neighbors) : neighbors
-    neighbors = backendset != nothing ? filter(v -> v.dfgNode.backendset == backendset, neighbors) : neighbors
+	neighbors = ready != nothing ? filter(v -> isSolvable(v.dfgNode) >= ready, neighbors) : neighbors
+    neighbors = backendset != nothing ? filter(v -> isSolveInProgress(v.dfgNode) == backendset, neighbors) : neighbors
     # Variable sorting (order is important)
     if node isa DFGFactor
         order = intersect(node._variableOrderSymbols, map(v->v.dfgNode.label, neighbors))
@@ -300,8 +309,8 @@ function getNeighbors(dfg::GraphsDFG, label::Symbol; ready::Union{Nothing, Int}=
     vert = dfg.g.vertices[dfg.labelDict[label]]
     neighbors = in_neighbors(vert, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
     # Additional filtering
-    neighbors = ready != nothing ? filter(v -> v.dfgNode.ready == ready, neighbors) : neighbors
-    neighbors = backendset != nothing ? filter(v -> v.dfgNode.backendset == backendset, neighbors) : neighbors
+    neighbors = ready != nothing ? filter(v -> isSolvable(v.dfgNode) >= ready, neighbors) : neighbors
+    neighbors = backendset != nothing ? filter(v -> isSolveInProgress(v.dfgNode) == backendset, neighbors) : neighbors
     # Variable sorting when using a factor (function order is important)
     if vert.dfgNode isa DFGFactor
         vert.dfgNode._variableOrderSymbols
@@ -311,41 +320,6 @@ function getNeighbors(dfg::GraphsDFG, label::Symbol; ready::Union{Nothing, Int}=
 
     return map(n -> n.dfgNode.label, neighbors)
 end
-
-# function _copyIntoGraph!(sourceDFG::GraphsDFG, destDFG::GraphsDFG, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false)::Nothing
-#     # Split into variables and factors
-#     verts = map(id -> sourceDFG.g.vertices[sourceDFG.labelDict[id]], variableFactorLabels)
-#     sourceVariables = filter(n -> n.dfgNode isa DFGVariable, verts)
-#     sourceFactors = filter(n -> n.dfgNode isa DFGFactor, verts)
-#
-#     # Now we have to add all variables first,
-#     for variable in sourceVariables
-#         if !haskey(destDFG.labelDict, variable.dfgNode.label)
-#             addVariable!(destDFG, deepcopy(variable.dfgNode))
-#         end
-#     end
-#     # And then all factors to the destDFG.
-#     for factor in sourceFactors
-#         if !haskey(destDFG.labelDict, factor.dfgNode.label)
-#             # Get the original factor variables (we need them to create it)
-#             neighVarIds = getNeighbors(sourceDFG, factor.dfgNode.label) #OLD: in_neighbors(factor, sourceDFG.g)
-#             # Find the labels and associated neighVarIds in our new subgraph
-#             factVariables = DFGVariable[]
-#             for neighVarId in neighVarIds
-#                 if haskey(destDFG.labelDict, neighVarId)
-#                     push!(factVariables, getVariable(destDFG, neighVarId))
-#                     #otherwise ignore
-#                 end
-#             end
-#
-#             # Only if we have all of them should we add it (otherwise strange things may happen on evaluation)
-#             if includeOrphanFactors || length(factVariables) == length(neighVarIds)
-#                 addFactor!(destDFG, factVariables, deepcopy(factor.dfgNode))
-#             end
-#         end
-#     end
-#     return nothing
-# end
 
 """
     $(SIGNATURES)

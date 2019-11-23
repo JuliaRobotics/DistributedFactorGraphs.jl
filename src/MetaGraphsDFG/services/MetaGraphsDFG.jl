@@ -318,8 +318,8 @@ hasOrphans(dfg::MetaGraphsDFG)::Bool = !isFullyConnected(dfg)
 
 function _isready(dfg::MetaGraphsDFG, idx::Int, ready::Int)::Bool
 	p = props(dfg.g, idx)
-	haskey(p, :variable) && (return p[:variable].ready == ready)
-	haskey(p, :factor) && (return p[:factor].ready == ready)
+	haskey(p, :variable) && (return p[:variable].solvable >= ready)
+	haskey(p, :factor) && (return p[:factor].solvable >= ready)
 
 	#TODO should this be an error?
 	@warn "Node not a factor or variable"
@@ -328,8 +328,8 @@ end
 
 function _isbackendset(dfg::MetaGraphsDFG, idx::Int, backendset::Int)::Bool
 	p = props(dfg.g, idx)
-	haskey(p, :variable) && (return p[:variable].backendset == backendset)
-	haskey(p, :factor) && (return p[:factor].backendset == backendset)
+	haskey(p, :variable) && (return p[:variable].solveInProgress == backendset)
+	haskey(p, :factor) && (return p[:factor].solveInProgress == backendset)
 
 	#TODO should this be an error?
 	@warn "Node not a factor or variable"
