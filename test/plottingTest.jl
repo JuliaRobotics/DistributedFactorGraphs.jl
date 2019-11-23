@@ -3,10 +3,12 @@ using DistributedFactorGraphs
 # using DistributedFactorGraphs.DFGPlots
 using Test
 
+struct TestInferenceVariable1 <: InferenceVariable end
+
 # Now make a complex graph for connectivity tests
 numNodes = 10
 dfg = GraphsDFG{NoSolverParams}()
-verts = map(n -> DFGVariable(Symbol("x$n")), 1:numNodes)
+verts = map(n -> DFGVariable(Symbol("x$n", TestInferenceVariable1())), 1:numNodes)
 map(v -> addVariable!(dfg, v), verts)
 map(n -> addFactor!(dfg, [verts[n], verts[n+1]], DFGFactor{Int, :Symbol}(Symbol("x$(n)x$(n+1)f1"))), 1:(numNodes-1))
 

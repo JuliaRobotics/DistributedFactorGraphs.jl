@@ -235,7 +235,7 @@ end
     global dfg,v1,v2,f1
     @test isFullyConnected(dfg) == true
     @test hasOrphans(dfg) == false
-    addVariable!(dfg, DFGVariable(:orphan))
+    addVariable!(dfg, DFGVariable(:orphan, TestInferenceVariable1()))
     @test isFullyConnected(dfg) == false
     @test hasOrphans(dfg) == true
 end
