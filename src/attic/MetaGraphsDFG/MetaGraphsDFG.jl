@@ -4,6 +4,7 @@ using MetaGraphs
 # Imports
 include("entities/MetaGraphsDFG.jl")
 include("services/MetaGraphsDFG.jl")
+include("DFGPlots.jl")
 
 # Exports
 # Deprecated -

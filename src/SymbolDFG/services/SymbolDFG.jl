@@ -485,38 +485,6 @@ function getAdjacencyMatrixSparse(dfg::SymbolDFG)::Tuple{LightGraphs.SparseMatri
 	end
 	return adjMat, varLabels, factLabels
 end
-#=
-"""
-    $(SIGNATURES)
-Produces a dot-format of the graph for visualization.
-"""
-function toDot(dfg::SymbolDFG)::String
-	@error "toDot(dfg::SymbolDFG) is not sopported yet, see https://github.com/JuliaGraphs/MetaGraphs.jl/issues/86"
-    m = PipeBuffer()
-    MetaGraphs.savedot(m, dfg.g)
-    data = take!(m)
-    close(m)
-    return String(data)
-end
-
-"""
-    $(SIGNATURES)
-Produces a dot file of the graph for visualization.
-Download XDot to see the data
-
-Note
-- Default location "/tmp/dfg.dot" -- MIGHT BE REMOVED
-- Can be viewed with the `xdot` system application.
-- Based on graphviz.org
-"""
-function toDotFile(dfg::SymbolDFG, fileName::String="/tmp/dfg.dot")::Nothing
-	@error "toDotFile(dfg::SymbolDFG,filename) is not sopported yet, see https://github.com/JuliaGraphs/MetaGraphs.jl/issues/86"
-    open(fileName, "w") do fid
-        MetaGraphs.savedot(fid, dfg.g)
-    end
-    return nothing
-end
-=#
 
 """
     $(SIGNATURES)

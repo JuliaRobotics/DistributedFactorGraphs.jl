@@ -9,6 +9,8 @@ using Reexport
 using JSON2
 using LinearAlgebra
 using SparseArrays
+# This is used in the definition of getAdjacencyMatrixSparse
+using LightGraphs
 
 # Entities
 include("entities/AbstractDFG.jl")
@@ -85,9 +87,6 @@ include("GraphsDFG/GraphsDFG.jl")
 
 # Include the FilesDFG API.
 include("FileDFG/FileDFG.jl")
-
-# Include the LightGraphs.jl (MetaGraphs.jl) API.
-include("MetaGraphsDFG/MetaGraphsDFG.jl")
 
 include("SymbolDFG/SymbolDFG.jl")
 using .SymbolDFGs

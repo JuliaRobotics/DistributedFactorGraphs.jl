@@ -15,10 +15,8 @@ using Pkg
 # global_logger(logger)
 
 # Test each interface
-# Still test LightDFG and MetaGraphsDFG for the moment until we remove in 0.4.2
 apis = [
     GraphsDFG,
-    DistributedFactorGraphs.MetaGraphsDFG,
     DistributedFactorGraphs.SymbolDFG,
     LightDFG]
 for api in apis
@@ -29,10 +27,8 @@ for api in apis
     end
 end
 
-# Test that we don't export LightDFG and MetaGraphsDFG
 @testset "Deprecated Drivers Test" begin
     @test_throws UndefVarError SymbolDFG{NoSolverParams}()
-    @test_throws UndefVarError MetaGraphsDFG{NoSolverParams}()
 end
 
 # Test special cases
@@ -66,7 +62,6 @@ if get(ENV, "IIF_TEST", "") == "true"
     apis = [
         GraphsDFG{NoSolverParams}(),
         LightDFG{NoSolverParams}(),
-        # # DistributedFactorGraphs.MetaGraphsDFG{NoSolverParams}(),
         # # DistributedFactorGraphs.SymbolDFG{NoSolverParams}(),
         CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
                                     "testUser", "testRobot", "testSession",
