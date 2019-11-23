@@ -482,7 +482,7 @@ function getAdjacencyMatrix(dfg::G)::Matrix{Union{Nothing, Symbol}} where G <: A
     adjMat[2:end, 1] = factLabels
     adjMat[1, 2:end] = varLabels
     for (fIndex, factLabel) in enumerate(factLabels)
-        factVars = getNeighbors(dfg, getFactor(dfg, factLabel))
+        factVars = getNeighbors(dfg, getFactor(dfg, factLabel), solvable=solvable)
         map(vLabel -> adjMat[fIndex+1,vDict[vLabel]] = factLabel, factVars)
     end
     return adjMat
