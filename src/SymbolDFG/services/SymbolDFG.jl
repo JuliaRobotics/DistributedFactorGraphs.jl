@@ -275,8 +275,8 @@ hasOrphans(dfg::SymbolDFG)::Bool = !isFullyConnected(dfg)
 
 function _isready(dfg::SymbolDFG, label::Symbol, ready::Int)::Bool
 
-	haskey(dfg.g.variables, label) && (return dfg.g.variables[label].ready == ready)
-	haskey(dfg.g.factors, label) && (return dfg.g.factors[label].ready == ready)
+	haskey(dfg.g.variables, label) && (return dfg.g.variables[label].solvable >= ready)
+	haskey(dfg.g.factors, label) && (return dfg.g.factors[label].solvable >= ready)
 
 	#TODO should this be a breaking error?
 	@error "Node not in factor or variable"
@@ -284,8 +284,8 @@ function _isready(dfg::SymbolDFG, label::Symbol, ready::Int)::Bool
 end
 
 function _isbackendset(dfg::SymbolDFG, label::Symbol, backendset::Int)::Bool
-	haskey(dfg.g.variables, label) && (return dfg.g.variables[label].backendset == backendset)
-	haskey(dfg.g.factors, label) && (return dfg.g.factors[label].backendset == backendset)
+	haskey(dfg.g.variables, label) && (return dfg.g.variables[label].solveInProgress == backendset)
+	haskey(dfg.g.factors, label) && (return dfg.g.factors[label].solveInProgress == backendset)
 
 	#TODO should this be a breaking error?
 	@error "Node not a factor or variable"

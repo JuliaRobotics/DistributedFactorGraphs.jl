@@ -331,17 +331,16 @@ numNodes = 10
 #change ready and backendset for x7,x8 for improved tests on x7x8f1
 verts = map(n -> addVariable!(dfg, Symbol("x$n"), ContinuousScalar, labels = [:POSE]), 1:numNodes)
 #TODO fix this to use accessors
-verts[7].ready = 1
+verts[7].solvable = 1
 # verts[7].backendset = 0
-verts[8].ready = 0
-verts[8].backendset = 1
+verts[8].solvable = 0
+verts[8].solveInProgress = 1
 #call update to set it on cloud
 updateVariable!(dfg, verts[7])
 updateVariable!(dfg, verts[8])
 
-facts = map(n -> addFactor!(dfg, [verts[n], verts[n+1]], LinearConditional(Normal(50.0,2.0))), 1:(numNodes-1))
-
-
+facts = map(n ->
+    addFactor!(dfg, [verts[n], verts[n+1]], LinearConditional(Normal(50.0,2.0)),solvable=0), 1:(numNodes-1))
 
 @testset "Getting Neighbors" begin
     global dfg,verts
@@ -361,7 +360,7 @@ facts = map(n -> addFactor!(dfg, [verts[n], verts[n+1]], LinearConditional(Norma
     @test symdiff(getNeighbors(dfg, :x5, ready=0), [:x4x5f1,:x5x6f1]) == []
     @test getNeighbors(dfg, :x5, backendset=1) == Symbol[]
     @test symdiff(getNeighbors(dfg, :x5, backendset=0),[:x4x5f1,:x5x6f1]) == []
-    @test getNeighbors(dfg, :x7x8f1, ready=0) == [:x8]
+    @test getNeighbors(dfg, :x7x8f1, ready=0) == [:x7, :x8]
     @test getNeighbors(dfg, :x7x8f1, backendset=0) == [:x7]
     @test getNeighbors(dfg, :x7x8f1, ready=1) == [:x7]
     @test getNeighbors(dfg, :x7x8f1, backendset=1) == [:x8]

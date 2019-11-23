@@ -38,8 +38,8 @@ mutable struct DFGFactor{T, S} <: AbstractDFGFactor
     label::Symbol
     tags::Vector{Symbol}
     data::GenericFunctionNodeData{T, S}
-    ready::Int
-    backendset::Int
+	solvable::Int
+    solveInProgress::Int
     _internalId::Int64
     _variableOrderSymbols::Vector{Symbol}
     DFGFactor{T, S}(label::Symbol) where {T, S} = new{T, S}(label, Symbol[], GenericFunctionNodeData{T, S}(), 0, 0, 0, Symbol[])

@@ -98,8 +98,8 @@ function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::Bool
     props["estimateDict"] = JSON2.write(variable.estimateDict)
     props["solverDataDict"] = JSON2.write(Dict(keys(variable.solverDataDict) .=> map(vnd -> pack(dfg, vnd), values(variable.solverDataDict))))
     props["smallData"] = JSON2.write(variable.smallData)
-    props["ready"] = variable.ready
-    props["backendset"] = variable.backendset
+    props["ready"] = variable.solvable
+    props["backendset"] = variable.solveInProgress
     # Don't handle big data at the moment.
 
     neo4jNode = Neo4j.createnode(dfg.neo4jInstance.graph, props);
@@ -143,8 +143,8 @@ function addFactor!(dfg::CloudGraphsDFG, variables::Vector{DFGVariable}, factor:
     # Include the type
     props["fnctype"] = String(_getname(fnctype))
     props["_variableOrderSymbols"] = JSON2.write(factor._variableOrderSymbols)
-    props["backendset"] = factor.backendset
-    props["ready"] = factor.ready
+    props["backendset"] = factor.solveInProgress
+    props["ready"] = factor.solvable
     # Don't handle big data at the moment.
 
     neo4jNode = Neo4j.createnode(dfg.neo4jInstance.graph, props);
@@ -201,8 +201,8 @@ function getVariable(dfg::CloudGraphsDFG, variableId::Int64)::DFGVariable
     variable.estimateDict = estimateDict
     variable.solverDataDict = solverData
     variable.smallData = smallData
-    variable.ready = props["ready"]
-    variable.backendset = props["backendset"]
+    variable.solvable = props["ready"]
+    variable.solveInProgress = props["backendset"]
 
     # Add to cache
     push!(dfg.variableCache, variable.label=>variable)
@@ -256,8 +256,8 @@ function getFactor(dfg::CloudGraphsDFG, factorId::Int64)::DFGFactor
     factor.tags = tags
     factor.data = fullFactor
     factor._variableOrderSymbols = _variableOrderSymbols
-    factor.ready = ready
-    factor.backendset = backendset
+    factor.solvable = ready
+    factor.solveInProgress = backendset
 
     # Lastly, rebuild the metadata
     factor = dfg.rebuildFactorMetadata!(dfg, factor)
@@ -310,8 +310,8 @@ function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariabl
     props["estimateDict"] = JSON2.write(variable.estimateDict)
     props["solverDataDict"] = JSON2.write(Dict(keys(variable.solverDataDict) .=> map(vnd -> pack(dfg, vnd), values(variable.solverDataDict))))
     props["smallData"] = JSON2.write(variable.smallData)
-    props["ready"] = variable.ready
-    props["backendset"] = variable.backendset
+    props["ready"] = variable.solvable
+    props["backendset"] = variable.solveInProgress
     # Don't handle big data at the moment.
 
     Neo4j.updatenodeproperties(neo4jNode, props)
@@ -361,8 +361,8 @@ function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor
     # Include the type
     props["fnctype"] = String(_getname(fnctype))
     props["_variableOrderSymbols"] = JSON2.write(factor._variableOrderSymbols)
-    props["backendset"] = factor.backendset
-    props["ready"] = factor.ready
+    props["backendset"] = factor.solveInProgress
+    props["ready"] = factor.solvable
     # Don't handle big data at the moment.
 
     Neo4j.updatenodeproperties(neo4jNode, props)
@@ -374,7 +374,7 @@ end
 
 """
     $(SIGNATURES)
-Update a complete DFGFactor in the DFG and update it's relationships.
+Update a complete DFGFactor in the DFG and update its relationships.
 """
 function updateFactor!(dfg::CloudGraphsDFG, variables::Vector{DFGVariable}, factor::DFGFactor)::DFGFactor
     # Update the body
@@ -597,7 +597,7 @@ function getNeighbors(dfg::CloudGraphsDFG, node::T; ready::Union{Nothing, Int}=n
     query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(node.label))--(node) where (node:VARIABLE or node:FACTOR) "
     if ready != nothing || backendset != nothing
         if ready != nothing
-            query = query * " and node.ready = $(ready)"
+            query = query * " and node.ready >= $(ready)"
         end
         if backendset != nothing
             query = query * " and node.backendset = $(backendset)"
@@ -620,7 +620,7 @@ function getNeighbors(dfg::CloudGraphsDFG, label::Symbol; ready::Union{Nothing, 
     query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(label))--(node) where (node:VARIABLE or node:FACTOR) "
     if ready != nothing || backendset != nothing
         if ready != nothing
-            query = query * " and node.ready = $(ready)"
+            query = query * " and node.ready >= $(ready)"
         end
         if backendset != nothing
             query = query * " and node.backendset = $(backendset)"

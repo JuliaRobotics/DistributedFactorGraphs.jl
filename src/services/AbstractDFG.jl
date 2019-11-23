@@ -332,14 +332,11 @@ end
 
 Variables or factors may or may not be 'solvable', depending on a user definition.  Useful for ensuring atomic transactions.
 
-DevNotes:
-- Will be renamed to `var.solvable` -- see DFG #201
-
 Related
 
 isSolveInProgress
 """
-isSolvable(var::Union{DFGVariable, DFGFactor}) = var.ready
+isSolvable(var::Union{DFGVariable, DFGFactor}) = var.solvable
 
 """
     $SIGNATURES
@@ -353,7 +350,7 @@ Related
 
 isSolvable
 """
-isSolveInProgress(var::Union{DFGVariable, DFGFactor}; solveKey::Symbol=:default) = var.backendset
+isSolveInProgress(var::Union{DFGVariable, DFGFactor}; solveKey::Symbol=:default) = var.solveInProgress
 
 """
     $(SIGNATURES)
