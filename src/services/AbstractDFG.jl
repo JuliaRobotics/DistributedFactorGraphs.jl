@@ -493,9 +493,9 @@ end
 Get an adjacency matrix for the DFG, returned as a tuple: adjmat::SparseMatrixCSC{Int}, var_labels::Vector{Symbol) fac_labels::Vector{Symbol).
 Rows are the factors, columns are the variables, with the corresponding labels in fac_labels,var_labels.
 """
-function getAdjacencyMatrixSparse(dfg::G)::Tuple{LightGraphs.SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}} where G <: AbstractDFG
-	varLabels = map(v->v.label, getVariables(dfg))
-	factLabels = map(f->f.label, getFactors(dfg))
+function getAdjacencyMatrixSparse(dfg::G; solvable::Int=1)::Tuple{LightGraphs.SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}} where G <: AbstractDFG
+	varLabels = map(v->v.label, getVariables(dfg, solvable=solvable))
+	factLabels = map(f->f.label, getFactors(dfg, solvable=solvable))
 
 	vDict = Dict(varLabels .=> [1:length(varLabels)...])
 
