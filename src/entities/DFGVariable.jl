@@ -114,8 +114,8 @@ mutable struct DFGVariable <: AbstractDFGVariable
     solverDataDict::Dict{Symbol, VariableNodeData}
     smallData::Dict{String, String}
     bigData::Dict{Symbol, AbstractBigDataEntry}
-    ready::Int
-    backendset::Int
+    solvable::Int
+    solveInProgress::Int
     _internalId::Int64
 end
 

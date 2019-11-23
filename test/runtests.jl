@@ -55,8 +55,8 @@ end
 if get(ENV, "IIF_TEST", "") == "true"
 
     Pkg.add("IncrementalInference")
-    # TODO: Remove this once we move to v0.5.0
-    Pkg.add(PackageSpec(name="IncrementalInference", rev="enhancement/compare_move_dfg"))
+    # Switch to our upstream test branch.
+    Pkg.add(PackageSpec(name="IncrementalInference", rev="upstream/dfg_integration_test"))
     @info "------------------------------------------------------------------------"
     @info "These tests are using IncrementalInference to do additional driver tests"
     @info "------------------------------------------------------------------------"
@@ -66,8 +66,8 @@ if get(ENV, "IIF_TEST", "") == "true"
     apis = [
         GraphsDFG{NoSolverParams}(),
         LightDFG{NoSolverParams}(),
-        # DistributedFactorGraphs.MetaGraphsDFG{NoSolverParams}(),
-        # DistributedFactorGraphs.SymbolDFG{NoSolverParams}(),
+        # # DistributedFactorGraphs.MetaGraphsDFG{NoSolverParams}(),
+        # # DistributedFactorGraphs.SymbolDFG{NoSolverParams}(),
         CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
                                     "testUser", "testRobot", "testSession",
                                     nothing,
