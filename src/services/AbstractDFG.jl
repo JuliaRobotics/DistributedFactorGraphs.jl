@@ -209,7 +209,7 @@ end
 List the DFGVariables in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the variables.
 """
-function getVariables(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{AbstractDFGVariable} where G <: AbstractDFG
+function getVariables(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{AbstractDFGVariable} where G <: AbstractDFG
 	error("getVariables not implemented for $(typeof(dfg))")
 end
 
@@ -227,9 +227,8 @@ Related
 
 ls
 """
-function getVariableIds(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{Symbol} where G <: AbstractDFG
-  vars = getVariables(dfg, regexFilter, tags=tags)
-  # mask = map(v -> length(intersect(v.tags, tags)) > 0, vars )
+function getVariableIds(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
+  vars = getVariables(dfg, regexFilter, tags=tags, solvable=solvable)
   return map(v -> v.label, vars)
 end
 
@@ -239,8 +238,8 @@ end
 List the DFGVariables in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the variables.
 """
-function ls(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{Symbol} where G <: AbstractDFG
-	return getVariableIds(dfg, regexFilter, tags=tags)
+function ls(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
+	return getVariableIds(dfg, regexFilter, tags=tags, solvable=solvable)
 end
 
 """
@@ -248,7 +247,7 @@ end
 List the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
-function getFactors(dfg::G, regexFilter::Union{Nothing, Regex}=nothing)::Vector{AbstractDFGFactor} where G <: AbstractDFG
+function getFactors(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{AbstractDFGFactor} where G <: AbstractDFG
 	error("getFactors not implemented for $(typeof(dfg))")
 end
 
@@ -257,8 +256,8 @@ end
 Get a list of the IDs of the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
-function getFactorIds(dfg::G, regexFilter::Union{Nothing, Regex}=nothing)::Vector{Symbol} where G <: AbstractDFG
-	return map(f -> f.label, getFactors(dfg, regexFilter))
+function getFactorIds(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
+	return map(f -> f.label, getFactors(dfg, regexFilter, solvable=solvable))
 end
 
 """
@@ -267,16 +266,16 @@ List the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
 # Alias
-function lsf(dfg::G, regexFilter::Union{Nothing, Regex}=nothing)::Vector{Symbol} where G <: AbstractDFG
-	return getFactorIds(dfg, regexFilter)
+function lsf(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
+	return getFactorIds(dfg, regexFilter, solvable=solvable)
 end
 
 """
 	$(SIGNATURES)
 Alias for getNeighbors - returns neighbors around a given node label.
 """
-function lsf(dfg::G, label::Symbol)::Vector{Symbol} where G <: AbstractDFG
-  return getNeighbors(dfg, label)
+function lsf(dfg::G, label::Symbol; solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
+  return getNeighbors(dfg, label, solvable=solvable)
 end
 
 """
@@ -300,14 +299,14 @@ end
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor.
 """
-function getNeighbors(dfg::G, node::T; ready::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}  where {G <: AbstractDFG, T <: DFGNode}
+function getNeighbors(dfg::G, node::T; solvable::Int=0, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}  where {G <: AbstractDFG, T <: DFGNode}
 	error("getNeighbors not implemented for $(typeof(dfg))")
 end
 """
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
 """
-function getNeighbors(dfg::G, label::Symbol; ready::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol} where G <: AbstractDFG
+function getNeighbors(dfg::G, label::Symbol; solvable::Int=0, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol} where G <: AbstractDFG
 	error("getNeighbors not implemented for $(typeof(dfg))")
 end
 
@@ -316,15 +315,15 @@ end
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor.
 """
-function ls(dfg::G, node::T)::Vector{Symbol} where {G <: AbstractDFG, T <: DFGNode}
-    return getNeighbors(dfg, node)
+function ls(dfg::G, node::T; solvable::Int=0)::Vector{Symbol} where {G <: AbstractDFG, T <: DFGNode}
+    return getNeighbors(dfg, node, solvable=solvable)
 end
 """
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
 """
-function ls(dfg::G, label::Symbol)::Vector{Symbol} where G <: AbstractDFG
-    return getNeighbors(dfg, label)
+function ls(dfg::G, label::Symbol; solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
+    return getNeighbors(dfg, label, solvable=solvable)
 end
 
 """
@@ -472,9 +471,10 @@ Get an adjacency matrix for the DFG, returned as a Matrix{Union{Nothing, Symbol}
 Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor.
 The first row and first column are factor and variable headings respectively.
 """
-function getAdjacencyMatrix(dfg::G)::Matrix{Union{Nothing, Symbol}} where G <: AbstractDFG
-	varLabels = sort(map(v->v.label, getVariables(dfg)))
-    factLabels = sort(map(f->f.label, getFactors(dfg)))
+function getAdjacencyMatrix(dfg::AbstractDFG; solvable::Int=0)::Matrix{Union{Nothing, Symbol}}
+    #
+    varLabels = sort(map(v->v.label, getVariables(dfg, solvable=solvable)))
+    factLabels = sort(map(f->f.label, getFactors(dfg, solvable=solvable)))
     vDict = Dict(varLabels .=> [1:length(varLabels)...].+1)
 
     adjMat = Matrix{Union{Nothing, Symbol}}(nothing, length(factLabels)+1, length(varLabels)+1)
@@ -482,7 +482,7 @@ function getAdjacencyMatrix(dfg::G)::Matrix{Union{Nothing, Symbol}} where G <: A
     adjMat[2:end, 1] = factLabels
     adjMat[1, 2:end] = varLabels
     for (fIndex, factLabel) in enumerate(factLabels)
-        factVars = getNeighbors(dfg, getFactor(dfg, factLabel))
+        factVars = getNeighbors(dfg, getFactor(dfg, factLabel), solvable=solvable)
         map(vLabel -> adjMat[fIndex+1,vDict[vLabel]] = factLabel, factVars)
     end
     return adjMat
@@ -493,9 +493,9 @@ end
 Get an adjacency matrix for the DFG, returned as a tuple: adjmat::SparseMatrixCSC{Int}, var_labels::Vector{Symbol) fac_labels::Vector{Symbol).
 Rows are the factors, columns are the variables, with the corresponding labels in fac_labels,var_labels.
 """
-function getAdjacencyMatrixSparse(dfg::G)::Tuple{LightGraphs.SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}} where G <: AbstractDFG
-	varLabels = map(v->v.label, getVariables(dfg))
-	factLabels = map(f->f.label, getFactors(dfg))
+function getAdjacencyMatrixSparse(dfg::G; solvable::Int=0)::Tuple{LightGraphs.SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}} where G <: AbstractDFG
+	varLabels = map(v->v.label, getVariables(dfg, solvable=solvable))
+	factLabels = map(f->f.label, getFactors(dfg, solvable=solvable))
 
 	vDict = Dict(varLabels .=> [1:length(varLabels)...])
 

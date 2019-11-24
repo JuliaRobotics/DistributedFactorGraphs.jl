@@ -18,9 +18,10 @@ using Pkg
 # Still test LightDFG and MetaGraphsDFG for the moment until we remove in 0.4.2
 apis = [
     GraphsDFG,
-    DistributedFactorGraphs.MetaGraphsDFG,
+    # DistributedFactorGraphs.MetaGraphsDFG,
     DistributedFactorGraphs.SymbolDFG,
-    LightDFG]
+    LightDFG
+    ]
 for api in apis
     @testset "Testing Driver: $(api)" begin
         @info "Testing Driver: $(api)"
@@ -66,15 +67,15 @@ if get(ENV, "IIF_TEST", "") == "true"
     apis = [
         GraphsDFG{NoSolverParams}(),
         LightDFG{NoSolverParams}(),
-        # # DistributedFactorGraphs.MetaGraphsDFG{NoSolverParams}(),
-        # # DistributedFactorGraphs.SymbolDFG{NoSolverParams}(),
-        CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
-                                    "testUser", "testRobot", "testSession",
-                                    nothing,
-                                    nothing,
-                                    IncrementalInference.decodePackedType,
-                                    IncrementalInference.rebuildFactorMetadata!,
-                                    solverParams=SolverParams())
+        # # # DistributedFactorGraphs.MetaGraphsDFG{NoSolverParams}(),
+        DistributedFactorGraphs.SymbolDFG{NoSolverParams}(),
+        # CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
+        #                             "testUser", "testRobot", "testSession",
+        #                             nothing,
+        #                             nothing,
+        #                             IncrementalInference.decodePackedType,
+        #                             IncrementalInference.rebuildFactorMetadata!,
+        #                             solverParams=SolverParams())
             ]
     for api in apis
         @testset "Testing Driver: $(typeof(api))" begin
