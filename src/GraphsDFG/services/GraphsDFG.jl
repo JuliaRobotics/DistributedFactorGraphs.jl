@@ -282,7 +282,7 @@ end
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor.
 """
-function getNeighbors(dfg::GraphsDFG, node::T; solvable::Int=0, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}  where T <: DFGNode
+function getNeighbors(dfg::GraphsDFG, node::T; solvable::Int=0)::Vector{Symbol}  where T <: DFGNode
     if !haskey(dfg.labelDict, node.label)
         error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
     end
@@ -290,7 +290,6 @@ function getNeighbors(dfg::GraphsDFG, node::T; solvable::Int=0, backendset::Unio
     neighbors = in_neighbors(vert, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
     # Additional filtering
 	neighbors = solvable != 0 ? filter(v -> solvable <= isSolvable(v.dfgNode), neighbors) : neighbors
-    neighbors = backendset != nothing ? filter(v -> isSolveInProgress(v.dfgNode) == backendset, neighbors) : neighbors
     # Variable sorting (order is important)
     if node isa DFGFactor
         order = intersect(node._variableOrderSymbols, map(v->v.dfgNode.label, neighbors))
@@ -303,7 +302,7 @@ end
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
 """
-function getNeighbors(dfg::GraphsDFG, label::Symbol; solvable::Int=0, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}  where T <: DFGNode
+function getNeighbors(dfg::GraphsDFG, label::Symbol; solvable::Int=0)::Vector{Symbol}  where T <: DFGNode
     if !haskey(dfg.labelDict, label)
         error("Variable/factor with label '$(label)' does not exist in the factor graph")
     end
@@ -311,7 +310,6 @@ function getNeighbors(dfg::GraphsDFG, label::Symbol; solvable::Int=0, backendset
     neighbors = in_neighbors(vert, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
     # Additional filtering
     neighbors = solvable != 0 ? filter(v -> isSolvable(v.dfgNode) >= solvable, neighbors) : neighbors
-    neighbors = backendset != nothing ? filter(v -> isSolveInProgress(v.dfgNode) == backendset, neighbors) : neighbors
     # Variable sorting when using a factor (function order is important)
     if vert.dfgNode isa DFGFactor
         vert.dfgNode._variableOrderSymbols

@@ -346,11 +346,10 @@ numNodes = 10
 #     clearSession!!(dfg)
 # end
 
-#change ready and backendset for x7,x8 for improved tests on x7x8f1
+#change solvable and solveInProgress for x7,x8 for improved tests on x7x8f1
 verts = map(n -> addVariable!(dfg, Symbol("x$n"), ContinuousScalar, labels = [:POSE]), 1:numNodes)
 #TODO fix this to use accessors
 verts[7].solvable = 1
-# verts[7].backendset = 0
 verts[8].solvable = 0
 verts[8].solveInProgress = 1
 #call update to set it on cloud
@@ -372,20 +371,20 @@ facts = map(n ->
     @test getNeighbors(dfg, getFactor(dfg, :x1x2f1)) == ls(dfg, getFactor(dfg, :x1x2f1))
     @test getNeighbors(dfg, :x1x2f1) == ls(dfg, :x1x2f1)
 
-    # ready and backendset
+    # solvable checks
     @test getNeighbors(dfg, :x5, solvable=1) == Symbol[]
     #TODO Confirm: test failed on GraphsDFG, don't know if the order is important for isa variable.
     @test symdiff(getNeighbors(dfg, :x5, solvable=0), [:x4x5f1,:x5x6f1]) == []
-    @test getNeighbors(dfg, :x5, backendset=1) == Symbol[]
-    @test symdiff(getNeighbors(dfg, :x5, backendset=0),[:x4x5f1,:x5x6f1]) == []
+    @test getNeighbors(dfg, :x5) == Symbol[]
+    @test symdiff(getNeighbors(dfg, :x5),[:x4x5f1,:x5x6f1]) == []
     @test getNeighbors(dfg, :x7x8f1, solvable=0) == [:x7, :x8]
-    @test getNeighbors(dfg, :x7x8f1, backendset=0) == [:x7]
+    @test getNeighbors(dfg, :x7x8f1) == [:x7]
     @test getNeighbors(dfg, :x7x8f1, solvable=1) == [:x7]
-    @test getNeighbors(dfg, :x7x8f1, backendset=1) == [:x8]
+    @test getNeighbors(dfg, :x7x8f1) == [:x8]
     @test getNeighbors(dfg, verts[1], solvable=0) == [:x1x2f1]
     @test getNeighbors(dfg, verts[1], solvable=1) == Symbol[]
-    @test getNeighbors(dfg, verts[1], backendset=0) == [:x1x2f1]
-    @test getNeighbors(dfg, verts[1], backendset=1) == Symbol[]
+    @test getNeighbors(dfg, verts[1]) == [:x1x2f1]
+    @test getNeighbors(dfg, verts[1]) == Symbol[]
 
 end
 
