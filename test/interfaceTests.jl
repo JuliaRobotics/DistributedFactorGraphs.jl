@@ -327,16 +327,12 @@ map(n -> addFactor!(dfg, [verts[n], verts[n+1]], DFGFactor{Int, :Symbol}(Symbol(
     # Solvable
     @test getNeighbors(dfg, :x5, solvable=1) == Symbol[]
     @test getNeighbors(dfg, :x5, solvable=0) == [:x4x5f1,:x5x6f1]
-    @test getNeighbors(dfg, :x5) == Symbol[]
     @test getNeighbors(dfg, :x5) == [:x4x5f1,:x5x6f1]
     @test getNeighbors(dfg, :x7x8f1, solvable=0) == [:x7, :x8]
-    @test getNeighbors(dfg, :x7x8f1) == [:x7]
     @test getNeighbors(dfg, :x7x8f1, solvable=1) == [:x7]
-    @test getNeighbors(dfg, :x7x8f1) == [:x8]
     @test getNeighbors(dfg, verts[1], solvable=0) == [:x1x2f1]
     @test getNeighbors(dfg, verts[1], solvable=1) == Symbol[]
     @test getNeighbors(dfg, verts[1]) == [:x1x2f1]
-    @test getNeighbors(dfg, verts[1]) == Symbol[]
 
 end
 

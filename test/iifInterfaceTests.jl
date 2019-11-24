@@ -314,7 +314,7 @@ end
     @test symdiff(f_ll, [:abf1, :abf1, :abf1]) == Symbol[]
 
     # Filtered - REF DFG #201
-    @show adjMat = getAdjacencyMatrix(dfg, solvable=1)
+    adjMat = getAdjacencyMatrix(dfg, solvable=1)
     @test size(adjMat) == (1,2)
     @test symdiff(adjMat[1, :], [nothing, :b]) == Symbol[]
     # sparse
@@ -375,16 +375,12 @@ facts = map(n ->
     @test getNeighbors(dfg, :x5, solvable=1) == Symbol[]
     #TODO Confirm: test failed on GraphsDFG, don't know if the order is important for isa variable.
     @test symdiff(getNeighbors(dfg, :x5, solvable=0), [:x4x5f1,:x5x6f1]) == []
-    @test getNeighbors(dfg, :x5) == Symbol[]
     @test symdiff(getNeighbors(dfg, :x5),[:x4x5f1,:x5x6f1]) == []
     @test getNeighbors(dfg, :x7x8f1, solvable=0) == [:x7, :x8]
-    @test getNeighbors(dfg, :x7x8f1) == [:x7]
     @test getNeighbors(dfg, :x7x8f1, solvable=1) == [:x7]
-    @test getNeighbors(dfg, :x7x8f1) == [:x8]
     @test getNeighbors(dfg, verts[1], solvable=0) == [:x1x2f1]
     @test getNeighbors(dfg, verts[1], solvable=1) == Symbol[]
     @test getNeighbors(dfg, verts[1]) == [:x1x2f1]
-    @test getNeighbors(dfg, verts[1]) == Symbol[]
 
 end
 
