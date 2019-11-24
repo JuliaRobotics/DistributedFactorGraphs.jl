@@ -10,11 +10,9 @@ end
 @testset "Building a simple Graph" begin
     global dfg,v1,v2,f1
     # Use IIF to add the variables and factors
-    v1 = addVariable!(dfg, :a, ContinuousScalar, labels = [:POSE])
-    v2 = addVariable!(dfg, :b, ContinuousScalar, labels = [:LANDMARK])
-    f1 = addFactor!(dfg, [:a; :b], LinearConditional(Normal(50.0,2.0)) )
-    # f1 = addFactor!(fg,[:x0], Prior( pd ) )
-    # @test_throws Exception addFactor!(dfg, DFGFactor{Int, :Symbol}("f2"), [v1, DFGVariable("Nope")])
+    v1 = addVariable!(dfg, :a, ContinuousScalar, labels = [:POSE], solvable=0)
+    v2 = addVariable!(dfg, :b, ContinuousScalar, labels = [:LANDMARK], solvable=1)
+    f1 = addFactor!(dfg, [:a; :b], LinearConditional(Normal(50.0,2.0)), solvable=0)
 end
 
 #test before anything changes
@@ -88,6 +86,15 @@ end
     @test length(lsf(dfg)) == 1 # Unless we add the prior!
     @test symdiff([:a, :b], getVariableIds(dfg)) == []
     @test getFactorIds(dfg) == [:abf1] # Unless we add the prior!
+    # Additional testing for https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/201
+    @test symdiff([:a, :b], getVariableIds(dfg, solvable=0)) == []
+    @test getVariableIds(dfg, solvable=1) == [:b]
+    @test map(v->v.label, getVariables(dfg, solvable=1)) == [:b]
+    @test getFactorIds(dfg) == [:abf1]
+    @test getFactorIds(dfg, solvable=1) == []
+    @test getFactorIds(dfg, solvable=0) == [:abf1]
+    @test map(f->f.label, getFactors(dfg, solvable=0)) == [:abf1]
+    @test map(f->f.label, getFactors(dfg, solvable=1)) == []
     #
     @test lsf(dfg, :a) == [f1.label]
     # Tags
@@ -280,7 +287,7 @@ end
     global dfg,v1,v2,f1
     @test isFullyConnected(dfg) == true
     @test hasOrphans(dfg) == false
-    addVariable!(dfg, :orphan, ContinuousScalar, labels = [:POSE])
+    addVariable!(dfg, :orphan, ContinuousScalar, labels = [:POSE], solvable=0)
     @test isFullyConnected(dfg) == false
     @test hasOrphans(dfg) == true
 end
@@ -288,6 +295,7 @@ end
 # Adjacency matrices
 @testset "Adjacency Matrices" begin
     global dfg,v1,v2,f1
+
     # Normal
     adjMat = getAdjacencyMatrix(dfg)
     @test size(adjMat) == (2,4)
@@ -304,6 +312,16 @@ end
     @test adjMat[1, indexOf(v_ll, :b)] == 1
     @test symdiff(v_ll, [:a, :b, :orphan]) == Symbol[]
     @test symdiff(f_ll, [:abf1, :abf1, :abf1]) == Symbol[]
+
+    # Filtered - REF DFG #201
+    @show adjMat = getAdjacencyMatrix(dfg, solvable=1)
+    @test size(adjMat) == (1,2)
+    @test symdiff(adjMat[1, :], [nothing, :b]) == Symbol[]
+    # sparse
+    @show adjMat, v_ll, f_ll = getAdjacencyMatrixSparse(dfg, solvable=1)
+    @test size(adjMat) == (0,1)
+    @test v_ll == [:b]
+    @test f_ll == []
 end
 
 # Deletions
