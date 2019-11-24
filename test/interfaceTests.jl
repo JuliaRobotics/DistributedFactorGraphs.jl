@@ -224,6 +224,9 @@ end
     #For now spot check
     @test solverDataDict(newvar) == solverDataDict(var)
     @test estimates(newvar) == estimates(var)
+    @test getMaxPPE(estimates(newvar)[:default]) == estimates(newvar)[:default].max
+    @test getMeanPPE(estimates(newvar)[:default]) == estimates(newvar)[:default].mean
+    @test getSuggestedPPE(estimates(newvar)[:default]) == estimates(newvar)[:default].suggested
 
     # Delete :default and replace to see if new ones can be added
     delete!(estimates(newvar), :default)
@@ -243,7 +246,7 @@ end
     global dfg,v1,v2,f1
     @test isFullyConnected(dfg) == true
     @test hasOrphans(dfg) == false
-    addVariable!(dfg, DFGVariable(:orphan))
+    addVariable!(dfg, DFGVariable(:orphan, TestInferenceVariable1()))
     @test isFullyConnected(dfg) == false
     @test hasOrphans(dfg) == true
 end
@@ -342,7 +345,7 @@ end
     dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
     # Only returns x1 and x2
     @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
-    # Test include orphan factorsVoid
+    # Test include orphan factors
     dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 1, true)
     @test symdiff([:x1, :x1x2f1], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
     # Test adding to the dfg
@@ -352,6 +355,13 @@ end
     dfgSubgraph = getSubgraph(dfg,[:x1, :x2, :x1x2f1])
     # Only returns x1 and x2
     @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+
+    # DFG issue #201 Test include orphan factors with filtering - should only return x7 with solvable=1
+    dfgSubgraph = getSubgraphAroundNode(dfg, getFactor(dfg, :x7x8f1), 1, true, solvable=0)
+    @test symdiff([:x7, :x8, :x7x8f1], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+    # Filter - always returns the node you start at but filters around that.
+    dfgSubgraph = getSubgraphAroundNode(dfg, getFactor(dfg, :x7x8f1), 1, true, solvable=1)
+    @test symdiff([:x7x8f1, :x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
 
     # DFG issue #95 - confirming that getSubgraphAroundNode retains order
     # REF: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/95

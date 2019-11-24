@@ -9,6 +9,8 @@ using Reexport
 using JSON2
 using LinearAlgebra
 using SparseArrays
+# This is used in the definition of getAdjacencyMatrixSparse
+using LightGraphs
 
 # Entities
 include("entities/AbstractDFG.jl")
@@ -21,6 +23,7 @@ export AbstractParams, NoSolverParams
 export DFGNode, DFGVariable, DFGFactor, AbstractDFGVariable, AbstractDFGFactor
 export InferenceType, PackedInferenceType, FunctorInferenceType, InferenceVariable, ConvolutionObject
 export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
+export getMaxPPE, getMeanPPE, getSuggestedPPE
 export label, timestamp, tags, estimates, estimate, data, softtype, solverData, getData, solverDataDict, setSolverData, internalId, smallData, bigData
 export DFGVariableSummary, DFGFactorSummary, AbstractDFGSummary
 
@@ -85,9 +88,6 @@ include("GraphsDFG/GraphsDFG.jl")
 
 # Include the FilesDFG API.
 include("FileDFG/FileDFG.jl")
-
-# Include the LightGraphs.jl (MetaGraphs.jl) API.
-include("MetaGraphsDFG/MetaGraphsDFG.jl")
 
 include("SymbolDFG/SymbolDFG.jl")
 using .SymbolDFGs

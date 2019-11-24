@@ -4,6 +4,8 @@ struct SingletonInferenceVariable <: InferenceVariable end
 
 """
 $(TYPEDEF)
+
+Main data container for Level2 data -- see developer wiki.
 """
 mutable struct VariableNodeData{T<:InferenceVariable}
   val::Array{Float64,2}
@@ -21,15 +23,25 @@ mutable struct VariableNodeData{T<:InferenceVariable}
   dontmargin::Bool
   # Tonio surprise TODO
   # frontalonly::Bool
-  # A valid, packable default constructor is needed.
-
 end
 
-VariableNodeData(val::Array{Float64,2},bw::Array{Float64,2},BayesNetOutVertIDs::Array{Symbol,1},dimIDs::Array{Int,1},dims::Int,eliminated::Bool,BayesNetVertID::Symbol,separator::Array{Symbol,1},softtype::T,initialized::Bool,inferdim::Float64,ismargin::Bool,dontmargin::Bool) where T <: InferenceVariable = VariableNodeData{T}(val,bw,BayesNetOutVertIDs,dimIDs,dims,eliminated,BayesNetVertID,separator,softtype::T,initialized,inferdim,ismargin,dontmargin)
+# Julia is issuing a warning, this doesn't look to be necessary.
+# VariableNodeData(val::Array{Float64,2},
+# 				 bw::Array{Float64,2},
+# 				 BayesNetOutVertIDs::Array{Symbol,1},
+# 				 dimIDs::Array{Int,1},
+# 				 dims::Int,eliminated::Bool,
+# 				 BayesNetVertID::Symbol,
+# 				 separator::Array{Symbol,1},
+# 				 softtype::T,
+# 				 initialized::Bool,
+# 				 inferdim::Float64,
+# 				 ismargin::Bool,
+# 				 dontmargin::Bool) where T <: InferenceVariable = VariableNodeData{T}(val,bw,BayesNetOutVertIDs,dimIDs,dims,eliminated,BayesNetVertID,separator,softtype::T,initialized,inferdim,ismargin,dontmargin)
 
 function VariableNodeData()
     st = stacktrace()
-    @warn "VariableNodeData() is depreciated please use VariableNodeData{T}() or VariableNodeData(softtype::T) where T <: InferenceVariable. Enable DEBUG logging for stack trace."
+    @warn "VariableNodeData() is deprecated please use VariableNodeData{T}() or VariableNodeData(softtype::T) where T <: InferenceVariable. Enable DEBUG logging for stack trace."
     @debug st
     VariableNodeData{InferenceVariable}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], SingletonInferenceVariable(), false, 0.0, false, false)
 end
@@ -95,6 +107,7 @@ MeanMaxPPE(solverKey::Symbol, suggested::Vector{Float64}, max::Vector{Float64},m
 
 getMaxPPE(est::AbstractPointParametricEst) = est.max
 getMeanPPE(est::AbstractPointParametricEst) = est.mean
+getSuggestedPPE(est::AbstractPointParametricEst) = est.suggested
 getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimestamp
 
 
