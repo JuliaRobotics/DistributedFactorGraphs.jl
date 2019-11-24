@@ -395,13 +395,15 @@ Optionally provide a distance to specify the number of edges should be followed.
 Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
 Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
 """
-function getSubgraphAroundNode(dfg::LightDFG{P,V,F}, node::DFGNode, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::LightDFG=LightDFG{P,V,F}())::LightDFG where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
+function getSubgraphAroundNode(dfg::LightDFG{P,V,F}, node::DFGNode, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::LightDFG=LightDFG{P,V,F}(); solvable::Int=0)::LightDFG where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
     if !exists(dfg,node.label)
         error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
     end
 
 	# Get a list of all unique neighbors inside 'distance'
 	ns = neighborhood(dfg.g, dfg.g.labels[node.label], distance)
+	# Always return the center node, skip that if we're filtering.
+	solvable != 0 && (filter!(id -> _isSolvable(dfg, dfg.g.labels[id], solvable) || dfg.g.labels[id] == node.label, ns))
 
 	# Copy the section of graph we want
 	_copyIntoGraph!(dfg, addToDFG, ns, includeOrphanFactors)

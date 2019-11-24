@@ -373,7 +373,7 @@ Optionally provide a distance to specify the number of edges should be followed.
 Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
 Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
 """
-function getSubgraphAroundNode(dfg::SymbolDFG, node::DFGNode, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::SymbolDFG=SymbolDFG{AbstractParams}())::SymbolDFG
+function getSubgraphAroundNode(dfg::SymbolDFG, node::DFGNode, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::SymbolDFG=SymbolDFG{AbstractParams}(); solvable::Int=0)::SymbolDFG
     if !exists(dfg,node.label)
         error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
     end
@@ -389,7 +389,7 @@ function getSubgraphAroundNode(dfg::SymbolDFG, node::DFGNode, distance::Int64=1,
 		for cl in curList
 			neighbors = outneighbors(dfg.g, cl)
 			for neighbor in neighbors
-				if !(neighbor in neighborList)
+				if !(neighbor in neighborList) && _isSolvable(dfg, neighbor, solvable)
 					push!(neighborList, neighbor)
 					push!(newNeighbors, neighbor)
 				end
