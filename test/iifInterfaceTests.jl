@@ -355,17 +355,17 @@ facts = map(n ->
     @test getNeighbors(dfg, :x1x2f1) == ls(dfg, :x1x2f1)
 
     # ready and backendset
-    @test getNeighbors(dfg, :x5, ready=1) == Symbol[]
+    @test getNeighbors(dfg, :x5, solvable=1) == Symbol[]
     #TODO Confirm: test failed on GraphsDFG, don't know if the order is important for isa variable.
-    @test symdiff(getNeighbors(dfg, :x5, ready=0), [:x4x5f1,:x5x6f1]) == []
+    @test symdiff(getNeighbors(dfg, :x5, solvable=0), [:x4x5f1,:x5x6f1]) == []
     @test getNeighbors(dfg, :x5, backendset=1) == Symbol[]
     @test symdiff(getNeighbors(dfg, :x5, backendset=0),[:x4x5f1,:x5x6f1]) == []
-    @test getNeighbors(dfg, :x7x8f1, ready=0) == [:x7, :x8]
+    @test getNeighbors(dfg, :x7x8f1, solvable=0) == [:x7, :x8]
     @test getNeighbors(dfg, :x7x8f1, backendset=0) == [:x7]
-    @test getNeighbors(dfg, :x7x8f1, ready=1) == [:x7]
+    @test getNeighbors(dfg, :x7x8f1, solvable=1) == [:x7]
     @test getNeighbors(dfg, :x7x8f1, backendset=1) == [:x8]
-    @test getNeighbors(dfg, verts[1], ready=0) == [:x1x2f1]
-    @test getNeighbors(dfg, verts[1], ready=1) == Symbol[]
+    @test getNeighbors(dfg, verts[1], solvable=0) == [:x1x2f1]
+    @test getNeighbors(dfg, verts[1], solvable=1) == Symbol[]
     @test getNeighbors(dfg, verts[1], backendset=0) == [:x1x2f1]
     @test getNeighbors(dfg, verts[1], backendset=1) == Symbol[]
 

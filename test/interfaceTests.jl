@@ -66,7 +66,15 @@ end
     @test length(ls(dfg)) == 2
     @test length(lsf(dfg)) == 1
     @test symdiff([:a, :b], getVariableIds(dfg)) == []
+    # Additional testing for https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/201
+    @test symdiff([:a, :b], getVariableIds(dfg, solvable=0)) == []
+    v2.solvable = 1
+    @test getVariableIds(dfg, solvable=1) == [:b]
+    @test getVariables(dfg, solvable=1) == [v2]
     @test getFactorIds(dfg) == [:f1]
+    @test getFactorIds(dfg, solvable=1) == []
+    @test getFactorIds(dfg, solvable=0) == [:f1]
+    @test getFactors(dfg, solvable=0) == [f1]
     #
     @test lsf(dfg, :a) == [f1.label]
     # Tags
@@ -259,6 +267,17 @@ end
     @test adjMat[1, indexOf(v_ll, :b)] == 1
     @test symdiff(v_ll, [:a, :b, :orphan]) == Symbol[]
     @test symdiff(f_ll, [:f1, :f1, :f1]) == Symbol[]
+
+    # Filtered - REF DFG #201
+    adjMat = getAdjacencyMatrix(dfg, solvable=1)
+    @test size(adjMat) == (1,2)
+    @test symdiff(adjMat[1, :], [nothing, :b]) == Symbol[]
+    # sparse
+    adjMat, v_ll, f_ll = getAdjacencyMatrixSparse(dfg, solvable=1)
+    @test size(adjMat) == (0,1)
+    @test v_ll == [:b]
+    @test f_ll == []
+
 end
 
 # Deletions
@@ -304,16 +323,16 @@ map(n -> addFactor!(dfg, [verts[n], verts[n+1]], DFGFactor{Int, :Symbol}(Symbol(
     @test getNeighbors(dfg, :x1x2f1) == ls(dfg, :x1x2f1)
 
     # ready and backendset
-    @test getNeighbors(dfg, :x5, ready=1) == Symbol[]
-    @test getNeighbors(dfg, :x5, ready=0) == [:x4x5f1,:x5x6f1]
+    @test getNeighbors(dfg, :x5, solvable=1) == Symbol[]
+    @test getNeighbors(dfg, :x5, solvable=0) == [:x4x5f1,:x5x6f1]
     @test getNeighbors(dfg, :x5, backendset=1) == Symbol[]
     @test getNeighbors(dfg, :x5, backendset=0) == [:x4x5f1,:x5x6f1]
-    @test getNeighbors(dfg, :x7x8f1, ready=0) == [:x7, :x8]
+    @test getNeighbors(dfg, :x7x8f1, solvable=0) == [:x7, :x8]
     @test getNeighbors(dfg, :x7x8f1, backendset=0) == [:x7]
-    @test getNeighbors(dfg, :x7x8f1, ready=1) == [:x7]
+    @test getNeighbors(dfg, :x7x8f1, solvable=1) == [:x7]
     @test getNeighbors(dfg, :x7x8f1, backendset=1) == [:x8]
-    @test getNeighbors(dfg, verts[1], ready=0) == [:x1x2f1]
-    @test getNeighbors(dfg, verts[1], ready=1) == Symbol[]
+    @test getNeighbors(dfg, verts[1], solvable=0) == [:x1x2f1]
+    @test getNeighbors(dfg, verts[1], solvable=1) == Symbol[]
     @test getNeighbors(dfg, verts[1], backendset=0) == [:x1x2f1]
     @test getNeighbors(dfg, verts[1], backendset=1) == Symbol[]
 

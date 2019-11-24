@@ -238,9 +238,9 @@ Optionally specify a label regular expression to retrieves a subset of the varia
 function getVariables(dfg::GraphsDFG,
                       regexFilter::Union{Nothing, Regex}=nothing;
                       tags::Vector{Symbol}=Symbol[],
-                      solvable::Int=0  )::Vector{DFGVariable}
+                      solvable::Union{Nothing, Int}=nothing)::Vector{DFGVariable}
     #
-    variables = map(v -> v.dfgNode, filter(n -> (n.dfgNode isa DFGVariable) && (solvable <= isSolvable(n.dfgNode)), Graphs.vertices(dfg.g)))
+    variables = map(v -> v.dfgNode, filter(n -> (n.dfgNode isa DFGVariable) && (solvable != nothing ? solvable <= isSolvable(n.dfgNode) : true), Graphs.vertices(dfg.g)))
     # filter on solvable
 
     # filter on regex
@@ -261,8 +261,8 @@ end
 List the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
-function getFactors(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{DFGFactor}
-	factors = map(v -> v.dfgNode, filter(n -> (n.dfgNode isa DFGFactor) && solvable <= isSolvable(n.dfgNode), Graphs.vertices(dfg.g)))
+function getFactors(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; solvable::Union{Nothing, Int}=nothing)::Vector{DFGFactor}
+	factors = map(v -> v.dfgNode, filter(n -> (n.dfgNode isa DFGFactor) && (solvable != nothing ? solvable <= isSolvable(n.dfgNode) : true), Graphs.vertices(dfg.g)))
 
 	if regexFilter != nothing
 		factors = filter(f -> occursin(regexFilter, String(f.label)), factors)
