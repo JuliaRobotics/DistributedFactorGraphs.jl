@@ -97,6 +97,7 @@ MeanMaxPPE(solverKey::Symbol, suggested::Vector{Float64}, max::Vector{Float64},m
 
 getMaxPPE(est::AbstractPointParametricEst) = est.max
 getMeanPPE(est::AbstractPointParametricEst) = est.mean
+getSuggestedPPE(est::AbstractPointParametricEst) = est.suggested
 getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimestamp
 
 
