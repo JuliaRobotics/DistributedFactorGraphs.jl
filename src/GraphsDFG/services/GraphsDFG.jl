@@ -261,8 +261,9 @@ end
 List the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
-function getFactors(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGFactor}
-	factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGFactor, Graphs.vertices(dfg.g)))
+function getFactors(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{DFGFactor}
+	factors = map(v -> v.dfgNode, filter(n -> (n.dfgNode isa DFGFactor) && solvable <= isSolvable(n.dfgNode), Graphs.vertices(dfg.g)))
+
 	if regexFilter != nothing
 		factors = filter(f -> occursin(regexFilter, String(f.label)), factors)
 	end
@@ -288,7 +289,7 @@ function getNeighbors(dfg::GraphsDFG, node::T; solvable::Union{Nothing, Int}=not
     vert = dfg.g.vertices[dfg.labelDict[node.label]]
     neighbors = in_neighbors(vert, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
     # Additional filtering
-	neighbors = ready != nothing ? filter(v -> solvable <= isSolvable(v.dfgNode), neighbors) : neighbors
+	neighbors = solvable != nothing ? filter(v -> solvable <= isSolvable(v.dfgNode), neighbors) : neighbors
     neighbors = backendset != nothing ? filter(v -> isSolveInProgress(v.dfgNode) == backendset, neighbors) : neighbors
     # Variable sorting (order is important)
     if node isa DFGFactor
@@ -302,14 +303,14 @@ end
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
 """
-function getNeighbors(dfg::GraphsDFG, label::Symbol; ready::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}  where T <: DFGNode
+function getNeighbors(dfg::GraphsDFG, label::Symbol; solvable::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}  where T <: DFGNode
     if !haskey(dfg.labelDict, label)
         error("Variable/factor with label '$(label)' does not exist in the factor graph")
     end
     vert = dfg.g.vertices[dfg.labelDict[label]]
     neighbors = in_neighbors(vert, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
     # Additional filtering
-    neighbors = ready != nothing ? filter(v -> isSolvable(v.dfgNode) >= ready, neighbors) : neighbors
+    neighbors = solvable != nothing ? filter(v -> isSolvable(v.dfgNode) >= solvable, neighbors) : neighbors
     neighbors = backendset != nothing ? filter(v -> isSolveInProgress(v.dfgNode) == backendset, neighbors) : neighbors
     # Variable sorting when using a factor (function order is important)
     if vert.dfgNode isa DFGFactor

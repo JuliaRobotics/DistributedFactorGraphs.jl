@@ -472,8 +472,10 @@ Get an adjacency matrix for the DFG, returned as a Matrix{Union{Nothing, Symbol}
 Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor.
 The first row and first column are factor and variable headings respectively.
 """
-function getAdjacencyMatrix(dfg::G)::Matrix{Union{Nothing, Symbol}} where G <: AbstractDFG
-	varLabels = sort(map(v->v.label, getVariables(dfg)))
+function getAdjacencyMatrix(dfg::AbstractDFG;
+                            solvable::Int=1)::Matrix{Union{Nothing, Symbol}}
+    #
+    varLabels = sort(map(v->v.label, getVariables(dfg)))
     factLabels = sort(map(f->f.label, getFactors(dfg)))
     vDict = Dict(varLabels .=> [1:length(varLabels)...].+1)
 
