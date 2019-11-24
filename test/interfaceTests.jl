@@ -216,6 +216,9 @@ end
     #For now spot check
     @test solverDataDict(newvar) == solverDataDict(var)
     @test estimates(newvar) == estimates(var)
+    @test getMaxPPE(estimates(newvar)[:default]) == estimates(newvar)[:default].max
+    @test getMeanPPE(estimates(newvar)[:default]) == estimates(newvar)[:default].mean
+    @test getSuggestedPPE(estimates(newvar)[:default]) == estimates(newvar)[:default].suggested
 
     # Delete :default and replace to see if new ones can be added
     delete!(estimates(newvar), :default)
