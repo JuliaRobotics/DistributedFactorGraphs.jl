@@ -238,9 +238,9 @@ Optionally specify a label regular expression to retrieves a subset of the varia
 function getVariables(dfg::GraphsDFG,
                       regexFilter::Union{Nothing, Regex}=nothing;
                       tags::Vector{Symbol}=Symbol[],
-                      solvable::Int=0  )::Vector{DFGVariable}
+                      solvable::Int=0)::Vector{DFGVariable}
     #
-    variables = map(v -> v.dfgNode, filter(n -> (n.dfgNode isa DFGVariable) && (solvable <= isSolvable(n.dfgNode)), Graphs.vertices(dfg.g)))
+    variables = map(v -> v.dfgNode, filter(n -> (n.dfgNode isa DFGVariable) && (solvable != 0 ? solvable <= isSolvable(n.dfgNode) : true), Graphs.vertices(dfg.g)))
     # filter on solvable
 
     # filter on regex
@@ -261,8 +261,9 @@ end
 List the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
-function getFactors(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{DFGFactor}
-	factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGFactor, Graphs.vertices(dfg.g)))
+function getFactors(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{DFGFactor}
+	factors = map(v -> v.dfgNode, filter(n -> (n.dfgNode isa DFGFactor) && (solvable != 0 ? solvable <= isSolvable(n.dfgNode) : true), Graphs.vertices(dfg.g)))
+
 	if regexFilter != nothing
 		factors = filter(f -> occursin(regexFilter, String(f.label)), factors)
 	end
@@ -281,14 +282,14 @@ end
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor.
 """
-function getNeighbors(dfg::GraphsDFG, node::T; ready::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}  where T <: DFGNode
+function getNeighbors(dfg::GraphsDFG, node::T; solvable::Int=0, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}  where T <: DFGNode
     if !haskey(dfg.labelDict, node.label)
         error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
     end
     vert = dfg.g.vertices[dfg.labelDict[node.label]]
     neighbors = in_neighbors(vert, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
     # Additional filtering
-	neighbors = ready != nothing ? filter(v -> isSolvable(v.dfgNode) >= ready, neighbors) : neighbors
+	neighbors = solvable != 0 ? filter(v -> solvable <= isSolvable(v.dfgNode), neighbors) : neighbors
     neighbors = backendset != nothing ? filter(v -> isSolveInProgress(v.dfgNode) == backendset, neighbors) : neighbors
     # Variable sorting (order is important)
     if node isa DFGFactor
@@ -302,14 +303,14 @@ end
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
 """
-function getNeighbors(dfg::GraphsDFG, label::Symbol; ready::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}  where T <: DFGNode
+function getNeighbors(dfg::GraphsDFG, label::Symbol; solvable::Int=0, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}  where T <: DFGNode
     if !haskey(dfg.labelDict, label)
         error("Variable/factor with label '$(label)' does not exist in the factor graph")
     end
     vert = dfg.g.vertices[dfg.labelDict[label]]
     neighbors = in_neighbors(vert, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
     # Additional filtering
-    neighbors = ready != nothing ? filter(v -> isSolvable(v.dfgNode) >= ready, neighbors) : neighbors
+    neighbors = solvable != 0 ? filter(v -> isSolvable(v.dfgNode) >= solvable, neighbors) : neighbors
     neighbors = backendset != nothing ? filter(v -> isSolveInProgress(v.dfgNode) == backendset, neighbors) : neighbors
     # Variable sorting when using a factor (function order is important)
     if vert.dfgNode isa DFGFactor
@@ -328,7 +329,7 @@ Optionally provide a distance to specify the number of edges should be followed.
 Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
 Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
 """
-function getSubgraphAroundNode(dfg::GraphsDFG{P}, node::T, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::GraphsDFG=GraphsDFG{P}())::GraphsDFG where {P <: AbstractParams, T <: DFGNode}
+function getSubgraphAroundNode(dfg::GraphsDFG{P}, node::T, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::GraphsDFG=GraphsDFG{P}(); solvable::Int=0)::GraphsDFG where {P <: AbstractParams, T <: DFGNode}
     if !haskey(dfg.labelDict, node.label)
         error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
     end
@@ -342,7 +343,7 @@ function getSubgraphAroundNode(dfg::GraphsDFG{P}, node::T, distance::Int64=1, in
         for (key, node) in curList
             neighbors = in_neighbors(node, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
             for neighbor in neighbors
-                if !haskey(neighborList, neighbor.dfgNode.label)
+                if !haskey(neighborList, neighbor.dfgNode.label) && (isSolvable(neighbor.dfgNode) >= solvable)
                     push!(neighborList, neighbor.dfgNode.label => neighbor)
                     push!(newNeighbors, neighbor.dfgNode.label => neighbor)
                 end

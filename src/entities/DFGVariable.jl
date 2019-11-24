@@ -4,6 +4,8 @@ struct SingletonInferenceVariable <: InferenceVariable end
 
 """
 $(TYPEDEF)
+
+Main data container for Level2 data -- see developer wiki.
 """
 mutable struct VariableNodeData{T<:InferenceVariable}
   val::Array{Float64,2}
@@ -39,7 +41,7 @@ end
 
 function VariableNodeData()
     st = stacktrace()
-    @warn "VariableNodeData() is depreciated please use VariableNodeData{T}() or VariableNodeData(softtype::T) where T <: InferenceVariable. Enable DEBUG logging for stack trace."
+    @warn "VariableNodeData() is deprecated please use VariableNodeData{T}() or VariableNodeData(softtype::T) where T <: InferenceVariable. Enable DEBUG logging for stack trace."
     @debug st
     VariableNodeData{InferenceVariable}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], SingletonInferenceVariable(), false, 0.0, false, false)
 end
@@ -105,6 +107,7 @@ MeanMaxPPE(solverKey::Symbol, suggested::Vector{Float64}, max::Vector{Float64},m
 
 getMaxPPE(est::AbstractPointParametricEst) = est.max
 getMeanPPE(est::AbstractPointParametricEst) = est.mean
+getSuggestedPPE(est::AbstractPointParametricEst) = est.suggested
 getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimestamp
 
 
