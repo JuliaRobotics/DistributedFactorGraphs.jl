@@ -291,20 +291,11 @@ function _isSolvable(dfg::LightDFG, label::Symbol, ready::Int)::Bool
 	return false
 end
 
-function _isbackendset(dfg::LightDFG, label::Symbol, backendset::Int)::Bool
-	haskey(dfg.g.variables, label) && (return dfg.g.variables[label].solveInProgress == backendset)
-	haskey(dfg.g.factors, label) && (return dfg.g.factors[label].solveInProgress == backendset)
-
-	#TODO should this be a breaking error?
-	@error "Node not a factor or variable"
-	return false
-end
-
 """
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor.
 """
-function getNeighbors(dfg::LightDFG, node::DFGNode; solvable::Int=0, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}
+function getNeighbors(dfg::LightDFG, node::DFGNode; solvable::Int=0)::Vector{Symbol}
 	label = node.label
     if !exists(dfg, label)
         error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
@@ -314,7 +305,6 @@ function getNeighbors(dfg::LightDFG, node::DFGNode; solvable::Int=0, backendset:
 	neighbors_ll = [dfg.g.labels[i] for i in neighbors_il]
     # Additional filtering
     solvable != 0 && filter!(lbl -> _isSolvable(dfg, lbl, solvable), neighbors_ll)
-	backendset != nothing && filter!(lbl -> _isbackendset(dfg, lbl, backendset), neighbors_ll)
 
     # Variable sorting (order is important)
     if typeof(node) <: AbstractDFGFactor
@@ -330,7 +320,7 @@ end
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
 """
-function getNeighbors(dfg::LightDFG, label::Symbol; solvable::Int=0, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}
+function getNeighbors(dfg::LightDFG, label::Symbol; solvable::Int=0)::Vector{Symbol}
 	if !exists(dfg, label)
         error("Variable/factor with label '$(label)' does not exist in the factor graph")
     end
@@ -339,7 +329,6 @@ function getNeighbors(dfg::LightDFG, label::Symbol; solvable::Int=0, backendset:
 	neighbors_ll = [dfg.g.labels[i] for i in neighbors_il]
     # Additional filtering
     solvable != 0 && filter!(lbl -> _isSolvable(dfg, lbl, solvable), neighbors_ll)
-	backendset != nothing && filter!(lbl -> _isbackendset(dfg, lbl, backendset), neighbors_ll)
 
     # Variable sorting (order is important)
     if haskey(dfg.g.factors, label)

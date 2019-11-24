@@ -299,14 +299,14 @@ end
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor.
 """
-function getNeighbors(dfg::G, node::T; solvable::Int=0, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}  where {G <: AbstractDFG, T <: DFGNode}
+function getNeighbors(dfg::G, node::T; solvable::Int=0)::Vector{Symbol}  where {G <: AbstractDFG, T <: DFGNode}
 	error("getNeighbors not implemented for $(typeof(dfg))")
 end
 """
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
 """
-function getNeighbors(dfg::G, label::Symbol; solvable::Int=0, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol} where G <: AbstractDFG
+function getNeighbors(dfg::G, label::Symbol; solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
 	error("getNeighbors not implemented for $(typeof(dfg))")
 end
 

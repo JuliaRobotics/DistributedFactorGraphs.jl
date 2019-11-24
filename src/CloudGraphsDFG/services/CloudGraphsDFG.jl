@@ -507,15 +507,10 @@ hasOrphans(dfg::CloudGraphsDFG)::Bool = !isFullyConnected(dfg)
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor.
 """
-function getNeighbors(dfg::CloudGraphsDFG, node::T; ready::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}  where T <: DFGNode
+function getNeighbors(dfg::CloudGraphsDFG, node::T; ready::Union{Nothing, Int}=nothing)::Vector{Symbol}  where T <: DFGNode
     query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(node.label))--(node) where (node:VARIABLE or node:FACTOR) "
-    if ready != nothing || backendset != nothing
-        if ready != nothing
-            query = query * " and node.solvable >= $(ready)"
-        end
-        if backendset != nothing
-            query = query * " and node.solveInProgress = $(backendset)"
-        end
+    if ready != nothing
+        query = query * " and node.ready >= $(ready)"
     end
     @debug "[Query] $query"
     neighbors = _getLabelsFromCyphonQuery(dfg.neo4jInstance, query)
@@ -530,15 +525,10 @@ end
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
 """
-function getNeighbors(dfg::CloudGraphsDFG, label::Symbol; ready::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}
+function getNeighbors(dfg::CloudGraphsDFG, label::Symbol; ready::Union{Nothing, Int}=nothing)::Vector{Symbol}
     query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(label))--(node) where (node:VARIABLE or node:FACTOR) "
-    if ready != nothing || backendset != nothing
-        if ready != nothing
-            query = query * " and node.solvable >= $(ready)"
-        end
-        if backendset != nothing
-            query = query * " and node.solveInProgress = $(backendset)"
-        end
+    if ready != nothing
+        query = query * " and node.ready >= $(ready)"
     end
     @debug "[Query] $query"
     neighbors = _getLabelsFromCyphonQuery(dfg.neo4jInstance, query)
