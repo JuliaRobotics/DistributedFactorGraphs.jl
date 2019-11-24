@@ -23,11 +23,21 @@ mutable struct VariableNodeData{T<:InferenceVariable}
   dontmargin::Bool
   # Tonio surprise TODO
   # frontalonly::Bool
-  # A valid, packable default constructor is needed.
-
 end
 
-VariableNodeData(val::Array{Float64,2},bw::Array{Float64,2},BayesNetOutVertIDs::Array{Symbol,1},dimIDs::Array{Int,1},dims::Int,eliminated::Bool,BayesNetVertID::Symbol,separator::Array{Symbol,1},softtype::T,initialized::Bool,inferdim::Float64,ismargin::Bool,dontmargin::Bool) where T <: InferenceVariable = VariableNodeData{T}(val,bw,BayesNetOutVertIDs,dimIDs,dims,eliminated,BayesNetVertID,separator,softtype::T,initialized,inferdim,ismargin,dontmargin)
+# Julia is issuing a warning, this doesn't look to be necessary.
+# VariableNodeData(val::Array{Float64,2},
+# 				 bw::Array{Float64,2},
+# 				 BayesNetOutVertIDs::Array{Symbol,1},
+# 				 dimIDs::Array{Int,1},
+# 				 dims::Int,eliminated::Bool,
+# 				 BayesNetVertID::Symbol,
+# 				 separator::Array{Symbol,1},
+# 				 softtype::T,
+# 				 initialized::Bool,
+# 				 inferdim::Float64,
+# 				 ismargin::Bool,
+# 				 dontmargin::Bool) where T <: InferenceVariable = VariableNodeData{T}(val,bw,BayesNetOutVertIDs,dimIDs,dims,eliminated,BayesNetVertID,separator,softtype::T,initialized,inferdim,ismargin,dontmargin)
 
 function VariableNodeData()
     st = stacktrace()

@@ -25,8 +25,13 @@ function unpackVariable(dfg::G, packedProps::Dict{String, Any})::DFGVariable whe
     packed = JSON2.read(packedProps["solverDataDict"], Dict{String, PackedVariableNodeData})
     solverData = Dict(Symbol.(keys(packed)) .=> map(p -> unpack(dfg, p), values(packed)))
 
-    # Rebuild DFGVariable
-    variable = DFGVariable(Symbol(packedProps["label"]))
+    # Rebuild DFGVariable using the first solver softtype in solverData
+    if length(solverData) > 0
+        variable = DFGVariable(Symbol(packedProps["label"]), first(solverData)[2].softtype)
+    else
+        @warn "The variable $label in this file does not have any solver data. This will not be supported in the future, please add at least one solverData structure."
+        variable = DFGVariable(Symbol(packedProps["label"]))
+    end
     variable.timestamp = timestamp
     variable.tags = tags
     variable.estimateDict = estimateDict
@@ -82,7 +87,7 @@ function unpack(dfg::G, d::PackedVariableNodeData)::VariableNodeData where G <: 
       error("The variable doesn't seem to have a softtype. It needs to set up with an InferenceVariable from IIF. This will happen if you use DFG to add serialized variables directly and try use them. Please use IncrementalInference.addVariable().")
   end
 
-  return VariableNodeData(M3,M4, d.BayesNetOutVertIDs,
+  return VariableNodeData{typeof(st)}(M3,M4, d.BayesNetOutVertIDs,
     d.dimIDs, d.dims, d.eliminated, d.BayesNetVertID, d.separator,
     st, d.initialized, d.inferdim, d.ismargin, d.dontmargin )
 end
