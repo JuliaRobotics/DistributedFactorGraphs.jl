@@ -509,18 +509,8 @@ Retrieve a list of labels of the immediate neighbors around a given variable or 
 """
 function getNeighbors(dfg::CloudGraphsDFG, node::T; ready::Union{Nothing, Int}=nothing)::Vector{Symbol}  where T <: DFGNode
     query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(node.label))--(node) where (node:VARIABLE or node:FACTOR) "
-<<<<<<< HEAD
     if ready != nothing
         query = query * " and node.ready >= $(ready)"
-=======
-    if ready != nothing || backendset != nothing
-        if ready != nothing
-            query = query * " and node.solvable >= $(ready)"
-        end
-        if backendset != nothing
-            query = query * " and node.solveInProgress = $(backendset)"
-        end
->>>>>>> 266f80b3a71e8a4f8749fe34d74613606141b7eb
     end
     @debug "[Query] $query"
     neighbors = _getLabelsFromCyphonQuery(dfg.neo4jInstance, query)
@@ -537,18 +527,8 @@ Retrieve a list of labels of the immediate neighbors around a given variable or 
 """
 function getNeighbors(dfg::CloudGraphsDFG, label::Symbol; ready::Union{Nothing, Int}=nothing)::Vector{Symbol}
     query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(label))--(node) where (node:VARIABLE or node:FACTOR) "
-<<<<<<< HEAD
     if ready != nothing
         query = query * " and node.ready >= $(ready)"
-=======
-    if ready != nothing || backendset != nothing
-        if ready != nothing
-            query = query * " and node.solvable >= $(ready)"
-        end
-        if backendset != nothing
-            query = query * " and node.solveInProgress = $(backendset)"
-        end
->>>>>>> 266f80b3a71e8a4f8749fe34d74613606141b7eb
     end
     @debug "[Query] $query"
     neighbors = _getLabelsFromCyphonQuery(dfg.neo4jInstance, query)
