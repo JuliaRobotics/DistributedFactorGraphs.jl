@@ -176,17 +176,15 @@ end
 
     # Session, robot, and user small data tests
     # NOTE: CloudGraphDFG isnt supporting this yet.
-    if !(typeof(dfg) <: CloudGraphsDFG)
-        smallUserData = Dict{Symbol, String}(:a => "42", :b => "Hello")
-        smallRobotData = Dict{Symbol, String}(:a => "43", :b => "Hello")
-        smallSessionData = Dict{Symbol, String}(:a => "44", :b => "Hello")
-        setUserData(dfg, deepcopy(smallUserData))
-        setRobotData(dfg, deepcopy(smallRobotData))
-        setSessionData(dfg, deepcopy(smallSessionData))
-        @test getUserData(dfg) == smallUserData
-        @test getRobotData(dfg) == smallRobotData
-        @test getSessionData(dfg) == smallSessionData
-    end
+    smallUserData = Dict{Symbol, String}(:a => "42", :b => "Hello")
+    smallRobotData = Dict{Symbol, String}(:a => "43", :b => "Hello")
+    smallSessionData = Dict{Symbol, String}(:a => "44", :b => "Hello")
+    setUserData(dfg, deepcopy(smallUserData))
+    setRobotData(dfg, deepcopy(smallRobotData))
+    setSessionData(dfg, deepcopy(smallSessionData))
+    @test getUserData(dfg) == smallUserData
+    @test getRobotData(dfg) == smallRobotData
+    @test getSessionData(dfg) == smallSessionData
 end
 
 @testset "BigData" begin
@@ -318,7 +316,7 @@ end
     @test size(adjMat) == (1,2)
     @test symdiff(adjMat[1, :], [nothing, :b]) == Symbol[]
     # sparse
-    @show adjMat, v_ll, f_ll = getAdjacencyMatrixSparse(dfg, solvable=1)
+    adjMat, v_ll, f_ll = getAdjacencyMatrixSparse(dfg, solvable=1)
     @test size(adjMat) == (0,1)
     @test v_ll == [:b]
     @test f_ll == []

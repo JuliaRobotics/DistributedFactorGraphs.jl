@@ -11,6 +11,7 @@ using Pkg
 ##
 
 # If you want to enable debugging logging (very verbose!)
+# using Logging
 # logger = SimpleLogger(stdout, Logging.Debug)
 # global_logger(logger)
 
@@ -64,13 +65,13 @@ if get(ENV, "IIF_TEST", "") == "true"
         GraphsDFG{NoSolverParams}(),
         LightDFG{NoSolverParams}(),
         DistributedFactorGraphs.SymbolDFG{NoSolverParams}(),
-        # CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
-        #                             "testUser", "testRobot", "testSession",
-        #                             nothing,
-        #                             nothing,
-        #                             IncrementalInference.decodePackedType,
-        #                             IncrementalInference.rebuildFactorMetadata!,
-        #                             solverParams=SolverParams())
+        CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
+                                    "testUser", "testRobot", "testSession",
+                                    nothing,
+                                    nothing,
+                                    IncrementalInference.decodePackedType,
+                                    IncrementalInference.rebuildFactorMetadata!,
+                                    solverParams=SolverParams())
             ]
     for api in apis
         @testset "Testing Driver: $(typeof(api))" begin
