@@ -16,8 +16,15 @@ append!(f1.tags, [:FACTOR])
 st1 = TestInferenceVariable1()
 st2 = TestInferenceVariable2()
 
-v1.solverDataDict[:default].softtype = deepcopy(st1)
-v2.solverDataDict[:default].softtype = deepcopy(st2)
+solverData(v1).softtype = deepcopy(st1)
+solverData(v2).softtype = deepcopy(st2)
+
+# set v2 solvable
+v2.solvable = 1
+# set v1 and f1 solveInProgress
+solverData(v1).solveInProgress = 1
+solverData(f1).solveInProgress = 1
+
 
 # NOTE: Just for testing
 # Override compareAllSpecial for testing our DFGFactor{Int, :Symbol}
@@ -68,7 +75,6 @@ end
     @test symdiff([:a, :b], getVariableIds(dfg)) == []
     # Additional testing for https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/201
     @test symdiff([:a, :b], getVariableIds(dfg, solvable=0)) == []
-    v2.solvable = 1
     @test getVariableIds(dfg, solvable=1) == [:b]
     @test getVariables(dfg, solvable=1) == [v2]
     @test getFactorIds(dfg) == [:f1]
@@ -151,8 +157,13 @@ end
     #solver data is initialized
     @test !isInitialized(dfg, :a)
     @test !isInitialized(v2)
-
     @test !isInitialized(v2, key=:second)
+    # isSolvable and isSolveInProgress
+    @test isSolvable(v1) == 0
+    @test isSolvable(v2) == 1
+    @test isSolvable(f1) == 0
+    @test isSolveInProgress(v1) == 1
+    @test isSolveInProgress(f1) == 1
 
     # Session, robot, and user small data tests
     smallUserData = Dict{Symbol, String}(:a => "42", :b => "Hello")

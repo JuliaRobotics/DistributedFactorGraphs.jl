@@ -8,13 +8,12 @@
     # Same graph as iifInterfaceTests.jl
     numNodes = 10
 
-    #change ready and backendset for x7,x8 for improved tests on x7x8f1
+    #change ready and solvable for x7,x8 for improved tests on x7x8f1
     verts = map(n -> addVariable!(dfg, Symbol("x$n"), ContinuousScalar, labels = [:POSE]), 1:numNodes)
     #TODO fix this to use accessors
     verts[7].solvable = 1
-    # verts[7].backendset = 0
     verts[8].solvable = 0
-    verts[8].solveInProgress = 1
+    solverData(verts[8]).solveInProgress = 1
     #call update to set it on cloud
     updateVariable!(dfg, verts[7])
     updateVariable!(dfg, verts[8])

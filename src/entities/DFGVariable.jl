@@ -21,36 +21,40 @@ mutable struct VariableNodeData{T<:InferenceVariable}
   inferdim::Float64
   ismargin::Bool
   dontmargin::Bool
+  solveInProgress::Int
   # Tonio surprise TODO
   # frontalonly::Bool
 end
 
-# Julia is issuing a warning, this doesn't look to be necessary.
-# VariableNodeData(val::Array{Float64,2},
-# 				 bw::Array{Float64,2},
-# 				 BayesNetOutVertIDs::Array{Symbol,1},
-# 				 dimIDs::Array{Int,1},
-# 				 dims::Int,eliminated::Bool,
-# 				 BayesNetVertID::Symbol,
-# 				 separator::Array{Symbol,1},
-# 				 softtype::T,
-# 				 initialized::Bool,
-# 				 inferdim::Float64,
-# 				 ismargin::Bool,
-# 				 dontmargin::Bool) where T <: InferenceVariable = VariableNodeData{T}(val,bw,BayesNetOutVertIDs,dimIDs,dims,eliminated,BayesNetVertID,separator,softtype::T,initialized,inferdim,ismargin,dontmargin)
+VariableNodeData(val::Array{Float64,2},
+			   bw::Array{Float64,2},
+			   BayesNetOutVertIDs::Array{Symbol,1},
+			   dimIDs::Array{Int,1},
+			   dims::Int,eliminated::Bool,
+			   BayesNetVertID::Symbol,
+			   separator::Array{Symbol,1},
+			   softtype::T,
+			   initialized::Bool,
+			   inferdim::Float64,
+			   ismargin::Bool,
+			   dontmargin::Bool,
+			   solveInProgress::Int=0) where T <: InferenceVariable =
+				  VariableNodeData{T}(val,bw,BayesNetOutVertIDs,dimIDs,dims,eliminated,BayesNetVertID,separator,
+									  softtype::T,initialized,inferdim,ismargin,dontmargin, solveInProgress)
+
 
 function VariableNodeData()
     st = stacktrace()
     @warn "VariableNodeData() is deprecated please use VariableNodeData{T}() or VariableNodeData(softtype::T) where T <: InferenceVariable. Enable DEBUG logging for stack trace."
     @debug st
-    VariableNodeData{InferenceVariable}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], SingletonInferenceVariable(), false, 0.0, false, false)
+    VariableNodeData{InferenceVariable}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], SingletonInferenceVariable(), false, 0.0, false, false, 0)
 end
 
 VariableNodeData{T}() where {T <:InferenceVariable} =
-        VariableNodeData{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], T(), false, 0.0, false, false)
+        VariableNodeData{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], T(), false, 0.0, false, false, 0)
 
 VariableNodeData(softtype::T) where T <: InferenceVariable =
-        VariableNodeData{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], softtype, false, 0.0, false, false)
+        VariableNodeData{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], softtype, false, 0.0, false, false, 0)
 
 """
 $(TYPEDEF)
@@ -71,6 +75,7 @@ mutable struct PackedVariableNodeData
   inferdim::Float64
   ismargin::Bool
   dontmargin::Bool
+  solveInProgress::Int
   PackedVariableNodeData() = new()
   PackedVariableNodeData(x1::Vector{Float64},
                          x2::Int,
@@ -86,7 +91,8 @@ mutable struct PackedVariableNodeData
                          x12::Bool,
                          x13::Float64,
                          x14::Bool,
-                         x15::Bool ) = new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15)
+                         x15::Bool,
+						 x16::Int) = new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16)
 end
 
 # AbstractPointParametricEst interface
@@ -128,7 +134,6 @@ mutable struct DFGVariable <: AbstractDFGVariable
     smallData::Dict{String, String}
     bigData::Dict{Symbol, AbstractBigDataEntry}
     solvable::Int
-    solveInProgress::Int
     _internalId::Int64
 end
 
@@ -145,21 +150,14 @@ function DFGVariable(label::Symbol, _internalId::Int64 = 0) #where {T <:Inferenc
                   Dict{Symbol, MeanMaxPPE}(),
                   Dict{Symbol, VariableNodeData{T}}(:default => VariableNodeData()),
                   Dict{String, String}(),
-                  Dict{Symbol,AbstractBigDataEntry}(), 0, 0, _internalId)
+                  Dict{Symbol,AbstractBigDataEntry}(), 0, _internalId)
 end
 DFGVariable(label::Symbol, softtype::T, _internalId::Int64 = 0) where {T <: InferenceVariable}  =
     DFGVariable(label, now(), Symbol[],
               Dict{Symbol, MeanMaxPPE}(),
               Dict{Symbol, VariableNodeData{T}}(:default => VariableNodeData{T}()),
               Dict{String, String}(),
-              Dict{Symbol,AbstractBigDataEntry}(), 0, 0, _internalId)
-
-# DFGVariable(label::Symbol, _internalId::Int64) =
-#         DFGVariable(label, now(), Symbol[], Dict{Symbol, Dict{Symbol, VariableEstimate}}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), Dict{String, String}(), Dict{Symbol,AbstractBigDataEntry}(), 0, 0, _internalId)
-#
-# DFGVariable(label::Symbol) =
-#         DFGVariable(label, now(), Symbol[], Dict{Symbol, VariableEstimate}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), Dict{String, String}(), Dict{Symbol,AbstractBigDataEntry}(), 0, 0, 0)
-#
+              Dict{Symbol,AbstractBigDataEntry}(), 0, _internalId)
 
 # Accessors
 label(v::DFGVariable) = v.label
