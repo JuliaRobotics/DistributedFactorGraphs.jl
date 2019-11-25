@@ -339,7 +339,7 @@ Related
 
 isSolveInProgress
 """
-isSolvable(var::Union{DFGVariable, DFGFactor}) = var.solvable
+isSolvable(var::Union{DFGVariable, DFGFactor})::Int = var.solvable
 
 """
     $SIGNATURES
@@ -353,7 +353,12 @@ Related
 
 isSolvable
 """
-isSolveInProgress(var::Union{DFGVariable, DFGFactor}; solveKey::Symbol=:default) = var.solveInProgress
+function isSolveInProgress(var::Union{DFGVariable, DFGFactor}; solveKey::Symbol=:default)::Int
+	# Variable
+	var isa DFGVariable && return haskey(solverDataDict(var), solveKey) ? solverDataDict(var)[solveKey].solveInProgress : 0
+	# Factor
+	return solverData(var).solveInProgress
+end
 
 """
     $(SIGNATURES)
@@ -516,27 +521,6 @@ end
 """
     $SIGNATURES
 
-Return boolean whether a factor `label` is present in `<:AbstractDFG`.
-"""
-function hasFactor(dfg::G, label::Symbol)::Bool where {G <: AbstractDFG}
-	@warn "hasFactor() deprecated, please use exists()"
-	return exists(dfg, label)
-end
-
-"""
-    $(SIGNATURES)
-
-Return `::Bool` on whether `dfg` contains the variable `lbl::Symbol`.
-"""
-function hasVariable(dfg::G, label::Symbol)::Bool where {G <: AbstractDFG}
-	@warn "hasVariable() deprecated, please use exists()"
-	return exists(dfg, label) # haskey(vertices(dfg.g), label)
-end
-
-
-"""
-    $SIGNATURES
-
 Returns state of vertex data `.initialized` flag.
 
 Notes:
@@ -562,14 +546,14 @@ end
 
 Return whether `sym::Symbol` represents a variable vertex in the graph.
 """
-isVariable(dfg::G, sym::Symbol) where G <: AbstractDFG = hasVariable(dfg, sym)
+isVariable(dfg::G, sym::Symbol) where G <: AbstractDFG = exists(dfg, sym)
 
 """
     $SIGNATURES
 
 Return whether `sym::Symbol` represents a factor vertex in the graph.
 """
-isFactor(dfg::G, sym::Symbol) where G <: AbstractDFG = hasFactor(dfg, sym)
+isFactor(dfg::G, sym::Symbol) where G <: AbstractDFG = exists(dfg, sym)
 
 """
     $SIGNATURES

@@ -35,7 +35,7 @@ export getUserData, setUserData, getRobotData, setRobotData, getSessionData, set
 export pushUserData!, pushRobotData!, pushSessionData!, popUserData!, popRobotData!, popSessionData!
 
 # Services/AbstractDFG Exports
-export hasFactor, hasVariable, isInitialized, getFactorFunction, isVariable, isFactor
+export isInitialized, getFactorFunction, isVariable, isFactor
 export isSolvable, isSolveInProgress
 export mergeUpdateVariableSolverData!, mergeUpdateGraphSolverData!
 
