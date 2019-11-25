@@ -11,16 +11,16 @@ using Pkg
 ##
 
 # If you want to enable debugging logging (very verbose!)
+# using Logging
 # logger = SimpleLogger(stdout, Logging.Debug)
 # global_logger(logger)
 
 # Test each interface
-# Still test LightDFG and MetaGraphsDFG for the moment until we remove in 0.4.2
 apis = [
     GraphsDFG,
-    DistributedFactorGraphs.MetaGraphsDFG,
     DistributedFactorGraphs.SymbolDFG,
-    LightDFG]
+    LightDFG
+    ]
 for api in apis
     @testset "Testing Driver: $(api)" begin
         @info "Testing Driver: $(api)"
@@ -29,10 +29,8 @@ for api in apis
     end
 end
 
-# Test that we don't export LightDFG and MetaGraphsDFG
 @testset "Deprecated Drivers Test" begin
     @test_throws UndefVarError SymbolDFG{NoSolverParams}()
-    @test_throws UndefVarError MetaGraphsDFG{NoSolverParams}()
 end
 
 # Test special cases
@@ -55,8 +53,8 @@ end
 if get(ENV, "IIF_TEST", "") == "true"
 
     Pkg.add("IncrementalInference")
-    # TODO: Remove this once we move to v0.5.0
-    Pkg.add(PackageSpec(name="IncrementalInference", rev="enhancement/compare_move_dfg"))
+    # Switch to our upstream test branch.
+    Pkg.add(PackageSpec(name="IncrementalInference", rev="upstream/dfg_integration_test"))
     @info "------------------------------------------------------------------------"
     @info "These tests are using IncrementalInference to do additional driver tests"
     @info "------------------------------------------------------------------------"
@@ -66,8 +64,7 @@ if get(ENV, "IIF_TEST", "") == "true"
     apis = [
         GraphsDFG{NoSolverParams}(),
         LightDFG{NoSolverParams}(),
-        # DistributedFactorGraphs.MetaGraphsDFG{NoSolverParams}(),
-        # DistributedFactorGraphs.SymbolDFG{NoSolverParams}(),
+        DistributedFactorGraphs.SymbolDFG{NoSolverParams}(),
         CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
                                     "testUser", "testRobot", "testSession",
                                     nothing,

@@ -25,8 +25,7 @@ function packFactor(dfg::G, f::DFGFactor)::Dict{String, Any} where G <: Abstract
     # Include the type
     props["fnctype"] = String(_getname(fnctype))
     props["_variableOrderSymbols"] = JSON2.write(f._variableOrderSymbols)
-    props["backendset"] = f.backendset
-    props["ready"] = f.ready
+    props["solvable"] = f.solvable
 
     return props
 end
@@ -54,16 +53,14 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any}, iifModule)::DFGFac
 
     # Include the type
     _variableOrderSymbols = JSON2.read(packedProps["_variableOrderSymbols"], Vector{Symbol})
-    backendset = packedProps["backendset"]
-    ready = packedProps["ready"]
+    solvable = packedProps["solvable"]
 
     # Rebuild DFGVariable
     factor = DFGFactor{typeof(fullFactor.fnc), Symbol}(Symbol(label))
     factor.tags = tags
     factor.data = fullFactor
     factor._variableOrderSymbols = _variableOrderSymbols
-    factor.ready = ready
-    factor.backendset = backendset
+    factor.solvable = solvable
 
     # GUARANTEED never to bite us in the ass in the future...
     # ... TODO: refactor if changed: https://github.com/JuliaRobotics/IncrementalInference.jl/issues/350

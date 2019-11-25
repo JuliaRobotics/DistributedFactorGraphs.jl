@@ -42,6 +42,7 @@ So can make orderProperty = label or id.
 """
 function _getLabelsFromCyphonQuery(neo4jInstance::Neo4jInstance, matchCondition::String, orderProperty::String="")::Vector{Symbol}
     query = "match $matchCondition return distinct(node.label) $(orderProperty != "" ? "order by node.$orderProperty" : "")";
+    @debug "[Query] $query"
     result = _queryNeo4j(neo4jInstance, query)
     nodeIds = map(node -> node["row"][1], result.results[1]["data"])
     return Symbol.(nodeIds)

@@ -21,6 +21,7 @@ export AbstractParams, NoSolverParams
 export DFGNode, DFGVariable, DFGFactor, AbstractDFGVariable, AbstractDFGFactor
 export InferenceType, PackedInferenceType, FunctorInferenceType, InferenceVariable, ConvolutionObject
 export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
+export getMaxPPE, getMeanPPE, getSuggestedPPE
 export label, timestamp, tags, estimates, estimate, data, softtype, solverData, getData, solverDataDict, setSolverData, internalId, smallData, bigData
 export DFGVariableSummary, DFGFactorSummary, AbstractDFGSummary
 
@@ -32,7 +33,8 @@ export getUserData, setUserData, getRobotData, setRobotData, getSessionData, set
 export pushUserData!, pushRobotData!, pushSessionData!, popUserData!, popRobotData!, popSessionData!
 
 # Services/AbstractDFG Exports
-export hasFactor, hasVariable, isInitialized, getFactorFunction, isVariable, isFactor
+export isInitialized, getFactorFunction, isVariable, isFactor
+export isSolvable, isSolveInProgress
 export mergeUpdateVariableSolverData!, mergeUpdateGraphSolverData!
 
 # Solver (IIF) Exports
@@ -84,9 +86,6 @@ include("GraphsDFG/GraphsDFG.jl")
 
 # Include the FilesDFG API.
 include("FileDFG/FileDFG.jl")
-
-# Include the LightGraphs.jl (MetaGraphs.jl) API.
-include("MetaGraphsDFG/MetaGraphsDFG.jl")
 
 include("SymbolDFG/SymbolDFG.jl")
 using .SymbolDFGs

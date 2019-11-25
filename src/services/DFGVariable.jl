@@ -8,8 +8,7 @@ function packVariable(dfg::G, v::DFGVariable)::Dict{String, Any} where G <: Abst
     props["estimateDict"] = JSON2.write(v.estimateDict)
     props["solverDataDict"] = JSON2.write(Dict(keys(v.solverDataDict) .=> map(vnd -> pack(dfg, vnd), values(v.solverDataDict))))
     props["smallData"] = JSON2.write(v.smallData)
-    props["ready"] = v.ready
-    props["backendset"] = v.backendset
+    props["solvable"] = v.solvable
     return props
 end
 
@@ -25,15 +24,19 @@ function unpackVariable(dfg::G, packedProps::Dict{String, Any})::DFGVariable whe
     packed = JSON2.read(packedProps["solverDataDict"], Dict{String, PackedVariableNodeData})
     solverData = Dict(Symbol.(keys(packed)) .=> map(p -> unpack(dfg, p), values(packed)))
 
-    # Rebuild DFGVariable
-    variable = DFGVariable(Symbol(packedProps["label"]))
+    # Rebuild DFGVariable using the first solver softtype in solverData
+    if length(solverData) > 0
+        variable = DFGVariable(Symbol(packedProps["label"]), first(solverData)[2].softtype)
+    else
+        @warn "The variable $label in this file does not have any solver data. This will not be supported in the future, please add at least one solverData structure."
+        variable = DFGVariable(Symbol(packedProps["label"]))
+    end
     variable.timestamp = timestamp
     variable.tags = tags
     variable.estimateDict = estimateDict
     variable.solverDataDict = solverData
     variable.smallData = smallData
-    variable.ready = packedProps["ready"]
-    variable.backendset = packedProps["backendset"]
+    variable.solvable = packedProps["solvable"]
 
     return variable
 end
@@ -45,7 +48,7 @@ function pack(dfg::G, d::VariableNodeData)::PackedVariableNodeData where G <: Ab
                                 d.BayesNetOutVertIDs,
                                 d.dimIDs, d.dims, d.eliminated,
                                 d.BayesNetVertID, d.separator,
-                                d.softtype != nothing ? string(d.softtype) : nothing, d.initialized, d.inferdim, d.ismargin, d.dontmargin)
+                                d.softtype != nothing ? string(d.softtype) : nothing, d.initialized, d.inferdim, d.ismargin, d.dontmargin, d.solveInProgress)
 end
 
 function unpack(dfg::G, d::PackedVariableNodeData)::VariableNodeData where G <: AbstractDFG
@@ -82,9 +85,9 @@ function unpack(dfg::G, d::PackedVariableNodeData)::VariableNodeData where G <: 
       error("The variable doesn't seem to have a softtype. It needs to set up with an InferenceVariable from IIF. This will happen if you use DFG to add serialized variables directly and try use them. Please use IncrementalInference.addVariable().")
   end
 
-  return VariableNodeData(M3,M4, d.BayesNetOutVertIDs,
+  return VariableNodeData{typeof(st)}(M3,M4, d.BayesNetOutVertIDs,
     d.dimIDs, d.dims, d.eliminated, d.BayesNetVertID, d.separator,
-    st, d.initialized, d.inferdim, d.ismargin, d.dontmargin )
+    st, d.initialized, d.inferdim, d.ismargin, d.dontmargin, d.solveInProgress)
 end
 
 function compare(a::VariableNodeData, b::VariableNodeData)
@@ -100,6 +103,7 @@ function compare(a::VariableNodeData, b::VariableNodeData)
     abs(a.inferdim - b.inferdim) > 1e-14 && @debug("inferdim is not equal")==nothing && return false
     a.ismargin != b.ismargin && @debug("ismargin is not equal")==nothing && return false
     a.dontmargin != b.dontmargin && @debug("dontmargin is not equal")==nothing && return false
+    a.solveInProgress != b.solveInProgress && @debug("solveInProgress is not equal")==nothing && return false
     typeof(a.softtype) != typeof(b.softtype) && @debug("softtype is not equal")==nothing && return false
     return true
 end

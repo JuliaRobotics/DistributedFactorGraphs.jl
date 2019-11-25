@@ -194,13 +194,16 @@ end
 List the DFGVariables in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the variables.
 """
-function getVariables(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{AbstractDFGVariable}
+function getVariables(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{AbstractDFGVariable}
 
 	# variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGVariable, vertices(dfg.g)))
 	variables = collect(values(dfg.g.variables))
     if regexFilter != nothing
         variables = filter(v -> occursin(regexFilter, String(v.label)), variables)
     end
+	if solvable != 0
+		variables = filter(v -> _isSolvable(dfg, v.label, solvable), variables)
+	end
 	if length(tags) > 0
         mask = map(v -> length(intersect(v.tags, tags)) > 0, variables )
         return variables[mask]
@@ -223,14 +226,15 @@ Related
 ls
 """
 
-function getVariableIds(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{Symbol}
+function getVariableIds(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol}
 
 	# variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGVariable, vertices(dfg.g)))
 	if length(tags) > 0
-		return map(v -> v.label, getVariables(dfg, regexFilter, tags=tags))
+		return map(v -> v.label, getVariables(dfg, regexFilter, tags=tags, solvable=solvable))
 	else
 		variables = collect(keys(dfg.g.variables))
 		regexFilter != nothing && (variables = filter(v -> occursin(regexFilter, String(v)), variables))
+		solvable != 0 && (variables = filter(vId -> _isSolvable(dfg, vId, solvable), variables))
 		return variables
     end
 end
@@ -240,11 +244,14 @@ end
 List the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
-function getFactors(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{AbstractDFGFactor}
+function getFactors(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{AbstractDFGFactor}
 	# factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGFactor, vertices(dfg.g)))
 	factors = collect(values(dfg.g.factors))
 	if regexFilter != nothing
 		factors = filter(f -> occursin(regexFilter, String(f.label)), factors)
+	end
+	if solvable != 0
+		factors = filter(f -> _isSolvable(dfg, f.label, solvable), factors)
 	end
 	return factors
 end
@@ -254,11 +261,14 @@ end
 Get a list of the IDs of the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
-function getFactorIds(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing)::Vector{Symbol}
+function getFactorIds(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{Symbol}
 	# factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGFactor, vertices(dfg.g)))
 	factors = collect(keys(dfg.g.factors))
 	if regexFilter != nothing
 		factors = filter(f -> occursin(regexFilter, String(f)), factors)
+	end
+	if solvable != 0
+		factors = filter(fId -> _isSolvable(dfg, fId, solvable), factors)
 	end
 	return factors
 end
@@ -271,22 +281,13 @@ function isFullyConnected(dfg::LightDFG)::Bool
     return length(LightGraphs.connected_components(dfg.g)) == 1
 end
 
-function _isready(dfg::LightDFG, label::Symbol, ready::Int)::Bool
+function _isSolvable(dfg::LightDFG, label::Symbol, ready::Int)::Bool
 
-	haskey(dfg.g.variables, label) && (return dfg.g.variables[label].ready == ready)
-	haskey(dfg.g.factors, label) && (return dfg.g.factors[label].ready == ready)
+	haskey(dfg.g.variables, label) && (return dfg.g.variables[label].solvable >= ready)
+	haskey(dfg.g.factors, label) && (return dfg.g.factors[label].solvable >= ready)
 
 	#TODO should this be a breaking error?
 	@error "Node not in factor or variable"
-	return false
-end
-
-function _isbackendset(dfg::LightDFG, label::Symbol, backendset::Int)::Bool
-	haskey(dfg.g.variables, label) && (return dfg.g.variables[label].backendset == backendset)
-	haskey(dfg.g.factors, label) && (return dfg.g.factors[label].backendset == backendset)
-
-	#TODO should this be a breaking error?
-	@error "Node not a factor or variable"
 	return false
 end
 
@@ -294,7 +295,7 @@ end
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor.
 """
-function getNeighbors(dfg::LightDFG, node::DFGNode; ready::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}
+function getNeighbors(dfg::LightDFG, node::DFGNode; solvable::Int=0)::Vector{Symbol}
 	label = node.label
     if !exists(dfg, label)
         error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
@@ -303,8 +304,7 @@ function getNeighbors(dfg::LightDFG, node::DFGNode; ready::Union{Nothing, Int}=n
 	neighbors_il =  FactorGraphs.outneighbors(dfg.g, dfg.g.labels[label])
 	neighbors_ll = [dfg.g.labels[i] for i in neighbors_il]
     # Additional filtering
-    ready != nothing && filter!(lbl -> _isready(dfg, lbl, ready), neighbors_ll)
-	backendset != nothing && filter!(lbl -> _isbackendset(dfg, lbl, backendset), neighbors_ll)
+    solvable != 0 && filter!(lbl -> _isSolvable(dfg, lbl, solvable), neighbors_ll)
 
     # Variable sorting (order is important)
     if typeof(node) <: AbstractDFGFactor
@@ -320,7 +320,7 @@ end
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
 """
-function getNeighbors(dfg::LightDFG, label::Symbol; ready::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}
+function getNeighbors(dfg::LightDFG, label::Symbol; solvable::Int=0)::Vector{Symbol}
 	if !exists(dfg, label)
         error("Variable/factor with label '$(label)' does not exist in the factor graph")
     end
@@ -328,8 +328,7 @@ function getNeighbors(dfg::LightDFG, label::Symbol; ready::Union{Nothing, Int}=n
 	neighbors_il =  FactorGraphs.outneighbors(dfg.g, dfg.g.labels[label])
 	neighbors_ll = [dfg.g.labels[i] for i in neighbors_il]
     # Additional filtering
-    ready != nothing && filter!(lbl -> _isready(dfg, lbl, ready), neighbors_ll)
-	backendset != nothing && filter!(lbl -> _isbackendset(dfg, lbl, backendset), neighbors_ll)
+    solvable != 0 && filter!(lbl -> _isSolvable(dfg, lbl, solvable), neighbors_ll)
 
     # Variable sorting (order is important)
     if haskey(dfg.g.factors, label)
@@ -385,13 +384,15 @@ Optionally provide a distance to specify the number of edges should be followed.
 Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
 Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
 """
-function getSubgraphAroundNode(dfg::LightDFG{P,V,F}, node::DFGNode, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::LightDFG=LightDFG{P,V,F}())::LightDFG where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
+function getSubgraphAroundNode(dfg::LightDFG{P,V,F}, node::DFGNode, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::LightDFG=LightDFG{P,V,F}(); solvable::Int=0)::LightDFG where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
     if !exists(dfg,node.label)
         error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
     end
 
 	# Get a list of all unique neighbors inside 'distance'
 	ns = neighborhood(dfg.g, dfg.g.labels[node.label], distance)
+	# Always return the center node, skip that if we're filtering.
+	solvable != 0 && (filter!(id -> _isSolvable(dfg, dfg.g.labels[id], solvable) || dfg.g.labels[id] == node.label, ns))
 
 	# Copy the section of graph we want
 	_copyIntoGraph!(dfg, addToDFG, ns, includeOrphanFactors)
@@ -426,10 +427,10 @@ Get an adjacency matrix for the DFG, returned as a Matrix{Union{Nothing, Symbol}
 Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor.
 The first row and first column are factor and variable headings respectively.
 """
-function getAdjacencyMatrix(dfg::LightDFG)::Matrix{Union{Nothing, Symbol}}
+function getAdjacencyMatrix(dfg::LightDFG; solvable::Int=0)::Matrix{Union{Nothing, Symbol}}
 	#TODO Why does it need to be sorted?
-	varLabels = sort(collect(keys(dfg.g.variables)))#ort(map(v->v.label, getVariables(dfg)))
-    factLabels = sort(collect(keys(dfg.g.factors)))#sort(map(f->f.label, getFactors(dfg)))
+	varLabels = sort(getVariableIds(dfg, solvable=solvable))#ort(map(v->v.label, getVariables(dfg)))
+    factLabels = sort(getFactorIds(dfg, solvable=solvable))#sort(map(f->f.label, getFactors(dfg)))
     vDict = Dict(varLabels .=> [1:length(varLabels)...].+1)
 
     adjMat = Matrix{Union{Nothing, Symbol}}(nothing, length(factLabels)+1, length(varLabels)+1)
@@ -443,9 +444,9 @@ function getAdjacencyMatrix(dfg::LightDFG)::Matrix{Union{Nothing, Symbol}}
     return adjMat
 end
 
-function getAdjacencyMatrixSparse(dfg::LightDFG)::Tuple{LightGraphs.SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}
-	varLabels = collect(keys(dfg.g.variables))
-    factLabels = collect(keys(dfg.g.factors))
+function getAdjacencyMatrixSparse(dfg::LightDFG; solvable::Int=0)::Tuple{LightGraphs.SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}
+	varLabels = getVariableIds(dfg, solvable=solvable)
+    factLabels = getFactorIds(dfg, solvable=solvable)
 	varIndex = [dfg.g.labels[s] for s in varLabels]
 	factIndex = [dfg.g.labels[s] for s in factLabels]
 
