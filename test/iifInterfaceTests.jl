@@ -115,6 +115,14 @@ end
     @test exists(dfg, :a) == true
     @test exists(dfg, v1) == true
     @test exists(dfg, :nope) == false
+    # isFactor and isVariable
+    @test isFactor(dfg, f1.label)
+    @test !isFactor(dfg, v1.label)
+    @test isVariable(dfg, v1.label)
+    @test !isVariable(dfg, f1.label)
+    @test !isVariable(dfg, :doesntexist)
+    @test !isFactor(dfg, :doesntexist)
+
     # Sorting of results
     # TODO - this function needs to be cleaned up
     unsorted = [:x1_3;:x1_6;:l1;:april1] #this will not work for :x1x2f1

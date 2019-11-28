@@ -70,18 +70,18 @@ end
 """
     $SIGNATURES
 
-Return whether `sym::Symbol` represents a variable vertex in the graph.
+Return whether `sym::Symbol` represents a variable in the graph dfg.
 """
 isVariable(dfg::CloudGraphsDFG, sym::Symbol)::Bool =
-    "VARIABLE" in _getNodeTags(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, String(sym)])
+    _getNodeCount(dfg.neo4jInstance, ["VARIABLE", dfg.userId, dfg.robotId, dfg.sessionId, String(sym)]) == 1
 
 """
     $SIGNATURES
 
-Return whether `sym::Symbol` represents a factor vertex in the graph.
+Return whether `sym::Symbol` represents a factor in the graph dfg.
 """
 isFactor(dfg::CloudGraphsDFG, sym::Symbol)::Bool =
-    "FACTOR" in _getNodeTags(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, String(sym)])
+    _getNodeCount(dfg.neo4jInstance, ["FACTOR", dfg.userId, dfg.robotId, dfg.sessionId, String(sym)]) == 1
 
 """
     $(SIGNATURES)

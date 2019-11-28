@@ -165,6 +165,14 @@ end
     @test isSolveInProgress(v1) == 1
     @test isSolveInProgress(f1) == 1
 
+    # isFactor and isVariable
+    @test isFactor(dfg, f1.label)
+    @test !isFactor(dfg, v1.label)
+    @test isVariable(dfg, v1.label)
+    @test !isVariable(dfg, f1.label)
+    @test !isVariable(dfg, :doesntexist)
+    @test !isFactor(dfg, :doesntexist)
+
     # Session, robot, and user small data tests
     smallUserData = Dict{Symbol, String}(:a => "42", :b => "Hello")
     smallRobotData = Dict{Symbol, String}(:a => "43", :b => "Hello")

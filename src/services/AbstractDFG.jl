@@ -544,16 +544,32 @@ end
 """
     $SIGNATURES
 
-Return whether `sym::Symbol` represents a variable vertex in the graph.
+Return whether `sym::Symbol` represents a variable vertex in the graph DFG.
+Checks whether it both exists in the graph and is a variable.
+(If you rather want a quick for type, just do node isa DFGVariable)
 """
-isVariable(dfg::G, sym::Symbol) where G <: AbstractDFG = exists(dfg, sym)
+function isVariable(dfg::G, sym::Symbol) where G <: AbstractDFG
+	error("isVariable not implemented for $(typeof(dfg))")
+end
+# Alias - bit ridiculous but know it'll come up at some point. Does existential and type check.
+function isVariable(dfg::G, node::N)::Bool where {G <: AbstractDFG, N <: DFGNode}
+	return isVariable(dfg, node.label)
+end
 
 """
     $SIGNATURES
 
-Return whether `sym::Symbol` represents a factor vertex in the graph.
+Return whether `sym::Symbol` represents a factor vertex in the graph DFG.
+Checks whether it both exists in the graph and is a factor.
+(If you rather want a quicker for type, just do node isa DFGFactor)
 """
-isFactor(dfg::G, sym::Symbol) where G <: AbstractDFG = exists(dfg, sym)
+function isFactor(dfg::G, sym::Symbol) where G <: AbstractDFG
+	error("isFactor not implemented for $(typeof(dfg))")
+end
+# Alias - bit ridiculous but know it'll come up at some point. Does existential and type check.
+function isFactor(dfg::G, node::N)::Bool where {G <: AbstractDFG, N <: DFGNode}
+	return isFactor(dfg, node.label)
+end
 
 """
     $SIGNATURES

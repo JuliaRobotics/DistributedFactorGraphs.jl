@@ -63,6 +63,13 @@ function exists(dfg::GraphsDFG, node::N) where N <: DFGNode
 end
 exists(dfg::GraphsDFG, nId::Symbol) = haskey(dfg.labelDict, nId)
 
+function isVariable(dfg::GraphsDFG, sym::Symbol)
+	return exists(dfg, sym) && dfg.g.vertices[dfg.labelDict[sym]].dfgNode isa DFGVariable
+end
+
+function isFactor(dfg::GraphsDFG, sym::Symbol)
+	return exists(dfg, sym) && dfg.g.vertices[dfg.labelDict[sym]].dfgNode isa DFGFactor
+end
 
 """
     $(SIGNATURES)
