@@ -39,7 +39,7 @@ mutable struct DFGFactor{T, S} <: AbstractDFGFactor
     label::Symbol
     tags::Vector{Symbol}
     data::GenericFunctionNodeData{T, S}
-	solvable::Int
+    solvable::Int
     _internalId::Int64
     _variableOrderSymbols::Vector{Symbol}
     DFGFactor{T, S}(label::Symbol) where {T, S} = new{T, S}(label, Symbol[], GenericFunctionNodeData{T, S}(), 0, 0, Symbol[])
@@ -107,12 +107,12 @@ internalId(f::DFGFactorSummary) = f._internalId
 
 # SKELETON DFG
 """
-	$(TYPEDEF)
+    $(TYPEDEF)
 Skeleton variable with essentials.
 """
 struct SkeletonDFGVariable <: AbstractDFGVariable
-	label::Symbol
-	tags::Vector{Symbol}
+    label::Symbol
+    tags::Vector{Symbol}
 end
 
 SkeletonDFGVariable(label::Symbol) = SkeletonDFGVariable(label, Symbol[])

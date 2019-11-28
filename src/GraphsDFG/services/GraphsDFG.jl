@@ -28,18 +28,18 @@ end
 # Get user, robot, and session "small" data.
 getUserData(dfg::GraphsDFG)::Dict{Symbol, String} = return dfg.userData
 function setUserData(dfg::GraphsDFG, data::Dict{Symbol, String})::Bool
-	dfg.userData = data
-	return true
+    dfg.userData = data
+    return true
 end
 getRobotData(dfg::GraphsDFG)::Dict{Symbol, String} = return dfg.robotData
 function setRobotData(dfg::GraphsDFG, data::Dict{Symbol, String})::Bool
-	dfg.robotData = data
-	return true
+    dfg.robotData = data
+    return true
 end
 getSessionData(dfg::GraphsDFG)::Dict{Symbol, String} = return dfg.sessionData
 function setSessionData(dfg::GraphsDFG, data::Dict{Symbol, String})::Bool
-	dfg.sessionData = data
-	return true
+    dfg.sessionData = data
+    return true
 end
 
 """
@@ -48,10 +48,10 @@ Gets an empty and unique CloudGraphsDFG derived from an existing DFG.
 """
 function _getDuplicatedEmptyDFG(dfg::GraphsDFG)::GraphsDFG
     newDfg = GraphsDFG{typeof(dfg.solverParams)}(;
-		userId=dfg.userId, robotId=dfg.robotId, sessionId=dfg.sessionId,
-		params=deepcopy(dfg.solverParams))
-	newDfg.description ="(Copy of) $(dfg.description)"
-	return newDfg
+        userId=dfg.userId, robotId=dfg.robotId, sessionId=dfg.sessionId,
+        params=deepcopy(dfg.solverParams))
+    newDfg.description ="(Copy of) $(dfg.description)"
+    return newDfg
 end
 
 """
@@ -249,11 +249,11 @@ function getVariables(dfg::GraphsDFG,
     end
 
     # filter on tags
-	if length(tags) > 0
+    if length(tags) > 0
         mask = map(v -> length(intersect(v.tags, tags)) > 0, variables )
         return variables[mask]
     end
-	return variables
+    return variables
 end
 
 """
@@ -262,12 +262,12 @@ List the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
 function getFactors(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{DFGFactor}
-	factors = map(v -> v.dfgNode, filter(n -> (n.dfgNode isa DFGFactor) && (solvable != 0 ? solvable <= isSolvable(n.dfgNode) : true), Graphs.vertices(dfg.g)))
+    factors = map(v -> v.dfgNode, filter(n -> (n.dfgNode isa DFGFactor) && (solvable != 0 ? solvable <= isSolvable(n.dfgNode) : true), Graphs.vertices(dfg.g)))
 
-	if regexFilter != nothing
-		factors = filter(f -> occursin(regexFilter, String(f.label)), factors)
-	end
-	return factors
+    if regexFilter != nothing
+        factors = filter(f -> occursin(regexFilter, String(f.label)), factors)
+    end
+    return factors
 end
 
 """
@@ -289,7 +289,7 @@ function getNeighbors(dfg::GraphsDFG, node::T; solvable::Int=0)::Vector{Symbol} 
     vert = dfg.g.vertices[dfg.labelDict[node.label]]
     neighbors = in_neighbors(vert, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
     # Additional filtering
-	neighbors = solvable != 0 ? filter(v -> solvable <= isSolvable(v.dfgNode), neighbors) : neighbors
+    neighbors = solvable != 0 ? filter(v -> solvable <= isSolvable(v.dfgNode), neighbors) : neighbors
     # Variable sorting (order is important)
     if node isa DFGFactor
         order = intersect(node._variableOrderSymbols, map(v->v.dfgNode.label, neighbors))
@@ -360,5 +360,5 @@ end
 Produces a dot-format of the graph for visualization.
 """
 function toDot(dfg::GraphsDFG)::String
-	return Graphs.to_dot(dfg.g)
+    return Graphs.to_dot(dfg.g)
 end
