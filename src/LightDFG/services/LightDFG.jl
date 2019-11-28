@@ -45,6 +45,13 @@ exists(dfg::LightDFG, nId::Symbol) = haskey(dfg.g.labels, nId)
 
 exists(dfg::LightDFG, node::DFGNode) = exists(dfg, node.label)
 
+function isVariable(dfg::LightDFG{P,V,F}, sym::Symbol) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
+	return haskey(dfg.g.variables, sym)
+end
+
+function isFactor(dfg::LightDFG{P,V,F}, sym::Symbol) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
+	return haskey(dfg.g.factors, sym)
+end
 
 
 """

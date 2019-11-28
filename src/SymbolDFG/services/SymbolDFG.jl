@@ -27,7 +27,13 @@ exists(dfg::SymbolDFG, nId::Symbol) = haskey(dfg.g.fadjdict, nId)
 
 exists(dfg::SymbolDFG, node::DFGNode) = exists(dfg, node.label)
 
+function isVariable(dfg::SymbolDFG{P,V,F}, sym::Symbol) where {P <:AbstractParams, V <: DFGNode, F <: DFGNode}
+	return haskey(dfg.g.variables, sym)
+end
 
+function isFactor(dfg::SymbolDFG{P,V,F}, sym::Symbol) where {P <:AbstractParams, V <: DFGNode, F <: DFGNode}
+	return haskey(dfg.g.factors, sym)
+end
 
 """
     $(SIGNATURES)
