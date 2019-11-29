@@ -27,20 +27,20 @@ mutable struct VariableNodeData{T<:InferenceVariable}
 end
 
 VariableNodeData(val::Array{Float64,2},
-			   bw::Array{Float64,2},
-			   BayesNetOutVertIDs::Array{Symbol,1},
-			   dimIDs::Array{Int,1},
-			   dims::Int,eliminated::Bool,
-			   BayesNetVertID::Symbol,
-			   separator::Array{Symbol,1},
-			   softtype::T,
-			   initialized::Bool,
-			   inferdim::Float64,
-			   ismargin::Bool,
-			   dontmargin::Bool,
-			   solveInProgress::Int=0) where T <: InferenceVariable =
-				  VariableNodeData{T}(val,bw,BayesNetOutVertIDs,dimIDs,dims,eliminated,BayesNetVertID,separator,
-									  softtype::T,initialized,inferdim,ismargin,dontmargin, solveInProgress)
+               bw::Array{Float64,2},
+               BayesNetOutVertIDs::Array{Symbol,1},
+               dimIDs::Array{Int,1},
+               dims::Int,eliminated::Bool,
+               BayesNetVertID::Symbol,
+               separator::Array{Symbol,1},
+               softtype::T,
+               initialized::Bool,
+               inferdim::Float64,
+               ismargin::Bool,
+               dontmargin::Bool,
+               solveInProgress::Int=0) where T <: InferenceVariable =
+                  VariableNodeData{T}(val,bw,BayesNetOutVertIDs,dimIDs,dims,eliminated,BayesNetVertID,separator,
+                                      softtype::T,initialized,inferdim,ismargin,dontmargin, solveInProgress)
 
 
 function VariableNodeData()
@@ -92,7 +92,7 @@ mutable struct PackedVariableNodeData
                          x13::Float64,
                          x14::Bool,
                          x15::Bool,
-						 x16::Int) = new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16)
+                         x16::Int) = new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16)
 end
 
 # AbstractPointParametricEst interface
@@ -104,7 +104,7 @@ Data container to store Parameteric Point Estimate (PPE) for mean and max.
 """
 struct MeanMaxPPE <: AbstractPointParametricEst
     solverKey::Symbol #repeated because of Sam's request
-	suggested::Vector{Float64}
+    suggested::Vector{Float64}
     max::Vector{Float64}
     mean::Vector{Float64}
     lastUpdatedTimestamp::DateTime
@@ -142,9 +142,9 @@ end
 DFGVariable constructors.
 """
 function DFGVariable(label::Symbol, _internalId::Int64 = 0) #where {T <:InferenceVariable}
-	st = stacktrace()
+    st = stacktrace()
     @warn "DFGVariable(label::Symbol, _internalId::Int64 = 0) is depreciated please use DFGVariable(label::Symbol, softtype::T, _internalId::Int64 = 0) where T <: InferenceVariable. Enable DEBUG logging for the stack trace."
-	@debug st
+    @debug st
     T = InferenceVariable
     DFGVariable(label, now(), Symbol[],
                   Dict{Symbol, MeanMaxPPE}(),
@@ -224,13 +224,13 @@ internalId(v::DFGVariableSummary) = v._internalId
 
 # SKELETON DFG
 """
-	$(TYPEDEF)
+    $(TYPEDEF)
 Skeleton factor with essentials.
 """
 struct SkeletonDFGFactor <: AbstractDFGFactor
     label::Symbol
-	tags::Vector{Symbol}
-	_variableOrderSymbols::Vector{Symbol}
+    tags::Vector{Symbol}
+    _variableOrderSymbols::Vector{Symbol}
 end
 
 #NOTE I feel like a want to force a variableOrderSymbols

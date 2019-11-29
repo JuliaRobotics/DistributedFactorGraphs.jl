@@ -47,51 +47,51 @@ end
 Sort a variable list which may have nested structure such as `:x1_2` -- does not sort for alphabetic characters.
 """
 function sortVarNested(vars::Vector{Symbol})::Vector{Symbol}
-	# whos nested and first numeric character offset
-	sv = string.(vars)
-	offsets = getFirstNumericalOffset.(sv)
-	masknested = isnestednum.(sv)
-	masknotnested = true .⊻ masknested
+    # whos nested and first numeric character offset
+    sv = string.(vars)
+    offsets = getFirstNumericalOffset.(sv)
+    masknested = isnestednum.(sv)
+    masknotnested = true .⊻ masknested
 
-	# strip alphabetic characters from front
-	msv = sv[masknotnested]
-	msvO = offsets[masknotnested]
-	nsv = sv[masknested]
-	nsvO = offsets[masknested]
+    # strip alphabetic characters from front
+    msv = sv[masknotnested]
+    msvO = offsets[masknotnested]
+    nsv = sv[masknested]
+    nsvO = offsets[masknested]
 
-	# do nonnested list separately
-	nnreducelist = map((s,o) -> s[o:end], msv, msvO)
-	nnintlist = parse.(Int, nnreducelist)
-	nnp = sortperm(nnintlist)
-	nnNums = nnintlist[nnp] # used in mixing later
-	nonnested = msv[nnp]
-	smsv = vars[masknotnested][nnp]
+    # do nonnested list separately
+    nnreducelist = map((s,o) -> s[o:end], msv, msvO)
+    nnintlist = parse.(Int, nnreducelist)
+    nnp = sortperm(nnintlist)
+    nnNums = nnintlist[nnp] # used in mixing later
+    nonnested = msv[nnp]
+    smsv = vars[masknotnested][nnp]
 
-	# do nested list separately
-	nestedreducelist = map((s,o) -> s[o:end], nsv, nsvO)
-	nestedp = sortnestedperm(nestedreducelist)
-	nesNums = parse.(Int, getindex.(split.(nestedreducelist[nestedp], '_'),1)) # used in mixing later
-	nested = nsv[nestedp]
-	snsv = vars[masknested][nestedp]
+    # do nested list separately
+    nestedreducelist = map((s,o) -> s[o:end], nsv, nsvO)
+    nestedp = sortnestedperm(nestedreducelist)
+    nesNums = parse.(Int, getindex.(split.(nestedreducelist[nestedp], '_'),1)) # used in mixing later
+    nested = nsv[nestedp]
+    snsv = vars[masknested][nestedp]
 
-	# mix back together, pick next sorted item from either pile
-	retvars = Vector{Symbol}(undef, length(vars))
-	nni = 1
-	nesi = 1
-	lsmsv = length(smsv)
-	lsnsv = length(snsv)
-	MAXMAX = 999999999999
-	for i in 1:length(vars)
-	  # inner ifs to ensure bounds and correct sorting at end of each list
-	  if (nni<=lsmsv ? nnNums[nni] : MAXMAX) <= (nesi<=lsnsv ? nesNums[nesi] : MAXMAX)
-	    retvars[i] = smsv[nni]
-		nni += 1
-	  else
-		retvars[i] = snsv[nesi]
-		nesi += 1
-	  end
-	end
-	return retvars
+    # mix back together, pick next sorted item from either pile
+    retvars = Vector{Symbol}(undef, length(vars))
+    nni = 1
+    nesi = 1
+    lsmsv = length(smsv)
+    lsnsv = length(snsv)
+    MAXMAX = 999999999999
+    for i in 1:length(vars)
+      # inner ifs to ensure bounds and correct sorting at end of each list
+      if (nni<=lsmsv ? nnNums[nni] : MAXMAX) <= (nesi<=lsnsv ? nesNums[nesi] : MAXMAX)
+        retvars[i] = smsv[nni]
+        nni += 1
+      else
+        retvars[i] = snsv[nesi]
+        nesi += 1
+      end
+    end
+    return retvars
 end
 
 """
@@ -277,7 +277,7 @@ end
 """
     $(SIGNATURES)
 Gives back all factor labels that fit the bill:
-	lsWho(dfg, :Pose3)
+    lsWho(dfg, :Pose3)
 
 Dev Notes
 - Cloud versions will benefit from less data transfer
@@ -289,19 +289,19 @@ ls, lsf, lsfPriors
 """
 function lsWho(dfg::AbstractDFG, type::Symbol; solveKey::Symbol=:default)::Vector{Symbol}
     vars = getVariables(dfg)
-	labels = Symbol[]
+    labels = Symbol[]
     for v in vars
-		varType = typeof(getVariableType(v, solveKey=solveKey)).name |> Symbol
-		varType == type && push!(labels, v.label)
-	end
-	return labels
+        varType = typeof(getVariableType(v, solveKey=solveKey)).name |> Symbol
+        varType == type && push!(labels, v.label)
+    end
+    return labels
 end
 
 
 """
     $(SIGNATURES)
 Gives back all factor labels that fit the bill:
-	lsfWho(dfg, :Point2Point2)
+    lsfWho(dfg, :Point2Point2)
 
 Dev Notes
 - Cloud versions will benefit from less data transfer
@@ -312,11 +312,11 @@ Related
 ls, lsf, lsfPriors
 """
 function lsfWho(dfg::AbstractDFG, type::Symbol)::Vector{Symbol}
-	facs = getFactors(dfg)
-	labels = Symbol[]
+    facs = getFactors(dfg)
+    labels = Symbol[]
     for f in facs
-		facType = typeof(getFactorType(f)).name |> Symbol
-		facType == type && push!(labels, f.label)
-	end
-	return labels
+        facType = typeof(getFactorType(f)).name |> Symbol
+        facType == type && push!(labels, f.label)
+    end
+    return labels
 end
