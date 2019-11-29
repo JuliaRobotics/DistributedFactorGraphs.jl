@@ -324,7 +324,9 @@ end
 
 
 """
-    $SIGNATURESSet the `solvable` parameter for either a variable or factor.
+    $SIGNATURES
+
+Set the `solvable` parameter for either a variable or factor.
 """
 function setSolvable!(dfg::AbstractDFG, sym::Symbol, solvable::Int)
   if isVariable(dfg, sym)
