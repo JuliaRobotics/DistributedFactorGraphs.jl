@@ -159,11 +159,77 @@ DFGVariable(label::Symbol, softtype::T, _internalId::Int64 = 0) where {T <: Infe
               Dict{String, String}(),
               Dict{Symbol,AbstractBigDataEntry}(), 0, _internalId)
 
+"""
+    $(SIGNATURES)
+Structure for first-class citizens of a DFGVariable.
+"""
+mutable struct DFGVariableSummary <: AbstractDFGVariable
+    label::Symbol
+    timestamp::DateTime
+    tags::Vector{Symbol}
+    estimateDict::Dict{Symbol, <:AbstractPointParametricEst}
+    softtypename::Symbol
+    _internalId::Int64
+end
+
+
+# SKELETON DFG
+"""
+    $(TYPEDEF)
+Skeleton variable with essentials.
+"""
+struct SkeletonDFGVariable <: AbstractDFGVariable
+    label::Symbol
+    tags::Vector{Symbol}
+end
+
+SkeletonDFGVariable(label::Symbol) = SkeletonDFGVariable(label, Symbol[])
+
 # Accessors
-label(v::DFGVariable) = v.label
-tags(v::DFGVariable) = v.tags
-estimates(v::DFGVariable) = v.estimateDict
-estimate(v::DFGVariable, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
+
+const VariableDataLevel0 = Union{DFGVariable, DFGVariableSummary, SkeletonDFGVariable}
+const VariableDataLevel1 = Union{DFGVariable, DFGVariableSummary}
+
+"""
+$SIGNATURES
+
+Return the label for a variable.
+"""
+label(v::VariableDataLevel0) = v.label
+"""
+$SIGNATURES
+
+Return the tags for a variable.
+"""
+tags(v::VariableDataLevel0) = v.tags
+
+"""
+    $SIGNATURES
+
+Return the timestamp for a variable.
+"""
+timestamp(v::VariableDataLevel1) = v.timestamp
+
+"""
+    $SIGNATURES
+
+Return the estimates for a variable.
+"""
+estimates(v::VariableDataLevel1) = v.estimateDict
+
+"""
+    $SIGNATURES
+
+Return a keyed estimate (default is :default) for a variable.
+"""
+estimate(v::VariableDataLevel1, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
+
+"""
+    $SIGNATURES
+
+Return the softtype name for a variable.
+"""
+softtype(v::DFGVariableSummary)::Symbol = v.softtypename
 
 """
     $SIGNATURES
@@ -171,6 +237,13 @@ estimate(v::DFGVariable, key::Symbol=:default) = haskey(v.estimateDict, key) ? v
 Retrieve the soft type name symbol for a DFGVariable or DFGVariableSummary. ie :Point2, Pose2, etc.
 """
 softtype(v::DFGVariable)::Symbol = Symbol(typeof(getSofttype(v)))
+
+"""
+    $SIGNATURES
+
+Return the internal ID a variable.
+"""
+internalId(v::VariableDataLevel1) = v._internalId
 
 """
     $SIGNATURES
@@ -193,55 +266,19 @@ end
 Set solver data structure stored in a variable.
 """
 setSolverData(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v.solverDataDict[key] = data
-solverDataDict(v::DFGVariable) = v.solverDataDict
-internalId(v::DFGVariable) = v._internalId
-# Todo: Complete this.
-smallData(v::DFGVariable) = v.smallData
-bigData(v::DFGVariable) = v.bigData
-
-"""
-    $(SIGNATURES)
-Structure for first-class citizens of a DFGVariable.
-"""
-mutable struct DFGVariableSummary <: AbstractDFGVariable
-    label::Symbol
-    timestamp::DateTime
-    tags::Vector{Symbol}
-    estimateDict::Dict{Symbol, <:AbstractPointParametricEst}
-    softtypename::Symbol
-    _internalId::Int64
-end
-label(v::DFGVariableSummary) = v.label
-tags(v::DFGVariableSummary) = v.tags
-estimates(v::DFGVariableSummary) = v.estimateDict
-estimate(v::DFGVariableSummary, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
-softtype(v::DFGVariableSummary)::Symbol = v.softtypename
-internalId(v::DFGVariableSummary) = v._internalId
-
-
-
-# SKELETON DFG
-"""
-    $(TYPEDEF)
-Skeleton factor with essentials.
-"""
-struct SkeletonDFGFactor <: AbstractDFGFactor
-    label::Symbol
-    tags::Vector{Symbol}
-    _variableOrderSymbols::Vector{Symbol}
-end
-
-#NOTE I feel like a want to force a variableOrderSymbols
-SkeletonDFGFactor(label::Symbol, variableOrderSymbols::Vector{Symbol} = Symbol[]) = SkeletonDFGFactor(label, Symbol[], variableOrderSymbols)
-
-label(f::SkeletonDFGFactor) = f.label
-tags(f::SkeletonDFGFactor) = f.tags
-
-const VariableDataLevel1 = Union{DFGVariable, DFGFactorSummary}
-
 """
     $SIGNATURES
 
-Return the timestamp of a Level 1 and Level 2 variable.
+Get solver data dictionary for a variable.
 """
-timestamp(v::VariableDataLevel1) = v.timestamp
+solverDataDict(v::DFGVariable) = v.solverDataDict
+
+"""
+$SIGNATURES
+
+Get the small data for a variable.
+"""
+smallData(v::DFGVariable) = v.smallData
+
+# Todo: Complete this.
+bigData(v::DFGVariable) = v.bigData
