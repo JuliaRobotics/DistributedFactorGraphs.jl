@@ -3,6 +3,7 @@ using GraphPlot # For plotting tests
 using Neo4j
 using DistributedFactorGraphs
 using Pkg
+using Dates
 
 ## To run the IIF tests, you need a local Neo4j with user/pass neo4j:test
 # To run a Docker image

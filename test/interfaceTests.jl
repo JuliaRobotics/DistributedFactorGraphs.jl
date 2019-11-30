@@ -127,11 +127,22 @@ end
     f1Prime = deepcopy(f1)
     #updateFactor! returns the factor updated, so should be equal
     @test updateFactor!(dfg, f1Prime) == f1
+    # Revert
+    v1 = getVariable(dfg, v1.label)
+    f1 = getFactor(dfg, f1.label)
 
     # Accessors
     @test label(v1) == v1.label
     @test tags(v1) == v1.tags
+    testTags = [:ha, :ha23]
+    @test setTags!(v1, testTags) == testTags
+    @test tags(v1) == testTags
+
     @test timestamp(v1) == v1.timestamp
+    testTimestamp = now()
+    @test setTimestamp!(v1, testTimestamp) == testTimestamp
+    @test timestamp(v1) == testTimestamp
+
     @test estimates(v1) == v1.estimateDict
     @test estimate(v1, :notfound) == nothing
     @test solverData(v1) === v1.solverDataDict[:default]
@@ -146,6 +157,9 @@ end
 
     @test label(f1) == f1.label
     @test tags(f1) == f1.tags
+    @test setTags!(v1, testTags) == testTags
+    @test tags(v1) == testTags
+
     @test solverData(f1) == f1.data
     # Deprecated functions
     @test data(f1) == f1.data
