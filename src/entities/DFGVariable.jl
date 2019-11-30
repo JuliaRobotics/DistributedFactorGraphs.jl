@@ -196,6 +196,7 @@ $SIGNATURES
 Return the label for a variable.
 """
 label(v::VariableDataLevel0) = v.label
+
 """
 $SIGNATURES
 
@@ -204,11 +205,25 @@ Return the tags for a variable.
 tags(v::VariableDataLevel0) = v.tags
 
 """
+$SIGNATURES
+
+Get the small data for a variable.
+"""
+setTags(v::VariableDataLevel0, tags::Vector{Symbol}) = v.tags = tags
+
+"""
     $SIGNATURES
 
 Return the timestamp for a variable.
 """
 timestamp(v::VariableDataLevel1) = v.timestamp
+
+"""
+$SIGNATURES
+
+Get the small data for a variable.
+"""
+setTimestamp(v::VariableDataLevel1, timestamp::DateTime) = v.timestamp = timestamp
 
 """
     $SIGNATURES
@@ -279,6 +294,13 @@ $SIGNATURES
 Get the small data for a variable.
 """
 smallData(v::DFGVariable) = v.smallData
+
+"""
+$SIGNATURES
+
+Get the small data for a variable.
+"""
+setSmallData(v::DFGVariable, smallData::String) = v.smallData = smallData
 
 # Todo: Complete this.
 bigData(v::DFGVariable) = v.bigData
