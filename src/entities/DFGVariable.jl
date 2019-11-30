@@ -237,7 +237,7 @@ SkeletonDFGFactor(label::Symbol, variableOrderSymbols::Vector{Symbol} = Symbol[]
 label(f::SkeletonDFGFactor) = f.label
 tags(f::SkeletonDFGFactor) = f.tags
 
-VariableDataLevel1 = Union{DFGVariable, DFGFactorSummary}
+const VariableDataLevel1 = Union{DFGVariable, DFGFactorSummary}
 
 """
     $SIGNATURES
