@@ -207,9 +207,9 @@ tags(v::VariableDataLevel0) = v.tags
 """
 $SIGNATURES
 
-Get the small data for a variable.
+Set the tags for a variable.
 """
-setTags(v::VariableDataLevel0, tags::Vector{Symbol}) = v.tags = tags
+setTags!(v::VariableDataLevel0, tags::Vector{Symbol}) = v.tags = tags
 
 """
     $SIGNATURES
@@ -221,9 +221,9 @@ timestamp(v::VariableDataLevel1) = v.timestamp
 """
 $SIGNATURES
 
-Get the small data for a variable.
+Set the timestamp for a variable.
 """
-setTimestamp(v::VariableDataLevel1, timestamp::DateTime) = v.timestamp = timestamp
+setTimestamp!(v::VariableDataLevel1, timestamp::DateTime) = v.timestamp = timestamp
 
 """
     $SIGNATURES
@@ -284,6 +284,13 @@ setSolverData(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v.
 """
     $SIGNATURES
 
+Set solver data structure stored in a variable.
+"""
+setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = setSolverData(v, data, key)
+
+"""
+    $SIGNATURES
+
 Get solver data dictionary for a variable.
 """
 solverDataDict(v::DFGVariable) = v.solverDataDict
@@ -298,9 +305,9 @@ smallData(v::DFGVariable) = v.smallData
 """
 $SIGNATURES
 
-Get the small data for a variable.
+Set the small data for a variable.
 """
-setSmallData(v::DFGVariable, smallData::String) = v.smallData = smallData
+setSmallData!(v::DFGVariable, smallData::String) = v.smallData = smallData
 
 # Todo: Complete this.
 bigData(v::DFGVariable) = v.bigData

@@ -87,12 +87,21 @@ $SIGNATURES
 Return the label for a factor.
 """
 label(f::FactorDataLevel0) = f.label
+
 """
 $SIGNATURES
 
 Return the tags for a variable.
 """
 tags(f::FactorDataLevel0) = f.tags
+
+"""
+$SIGNATURES
+
+Set the tags for a factor.
+"""
+setTag!s(f::FactorDataLevel0, tags::Vector{Symbol}) = f.tags = tags
+
 """
 $SIGNATURES
 
