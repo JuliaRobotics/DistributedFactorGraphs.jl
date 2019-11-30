@@ -161,7 +161,6 @@ DFGVariable(label::Symbol, softtype::T, _internalId::Int64 = 0) where {T <: Infe
 
 # Accessors
 label(v::DFGVariable) = v.label
-timestamp(v::DFGVariable) = v.timestamp
 tags(v::DFGVariable) = v.tags
 estimates(v::DFGVariable) = v.estimateDict
 estimate(v::DFGVariable, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
@@ -213,7 +212,6 @@ mutable struct DFGVariableSummary <: AbstractDFGVariable
     _internalId::Int64
 end
 label(v::DFGVariableSummary) = v.label
-timestamp(v::DFGVariableSummary) = v.timestamp
 tags(v::DFGVariableSummary) = v.tags
 estimates(v::DFGVariableSummary) = v.estimateDict
 estimate(v::DFGVariableSummary, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
@@ -238,3 +236,12 @@ SkeletonDFGFactor(label::Symbol, variableOrderSymbols::Vector{Symbol} = Symbol[]
 
 label(f::SkeletonDFGFactor) = f.label
 tags(f::SkeletonDFGFactor) = f.tags
+
+VariableDataLevel1 = Union{DFGVariable, DFGFactorSummary}
+
+"""
+    $SIGNATURES
+
+Return the timestamp of a Level 1 and Level 2 variable.
+"""
+timestamp(v::VariableDataLevel1) = v.timestamp
