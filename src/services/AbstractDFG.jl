@@ -344,6 +344,30 @@ isSolvable(var::Union{DFGVariable, DFGFactor})::Int = var.solvable
 """
     $SIGNATURES
 
+Variables or factors may or may not be 'solvable', depending on a user definition.  Useful for ensuring atomic transactions.
+
+Related
+
+isSolveInProgress
+"""
+getSolvable(var::Union{DFGVariable, DFGFactor})::Int = var.solvable
+
+"""
+    $SIGNATURES
+
+Get 'solvable' parameter for either a variable or factor.
+"""
+function getSolvable(dfg::AbstractDFG, sym::Symbol)
+  if isVariable(dfg, sym)
+    return getVariable(dfg, sym).solvable
+  elseif isFactor(dfg, sym)
+    return getFactor(dfg, sym).solvable
+  end
+end
+
+"""
+    $SIGNATURES
+
 Which variables or factors are currently being used by an active solver.  Useful for ensuring atomic transactions.
 
 DevNotes:
@@ -358,6 +382,30 @@ function isSolveInProgress(var::Union{DFGVariable, DFGFactor}; solveKey::Symbol=
 	var isa DFGVariable && return haskey(solverDataDict(var), solveKey) ? solverDataDict(var)[solveKey].solveInProgress : 0
 	# Factor
 	return solverData(var).solveInProgress
+end
+
+"""
+    $SIGNATURES
+
+Set the `solvable` parameter for either a variable or factor.
+"""
+function setSolvable!(dfg::AbstractDFG, sym::Symbol, solvable::Int)::Int
+  if isVariable(dfg, sym)
+    getVariable(dfg, sym).solvable = solvable
+  elseif isFactor(dfg, sym)
+    getFactor(dfg, sym).solvable = solvable
+  end
+  return solvable
+end
+
+"""
+    $SIGNATURES
+
+Set the `solvable` parameter for either a variable or factor.
+"""
+function setSolvable!(node::N, solvable::Int)::Int where N <: DFGNode
+  node.solvable = solvable
+  return solvable
 end
 
 """

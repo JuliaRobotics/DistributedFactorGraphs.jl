@@ -8,7 +8,6 @@ export getFactorType, getfnctype
 export lsTypes, lsfTypes
 export lsWho, lsfWho
 export *
-export setSolvable!
 
 *(a::Symbol, b::AbstractString)::Symbol = Symbol(string(a,b))
 
@@ -320,19 +319,4 @@ function lsfWho(dfg::AbstractDFG, type::Symbol)::Vector{Symbol}
 		facType == type && push!(labels, f.label)
 	end
 	return labels
-end
-
-
-"""
-    $SIGNATURES
-
-Set the `solvable` parameter for either a variable or factor.
-"""
-function setSolvable!(dfg::AbstractDFG, sym::Symbol, solvable::Int)
-  if isVariable(dfg, sym)
-    getVariable(dfg, sym).solvable = solvable
-  elseif isFactor(dfg, sym)
-    getFactor(dfg, sym).solvable = solvable
-  end
-  return solvable
 end
