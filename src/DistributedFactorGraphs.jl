@@ -34,7 +34,7 @@ export pushUserData!, pushRobotData!, pushSessionData!, popUserData!, popRobotDa
 
 # Services/AbstractDFG Exports
 export isInitialized, getFactorFunction, isVariable, isFactor
-export isSolvable, isSolveInProgress
+export isSolvable, isSolveInProgress, getSolvable, setSolvable!
 export mergeUpdateVariableSolverData!, mergeUpdateGraphSolverData!
 
 # Solver (IIF) Exports

@@ -1,3 +1,5 @@
+# using DistributedFactorGraphs, Test
+# testDFGAPI = GraphsDFG
 dfg = testDFGAPI{NoSolverParams}()
 
 #add types for softtypes
@@ -20,7 +22,7 @@ solverData(v1).softtype = deepcopy(st1)
 solverData(v2).softtype = deepcopy(st2)
 
 # set v2 solvable
-v2.solvable = 1
+setSolvable!(v2, 1)
 # set v1 and f1 solveInProgress
 solverData(v1).solveInProgress = 1
 solverData(f1).solveInProgress = 1
@@ -164,6 +166,17 @@ end
     @test isSolvable(f1) == 0
     @test isSolveInProgress(v1) == 1
     @test isSolveInProgress(f1) == 1
+    # setSolvable, getSolvable, and variants
+    v1 = getVariable(dfg, v1.label)
+    f1 = getFactor(dfg, f1.label)
+    @test setSolvable!(v1, 1) == 1
+    @test isSolvable(v1) == 1
+    @test setSolvable!(dfg, v1.label, 0) == 0
+    @test isSolvable(v1) == 0
+    @test setSolvable!(f1, 1) == 1
+    @test getSolvable(dfg, f1.label) == 1
+    @test setSolvable!(dfg, f1.label, 0) == 0
+    @test getSolvable(f1) == 0
 
     # isFactor and isVariable
     @test isFactor(dfg, f1.label)
