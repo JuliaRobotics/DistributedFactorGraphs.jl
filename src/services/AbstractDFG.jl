@@ -454,8 +454,9 @@ end
     $(SIGNATURES)
 Common function for copying nodes from one graph into another graph.
 This is overridden in specialized implementations for performance.
+NOTE: copyGraphMetadata not supported yet.
 """
-function _copyIntoGraph!(sourceDFG::G, destDFG::H, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false; copyGraphMetadata::Bool=true)::Nothing where {G <: AbstractDFG, H <: AbstractDFG}
+function _copyIntoGraph!(sourceDFG::G, destDFG::H, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false; copyGraphMetadata::Bool=false)::Nothing where {G <: AbstractDFG, H <: AbstractDFG}
     # Split into variables and factors
     sourceVariables = map(vId->getVariable(sourceDFG, vId), intersect(getVariableIds(sourceDFG), variableFactorLabels))
     sourceFactors = map(fId->getFactor(sourceDFG, fId), intersect(getFactorIds(sourceDFG), variableFactorLabels))
