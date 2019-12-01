@@ -4,6 +4,7 @@ include("entities/InMemoryDataStore.jl")
 include("entities/FileDataStore.jl")
 
 include("services/AbstractDataStore.jl")
+include("services/AbstractBigDataEntries.jl")
 include("services/InMemoryDataStore.jl")
 include("services/FileDataStore.jl")
 
