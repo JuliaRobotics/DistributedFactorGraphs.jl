@@ -1,7 +1,18 @@
 
 """
-    @(SIGNATURES)
+    $(SIGNATURES)
 Save a DFG to a folder. Will create/overwrite folder if it exists.
+
+# Example
+```julia
+using DistributedFactorGraphs, IncrementalInference
+# Create a DFG - can make one directly, e.g. GraphsDFG{NoSolverParams}() or use IIF:
+dfg = initfg()
+# ... Add stuff to graph using either IIF or DFG:
+v1 = addVariable!(dfg, :a, ContinuousScalar, labels = [:POSE], solvable=0)
+# Now save it:
+saveDFG(dfg, "/tmp/saveDFG")
+```
 """
 function saveDFG(dfg::G, folder::String) where G <: AbstractDFG
     variables = getVariables(dfg)
@@ -35,17 +46,20 @@ function saveDFG(dfg::G, folder::String) where G <: AbstractDFG
 end
 
 """
-    @(SIGNATURES)
-Load a DFG from a saved folder. You will need to provide the IIFModule as the second
+    $(SIGNATURES)
+Load a DFG from a saved folder. Always provide the IIF module as the second
 parameter.
 
-Example:
+# Example
+```julia
 using DistributedFactorGraphs, IncrementalInference
 # Create a DFG - can make one directly, e.g. GraphsDFG{NoSolverParams}() or use IIF:
 dfg = initfg()
 # Load the graph
 loadDFG("/tmp/savedgraph", IncrementalInference, dfg)
-# Use it as normal.
+# Use the DFG as you do normally.
+ls(dfg)
+```
 """
 function loadDFG(folder::String, iifModule, dfgLoadInto::G) where G <: AbstractDFG
     variables = DFGVariable[]
