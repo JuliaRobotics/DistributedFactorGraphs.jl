@@ -399,7 +399,7 @@ function ls(dfg::MetaGraphsDFG, label::Symbol)::Vector{Symbol} where T <: DFGNod
     return getNeighbors(dfg, label)
 end
 
-function _copyIntoGraph!(sourceDFG::MetaGraphsDFG, destDFG::MetaGraphsDFG, ns::Vector{Int}, includeOrphanFactors::Bool=false)::Nothing
+function _copyIntoGraph!(sourceDFG::MetaGraphsDFG, destDFG::MetaGraphsDFG, ns::Vector{Int}, includeOrphanFactors::Bool=false; copyGraphMetadata::Bool=true)::Nothing
     # Split into variables and factors
     subgraph = sourceDFG.g[ns]
     sourceVariableIds = collect(filter_vertices(subgraph, :variable))
