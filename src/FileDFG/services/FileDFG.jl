@@ -1,4 +1,8 @@
 
+"""
+    @(SIGNATURES)
+Save a DFG to a folder. Will create/overwrite folder if it exists.
+"""
 function saveDFG(dfg::G, folder::String) where G <: AbstractDFG
     variables = getVariables(dfg)
     factors = getFactors(dfg)
@@ -30,6 +34,19 @@ function saveDFG(dfg::G, folder::String) where G <: AbstractDFG
     end
 end
 
+"""
+    @(SIGNATURES)
+Load a DFG from a saved folder. You will need to provide the IIFModule as the second
+parameter.
+
+Example:
+using DistributedFactorGraphs, IncrementalInference
+# Create a DFG - can make one directly, e.g. GraphsDFG{NoSolverParams}() or use IIF:
+dfg = initfg()
+# Load the graph
+loadDFG("/tmp/savedgraph", IncrementalInference, dfg)
+# Use it as normal.
+"""
 function loadDFG(folder::String, iifModule, dfgLoadInto::G) where G <: AbstractDFG
     variables = DFGVariable[]
     factors = DFGFactor[]

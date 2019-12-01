@@ -1,5 +1,5 @@
 include("entities/AbstractDataStore.jl")
-include("entities/DataEntries.jl")
+include("entities/AbstractBigDataEntries.jl")
 include("entities/InMemoryDataStore.jl")
 include("entities/FileDataStore.jl")
 

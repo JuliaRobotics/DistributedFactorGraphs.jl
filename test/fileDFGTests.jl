@@ -18,6 +18,13 @@
     updateVariable!(dfg, verts[7])
     updateVariable!(dfg, verts[8])
 
+    # Add some bigData to x1, x2
+    addBigDataEntry!(verts[1], GeneralBigDataEntry(:testing, :testing; mimeType="application/nuthin!"))
+    addBigDataEntry!(verts[2], FileBigDataEntry(:testing2, "/dev/null"))
+    #call update to set it on cloud
+    updateVariable!(dfg, verts[1])
+    updateVariable!(dfg, verts[2])
+
     facts = map(n -> addFactor!(dfg, [verts[n], verts[n+1]], LinearConditional(Normal(50.0,2.0))), 1:(numNodes-1))
 
     # Save and load the graph to test.
@@ -26,6 +33,7 @@
 
     copyDfg = DistributedFactorGraphs._getDuplicatedEmptyDFG(dfg)
     retDFG = loadDFG(saveFolder, Main, copyDfg)
+
     @test symdiff(ls(dfg), ls(retDFG)) == []
     @test symdiff(lsf(dfg), lsf(retDFG)) == []
     for var in ls(dfg)
@@ -34,4 +42,10 @@
     for fact in lsf(dfg)
         @test getFactor(dfg, fact) == getFactor(retDFG, fact)
     end
+
+    @test length(getBigDataEntries(getVariable(retDFG, :x1))) == 1
+    @test typeof(getBigDataEntry(getVariable(retDFG, :x1),:testing)) == GeneralBigDataEntry
+    @test length(getBigDataEntries(getVariable(retDFG, :x2))) == 1
+    @test typeof(getBigDataEntry(getVariable(retDFG, :x2),:testing2)) == FileBigDataEntry
+
 end

@@ -40,6 +40,11 @@ end
     include("plottingTest.jl")
 end
 
+@testset "Data Store Tests" begin
+    include("DataStoreTests.jl")
+end
+
+
 @testset "LightDFG subtype tests" begin
     for type in [(var=DFGVariableSummary, fac=DFGFactorSummary), (var=SkeletonDFGVariable,fac=SkeletonDFGFactor)]
         @testset "$(type.var) and $(type.fac) tests" begin

@@ -171,7 +171,7 @@ end
 
 """
     $(SIGNATURES)
-Add Big Data Entry to distrubuted factor graph.
+Add Big Data Entry to distributed factor graph.
 Should be extended if DFG variable is not returned by reference.
 """
 function addBigDataEntry!(dfg::AbstractDFG, label::Symbol, bde::AbstractBigDataEntry)::AbstractDFGVariable
@@ -194,27 +194,34 @@ end
     $(SIGNATURES)
 Update big data entry
 """
-function updateBigDataEntry!(var::AbstractDFGVariable,  bde::AbstractBigDataEntry)::AbstractDFGVariable
-    !haskey(var.bigData,bde.key) && (@error "$(bde.key) does not exist in variable!"; return false)
+function updateBigDataEntry!(var::AbstractDFGVariable,  bde::AbstractBigDataEntry)::Union{Nothing, AbstractDFGVariable}
+    !haskey(var.bigData,bde.key) && (@error "$(bde.key) does not exist in variable!"; return nothing)
     var.bigData[bde.key] = bde
     return var
 end
-function updateBigDataEntry!(dfg::AbstractDFG, label::Symbol,  bde::AbstractBigDataEntry)::AbstractDFGVariable
+function updateBigDataEntry!(dfg::AbstractDFG, label::Symbol,  bde::AbstractBigDataEntry)::Union{Nothing, AbstractDFGVariable}
+    !isVariable(dfg, label) && return nothing
     return updateBigDataEntry!(getVariable(dfg, label), bde)
 end
 
 """
     $(SIGNATURES)
-Delete big data entry
+Delete big data entry from the factor graph.
+Note this doesn't remove it from any data stores.
 """
-function deleteBigDataEntry!(var::AbstractDFGVariable, key::Symbol)::AbstractBigDataEntry #users responsibility to delete big data in db before deleting entry
+function deleteBigDataEntry!(var::AbstractDFGVariable, key::Symbol)::Union{Nothing, AbstractDFGVariable} #users responsibility to delete big data in db before deleting entry
     bde = getBigDataEntry(var, key)
+    bde == nothing && return nothing
     delete!(var.bigData, key)
-    return bde
+    return var
+end
+function deleteBigDataEntry!(dfg::AbstractDFG, label::Symbol, key::Symbol)::Union{Nothing, AbstractDFGVariable} #users responsibility to delete big data in db before deleting entry
+    !isVariable(dfg, label) && return nothing
+    return deleteBigDataEntry!(getVariable(dfg, label), key)
 end
 
-function deleteBigDataEntry!(dfg::AbstractDFG, label::Symbol, key::Symbol)::AbstractBigDataEntry #users responsibility to delete big data in db before deleting entry
-    deleteBigDataEntry!(getVariable(dfg, label), key)
+function deleteBigDataEntry!(var::AbstractDFGVariable, entry::AbstractBigDataEntry)::Union{Nothing, AbstractDFGVariable} #users responsibility to delete big data in db before deleting entry
+    return deleteBigDataEntry!(var, entry.key)
 end
 
 """
@@ -225,7 +232,8 @@ function getBigDataEntries(var::AbstractDFGVariable)::Vector{AbstractBigDataEntr
     #or should we return the iterator, Base.ValueIterator{Dict{Symbol,AbstractBigDataEntry}}?
     collect(values(var.bigData))
 end
-function getBigDataEntries(dfg::AbstractDFG, label::Symbol)::Vector{AbstractBigDataEntry}
+function getBigDataEntries(dfg::AbstractDFG, label::Symbol)::Union{Nothing, Vector{AbstractBigDataEntry}}
+    !isVariable(dfg, label) && return nothing
     #or should we return the iterator, Base.ValueIterator{Dict{Symbol,AbstractBigDataEntry}}?
     getBigDataEntries(getVariable(dfg, label))
 end
@@ -238,6 +246,7 @@ getBigDataKeys
 function getBigDataKeys(var::AbstractDFGVariable)::Vector{Symbol}
     collect(keys(var.bigData))
 end
-function getBigDataKeys(dfg::AbstractDFG, label::Symbol)::Vector{Symbol}
+function getBigDataKeys(dfg::AbstractDFG, label::Symbol)::Union{Nothing, Vector{Symbol}}
+    !isVariable(dfg, label) && return nothing
     getBigDataKeys(getVariable(dfg, label))
 end
