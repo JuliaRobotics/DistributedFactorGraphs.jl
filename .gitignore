@@ -5,3 +5,4 @@ deps/deps.jl
 docs/build
 Manifest.toml
 dev
+test/sandbox.jl

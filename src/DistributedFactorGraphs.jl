@@ -24,6 +24,7 @@ export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
 export getMaxPPE, getMeanPPE, getSuggestedPPE
 export label, timestamp, setTimestamp!, tags, setTags!, estimates, estimate, data, softtype, solverData, getData, solverDataDict, setSolverData, setSolverData!, internalId, smallData, setSmallData!, bigData
 export DFGVariableSummary, DFGFactorSummary, AbstractDFGSummary
+export addBigDataEntry!, getBigDataEntry, updateBigDataEntry!, deleteBigDataEntry!, getBigDataEntries, getBigDataKeys
 
 #Skeleton types
 export SkeletonDFGVariable, SkeletonDFGFactor
@@ -79,8 +80,6 @@ include("services/DFGVariable.jl")
 include("services/DFGFactor.jl")
 include("services/CompareUtils.jl")
 
-include("BigData.jl")
-
 # Include the Graphs.jl API.
 include("GraphsDFG/GraphsDFG.jl")
 
@@ -110,5 +109,8 @@ end
 
 # To be moved as necessary.
 include("Common.jl")
+
+# Big data extensions
+include("BigData/BigData.jl")
 
 end

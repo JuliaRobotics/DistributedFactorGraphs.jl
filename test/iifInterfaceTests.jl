@@ -209,20 +209,21 @@ end
 
         #add
         v1 = getVariable(dfg, :a)
-        @test addBigDataEntry!(v1, de1)
-        @test addBigDataEntry!(dfg, :a, de2)
-        @test addBigDataEntry!(v1, de1)
+        @test addBigDataEntry!(v1, de1) == v1
+        @test addBigDataEntry!(dfg, :a, de2) == v1
+        @test addBigDataEntry!(v1, de1) == v1
+        @test de2 in getBigDataEntries(v1)
 
         #get
         @test deepcopy(de1) == getBigDataEntry(v1, :key1)
         @test deepcopy(de2) == getBigDataEntry(dfg, :a, :key2)
-        @test_throws Any getBigDataEntry(v2, :key1)
-        @test_throws Any getBigDataEntry(dfg, :b, :key1)
+        @test getBigDataEntry(v2, :key1) == nothing
+        @test getBigDataEntry(dfg, :b, :key1) == nothing
 
         #update
-        @test updateBigDataEntry!(dfg, :a, de2_update)
+        @test updateBigDataEntry!(dfg, :a, de2_update) == v1
         @test deepcopy(de2_update) == getBigDataEntry(dfg, :a, :key2)
-        @test !updateBigDataEntry!(dfg, :b, de2_update)
+        @test updateBigDataEntry!(dfg, :b, de2_update) == nothing
 
         #list
         entries = getBigDataEntries(dfg, :a)
@@ -234,10 +235,10 @@ end
         @test getBigDataKeys(dfg, :b) == Symbol[]
 
         #delete
-        @test deepcopy(de1) == deleteBigDataEntry!(v1, :key1)
+        @test deleteBigDataEntry!(v1, :key1) == v1
         @test getBigDataKeys(v1) == Symbol[:key2]
         #delete from dfg
-        @test deepcopy(de2_update) == deleteBigDataEntry!(dfg, :a, :key2)
+        @test deleteBigDataEntry!(dfg, :a, :key2) == v1
         @test getBigDataKeys(v1) == Symbol[]
     end
 end
