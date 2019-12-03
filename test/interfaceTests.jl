@@ -141,6 +141,11 @@ end
     @test setTimestamp!(v1, testTimestamp) == testTimestamp
     @test timestamp(v1) == testTimestamp
 
+    @test timestamp(f1) == f1.timestamp
+    testTimestamp = now()
+    @test setTimestamp!(f1, testTimestamp) == testTimestamp
+    @test timestamp(f1) == f1.timestamp
+
     @test estimates(v1) == v1.estimateDict
     @test estimate(v1, :notfound) == nothing
     @test solverData(v1) === v1.solverDataDict[:default]
