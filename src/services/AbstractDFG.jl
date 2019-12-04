@@ -547,6 +547,13 @@ end
 updateVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable, solvekey::Symbol=:default) =
     updateVariableSolverData!(dfg, solverData(sourceVariable, solvekey), sourceVariable.label, solvekey)
 
+function updateVariableSolverData!(dfg::AbstractDFG, sourceVariables::Vector{DFGVariable}, solvekey::Symbol=:default)
+    #I think cloud would do this in bulk for speed
+    for var in sourceVariables
+        updateVariableSolverData!(dfg, solverData(var, solvekey), var.label, solvekey)
+    end
+end
+
 """
     $(SIGNATURES)
 """
