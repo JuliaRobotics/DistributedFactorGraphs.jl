@@ -499,6 +499,75 @@ function _copyIntoGraph!(sourceDFG::G, destDFG::H, variableFactorLabels::Vector{
     return nothing
 end
 
+#TODO UNTESTED and NOT FILLED IN, just to define function signatures
+"""
+    $(SIGNATURES)
+"""
+function getVariableSolverData(dfg::AbstractDFG, variablekey::Symbol, solvekey::Symbol=:default)
+    error("not implemented")
+    return deepcopy(solverData(getVariable(dfg, variablekey), solvekey))
+end
+
+"""
+    $(SIGNATURES)
+"""
+function addVariableSolverData!(dfg::AbstractDFG, vnd::VariableNodeData, variablekey::Symbol, solvekey::Symbol=:default)
+    #for InMemoryDFGTypes, cloud would update here
+    error("not implemented")
+
+    var = getVariable(dfg, variablekey)
+
+    if haskey(var.solverDataDict, solvekey)
+        error("VariableNodeData '$(solvekey)' already exists")
+    end
+
+    #var.solverDataDict[solvekey] = vnd
+
+    setSolverData(var, deepcopy(vnd), key)
+
+end
+
+addVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable, solvekey::Symbol=:default) =
+    addVariableSolverData!(dfg, solverData(sourceVariable, solvekey), sourceVariable.label, solvekey)
+
+
+"""
+    $(SIGNATURES)
+"""
+function updateVariableSolverData!(dfg::AbstractDFG, vnd::VariableNodeData, variablekey::Symbol, solvekey::Symbol=:default)
+    error("not implemented")
+    #This is basically just setSolverData with a copy
+    var = getVariable(dfg, variablekey)
+
+    #var.solverDataDict[solvekey] = deepcopy(vnd)
+    #for InMemoryDFGTypes, cloud would update here
+    setSolverData(var, deepcopy(vnd), key)
+end
+
+updateVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable, solvekey::Symbol=:default) =
+    updateVariableSolverData!(dfg, solverData(sourceVariable, solvekey), sourceVariable.label, solvekey)
+
+"""
+    $(SIGNATURES)
+"""
+function deleteVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, solvekey::Symbol=:default)
+    error("not implemented")
+
+    var = getVariable(dfg, variablekey)
+
+    if haskey(var.solverDataDict, solvekey)
+        error("VariableNodeData '$(solvekey)' already exists")
+    end
+
+    vnd = pop!(var.solverDataDict, solvekey])
+
+    return vnd
+end
+
+deleteVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable, solvekey::Symbol=:default) =
+    deleteVariableSolverData!(dfg, sourceVariable.label, solvekey)
+
+
 """
     $(SIGNATURES)
 Merges and updates solver and estimate data for a variable (variable can be from another graph).
