@@ -215,8 +215,20 @@ setTags!(v::VariableDataLevel0, tags::Vector{Symbol}) = v.tags = tags
     $SIGNATURES
 
 Return the timestamp for a variable.
+
+DEPRECATED -> use getTimestamp instead.
 """
-timestamp(v::VariableDataLevel1) = v.timestamp
+function timestamp(v::VariableDataLevel1)
+    @warn "timestamp is deprecated, use getTimestamp instead"
+    v.timestamp
+end
+
+"""
+    $SIGNATURES
+
+Return the timestamp for a variable.
+"""
+getTimestamp(v::VariableDataLevel1) = v.timestamp
 
 """
 $SIGNATURES

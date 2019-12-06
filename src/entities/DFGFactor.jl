@@ -117,8 +117,20 @@ setTags!(f::FactorDataLevel0, tags::Vector{Symbol}) = f.tags = tags
 $SIGNATURES
 
 Get the timestamp from a DFGFactor object.
+
+DEPRECATED -> use getTimestamp instead.
 """
-timestamp(v::FactorDataLevel1) = v.timestamp
+function timestamp(v::FactorDataLevel1)
+  @warn "timestamp deprecated, use getTimestamp instead"
+  v.timestamp
+end
+
+"""
+$SIGNATURES
+
+Get the timestamp from a DFGFactor object.
+"""
+getTimestamp(v::FactorDataLevel1) = v.timestamp
 
 """
 $SIGNATURES

@@ -151,7 +151,7 @@ end
     # Accessors
     @test label(v1) == v1.label
     @test tags(v1) == v1.tags
-    @test timestamp(v1) == v1.timestamp
+    @test getTimestamp(v1) == v1.timestamp
     @test estimates(v1) == v1.estimateDict
     @test DistributedFactorGraphs.estimate(v1, :notfound) == nothing
     @test solverData(v1) === v1.solverDataDict[:default]
