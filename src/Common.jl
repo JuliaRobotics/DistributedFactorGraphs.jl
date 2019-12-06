@@ -8,6 +8,7 @@ export getFactorType, getfnctype
 export lsTypes, lsfTypes
 export lsWho, lsfWho
 export *
+export findClosestTimestamp, findVariableNearTimestamp
 
 *(a::Symbol, b::AbstractString)::Symbol = Symbol(string(a,b))
 
@@ -319,4 +320,86 @@ function lsfWho(dfg::AbstractDFG, type::Symbol)::Vector{Symbol}
         facType == type && push!(labels, f.label)
     end
     return labels
+end
+
+
+"""
+    $SIGNATURES
+
+Find and return the closest timestamp from two sets of Tuples.  Also return the minimum delta-time (`::Millisecond`) and how many elements match from the two sets are separated by the minimum delta-time.
+"""
+function findClosestTimestamp(setA::Vector{Tuple{DateTime,T}},
+                              setB::Vector{Tuple{DateTime,S}}) where {S,T}
+  #
+  # build matrix of delta times, ranges on rows x vars on columns
+  DT = Array{Millisecond, 2}(undef, length(setA), length(setB))
+  for i in 1:length(setA), j in 1:length(setB)
+    DT[i,j] = setB[j][1] - setA[i][1]
+  end
+
+  DT .= abs.(DT)
+
+  # absolute time differences
+  # DTi = (x->x.value).(DT) .|> abs
+
+  # find the smallest element
+  mdt = minimum(DT)
+  corrs = findall(x->x==mdt, DT)
+
+  # return the closest timestamp, deltaT, number of correspondences
+  return corrs[1].I, mdt, length(corrs)
+end
+
+"""
+    $SIGNATURES
+
+Find and return nearest variable labels per delta time.  Function will filter on `regexFilter`, `tags`, and `solvable`.
+
+DevNotes:
+- TODO `number` should allow returning more than one for k-nearest matches.
+- Future versions likely will require some optimization around the internal `getVariable` call.
+  - Perhaps a dedicated/efficient `getVariableTimestamp` for all DFG flavors.
+
+Related
+
+ls, getVariableIds, findClosestTimestamp
+"""
+function findVariableNearTimestamp(dfg::AbstractDFG,
+                                   timest::DateTime,
+                                   regexFilter::Union{Nothing, Regex}=nothing;
+                                   tags::Vector{Symbol}=Symbol[],
+                                   solvable::Int=0,
+                                   warnDuplicate::Bool=true,
+                                   number::Int=1  )::Vector{Tuple{Vector{Symbol}, Millisecond}}
+  #
+  # get the variable labels based on filters
+  # syms = getVariableIds(dfg, regexFilter, tags=tags, solvable=solvable)
+  syms = getVariableIds(dfg, regexFilter, tags=tags, solvable=solvable)
+  # compile timestamps with label
+  # vars = map( x->getVariable(dfg, x), syms )
+  timeset = map(x->(DFG.timestamp(getVariable(dfg,x)), x), syms)
+  mask = BitArray{1}(undef, length(syms))
+  fill!(mask, true)
+
+  RET = Vector{Tuple{Vector{Symbol},Millisecond}}()
+  SYMS = Symbol[]
+  CORRS = 1
+  NUMBER = number
+  while 0 < CORRS + NUMBER
+    # get closest
+    link, mdt, corrs = findClosestTimestamp([(timest,0)], timeset[mask])
+    push!(SYMS, syms[link[2]])
+    mask[link[2]] = false
+    CORRS = corrs-1
+    # last match, done with this delta time
+    if corrs == 1
+      NUMBER -=  1
+      push!(RET, (deepcopy(SYMS),mdt))
+      SYMS = Symbol[]
+    end
+  end
+  # warn if duplicates found
+  # warnDuplicate && 1 < corrs ? @warn("getVariableNearTimestamp found more than one variable at $timestamp") :   nothing
+
+  return RET
 end
