@@ -9,7 +9,8 @@ export lsTypes, lsfTypes
 export lsWho, lsfWho
 export *
 export findClosestTimestamp, findVariableNearTimestamp
-export hasTags
+export addTags!
+export hasTags, hasTagsNeighbors
 
 *(a::Symbol, b::AbstractString)::Symbol = Symbol(string(a,b))
 
@@ -405,16 +406,42 @@ function findVariableNearTimestamp(dfg::AbstractDFG,
   return RET
 end
 
+"""
+    $SIGNATURES
+
+Add tags to a variable or factor
+"""
+function addTags!(dfg::InMemoryDFGTypes, sym::Symbol, tags::Vector{Symbol})
+  union!(getTags(getFactor(fg, sym)), tags)
+end
 
 """
     $SIGNATURES
 
-Determine if a variable or factor has all the tags listed in `stags`.
+Determine if the variable or factor neighbors have the `tags:;Vector{Symbol}`, and `matchAll::Bool`.
 """
 function hasTags(dfg::InMemoryDFGTypes,
                  sym::Symbol,
-                 stags::Vector{Symbol})::Bool
+                 tags::Vector{Symbol};
+                 matchAll::Bool=true  )::Bool
   #
-  alltags = union( (ls(dfg, sym) .|> x->tags(getFactor(dfg,x)))...)
-  length(filter(x->x in alltags, stags)) == length(stags)
+  alltags = getTags(dfg, sym)
+  length(filter(x->x in alltags, tags)) >= (matchAll ? length(tags) : 1)
+end
+
+
+"""
+    $SIGNATURES
+
+Determine if the variable or factor neighbors have the `tags:;Vector{Symbol}`, and `matchAll::Bool`.
+"""
+function hasTagsNeighbors(dfg::InMemoryDFGTypes,
+                          sym::Symbol,
+                          tags::Vector{Symbol};
+                          matchAll::Bool=true  )::Bool
+  #
+  # assume only variables or factors are neighbors
+  getNeiFnc = isVariable(dfg, sym) ? getFactor : getVariable
+  alltags = union( (ls(dfg, sym) .|> x->DFG.tags(getNeiFnc(dfg,x)))... )
+  length(filter(x->x in alltags, tags)) >= (matchAll ? length(tags) : 1)
 end

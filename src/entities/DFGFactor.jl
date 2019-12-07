@@ -88,63 +88,7 @@ SkeletonDFGFactor(label::Symbol, variableOrderSymbols::Vector{Symbol} = Symbol[]
 
 # Accessors
 
-const FactorDataLevel0 = Union{DFGFactor, DFGFactorSummary, SkeletonDFGFactor}
-const FactorDataLevel1 = Union{DFGFactor, DFGFactorSummary}
-# const FactorDataLevel2 = Union{DFGFactor}
 
-"""
-$SIGNATURES
-
-Return the label for a factor.
-"""
-label(f::FactorDataLevel0) = f.label
-
-"""
-$SIGNATURES
-
-Return the tags for a variable.
-"""
-tags(f::FactorDataLevel0) = f.tags
-
-"""
-$SIGNATURES
-
-Set the tags for a factor.
-"""
-setTags!(f::FactorDataLevel0, tags::Vector{Symbol}) = f.tags = tags
-
-"""
-$SIGNATURES
-
-Get the timestamp from a DFGFactor object.
-
-DEPRECATED -> use getTimestamp instead.
-"""
-function timestamp(v::FactorDataLevel1)
-  @warn "timestamp deprecated, use getTimestamp instead"
-  v.timestamp
-end
-
-"""
-$SIGNATURES
-
-Get the timestamp from a DFGFactor object.
-"""
-getTimestamp(v::FactorDataLevel1) = v.timestamp
-
-"""
-$SIGNATURES
-
-Set the timestamp of a DFGFactor object.
-"""
-setTimestamp!(v::FactorDataLevel1, ts::DateTime) = v.timestamp = ts
-
-"""
-$SIGNATURES
-
-Return the internal ID for a variable.
-"""
-internalId(f::FactorDataLevel1) = f._internalId
 
 """
     $SIGNATURES

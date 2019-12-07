@@ -190,52 +190,6 @@ SkeletonDFGVariable(label::Symbol) = SkeletonDFGVariable(label, Symbol[])
 const VariableDataLevel0 = Union{DFGVariable, DFGVariableSummary, SkeletonDFGVariable}
 const VariableDataLevel1 = Union{DFGVariable, DFGVariableSummary}
 
-"""
-$SIGNATURES
-
-Return the label for a variable.
-"""
-label(v::VariableDataLevel0) = v.label
-
-"""
-$SIGNATURES
-
-Return the tags for a variable.
-"""
-tags(v::VariableDataLevel0) = v.tags
-
-"""
-$SIGNATURES
-
-Set the tags for a variable.
-"""
-setTags!(v::VariableDataLevel0, tags::Vector{Symbol}) = v.tags = tags
-
-"""
-    $SIGNATURES
-
-Return the timestamp for a variable.
-
-DEPRECATED -> use getTimestamp instead.
-"""
-function timestamp(v::VariableDataLevel1)
-    @warn "timestamp is deprecated, use getTimestamp instead"
-    v.timestamp
-end
-
-"""
-    $SIGNATURES
-
-Return the timestamp for a variable.
-"""
-getTimestamp(v::VariableDataLevel1) = v.timestamp
-
-"""
-$SIGNATURES
-
-Set the timestamp for a variable.
-"""
-setTimestamp!(v::VariableDataLevel1, timestamp::DateTime) = v.timestamp = timestamp
 
 """
     $SIGNATURES
