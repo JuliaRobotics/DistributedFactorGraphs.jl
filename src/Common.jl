@@ -9,6 +9,7 @@ export lsTypes, lsfTypes
 export lsWho, lsfWho
 export *
 export findClosestTimestamp, findVariableNearTimestamp
+export hasTags
 
 *(a::Symbol, b::AbstractString)::Symbol = Symbol(string(a,b))
 
@@ -402,4 +403,18 @@ function findVariableNearTimestamp(dfg::AbstractDFG,
   # warnDuplicate && 1 < corrs ? @warn("getVariableNearTimestamp found more than one variable at $timestamp") :   nothing
 
   return RET
+end
+
+
+"""
+    $SIGNATURES
+
+Determine if a variable or factor has all the tags listed in `stags`.
+"""
+function hasTags(dfg::InMemoryDFGTypes,
+                 sym::Symbol,
+                 stags::Vector{Symbol})::Bool
+  #
+  alltags = union( (ls(dfg, sym) .|> x->tags(getFactor(dfg,x)))...)
+  length(filter(x->x in alltags, stags)) == length(stags)
 end
