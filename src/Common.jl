@@ -427,6 +427,6 @@ function hasTagsNeighbors(dfg::InMemoryDFGTypes,
   #
   # assume only variables or factors are neighbors
   getNeiFnc = isVariable(dfg, sym) ? getFactor : getVariable
-  alltags = union( (ls(dfg, sym) .|> x->DFG.tags(getNeiFnc(dfg,x)))... )
+  alltags = union( (ls(dfg, sym) .|> x->getTags(getNeiFnc(dfg,x)))... )
   length(filter(x->x in alltags, tags)) >= (matchAll ? length(tags) : 1)
 end
