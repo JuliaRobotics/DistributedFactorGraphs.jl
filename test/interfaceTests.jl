@@ -1,3 +1,5 @@
+# global testDFGAPI = GraphsDFG
+
 dfg = testDFGAPI{NoSolverParams}()
 
 #add types for softtypes
@@ -76,6 +78,11 @@ end
     # Additional testing for https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/201
     @test symdiff([:a, :b], getVariableIds(dfg, solvable=0)) == []
     @test getVariableIds(dfg, solvable=1) == [:b]
+      # WHAT -- still does not work?
+      # v2b = deepcopy(v2)
+      # setTags!(v2b, [:VARIABLE; :LANDMARK])
+      # setSolvable!(v2b, 1)
+      # setTimestamp!(v2b, getTimestamp(getVariables(dfg, solvable=1)[1]))
     @test getVariables(dfg, solvable=1) == [v2]
     @test getFactorIds(dfg) == [:f1]
     @test getFactorIds(dfg, solvable=1) == []

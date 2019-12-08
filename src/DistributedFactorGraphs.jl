@@ -79,6 +79,7 @@ export
 include("services/AbstractDFG.jl")
 include("services/DFGVariable.jl")
 include("services/DFGFactor.jl")
+include("CommonAccessors.jl")
 include("services/CompareUtils.jl")
 
 # Include the Graphs.jl API.

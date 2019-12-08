@@ -185,21 +185,6 @@ function lsfPriors(dfg::G)::Vector{Symbol} where G <: AbstractDFG
   return priors
 end
 
-"""
-   $(SIGNATURES)
-
-Variable nodes softtype information holding a variety of meta data associated with the type of variable stored in that node of the factor graph.
-
-Related
-
-getVariableType
-"""
-function getSofttype(vnd::VariableNodeData)
-  return vnd.softtype
-end
-function getSofttype(v::DFGVariable; solveKey::Symbol=:default)
-  return getSofttype(solverData(v, solveKey))
-end
 
 """
     $SIGNATURES

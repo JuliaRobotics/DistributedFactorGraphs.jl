@@ -86,8 +86,13 @@ end
 #NOTE I feel like a want to force a variableOrderSymbols
 SkeletonDFGFactor(label::Symbol, variableOrderSymbols::Vector{Symbol} = Symbol[]) = SkeletonDFGFactor(label, Symbol[], variableOrderSymbols)
 
+
+
 # Accessors
 
+const FactorDataLevel0 = Union{DFGFactor, DFGFactorSummary, SkeletonDFGFactor}
+const FactorDataLevel1 = Union{DFGFactor, DFGFactorSummary}
+const FactorDataLevel2 = Union{DFGFactor}
 
 
 """

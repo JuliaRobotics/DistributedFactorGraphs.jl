@@ -185,46 +185,89 @@ end
 
 SkeletonDFGVariable(label::Symbol) = SkeletonDFGVariable(label, Symbol[])
 
+
 # Accessors
 
 const VariableDataLevel0 = Union{DFGVariable, DFGVariableSummary, SkeletonDFGVariable}
 const VariableDataLevel1 = Union{DFGVariable, DFGVariableSummary}
+const VariableDataLevel2 = Union{DFGVariable}
 
+
+"""
+$SIGNATURES
+
+Return the estimates for a variable.
+"""
+getEstimates(v::VariableDataLevel1) = v.estimateDict
 
 """
     $SIGNATURES
 
 Return the estimates for a variable.
+
+DEPRECATED, estimates -> getEstimates
 """
-estimates(v::VariableDataLevel1) = v.estimateDict
+function estimates(v::VariableDataLevel1)
+    @warn "Deprecated estimates, use getEstimates instead."
+    getEstimates(v)
+end
 
 """
     $SIGNATURES
 
 Return a keyed estimate (default is :default) for a variable.
 """
-estimate(v::VariableDataLevel1, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
+getEstimate(v::VariableDataLevel1, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
 
 """
-    $SIGNATURES
+$SIGNATURES
 
-Return the softtype name for a variable.
+Return a keyed estimate (default is :default) for a variable.
 """
-softtype(v::DFGVariableSummary)::Symbol = v.softtypename
+function estimate(v::VariableDataLevel1, key::Symbol=:default)
+    @warn "DEPRECATED estimate, use getEstimate instead."
+    getEstimate(v, key)
+end
+
+"""
+   $(SIGNATURES)
+
+Variable nodes softtype information holding a variety of meta data associated with the type of variable stored in that node of the factor graph.
+
+Related
+
+getVariableType
+"""
+function getSofttype(vnd::VariableNodeData)
+  return vnd.softtype
+end
+function getSofttype(v::DFGVariable; solveKey::Symbol=:default)
+  return getSofttype(solverData(v, solveKey))
+end
 
 """
     $SIGNATURES
 
 Retrieve the soft type name symbol for a DFGVariable or DFGVariableSummary. ie :Point2, Pose2, etc.
+
+TODO, DO NOT USE v.softtypename in DFGVariableSummary
 """
-softtype(v::DFGVariable)::Symbol = Symbol(typeof(getSofttype(v)))
+getSofttype(v::DFGVariableSummary) = v.softtypename
+
+
 
 """
-    $SIGNATURES
+$SIGNATURES
 
-Return the internal ID a variable.
+Return the softtype name for a variable.
+
+DEPRECATED, softtype -> getSofttype
 """
-internalId(v::VariableDataLevel1) = v._internalId
+function softtype(v::VariableDataLevel1)::Symbol
+    @warn "Deprecated softtype, use getSofttype instead."
+    getSofttype(v)
+end
+
 
 """
     $SIGNATURES

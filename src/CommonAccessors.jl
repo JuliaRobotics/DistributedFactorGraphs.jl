@@ -8,10 +8,6 @@ export getTimestamp, setTimestamp!, timestamp
 export getInternalId, interalId
 
 
-const FactorDataLevel0 = Union{DFGFactor, DFGFactorSummary, SkeletonDFGFactor}
-const FactorDataLevel1 = Union{DFGFactor, DFGFactorSummary}
-# const FactorDataLevel2 = Union{DFGFactor}
-
 const DataLevel0 = Union{VariableDataLevel0, FactorDataLevel0}
 const DataLevel1 = Union{VariableDataLevel1, FactorDataLevel1}
 const DataLevel2 = Union{VariableDataLevel2, FactorDataLevel2}
@@ -106,6 +102,6 @@ Return the internal ID for a variable.
 DEPRECATED, internalId -> getInternalId
 """
 function internalId(v::DataLevel1)
-  @warn "Deprecated interalId, use getInternalId instead."
-  getInternalId(v)
+    @warn "Deprecated interalId, use getInternalId instead."
+    getInternalId(v)
 end
