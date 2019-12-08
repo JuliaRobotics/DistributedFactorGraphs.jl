@@ -364,7 +364,7 @@ function findVariableNearTimestamp(dfg::AbstractDFG,
   syms = getVariableIds(dfg, regexFilter, tags=tags, solvable=solvable)
   # compile timestamps with label
   # vars = map( x->getVariable(dfg, x), syms )
-  timeset = map(x->(DFG.timestamp(getVariable(dfg,x)), x), syms)
+  timeset = map(x->(getTimestamp(getVariable(dfg,x)), x), syms)
   mask = BitArray{1}(undef, length(syms))
   fill!(mask, true)
 
