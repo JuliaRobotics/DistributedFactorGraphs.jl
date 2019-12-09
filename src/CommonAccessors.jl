@@ -40,10 +40,6 @@ Return the tags for a variable.
 """
 getTags(v::DataLevel0) = v.tags
 
-function getTags(dfg::InMemoryDFGTypes, sym::Symbol)
-  getFnc = isVariable(dfg,sym) ? getVariable : getFactor
-  getTags(getFnc(dfg, sym))
-end
 
 """
 $SIGNATURES

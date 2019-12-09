@@ -392,6 +392,16 @@ function findVariableNearTimestamp(dfg::AbstractDFG,
 end
 
 """
+$SIGNATURES
+
+Return the tags for a variable or factor.
+"""
+function getTags(dfg::InMemoryDFGTypes, sym::Symbol)
+  getFnc = isVariable(dfg,sym) ? getVariable : getFactor
+  getTags(getFnc(dfg, sym))
+end
+
+"""
     $SIGNATURES
 
 Add tags to a variable or factor
