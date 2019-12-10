@@ -566,7 +566,7 @@ function deleteVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, solvek
         error("VariableNodeData '$(solvekey)' already exists")
     end
 
-    vnd = pop!(var.solverDataDict, solvekey])
+    vnd = pop!(var.solverDataDict, solvekey)
 
     return vnd
 end

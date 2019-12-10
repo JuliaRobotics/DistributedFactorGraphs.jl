@@ -66,10 +66,14 @@ end
 """
     $(TYPEDEF)
 Skeleton factor with essentials.
+    $(FIELDS)
 """
 struct SkeletonDFGFactor <: AbstractDFGFactor
+    "Factor label, :x1f1, `label(factor)`"
     label::Symbol
+    "Factor tags, [:FACTOR], `tags(factor)`"
     tags::Vector{Symbol}
+    "The order of the variables associated with this factor."
     _variableOrderSymbols::Vector{Symbol}
 end
 
