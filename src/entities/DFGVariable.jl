@@ -248,22 +248,21 @@ end
 """
     $SIGNATURES
 
-Retrieve the soft type name symbol for a DFGVariable or DFGVariableSummary. ie :Point2, Pose2, etc.
-
+Retrieve the soft type name symbol for a DFGVariableSummary. ie :Point2, Pose2, etc.
 TODO, DO NOT USE v.softtypename in DFGVariableSummary
 """
-getSofttype(v::DFGVariableSummary) = v.softtypename
+getSofttype(v::DFGVariableSummary)::Symbol = v.softtypename
 
 
 
 """
 $SIGNATURES
 
-Return the softtype name for a variable.
+Return the softtype for a variable.
 
 DEPRECATED, softtype -> getSofttype
 """
-function softtype(v::VariableDataLevel1)::Symbol
+function softtype(v::VariableDataLevel1)
     @warn "Deprecated softtype, use getSofttype instead."
     getSofttype(v)
 end

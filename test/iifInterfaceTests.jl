@@ -160,9 +160,9 @@ end
     @test solverDataDict(v1) == v1.solverDataDict
     @test internalId(v1) == v1._internalId
 
-    @test softtype(v1) == :ContinuousScalar#Symbol(typeof(st1))
-    @test softtype(v2) == :ContinuousScalar#Symbol(typeof(st2))
-    @test typeof(getSofttype(v1)) == typeof(ContinuousScalar())
+    @test typeof(softtype(v1)) == ContinuousScalar
+    @test typeof(softtype(v2)) == ContinuousScalar
+    @test typeof(getSofttype(v1)) == ContinuousScalar
 
     @test label(f1) == f1.label
     @test tags(f1) == f1.tags
@@ -441,9 +441,10 @@ end
     for v in ls(summaryGraph)
         for field in variableFields
             if field != :softtypename
-            @test getfield(getVariable(dfg, v), field) == getfield(getVariable(summaryGraph, v), field)
+                @test getfield(getVariable(dfg, v), field) == getfield(getVariable(summaryGraph, v), field)
             else
-                @test softtype(getVariable(dfg, v)) == softtype(getVariable(summaryGraph, v))
+                # Special case to check the symbol softtype is equal to the full softtype.
+                @test Symbol(typeof(softtype(getVariable(dfg, v)))) == softtype(getVariable(summaryGraph, v))
         end
     end
     end
