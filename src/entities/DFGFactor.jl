@@ -44,7 +44,7 @@ mutable struct DFGFactor{T, S} <: AbstractDFGFactor
     _internalId::Int64
     _variableOrderSymbols::Vector{Symbol}
     # TODO back to front ts and _internalId for legacy reasons
-    DFGFactor{T, S}(label::Symbol, _internalId::Int64=0, ts::DateTime=now()) where {T, S} = new{T, S}(label, Symbol[], GenericFunctionNodeData{T, S}(), 0, ts, 0, Symbol[])
+    DFGFactor{T, S}(label::Symbol, _internalId::Int64=0, timestamp::DateTime=now()) where {T, S} = new{T, S}(label, Symbol[], GenericFunctionNodeData{T, S}(), 0, timestamp, 0, Symbol[])
     # DFGFactor{T, S}(label::Symbol, _internalId::Int64) where {T, S} = new{T, S}(label, Symbol[], GenericFunctionNodeData{T, S}(), 0, now(), _internalId, Symbol[])
 end
 

@@ -8,6 +8,7 @@ function packFactor(dfg::G, f::DFGFactor)::Dict{String, Any} where G <: Abstract
     # Construct the properties to save
     props = Dict{String, Any}()
     props["label"] = string(f.label)
+    props["timestamp"] = string(f.timestamp)
     props["tags"] = JSON2.write(f.tags)
     # Pack the node data
     fnctype = f.data.fnc.usrfnc!
@@ -32,6 +33,7 @@ end
 
 function unpackFactor(dfg::G, packedProps::Dict{String, Any}, iifModule)::DFGFactor where G <: AbstractDFG
     label = packedProps["label"]
+    timestamp = DateTime(packedProps["timestamp"])
     tags = JSON2.read(packedProps["tags"], Vector{Symbol})
 
     data = packedProps["data"]
@@ -56,7 +58,7 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any}, iifModule)::DFGFac
     solvable = packedProps["solvable"]
 
     # Rebuild DFGVariable
-    factor = DFGFactor{typeof(fullFactor.fnc), Symbol}(Symbol(label))
+    factor = DFGFactor{typeof(fullFactor.fnc), Symbol}(Symbol(label), 0, timestamp)
     factor.tags = tags
     factor.data = fullFactor
     factor._variableOrderSymbols = _variableOrderSymbols

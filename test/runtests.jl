@@ -17,44 +17,44 @@ using Dates
 # global_logger(logger)
 
 # Test each interface
-# apis = [
-#     GraphsDFG,
-#     DistributedFactorGraphs.SymbolDFG,
-#     LightDFG
-#     ]
-# for api in apis
-#     @testset "Testing Driver: $(api)" begin
-#         @info "Testing Driver: $(api)"
-#         global testDFGAPI = api
-#         include("interfaceTests.jl")
-#     end
-# end
-#
-# @testset "Deprecated Drivers Test" begin
-#     @test_throws UndefVarError SymbolDFG{NoSolverParams}()
-# end
-#
-# # Test special cases
-#
-# @testset "Plotting Tests" begin
-#     include("plottingTest.jl")
-# end
-#
-# @testset "Data Store Tests" begin
-#     include("DataStoreTests.jl")
-# end
-#
-#
-# @testset "LightDFG subtype tests" begin
-#     for type in [(var=DFGVariableSummary, fac=DFGFactorSummary), (var=SkeletonDFGVariable,fac=SkeletonDFGFactor)]
-#         @testset "$(type.var) and $(type.fac) tests" begin
-#             @info "Testing $(type.var) and $(type.fac)"
-#             global VARTYPE = type.var
-#             global FACTYPE = type.fac
-#             include("LightDFGSummaryTypes.jl")
-#         end
-#     end
-# end
+apis = [
+    GraphsDFG,
+    DistributedFactorGraphs.SymbolDFG,
+    LightDFG
+    ]
+for api in apis
+    @testset "Testing Driver: $(api)" begin
+        @info "Testing Driver: $(api)"
+        global testDFGAPI = api
+        include("interfaceTests.jl")
+    end
+end
+
+@testset "Deprecated Drivers Test" begin
+    @test_throws UndefVarError SymbolDFG{NoSolverParams}()
+end
+
+# Test special cases
+
+@testset "Plotting Tests" begin
+    include("plottingTest.jl")
+end
+
+@testset "Data Store Tests" begin
+    include("DataStoreTests.jl")
+end
+
+
+@testset "LightDFG subtype tests" begin
+    for type in [(var=DFGVariableSummary, fac=DFGFactorSummary), (var=SkeletonDFGVariable,fac=SkeletonDFGFactor)]
+        @testset "$(type.var) and $(type.fac) tests" begin
+            @info "Testing $(type.var) and $(type.fac)"
+            global VARTYPE = type.var
+            global FACTYPE = type.fac
+            include("LightDFGSummaryTypes.jl")
+        end
+    end
+end
 
 if get(ENV, "IIF_TEST", "") == "true"
 
