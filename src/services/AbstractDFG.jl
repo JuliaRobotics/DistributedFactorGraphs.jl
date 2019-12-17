@@ -567,7 +567,7 @@ function getAdjacencyMatrixSparse(dfg::G; solvable::Int=0)::Tuple{SparseMatrixCS
     adjMat = spzeros(Int, length(factLabels), length(varLabels))
 
     for (fIndex, factLabel) in enumerate(factLabels)
-        factVars = getNeighbors(dfg, getFactor(dfg, factLabel))
+        factVars = getNeighbors(dfg, getFactor(dfg, factLabel), solvable=solvable)
         map(vLabel -> adjMat[fIndex,vDict[vLabel]] = 1, factVars)
     end
     return adjMat, varLabels, factLabels

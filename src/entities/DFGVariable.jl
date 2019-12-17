@@ -185,80 +185,88 @@ end
 
 SkeletonDFGVariable(label::Symbol) = SkeletonDFGVariable(label, Symbol[])
 
+
 # Accessors
 
 const VariableDataLevel0 = Union{DFGVariable, DFGVariableSummary, SkeletonDFGVariable}
 const VariableDataLevel1 = Union{DFGVariable, DFGVariableSummary}
+const VariableDataLevel2 = Union{DFGVariable}
+
 
 """
 $SIGNATURES
 
-Return the label for a variable.
+Return the estimates for a variable.
 """
-label(v::VariableDataLevel0) = v.label
-
-"""
-$SIGNATURES
-
-Return the tags for a variable.
-"""
-tags(v::VariableDataLevel0) = v.tags
-
-"""
-$SIGNATURES
-
-Set the tags for a variable.
-"""
-setTags!(v::VariableDataLevel0, tags::Vector{Symbol}) = v.tags = tags
-
-"""
-    $SIGNATURES
-
-Return the timestamp for a variable.
-"""
-timestamp(v::VariableDataLevel1) = v.timestamp
-
-"""
-$SIGNATURES
-
-Set the timestamp for a variable.
-"""
-setTimestamp!(v::VariableDataLevel1, timestamp::DateTime) = v.timestamp = timestamp
+getEstimates(v::VariableDataLevel1) = v.estimateDict
 
 """
     $SIGNATURES
 
 Return the estimates for a variable.
+
+DEPRECATED, estimates -> getEstimates
 """
-estimates(v::VariableDataLevel1) = v.estimateDict
+function estimates(v::VariableDataLevel1)
+    @warn "Deprecated estimates, use getEstimates instead."
+    getEstimates(v)
+end
 
 """
     $SIGNATURES
 
 Return a keyed estimate (default is :default) for a variable.
 """
-estimate(v::VariableDataLevel1, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
+getEstimate(v::VariableDataLevel1, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
+
+"""
+$SIGNATURES
+
+Return a keyed estimate (default is :default) for a variable.
+"""
+function estimate(v::VariableDataLevel1, key::Symbol=:default)
+    @warn "DEPRECATED estimate, use getEstimate instead."
+    getEstimate(v, key)
+end
+
+"""
+   $(SIGNATURES)
+
+Variable nodes softtype information holding a variety of meta data associated with the type of variable stored in that node of the factor graph.
+
+Related
+
+getVariableType
+"""
+function getSofttype(vnd::VariableNodeData)
+  return vnd.softtype
+end
+function getSofttype(v::DFGVariable; solveKey::Symbol=:default)
+  return getSofttype(solverData(v, solveKey))
+end
 
 """
     $SIGNATURES
 
-Return the softtype name for a variable.
+Retrieve the soft type name symbol for a DFGVariableSummary. ie :Point2, Pose2, etc.
+TODO, DO NOT USE v.softtypename in DFGVariableSummary
 """
-softtype(v::DFGVariableSummary)::Symbol = v.softtypename
+getSofttype(v::DFGVariableSummary)::Symbol = v.softtypename
+
+
 
 """
-    $SIGNATURES
+$SIGNATURES
 
-Retrieve the soft type name symbol for a DFGVariable or DFGVariableSummary. ie :Point2, Pose2, etc.
-"""
-softtype(v::DFGVariable)::Symbol = Symbol(typeof(getSofttype(v)))
+Return the softtype for a variable.
 
+DEPRECATED, softtype -> getSofttype
 """
-    $SIGNATURES
+function softtype(v::VariableDataLevel1)
+    @warn "Deprecated softtype, use getSofttype instead."
+    getSofttype(v)
+end
 
-Return the internal ID a variable.
-"""
-internalId(v::VariableDataLevel1) = v._internalId
 
 """
     $SIGNATURES
