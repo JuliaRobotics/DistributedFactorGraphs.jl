@@ -5,7 +5,7 @@
 export getLabel, label
 export getTags, setTags!, tags
 export getTimestamp, setTimestamp!, timestamp
-export getInternalId, interalId
+export getInternalId, internalId
 
 
 const DataLevel0 = Union{VariableDataLevel0, FactorDataLevel0}
@@ -50,7 +50,7 @@ DEPRECATED, tags -> getTags
 """
 function tags(v::DataLevel0)
   @warn "tags deprecated, use getTags instead"
-  getTags
+  getTags(v)
 end
 
 """
@@ -58,7 +58,10 @@ $SIGNATURES
 
 Set the tags for a factor.
 """
-setTags!(f::DataLevel0, tags::Vector{Symbol}) = f.tags = tags
+function setTags!(f::DataLevel0, tags::Vector{Symbol})
+  resize!(f.tags, length(tags))
+  f.tags .= tags
+end
 
 
 """
