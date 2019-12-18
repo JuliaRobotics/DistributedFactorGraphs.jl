@@ -123,7 +123,6 @@ VariableEstimate(params...) = errror("VariableEstimate is depreciated, please us
 """
     $(TYPEDEF)
 Fundamental structure for a DFG variable with fields:
-$(TYPEDFIELDS)
 """
 mutable struct DFGVariable <: AbstractDFGVariable
     label::Symbol
