@@ -24,13 +24,15 @@ function buildSubgraphFromLabels!(dfg::G,
     #Same type
     cliqSubFg = G(params=getSolverParams(dfg))
   else
-    #Default
+    #Default if not in-memory
     cliqSubFg = destType{typeof(getSolverParms(dfg))}(params=getSolverParams(dfg))
   end
 
   # add a little too many variables (since we need the factors)
   for sym in syms
-    getSubgraphAroundNode(dfg, getVariable(dfg, sym), 2, false, cliqSubFg, solvable=solvable)
+    if getSolvable(dfg, sym) >= solvable
+      getSubgraphAroundNode(dfg, getVariable(dfg, sym), 2, false, cliqSubFg, solvable=solvable)
+    end
   end
 
   # remove excessive variables that were copied by neighbors distance 2
