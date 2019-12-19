@@ -1,10 +1,11 @@
 using DistributedFactorGraphs
 using Test
 
+struct TestInferenceVariable1 <: InferenceVariable end
+struct TestInferenceVariable2 <: InferenceVariable end
+
 @testset "Needs-a-home tests" begin
     dfg = GraphsDFG{NoSolverParams}(params=NoSolverParams())
-    struct TestInferenceVariable1 <: InferenceVariable end
-    struct TestInferenceVariable2 <: InferenceVariable end
 
     # Build a graph
     v1 = DFGVariable(:a, TestInferenceVariable1())
