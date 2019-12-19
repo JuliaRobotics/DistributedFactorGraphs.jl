@@ -22,8 +22,10 @@ export DFGNode, DFGVariable, DFGFactor, AbstractDFGVariable, AbstractDFGFactor
 export InferenceType, PackedInferenceType, FunctorInferenceType, InferenceVariable, ConvolutionObject
 export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
 export getMaxPPE, getMeanPPE, getSuggestedPPE
-export label, timestamp, tags, estimates, estimate, data, softtype, solverData, getData, solverDataDict, setSolverData, internalId, smallData, bigData
+export timestamp # DEPRECATED
+export label, getTimestamp, setTimestamp!, tags, setTags!, estimates, estimate, data, softtype, solverData, getData, solverDataDict, setSolverData, setSolverData!, internalId, smallData, setSmallData!, bigData
 export DFGVariableSummary, DFGFactorSummary, AbstractDFGSummary
+export addBigDataEntry!, getBigDataEntry, updateBigDataEntry!, deleteBigDataEntry!, getBigDataEntries, getBigDataKeys
 
 #Skeleton types
 export SkeletonDFGVariable, SkeletonDFGFactor
@@ -34,7 +36,7 @@ export pushUserData!, pushRobotData!, pushSessionData!, popUserData!, popRobotDa
 
 # Services/AbstractDFG Exports
 export isInitialized, getFactorFunction, isVariable, isFactor
-export isSolvable, isSolveInProgress
+export isSolvable, isSolveInProgress, getSolvable, setSolvable!
 export mergeUpdateVariableSolverData!, mergeUpdateGraphSolverData!
 
 # Solver (IIF) Exports
@@ -77,9 +79,8 @@ export
 include("services/AbstractDFG.jl")
 include("services/DFGVariable.jl")
 include("services/DFGFactor.jl")
+include("CommonAccessors.jl")
 include("services/CompareUtils.jl")
-
-include("BigData.jl")
 
 # Include the Graphs.jl API.
 include("GraphsDFG/GraphsDFG.jl")
@@ -99,6 +100,9 @@ include("CloudGraphsDFG/CloudGraphsDFG.jl")
 const InMemoryDFGTypes = Union{GraphsDFG, LightDFG}
 export InMemoryDFGTypes
 
+# Needs a home.
+include("needsahome.jl")
+
 function __init__()
     @require GraphPlot = "a2cc645c-3eea-5389-862e-a155d0052231" begin
         @info "Including Plots"
@@ -110,5 +114,8 @@ end
 
 # To be moved as necessary.
 include("Common.jl")
+
+# Big data extensions
+include("BigData/BigData.jl")
 
 end

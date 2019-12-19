@@ -125,7 +125,7 @@ function compareVariable(A::DFGVariable,
                          show::Bool=true,
                          skipsamples::Bool=true  )::Bool
   #
-  skiplist = union([:attributes;:solverDataDict;:_internalId],skip)
+  skiplist = union([:attributes;:solverDataDict;:_internalId;:createdTimestamp;:lastUpdatedTimestamp],skip)
   TP = compareAll(A, B, skip=skiplist, show=show)
   varskiplist = skipsamples ? [:val; :bw] : Symbol[]
   skiplist = union([:softtype;],varskiplist)

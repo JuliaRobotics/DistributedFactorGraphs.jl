@@ -24,7 +24,7 @@ end
 DFGPlotProps() = DFGPlotProps(  (var=colorant"seagreen", fac=colorant"cyan3"),
                                 (var=1.0, fac=0.3),
                                 (var=:box, fac=:elipse),
-                                spectral_layout,
+                                spring_layout,
                                 true)
 
 
@@ -89,7 +89,7 @@ function dfgplot(dfg::AbstractDFG, p::DFGPlotProps = DFGPlotProps())
     # TODO implement convert functions
     @warn "TODO Implement convert"
     ldfg = LightDFG{AbstractParams}()
-    DistributedFactorGraphs._copyIntoGraph!(dfg, ldfg, union(getVariableIds(dfg), getFactorIds(dfg)), true)
+    DistributedFactorGraphs._copyIntoGraph!(dfg, ldfg, union(getVariableIds(dfg), getFactorIds(dfg)), true, copyGraphMetadata=false)
 
     dfgplot(ldfg, p)
 end

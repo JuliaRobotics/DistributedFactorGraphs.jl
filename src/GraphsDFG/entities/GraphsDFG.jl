@@ -21,7 +21,22 @@ mutable struct GraphsDFG{T <: AbstractParams} <: AbstractDFG
     labelDict::Dict{Symbol, Int64}
     addHistory::Vector{Symbol} #TODO: Discuss more - is this an audit trail?
     solverParams::T # Solver parameters
+    # GraphsDFG{T}(x...) where T <: AbstractParams = new{T}(x...)
 end
+
+
+GraphsDFG(   g::FGType=Graphs.incdict(GraphsNode,is_directed=false),
+                d::String="Graphs.jl implementation",
+                n::Int64=0,
+                l::Dict{Symbol, Int64}=Dict{Symbol, Int64}(),
+                a::Vector{Symbol}=Symbol[];
+                userId::String = "UserID",
+                robotId::String = "robotID",
+                sessionId::String = "sessionID",
+                userData::Dict{Symbol, String} = Dict{Symbol, String}(),
+                robotData::Dict{Symbol, String} = Dict{Symbol, String}(),
+                sessionData::Dict{Symbol, String} = Dict{Symbol, String}(),
+                params::T=NoSolverParams()) where T <: AbstractParams = GraphsDFG{T}(g, d, userId, robotId, sessionId, userData, robotData, sessionData, n, l, a, params)
 
 GraphsDFG{T}(   g::FGType=Graphs.incdict(GraphsNode,is_directed=false),
                 d::String="Graphs.jl implementation",

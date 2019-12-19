@@ -27,20 +27,20 @@ mutable struct VariableNodeData{T<:InferenceVariable}
 end
 
 VariableNodeData(val::Array{Float64,2},
-			   bw::Array{Float64,2},
-			   BayesNetOutVertIDs::Array{Symbol,1},
-			   dimIDs::Array{Int,1},
-			   dims::Int,eliminated::Bool,
-			   BayesNetVertID::Symbol,
-			   separator::Array{Symbol,1},
-			   softtype::T,
-			   initialized::Bool,
-			   inferdim::Float64,
-			   ismargin::Bool,
-			   dontmargin::Bool,
-			   solveInProgress::Int=0) where T <: InferenceVariable =
-				  VariableNodeData{T}(val,bw,BayesNetOutVertIDs,dimIDs,dims,eliminated,BayesNetVertID,separator,
-									  softtype::T,initialized,inferdim,ismargin,dontmargin, solveInProgress)
+               bw::Array{Float64,2},
+               BayesNetOutVertIDs::Array{Symbol,1},
+               dimIDs::Array{Int,1},
+               dims::Int,eliminated::Bool,
+               BayesNetVertID::Symbol,
+               separator::Array{Symbol,1},
+               softtype::T,
+               initialized::Bool,
+               inferdim::Float64,
+               ismargin::Bool,
+               dontmargin::Bool,
+               solveInProgress::Int=0) where T <: InferenceVariable =
+                  VariableNodeData{T}(val,bw,BayesNetOutVertIDs,dimIDs,dims,eliminated,BayesNetVertID,separator,
+                                      softtype::T,initialized,inferdim,ismargin,dontmargin, solveInProgress)
 
 
 function VariableNodeData()
@@ -92,7 +92,7 @@ mutable struct PackedVariableNodeData
                          x13::Float64,
                          x14::Bool,
                          x15::Bool,
-						 x16::Int) = new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16)
+                         x16::Int) = new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16)
 end
 
 # AbstractPointParametricEst interface
@@ -104,7 +104,7 @@ Data container to store Parameteric Point Estimate (PPE) for mean and max.
 """
 struct MeanMaxPPE <: AbstractPointParametricEst
     solverKey::Symbol #repeated because of Sam's request
-	suggested::Vector{Float64}
+    suggested::Vector{Float64}
     max::Vector{Float64}
     mean::Vector{Float64}
     lastUpdatedTimestamp::DateTime
@@ -123,7 +123,6 @@ VariableEstimate(params...) = errror("VariableEstimate is depreciated, please us
 """
     $(TYPEDEF)
 Fundamental structure for a DFG variable with fields:
-$(TYPEDFIELDS)
 """
 mutable struct DFGVariable <: AbstractDFGVariable
     label::Symbol
@@ -142,9 +141,9 @@ end
 DFGVariable constructors.
 """
 function DFGVariable(label::Symbol, _internalId::Int64 = 0) #where {T <:InferenceVariable}
-	st = stacktrace()
+    st = stacktrace()
     @warn "DFGVariable(label::Symbol, _internalId::Int64 = 0) is depreciated please use DFGVariable(label::Symbol, softtype::T, _internalId::Int64 = 0) where T <: InferenceVariable. Enable DEBUG logging for the stack trace."
-	@debug st
+    @debug st
     T = InferenceVariable
     DFGVariable(label, now(), Symbol[],
                   Dict{Symbol, MeanMaxPPE}(),
@@ -159,19 +158,114 @@ DFGVariable(label::Symbol, softtype::T, _internalId::Int64 = 0) where {T <: Infe
               Dict{String, String}(),
               Dict{Symbol,AbstractBigDataEntry}(), 0, _internalId)
 
+"""
+    $(SIGNATURES)
+Structure for first-class citizens of a DFGVariable.
+"""
+mutable struct DFGVariableSummary <: AbstractDFGVariable
+    label::Symbol
+    timestamp::DateTime
+    tags::Vector{Symbol}
+    estimateDict::Dict{Symbol, <:AbstractPointParametricEst}
+    softtypename::Symbol
+    _internalId::Int64
+end
+
+
+# SKELETON DFG
+"""
+    $(TYPEDEF)
+Skeleton variable with essentials.
+"""
+struct SkeletonDFGVariable <: AbstractDFGVariable
+    label::Symbol
+    tags::Vector{Symbol}
+end
+
+SkeletonDFGVariable(label::Symbol) = SkeletonDFGVariable(label, Symbol[])
+
+
 # Accessors
-label(v::DFGVariable) = v.label
-timestamp(v::DFGVariable) = v.timestamp
-tags(v::DFGVariable) = v.tags
-estimates(v::DFGVariable) = v.estimateDict
-estimate(v::DFGVariable, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
+
+const VariableDataLevel0 = Union{DFGVariable, DFGVariableSummary, SkeletonDFGVariable}
+const VariableDataLevel1 = Union{DFGVariable, DFGVariableSummary}
+const VariableDataLevel2 = Union{DFGVariable}
+
+
+"""
+$SIGNATURES
+
+Return the estimates for a variable.
+"""
+getEstimates(v::VariableDataLevel1) = v.estimateDict
 
 """
     $SIGNATURES
 
-Retrieve the soft type name symbol for a DFGVariable or DFGVariableSummary. ie :Point2, Pose2, etc.
+Return the estimates for a variable.
+
+DEPRECATED, estimates -> getEstimates
 """
-softtype(v::DFGVariable)::Symbol = Symbol(typeof(getSofttype(v)))
+function estimates(v::VariableDataLevel1)
+    @warn "Deprecated estimates, use getEstimates instead."
+    getEstimates(v)
+end
+
+"""
+    $SIGNATURES
+
+Return a keyed estimate (default is :default) for a variable.
+"""
+getEstimate(v::VariableDataLevel1, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
+
+"""
+$SIGNATURES
+
+Return a keyed estimate (default is :default) for a variable.
+"""
+function estimate(v::VariableDataLevel1, key::Symbol=:default)
+    @warn "DEPRECATED estimate, use getEstimate instead."
+    getEstimate(v, key)
+end
+
+"""
+   $(SIGNATURES)
+
+Variable nodes softtype information holding a variety of meta data associated with the type of variable stored in that node of the factor graph.
+
+Related
+
+getVariableType
+"""
+function getSofttype(vnd::VariableNodeData)
+  return vnd.softtype
+end
+function getSofttype(v::DFGVariable; solveKey::Symbol=:default)
+  return getSofttype(solverData(v, solveKey))
+end
+
+"""
+    $SIGNATURES
+
+Retrieve the soft type name symbol for a DFGVariableSummary. ie :Point2, Pose2, etc.
+TODO, DO NOT USE v.softtypename in DFGVariableSummary
+"""
+getSofttype(v::DFGVariableSummary)::Symbol = v.softtypename
+
+
+
+"""
+$SIGNATURES
+
+Return the softtype for a variable.
+
+DEPRECATED, softtype -> getSofttype
+"""
+function softtype(v::VariableDataLevel1)
+    @warn "Deprecated softtype, use getSofttype instead."
+    getSofttype(v)
+end
+
 
 """
     $SIGNATURES
@@ -194,47 +288,33 @@ end
 Set solver data structure stored in a variable.
 """
 setSolverData(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v.solverDataDict[key] = data
+"""
+    $SIGNATURES
+
+Set solver data structure stored in a variable.
+"""
+setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = setSolverData(v, data, key)
+
+"""
+    $SIGNATURES
+
+Get solver data dictionary for a variable.
+"""
 solverDataDict(v::DFGVariable) = v.solverDataDict
-internalId(v::DFGVariable) = v._internalId
-# Todo: Complete this.
+
+"""
+$SIGNATURES
+
+Get the small data for a variable.
+"""
 smallData(v::DFGVariable) = v.smallData
+
+"""
+$SIGNATURES
+
+Set the small data for a variable.
+"""
+setSmallData!(v::DFGVariable, smallData::String) = v.smallData = smallData
+
+# Todo: Complete this.
 bigData(v::DFGVariable) = v.bigData
-
-"""
-    $(SIGNATURES)
-Structure for first-class citizens of a DFGVariable.
-"""
-mutable struct DFGVariableSummary <: AbstractDFGVariable
-    label::Symbol
-    timestamp::DateTime
-    tags::Vector{Symbol}
-    estimateDict::Dict{Symbol, <:AbstractPointParametricEst}
-    softtypename::Symbol
-    _internalId::Int64
-end
-label(v::DFGVariableSummary) = v.label
-timestamp(v::DFGVariableSummary) = v.timestamp
-tags(v::DFGVariableSummary) = v.tags
-estimates(v::DFGVariableSummary) = v.estimateDict
-estimate(v::DFGVariableSummary, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
-softtype(v::DFGVariableSummary)::Symbol = v.softtypename
-internalId(v::DFGVariableSummary) = v._internalId
-
-
-
-# SKELETON DFG
-"""
-	$(TYPEDEF)
-Skeleton factor with essentials.
-"""
-struct SkeletonDFGFactor <: AbstractDFGFactor
-    label::Symbol
-	tags::Vector{Symbol}
-	_variableOrderSymbols::Vector{Symbol}
-end
-
-#NOTE I feel like a want to force a variableOrderSymbols
-SkeletonDFGFactor(label::Symbol, variableOrderSymbols::Vector{Symbol} = Symbol[]) = SkeletonDFGFactor(label, Symbol[], variableOrderSymbols)
-
-label(f::SkeletonDFGFactor) = f.label
-tags(f::SkeletonDFGFactor) = f.tags

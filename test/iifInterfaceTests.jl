@@ -115,6 +115,14 @@ end
     @test exists(dfg, :a) == true
     @test exists(dfg, v1) == true
     @test exists(dfg, :nope) == false
+    # isFactor and isVariable
+    @test isFactor(dfg, f1.label)
+    @test !isFactor(dfg, v1.label)
+    @test isVariable(dfg, v1.label)
+    @test !isVariable(dfg, f1.label)
+    @test !isVariable(dfg, :doesntexist)
+    @test !isFactor(dfg, :doesntexist)
+
     # Sorting of results
     # TODO - this function needs to be cleaned up
     unsorted = [:x1_3;:x1_6;:l1;:april1] #this will not work for :x1x2f1
@@ -143,7 +151,7 @@ end
     # Accessors
     @test label(v1) == v1.label
     @test tags(v1) == v1.tags
-    @test timestamp(v1) == v1.timestamp
+    @test getTimestamp(v1) == v1.timestamp
     @test estimates(v1) == v1.estimateDict
     @test DistributedFactorGraphs.estimate(v1, :notfound) == nothing
     @test solverData(v1) === v1.solverDataDict[:default]
@@ -152,9 +160,9 @@ end
     @test solverDataDict(v1) == v1.solverDataDict
     @test internalId(v1) == v1._internalId
 
-    @test softtype(v1) == :ContinuousScalar#Symbol(typeof(st1))
-    @test softtype(v2) == :ContinuousScalar#Symbol(typeof(st2))
-    @test typeof(getSofttype(v1)) == typeof(ContinuousScalar())
+    @test typeof(softtype(v1)) == ContinuousScalar
+    @test typeof(softtype(v2)) == ContinuousScalar
+    @test typeof(getSofttype(v1)) == ContinuousScalar
 
     @test label(f1) == f1.label
     @test tags(f1) == f1.tags
@@ -201,20 +209,21 @@ end
 
         #add
         v1 = getVariable(dfg, :a)
-        @test addBigDataEntry!(v1, de1)
-        @test addBigDataEntry!(dfg, :a, de2)
-        @test addBigDataEntry!(v1, de1)
+        @test addBigDataEntry!(v1, de1) == v1
+        @test addBigDataEntry!(dfg, :a, de2) == v1
+        @test addBigDataEntry!(v1, de1) == v1
+        @test de2 in getBigDataEntries(v1)
 
         #get
         @test deepcopy(de1) == getBigDataEntry(v1, :key1)
         @test deepcopy(de2) == getBigDataEntry(dfg, :a, :key2)
-        @test_throws Any getBigDataEntry(v2, :key1)
-        @test_throws Any getBigDataEntry(dfg, :b, :key1)
+        @test getBigDataEntry(v2, :key1) == nothing
+        @test getBigDataEntry(dfg, :b, :key1) == nothing
 
         #update
-        @test updateBigDataEntry!(dfg, :a, de2_update)
+        @test updateBigDataEntry!(dfg, :a, de2_update) == v1
         @test deepcopy(de2_update) == getBigDataEntry(dfg, :a, :key2)
-        @test !updateBigDataEntry!(dfg, :b, de2_update)
+        @test updateBigDataEntry!(dfg, :b, de2_update) == nothing
 
         #list
         entries = getBigDataEntries(dfg, :a)
@@ -226,10 +235,10 @@ end
         @test getBigDataKeys(dfg, :b) == Symbol[]
 
         #delete
-        @test deepcopy(de1) == deleteBigDataEntry!(v1, :key1)
+        @test deleteBigDataEntry!(v1, :key1) == v1
         @test getBigDataKeys(v1) == Symbol[:key2]
         #delete from dfg
-        @test deepcopy(de2_update) == deleteBigDataEntry!(dfg, :a, :key2)
+        @test deleteBigDataEntry!(dfg, :a, :key2) == v1
         @test getBigDataKeys(v1) == Symbol[]
     end
 end
@@ -432,9 +441,10 @@ end
     for v in ls(summaryGraph)
         for field in variableFields
             if field != :softtypename
-            @test getfield(getVariable(dfg, v), field) == getfield(getVariable(summaryGraph, v), field)
+                @test getfield(getVariable(dfg, v), field) == getfield(getVariable(summaryGraph, v), field)
             else
-                @test softtype(getVariable(dfg, v)) == softtype(getVariable(summaryGraph, v))
+                # Special case to check the symbol softtype is equal to the full softtype.
+                @test Symbol(typeof(softtype(getVariable(dfg, v)))) == softtype(getVariable(summaryGraph, v))
         end
     end
     end

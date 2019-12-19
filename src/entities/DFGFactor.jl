@@ -1,4 +1,3 @@
-# Originally from IncrementalInference
 
 abstract type InferenceType end
 abstract type PackedInferenceType end
@@ -32,22 +31,70 @@ mutable struct GenericFunctionNodeData{T, S}
 end
 
 """
-    $(SIGNATURES)
+    $(TYPEDEF)
+
 Fundamental structure for a DFG factor.
 """
 mutable struct DFGFactor{T, S} <: AbstractDFGFactor
     label::Symbol
     tags::Vector{Symbol}
     data::GenericFunctionNodeData{T, S}
-	solvable::Int
+    solvable::Int
+    timestamp::DateTime
     _internalId::Int64
     _variableOrderSymbols::Vector{Symbol}
-    DFGFactor{T, S}(label::Symbol) where {T, S} = new{T, S}(label, Symbol[], GenericFunctionNodeData{T, S}(), 0, 0, Symbol[])
-    DFGFactor{T, S}(label::Symbol, _internalId::Int64) where {T, S} = new{T, S}(label, Symbol[], GenericFunctionNodeData{T, S}(), 0, _internalId, Symbol[])
+    # TODO back to front ts and _internalId for legacy reasons
+    DFGFactor{T, S}(label::Symbol, _internalId::Int64=0, timestamp::DateTime=now()) where {T, S} = new{T, S}(label, Symbol[], GenericFunctionNodeData{T, S}(), 0, timestamp, 0, Symbol[])
+    # DFGFactor{T, S}(label::Symbol, _internalId::Int64) where {T, S} = new{T, S}(label, Symbol[], GenericFunctionNodeData{T, S}(), 0, now(), _internalId, Symbol[])
 end
 
-label(f::F) where F <: DFGFactor = f.label
-tags(f::F) where F <: DFGFactor = f.tags
+"""
+    $(SIGNATURES)
+
+Convenience constructor for DFG factor.
+"""
+DFGFactor(label::Symbol; tags::Vector{Symbol}=Symbol[], data::GenericFunctionNodeData{T, S}=GenericFunctionNodeData{T, S}(), solvable::Int=0, timestamp::DateTime=now(), _internalId::Int64=0, _variableOrderSymbols::Vector{Symbol}=Symbol[]) where {T, S} = DFGFactor{T,S}(label,tags,data,solvable,timestamp,_internalId,_variableOrderSymbols)
+
+# Simply for convenience - don't export
+const PackedFunctionNodeData{T} = GenericFunctionNodeData{T, <: AbstractString}
+PackedFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, x7::String="", x8::Vector{Int}=Int[], x9::Int=0) where {T <: PackedInferenceType, S <: AbstractString} = GenericFunctionNodeData(x1, x2, x3, x4, x5, x6, x7, x8, x9)
+const FunctionNodeData{T} = GenericFunctionNodeData{T, Symbol}
+FunctionNodeData(x1, x2, x3, x4, x5::Symbol, x6::T, x7::String="", x8::Vector{Int}=Int[], x9::Int=0) where {T <: Union{FunctorInferenceType, ConvolutionObject}}= GenericFunctionNodeData{T, Symbol}(x1, x2, x3, x4, x5, x6, x7, x8, x9)
+
+"""
+    $(SIGNATURES)
+Structure for first-class citizens of a DFGFactor.
+"""
+mutable struct DFGFactorSummary <: AbstractDFGFactor
+    label::Symbol
+    tags::Vector{Symbol}
+    _internalId::Int64
+    _variableOrderSymbols::Vector{Symbol}
+end
+
+# SKELETON DFG
+"""
+    $(TYPEDEF)
+Skeleton factor with essentials.
+"""
+struct SkeletonDFGFactor <: AbstractDFGFactor
+    label::Symbol
+    tags::Vector{Symbol}
+    _variableOrderSymbols::Vector{Symbol}
+end
+
+#NOTE I feel like a want to force a variableOrderSymbols
+SkeletonDFGFactor(label::Symbol, variableOrderSymbols::Vector{Symbol} = Symbol[]) = SkeletonDFGFactor(label, Symbol[], variableOrderSymbols)
+
+
+
+# Accessors
+
+const FactorDataLevel0 = Union{DFGFactor, DFGFactorSummary, SkeletonDFGFactor}
+const FactorDataLevel1 = Union{DFGFactor, DFGFactorSummary}
+const FactorDataLevel2 = Union{DFGFactor}
+
+
 """
     $SIGNATURES
 
@@ -79,43 +126,3 @@ function getData(f::DFGFactor)::GenericFunctionNodeData
   # @warn "getData is deprecated, please use solverData()"
   return f.data
 end
-
-internalId(f::F) where F <: DFGFactor = f._internalId
-
-# Simply for convenience - don't export
-const PackedFunctionNodeData{T} = GenericFunctionNodeData{T, <: AbstractString}
-PackedFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, x7::String="", x8::Vector{Int}=Int[], x9::Int=0) where {T <: PackedInferenceType, S <: AbstractString} = GenericFunctionNodeData(x1, x2, x3, x4, x5, x6, x7, x8, x9)
-const FunctionNodeData{T} = GenericFunctionNodeData{T, Symbol}
-FunctionNodeData(x1, x2, x3, x4, x5::Symbol, x6::T, x7::String="", x8::Vector{Int}=Int[], x9::Int=0) where {T <: Union{FunctorInferenceType, ConvolutionObject}}= GenericFunctionNodeData{T, Symbol}(x1, x2, x3, x4, x5, x6, x7, x8, x9)
-
-"""
-    $(SIGNATURES)
-Structure for first-class citizens of a DFGFactor.
-"""
-mutable struct DFGFactorSummary <: AbstractDFGFactor
-    label::Symbol
-    tags::Vector{Symbol}
-    _internalId::Int64
-    _variableOrderSymbols::Vector{Symbol}
-end
-
-label(f::DFGFactorSummary) = f.label
-data(f::DFGFactorSummary) = f.data
-tags(f::DFGFactorSummary) = f.tags
-internalId(f::DFGFactorSummary) = f._internalId
-
-
-# SKELETON DFG
-"""
-	$(TYPEDEF)
-Skeleton variable with essentials.
-"""
-struct SkeletonDFGVariable <: AbstractDFGVariable
-	label::Symbol
-	tags::Vector{Symbol}
-end
-
-SkeletonDFGVariable(label::Symbol) = SkeletonDFGVariable(label, Symbol[])
-
-label(v::SkeletonDFGVariable) = v.label
-tags(v::SkeletonDFGVariable) = v.tags

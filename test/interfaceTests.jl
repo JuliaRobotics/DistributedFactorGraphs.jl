@@ -1,3 +1,5 @@
+# global testDFGAPI = GraphsDFG
+
 dfg = testDFGAPI{NoSolverParams}()
 
 #add types for softtypes
@@ -20,7 +22,7 @@ solverData(v1).softtype = deepcopy(st1)
 solverData(v2).softtype = deepcopy(st2)
 
 # set v2 solvable
-v2.solvable = 1
+setSolvable!(v2, 1)
 # set v1 and f1 solveInProgress
 solverData(v1).solveInProgress = 1
 solverData(f1).solveInProgress = 1
@@ -76,6 +78,11 @@ end
     # Additional testing for https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/201
     @test symdiff([:a, :b], getVariableIds(dfg, solvable=0)) == []
     @test getVariableIds(dfg, solvable=1) == [:b]
+      # WHAT -- still does not work?
+      # v2b = deepcopy(v2)
+      # setTags!(v2b, [:VARIABLE; :LANDMARK])
+      # setSolvable!(v2b, 1)
+      # setTimestamp!(v2b, getTimestamp(getVariables(dfg, solvable=1)[1]))
     @test getVariables(dfg, solvable=1) == [v2]
     @test getFactorIds(dfg) == [:f1]
     @test getFactorIds(dfg, solvable=1) == []
@@ -125,11 +132,27 @@ end
     f1Prime = deepcopy(f1)
     #updateFactor! returns the factor updated, so should be equal
     @test updateFactor!(dfg, f1Prime) == f1
+    # Revert
+    v1 = getVariable(dfg, v1.label)
+    f1 = getFactor(dfg, f1.label)
 
     # Accessors
     @test label(v1) == v1.label
     @test tags(v1) == v1.tags
-    @test timestamp(v1) == v1.timestamp
+    testTags = [:ha, :ha23]
+    @test setTags!(v1, testTags) == testTags
+    @test tags(v1) == testTags
+
+    @test getTimestamp(v1) == v1.timestamp
+    testTimestamp = now()
+    @test setTimestamp!(v1, testTimestamp) == testTimestamp
+    @test getTimestamp(v1) == testTimestamp
+
+    @test getTimestamp(f1) == f1.timestamp
+    testTimestamp = now()
+    @test setTimestamp!(f1, testTimestamp) == testTimestamp
+    @test getTimestamp(f1) == f1.timestamp
+
     @test estimates(v1) == v1.estimateDict
     @test estimate(v1, :notfound) == nothing
     @test solverData(v1) === v1.solverDataDict[:default]
@@ -138,12 +161,15 @@ end
     @test solverDataDict(v1) == v1.solverDataDict
     @test internalId(v1) == v1._internalId
 
-    @test softtype(v1) == Symbol(typeof(st1))
-    @test softtype(v2) == Symbol(typeof(st2))
+    @test softtype(v1) == st1
+    @test softtype(v2) == st2
     @test getSofttype(v1) == st1
 
     @test label(f1) == f1.label
     @test tags(f1) == f1.tags
+    @test setTags!(v1, testTags) == testTags
+    @test tags(v1) == testTags
+
     @test solverData(f1) == f1.data
     # Deprecated functions
     @test data(f1) == f1.data
@@ -164,6 +190,26 @@ end
     @test isSolvable(f1) == 0
     @test isSolveInProgress(v1) == 1
     @test isSolveInProgress(f1) == 1
+    # setSolvable, getSolvable, and variants
+    v1 = getVariable(dfg, v1.label)
+    f1 = getFactor(dfg, f1.label)
+    @test setSolvable!(v1, 1) == 1
+    @test isSolvable(v1) == 1
+    @test setSolvable!(dfg, v1.label, 0) == 0
+    @test isSolvable(v1) == 0
+    @test setSolvable!(f1, 1) == 1
+    @test getSolvable(dfg, f1.label) == 1
+    @test setSolvable!(dfg, f1.label, 0) == 0
+    @test getSolvable(f1) == 0
+
+
+    # isFactor and isVariable
+    @test isFactor(dfg, f1.label)
+    @test !isFactor(dfg, v1.label)
+    @test isVariable(dfg, v1.label)
+    @test !isVariable(dfg, f1.label)
+    @test !isVariable(dfg, :doesntexist)
+    @test !isFactor(dfg, :doesntexist)
 
     # Session, robot, and user small data tests
     smallUserData = Dict{Symbol, String}(:a => "42", :b => "Hello")
@@ -178,7 +224,7 @@ end
 
 end
 
-@testset "BigData" begin
+@testset "BigData Entries" begin
     oid = zeros(UInt8,12); oid[12] = 0x01
     de1 = MongodbBigDataEntry(:key1, NTuple{12,UInt8}(oid))
 
@@ -190,20 +236,21 @@ end
 
     #add
     v1 = getVariable(dfg, :a)
-    @test addBigDataEntry!(v1, de1)
-    @test addBigDataEntry!(dfg, :a, de2)
-    @test addBigDataEntry!(v1, de1)
+    @test addBigDataEntry!(v1, de1) == v1
+    @test addBigDataEntry!(dfg, :a, de2) == v1
+    @test addBigDataEntry!(v1, de1) == v1
+    @test de2 in getBigDataEntries(v1)
 
     #get
     @test deepcopy(de1) == getBigDataEntry(v1, :key1)
     @test deepcopy(de2) == getBigDataEntry(dfg, :a, :key2)
-    @test_throws Any getBigDataEntry(v2, :key1)
-    @test_throws Any getBigDataEntry(dfg, :b, :key1)
+    @test getBigDataEntry(v2, :key1) == nothing
+    @test getBigDataEntry(dfg, :b, :key1) == nothing
 
     #update
-    @test updateBigDataEntry!(dfg, :a, de2_update)
+    @test updateBigDataEntry!(dfg, :a, de2_update) == v1
     @test deepcopy(de2_update) == getBigDataEntry(dfg, :a, :key2)
-    @test !updateBigDataEntry!(dfg, :b, de2_update)
+    @test updateBigDataEntry!(dfg, :b, de2_update) == nothing
 
     #list
     entries = getBigDataEntries(dfg, :a)
@@ -215,10 +262,10 @@ end
     @test getBigDataKeys(dfg, :b) == Symbol[]
 
     #delete
-    @test deepcopy(de1) == deleteBigDataEntry!(v1, :key1)
+    @test deleteBigDataEntry!(v1, :key1) == v1
     @test getBigDataKeys(v1) == Symbol[:key2]
     #delete from dfg
-    @test deepcopy(de2_update) == deleteBigDataEntry!(dfg, :a, :key2)
+    @test deleteBigDataEntry!(dfg, :a, :key2) == v1
     @test getBigDataKeys(v1) == Symbol[]
 end
 
@@ -399,7 +446,8 @@ end
             if field != :softtypename
                 @test getfield(getVariable(dfg, v), field) == getfield(getVariable(summaryGraph, v), field)
             else
-                @test softtype(getVariable(dfg, v)) == softtype(getVariable(summaryGraph, v))
+                # Special case to check the symbol softtype is equal to the full softtype.
+                @test Symbol(typeof(softtype(getVariable(dfg, v)))) == softtype(getVariable(summaryGraph, v))
             end
         end
     end
