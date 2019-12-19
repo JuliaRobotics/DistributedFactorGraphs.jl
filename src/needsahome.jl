@@ -55,7 +55,7 @@ function buildSubgraphFromLabels(dfg::G,
                                   allowedFactors::Union{Nothing, Vector{Symbol}}=nothing  )::G where G <: AbstractDFG
   #
   @warn "Deprecated buildSubgraphFromLabels, use buildSubgraphFromLabels! instead."
-  buildSubgraphFromLabels(dfg, syms, subfg=subfg, solvable=solvable, allowedFactors=allowedFactors )
+  buildSubgraphFromLabels!(dfg, syms, subfg=subfg, solvable=solvable, allowedFactors=allowedFactors )
 end
 
 
