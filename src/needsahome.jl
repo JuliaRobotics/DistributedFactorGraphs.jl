@@ -86,7 +86,7 @@ function buildSubgraphFromLabels!_SPECIAL(dfg::G,
   addfac = Symbol[]
   for sym in syms # frontals
     if solvable <= getSolvable(dfg, sym)
-      DFG.addVariable!(subfg, deepcopy(DFG.getVariable(dfg, sym)))
+      addVariable!(subfg, deepcopy(getVariable(dfg, sym)))
       append!(addfac, getNeighbors(dfg, sym, solvable=solvable))
     end
   end
@@ -96,19 +96,19 @@ function buildSubgraphFromLabels!_SPECIAL(dfg::G,
 
   allvars = ls(subfg)
   for sym in usefac
-    fac = DFG.getFactor(dfg, sym)
+    fac = getFactor(dfg, sym)
     vos = fac._variableOrderSymbols
     #TODO don't add duplicates to start with
     if !exists(subfg,fac) && (vos ⊆ allvars) && (solvable <= getSolvable(dfg, sym))
-      DFG.addFactor!(subfg, fac._variableOrderSymbols, deepcopy(fac))
+      addFactor!(subfg, fac._variableOrderSymbols, deepcopy(fac))
     end
   end
 
   # remove orphans
-  for fct in DFG.getFactors(subfg)
+  for fct in getFactors(subfg)
     # delete any neighboring factors first
     if length(getNeighbors(subfg, fct)) != length(fct._variableOrderSymbols)
-      DFG.deleteFactor!(subfg, fc)
+      deleteFactor!(subfg, fc)
       @error "deleteFactor! this should not happen"
     end
   end
