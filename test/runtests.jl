@@ -44,6 +44,9 @@ end
     include("DataStoreTests.jl")
 end
 
+@testset "Needs-a-Home Tests" begin
+    include("needsahomeTests.jl")
+end
 
 @testset "LightDFG subtype tests" begin
     for type in [(var=DFGVariableSummary, fac=DFGFactorSummary), (var=SkeletonDFGVariable,fac=SkeletonDFGFactor)]
