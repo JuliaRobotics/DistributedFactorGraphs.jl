@@ -1,4 +1,5 @@
-export buildSubgraphFromLabels!
+export buildSubgraphFromLabels!, buildSubgraphFromLabels!_SPECIAL
+export buildSubgraphFromLabels
 
 
 """
@@ -18,46 +19,50 @@ Related
 getVariableIds, _copyIntoGraph!
 """
 function buildSubgraphFromLabels!(dfg::G,
-                                  syms::Vector{Symbol},
-                                  destType::Type{<:AbstractDFG}=GraphsDFG;
-                                  solvable::Int=0)::G where G <: AbstractDFG
+                                  syms::Vector{Symbol};
+                                  subfg::AbstractDFG=(G <: InMemoryDFGTypes ? G : GraphsDFG)(params=getSolverParams(dfg)),
+                                  solvable::Int=0,
+                                  allowedFactors::Union{Nothing, Vector{Symbol}}=nothing  )::G where G <: AbstractDFG
   #
-  #Same type
-  LocalGraphType = G <: InMemoryDFGTypes ? G : destType{typeof(getSolverParms(dfg))}
-  # data structure for cliq sub graph
-  cliqSubFg = LocalGraphType(params=getSolverParams(dfg))
 
   # add a little too many variables (since we need the factors)
   for sym in syms
     if solvable <= getSolvable(dfg, sym)
-      getSubgraphAroundNode(dfg, getVariable(dfg, sym), 2, false, cliqSubFg, solvable=solvable)
+      getSubgraphAroundNode(dfg, getVariable(dfg, sym), 2, false, subfg, solvable=solvable)
     end
   end
 
   # remove excessive variables that were copied by neighbors distance 2
-  currVars = getVariableIds(cliqSubFg)
+  currVars = getVariableIds(subfg)
   toDelVars = setdiff(currVars, syms)
   for dv in toDelVars
     # delete any neighboring factors first
-    for fc in lsf(cliqSubFg, dv)
-      deleteFactor!(cliqSubFg, fc)
+    for fc in lsf(subfg, dv)
+      deleteFactor!(subfg, fc)
     end
 
     # and the variable itself
-    deleteVariable!(cliqSubFg, dv)
+    deleteVariable!(subfg, dv)
   end
 
-  return cliqSubFg
+  return subfg
+end
+
+function buildSubgraphFromLabels(dfg::G,
+                                  syms::Vector{Symbol};
+                                  subfg::AbstractDFG=(G <: InMemoryDFGTypes ? G : GraphsDFG)(params=getSolverParams(dfg)),
+                                  solvable::Int=0,
+                                  allowedFactors::Union{Nothing, Vector{Symbol}}=nothing  )::G where G <: AbstractDFG
+  #
+  @warn "Deprecated buildSubgraphFromLabels, use buildSubgraphFromLabels! instead."
+  buildSubgraphFromLabels(dfg, syms, subfg=subfg, solvable=solvable, allowedFactors=allowedFactors )
 end
 
 
 """
     $SIGNATURES
 
-IIF clique specific version of building subgraphs.
-
-Notes
-- Special snowflake that adds only factors related to `frontals`.
+IIF clique specific version of building subgraphs.  This is was an unfortunate rewrite of the existing `buildSubgraphFromLabels!` function above.  Currently halfway consolidated.  Tests required to ensure these two functions can be reduced to and will perform the same in both.
 
 DevNotes
 - DF: Could we somehow better consolidate the functionality of this method into `buildSubgraphFromLabels!` above, which in turn should be consolidated as SamC suggests.
@@ -65,44 +70,48 @@ DevNotes
 
 Related
 
-_copyIntoGraph!
+buildSubgraphFromLabels!, _copyIntoGraph!, getVariableIds
 """
-function buildSubgraphFromLabels!(dfg::AbstractDFG,
-                                  cliqSubFg::AbstractDFG,
-                                  frontals::Vector{Symbol},
-                                  separators::Vector{Symbol};
-                                  solvable::Int=0)
+function buildSubgraphFromLabels!_SPECIAL(dfg::G,
+                                          # frontals::Vector{Symbol},
+                                          syms::Vector{Symbol};
+                                          subfg::AbstractDFG=(G <: InMemoryDFGTypes ? G :         GraphsDFG)(params=getSolverParams(dfg)),
+                                          solvable::Int=0,
+                                          allowedFactors::Union{Nothing, Vector{Symbol}}=nothing  )::G  where G <: AbstractDFG
   #
-  for sym in separators
-    (solvable <= getSolvable(dfg, sym)) && DFG.addVariable!(cliqSubFg, deepcopy(DFG.getVariable(dfg, sym)))
-  end
+  # for sym in separators
+  #   (solvable <= getSolvable(dfg, sym)) && DFG.addVariable!(subfg, deepcopy(DFG.getVariable(dfg, sym)))
+  # end
 
   addfac = Symbol[]
-  for sym in frontals
+  for sym in syms # frontals
     if solvable <= getSolvable(dfg, sym)
-      DFG.addVariable!(cliqSubFg, deepcopy(DFG.getVariable(dfg, sym)))
-      append!(addfac, getNeighbors(dfg,sym))
+      DFG.addVariable!(subfg, deepcopy(DFG.getVariable(dfg, sym)))
+      append!(addfac, getNeighbors(dfg, sym, solvable=solvable))
     end
   end
 
-  allvars = ls(cliqSubFg)
-  for sym in addfac
+  # allowable factors as intersect between connected an user list
+  usefac = allowedFactors == nothing ? addfac : intersect(allowedFactors, addfac)
+
+  allvars = ls(subfg)
+  for sym in usefac
     fac = DFG.getFactor(dfg, sym)
     vos = fac._variableOrderSymbols
     #TODO don't add duplicates to start with
-    if !exists(cliqSubFg,fac) && vos ⊆ allvars && solvable <= getSolvable(dfg, sym)
-      DFG.addFactor!(cliqSubFg, fac._variableOrderSymbols, deepcopy(fac))
+    if !exists(subfg,fac) && (vos ⊆ allvars) && (solvable <= getSolvable(dfg, sym))
+      DFG.addFactor!(subfg, fac._variableOrderSymbols, deepcopy(fac))
     end
   end
 
   # remove orphans
-  for fct in DFG.getFactors(cliqSubFg)
+  for fct in DFG.getFactors(subfg)
     # delete any neighboring factors first
-    if length(getNeighbors(cliqSubFg, fct)) != length(fct._variableOrderSymbols)
-      DFG.deleteFactor!(cliqSubFg, fc)
+    if length(getNeighbors(subfg, fct)) != length(fct._variableOrderSymbols)
+      DFG.deleteFactor!(subfg, fc)
       @error "deleteFactor! this should not happen"
     end
   end
 
-  return cliqSubFg
+  return subfg
 end
