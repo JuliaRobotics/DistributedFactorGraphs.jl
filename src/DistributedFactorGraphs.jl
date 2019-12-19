@@ -100,6 +100,9 @@ include("CloudGraphsDFG/CloudGraphsDFG.jl")
 const InMemoryDFGTypes = Union{GraphsDFG, LightDFG}
 export InMemoryDFGTypes
 
+# Needs a home.
+include("needsahome.jl")
+
 function __init__()
     @require GraphPlot = "a2cc645c-3eea-5389-862e-a155d0052231" begin
         @info "Including Plots"
