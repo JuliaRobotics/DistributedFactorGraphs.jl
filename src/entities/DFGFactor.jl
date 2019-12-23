@@ -38,7 +38,7 @@ Fundamental structure for a DFG factor.
 mutable struct DFGFactor{T, S} <: AbstractDFGFactor
     label::Symbol
     tags::Vector{Symbol}
-    data::GenericFunctionNodeData{T, S}
+    solverData::GenericFunctionNodeData{T, S}
     solvable::Int
     timestamp::DateTime
     _internalId::Int64
@@ -60,69 +60,3 @@ const PackedFunctionNodeData{T} = GenericFunctionNodeData{T, <: AbstractString}
 PackedFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, x7::String="", x8::Vector{Int}=Int[], x9::Int=0) where {T <: PackedInferenceType, S <: AbstractString} = GenericFunctionNodeData(x1, x2, x3, x4, x5, x6, x7, x8, x9)
 const FunctionNodeData{T} = GenericFunctionNodeData{T, Symbol}
 FunctionNodeData(x1, x2, x3, x4, x5::Symbol, x6::T, x7::String="", x8::Vector{Int}=Int[], x9::Int=0) where {T <: Union{FunctorInferenceType, ConvolutionObject}}= GenericFunctionNodeData{T, Symbol}(x1, x2, x3, x4, x5, x6, x7, x8, x9)
-
-"""
-    $(SIGNATURES)
-Structure for first-class citizens of a DFGFactor.
-"""
-mutable struct DFGFactorSummary <: AbstractDFGFactor
-    label::Symbol
-    tags::Vector{Symbol}
-    _internalId::Int64
-    _variableOrderSymbols::Vector{Symbol}
-end
-
-# SKELETON DFG
-"""
-    $(TYPEDEF)
-Skeleton factor with essentials.
-"""
-struct SkeletonDFGFactor <: AbstractDFGFactor
-    label::Symbol
-    tags::Vector{Symbol}
-    _variableOrderSymbols::Vector{Symbol}
-end
-
-#NOTE I feel like a want to force a variableOrderSymbols
-SkeletonDFGFactor(label::Symbol, variableOrderSymbols::Vector{Symbol} = Symbol[]) = SkeletonDFGFactor(label, Symbol[], variableOrderSymbols)
-
-
-
-# Accessors
-
-const FactorDataLevel0 = Union{DFGFactor, DFGFactorSummary, SkeletonDFGFactor}
-const FactorDataLevel1 = Union{DFGFactor, DFGFactorSummary}
-const FactorDataLevel2 = Union{DFGFactor}
-
-
-"""
-    $SIGNATURES
-
-Retrieve solver data structure stored in a factor.
-"""
-function solverData(f::F) where F <: DFGFactor
-  return f.data
-end
-"""
-    $SIGNATURES
-
-Retrieve solver data structure stored in a factor.
-"""
-function data(f::DFGFactor)::GenericFunctionNodeData
-  @warn "data() is deprecated, please use solverData()"
-  return f.data
-end
-"""
-    $SIGNATURES
-
-Retrieve solver data structure stored in a factor.
-"""
-function getData(f::DFGFactor)::GenericFunctionNodeData
-  #FIXME but back in later, it just slows everything down
-  if !(@isdefined getDataWarnOnce)
-    @warn "getData is deprecated, please use solverData(), future warnings in getData is suppressed"
-    global getDataWarnOnce = true
-  end
-  # @warn "getData is deprecated, please use solverData()"
-  return f.data
-end

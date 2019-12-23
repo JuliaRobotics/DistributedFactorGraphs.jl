@@ -92,3 +92,18 @@ Equality check for DFGFactor.
 function ==(a::DFGFactor, b::DFGFactor)::Bool
     return compareFactor(a, b)
 end
+
+# Accessors
+
+"""
+    $SIGNATURES
+
+Retrieve solver data structure stored in a factor.
+"""
+function solverData(f::F) where F <: DFGFactor
+  @warn "Deprecated for 0.6 standardization. Please use getSolverData()"
+  return f.data
+end
+function getSolverData(f::F) where F <: DFGFactor
+  return f.data
+end

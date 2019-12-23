@@ -12,27 +12,51 @@ using SparseArrays
 
 # Entities
 include("entities/AbstractDFG.jl")
+
 include("entities/DFGFactor.jl")
+
 include("entities/DFGVariable.jl")
+include("entities/DFGVariableSummary.jl")
+include("entities/SkeletonDFGVariable.jl")
+
 include("entities/AbstractDFGSummary.jl")
 
+# Solver data
+export InferenceType, PackedInferenceType, FunctorInferenceType, InferenceVariable, ConvolutionObject
+export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
+
+# Graph Types
 export AbstractDFG
 export AbstractParams, NoSolverParams
 export DFGNode, DFGVariable, DFGFactor, AbstractDFGVariable, AbstractDFGFactor
-export InferenceType, PackedInferenceType, FunctorInferenceType, InferenceVariable, ConvolutionObject
-export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
-export getMaxPPE, getMeanPPE, getSuggestedPPE
-export timestamp # DEPRECATED
-export label, getTimestamp, setTimestamp!, tags, setTags!, estimates, estimate, data, softtype, solverData, getData, solverDataDict, setSolverData, setSolverData!, internalId, smallData, setSmallData!, bigData
-export DFGVariableSummary, DFGFactorSummary, AbstractDFGSummary
-export addBigDataEntry!, getBigDataEntry, updateBigDataEntry!, deleteBigDataEntry!, getBigDataEntries, getBigDataKeys
-
-#Skeleton types
 export SkeletonDFGVariable, SkeletonDFGFactor
+export DFGVariableSummary, DFGFactorSummary, AbstractDFGSummary
 
+# Define variable levels
+const VariableDataLevel0 = Union{DFGVariable, DFGVariableSummary, SkeletonDFGVariable}
+const VariableDataLevel1 = Union{DFGVariable, DFGVariableSummary}
+const VariableDataLevel2 = Union{DFGVariable}
+
+# Define factor levels
+const FactorDataLevel0 = Union{DFGFactor, DFGFactorSummary, SkeletonDFGFactor}
+const FactorDataLevel1 = Union{DFGFactor, DFGFactorSummary}
+const FactorDataLevel2 = Union{DFGFactor}
+
+# Accessors
+# Level 0
+export getLabel, getTimestamp, setTimestamp!, getTags, setTags!
+# Level 1
+export getEstimates, getEstimate, getSofttype
+export getMaxPPE, getMeanPPE, getSuggestedPPE
+# Level 2
+export solverData, getData, solverDataDict, setSolverData, setSolverData!, getInternalId, smallData, setSmallData!, bigData
+export addBigDataEntry!, getBigDataEntry, updateBigDataEntry!, deleteBigDataEntry!, getBigDataEntries, getBigDataKeys
 #graph small data
 export getUserData, setUserData, getRobotData, setRobotData, getSessionData, setSessionData
 export pushUserData!, pushRobotData!, pushSessionData!, popUserData!, popRobotData!, popSessionData!
+
+# Find a home
+export getVariableOrder
 
 # Services/AbstractDFG Exports
 export isInitialized, getFactorFunction, isVariable, isFactor
