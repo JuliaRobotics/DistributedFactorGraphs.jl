@@ -15,36 +15,53 @@ abstract type FunctorPairwiseMinimize <: FunctorInferenceType end
 $(TYPEDEF)
 """
 mutable struct GenericFunctionNodeData{T, S}
-  fncargvID::Vector{Symbol}
-  eliminated::Bool
-  potentialused::Bool
-  edgeIDs::Array{Int,1}
-  frommodule::S #Union{Symbol, AbstractString}
-  fnc::T
-  multihypo::String # likely to moved when GenericWrapParam is refactored
-  certainhypo::Vector{Int}
-  solveInProgress::Int
-  GenericFunctionNodeData{T, S}() where {T, S} = new{T,S}()
-  GenericFunctionNodeData{T, S}(x1, x2, x3, x4, x5::S, x6::T, x7::String="", x8::Vector{Int}=Int[], x9::Int=0) where {T, S} = new{T,S}(x1, x2, x3, x4, x5, x6, x7, x8, x9)
-  GenericFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, x7::String="", x8::Vector{Int}=Int[], x9::Int=0) where {T, S} = new{T,S}(x1, x2, x3, x4, x5, x6, x7, x8, x9)
-  # GenericFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, x7::String) where {T, S} = new{T,S}(x1, x2, x3, x4, x5, x6, x7)
+    fncargvID::Vector{Symbol}
+    eliminated::Bool
+    potentialused::Bool
+    edgeIDs::Array{Int,1}
+    frommodule::S #Union{Symbol, AbstractString}
+    fnc::T
+    multihypo::String # likely to moved when GenericWrapParam is refactored
+    certainhypo::Vector{Int}
+    solveInProgress::Int
+    GenericFunctionNodeData{T, S}() where {T, S} = new{T,S}()
+    GenericFunctionNodeData{T, S}(x1, x2, x3, x4, x5::S, x6::T, x7::String="", x8::Vector{Int}=Int[], x9::Int=0) where {T, S} = new{T,S}(x1, x2, x3, x4, x5, x6, x7, x8, x9)
+    GenericFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, x7::String="", x8::Vector{Int}=Int[], x9::Int=0) where {T, S} = new{T,S}(x1, x2, x3, x4, x5, x6, x7, x8, x9)
+    # GenericFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, x7::String) where {T, S} = new{T,S}(x1, x2, x3, x4, x5, x6, x7)
 end
 
 """
-    $(TYPEDEF)
+$(TYPEDEF)
+Complete factor structure for a DistributedFactorGraph factor.
 
-Fundamental structure for a DFG factor.
+  ---
+Fields:
+$(TYPEDFIELDS)
 """
 mutable struct DFGFactor{T, S} <: AbstractDFGFactor
+    """Factor label, e.g. :x1f1.
+    Accessor: `getLabel`"""
     label::Symbol
-    tags::Vector{Symbol}
-    solverData::GenericFunctionNodeData{T, S}
-    solvable::Int
+    """Variable timestamp.
+    Accessors: `getTimestamp`, `setTimestamp!`"""
     timestamp::DateTime
+    """Factor tags, e.g [:FACTOR].
+    Accessors: `getLabels`, `addLabels!`, and `deleteLabels!`"""
+    tags::Vector{Symbol}
+    """Solver data.
+    Accessors: `getSolverData`, `setSolverData!`"""
+    solverData::GenericFunctionNodeData{T, S}
+    """Solvable flag for the factor.
+    Accessors: `getSolvable`, `setSolvable!`
+    TODO: Switch to `DFGNodeParams`"""
+    solvable::Int
+    """Internal ID used by some of the DFG drivers. We don't suggest using this outside of DFG."""
     _internalId::Int64
+    """Internal cache of the ordering of the neighbor variables. Rather use getNeighbors to get the list as this is an internal value.
+    Accessors: `getVariableOrder`"""
     _variableOrderSymbols::Vector{Symbol}
     # TODO back to front ts and _internalId for legacy reasons
-    DFGFactor{T, S}(label::Symbol, _internalId::Int64=0, timestamp::DateTime=now()) where {T, S} = new{T, S}(label, Symbol[], GenericFunctionNodeData{T, S}(), 0, timestamp, 0, Symbol[])
+    DFGFactor{T, S}(label::Symbol, _internalId::Int64=0, timestamp::DateTime=now()) where {T, S} = new{T, S}(label, timestamp, Symbol[], GenericFunctionNodeData{T, S}(), 0, 0, Symbol[])
     # DFGFactor{T, S}(label::Symbol, _internalId::Int64) where {T, S} = new{T, S}(label, Symbol[], GenericFunctionNodeData{T, S}(), 0, now(), _internalId, Symbol[])
 end
 

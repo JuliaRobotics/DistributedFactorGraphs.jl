@@ -21,6 +21,13 @@ abstract type AbstractDFGFactor <: DFGNode
 end
 
 """
+The common node parameters for variables and factors.
+"""
+mutable struct DFGNodeParams
+    solvable::Int
+end
+
+"""
     $(SIGNATURES)
 Abstract parent struct for a DFG graph.
 """

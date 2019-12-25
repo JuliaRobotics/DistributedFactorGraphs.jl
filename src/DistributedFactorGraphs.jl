@@ -14,6 +14,8 @@ using SparseArrays
 include("entities/AbstractDFG.jl")
 
 include("entities/DFGFactor.jl")
+include("entities/DFGFactorSummary.jl")
+include("entities/SkeletonDFGFactor.jl")
 
 include("entities/DFGVariable.jl")
 include("entities/DFGVariableSummary.jl")

@@ -4,8 +4,11 @@ struct SingletonInferenceVariable <: InferenceVariable end
 
 """
 $(TYPEDEF)
+Data container for solver-specific data.
 
-Main data container for Level2 data -- see developer wiki.
+  ---
+Fields:
+$(TYPEDFIELDS)
 """
 mutable struct VariableNodeData{T<:InferenceVariable}
   val::Array{Float64,2}
@@ -51,6 +54,11 @@ VariableNodeData(softtype::T) where T <: InferenceVariable =
 
 """
 $(TYPEDEF)
+Packed VariabeNodeData for serializing DFGVariables.
+
+  ---
+Fields:
+$(TYPEDFIELDS)
 """
 mutable struct PackedVariableNodeData
   vecval::Array{Float64,1}
@@ -113,18 +121,40 @@ VariableEstimate(params...) = errror("VariableEstimate is depreciated, please us
 
 
 """
-    $(TYPEDEF)
-Fundamental structure for a DFG variable with fields:
+$(TYPEDEF)
+Complete variable structure for a DistributedFactorGraph variable.
+
+  ---
+Fields:
+$(TYPEDFIELDS)
 """
 struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
+    """Variable label, e.g. :x1.
+    Accessor: `getLabel`"""
     label::Symbol
+    """Variable timestamp.
+    Accessors: `getTimestamp`, `setTimestamp!`"""
     timestamp::DateTime
+    """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
+    Accessors: `getLabels`, `addLabels!`, and `deleteLabels!`"""
     tags::Vector{Symbol}
+    """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
+    Accessors: `getLabels`, `addLabels`, and `deleteLabels`"""
     estimateDict::Dict{Symbol, <: AbstractPointParametricEst}
+    """Dictionary of solver data. May be a subset of all solutions if a solver key was specified in the get call.
+    Accessors: `addVariableSolverData!`, `updateVariableSolverData!`, and `deleteVariableSolverData!`"""
     solverDataDict::Dict{Symbol, VariableNodeData{T}}
+    """Dictionary of small data associated with this variable.
+    Accessors: `addSmallData!`, `updateSmallData!`, and `deleteSmallData!`"""
     smallData::Dict{String, String}
+    """Dictionary of large data associated with this variable.
+    Accessors: `addSmallData!`, `updateSmallData!`, and `deleteSmallData!`"""
     bigData::Dict{Symbol, AbstractBigDataEntry}
+    """Solvable flag for the variable.
+    Accessors: `getSolvable`, `setSolvable!`
+    TODO: Switch to `DFGNodeParams`"""
     solvable::Int
+    """Internal ID used by some of the DFG drivers. We don't suggest using this outside of DFG."""
     _internalId::Int64
 end
 
