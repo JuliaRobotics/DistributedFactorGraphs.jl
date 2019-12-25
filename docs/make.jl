@@ -7,6 +7,7 @@ makedocs(
     sitename = "DistributedFactorGraphs.jl",
     pages = Any[
         "Home" => "index.md",
+        "Data Structure" => "DataStructure.md",
         "Getting Started" => [
             "Introduction" => "getting_started.md",
             "Variables and Factors" => "variables_and_factors.md",
