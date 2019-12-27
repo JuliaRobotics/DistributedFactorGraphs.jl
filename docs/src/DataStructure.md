@@ -38,4 +38,4 @@ DFGFactor
 
 ## Additional Offloaded Data
 
-Additional larger data can be associated
+Additional, larger data can be associated with variables using keyed big data entries.  

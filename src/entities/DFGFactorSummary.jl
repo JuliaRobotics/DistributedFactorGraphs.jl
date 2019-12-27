@@ -11,7 +11,7 @@ struct DFGFactorSummary <: AbstractDFGFactor
     Accessor: `getLabel`"""
     label::Symbol
     """Factor tags, e.g [:FACTOR].
-    Accessors: `getLabels`, `addLabels!`, and `deleteLabels!`"""
+    Accessors: `getTags`, `addTags!`, and `deleteTags!`"""
     tags::Vector{Symbol}
     """Internal ID used by some of the DFG drivers. We don't suggest using this outside of DFG."""
     _internalId::Int64

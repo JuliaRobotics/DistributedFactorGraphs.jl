@@ -110,7 +110,7 @@ end
     $(SIGNATURES)
 Add a DFGFactor to a DFG.
 """
-function addFactor!(dfg::G, variables::Vector{V}, factor::F)::Bool where {G <: AbstractDFG, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
+function addFactor!(dfg::G, variables::Vector{<:V}, factor::F)::Bool where {G <: AbstractDFG, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
     error("addFactor! not implemented for $(typeof(dfg))")
 end
 

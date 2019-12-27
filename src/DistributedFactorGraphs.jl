@@ -31,6 +31,7 @@ export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
 export AbstractDFG
 export AbstractParams, NoSolverParams
 export DFGNode, DFGVariable, DFGFactor, AbstractDFGVariable, AbstractDFGFactor
+export DFGNodeParams
 export SkeletonDFGVariable, SkeletonDFGFactor
 export DFGVariableSummary, DFGFactorSummary, AbstractDFGSummary
 

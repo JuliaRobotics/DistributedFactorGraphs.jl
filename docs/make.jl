@@ -16,8 +16,7 @@ makedocs(
         ],
         "DistributedFactorGraph API's" => [
             "Graphs.jl" => "apis/graphs.md",
-            "MetaGraph.jl" => "apis/graphs.md",
-            "GraffSDK.jl" => "apis/graphs.md",
+            "LightGraphs.jl" => "apis/graphs.md",
             "CloudGraphs.jl" => "apis/graphs.md",
         ],
         "Reference" => "func_ref.md"

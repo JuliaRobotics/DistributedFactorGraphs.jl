@@ -80,10 +80,10 @@ function addVariable!(dfg::GraphsDFG, variable::DFGVariable)::Bool
         error("Variable '$(variable.label)' already exists in the factor graph")
     end
     dfg.nodeCounter += 1
-    variable._internalId = dfg.nodeCounter
+    variable._dfgNodeParams._internalId = dfg.nodeCounter
     v = GraphsNode(dfg.nodeCounter, variable)
     Graphs.add_vertex!(dfg.g, v)
-    push!(dfg.labelDict, variable.label=>variable._internalId)
+    push!(dfg.labelDict, variable.label=>variable._dfgNodeParams._internalId)
     # Track insertion
     push!(dfg.addHistory, variable.label)
 
@@ -94,7 +94,7 @@ end
     $(SIGNATURES)
 Add a DFGFactor to a DFG.
 """
-function addFactor!(dfg::GraphsDFG, variables::Vector{DFGVariable}, factor::DFGFactor)::Bool
+function addFactor!(dfg::GraphsDFG, variables::Vector{<:DFGVariable}, factor::DFGFactor)::Bool
     if haskey(dfg.labelDict, factor.label)
         error("Factor '$(factor.label)' already exists in the factor graph")
     end
@@ -104,15 +104,15 @@ function addFactor!(dfg::GraphsDFG, variables::Vector{DFGVariable}, factor::DFGF
         end
     end
     dfg.nodeCounter += 1
-    factor._internalId = dfg.nodeCounter
+    factor._dfgNodeParams._internalId = dfg.nodeCounter
     factor._variableOrderSymbols = map(v->v.label, variables)
     fNode = GraphsNode(dfg.nodeCounter, factor)
     f = Graphs.add_vertex!(dfg.g, fNode)
     # Add index
-    push!(dfg.labelDict, factor.label=>factor._internalId)
+    push!(dfg.labelDict, factor.label=>factor._dfgNodeParams._internalId)
     # Add the edges...
     for variable in variables
-        v = dfg.g.vertices[variable._internalId]
+        v = dfg.g.vertices[variable._dfgNodeParams._internalId]
         edge = Graphs.make_edge(dfg.g, v, f)
         Graphs.add_edge!(dfg.g, edge)
     end

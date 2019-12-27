@@ -102,8 +102,8 @@ Retrieve solver data structure stored in a factor.
 """
 function solverData(f::F) where F <: DFGFactor
   @warn "Deprecated for 0.6 standardization. Please use getSolverData()"
-  return f.data
+  return f.solverData
 end
 function getSolverData(f::F) where F <: DFGFactor
-  return f.data
+  return f.solverData
 end

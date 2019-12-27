@@ -46,7 +46,7 @@ mutable struct DFGFactor{T, S} <: AbstractDFGFactor
     Accessors: `getTimestamp`, `setTimestamp!`"""
     timestamp::DateTime
     """Factor tags, e.g [:FACTOR].
-    Accessors: `getLabels`, `addLabels!`, and `deleteLabels!`"""
+    Accessors: `getTags`, `addTags!`, and `deleteTags!`"""
     tags::Vector{Symbol}
     """Solver data.
     Accessors: `getSolverData`, `setSolverData!`"""
@@ -55,22 +55,35 @@ mutable struct DFGFactor{T, S} <: AbstractDFGFactor
     Accessors: `getSolvable`, `setSolvable!`
     TODO: Switch to `DFGNodeParams`"""
     solvable::Int
-    """Internal ID used by some of the DFG drivers. We don't suggest using this outside of DFG."""
-    _internalId::Int64
+    """Mutable parameters for the variable. We suggest using accessors to get to this data.
+    Accessors: `getSolvable`, `setSolvable!`"""
+    _dfgNodeParams::DFGNodeParams
     """Internal cache of the ordering of the neighbor variables. Rather use getNeighbors to get the list as this is an internal value.
     Accessors: `getVariableOrder`"""
     _variableOrderSymbols::Vector{Symbol}
-    # TODO back to front ts and _internalId for legacy reasons
     DFGFactor{T, S}(label::Symbol, _internalId::Int64=0, timestamp::DateTime=now()) where {T, S} = new{T, S}(label, timestamp, Symbol[], GenericFunctionNodeData{T, S}(), 0, 0, Symbol[])
-    # DFGFactor{T, S}(label::Symbol, _internalId::Int64) where {T, S} = new{T, S}(label, Symbol[], GenericFunctionNodeData{T, S}(), 0, now(), _internalId, Symbol[])
+    DFGFactor{T, S}(label::Symbol,
+        timestamp::DateTime,
+        tags::Vector{Symbol},
+        solverData::GenericFunctionNodeData{T, S},
+        solvable::Int,
+        _dfgNodeParams::DFGNodeParams,
+        _variableOrderSymbols::Vector{Symbol}) where {T, S} = new(label, timestamp, tags, solverData, solvable, _dfgNodeParams, _variableOrderSymbols)
 end
 
 """
-    $(SIGNATURES)
+$(SIGNATURES)
 
-Convenience constructor for DFG factor.
+Construct a DFG factor given a label.
 """
-DFGFactor(label::Symbol; tags::Vector{Symbol}=Symbol[], data::GenericFunctionNodeData{T, S}=GenericFunctionNodeData{T, S}(), solvable::Int=0, timestamp::DateTime=now(), _internalId::Int64=0, _variableOrderSymbols::Vector{Symbol}=Symbol[]) where {T, S} = DFGFactor{T,S}(label,tags,data,solvable,timestamp,_internalId,_variableOrderSymbols)
+DFGFactor(label::Symbol;
+    tags::Vector{Symbol}=Symbol[],
+    data::GenericFunctionNodeData{T, S}=GenericFunctionNodeData{T, S}(),
+    solvable::Int=0,
+    timestamp::DateTime=now(),
+    _internalId::Int64=0,
+    _variableOrderSymbols::Vector{Symbol}=Symbol[]) where {T, S} =
+        DFGFactor{T,S}(label,timestamp,tags,data,solvable,DFGNodeParams(solvable, _internalId),_variableOrderSymbols)
 
 # Simply for convenience - don't export
 const PackedFunctionNodeData{T} = GenericFunctionNodeData{T, <: AbstractString}
