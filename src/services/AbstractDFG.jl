@@ -646,6 +646,28 @@ Display and return to console the user factor identified by tag name.
 showFactor(fgl::G, fsym::Symbol) where G <: AbstractDFG = @show getFactor(fgl,fsym)
 
 
+# """
+#    $SIGNATURES
+#
+#  TODO: OLD, NEEDS TO BE REWORKED
+# Display the content of `VariableNodeData` to console for a given factor graph and variable tag`::Symbol`.
+#
+# Dev Notes
+# - TODO split as two show macros between AMP and DFG
+# """
+# function showVariable(fgl::G, vsym::Symbol) where G <: AbstractDFG
+#   vert = DFG.getVariable(fg, vsym)
+#   vnd = solverData(vert)
+#   println("label: $(vert.label), exVertexId: $(vert.index)")
+#   println("tags: $( haskey(vert.attributes, string(:tags)) ? vert.attributes[string(:tags)] : string(:none))")
+#   println("size marginal samples $(size(getVal(vnd)))")
+#   println("kde bandwidths: $(getBW(vnd)[:,1])")
+#   println("kde mean: $(round.(getKDEMean(getKDE(vnd)),digits=4))")
+#   println("kde max: $(round.(getKDEMax(getKDE(vnd)),digits=4))")
+#   println()
+#   vnd
+# end
+
 """
     $(SIGNATURES)
 Produces a dot-format of the graph for visualization.
