@@ -10,9 +10,9 @@ makedocs(
         "Data Structure" => "DataStructure.md",
         "Getting Started" => [
             "Introduction" => "getting_started.md",
-            "Variables and Factors" => "variables_and_factors.md",
-            "Common API Interface" => "ref_api.md",
-            "Example" => "example.md"
+            "Building Graphs" => "BuildingGraphs.md",
+            "Drawing Graphs" => "DrawingGraphs.md",
+            "Common API Interface" => "ref_api.md"
         ],
         "DistributedFactorGraph API's" => [
             "Graphs.jl" => "apis/graphs.md",

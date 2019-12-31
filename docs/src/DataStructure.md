@@ -9,11 +9,23 @@ of interest and then retrieve more detail on the subset.
 Note that drivers support all of the structures.
 
 The following section discusses the datastructures for each level. A quick
-summary of the types and the available properties:
+summary of the types and the available properties (some of which are derived) is provided below.
 
-[Table of Variable Properties]
+Accessible properties for each of the variable structures:
 
-[Table of Factor Properties]
+|                     | Label | Timestamp | Tags | Estimates | Soft Type | Solvable | Solver Data | Small Data | Big Data Entries |
+|---------------------|-------|-----------|------|-----------|-----------|----------|-------------|------------|------------------|
+| SkeletonDFGVariable | X     |           | X    |           |           |          |             |            |                  |
+| DFGVariableSummary  | X     | X         | X    | X         | Symbol    |          |             |            | X                |
+| DFGVariable         | X     | X         | X    | X         | X         | X        | X           | X          | X                |
+
+Accessible properties for each of the factor structures:
+
+|                   | Label | Timestamp | Tags | Factor Type | Solvable | Solver Data |
+|-------------------|-------|-----------|------|-------------|----------|-------------|
+| SkeletonDFGFactor | X     |           | X    |             |          |             |
+| DFGFactorSummary  | X     | X         | X    |             |          |             |
+| DFGFactor         | X     | X         | X    | X           | X        | X           |
 
 ## DFG Skeleton
 

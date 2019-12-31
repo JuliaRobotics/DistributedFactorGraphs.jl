@@ -1,6 +1,6 @@
 """
 $(TYPEDEF)
-Summary factor structure for a DistributedFactorGraph factor.
+Read-only summary factor structure for a DistributedFactorGraph factor.
 
   ---
 Fields:
@@ -10,8 +10,11 @@ struct DFGFactorSummary <: AbstractDFGFactor
     """Factor label, e.g. :x1f1.
     Accessor: `getLabel`"""
     label::Symbol
+    """Variable timestamp.
+    Accessors: `getTimestamp`"""
+    timestamp::DateTime
     """Factor tags, e.g [:FACTOR].
-    Accessors: `getTags`, `addTags!`, and `deleteTags!`"""
+    Accessors: `getTags`"""
     tags::Vector{Symbol}
     """Internal ID used by some of the DFG drivers. We don't suggest using this outside of DFG."""
     _internalId::Int64
