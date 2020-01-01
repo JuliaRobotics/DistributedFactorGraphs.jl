@@ -16,8 +16,8 @@ using DistributedFactorGraphs
 
 Any factor graph can then be drawn by calling `dfgPlot`:
 
-```
-#Construct graph
+```julia
+# Construct graph
 dfg = GraphsDFG{SolverParams}(params=SolverParams())
 v1 = addVariable!(dfg, :x0, ContinuousScalar, labels = [:POSE], solvable=1)
 v2 = addVariable!(dfg, :x1, ContinuousScalar, labels = [:POSE], solvable=1)
@@ -31,12 +31,18 @@ f1 = addFactor!(dfg, [:l0; :x1], LinearConditional(Normal(-10.0,5.0)), solvable=
 dfgplot(dfg)
 ```
 
+![imgs/initialgraph.jpg](imgs/initialgraph.jpg)
+
+```@docs
+dfgplot
+```
+
 ## Rendering to PDF
 
 The graph can be rendered to PDF or JPG in the following way:
 
 ```julia
-# Save to PDFG
+# Save to PDF
 using Compose
 draw(PDF("/tmp/graph.pdf", 16cm, 16cm), dfgplot(dfg))
 ```
