@@ -566,7 +566,7 @@ function getIncidenceMatrix(dfg::AbstractDFG; solvable::Int=0)::Matrix{Union{Not
     return adjMat
 end
 
-function getAdjacencyMatrix(dfg::G; solvable::Int=0)::Tuple{SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}} where G <: AbstractDFG
+function getAdjacencyMatrixSparse(dfg::G; solvable::Int=0)::Tuple{SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}} where G <: AbstractDFG
     @warn "Deprecated function, please use getIncidenceMatrixSparse as this will be removed in v0.6.1"
     return getIncidenceMatrixSparse(dfg, solvable)
 end
