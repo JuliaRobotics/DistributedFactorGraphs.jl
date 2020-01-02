@@ -313,12 +313,12 @@ end
 @testset "Adjacency Matrices" begin
     global dfg,v1,v2,f1
     # Normal
-    adjMat = getAdjacencyMatrix(dfg)
+    adjMat = getIncidenceMatrix(dfg)
     @test size(adjMat) == (2,4)
     @test symdiff(adjMat[1, :], [nothing, :a, :b, :orphan]) == Symbol[]
     @test symdiff(adjMat[2, :], [:f1, :f1, :f1, nothing]) == Symbol[]
     #sparse
-    adjMat, v_ll, f_ll = getAdjacencyMatrixSparse(dfg)
+    adjMat, v_ll, f_ll = getIncidenceMatrixSparse(dfg)
     @test size(adjMat) == (1,3)
 
     # Checking the elements of adjacency, its not sorted so need indexing function
@@ -330,11 +330,11 @@ end
     @test symdiff(f_ll, [:f1, :f1, :f1]) == Symbol[]
 
     # Filtered - REF DFG #201
-    adjMat = getAdjacencyMatrix(dfg, solvable=1)
+    adjMat = getIncidenceMatrix(dfg, solvable=1)
     @test size(adjMat) == (1,2)
     @test symdiff(adjMat[1, :], [nothing, :b]) == Symbol[]
     # sparse
-    adjMat, v_ll, f_ll = getAdjacencyMatrixSparse(dfg, solvable=1)
+    adjMat, v_ll, f_ll = getIncidenceMatrixSparse(dfg, solvable=1)
     @test size(adjMat) == (0,1)
     @test v_ll == [:b]
     @test f_ll == []

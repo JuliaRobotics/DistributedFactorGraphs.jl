@@ -423,7 +423,7 @@ Get an adjacency matrix for the DFG, returned as a Matrix{Union{Nothing, Symbol}
 Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor.
 The first row and first column are factor and variable headings respectively.
 """
-function getAdjacencyMatrix(dfg::SymbolDFG; solvable::Int=0)::Matrix{Union{Nothing, Symbol}}
+function getIncidenceMatrix(dfg::SymbolDFG; solvable::Int=0)::Matrix{Union{Nothing, Symbol}}
     varLabels = map(v->v.label, getVariables(dfg, solvable=solvable))
     factLabels = map(f->f.label, getFactors(dfg, solvable=solvable))
     vDict = Dict(varLabels .=> [1:length(varLabels)...].+1)
@@ -440,7 +440,7 @@ function getAdjacencyMatrix(dfg::SymbolDFG; solvable::Int=0)::Matrix{Union{Nothi
 end
 
 
-function getAdjacencyMatrixSparse(dfg::SymbolDFG; solvable::Int=0)::Tuple{LightGraphs.SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}
+function getIncidenceMatrixSparse(dfg::SymbolDFG; solvable::Int=0)::Tuple{LightGraphs.SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}
     varLabels = getVariableIds(dfg, solvable=solvable)
     factLabels = getFactorIds(dfg, solvable=solvable)
 

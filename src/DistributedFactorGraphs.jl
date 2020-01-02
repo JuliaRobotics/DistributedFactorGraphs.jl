@@ -79,7 +79,7 @@ export AbstractPointParametricEst
 export MeanMaxPPE
 
 #Interfaces
-export getAdjacencyMatrixSparse
+export getIncidenceMatrix, getIncidenceMatrixSparse
 
 # File import and export
 export saveDFG, loadDFG
@@ -115,8 +115,9 @@ include("GraphsDFG/GraphsDFG.jl")
 # Include the FilesDFG API.
 include("FileDFG/FileDFG.jl")
 
-include("SymbolDFG/SymbolDFG.jl")
-using .SymbolDFGs
+# In the attic until it's needed again.
+# include("SymbolDFG/SymbolDFG.jl")
+# using .SymbolDFGs
 
 include("LightDFG/LightDFG.jl")
 @reexport using .LightDFGs

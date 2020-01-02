@@ -48,10 +48,6 @@ function getSerializationModule(dfg::CloudGraphsDFG)::Module where G <: Abstract
     return Main
 end
 
-"""
-    $(SIGNATURES)
-True if the variable or factor exists in the graph.
-"""
 function exists(dfg::CloudGraphsDFG, nId::Symbol)
     # If in the dictionary, then shortcut return true
     dfg.useCache && haskey(dfg.labelDict, nId) && return true
@@ -67,26 +63,12 @@ function exists(dfg::CloudGraphsDFG, node::N) where N <: DFGNode
     return exists(dfg, node.label)
 end
 
-"""
-    $SIGNATURES
-
-Return whether `sym::Symbol` represents a variable in the graph dfg.
-"""
 isVariable(dfg::CloudGraphsDFG, sym::Symbol)::Bool =
     _getNodeCount(dfg.neo4jInstance, ["VARIABLE", dfg.userId, dfg.robotId, dfg.sessionId, String(sym)]) == 1
 
-"""
-    $SIGNATURES
-
-Return whether `sym::Symbol` represents a factor in the graph dfg.
-"""
 isFactor(dfg::CloudGraphsDFG, sym::Symbol)::Bool =
     _getNodeCount(dfg.neo4jInstance, ["FACTOR", dfg.userId, dfg.robotId, dfg.sessionId, String(sym)]) == 1
 
-"""
-    $(SIGNATURES)
-Add a DFGVariable to a DFG.
-"""
 function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::Bool
     if exists(dfg, variable)
         error("Variable '$(variable.label)' already exists in the factor graph")
@@ -110,10 +92,6 @@ function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::Bool
     return true
 end
 
-"""
-    $(SIGNATURES)
-Add a DFGFactor to a DFG.
-"""
 function addFactor!(dfg::CloudGraphsDFG, variables::Vector{DFGVariable}, factor::DFGFactor)::Bool
     if exists(dfg, factor)
         error("Factor '$(factor.label)' already exists in the factor graph")
@@ -145,19 +123,11 @@ function addFactor!(dfg::CloudGraphsDFG, variables::Vector{DFGVariable}, factor:
     return true
 end
 
-"""
-    $(SIGNATURES)
-Add a DFGFactor to a DFG.
-"""
 function addFactor!(dfg::CloudGraphsDFG, variableIds::Vector{Symbol}, factor::DFGFactor)::Bool
     variables = map(vId -> getVariable(dfg, vId), variableIds)
     return addFactor!(dfg, variables, factor)
 end
 
-"""
-    $(SIGNATURES)
-Get a DFGVariable from a DFG using its underlying integer ID.
-"""
 function getVariable(dfg::CloudGraphsDFG, variableId::Int64)::DFGVariable
     props = getnodeproperties(dfg.neo4jInstance.graph, variableId)
     variable = unpackVariable(dfg, props)
@@ -170,10 +140,6 @@ function getVariable(dfg::CloudGraphsDFG, variableId::Int64)::DFGVariable
 end
 
 
-"""
-    $(SIGNATURES)
-Get a DFGVariable from a DFG using its label.
-"""
 function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGVariable
     if typeof(label) == String
         label = Symbol(label)
@@ -188,10 +154,6 @@ function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGVari
     return getVariable(dfg, nodeId)
 end
 
-"""
-    $(SIGNATURES)
-Get a DFGFactor from a DFG using its underlying integer ID.
-"""
 function getFactor(dfg::CloudGraphsDFG, factorId::Int64)::DFGFactor
     props = getnodeproperties(dfg.neo4jInstance.graph, factorId)
     factor = unpackFactor(dfg, props, getSerializationModule(dfg))
@@ -209,10 +171,6 @@ function getFactor(dfg::CloudGraphsDFG, factorId::Int64)::DFGFactor
     return factor
 end
 
-"""
-    $(SIGNATURES)
-Get a DFGFactor from a DFG using its label.
-"""
 function getFactor(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGFactor
     if typeof(label) == String
         label = Symbol(label)
@@ -227,10 +185,6 @@ function getFactor(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGFactor
     return getFactor(dfg, nodeId)
 end
 
-"""
-    $(SIGNATURES)
-Update a complete DFGVariable in the DFG.
-"""
 function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariable
     if !exists(dfg, variable)
         error("Variable label '$(variable.label)' does not exist in the factor graph")
@@ -247,10 +201,6 @@ function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariabl
     return variable
 end
 
-"""
-    $(SIGNATURES)
-Update solver and estimate data for a variable (variable can be from another graph).
-"""
 function mergeUpdateVariableSolverData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable)::DFGVariable
     if !exists(dfg, sourceVariable)
         error("Source variable '$(sourceVariable.label)' doesn't exist in the graph.")
@@ -265,10 +215,6 @@ function mergeUpdateVariableSolverData!(dfg::CloudGraphsDFG, sourceVariable::DFG
     return sourceVariable
 end
 
-"""
-    $(SIGNATURES)
-Update a complete DFGFactor in the DFG.
-"""
 function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor
     if !exists(dfg, factor)
         error("Factor label '$(factor.label)' does not exist in the factor graph")
@@ -286,10 +232,6 @@ function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor
 end
 
 
-"""
-    $(SIGNATURES)
-Update a complete DFGFactor in the DFG and update its relationships.
-"""
 function updateFactor!(dfg::CloudGraphsDFG, variables::Vector{DFGVariable}, factor::DFGFactor)::DFGFactor
     # Update the body
     factor = updateFactor!(dfg, factor)
@@ -318,19 +260,11 @@ function updateFactor!(dfg::CloudGraphsDFG, variables::Vector{DFGVariable}, fact
     return factor
 end
 
-"""
-    $(SIGNATURES)
-Update a complete DFGFactor in the DFG and update it's relationships.
-"""
 function updateFactor!(dfg::CloudGraphsDFG, variableIds::Vector{Symbol}, factor::DFGFactor)::DFGFactor
     variables = map(vId -> getVariable(dfg, vId), variableIds)
     return updateFactor!(dfg, variables, factor)
 end
 
-"""
-    $(SIGNATURES)
-Delete a DFGVariable from the DFG using its label.
-"""
 function deleteVariable!(dfg::CloudGraphsDFG, label::Symbol)::DFGVariable
     variable = nothing
     if dfg.useCache && haskey(dfg.variableCache, label)
@@ -354,16 +288,8 @@ function deleteVariable!(dfg::CloudGraphsDFG, label::Symbol)::DFGVariable
 end
 
 #Alias
-"""
-    $(SIGNATURES)
-Delete a referenced DFGVariable from the DFG.
-"""
 deleteVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariable = deleteVariable!(dfg, variable.label)
 
-"""
-    $(SIGNATURES)
-Delete a DFGFactor from the DFG using its label.
-"""
 function deleteFactor!(dfg::CloudGraphsDFG, label::Symbol)::DFGFactor
     factor = nothing
     if dfg.useCache && haskey(dfg.factoreCache, label)
@@ -387,17 +313,8 @@ function deleteFactor!(dfg::CloudGraphsDFG, label::Symbol)::DFGFactor
 end
 
 # Alias
-"""
-    $(SIGNATURES)
-Delete the referened DFGFactor from the DFG.
-"""
 deleteFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor = deleteFactor!(dfg, factor.label)
 
-"""
-    $(SIGNATURES)
-List the DFGVariables in the DFG.
-Optionally specify a label regular expression to retrieves a subset of the variables.
-"""
 function getVariables(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{DFGVariable}
     variableIds = getVariableIds(dfg, regexFilter, tags=tags, solvable=solvable)
     # TODO: Optimize to use tags in query here!
@@ -409,11 +326,6 @@ function getVariables(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=no
     return variables
 end
 
-"""
-    $(SIGNATURES)
-Get a list of IDs of the DFGVariables in the DFG.
-Optionally specify a label regular expression to retrieves a subset of the variables.
-"""
 function getVariableIds(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol}
     # Optimized for DB call
     tagsFilter = length(tags) > 0 ? " and "*join("node:".*String.(tags), " or ") : ""
@@ -424,21 +336,11 @@ function getVariableIds(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=
     end
 end
 
-"""
-    $(SIGNATURES)
-List the DFGFactors in the DFG.
-Optionally specify a label regular expression to retrieves a subset of the factors.
-"""
 function getFactors(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{DFGFactor}
     factorIds = getFactorIds(dfg, regexFilter, solvable=solvable)
     return map(vId->getFactor(dfg, vId), factorIds)
 end
 
-"""
-    $(SIGNATURES)
-Get a list of the IDs of the DFGFactors in the DFG.
-Optionally specify a label regular expression to retrieves a subset of the factors.
-"""
 function getFactorIds(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{Symbol}
     # Optimized for DB call
     if regexFilter == nothing
@@ -448,10 +350,6 @@ function getFactorIds(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=no
     end
 end
 
-"""
-    $(SIGNATURES)
-Checks if the graph is fully connected, returns true if so.
-"""
 function isFullyConnected(dfg::CloudGraphsDFG)::Bool
     # If the total number of nodes == total number of distinct connected nodes, then it is fully connected
     # Total nodes
@@ -472,10 +370,6 @@ function isFullyConnected(dfg::CloudGraphsDFG)::Bool
     return result.results[1]["data"][1]["row"][1] == length(varIds) + length(factIds)
 end
 
-"""
-    $(SIGNATURES)
-Retrieve a list of labels of the immediate neighbors around a given variable or factor.
-"""
 function getNeighbors(dfg::CloudGraphsDFG, node::T; solvable::Int=0)::Vector{Symbol}  where T <: DFGNode
     query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(node.label))--(node) where (node:VARIABLE or node:FACTOR) and node.solvable >= $solvable"
     @debug "[Query] $query"
@@ -487,10 +381,6 @@ function getNeighbors(dfg::CloudGraphsDFG, node::T; solvable::Int=0)::Vector{Sym
     return neighbors
 end
 
-"""
-    $(SIGNATURES)
-Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
-"""
 function getNeighbors(dfg::CloudGraphsDFG, label::Symbol; solvable::Int=0)::Vector{Symbol}
     query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(label))--(node) where (node:VARIABLE or node:FACTOR) and node.solvable >= $solvable"
     @debug "[Query] $query"
@@ -504,13 +394,6 @@ function getNeighbors(dfg::CloudGraphsDFG, label::Symbol; solvable::Int=0)::Vect
     return neighbors
 end
 
-"""
-    $(SIGNATURES)
-Retrieve a deep subgraph copy around a given variable or factor.
-Optionally provide a distance to specify the number of edges should be followed.
-Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
-Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
-"""
 function getSubgraphAroundNode(dfg::CloudGraphsDFG, node::DFGNode, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::AbstractDFG=_getDuplicatedEmptyDFG(dfg); solvable::Int=0)::AbstractDFG
     distance < 1 && error("getSubgraphAroundNode() only works for distance > 0")
 
@@ -529,12 +412,6 @@ function getSubgraphAroundNode(dfg::CloudGraphsDFG, node::DFGNode, distance::Int
 end
 
 
-"""
-    $(SIGNATURES)
-Get a deep subgraph copy from the DFG given a list of variables and factors.
-Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
-Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
-"""
 function getSubgraph(dfg::CloudGraphsDFG,
                      variableFactorLabels::Vector{Symbol},
                      includeOrphanFactors::Bool=false,
@@ -546,14 +423,7 @@ function getSubgraph(dfg::CloudGraphsDFG,
     return addToDFG
 end
 
-"""
-    $(SIGNATURES)
-Get an adjacency matrix for the DFG, returned as a Matrix{Union{Nothing, Symbol}}.
-Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor.
-The first row and first column are factor and variable headings respectively.
-This is optimized for database usage.
-"""
-function getAdjacencyMatrix(dfg::CloudGraphsDFG; solvable::Int=0)::Matrix{Union{Nothing, Symbol}}
+function getIncidenceMatrix(dfg::CloudGraphsDFG; solvable::Int=0)::Matrix{Union{Nothing, Symbol}}
     varLabels = sort(getVariableIds(dfg, solvable=solvable))
     factLabels = sort(getFactorIds(dfg, solvable=solvable))
     vDict = Dict(varLabels .=> [1:length(varLabels)...].+1)
@@ -583,7 +453,7 @@ function getAdjacencyMatrix(dfg::CloudGraphsDFG; solvable::Int=0)::Matrix{Union{
     return adjMat
 end
 
-function getAdjacencyMatrixSparse(dfg::CloudGraphsDFG; solvable::Int=0)::Tuple{SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}
+function getIncidenceMatrixSparse(dfg::CloudGraphsDFG; solvable::Int=0)::Tuple{SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}
     varLabels = getVariableIds(dfg, solvable=solvable)
     factLabels = getFactorIds(dfg, solvable=solvable)
     vDict = Dict(varLabels .=> [1:length(varLabels)...])

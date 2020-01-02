@@ -506,7 +506,7 @@ Get an adjacency matrix for the DFG, returned as a Matrix{Union{Nothing, Symbol}
 Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor.
 The first row and first column are factor and variable headings respectively.
 """
-function getAdjacencyMatrix(dfg::MetaGraphsDFG)::Matrix{Union{Nothing, Symbol}}
+function getIncidenceMatrix(dfg::MetaGraphsDFG)::Matrix{Union{Nothing, Symbol}}
     varLabels = map(v->v.label, getVariables(dfg))
     factLabels = map(f->f.label, getFactors(dfg))
     vDict = Dict(varLabels .=> [1:length(varLabels)...].+1)
@@ -522,7 +522,7 @@ function getAdjacencyMatrix(dfg::MetaGraphsDFG)::Matrix{Union{Nothing, Symbol}}
     return adjMat
 end
 
-function getAdjacencyMatrixSparse(dfg::MetaGraphsDFG)::Tuple{LightGraphs.SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}
+function getIncidenceMatrixSparse(dfg::MetaGraphsDFG)::Tuple{LightGraphs.SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}
     adj = LightGraphs.adjacency_matrix(dfg.g)
     v_labels = getVariableIds(dfg)
     f_labels = getFactorIds(dfg)
