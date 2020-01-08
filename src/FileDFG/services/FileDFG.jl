@@ -75,18 +75,17 @@ loadDFG("/tmp/savedgraph", IncrementalInference, dfg) # alternative
 ls(dfg)
 ```
 """
-function loadDFG(dst::String, iifModule, dfgLoadInto::G) where G <: AbstractDFG
-    # check if zipped dst first
-    folder = dst
-    sdist = split(dst, '.')
-    if sdist[end] == "gz" && sdist[end-1] == "tar"
-      caesardir = joinpath("/tmp","caesar","random")
-      Base.mkpath(caesardir)
-      folder = joinpath(caesardir, splitpath(string(sdist[end-2]))[end] )
+function loadDFG(dst::String, iifModule, dfgLoadInto::G; loaddir=joinpath("/","tmp","caesar","random")) where G <: AbstractDFG
+    # Check if zipped destination (dst)
+    folder = Base.isdir(dst) ? dst : dst*".tar.gz"
+    sdst = split(dst, '.')
+    if sdst[end] == "gz" && sdst[end-1] == "tar"
+      Base.mkpath(loaddir)
+      folder = joinpath(loaddir, splitpath(string(sdst[end-2]))[end] )
       @info "loadDF detected a gzip tarball -- unpacking via $folder now..."
       Base.rm(folder, recursive=true, force=true)
       # unzip the tar file
-      run(`tar -zxf $dst -C $caesardir`)
+      run(`tar -zxf $dst -C $loaddir`)
     end
     variables = DFGVariable[]
     factors = DFGFactor[]
