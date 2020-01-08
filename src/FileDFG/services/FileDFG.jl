@@ -76,25 +76,27 @@ ls(dfg)
 ```
 """
 function loadDFG(dst::String, iifModule, dfgLoadInto::G; loaddir=joinpath("/","tmp","caesar","random")) where G <: AbstractDFG
-    # Check if zipped destination (dst) by first doing fuzzy search from user supplied dst (might not have .tar.gz extension)
-    folder = dst
+    # Check if zipped destination (dst) by first doing fuzzy search from user supplied dst
+    folder = dst  # working directory for fileDFG variable and factor operations
+    dstname = dst # path name could either be legacy FileDFG dir or .tar.gz file of FileDFG files.
     unzip = false
-    sdst = split(folder, '.')
+    # add if doesn't have .tar.gz extension
     if !isdir(dst)
         unzip = true
-        if sdst[end] != "gz" && sdst[end-1] != "tar"
-            folder *= ".tar.gz"
+        sdst = split(folder, '.')
+        if length(sdst) == 1 && sdst[end] != "gz"
+            dstname *= ".tar.gz"
         end
     end
     # do actual unzipping
     if unzip
-        sfolder = split(folder, '.')
+        sfolder = split(dstname, '.')
         Base.mkpath(loaddir)
-        @show folder = joinpath(loaddir, splitpath(string(sfolder[end-2]))[end] )
-        @info "loadDF detected a gzip tarball -- unpacking via $folder now..."
+        folder = joinpath(loaddir, splitpath(string(sfolder[end-2]))[end] )
+        @info "loadDF detected a gzip $dstname -- unpacking via $loaddir now..."
         Base.rm(folder, recursive=true, force=true)
         # unzip the tar file
-        run(`tar -zxf $dst -C $loaddir`)
+        run(`tar -zxf $dstname -C $loaddir`)
     end
     # extract the factor graph from fileDFG folder
     variables = DFGVariable[]
