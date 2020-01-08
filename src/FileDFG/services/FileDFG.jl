@@ -14,7 +14,7 @@ v1 = addVariable!(dfg, :a, ContinuousScalar, labels = [:POSE], solvable=0)
 saveDFG(dfg, "/tmp/saveDFG")
 ```
 """
-function saveDFG(dfg::G, folder::String) where G <: AbstractDFG
+function saveDFG(dfg::AbstractDFG, folder::String; compress::Symbol=:gzip)
     variables = getVariables(dfg)
     factors = getFactors(dfg)
     varFolder = "$folder/variables"
@@ -43,6 +43,19 @@ function saveDFG(dfg::G, folder::String) where G <: AbstractDFG
         JSON2.write(io, fPacked)
         close(io)
     end
+
+    # compress newly saved folder, skip if not supported format
+    !(compress in [:gzip]) && return
+    savepath = folder[end] == '/' ? folder[1:end-1] : folder
+    savedir = dirname(savepath)
+    savename = splitpath(string(savepath))[end]
+    @assert savename != ""
+    # temporarily change working directory to get correct zipped path
+    here = Base.pwd()
+    Base.cd(savedir)
+    run(`tar -zcf $savepath.tar.gz $savename`)
+    Base.rm(savename, recursive=true)
+    Base.cd(here)
 end
 
 """
@@ -56,12 +69,25 @@ using DistributedFactorGraphs, IncrementalInference
 # Create a DFG - can make one directly, e.g. GraphsDFG{NoSolverParams}() or use IIF:
 dfg = initfg()
 # Load the graph
-loadDFG("/tmp/savedgraph", IncrementalInference, dfg)
+loadDFG("/tmp/savedgraph.tar.gz", IncrementalInference, dfg)
+loadDFG("/tmp/savedgraph", IncrementalInference, dfg) # alternative
 # Use the DFG as you do normally.
 ls(dfg)
 ```
 """
-function loadDFG(folder::String, iifModule, dfgLoadInto::G) where G <: AbstractDFG
+function loadDFG(dst::String, iifModule, dfgLoadInto::G) where G <: AbstractDFG
+    # check if zipped dst first
+    folder = dst
+    sdist = split(dst, '.')
+    if sdist[end] == "gz" && sdist[end-1] == "tar"
+      caesardir = joinpath("/tmp","caesar","random")
+      Base.mkpath(caesardir)
+      folder = joinpath(caesardir, splitpath(string(sdist[end-2]))[end] )
+      @info "loadDF detected a gzip tarball -- unpacking via $folder now..."
+      Base.rm(folder, recursive=true, force=true)
+      # unzip the tar file
+      run(`tar -zxf $dst -C $caesardir`)
+    end
     variables = DFGVariable[]
     factors = DFGFactor[]
     varFolder = "$folder/variables"
