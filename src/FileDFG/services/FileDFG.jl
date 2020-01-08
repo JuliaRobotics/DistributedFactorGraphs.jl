@@ -77,11 +77,11 @@ ls(dfg)
 """
 function loadDFG(dst::String, iifModule, dfgLoadInto::G; loaddir=joinpath("/","tmp","caesar","random")) where G <: AbstractDFG
     # Check if zipped destination (dst)
-    folder = Base.isdir(dst) ? dst : dst*".tar.gz"
-    sdst = split(dst, '.')
-    if sdst[end] == "gz" && sdst[end-1] == "tar"
+    @show folder = isdir(dst) ? dst : (dst*".tar.gz")
+    sfolder = split(folder, '.')
+    if sfolder[end] == "gz" && sfolder[end-1] == "tar"
       Base.mkpath(loaddir)
-      folder = joinpath(loaddir, splitpath(string(sdst[end-2]))[end] )
+      @show folder = joinpath(loaddir, splitpath(string(sfolder[end-2]))[end] )
       @info "loadDF detected a gzip tarball -- unpacking via $folder now..."
       Base.rm(folder, recursive=true, force=true)
       # unzip the tar file
@@ -93,8 +93,8 @@ function loadDFG(dst::String, iifModule, dfgLoadInto::G; loaddir=joinpath("/","t
     factorFolder = "$folder/factors"
     # Folder preparations
     !isdir(folder) && error("Can't load DFG graph - folder '$folder' doesn't exist")
-    !isdir(varFolder) && error("Can't load DFG graph - folder '$folder' doesn't exist")
-    !isdir(factorFolder) && error("Can't load DFG graph - folder '$folder' doesn't exist")
+    !isdir(varFolder) && error("Can't load DFG graph - folder '$varFolder' doesn't exist")
+    !isdir(factorFolder) && error("Can't load DFG graph - folder '$factorFolder' doesn't exist")
 
     varFiles = readdir(varFolder)
     factorFiles = readdir(factorFolder)
