@@ -81,19 +81,21 @@ function loadDFG(dst::String, iifModule, dfgLoadInto::G; loaddir=joinpath("/","t
     dstname = dst # path name could either be legacy FileDFG dir or .tar.gz file of FileDFG files.
     unzip = false
     # add if doesn't have .tar.gz extension
+    lastdirname = splitpath(dstname)[end]
     if !isdir(dst)
         unzip = true
-        sdst = split(folder, '.')
-        if length(sdst) == 1 && sdst[end] != "gz"
+        sdst = split(lastdirname, '.')
+        if sdst[end] != "gz" #  length(sdst) == 1 &&
             dstname *= ".tar.gz"
+            lastdirname *= ".tar.gz"
         end
     end
     # do actual unzipping
     if unzip
-        sfolder = split(dstname, '.')
+        @show sfolder = split(dstname, '.')
         Base.mkpath(loaddir)
-        folder = joinpath(loaddir, splitpath(string(sfolder[end-2]))[end] )
-        @info "loadDF detected a gzip $dstname -- unpacking via $loaddir now..."
+        folder = joinpath(loaddir, lastdirname[1:(end-length(".tar.gz"))]) #splitpath(string(sfolder[end-2]))[end]
+        @info "loadDFG detected a gzip $dstname -- unpacking via $loaddir now..."
         Base.rm(folder, recursive=true, force=true)
         # unzip the tar file
         run(`tar -zxf $dstname -C $loaddir`)
