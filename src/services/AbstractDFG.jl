@@ -1,3 +1,5 @@
+
+
 ## ===== Interface for an AbstractDFG =====
 
 """
@@ -340,83 +342,6 @@ function ls(dfg::G, label::Symbol; solvable::Int=0)::Vector{Symbol} where G <: A
 end
 
 """
-    $SIGNATURES
-
-Variables or factors may or may not be 'solvable', depending on a user definition.  Useful for ensuring atomic transactions.
-
-Related
-
-isSolveInProgress
-"""
-isSolvable(var::Union{DFGVariable, DFGFactor})::Int = var.solvable
-
-"""
-    $SIGNATURES
-
-Variables or factors may or may not be 'solvable', depending on a user definition.  Useful for ensuring atomic transactions.
-
-Related:
-- isSolveInProgress
-"""
-getSolvable(var::Union{DFGVariable, DFGFactor})::Int = var.solvable
-
-"""
-    $SIGNATURES
-
-Get 'solvable' parameter for either a variable or factor.
-"""
-function getSolvable(dfg::AbstractDFG, sym::Symbol)
-  if isVariable(dfg, sym)
-    return getVariable(dfg, sym).solvable
-  elseif isFactor(dfg, sym)
-    return getFactor(dfg, sym).solvable
-  end
-end
-
-"""
-    $SIGNATURES
-
-Which variables or factors are currently being used by an active solver.  Useful for ensuring atomic transactions.
-
-DevNotes:
-- Will be renamed to `data.solveinprogress` which will be in VND, not DFGNode -- see DFG #201
-
-Related
-
-isSolvable
-"""
-function getSolveInProgress(var::Union{DFGVariable, DFGFactor}; solveKey::Symbol=:default)::Int
-    # Variable
-    var isa DFGVariable && return haskey(solverDataDict(var), solveKey) ? solverDataDict(var)[solveKey].solveInProgress : 0
-    # Factor
-    return solverData(var).solveInProgress
-end
-
-"""
-    $SIGNATURES
-
-Set the `solvable` parameter for either a variable or factor.
-"""
-function setSolvable!(dfg::AbstractDFG, sym::Symbol, solvable::Int)::Int
-  if isVariable(dfg, sym)
-    getVariable(dfg, sym).solvable = solvable
-  elseif isFactor(dfg, sym)
-    getFactor(dfg, sym).solvable = solvable
-  end
-  return solvable
-end
-
-"""
-    $SIGNATURES
-
-Set the `solvable` parameter for either a variable or factor.
-"""
-function setSolvable!(node::N, solvable::Int)::Int where N <: DFGNode
-  node.solvable = solvable
-  return solvable
-end
-
-"""
     $(SIGNATURES)
 Gets an empty and unique CloudGraphsDFG derived from an existing DFG.
 """
@@ -539,15 +464,23 @@ function mergeUpdateGraphSolverData!(sourceDFG::G, destDFG::H, varSyms::Vector{S
 end
 
 # Alias
+"""
+    $(SIGNATURES)
+Get a matrix indicating relationships between variables and factors. Rows are
+all factors, columns are all variables, and each cell contains either nothing or
+the symbol of the relating factor. The first row and first column are factor and
+variable headings respectively.
+"""
 function getAdjacencyMatrix(dfg::AbstractDFG; solvable::Int=0)::Matrix{Union{Nothing, Symbol}}
     @warn "Deprecated function, please use getIncidenceMatrix as this will be removed in v0.6.1"
     return getIncidenceMatrix(dfg, solvable)
 end
 """
     $(SIGNATURES)
-Get an adjacency matrix for the DFG, returned as a Matrix{Union{Nothing, Symbol}}.
-Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor.
-The first row and first column are factor and variable headings respectively.
+Get a matrix indicating relationships between variables and factors. Rows are
+all factors, columns are all variables, and each cell contains either nothing or
+the symbol of the relating factor. The first row and first column are factor and
+variable headings respectively.
 """
 function getIncidenceMatrix(dfg::AbstractDFG; solvable::Int=0)::Matrix{Union{Nothing, Symbol}}
     #
@@ -566,14 +499,23 @@ function getIncidenceMatrix(dfg::AbstractDFG; solvable::Int=0)::Matrix{Union{Not
     return adjMat
 end
 
+"""
+    $(SIGNATURES)
+Get a matrix indicating relationships between variables and factors. Returned as
+a tuple: adjmat::SparseMatrixCSC{Int}, var_labels::Vector{Symbol)
+fac_labels::Vector{Symbol). Rows are the factors, columns are the variables,
+with the corresponding labels in fac_labels,var_labels.
+"""
 function getAdjacencyMatrixSparse(dfg::G; solvable::Int=0)::Tuple{SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}} where G <: AbstractDFG
     @warn "Deprecated function, please use getIncidenceMatrixSparse as this will be removed in v0.6.1"
     return getIncidenceMatrixSparse(dfg, solvable)
 end
 """
     $(SIGNATURES)
-Get an adjacency matrix for the DFG, returned as a tuple: adjmat::SparseMatrixCSC{Int}, var_labels::Vector{Symbol) fac_labels::Vector{Symbol).
-Rows are the factors, columns are the variables, with the corresponding labels in fac_labels,var_labels.
+Get a matrix indicating relationships between variables and factors. Returned as
+a tuple: adjmat::SparseMatrixCSC{Int}, var_labels::Vector{Symbol)
+fac_labels::Vector{Symbol). Rows are the factors, columns are the variables,
+with the corresponding labels in fac_labels,var_labels.
 """
 function getIncidenceMatrixSparse(dfg::G; solvable::Int=0)::Tuple{SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}} where G <: AbstractDFG
     varLabels = map(v->v.label, getVariables(dfg, solvable=solvable))
@@ -588,6 +530,85 @@ function getIncidenceMatrixSparse(dfg::G; solvable::Int=0)::Tuple{SparseMatrixCS
         map(vLabel -> adjMat[fIndex,vDict[vLabel]] = 1, factVars)
     end
     return adjMat, varLabels, factLabels
+end
+
+# -------------------------
+
+"""
+    $SIGNATURES
+
+Variables or factors may or may not be 'solvable', depending on a user definition.  Useful for ensuring atomic transactions.
+
+Related
+
+isSolveInProgress
+"""
+isSolvable(var::Union{DFGVariable, DFGFactor})::Int = var.solvable
+
+"""
+    $SIGNATURES
+
+Variables or factors may or may not be 'solvable', depending on a user definition.  Useful for ensuring atomic transactions.
+
+Related:
+- isSolveInProgress
+"""
+getSolvable(var::Union{DFGVariable, DFGFactor})::Int = var.solvable
+
+"""
+    $SIGNATURES
+
+Get 'solvable' parameter for either a variable or factor.
+"""
+function getSolvable(dfg::AbstractDFG, sym::Symbol)
+  if isVariable(dfg, sym)
+    return getVariable(dfg, sym).solvable
+  elseif isFactor(dfg, sym)
+    return getFactor(dfg, sym).solvable
+  end
+end
+
+"""
+    $SIGNATURES
+
+Which variables or factors are currently being used by an active solver.  Useful for ensuring atomic transactions.
+
+DevNotes:
+- Will be renamed to `data.solveinprogress` which will be in VND, not DFGNode -- see DFG #201
+
+Related
+
+isSolvable
+"""
+function getSolveInProgress(var::Union{DFGVariable, DFGFactor}; solveKey::Symbol=:default)::Int
+    # Variable
+    var isa DFGVariable && return haskey(solverDataDict(var), solveKey) ? solverDataDict(var)[solveKey].solveInProgress : 0
+    # Factor
+    return solverData(var).solveInProgress
+end
+
+"""
+    $SIGNATURES
+
+Set the `solvable` parameter for either a variable or factor.
+"""
+function setSolvable!(dfg::AbstractDFG, sym::Symbol, solvable::Int)::Int
+  if isVariable(dfg, sym)
+    getVariable(dfg, sym).solvable = solvable
+  elseif isFactor(dfg, sym)
+    getFactor(dfg, sym).solvable = solvable
+  end
+  return solvable
+end
+
+"""
+    $SIGNATURES
+
+Set the `solvable` parameter for either a variable or factor.
+"""
+function setSolvable!(node::N, solvable::Int)::Int where N <: DFGNode
+  node.solvable = solvable
+  return solvable
 end
 
 """

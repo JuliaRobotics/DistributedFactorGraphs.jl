@@ -11,7 +11,9 @@ makedocs(
         "Getting Started" => [
             "Introduction" => "getting_started.md",
             "Building Graphs" => "BuildingGraphs.md",
+            "Using Graph Data" => "GraphData.md",
             "Drawing Graphs" => "DrawingGraphs.md",
+            "Traversing and Querying" => "TraversingAndQuerying.md",
             "Common API Interface" => "ref_api.md"
         ],
         "DistributedFactorGraph API's" => [

@@ -52,11 +52,8 @@ export getLabel, getTimestamp, setTimestamp!, getTags, setTags!
 export getEstimates, getEstimate, getSofttype
 export getMaxPPE, getMeanPPE, getSuggestedPPE
 # Level 2
-export solverData, getData, solverDataDict, setSolverData, setSolverData!, getInternalId, smallData, setSmallData!, bigData
+export getSolverData, solverData, getData, solverDataDict, setSolverData, setSolverData!, getInternalId, smallData, setSmallData!, bigData
 export addBigDataEntry!, getBigDataEntry, updateBigDataEntry!, deleteBigDataEntry!, getBigDataEntries, getBigDataKeys
-#graph small data
-export getUserData, setUserData, getRobotData, setRobotData, getSessionData, setSessionData
-export pushUserData!, pushRobotData!, pushSessionData!, popUserData!, popRobotData!, popSessionData!
 
 # Find a home
 export getVariableOrder
@@ -68,18 +65,33 @@ export mergeUpdateVariableSolverData!, mergeUpdateGraphSolverData!
 
 # Solver (IIF) Exports
 export VariableNodeData, PackedVariableNodeData
-export GenericFunctionNodeData#, FunctionNodeData
+export GenericFunctionNodeData
 export getSerializationModule, setSerializationModule!
 export pack, unpack
 # Resolve with above
 export packVariable, unpackVariable, packFactor, unpackFactor
 
-#PPE exports
+# PPE exports
 export AbstractPointParametricEst
 export MeanMaxPPE
 
-#Interfaces
+# AbstractDFG Interface
+#--------
+export setSerializationModule!, getSerializationModule
+export getLabelDict, getDescription, setDescription, getAddHistory, getSolverParams, setSolverParams
+export getUserData, setUserData, getRobotData, setRobotData, getSessionData, setSessionData
+# Not sure these are going to work everywhere
+export pushUserData!, pushRobotData!, pushSessionData!, popUserData!, popRobotData!, popSessionData!
+
+export exists, addVariable!, addFactor!, getVariable, getFactor, updateVariable!, updateFactor!, deleteVariable!, deleteFactor!
+export getVariables, getVariableIds, getFactors, getFactorIds, ls, lsf
+export isFullyConnected, hasOrphans
+export getNeighbors, _getDuplicatedEmptyDFG, getSubgraphAroundNode, getSubgraph
 export getIncidenceMatrix, getIncidenceMatrixSparse
+export toDot, toDotFile
+# Deprecated
+export getAdjacencyMatrix, getAdjacencyMatrixSparse
+#--------
 
 # File import and export
 export saveDFG, loadDFG
