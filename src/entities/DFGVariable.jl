@@ -117,7 +117,7 @@ getSuggestedPPE(est::AbstractPointParametricEst) = est.suggested
 getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimestamp
 
 
-VariableEstimate(params...) = errror("VariableEstimate is depreciated, please use MeanMaxPPE")
+VariableEstimate(params...) = error("VariableEstimate is deprecated, please use MeanMaxPPE")
 
 
 """
@@ -142,7 +142,7 @@ DFGVariable constructors.
 """
 function DFGVariable(label::Symbol, _internalId::Int64 = 0) #where {T <:InferenceVariable}
     st = stacktrace()
-    @warn "DFGVariable(label::Symbol, _internalId::Int64 = 0) is depreciated please use DFGVariable(label::Symbol, softtype::T, _internalId::Int64 = 0) where T <: InferenceVariable. Enable DEBUG logging for the stack trace."
+    @warn "DFGVariable(label::Symbol, _internalId::Int64 = 0) is deprecated please use DFGVariable(label::Symbol, softtype::T, _internalId::Int64 = 0) where T <: InferenceVariable. Enable DEBUG logging for the stack trace."
     @debug st
     T = InferenceVariable
     DFGVariable(label, now(), Symbol[],
@@ -227,6 +227,25 @@ function estimate(v::VariableDataLevel1, key::Symbol=:default)
     @warn "DEPRECATED estimate, use getEstimate instead."
     getEstimate(v, key)
 end
+
+
+"""
+    $SIGNATURES
+
+Get the parametric point estimate (PPE) for a variable in the factor graph.
+
+Notes
+- Defaults on keywords `solveKey` and `method`
+
+Related
+
+getMeanPPE, getMaxPPE, getKDEMean, getKDEFit
+"""
+function getVariablePPE(vari::DFGVariable; solveKey::Symbol=:default, method::Function=getSuggestedPPE)
+  getEstimates(vari)[solveKey] |> getSuggestedPPE
+end
+
+getVariablePPE(dfg::AbstractDFG, vsym::Symbol; solveKey::Symbol=:default, method::Function=getSuggestedPPE) = getVariablePPE(getVariable(dfg,vsym), solveKey=solveKey, method=method)
 
 """
    $(SIGNATURES)
