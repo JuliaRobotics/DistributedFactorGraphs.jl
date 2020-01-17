@@ -1,3 +1,5 @@
+# global testDFGAPI = GraphsDFG
+
 dfg = testDFGAPI{NoSolverParams}()
 
 #add types for softtypes
@@ -76,6 +78,11 @@ end
     # Additional testing for https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/201
     @test symdiff([:a, :b], getVariableIds(dfg, solvable=0)) == []
     @test getVariableIds(dfg, solvable=1) == [:b]
+      # WHAT -- still does not work?
+      # v2b = deepcopy(v2)
+      # setTags!(v2b, [:VARIABLE; :LANDMARK])
+      # setSolvable!(v2b, 1)
+      # setTimestamp!(v2b, getTimestamp(getVariables(dfg, solvable=1)[1]))
     @test getVariables(dfg, solvable=1) == [v2]
     @test getFactorIds(dfg) == [:f1]
     @test getFactorIds(dfg, solvable=1) == []
@@ -136,10 +143,15 @@ end
     @test setTags!(v1, testTags) == testTags
     @test tags(v1) == testTags
 
-    @test timestamp(v1) == v1.timestamp
+    @test getTimestamp(v1) == v1.timestamp
     testTimestamp = now()
     @test setTimestamp!(v1, testTimestamp) == testTimestamp
-    @test timestamp(v1) == testTimestamp
+    @test getTimestamp(v1) == testTimestamp
+
+    @test getTimestamp(f1) == f1.timestamp
+    testTimestamp = now()
+    @test setTimestamp!(f1, testTimestamp) == testTimestamp
+    @test getTimestamp(f1) == f1.timestamp
 
     @test estimates(v1) == v1.estimateDict
     @test estimate(v1, :notfound) == nothing
@@ -149,8 +161,8 @@ end
     @test solverDataDict(v1) == v1.solverDataDict
     @test internalId(v1) == v1._internalId
 
-    @test softtype(v1) == Symbol(typeof(st1))
-    @test softtype(v2) == Symbol(typeof(st2))
+    @test softtype(v1) == st1
+    @test softtype(v2) == st2
     @test getSofttype(v1) == st1
 
     @test label(f1) == f1.label
@@ -434,7 +446,8 @@ end
             if field != :softtypename
                 @test getfield(getVariable(dfg, v), field) == getfield(getVariable(summaryGraph, v), field)
             else
-                @test softtype(getVariable(dfg, v)) == softtype(getVariable(summaryGraph, v))
+                # Special case to check the symbol softtype is equal to the full softtype.
+                @test Symbol(typeof(softtype(getVariable(dfg, v)))) == softtype(getVariable(summaryGraph, v))
             end
         end
     end

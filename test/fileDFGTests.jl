@@ -32,7 +32,8 @@
     saveDFG(dfg, saveFolder)
 
     copyDfg = DistributedFactorGraphs._getDuplicatedEmptyDFG(dfg)
-    retDFG = loadDFG(saveFolder, Main, copyDfg)
+    @info "Going to load $saveFolder"
+    retDFG = loadDFG(saveFolder*".tar.gz", Main, copyDfg, loaddir="/tmp")
 
     @test symdiff(ls(dfg), ls(retDFG)) == []
     @test symdiff(lsf(dfg), lsf(retDFG)) == []

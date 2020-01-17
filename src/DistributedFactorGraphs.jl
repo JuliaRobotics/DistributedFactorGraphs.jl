@@ -21,8 +21,10 @@ export AbstractParams, NoSolverParams
 export DFGNode, DFGVariable, DFGFactor, AbstractDFGVariable, AbstractDFGFactor
 export InferenceType, PackedInferenceType, FunctorInferenceType, InferenceVariable, ConvolutionObject
 export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
-export getMaxPPE, getMeanPPE, getSuggestedPPE
-export label, timestamp, setTimestamp!, tags, setTags!, estimates, estimate, data, softtype, solverData, getData, solverDataDict, setSolverData, setSolverData!, internalId, smallData, setSmallData!, bigData
+export getMaxPPE, getMeanPPE, getSuggestedPPE, getEstimates
+export getVariablePPE
+export timestamp # DEPRECATED
+export label, getTimestamp, setTimestamp!, tags, setTags!, estimates, estimate, data, softtype, solverData, getData, solverDataDict, setSolverData, setSolverData!, internalId, smallData, setSmallData!, bigData
 export DFGVariableSummary, DFGFactorSummary, AbstractDFGSummary
 export addBigDataEntry!, getBigDataEntry, updateBigDataEntry!, deleteBigDataEntry!, getBigDataEntries, getBigDataKeys
 
@@ -78,6 +80,7 @@ export
 include("services/AbstractDFG.jl")
 include("services/DFGVariable.jl")
 include("services/DFGFactor.jl")
+include("CommonAccessors.jl")
 include("services/CompareUtils.jl")
 
 # Include the Graphs.jl API.
@@ -97,6 +100,9 @@ include("CloudGraphsDFG/CloudGraphsDFG.jl")
 #supported in Memory fg types
 const InMemoryDFGTypes = Union{GraphsDFG, LightDFG}
 export InMemoryDFGTypes
+
+# Needs a home.
+include("needsahome.jl")
 
 function __init__()
     @require GraphPlot = "a2cc645c-3eea-5389-862e-a155d0052231" begin

@@ -51,10 +51,10 @@ Base.propertynames(x::MetaGraphsDFG, private::Bool=false) =
 
 Base.getproperty(x::MetaGraphsDFG,f::Symbol) = begin
     if f == :nodeCounter
-        @warn "Field nodeCounter depreciated. returning number of nodes"
+        @warn "Field nodeCounter deprecated. returning number of nodes"
         nv(x.g)
     elseif f == :labelDict
-        @warn "Field labelDict depreciated. Consider using exists(dfg,label) or getLabelDict(dfg) instead. Returning internals copy"
+        @warn "Field labelDict deprecated. Consider using exists(dfg,label) or getLabelDict(dfg) instead. Returning internals copy"
         copy(x.g.metaindex[:label])
     else
         getfield(x,f)

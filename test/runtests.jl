@@ -44,6 +44,9 @@ end
     include("DataStoreTests.jl")
 end
 
+@testset "Needs-a-Home Tests" begin
+    include("needsahomeTests.jl")
+end
 
 @testset "LightDFG subtype tests" begin
     for type in [(var=DFGVariableSummary, fac=DFGFactorSummary), (var=SkeletonDFGVariable,fac=SkeletonDFGFactor)]
@@ -58,7 +61,6 @@ end
 
 if get(ENV, "IIF_TEST", "") == "true"
 
-    Pkg.add("IncrementalInference")
     # Switch to our upstream test branch.
     Pkg.add(PackageSpec(name="IncrementalInference", rev="upstream/dfg_integration_test"))
     @info "------------------------------------------------------------------------"
@@ -96,6 +98,19 @@ if get(ENV, "IIF_TEST", "") == "true"
     @testset "CGStructure Tests for CGDFG" begin
         # Run the CGStructure tests
         include("CGStructureTests.jl")
+    end
+
+    # Simple graph solving test
+    @testset "Simple graph solving test" begin
+        # This is just to validate we're not going to blow up downstream.
+        apis = [
+            GraphsDFG{SolverParams}(params=SolverParams()),
+            LightDFG{SolverParams}(params=SolverParams())]
+        for api in apis
+            @info "Running simple solver test: $(typeof(api))"
+            global dfg = deepcopy(api)
+            include("solveTest.jl")
+        end
     end
 else
     @warn "Skipping IncrementalInference driver tests"

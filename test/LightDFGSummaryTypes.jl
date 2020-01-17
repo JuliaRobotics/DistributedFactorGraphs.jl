@@ -98,7 +98,7 @@ end
     @test tags(v1) == v1.tags
 
     if VARTYPE == DFGVariableSummary
-        @test timestamp(v1) == v1.timestamp
+        @test getTimestamp(v1) == v1.timestamp
         @test estimates(v1) == v1.estimateDict
         @test estimate(v1, :notfound) == nothing
         @test softtype(v1) == :Pose2

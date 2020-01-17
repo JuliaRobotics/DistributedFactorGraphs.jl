@@ -31,7 +31,8 @@ mutable struct GenericFunctionNodeData{T, S}
 end
 
 """
-    $(SIGNATURES)
+    $(TYPEDEF)
+
 Fundamental structure for a DFG factor.
 """
 mutable struct DFGFactor{T, S} <: AbstractDFGFactor
@@ -39,11 +40,20 @@ mutable struct DFGFactor{T, S} <: AbstractDFGFactor
     tags::Vector{Symbol}
     data::GenericFunctionNodeData{T, S}
     solvable::Int
+    timestamp::DateTime
     _internalId::Int64
     _variableOrderSymbols::Vector{Symbol}
-    DFGFactor{T, S}(label::Symbol) where {T, S} = new{T, S}(label, Symbol[], GenericFunctionNodeData{T, S}(), 0, 0, Symbol[])
-    DFGFactor{T, S}(label::Symbol, _internalId::Int64) where {T, S} = new{T, S}(label, Symbol[], GenericFunctionNodeData{T, S}(), 0, _internalId, Symbol[])
+    # TODO back to front ts and _internalId for legacy reasons
+    DFGFactor{T, S}(label::Symbol, _internalId::Int64=0, timestamp::DateTime=now()) where {T, S} = new{T, S}(label, Symbol[], GenericFunctionNodeData{T, S}(), 0, timestamp, 0, Symbol[])
+    # DFGFactor{T, S}(label::Symbol, _internalId::Int64) where {T, S} = new{T, S}(label, Symbol[], GenericFunctionNodeData{T, S}(), 0, now(), _internalId, Symbol[])
 end
+
+"""
+    $(SIGNATURES)
+
+Convenience constructor for DFG factor.
+"""
+DFGFactor(label::Symbol; tags::Vector{Symbol}=Symbol[], data::GenericFunctionNodeData{T, S}=GenericFunctionNodeData{T, S}(), solvable::Int=0, timestamp::DateTime=now(), _internalId::Int64=0, _variableOrderSymbols::Vector{Symbol}=Symbol[]) where {T, S} = DFGFactor{T,S}(label,tags,data,solvable,timestamp,_internalId,_variableOrderSymbols)
 
 # Simply for convenience - don't export
 const PackedFunctionNodeData{T} = GenericFunctionNodeData{T, <: AbstractString}
@@ -80,38 +90,14 @@ end
 #NOTE I feel like a want to force a variableOrderSymbols
 SkeletonDFGFactor(label::Symbol, variableOrderSymbols::Vector{Symbol} = Symbol[]) = SkeletonDFGFactor(label, Symbol[], variableOrderSymbols)
 
+
+
 # Accessors
 
 const FactorDataLevel0 = Union{DFGFactor, DFGFactorSummary, SkeletonDFGFactor}
 const FactorDataLevel1 = Union{DFGFactor, DFGFactorSummary}
+const FactorDataLevel2 = Union{DFGFactor}
 
-"""
-$SIGNATURES
-
-Return the label for a factor.
-"""
-label(f::FactorDataLevel0) = f.label
-
-"""
-$SIGNATURES
-
-Return the tags for a variable.
-"""
-tags(f::FactorDataLevel0) = f.tags
-
-"""
-$SIGNATURES
-
-Set the tags for a factor.
-"""
-setTag!s(f::FactorDataLevel0, tags::Vector{Symbol}) = f.tags = tags
-
-"""
-$SIGNATURES
-
-Return the internal ID for a variable.
-"""
-internalId(f::FactorDataLevel1) = f._internalId
 
 """
     $SIGNATURES
