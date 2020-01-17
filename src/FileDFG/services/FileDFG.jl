@@ -51,11 +51,8 @@ function saveDFG(dfg::AbstractDFG, folder::String; compress::Symbol=:gzip)
     savename = splitpath(string(savepath))[end]
     @assert savename != ""
     # temporarily change working directory to get correct zipped path
-    here = Base.pwd()
-    Base.cd(savedir)
-    run(`tar -zcf $savepath.tar.gz $savename`)
-    Base.rm(savename, recursive=true)
-    Base.cd(here)
+    run( pipeline(`tar -zcf - -C $savedir $savename`, stdout="$savepath.tar.gz") )
+    Base.rm(joinpath(savedir,savename), recursive=true)
 end
 
 """
