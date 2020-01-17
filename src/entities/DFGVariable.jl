@@ -128,10 +128,10 @@ struct MeanMaxPPE <: AbstractPointParametricEst
 end
 MeanMaxPPE(solverKey::Symbol, suggested::Vector{Float64}, max::Vector{Float64},mean::Vector{Float64}) = MeanMaxPPE(solverKey, suggested, max, mean, now())
 
-getMaxPPE(est::AbstractPointParametricEst) = est.max
-getMeanPPE(est::AbstractPointParametricEst) = est.mean
-getSuggestedPPE(est::AbstractPointParametricEst) = est.suggested
-getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimestamp
+getMaxPPE(ppe::AbstractPointParametricEst) = ppe.max
+getMeanPPE(ppe::AbstractPointParametricEst) = ppe.mean
+getSuggestedPPE(ppe::AbstractPointParametricEst) = ppe.suggested
+getLastUpdatedTimestamp(ppe::AbstractPointParametricEst) = ppe.lastUpdatedTimestamp
 
 
 VariableEstimate(params...) = error("VariableEstimate is deprecated, please use MeanMaxPPE")
@@ -145,7 +145,7 @@ mutable struct DFGVariable <: AbstractDFGVariable
     label::Symbol
     timestamp::DateTime
     tags::Vector{Symbol}
-    estimateDict::Dict{Symbol, <: AbstractPointParametricEst}
+    ppeDict::Dict{Symbol, <: AbstractPointParametricEst}
     solverDataDict::Dict{Symbol, VariableNodeData}
     smallData::Dict{String, String}
     bigData::Dict{Symbol, AbstractBigDataEntry}
@@ -183,7 +183,7 @@ mutable struct DFGVariableSummary <: AbstractDFGVariable
     label::Symbol
     timestamp::DateTime
     tags::Vector{Symbol}
-    estimateDict::Dict{Symbol, <:AbstractPointParametricEst}
+    ppeDict::Dict{Symbol, <:AbstractPointParametricEst}
     softtypename::Symbol
     _internalId::Int64
 end
@@ -208,42 +208,25 @@ const VariableDataLevel0 = Union{DFGVariable, DFGVariableSummary, SkeletonDFGVar
 const VariableDataLevel1 = Union{DFGVariable, DFGVariableSummary}
 const VariableDataLevel2 = Union{DFGVariable}
 
-
 """
-$SIGNATURES
+    $SIGNATURES
 
-Return the estimates for a variable.
+Return dictionary with Parametric Point Estimates (PPE) values.
+
+Notes:
+- Equivalent to `getPPEs`.
 """
-getEstimates(v::VariableDataLevel1) = v.estimateDict
+getVariablePPEs(vari::VariableDataLevel1)::Dict = vari.ppeDict
 
 """
     $SIGNATURES
 
-Return the estimates for a variable.
+Return dictionary with Parametric Point Estimates (PPE) values.
 
-DEPRECATED, estimates -> getEstimates
+Notes:
+- Equivalent to `getVariablePPEs`.
 """
-function estimates(v::VariableDataLevel1)
-    @warn "Deprecated estimates, use getEstimates instead."
-    getEstimates(v)
-end
-
-"""
-    $SIGNATURES
-
-Return a keyed estimate (default is :default) for a variable.
-"""
-getEstimate(v::VariableDataLevel1, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
-
-"""
-$SIGNATURES
-
-Return a keyed estimate (default is :default) for a variable.
-"""
-function estimate(v::VariableDataLevel1, key::Symbol=:default)
-    @warn "DEPRECATED estimate, use getEstimate instead."
-    getEstimate(v, key)
-end
+getPPEs(vari::VariableDataLevel1)::Dict = getVariablePPEs(vari)
 
 
 """
@@ -256,13 +239,15 @@ Notes
 
 Related
 
-getMeanPPE, getMaxPPE, getKDEMean, getKDEFit
+getMeanPPE, getMaxPPE, getKDEMean, getKDEFit, getPPEs, getVariablePPEs
 """
-function getVariablePPE(vari::DFGVariable; solveKey::Symbol=:default, method::Function=getSuggestedPPE)
-  getEstimates(vari)[solveKey] |> getSuggestedPPE
+function getVariablePPE(vari::VariableDataLevel1, solveKey::Symbol=:default)
+    ppeDict = getVariablePPEs(vari)
+    return haskey(ppeDict, solveKey) ? ppeDict[solveKey] : nothing
 end
 
-getVariablePPE(dfg::AbstractDFG, vsym::Symbol; solveKey::Symbol=:default, method::Function=getSuggestedPPE) = getVariablePPE(getVariable(dfg,vsym), solveKey=solveKey, method=method)
+getVariablePPE(dfg::AbstractDFG, vsym::Symbol, solveKey::Symbol=:default) = getVariablePPE(getVariable(dfg,vsym), solveKey)
+
 
 """
    $(SIGNATURES)
@@ -290,18 +275,6 @@ getSofttype(v::DFGVariableSummary)::Symbol = v.softtypename
 
 
 
-"""
-$SIGNATURES
-
-Return the softtype for a variable.
-
-DEPRECATED, softtype -> getSofttype
-"""
-function softtype(v::VariableDataLevel1)
-    @warn "Deprecated softtype, use getSofttype instead."
-    getSofttype(v)
-end
-
 
 """
     $SIGNATURES
@@ -309,27 +282,14 @@ end
 Retrieve solver data structure stored in a variable.
 """
 solverData(v::DFGVariable, key::Symbol=:default) = haskey(v.solverDataDict, key) ? v.solverDataDict[key] : nothing
-"""
-    $SIGNATURES
 
-Retrieve data structure stored in a variable.
-"""
-function getData(v::DFGVariable; solveKey::Symbol=:default)::VariableNodeData
-  @warn "getData is deprecated, please use solverData()"
-  return v.solverDataDict[solveKey]
-end
+
 """
     $SIGNATURES
 
 Set solver data structure stored in a variable.
 """
-setSolverData(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v.solverDataDict[key] = data
-"""
-    $SIGNATURES
-
-Set solver data structure stored in a variable.
-"""
-setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = setSolverData(v, data, key)
+setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v.solverDataDict[key] = data
 
 """
     $SIGNATURES

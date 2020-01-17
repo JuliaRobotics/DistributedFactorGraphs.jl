@@ -20,18 +20,6 @@ Return the label for a variable or factor.
 """
 getLabel(v::DataLevel0) = v.label
 
-"""
-$SIGNATURES
-
-Return the label for a variable or factor.
-
-DEPRECATED label -> getLabel
-"""
-function label(v::DataLevel0)
-  @warn "Deprecated label, use getLabel instead."
-  getLabel(v)
-end
-
 
 """
 $SIGNATURES
@@ -40,18 +28,6 @@ Return the tags for a variable.
 """
 getTags(v::DataLevel0) = v.tags
 
-
-"""
-$SIGNATURES
-
-Return the tags for a variable.
-
-DEPRECATED, tags -> getTags
-"""
-function tags(v::DataLevel0)
-  @warn "tags deprecated, use getTags instead"
-  getTags(v)
-end
 
 """
 $SIGNATURES
