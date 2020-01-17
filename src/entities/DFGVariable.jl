@@ -145,7 +145,7 @@ mutable struct DFGVariable <: AbstractDFGVariable
     label::Symbol
     timestamp::DateTime
     tags::Vector{Symbol}
-    estimateDict::Dict{Symbol, <: AbstractPointParametricEst}
+    ppeDict::Dict{Symbol, <: AbstractPointParametricEst}
     solverDataDict::Dict{Symbol, VariableNodeData}
     smallData::Dict{String, String}
     bigData::Dict{Symbol, AbstractBigDataEntry}
@@ -183,7 +183,7 @@ mutable struct DFGVariableSummary <: AbstractDFGVariable
     label::Symbol
     timestamp::DateTime
     tags::Vector{Symbol}
-    estimateDict::Dict{Symbol, <:AbstractPointParametricEst}
+    ppeDict::Dict{Symbol, <:AbstractPointParametricEst}
     softtypename::Symbol
     _internalId::Int64
 end
@@ -216,7 +216,7 @@ Return dictionary with Parametric Point Estimates (PPE) values.
 Notes:
 - Equivalent to `getPPEs`.
 """
-getVariablePPEs(vari::VariableDataLevel1)::Dict = vari.estimateDict
+getVariablePPEs(vari::VariableDataLevel1)::Dict = vari.ppeDict
 
 """
     $SIGNATURES
@@ -248,50 +248,6 @@ end
 
 getVariablePPE(dfg::AbstractDFG, vsym::Symbol, solveKey::Symbol=:default) = getVariablePPE(getVariable(dfg,vsym), solveKey)
 
-"""
-$SIGNATURES
-
-Return the estimates for a variable.
-"""
-function getEstimates(v::VariableDataLevel1)
-    @warn "Deprecated getEstimates, use getVariablePPE/getPPE instead."
-    getVariablePPEs(vari)
-end
-
-"""
-    $SIGNATURES
-
-Return the estimates for a variable.
-
-DEPRECATED, estimates -> getVariablePPEs/getPPEs
-"""
-function estimates(v::VariableDataLevel1)
-    @warn "Deprecated estimates, use getVariablePPEs/getPPE instead."
-    getVariablePPEs(v)
-end
-
-"""
-    $SIGNATURES
-
-Return a keyed estimate (default is :default) for a variable.
-
-DEPRECATED use getVariablePPE/getPPE instead.
-"""
-function getEstimate(v::VariableDataLevel1, key::Symbol=:default)
-  @warn "Deprecated getEstimate, use getVariablePPE/getPPE instead."
-  getVariablePPE(v, key)
-end
-
-"""
-$SIGNATURES
-
-Return a keyed estimate (default is :default) for a variable.
-"""
-function estimate(v::VariableDataLevel1, key::Symbol=:default)
-    @warn "DEPRECATED estimate, use getVariablePPE/getPPE instead."
-    getVariablePPE(v, key)
-end
-
 
 """
    $(SIGNATURES)
@@ -318,18 +274,6 @@ TODO, DO NOT USE v.softtypename in DFGVariableSummary
 getSofttype(v::DFGVariableSummary)::Symbol = v.softtypename
 
 
-
-"""
-$SIGNATURES
-
-Return the softtype for a variable.
-
-DEPRECATED, softtype -> getSofttype
-"""
-function softtype(v::VariableDataLevel1)
-    @warn "Deprecated softtype, use getSofttype instead."
-    getSofttype(v)
-end
 
 
 """

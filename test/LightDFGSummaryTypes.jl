@@ -99,7 +99,7 @@ end
 
     if VARTYPE == DFGVariableSummary
         @test getTimestamp(v1) == v1.timestamp
-        @test getVariablePPEs(v1) == v1.estimateDict
+        @test getVariablePPEs(v1) == v1.ppeDict
         @test getVariablePPE(v1, :notfound) == nothing
         @test getSofttype(v1) == :Pose2
         @test internalId(v1) == v1._internalId

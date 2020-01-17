@@ -5,7 +5,7 @@ function packVariable(dfg::G, v::DFGVariable)::Dict{String, Any} where G <: Abst
     props["label"] = string(v.label)
     props["timestamp"] = string(v.timestamp)
     props["tags"] = JSON2.write(v.tags)
-    props["estimateDict"] = JSON2.write(v.estimateDict)
+    props["ppeDict"] = JSON2.write(v.ppeDict)
     props["solverDataDict"] = JSON2.write(Dict(keys(v.solverDataDict) .=> map(vnd -> pack(dfg, vnd), values(v.solverDataDict))))
     props["smallData"] = JSON2.write(v.smallData)
     props["solvable"] = v.solvable
@@ -19,7 +19,7 @@ function unpackVariable(dfg::G, packedProps::Dict{String, Any})::DFGVariable whe
     timestamp = DateTime(packedProps["timestamp"])
     tags =  JSON2.read(packedProps["tags"], Vector{Symbol})
     #TODO this will work for some time, but unpacking in an <: AbstractPointParametricEst would be lekker.
-    estimateDict = JSON2.read(packedProps["estimateDict"], Dict{Symbol, MeanMaxPPE})
+    ppeDict = JSON2.read(packedProps["ppeDict"], Dict{Symbol, MeanMaxPPE})
     smallData = nothing
     smallData = JSON2.read(packedProps["smallData"], Dict{String, String})
     bigDataElemTypes = JSON2.read(packedProps["bigDataElemType"], Dict{Symbol, Symbol})
@@ -37,7 +37,7 @@ function unpackVariable(dfg::G, packedProps::Dict{String, Any})::DFGVariable whe
     end
     variable.timestamp = timestamp
     variable.tags = tags
-    variable.estimateDict = estimateDict
+    variable.ppeDict = ppeDict
     variable.solverDataDict = solverData
     variable.smallData = smallData
     variable.solvable = packedProps["solvable"]
@@ -156,7 +156,7 @@ end
 Convert a DFGVariable to a DFGVariableSummary.
 """
 function convert(::Type{DFGVariableSummary}, v::DFGVariable)
-    return DFGVariableSummary(v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.estimateDict), Symbol(typeof(getSofttype(v))), v._internalId)
+    return DFGVariableSummary(v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.ppeDict), Symbol(typeof(getSofttype(v))), v._internalId)
 end
 
 """

@@ -15,6 +15,7 @@ include("entities/AbstractDFG.jl")
 include("entities/DFGFactor.jl")
 include("entities/DFGVariable.jl")
 include("entities/AbstractDFGSummary.jl")
+include("Deprecated.jl")
 
 export AbstractDFG
 export AbstractParams, NoSolverParams
