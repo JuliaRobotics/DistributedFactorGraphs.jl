@@ -58,10 +58,10 @@ Base.propertynames(x::LightDFG, private::Bool=false) =
 
 Base.getproperty(x::LightDFG,f::Symbol) = begin
     if f == :nodeCounter
-        @error "Field nodeCounter depreciated. returning number of nodes"
+        @error "Field nodeCounter deprecated. returning number of nodes"
         nv(x.g)
     elseif f == :labelDict
-        @error "Field labelDict depreciated. Consider using exists(dfg,label) or getLabelDict(dfg) instead. Returning internals copy"
+        @error "Field labelDict deprecated. Consider using exists(dfg,label) or getLabelDict(dfg) instead. Returning internals copy"
         #TODO: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/111
         copy(x.g.labels.sym_int)
     else

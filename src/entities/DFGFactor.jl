@@ -103,15 +103,7 @@ Retrieve solver data structure stored in a factor.
 function solverData(f::F) where F <: DFGFactor
   return f.data
 end
-"""
-    $SIGNATURES
 
-Retrieve solver data structure stored in a factor.
-"""
-function data(f::DFGFactor)::GenericFunctionNodeData
-  @warn "data() is deprecated, please use solverData()"
-  return f.data
-end
 """
     $SIGNATURES
 

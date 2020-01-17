@@ -14,7 +14,7 @@ v1 = addVariable!(dfg, :a, ContinuousScalar, labels = [:POSE], solvable=0)
 saveDFG(dfg, "/tmp/saveDFG")
 ```
 """
-function saveDFG(dfg::G, folder::String) where G <: AbstractDFG
+function saveDFG(dfg::AbstractDFG, folder::String; compress::Symbol=:gzip)
     variables = getVariables(dfg)
     factors = getFactors(dfg)
     varFolder = "$folder/variables"
@@ -43,6 +43,16 @@ function saveDFG(dfg::G, folder::String) where G <: AbstractDFG
         JSON2.write(io, fPacked)
         close(io)
     end
+
+    # compress newly saved folder, skip if not supported format
+    !(compress in [:gzip]) && return
+    savepath = folder[end] == '/' ? folder[1:end-1] : folder
+    savedir = dirname(savepath)
+    savename = splitpath(string(savepath))[end]
+    @assert savename != ""
+    # temporarily change working directory to get correct zipped path
+    run( pipeline(`tar -zcf - -C $savedir $savename`, stdout="$savepath.tar.gz") )
+    Base.rm(joinpath(savedir,savename), recursive=true)
 end
 
 """
@@ -56,20 +66,46 @@ using DistributedFactorGraphs, IncrementalInference
 # Create a DFG - can make one directly, e.g. GraphsDFG{NoSolverParams}() or use IIF:
 dfg = initfg()
 # Load the graph
-loadDFG("/tmp/savedgraph", IncrementalInference, dfg)
+loadDFG("/tmp/savedgraph.tar.gz", IncrementalInference, dfg)
+loadDFG("/tmp/savedgraph", IncrementalInference, dfg) # alternative
 # Use the DFG as you do normally.
 ls(dfg)
 ```
 """
-function loadDFG(folder::String, iifModule, dfgLoadInto::G) where G <: AbstractDFG
+function loadDFG(dst::String, iifModule, dfgLoadInto::G; loaddir=joinpath("/","tmp","caesar","random")) where G <: AbstractDFG
+    # Check if zipped destination (dst) by first doing fuzzy search from user supplied dst
+    folder = dst  # working directory for fileDFG variable and factor operations
+    dstname = dst # path name could either be legacy FileDFG dir or .tar.gz file of FileDFG files.
+    unzip = false
+    # add if doesn't have .tar.gz extension
+    lastdirname = splitpath(dstname)[end]
+    if !isdir(dst)
+        unzip = true
+        sdst = split(lastdirname, '.')
+        if sdst[end] != "gz" #  length(sdst) == 1 &&
+            dstname *= ".tar.gz"
+            lastdirname *= ".tar.gz"
+        end
+    end
+    # do actual unzipping
+    if unzip
+        @show sfolder = split(dstname, '.')
+        Base.mkpath(loaddir)
+        folder = joinpath(loaddir, lastdirname[1:(end-length(".tar.gz"))]) #splitpath(string(sfolder[end-2]))[end]
+        @info "loadDFG detected a gzip $dstname -- unpacking via $loaddir now..."
+        Base.rm(folder, recursive=true, force=true)
+        # unzip the tar file
+        run(`tar -zxf $dstname -C $loaddir`)
+    end
+    # extract the factor graph from fileDFG folder
     variables = DFGVariable[]
     factors = DFGFactor[]
     varFolder = "$folder/variables"
     factorFolder = "$folder/factors"
     # Folder preparations
     !isdir(folder) && error("Can't load DFG graph - folder '$folder' doesn't exist")
-    !isdir(varFolder) && error("Can't load DFG graph - folder '$folder' doesn't exist")
-    !isdir(factorFolder) && error("Can't load DFG graph - folder '$folder' doesn't exist")
+    !isdir(varFolder) && error("Can't load DFG graph - folder '$varFolder' doesn't exist")
+    !isdir(factorFolder) && error("Can't load DFG graph - folder '$factorFolder' doesn't exist")
 
     varFiles = readdir(varFolder)
     factorFiles = readdir(factorFolder)

@@ -17,7 +17,7 @@ Internal function to generate a unique key for the entry - userId_robotId_sessio
 Simple symbol.
 """
 function _uniqueKey(dfg::G, v::V, key::Symbol)::Symbol where {G <: AbstractDFG, V <: AbstractDFGVariable}
-    key = join(String.([dfg.userId, dfg.robotId, dfg.sessionId, label(v), String(key)]), "_")
+    key = join(String.([dfg.userId, dfg.robotId, dfg.sessionId, getLabel(v), String(key)]), "_")
     return Symbol(key)
 end
 
