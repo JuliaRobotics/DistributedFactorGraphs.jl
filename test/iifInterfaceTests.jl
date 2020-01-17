@@ -160,7 +160,7 @@ end
     @test solverDataDict(v1) == v1.solverDataDict
     @test internalId(v1) == v1._internalId
     # legacy compat test
-    @test getVariablePPE(v1) == v1.estimateDict
+    @test getVariablePPEs(v1) == v1.estimateDict # changed to .ppeDict -- delete by DFG v0.7
 
 
     @test typeof(getSofttype(v1)) == ContinuousScalar
