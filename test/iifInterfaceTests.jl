@@ -149,26 +149,29 @@ end
     @test updateFactor!(dfg, f1Prime) == getFactor(dfg, f1.label)
 
     # Accessors
-    @test label(v1) == v1.label
-    @test tags(v1) == v1.tags
+    @test getLabel(v1) == v1.label
+    @test getTags(v1) == v1.tags
     @test getTimestamp(v1) == v1.timestamp
-    @test getVariablePPE(v1) == v1.estimateDict
-    @test DistributedFactorGraphs.estimate(v1, :notfound) == nothing
+    @test getVariablePPEs(v1) == v1.ppeDict
+    @test DistributedFactorGraphs.getVariablePPE(v1, :notfound) == nothing
     @test solverData(v1) === v1.solverDataDict[:default]
     @test getData(v1) === v1.solverDataDict[:default]
     @test solverData(v1, :default) === v1.solverDataDict[:default]
     @test solverDataDict(v1) == v1.solverDataDict
     @test internalId(v1) == v1._internalId
+    # legacy compat test
+    @test getVariablePPE(v1) == v1.estimateDict
 
-    @test typeof(softtype(v1)) == ContinuousScalar
-    @test typeof(softtype(v2)) == ContinuousScalar
+
+    @test typeof(getSofttype(v1)) == ContinuousScalar
+    @test typeof(getSofttype(v2)) == ContinuousScalar
     @test typeof(getSofttype(v1)) == ContinuousScalar
 
-    @test label(f1) == f1.label
-    @test tags(f1) == f1.tags
+    @test getLabel(f1) == f1.label
+    @test getTags(f1) == f1.tags
     @test solverData(f1) == f1.data
     # Deprecated functions
-    @test data(f1) == f1.data
+    @test solverData(f1) == f1.data
     @test getData(f1) == f1.data
     # Internal function
     @test internalId(f1) == f1._internalId
@@ -444,7 +447,7 @@ end
                 @test getfield(getVariable(dfg, v), field) == getfield(getVariable(summaryGraph, v), field)
             else
                 # Special case to check the symbol softtype is equal to the full softtype.
-                @test Symbol(typeof(softtype(getVariable(dfg, v)))) == softtype(getVariable(summaryGraph, v))
+                @test Symbol(typeof(getSofttype(getVariable(dfg, v)))) == getSofttype(getVariable(summaryGraph, v))
         end
     end
     end

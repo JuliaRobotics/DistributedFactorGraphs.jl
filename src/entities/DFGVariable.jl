@@ -282,27 +282,14 @@ getSofttype(v::DFGVariableSummary)::Symbol = v.softtypename
 Retrieve solver data structure stored in a variable.
 """
 solverData(v::DFGVariable, key::Symbol=:default) = haskey(v.solverDataDict, key) ? v.solverDataDict[key] : nothing
-"""
-    $SIGNATURES
 
-Retrieve data structure stored in a variable.
-"""
-function getData(v::DFGVariable; solveKey::Symbol=:default)::VariableNodeData
-  @warn "getData is deprecated, please use solverData()"
-  return v.solverDataDict[solveKey]
-end
+
 """
     $SIGNATURES
 
 Set solver data structure stored in a variable.
 """
-setSolverData(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v.solverDataDict[key] = data
-"""
-    $SIGNATURES
-
-Set solver data structure stored in a variable.
-"""
-setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = setSolverData(v, data, key)
+setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v.solverDataDict[key] = data
 
 """
     $SIGNATURES

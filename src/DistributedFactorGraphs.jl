@@ -15,7 +15,6 @@ include("entities/AbstractDFG.jl")
 include("entities/DFGFactor.jl")
 include("entities/DFGVariable.jl")
 include("entities/AbstractDFGSummary.jl")
-include("Deprecated.jl")
 
 export AbstractDFG
 export AbstractParams, NoSolverParams
@@ -81,6 +80,7 @@ include("services/AbstractDFG.jl")
 include("services/DFGVariable.jl")
 include("services/DFGFactor.jl")
 include("CommonAccessors.jl")
+include("Deprecated.jl")
 include("services/CompareUtils.jl")
 
 # Include the Graphs.jl API.
