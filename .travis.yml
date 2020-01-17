@@ -4,7 +4,6 @@ dist: trusty
 
 os:
     - linux
-    - osx
 
 arch:
     - amd64
@@ -43,7 +42,6 @@ matrix:
   allow_failures:
   - julia: nightly
   - arch: arm64
-  - os: osx
 # - env: IIF_TEST=true
 
 # Set the password for Neo4j to neo4j:test
