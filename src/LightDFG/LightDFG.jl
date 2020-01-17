@@ -40,8 +40,8 @@ import ...DistributedFactorGraphs:  setSolverParams,
                                     getNeighbors,
                                     getSubgraphAroundNode,
                                     getSubgraph,
-                                    getAdjacencyMatrix,
-                                    getAdjacencyMatrixSparse,
+                                    getIncidenceMatrix,
+                                    getIncidenceMatrixSparse,
                                     _getDuplicatedEmptyDFG
 
 include("FactorGraphs/FactorGraphs.jl")

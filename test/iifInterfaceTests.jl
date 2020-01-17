@@ -304,15 +304,15 @@ end
     global dfg,v1,v2,f1
 
     # Normal
-    adjMat = getAdjacencyMatrix(dfg)
+    adjMat = getIncidenceMatrix(dfg)
     @test size(adjMat) == (2,4)
     @test symdiff(adjMat[1, :], [nothing, :a, :b, :orphan]) == Symbol[]
     @test symdiff(adjMat[2, :], [:abf1, :abf1, :abf1, nothing]) == Symbol[]
     #sparse
-    adjMat, v_ll, f_ll = getAdjacencyMatrixSparse(dfg)
+    adjMat, v_ll, f_ll = getIncidenceMatrixSparse(dfg)
     @test size(adjMat) == (1,3)
 
-    # Checking the elements of adjacency, its not sorted so need indexing function
+    # Checking the elements of adjacency, its not getIncidenceMatrix so need indexing function
     indexOf = (arr, el1) -> findfirst(el2->el2==el1, arr)
     @test adjMat[1, indexOf(v_ll, :orphan)] == 0
     @test adjMat[1, indexOf(v_ll, :a)] == 1
@@ -321,11 +321,11 @@ end
     @test symdiff(f_ll, [:abf1, :abf1, :abf1]) == Symbol[]
 
     # Filtered - REF DFG #201
-    adjMat = getAdjacencyMatrix(dfg, solvable=1)
+    adjMat = getIncidenceMatrix(dfg, solvable=1)
     @test size(adjMat) == (1,2)
     @test symdiff(adjMat[1, :], [nothing, :b]) == Symbol[]
     # sparse
-    adjMat, v_ll, f_ll = getAdjacencyMatrixSparse(dfg, solvable=1)
+    adjMat, v_ll, f_ll = getIncidenceMatrixSparse(dfg, solvable=1)
     @test size(adjMat) == (0,1)
     @test v_ll == [:b]
     @test f_ll == []

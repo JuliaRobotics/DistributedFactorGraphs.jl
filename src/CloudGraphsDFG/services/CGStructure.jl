@@ -1,14 +1,3 @@
-# Additional exports
-export copySession!
-# Please be careful with these
-# With great power comes great "Oh crap, I deleted everything..."
-export clearSession!!, clearRobot!!, clearUser!!
-export createSession, createRobot, createUser, createDfgSessionIfNotExist
-export existsSession, existsRobot, existsUser
-export getSession, getRobot, getUser
-export updateSession, updateRobot, updateUser
-export lsSessions, lsRobots, lsUsers
-
 global _invalidIds = ["USER", "ROBOT", "SESSION", "VARIABLE", "FACTOR", "ENVIRONMENT", "PPE", "BIGDATA"]
 global _validLabelRegex = r"^[a-zA-Z]\w*$"
 

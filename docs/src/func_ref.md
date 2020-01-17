@@ -43,7 +43,8 @@ deleteFactor!
 
 ### Getting Adjacency Matrix
 ```@docs
-getAdjacencyMatrix
+getIncidenceMatrix
+getIncidenceMatrixSparse
 ```
 
 ### Validating Factor Graph Connectivity

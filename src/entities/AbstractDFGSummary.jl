@@ -1,5 +1,5 @@
 """
-    $(SIGNATURES)
+$(TYPEDEF)
 Structure for a graph summary.
 """
 struct AbstractDFGSummary

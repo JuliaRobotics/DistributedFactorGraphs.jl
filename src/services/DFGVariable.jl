@@ -250,3 +250,107 @@ function getBigDataKeys(dfg::AbstractDFG, label::Symbol)::Union{Nothing, Vector{
     !isVariable(dfg, label) && return nothing
     getBigDataKeys(getVariable(dfg, label))
 end
+
+# TODO: Temporary home
+# Accessors
+
+"""
+$SIGNATURES
+
+Return the estimates for a variable.
+"""
+getEstimates(v::VariableDataLevel1) = v.estimateDict
+
+
+"""
+    $SIGNATURES
+
+Return a keyed estimate (default is :default) for a variable.
+"""
+getEstimate(v::VariableDataLevel1, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
+
+
+"""
+   $(SIGNATURES)
+
+Variable nodes softtype information holding a variety of meta data associated with the type of variable stored in that node of the factor graph.
+
+Related
+
+getVariableType
+"""
+function getSofttype(vnd::VariableNodeData)
+  return vnd.softtype
+end
+function getSofttype(v::DFGVariable; solveKey::Symbol=:default)
+  return getSofttype(solverData(v, solveKey))
+end
+
+"""
+    $SIGNATURES
+
+Retrieve the soft type name symbol for a DFGVariableSummary. ie :Point2, Pose2, etc.
+TODO, DO NOT USE v.softtypename in DFGVariableSummary
+"""
+getSofttype(v::DFGVariableSummary)::Symbol = v.softtypename
+
+
+"""
+    $SIGNATURES
+
+Retrieve solver data structure stored in a variable.
+"""
+function getSolverData(v::DFGVariable, key::Symbol=:default)
+    return haskey(v.solverDataDict, key) ? v.solverDataDict[key] : nothing
+end
+
+"""
+    $SIGNATURES
+
+Retrieve solver data structure stored in a variable.
+"""
+function solverData(v::DFGVariable, key::Symbol=:default)
+    @warn "Deprecated, please use getSolverData"
+    return getSolverData(v, key)
+end
+"""
+    $SIGNATURES
+
+Set solver data structure stored in a variable.
+"""
+setSolverData(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v.solverDataDict[key] = data
+"""
+    $SIGNATURES
+
+Set solver data structure stored in a variable.
+"""
+setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = setSolverData(v, data, key)
+
+"""
+    $SIGNATURES
+
+Get solver data dictionary for a variable.
+"""
+solverDataDict(v::DFGVariable) = v.solverDataDict
+
+"""
+$SIGNATURES
+
+Get the small data for a variable.
+"""
+smallData(v::DFGVariable) = v.smallData
+
+"""
+$SIGNATURES
+
+Set the small data for a variable.
+"""
+setSmallData!(v::DFGVariable, smallData::String) = v.smallData = smallData
+
+"""
+$SIGNATURES
+
+Get the variable ordering for this factor.
+Should be equivalent to getNeighbors unless something was deleted in the graph.
+"""
+getVariableOrder(fct::DFGFactor)::Vector{Symbol} = fct._variableOrderSymbols
