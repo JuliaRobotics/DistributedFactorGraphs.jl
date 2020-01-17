@@ -252,33 +252,33 @@ end
     var = getVariable(dfg, :a)
     #make a copy and simulate external changes
     newvar = deepcopy(var)
-    getVariablePPE(newvar)[:default] = MeanMaxPPE(:default, [150.0], [100.0], [50.0])
+    getVariablePPEs(newvar)[:default] = MeanMaxPPE(:default, [150.0], [100.0], [50.0])
     #update
     mergeUpdateVariableSolverData!(dfg, newvar)
 
     #Check if variable is updated
     var = getVariable(dfg, :a)
-    @test getVariablePPE(newvar) == getVariablePPE(var)
+    @test getVariablePPEs(newvar) == getVariablePPEs(var)
 
     # Add a new estimate.
-    getVariablePPE(newvar)[:second] = MeanMaxPPE(:second, [15.0], [10.0], [5.0])
+    getVariablePPEs(newvar)[:second] = MeanMaxPPE(:second, [15.0], [10.0], [5.0])
 
     # Confirm they're different
-    @test getVariablePPE(newvar) != getVariablePPE(var)
+    @test getVariablePPEs(newvar) != getVariablePPEs(var)
     # Persist it.
     mergeUpdateVariableSolverData!(dfg, newvar)
     # Get the latest
     var = getVariable(dfg, :a)
-    @test symdiff(collect(keys(getVariablePPE(var))), [:default, :second]) == Symbol[]
+    @test symdiff(collect(keys(getVariablePPEs(var))), [:default, :second]) == Symbol[]
 
     #Check if variable is updated
-    @test getVariablePPE(newvar) == getVariablePPE(var)
+    @test getVariablePPEs(newvar) == getVariablePPEs(var)
 
 
     # Delete :default and replace to see if new ones can be added
-    delete!(getVariablePPE(newvar), :default)
+    delete!(getVariablePPEs(newvar), :default)
     #confirm delete
-    @test symdiff(collect(keys(getVariablePPE(newvar))), [:second]) == Symbol[]
+    @test symdiff(collect(keys(getVariablePPEs(newvar))), [:second]) == Symbol[]
     # Persist it.
     mergeUpdateVariableSolverData!(dfg, newvar)
 
@@ -286,8 +286,8 @@ end
     var = getVariable(dfg, :a)
 
     # TODO issue #166
-    @test getVariablePPE(newvar) != getVariablePPE(var)
-    @test collect(keys(getVariablePPE(var))) ==  [:default, :second]
+    @test getVariablePPEs(newvar) != getVariablePPEs(var)
+    @test collect(keys(getVariablePPEs(var))) ==  [:default, :second]
 
     # @test symdiff(collect(keys(getVariablePPE(getVariable(dfg, :a)))), [:default, :second]) == Symbol[]
 end
