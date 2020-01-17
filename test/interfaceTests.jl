@@ -153,8 +153,8 @@ end
     @test setTimestamp!(f1, testTimestamp) == testTimestamp
     @test getTimestamp(f1) == f1.timestamp
 
-    @test estimates(v1) == v1.estimateDict
-    @test estimate(v1, :notfound) == nothing
+    @test getVariablePPEs(v1) == v1.estimateDict
+    @test getVariablePPE(v1, :notfound) == nothing
     @test solverData(v1) === v1.solverDataDict[:default]
     @test getData(v1) === v1.solverDataDict[:default]
     @test solverData(v1, :default) === v1.solverDataDict[:default]
@@ -275,28 +275,28 @@ end
     var = getVariable(dfg, :a)
     #make a copy and simulate external changes
     newvar = deepcopy(var)
-    estimates(newvar)[:default] = MeanMaxPPE(:default, [150.0], [100.0], [50.0])
+    getVariablePPEs(newvar)[:default] = MeanMaxPPE(:default, [150.0], [100.0], [50.0])
     #update
     mergeUpdateVariableSolverData!(dfg, newvar)
 
     #For now spot check
     @test solverDataDict(newvar) == solverDataDict(var)
-    @test estimates(newvar) == estimates(var)
-    @test getMaxPPE(estimates(newvar)[:default]) == estimates(newvar)[:default].max
-    @test getMeanPPE(estimates(newvar)[:default]) == estimates(newvar)[:default].mean
-    @test getSuggestedPPE(estimates(newvar)[:default]) == estimates(newvar)[:default].suggested
+    @test getVariablePPEs(newvar) == getVariablePPEs(var)
+    @test getMaxPPE(getVariablePPEs(newvar)[:default]) == getVariablePPEs(newvar)[:default].max
+    @test getMeanPPE(getVariablePPEs(newvar)[:default]) == getVariablePPEs(newvar)[:default].mean
+    @test getSuggestedPPE(getVariablePPEs(newvar)[:default]) == getVariablePPEs(newvar)[:default].suggested
 
     # Delete :default and replace to see if new ones can be added
-    delete!(estimates(newvar), :default)
-    estimates(newvar)[:second] = MeanMaxPPE(:second, [15.0], [10.0], [5.0])
+    delete!(getVariablePPEs(newvar), :default)
+    getVariablePPEs(newvar)[:second] = MeanMaxPPE(:second, [15.0], [10.0], [5.0])
 
     # Persist to the original variable.
     mergeUpdateVariableSolverData!(dfg, newvar)
     # At this point newvar will have only :second, and var should have both (it is the reference)
-    @test symdiff(collect(keys(estimates(var))), [:default, :second]) == Symbol[]
-    @test symdiff(collect(keys(estimates(newvar))), [:second]) == Symbol[]
+    @test symdiff(collect(keys(getVariablePPEs(var))), [:default, :second]) == Symbol[]
+    @test symdiff(collect(keys(getVariablePPEs(newvar))), [:second]) == Symbol[]
     # Get the source too.
-    @test symdiff(collect(keys(estimates(getVariable(dfg, :a)))), [:default, :second]) == Symbol[]
+    @test symdiff(collect(keys(getVariablePPEs(getVariable(dfg, :a)))), [:default, :second]) == Symbol[]
 end
 
 # Connectivity test

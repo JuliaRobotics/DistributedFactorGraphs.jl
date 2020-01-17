@@ -21,8 +21,7 @@ export AbstractParams, NoSolverParams
 export DFGNode, DFGVariable, DFGFactor, AbstractDFGVariable, AbstractDFGFactor
 export InferenceType, PackedInferenceType, FunctorInferenceType, InferenceVariable, ConvolutionObject
 export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
-export getMaxPPE, getMeanPPE, getSuggestedPPE, getEstimates
-export getVariablePPE
+export getMaxPPE, getMeanPPE, getSuggestedPPE, getVariablePPE, getPPE, getVariablePPEs, getPPEs #, getEstimates
 export timestamp # DEPRECATED
 export label, getTimestamp, setTimestamp!, tags, setTags!, estimates, estimate, data, softtype, solverData, getData, solverDataDict, setSolverData, setSolverData!, internalId, smallData, setSmallData!, bigData
 export DFGVariableSummary, DFGFactorSummary, AbstractDFGSummary

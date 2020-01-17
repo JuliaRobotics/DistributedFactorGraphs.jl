@@ -152,7 +152,7 @@ end
     @test label(v1) == v1.label
     @test tags(v1) == v1.tags
     @test getTimestamp(v1) == v1.timestamp
-    @test estimates(v1) == v1.estimateDict
+    @test getVariablePPE(v1) == v1.estimateDict
     @test DistributedFactorGraphs.estimate(v1, :notfound) == nothing
     @test solverData(v1) === v1.solverDataDict[:default]
     @test getData(v1) === v1.solverDataDict[:default]
@@ -249,33 +249,33 @@ end
     var = getVariable(dfg, :a)
     #make a copy and simulate external changes
     newvar = deepcopy(var)
-    estimates(newvar)[:default] = MeanMaxPPE(:default, [150.0], [100.0], [50.0])
+    getVariablePPE(newvar)[:default] = MeanMaxPPE(:default, [150.0], [100.0], [50.0])
     #update
     mergeUpdateVariableSolverData!(dfg, newvar)
 
     #Check if variable is updated
     var = getVariable(dfg, :a)
-    @test estimates(newvar) == estimates(var)
+    @test getVariablePPE(newvar) == getVariablePPE(var)
 
     # Add a new estimate.
-    estimates(newvar)[:second] = MeanMaxPPE(:second, [15.0], [10.0], [5.0])
+    getVariablePPE(newvar)[:second] = MeanMaxPPE(:second, [15.0], [10.0], [5.0])
 
     # Confirm they're different
-    @test estimates(newvar) != estimates(var)
+    @test getVariablePPE(newvar) != getVariablePPE(var)
     # Persist it.
     mergeUpdateVariableSolverData!(dfg, newvar)
     # Get the latest
     var = getVariable(dfg, :a)
-    @test symdiff(collect(keys(estimates(var))), [:default, :second]) == Symbol[]
+    @test symdiff(collect(keys(getVariablePPE(var))), [:default, :second]) == Symbol[]
 
     #Check if variable is updated
-    @test estimates(newvar) == estimates(var)
+    @test getVariablePPE(newvar) == getVariablePPE(var)
 
 
     # Delete :default and replace to see if new ones can be added
-    delete!(estimates(newvar), :default)
+    delete!(getVariablePPE(newvar), :default)
     #confirm delete
-    @test symdiff(collect(keys(estimates(newvar))), [:second]) == Symbol[]
+    @test symdiff(collect(keys(getVariablePPE(newvar))), [:second]) == Symbol[]
     # Persist it.
     mergeUpdateVariableSolverData!(dfg, newvar)
 
@@ -283,10 +283,10 @@ end
     var = getVariable(dfg, :a)
 
     # TODO issue #166
-    @test estimates(newvar) != estimates(var)
-    @test collect(keys(estimates(var))) ==  [:default, :second]
+    @test getVariablePPE(newvar) != getVariablePPE(var)
+    @test collect(keys(getVariablePPE(var))) ==  [:default, :second]
 
-    # @test symdiff(collect(keys(estimates(getVariable(dfg, :a)))), [:default, :second]) == Symbol[]
+    # @test symdiff(collect(keys(getVariablePPE(getVariable(dfg, :a)))), [:default, :second]) == Symbol[]
 end
 
 # Connectivity test
