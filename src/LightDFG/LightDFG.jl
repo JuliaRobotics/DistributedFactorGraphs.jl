@@ -42,7 +42,9 @@ import ...DistributedFactorGraphs:  setSolverParams,
                                     getSubgraph,
                                     getIncidenceMatrix,
                                     getIncidenceMatrixSparse,
-                                    _getDuplicatedEmptyDFG
+                                    _getDuplicatedEmptyDFG,
+                                    toDot,
+                                    toDotFile
 
 include("FactorGraphs/FactorGraphs.jl")
 using .FactorGraphs

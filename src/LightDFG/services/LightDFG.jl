@@ -42,11 +42,11 @@ exists(dfg::LightDFG, nId::Symbol) = haskey(dfg.g.labels, nId)
 exists(dfg::LightDFG, node::DFGNode) = exists(dfg, node.label)
 
 function isVariable(dfg::LightDFG{P,V,F}, sym::Symbol) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
-	return haskey(dfg.g.variables, sym)
+    return haskey(dfg.g.variables, sym)
 end
 
 function isFactor(dfg::LightDFG{P,V,F}, sym::Symbol) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
-	return haskey(dfg.g.factors, sym)
+    return haskey(dfg.g.factors, sym)
 end
 
 
@@ -113,17 +113,34 @@ function addFactor!(dfg::LightDFG{<:AbstractParams, <:AbstractDFGVariable, F}, f
     return FactorGraphs.addFactor!(dfg.g, variableLabels, factor)
 end
 
+#TODO Sam, I would say if we handle the update vsd corectly this function is only needed in the cloud.
+#   In memory types are just passing pointers along so no perfomrance issue.
 function getVariable(dfg::LightDFG, label::Symbol; solveKey::Union{Nothing, Symbol})::Union{Nothing, AbstractDFGVariable}
-	!(label in dfg.g.variables) && return nothing
-    solveKey == nothing && return dfg.g.variables[label]
-	# Requesting a single solvekey
-	if solveKey in dfg.g.variables[label]
-		v = copy(dfg.g.variables[label]) # Shallow copy
-		v.solverDataDict = [solveKey=>v.solverDataDict[solveKey]]
-		return v
-	else
-		return nothing
-	end
+
+    if !haskey(dfg.g.variables, label)
+        @warn "Variable '$label' does not exists in the factor graph"
+        return nothing
+    end
+
+    var = dfg.g.variables[label]
+
+    if solveKey != nothing && !haskey(var.solverDataDict, solveKey)
+        @warn "Solvekey '$solveKey' does not exists in the variable"
+        return nothing
+    end
+
+    return var
+
+    # !(label in dfg.g.variables) && return nothing
+    # solveKey == nothing && return dfg.g.variables[label]
+    # # Requesting a single solvekey
+    # if solveKey in dfg.g.variables[label]
+    #     v = copy(dfg.g.variables[label]) # Shallow copy
+    #     v.solverDataDict = [solveKey=>v.solverDataDict[solveKey]]
+    #     return v
+    # else
+    #     return nothing
+    # end
 end
 
 function getFactor(dfg::LightDFG, label::Symbol)::AbstractDFGFactor
@@ -360,7 +377,9 @@ function getIncidenceMatrix(dfg::LightDFG; solvable::Int=0)::Matrix{Union{Nothin
     return adjMat
 end
 
-function getIncidenceMatrixSparse(dfg::LightDFG; solvable::Int=0)::Tuple{LightGraphs.SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}
+#TODO This is just way too strange to call a function  getIncidenceMatrix that calls adjacency_matrix internally,
+# So I'm going with Biadjacency Matrix https://en.wikipedia.org/wiki/Adjacency_matrix#Of_a_bipartite_graph
+function getBiadjacencyMatrixSparse(dfg::LightDFG; solvable::Int=0)::Tuple{LightGraphs.SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}
     varLabels = getVariableIds(dfg, solvable=solvable)
     factLabels = getFactorIds(dfg, solvable=solvable)
     varIndex = [dfg.g.labels[s] for s in varLabels]
@@ -370,6 +389,16 @@ function getIncidenceMatrixSparse(dfg::LightDFG; solvable::Int=0)::Tuple{LightGr
 
     adjvf = adj[factIndex, varIndex]
     return adjvf, varLabels, factLabels
+end
+
+function getAdjacencyMatrixSparse(dfg::LightDFG; solvable::Int=0)
+    @warn "Deprecated function, please use getBiadjacencyMatrixSparse as this will be removed in v0.6.1"
+    return getBiadjacencyMatrixSparse(dfg, solvable)
+end
+
+# this would be an incidence matrix
+function getIncidenceMatrixSparse(dfg::LightDFG)
+    return incidence_matrix(dfg.g)
 end
 
 """
@@ -382,4 +411,41 @@ function _getDuplicatedEmptyDFG(dfg::LightDFG{P,V,F})::LightDFG where {P <: Abst
         params=deepcopy(dfg.solverParams))
     newDfg.description ="(Copy of) $(dfg.description)"
     return newDfg
+end
+
+
+#TODO JT test.
+"""
+    $(SIGNATURES)
+A replacement for to_dot that saves only hardcoded factor graph plotting attributes.
+"""
+function savedot_attributes(io::IO, dfg::LightDFG)
+    write(io, "graph G {\n")
+
+    for vl in getVariableIds(dfg)
+        write(io, "$vl [color=red, shape=ellipse];\n")
+    end
+    for fl in getFactorIds(dfg)
+        write(io, "$fl [color=blue, shape=box];\n")
+    end
+
+    for e in edges(dfg.g)
+        write(io, "$(dfg.g.labels[src(e)]) -- $(dfg.g.labels[dst(e)])\n")
+    end
+    write(io, "}\n")
+end
+
+function toDotFile(dfg::LightDFG, fileName::String="/tmp/dfg.dot")::Nothing
+    open(fileName, "w") do fid
+        savedot_attributes(fid, dfg)
+    end
+    return nothing
+end
+
+function toDot(dfg::LightDFG)::String
+    m = PipeBuffer()
+    savedot_attributes(m, dfg)
+    data = take!(m)
+    close(m)
+    return String(data)
 end

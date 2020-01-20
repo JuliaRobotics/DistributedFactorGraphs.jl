@@ -87,8 +87,11 @@ export MeanMaxPPE
 export setSerializationModule!, getSerializationModule
 export getLabelDict, getDescription, setDescription, getAddHistory, getSolverParams, setSolverParams
 export getUserData, setUserData, getRobotData, setRobotData, getSessionData, setSessionData
-# Not sure these are going to work everywhere
-export pushUserData!, pushRobotData!, pushSessionData!, popUserData!, popRobotData!, popSessionData!
+
+# Not sure these are going to work everywhere, TODO implement in cloud?
+export updateUserData!, updateRobotData!, updateSessionData!, deleteUserData!, deleteRobotData!, deleteSessionData!
+export emptyUserData!, emptyRobotData!, emptySessionData!
+
 
 export exists, addVariable!, addFactor!, getVariable, getFactor, updateVariable!, updateFactor!, deleteVariable!, deleteFactor!
 export getVariables, getVariableIds, getFactors, getFactorIds, ls, lsf

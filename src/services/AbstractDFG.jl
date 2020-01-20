@@ -94,13 +94,23 @@ function setSessionData(dfg::AbstractDFG, data::Dict{Symbol, String})::Bool
     return true
 end
 
-pushUserData!(dfg::AbstractDFG, pair::Pair{Symbol,String}) = push!(dfg.userData, pair)
-pushRobotData!(dfg::AbstractDFG, pair::Pair{Symbol,String}) = push!(dfg.userData, pair)
-pushSessionData!(dfg::AbstractDFG, pair::Pair{Symbol,String}) = push!(dfg.userData, pair)
+#NOTE with API standardization this should become something like:
+# JT, I however do not feel we should force it, as I prever dot notation
+getUserData(dfg::AbstractDFG, key::Symbol)::Dict{Symbol, String} = dfg.UserData[key]
+getRobotData(dfg::AbstractDFG, key::Symbol)::Dict{Symbol, String} = dfg.RobotData[key]
+getSessionData(dfg::AbstractDFG, key::Symbol)::Dict{Symbol, String} = dfg.SessionData[key]
 
-popUserData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.userData, key)
-popRobotData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.userData, key)
-popSessionData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.userData, key)
+updateUserData!(dfg::AbstractDFG, pair::Pair{Symbol,String}) = push!(dfg.userData, pair)
+updateRobotData!(dfg::AbstractDFG, pair::Pair{Symbol,String}) = push!(dfg.userData, pair)
+updateSessionData!(dfg::AbstractDFG, pair::Pair{Symbol,String}) = push!(dfg.userData, pair)
+
+deleteUserData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.userData, key)
+deleteRobotData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.userData, key)
+deleteSessionData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.userData, key)
+
+emptyUserData!(dfg::AbstractDFG) = empty!(dfg.userData)
+emptyRobotData!(dfg::AbstractDFG) = empty!(dfg.userData)
+emptySessionData!(dfg::AbstractDFG) = empty!(dfg.userData)
 
 """
     $(SIGNATURES)
@@ -432,6 +442,88 @@ function _copyIntoGraph!(sourceDFG::G, destDFG::H, variableFactorLabels::Vector{
     return nothing
 end
 
+#TODO UNTESTED and NOT FILLED IN, just to define function signatures
+"""
+    $(SIGNATURES)
+"""
+function getVariableSolverData(dfg::AbstractDFG, variablekey::Symbol, solvekey::Symbol=:default)
+    return solverData(getVariable(dfg, variablekey), solvekey)
+end
+
+"""
+    $(SIGNATURES)
+
+"""
+function addVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData, solvekey::Symbol=:default)
+    #for InMemoryDFGTypes, cloud would update here
+    error("not implemented")
+
+    var = getVariable(dfg, variablekey)
+
+    if haskey(var.solverDataDict, solvekey)
+        error("VariableNodeData '$(solvekey)' already exists")
+    end
+
+    var.solverDataDict[solvekey] = vnd
+    # setSolverData!(var, vnd, solvekey)
+
+end
+
+"""
+    $(SIGNATURES)
+Add a new solver data  entry from a deepcopy of the source variable solver data.
+"""
+addVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable, solvekey::Symbol=:default) =
+    addVariableSolverData!(dfg, sourceVariable.label, deepcopy(solverData(sourceVariable, solvekey)), solvekey)
+
+
+"""
+    $(SIGNATURES)
+"""
+function updateVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData, solvekey::Symbol=:default)
+
+    #This is basically just setSolverData
+    var = getVariable(dfg, variablekey)
+
+    #for InMemoryDFGTypes, cloud would update here
+    # var.solverDataDict[solvekey] = deepcopy(vnd)
+    setSolverData!(var, vnd, solvekey)
+end
+
+"""
+    $(SIGNATURES)
+Update the destination variable solver data with a deepcopy of the source variable solver data
+"""
+updateVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable, solvekey::Symbol=:default) =
+    updateVariableSolverData!(dfg, sourceVariable.label, deepcopy(solverData(sourceVariable, solvekey)), solvekey)
+
+function updateVariableSolverData!(dfg::AbstractDFG, sourceVariables::Vector{DFGVariable}, solvekey::Symbol=:default)
+    #I think cloud would do this in bulk for speed
+    for var in sourceVariables
+        updateVariableSolverData!(dfg, solverData(var, solvekey), var.label, solvekey)
+    end
+end
+
+"""
+    $(SIGNATURES)
+"""
+function deleteVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, solvekey::Symbol=:default)
+
+    var = getVariable(dfg, variablekey)
+
+    if !haskey(var.solverDataDict, solvekey)
+        error("VariableNodeData '$(solvekey)' does not exist")
+    end
+
+    vnd = pop!(var.solverDataDict, solvekey)
+
+    return vnd
+end
+
+# deleteVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable, solvekey::Symbol=:default) =
+#     deleteVariableSolverData!(dfg, sourceVariable.label, solvekey)
+
+
 """
     $(SIGNATURES)
 Merges and updates solver and estimate data for a variable (variable can be from another graph).
@@ -642,11 +734,11 @@ Checks whether it both exists in the graph and is a variable.
 (If you rather want a quick for type, just do node isa DFGVariable)
 """
 function isVariable(dfg::G, sym::Symbol) where G <: AbstractDFG
-	error("isVariable not implemented for $(typeof(dfg))")
+    error("isVariable not implemented for $(typeof(dfg))")
 end
 # Alias - bit ridiculous but know it'll come up at some point. Does existential and type check.
 function isVariable(dfg::G, node::N)::Bool where {G <: AbstractDFG, N <: DFGNode}
-	return isVariable(dfg, node.label)
+    return isVariable(dfg, node.label)
 end
 
 """
@@ -657,11 +749,11 @@ Checks whether it both exists in the graph and is a factor.
 (If you rather want a quicker for type, just do node isa DFGFactor)
 """
 function isFactor(dfg::G, sym::Symbol) where G <: AbstractDFG
-	error("isFactor not implemented for $(typeof(dfg))")
+    error("isFactor not implemented for $(typeof(dfg))")
 end
 # Alias - bit ridiculous but know it'll come up at some point. Does existential and type check.
 function isFactor(dfg::G, node::N)::Bool where {G <: AbstractDFG, N <: DFGNode}
-	return isFactor(dfg, node.label)
+    return isFactor(dfg, node.label)
 end
 
 """
