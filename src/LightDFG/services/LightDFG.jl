@@ -347,41 +347,41 @@ function getNeighbors(dfg::LightDFG, label::Symbol; solvable::Int=0)::Vector{Sym
 
 end
 
-function _copyIntoGraph!(sourceDFG::LightDFG{<:AbstractParams, V, F}, destDFG::LightDFG{<:AbstractParams, V, F}, ns::Vector{Int}, includeOrphanFactors::Bool=false)::Nothing where {V <: AbstractDFGVariable, F <: AbstractDFGFactor}
-    #kan ek die in bulk copy, soos graph en dan nuwe map maak
-    # Add all variables first,
-    labels = [sourceDFG.g.labels[i] for i in ns]
-
-    for v in values(sourceDFG.g.variables)
-        if v.label in labels
-            exists(destDFG, v) ? (@warn "_copyIntoGraph $(v.label) exists, ignoring") : addVariable!(destDFG, deepcopy(v))
-        end
-    end
-
-    # And then all factors to the destDFG.
-    for f in values(sourceDFG.g.factors)
-        if f.label in labels
-            # Get the original factor variables (we need them to create it)
-            neigh_ints = FactorGraphs.outneighbors(sourceDFG.g, sourceDFG.g.labels[f.label])
-
-            neigh_labels = [sourceDFG.g.labels[i] for i in neigh_ints]
-            # Find the labels and associated variables in our new subgraph
-            factVariables = V[]
-            for v_lab in neigh_labels
-                if haskey(destDFG.g.variables, v_lab)
-                    push!(factVariables, getVariable(destDFG, v_lab))
-                    #otherwise ignore
-                end
-            end
-
-            # Only if we have all of them should we add it (otherwise strange things may happen on evaluation)
-            if includeOrphanFactors || length(factVariables) == length(neigh_labels)
-                exists(destDFG, f.label) ? (@warn "_copyIntoGraph $(f.label) exists, ignoring") : addFactor!(destDFG, factVariables, deepcopy(f))
-            end
-        end
-    end
-    return nothing
-end
+# function _copyIntoGraph!(sourceDFG::LightDFG{<:AbstractParams, V, F}, destDFG::LightDFG{<:AbstractParams, V, F}, ns::Vector{Int}, includeOrphanFactors::Bool=false)::Nothing where {V <: AbstractDFGVariable, F <: AbstractDFGFactor}
+#     #kan ek die in bulk copy, soos graph en dan nuwe map maak
+#     # Add all variables first,
+#     labels = [sourceDFG.g.labels[i] for i in ns]
+#
+#     for v in values(sourceDFG.g.variables)
+#         if v.label in labels
+#             exists(destDFG, v) ? (@warn "_copyIntoGraph $(v.label) exists, ignoring") : addVariable!(destDFG, deepcopy(v))
+#         end
+#     end
+#
+#     # And then all factors to the destDFG.
+#     for f in values(sourceDFG.g.factors)
+#         if f.label in labels
+#             # Get the original factor variables (we need them to create it)
+#             neigh_ints = FactorGraphs.outneighbors(sourceDFG.g, sourceDFG.g.labels[f.label])
+#
+#             neigh_labels = [sourceDFG.g.labels[i] for i in neigh_ints]
+#             # Find the labels and associated variables in our new subgraph
+#             factVariables = V[]
+#             for v_lab in neigh_labels
+#                 if haskey(destDFG.g.variables, v_lab)
+#                     push!(factVariables, getVariable(destDFG, v_lab))
+#                     #otherwise ignore
+#                 end
+#             end
+#
+#             # Only if we have all of them should we add it (otherwise strange things may happen on evaluation)
+#             if includeOrphanFactors || length(factVariables) == length(neigh_labels)
+#                 exists(destDFG, f.label) ? (@warn "_copyIntoGraph $(f.label) exists, ignoring") : addFactor!(destDFG, factVariables, deepcopy(f))
+#             end
+#         end
+#     end
+#     return nothing
+# end
 
 
 """
@@ -400,10 +400,10 @@ function getSubgraphAroundNode(dfg::LightDFG{P,V,F}, node::DFGNode, distance::In
     ns = neighborhood(dfg.g, dfg.g.labels[node.label], distance)
     # Always return the center node, skip that if we're filtering.
     solvable != 0 && (filter!(id -> _isSolvable(dfg, dfg.g.labels[id], solvable) || dfg.g.labels[id] == node.label, ns))
-
+	labels = map(id -> dfg.g.labels[id], ns)
 
     # Copy the section of graph we want
-    _copyIntoGraph!(dfg, addToDFG, ns, includeOrphanFactors)
+    _copyIntoGraph!(dfg, addToDFG, labels, includeOrphanFactors)
     return addToDFG
 
 end
