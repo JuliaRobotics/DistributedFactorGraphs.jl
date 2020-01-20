@@ -21,11 +21,12 @@ Related
 
 getVariableIds, _copyIntoGraph!
 """
-function buildSubgraphFromLabels!(dfg::G,
+function buildSubgraphFromLabels!(dfg::GSRC,
                                   syms::Vector{Symbol};
-                                  subfg::AbstractDFG=(G <: InMemoryDFGTypes ? G : GraphsDFG)(params=getSolverParams(dfg)),
+                                  subfg::GDST=(GSRC <: InMemoryDFGTypes ? GSRC : GraphsDFG)(params=getSolverParams(dfg)),
                                   solvable::Int=0,
-                                  allowedFactors::Union{Nothing, Vector{Symbol}}=nothing  )::G where G <: AbstractDFG
+                                  allowedFactors::Union{Nothing, Vector{Symbol}}=nothing  )::GDST
+                                     where {GSRC <: AbstractDFG, GDST <: AbstractDFG}
   #
 
   # add a little too many variables (since we need the factors)
@@ -61,11 +62,12 @@ function buildSubgraphFromLabels!(dfg::G,
   return subfg
 end
 
-function buildSubgraphFromLabels(dfg::G,
+function buildSubgraphFromLabels(dfg::GSRC,
                                   syms::Vector{Symbol};
-                                  subfg::AbstractDFG=(G <: InMemoryDFGTypes ? G : GraphsDFG)(params=getSolverParams(dfg)),
+                                  subfg::GDST=(GSRC <: InMemoryDFGTypes ? GSRC : GraphsDFG)(params=getSolverParams(dfg)),
                                   solvable::Int=0,
-                                  allowedFactors::Union{Nothing, Vector{Symbol}}=nothing  )::G where G <: AbstractDFG
+                                  allowedFactors::Union{Nothing, Vector{Symbol}}=nothing  )::GDST
+                                     where {GSRC <: AbstractDFG, GDST <: AbstractDFG}
   #
   @warn "Deprecated buildSubgraphFromLabels, use buildSubgraphFromLabels! instead."
   buildSubgraphFromLabels!(dfg, syms, subfg=subfg, solvable=solvable, allowedFactors=allowedFactors )
