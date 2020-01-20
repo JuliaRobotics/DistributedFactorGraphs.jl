@@ -33,6 +33,8 @@ export AbstractParams, NoSolverParams
 export DFGNode, DFGVariable, DFGFactor, AbstractDFGVariable, AbstractDFGFactor
 export DFGNodeParams
 export SkeletonDFGVariable, SkeletonDFGFactor
+export timestamp # DEPRECATED
+export label, getTimestamp, setTimestamp!, tags, setTags!, data, softtype, solverData, getData, solverDataDict, setSolverData, setSolverData!, internalId, smallData, setSmallData!, bigData
 export DFGVariableSummary, DFGFactorSummary, AbstractDFGSummary
 
 # Define variable levels
@@ -45,12 +47,17 @@ const FactorDataLevel0 = Union{DFGFactor, DFGFactorSummary, SkeletonDFGFactor}
 const FactorDataLevel1 = Union{DFGFactor, DFGFactorSummary}
 const FactorDataLevel2 = Union{DFGFactor}
 
+# Data levels
+const DataLevel0 = Union{VariableDataLevel0, FactorDataLevel0}
+const DataLevel1 = Union{VariableDataLevel1, FactorDataLevel1}
+const DataLevel2 = Union{VariableDataLevel2, FactorDataLevel2}
+
 # Accessors
 # Level 0
 export getLabel, getTimestamp, setTimestamp!, getTags, setTags!
 # Level 1
-export getEstimates, getEstimate, getSofttype
-export getMaxPPE, getMeanPPE, getSuggestedPPE
+export getMaxPPE, getMeanPPE, getSuggestedPPE, getVariablePPE, getPPE, getVariablePPEs, getPPEs #, getEstimates
+export getSofttype
 # Level 2
 export getSolverData, solverData, getData, getSolverDataDict, setSolverData!, getInternalId, smallData, setSmallData!, bigData
 export addBigDataEntry!, getBigDataEntry, updateBigDataEntry!, deleteBigDataEntry!, getBigDataEntries, getBigDataKeys
@@ -119,6 +126,7 @@ include("services/AbstractDFG.jl")
 include("services/DFGVariable.jl")
 include("services/DFGFactor.jl")
 include("CommonAccessors.jl")
+include("Deprecated.jl")
 include("services/CompareUtils.jl")
 
 # Include the Graphs.jl API.

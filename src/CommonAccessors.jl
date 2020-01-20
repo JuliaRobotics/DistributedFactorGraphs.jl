@@ -2,17 +2,6 @@
 
 # NOTE this could be reduced with macros and function generation to even less code.
 
-export getLabel, label
-export getTags, setTags!, tags
-export getTimestamp, setTimestamp!, timestamp
-export getInternalId, internalId
-
-
-const DataLevel0 = Union{VariableDataLevel0, FactorDataLevel0}
-const DataLevel1 = Union{VariableDataLevel1, FactorDataLevel1}
-const DataLevel2 = Union{VariableDataLevel2, FactorDataLevel2}
-
-
 """
 $SIGNATURES
 

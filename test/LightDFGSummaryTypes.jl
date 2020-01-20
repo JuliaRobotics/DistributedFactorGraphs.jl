@@ -94,14 +94,14 @@ end
     @test updateFactor!(dfg, f1Prime) == f1
 
     # Accessors
-    @test label(v1) == v1.label
-    @test tags(v1) == v1.tags
+    @test getLabel(v1) == v1.label
+    @test getTags(v1) == v1.tags
 
     if VARTYPE == DFGVariableSummary
         @test getTimestamp(v1) == v1.timestamp
-        @test estimates(v1) == v1.estimateDict
-        @test estimate(v1, :notfound) == nothing
-        @test softtype(v1) == :Pose2
+        @test getVariablePPEs(v1) == v1.ppeDict
+        @test getVariablePPE(v1, :notfound) == nothing
+        @test getSofttype(v1) == :Pose2
         @test internalId(v1) == v1._internalId
     end
     # @test solverData(v1) === v1.solverDataDict[:default]
@@ -109,8 +109,8 @@ end
     # @test solverData(v1, :default) === v1.solverDataDict[:default]
     # @test solverDataDict(v1) == v1.solverDataDict
 
-    @test label(f1) == f1.label
-    @test tags(f1) == f1.tags
+    @test getLabel(f1) == f1.label
+    @test getTags(f1) == f1.tags
     # @test solverData(f1) == f1.data
     # Deprecated functions
     # @test data(f1) == f1.data
@@ -129,24 +129,24 @@ end
         var = getVariable(dfg, :a)
         #make a copy and simulate external changes
         newvar = deepcopy(var)
-        estimates(newvar)[:default] = MeanMaxPPE(:default, [150.0], [100.0], [50.0])
+        getVariablePPEs(newvar)[:default] = MeanMaxPPE(:default, [150.0], [100.0], [50.0])
         #update
         mergeUpdateVariableSolverData!(dfg, newvar)
         #For now spot check
         # @test solverDataDict(newvar) == solverDataDict(var)
-        @test estimates(newvar) == estimates(var)
+        @test getVariablePPEs(newvar) == getVariablePPEs(var)
 
         # Delete :default and replace to see if new ones can be added
-        delete!(estimates(newvar), :default)
-        estimates(newvar)[:second] = MeanMaxPPE(:second, [15.0], [10.0], [5.0])
+        delete!(getVariablePPEs(newvar), :default)
+        getVariablePPEs(newvar)[:second] = MeanMaxPPE(:second, [15.0], [10.0], [5.0])
 
         # Persist to the original variable.
         mergeUpdateVariableSolverData!(dfg, newvar)
         # At this point newvar will have only :second, and var should have both (it is the reference)
-        @test symdiff(collect(keys(estimates(var))), [:default, :second]) == Symbol[]
-        @test symdiff(collect(keys(estimates(newvar))), [:second]) == Symbol[]
+        @test symdiff(collect(keys(getVariablePPEs(var))), [:default, :second]) == Symbol[]
+        @test symdiff(collect(keys(getVariablePPEs(newvar))), [:second]) == Symbol[]
         # Get the source too.
-        @test symdiff(collect(keys(estimates(getVariable(dfg, :a)))), [:default, :second]) == Symbol[]
+        @test symdiff(collect(keys(getVariablePPEs(getVariable(dfg, :a)))), [:default, :second]) == Symbol[]
     end
 end
 

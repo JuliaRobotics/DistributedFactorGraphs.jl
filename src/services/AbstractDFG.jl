@@ -444,7 +444,7 @@ function mergeUpdateVariableSolverData!(dfg::AbstractDFG, sourceVariable::Abstra
     end
     var = getVariable(dfg, sourceVariable.label)
     # We don't know which graph this came from, must be copied!
-    merge!(var.estimateDict, deepcopy(sourceVariable.estimateDict))
+    merge!(var.ppeDict, deepcopy(sourceVariable.ppeDict))
     # If this variable has solverDataDict (summaries do not)
     :solverDataDict in fieldnames(typeof(var)) && merge!(var.solverDataDict, deepcopy(sourceVariable.solverDataDict))
     return sourceVariable

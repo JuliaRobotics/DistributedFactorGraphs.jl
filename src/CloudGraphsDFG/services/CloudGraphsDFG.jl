@@ -206,9 +206,9 @@ function mergeUpdateVariableSolverData!(dfg::CloudGraphsDFG, sourceVariable::DFG
         error("Source variable '$(sourceVariable.label)' doesn't exist in the graph.")
     end
     var = getVariable(dfg, sourceVariable.label)
-    newEsts = merge!(var.estimateDict, deepcopy(sourceVariable.estimateDict))
+    newEsts = merge!(var.ppeDict, deepcopy(sourceVariable.ppeDict))
     newSolveData = merge!(var.solverDataDict, sourceVariable.solverDataDict)
-    Neo4j.setnodeproperty(dfg.neo4jInstance.graph, var._internalId, "estimateDict",
+    Neo4j.setnodeproperty(dfg.neo4jInstance.graph, var._internalId, "ppeDict",
         JSON2.write(newEsts))
     Neo4j.setnodeproperty(dfg.neo4jInstance.graph, var._internalId, "solverDataDict",
         JSON2.write(Dict(keys(newSolveData) .=> map(vnd -> pack(dfg, vnd), values(newSolveData)))))

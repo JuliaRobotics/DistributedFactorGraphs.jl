@@ -38,10 +38,10 @@ Base.propertynames(x::SymbolDFG, private::Bool=false) =
 
 Base.getproperty(x::SymbolDFG,f::Symbol) = begin
     if f == :nodeCounter
-        @error "Field nodeCounter depreciated. returning number of nodes"
+        @error "Field nodeCounter deprecated. returning number of nodes"
         nv(x.g)
     elseif f == :labelDict
-        @error "Field labelDict depreciated. Consider using exists(dfg,label) or getLabelDict(dfg) instead. Returning internals copy"
+        @error "Field labelDict deprecated. Consider using exists(dfg,label) or getLabelDict(dfg) instead. Returning internals copy"
         copy(x.g.fadjdict)
     else
         getfield(x,f)

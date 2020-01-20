@@ -23,7 +23,7 @@ struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
     tags::Vector{Symbol}
     """Dictionary of estimates keyed by solverDataDict keys
     Accessors: `addEstimate!`, `updateEstimate!`, and `deleteEstimate!`"""
-    estimateDict::Dict{Symbol, <: AbstractPointParametricEst}
+    ppeDict::Dict{Symbol, <: AbstractPointParametricEst}
     """Dictionary of solver data. May be a subset of all solutions if a solver key was specified in the get call.
     Accessors: `addVariableSolverData!`, `updateVariableSolverData!`, and `deleteVariableSolverData!`"""
     solverDataDict::Dict{Symbol, VariableNodeData{T}}
