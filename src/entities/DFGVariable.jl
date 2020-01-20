@@ -33,10 +33,6 @@ struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
     """Dictionary of large data associated with this variable.
     Accessors: `addBigDataEntry!`, `getBigDataEntry`, `updateBigDataEntry!`, and `deleteBigDataEntry!`"""
     bigData::Dict{Symbol, AbstractBigDataEntry}
-    """Solvable flag for the variable.
-    Accessors: `getSolvable`, `setSolvable!`
-    TODO: Switch to `DFGNodeParams`"""
-    solvable::Int
     """Mutable parameters for the variable. We suggest using accessors to get to this data.
     Accessors: `getSolvable`, `setSolvable!`"""
     _dfgNodeParams::DFGNodeParams
@@ -54,4 +50,10 @@ DFGVariable(label::Symbol, softtype::T;
             bigData::Dict{Symbol, AbstractBigDataEntry}=Dict{Symbol,AbstractBigDataEntry}(),
             solvable::Int=1,
             _internalId::Int64=0) where {T <: InferenceVariable} =
-    DFGVariable{T}(label, now(), tags, estimateDict, solverDataDict, smallData, bigData, solvable, DFGNodeParams(solvable, _internalId))
+    DFGVariable{T}(label, now(), tags, estimateDict, solverDataDict, smallData, bigData, DFGNodeParams(solvable, _internalId))
+
+function Base.copy(o::DFGVariable)::DFGVariable
+    return DFGVariable(o.label, getSofttype(o)(), tags=copy(o.tags), estimateDict=copy(o.estimateDict),
+                        solverDataDict=copy(o.solverDataDict), smallData=copy(o.smallData),
+                        bigData=copy(o.bigData), solvable=getSolvable(o), _internalId=getInternalId(o))
+end

@@ -5,7 +5,7 @@
 """
     $(SIGNATURES)
 
-De-serialization of IncrementalInference objects require discovery of foreign types.
+Deserialization of IncrementalInference objects require discovery of foreign types.
 
 Example:
 
@@ -138,7 +138,7 @@ end
     $(SIGNATURES)
 Get a DFGVariable from a DFG using its underlying integer ID.
 """
-function getVariable(dfg::G, variableId::Int64)::AbstractDFGVariable where G <: AbstractDFG
+function getVariable(dfg::G, variableId::Int64)::Union{Nothing, AbstractDFGVariable} where G <: AbstractDFG
     error("getVariable not implemented for $(typeof(dfg))")
 end
 
@@ -146,8 +146,8 @@ end
     $(SIGNATURES)
 Get a DFGVariable from a DFG using its label.
 """
-function getVariable(dfg::G, label::Union{Symbol, String})::AbstractDFGVariable where G <: AbstractDFG
-    return getVariable(dfg, Symbol(label))
+function getVariable(dfg::G, label::Union{Symbol, String}; solveKey::Union{Nothing, Symbol})::Union{Nothing, AbstractDFGVariable} where G <: AbstractDFG
+    return getVariable(dfg, Symbol(label); solveKey=solveKey)
 end
 
 """
@@ -543,7 +543,7 @@ Related
 
 isSolveInProgress
 """
-isSolvable(var::Union{DFGVariable, DFGFactor})::Int = var.solvable
+isSolvable(var::Union{DFGVariable, DFGFactor})::Int = var._dfgNodeParams.solvable
 
 """
     $SIGNATURES
@@ -553,7 +553,7 @@ Variables or factors may or may not be 'solvable', depending on a user definitio
 Related:
 - isSolveInProgress
 """
-getSolvable(var::Union{DFGVariable, DFGFactor})::Int = var.solvable
+getSolvable(var::Union{DFGVariable, DFGFactor})::Int = var._dfgNodeParams.solvable
 
 """
     $SIGNATURES
@@ -562,9 +562,9 @@ Get 'solvable' parameter for either a variable or factor.
 """
 function getSolvable(dfg::AbstractDFG, sym::Symbol)
   if isVariable(dfg, sym)
-    return getVariable(dfg, sym).solvable
+    return getVariable(dfg, sym)._dfgNodeParams.solvable
   elseif isFactor(dfg, sym)
-    return getFactor(dfg, sym).solvable
+    return getFactor(dfg, sym)._dfgNodeParams.solvable
   end
 end
 
@@ -594,9 +594,9 @@ Set the `solvable` parameter for either a variable or factor.
 """
 function setSolvable!(dfg::AbstractDFG, sym::Symbol, solvable::Int)::Int
   if isVariable(dfg, sym)
-    getVariable(dfg, sym).solvable = solvable
+    getVariable(dfg, sym)._dfgNodeParams.solvable = solvable
   elseif isFactor(dfg, sym)
-    getFactor(dfg, sym).solvable = solvable
+    getFactor(dfg, sym)._dfgNodeParams.solvable = solvable
   end
   return solvable
 end
@@ -607,7 +607,7 @@ end
 Set the `solvable` parameter for either a variable or factor.
 """
 function setSolvable!(node::N, solvable::Int)::Int where N <: DFGNode
-  node.solvable = solvable
+  node._dfgNodeParams.solvable = solvable
   return solvable
 end
 

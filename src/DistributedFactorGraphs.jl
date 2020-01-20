@@ -52,7 +52,7 @@ export getLabel, getTimestamp, setTimestamp!, getTags, setTags!
 export getEstimates, getEstimate, getSofttype
 export getMaxPPE, getMeanPPE, getSuggestedPPE
 # Level 2
-export getSolverData, solverData, getData, solverDataDict, setSolverData, setSolverData!, getInternalId, smallData, setSmallData!, bigData
+export getSolverData, solverData, getData, getSolverDataDict, setSolverData!, getInternalId, smallData, setSmallData!, bigData
 export addBigDataEntry!, getBigDataEntry, updateBigDataEntry!, deleteBigDataEntry!, getBigDataEntries, getBigDataKeys
 
 # Find a home

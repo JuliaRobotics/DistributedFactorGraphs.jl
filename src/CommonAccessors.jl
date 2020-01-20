@@ -57,4 +57,4 @@ $SIGNATURES
 
 Return the internal ID for a variable.
 """
-getInternalId(v::DataLevel1) = v._internalId
+getInternalId(v::DataLevel1) = v._dfgNodeParams._internalId

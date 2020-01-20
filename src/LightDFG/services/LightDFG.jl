@@ -113,8 +113,17 @@ function addFactor!(dfg::LightDFG{<:AbstractParams, <:AbstractDFGVariable, F}, f
     return FactorGraphs.addFactor!(dfg.g, variableLabels, factor)
 end
 
-function getVariable(dfg::LightDFG, label::Symbol)::AbstractDFGVariable
-    return dfg.g.variables[label]
+function getVariable(dfg::LightDFG, label::Symbol; solveKey::Union{Nothing, Symbol})::Union{Nothing, AbstractDFGVariable}
+	!(label in dfg.g.variables) && return nothing
+    solveKey == nothing && return dfg.g.variables[label]
+	# Requesting a single solvekey
+	if solveKey in dfg.g.variables[label]
+		v = copy(dfg.g.variables[label]) # Shallow copy
+		v.solverDataDict = [solveKey=>v.solverDataDict[solveKey]]
+		return v
+	else
+		return nothing
+	end
 end
 
 function getFactor(dfg::LightDFG, label::Symbol)::AbstractDFGFactor

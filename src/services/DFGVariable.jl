@@ -282,8 +282,8 @@ getVariableType
 function getSofttype(vnd::VariableNodeData)
   return vnd.softtype
 end
-function getSofttype(v::DFGVariable; solveKey::Symbol=:default)
-  return getSofttype(solverData(v, solveKey))
+function getSofttype(v::DFGVariable)
+  return typeof(v).parameters[1] # Get the parameter of the DFGVariable
 end
 
 """
@@ -318,12 +318,6 @@ end
 
 Set solver data structure stored in a variable.
 """
-setSolverData(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v.solverDataDict[key] = data
-"""
-    $SIGNATURES
-
-Set solver data structure stored in a variable.
-"""
 setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = setSolverData(v, data, key)
 
 """
@@ -331,7 +325,7 @@ setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = s
 
 Get solver data dictionary for a variable.
 """
-solverDataDict(v::DFGVariable) = v.solverDataDict
+getSolverDataDict(v::DFGVariable) = v.solverDataDict
 
 """
 $SIGNATURES
