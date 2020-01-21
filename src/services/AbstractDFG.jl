@@ -426,8 +426,36 @@ Optionally provide an existing subgraph addToDFG, the extracted nodes will be co
 Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
 Note: Always returns the node at the center, but filters around it if solvable is set.
 """
-function getSubgraphAroundNode(dfg::G, node::T, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::H=_getDuplicatedEmptyDFG(dfg); solvable::Int=0)::G where {G <: AbstractDFG, H <: AbstractDFG, P <: AbstractParams, T <: DFGNode}
-    error("getSubgraphAroundNode not implemented for $(typeof(dfg))")
+function getSubgraphAroundNode(dfg::G, node::T, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::H=_getDuplicatedEmptyDFG(dfg); solvable::Int=0)::H where {G <: AbstractDFG, H <: AbstractDFG, P <: AbstractParams, T <: DFGNode}
+    # error("getSubgraphAroundNode not implemented for $(typeof(dfg))")
+    if !exists(dfg, node.label)
+        error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
+    end
+
+    # Build a list of all unique neighbors inside 'distance'
+    neighborList = Dict{Symbol, Any}()
+    push!(neighborList, node.label => getVariable(dfg, node.label))
+    curList = Dict{Symbol, Any}(node.label => getVariable(dfg, node.label))
+    for dist in 1:distance
+        newNeighbors = Dict{Symbol, Any}()
+        for (key, node) in curList
+            neighbors = getNeighbors(dfg, node, solvable=solvable)
+            for neighbor in neighbors
+                if isVariable(dfg, neighbor)
+                    push!(neighborList, neighbor => getVariable(dfg,neighbor))
+                    push!(newNeighbors, neighbor => getVariable(dfg,neighbor))
+                else
+                    push!(neighborList, neighbor => getFactor(dfg,neighbor))
+                    push!(newNeighbors, neighbor => getFactor(dfg,neighbor))
+                end
+            end
+        end
+        curList = newNeighbors
+    end
+
+    # Copy the section of graph we want
+    _copyIntoGraph!(dfg, addToDFG, collect(keys(neighborList)), includeOrphanFactors)
+    return addToDFG
 end
 
 """
