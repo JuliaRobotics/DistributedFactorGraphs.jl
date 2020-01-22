@@ -418,6 +418,30 @@ end
 
 # TODO: NEED TO FIGURE OUT SIGNATURE FOR DEFAULT ARGS
 
+
+# TODO export, test and overwrite in LightGraphs and CloudGraphsDFG
+"""
+    $(SIGNATURES)
+Build a list of all unique neighbors inside 'distance'
+"""
+function getNeighborhood(dfg::AbstractDFG, label::Symbol, distance::Int)::Vector{Symbol}
+    neighborList = Set{Symbol}([label])
+    curList = Set{Symbol}([label])
+
+    for dist in 1:distance
+        newNeighbors = Set{Symbol}()
+        for node in curList
+            neighbors = getNeighbors(dfg, node)
+            for neighbor in neighbors
+                push!(neighborList, neighbor)
+                push!(newNeighbors, neighbor)
+            end
+        end
+        curList = newNeighbors
+    end
+    return collect(neighborList)
+end
+
 """
     $(SIGNATURES)
 Retrieve a deep subgraph copy around a given variable or factor.
@@ -426,35 +450,19 @@ Optionally provide an existing subgraph addToDFG, the extracted nodes will be co
 Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
 Note: Always returns the node at the center, but filters around it if solvable is set.
 """
-function getSubgraphAroundNode(dfg::G, node::T, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::H=_getDuplicatedEmptyDFG(dfg); solvable::Int=0)::H where {G <: AbstractDFG, H <: AbstractDFG, P <: AbstractParams, T <: DFGNode}
-    # error("getSubgraphAroundNode not implemented for $(typeof(dfg))")
+function getSubgraphAroundNode(dfg::AbstractDFG, node::DFGNode, distance::Int=1, includeOrphanFactors::Bool=false, addToDFG::AbstractDFG=_getDuplicatedEmptyDFG(dfg); solvable::Int=0)::AbstractDFG
+
     if !exists(dfg, node.label)
         error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
     end
 
-    # Build a list of all unique neighbors inside 'distance'
-    neighborList = Dict{Symbol, Any}()
-    push!(neighborList, node.label => getVariable(dfg, node.label))
-    curList = Dict{Symbol, Any}(node.label => getVariable(dfg, node.label))
-    for dist in 1:distance
-        newNeighbors = Dict{Symbol, Any}()
-        for (key, node) in curList
-            neighbors = getNeighbors(dfg, node, solvable=solvable)
-            for neighbor in neighbors
-                if isVariable(dfg, neighbor)
-                    push!(neighborList, neighbor => getVariable(dfg,neighbor))
-                    push!(newNeighbors, neighbor => getVariable(dfg,neighbor))
-                else
-                    push!(neighborList, neighbor => getFactor(dfg,neighbor))
-                    push!(newNeighbors, neighbor => getFactor(dfg,neighbor))
-                end
-            end
-        end
-        curList = newNeighbors
-    end
+    neighbors = getNeighborhood(dfg, node.label, distance)
+
+    # for some reason: always returns the node at the center with  || (nlbl == node.label)
+    solvable != 0 && filter!(nlbl -> (getSolvable(dfg, nlbl) >= solvable) || (nlbl == node.label), neighbors)
 
     # Copy the section of graph we want
-    _copyIntoGraph!(dfg, addToDFG, collect(keys(neighborList)), includeOrphanFactors)
+    _copyIntoGraph!(dfg, addToDFG, neighbors, includeOrphanFactors)
     return addToDFG
 end
 
