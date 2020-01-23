@@ -20,7 +20,7 @@ struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
     timestamp::DateTime
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
     Accessors: `getTags`, `addTags!`, and `deleteTags!`"""
-    tags::tags::Set{Symbol}#Vector{Symbol} #TODO I propose we use a set since tags can't be repeated.
+    tags::Set{Symbol}#Vector{Symbol} #TODO I propose we use a set since tags can't be repeated.
     """Dictionary of estimates keyed by solverDataDict keys
     Accessors: `addEstimate!`, `updateEstimate!`, and `deleteEstimate!`"""
     ppeDict::Dict{Symbol, <: AbstractPointParametricEst}
@@ -43,7 +43,7 @@ end
 The default DFGVariable constructor.
 """
 DFGVariable(label::Symbol, softtype::T;
-            tags::Vector{Symbol}=Symbol[],
+            tags::Set{Symbol}=Set{Symbol}(),
             estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
             solverDataDict::Dict{Symbol, VariableNodeData{T}}=Dict{Symbol, VariableNodeData{T}}(:default => VariableNodeData{T}()),
             smallData::Dict{String, String}=Dict{String, String}(),

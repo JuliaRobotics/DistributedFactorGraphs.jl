@@ -20,11 +20,11 @@ getTags(v::DataLevel0) = v.tags
 """
 $SIGNATURES
 
-Set the tags for a factor.
+Set the tags for a node.
 """
 function setTags!(f::DataLevel0, tags::Vector{Symbol})
-  resize!(f.tags, length(tags))
-  f.tags .= tags
+  empty!(f.tags)
+  union!(f.tags, tags)
 end
 
 """

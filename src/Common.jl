@@ -410,6 +410,30 @@ function addTags!(dfg::InMemoryDFGTypes, sym::Symbol, tags::Vector{Symbol})
   union!(getTags(getFactor(fg, sym)), tags)
 end
 
+
+"""
+$SIGNATURES
+
+Add tag to a variable or factor
+"""
+addTag!(f::DataLevel0, tag::Symbol) = union!(f.tags,[tag])
+
+
+"""
+$SIGNATURES
+
+Merge tags to the node's tags (variable/factor).
+"""
+mergeTags!(f::DataLevel0, tags::Vector{Symbol}) = union!(f.tags, tags)
+
+"""
+$SIGNATURES
+
+Remove the tags from the node
+"""
+deleteTags!(f::DataLevel0, tags::Vector{Symbol}) = setdiff!(f.tags, tags)
+
+
 """
     $SIGNATURES
 
