@@ -47,7 +47,7 @@ mutable struct DFGFactor{T, S} <: AbstractDFGFactor
     timestamp::DateTime
     """Factor tags, e.g [:FACTOR].
     Accessors: `getTags`, `addTags!`, and `deleteTags!`"""
-    tags::Set{Symbol}#Vector{Symbol} #TODO I propose we use a set since tags can't be repeated.
+    tags::Vector{Symbol}
     """Solver data.
     Accessors: `getSolverData`, `setSolverData!`"""
     solverData::GenericFunctionNodeData{T, S}
