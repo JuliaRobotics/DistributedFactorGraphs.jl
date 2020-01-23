@@ -1,4 +1,5 @@
-# global testDFGAPI = GraphsDFG
+#
+global testDFGAPI = LightDFG
 
 dfg = testDFGAPI{NoSolverParams}()
 
@@ -21,8 +22,8 @@ st2 = TestInferenceVariable2()
 solverData(v1).softtype = deepcopy(st1)
 solverData(v2).softtype = deepcopy(st2)
 
-# set v2 solvable
-setSolvable!(v2, 1)
+# set v1 to solvable=0
+setSolvable!(v1, 0)
 # set v1 and f1 solveInProgress
 solverData(v1).solveInProgress = 1
 solverData(f1).solveInProgress = 1
@@ -114,13 +115,14 @@ end
 # Gets
 @testset "Gets, Sets, and Accessors" begin
     global dfg,v1,v2,f1
+    #TODO compare variable and factor
     @test getVariable(dfg, v1.label) == v1
     @test getVariable(dfg, v2.label) != v1
     @test getFactor(dfg, f1.label) == f1
     f2 = deepcopy(f1)
     f2.label = :something
     @test f2 != f1
-    @test_throws Exception getVariable(dfg, :nope)
+    @test getVariable(dfg, :nope) == nothing
     @test_throws Exception getVariable(dfg, "nope")
     @test_throws Exception getFactor(dfg, :nope)
     @test_throws Exception getFactor(dfg, "nope")
@@ -145,6 +147,7 @@ end
 
     @test getTimestamp(v1) == v1.timestamp
     testTimestamp = now()
+    #TODO set timestamp immutable
     @test setTimestamp!(v1, testTimestamp) == testTimestamp
     @test getTimestamp(v1) == testTimestamp
 
@@ -158,9 +161,10 @@ end
     @test solverData(v1) === v1.solverDataDict[:default]
     @test getData(v1) === v1.solverDataDict[:default]
     @test solverData(v1, :default) === v1.solverDataDict[:default]
-    @test solverDataDict(v1) == v1.solverDataDict
-    @test internalId(v1) == v1._internalId
+    @test getSolverDataDict(v1) == v1.solverDataDict
+    @test getInternalId(v1) == v1._internalId
 
+    #TODO I don't know what is supposed to happen to softtype
     @test getSofttype(v1) == st1
     @test getSofttype(v2) == st2
     @test getSofttype(v1) == st1
@@ -170,12 +174,12 @@ end
     @test setTags!(v1, testTags) == testTags
     @test getTags(v1) == testTags
 
-    @test solverData(f1) == f1.data
+    @test solverData(f1) == f1.solverData
     # Deprecated functions
-    @test solverData(f1) == f1.data
-    @test getData(f1) == f1.data
+    @test solverData(f1) == f1.solverData
+    # REMOVED? @test getData(f1) == f1.data
     # Internal function
-    @test internalId(f1) == f1._internalId
+    @test getInternalId(f1) == f1._dfgNodeParams._internalId
 
     @test getSolverParams(dfg) != nothing
     @test setSolverParams(dfg, getSolverParams(dfg)) == getSolverParams(dfg)
@@ -188,8 +192,11 @@ end
     @test isSolvable(v1) == 0
     @test isSolvable(v2) == 1
     @test isSolvable(f1) == 0
-    @test isSolveInProgress(v1) == 1
-    @test isSolveInProgress(f1) == 1
+    @test getSolvable(v1) == 0
+
+    #TODO isSolveInProgress was not deprecated
+    @test getSolveInProgress(v1) == 1
+    @test getSolveInProgress(f1) == 1
     # setSolvable, getSolvable, and variants
     v1 = getVariable(dfg, v1.label)
     f1 = getFactor(dfg, f1.label)
@@ -280,7 +287,8 @@ end
     mergeUpdateVariableSolverData!(dfg, newvar)
 
     #For now spot check
-    @test solverDataDict(newvar) == solverDataDict(var)
+    #TODO solverDataDict() not deprecated
+    @test getSolverDataDict(newvar) == getSolverDataDict(var)
     @test getVariablePPEs(newvar) == getVariablePPEs(var)
     @test getMaxPPE(getVariablePPEs(newvar)[:default]) == getVariablePPEs(newvar)[:default].max
     @test getMeanPPE(getVariablePPEs(newvar)[:default]) == getVariablePPEs(newvar)[:default].mean
@@ -318,7 +326,8 @@ end
     @test symdiff(adjMat[1, :], [nothing, :a, :b, :orphan]) == Symbol[]
     @test symdiff(adjMat[2, :], [:f1, :f1, :f1, nothing]) == Symbol[]
     #sparse
-    adjMat, v_ll, f_ll = getIncidenceMatrixSparse(dfg)
+    #TODO this silly name thing has gone on too long
+    adjMat, v_ll, f_ll = DistributedFactorGraphs.getIncidenceMatrix(dfg)
     @test size(adjMat) == (1,3)
 
     # Checking the elements of adjacency, its not sorted so need indexing function
@@ -360,8 +369,9 @@ numNodes = 10
 dfg = testDFGAPI{NoSolverParams}()
 verts = map(n -> DFGVariable(Symbol("x$n"), TestInferenceVariable1()), 1:numNodes)
 #change ready and solveInProgress for x7,x8 for improved tests on x7x8f1
-verts[7].solvable = 1
-
+#NOTE because defaults changed
+verts[8]._dfgNodeParams.solvable = 0
+verts[9]._dfgNodeParams.solvable = 0
 # Can't change the softtypes now.
 # #force softytypes to first 2 vertices.
 # verts[1].solverDataDict[:default].softtype = deepcopy(st1)
@@ -369,6 +379,8 @@ verts[7].solvable = 1
 
 map(v -> addVariable!(dfg, v), verts)
 map(n -> addFactor!(dfg, [verts[n], verts[n+1]], DFGFactor{Int, :Symbol}(Symbol("x$(n)x$(n+1)f1"))), 1:(numNodes-1))
+
+getFactor(dfg, :x7x8f1)._dfgNodeParams.solvable = 0
 
 @testset "Getting Neighbors" begin
     global dfg,verts
@@ -433,6 +445,7 @@ end
     end
 end
 
+#TODO Summaries and Summary Graphs
 @testset "Summaries and Summary Graphs" begin
     factorFields = fieldnames(DFGFactorSummary)
     variableFields = fieldnames(DFGVariableSummary)
@@ -471,7 +484,7 @@ end
     addVariable!(dotdfg, v1)
     addVariable!(dotdfg, v2)
     addFactor!(dotdfg, [v1, v2], f1)
-
+    #TODO hardcoded will have different results so test LightGraphs seperately
     @test toDot(dotdfg) == "graph graphname {\n2 [\"label\"=\"b\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n2 -- 3\n3 [\"label\"=\"f1\",\"shape\"=\"box\",\"fillcolor\"=\"blue\",\"color\"=\"blue\"]\n1 [\"label\"=\"a\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n1 -- 3\n}\n"
     @test toDotFile(dotdfg, "something.dot") == nothing
     Base.rm("something.dot")

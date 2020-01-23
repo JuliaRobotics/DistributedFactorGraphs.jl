@@ -9,6 +9,10 @@ Base.getproperty(x::VariableDataLevel1,f::Symbol) = begin
     if f == :estimateDict
       @warn "estimateDict is deprecated, use ppeDict instead"
       getfield(x, :ppeDict)
+    elseif f == :solvable
+      getfield(x,:_dfgNodeParams).solvable
+    elseif f == :_internalId
+      getfield(x,:_dfgNodeParams)._internalId
     else
       getfield(x,f)
     end

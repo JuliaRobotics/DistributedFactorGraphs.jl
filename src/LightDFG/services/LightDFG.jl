@@ -67,7 +67,7 @@ function addVariable!(dfg::LightDFG{<:AbstractParams, V, <:AbstractDFGFactor}, v
     return true
 end
 
-function addFactor!(dfg::LightDFG{<:AbstractParams, V, F}, variables::Vector{V}, factor::F)::Bool where {V <: AbstractDFGVariable, F <: AbstractDFGFactor}
+function addFactor!(dfg::LightDFG{<:AbstractParams, V, F}, variables::Vector{<:V}, factor::F)::Bool where {V <: AbstractDFGVariable, F <: AbstractDFGFactor}
     # if haskey(dfg.g.metaindex[:label], factor.label)
     #     error("Factor '$(factor.label)' already exists in the factor graph")
     # end
@@ -115,7 +115,7 @@ end
 
 #TODO Sam, I would say if we handle the update vsd corectly this function is only needed in the cloud.
 #   In memory types are just passing pointers along so no perfomrance issue.
-function getVariable(dfg::LightDFG, label::Symbol; solveKey::Union{Nothing, Symbol})::Union{Nothing, AbstractDFGVariable}
+function getVariable(dfg::LightDFG, label::Symbol; solveKey::Union{Nothing, Symbol}=nothing)::Union{Nothing, AbstractDFGVariable}
 
     if !haskey(dfg.g.variables, label)
         @warn "Variable '$label' does not exists in the factor graph"
@@ -393,7 +393,7 @@ end
 
 function getAdjacencyMatrixSparse(dfg::LightDFG; solvable::Int=0)
     @warn "Deprecated function, please use getBiadjacencyMatrixSparse as this will be removed in v0.6.1"
-    return getBiadjacencyMatrixSparse(dfg, solvable)
+    return getBiadjacencyMatrixSparse(dfg, solvable=solvable)
 end
 
 # this would be an incidence matrix

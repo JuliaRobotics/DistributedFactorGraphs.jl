@@ -47,7 +47,7 @@ mutable struct DFGFactor{T, S} <: AbstractDFGFactor
     timestamp::DateTime
     """Factor tags, e.g [:FACTOR].
     Accessors: `getTags`, `addTags!`, and `deleteTags!`"""
-    tags::Vector{Symbol}
+    tags::Set{Symbol}#Vector{Symbol} #TODO I propose we use a set since tags can't be repeated.
     """Solver data.
     Accessors: `getSolverData`, `setSolverData!`"""
     solverData::GenericFunctionNodeData{T, S}
@@ -69,8 +69,8 @@ $(SIGNATURES)
 Construct a DFG factor given a label.
 """
 #TODO _internalId?
-DFGFactor{T, S}(label::Symbol, _internalId::Int64=0, timestamp::DateTime=now()) where {T, S}
-            = DFGFactor(label, timestamp, Symbol[], GenericFunctionNodeData{T, S}(), 0, DFGNodeParams(0, _internalId), Symbol[])
+DFGFactor{T, S}(label::Symbol, internalId::Int64=0, timestamp::DateTime=now()) where {T, S} =
+                DFGFactor(label, timestamp, Symbol[], GenericFunctionNodeData{T, S}(), 0, DFGNodeParams(0, internalId), Symbol[])
 
 DFGFactor(label::Symbol;
     timestamp::DateTime=now(),

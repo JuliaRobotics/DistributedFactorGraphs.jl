@@ -68,7 +68,7 @@ export getVariableOrder
 
 # Services/AbstractDFG Exports
 export isInitialized, getFactorFunction, isVariable, isFactor
-export isSolvable, isSolveInProgress, getSolvable, setSolvable!
+export isSolvable, isSolveInProgress, getSolvable, setSolvable!, getSolveInProgress
 export mergeUpdateVariableSolverData!, mergeUpdateGraphSolverData!
 
 # Solver (IIF) Exports

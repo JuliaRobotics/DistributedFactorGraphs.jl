@@ -20,7 +20,7 @@ struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
     timestamp::DateTime
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
     Accessors: `getTags`, `addTags!`, and `deleteTags!`"""
-    tags::Vector{Symbol}
+    tags::tags::Set{Symbol}#Vector{Symbol} #TODO I propose we use a set since tags can't be repeated.
     """Dictionary of estimates keyed by solverDataDict keys
     Accessors: `addEstimate!`, `updateEstimate!`, and `deleteEstimate!`"""
     ppeDict::Dict{Symbol, <: AbstractPointParametricEst}
