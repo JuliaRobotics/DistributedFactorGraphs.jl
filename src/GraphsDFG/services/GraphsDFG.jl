@@ -258,33 +258,41 @@ function getNeighbors(dfg::GraphsDFG, label::Symbol; solvable::Int=0)::Vector{Sy
     return map(n -> n.dfgNode.label, neighbors)
 end
 
-function getSubgraphAroundNode(dfg::GraphsDFG{P}, node::T, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::GraphsDFG=GraphsDFG{P}(); solvable::Int=0)::GraphsDFG where {P <: AbstractParams, T <: DFGNode}
-    if !haskey(dfg.labelDict, node.label)
-        error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
-    end
-
-    # Build a list of all unique neighbors inside 'distance'
-    neighborList = Dict{Symbol, Any}()
-    push!(neighborList, node.label => dfg.g.vertices[dfg.labelDict[node.label]])
-    curList = Dict{Symbol, Any}(node.label => dfg.g.vertices[dfg.labelDict[node.label]])
-    for dist in 1:distance
-        newNeighbors = Dict{Symbol, Any}()
-        for (key, node) in curList
-            neighbors = in_neighbors(node, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
-            for neighbor in neighbors
-                if !haskey(neighborList, neighbor.dfgNode.label) && (isSolvable(neighbor.dfgNode) >= solvable)
-                    push!(neighborList, neighbor.dfgNode.label => neighbor)
-                    push!(newNeighbors, neighbor.dfgNode.label => neighbor)
-                end
-            end
-        end
-        curList = newNeighbors
-    end
-
-    # Copy the section of graph we want
-    _copyIntoGraph!(dfg, addToDFG, collect(keys(neighborList)), includeOrphanFactors)
-    return addToDFG
-end
+#NOTE Replaced by abstract function in services/AbstractDFG.jl
+# """
+#     $(SIGNATURES)
+# Retrieve a deep subgraph copy around a given variable or factor.
+# Optionally provide a distance to specify the number of edges should be followed.
+# Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
+# Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
+# """
+# function getSubgraphAroundNode(dfg::GraphsDFG{P}, node::T, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::GraphsDFG=GraphsDFG{P}(); solvable::Int=0)::GraphsDFG where {P <: AbstractParams, T <: DFGNode}
+#     if !haskey(dfg.labelDict, node.label)
+#         error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
+#     end
+#
+#     # Build a list of all unique neighbors inside 'distance'
+#     neighborList = Dict{Symbol, Any}()
+#     push!(neighborList, node.label => dfg.g.vertices[dfg.labelDict[node.label]])
+#     curList = Dict{Symbol, Any}(node.label => dfg.g.vertices[dfg.labelDict[node.label]])
+#     for dist in 1:distance
+#         newNeighbors = Dict{Symbol, Any}()
+#         for (key, node) in curList
+#             neighbors = in_neighbors(node, dfg.g) #Don't use out_neighbors! It enforces directiveness even if we don't want it
+#             for neighbor in neighbors
+#                 if !haskey(neighborList, neighbor.dfgNode.label) && (isSolvable(neighbor.dfgNode) >= solvable)
+#                     push!(neighborList, neighbor.dfgNode.label => neighbor)
+#                     push!(newNeighbors, neighbor.dfgNode.label => neighbor)
+#                 end
+#             end
+#         end
+#         curList = newNeighbors
+#     end
+#
+#     # Copy the section of graph we want
+#     _copyIntoGraph!(dfg, addToDFG, collect(keys(neighborList)), includeOrphanFactors)
+#     return addToDFG
+# end
 
 """
     $(SIGNATURES)
