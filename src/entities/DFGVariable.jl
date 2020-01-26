@@ -150,7 +150,7 @@ mutable struct DFGVariable <: AbstractDFGVariable
     smallData::Dict{String, String}
     bigData::Dict{Symbol, AbstractBigDataEntry}
     solvable::Int
-    solveCount::Int
+    solveCount::Ref{Int}
     _internalId::Int64
 end
 
@@ -283,7 +283,7 @@ Related
 
 isSolved, setSolved!
 """
-getSolved(v::VariableDataLevel2) = v.solveCount
+getSolved(v::VariableDataLevel2) = v.solveCount[]
 
 """
     $SIGNATURES
@@ -305,7 +305,7 @@ Related
 
 getSolved, isSolved
 """
-setSolved!(v::VariableDataLevel2, val::Int) = v.solveCount = val
+setSolved!(v::VariableDataLevel2, val::Int) = v.solveCount[] = val
 
 """
     $SIGNATURES
