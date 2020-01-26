@@ -310,7 +310,7 @@ Related
 
 isSolved, setSolved!
 """
-getSolved(v::VariableNodeData) = v.solveCount
+getSolved(v::VariableNodeData) = v.solvedCount
 getSolved(v::VariableDataLevel2, solveKey::Symbol=:default) = solverData(v, solveKey) |> getSolved
 getSolved(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = getSolved(getVariable(dfg, sym), solveKey)
 
