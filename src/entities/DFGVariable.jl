@@ -278,48 +278,6 @@ TODO, DO NOT USE v.softtypename in DFGVariableSummary
 """
 getSofttype(v::DFGVariableSummary)::Symbol = v.softtypename
 
-"""
-    $SIGNATURES
-
-Get the number of times a variable has been inferred -- i.e. `solvedCount`.
-
-Related
-
-isSolved, setSolved!
-"""
-getSolved(v::VariableNodeData) = v.solveCount
-getSolved(v::VariableDataLevel2, solveKey::Symbol=:default) = solverData(v, solveKey) |> getSolved
-getSolved(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = getSolved(getVariable(dfg, sym), solveKey)
-
-"""
-    $SIGNATURES
-
-Boolena on whether the variable has been solved.
-
-Related
-
-getSolved, setSolved!
-"""
-isSolved(v::VariableNodeData) = v.solveCount
-isSolved(v::VariableDataLevel2, solveKey::Symbol=:default) = solverData(v, solveKey) |> isSolved
-isSolved(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = isSolved(getVariable(dfg, sym), solveKey)
-
-
-"""
-    $SIGNATURES
-
-Update/set the `solveCount` value.
-
-Related
-
-getSolved, isSolved
-"""
-# setSolved!(v::VariableDataLevel2, val::Int) = v.solveCount[] = val
-# setSolved!(dfg::AbstractDFG, sym::Symbol, val::Int solveKey::Symbol=:default) = setSolved!(solverData(getVariable(dfg, sym), solveKey), val)
-
-setSolved!(v::VariableNodeData, val::Int) = v.solveCount = val
-setSolved!(v::VariableDataLevel2, val::Int, solveKey::Symbol=:default) = setSolved!(solverData(v, solveKey), val)
-setSolved!(dfg::AbstractDFG, sym::Symbol, val::Int, solveKey::Symbol=:default) = setSolved!(getVariable(dfg, sym), solveKey, val)
 
 """
     $SIGNATURES
@@ -342,6 +300,47 @@ setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v
 Get solver data dictionary for a variable.
 """
 solverDataDict(v::DFGVariable) = v.solverDataDict
+
+"""
+    $SIGNATURES
+
+Get the number of times a variable has been inferred -- i.e. `solvedCount`.
+
+Related
+
+isSolved, setSolved!
+"""
+getSolved(v::VariableNodeData) = v.solveCount
+getSolved(v::VariableDataLevel2, solveKey::Symbol=:default) = solverData(v, solveKey) |> getSolved
+getSolved(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = getSolved(getVariable(dfg, sym), solveKey)
+
+"""
+    $SIGNATURES
+
+Boolean on whether the variable has been solved.
+
+Related
+
+getSolved, setSolved!
+"""
+isSolved(v::VariableNodeData) = v.solvedCount
+isSolved(v::VariableDataLevel2, solveKey::Symbol=:default) = solverData(v, solveKey) |> isSolved
+isSolved(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = isSolved(getVariable(dfg, sym), solveKey)
+
+
+"""
+    $SIGNATURES
+
+Update/set the `solveCount` value.
+
+Related
+
+getSolved, isSolved
+"""
+setSolved!(v::VariableNodeData, val::Int) = v.solvedCount = val
+setSolved!(v::VariableDataLevel2, val::Int, solveKey::Symbol=:default) = setSolved!(solverData(v, solveKey), val)
+setSolved!(dfg::AbstractDFG, sym::Symbol, val::Int, solveKey::Symbol=:default) = setSolved!(getVariable(dfg, sym), solveKey, val)
+
 
 """
 $SIGNATURES
