@@ -22,8 +22,9 @@ mutable struct VariableNodeData{T<:InferenceVariable}
   ismargin::Bool
   dontmargin::Bool
   solveInProgress::Int
+  solvedCount::Int
   VariableNodeData{T}() where {T <:InferenceVariable} =
-  new{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], T(), false, 0.0, false, false, 0)
+  new{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], T(), false, 0.0, false, false, 0, 0)
   VariableNodeData{T}(val::Array{Float64,2},
                       bw::Array{Float64,2},
                       BayesNetOutVertIDs::Array{Symbol,1},
@@ -36,11 +37,12 @@ mutable struct VariableNodeData{T<:InferenceVariable}
                       inferdim::Float64,
                       ismargin::Bool,
                       dontmargin::Bool,
-                      solveInProgress::Int=0) where T <: InferenceVariable =
+                      solveInProgress::Int=0,
+                      solvedCount::Int=0 ) where T <: InferenceVariable =
                           new{T}(val,bw,BayesNetOutVertIDs,dimIDs,dims,
                                  eliminated,BayesNetVertID,separator,
                                  softtype::T,initialized,inferdim,ismargin,
-                                 dontmargin, solveInProgress)
+                                 dontmargin, solveInProgress, solvedCount)
 end
 
 VariableNodeData(val::Array{Float64,2},
@@ -55,20 +57,21 @@ VariableNodeData(val::Array{Float64,2},
                  inferdim::Float64,
                  ismargin::Bool,
                  dontmargin::Bool,
-                 solveInProgress::Int=0) where T <: InferenceVariable =
+                 solveInProgress::Int=0,
+                 solvedCount::Int=0) where T <: InferenceVariable =
                    VariableNodeData{T}(val,bw,BayesNetOutVertIDs,dimIDs,dims,
                                        eliminated,BayesNetVertID,separator,
                                        softtype::T,initialized,inferdim,ismargin,
-                                       dontmargin, solveInProgress)
+                                       dontmargin, solveInProgress, solvedCount)
 #
 VariableNodeData(softtype::T) where T <: InferenceVariable =
-    VariableNodeData{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], softtype, false, 0.0, false, false, 0)
+    VariableNodeData{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], softtype, false, 0.0, false, false, 0, 0)
 
 function VariableNodeData()
     st = stacktrace()
     @warn "VariableNodeData() is deprecated please use VariableNodeData{T}() or VariableNodeData(softtype::T) where T <: InferenceVariable. Enable DEBUG logging for stack trace."
     @debug st
-    VariableNodeData{InferenceVariable}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], SingletonInferenceVariable(), false, 0.0, false, false, 0)
+    VariableNodeData{InferenceVariable}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], SingletonInferenceVariable(), false, 0.0, false, false, 0, 0)
 end
 
 
@@ -93,6 +96,7 @@ mutable struct PackedVariableNodeData
   ismargin::Bool
   dontmargin::Bool
   solveInProgress::Int
+  solvedCount::Int
   PackedVariableNodeData() = new()
   PackedVariableNodeData(x1::Vector{Float64},
                          x2::Int,
@@ -109,7 +113,8 @@ mutable struct PackedVariableNodeData
                          x13::Float64,
                          x14::Bool,
                          x15::Bool,
-                         x16::Int) = new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16)
+                         x16::Int,
+                         solvedCount::Int) = new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16,solvedCount)
 end
 
 # AbstractPointParametricEst interface
@@ -150,7 +155,6 @@ mutable struct DFGVariable <: AbstractDFGVariable
     smallData::Dict{String, String}
     bigData::Dict{Symbol, AbstractBigDataEntry}
     solvable::Int
-    solveCount::Ref{Int}
     _internalId::Int64
 end
 
@@ -167,14 +171,14 @@ function DFGVariable(label::Symbol, _internalId::Int64 = 0) #where {T <:Inferenc
                   Dict{Symbol, MeanMaxPPE}(),
                   Dict{Symbol, VariableNodeData{T}}(:default => VariableNodeData()),
                   Dict{String, String}(),
-                  Dict{Symbol,AbstractBigDataEntry}(), 0, 0, _internalId)
+                  Dict{Symbol,AbstractBigDataEntry}(), 0, _internalId)
 end
 DFGVariable(label::Symbol, softtype::T, _internalId::Int64 = 0) where {T <: InferenceVariable}  =
     DFGVariable(label, now(), Symbol[],
               Dict{Symbol, MeanMaxPPE}(),
               Dict{Symbol, VariableNodeData{T}}(:default => VariableNodeData{T}()),
               Dict{String, String}(),
-              Dict{Symbol,AbstractBigDataEntry}(), 0, 0, _internalId)
+              Dict{Symbol,AbstractBigDataEntry}(), 0, _internalId)
 
 """
     $(SIGNATURES)
@@ -277,13 +281,15 @@ getSofttype(v::DFGVariableSummary)::Symbol = v.softtypename
 """
     $SIGNATURES
 
-Get the number of times a variable has been inferred -- i.e. `solveCount`.
+Get the number of times a variable has been inferred -- i.e. `solvedCount`.
 
 Related
 
 isSolved, setSolved!
 """
-getSolved(v::VariableDataLevel2) = v.solveCount[]
+getSolved(v::VariableNodeData) = v.solveCount
+getSolved(v::VariableDataLevel2, solveKey::Symbol=:default) = solverData(v, solveKey) |> getSolved
+getSolved(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = getSolved(getVariable(dfg, sym), solveKey)
 
 """
     $SIGNATURES
@@ -294,7 +300,10 @@ Related
 
 getSolved, setSolved!
 """
-isSolved(v::VariableDataLevel2)::Bool = 0 < getSolved(v)
+isSolved(v::VariableNodeData) = v.solveCount
+isSolved(v::VariableDataLevel2, solveKey::Symbol=:default) = solverData(v, solveKey) |> isSolved
+isSolved(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = isSolved(getVariable(dfg, sym), solveKey)
+
 
 """
     $SIGNATURES
@@ -305,7 +314,12 @@ Related
 
 getSolved, isSolved
 """
-setSolved!(v::VariableDataLevel2, val::Int) = v.solveCount[] = val
+# setSolved!(v::VariableDataLevel2, val::Int) = v.solveCount[] = val
+# setSolved!(dfg::AbstractDFG, sym::Symbol, val::Int solveKey::Symbol=:default) = setSolved!(solverData(getVariable(dfg, sym), solveKey), val)
+
+setSolved!(v::VariableNodeData, val::Int) = v.solveCount = val
+setSolved!(v::VariableDataLevel2, val::Int, solveKey::Symbol=:default) = setSolved!(solverData(v, solveKey), val)
+setSolved!(dfg::AbstractDFG, sym::Symbol, val::Int, solveKey::Symbol=:default) = setSolved!(getVariable(dfg, sym), solveKey, val)
 
 """
     $SIGNATURES
