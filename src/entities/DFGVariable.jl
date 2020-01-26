@@ -150,6 +150,7 @@ mutable struct DFGVariable <: AbstractDFGVariable
     smallData::Dict{String, String}
     bigData::Dict{Symbol, AbstractBigDataEntry}
     solvable::Int
+    solveCount::Int
     _internalId::Int64
 end
 
@@ -166,14 +167,14 @@ function DFGVariable(label::Symbol, _internalId::Int64 = 0) #where {T <:Inferenc
                   Dict{Symbol, MeanMaxPPE}(),
                   Dict{Symbol, VariableNodeData{T}}(:default => VariableNodeData()),
                   Dict{String, String}(),
-                  Dict{Symbol,AbstractBigDataEntry}(), 0, _internalId)
+                  Dict{Symbol,AbstractBigDataEntry}(), 0, 0, _internalId)
 end
 DFGVariable(label::Symbol, softtype::T, _internalId::Int64 = 0) where {T <: InferenceVariable}  =
     DFGVariable(label, now(), Symbol[],
               Dict{Symbol, MeanMaxPPE}(),
               Dict{Symbol, VariableNodeData{T}}(:default => VariableNodeData{T}()),
               Dict{String, String}(),
-              Dict{Symbol,AbstractBigDataEntry}(), 0, _internalId)
+              Dict{Symbol,AbstractBigDataEntry}(), 0, 0, _internalId)
 
 """
     $(SIGNATURES)
@@ -184,7 +185,7 @@ mutable struct DFGVariableSummary <: AbstractDFGVariable
     timestamp::DateTime
     tags::Vector{Symbol}
     ppeDict::Dict{Symbol, <:AbstractPointParametricEst}
-    softtypename::Symbol
+    softtypename::Symbol # should be removed
     _internalId::Int64
 end
 
@@ -273,8 +274,38 @@ TODO, DO NOT USE v.softtypename in DFGVariableSummary
 """
 getSofttype(v::DFGVariableSummary)::Symbol = v.softtypename
 
+"""
+    $SIGNATURES
 
+Get the number of times a variable has been inferred -- i.e. `solveCount`.
 
+Related
+
+isSolved, setSolved!
+"""
+getSolved(v::VariableDataLevel2) = v.solveCount
+
+"""
+    $SIGNATURES
+
+Boolena on whether the variable has been solved.
+
+Related
+
+getSolved, setSolved!
+"""
+isSolved(v::VariableDataLevel2)::Bool = 0 < getSolved(v)
+
+"""
+    $SIGNATURES
+
+Update/set the `solveCount` value.
+
+Related
+
+getSolved, isSolved
+"""
+setSolved!(v::VariableDataLevel2, val::Int) = v.solveCount = val
 
 """
     $SIGNATURES
