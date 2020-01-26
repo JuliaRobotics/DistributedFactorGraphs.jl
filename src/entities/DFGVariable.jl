@@ -323,7 +323,7 @@ Related
 
 getSolved, setSolved!
 """
-isSolved(v::VariableNodeData) = v.solvedCount
+isSolved(v::VariableNodeData) = 0 < v.solvedCount
 isSolved(v::VariableDataLevel2, solveKey::Symbol=:default) = solverData(v, solveKey) |> isSolved
 isSolved(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = isSolved(getVariable(dfg, sym), solveKey)
 

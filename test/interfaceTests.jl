@@ -212,6 +212,7 @@ end
     @test !isFactor(dfg, :doesntexist)
 
     # test solveCount for variable
+    # vari = getVariable(dfg, v1)
     @test !isSolved(v1)
     @test getSolved(v1) == 0
     setSolved!(v1, 1)
