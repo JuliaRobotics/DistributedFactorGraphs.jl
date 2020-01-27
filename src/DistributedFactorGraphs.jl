@@ -35,6 +35,7 @@ export DFGNodeParams
 export SkeletonDFGVariable, SkeletonDFGFactor
 export timestamp # DEPRECATED
 export label, getTimestamp, setTimestamp!, tags, setTags!, data, softtype, solverData, getData, solverDataDict, setSolverData, setSolverData!, internalId, smallData, setSmallData!, bigData
+export getSolvedCount, isSolved, setSolvedCount!
 export DFGVariableSummary, DFGFactorSummary, AbstractDFGSummary
 export getNeighborhood, getSubgraph, getSubgraphAroundNode
 

@@ -23,6 +23,7 @@ mutable struct PackedVariableNodeData
     ismargin::Bool
     dontmargin::Bool
     solveInProgress::Int
+    solvedCount::Int
     PackedVariableNodeData() = new()
     PackedVariableNodeData(x1::Vector{Float64},
                          x2::Int,
@@ -39,5 +40,6 @@ mutable struct PackedVariableNodeData
                          x13::Float64,
                          x14::Bool,
                          x15::Bool,
-                         x16::Int) = new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16)
+                         x16::Int,
+                         solvedCount::Int) = new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16, solvedCount)
 end

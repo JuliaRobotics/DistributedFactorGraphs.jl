@@ -1,4 +1,3 @@
-
 include("DFGVariable/PackedVariableNodeData.jl")
 include("DFGVariable/PointParametricEst.jl")
 include("DFGVariable/VariableNodeData.jl")

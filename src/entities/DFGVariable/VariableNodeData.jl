@@ -21,6 +21,7 @@ mutable struct VariableNodeData{T<:InferenceVariable}
     ismargin::Bool
     dontmargin::Bool
     solveInProgress::Int
+    solvedCount::Int
     VariableNodeData{T}() where {T <:InferenceVariable} =
     new{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], T(), false, 0.0, false, false, 0)
     VariableNodeData{T}(val::Array{Float64,2},
@@ -35,11 +36,12 @@ mutable struct VariableNodeData{T<:InferenceVariable}
                         inferdim::Float64,
                         ismargin::Bool,
                         dontmargin::Bool,
-                        solveInProgress::Int=0) where T <: InferenceVariable =
+                        solveInProgress::Int=0,
+                        solvedCount::Int=0) where T <: InferenceVariable =
                             new{T}(val,bw,BayesNetOutVertIDs,dimIDs,dims,
                                    eliminated,BayesNetVertID,separator,
                                    softtype::T,initialized,inferdim,ismargin,
-                                   dontmargin, solveInProgress)
+                                   dontmargin, solveInProgress, solvedCount)
 end
 
 VariableNodeData(val::Array{Float64,2},
@@ -54,11 +56,12 @@ VariableNodeData(val::Array{Float64,2},
                  inferdim::Float64,
                  ismargin::Bool,
                  dontmargin::Bool,
-                 solveInProgress::Int=0) where T <: InferenceVariable =
+                 solveInProgress::Int=0,
+                 solvedCount::Int=0) where T <: InferenceVariable =
                    VariableNodeData{T}(val,bw,BayesNetOutVertIDs,dimIDs,dims,
                                        eliminated,BayesNetVertID,separator,
                                        softtype::T,initialized,inferdim,ismargin,
-                                       dontmargin, solveInProgress)
+                                       dontmargin, solveInProgress, solvedCount)
 #
 VariableNodeData(softtype::T) where T <: InferenceVariable =
-    VariableNodeData{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], softtype, false, 0.0, false, false, 0)
+    VariableNodeData{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], softtype, false, 0.0, false, false, 0, 0)

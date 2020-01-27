@@ -381,3 +381,43 @@ Get the variable ordering for this factor.
 Should be equivalent to getNeighbors unless something was deleted in the graph.
 """
 getVariableOrder(fct::DFGFactor)::Vector{Symbol} = fct._variableOrderSymbols
+
+"""
+    $SIGNATURES
+
+Get the number of times a variable has been inferred -- i.e. `solvedCount`.
+
+Related
+
+isSolved, setSolvedCount!
+"""
+getSolvedCount(v::VariableNodeData) = v.solvedCount
+getSolvedCount(v::VariableDataLevel2, solveKey::Symbol=:default) = getSolverData(v, solveKey) |> getSolvedCount
+getSolvedCount(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = getSolvedCount(getVariable(dfg, sym), solveKey)
+
+"""
+    $SIGNATURES
+
+Boolean on whether the variable has been solved.
+
+Related
+
+getSolved, setSolved!
+"""
+isSolved(v::VariableNodeData) = 0 < v.solvedCount
+isSolved(v::VariableDataLevel2, solveKey::Symbol=:default) = getSolverData(v, solveKey) |> isSolved
+isSolved(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = isSolved(getVariable(dfg, sym), solveKey)
+
+
+"""
+    $SIGNATURES
+
+Update/set the `solveCount` value.
+
+Related
+
+getSolved, isSolved
+"""
+setSolvedCount!(v::VariableNodeData, val::Int) = v.solvedCount = val
+setSolvedCount!(v::VariableDataLevel2, val::Int, solveKey::Symbol=:default) = setSolvedCount!(solverData(v, solveKey), val)
+setSolvedCount!(dfg::AbstractDFG, sym::Symbol, val::Int, solveKey::Symbol=:default) = setSolvedCount!(getVariable(dfg, sym), val, solveKey)
