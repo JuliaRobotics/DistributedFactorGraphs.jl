@@ -15,7 +15,7 @@ struct DFGVariableSummary <: AbstractDFGVariable
     timestamp::DateTime
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
     Accessors: `getTags`, `addTags!`, and `deleteTags!`"""
-    tags::Vector{Symbol}
+    tags::Set{Symbol}
     """Dictionary of estimates keyed by solverDataDict keys
     Accessors: `addEstimate!`, `updateEstimate!`, and `deleteEstimate!`"""
     estimateDict::Dict{Symbol, <:AbstractPointParametricEst}

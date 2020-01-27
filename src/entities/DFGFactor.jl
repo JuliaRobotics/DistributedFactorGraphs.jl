@@ -47,7 +47,7 @@ mutable struct DFGFactor{T, S} <: AbstractDFGFactor
     timestamp::DateTime
     """Factor tags, e.g [:FACTOR].
     Accessors: `getTags`, `addTags!`, and `deleteTags!`"""
-    tags::Vector{Symbol}
+    tags::Set{Symbol}
     """Solver data.
     Accessors: `getSolverData`, `setSolverData!`"""
     solverData::GenericFunctionNodeData{T, S}

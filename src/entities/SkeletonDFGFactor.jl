@@ -11,8 +11,8 @@ struct SkeletonDFGFactor <: AbstractDFGFactor
     Accessor: `getLabel`"""
     label::Symbol
     """Factor tags, e.g [:FACTOR].
-    Accessors: `getLabels`, `addLabels!`, and `deleteLabels!`"""
-    tags::Vector{Symbol}
+    Accessors: `getTags`, `addTags!`, and `deleteTags!`"""
+    tags::Set{Symbol}
     """Internal cache of the ordering of the neighbor variables. Rather use getNeighbors to get the list as this is an internal value.
     Accessors: `getVariableOrder`"""
     _variableOrderSymbols::Vector{Symbol}

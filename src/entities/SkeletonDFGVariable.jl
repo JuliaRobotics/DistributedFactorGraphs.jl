@@ -12,8 +12,8 @@ struct SkeletonDFGVariable <: AbstractDFGVariable
     Accessor: `getLabel`"""
     label::Symbol
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
-    Accessors: `getLabels`, `addLabels!`, and `deleteLabels!`"""
-    tags::Vector{Symbol}
+    Accessors: `getTags`, `addTags!`, and `deleteTags!`"""
+    tags::Set{Symbol}
 end
 
 SkeletonDFGVariable(label::Symbol) = SkeletonDFGVariable(label, Symbol[])
