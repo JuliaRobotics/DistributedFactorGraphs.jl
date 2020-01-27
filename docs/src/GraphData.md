@@ -11,13 +11,13 @@ There are three fundamental types of data in DFG:
 
 The following is a guideline to using these parameters.
 
-> Note: Some functions are direct accessors to the internal parameters, others are derived functions (e.g. getLabel(v) = v.label). In other cases the accessors are simplified ways to interact with the structures. We recommend using the accessors as the internal structure may change over time.
+**NOTE**: Some functions are direct accessors to the internal parameters, others are derived functions (e.g. getLabel(v) = v.label). In other cases the accessors are simplified ways to interact with the structures. We recommend using the accessors as the internal structure may change over time.
 
-> Note: Adds in general throw an error if the element already exists. Update will update the element if it exists, otherwise it will add it.
+**NOTE**: Adds in general throw an error if the element already exists. Update will update the element if it exists, otherwise it will add it.
 
-> Note: In general these functions will return an error if the respective element is not found. This is to avoid returning, say, nothing, which will be horribly confusing if you tried `getVariableSolverData(dfg, :a, :b)` and it returned nothing - which was missing, :a or :b, or was there a communication issue? We recommend coding defensively and trapping errors in critical portions of your user code.
+**NOTE**: In general these functions will return an error if the respective element is not found. This is to avoid returning, say, nothing, which will be horribly confusing if you tried `getVariableSolverData(dfg, :a, :b)` and it returned nothing - which was missing, :a or :b, or was there a communication issue? We recommend coding defensively and trapping errors in critical portions of your user code.
 
-> Note: All data is passed by reference, so if you update the returned structure it will update in the graph. The database driver is an exception, and once the variable or factor is updated you need to call update* to persist the changes to the graph.
+**NOTE**: All data is passed by reference, so if you update the returned structure it will update in the graph. The database driver is an exception, and once the variable or factor is updated you need to call update* to persist the changes to the graph.
 
 The following examples make use this data:
 
@@ -87,9 +87,16 @@ getSofttype
 
 #### Packed Parametric Estimates
 
-Solved graphs contain estimates for the variables, which are keyed by the solution (the default is saved as :default).
+Solved graphs contain packed parametric estimates for the variables, which are keyed by the solution (the default is saved as :default).
 
 ```@docs
+getMaxPPE
+getMeanPPE
+getSuggestedPPE
+getVariablePPE
+getPPE
+getVariablePPEs
+getPPEs
 ```
 
 #### Solver Data

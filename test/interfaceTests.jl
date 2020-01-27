@@ -158,11 +158,30 @@ end
 
     @test getVariablePPEs(v1) == v1.ppeDict
     @test getVariablePPE(v1, :notfound) == nothing
-    @test solverData(v1) === v1.solverDataDict[:default]
+    @test getSolverData(v1) === v1.solverDataDict[:default]
     @test getData(v1) === v1.solverDataDict[:default]
     @test solverData(v1, :default) === v1.solverDataDict[:default]
     @test getSolverDataDict(v1) == v1.solverDataDict
     @test getInternalId(v1) == v1._internalId
+
+    # Add new VND of type ContinuousScalar to :x0
+    # Could also do VariableNodeData(ContinuousScalar())
+    vnd = VariableNodeData{ContinuousScalar}()
+    addVariableSolverData!(dfg, :a, vnd, :parametric)
+    @show listVariableSolverData(dfg, :a)
+    # Get the data back - note that this is a reference to above.
+    vndBack = getVariableSolverData(dfg, :a, :parametric)
+    # Delete it
+    deleteVariableSolverData!(dfg, :a, :parametric)
+    # Update add it
+    updateVariableSolverData!(dfg, :a, vnd, :parametric)
+    # Update update it
+    updateVariableSolverData!(dfg, :a, vnd, :parametric)
+    # Bulk copy update x0 and x1
+    updateVariableSolverData!(dfg, [v1, v2], :default)
+    # Delete parametric from v1
+    deleteVariableSolverData!(dfg, :a, :parametric)
+
 
     #TODO I don't know what is supposed to happen to softtype
     @test getSofttype(v1) == st1

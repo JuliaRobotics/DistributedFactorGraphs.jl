@@ -64,7 +64,7 @@ Variables are added using IncrementalInference's `addVariable!` function. To cre
 - The variable's label (e.g. :x1 or :a)
 - The variable inference type (aka soft type), which is a subtype of InferenceVariable
 
-**Note**: Once variables are initialized to a specific soft type, all variable node data (solver data) must use that type. 
+**NOTE**: Once variables are initialized to a specific soft type, variable node data (solver data) is templated to that type. 
 
 In addition, the following optional parameters are provided:
 - Additional labels for the variable (in DFG these are referred to as tags)
