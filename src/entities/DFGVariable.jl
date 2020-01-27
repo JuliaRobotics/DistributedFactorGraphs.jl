@@ -339,7 +339,7 @@ getSolved, isSolved
 """
 setSolvedCount!(v::VariableNodeData, val::Int) = v.solvedCount = val
 setSolvedCount!(v::VariableDataLevel2, val::Int, solveKey::Symbol=:default) = setSolvedCount!(solverData(v, solveKey), val)
-setSolvedCount!(dfg::AbstractDFG, sym::Symbol, val::Int, solveKey::Symbol=:default) = setSolved!(getVariable(dfg, sym), solveKey, val)
+setSolvedCount!(dfg::AbstractDFG, sym::Symbol, val::Int, solveKey::Symbol=:default) = setSolvedCount!(getVariable(dfg, sym), solveKey, val)
 
 
 """
