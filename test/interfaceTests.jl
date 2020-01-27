@@ -214,9 +214,9 @@ end
     # test solveCount for variable
     # vari = getVariable(dfg, v1)
     @test !isSolved(v1)
-    @test getSolved(v1) == 0
-    setSolved!(v1, 1)
-    @test getSolved(v1) == 1
+    @test getSolvedCount(v1) == 0
+    setSolvedCount!(v1, 1)
+    @test getSolvedCount(v1) == 1
     @test isSolved(v1)
 
     # Session, robot, and user small data tests

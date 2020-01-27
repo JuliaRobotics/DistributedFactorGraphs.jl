@@ -308,11 +308,11 @@ Get the number of times a variable has been inferred -- i.e. `solvedCount`.
 
 Related
 
-isSolved, setSolved!
+isSolved, setSolvedCount!
 """
-getSolved(v::VariableNodeData) = v.solvedCount
-getSolved(v::VariableDataLevel2, solveKey::Symbol=:default) = solverData(v, solveKey) |> getSolved
-getSolved(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = getSolved(getVariable(dfg, sym), solveKey)
+getSolvedCount(v::VariableNodeData) = v.solvedCount
+getSolvedCount(v::VariableDataLevel2, solveKey::Symbol=:default) = solverData(v, solveKey) |> getSolvedCount
+getSolvedCount(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = getSolved(getVariable(dfg, sym), solveKey)
 
 """
     $SIGNATURES
@@ -337,9 +337,9 @@ Related
 
 getSolved, isSolved
 """
-setSolved!(v::VariableNodeData, val::Int) = v.solvedCount = val
-setSolved!(v::VariableDataLevel2, val::Int, solveKey::Symbol=:default) = setSolved!(solverData(v, solveKey), val)
-setSolved!(dfg::AbstractDFG, sym::Symbol, val::Int, solveKey::Symbol=:default) = setSolved!(getVariable(dfg, sym), solveKey, val)
+setSolvedCount!(v::VariableNodeData, val::Int) = v.solvedCount = val
+setSolvedCount!(v::VariableDataLevel2, val::Int, solveKey::Symbol=:default) = setSolvedCount!(solverData(v, solveKey), val)
+setSolvedCount!(dfg::AbstractDFG, sym::Symbol, val::Int, solveKey::Symbol=:default) = setSolved!(getVariable(dfg, sym), solveKey, val)
 
 
 """
