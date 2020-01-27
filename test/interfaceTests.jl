@@ -211,6 +211,15 @@ end
     @test !isVariable(dfg, :doesntexist)
     @test !isFactor(dfg, :doesntexist)
 
+    # test solveCount for variable
+    @test !isSolved(v1)
+    @test getSolvedCount(v1) == 0
+    setSolvedCount!(v1, 1)
+    @test getSolvedCount(v1) == 1
+    @test isSolved(v1)
+    setSolvedCount!(dfg, getLabel(v1), 2)
+    @test getSolvedCount(dfg, getLabel(v1)) == 2
+
     # Session, robot, and user small data tests
     smallUserData = Dict{Symbol, String}(:a => "42", :b => "Hello")
     smallRobotData = Dict{Symbol, String}(:a => "43", :b => "Hello")
@@ -416,6 +425,10 @@ end
     # Filter - always returns the node you start at but filters around that.
     dfgSubgraph = getSubgraphAroundNode(dfg, getFactor(dfg, :x7x8f1), 1, true, solvable=1)
     @test symdiff([:x7x8f1, :x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+    # Test for distance = 2, should return orphans
+    #:x7x8f1 is not solvable
+    dfgSubgraph = getSubgraphAroundNode(dfg, getVariable(dfg, :x8), 2, true, solvable=1)
+    @test symdiff([:x8, :x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
 
     # DFG issue #95 - confirming that getSubgraphAroundNode retains order
     # REF: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/95

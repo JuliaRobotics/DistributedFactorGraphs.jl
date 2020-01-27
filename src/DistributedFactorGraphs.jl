@@ -23,9 +23,11 @@ export InferenceType, PackedInferenceType, FunctorInferenceType, InferenceVariab
 export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
 export getMaxPPE, getMeanPPE, getSuggestedPPE, getVariablePPE, getPPE, getVariablePPEs, getPPEs #, getEstimates
 export timestamp # DEPRECATED
+export getSolvedCount, isSolved, setSolvedCount!
 export label, getTimestamp, setTimestamp!, tags, setTags!, estimates, estimate, data, softtype, solverData, getData, solverDataDict, setSolverData, setSolverData!, internalId, smallData, setSmallData!, bigData
 export DFGVariableSummary, DFGFactorSummary, AbstractDFGSummary
 export addBigDataEntry!, getBigDataEntry, updateBigDataEntry!, deleteBigDataEntry!, getBigDataEntries, getBigDataKeys
+export getNeighborhood, getSubgraph, getSubgraphAroundNode
 
 #Skeleton types
 export SkeletonDFGVariable, SkeletonDFGFactor
