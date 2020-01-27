@@ -57,7 +57,8 @@ const DataLevel2 = Union{VariableDataLevel2, FactorDataLevel2}
 # Level 0
 export getLabel, getTimestamp, setTimestamp!, getTags, setTags!
 # Level 1
-export getMaxPPE, getMeanPPE, getSuggestedPPE, getVariablePPE, getPPE, getVariablePPEs, getPPEs #, getEstimates
+export getMaxPPE, getMeanPPE, getSuggestedPPE, getVariablePPE, getVariablePPEs, getPPEs #, getEstimates
+export listPPE, getPPE, addPPE!, updatePPE!, deletePPE!
 export getSofttype
 # Level 2
 export getData, getSolverData, getSolverDataDict, setSolverData!, getInternalId

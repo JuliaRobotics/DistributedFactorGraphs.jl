@@ -307,7 +307,7 @@ function getSofttype(vnd::VariableNodeData)
   return vnd.softtype
 end
 function getSofttype(v::DFGVariable)
-  return typeof(v).parameters[1] # Get the parameter of the DFGVariable
+  return typeof(v).parameters[1]() # Get instantiated form of the parameter for the DFGVariable
 end
 
 """
@@ -347,14 +347,32 @@ $SIGNATURES
 
 Get the small data for a variable.
 """
-getSmallData(v::DFGVariable) = v.smallData
+getSmallData(v::DFGVariable)::Dict{String, String} = v.smallData
 
 """
 $SIGNATURES
 
 Set the small data for a variable.
 """
-setSmallData!(v::DFGVariable, smallData::String) = v.smallData = smallData
+function setSmallData!(v::DFGVariable, smallData::Dict{String, String})::Dict{String, String}
+    v.smallData = smallData
+end
+
+# WIP
+# """
+# $SIGNATURES
+#
+# Set the small data for a variable.
+# """
+# function addSmallData!(v::DFGVariable, smallData::Dict{String, String})::Dict{String, String}
+#     v.smallData = smallData
+# end
+#
+# function updateSmallData!()
+# end
+#
+# function deleteSmallData!()
+# end
 
 """
 $SIGNATURES

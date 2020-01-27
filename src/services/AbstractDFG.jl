@@ -583,6 +583,105 @@ Delete variable solver data, returns the deleted element.
 deleteVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable, solvekey::Symbol=:default) =
     deleteVariableSolverData!(dfg, sourceVariable.label, solvekey)
 
+#####
+
+"""
+    $(SIGNATURES)
+List all the PPE data keys in the variable.
+"""
+function listPPE(dfg::AbstractDFG, variablekey::Symbol)::Vector{Symbol}
+    v = getVariable(dfg, variablekey)
+    return collect(keys(v.ppeDict))
+end
+
+"""
+    $(SIGNATURES)
+Get variable PPE for a given solve key.
+"""
+function getPPE(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol=:default)::AbstractPointParametricEst
+    v = getVariable(dfg, variablekey)
+    !haskey(v.ppeDict, ppekey) && error("PPE key '$ppeKey' not found in variable '$variableKey'")
+    return v.ppeDict[ppekey]
+end
+
+# Not the most efficient call but it at least reuses above (in memory it's probably ok)
+getPPE(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol=default)::AbstractPointParametricEst = getPPE(dfg, sourceVariable.label, ppekey)
+
+"""
+    $(SIGNATURES)
+Add variable PPE, errors if it already exists.
+"""
+function addPPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default)::Dict{Symbol, AbstractPointParametricEst} where P <: AbstractPointParametricEst
+    var = getVariable(dfg, variablekey)
+    if haskey(var.ppeDict, ppekey)
+        error("PPE '$(ppekey)' already exists")
+    end
+    var.ppeDict[ppekey] = ppe
+    return var.ppeDict
+end
+
+"""
+    $(SIGNATURES)
+Add a new PPE entry from a deepcopy of the source variable PPE.
+NOTE: Copies the solver data.
+"""
+addPPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol=:default) =
+    addPPE!(dfg, sourceVariable.label, deepcopy(getPPE(sourceVariable, ppekey)), ppekey)
+
+
+"""
+    $(SIGNATURES)
+Update PPE data if it exists, otherwise add it.
+"""
+function updatePPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default)::Dict{Symbol, AbstractPointParametricEst} where P <: AbstractPointParametricEst
+    #This is basically just setSolverData
+    var = getVariable(dfg, variablekey)
+    #for InMemoryDFGTypes, cloud would update here
+    var.ppeDict[ppekey] = ppe
+    return var.ppeDict
+end
+
+"""
+    $(SIGNATURES)
+Update PPE data if it exists, otherwise add it.
+NOTE: Copies the PPE data.
+"""
+updatePPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol=:default) =
+    updateVariableSolverData!(dfg, sourceVariable.label, deepcopy(getPPE(sourceVariable, ppekey)), ppekey)
+
+"""
+    $(SIGNATURES)
+Update PPE data if it exists, otherwise add it.
+"""
+function updatePPE!(dfg::AbstractDFG, sourceVariables::Vector{<:DFGVariable}, ppekey::Symbol=:default)
+    #I think cloud would do this in bulk for speed
+    for var in sourceVariables
+        updatePPE!(dfg, var.label, getPPE(dfg, var, ppekey), ppekey)
+    end
+end
+
+"""
+    $(SIGNATURES)
+Delete PPE data, returns the deleted element.
+"""
+function deletePPE!(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol=:default)::AbstractPointParametricEst
+    var = getVariable(dfg, variablekey)
+
+    if !haskey(var.ppeDict, ppekey)
+        error("VariableNodeData '$(ppekey)' does not exist")
+    end
+    vnd = pop!(var.ppeDict, ppekey)
+    return vnd
+end
+
+"""
+    $(SIGNATURES)
+Delete PPE data, returns the deleted element.
+"""
+deletePPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol=:default) =
+    deletePPE!(dfg, sourceVariable.label, ppekey)
+
+####
 
 """
     $(SIGNATURES)

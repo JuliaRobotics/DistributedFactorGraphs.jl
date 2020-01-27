@@ -89,21 +89,59 @@ getSofttype
 
 Solved graphs contain packed parametric estimates for the variables, which are keyed by the solution (the default is saved as :default).
 
+For each PPE structure, there are accessors for getting individual values:
+
 ```@docs
 getMaxPPE
 getMeanPPE
 getSuggestedPPE
-getVariablePPE
 getPPE
-getVariablePPEs
-getPPEs
+```
+
+Related functions for getting, adding/updating, and deleting PPE structures:
+
+```@docs
+listPPE
+getPPE
+addPPE!
+updatePPE!
+deletePPE!
+```
+
+Example of PPE operations:
+
+```julia
+# Add a new PPE of type MeanMaxPPE to :x0
+ppe = MeanMaxPPE(:default, [0.0], [0.0], [0.0])
+addPPE!(dfg, :x0, ppe)
+@show listPPE(dfg, :x0)
+# Get the data back - note that this is a reference to above.
+v = getPPE(dfg, :x0, :default)
+# Delete it
+deletePPE!(dfg, :x0, :default)
+# Update add it
+updatePPE!(dfg, :x0, ppe, :default)
+# Update update it
+updatePPE!(dfg, :x0, ppe, :default)
+# Bulk copy PPE's for x0 and x1
+updatePPE!(dfg, [x0], :default)
 ```
 
 #### Solver Data
 
 Solver data is used by IncrementalInference/RoME/Caesar solver to produce the above PPEs.
 
-Example of updating solver data:
+Related functions:
+
+```@docs
+listVariableSolverData
+getVariableSolverData
+addVariableSolverData!
+updateVariableSolverData!
+deleteVariableSolverData!
+```
+
+Example of solver data operations:
 
 ```julia
 # Add new VND of type ContinuousScalar to :x0
@@ -117,17 +155,24 @@ vndBack = getVariableSolverData(dfg, :x0, :parametric)
 deleteVariableSolverData!(dfg, :x0, :parametric)
 ```
 
-Related Functions:
+#### Small Data
+
+Small data allows you to assign a dictionary to variables. It is a useful way to
+keep small amounts of string data in a variable. As it is stored in the graph
+itself, large entries will slow the graph down, so if data should exceed a
+few bytes/kb, it should rather be saved in bigData.
 
 ```@docs
-listVariableSolverData
-getVariableSolverData
-addVariableSolverData!
-updateVariableSolverData!
-deleteVariableSolverData!
+getSmallData,
+setSmallData!
 ```
 
-#### Small Data
+Example:
+
+```julia
+setSmallData!(x0, Dict("entry"=>"entry value"))
+getSmallData(x0)
+```
 
 #### Big Data
 
