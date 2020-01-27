@@ -63,7 +63,8 @@ function pack(dfg::G, d::VariableNodeData)::PackedVariableNodeData where G <: Ab
                                 d.inferdim,
                                 d.ismargin,
                                 d.dontmargin,
-                                d.solveInProgress)
+                                d.solveInProgress,
+                                d.solvedCount)
 end
 
 function unpack(dfg::G, d::PackedVariableNodeData)::VariableNodeData where G <: AbstractDFG

@@ -211,6 +211,14 @@ end
     @test !isVariable(dfg, :doesntexist)
     @test !isFactor(dfg, :doesntexist)
 
+    # test solveCount for variable
+    # vari = getVariable(dfg, v1)
+    @test !isSolved(v1)
+    @test getSolved(v1) == 0
+    setSolved!(v1, 1)
+    @test getSolved(v1) == 1
+    @test isSolved(v1)
+
     # Session, robot, and user small data tests
     smallUserData = Dict{Symbol, String}(:a => "42", :b => "Hello")
     smallRobotData = Dict{Symbol, String}(:a => "43", :b => "Hello")
