@@ -218,7 +218,7 @@ end
     @test getSolvedCount(v1) == 1
     @test isSolved(v1)
     setSolvedCount!(dfg, getLabel(v1), 2)
-    @test getSolvedCount(v1) == 2
+    @test getSolvedCount(dfg, getLabel(v1)) == 2
 
     # Session, robot, and user small data tests
     smallUserData = Dict{Symbol, String}(:a => "42", :b => "Hello")

@@ -312,7 +312,7 @@ isSolved, setSolvedCount!
 """
 getSolvedCount(v::VariableNodeData) = v.solvedCount
 getSolvedCount(v::VariableDataLevel2, solveKey::Symbol=:default) = solverData(v, solveKey) |> getSolvedCount
-getSolvedCount(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = getSolved(getVariable(dfg, sym), solveKey)
+getSolvedCount(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = getSolvedCount(getVariable(dfg, sym), solveKey)
 
 """
     $SIGNATURES
@@ -339,7 +339,7 @@ getSolved, isSolved
 """
 setSolvedCount!(v::VariableNodeData, val::Int) = v.solvedCount = val
 setSolvedCount!(v::VariableDataLevel2, val::Int, solveKey::Symbol=:default) = setSolvedCount!(solverData(v, solveKey), val)
-setSolvedCount!(dfg::AbstractDFG, sym::Symbol, val::Int, solveKey::Symbol=:default) = setSolvedCount!(getVariable(dfg, sym), solveKey, val)
+setSolvedCount!(dfg::AbstractDFG, sym::Symbol, val::Int, solveKey::Symbol=:default) = setSolvedCount!(getVariable(dfg, sym), val, solveKey)
 
 
 """
