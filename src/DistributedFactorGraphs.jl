@@ -60,7 +60,10 @@ export getLabel, getTimestamp, setTimestamp!, getTags, setTags!
 export getMaxPPE, getMeanPPE, getSuggestedPPE, getVariablePPE, getPPE, getVariablePPEs, getPPEs #, getEstimates
 export getSofttype
 # Level 2
-export getSolverData, solverData, getData, getSolverDataDict, setSolverData!, getInternalId, smallData, setSmallData!, bigData
+export getData, getSolverData, getSolverDataDict, setSolverData!, getInternalId
+export listVariableSolverData, getVariableSolverData, addVariableSolverData!, updateVariableSolverData!, deleteVariableSolverData!
+
+export getSmallData, setSmallData!, bigData
 export addBigDataEntry!, getBigDataEntry, updateBigDataEntry!, deleteBigDataEntry!, getBigDataEntries, getBigDataKeys
 
 # Find a home
@@ -68,7 +71,7 @@ export getVariableOrder
 
 # Services/AbstractDFG Exports
 export isInitialized, getFactorFunction, isVariable, isFactor
-export isSolvable, isSolveInProgress, getSolvable, setSolvable!, getSolveInProgress
+export isSolveInProgress, getSolvable, setSolvable!, getSolveInProgress
 export mergeUpdateVariableSolverData!, mergeUpdateGraphSolverData!
 
 # Solver (IIF) Exports
@@ -87,7 +90,7 @@ export MeanMaxPPE
 #--------
 export setSerializationModule!, getSerializationModule
 export getLabelDict, getDescription, setDescription, getAddHistory, getSolverParams, setSolverParams
-export getUserData, setUserData, getRobotData, setRobotData, getSessionData, setSessionData
+export getUserData, setUserData!, getRobotData, setRobotData!, getSessionData, setSessionData!
 
 # Not sure these are going to work everywhere, TODO implement in cloud?
 export updateUserData!, updateRobotData!, updateSessionData!, deleteUserData!, deleteRobotData!, deleteSessionData!

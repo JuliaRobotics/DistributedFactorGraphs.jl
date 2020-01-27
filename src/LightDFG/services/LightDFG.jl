@@ -12,23 +12,6 @@ function setSolverParams(dfg::LightDFG, solverParams::P) where P <: AbstractPara
   dfg.solverParams = solverParams
 end
 
-# Get user, robot, and session "small" data.
-getUserData(dfg::LightDFG)::Dict{Symbol, String} = return dfg.userData
-function setUserData(dfg::LightDFG, data::Dict{Symbol, String})::Bool
-    dfg.userData = data
-    return true
-end
-getRobotData(dfg::LightDFG)::Dict{Symbol, String} = return dfg.robotData
-function setRobotData(dfg::LightDFG, data::Dict{Symbol, String})::Bool
-    dfg.robotData = data
-    return true
-end
-getSessionData(dfg::LightDFG)::Dict{Symbol, String} = return dfg.sessionData
-function setSessionData(dfg::LightDFG, data::Dict{Symbol, String})::Bool
-    dfg.sessionData = data
-    return true
-end
-
 function exists(dfg::LightDFG{P,V,F}, node::V) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
     return haskey(dfg.g.variables, node.label)
 end
@@ -105,7 +88,6 @@ end
 
 
 function addFactor!(dfg::LightDFG{<:AbstractParams, <:AbstractDFGVariable, F}, factor::F)::Bool where F <: AbstractDFGFactor
-    #TODO should this be an error
     if haskey(dfg.g.factors, factor.label)
         error("Factor '$(factor.label)' already exists in the factor graph")
     end
@@ -113,37 +95,18 @@ function addFactor!(dfg::LightDFG{<:AbstractParams, <:AbstractDFGVariable, F}, f
     return FactorGraphs.addFactor!(dfg.g, variableLabels, factor)
 end
 
-#TODO Sam, I would say if we handle the update vsd corectly this function is only needed in the cloud.
-#   In memory types are just passing pointers along so no perfomrance issue.
-function getVariable(dfg::LightDFG, label::Symbol; solveKey::Union{Nothing, Symbol}=nothing)::Union{Nothing, AbstractDFGVariable}
-
+function getVariable(dfg::LightDFG, label::Symbol)::AbstractDFGVariable
     if !haskey(dfg.g.variables, label)
-        @warn "Variable '$label' does not exists in the factor graph"
-        return nothing
+        error("Variable label '$(label)' does not exist in the factor graph")
     end
 
-    var = dfg.g.variables[label]
-
-    if solveKey != nothing && !haskey(var.solverDataDict, solveKey)
-        @warn "Solvekey '$solveKey' does not exists in the variable"
-        return nothing
-    end
-
-    return var
-
-    # !(label in dfg.g.variables) && return nothing
-    # solveKey == nothing && return dfg.g.variables[label]
-    # # Requesting a single solvekey
-    # if solveKey in dfg.g.variables[label]
-    #     v = copy(dfg.g.variables[label]) # Shallow copy
-    #     v.solverDataDict = [solveKey=>v.solverDataDict[solveKey]]
-    #     return v
-    # else
-    #     return nothing
-    # end
+    return dfg.g.variables[label]
 end
 
 function getFactor(dfg::LightDFG, label::Symbol)::AbstractDFGFactor
+    if !haskey(dfg.g.factors, label)
+        error("Factor label '$(label)' does not exist in the factor graph")
+    end
     return dfg.g.factors[label]
 end
 

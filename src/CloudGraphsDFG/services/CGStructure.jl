@@ -296,7 +296,7 @@ function getUserData(dfg::CloudGraphsDFG)::Dict{Symbol, String}
     propVal = _getNodeProperty(dfg.neo4jInstance, [dfg.userId, "USER"], "data")
     return JSON2.read(String(base64decode(propVal)), Dict{Symbol, String})
 end
-function setUserData(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
+function setUserData!(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
     count = _setNodeProperty(dfg.neo4jInstance, [dfg.userId, "USER"], "data", base64encode(JSON2.write(data)))
     return count == 1
 end
@@ -304,7 +304,7 @@ function getRobotData(dfg::CloudGraphsDFG)::Dict{Symbol, String}
     propVal = _getNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, "ROBOT"], "data")
     return JSON2.read(String(base64decode(propVal)), Dict{Symbol, String})
 end
-function setRobotData(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
+function setRobotData!(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
     count = _setNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, "ROBOT"], "data", base64encode(JSON2.write(data)))
     return count == 1
 end
@@ -312,7 +312,7 @@ function getSessionData(dfg::CloudGraphsDFG)::Dict{Symbol, String}
     propVal = _getNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, "SESSION"], "data")
     return JSON2.read(String(base64decode(propVal)), Dict{Symbol, String})
 end
-function setSessionData(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
+function setSessionData!(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
     count = _setNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, "SESSION"], "data", base64encode(JSON2.write(data)))
     return count == 1
 end
