@@ -70,11 +70,11 @@ Construct a DFG factor given a label.
 """
 #TODO _internalId?
 DFGFactor{T, S}(label::Symbol, internalId::Int64=0, timestamp::DateTime=now()) where {T, S} =
-                DFGFactor(label, timestamp, Symbol[], GenericFunctionNodeData{T, S}(), 0, DFGNodeParams(0, internalId), Symbol[])
+                DFGFactor(label, timestamp, Set{Symbol}(), GenericFunctionNodeData{T, S}(), 0, DFGNodeParams(0, internalId), Symbol[])
 
 DFGFactor(label::Symbol;
     timestamp::DateTime=now(),
-    tags::Vector{Symbol}=Symbol[],
+    tags::Set{Symbol}=Set{Symbol}(),
     data::GenericFunctionNodeData{T, S}=GenericFunctionNodeData{T, S}(),
     solvable::Int=0,
     _internalId::Int64=0,

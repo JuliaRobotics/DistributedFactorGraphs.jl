@@ -12,9 +12,9 @@ v2 = DFGVariable(:b, TestInferenceVariable2())
 f1 = DFGFactor{Int, :Symbol}(:f1)
 
 #add tags for filters
-append!(v1.tags, [:VARIABLE, :POSE])
-append!(v2.tags, [:VARIABLE, :LANDMARK])
-append!(f1.tags, [:FACTOR])
+union!(v1.tags, [:VARIABLE, :POSE])
+union!(v2.tags, [:VARIABLE, :LANDMARK])
+union!(f1.tags, [:FACTOR])
 
 st1 = TestInferenceVariable1()
 st2 = TestInferenceVariable2()
@@ -142,8 +142,8 @@ end
     @test getLabel(v1) == v1.label
     @test getTags(v1) == v1.tags
     testTags = [:ha, :ha23]
-    @test setTags!(v1, testTags) == testTags
-    @test getTags(v1) == testTags
+    @test setTags!(v1, testTags) == Set(testTags)
+    @test getTags(v1) == Set(testTags)
 
     @test getTimestamp(v1) == v1.timestamp
     testTimestamp = now()
