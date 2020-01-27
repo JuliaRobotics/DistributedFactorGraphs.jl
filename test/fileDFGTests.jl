@@ -1,3 +1,7 @@
+using DistributedFactorGraphs
+using IncrementalInference
+dfg = LightDFG{NoSolverParams}()
+
 @testset "FileDFG Tests" begin
 
     if typeof(dfg) <: CloudGraphsDFG
@@ -14,6 +18,7 @@
     verts[7].solvable = 1
     verts[8].solvable = 0
     solverData(verts[8]).solveInProgress = 1
+    setSolvedCount!(verts[1], 5)
     #call update to set it on cloud
     updateVariable!(dfg, verts[7])
     updateVariable!(dfg, verts[8])
