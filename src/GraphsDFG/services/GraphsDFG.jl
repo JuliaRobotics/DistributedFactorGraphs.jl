@@ -25,23 +25,6 @@ function setSolverParams(dfg::GraphsDFG, solverParams::T) where T <: AbstractPar
     dfg.solverParams = solverParams
 end
 
-# Get user, robot, and session "small" data.
-getUserData(dfg::GraphsDFG)::Dict{Symbol, String} = return dfg.userData
-function setUserData(dfg::GraphsDFG, data::Dict{Symbol, String})::Bool
-    dfg.userData = data
-    return true
-end
-getRobotData(dfg::GraphsDFG)::Dict{Symbol, String} = return dfg.robotData
-function setRobotData(dfg::GraphsDFG, data::Dict{Symbol, String})::Bool
-    dfg.robotData = data
-    return true
-end
-getSessionData(dfg::GraphsDFG)::Dict{Symbol, String} = return dfg.sessionData
-function setSessionData(dfg::GraphsDFG, data::Dict{Symbol, String})::Bool
-    dfg.sessionData = data
-    return true
-end
-
 """
     $(SIGNATURES)
 Gets an empty and unique CloudGraphsDFG derived from an existing DFG.
@@ -115,14 +98,15 @@ function addFactor!(dfg::GraphsDFG, variableIds::Vector{Symbol}, factor::DFGFact
     return addFactor!(dfg, variables, factor)
 end
 
-function getVariable(dfg::GraphsDFG, variableId::Int64)::DFGVariable
-    @warn "This may be slow, rather use by getVariable(dfg, label)"
-    #TODO: This may be slow (O(n)), can we make it better?
-    if !(variableId in values(dfg.labelDict))
-        error("Variable ID '$(variableId)' does not exist in the factor graph")
-    end
-    return dfg.g.vertices[variableId].dfgNode
-end
+# TODO: Confirm we can remove this.
+# function getVariable(dfg::GraphsDFG, variableId::Int64)::DFGVariable
+#     @warn "This may be slow, rather use by getVariable(dfg, label)"
+#     #TODO: This may be slow (O(n)), can we make it better?
+#     if !(variableId in values(dfg.labelDict))
+#         error("Variable ID '$(variableId)' does not exist in the factor graph")
+#     end
+#     return dfg.g.vertices[variableId].dfgNode
+# end
 
 function getVariable(dfg::GraphsDFG, label::Union{Symbol, String})::DFGVariable
     if typeof(label) == String

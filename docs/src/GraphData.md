@@ -1,185 +1,167 @@
-# Creating Graphs
+# Using Graph Elements
 
-In this section constructing DFG graphs will be discussed. To start, bring DistributedFactorGraphs into your workspace:
+Variables and factors in DistributedFactorGraphs are used for a variety of
+different applications. We have tried to compartmentalize the data as much as
+possible so that users do not need to dig around to find what they need (it's a work in progress).
+
+There are three fundamental types of data in DFG:
+- Variable and factor data (stored in the nodes themselves)
+- Offloaded big data elements (keyed in a variable or factor, but stored in another location)
+- Graph data (data that is related to the graph itself)
+
+The following is a guideline to using these parameters.
+
+> Note: Some functions are direct accessors to the internal parameters, others are derived functions (e.g. getLabel(v) = v.label). In other cases the accessors are simplified ways to interact with the structures. We recommend using the accessors as the internal structure may change over time.
+
+> Note: Adds in general throw an error if the element already exists. Update will update the element if it exists, otherwise it will add it.
+
+> Note: In general these functions will return an error if the respective element is not found. This is to avoid returning, say, nothing, which will be horribly confusing if you tried `getVariableSolverData(dfg, :a, :b)` and it returned nothing - which was missing, :a or :b, or was there a communication issue? We recommend coding defensively and trapping errors in critical portions of your user code.
+
+> Note: All data is passed by reference, so if you update the returned structure it will update in the graph. The database driver is an exception, and once the variable or factor is updated you need to call update* to persist the changes to the graph.
+
+The following examples make use this data:
 
 ```julia
-using DistributedFactorGraphs
-```
-
-We recommend using IncrementalInference (IIF) to populate DFG graphs. DFG provides the structure, but IIF overloads the provided `addVariable!` and `addFactor!` functions and creates solver-specific data that allows the graph to be solved. So although you can use DFG's `addVariable!` and `addFactor!`, it is better to start with IIF's functions so that the graph is solvable.
-
-So for the following examples, IncrementalInference will be used to create the variables and factors. It should be added and imported to run the examples:
-
-```julia
-using Pkg
-Pkg.add("IncrementalInference")
 using IncrementalInference
-```
-
-## Initializing a Graph
-
-DFG graphs can be built using various drivers (different representations of the underlying graph). At the moment DFG supports 3 drivers:
-- GraphsDFG: An in-memory graph that uses Graphs.jl for representing the graph.
-- LightDFG: An in-memory graph that uses LightGraphs.jl for representing the graph.
-- CloudGraphs: A database-driven graph that uses Neo4j.jl for interacting with the graph.
-
-In general the first two are used for building and solving graphs, and CloudGraphs is used for persisting in-memory graphs into a database. In the long term we recommend using the LightDFG driver for in-memory operation because Graphs.jl is not actively supported and over time that driver may be deprecated.
-
-To continue the example, run one of the following to create a DFG driver:
-
-### Creating a GraphsDFG Graph
-
-```julia
-# Create a DFG with default solver parameters using the Graphs.jl driver.
-dfg = GraphsDFG{SolverParams}(params=SolverParams())
-```
-
-### Creating a LightDFG Graph
-
-```julia
 # Create a DFG with default solver parameters using the LightGraphs.jl driver.
 dfg = LightDFG{SolverParams}(params=SolverParams())
-```
 
-### Creating a CloudGraphsDFG Graph
-
-```julia
-# Create a DFG with no solver parameters (just to demonstrate the difference) using the CloudGraphs driver, and connect it to a local Neo4j instance.
-dfg = CloudGraphsDFG{NoSolverParams}("localhost", 7474, "neo4j", "test",
-                                "testUser", "testRobot", "testSession",
-                                nothing,
-                                nothing,
-                                IncrementalInference.decodePackedType,
-                                IncrementalInference.rebuildFactorMetadata!)
-```
-
-## Creating Variables and Factors
-
-DFG and IIF rely on a CRUD (Create, Read, Update, and Delete) interface to allow users to create and edit graphs.
-
-### Creating Variables with IIF
-
-Variables are added using IncrementalInference's `addVariable!` function. To create the variable, you provide the following parameters:
-- The graph the variable is being added to
-- The variable's label (e.g. :x1 or :a)
-- The variable type (which is a subtype of InferenceVariable)
-
-In addition, the following optional parameters are provided:
-- Additional labels for the variable (in DFG these are referred to as tags)
-- A `solvable` flag to indicate whether the variable is ready to be added to a solution
-
-Three variables are added:
-
-```julia
-v1 = addVariable!(dfg, :x0, ContinuousScalar, labels = [:POSE], solvable=1)
-v2 = addVariable!(dfg, :x1, ContinuousScalar, labels = [:POSE], solvable=1)
-v3 = addVariable!(dfg, :l0, ContinuousScalar, labels = [:LANDMARK], solvable=1)
-```
-
-### Creating Factors with IIF
-
-Similarly to variables, it is recommended that users start with the IIF implementation of the `addFactor!` functions to create factors. To create the factors, you provide the following parameters:
-- The graph the variable is being added to
-- The labels for the variables that the factor is linking
-- The factor function (which is a subtype of )
-
-Additionally, the solvable flag is also set to indicate that the factor can be used in solving graphs.
-
-**NOTE:** Every graph requires a prior for it to be solvable, so it is a good practice to make sure one is added (generally by adding to the first variable in the graph).
-
-Four factors are added: a prior, a linear conditional relationship with a normal distribution between x0 and x1, and a pair of linear conditional relationships between each pose and the landmark.
-
-```julia
-prior = addFactor!(dfg, [:x0], Prior(Normal(0,1)))
+x0 = addVariable!(dfg, :x0, ContinuousScalar, labels = [:POSE], solvable=1)
+x1 = addVariable!(dfg, :x1, ContinuousScalar, labels = [:POSE], solvable=1)
 f1 = addFactor!(dfg, [:x0; :x1], LinearConditional(Normal(50.0,2.0)), solvable=1)
-f1 = addFactor!(dfg, [:l0; :x0], LinearConditional(Normal(40.0,5.0)), solvable=1)
-f1 = addFactor!(dfg, [:l0; :x1], LinearConditional(Normal(-10.0,5.0)), solvable=1)
 ```
 
-The produced factor graph is:
+## Variable and Factor Elements
 
-![imgs/initialgraph.jpg](imgs/initialgraph.jpg)
+### Common Elements
 
-(For more information on producing plots of the graph, please refer to the
-[Drawing Graphs](DrawingGraphs.md) section).
+#### Labels
 
-## Listing Variables and Factors
-
-Reading, updating, and deleting all use DFG functions (as opposed to adding,
-where using the IncrementalInference functions are recommended).
-
-Each variable and factor is uniquely identified by its label. The list of
-variable and factor labels can be retrieved with the `ls`/`getVariableIds` and
-`lsf`/`getFactorIds` functions:
+Labels are the principle identifier of a variable or factor.
 
 ```@docs
-getVariableIds
-ls
+getLabel
 ```
 
 ```@docs
-getFactorIds
-lsf
+getLabel
 ```
 
-To list all variables or factors (instead of just their labels), use the
-`getVariables` and `getFactors` functions:
+#### Timestamps
+
+Each variable or factor can have a timestamp associated with it.
 
 ```@docs
-getVariables
-getFactors
+getTimestamp
+setTimestamp!
 ```
 
-**NOTE**: `getNeighbors` is also worth mentioning at this point as it is a simple way to
-find the bigraph relationships. More information on this and other ways to
-retrieve filtered lists of variables/factors (an area that's currently WIP in
-DFG) can be found in [Traversing and Querying](TraversingAndQuerying.md).  
+#### Tags
 
-## Getting (Reading) Variables and Factors
-
-Individual variables and factors can be retrieved from their labels using the following functions:
+Tags are a set of symbols that contain identifiers for the variable or factor.
 
 ```@docs
-getVariable
+addTag
+mergeTags!
+deleteTags!
 ```
 
+### Solvable
+
+The solvable flag indicates whether the solver should make use of the variable or factor while solving the graph. This can be used to construct graphs in chunks while solving asynchronously, or for selectively solving portions of the graph.
+
 ```@docs
-getFactor
+getSolvable
+setSolvable!
 ```
 
-It is worth noting that `getVariable` allows a user to retrieve only a single
-solver entry, so that subsets of the solver data can be retrieved individually
-(say, in the case that there are many solutions). These can then be updated
-independently using the functions as discussed in the update section below.
+### Variables
 
-## Updating Variables and Factors
+#### Soft Type
 
-Full variables and factors can be updated using the following functions:
+The soft type is the underlying inference variable type, such as a Pose2.
 
 ```@docs
-updateVariable!
+getSofttype
 ```
 
+#### Packed Parametric Estimates
+
+Solved graphs contain estimates for the variables, which are keyed by the solution (the default is saved as :default).
+
 ```@docs
-updateFactor!
 ```
 
-**NOTE**: Skeleton and summary variables are read-only. To perform updates you
-should use the full factors and variables.
+#### Solver Data
 
-**NOTE**: `updateVariable`/`updateFactor` performs a complete update of the
-respective node. It's not a very efficient way to edit fine-grain detail. There
-are other methods to perform smaller in-place changes. This is discussed in
-more detail in [Data Structure](DataStructure.md).
+Solver data is used by IncrementalInference/RoME/Caesar solver to produce the above PPEs.
 
-## Deleting Variables and Factors
+Example of updating solver data:
 
-Variables and factors can be deleted using the following functions:
-
-```@docs
-deleteVariable!
+```julia
+# Add new VND of type ContinuousScalar to :x0
+# Could also do VariableNodeData(ContinuousScalar())
+vnd = VariableNodeData{ContinuousScalar}()
+addVariableSolverData!(dfg, :x0, vnd, :parametric)
+@show listVariableSolverData(dfg, :x0)
+# Get the data back - note that this is a reference to above.
+vndBack = getVariableSolverData(dfg, :x0, :parametric)
+# Delete it
+deleteVariableSolverData!(dfg, :x0, :parametric)
 ```
 
+Related Functions:
+
 ```@docs
-deleteFactor!
+listVariableSolverData
+getVariableSolverData
+addVariableSolverData!
+updateVariableSolverData!
+deleteVariableSolverData!
+```
+
+#### Small Data
+
+#### Big Data
+
+### Factors
+
+## Graph-Related Data
+
+DFG can store data in the graph itself (as opposed to inside graph elements).
+When you retrieve graphs from a database, this information is carried along. If
+you are working with an in-memory graph, the structure is flattened into the
+graph itself as `userData`, `robotData`, and `sessionData`.
+
+Graphs reside inside a hierarchy made up in the following way:
+- User1
+  - Robot1
+    - Session1 (the graph itself)
+- User2
+  - Robot2
+  - Robot3
+    - Session2
+    - Session3
+
+This data can be retrieved with the follow functions:
+
+```@docs
+getUserData
+getRobotData
+getSessionData
+```
+
+It can be set using the following functions:
+
+```@docs
+setUserData!
+setRobotData!
+setSessionData!
+```
+
+Example of using graph-level data:
+
+```julia
+setUserData!(dfg, Dict(:a => "Hello"))
+getUserData(dfg)
 ```

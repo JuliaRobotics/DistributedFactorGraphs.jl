@@ -331,18 +331,9 @@ end
 """
     $SIGNATURES
 
-Retrieve solver data structure stored in a variable.
-"""
-function solverData(v::DFGVariable, key::Symbol=:default)
-    @warn "Deprecated, please use getSolverData"
-    return getSolverData(v, key)
-end
-"""
-    $SIGNATURES
-
 Set solver data structure stored in a variable.
 """
-setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = setSolverData(v, data, key)
+setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v.solverDataDict[key] = data
 
 """
     $SIGNATURES
@@ -356,7 +347,7 @@ $SIGNATURES
 
 Get the small data for a variable.
 """
-smallData(v::DFGVariable) = v.smallData
+getSmallData(v::DFGVariable) = v.smallData
 
 """
 $SIGNATURES
