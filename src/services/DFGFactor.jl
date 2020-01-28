@@ -1,7 +1,7 @@
 import Base: convert, ==
 
 function convert(::Type{DFGFactorSummary}, f::DFGFactor)
-    return DFGFactorSummary(f.label, f.timetamp, deepcopy(f.tags), f._internalId, deepcopy(f._variableOrderSymbols))
+    return DFGFactorSummary(f.label, f.timestamp, deepcopy(f.tags), f._dfgNodeParams._internalId, deepcopy(f._variableOrderSymbols))
 end
 
 function packFactor(dfg::G, f::DFGFactor)::Dict{String, Any} where G <: AbstractDFG

@@ -38,8 +38,20 @@ getTimestamp(v::DataLevel1) = v.timestamp
 $SIGNATURES
 
 Set the timestamp of a DFGFactor object.
+Dev note:
+Since it is not mutable it has to return a new variable with the updated timestamp.
+Use `updateVariable!` to update it in the factor graph.
+TODO either this or we should make the field/variable mutable
 """
-setTimestamp!(v::DataLevel1, ts::DateTime) = v.timestamp = ts
+function setTimestamp(v::DFGVariable, ts::DateTime)
+    return DFGVariable(v.label, ts, v.tags, v.ppeDict, v.solverDataDict, v.smallData, v.bigData, v._dfgNodeParams)
+end
+
+function setTimestamp(v::DFGVariableSummary, ts::DateTime)
+    return DFGVariableSummary(v.label, ts, v.tags, v.estimateDict, v.softtypename, v.bigData, v._internalId)
+end
+
+setTimestamp!(f::FactorDataLevel1, ts::DateTime) = f.timestamp = ts
 
 """
 $SIGNATURES

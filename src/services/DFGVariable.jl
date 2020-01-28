@@ -156,7 +156,7 @@ end
 Convert a DFGVariable to a DFGVariableSummary.
 """
 function convert(::Type{DFGVariableSummary}, v::DFGVariable)
-    return DFGVariableSummary(v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.ppeDict), Symbol(typeof(getSofttype(v))), v._internalId)
+    return DFGVariableSummary(v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.ppeDict), Symbol(typeof(getSofttype(v))), v.bigData, v._internalId)
 end
 
 """
@@ -326,6 +326,11 @@ Retrieve solver data structure stored in a variable.
 """
 function getSolverData(v::DFGVariable, key::Symbol=:default)
     return haskey(v.solverDataDict, key) ? v.solverDataDict[key] : nothing
+end
+
+function solverData(v::DFGVariable, key::Symbol=:default)
+  @warn "Deprecated for 0.6 standardization. Please use getSolverData()"
+  return getSolverData(v, key)
 end
 
 """

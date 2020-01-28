@@ -1,5 +1,4 @@
-#
-global testDFGAPI = LightDFG
+# global testDFGAPI = LightDFG
 
 dfg = testDFGAPI{NoSolverParams}()
 
@@ -19,14 +18,14 @@ union!(f1.tags, [:FACTOR])
 st1 = TestInferenceVariable1()
 st2 = TestInferenceVariable2()
 
-solverData(v1).softtype = deepcopy(st1)
-solverData(v2).softtype = deepcopy(st2)
+getSolverData(v1).softtype = deepcopy(st1)
+getSolverData(v2).softtype = deepcopy(st2)
 
 # set v1 to solvable=0
 setSolvable!(v1, 0)
 # set v1 and f1 solveInProgress
-solverData(v1).solveInProgress = 1
-solverData(f1).solveInProgress = 1
+getSolverData(v1).solveInProgress = 1
+getSolverData(f1).solveInProgress = 1
 
 
 # NOTE: Just for testing
@@ -122,7 +121,9 @@ end
     f2 = deepcopy(f1)
     f2.label = :something
     @test f2 != f1
-    @test getVariable(dfg, :nope) == nothing
+    #TODO we should really finish defining error behaviour
+    @test_throws Exception getVariable(dfg, :nope)
+    # @test getVariable(dfg, :nope) == nothing
     @test_throws Exception getVariable(dfg, "nope")
     @test_throws Exception getFactor(dfg, :nope)
     @test_throws Exception getFactor(dfg, "nope")
@@ -147,8 +148,12 @@ end
 
     @test getTimestamp(v1) == v1.timestamp
     testTimestamp = now()
-    #TODO set timestamp immutable
-    @test setTimestamp!(v1, testTimestamp) == testTimestamp
+    #TODO set timestamp immutable, confirm behaviour
+    v1ts = setTimestamp(v1, testTimestamp)
+    updateVariable!(dfg, v1ts)
+    @test getVariable(dfg, v1ts.label) == v1ts
+    @test v1ts != v1
+    v1 = getVariable(dfg, v1ts.label)
     @test getTimestamp(v1) == testTimestamp
 
     @test getTimestamp(f1) == f1.timestamp
@@ -167,13 +172,14 @@ end
     #TODO: Finish
     # Add new VND of type ContinuousScalar to :x0
     # Could also do VariableNodeData(ContinuousScalar())
-    vnd = VariableNodeData{ContinuousScalar}()
+    vnd = VariableNodeData{TestInferenceVariable1}()
     addVariableSolverData!(dfg, :a, vnd, :parametric)
-    @show listVariableSolverData(dfg, :a)
+    @test setdiff(listVariableSolverData(dfg, :a), [:default, :parametric]) == []
     # Get the data back - note that this is a reference to above.
     vndBack = getVariableSolverData(dfg, :a, :parametric)
+    @test vndBack == vnd
     # Delete it
-    deleteVariableSolverData!(dfg, :a, :parametric)
+    @test deleteVariableSolverData!(dfg, :a, :parametric) == vndBack
     # Update add it
     updateVariableSolverData!(dfg, :a, vnd, :parametric)
     # Update update it
@@ -186,20 +192,21 @@ end
     #TODO: Finish
     # Add a new PPE of type MeanMaxPPE to :x0
     ppe = MeanMaxPPE(:default, [0.0], [0.0], [0.0])
-    addPPE!(dfg, :x0, ppe)
-    @show listPPE(dfg, :x0)
+    addPPE!(dfg, :a, ppe)
+    @test listPPE(dfg, :a) == [:default]
     # Get the data back - note that this is a reference to above.
-    v = getPPE(dfg, :x0, :default)
+    @test getPPE(dfg, :a, :default) == ppe
+
     # Delete it
-    deletePPE!(dfg, :x0, :default)
+    @test deletePPE!(dfg, :a, :default) == ppe
     # Update add it
-    updatePPE!(dfg, :x0, ppe, :default)
+    updatePPE!(dfg, :a, ppe, :default)
     # Update update it
-    updatePPE!(dfg, :x0, ppe, :default)
+    updatePPE!(dfg, :a, ppe, :default)
     # Bulk copy PPE's for x0 and x1
-    updatePPE!(dfg, [x0], :default)
+    updatePPE!(dfg, [v1], :default)
     # Delete it
-    deletePPE!(dfg, :x0, :default)
+    @test deletePPE!(dfg, :a, :default) == ppe
 
     #TODO I don't know what is supposed to happen to softtype
     @test getSofttype(v1) == st1
@@ -208,8 +215,8 @@ end
 
     @test getLabel(f1) == f1.label
     @test getTags(f1) == f1.tags
-    @test setTags!(v1, testTags) == testTags
-    @test getTags(v1) == testTags
+    @test setTags!(v1, testTags) == Set(testTags)
+    @test getTags(v1) == Set(testTags)
 
     @test solverData(f1) == f1.solverData
     # Deprecated functions
@@ -226,9 +233,10 @@ end
     @test !isInitialized(v2)
     @test !isInitialized(v2, key=:second)
     # isSolvable and isSolveInProgress
-    @test isSolvable(v1) == 0
-    @test isSolvable(v2) == 1
-    @test isSolvable(f1) == 0
+    #TODO implement or deprecate isSolvable
+    @test getSolvable(v1) == 0
+    @test getSolvable(v2) == 1
+    @test getSolvable(f1) == 0
     @test getSolvable(v1) == 0
 
     #TODO isSolveInProgress was not deprecated
@@ -238,9 +246,9 @@ end
     v1 = getVariable(dfg, v1.label)
     f1 = getFactor(dfg, f1.label)
     @test setSolvable!(v1, 1) == 1
-    @test isSolvable(v1) == 1
+    @test getSolvable(v1) == 1
     @test setSolvable!(dfg, v1.label, 0) == 0
-    @test isSolvable(v1) == 0
+    @test getSolvable(v1) == 0
     @test setSolvable!(f1, 1) == 1
     @test getSolvable(dfg, f1.label) == 1
     @test setSolvable!(dfg, f1.label, 0) == 0
@@ -268,9 +276,9 @@ end
     smallUserData = Dict{Symbol, String}(:a => "42", :b => "Hello")
     smallRobotData = Dict{Symbol, String}(:a => "43", :b => "Hello")
     smallSessionData = Dict{Symbol, String}(:a => "44", :b => "Hello")
-    setUserData(dfg, deepcopy(smallUserData))
-    setRobotData(dfg, deepcopy(smallRobotData))
-    setSessionData(dfg, deepcopy(smallSessionData))
+    setUserData!(dfg, deepcopy(smallUserData))
+    setRobotData!(dfg, deepcopy(smallRobotData))
+    setSessionData!(dfg, deepcopy(smallSessionData))
     @test getUserData(dfg) == smallUserData
     @test getRobotData(dfg) == smallRobotData
     @test getSessionData(dfg) == smallSessionData
@@ -507,7 +515,7 @@ end
     for v in ls(summaryGraph)
         for field in variableFields
             if field != :softtypename
-                @test getfield(getVariable(dfg, v), field) == getfield(getVariable(summaryGraph, v), field)
+                @test getproperty(getVariable(dfg, v), field) == getproperty(getVariable(summaryGraph, v), field)
             else
                 # Special case to check the symbol softtype is equal to the full softtype.
                 @test Symbol(typeof(getSofttype(getVariable(dfg, v)))) == getSofttype(getVariable(summaryGraph, v))
@@ -516,7 +524,7 @@ end
     end
     for f in lsf(summaryGraph)
         for field in factorFields
-            @test getfield(getFactor(dfg, f), field) == getfield(getFactor(summaryGraph, f), field)
+            @test getproperty(getFactor(dfg, f), field) == getproperty(getFactor(summaryGraph, f), field)
         end
     end
 end

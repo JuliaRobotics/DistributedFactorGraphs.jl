@@ -16,9 +16,9 @@ struct DFGVariableSummary <: AbstractDFGVariable
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
     Accessors: `getTags`, `addTags!`, and `deleteTags!`"""
     tags::Set{Symbol}
-    """Dictionary of estimates keyed by solverDataDict keys
-    Accessors: `addEstimate!`, `updateEstimate!`, and `deleteEstimate!`"""
-    estimateDict::Dict{Symbol, <:AbstractPointParametricEst}
+    """Dictionary of parametric point estimates keyed by solverDataDict keys
+    Accessors: `addPPE!`, `updatePPE!`, and `deletePPE!`"""
+    ppeDict::Dict{Symbol, <:AbstractPointParametricEst}
     """Symbol for the softtype for the underlying variable.
     Accessor: `getSofttype`"""
     softtypename::Symbol

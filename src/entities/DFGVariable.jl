@@ -20,8 +20,8 @@ struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
     Accessors: `getTags`, `addTags!`, and `deleteTags!`"""
     tags::Set{Symbol}
-    """Dictionary of estimates keyed by solverDataDict keys
-    Accessors: `addEstimate!`, `updateEstimate!`, and `deleteEstimate!`"""
+    """Dictionary of parametric point estimates keyed by solverDataDict keys
+    Accessors: `addPPE!`, `updatePPE!`, and `deletePPE!`"""
     ppeDict::Dict{Symbol, <: AbstractPointParametricEst}
     """Dictionary of solver data. May be a subset of all solutions if a solver key was specified in the get call.
     Accessors: `addVariableSolverData!`, `updateVariableSolverData!`, and `deleteVariableSolverData!`"""
