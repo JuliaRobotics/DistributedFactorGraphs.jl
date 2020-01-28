@@ -715,6 +715,7 @@ function mergeUpdateGraphSolverData!(sourceDFG::G, destDFG::H, varSyms::Vector{S
 end
 
 # Alias
+# TODO Can we not deprecate this completely in favor of only using a sparse matrix?
 """
     $(SIGNATURES)
 Get a matrix indicating relationships between variables and factors. Rows are
@@ -723,8 +724,7 @@ the symbol of the relating factor. The first row and first column are factor and
 variable headings respectively.
 """
 function getAdjacencyMatrix(dfg::AbstractDFG; solvable::Int=0)::Matrix{Union{Nothing, Symbol}}
-    @warn "Deprecated function, please use getIncidenceMatrix as this will be removed in v0.6.1"
-    return getIncidenceMatrix(dfg, solvable)
+    error("Deprecated function, please use getBiadjacencyMatrix")
 end
 """
     $(SIGNATURES)
@@ -732,8 +732,9 @@ Get a matrix indicating relationships between variables and factors. Rows are
 all factors, columns are all variables, and each cell contains either nothing or
 the symbol of the relating factor. The first row and first column are factor and
 variable headings respectively.
+Note: rather use getBiadjacencyMatrix
 """
-function getIncidenceMatrix(dfg::AbstractDFG; solvable::Int=0)::Matrix{Union{Nothing, Symbol}}
+function getAdjacencyMatrixSymbols(dfg::AbstractDFG; solvable::Int=0)::Matrix{Union{Nothing, Symbol}}
     #
     varLabels = sort(map(v->v.label, getVariables(dfg, solvable=solvable)))
     factLabels = sort(map(f->f.label, getFactors(dfg, solvable=solvable)))
@@ -750,25 +751,16 @@ function getIncidenceMatrix(dfg::AbstractDFG; solvable::Int=0)::Matrix{Union{Not
     return adjMat
 end
 
+
+
 """
     $(SIGNATURES)
-Get a matrix indicating relationships between variables and factors. Returned as
+Get a matrix indicating adjacency between variables and factors. Returned as
 a tuple: adjmat::SparseMatrixCSC{Int}, var_labels::Vector{Symbol)
 fac_labels::Vector{Symbol). Rows are the factors, columns are the variables,
 with the corresponding labels in fac_labels,var_labels.
 """
-function getAdjacencyMatrixSparse(dfg::G; solvable::Int=0)::Tuple{SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}} where G <: AbstractDFG
-    @warn "Deprecated function, please use getIncidenceMatrixSparse as this will be removed in v0.6.1"
-    return getIncidenceMatrixSparse(dfg, solvable)
-end
-"""
-    $(SIGNATURES)
-Get a matrix indicating relationships between variables and factors. Returned as
-a tuple: adjmat::SparseMatrixCSC{Int}, var_labels::Vector{Symbol)
-fac_labels::Vector{Symbol). Rows are the factors, columns are the variables,
-with the corresponding labels in fac_labels,var_labels.
-"""
-function getIncidenceMatrixSparse(dfg::G; solvable::Int=0)::Tuple{SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}} where G <: AbstractDFG
+function getBiadjacencyMatrix(dfg::G; solvable::Int=0)::Tuple{SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}} where G <: AbstractDFG
     varLabels = map(v->v.label, getVariables(dfg, solvable=solvable))
     factLabels = map(f->f.label, getFactors(dfg, solvable=solvable))
 
@@ -783,6 +775,10 @@ function getIncidenceMatrixSparse(dfg::G; solvable::Int=0)::Tuple{SparseMatrixCS
     return adjMat, varLabels, factLabels
 end
 
+function getAdjacencyMatrixSparse(dfg::G; solvable::Int=0)::Tuple{SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}} where G <: AbstractDFG
+    @warn "Deprecated function, please use getBiadjacencyMatrix as this will be removed in v0.6.1"
+    return getBiadjacencyMatrix(dfg, solvable)
+end
 # -------------------------
 
 """
@@ -807,6 +803,9 @@ function getSolvable(dfg::AbstractDFG, sym::Symbol)
     return getFactor(dfg, sym)._dfgNodeParams.solvable
   end
 end
+
+
+isSolvable(node::Union{DFGVariable, DFGFactor}) = getSolvable(node) > 0
 
 """
     $SIGNATURES

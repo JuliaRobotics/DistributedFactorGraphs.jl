@@ -19,7 +19,6 @@ using Dates
 # Test each interface
 apis = [
     GraphsDFG,
-    DistributedFactorGraphs.SymbolDFG,
     LightDFG
     ]
 for api in apis
@@ -28,10 +27,6 @@ for api in apis
         global testDFGAPI = api
         include("interfaceTests.jl")
     end
-end
-
-@testset "Deprecated Drivers Test" begin
-    @test_throws UndefVarError SymbolDFG{NoSolverParams}()
 end
 
 # Test special cases

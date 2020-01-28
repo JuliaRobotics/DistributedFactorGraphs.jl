@@ -323,26 +323,10 @@ function getSubgraph(dfg::LightDFG{P,V,F}, variableFactorLabels::Vector{Symbol},
     return addToDFG
 end
 
-function getIncidenceMatrix(dfg::LightDFG; solvable::Int=0)::Matrix{Union{Nothing, Symbol}}
-    #TODO Why does it need to be sorted?
-    varLabels = sort(getVariableIds(dfg, solvable=solvable))#ort(map(v->v.label, getVariables(dfg)))
-    factLabels = sort(getFactorIds(dfg, solvable=solvable))#sort(map(f->f.label, getFactors(dfg)))
-    vDict = Dict(varLabels .=> [1:length(varLabels)...].+1)
-
-    adjMat = Matrix{Union{Nothing, Symbol}}(nothing, length(factLabels)+1, length(varLabels)+1)
-    # Set row/col headings
-    adjMat[2:end, 1] = factLabels
-    adjMat[1, 2:end] = varLabels
-    for (fIndex, factLabel) in enumerate(factLabels)
-        factVars = getNeighbors(dfg, getFactor(dfg, factLabel))
-        map(vLabel -> adjMat[fIndex+1,vDict[vLabel]] = factLabel, factVars)
-    end
-    return adjMat
-end
 
 #TODO This is just way too strange to call a function  getIncidenceMatrix that calls adjacency_matrix internally,
 # So I'm going with Biadjacency Matrix https://en.wikipedia.org/wiki/Adjacency_matrix#Of_a_bipartite_graph
-function getBiadjacencyMatrixSparse(dfg::LightDFG; solvable::Int=0)::Tuple{LightGraphs.SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}
+function getBiadjacencyMatrix(dfg::LightDFG; solvable::Int=0)::Tuple{LightGraphs.SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}
     varLabels = getVariableIds(dfg, solvable=solvable)
     factLabels = getFactorIds(dfg, solvable=solvable)
     varIndex = [dfg.g.labels[s] for s in varLabels]
@@ -354,13 +338,8 @@ function getBiadjacencyMatrixSparse(dfg::LightDFG; solvable::Int=0)::Tuple{Light
     return adjvf, varLabels, factLabels
 end
 
-function getAdjacencyMatrixSparse(dfg::LightDFG; solvable::Int=0)
-    @warn "Deprecated function, please use getBiadjacencyMatrixSparse as this will be removed in v0.6.1"
-    return getBiadjacencyMatrixSparse(dfg, solvable=solvable)
-end
-
 # this would be an incidence matrix
-function getIncidenceMatrixSparse(dfg::LightDFG)
+function getIncidenceMatrix(dfg::LightDFG)
     return incidence_matrix(dfg.g)
 end
 
