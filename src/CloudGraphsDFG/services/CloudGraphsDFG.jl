@@ -163,7 +163,7 @@ function getFactor(dfg::CloudGraphsDFG, factorId::Int64)::DFGFactor
     factor = dfg.rebuildFactorMetadata!(dfg, factor)
     # GUARANTEED never to bite us in the future...
     # ... TODO: refactor if changed: https://github.com/JuliaRobotics/IncrementalInference.jl/issues/350
-    solverData(factor).fncargvID = factor._variableOrderSymbols
+    getSolverData(factor).fncargvID = factor._variableOrderSymbols
 
     # Add to cache
     push!(dfg.factorCache, factor.label=>factor)

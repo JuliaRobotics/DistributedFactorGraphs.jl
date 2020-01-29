@@ -823,7 +823,7 @@ function getSolveInProgress(var::Union{DFGVariable, DFGFactor}; solveKey::Symbol
     # Variable
     var isa DFGVariable && return haskey(getSolverDataDict(var), solveKey) ? getSolverDataDict(var)[solveKey].solveInProgress : 0
     # Factor
-    return solverData(var).solveInProgress
+    return getSolverData(var).solveInProgress
 end
 
 """
@@ -909,7 +909,7 @@ end
 Return reference to the user factor in `<:AbstractDFG` identified by `::Symbol`.
 """
 getFactorFunction(fcd::GenericFunctionNodeData) = fcd.fnc.usrfnc!
-getFactorFunction(fc::DFGFactor) = getFactorFunction(solverData(fc))
+getFactorFunction(fc::DFGFactor) = getFactorFunction(getSolverData(fc))
 function getFactorFunction(dfg::G, fsym::Symbol) where G <: AbstractDFG
   getFactorFunction(getFactor(dfg, fsym))
 end
