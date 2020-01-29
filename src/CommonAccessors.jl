@@ -58,4 +58,6 @@ $SIGNATURES
 
 Return the internal ID for a variable.
 """
-getInternalId(v::DataLevel1) = v._dfgNodeParams._internalId
+getInternalId(v::DataLevel2) = v._dfgNodeParams._internalId
+
+getInternalId(v::Union{DFGVariableSummary, DFGFactorSummary}) = v._internalId

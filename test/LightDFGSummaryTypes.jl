@@ -1,19 +1,19 @@
 
 dfg = LightDFG{NoSolverParams, VARTYPE, FACTYPE}()
-DistributedFactorGraphs.DFGVariableSummary(label::Symbol) = DFGVariableSummary(label, DistributedFactorGraphs.now(), Symbol[], Dict{Symbol, MeanMaxPPE}(), :NA, 0)
-DistributedFactorGraphs.DFGFactorSummary(label::Symbol) = DFGFactorSummary(label, Symbol[], 0, Symbol[])
+DistributedFactorGraphs.DFGVariableSummary(label::Symbol) = DFGVariableSummary(label, DistributedFactorGraphs.now(), Set{Symbol}(), Dict{Symbol, MeanMaxPPE}(), :Pose2, Dict{Symbol,AbstractBigDataEntry}(), 0)
+DistributedFactorGraphs.DFGFactorSummary(label::Symbol) = DFGFactorSummary(label, DistributedFactorGraphs.now(), Set{Symbol}(), 0, Symbol[])
 
 v1 = VARTYPE(:a)
 v2 = VARTYPE(:b)
 f1 = FACTYPE(:f1)
 
 #add tags for filters
-append!(v1.tags, [:VARIABLE, :POSE])
-append!(v2.tags, [:VARIABLE, :LANDMARK])
-append!(f1.tags, [:FACTOR])
+union!(v1.tags, [:VARIABLE, :POSE])
+union!(v2.tags, [:VARIABLE, :LANDMARK])
+union!(f1.tags, [:FACTOR])
 
 #Force softtypename
-isa(v1, DFGVariableSummary) && (v1.softtypename = :Pose2)
+# isa(v1, DFGVariableSummary) && (v1.softtypename = :Pose2)
 
 # @testset "Creating Graphs" begin
 global dfg,v1,v2,f1
@@ -102,7 +102,7 @@ end
         @test getVariablePPEs(v1) == v1.ppeDict
         @test getVariablePPE(v1, :notfound) == nothing
         @test getSofttype(v1) == :Pose2
-        @test internalId(v1) == v1._internalId
+        @test getInternalId(v1) == v1._internalId
     end
     # @test solverData(v1) === v1.solverDataDict[:default]
     # @test getData(v1) === v1.solverDataDict[:default]
@@ -117,7 +117,7 @@ end
     # @test getData(f1) == f1.data
     # Internal function
     if FACTYPE == DFGFactorSummary
-        @test internalId(f1) == f1._internalId
+        @test getInternalId(f1) == f1._internalId
     end
 
 end
@@ -164,12 +164,12 @@ end
 @testset "Adjacency Matrices" begin
     global dfg,v1,v2,f1
     # Normal
-    adjMat = getAdjacencyMatrix(dfg)
-    @test size(adjMat) == (2,4)
-    @test symdiff(adjMat[1, :], [nothing, :a, :b, :orphan]) == Symbol[]
-    @test symdiff(adjMat[2, :], [:f1, :f1, :f1, nothing]) == Symbol[]
+    @test_throws ErrorException getAdjacencyMatrix(dfg)
+    # @test size(adjMat) == (2,4)
+    # @test symdiff(adjMat[1, :], [nothing, :a, :b, :orphan]) == Symbol[]
+    # @test symdiff(adjMat[2, :], [:f1, :f1, :f1, nothing]) == Symbol[]
     #sparse
-    adjMat, v_ll, f_ll = getAdjacencyMatrixSparse(dfg)
+    adjMat, v_ll, f_ll = getBiadjacencyMatrix(dfg)
     @test size(adjMat) == (1,3)
 
     # Checking the elements of adjacency, its not sorted so need indexing function

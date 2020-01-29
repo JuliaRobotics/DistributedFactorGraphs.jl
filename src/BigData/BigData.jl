@@ -10,7 +10,7 @@ include("services/FileDataStore.jl")
 
 export AbstractDataStore
 
-export GeneralBigDataEntry, MongodbBigDataEntry, FileBigDataEntry
+export AbstractBigDataEntry, GeneralBigDataEntry, MongodbBigDataEntry, FileBigDataEntry
 export InMemoryDataStore, FileDataStore
 
 export getBigData, addBigData!, updateBigData!, deleteBigData!, listStoreEntries
