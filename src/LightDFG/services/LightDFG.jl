@@ -326,7 +326,8 @@ end
 
 #TODO This is just way too strange to call a function  getIncidenceMatrix that calls adjacency_matrix internally,
 # So I'm going with Biadjacency Matrix https://en.wikipedia.org/wiki/Adjacency_matrix#Of_a_bipartite_graph
-function getBiadjacencyMatrix(dfg::LightDFG; solvable::Int=0)::Tuple{LightGraphs.SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}
+# TODO biadjacencyMatrix
+function getBiadjacencyMatrix(dfg::LightDFG; solvable::Int=0)::NamedTuple{(:B, :varLabels, :facLabels),Tuple{LightGraphs.SparseMatrixCSC,Vector{Symbol}, Vector{Symbol}}}
     varLabels = getVariableIds(dfg, solvable=solvable)
     factLabels = getFactorIds(dfg, solvable=solvable)
     varIndex = [dfg.g.labels[s] for s in varLabels]
@@ -335,7 +336,7 @@ function getBiadjacencyMatrix(dfg::LightDFG; solvable::Int=0)::Tuple{LightGraphs
     adj = adjacency_matrix(dfg.g)
 
     adjvf = adj[factIndex, varIndex]
-    return adjvf, varLabels, factLabels
+    return (B=adjvf, varLabels=varLabels, facLabels=factLabels)
 end
 
 # this would be an incidence matrix

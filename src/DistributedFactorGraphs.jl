@@ -103,7 +103,6 @@ export exists, addVariable!, addFactor!, getVariable, getFactor, updateVariable!
 export getVariables, getVariableIds, getFactors, getFactorIds, ls, lsf
 export isFullyConnected, hasOrphans
 export getNeighbors, _getDuplicatedEmptyDFG, getSubgraphAroundNode, getSubgraph
-# export getIncidenceMatrix, getIncidenceMatrixSparse
 export getBiadjacencyMatrix
 
 export toDot, toDotFile

@@ -760,7 +760,8 @@ a tuple: adjmat::SparseMatrixCSC{Int}, var_labels::Vector{Symbol)
 fac_labels::Vector{Symbol). Rows are the factors, columns are the variables,
 with the corresponding labels in fac_labels,var_labels.
 """
-function getBiadjacencyMatrix(dfg::G; solvable::Int=0)::Tuple{SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}} where G <: AbstractDFG
+# TODO API name get seems wrong maybe just biadjacencyMatrix
+function getBiadjacencyMatrix(dfg::AbstractDFG; solvable::Int=0)::NamedTuple{(:B, :varLabels, :facLabels), Tuple{SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}}
     varLabels = map(v->v.label, getVariables(dfg, solvable=solvable))
     factLabels = map(f->f.label, getFactors(dfg, solvable=solvable))
 
@@ -772,11 +773,10 @@ function getBiadjacencyMatrix(dfg::G; solvable::Int=0)::Tuple{SparseMatrixCSC, V
         factVars = getNeighbors(dfg, getFactor(dfg, factLabel), solvable=solvable)
         map(vLabel -> adjMat[fIndex,vDict[vLabel]] = 1, factVars)
     end
-    return adjMat, varLabels, factLabels
+    return (B=adjMat, varLabels=varLabels, facLabels=factLabels)
 end
 
-function getAdjacencyMatrixSparse(dfg::G; solvable::Int=0)::Tuple{SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}} where G <: AbstractDFG
-    @warn "Deprecated function, please use getBiadjacencyMatrix as this will be removed in v0.6.1"
+function getAdjacencyMatrixSparse(dfg::AbstractDFG; solvable::Int=0)
     return getBiadjacencyMatrix(dfg, solvable)
 end
 # -------------------------
