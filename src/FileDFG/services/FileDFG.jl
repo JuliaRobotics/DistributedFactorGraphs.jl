@@ -87,11 +87,13 @@ function loadDFG(dst::String, iifModule, dfgLoadInto::G; loaddir=joinpath("/","t
             lastdirname *= ".tar.gz"
         end
     end
+    # TODO -- what if it is not a tar.gz but classic folder instead?
     # do actual unzipping
+    filename = lastdirname[1:(end-length(".tar.gz"))] |> string
     if unzip
         @show sfolder = split(dstname, '.')
         Base.mkpath(loaddir)
-        folder = joinpath(loaddir, lastdirname[1:(end-length(".tar.gz"))]) #splitpath(string(sfolder[end-2]))[end]
+        folder = joinpath(loaddir, filename) #splitpath(string(sfolder[end-2]))[end]
         @info "loadDFG detected a gzip $dstname -- unpacking via $loaddir now..."
         Base.rm(folder, recursive=true, force=true)
         # unzip the tar file
@@ -139,6 +141,13 @@ function loadDFG(dst::String, iifModule, dfgLoadInto::G; loaddir=joinpath("/","t
     # TEMPORARY
     # TODO: Remove in future
     map(f->solverData(f).fncargvID = f._variableOrderSymbols, getFactors(dfgLoadInto))
+
+    # remove the temporary unzipped file
+    if unzip
+      @info "DFG.loadDFG is deleting a temp folder created during unzip, $folder"
+      # need this because the number of files created in /tmp/caesar/random is becoming redonkulous.
+      Base.rm(folder, recursive=true)
+    end
 
     return dfgLoadInto
 end
