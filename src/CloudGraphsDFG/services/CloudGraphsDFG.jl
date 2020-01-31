@@ -36,10 +36,10 @@ end
 # Accessors
 getLabelDict(dfg::CloudGraphsDFG) = dfg.labelDict
 getDescription(dfg::CloudGraphsDFG) = dfg.description
-setDescription(dfg::CloudGraphsDFG, description::String) = dfg.description = description
+setDescription!(dfg::CloudGraphsDFG, description::String) = dfg.description = description
 getAddHistory(dfg::CloudGraphsDFG) = dfg.addHistory
 getSolverParams(dfg::CloudGraphsDFG) = dfg.solverParams
-function setSolverParams(dfg::CloudGraphsDFG, solverParams::T)::T where T <: AbstractParams
+function setSolverParams!(dfg::CloudGraphsDFG, solverParams::T)::T where T <: AbstractParams
     return dfg.solverParams = solverParams
 end
 

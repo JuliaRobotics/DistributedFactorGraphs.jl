@@ -63,7 +63,7 @@ end
     # Accessors
     @test getAddHistory(dfg) == [:a, :b] #, :f1
     @test getDescription(dfg) != nothing
-    @test getLabelDict(dfg) != nothing
+    @test_throws ErrorException getLabelDict(dfg)
     # Existence
     @test exists(dfg, :a) == true
     @test exists(dfg, v1) == true

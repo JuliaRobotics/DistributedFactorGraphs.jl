@@ -91,7 +91,7 @@ export MeanMaxPPE
 # AbstractDFG Interface
 #--------
 export setSerializationModule!, getSerializationModule
-export getLabelDict, getDescription, setDescription, getAddHistory, getSolverParams, setSolverParams
+export getDescription, setDescription!, getAddHistory, getSolverParams, setSolverParams!
 export getUserData, setUserData!, getRobotData, setRobotData!, getSessionData, setSessionData!
 
 # Not sure these are going to work everywhere, TODO implement in cloud?
@@ -108,6 +108,7 @@ export getBiadjacencyMatrix
 export toDot, toDotFile
 # Deprecated
 export getAdjacencyMatrix, getAdjacencyMatrixSparse
+export getLabelDict, setSolverParams, setDescription
 #--------
 
 # File import and export

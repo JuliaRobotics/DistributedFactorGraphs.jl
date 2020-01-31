@@ -1,16 +1,16 @@
 
 
-# Accessors
-getLabelDict(dfg::LightDFG) = copy(dfg.g.labels.sym_int)
-getDescription(dfg::LightDFG) = dfg.description
-setDescription(dfg::LightDFG, description::String) = dfg.description = description
-getAddHistory(dfg::LightDFG) = dfg.addHistory
-getSolverParams(dfg::LightDFG) = dfg.solverParams
-
-# setSolverParams(dfg::LightDFG, solverParams) = dfg.solverParams = solverParams
-function setSolverParams(dfg::LightDFG, solverParams::P) where P <: AbstractParams
-  dfg.solverParams = solverParams
-end
+# # Accessors
+# getLabelDict(dfg::LightDFG) = copy(dfg.g.labels.sym_int)
+# getDescription(dfg::LightDFG) = dfg.description
+# setDescription(dfg::LightDFG, description::String) = dfg.description = description
+# getAddHistory(dfg::LightDFG) = dfg.addHistory
+# getSolverParams(dfg::LightDFG) = dfg.solverParams
+#
+# # setSolverParams(dfg::LightDFG, solverParams) = dfg.solverParams = solverParams
+# function setSolverParams(dfg::LightDFG, solverParams::P) where P <: AbstractParams
+#   dfg.solverParams = solverParams
+# end
 
 function exists(dfg::LightDFG{P,V,F}, node::V) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
     return haskey(dfg.g.variables, node.label)
