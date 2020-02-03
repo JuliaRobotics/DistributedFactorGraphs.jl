@@ -16,4 +16,4 @@ struct SkeletonDFGVariable <: AbstractDFGVariable
     tags::Set{Symbol}
 end
 
-SkeletonDFGVariable(label::Symbol) = SkeletonDFGVariable(label, Symbol[])
+SkeletonDFGVariable(label::Symbol) = SkeletonDFGVariable(label, Set{Symbol}())

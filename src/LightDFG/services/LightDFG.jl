@@ -1,16 +1,16 @@
 
 
-# Accessors
-getLabelDict(dfg::LightDFG) = copy(dfg.g.labels.sym_int)
-getDescription(dfg::LightDFG) = dfg.description
-setDescription(dfg::LightDFG, description::String) = dfg.description = description
-getAddHistory(dfg::LightDFG) = dfg.addHistory
-getSolverParams(dfg::LightDFG) = dfg.solverParams
-
-# setSolverParams(dfg::LightDFG, solverParams) = dfg.solverParams = solverParams
-function setSolverParams(dfg::LightDFG, solverParams::P) where P <: AbstractParams
-  dfg.solverParams = solverParams
-end
+# # Accessors
+# getLabelDict(dfg::LightDFG) = copy(dfg.g.labels.sym_int)
+# getDescription(dfg::LightDFG) = dfg.description
+# setDescription(dfg::LightDFG, description::String) = dfg.description = description
+# getAddHistory(dfg::LightDFG) = dfg.addHistory
+# getSolverParams(dfg::LightDFG) = dfg.solverParams
+#
+# # setSolverParams(dfg::LightDFG, solverParams) = dfg.solverParams = solverParams
+# function setSolverParams(dfg::LightDFG, solverParams::P) where P <: AbstractParams
+#   dfg.solverParams = solverParams
+# end
 
 function exists(dfg::LightDFG{P,V,F}, node::V) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
     return haskey(dfg.g.variables, node.label)
@@ -261,7 +261,7 @@ function _copyIntoGraph!(sourceDFG::LightDFG{<:AbstractParams, V, F}, destDFG::L
 
     for v in values(sourceDFG.g.variables)
         if v.label in labels
-            exists(destDFG, v) ? (@warn "_copyIntoGraph $(v.label) exists, ignoring") : addVariable!(destDFG, deepcopy(v))
+            exists(destDFG, v) ? (@warn "_copyIntoGraph $(v.label) exists, ignoring pending error behaviour decision") : addVariable!(destDFG, deepcopy(v))
         end
     end
 
@@ -283,7 +283,7 @@ function _copyIntoGraph!(sourceDFG::LightDFG{<:AbstractParams, V, F}, destDFG::L
 
             # Only if we have all of them should we add it (otherwise strange things may happen on evaluation)
             if includeOrphanFactors || length(factVariables) == length(neigh_labels)
-                exists(destDFG, f.label) ? (@warn "_copyIntoGraph $(f.label) exists, ignoring") : addFactor!(destDFG, factVariables, deepcopy(f))
+                exists(destDFG, f.label) ? (@warn "_copyIntoGraph $(f.label) exists, ignoring pending error behaviour decision") : addFactor!(destDFG, factVariables, deepcopy(f))
             end
         end
     end
@@ -323,26 +323,11 @@ function getSubgraph(dfg::LightDFG{P,V,F}, variableFactorLabels::Vector{Symbol},
     return addToDFG
 end
 
-function getIncidenceMatrix(dfg::LightDFG; solvable::Int=0)::Matrix{Union{Nothing, Symbol}}
-    #TODO Why does it need to be sorted?
-    varLabels = sort(getVariableIds(dfg, solvable=solvable))#ort(map(v->v.label, getVariables(dfg)))
-    factLabels = sort(getFactorIds(dfg, solvable=solvable))#sort(map(f->f.label, getFactors(dfg)))
-    vDict = Dict(varLabels .=> [1:length(varLabels)...].+1)
-
-    adjMat = Matrix{Union{Nothing, Symbol}}(nothing, length(factLabels)+1, length(varLabels)+1)
-    # Set row/col headings
-    adjMat[2:end, 1] = factLabels
-    adjMat[1, 2:end] = varLabels
-    for (fIndex, factLabel) in enumerate(factLabels)
-        factVars = getNeighbors(dfg, getFactor(dfg, factLabel))
-        map(vLabel -> adjMat[fIndex+1,vDict[vLabel]] = factLabel, factVars)
-    end
-    return adjMat
-end
 
 #TODO This is just way too strange to call a function  getIncidenceMatrix that calls adjacency_matrix internally,
 # So I'm going with Biadjacency Matrix https://en.wikipedia.org/wiki/Adjacency_matrix#Of_a_bipartite_graph
-function getBiadjacencyMatrixSparse(dfg::LightDFG; solvable::Int=0)::Tuple{LightGraphs.SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}
+# TODO biadjacencyMatrix
+function getBiadjacencyMatrix(dfg::LightDFG; solvable::Int=0)::NamedTuple{(:B, :varLabels, :facLabels),Tuple{LightGraphs.SparseMatrixCSC,Vector{Symbol}, Vector{Symbol}}}
     varLabels = getVariableIds(dfg, solvable=solvable)
     factLabels = getFactorIds(dfg, solvable=solvable)
     varIndex = [dfg.g.labels[s] for s in varLabels]
@@ -351,16 +336,11 @@ function getBiadjacencyMatrixSparse(dfg::LightDFG; solvable::Int=0)::Tuple{Light
     adj = adjacency_matrix(dfg.g)
 
     adjvf = adj[factIndex, varIndex]
-    return adjvf, varLabels, factLabels
-end
-
-function getAdjacencyMatrixSparse(dfg::LightDFG; solvable::Int=0)
-    @warn "Deprecated function, please use getBiadjacencyMatrixSparse as this will be removed in v0.6.1"
-    return getBiadjacencyMatrixSparse(dfg, solvable=solvable)
+    return (B=adjvf, varLabels=varLabels, facLabels=factLabels)
 end
 
 # this would be an incidence matrix
-function getIncidenceMatrixSparse(dfg::LightDFG)
+function getIncidenceMatrix(dfg::LightDFG)
     return incidence_matrix(dfg.g)
 end
 

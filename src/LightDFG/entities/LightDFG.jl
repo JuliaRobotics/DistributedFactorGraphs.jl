@@ -56,6 +56,18 @@ LightDFG{T}(g::FactorGraph{Int,DFGVariable,DFGFactor}=FactorGraph{Int,DFGVariabl
 LightDFG(g::FactorGraph{Int,DFGVariable,DFGFactor}=FactorGraph{Int,DFGVariable,DFGFactor}(); params::T=NoSolverParams(), kwargs...)  where T =
         LightDFG{T,DFGVariable,DFGFactor}(g; params=params, kwargs...)
 
+
+LigthDFG(description::String,
+         userId::String,
+         robotId::String,
+         sessionId::String,
+         userData::Dict{Symbol, String},
+         robotData::Dict{Symbol, String},
+         sessionData::Dict{Symbol, String},
+         solverParams::AbstractParams) =
+         LigthDFG(FactorGraph{Int,DFGVariable,DFGFactor}(), description, userId, robotId, sessionId, userData, robotData, sessionData, Symbol[], solverParams)
+
+
 # Fully depcrecate nodeCounter and labelDict
 # Base.propertynames(x::LightDFG, private::Bool=false) =
 #     (:g, :description, :userId, :robotId, :sessionId, :nodeCounter, :labelDict, :addHistory, :solverParams)

@@ -164,7 +164,7 @@ end
 Add Big Data Entry to a DFG variable
 """
 function addBigDataEntry!(var::AbstractDFGVariable, bde::AbstractBigDataEntry)::AbstractDFGVariable
-    haskey(var.bigData,bde.key) && @warn "$(bde.key) already exists in variable, overwriting!"
+    haskey(var.bigData,bde.key) && error("BigData entry $(bde.key) already exists in variable")
     var.bigData[bde.key] = bde
     return var
 end
@@ -424,5 +424,5 @@ Related
 getSolved, isSolved
 """
 setSolvedCount!(v::VariableNodeData, val::Int) = v.solvedCount = val
-setSolvedCount!(v::VariableDataLevel2, val::Int, solveKey::Symbol=:default) = setSolvedCount!(solverData(v, solveKey), val)
+setSolvedCount!(v::VariableDataLevel2, val::Int, solveKey::Symbol=:default) = setSolvedCount!(getSolverData(v, solveKey), val)
 setSolvedCount!(dfg::AbstractDFG, sym::Symbol, val::Int, solveKey::Symbol=:default) = setSolvedCount!(getVariable(dfg, sym), val, solveKey)

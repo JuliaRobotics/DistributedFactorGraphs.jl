@@ -6,10 +6,10 @@ using DocStringExtensions
 import ...DistributedFactorGraphs: AbstractDFG, DFGNode, AbstractDFGVariable, AbstractDFGFactor, AbstractDFGSummary, AbstractParams, NoSolverParams, DFGVariable, DFGFactor
 
 # import DFG functions to extend
-import ...DistributedFactorGraphs:  setSolverParams,
+import ...DistributedFactorGraphs:  setSolverParams!,
                                     getFactor,
-                                    setDescription,
-                                    getLabelDict,
+                                    setDescription!,
+                                    # getLabelDict,
                                     getUserData,
                                     setUserData!,
                                     getRobotData,
@@ -40,8 +40,7 @@ import ...DistributedFactorGraphs:  setSolverParams,
                                     getNeighbors,
                                     getSubgraphAroundNode,
                                     getSubgraph,
-                                    getIncidenceMatrix,
-                                    getIncidenceMatrixSparse,
+                                    getBiadjacencyMatrix,
                                     _getDuplicatedEmptyDFG,
                                     toDot,
                                     toDotFile

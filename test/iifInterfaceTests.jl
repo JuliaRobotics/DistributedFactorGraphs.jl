@@ -110,7 +110,8 @@ end
     # Accessors
     @test getAddHistory(dfg) == [:a, :b] #, :abf1
     @test getDescription(dfg) != nothing
-    @test getLabelDict(dfg) != nothing
+    #TODO Deprecate
+    @test_throws ErrorException getLabelDict(dfg)
     # Existence
     @test exists(dfg, :a) == true
     @test exists(dfg, v1) == true
@@ -122,12 +123,6 @@ end
     @test !isVariable(dfg, f1.label)
     @test !isVariable(dfg, :doesntexist)
     @test !isFactor(dfg, :doesntexist)
-
-    # Sorting of results
-    # TODO - this function needs to be cleaned up
-    unsorted = [:x1_3;:x1_6;:l1;:april1] #this will not work for :x1x2f1
-    @test sortDFG(unsorted) == sortVarNested(unsorted)
-    @test_skip sortDFG([:x1x2f1, :x1l1f1]) == [:x1l1f1, :x1x2f1]
 end
 
 # Gets
@@ -177,7 +172,7 @@ end
     @test internalId(f1) == f1._internalId
 
     @test getSolverParams(dfg) != nothing
-    @test setSolverParams(dfg, getSolverParams(dfg)) == getSolverParams(dfg)
+    @test setSolverParams!(dfg, getSolverParams(dfg)) == getSolverParams(dfg)
 
     #solver data is initialized
     @test !isInitialized(dfg, :a)

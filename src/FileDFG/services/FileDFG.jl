@@ -138,7 +138,7 @@ function loadDFG(dst::String, iifModule, dfgLoadInto::G; loaddir=joinpath("/","t
     # PATCH - To update the fncargvID for factors, it's being cleared somewhere in rebuildFactorMetadata.
     # TEMPORARY
     # TODO: Remove in future
-    map(f->solverData(f).fncargvID = f._variableOrderSymbols, getFactors(dfgLoadInto))
+    map(f->getSolverData(f).fncargvID = f._variableOrderSymbols, getFactors(dfgLoadInto))
 
     return dfgLoadInto
 end

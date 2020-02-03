@@ -1,59 +1,89 @@
-
-
 ## ===== Interface for an AbstractDFG =====
+
+# Standard recommended fields to implement for AbstractDFG
+# - `description::String`
+# - `userId::String`
+# - `robotId::String`
+# - `sessionId::String`
+# - `userData::Dict{Symbol, String}`
+# - `robotData::Dict{Symbol, String}`
+# - `sessionData::Dict{Symbol, String}`
+# - `solverParams::T<:AbstractParams`
+# - `addHistory::Vector{Symbol}`
+# AbstractDFG Accessors
+
+# Getters
+"""
+    $(SIGNATURES)
+"""
+getDFGInfo(dfg::AbstractDFG) = (dfg.description, dfg.userId, dfg.robotId, dfg.sessionId, dfg.userData, dfg.robotData, dfg.sessionData, dfg.solverParams)
 
 """
     $(SIGNATURES)
-
-Deserialization of IncrementalInference objects require discovery of foreign types.
-
-Example:
-
-Template to tunnel types from a user module:
-```julia
-# or more generic solution -- will always try Main if available
-IIF.setSerializationNamespace!(Main)
-
-# or a specific package such as RoME if you import all variable and factor types into a specific module.
-using RoME
-IIF.setSerializationNamespace!(RoME)
-```
 """
-function setSerializationModule!(dfg::G, mod::Module)::Nothing where G <: AbstractDFG
-    @warn "Setting serialization module from AbstractDFG - override this in the '$(typeof(dfg)) structure! This is being ignored."
-end
+getDescription(dfg::AbstractDFG) = dfg.description
 
-function getSerializationModule(dfg::G)::Module where G <: AbstractDFG
-    @warn "Retrieving serialization module from AbstractDFG - override this in the '$(typeof(dfg)) structure! This is returning Main"
-    return Main
-end
+"""
+    $(SIGNATURES)
+"""
+getUserId(dfg::AbstractDFG) = dfg.userId
 
-# Accessors
-function getLabelDict(dfg::G) where G <: AbstractDFG
-    error("getLabelDict not implemented for $(typeof(dfg))")
-end
-function getDescription(dfg::G) where G <: AbstractDFG
-    error("getDescription not implemented for $(typeof(dfg))")
-end
-function setDescription(dfg::G, description::String) where G <: AbstractDFG
-    error("setDescription not implemented for $(typeof(dfg))")
-end
-function getAddHistory(dfg::G) where G <: AbstractDFG
-    error("getAddHistory not implemented for $(typeof(dfg))")
-end
-function getSolverParams(dfg::G) where G <: AbstractDFG
-    error("getSolverParams not implemented for $(typeof(dfg))")
-end
-function setSolverParams(dfg::G, solverParams::T) where {G <: AbstractDFG, T <: AbstractParams}
-    error("setSolverParams not implemented for $(typeof(dfg))")
-end
+"""
+    $(SIGNATURES)
+"""
+getRobotId(dfg::AbstractDFG) = dfg.robotId
 
+"""
+    $(SIGNATURES)
+"""
+getSessionId(dfg::AbstractDFG) = dfg.sessionId
+
+"""
+    $(SIGNATURES)
+"""
+getAddHistory(dfg::AbstractDFG) = dfg.addHistory
+
+"""
+    $(SIGNATURES)
+"""
+getSolverParams(dfg::AbstractDFG) = dfg.solverParams
+
+
+# Setters
+"""
+    $(SIGNATURES)
+"""
+setDescription!(dfg::AbstractDFG, description::String) = dfg.description = description
+
+"""
+    $(SIGNATURES)
+"""
+setUserId!(dfg::AbstractDFG, userId::String) = dfg.userId = userId
+
+"""
+    $(SIGNATURES)
+"""
+setRobotId!(dfg::AbstractDFG, robotId::String) = dfg.robotId = robotId
+
+"""
+    $(SIGNATURES)
+"""
+setSessionId!(dfg::AbstractDFG, sessionId::String) = dfg.sessionId = sessionId
+
+"""
+    $(SIGNATURES)
+"""
+#TODO don't know what error will be thrown if solverParams type does not mach the one in dfg
+setSolverParams!(dfg::AbstractDFG, solverParams::AbstractParams) = dfg.solverParams = solverParams
+
+# Accessors and CRUD for user/robot/session Data
 """
 $SIGNATURES
 
 Get the user data associated with the graph.
 """
 getUserData(dfg::AbstractDFG)::Union{Nothing, Dict{Symbol, String}} = return dfg.userData
+
 """
 $SIGNATURES
 
@@ -63,12 +93,14 @@ function setUserData!(dfg::AbstractDFG, data::Dict{Symbol, String})::Union{Nothi
     dfg.userData = data
     return dfg.userData
 end
+
 """
 $SIGNATURES
 
 Get the robot data associated with the graph.
 """
 getRobotData(dfg::AbstractDFG)::Union{Nothing, Dict{Symbol, String}} = return dfg.robotData
+
 """
 $SIGNATURES
 
@@ -78,12 +110,14 @@ function setRobotData!(dfg::AbstractDFG, data::Dict{Symbol, String})::Union{Noth
     dfg.robotData = data
     return dfg.robotData
 end
+
 """
 $SIGNATURES
 
 Get the session data associated with the graph.
 """
 getSessionData(dfg::AbstractDFG)::Dict{Symbol, String} = return dfg.sessionData
+
 """
 $SIGNATURES
 
@@ -111,6 +145,38 @@ deleteSessionData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.userData, key)
 emptyUserData!(dfg::AbstractDFG) = empty!(dfg.userData)
 emptyRobotData!(dfg::AbstractDFG) = empty!(dfg.userData)
 emptySessionData!(dfg::AbstractDFG) = empty!(dfg.userData)
+
+
+
+
+##
+"""
+    $(SIGNATURES)
+
+Deserialization of IncrementalInference objects require discovery of foreign types.
+
+Example:
+
+Template to tunnel types from a user module:
+```julia
+# or more generic solution -- will always try Main if available
+IIF.setSerializationNamespace!(Main)
+
+# or a specific package such as RoME if you import all variable and factor types into a specific module.
+using RoME
+IIF.setSerializationNamespace!(RoME)
+```
+"""
+function setSerializationModule!(dfg::G, mod::Module)::Nothing where G <: AbstractDFG
+    @warn "Setting serialization module from AbstractDFG - override this in the '$(typeof(dfg)) structure! This is being ignored."
+end
+
+function getSerializationModule(dfg::G)::Module where G <: AbstractDFG
+    @warn "Retrieving serialization module from AbstractDFG - override this in the '$(typeof(dfg)) structure! This is returning Main"
+    return Main
+end
+
+
 
 """
     $(SIGNATURES)
@@ -715,6 +781,7 @@ function mergeUpdateGraphSolverData!(sourceDFG::G, destDFG::H, varSyms::Vector{S
 end
 
 # Alias
+# TODO Can we not deprecate this completely in favor of only using a sparse matrix?
 """
     $(SIGNATURES)
 Get a matrix indicating relationships between variables and factors. Rows are
@@ -723,8 +790,7 @@ the symbol of the relating factor. The first row and first column are factor and
 variable headings respectively.
 """
 function getAdjacencyMatrix(dfg::AbstractDFG; solvable::Int=0)::Matrix{Union{Nothing, Symbol}}
-    @warn "Deprecated function, please use getIncidenceMatrix as this will be removed in v0.6.1"
-    return getIncidenceMatrix(dfg, solvable)
+    error("Deprecated function, please use getBiadjacencyMatrix")
 end
 """
     $(SIGNATURES)
@@ -732,8 +798,9 @@ Get a matrix indicating relationships between variables and factors. Rows are
 all factors, columns are all variables, and each cell contains either nothing or
 the symbol of the relating factor. The first row and first column are factor and
 variable headings respectively.
+Note: rather use getBiadjacencyMatrix
 """
-function getIncidenceMatrix(dfg::AbstractDFG; solvable::Int=0)::Matrix{Union{Nothing, Symbol}}
+function getAdjacencyMatrixSymbols(dfg::AbstractDFG; solvable::Int=0)::Matrix{Union{Nothing, Symbol}}
     #
     varLabels = sort(map(v->v.label, getVariables(dfg, solvable=solvable)))
     factLabels = sort(map(f->f.label, getFactors(dfg, solvable=solvable)))
@@ -750,25 +817,17 @@ function getIncidenceMatrix(dfg::AbstractDFG; solvable::Int=0)::Matrix{Union{Not
     return adjMat
 end
 
+
+
 """
     $(SIGNATURES)
-Get a matrix indicating relationships between variables and factors. Returned as
+Get a matrix indicating adjacency between variables and factors. Returned as
 a tuple: adjmat::SparseMatrixCSC{Int}, var_labels::Vector{Symbol)
 fac_labels::Vector{Symbol). Rows are the factors, columns are the variables,
 with the corresponding labels in fac_labels,var_labels.
 """
-function getAdjacencyMatrixSparse(dfg::G; solvable::Int=0)::Tuple{SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}} where G <: AbstractDFG
-    @warn "Deprecated function, please use getIncidenceMatrixSparse as this will be removed in v0.6.1"
-    return getIncidenceMatrixSparse(dfg, solvable)
-end
-"""
-    $(SIGNATURES)
-Get a matrix indicating relationships between variables and factors. Returned as
-a tuple: adjmat::SparseMatrixCSC{Int}, var_labels::Vector{Symbol)
-fac_labels::Vector{Symbol). Rows are the factors, columns are the variables,
-with the corresponding labels in fac_labels,var_labels.
-"""
-function getIncidenceMatrixSparse(dfg::G; solvable::Int=0)::Tuple{SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}} where G <: AbstractDFG
+# TODO API name get seems wrong maybe just biadjacencyMatrix
+function getBiadjacencyMatrix(dfg::AbstractDFG; solvable::Int=0)::NamedTuple{(:B, :varLabels, :facLabels), Tuple{SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}}
     varLabels = map(v->v.label, getVariables(dfg, solvable=solvable))
     factLabels = map(f->f.label, getFactors(dfg, solvable=solvable))
 
@@ -780,9 +839,13 @@ function getIncidenceMatrixSparse(dfg::G; solvable::Int=0)::Tuple{SparseMatrixCS
         factVars = getNeighbors(dfg, getFactor(dfg, factLabel), solvable=solvable)
         map(vLabel -> adjMat[fIndex,vDict[vLabel]] = 1, factVars)
     end
-    return adjMat, varLabels, factLabels
+    return (B=adjMat, varLabels=varLabels, facLabels=factLabels)
 end
 
+function getAdjacencyMatrixSparse(dfg::AbstractDFG; solvable::Int=0)
+    @warn "Deprecated function, please use getBiadjacencyMatrix as this will be removed in v0.6.1"
+    return getBiadjacencyMatrix(dfg, solvable)
+end
 # -------------------------
 
 """
@@ -808,6 +871,9 @@ function getSolvable(dfg::AbstractDFG, sym::Symbol)
   end
 end
 
+
+isSolvable(node::Union{DFGVariable, DFGFactor}) = getSolvable(node) > 0
+
 """
     $SIGNATURES
 
@@ -824,7 +890,7 @@ function getSolveInProgress(var::Union{DFGVariable, DFGFactor}; solveKey::Symbol
     # Variable
     var isa DFGVariable && return haskey(getSolverDataDict(var), solveKey) ? getSolverDataDict(var)[solveKey].solveInProgress : 0
     # Factor
-    return solverData(var).solveInProgress
+    return getSolverData(var).solveInProgress
 end
 
 """
@@ -910,7 +976,7 @@ end
 Return reference to the user factor in `<:AbstractDFG` identified by `::Symbol`.
 """
 getFactorFunction(fcd::GenericFunctionNodeData) = fcd.fnc.usrfnc!
-getFactorFunction(fc::DFGFactor) = getFactorFunction(solverData(fc))
+getFactorFunction(fc::DFGFactor) = getFactorFunction(getSolverData(fc))
 function getFactorFunction(dfg::G, fsym::Symbol) where G <: AbstractDFG
   getFactorFunction(getFactor(dfg, fsym))
 end

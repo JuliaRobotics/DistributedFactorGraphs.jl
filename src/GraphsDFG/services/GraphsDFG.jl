@@ -16,14 +16,14 @@ end
 vertex_index(v::GraphsNode) = v.index
 
 # Accessors
-getLabelDict(dfg::GraphsDFG) = dfg.labelDict
-getDescription(dfg::GraphsDFG) = dfg.description
-setDescription(dfg::GraphsDFG, description::String) = dfg.description = description
-getAddHistory(dfg::GraphsDFG) = dfg.addHistory
-getSolverParams(dfg::GraphsDFG) = dfg.solverParams
-function setSolverParams(dfg::GraphsDFG, solverParams::T) where T <: AbstractParams
-    dfg.solverParams = solverParams
-end
+# getLabelDict(dfg::GraphsDFG) = dfg.labelDict
+# getDescription(dfg::GraphsDFG) = dfg.description
+# setDescription(dfg::GraphsDFG, description::String) = dfg.description = description
+# getAddHistory(dfg::GraphsDFG) = dfg.addHistory
+# getSolverParams(dfg::GraphsDFG) = dfg.solverParams
+# function setSolverParams(dfg::GraphsDFG, solverParams::T) where T <: AbstractParams
+#     dfg.solverParams = solverParams
+# end
 
 """
     $(SIGNATURES)

@@ -131,7 +131,7 @@ end
 Retrieve data structure stored in a variable.
 """
 function getData(v::DFGVariable; solveKey::Symbol=:default)::VariableNodeData
-  @warn "getData is deprecated, please use solverData()"
+  @warn "getData is deprecated, please use getSolverData()"
   return v.solverDataDict[solveKey]
 end
 
@@ -153,6 +153,12 @@ end
 Retrieve solver data structure stored in a factor.
 """
 function data(f::DFGFactor)::GenericFunctionNodeData
-  @warn "data() is deprecated, please use solverData()"
+  @warn "data() is deprecated, please use getSolverData()"
   return f.data
 end
+
+
+getLabelDict(dfg::AbstractDFG) = error("getLabelDict is deprecated, consider using listing functions")
+
+setSolverParams(args...) = error("setSolverParams is deprecated, use setSolverParams!")
+setDescription(args...) = error("setSolverParams is deprecated, use setDescription!")

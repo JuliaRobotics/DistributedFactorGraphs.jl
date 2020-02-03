@@ -36,10 +36,10 @@ end
 # Accessors
 getLabelDict(dfg::CloudGraphsDFG) = dfg.labelDict
 getDescription(dfg::CloudGraphsDFG) = dfg.description
-setDescription(dfg::CloudGraphsDFG, description::String) = dfg.description = description
+setDescription!(dfg::CloudGraphsDFG, description::String) = dfg.description = description
 getAddHistory(dfg::CloudGraphsDFG) = dfg.addHistory
 getSolverParams(dfg::CloudGraphsDFG) = dfg.solverParams
-function setSolverParams(dfg::CloudGraphsDFG, solverParams::T)::T where T <: AbstractParams
+function setSolverParams!(dfg::CloudGraphsDFG, solverParams::T)::T where T <: AbstractParams
     return dfg.solverParams = solverParams
 end
 
@@ -163,7 +163,7 @@ function getFactor(dfg::CloudGraphsDFG, factorId::Int64)::DFGFactor
     factor = dfg.rebuildFactorMetadata!(dfg, factor)
     # GUARANTEED never to bite us in the future...
     # ... TODO: refactor if changed: https://github.com/JuliaRobotics/IncrementalInference.jl/issues/350
-    solverData(factor).fncargvID = factor._variableOrderSymbols
+    getSolverData(factor).fncargvID = factor._variableOrderSymbols
 
     # Add to cache
     push!(dfg.factorCache, factor.label=>factor)

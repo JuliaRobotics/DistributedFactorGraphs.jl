@@ -19,4 +19,4 @@ struct SkeletonDFGFactor <: AbstractDFGFactor
 end
 
 #NOTE I feel like a want to force a variableOrderSymbols
-SkeletonDFGFactor(label::Symbol, variableOrderSymbols::Vector{Symbol} = Symbol[]) = SkeletonDFGFactor(label, Symbol[], variableOrderSymbols)
+SkeletonDFGFactor(label::Symbol, variableOrderSymbols::Vector{Symbol} = Symbol[]) = SkeletonDFGFactor(label, Set{Symbol}(), variableOrderSymbols)
