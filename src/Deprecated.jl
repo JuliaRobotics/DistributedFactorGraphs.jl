@@ -161,4 +161,4 @@ end
 getLabelDict(dfg::AbstractDFG) = error("getLabelDict is deprecated, consider using listing functions")
 
 setSolverParams(args...) = error("setSolverParams is deprecated, use setSolverParams!")
-setDescription(args...) = error("setSolverParams is deprecated, use setDescription!")
+@deprecate setDescription(args...) setDescription!(args...)

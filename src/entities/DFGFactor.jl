@@ -70,16 +70,17 @@ Construct a DFG factor given a label.
 """
 #TODO _internalId?
 DFGFactor{T, S}(label::Symbol, internalId::Int64=0, timestamp::DateTime=now()) where {T, S} =
-                DFGFactor(label, timestamp, Set{Symbol}(), GenericFunctionNodeData{T, S}(), 0, DFGNodeParams(0, internalId), Symbol[])
+                DFGFactor(label, timestamp, Set{Symbol}(), GenericFunctionNodeData{T, S}(), 1, DFGNodeParams(1, internalId), Symbol[])
 
-DFGFactor(label::Symbol;
-    timestamp::DateTime=now(),
-    tags::Set{Symbol}=Set{Symbol}(),
-    data::GenericFunctionNodeData{T, S}=GenericFunctionNodeData{T, S}(),
-    solvable::Int=0,
-    _internalId::Int64=0,
-    _variableOrderSymbols::Vector{Symbol}=Symbol[]) where {T, S} =
-        DFGFactor{T,S}(label,timestamp,tags,data,solvable,DFGNodeParams(solvable, _internalId),_variableOrderSymbols)
+#TODO update where this constructor was used. It was fundamentally broken.
+DFGFactor(label::Symbol,
+          variableOrderSymbols::Vector{Symbol},
+          data::GenericFunctionNodeData{T, S};
+          tags::Set{Symbol}=Set{Symbol}(),
+          timestamp::DateTime=now(),
+          solvable::Int=1,
+          _internalId::Int64=0) where {T, S} =
+                DFGFactor{T,S}(label,timestamp,tags,data,solvable,DFGNodeParams(solvable, _internalId),variableOrderSymbols)
 
 
 # Simply for convenience - don't export

@@ -39,6 +39,8 @@ export getSolvedCount, isSolved, setSolvedCount!
 export DFGVariableSummary, DFGFactorSummary, AbstractDFGSummary
 export getNeighborhood, getSubgraph, getSubgraphAroundNode
 
+export getUserId, getRobotId, getSessionId
+
 # Define variable levels
 const VariableDataLevel0 = Union{DFGVariable, DFGVariableSummary, SkeletonDFGVariable}
 const VariableDataLevel1 = Union{DFGVariable, DFGVariableSummary}

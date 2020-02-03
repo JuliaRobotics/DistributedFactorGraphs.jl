@@ -22,7 +22,7 @@ $SIGNATURES
 
 Set the tags for a node.
 """
-function setTags!(f::DataLevel0, tags::Vector{Symbol})
+function setTags!(f::DataLevel0, tags::Union{Vector{Symbol},Set{Symbol}})
   empty!(f.tags)
   union!(f.tags, tags)
 end

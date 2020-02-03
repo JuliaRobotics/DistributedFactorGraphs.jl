@@ -73,7 +73,8 @@ setSessionId!(dfg::AbstractDFG, sessionId::String) = dfg.sessionId = sessionId
 """
     $(SIGNATURES)
 """
-#TODO don't know what error will be thrown if solverParams type does not mach the one in dfg
+#NOTE a MethodError will be thrown if solverParams type does not mach the one in dfg
+# TODO Is it ok or do we want any abstract solver paramters
 setSolverParams!(dfg::AbstractDFG, solverParams::AbstractParams) = dfg.solverParams = solverParams
 
 # Accessors and CRUD for user/robot/session Data
@@ -130,23 +131,23 @@ end
 
 #NOTE with API standardization this should become something like:
 # JT, I however do not feel we should force it, as I prever dot notation
-getUserData(dfg::AbstractDFG, key::Symbol)::Dict{Symbol, String} = dfg.UserData[key]
-getRobotData(dfg::AbstractDFG, key::Symbol)::Dict{Symbol, String} = dfg.RobotData[key]
-getSessionData(dfg::AbstractDFG, key::Symbol)::Dict{Symbol, String} = dfg.SessionData[key]
+getUserData(dfg::AbstractDFG, key::Symbol)::String = dfg.userData[key]
+getRobotData(dfg::AbstractDFG, key::Symbol)::String = dfg.robotData[key]
+getSessionData(dfg::AbstractDFG, key::Symbol)::String = dfg.sessionData[key]
 
 updateUserData!(dfg::AbstractDFG, pair::Pair{Symbol,String}) = push!(dfg.userData, pair)
-updateRobotData!(dfg::AbstractDFG, pair::Pair{Symbol,String}) = push!(dfg.userData, pair)
-updateSessionData!(dfg::AbstractDFG, pair::Pair{Symbol,String}) = push!(dfg.userData, pair)
+updateRobotData!(dfg::AbstractDFG, pair::Pair{Symbol,String}) = push!(dfg.robotData, pair)
+updateSessionData!(dfg::AbstractDFG, pair::Pair{Symbol,String}) = push!(dfg.sessionData, pair)
 
 deleteUserData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.userData, key)
-deleteRobotData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.userData, key)
-deleteSessionData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.userData, key)
+deleteRobotData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.robotData, key)
+deleteSessionData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.sessionData, key)
 
 emptyUserData!(dfg::AbstractDFG) = empty!(dfg.userData)
-emptyRobotData!(dfg::AbstractDFG) = empty!(dfg.userData)
-emptySessionData!(dfg::AbstractDFG) = empty!(dfg.userData)
+emptyRobotData!(dfg::AbstractDFG) = empty!(dfg.robotData)
+emptySessionData!(dfg::AbstractDFG) = empty!(dfg.sessionData)
 
-
+#TODO add__Data!?
 
 
 ##
@@ -570,7 +571,7 @@ Get variable solverdata for a given solve key.
 """
 function getVariableSolverData(dfg::AbstractDFG, variablekey::Symbol, solvekey::Symbol=:default)::VariableNodeData
     v = getVariable(dfg, variablekey)
-    !haskey(v.solverDataDict, solvekey) && error("Solve key '$solveKey' not found in variable '$variableKey'")
+    !haskey(v.solverDataDict, solvekey) && error("Solve key '$solvekey' not found in variable '$variablekey'")
     return v.solverDataDict[solvekey]
 end
 
@@ -579,13 +580,13 @@ end
     $(SIGNATURES)
 Add variable solver data, errors if it already exists.
 """
-function addVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData, solvekey::Symbol=:default)::Dict{Symbol, VariableNodeData}
+function addVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData, solvekey::Symbol=:default)::VariableNodeData
     var = getVariable(dfg, variablekey)
     if haskey(var.solverDataDict, solvekey)
         error("VariableNodeData '$(solvekey)' already exists")
     end
     var.solverDataDict[solvekey] = vnd
-    return var.solverDataDict
+    return vnd
 end
 
 """
@@ -601,12 +602,12 @@ addVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable, solvekey::
     $(SIGNATURES)
 Update variable solver data if it exists, otherwise add it.
 """
-function updateVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData, solvekey::Symbol=:default)::Dict{Symbol, VariableNodeData}
+function updateVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData, solvekey::Symbol=:default)::VariableNodeData
     #This is basically just setSolverData
     var = getVariable(dfg, variablekey)
     #for InMemoryDFGTypes, cloud would update here
     var.solverDataDict[solvekey] = vnd
-    return var.solverDataDict
+    return vnd
 end
 
 """
@@ -666,7 +667,7 @@ Get variable PPE for a given solve key.
 """
 function getPPE(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol=:default)::AbstractPointParametricEst
     v = getVariable(dfg, variablekey)
-    !haskey(v.ppeDict, ppekey) && error("PPE key '$ppeKey' not found in variable '$variableKey'")
+    !haskey(v.ppeDict, ppekey) && error("PPE key '$ppekey' not found in variable '$variablekey'")
     return v.ppeDict[ppekey]
 end
 
@@ -699,12 +700,12 @@ addPPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol=:default) 
     $(SIGNATURES)
 Update PPE data if it exists, otherwise add it.
 """
-function updatePPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default)::Dict{Symbol, AbstractPointParametricEst} where P <: AbstractPointParametricEst
-    #This is basically just setSolverData
+function updatePPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default)::P where P <: AbstractPointParametricEst
+    #
     var = getVariable(dfg, variablekey)
     #for InMemoryDFGTypes, cloud would update here
     var.ppeDict[ppekey] = ppe
-    return var.ppeDict
+    return ppe
 end
 
 """

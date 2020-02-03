@@ -406,7 +406,8 @@ end
 Add tags to a variable or factor
 """
 function addTags!(dfg::InMemoryDFGTypes, sym::Symbol, tags::Vector{Symbol})
-  union!(getTags(getFactor(fg, sym)), tags)
+  getFnc = isVariable(dfg,sym) ? getVariable : getFactor
+  union!(getTags(getFnc(dfg, sym)), tags)
 end
 
 

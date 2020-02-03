@@ -57,7 +57,7 @@ LightDFG(g::FactorGraph{Int,DFGVariable,DFGFactor}=FactorGraph{Int,DFGVariable,D
         LightDFG{T,DFGVariable,DFGFactor}(g; params=params, kwargs...)
 
 
-LigthDFG(description::String,
+LightDFG(description::String,
          userId::String,
          robotId::String,
          sessionId::String,
@@ -65,7 +65,7 @@ LigthDFG(description::String,
          robotData::Dict{Symbol, String},
          sessionData::Dict{Symbol, String},
          solverParams::AbstractParams) =
-         LigthDFG(FactorGraph{Int,DFGVariable,DFGFactor}(), description, userId, robotId, sessionId, userData, robotData, sessionData, Symbol[], solverParams)
+         LightDFG(FactorGraph{Int,DFGVariable,DFGFactor}(), description, userId, robotId, sessionId, userData, robotData, sessionData, Symbol[], solverParams)
 
 
 # Fully depcrecate nodeCounter and labelDict

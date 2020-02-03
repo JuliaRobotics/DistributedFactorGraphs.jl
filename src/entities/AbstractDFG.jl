@@ -48,7 +48,7 @@ abstract type AbstractParams end
 $(TYPEDEF)
 Empty structure for solver parameters.
 """
-mutable struct NoSolverParams <: AbstractParams
+struct NoSolverParams <: AbstractParams
 end
 
 """

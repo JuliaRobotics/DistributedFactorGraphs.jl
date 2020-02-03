@@ -358,9 +358,11 @@ getSmallData(v::DFGVariable)::Dict{String, String} = v.smallData
 $SIGNATURES
 
 Set the small data for a variable.
+This will overwrite old smallData.
 """
 function setSmallData!(v::DFGVariable, smallData::Dict{String, String})::Dict{String, String}
-    v.smallData = smallData
+    empty!(v.smallData)
+    merge!(v.smallData, smallData)
 end
 
 # WIP
