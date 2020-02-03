@@ -63,8 +63,7 @@ function pack(dfg::G, d::VariableNodeData)::PackedVariableNodeData where G <: Ab
                                 d.inferdim,
                                 d.ismargin,
                                 d.dontmargin,
-                                d.solveInProgress,
-                                d.solvedCount)
+                                d.solveInProgress)
 end
 
 function unpack(dfg::G, d::PackedVariableNodeData)::VariableNodeData where G <: AbstractDFG
@@ -103,7 +102,7 @@ function unpack(dfg::G, d::PackedVariableNodeData)::VariableNodeData where G <: 
 
   return VariableNodeData{typeof(st)}(M3,M4, d.BayesNetOutVertIDs,
     d.dimIDs, d.dims, d.eliminated, d.BayesNetVertID, d.separator,
-    st, d.initialized, d.inferdim, d.ismargin, d.dontmargin, d.solveInProgress, d.solvedCount)
+    st, d.initialized, d.inferdim, d.ismargin, d.dontmargin, d.solveInProgress)
 end
 
 function compare(a::VariableNodeData, b::VariableNodeData)
@@ -157,7 +156,7 @@ end
 Convert a DFGVariable to a DFGVariableSummary.
 """
 function convert(::Type{DFGVariableSummary}, v::DFGVariable)
-    return DFGVariableSummary(v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.ppeDict), Symbol(typeof(getSofttype(v))), v._internalId)
+    return DFGVariableSummary(v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.ppeDict), Symbol(typeof(getSofttype(v))), v.bigData, v._internalId)
 end
 
 """
@@ -165,7 +164,7 @@ end
 Add Big Data Entry to a DFG variable
 """
 function addBigDataEntry!(var::AbstractDFGVariable, bde::AbstractBigDataEntry)::AbstractDFGVariable
-    haskey(var.bigData,bde.key) && @warn "$(bde.key) already exists in variable, overwriting!"
+    haskey(var.bigData,bde.key) && error("BigData entry $(bde.key) already exists in variable")
     var.bigData[bde.key] = bde
     return var
 end
@@ -251,3 +250,179 @@ function getBigDataKeys(dfg::AbstractDFG, label::Symbol)::Union{Nothing, Vector{
     !isVariable(dfg, label) && return nothing
     getBigDataKeys(getVariable(dfg, label))
 end
+
+# TODO: Temporary home
+# Accessors
+
+"""
+    $SIGNATURES
+
+Return dictionary with Parametric Point Estimates (PPE) values.
+
+Notes:
+- Equivalent to `getPPEs`.
+"""
+getVariablePPEs(vari::VariableDataLevel1)::Dict = vari.ppeDict
+
+"""
+    $SIGNATURES
+
+Return dictionary with Parametric Point Estimates (PPE) values.
+
+Notes:
+- Equivalent to `getVariablePPEs`.
+"""
+getPPEs(vari::VariableDataLevel1)::Dict = getVariablePPEs(vari)
+
+
+"""
+    $SIGNATURES
+
+Get the parametric point estimate (PPE) for a variable in the factor graph.
+
+Notes
+- Defaults on keywords `solveKey` and `method`
+
+Related
+
+getMeanPPE, getMaxPPE, getKDEMean, getKDEFit, getPPEs, getVariablePPEs
+"""
+function getVariablePPE(vari::VariableDataLevel1, solveKey::Symbol=:default)
+    ppeDict = getVariablePPEs(vari)
+    return haskey(ppeDict, solveKey) ? ppeDict[solveKey] : nothing
+end
+
+getVariablePPE(dfg::AbstractDFG, vsym::Symbol, solveKey::Symbol=:default) = getVariablePPE(getVariable(dfg,vsym), solveKey)
+
+"""
+   $(SIGNATURES)
+
+Variable nodes softtype information holding a variety of meta data associated with the type of variable stored in that node of the factor graph.
+
+Related
+
+getVariableType
+"""
+function getSofttype(vnd::VariableNodeData)
+  return vnd.softtype
+end
+function getSofttype(v::DFGVariable)
+  return typeof(v).parameters[1]() # Get instantiated form of the parameter for the DFGVariable
+end
+
+"""
+    $SIGNATURES
+
+Retrieve the soft type name symbol for a DFGVariableSummary. ie :Point2, Pose2, etc.
+TODO, DO NOT USE v.softtypename in DFGVariableSummary
+"""
+getSofttype(v::DFGVariableSummary)::Symbol = v.softtypename
+
+
+"""
+    $SIGNATURES
+
+Retrieve solver data structure stored in a variable.
+"""
+function getSolverData(v::DFGVariable, key::Symbol=:default)
+    return haskey(v.solverDataDict, key) ? v.solverDataDict[key] : nothing
+end
+
+function solverData(v::DFGVariable, key::Symbol=:default)
+  @warn "Deprecated for 0.6 standardization. Please use getSolverData()"
+  return getSolverData(v, key)
+end
+
+"""
+    $SIGNATURES
+
+Set solver data structure stored in a variable.
+"""
+setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v.solverDataDict[key] = data
+
+"""
+    $SIGNATURES
+
+Get solver data dictionary for a variable.
+"""
+getSolverDataDict(v::DFGVariable) = v.solverDataDict
+
+"""
+$SIGNATURES
+
+Get the small data for a variable.
+"""
+getSmallData(v::DFGVariable)::Dict{String, String} = v.smallData
+
+"""
+$SIGNATURES
+
+Set the small data for a variable.
+"""
+function setSmallData!(v::DFGVariable, smallData::Dict{String, String})::Dict{String, String}
+    v.smallData = smallData
+end
+
+# WIP
+# """
+# $SIGNATURES
+#
+# Set the small data for a variable.
+# """
+# function addSmallData!(v::DFGVariable, smallData::Dict{String, String})::Dict{String, String}
+#     v.smallData = smallData
+# end
+#
+# function updateSmallData!()
+# end
+#
+# function deleteSmallData!()
+# end
+
+"""
+$SIGNATURES
+
+Get the variable ordering for this factor.
+Should be equivalent to getNeighbors unless something was deleted in the graph.
+"""
+getVariableOrder(fct::DFGFactor)::Vector{Symbol} = fct._variableOrderSymbols
+
+"""
+    $SIGNATURES
+
+Get the number of times a variable has been inferred -- i.e. `solvedCount`.
+
+Related
+
+isSolved, setSolvedCount!
+"""
+getSolvedCount(v::VariableNodeData) = v.solvedCount
+getSolvedCount(v::VariableDataLevel2, solveKey::Symbol=:default) = getSolverData(v, solveKey) |> getSolvedCount
+getSolvedCount(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = getSolvedCount(getVariable(dfg, sym), solveKey)
+
+"""
+    $SIGNATURES
+
+Boolean on whether the variable has been solved.
+
+Related
+
+getSolved, setSolved!
+"""
+isSolved(v::VariableNodeData) = 0 < v.solvedCount
+isSolved(v::VariableDataLevel2, solveKey::Symbol=:default) = getSolverData(v, solveKey) |> isSolved
+isSolved(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = isSolved(getVariable(dfg, sym), solveKey)
+
+
+"""
+    $SIGNATURES
+
+Update/set the `solveCount` value.
+
+Related
+
+getSolved, isSolved
+"""
+setSolvedCount!(v::VariableNodeData, val::Int) = v.solvedCount = val
+setSolvedCount!(v::VariableDataLevel2, val::Int, solveKey::Symbol=:default) = setSolvedCount!(getSolverData(v, solveKey), val)
+setSolvedCount!(dfg::AbstractDFG, sym::Symbol, val::Int, solveKey::Symbol=:default) = setSolvedCount!(getVariable(dfg, sym), val, solveKey)

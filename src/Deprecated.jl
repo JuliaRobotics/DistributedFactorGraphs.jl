@@ -3,17 +3,42 @@
 ## quick deprecation handle
 import Base: propertynames, getproperty
 
-Base.propertynames(x::VariableDataLevel1, private::Bool=false) = private ? (:estimateDict, :ppeDict) : (:ppeDict,)
+# this hides all the propertynames and makes it hard to work with.
+# Base.propertynames(x::VariableDataLevel1, private::Bool=false) = private ? (:estimateDict, :ppeDict) : (:ppeDict,)
 
-Base.getproperty(x::VariableDataLevel1,f::Symbol) = begin
+Base.getproperty(x::DFGVariable,f::Symbol) = begin
     if f == :estimateDict
-      @warn "estimateDict is deprecated, use ppeDict instead"
-      getfield(x, :ppeDict)
+        @warn "estimateDict is deprecated, use ppeDict instead"
+        getfield(x, :ppeDict)
+    elseif f == :solvable
+        getfield(x,:_dfgNodeParams).solvable
+    elseif f == :_internalId
+        getfield(x,:_dfgNodeParams)._internalId
     else
-      getfield(x,f)
+        getfield(x,f)
     end
   end
 
+Base.getproperty(x::DFGVariableSummary,f::Symbol) = begin
+    if f == :estimateDict
+        @warn "estimateDict is deprecated, use ppeDict instead"
+        getfield(x, :ppeDict)
+    else
+        getfield(x,f)
+    end
+  end
+
+
+
+Base.getproperty(x::DFGFactor,f::Symbol) = begin
+  if f == :solvable
+      getfield(x,:_dfgNodeParams).solvable
+  elseif f == :_internalId
+      getfield(x,:_dfgNodeParams)._internalId
+  else
+      getfield(x,f)
+  end
+end
 
 
 """
@@ -106,7 +131,7 @@ end
 Retrieve data structure stored in a variable.
 """
 function getData(v::DFGVariable; solveKey::Symbol=:default)::VariableNodeData
-  @warn "getData is deprecated, please use solverData()"
+  @warn "getData is deprecated, please use getSolverData()"
   return v.solverDataDict[solveKey]
 end
 
@@ -128,6 +153,12 @@ end
 Retrieve solver data structure stored in a factor.
 """
 function data(f::DFGFactor)::GenericFunctionNodeData
-  @warn "data() is deprecated, please use solverData()"
+  @warn "data() is deprecated, please use getSolverData()"
   return f.data
 end
+
+
+getLabelDict(dfg::AbstractDFG) = error("getLabelDict is deprecated, consider using listing functions")
+
+setSolverParams(args...) = error("setSolverParams is deprecated, use setSolverParams!")
+setDescription(args...) = error("setSolverParams is deprecated, use setDescription!")

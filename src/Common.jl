@@ -114,7 +114,6 @@ Related
 ls, lsf
 """
 sortDFG(vars::Vector{Symbol})::Vector{Symbol} = sortVarNested(vars)
-
 """
     $SIGNATURES
 
@@ -137,7 +136,7 @@ function getfnctype(data::GenericFunctionNodeData)
   return data.fnc.usrfnc!
 end
 function getfnctype(fact::DFGFactor; solveKey::Symbol=:default)
-  data = solverData(fact) # TODO , solveKey=solveKey)
+  data = getSolverData(fact) # TODO , solveKey=solveKey)
   return getfnctype(data)
 end
 function getfnctype(dfg::T, lbl::Symbol; solveKey::Symbol=:default) where T <: AbstractDFG
@@ -153,7 +152,7 @@ Notes
 - Replaces older `getfnctype`.
 """
 getFactorType(data::GenericFunctionNodeData) = data.fnc.usrfnc!
-getFactorType(fct::DFGFactor) = getFactorType(solverData(fct))
+getFactorType(fct::DFGFactor) = getFactorType(getSolverData(fct))
 function getFactorType(dfg::G, lbl::Symbol) where G <: AbstractDFG
   getFactorType(getFactor(dfg, lbl))
 end
@@ -410,6 +409,30 @@ function addTags!(dfg::InMemoryDFGTypes, sym::Symbol, tags::Vector{Symbol})
   union!(getTags(getFactor(fg, sym)), tags)
 end
 
+
+"""
+$SIGNATURES
+
+Add tag to a variable or factor
+"""
+addTag!(f::DataLevel0, tag::Symbol) = union!(f.tags,[tag])
+
+
+"""
+$SIGNATURES
+
+Merge tags to the node's tags (variable/factor).
+"""
+mergeTags!(f::DataLevel0, tags::Vector{Symbol}) = union!(f.tags, tags)
+
+"""
+$SIGNATURES
+
+Remove the tags from the node
+"""
+deleteTags!(f::DataLevel0, tags::Vector{Symbol}) = setdiff!(f.tags, tags)
+
+
 """
     $SIGNATURES
 
@@ -440,3 +463,29 @@ function hasTagsNeighbors(dfg::InMemoryDFGTypes,
   alltags = union( (ls(dfg, sym) .|> x->getTags(getNeiFnc(dfg,x)))... )
   length(filter(x->x in alltags, tags)) >= (matchAll ? length(tags) : 1)
 end
+
+
+
+#Natural Sorting
+# Adapted from https://rosettacode.org/wiki/Natural_sorting
+# split at digit to not digit change
+splitbynum(x::AbstractString) = split(x, r"(?<=\D)(?=\d)|(?<=\d)(?=\D)")
+#parse to Int
+numstringtonum(arr::Vector{<:AbstractString}) = [(n = tryparse(Int, e)) != nothing ? n : e for e in arr]
+#natural less than
+function natural_lt(x::T, y::T) where T <: AbstractString
+    xarr = numstringtonum(splitbynum(x))
+    yarr = numstringtonum(splitbynum(y))
+    for i in 1:min(length(xarr), length(yarr))
+        if typeof(xarr[i]) != typeof(yarr[i])
+            return isa(xarr[i], Int)
+        elseif xarr[i] == yarr[i]
+            continue
+        else
+            return xarr[i] < yarr[i]
+        end
+    end
+    return length(xarr) < length(yarr)
+end
+
+natural_lt(x::Symbol, y::Symbol) = natural_lt(string(x),string(y))

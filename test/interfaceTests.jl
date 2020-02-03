@@ -1,3 +1,4 @@
+# global testDFGAPI = LightDFG
 # global testDFGAPI = GraphsDFG
 
 dfg = testDFGAPI{NoSolverParams}()
@@ -11,21 +12,21 @@ v2 = DFGVariable(:b, TestInferenceVariable2())
 f1 = DFGFactor{Int, :Symbol}(:f1)
 
 #add tags for filters
-append!(v1.tags, [:VARIABLE, :POSE])
-append!(v2.tags, [:VARIABLE, :LANDMARK])
-append!(f1.tags, [:FACTOR])
+union!(v1.tags, [:VARIABLE, :POSE])
+union!(v2.tags, [:VARIABLE, :LANDMARK])
+union!(f1.tags, [:FACTOR])
 
 st1 = TestInferenceVariable1()
 st2 = TestInferenceVariable2()
 
-solverData(v1).softtype = deepcopy(st1)
-solverData(v2).softtype = deepcopy(st2)
+getSolverData(v1).softtype = deepcopy(st1)
+getSolverData(v2).softtype = deepcopy(st2)
 
-# set v2 solvable
-setSolvable!(v2, 1)
+# set v1 to solvable=0
+setSolvable!(v1, 0)
 # set v1 and f1 solveInProgress
-solverData(v1).solveInProgress = 1
-solverData(f1).solveInProgress = 1
+getSolverData(v1).solveInProgress = 1
+getSolverData(f1).solveInProgress = 1
 
 
 # NOTE: Just for testing
@@ -46,7 +47,7 @@ addVariable!(dfg, v2)
 addFactor!(dfg, [v1, v2], f1)
 @test_throws Exception addFactor!(dfg, DFGFactor{Int, :Symbol}("f2"), [v1, DFGVariable("Nope")])
 # end
-
+##
 @testset "Adding Removing Nodes" begin
     dfg2 = testDFGAPI{NoSolverParams}()
     v1 = DFGVariable(:a, TestInferenceVariable1())
@@ -99,7 +100,7 @@ end
     # Accessors
     @test getAddHistory(dfg) == [:a, :b] #, :f1
     @test getDescription(dfg) != nothing
-    @test getLabelDict(dfg) != nothing
+    @test_throws ErrorException getLabelDict(dfg)
     # Existence
     @test exists(dfg, :a) == true
     @test exists(dfg, v1) == true
@@ -108,19 +109,24 @@ end
     # TODO - this function needs to be cleaned up
     unsorted = [:x1_3;:x1_6;:l1;:april1] #this will not work for :x1x2f1
     @test sortDFG(unsorted) == sortVarNested(unsorted)
-    @test_skip sortDFG([:x1x2f1, :x1l1f1]) == [:x1l1f1, :x1x2f1]
+    @test sort([:x1x2f1, :x1l1f1], lt=DistributedFactorGraphs.natural_lt) == [:x1l1f1, :x1x2f1]
+    l = [:a1, :X1, :b1c2, :x2_2, :c, :x1, :x10, :x1_1, :x10_10,:a, :x2_1, :xy3, :l1, :x1_2, :x1l1f1, Symbol("1a1"), :x1x2f1]
+    @test sort(l, lt=DistributedFactorGraphs.natural_lt) == [Symbol("1a1"), :X1, :a, :a1, :b1c2, :c, :l1, :x1, :x1_1, :x1_2, :x1l1f1, :x1x2f1, :x2_1, :x2_2, :x10, :x10_10, :xy3]
 end
 
 # Gets
 @testset "Gets, Sets, and Accessors" begin
     global dfg,v1,v2,f1
+    #TODO compare variable and factor
     @test getVariable(dfg, v1.label) == v1
-    @test getVariable(dfg, v2.label) != v1
+    @test_broken getVariable(dfg, v2.label) != v1
     @test getFactor(dfg, f1.label) == f1
     f2 = deepcopy(f1)
     f2.label = :something
     @test f2 != f1
+    #TODO we should really finish defining error behaviour
     @test_throws Exception getVariable(dfg, :nope)
+    # @test getVariable(dfg, :nope) == nothing
     @test_throws Exception getVariable(dfg, "nope")
     @test_throws Exception getFactor(dfg, :nope)
     @test_throws Exception getFactor(dfg, "nope")
@@ -128,10 +134,10 @@ end
     # Sets
     v1Prime = deepcopy(v1)
     #updateVariable! returns the variable updated, so should be equal
-    @test updateVariable!(dfg, v1Prime) == v1
+    @test_broken updateVariable!(dfg, v1Prime) == v1
     f1Prime = deepcopy(f1)
     #updateFactor! returns the factor updated, so should be equal
-    @test updateFactor!(dfg, f1Prime) == f1
+    @test_broken updateFactor!(dfg, f1Prime) == f1
     # Revert
     v1 = getVariable(dfg, v1.label)
     f1 = getFactor(dfg, f1.label)
@@ -140,12 +146,17 @@ end
     @test getLabel(v1) == v1.label
     @test getTags(v1) == v1.tags
     testTags = [:ha, :ha23]
-    @test setTags!(v1, testTags) == testTags
-    @test getTags(v1) == testTags
+    @test setTags!(v1, testTags) == Set(testTags)
+    @test getTags(v1) == Set(testTags)
 
     @test getTimestamp(v1) == v1.timestamp
     testTimestamp = now()
-    @test setTimestamp!(v1, testTimestamp) == testTimestamp
+    #TODO set timestamp immutable, confirm behaviour
+    v1ts = setTimestamp(v1, testTimestamp)
+    updateVariable!(dfg, v1ts)
+    @test getVariable(dfg, v1ts.label) == v1ts
+    @test v1ts != v1
+    v1 = getVariable(dfg, v1ts.label)
     @test getTimestamp(v1) == testTimestamp
 
     @test getTimestamp(f1) == f1.timestamp
@@ -155,48 +166,92 @@ end
 
     @test getVariablePPEs(v1) == v1.ppeDict
     @test getVariablePPE(v1, :notfound) == nothing
-    @test solverData(v1) === v1.solverDataDict[:default]
-    @test getData(v1) === v1.solverDataDict[:default]
-    @test solverData(v1, :default) === v1.solverDataDict[:default]
-    @test solverDataDict(v1) == v1.solverDataDict
-    @test internalId(v1) == v1._internalId
+    @test getSolverData(v1) === v1.solverDataDict[:default]
+    @test @test_logs (:warn, r"[Dd]eprecate") getData(v1) === v1.solverDataDict[:default]
+    @test @test_logs (:warn, r"[Dd]eprecate") solverData(v1, :default) === v1.solverDataDict[:default]
+    @test getSolverDataDict(v1) == v1.solverDataDict
+    @test getInternalId(v1) == v1._internalId
 
+    #TODO: Finish
+    # Add new VND of type ContinuousScalar to :x0
+    # Could also do VariableNodeData(ContinuousScalar())
+    vnd = VariableNodeData{TestInferenceVariable1}()
+    addVariableSolverData!(dfg, :a, vnd, :parametric)
+    @test setdiff(listVariableSolverData(dfg, :a), [:default, :parametric]) == []
+    # Get the data back - note that this is a reference to above.
+    vndBack = getVariableSolverData(dfg, :a, :parametric)
+    @test vndBack == vnd
+    # Delete it
+    @test deleteVariableSolverData!(dfg, :a, :parametric) == vndBack
+    # Update add it
+    updateVariableSolverData!(dfg, :a, vnd, :parametric)
+    # Update update it
+    updateVariableSolverData!(dfg, :a, vnd, :parametric)
+    # Bulk copy update x0
+    updateVariableSolverData!(dfg, [v1], :default)
+    # Delete parametric from v1
+    deleteVariableSolverData!(dfg, :a, :parametric)
+
+    #TODO: Finish
+    # Add a new PPE of type MeanMaxPPE to :x0
+    ppe = MeanMaxPPE(:default, [0.0], [0.0], [0.0])
+    addPPE!(dfg, :a, ppe)
+    @test listPPE(dfg, :a) == [:default]
+    # Get the data back - note that this is a reference to above.
+    @test getPPE(dfg, :a, :default) == ppe
+
+    # Delete it
+    @test deletePPE!(dfg, :a, :default) == ppe
+    # Update add it
+    updatePPE!(dfg, :a, ppe, :default)
+    # Update update it
+    updatePPE!(dfg, :a, ppe, :default)
+    # Bulk copy PPE's for x0 and x1
+    updatePPE!(dfg, [v1], :default)
+    # Delete it
+    @test deletePPE!(dfg, :a, :default) == ppe
+
+    #TODO I don't know what is supposed to happen to softtype
     @test getSofttype(v1) == st1
     @test getSofttype(v2) == st2
     @test getSofttype(v1) == st1
 
     @test getLabel(f1) == f1.label
     @test getTags(f1) == f1.tags
-    @test setTags!(v1, testTags) == testTags
-    @test getTags(v1) == testTags
+    @test setTags!(v1, testTags) == Set(testTags)
+    @test getTags(v1) == Set(testTags)
 
-    @test solverData(f1) == f1.data
+    @test getSolverData(f1) == f1.solverData
     # Deprecated functions
-    @test solverData(f1) == f1.data
-    @test getData(f1) == f1.data
+    @test @test_logs (:warn, r"[Dd]eprecate") solverData(f1) == f1.solverData
+    # REMOVED? @test getData(f1) == f1.data
     # Internal function
-    @test internalId(f1) == f1._internalId
+    @test getInternalId(f1) == f1._dfgNodeParams._internalId
 
     @test getSolverParams(dfg) != nothing
-    @test setSolverParams(dfg, getSolverParams(dfg)) == getSolverParams(dfg)
+    @test setSolverParams!(dfg, getSolverParams(dfg)) == getSolverParams(dfg)
 
     #solver data is initialized
     @test !isInitialized(dfg, :a)
     @test !isInitialized(v2)
-    @test !isInitialized(v2, key=:second)
+    @test @test_logs (:error, r"Variable does not have solver data") !isInitialized(v2, key=:second)
     # isSolvable and isSolveInProgress
-    @test isSolvable(v1) == 0
-    @test isSolvable(v2) == 1
-    @test isSolvable(f1) == 0
-    @test isSolveInProgress(v1) == 1
-    @test isSolveInProgress(f1) == 1
+    #TODO implement or deprecate isSolvable
+    @test getSolvable(v1) == 0
+    @test getSolvable(v2) == 1
+    @test getSolvable(f1) == 0
+    @test getSolvable(v1) == 0
+
+    #TODO isSolveInProgress was not deprecated
+    @test getSolveInProgress(v1) == 1
+    @test getSolveInProgress(f1) == 1
     # setSolvable, getSolvable, and variants
     v1 = getVariable(dfg, v1.label)
     f1 = getFactor(dfg, f1.label)
     @test setSolvable!(v1, 1) == 1
-    @test isSolvable(v1) == 1
+    @test getSolvable(v1) == 1
     @test setSolvable!(dfg, v1.label, 0) == 0
-    @test isSolvable(v1) == 0
+    @test getSolvable(v1) == 0
     @test setSolvable!(f1, 1) == 1
     @test getSolvable(dfg, f1.label) == 1
     @test setSolvable!(dfg, f1.label, 0) == 0
@@ -224,9 +279,9 @@ end
     smallUserData = Dict{Symbol, String}(:a => "42", :b => "Hello")
     smallRobotData = Dict{Symbol, String}(:a => "43", :b => "Hello")
     smallSessionData = Dict{Symbol, String}(:a => "44", :b => "Hello")
-    setUserData(dfg, deepcopy(smallUserData))
-    setRobotData(dfg, deepcopy(smallRobotData))
-    setSessionData(dfg, deepcopy(smallSessionData))
+    setUserData!(dfg, deepcopy(smallUserData))
+    setRobotData!(dfg, deepcopy(smallRobotData))
+    setSessionData!(dfg, deepcopy(smallSessionData))
     @test getUserData(dfg) == smallUserData
     @test getRobotData(dfg) == smallRobotData
     @test getSessionData(dfg) == smallSessionData
@@ -247,7 +302,7 @@ end
     v1 = getVariable(dfg, :a)
     @test addBigDataEntry!(v1, de1) == v1
     @test addBigDataEntry!(dfg, :a, de2) == v1
-    @test addBigDataEntry!(v1, de1) == v1
+    @test_throws ErrorException addBigDataEntry!(v1, de1)
     @test de2 in getBigDataEntries(v1)
 
     #get
@@ -259,7 +314,7 @@ end
     #update
     @test updateBigDataEntry!(dfg, :a, de2_update) == v1
     @test deepcopy(de2_update) == getBigDataEntry(dfg, :a, :key2)
-    @test updateBigDataEntry!(dfg, :b, de2_update) == nothing
+    @test @test_logs (:error, r"does not exist") updateBigDataEntry!(dfg, :b, de2_update) == nothing
 
     #list
     entries = getBigDataEntries(dfg, :a)
@@ -289,7 +344,8 @@ end
     mergeUpdateVariableSolverData!(dfg, newvar)
 
     #For now spot check
-    @test solverDataDict(newvar) == solverDataDict(var)
+    #TODO solverDataDict() not deprecated
+    @test getSolverDataDict(newvar) == getSolverDataDict(var)
     @test getVariablePPEs(newvar) == getVariablePPEs(var)
     @test getMaxPPE(getVariablePPEs(newvar)[:default]) == getVariablePPEs(newvar)[:default].max
     @test getMeanPPE(getVariablePPEs(newvar)[:default]) == getVariablePPEs(newvar)[:default].mean
@@ -322,12 +378,16 @@ end
 @testset "Adjacency Matrices" begin
     global dfg,v1,v2,f1
     # Normal
-    adjMat = getAdjacencyMatrix(dfg)
+    #deprecated
+    @test_throws ErrorException getAdjacencyMatrix(dfg)
+    adjMat = DistributedFactorGraphs.getAdjacencyMatrixSymbols(dfg)
     @test size(adjMat) == (2,4)
     @test symdiff(adjMat[1, :], [nothing, :a, :b, :orphan]) == Symbol[]
     @test symdiff(adjMat[2, :], [:f1, :f1, :f1, nothing]) == Symbol[]
+    #
     #sparse
-    adjMat, v_ll, f_ll = getAdjacencyMatrixSparse(dfg)
+    #TODO this silly name thing has gone on too long
+    adjMat, v_ll, f_ll = getBiadjacencyMatrix(dfg)
     @test size(adjMat) == (1,3)
 
     # Checking the elements of adjacency, its not sorted so need indexing function
@@ -339,13 +399,13 @@ end
     @test symdiff(f_ll, [:f1, :f1, :f1]) == Symbol[]
 
     # Filtered - REF DFG #201
-    adjMat = getAdjacencyMatrix(dfg, solvable=1)
-    @test size(adjMat) == (1,2)
-    @test symdiff(adjMat[1, :], [nothing, :b]) == Symbol[]
+    adjMat, v_ll, f_ll = getBiadjacencyMatrix(dfg, solvable=1)
+    @test size(adjMat) == (0,2)
+
     # sparse
-    adjMat, v_ll, f_ll = getAdjacencyMatrixSparse(dfg, solvable=1)
-    @test size(adjMat) == (0,1)
-    @test v_ll == [:b]
+    adjMat, v_ll, f_ll = getBiadjacencyMatrix(dfg, solvable=1)
+    @test size(adjMat) == (0,2)
+    @test v_ll == [:orphan, :b]
     @test f_ll == []
 
 end
@@ -369,8 +429,9 @@ numNodes = 10
 dfg = testDFGAPI{NoSolverParams}()
 verts = map(n -> DFGVariable(Symbol("x$n"), TestInferenceVariable1()), 1:numNodes)
 #change ready and solveInProgress for x7,x8 for improved tests on x7x8f1
-verts[7].solvable = 1
-
+#NOTE because defaults changed
+verts[8]._dfgNodeParams.solvable = 0
+verts[9]._dfgNodeParams.solvable = 0
 # Can't change the softtypes now.
 # #force softytypes to first 2 vertices.
 # verts[1].solverDataDict[:default].softtype = deepcopy(st1)
@@ -378,6 +439,8 @@ verts[7].solvable = 1
 
 map(v -> addVariable!(dfg, v), verts)
 map(n -> addFactor!(dfg, [verts[n], verts[n+1]], DFGFactor{Int, :Symbol}(Symbol("x$(n)x$(n+1)f1"))), 1:(numNodes-1))
+
+getFactor(dfg, :x7x8f1)._dfgNodeParams.solvable = 0
 
 @testset "Getting Neighbors" begin
     global dfg,verts
@@ -442,6 +505,7 @@ end
     end
 end
 
+#TODO Summaries and Summary Graphs
 @testset "Summaries and Summary Graphs" begin
     factorFields = fieldnames(DFGFactorSummary)
     variableFields = fieldnames(DFGVariableSummary)
@@ -457,7 +521,7 @@ end
     for v in ls(summaryGraph)
         for field in variableFields
             if field != :softtypename
-                @test getfield(getVariable(dfg, v), field) == getfield(getVariable(summaryGraph, v), field)
+                @test getproperty(getVariable(dfg, v), field) == getproperty(getVariable(summaryGraph, v), field)
             else
                 # Special case to check the symbol softtype is equal to the full softtype.
                 @test Symbol(typeof(getSofttype(getVariable(dfg, v)))) == getSofttype(getVariable(summaryGraph, v))
@@ -466,7 +530,7 @@ end
     end
     for f in lsf(summaryGraph)
         for field in factorFields
-            @test getfield(getFactor(dfg, f), field) == getfield(getFactor(summaryGraph, f), field)
+            @test getproperty(getFactor(dfg, f), field) == getproperty(getFactor(summaryGraph, f), field)
         end
     end
 end
@@ -480,8 +544,12 @@ end
     addVariable!(dotdfg, v1)
     addVariable!(dotdfg, v2)
     addFactor!(dotdfg, [v1, v2], f1)
-
-    @test toDot(dotdfg) == "graph graphname {\n2 [\"label\"=\"b\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n2 -- 3\n3 [\"label\"=\"f1\",\"shape\"=\"box\",\"fillcolor\"=\"blue\",\"color\"=\"blue\"]\n1 [\"label\"=\"a\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n1 -- 3\n}\n"
+    #NOTE hardcoded toDot will have different results so test LightGraphs seperately
+    if testDFGAPI == LightDFG
+        @test toDot(dotdfg) == "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nf1 [color=blue, shape=box];\na -- f1\nb -- f1\n}\n"
+    else
+        @test toDot(dotdfg) == "graph graphname {\n2 [\"label\"=\"b\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n2 -- 3\n3 [\"label\"=\"f1\",\"shape\"=\"box\",\"fillcolor\"=\"blue\",\"color\"=\"blue\"]\n1 [\"label\"=\"a\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n1 -- 3\n}\n"
+    end
     @test toDotFile(dotdfg, "something.dot") == nothing
     Base.rm("something.dot")
 

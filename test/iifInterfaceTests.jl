@@ -110,7 +110,8 @@ end
     # Accessors
     @test getAddHistory(dfg) == [:a, :b] #, :abf1
     @test getDescription(dfg) != nothing
-    @test getLabelDict(dfg) != nothing
+    #TODO Deprecate
+    @test_throws ErrorException getLabelDict(dfg)
     # Existence
     @test exists(dfg, :a) == true
     @test exists(dfg, v1) == true
@@ -122,12 +123,6 @@ end
     @test !isVariable(dfg, f1.label)
     @test !isVariable(dfg, :doesntexist)
     @test !isFactor(dfg, :doesntexist)
-
-    # Sorting of results
-    # TODO - this function needs to be cleaned up
-    unsorted = [:x1_3;:x1_6;:l1;:april1] #this will not work for :x1x2f1
-    @test sortDFG(unsorted) == sortVarNested(unsorted)
-    @test_skip sortDFG([:x1x2f1, :x1l1f1]) == [:x1l1f1, :x1x2f1]
 end
 
 # Gets
@@ -177,7 +172,7 @@ end
     @test internalId(f1) == f1._internalId
 
     @test getSolverParams(dfg) != nothing
-    @test setSolverParams(dfg, getSolverParams(dfg)) == getSolverParams(dfg)
+    @test setSolverParams!(dfg, getSolverParams(dfg)) == getSolverParams(dfg)
 
     #solver data is initialized
     @test !isInitialized(dfg, :a)
@@ -307,15 +302,15 @@ end
     global dfg,v1,v2,f1
 
     # Normal
-    adjMat = getAdjacencyMatrix(dfg)
+    adjMat = getIncidenceMatrix(dfg)
     @test size(adjMat) == (2,4)
     @test symdiff(adjMat[1, :], [nothing, :a, :b, :orphan]) == Symbol[]
     @test symdiff(adjMat[2, :], [:abf1, :abf1, :abf1, nothing]) == Symbol[]
     #sparse
-    adjMat, v_ll, f_ll = getAdjacencyMatrixSparse(dfg)
+    adjMat, v_ll, f_ll = getIncidenceMatrixSparse(dfg)
     @test size(adjMat) == (1,3)
 
-    # Checking the elements of adjacency, its not sorted so need indexing function
+    # Checking the elements of adjacency, its not getIncidenceMatrix so need indexing function
     indexOf = (arr, el1) -> findfirst(el2->el2==el1, arr)
     @test adjMat[1, indexOf(v_ll, :orphan)] == 0
     @test adjMat[1, indexOf(v_ll, :a)] == 1
@@ -324,11 +319,11 @@ end
     @test symdiff(f_ll, [:abf1, :abf1, :abf1]) == Symbol[]
 
     # Filtered - REF DFG #201
-    adjMat = getAdjacencyMatrix(dfg, solvable=1)
+    adjMat = getIncidenceMatrix(dfg, solvable=1)
     @test size(adjMat) == (1,2)
     @test symdiff(adjMat[1, :], [nothing, :b]) == Symbol[]
     # sparse
-    adjMat, v_ll, f_ll = getAdjacencyMatrixSparse(dfg, solvable=1)
+    adjMat, v_ll, f_ll = getIncidenceMatrixSparse(dfg, solvable=1)
     @test size(adjMat) == (0,1)
     @test v_ll == [:b]
     @test f_ll == []

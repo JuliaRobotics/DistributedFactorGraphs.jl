@@ -132,8 +132,8 @@ function compareVariable(A::DFGVariable,
   union!(skiplist, skip)
   TP = TP && compareAll(A.solverDataDict, B.solverDataDict, skip=skiplist, show=show)
 
-  Ad = solverData(A)
-  Bd = solverData(B)
+  Ad = getSolverData(A)
+  Bd = getSolverData(B)
 
   # TP = TP && compareAll(A.attributes, B.attributes, skip=[:softtype;], show=show)
   varskiplist = union(varskiplist, [:softtype;:_internalId])
@@ -169,20 +169,20 @@ function compareFactor(A::DFGFactor,
   #
   TP =  compareAll(A, B, skip=union([:attributes;:data;:_variableOrderSymbols;:_internalId],skip), show=show)
   # TP = TP & compareAll(A.attributes, B.attributes, skip=[:data;], show=show)
-  TP = TP & compareAllSpecial(solverData(A), solverData(B), skip=union([:fnc;:_internalId], skip), show=show)
-  TP = TP & compareAllSpecial(solverData(A).fnc, solverData(B).fnc, skip=union([:cpt;:measurement;:params;:varidx;:threadmodel], skip), show=show)
-  TP = TP & (skipsamples || compareAll(solverData(A).fnc.measurement, solverData(B).fnc.measurement, show=show, skip=skip))
-  TP = TP & (skipcompute || compareAll(solverData(A).fnc.params, solverData(B).fnc.params, show=show, skip=skip))
-  TP = TP & (skipcompute || compareAll(solverData(A).fnc.varidx, solverData(B).fnc.varidx, show=show, skip=skip))
+  TP = TP & compareAllSpecial(getSolverData(A), getSolverData(B), skip=union([:fnc;:_internalId], skip), show=show)
+  TP = TP & compareAllSpecial(getSolverData(A).fnc, getSolverData(B).fnc, skip=union([:cpt;:measurement;:params;:varidx;:threadmodel], skip), show=show)
+  TP = TP & (skipsamples || compareAll(getSolverData(A).fnc.measurement, getSolverData(B).fnc.measurement, show=show, skip=skip))
+  TP = TP & (skipcompute || compareAll(getSolverData(A).fnc.params, getSolverData(B).fnc.params, show=show, skip=skip))
+  TP = TP & (skipcompute || compareAll(getSolverData(A).fnc.varidx, getSolverData(B).fnc.varidx, show=show, skip=skip))
 
   return TP
 end
-  # Ad = solverData(A)
-  # Bd = solverData(B)
+  # Ad = getSolverData(A)
+  # Bd = getSolverData(B)
   # TP =  compareAll(A, B, skip=[:attributes;:data], show=show)
   # TP &= compareAll(A.attributes, B.attributes, skip=[:data;], show=show)
-  # TP &= compareAllSpecial(solverData(A).fnc, solverData(B).fnc, skip=[:cpt;], show=show)
-  # TP &= compareAll(solverData(A).fnc.cpt, solverData(B).fnc.cpt, show=show)
+  # TP &= compareAllSpecial(getSolverData(A).fnc, getSolverData(B).fnc, skip=[:cpt;], show=show)
+  # TP &= compareAll(getSolverData(A).fnc.cpt, getSolverData(B).fnc.cpt, show=show)
 
 
 """

@@ -1,7 +1,7 @@
 import Base: convert, ==
 
 function convert(::Type{DFGFactorSummary}, f::DFGFactor)
-    return DFGFactorSummary(f.label, deepcopy(f.tags), f._internalId, deepcopy(f._variableOrderSymbols))
+    return DFGFactorSummary(f.label, f.timestamp, deepcopy(f.tags), f._dfgNodeParams._internalId, deepcopy(f._variableOrderSymbols))
 end
 
 function packFactor(dfg::G, f::DFGFactor)::Dict{String, Any} where G <: AbstractDFG
@@ -91,4 +91,19 @@ Equality check for DFGFactor.
 """
 function ==(a::DFGFactor, b::DFGFactor)::Bool
     return compareFactor(a, b)
+end
+
+# Accessors
+
+"""
+    $SIGNATURES
+
+Retrieve solver data structure stored in a factor.
+"""
+function solverData(f::F) where F <: DFGFactor
+  @warn "Deprecated for 0.6 standardization. Please use getSolverData()"
+  return f.solverData
+end
+function getSolverData(f::F) where F <: DFGFactor
+  return f.solverData
 end
