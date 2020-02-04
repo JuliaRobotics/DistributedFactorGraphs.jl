@@ -3,7 +3,7 @@ using Test
 
 # Build a basic graph.
 
-dfg = GraphsDFG{NoSolverParams}()
+dfg = LightDFG{NoSolverParams}()
 #add types for softtypes
 struct TestInferenceVariable1 <: InferenceVariable end
 v1 = DFGVariable(:a, TestInferenceVariable1())
@@ -33,10 +33,11 @@ for testStore in testStores
     @test addBigData!(ds, entry1, dataset) == dataset
     @test getBigData(ds, entry1) == dataset
     # Now add it to the variable
-    @test addBigDataEntry!(v1, entry1) == v1
+    @test addBigDataEntry!(v1, entry1) == entry1
     @test entry1 in getBigDataEntries(v1)
     # Update test
     copyEntry = deepcopy(entry1)
+    sleep(0.1)
     @test updateBigData!(ds, entry1, dataset2) == dataset2
     # Data updated?
     @test getBigData(ds, entry1) == dataset2

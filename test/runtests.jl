@@ -35,7 +35,7 @@ end
 end
 
 @testset "Data Store Tests" begin
-    @test_skip include("DataStoreTests.jl")
+    include("DataStoreTests.jl")
 end
 
 @testset "Needs-a-Home Tests" begin
