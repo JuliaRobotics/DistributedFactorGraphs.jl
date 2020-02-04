@@ -66,22 +66,3 @@ LightDFG(description::String,
          sessionData::Dict{Symbol, String},
          solverParams::AbstractParams) =
          LightDFG(FactorGraph{Int,DFGVariable,DFGFactor}(), description, userId, robotId, sessionId, userData, robotData, sessionData, Symbol[], solverParams)
-
-
-# Fully depcrecate nodeCounter and labelDict
-# Base.propertynames(x::LightDFG, private::Bool=false) =
-#     (:g, :description, :userId, :robotId, :sessionId, :nodeCounter, :labelDict, :addHistory, :solverParams)
-#         # (private ? fieldnames(typeof(x)) : ())...)
-#
-# Base.getproperty(x::LightDFG,f::Symbol) = begin
-#     if f == :nodeCounter
-#         @error "Field nodeCounter deprecated. returning number of nodes"
-#         nv(x.g)
-#     elseif f == :labelDict
-#         @error "Field labelDict deprecated. Consider using exists(dfg,label) or getLabelDict(dfg) instead. Returning internals copy"
-#         #TODO: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/111
-#         copy(x.g.labels.sym_int)
-#     else
-#         getfield(x,f)
-#     end
-# end

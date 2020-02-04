@@ -328,11 +328,6 @@ function getSolverData(v::DFGVariable, key::Symbol=:default)
     return haskey(v.solverDataDict, key) ? v.solverDataDict[key] : nothing
 end
 
-function solverData(v::DFGVariable, key::Symbol=:default)
-  @warn "Deprecated for 0.6 standardization. Please use getSolverData()"
-  return getSolverData(v, key)
-end
-
 """
     $SIGNATURES
 

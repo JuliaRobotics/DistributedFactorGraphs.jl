@@ -61,16 +61,6 @@ function buildSubgraphFromLabels!(dfg::G,
   return subfg
 end
 
-function buildSubgraphFromLabels(dfg::G,
-                                  syms::Vector{Symbol};
-                                  subfg::AbstractDFG=(G <: InMemoryDFGTypes ? G : GraphsDFG)(params=getSolverParams(dfg)),
-                                  solvable::Int=0,
-                                  allowedFactors::Union{Nothing, Vector{Symbol}}=nothing  )::G where G <: AbstractDFG
-  #
-  @warn "Deprecated buildSubgraphFromLabels, use buildSubgraphFromLabels! instead."
-  buildSubgraphFromLabels!(dfg, syms, subfg=subfg, solvable=solvable, allowedFactors=allowedFactors )
-end
-
 
 ## KEEPING COMMENT, WANT TO BE CONSOLIDATED WITH FUNCTION ABOVE -- KEEPING ONLY ONE FOR MAINTAINABILITY
 ## STILL NEEDS TO BE CONSOLIDATED WITH `DFG._copyIntoGraph`

@@ -33,7 +33,6 @@ export AbstractParams, NoSolverParams
 export DFGNode, DFGVariable, DFGFactor, AbstractDFGVariable, AbstractDFGFactor
 export DFGNodeParams
 export SkeletonDFGVariable, SkeletonDFGFactor
-export timestamp # DEPRECATED
 export label, getTimestamp, setTimestamp!, setTimestamp, tags, setTags!, data, softtype, solverData, getData, solverDataDict, setSolverData, setSolverData!, internalId, smallData, setSmallData!, bigData
 export getSolvedCount, isSolved, setSolvedCount!
 export DFGVariableSummary, DFGFactorSummary, AbstractDFGSummary
@@ -108,9 +107,6 @@ export getNeighbors, _getDuplicatedEmptyDFG, getSubgraphAroundNode, getSubgraph
 export getBiadjacencyMatrix
 
 export toDot, toDotFile
-# Deprecated
-export getAdjacencyMatrix, getAdjacencyMatrixSparse
-export getLabelDict, setSolverParams, setDescription
 #--------
 
 # File import and export

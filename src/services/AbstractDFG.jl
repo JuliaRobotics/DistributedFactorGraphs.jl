@@ -782,17 +782,7 @@ function mergeUpdateGraphSolverData!(sourceDFG::G, destDFG::H, varSyms::Vector{S
 end
 
 # Alias
-# TODO Can we not deprecate this completely in favor of only using a sparse matrix?
-"""
-    $(SIGNATURES)
-Get a matrix indicating relationships between variables and factors. Rows are
-all factors, columns are all variables, and each cell contains either nothing or
-the symbol of the relating factor. The first row and first column are factor and
-variable headings respectively.
-"""
-function getAdjacencyMatrix(dfg::AbstractDFG; solvable::Int=0)::Matrix{Union{Nothing, Symbol}}
-    error("Deprecated function, please use getBiadjacencyMatrix")
-end
+
 """
     $(SIGNATURES)
 Get a matrix indicating relationships between variables and factors. Rows are
@@ -823,9 +813,9 @@ end
 """
     $(SIGNATURES)
 Get a matrix indicating adjacency between variables and factors. Returned as
-a tuple: adjmat::SparseMatrixCSC{Int}, var_labels::Vector{Symbol)
-fac_labels::Vector{Symbol). Rows are the factors, columns are the variables,
-with the corresponding labels in fac_labels,var_labels.
+a named tuple: B::SparseMatrixCSC{Int}, varLabels::Vector{Symbol)
+facLabels::Vector{Symbol). Rows are the factors, columns are the variables,
+with the corresponding labels in varLabels,facLabels.
 """
 # TODO API name get seems wrong maybe just biadjacencyMatrix
 function getBiadjacencyMatrix(dfg::AbstractDFG; solvable::Int=0)::NamedTuple{(:B, :varLabels, :facLabels), Tuple{SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}}
@@ -843,11 +833,6 @@ function getBiadjacencyMatrix(dfg::AbstractDFG; solvable::Int=0)::NamedTuple{(:B
     return (B=adjMat, varLabels=varLabels, facLabels=factLabels)
 end
 
-function getAdjacencyMatrixSparse(dfg::AbstractDFG; solvable::Int=0)
-    @warn "Deprecated function, please use getBiadjacencyMatrix as this will be removed in v0.6.1"
-    return getBiadjacencyMatrix(dfg, solvable)
-end
-# -------------------------
 
 """
     $SIGNATURES
