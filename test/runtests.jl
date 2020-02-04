@@ -110,3 +110,33 @@ if get(ENV, "IIF_TEST", "") == "true"
 else
     @warn "Skipping IncrementalInference driver tests"
 end
+
+struct NotImplementedDFG <: AbstractDFG end
+
+
+@testset "No Interface tests" begin
+    dfg = NotImplementedDFG()
+    v1 = SkeletonDFGVariable(:v1)
+    f1 = SkeletonDFGFactor(:f1)
+
+    @test_throws ErrorException exists(dfg, v1)
+    @test_throws ErrorException exists(dfg, f1)
+    #TODO FIXME
+    # @test_throws ErrorException exists(dfg, :s)
+    @test_throws ErrorException addVariable!(dfg, v1)
+    @test_throws ErrorException addFactor!(dfg, [v1, v1], f1)
+    @test_throws ErrorException addFactor!(dfg,[:a, :b], f1)
+    #TODO only implement addFactor!(dfg, f1)
+    @test_throws ErrorException getVariable(dfg, :a)
+    @test_throws ErrorException getFactor(dfg, :a)
+    @test_throws ErrorException updateVariable!(dfg, v1)
+    @test_throws ErrorException updateFactor!(dfg, f1)
+
+    @test_throws ErrorException deleteVariable!(dfg, :a)
+    @test_throws ErrorException deleteFactor!(dfg, :a)
+    @test_throws ErrorException getVariables(dfg)
+    @test_throws ErrorException getFactors(dfg)
+    @test_throws ErrorException isFullyConnected(dfg)
+    @test_throws ErrorException getNeighbors(dfg, v1)
+    @test_throws ErrorException getNeighbors(dfg, v1)
+end

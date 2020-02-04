@@ -231,10 +231,17 @@ end
 """
     $(SIGNATURES)
 Get a DFGVariable with a specific solver key.
-Not used in memory, only defined for CGDFG.
+In memory types still return a reference, other types returns a variable with only solveKey.
 """
 function getVariable(dfg::G, label::Symbol, solveKey::Symbol)::AbstractDFGVariable where G <: AbstractDFG
-    return getVariable(dfg, Symbol(label))
+
+    var = getVariable(dfg, label)
+
+    if !haskey(var.solverDataDict, solveKey)
+        error("Solvekey '$solveKey' does not exists in the variable")
+    end
+
+    return var
 end
 
 # TODO: Confirm we can remove this.

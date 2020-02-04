@@ -283,6 +283,9 @@ end
 
 
     @test getVariable(fg, :a) == v1
+    @test getVariable(fg, :a, :default) == v1
+    @test_throws ErrorException getVariable(fg, :a, :missingfoo)
+
     @test getFactor(fg, :f1) == f1
 
     @test_throws ErrorException getVariable(fg, :c)
