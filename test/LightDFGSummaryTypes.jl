@@ -31,15 +31,15 @@ addFactor!(dfg, [v1, v2], f1)
     f1 = FACTYPE(:f1)
     f2 = FACTYPE(:f2)
     # @testset "Creating Graphs" begin
-    @test addVariable!(dfg2, v1)
-    @test addVariable!(dfg2, v2)
-    @test_throws ErrorException updateVariable!(dfg2, v3)
-    @test addVariable!(dfg2, v3)
+    @test addVariable!(dfg2, v1) == v1
+    @test addVariable!(dfg2, v2) == v2
+    @test updateVariable!(dfg2, v3) == v3
     @test_throws ErrorException addVariable!(dfg2, v3)
-    @test addFactor!(dfg2, [v1, v2], f1)
+    @test_throws ErrorException addVariable!(dfg2, v3)
+    @test addFactor!(dfg2, [v1, v2], f1) == f1
     @test_throws ErrorException addFactor!(dfg2, [v1, v2], f1)
-    @test_throws ErrorException updateFactor!(dfg2, f2)
-    @test addFactor!(dfg2, [:b, :c], f2)
+    @test updateFactor!(dfg2, f2) == f2
+    @test_throws ErrorException addFactor!(dfg2, [:b, :c], f2)
     @test deleteVariable!(dfg2, v3) == v3
     @test symdiff(ls(dfg2),[:a,:b]) == []
     @test deleteFactor!(dfg2, f2) == f2

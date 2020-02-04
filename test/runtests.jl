@@ -42,7 +42,6 @@ end
     include("needsahomeTests.jl")
 end
 
-#=
 @testset "LightDFG subtype tests" begin
     for type in [(var=DFGVariableSummary, fac=DFGFactorSummary), (var=SkeletonDFGVariable,fac=SkeletonDFGFactor)]
         @testset "$(type.var) and $(type.fac) tests" begin
@@ -53,6 +52,7 @@ end
         end
     end
 end
+
 
 if get(ENV, "IIF_TEST", "") == "true"
 
@@ -110,4 +110,3 @@ if get(ENV, "IIF_TEST", "") == "true"
 else
     @warn "Skipping IncrementalInference driver tests"
 end
-=#
