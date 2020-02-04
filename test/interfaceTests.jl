@@ -171,6 +171,7 @@ end
 
     @test setSolvable!(v1, 1) == 1
     @test getSolvable(v1) == 1
+    @test setSolvable!(v1, 0) == 0
 
     @test setSmallData!(v1, small) == small
     @test getSmallData(v1) == small
@@ -258,12 +259,15 @@ end
     @test addVariable!(fg, v1) == v1
     @test addVariable!(fg, v2) == v2
     @test @test_logs (:warn, r"does not exist") updateVariable!(fg, v3) == v3
+    @test updateVariable!(fg, v3) == v3
     @test_throws ErrorException addVariable!(fg, v3)
 
     @test addFactor!(fg, [v1, v2], f1) == f1
     @test_throws ErrorException addFactor!(fg, [v1, v2], f1)
     @test @test_logs (:warn, r"does not exist") updateFactor!(fg, f2) == f2
+    @test updateFactor!(fg, f2) == f2
     @test_throws ErrorException addFactor!(fg, [:b, :c], f2)
+    #TODO Graphs.jl, but look at refactoring absract @test_throws ErrorException addFactor!(fg, f2)
 
     #deletions
     @test deleteVariable!(fg, v3) == v3
@@ -282,14 +286,39 @@ end
 
 
     # TODO move
+    #getvariables and factors
+    @test length(getVariables(fg)) == 2
+    @test all(getVariables(fg, r"a") .== [v1])
+    @test all(getVariables(fg, solvable=1) .== [v2])
+    @test getVariables(fg, r"a", solvable=1) == []
+    @test all(getFactors(fg) .== [f1])
+    @test getFactors(fg, r"a") == []
+    @test all(getFactors(fg, solvable=1) .== [f1])
+    @test getFactors(fg, solvable=2) == []
+
+    # Existence
+    @test exists(fg, :a)
+    @test !exists(fg, :c)
+    @test exists(fg, :f1)
+    @test !exists(fg, :f2)
+
+    @test exists(fg, v1)
+    @test !exists(fg, v3)
+    @test exists(fg, f1)
+    @test !exists(fg, f2)
+
+    @test isVariable(fg, :a)
+    @test !isVariable(fg, :f1)
+
+    @test isFactor(fg, :f1)
+    @test !isFactor(fg, :a)
+
     #list
     @test issetequal([:a,:b], listVariables(fg))
     @test issetequal([:f1], listFactors(fg))
 
     @test @test_deprecated getVariableIds(fg) == listVariables(fg)
     @test @test_deprecated getFactorIds(fg) == listFactors(fg)
-
-
 end
 
 
