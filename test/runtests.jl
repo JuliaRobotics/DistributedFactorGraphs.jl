@@ -18,8 +18,8 @@ using Dates
 
 # Test each interface
 apis = [
+    LightDFG,
     GraphsDFG,
-    LightDFG
     ]
 for api in apis
     @testset "Testing Driver: $(api)" begin

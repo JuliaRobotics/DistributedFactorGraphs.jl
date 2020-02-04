@@ -149,7 +149,7 @@ end
 
     # TODO direct use is not recommended, use accessors, maybe not export or deprecate
     @test getSolverDataDict(v1) == v1.solverDataDict
-    # TODO implement name
+
     @test getPPEDict(v1) == v1.ppeDict
 
     @test getSmallData(v1) == Dict{String,String}()
@@ -177,6 +177,10 @@ end
     @test getSmallData(v1) == small
 
     #no accessors on BigData, only CRUD
+
+    #deprecated
+    @test @test_deprecated getData(v1) === v1.solverDataDict[:default]
+    @test @test_deprecated solverData(v1, :default) === v1.solverDataDict[:default]
 
     # #TODO sort out
     # getPPEs
@@ -291,10 +295,13 @@ end
     @test all(getVariables(fg, r"a") .== [v1])
     @test all(getVariables(fg, solvable=1) .== [v2])
     @test getVariables(fg, r"a", solvable=1) == []
+    @test getVariables(fg, tags=[:POSE])[1] == v1
+
     @test all(getFactors(fg) .== [f1])
     @test getFactors(fg, r"a") == []
     @test all(getFactors(fg, solvable=1) .== [f1])
     @test getFactors(fg, solvable=2) == []
+    @test_broken getFactors(fg, tags=[:tag1])[1] == f1
 
     # Existence
     @test exists(fg, :a)
@@ -322,6 +329,71 @@ end
 end
 
 
+##
+@testset "TODO Sorteer groep" begin
+
+    @testset "Connectivity Test" begin
+
+        if testDFGAPI == GraphsDFG
+            @error "FIXME! GraphsDFG connectivity functions are broken"
+
+            @test_broken isFullyConnected(fg) == true
+            @test_broken hasOrphans(fg) == false
+            addVariable!(fg, DFGVariable(:orphan, TestInferenceVariable1()))
+            @test_broken isFullyConnected(fg) == false
+            @test_broken hasOrphans(fg) == true
+        else
+            @test isFullyConnected(fg) == true
+            @test hasOrphans(fg) == false
+            addVariable!(fg, DFGVariable(:orphan, TestInferenceVariable1()))
+            @test isFullyConnected(fg) == false
+            @test hasOrphans(fg) == true
+        end
+    end
+
+    @testset "Adjacency Matrices" begin
+
+        # Normal
+        #deprecated
+        @test_throws ErrorException getAdjacencyMatrix(fg)
+        adjMat = DistributedFactorGraphs.getAdjacencyMatrixSymbols(fg)
+        @test size(adjMat) == (2,4)
+        @test symdiff(adjMat[1, :], [nothing, :a, :b, :orphan]) == Symbol[]
+        @test symdiff(adjMat[2, :], [:f1, :f1, :f1, nothing]) == Symbol[]
+        #
+        #sparse
+        #TODO this silly name thing has gone on too long
+        adjMat, v_ll, f_ll = getBiadjacencyMatrix(fg)
+        @test size(adjMat) == (1,3)
+
+        # Checking the elements of adjacency, its not sorted so need indexing function
+        indexOf = (arr, el1) -> findfirst(el2->el2==el1, arr)
+        @test adjMat[1, indexOf(v_ll, :orphan)] == 0
+        @test adjMat[1, indexOf(v_ll, :a)] == 1
+        @test adjMat[1, indexOf(v_ll, :b)] == 1
+        @test symdiff(v_ll, [:a, :b, :orphan]) == Symbol[]
+        @test symdiff(f_ll, [:f1, :f1, :f1]) == Symbol[]
+
+        # Filtered - REF DFG #201
+        adjMat, v_ll, f_ll = getBiadjacencyMatrix(fg, solvable=0)
+        @test size(adjMat) == (1,3)
+
+        # sparse
+        adjMat, v_ll, f_ll = getBiadjacencyMatrix(fg, solvable=1)
+        @test size(adjMat) == (1,2)
+        @test issetequal(v_ll, [:orphan, :b])
+        @test f_ll == [:f1]
+
+    end
+
+    @testset "Sorting" begin
+        unsorted = [:x1_3;:x1_6;:l1;:april1] #this will not work for :x1x2f1
+        @test sortDFG(unsorted) == sortVarNested(unsorted)
+        @test sort([:x1x2f1, :x1l1f1], lt=DistributedFactorGraphs.natural_lt) == [:x1l1f1, :x1x2f1]
+        l = [:a1, :X1, :b1c2, :x2_2, :c, :x1, :x10, :x1_1, :x10_10,:a, :x2_1, :xy3, :l1, :x1_2, :x1l1f1, Symbol("1a1"), :x1x2f1]
+        @test sort(l, lt=DistributedFactorGraphs.natural_lt) == [Symbol("1a1"), :X1, :a, :a1, :b1c2, :c, :l1, :x1, :x1_1, :x1_2, :x1l1f1, :x1x2f1, :x2_1, :x2_2, :x10, :x10_10, :xy3]
+    end
+end
 #
 @testset "tags" begin
     #
@@ -906,9 +978,11 @@ end
     deleteVariable!(dfg, :a)
     @test listVariables(dfg) == []
 end
+=#
 
+## Now make a complex graph for connectivity tests
+#TODO Also improve
 
-# Now make a complex graph for connectivity tests
 numNodes = 10
 dfg = testDFGAPI{NoSolverParams}()
 verts = map(n -> DFGVariable(Symbol("x$n"), TestInferenceVariable1()), 1:numNodes)
@@ -939,13 +1013,13 @@ getFactor(dfg, :x7x8f1)._dfgNodeParams.solvable = 0
     @test getNeighbors(dfg, :x1x2f1) == ls(dfg, :x1x2f1)
 
     # Solvable
-    @test getNeighbors(dfg, :x5, solvable=1) == Symbol[]
+    @test getNeighbors(dfg, :x5, solvable=2) == Symbol[]
     @test getNeighbors(dfg, :x5, solvable=0) == [:x4x5f1,:x5x6f1]
     @test getNeighbors(dfg, :x5) == [:x4x5f1,:x5x6f1]
     @test getNeighbors(dfg, :x7x8f1, solvable=0) == [:x7, :x8]
     @test getNeighbors(dfg, :x7x8f1, solvable=1) == [:x7]
     @test getNeighbors(dfg, verts[1], solvable=0) == [:x1x2f1]
-    @test getNeighbors(dfg, verts[1], solvable=1) == Symbol[]
+    @test getNeighbors(dfg, verts[1], solvable=2) == Symbol[]
     @test getNeighbors(dfg, verts[1]) == [:x1x2f1]
 
 end
@@ -973,19 +1047,19 @@ end
     dfgSubgraph = getSubgraphAroundNode(dfg, getFactor(dfg, :x7x8f1), 1, true, solvable=1)
     @test symdiff([:x7x8f1, :x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
     # Test for distance = 2, should return orphans
-    #:x7x8f1 is not solvable
+    setSolvable!(dfg, :x8x9f1, 0)
     dfgSubgraph = getSubgraphAroundNode(dfg, getVariable(dfg, :x8), 2, true, solvable=1)
-    @test symdiff([:x8, :x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+    @test issetequal([:x8, :x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
 
     # DFG issue #95 - confirming that getSubgraphAroundNode retains order
     # REF: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/95
     for fId in listVariables(dfg)
-        # Get a subgraph of this and it's related factors+variables
-        dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
-        # For each factor check that the order the copied graph == original
-        for fact in getFactors(dfgSubgraph)
-            @test fact._variableOrderSymbols == getFactor(dfg, fact.label)._variableOrderSymbols
-        end
+    # Get a subgraph of this and it's related factors+variables
+    dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
+    # For each factor check that the order the copied graph == original
+    for fact in getFactors(dfgSubgraph)
+        @test fact._variableOrderSymbols == getFactor(dfg, fact.label)._variableOrderSymbols
+    end
     end
 end
 
@@ -1038,5 +1112,3 @@ end
     Base.rm("something.dot")
 
 end
-
-=#
