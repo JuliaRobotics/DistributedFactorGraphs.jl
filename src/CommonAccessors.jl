@@ -53,6 +53,14 @@ end
 
 setTimestamp!(f::FactorDataLevel1, ts::DateTime) = f.timestamp = ts
 
+function setTimestamp(f::DFGFactor, ts::DateTime)
+    return DFGFactor(f.label, ts, f.tags, f.solverData, f.solvable, f._dfgNodeParams, f._variableOrderSymbols)
+end
+
+function setTimestamp(f::DFGFactorSummary, ts::DateTime)
+    return DFGFactorSummary(f.label, ts, f.tags, f._internalId, f._variableOrderSymbols)
+end
+
 """
 $SIGNATURES
 

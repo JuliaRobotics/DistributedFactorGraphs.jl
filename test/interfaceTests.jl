@@ -8,7 +8,7 @@ struct TestInferenceVariable2 <: InferenceVariable end
 struct TestFunctorInferenceType1 <: FunctorInferenceType end
 
 
-## DFG Accessors
+# DFG Accessors
 @testset "DFG Structure and Accessors" begin
     # Constructors
     # Constructors to be implemented
@@ -56,7 +56,7 @@ struct TestFunctorInferenceType1 <: FunctorInferenceType end
     # TODO see note in AbstractDFG.jl setSolverParams!
     struct GeenSolverParams <: AbstractParams
     end
-    @test_broken setSolverParams!(fg, GeenSolverParams()) == GeenSolverParams()
+    @test_throws MethodError setSolverParams!(fg, GeenSolverParams()) == GeenSolverParams()
 
 
     @test setSolverParams!(fg, NoSolverParams()) == NoSolverParams()
@@ -82,7 +82,7 @@ struct TestFunctorInferenceType1 <: FunctorInferenceType end
     # _getDuplicatedEmptyDFG
 end
 
-#### User, Robot, Session Data
+# User, Robot, Session Data
 @testset "User, Robot, Session Data" begin
     # User Data
     global fg
@@ -124,7 +124,7 @@ end
     global v1, v2, v3
 
     v1_lbl = :a
-    v1_tags = Set([:VARIABLE, :POSE])
+    global v1_tags = Set([:VARIABLE, :POSE])
     small = Dict("small"=>"data")
     testTimestamp = now()
     # Constructors
@@ -149,7 +149,7 @@ end
     # TODO direct use is not recommended, use accessors, maybe not export or deprecate
     @test getSolverDataDict(v1) == v1.solverDataDict
     # TODO implement name
-    @test_broken getPPEDict(v1) == v1.ppeDict
+    @test getPPEDict(v1) == v1.ppeDict
 
     @test getSmallData(v1) == Dict{String,String}()
 
@@ -227,8 +227,9 @@ end
     @test setTags!(f1, Set(testTags)) == Set(testTags)
 
     #TODO Handle same way as variable
-    @test_broken f1ts = setTimestamp(f1, testTimestamp)
-    @test_broken getTimestamp(f1ts) == testTimestamp
+    f1ts = setTimestamp(f1, testTimestamp)
+    @test !(f1ts === f1)
+    @test getTimestamp(f1ts) == testTimestamp
     #follow with updateVariable!(fg, v1ts)
     @test setTimestamp!(f1, testTimestamp) == testTimestamp
     #/TODO
@@ -282,7 +283,7 @@ end
     # TODO move
     #list
     @test issetequal([:a,:b], listVariables(fg))
-    @test issetequal([:a,:b],listFactors(fg))
+    @test issetequal([:f1], listFactors(fg))
 
     @test @test_deprecated getVariableIds(fg) == listVariables(fg)
     @test @test_deprecated getFactorIds(fg) == listFactors(fg)
@@ -290,21 +291,23 @@ end
 
 end
 
+
+#
 @testset "tags" begin
-    ##
-    ## LOTS TODO
-    @test getTags(fg, :a) == v1_tags
+    #
+    # LOTS TODO
+
+    @test issetequal(getTags(fg, :a), v1_tags)
 
     # TODO do we error on duplicates
     @test issetequal(addTags!(fg, :a, [:TAG]), v1_tags ∪ [:TAG])
 
-    @test emptyTags!(fg, :a)
+    @test_broken emptyTags!(fg, :a)
 
-    updateTags!
-    deleteTags!
-    listTags
-
-    mergeTags!
+    @test_broken updateTags!
+    @test_broken deleteTags!
+    @test_broken listTags
+    @test_broken mergeTags!
 
 end
 
@@ -335,7 +338,7 @@ end
     #TODO warn key not exist
     @test @test_logs (:warn, r"does not exist") updatePPE!(fg, :a, ppe, :default) == ppe
     # Update update it
-    @test updatePPE!(dfg, :a, ppe, :default) == ppe
+    @test updatePPE!(fg, :a, ppe, :default) == ppe
     # Bulk copy PPE's for x0 and x1
     @test updatePPE!(fg, [v1], :default) == nothing
     # Delete it
@@ -416,30 +419,30 @@ end
 
     #add
     v1 = getVariable(fg, :a)
-    @test addBigDataEntry!(v1, de1) == v1
-    @test addBigDataEntry!(fg, :a, de2) == v1
+    @test addBigDataEntry!(v1, de1) == de1
+    @test addBigDataEntry!(fg, :a, de2) == de2
     @test_throws ErrorException addBigDataEntry!(v1, de1)
     @test de2 in getBigDataEntries(v1)
 
     #get
     @test deepcopy(de1) == getBigDataEntry(v1, :key1)
     @test deepcopy(de2) == getBigDataEntry(fg, :a, :key2)
-    @test getBigDataEntry(v2, :key1) == nothing
-    @test getBigDataEntry(fg, :b, :key1) == nothing
+    @test_throws ErrorException getBigDataEntry(v2, :key1)
+    @test_throws ErrorException getBigDataEntry(fg, :b, :key1)
 
     #update
-    @test updateBigDataEntry!(fg, :a, de2_update) == v1
+    @test updateBigDataEntry!(fg, :a, de2_update) == de2_update
     @test deepcopy(de2_update) == getBigDataEntry(fg, :a, :key2)
-    @test @test_logs (:error, r"does not exist") updateBigDataEntry!(fg, :b, de2_update) == nothing
+    @test @test_logs (:warn, r"does not exist") updateBigDataEntry!(fg, :b, de2_update) == de2_update
 
     #list
     entries = getBigDataEntries(fg, :a)
     @test length(entries) == 2
     @test issetequal(map(e->e.key, entries), [:key1, :key2])
-    @test length(getBigDataEntries(fg, :b)) == 0
+    @test length(getBigDataEntries(fg, :b)) == 1
 
     @test issetequal(getBigDataKeys(fg, :a), [:key1, :key2])
-    @test getBigDataKeys(fg, :b) == Symbol[]
+    @test getBigDataKeys(fg, :b) == Symbol[:key2]
 
     #delete
     @test deleteBigDataEntry!(v1, :key1) == v1
@@ -449,10 +452,10 @@ end
     @test getBigDataKeys(v1) == Symbol[]
 end
 
-# ============================================================================ #
+## ========================================================================== ##
 
-# ============================================================================ #
-
+## ========================================================================== ##
+#=
 dfg = testDFGAPI{NoSolverParams}()
 
 #add types for softtypes
@@ -1005,3 +1008,5 @@ end
     Base.rm("something.dot")
 
 end
+
+=#

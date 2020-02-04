@@ -34,6 +34,7 @@ export DFGNode, DFGVariable, DFGFactor, AbstractDFGVariable, AbstractDFGFactor
 export DFGNodeParams
 export SkeletonDFGVariable, SkeletonDFGFactor
 export label, getTimestamp, setTimestamp!, setTimestamp, tags, setTags!, data, softtype, solverData, getData, solverDataDict, setSolverData, setSolverData!, internalId, smallData, setSmallData!, bigData
+export getPPEDict
 export getSolvedCount, isSolved, setSolvedCount!
 export DFGVariableSummary, DFGFactorSummary, AbstractDFGSummary
 export getNeighborhood, getSubgraph, getSubgraphAroundNode

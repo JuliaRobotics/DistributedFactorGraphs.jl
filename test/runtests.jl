@@ -30,19 +30,19 @@ for api in apis
 end
 
 # Test special cases
-
 @testset "Plotting Tests" begin
     include("plottingTest.jl")
 end
 
 @testset "Data Store Tests" begin
-    include("DataStoreTests.jl")
+    @test_skip include("DataStoreTests.jl")
 end
 
 @testset "Needs-a-Home Tests" begin
     include("needsahomeTests.jl")
 end
 
+#=
 @testset "LightDFG subtype tests" begin
     for type in [(var=DFGVariableSummary, fac=DFGFactorSummary), (var=SkeletonDFGVariable,fac=SkeletonDFGFactor)]
         @testset "$(type.var) and $(type.fac) tests" begin
@@ -110,3 +110,4 @@ if get(ENV, "IIF_TEST", "") == "true"
 else
     @warn "Skipping IncrementalInference driver tests"
 end
+=#

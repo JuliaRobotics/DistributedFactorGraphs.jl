@@ -123,13 +123,14 @@ function compare(a::VariableNodeData, b::VariableNodeData)
     return true
 end
 
-"""
-    $(SIGNATURES)
-Equality check for VariableNodeData.
-"""
-function ==(a::VariableNodeData,b::VariableNodeData, nt::Symbol=:var)
-  return DistributedFactorGraphs.compare(a,b)
-end
+#FIXME
+# """
+#     $(SIGNATURES)
+# Equality check for VariableNodeData.
+# """
+# function ==(a::VariableNodeData,b::VariableNodeData, nt::Symbol=:var)
+#   return DistributedFactorGraphs.compare(a,b)
+# end
 
 """
     ==(x::T, y::T) where T <: AbstractPointParametricEst
@@ -143,13 +144,14 @@ end
     mapreduce(n -> :(x.$n == y.$n), (a,b)->:($a && $b), fieldnames(x))
 end
 
-"""
-    $(SIGNATURES)
-Equality check for DFGVariable.
-"""
-function ==(a::DFGVariable, b::DFGVariable)::Bool
-    return compareVariable(a, b)
-end
+#FIXME
+# """
+#     $(SIGNATURES)
+# Equality check for DFGVariable.
+# """
+# function ==(a::DFGVariable, b::DFGVariable)::Bool
+#     return compareVariable(a, b)
+# end
 
 """
     $(SIGNATURES)
@@ -163,10 +165,10 @@ end
     $(SIGNATURES)
 Add Big Data Entry to a DFG variable
 """
-function addBigDataEntry!(var::AbstractDFGVariable, bde::AbstractBigDataEntry)::AbstractDFGVariable
+function addBigDataEntry!(var::AbstractDFGVariable, bde::AbstractBigDataEntry)::AbstractBigDataEntry
     haskey(var.bigData,bde.key) && error("BigData entry $(bde.key) already exists in variable")
     var.bigData[bde.key] = bde
-    return var
+    return bde
 end
 
 """
@@ -174,7 +176,7 @@ end
 Add Big Data Entry to distributed factor graph.
 Should be extended if DFG variable is not returned by reference.
 """
-function addBigDataEntry!(dfg::AbstractDFG, label::Symbol, bde::AbstractBigDataEntry)::AbstractDFGVariable
+function addBigDataEntry!(dfg::AbstractDFG, label::Symbol, bde::AbstractBigDataEntry)::AbstractBigDataEntry
     return addBigDataEntry!(getVariable(dfg, label), bde)
 end
 
@@ -183,9 +185,10 @@ end
 Get big data entry
 """
 function getBigDataEntry(var::AbstractDFGVariable, key::Symbol)::Union{Nothing, AbstractBigDataEntry}
-    !haskey(var.bigData, key) && return nothing
+    !haskey(var.bigData, key) && (error("BigData entry $(key) does not exist in variable"); return nothing)
     return var.bigData[key]
 end
+
 function getBigDataEntry(dfg::AbstractDFG, label::Symbol, key::Symbol)::Union{Nothing, AbstractBigDataEntry}
     return getBigDataEntry(getVariable(dfg, label), key)
 end
@@ -194,13 +197,13 @@ end
     $(SIGNATURES)
 Update big data entry
 """
-function updateBigDataEntry!(var::AbstractDFGVariable,  bde::AbstractBigDataEntry)::Union{Nothing, AbstractDFGVariable}
-    !haskey(var.bigData,bde.key) && (@error "$(bde.key) does not exist in variable!"; return nothing)
+function updateBigDataEntry!(var::AbstractDFGVariable,  bde::AbstractBigDataEntry)::Union{Nothing, AbstractBigDataEntry}
+    !haskey(var.bigData,bde.key) && (@warn "$(bde.key) does not exist in variable, adding")
     var.bigData[bde.key] = bde
-    return var
+    return bde
 end
-function updateBigDataEntry!(dfg::AbstractDFG, label::Symbol,  bde::AbstractBigDataEntry)::Union{Nothing, AbstractDFGVariable}
-    !isVariable(dfg, label) && return nothing
+function updateBigDataEntry!(dfg::AbstractDFG, label::Symbol,  bde::AbstractBigDataEntry)::Union{Nothing, AbstractBigDataEntry}
+    # !isVariable(dfg, label) && return nothing
     return updateBigDataEntry!(getVariable(dfg, label), bde)
 end
 
@@ -341,6 +344,13 @@ setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v
 Get solver data dictionary for a variable.
 """
 getSolverDataDict(v::DFGVariable) = v.solverDataDict
+
+"""
+    $SIGNATURES
+
+Get the PPE dictionary for a variable. Its use is not recomended.
+"""
+getPPEDict(v::DFGVariable) = v.ppeDict
 
 """
 $SIGNATURES

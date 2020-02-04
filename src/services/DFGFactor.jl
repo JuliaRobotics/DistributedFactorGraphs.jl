@@ -85,13 +85,14 @@ function compare(a::GenericFunctionNodeData{T1,S},b::GenericFunctionNodeData{T2,
   return TP
 end
 
-"""
-    $(SIGNATURES)
-Equality check for DFGFactor.
-"""
-function ==(a::DFGFactor, b::DFGFactor)::Bool
-    return compareFactor(a, b)
-end
+#FIXME
+# """
+#     $(SIGNATURES)
+# Equality check for DFGFactor.
+# """
+# function ==(a::DFGFactor, b::DFGFactor)::Bool
+#     return compareFactor(a, b)
+# end
 
 # Accessors
 

@@ -609,6 +609,9 @@ Update variable solver data if it exists, otherwise add it.
 function updateVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData, solvekey::Symbol=:default)::VariableNodeData
     #This is basically just setSolverData
     var = getVariable(dfg, variablekey)
+    if !haskey(var.solverDataDict, solvekey)
+        @warn "VariableNodeData '$(solvekey)' does not exist, adding"
+    end
     #for InMemoryDFGTypes, cloud would update here
     var.solverDataDict[solvekey] = vnd
     return vnd
@@ -682,13 +685,13 @@ getPPE(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol=default)::A
     $(SIGNATURES)
 Add variable PPE, errors if it already exists.
 """
-function addPPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default)::Dict{Symbol, AbstractPointParametricEst} where P <: AbstractPointParametricEst
+function addPPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default)::AbstractPointParametricEst where P <: AbstractPointParametricEst
     var = getVariable(dfg, variablekey)
     if haskey(var.ppeDict, ppekey)
         error("PPE '$(ppekey)' already exists")
     end
     var.ppeDict[ppekey] = ppe
-    return var.ppeDict
+    return ppe
 end
 
 """
@@ -705,8 +708,11 @@ addPPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol=:default) 
 Update PPE data if it exists, otherwise add it.
 """
 function updatePPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default)::P where P <: AbstractPointParametricEst
-    #
+
     var = getVariable(dfg, variablekey)
+    if !haskey(var.ppeDict, ppekey)
+        @warn "PPE '$(ppekey)' does not exist, adding"
+    end
     #for InMemoryDFGTypes, cloud would update here
     var.ppeDict[ppekey] = ppe
     return ppe
@@ -718,7 +724,7 @@ Update PPE data if it exists, otherwise add it.
 NOTE: Copies the PPE data.
 """
 updatePPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol=:default) =
-    updateVariableSolverData!(dfg, sourceVariable.label, deepcopy(getPPE(sourceVariable, ppekey)), ppekey)
+    updatePPE!(dfg, sourceVariable.label, deepcopy(getPPE(sourceVariable, ppekey)), ppekey)
 
 """
     $(SIGNATURES)
