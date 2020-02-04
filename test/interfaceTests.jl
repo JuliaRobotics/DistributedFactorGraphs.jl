@@ -7,6 +7,9 @@ struct TestInferenceVariable2 <: InferenceVariable end
 
 struct TestFunctorInferenceType1 <: FunctorInferenceType end
 
+# TODO see note in AbstractDFG.jl setSolverParams!
+struct GeenSolverParams <: AbstractParams
+end
 
 # DFG Accessors
 @testset "DFG Structure and Accessors" begin
@@ -54,8 +57,6 @@ struct TestFunctorInferenceType1 <: FunctorInferenceType end
 
 
     # TODO see note in AbstractDFG.jl setSolverParams!
-    struct GeenSolverParams <: AbstractParams
-    end
     @test_throws MethodError setSolverParams!(fg, GeenSolverParams()) == GeenSolverParams()
 
 
