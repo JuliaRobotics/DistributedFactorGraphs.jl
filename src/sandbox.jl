@@ -1,8 +1,8 @@
 
 function copyGraph!(destDFG::AbstractDFG, sourceDFG::AbstractDFG, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false; copyGraphMetadata::Bool=false)
     # Split into variables and factors
-    sourceVariables = map(vId->getVariable(sourceDFG, vId), intersect(getVariableIds(sourceDFG), variableFactorLabels))
-    sourceFactors = map(fId->getFactor(sourceDFG, fId), intersect(getFactorIds(sourceDFG), variableFactorLabels))
+    sourceVariables = map(vId->getVariable(sourceDFG, vId), intersect(listVariables(sourceDFG), variableFactorLabels))
+    sourceFactors = map(fId->getFactor(sourceDFG, fId), intersect(listFactors(sourceDFG), variableFactorLabels))
     if length(sourceVariables) + length(sourceFactors) != length(variableFactorLabels)
         rem = symdiff(map(v->v.label, sourceVariables), variableFactorLabels)
         rem = symdiff(map(f->f.label, sourceFactors), variableFactorLabels)

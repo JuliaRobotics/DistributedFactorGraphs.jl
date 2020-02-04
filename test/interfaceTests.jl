@@ -248,23 +248,27 @@ end
 @testset "Variables and Factors CRUD" begin
 
     #TODO dont throw ErrorException
-    global fg
+    #TODO test remaining add signitures
+    # global fg
+    # fg = GraphsDFG(params=NoSolverParams())
+    # fg = LightDFG(params=NoSolverParams())
     # add update delete
     @test addVariable!(fg, v1) == v1
     @test addVariable!(fg, v2) == v2
-    @test_throws ErrorException updateVariable!(fg, v3)
-    @test addVariable!(fg, v3) == v3
+    @test @test_logs (:warn, r"does not exist") updateVariable!(fg, v3) == v3
     @test_throws ErrorException addVariable!(fg, v3)
 
     @test addFactor!(fg, [v1, v2], f1) == f1
     @test_throws ErrorException addFactor!(fg, [v1, v2], f1)
-    @test_throws ErrorException updateFactor!(fg, f2)
-    @test addFactor!(fg, [:b, :c], f2) == f2
+    @test @test_logs (:warn, r"does not exist") updateFactor!(fg, f2) == f2
+    @test_throws ErrorException addFactor!(fg, [:b, :c], f2)
 
+    #deletions
     @test deleteVariable!(fg, v3) == v3
+    @test_throws ErrorException deleteVariable!(fg, v3)
     @test setdiff(ls(fg),[:a,:b]) == []
     @test deleteFactor!(fg, f2) == f2
-    @test_throws ErrorException deleteFactor!(fg, f2) == f2
+    @test_throws ErrorException deleteFactor!(fg, f2)
     @test lsf(fg) == [:f1]
 
 
@@ -279,8 +283,9 @@ end
     #list
     @test issetequal([:a,:b], listVariables(fg))
     @test issetequal([:a,:b],listFactors(fg))
+
     @test @test_deprecated getVariableIds(fg) == listVariables(fg)
-    @test @test_deprecated getVariableIds(fg) == listVariables(fg)
+    @test @test_deprecated getFactorIds(fg) == listFactors(fg)
 
 
 end
@@ -522,19 +527,19 @@ end
     global dfg,v1,v2,f1
     @test length(ls(dfg)) == 2
     @test length(lsf(dfg)) == 1
-    @test symdiff([:a, :b], getVariableIds(dfg)) == []
+    @test symdiff([:a, :b], listVariables(dfg)) == []
     # Additional testing for https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/201
-    @test symdiff([:a, :b], getVariableIds(dfg, solvable=0)) == []
-    @test getVariableIds(dfg, solvable=1) == [:b]
+    @test symdiff([:a, :b], listVariables(dfg, solvable=0)) == []
+    @test listVariables(dfg, solvable=1) == [:b]
       # WHAT -- still does not work?
       # v2b = deepcopy(v2)
       # setTags!(v2b, [:VARIABLE; :LANDMARK])
       # setSolvable!(v2b, 1)
       # setTimestamp!(v2b, getTimestamp(getVariables(dfg, solvable=1)[1]))
     @test getVariables(dfg, solvable=1) == [v2]
-    @test getFactorIds(dfg) == [:f1]
-    @test getFactorIds(dfg, solvable=1) == []
-    @test getFactorIds(dfg, solvable=0) == [:f1]
+    @test listFactors(dfg) == [:f1]
+    @test listFactors(dfg, solvable=1) == []
+    @test listFactors(dfg, solvable=0) == [:f1]
     @test getFactors(dfg, solvable=0) == [f1]
     #
     @test lsf(dfg, :a) == [f1.label]
@@ -859,14 +864,14 @@ end
 # Deletions
 @testset "Deletions" begin
     deleteFactor!(dfg, :f1)
-    @test getFactorIds(dfg) == []
+    @test listFactors(dfg) == []
     deleteVariable!(dfg, :b)
-    @test symdiff([:a, :orphan], getVariableIds(dfg)) == []
+    @test symdiff([:a, :orphan], listVariables(dfg)) == []
     #delete last also for the LightGraphs implementation coverage
     deleteVariable!(dfg, :orphan)
-    @test symdiff([:a], getVariableIds(dfg)) == []
+    @test symdiff([:a], listVariables(dfg)) == []
     deleteVariable!(dfg, :a)
-    @test getVariableIds(dfg) == []
+    @test listVariables(dfg) == []
 end
 
 
@@ -941,7 +946,7 @@ end
 
     # DFG issue #95 - confirming that getSubgraphAroundNode retains order
     # REF: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/95
-    for fId in getVariableIds(dfg)
+    for fId in listVariables(dfg)
         # Get a subgraph of this and it's related factors+variables
         dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
         # For each factor check that the order the copied graph == original

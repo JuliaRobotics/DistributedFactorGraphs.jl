@@ -43,14 +43,14 @@ end
 exists(dfg::GraphsDFG, nId::Symbol) = haskey(dfg.labelDict, nId)
 
 function isVariable(dfg::GraphsDFG, sym::Symbol)
-	return exists(dfg, sym) && dfg.g.vertices[dfg.labelDict[sym]].dfgNode isa DFGVariable
+    return exists(dfg, sym) && dfg.g.vertices[dfg.labelDict[sym]].dfgNode isa DFGVariable
 end
 
 function isFactor(dfg::GraphsDFG, sym::Symbol)
-	return exists(dfg, sym) && dfg.g.vertices[dfg.labelDict[sym]].dfgNode isa DFGFactor
+    return exists(dfg, sym) && dfg.g.vertices[dfg.labelDict[sym]].dfgNode isa DFGFactor
 end
 
-function addVariable!(dfg::GraphsDFG, variable::DFGVariable)::Bool
+function addVariable!(dfg::GraphsDFG, variable::DFGVariable)::DFGVariable
     if haskey(dfg.labelDict, variable.label)
         error("Variable '$(variable.label)' already exists in the factor graph")
     end
@@ -62,10 +62,10 @@ function addVariable!(dfg::GraphsDFG, variable::DFGVariable)::Bool
     # Track insertion
     push!(dfg.addHistory, variable.label)
 
-    return true
+    return variable
 end
 
-function addFactor!(dfg::GraphsDFG, variables::Vector{<:DFGVariable}, factor::DFGFactor)::Bool
+function addFactor!(dfg::GraphsDFG, variables::Vector{<:DFGVariable}, factor::DFGFactor)::DFGFactor
     if haskey(dfg.labelDict, factor.label)
         error("Factor '$(factor.label)' already exists in the factor graph")
     end
@@ -90,10 +90,11 @@ function addFactor!(dfg::GraphsDFG, variables::Vector{<:DFGVariable}, factor::DF
     # Track insertion
     # push!(dfg.addHistory, factor.label)
 
-    return true
+    return factor
 end
 
-function addFactor!(dfg::GraphsDFG, variableIds::Vector{Symbol}, factor::DFGFactor)::Bool
+#TODO move to abstract
+function addFactor!(dfg::GraphsDFG, variableIds::Vector{Symbol}, factor::DFGFactor)::DFGFactor
     variables = map(vId -> getVariable(dfg, vId), variableIds)
     return addFactor!(dfg, variables, factor)
 end
@@ -139,7 +140,8 @@ end
 
 function updateVariable!(dfg::GraphsDFG, variable::DFGVariable)::DFGVariable
     if !haskey(dfg.labelDict, variable.label)
-        error("Variable label '$(variable.label)' does not exist in the factor graph")
+        @warn "Variable label '$(variable.label)' does not exist in the factor graph, adding"
+        return addVariable!(dfg, variable)
     end
     dfg.g.vertices[dfg.labelDict[variable.label]].dfgNode = variable
     return variable
@@ -147,7 +149,8 @@ end
 
 function updateFactor!(dfg::GraphsDFG, factor::DFGFactor)::DFGFactor
     if !haskey(dfg.labelDict, factor.label)
-        error("Factor label '$(factor.label)' does not exist in the factor graph")
+        @warn "Factor label '$(factor.label)' does not exist in the factor graph, adding"
+        return addFactor!(dfg, factor._variableOrderSymbols, factor)
     end
     dfg.g.vertices[dfg.labelDict[factor.label]].dfgNode = factor
     return factor

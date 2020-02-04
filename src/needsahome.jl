@@ -19,7 +19,7 @@ DevNotes
 
 Related
 
-getVariableIds, _copyIntoGraph!
+listVariables, _copyIntoGraph!
 """
 function buildSubgraphFromLabels!(dfg::G,
                                   syms::Vector{Symbol};
@@ -36,7 +36,7 @@ function buildSubgraphFromLabels!(dfg::G,
   end
 
   # remove excessive variables that were copied by neighbors distance 2
-  currVars = getVariableIds(subfg)
+  currVars = listVariables(subfg)
   toDelVars = setdiff(currVars, syms)
   for dv in toDelVars
     # delete any neighboring factors first
@@ -75,7 +75,7 @@ end
 #
 # Related
 #
-# buildSubgraphFromLabels!, _copyIntoGraph!, getVariableIds
+# buildSubgraphFromLabels!, _copyIntoGraph!, listVariables
 # """
 # function buildSubgraphFromLabels!_SPECIAL(dfg::G,
 #                                           # frontals::Vector{Symbol},

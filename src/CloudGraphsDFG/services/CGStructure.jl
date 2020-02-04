@@ -282,7 +282,7 @@ function copySession!(sourceDFG::CloudGraphsDFG, destDFG::Union{Nothing, CloudGr
     if destDFG == nothing
         destDFG = _getDuplicatedEmptyDFG(sourceDFG)
     end
-    _copyIntoGraph!(sourceDFG, destDFG, union(getVariableIds(sourceDFG), getFactorIds(sourceDFG)), true)
+    _copyIntoGraph!(sourceDFG, destDFG, union(listVariables(sourceDFG), listFactors(sourceDFG)), true)
     return destDFG
 end
 """

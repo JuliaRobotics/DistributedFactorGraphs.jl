@@ -101,7 +101,10 @@ export emptyUserData!, emptyRobotData!, emptySessionData!
 
 
 export exists, addVariable!, addFactor!, getVariable, getFactor, updateVariable!, updateFactor!, deleteVariable!, deleteFactor!
-export getVariables, getVariableIds, getFactors, getFactorIds, ls, lsf
+export listVariables, listFactors, getVariables, getFactors, ls, lsf
+#TODO deprecate or alias
+export getVariableIds, getFactorIds
+
 export isFullyConnected, hasOrphans
 export getNeighbors, _getDuplicatedEmptyDFG, getSubgraphAroundNode, getSubgraph
 export getBiadjacencyMatrix

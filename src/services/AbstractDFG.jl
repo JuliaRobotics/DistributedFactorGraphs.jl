@@ -322,16 +322,18 @@ Tags is a list of any tags that a node must have (at least one match).
 
 Example
 ```julia
-getVariableIds(dfg, r"l", tags=[:APRILTAG;])
+listVariables(dfg, r"l", tags=[:APRILTAG;])
 ```
 
 Related:
 - ls
 """
-function getVariableIds(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
+function listVariables(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
   vars = getVariables(dfg, regexFilter, tags=tags, solvable=solvable)
   return map(v -> v.label, vars)
 end
+#TODO alias or deprecate
+@deprecate getVariableIds(dfg::AbstractDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0) listVariables(dfg, regexFilter, tags=tags, solvable=solvable)
 
 # Alias
 """
@@ -342,7 +344,7 @@ Tags is a list of any tags that a node must have (at least one match).
 
 """
 function ls(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
-    return getVariableIds(dfg, regexFilter, tags=tags, solvable=solvable)
+    return listVariables(dfg, regexFilter, tags=tags, solvable=solvable)
 end
 
 """
@@ -356,12 +358,14 @@ end
 
 """
     $(SIGNATURES)
-Get a list of the IDs of the DFGFactors in the DFG.
+Get a list of the IDs (labels) of the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
-function getFactorIds(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
+function listFactors(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
     return map(f -> f.label, getFactors(dfg, regexFilter, solvable=solvable))
 end
+#TODO alias or deprecate
+@deprecate getFactorIds(dfg, regexFilter=nothing; solvable=0) listFactors(dfg, regexFilter, solvable=solvable)
 
 # Alias
 """
@@ -370,7 +374,7 @@ List the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
 function lsf(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
-    return getFactorIds(dfg, regexFilter, solvable=solvable)
+    return listFactors(dfg, regexFilter, solvable=solvable)
 end
 
 """
@@ -515,8 +519,8 @@ NOTE: copyGraphMetadata not supported yet.
 """
 function _copyIntoGraph!(sourceDFG::G, destDFG::H, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false; copyGraphMetadata::Bool=false)::Nothing where {G <: AbstractDFG, H <: AbstractDFG}
     # Split into variables and factors
-    sourceVariables = map(vId->getVariable(sourceDFG, vId), intersect(getVariableIds(sourceDFG), variableFactorLabels))
-    sourceFactors = map(fId->getFactor(sourceDFG, fId), intersect(getFactorIds(sourceDFG), variableFactorLabels))
+    sourceVariables = map(vId->getVariable(sourceDFG, vId), intersect(listVariables(sourceDFG), variableFactorLabels))
+    sourceFactors = map(fId->getFactor(sourceDFG, fId), intersect(listFactors(sourceDFG), variableFactorLabels))
     if length(sourceVariables) + length(sourceFactors) != length(variableFactorLabels)
         rem = symdiff(map(v->v.label, sourceVariables), variableFactorLabels)
         rem = symdiff(map(f->f.label, sourceFactors), variableFactorLabels)
@@ -983,7 +987,7 @@ Produces a dot-format of the graph for visualization.
 function toDot(dfg::AbstractDFG)::String
     #TODO implement convert
     graphsdfg = GraphsDFG{AbstractParams}()
-    DistributedFactorGraphs._copyIntoGraph!(dfg, graphsdfg, union(getVariableIds(dfg), getFactorIds(dfg)), true)
+    DistributedFactorGraphs._copyIntoGraph!(dfg, graphsdfg, union(listVariables(dfg), listFactors(dfg)), true)
 
     # Calls down to GraphsDFG.toDot
     return toDot(graphsdfg)
@@ -1002,7 +1006,7 @@ Note
 function toDotFile(dfg::AbstractDFG, fileName::String="/tmp/dfg.dot")::Nothing
     #TODO implement convert
     graphsdfg = GraphsDFG{AbstractParams}()
-    DistributedFactorGraphs._copyIntoGraph!(dfg, graphsdfg, union(getVariableIds(dfg), getFactorIds(dfg)), true)
+    DistributedFactorGraphs._copyIntoGraph!(dfg, graphsdfg, union(listVariables(dfg), listFactors(dfg)), true)
 
     open(fileName, "w") do fid
         write(fid,Graphs.to_dot(graphsdfg.g))

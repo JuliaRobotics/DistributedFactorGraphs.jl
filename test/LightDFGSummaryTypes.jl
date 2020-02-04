@@ -50,8 +50,8 @@ end
     global dfg,v1,v2,f1
     @test length(ls(dfg)) == 2
     @test length(lsf(dfg)) == 1
-    @test symdiff([:a, :b], getVariableIds(dfg)) == []
-    @test getFactorIds(dfg) == [:f1]
+    @test symdiff([:a, :b], listVariables(dfg)) == []
+    @test listFactors(dfg) == [:f1]
     #
     @test lsf(dfg, :a) == [f1.label]
     # Tags
@@ -179,14 +179,14 @@ end
 # Deletions
 @testset "Deletions" begin
     deleteFactor!(dfg, :f1)
-    @test getFactorIds(dfg) == []
+    @test listFactors(dfg) == []
     deleteVariable!(dfg, :b)
-    @test symdiff([:a, :orphan], getVariableIds(dfg)) == []
+    @test symdiff([:a, :orphan], listVariables(dfg)) == []
     #delete last also for the LightGraphs implementation coverage
     deleteVariable!(dfg, :orphan)
-    @test symdiff([:a], getVariableIds(dfg)) == []
+    @test symdiff([:a], listVariables(dfg)) == []
     deleteVariable!(dfg, :a)
-    @test getVariableIds(dfg) == []
+    @test listVariables(dfg) == []
 end
 
 
@@ -229,7 +229,7 @@ end
 
     # DFG issue #95 - confirming that getSubgraphAroundNode retains order
     # REF: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/95
-    for fId in getVariableIds(dfg)
+    for fId in listVariables(dfg)
         # Get a subgraph of this and it's related factors+variables
         dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
         # For each factor check that the order the copied graph == original

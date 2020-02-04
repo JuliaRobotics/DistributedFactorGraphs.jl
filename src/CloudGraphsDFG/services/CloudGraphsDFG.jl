@@ -69,7 +69,7 @@ isVariable(dfg::CloudGraphsDFG, sym::Symbol)::Bool =
 isFactor(dfg::CloudGraphsDFG, sym::Symbol)::Bool =
     _getNodeCount(dfg.neo4jInstance, ["FACTOR", dfg.userId, dfg.robotId, dfg.sessionId, String(sym)]) == 1
 
-function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::Bool
+function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariable
     if exists(dfg, variable)
         error("Variable '$(variable.label)' already exists in the factor graph")
     end
@@ -89,7 +89,7 @@ function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::Bool
     # Track insertion
     push!(dfg.addHistory, variable.label)
 
-    return true
+    return variable
 end
 
 function addFactor!(dfg::CloudGraphsDFG, variables::Vector{DFGVariable}, factor::DFGFactor)::Bool
@@ -316,7 +316,7 @@ end
 deleteFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor = deleteFactor!(dfg, factor.label)
 
 function getVariables(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{DFGVariable}
-    variableIds = getVariableIds(dfg, regexFilter, tags=tags, solvable=solvable)
+    variableIds = listVariables(dfg, regexFilter, tags=tags, solvable=solvable)
     # TODO: Optimize to use tags in query here!
     variables = map(vId->getVariable(dfg, vId), variableIds)
     if length(tags) > 0
@@ -326,7 +326,7 @@ function getVariables(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=no
     return variables
 end
 
-function getVariableIds(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol}
+function listVariables(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol}
     # Optimized for DB call
     tagsFilter = length(tags) > 0 ? " and "*join("node:".*String.(tags), " or ") : ""
     if regexFilter == nothing
@@ -337,11 +337,11 @@ function getVariableIds(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=
 end
 
 function getFactors(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{DFGFactor}
-    factorIds = getFactorIds(dfg, regexFilter, solvable=solvable)
+    factorIds = listFactors(dfg, regexFilter, solvable=solvable)
     return map(vId->getFactor(dfg, vId), factorIds)
 end
 
-function getFactorIds(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{Symbol}
+function listFactors(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{Symbol}
     # Optimized for DB call
     if regexFilter == nothing
         return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):FACTOR) where node.solvable >= $solvable")
@@ -353,8 +353,8 @@ end
 function isFullyConnected(dfg::CloudGraphsDFG)::Bool
     # If the total number of nodes == total number of distinct connected nodes, then it is fully connected
     # Total nodes
-    varIds = getVariableIds(dfg)
-    factIds = getFactorIds(dfg)
+    varIds = listVariables(dfg)
+    factIds = listFactors(dfg)
     length(varIds) + length(factIds) == 0 && return false
 
     # Total connected nodes - thank you Neo4j for 0..* awesomeness!!
@@ -424,8 +424,8 @@ function getSubgraph(dfg::CloudGraphsDFG,
 end
 
 function getIncidenceMatrix(dfg::CloudGraphsDFG; solvable::Int=0)::Matrix{Union{Nothing, Symbol}}
-    varLabels = sort(getVariableIds(dfg, solvable=solvable))
-    factLabels = sort(getFactorIds(dfg, solvable=solvable))
+    varLabels = sort(listVariables(dfg, solvable=solvable))
+    factLabels = sort(listFactors(dfg, solvable=solvable))
     vDict = Dict(varLabels .=> [1:length(varLabels)...].+1)
     fDict = Dict(factLabels .=> [1:length(factLabels)...].+1)
 
@@ -454,8 +454,8 @@ function getIncidenceMatrix(dfg::CloudGraphsDFG; solvable::Int=0)::Matrix{Union{
 end
 
 function getIncidenceMatrixSparse(dfg::CloudGraphsDFG; solvable::Int=0)::Tuple{SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}
-    varLabels = getVariableIds(dfg, solvable=solvable)
-    factLabels = getFactorIds(dfg, solvable=solvable)
+    varLabels = listVariables(dfg, solvable=solvable)
+    factLabels = listFactors(dfg, solvable=solvable)
     vDict = Dict(varLabels .=> [1:length(varLabels)...])
     fDict = Dict(factLabels .=> [1:length(factLabels)...])
 
