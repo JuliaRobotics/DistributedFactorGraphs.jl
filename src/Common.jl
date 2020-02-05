@@ -114,34 +114,38 @@ Related
 ls, lsf
 """
 sortDFG(vars::Vector{Symbol})::Vector{Symbol} = sortVarNested(vars)
-"""
-    $SIGNATURES
 
-Return the factor type used in a `::DFGFactor`.
+#TODO Is this deprecate in favor of getFactorType, or OBSOLETE?
+# """
+#     $SIGNATURES
+#
+# Return the factor type used in a `::DFGFactor`.
+#
+# Notes:
+# - OBSOLETE, use newer getFactorType instead.
+#
+# Related
+#
+# getFactorType
+# """
+# function getfnctype(data::GenericFunctionNodeData)
+#   # TODO what is this?
+#   if typeof(data).name.name == :VariableNodeData
+#     return VariableNodeData
+#   end
+#
+#   # this looks right
+#   return data.fnc.usrfnc!
+# end
+# function getfnctype(fact::DFGFactor; solveKey::Symbol=:default)
+#   data = getSolverData(fact) # TODO , solveKey=solveKey)
+#   return getfnctype(data)
+# end
+# function getfnctype(dfg::T, lbl::Symbol; solveKey::Symbol=:default) where T <: AbstractDFG
+#   getfnctype(getFactor(dfg, exvertid))
+# end
 
-Notes:
-- OBSOLETE, use newer getFactorType instead.
-
-Related
-
-getFactorType
-"""
-function getfnctype(data::GenericFunctionNodeData)
-  # TODO what is this?
-  if typeof(data).name.name == :VariableNodeData
-    return VariableNodeData
-  end
-
-  # this looks right
-  return data.fnc.usrfnc!
-end
-function getfnctype(fact::DFGFactor; solveKey::Symbol=:default)
-  data = getSolverData(fact) # TODO , solveKey=solveKey)
-  return getfnctype(data)
-end
-function getfnctype(dfg::T, lbl::Symbol; solveKey::Symbol=:default) where T <: AbstractDFG
-  getfnctype(getFactor(dfg, exvertid))
-end
+@deprecate getfnctype(args...) getFactorType(args...)
 
 """
     $SIGNATURES
@@ -190,9 +194,9 @@ end
 
 Return the DFGVariable softtype in factor graph `dfg<:AbstractDFG` and label `::Symbol`.
 """
-getVariableType(var::DFGVariable; solveKey::Symbol=:default) = getSofttype(var, solveKey=solveKey)
-function getVariableType(dfg::G, lbl::Symbol; solveKey::Symbol=:default) where G <: AbstractDFG
-  getVariableType(getVariable(dfg, lbl), solveKey=solveKey)
+getVariableType(var::DFGVariable) = getSofttype(var)
+function getVariableType(dfg::G, lbl::Symbol) where G <: AbstractDFG
+  getVariableType(getVariable(dfg, lbl))
 end
 
 
@@ -241,9 +245,9 @@ function lsTypes(dfg::G)::Dict{Symbol, Vector{String}} where G <: AbstractDFG
 end
 
 
-function ls(dfg::G, ::Type{T}; solveKey::Symbol=:default) where {G <: AbstractDFG, T <: InferenceVariable}
+function ls(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: InferenceVariable}
   xx = getVariables(dfg)
-  mask = getVariableType.(xx, solveKey=solveKey) .|> typeof .== T
+  mask = getVariableType.(xx) .|> typeof .== T
   vxx = view(xx, mask)
   map(x->x.label, vxx)
 end
@@ -274,11 +278,11 @@ Related
 
 ls, lsf, lsfPriors
 """
-function lsWho(dfg::AbstractDFG, type::Symbol; solveKey::Symbol=:default)::Vector{Symbol}
+function lsWho(dfg::AbstractDFG, type::Symbol)::Vector{Symbol}
     vars = getVariables(dfg)
     labels = Symbol[]
     for v in vars
-        varType = typeof(getVariableType(v, solveKey=solveKey)).name |> Symbol
+        varType = typeof(getVariableType(v)).name |> Symbol
         varType == type && push!(labels, v.label)
     end
     return labels
@@ -390,48 +394,56 @@ function findVariableNearTimestamp(dfg::AbstractDFG,
   return RET
 end
 
+
+#TAGS as a set, list, merge, remove, empty
 """
 $SIGNATURES
 
 Return the tags for a variable or factor.
 """
-function getTags(dfg::InMemoryDFGTypes, sym::Symbol)
+function listTags(dfg::InMemoryDFGTypes, sym::Symbol)
   getFnc = isVariable(dfg,sym) ? getVariable : getFactor
   getTags(getFnc(dfg, sym))
 end
+#alias for completeness
+listTags(f::DataLevel0) = getTags(f)
 
 """
     $SIGNATURES
 
-Add tags to a variable or factor
+Merge add tags to a variable or factor (union)
 """
-function addTags!(dfg::InMemoryDFGTypes, sym::Symbol, tags::Vector{Symbol})
+function mergeTags!(dfg::InMemoryDFGTypes, sym::Symbol, tags::Vector{Symbol})
   getFnc = isVariable(dfg,sym) ? getVariable : getFactor
   union!(getTags(getFnc(dfg, sym)), tags)
 end
-
-
-"""
-$SIGNATURES
-
-Add tag to a variable or factor
-"""
-addTag!(f::DataLevel0, tag::Symbol) = union!(f.tags,[tag])
-
-
-"""
-$SIGNATURES
-
-Merge tags to the node's tags (variable/factor).
-"""
 mergeTags!(f::DataLevel0, tags::Vector{Symbol}) = union!(f.tags, tags)
 
+
 """
 $SIGNATURES
 
-Remove the tags from the node
+Remove the tags from the node (setdiff)
 """
-deleteTags!(f::DataLevel0, tags::Vector{Symbol}) = setdiff!(f.tags, tags)
+function removeTags!(dfg::InMemoryDFGTypes, sym::Symbol, tags::Vector{Symbol})
+  getFnc = isVariable(dfg,sym) ? getVariable : getFactor
+  setdiff!(getTags(getFnc(dfg, sym)), tags)
+end
+removeTags!(f::DataLevel0, tags::Vector{Symbol}) = setdiff!(f.tags, tags)
+
+"""
+$SIGNATURES
+
+Empty all tags from the node (empty)
+"""
+function emptyTags!(dfg::InMemoryDFGTypes, sym::Symbol)
+  getFnc = isVariable(dfg,sym) ? getVariable : getFactor
+  empty!(getTags(getFnc(dfg, sym)))
+end
+emptyTags!(f::DataLevel0) = empty!(f.tags)
+
+
+
 
 
 """
@@ -444,7 +456,7 @@ function hasTags(dfg::InMemoryDFGTypes,
                  tags::Vector{Symbol};
                  matchAll::Bool=true  )::Bool
   #
-  alltags = getTags(dfg, sym)
+  alltags = listTags(dfg, sym)
   length(filter(x->x in alltags, tags)) >= (matchAll ? length(tags) : 1)
 end
 

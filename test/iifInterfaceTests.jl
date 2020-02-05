@@ -30,7 +30,7 @@ end
 
 @testset "Testing CRUD, return and Failures from a GraphsDFG" begin
     global dfg
-    # fg to copy to
+    # dfg to copy to
     # creating a whole new graph with the same labels
     T = typeof(dfg)
     if T <: CloudGraphsDFG
@@ -124,6 +124,44 @@ end
     @test !isVariable(dfg, f1.label)
     @test !isVariable(dfg, :doesntexist)
     @test !isFactor(dfg, :doesntexist)
+
+    @test issetequal([:a,:b], listVariables(dfg))
+    @test issetequal([:abf1], listFactors(dfg))
+
+    @test @test_deprecated getVariableIds(dfg) == listVariables(dfg)
+    @test @test_deprecated getFactorIds(dfg) == listFactors(dfg)
+
+
+    @test @test_deprecated getfnctype(f1.solverData) === getFactorType(f1.solverData)
+    @test @test_deprecated getfnctype(f1) === getFactorType(f1)
+    @test @test_deprecated getfnctype(dfg, :abf1) === getFactorType(dfg, :abf1)
+
+    @test getFactorType(f1.solverData) === f1.solverData.fnc.usrfnc!
+    @test getFactorType(f1) === f1.solverData.fnc.usrfnc!
+    @test getFactorType(dfg, :abf1) === f1.solverData.fnc.usrfnc!
+
+    @test !isPrior(dfg, :abf1) # f1 is not a prior
+    @test lsfPriors(dfg) == []
+    #FIXME don't know what it is supposed to do
+    @test_broken lsfTypes(dfg)
+
+    @test ls(dfg, LinearConditional) == [:abf1]
+    @test lsf(dfg, LinearConditional) == [:abf1]
+    @test lsfWho(dfg, :LinearConditional) == [:abf1]
+
+    @test getVariableType(v1) isa ContinuousScalar
+    @test getVariableType(dfg,:a) isa ContinuousScalar
+
+    #TODO what is lsTypes supposed to return?
+    @test_broken lsTypes(dfg)
+
+    @test issetequal(ls(dfg, ContinuousScalar), [:a, :b])
+
+    @test issetequal(lsWho(dfg, :ContinuousScalar),[:a, :b])
+
+    varNearTs = findVariableNearTimestamp(dfg, now())
+    @test_skip varNearTs[1][1]  == [:b]
+
 end
 
 # Gets
@@ -346,7 +384,7 @@ end
 
 # Now make a complex graph for connectivity tests
 numNodes = 10
-#the deletions in last test should have cleared out the fg
+#the deletions in last test should have cleared out the dfg
 # dfg = DistributedFactorGraphs._getDuplicatedEmptyDFG(dfg)
 # if typeof(dfg) <: CloudGraphsDFG
 #     clearSession!!(dfg)
