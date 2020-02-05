@@ -92,7 +92,11 @@ function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariable
     return variable
 end
 
-function addFactor!(dfg::CloudGraphsDFG, variables::Vector{DFGVariable}, factor::DFGFactor)::Bool
+function addFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)
+    addFactor!(dfg, factor._variableOrderSymbols, factor)
+end
+
+function addFactor!(dfg::CloudGraphsDFG, variables::Vector{<:DFGVariable}, factor::DFGFactor)::DFGFactor
     if exists(dfg, factor)
         error("Factor '$(factor.label)' already exists in the factor graph")
     end
@@ -120,10 +124,10 @@ function addFactor!(dfg::CloudGraphsDFG, variables::Vector{DFGVariable}, factor:
     # Track insertion only for variables
     # push!(dfg.addHistory, factor.label
 
-    return true
+    return factor
 end
 
-function addFactor!(dfg::CloudGraphsDFG, variableIds::Vector{Symbol}, factor::DFGFactor)::Bool
+function addFactor!(dfg::CloudGraphsDFG, variableIds::Vector{Symbol}, factor::DFGFactor)::DFGFactor
     variables = map(vId -> getVariable(dfg, vId), variableIds)
     return addFactor!(dfg, variables, factor)
 end
@@ -187,7 +191,8 @@ end
 
 function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariable
     if !exists(dfg, variable)
-        error("Variable label '$(variable.label)' does not exist in the factor graph")
+        @warn "Variable label '$(variable.label)' does not exist in the factor graph, adding"
+        return addVariable!(dfg, variable)
     end
     nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, variable.label)
     # Update the node ID
@@ -217,7 +222,8 @@ end
 
 function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor
     if !exists(dfg, factor)
-        error("Factor label '$(factor.label)' does not exist in the factor graph")
+        @warn "Factor label '$(factor.label)' does not exist in the factor graph, adding"
+        return addFactor!(dfg, factor)
     end
     nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, factor.label)
     # Update the _internalId

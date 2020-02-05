@@ -1,17 +1,5 @@
 
 
-# # Accessors
-# getLabelDict(dfg::LightDFG) = copy(dfg.g.labels.sym_int)
-# getDescription(dfg::LightDFG) = dfg.description
-# setDescription(dfg::LightDFG, description::String) = dfg.description = description
-# getAddHistory(dfg::LightDFG) = dfg.addHistory
-# getSolverParams(dfg::LightDFG) = dfg.solverParams
-#
-# # setSolverParams(dfg::LightDFG, solverParams) = dfg.solverParams = solverParams
-# function setSolverParams(dfg::LightDFG, solverParams::P) where P <: AbstractParams
-#   dfg.solverParams = solverParams
-# end
-
 function exists(dfg::LightDFG{P,V,F}, node::V) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
     return haskey(dfg.g.variables, node.label)
 end
@@ -50,41 +38,42 @@ function addVariable!(dfg::LightDFG{<:AbstractParams, V, <:AbstractDFGFactor}, v
     return variable
 end
 
-function addFactor!(dfg::LightDFG{<:AbstractParams, V, F}, variables::Vector{<:V}, factor::F)::F where {V <: AbstractDFGVariable, F <: AbstractDFGFactor}
-
-    #TODO should this be an error
-    if haskey(dfg.g.factors, factor.label)
-        error("Factor '$(factor.label)' already exists in the factor graph")
-    end
-    # for v in variables
-    #     if !(v.label in keys(dfg.g.metaindex[:label]))
-    #         error("Variable '$(v.label)' not found in graph when creating Factor '$(factor.label)'")
-    #     end
-    # end
-
-    variableLabels = map(v->v.label, variables)
-
-    resize!(factor._variableOrderSymbols, length(variableLabels))
-    factor._variableOrderSymbols .= variableLabels
-    # factor._variableOrderSymbols = copy(variableLabels)
-
-    @assert FactorGraphs.addFactor!(dfg.g, variableLabels, factor)
-    return factor
-end
-
-function addFactor!(dfg::LightDFG{<:AbstractParams, <:AbstractDFGVariable, F}, variableLabels::Vector{Symbol}, factor::F)::F where F <: AbstractDFGFactor
-    #TODO should this be an error
-    if haskey(dfg.g.factors, factor.label)
-        error("Factor '$(factor.label)' already exists in the factor graph")
-    end
-
-    resize!(factor._variableOrderSymbols, length(variableLabels))
-    factor._variableOrderSymbols .= variableLabels
-
-    @assert FactorGraphs.addFactor!(dfg.g, variableLabels, factor)
-
-    return factor
-end
+#moved to abstract
+# function addFactor!(dfg::LightDFG{<:AbstractParams, V, F}, variables::Vector{<:V}, factor::F)::F where {V <: AbstractDFGVariable, F <: AbstractDFGFactor}
+#
+#     #TODO should this be an error
+#     if haskey(dfg.g.factors, factor.label)
+#         error("Factor '$(factor.label)' already exists in the factor graph")
+#     end
+#     # for v in variables
+#     #     if !(v.label in keys(dfg.g.metaindex[:label]))
+#     #         error("Variable '$(v.label)' not found in graph when creating Factor '$(factor.label)'")
+#     #     end
+#     # end
+#
+#     variableLabels = map(v->v.label, variables)
+#
+#     resize!(factor._variableOrderSymbols, length(variableLabels))
+#     factor._variableOrderSymbols .= variableLabels
+#     # factor._variableOrderSymbols = copy(variableLabels)
+#
+#     @assert FactorGraphs.addFactor!(dfg.g, variableLabels, factor)
+#     return factor
+# end
+#
+# function addFactor!(dfg::LightDFG{<:AbstractParams, <:AbstractDFGVariable, F}, variableLabels::Vector{Symbol}, factor::F)::F where F <: AbstractDFGFactor
+#     #TODO should this be an error
+#     if haskey(dfg.g.factors, factor.label)
+#         error("Factor '$(factor.label)' already exists in the factor graph")
+#     end
+#
+#     resize!(factor._variableOrderSymbols, length(variableLabels))
+#     factor._variableOrderSymbols .= variableLabels
+#
+#     @assert FactorGraphs.addFactor!(dfg.g, variableLabels, factor)
+#
+#     return factor
+# end
 
 
 function addFactor!(dfg::LightDFG{<:AbstractParams, <:AbstractDFGVariable, F}, factor::F)::F where F <: AbstractDFGFactor

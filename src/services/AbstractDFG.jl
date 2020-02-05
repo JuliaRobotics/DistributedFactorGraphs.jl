@@ -196,19 +196,36 @@ function addVariable!(dfg::G, variable::V)::AbstractDFGVariable where {G <: Abst
 end
 
 """
-    $(SIGNATURES)
 Add a DFGFactor to a DFG.
+    $(SIGNATURES)
 """
-function addFactor!(dfg::G, variables::Vector{<:V}, factor::F)::AbstractDFGFactor where {G <: AbstractDFG, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
-    error("addFactor! not implemented for $(typeof(dfg))")
+function addFactor!(dfg::AbstractDFG, factor::F)::F where F <: AbstractDFGFactor
+    error("addFactor! not implemented for $(typeof(dfg))(dfg, factor)")
 end
 
 """
-    $(SIGNATURES)
-Add a DFGFactor to a DFG.
+$(SIGNATURES)
 """
-function addFactor!(dfg::G, variableIds::Vector{Symbol}, factor::F)::AbstractDFGFactor where {G <: AbstractDFG, F <: AbstractDFGFactor}
-    error("addFactor! not implemented for $(typeof(dfg))")
+function addFactor!(dfg::AbstractDFG, variables::Vector{<:AbstractDFGVariable}, factor::F)::F where  F <: AbstractDFGFactor
+
+        variableLabels = map(v->v.label, variables)
+
+        resize!(factor._variableOrderSymbols, length(variableLabels))
+        factor._variableOrderSymbols .= variableLabels
+
+        return addFactor!(dfg, factor)
+
+end
+
+"""
+$(SIGNATURES)
+"""
+function addFactor!(dfg::AbstractDFG, variableLabels::Vector{Symbol}, factor::F)::AbstractDFGFactor where F <: AbstractDFGFactor
+
+    resize!(factor._variableOrderSymbols, length(variableLabels))
+    factor._variableOrderSymbols .= variableLabels
+
+    return addFactor!(dfg, factor)
 end
 
 # TODO: Confirm we can remove this.
@@ -999,7 +1016,7 @@ Produces a dot-format of the graph for visualization.
 """
 function toDot(dfg::AbstractDFG)::String
     #TODO implement convert
-    graphsdfg = GraphsDFG{AbstractParams}()
+    graphsdfg = GraphsDFG{NoSolverParams}()
     DistributedFactorGraphs._copyIntoGraph!(dfg, graphsdfg, union(listVariables(dfg), listFactors(dfg)), true)
 
     # Calls down to GraphsDFG.toDot
@@ -1018,8 +1035,12 @@ Note
 """
 function toDotFile(dfg::AbstractDFG, fileName::String="/tmp/dfg.dot")::Nothing
     #TODO implement convert
-    graphsdfg = GraphsDFG{AbstractParams}()
-    DistributedFactorGraphs._copyIntoGraph!(dfg, graphsdfg, union(listVariables(dfg), listFactors(dfg)), true)
+    if isa(dfg, GraphsDFG)
+        graphsdfg = dfg
+    else
+        graphsdfg = GraphsDFG{NoSolverParams}()
+        DistributedFactorGraphs._copyIntoGraph!(dfg, graphsdfg, union(listVariables(dfg), listFactors(dfg)), true)
+    end
 
     open(fileName, "w") do fid
         write(fid,Graphs.to_dot(graphsdfg.g))

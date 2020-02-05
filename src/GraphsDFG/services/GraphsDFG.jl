@@ -65,24 +65,29 @@ function addVariable!(dfg::GraphsDFG, variable::DFGVariable)::DFGVariable
     return variable
 end
 
-function addFactor!(dfg::GraphsDFG, variables::Vector{<:DFGVariable}, factor::DFGFactor)::DFGFactor
+function addFactor!(dfg::GraphsDFG, factor::DFGFactor)::DFGFactor
+
     if haskey(dfg.labelDict, factor.label)
         error("Factor '$(factor.label)' already exists in the factor graph")
     end
-    for v in variables
-        if !(v.label in keys(dfg.labelDict))
-            error("Variable '$(v.label)' not found in graph when creating Factor '$(factor.label)'")
+
+    variableLabels = factor._variableOrderSymbols
+    for v in variableLabels
+        if !(v in keys(dfg.labelDict))
+            error("Variable '$(v)' not found in graph when creating Factor '$(factor.label)'")
         end
     end
+
     dfg.nodeCounter += 1
     factor._dfgNodeParams._internalId = dfg.nodeCounter
-    factor._variableOrderSymbols = map(v->v.label, variables)
+
     fNode = GraphsNode(dfg.nodeCounter, factor)
     f = Graphs.add_vertex!(dfg.g, fNode)
     # Add index
     push!(dfg.labelDict, factor.label=>factor._dfgNodeParams._internalId)
     # Add the edges...
-    for variable in variables
+    for varLbl in variableLabels
+        variable = getVariable(dfg, varLbl)
         v = dfg.g.vertices[variable._dfgNodeParams._internalId]
         edge = Graphs.make_edge(dfg.g, v, f)
         Graphs.add_edge!(dfg.g, edge)
@@ -93,11 +98,11 @@ function addFactor!(dfg::GraphsDFG, variables::Vector{<:DFGVariable}, factor::DF
     return factor
 end
 
-#TODO move to abstract
-function addFactor!(dfg::GraphsDFG, variableIds::Vector{Symbol}, factor::DFGFactor)::DFGFactor
-    variables = map(vId -> getVariable(dfg, vId), variableIds)
-    return addFactor!(dfg, variables, factor)
-end
+#moved to abstract
+# function addFactor!(dfg::GraphsDFG, variableIds::Vector{Symbol}, factor::DFGFactor)::DFGFactor
+#     variables = map(vId -> getVariable(dfg, vId), variableIds)
+#     return addFactor!(dfg, variables, factor)
+# end
 
 # TODO: Confirm we can remove this.
 # function getVariable(dfg::GraphsDFG, variableId::Int64)::DFGVariable

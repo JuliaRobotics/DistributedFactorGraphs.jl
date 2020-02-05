@@ -19,7 +19,7 @@ julia:
 #FIXME#    - nightly
 
 env:
-    - IIF_TEST=false
+    - IIF_TEST=true
 
 #FIXME#jobs:
 #FIXME#  include:

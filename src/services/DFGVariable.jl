@@ -30,17 +30,12 @@ function unpackVariable(dfg::G, packedProps::Dict{String, Any})::DFGVariable whe
 
     # Rebuild DFGVariable using the first solver softtype in solverData
     if length(solverData) > 0
-        variable = DFGVariable(Symbol(packedProps["label"]), first(solverData)[2].softtype)
+        # variable = DFGVariable(Symbol(packedProps["label"]), first(solverData)[2].softtype)
+        variable = DFGVariable(Symbol(packedProps["label"]), timestamp, Set(tags), ppeDict, solverData,  smallData, Dict{Symbol,AbstractBigDataEntry}(), DFGNodeParams(packedProps["solvable"],0))
     else
         @warn "The variable $label in this file does not have any solver data. This will not be supported in the future, please add at least one solverData structure."
-        variable = DFGVariable(Symbol(packedProps["label"]))
+        variable = DFGVariable(Symbol(packedProps["label"]), timestamp, Set(tags), ppeDict, solverData,  smallData, Dict{Symbol,AbstractBigDataEntry}(), DFGNodeParams(packedProps["solvable"],0))
     end
-    variable.timestamp = timestamp
-    variable.tags = tags
-    variable.ppeDict = ppeDict
-    variable.solverDataDict = solverData
-    variable.smallData = smallData
-    variable.solvable = packedProps["solvable"]
 
     # Now rehydrate complete bigData type.
     for (k,bdeInter) in bigDataIntermed
@@ -63,7 +58,8 @@ function pack(dfg::G, d::VariableNodeData)::PackedVariableNodeData where G <: Ab
                                 d.inferdim,
                                 d.ismargin,
                                 d.dontmargin,
-                                d.solveInProgress)
+                                d.solveInProgress,
+                                d.solvedCount)
 end
 
 function unpack(dfg::G, d::PackedVariableNodeData)::VariableNodeData where G <: AbstractDFG

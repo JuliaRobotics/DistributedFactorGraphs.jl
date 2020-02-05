@@ -57,7 +57,7 @@ end
 if get(ENV, "IIF_TEST", "") == "true"
 
     # Switch to our upstream test branch.
-    Pkg.add(PackageSpec(name="IncrementalInference", rev="upstream/dfg_integration_test"))
+    Pkg.add(PackageSpec(name="IncrementalInference", rev="develop"))
     @info "------------------------------------------------------------------------"
     @info "These tests are using IncrementalInference to do additional driver tests"
     @info "------------------------------------------------------------------------"
@@ -65,9 +65,8 @@ if get(ENV, "IIF_TEST", "") == "true"
     using IncrementalInference
 
     apis = [
-        GraphsDFG{NoSolverParams}(),
-        LightDFG{NoSolverParams}(),
-        DistributedFactorGraphs.SymbolDFG{NoSolverParams}(),
+        GraphsDFG{SolverParams}(),
+        LightDFG{SolverParams}(),
         CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
                                     "testUser", "testRobot", "testSession",
                                     nothing,

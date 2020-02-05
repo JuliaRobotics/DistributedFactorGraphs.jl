@@ -19,6 +19,18 @@ Base.getproperty(x::DFGVariable,f::Symbol) = begin
     end
   end
 
+Base.setproperty!(x::DFGVariable,f::Symbol, val) = begin
+    if f == :estimateDict
+        error("estimateDict is deprecated, use ppeDict instead")
+    elseif f == :solvable
+        getfield(x,:_dfgNodeParams).solvable = val
+    elseif f == :_internalId
+        getfield(x,:_dfgNodeParams)._internalId = val
+    else
+        setfield!(x,f,val)
+    end
+  end
+
 Base.getproperty(x::DFGVariableSummary,f::Symbol) = begin
     if f == :estimateDict
         @warn "estimateDict is deprecated, use ppeDict instead"
@@ -29,17 +41,32 @@ Base.getproperty(x::DFGVariableSummary,f::Symbol) = begin
   end
 
 
-
 Base.getproperty(x::DFGFactor,f::Symbol) = begin
   if f == :solvable
       getfield(x,:_dfgNodeParams).solvable
   elseif f == :_internalId
       getfield(x,:_dfgNodeParams)._internalId
+  elseif f == :data
+      @warn "data field is deprecated, use solverData or getSolverData"
+      getfield(x, :solverData)
   else
       getfield(x,f)
   end
 end
 
+Base.setproperty!(x::DFGFactor,f::Symbol, val) = begin
+    if f == :solvable
+        setfield!(x,f,val)
+        getfield(x,:_dfgNodeParams).solvable = val
+    elseif f == :_internalId
+        getfield(x,:_dfgNodeParams)._internalId = val
+    elseif f == :data
+        @warn "data field is deprecated, use ...TODO?"
+        setfield!(x,:solverData, val)
+    else
+        setfield!(x,f,val)
+    end
+  end
 
 @deprecate getEstimates(v::VariableDataLevel1) getVariablePPEs(v)
 
@@ -60,7 +87,10 @@ end
 
 @deprecate getData(v::DFGVariable; solveKey::Symbol=:default) getSolverData(v, solveKey)
 
+@deprecate getData(f::DFGFactor) getSolverData(f)
+
 @deprecate setSolverData(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) setSolverData!(v, data, key)
+
 
 @deprecate data(f::DFGFactor) getSolverData(f)
 
@@ -73,6 +103,12 @@ end
 @deprecate solverData(f::DFGFactor) getSolverData(f)
 
 @deprecate solverData(v::DFGVariable, key::Symbol=:default) getSolverData(v, key)
+
+@deprecate solverDataDict(args...) getSolverDataDict(args...)
+
+@deprecate internalId(args...) getInternalId(args...)
+
+
 
 export getLabelDict
 getLabelDict(dfg::AbstractDFG) = error("getLabelDict is deprecated, consider using listing functions")

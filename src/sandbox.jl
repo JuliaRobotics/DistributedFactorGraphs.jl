@@ -13,6 +13,9 @@ function copyGraph!(destDFG::AbstractDFG, sourceDFG::AbstractDFG, variableFactor
     for variable in sourceVariables
         if !exists(destDFG, variable)
             addVariable!(destDFG, variable)
+        else
+            #TODO Technically this should be an error
+            @warn "Variable $(variable.label) already exists in destination graph, ignoring!"
         end
     end
     # And then all factors to the destDFG.

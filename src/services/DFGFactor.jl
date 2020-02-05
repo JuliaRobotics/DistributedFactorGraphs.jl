@@ -59,8 +59,9 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any}, iifModule)::DFGFac
 
     # Rebuild DFGVariable
     factor = DFGFactor{typeof(fullFactor.fnc), Symbol}(Symbol(label), 0, timestamp)
-    factor.tags = tags
-    factor.data = fullFactor
+
+    union!(factor.tags, tags)
+    factor.data = fullFactor #TODO setSolverData!(factor, fullFactor)
     factor._variableOrderSymbols = _variableOrderSymbols
     factor.solvable = solvable
 
