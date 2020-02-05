@@ -86,6 +86,8 @@ export pack, unpack
 # Resolve with above
 export packVariable, unpackVariable, packFactor, unpackFactor
 
+# TODO TAGS
+export listTags, mergeTags!, removeTags!, emptyTags!
 # PPE exports
 export AbstractPointParametricEst
 export MeanMaxPPE

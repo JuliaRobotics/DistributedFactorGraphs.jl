@@ -332,8 +332,54 @@ end
 end
 
 
-##
 @testset "TODO Sorteer groep" begin
+
+    @testset "Listing Variables and Factors with filters" begin
+
+        @test issetequal([:a,:b], listVariables(fg))
+        @test issetequal([:f1], listFactors(fg))
+
+        @test @test_deprecated getVariableIds(fg) == listVariables(fg)
+        @test @test_deprecated getFactorIds(fg) == listFactors(fg)
+
+        # TODO Mabye implement IIF type here
+        # Requires IIF or a type in IIF
+        @test_skip @test_deprecated getfnctype(f1.solverData) === getFactorType(f1.solverData)
+        @test_skip @test_deprecated getfnctype(f1) === getFactorType(f1)
+        @test_skip @test_deprecated getfnctype(fg, :f1) === getFactorType(fg, :f1)
+        @test_broken getFactorType(f1.solverData) === f1.solverData.fnc.usrfnc!
+        @test_broken getFactorType(f1) === f1.solverData.fnc.usrfnc!
+        @test_broken getFactorType(fg, :f1) === f1.solverData.fnc.usrfnc!
+
+        @test_broken isPrior(fg, :f1) # if f1 is prior
+        @test_broken lsfPriors(fg) == [:f1]
+        @test_broken lsfTypes(fg)
+
+        @test_broken ls(fg, TestFunctorInferenceType1) == [f1]
+        @test_broken lsf(fg, TestFunctorInferenceType1) == [f1]
+        @test_broken lsfWho(fg, :TestFunctorInferenceType1) == [f1]
+
+        @test getVariableType(v1) == TestInferenceVariable1()
+        @test getVariableType(fg,:a) == TestInferenceVariable1()
+
+        #TODO what is lsTypes supposed to return?
+        lsTypes(fg)
+
+        @test ls(fg, TestInferenceVariable1) == [:a]
+
+        @test lsWho(fg, :TestInferenceVariable1) == [:a]
+
+        varNearTs = findVariableNearTimestamp(fg, now())
+        @test varNearTs[1][1]  == [:b]
+
+        #TODO test filters and options
+        # regexFilter::Union{Nothing, Regex}=nothing;
+        # tags::Vector{Symbol}=Symbol[],
+        # solvable::Int=0,
+        # warnDuplicate::Bool=true,
+        # number::Int=1
+
+    end
 
     @testset "Connectivity Test" begin
 
@@ -397,22 +443,24 @@ end
         @test sort(l, lt=DistributedFactorGraphs.natural_lt) == [Symbol("1a1"), :X1, :a, :a1, :b1c2, :c, :l1, :x1, :x1_1, :x1_2, :x1l1f1, :x1x2f1, :x2_1, :x2_2, :x10, :x10_10, :xy3]
     end
 end
-#
+
 @testset "tags" begin
     #
-    # LOTS TODO
 
-    @test issetequal(getTags(fg, :a), v1_tags)
+    v1Tags = deepcopy(getTags(v1))
+    @test issetequal(v1Tags, v1_tags)
+    @test issetequal(listTags(fg, :a), v1Tags)
+    @test issetequal(mergeTags!(fg, :a, [:TAG]), v1Tags ∪ [:TAG])
+    @test issetequal(removeTags!(fg, :a, [:TAG]), v1Tags)
+    @test emptyTags!(fg, :a) == Set{Symbol}()
 
-    # TODO do we error on duplicates
-    @test issetequal(addTags!(fg, :a, [:TAG]), v1_tags ∪ [:TAG])
 
-    @test_broken emptyTags!(fg, :a)
+    v2Tags = [listTags(fg, :b)...]
+    @test hasTags(fg, :b, [v2Tags...])
+    @test hasTags(fg, :b, [:LANDMARK, :TAG], matchAll=false)
 
-    @test_broken updateTags!
-    @test_broken deleteTags!
-    @test_broken listTags
-    @test_broken mergeTags!
+    @test hasTagsNeighbors(fg, :f1, [:LANDMARK])
+    @test !hasTagsNeighbors(fg, :f1, [:LANDMARK, :TAG])
 
 end
 
