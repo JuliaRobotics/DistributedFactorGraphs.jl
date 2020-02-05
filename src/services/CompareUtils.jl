@@ -114,6 +114,25 @@ function compareAll(Al::T, Bl::T; show::Bool=true, skip::Vector{Symbol}=Symbol[]
   return true
 end
 
+#Compare VariableNodeData
+function compare(a::VariableNodeData, b::VariableNodeData)
+    a.val != b.val && @debug("val is not equal")==nothing && return false
+    a.bw != b.bw && @debug("bw is not equal")==nothing && return false
+    a.BayesNetOutVertIDs != b.BayesNetOutVertIDs && @debug("BayesNetOutVertIDs is not equal")==nothing && return false
+    a.dimIDs != b.dimIDs && @debug("dimIDs is not equal")==nothing && return false
+    a.dims != b.dims && @debug("dims is not equal")==nothing && return false
+    a.eliminated != b.eliminated && @debug("eliminated is not equal")==nothing && return false
+    a.BayesNetVertID != b.BayesNetVertID && @debug("BayesNetVertID is not equal")==nothing && return false
+    a.separator != b.separator && @debug("separator is not equal")==nothing && return false
+    a.initialized != b.initialized && @debug("initialized is not equal")==nothing && return false
+    abs(a.inferdim - b.inferdim) > 1e-14 && @debug("inferdim is not equal")==nothing && return false
+    a.ismargin != b.ismargin && @debug("ismargin is not equal")==nothing && return false
+    a.dontmargin != b.dontmargin && @debug("dontmargin is not equal")==nothing && return false
+    a.solveInProgress != b.solveInProgress && @debug("solveInProgress is not equal")==nothing && return false
+    typeof(a.softtype) != typeof(b.softtype) && @debug("softtype is not equal")==nothing && return false
+    return true
+end
+
 """
     $SIGNATURES
 
@@ -153,6 +172,20 @@ function compareAllSpecial(A::T1,
   else
     return compareAll(A, B, skip=skip, show=show)
   end
+end
+
+
+# Compare FunctionNodeData
+function compare(a::GenericFunctionNodeData{T1,S},b::GenericFunctionNodeData{T2,S}) where {T1, T2, S}
+  # TODO -- beef up this comparison to include the gwp
+  TP = true
+  TP = TP && a.fncargvID == b.fncargvID
+  TP = TP && a.eliminated == b.eliminated
+  TP = TP && a.potentialused == b.potentialused
+  TP = TP && a.edgeIDs == b.edgeIDs
+  TP = TP && a.frommodule == b.frommodule
+  # TP = TP && typeof(a.fnc) == typeof(b.fnc)
+  return TP
 end
 
 """
@@ -323,3 +356,16 @@ function compareFactorGraphs(fgA::G1,
 
   return TP
 end
+
+
+# """
+#     ==(x::T, y::T) where T <: AbstractPointParametricEst
+# Equality check for AbstractPointParametricEst.
+# """
+# @generated function ==(x::T, y::T) where T <: AbstractPointParametricEst
+#     mapreduce(n -> :(x.$n == y.$n), (a,b)->:($a && $b), fieldnames(x))
+# end
+#
+# @generated function Base.:(==)(x::T, y::T) where T <: Union{DFGFactorSummary, DFGVariableSummary, SkeletonDFGVariable, SkeletonDFGFactor}
+#     mapreduce(n -> :(x.$n == y.$n), (a,b)->:($a && $b), fieldnames(x))
+# end
