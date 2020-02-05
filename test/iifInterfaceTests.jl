@@ -155,9 +155,9 @@ end
     #TODO what is lsTypes supposed to return?
     @test_broken lsTypes(dfg)
 
-    @test ls(dfg, ContinuousScalar) == [:a, :b]
+    @test issetequal(ls(dfg, ContinuousScalar), [:a, :b])
 
-    @test lsWho(dfg, :ContinuousScalar) == [:a, :b]
+    @test issetequal(lsWho(dfg, :ContinuousScalar),[:a, :b])
 
     varNearTs = findVariableNearTimestamp(dfg, now())
     @test_skip varNearTs[1][1]  == [:b]
