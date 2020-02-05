@@ -389,6 +389,7 @@ Get the variable ordering for this factor.
 Should be equivalent to getNeighbors unless something was deleted in the graph.
 """
 getVariableOrder(fct::DFGFactor)::Vector{Symbol} = fct._variableOrderSymbols
+getVariableOrder(dfg::AbstractDFG, fct::Symbol) = getVariableOrder(getFactor(dfg, fct))
 
 """
     $SIGNATURES

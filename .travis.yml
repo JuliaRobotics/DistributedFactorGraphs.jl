@@ -13,8 +13,8 @@ services:
     - neo4j
 
 julia:
-    - 1.0
-#FIXME#    - 1.2
+#FIXME#    - 1.0
+    - 1.2
 #FIXME#    - 1.3
 #FIXME#    - nightly
 
