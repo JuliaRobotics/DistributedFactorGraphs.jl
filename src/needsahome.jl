@@ -19,7 +19,7 @@ DevNotes
 
 Related
 
-getVariableIds, _copyIntoGraph!
+listVariables, _copyIntoGraph!
 """
 function buildSubgraphFromLabels!(dfg::G,
                                   syms::Vector{Symbol};
@@ -36,7 +36,7 @@ function buildSubgraphFromLabels!(dfg::G,
   end
 
   # remove excessive variables that were copied by neighbors distance 2
-  currVars = getVariableIds(subfg)
+  currVars = listVariables(subfg)
   toDelVars = setdiff(currVars, syms)
   for dv in toDelVars
     # delete any neighboring factors first
@@ -61,16 +61,6 @@ function buildSubgraphFromLabels!(dfg::G,
   return subfg
 end
 
-function buildSubgraphFromLabels(dfg::G,
-                                  syms::Vector{Symbol};
-                                  subfg::AbstractDFG=(G <: InMemoryDFGTypes ? G : GraphsDFG)(params=getSolverParams(dfg)),
-                                  solvable::Int=0,
-                                  allowedFactors::Union{Nothing, Vector{Symbol}}=nothing  )::G where G <: AbstractDFG
-  #
-  @warn "Deprecated buildSubgraphFromLabels, use buildSubgraphFromLabels! instead."
-  buildSubgraphFromLabels!(dfg, syms, subfg=subfg, solvable=solvable, allowedFactors=allowedFactors )
-end
-
 
 ## KEEPING COMMENT, WANT TO BE CONSOLIDATED WITH FUNCTION ABOVE -- KEEPING ONLY ONE FOR MAINTAINABILITY
 ## STILL NEEDS TO BE CONSOLIDATED WITH `DFG._copyIntoGraph`
@@ -85,7 +75,7 @@ end
 #
 # Related
 #
-# buildSubgraphFromLabels!, _copyIntoGraph!, getVariableIds
+# buildSubgraphFromLabels!, _copyIntoGraph!, listVariables
 # """
 # function buildSubgraphFromLabels!_SPECIAL(dfg::G,
 #                                           # frontals::Vector{Symbol},

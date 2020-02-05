@@ -1,6 +1,566 @@
 # global testDFGAPI = LightDFG
 # global testDFGAPI = GraphsDFG
 
+#test Specific definitions
+struct TestInferenceVariable1 <: InferenceVariable end
+struct TestInferenceVariable2 <: InferenceVariable end
+
+struct TestFunctorInferenceType1 <: FunctorInferenceType end
+
+# TODO see note in AbstractDFG.jl setSolverParams!
+struct GeenSolverParams <: AbstractParams
+end
+
+# DFG Accessors
+@testset "DFG Structure and Accessors" begin
+    # Constructors
+    # Constructors to be implemented
+    global fg = testDFGAPI(params=NoSolverParams())
+    #TODO test something better
+    @test isa(fg, testDFGAPI)
+
+    des = "description"
+    uId = "userId"
+    rId = "robotId"
+    sId = "sessionId"
+    ud = :ud=>"udEntry"
+    rd = :rd=>"rdEntry"
+    sd = :sd=>"sdEntry"
+    fg = testDFGAPI(des, uId,  rId,  sId,  Dict{Symbol, String}(ud),  Dict{Symbol, String}(rd),  Dict{Symbol, String}(sd),  NoSolverParams())
+
+    # accesssors
+    # get
+    @test getDescription(fg) == des
+    @test getUserId(fg) == uId
+    @test getRobotId(fg) == rId
+    @test getSessionId(fg) == sId
+    @test getAddHistory(fg) == []
+
+    @test getUserData(fg) == Dict(ud)
+    @test getRobotData(fg) == Dict(rd)
+    @test getSessionData(fg) == Dict(sd)
+
+    @test getSolverParams(fg) == NoSolverParams()
+
+    smallUserData = Dict{Symbol, String}(:a => "42", :b => "Hello")
+    smallRobotData = Dict{Symbol, String}(:a => "43", :b => "Hello")
+    smallSessionData = Dict{Symbol, String}(:a => "44", :b => "Hello")
+
+    #TODO CRUD vs set
+    @test setUserData!(fg, deepcopy(smallUserData)) == smallUserData
+    @test setRobotData!(fg, deepcopy(smallRobotData)) == smallRobotData
+    @test setSessionData!(fg, deepcopy(smallSessionData)) == smallSessionData
+
+    @test getUserData(fg) == smallUserData
+    @test getRobotData(fg) == smallRobotData
+    @test getSessionData(fg) == smallSessionData
+
+
+    # TODO see note in AbstractDFG.jl setSolverParams!
+    @test_throws MethodError setSolverParams!(fg, GeenSolverParams()) == GeenSolverParams()
+
+
+    @test setSolverParams!(fg, NoSolverParams()) == NoSolverParams()
+
+    @test setDescription!(fg, des*"_1") == des*"_1"
+
+    #TODO I don't like, so not exporting, and not recommended to use
+    #     Technically if you set Ids its a new object
+    @test DistributedFactorGraphs.setUserId!(fg, uId*"_1") == uId*"_1"
+    @test DistributedFactorGraphs.setRobotId!(fg, rId*"_1") == rId*"_1"
+    @test DistributedFactorGraphs.setSessionId!(fg, sId*"_1") == sId*"_1"
+
+
+    #deprecated
+    @test_throws ErrorException getLabelDict(fg)
+    @test @test_deprecated setDescription(fg, des) == des
+
+
+    #TODO
+    # duplicateEmptyDFG
+    # copyEmptyDFG
+    # emptyDFG ?
+    # _getDuplicatedEmptyDFG
+end
+
+# User, Robot, Session Data
+@testset "User, Robot, Session Data" begin
+    # User Data
+    global fg
+    @test getUserData(fg, :a) == "42"
+    #TODO
+    @test_broken addUserData!
+    @test updateUserData!(fg, :b=>"1") == getUserData(fg)
+    @test getUserData(fg, :b) == deleteUserData!(fg, :b)
+    @test emptyUserData!(fg) == Dict{Symbol,String}()
+
+    # Robot Data
+    @test getRobotData(fg, :a) == "43"
+    #TODO
+    @test_broken addRobotData!
+    @test updateRobotData!(fg, :b=>"2") == getRobotData(fg)
+    @test getRobotData(fg, :b) == deleteRobotData!(fg, :b)
+    @test emptyRobotData!(fg) == Dict{Symbol,String}()
+
+    # SessionData
+    @test getSessionData(fg, :a) == "44"
+    #TODO
+    @test_broken addSessionData!
+    updateSessionData!(fg, :b=>"3") == getSessionData(fg)
+    @test getSessionData(fg, :b) == deleteSessionData!(fg, :b)
+    @test emptySessionData!(fg) == Dict{Symbol,String}()
+
+    # TODO Set-like if we want eg. list, merge, etc
+    # listUserData
+    # listRobotData
+    # listSessionData
+    # mergeUserData
+    # mergeRobotData
+    # mergeSessionData
+
+end
+
+@testset "DFG Variable" begin
+
+    global v1, v2, v3
+
+    v1_lbl = :a
+    global v1_tags = Set([:VARIABLE, :POSE])
+    small = Dict("small"=>"data")
+    testTimestamp = now()
+    # Constructors
+    v1 = DFGVariable(v1_lbl, TestInferenceVariable1(), tags=v1_tags, solvable=0)
+    v2 = DFGVariable(:b, TestInferenceVariable2(), tags=Set([:VARIABLE, :LANDMARK]))
+    v3 = DFGVariable(:c, TestInferenceVariable2())
+
+
+    getSolverData(v1).solveInProgress = 1
+
+    @test getLabel(v1) == v1_lbl
+    @test getTags(v1) == v1_tags
+
+    @test getTimestamp(v1) == v1.timestamp
+
+    @test getInternalId(v1) == v1._internalId
+    @test getInternalId(v1) == v1._dfgNodeParams._internalId
+
+    @test getSolvable(v1) == 0
+    @test getSolvable(v2) == 1
+
+    # TODO direct use is not recommended, use accessors, maybe not export or deprecate
+    @test getSolverDataDict(v1) == v1.solverDataDict
+
+    @test getPPEDict(v1) == v1.ppeDict
+
+    @test getSmallData(v1) == Dict{String,String}()
+
+    @test getSofttype(v1) == TestInferenceVariable1()
+
+
+    #TODO here for now, don't reccomend usage.
+    testTags = [:tag1, :tag2]
+    @test setTags!(v3, testTags) == Set(testTags)
+    @test setTags!(v3, Set(testTags)) == Set(testTags)
+
+    #TODO Document
+    #NOTE there does not exist a thing like setTimestamp!, a variable's timestamp is considered similar to its label.
+    v1ts = setTimestamp(v1, testTimestamp)
+    @test getTimestamp(v1ts) == testTimestamp
+    #follow with updateVariable!(fg, v1ts)
+    @test_throws MethodError setTimestamp!(v1, testTimestamp)
+
+    @test setSolvable!(v1, 1) == 1
+    @test getSolvable(v1) == 1
+    @test setSolvable!(v1, 0) == 0
+
+    @test setSmallData!(v1, small) == small
+    @test getSmallData(v1) == small
+
+    #no accessors on BigData, only CRUD
+
+    #deprecated
+    @test @test_deprecated getData(v1) === v1.solverDataDict[:default]
+    @test @test_deprecated solverData(v1, :default) === v1.solverDataDict[:default]
+
+    # #TODO sort out
+    # getPPEs
+    # getSolverData
+    # setSolverData
+    # getVariablePPEs
+    # getVariablePPE
+    # getSolvedCount
+    # isSolved
+    # setSolvedCount
+
+end
+
+@testset "DFG Factor" begin
+
+    global f1, f2
+    # Constructors
+    #DFGVariable solvable default to 1, but Factor to 0, is that correct
+    f1_lbl = :f1
+    f1_tags = Set([:FACTOR])
+    testTimestamp = now()
+
+    f1 = DFGFactor{TestFunctorInferenceType1, Symbol}(f1_lbl)
+    f1 = DFGFactor(f1_lbl, [:a,:b], GenericFunctionNodeData{TestFunctorInferenceType1,Symbol}(), tags = f1_tags, solvable=0)
+
+    f2 = DFGFactor{TestFunctorInferenceType1, Symbol}(:f2)
+
+    @test getLabel(f1) == f1_lbl
+    @test getTags(f1) == f1_tags
+
+    @test getTimestamp(f1) == f1.timestamp
+
+    @test getInternalId(f1) == f1._internalId
+    @test getInternalId(f1) == f1._dfgNodeParams._internalId
+
+    @test getSolvable(f1) == 0
+
+
+    @test getSolverData(f1) == f1.solverData
+
+    @test getVariableOrder(f1) == [:a,:b]
+
+    getSolverData(f1).solveInProgress = 1
+    @test setSolvable!(f1, 1) == 1
+
+
+    #TODO here for now, don't reccomend usage.
+    testTags = [:tag1, :tag2]
+    @test setTags!(f1, testTags) == Set(testTags)
+    @test setTags!(f1, Set(testTags)) == Set(testTags)
+
+    #TODO Handle same way as variable
+    f1ts = setTimestamp(f1, testTimestamp)
+    @test !(f1ts === f1)
+    @test getTimestamp(f1ts) == testTimestamp
+    #follow with updateVariable!(fg, v1ts)
+    @test setTimestamp!(f1, testTimestamp) == testTimestamp
+    #/TODO
+
+    @test setSolvable!(f1, 1) == 1
+    @test getSolvable(f1) == 1
+
+    #TODO setSolverData!(f1,...)????
+
+    #TODO
+    # getFactorFunction
+    # getFactorType
+    # isPrior
+
+end
+
+@testset "Variables and Factors CRUD" begin
+
+    #TODO dont throw ErrorException
+    #TODO test remaining add signitures
+    # global fg
+    # fg = GraphsDFG(params=NoSolverParams())
+    # fg = LightDFG(params=NoSolverParams())
+    # add update delete
+    @test addVariable!(fg, v1) == v1
+    @test addVariable!(fg, v2) == v2
+    @test @test_logs (:warn, r"does not exist") updateVariable!(fg, v3) == v3
+    @test updateVariable!(fg, v3) == v3
+    @test_throws ErrorException addVariable!(fg, v3)
+
+    @test addFactor!(fg, [v1, v2], f1) == f1
+    @test_throws ErrorException addFactor!(fg, [v1, v2], f1)
+    @test @test_logs (:warn, r"does not exist") updateFactor!(fg, f2) == f2
+    @test updateFactor!(fg, f2) == f2
+    @test_throws ErrorException addFactor!(fg, [:b, :c], f2)
+    #TODO Graphs.jl, but look at refactoring absract @test_throws ErrorException addFactor!(fg, f2)
+
+    #deletions
+    @test deleteVariable!(fg, v3) == v3
+    @test_throws ErrorException deleteVariable!(fg, v3)
+    @test setdiff(ls(fg),[:a,:b]) == []
+    @test deleteFactor!(fg, f2) == f2
+    @test_throws ErrorException deleteFactor!(fg, f2)
+    @test lsf(fg) == [:f1]
+
+
+    @test getVariable(fg, :a) == v1
+    @test getVariable(fg, :a, :default) == v1
+    @test_throws ErrorException getVariable(fg, :a, :missingfoo)
+
+    @test getFactor(fg, :f1) == f1
+
+    @test_throws ErrorException getVariable(fg, :c)
+    @test_throws ErrorException getFactor(fg, :f2)
+
+
+    # TODO move
+    #getvariables and factors
+    @test length(getVariables(fg)) == 2
+    @test all(getVariables(fg, r"a") .== [v1])
+    @test all(getVariables(fg, solvable=1) .== [v2])
+    @test getVariables(fg, r"a", solvable=1) == []
+    @test getVariables(fg, tags=[:POSE])[1] == v1
+
+    @test all(getFactors(fg) .== [f1])
+    @test getFactors(fg, r"a") == []
+    @test all(getFactors(fg, solvable=1) .== [f1])
+    @test getFactors(fg, solvable=2) == []
+    @test_broken getFactors(fg, tags=[:tag1])[1] == f1
+
+    # Existence
+    @test exists(fg, :a)
+    @test !exists(fg, :c)
+    @test exists(fg, :f1)
+    @test !exists(fg, :f2)
+
+    @test exists(fg, v1)
+    @test !exists(fg, v3)
+    @test exists(fg, f1)
+    @test !exists(fg, f2)
+
+    @test isVariable(fg, :a)
+    @test !isVariable(fg, :f1)
+
+    @test isFactor(fg, :f1)
+    @test !isFactor(fg, :a)
+
+    #list
+    @test issetequal([:a,:b], listVariables(fg))
+    @test issetequal([:f1], listFactors(fg))
+
+    @test @test_deprecated getVariableIds(fg) == listVariables(fg)
+    @test @test_deprecated getFactorIds(fg) == listFactors(fg)
+end
+
+
+##
+@testset "TODO Sorteer groep" begin
+
+    @testset "Connectivity Test" begin
+
+        if testDFGAPI == GraphsDFG
+            @error "FIXME! GraphsDFG connectivity functions are broken"
+
+            @test_broken isFullyConnected(fg) == true
+            @test_broken hasOrphans(fg) == false
+            addVariable!(fg, DFGVariable(:orphan, TestInferenceVariable1()))
+            @test_broken isFullyConnected(fg) == false
+            @test_broken hasOrphans(fg) == true
+        else
+            @test isFullyConnected(fg) == true
+            @test hasOrphans(fg) == false
+            addVariable!(fg, DFGVariable(:orphan, TestInferenceVariable1()))
+            @test isFullyConnected(fg) == false
+            @test hasOrphans(fg) == true
+        end
+    end
+
+    @testset "Adjacency Matrices" begin
+
+        # Normal
+        #deprecated
+        @test_throws ErrorException getAdjacencyMatrix(fg)
+        adjMat = DistributedFactorGraphs.getAdjacencyMatrixSymbols(fg)
+        @test size(adjMat) == (2,4)
+        @test symdiff(adjMat[1, :], [nothing, :a, :b, :orphan]) == Symbol[]
+        @test symdiff(adjMat[2, :], [:f1, :f1, :f1, nothing]) == Symbol[]
+        #
+        #sparse
+        #TODO this silly name thing has gone on too long
+        adjMat, v_ll, f_ll = getBiadjacencyMatrix(fg)
+        @test size(adjMat) == (1,3)
+
+        # Checking the elements of adjacency, its not sorted so need indexing function
+        indexOf = (arr, el1) -> findfirst(el2->el2==el1, arr)
+        @test adjMat[1, indexOf(v_ll, :orphan)] == 0
+        @test adjMat[1, indexOf(v_ll, :a)] == 1
+        @test adjMat[1, indexOf(v_ll, :b)] == 1
+        @test symdiff(v_ll, [:a, :b, :orphan]) == Symbol[]
+        @test symdiff(f_ll, [:f1, :f1, :f1]) == Symbol[]
+
+        # Filtered - REF DFG #201
+        adjMat, v_ll, f_ll = getBiadjacencyMatrix(fg, solvable=0)
+        @test size(adjMat) == (1,3)
+
+        # sparse
+        adjMat, v_ll, f_ll = getBiadjacencyMatrix(fg, solvable=1)
+        @test size(adjMat) == (1,2)
+        @test issetequal(v_ll, [:orphan, :b])
+        @test f_ll == [:f1]
+
+    end
+
+    @testset "Sorting" begin
+        unsorted = [:x1_3;:x1_6;:l1;:april1] #this will not work for :x1x2f1
+        @test sortDFG(unsorted) == sortVarNested(unsorted)
+        @test sort([:x1x2f1, :x1l1f1], lt=DistributedFactorGraphs.natural_lt) == [:x1l1f1, :x1x2f1]
+        l = [:a1, :X1, :b1c2, :x2_2, :c, :x1, :x10, :x1_1, :x10_10,:a, :x2_1, :xy3, :l1, :x1_2, :x1l1f1, Symbol("1a1"), :x1x2f1]
+        @test sort(l, lt=DistributedFactorGraphs.natural_lt) == [Symbol("1a1"), :X1, :a, :a1, :b1c2, :c, :l1, :x1, :x1_1, :x1_2, :x1l1f1, :x1x2f1, :x2_1, :x2_2, :x10, :x10_10, :xy3]
+    end
+end
+#
+@testset "tags" begin
+    #
+    # LOTS TODO
+
+    @test issetequal(getTags(fg, :a), v1_tags)
+
+    # TODO do we error on duplicates
+    @test issetequal(addTags!(fg, :a, [:TAG]), v1_tags ∪ [:TAG])
+
+    @test_broken emptyTags!(fg, :a)
+
+    @test_broken updateTags!
+    @test_broken deleteTags!
+    @test_broken listTags
+    @test_broken mergeTags!
+
+end
+
+
+@testset "Parametric Point Estimates" begin
+
+    #  - `getPPEs`
+    # **Set**
+    # > - `emptyPPE!`
+    # > - `mergePPE!`
+
+    # Add a new PPE of type MeanMaxPPE to :x0
+    ppe = MeanMaxPPE(:default, [0.0], [0.0], [0.0])
+
+    @test addPPE!(fg, :a, ppe) == ppe
+    @test_throws ErrorException addPPE!(fg, :a, ppe)
+
+
+    @test listPPE(fg, :a) == [:default]
+    # Get the data back - note that this is a reference to above.
+    @test getPPE(fg, :a, :default) == ppe
+
+    # Delete it
+    @test deletePPE!(fg, :a, :default) == ppe
+
+    @test_throws ErrorException getPPE(fg, :a, :default)
+    # Update add it
+    #TODO warn key not exist
+    @test @test_logs (:warn, r"does not exist") updatePPE!(fg, :a, ppe, :default) == ppe
+    # Update update it
+    @test updatePPE!(fg, :a, ppe, :default) == ppe
+    # Bulk copy PPE's for x0 and x1
+    @test updatePPE!(fg, [v1], :default) == nothing
+    # Delete it
+    @test deletePPE!(fg, :a, :default) == ppe
+
+end
+
+@testset "Variable Solver Data" begin
+# #### Variable Solver Data
+# **CRUD**
+#  - `getVariableSolverData`
+#  - `addVariableSolverData!`
+#  - `updateVariableSolverData!`
+#  - `deleteVariableSolverData!`
+#
+# > - `getVariableSolverDataAll` #TODO Data is already plural so maybe Variables, All or Dict
+# > - `getVariablesSolverData`
+#
+# **Set like**
+#  - `listVariableSolverData`
+#
+# > - `emptyVariableSolverData!` #TODO ?
+# > - `mergeVariableSolverData!` #TODO ?
+#
+# **VariableNodeData**
+#  - `getSolveInProgress`
+
+    vnd = VariableNodeData{TestInferenceVariable1}()
+    @test addVariableSolverData!(fg, :a, vnd, :parametric) == vnd
+
+    @test_throws ErrorException addVariableSolverData!(fg, :a, vnd, :parametric)
+
+    @test issetequal(listVariableSolverData(fg, :a), [:default, :parametric])
+
+    # Get the data back - note that this is a reference to above.
+    vndBack = getVariableSolverData(fg, :a, :parametric)
+    @test vndBack == vnd
+
+
+    # Delete it
+    @test deleteVariableSolverData!(fg, :a, :parametric) == vndBack
+    # Update add it
+    #TODO warn key not exist
+    @test @test_logs (:warn, r"does not exist") updateVariableSolverData!(fg, :a, vnd, :parametric) == vnd
+
+    # Update update it
+    @test updateVariableSolverData!(fg, :a, vnd, :parametric) == vnd
+    # Bulk copy update x0
+    @test updateVariableSolverData!(fg, [v1], :default) == nothing
+
+    # Delete parametric from v1
+    @test deleteVariableSolverData!(fg, :a, :parametric) == vnd
+
+    @test_throws ErrorException getVariableSolverData(fg, :a, :parametric)
+
+end
+
+@testset "BigData Entries" begin
+
+    # getBigDataEntry
+    # addBigDataEntry
+    # updateBigDataEntry
+    # deleteBigDataEntry
+    # getBigDataEntries
+    # getBigDataKeys
+    # listBigDataEntries
+    # emptyBigDataEntries
+    # mergeBigDataEntries
+
+    oid = zeros(UInt8,12); oid[12] = 0x01
+    de1 = MongodbBigDataEntry(:key1, NTuple{12,UInt8}(oid))
+
+    oid = zeros(UInt8,12); oid[12] = 0x02
+    de2 = MongodbBigDataEntry(:key2, NTuple{12,UInt8}(oid))
+
+    oid = zeros(UInt8,12); oid[12] = 0x03
+    de2_update = MongodbBigDataEntry(:key2, NTuple{12,UInt8}(oid))
+
+    #add
+    v1 = getVariable(fg, :a)
+    @test addBigDataEntry!(v1, de1) == de1
+    @test addBigDataEntry!(fg, :a, de2) == de2
+    @test_throws ErrorException addBigDataEntry!(v1, de1)
+    @test de2 in getBigDataEntries(v1)
+
+    #get
+    @test deepcopy(de1) == getBigDataEntry(v1, :key1)
+    @test deepcopy(de2) == getBigDataEntry(fg, :a, :key2)
+    @test_throws ErrorException getBigDataEntry(v2, :key1)
+    @test_throws ErrorException getBigDataEntry(fg, :b, :key1)
+
+    #update
+    @test updateBigDataEntry!(fg, :a, de2_update) == de2_update
+    @test deepcopy(de2_update) == getBigDataEntry(fg, :a, :key2)
+    @test @test_logs (:warn, r"does not exist") updateBigDataEntry!(fg, :b, de2_update) == de2_update
+
+    #list
+    entries = getBigDataEntries(fg, :a)
+    @test length(entries) == 2
+    @test issetequal(map(e->e.key, entries), [:key1, :key2])
+    @test length(getBigDataEntries(fg, :b)) == 1
+
+    @test issetequal(getBigDataKeys(fg, :a), [:key1, :key2])
+    @test getBigDataKeys(fg, :b) == Symbol[:key2]
+
+    #delete
+    @test deleteBigDataEntry!(v1, :key1) == v1
+    @test getBigDataKeys(v1) == Symbol[:key2]
+    #delete from dfg
+    @test deleteBigDataEntry!(fg, :a, :key2) == v1
+    @test getBigDataKeys(v1) == Symbol[]
+end
+
+## ========================================================================== ##
+
+## ========================================================================== ##
+#=
 dfg = testDFGAPI{NoSolverParams}()
 
 #add types for softtypes
@@ -75,19 +635,19 @@ end
     global dfg,v1,v2,f1
     @test length(ls(dfg)) == 2
     @test length(lsf(dfg)) == 1
-    @test symdiff([:a, :b], getVariableIds(dfg)) == []
+    @test symdiff([:a, :b], listVariables(dfg)) == []
     # Additional testing for https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/201
-    @test symdiff([:a, :b], getVariableIds(dfg, solvable=0)) == []
-    @test getVariableIds(dfg, solvable=1) == [:b]
+    @test symdiff([:a, :b], listVariables(dfg, solvable=0)) == []
+    @test listVariables(dfg, solvable=1) == [:b]
       # WHAT -- still does not work?
       # v2b = deepcopy(v2)
       # setTags!(v2b, [:VARIABLE; :LANDMARK])
       # setSolvable!(v2b, 1)
       # setTimestamp!(v2b, getTimestamp(getVariables(dfg, solvable=1)[1]))
     @test getVariables(dfg, solvable=1) == [v2]
-    @test getFactorIds(dfg) == [:f1]
-    @test getFactorIds(dfg, solvable=1) == []
-    @test getFactorIds(dfg, solvable=0) == [:f1]
+    @test listFactors(dfg) == [:f1]
+    @test listFactors(dfg, solvable=1) == []
+    @test listFactors(dfg, solvable=0) == [:f1]
     @test getFactors(dfg, solvable=0) == [f1]
     #
     @test lsf(dfg, :a) == [f1.label]
@@ -214,7 +774,6 @@ end
     #TODO I don't know what is supposed to happen to softtype
     @test getSofttype(v1) == st1
     @test getSofttype(v2) == st2
-    @test getSofttype(v1) == st1
 
     @test getLabel(f1) == f1.label
     @test getTags(f1) == f1.tags
@@ -413,18 +972,20 @@ end
 # Deletions
 @testset "Deletions" begin
     deleteFactor!(dfg, :f1)
-    @test getFactorIds(dfg) == []
+    @test listFactors(dfg) == []
     deleteVariable!(dfg, :b)
-    @test symdiff([:a, :orphan], getVariableIds(dfg)) == []
+    @test symdiff([:a, :orphan], listVariables(dfg)) == []
     #delete last also for the LightGraphs implementation coverage
     deleteVariable!(dfg, :orphan)
-    @test symdiff([:a], getVariableIds(dfg)) == []
+    @test symdiff([:a], listVariables(dfg)) == []
     deleteVariable!(dfg, :a)
-    @test getVariableIds(dfg) == []
+    @test listVariables(dfg) == []
 end
+=#
 
+## Now make a complex graph for connectivity tests
+#TODO Also improve
 
-# Now make a complex graph for connectivity tests
 numNodes = 10
 dfg = testDFGAPI{NoSolverParams}()
 verts = map(n -> DFGVariable(Symbol("x$n"), TestInferenceVariable1()), 1:numNodes)
@@ -455,13 +1016,13 @@ getFactor(dfg, :x7x8f1)._dfgNodeParams.solvable = 0
     @test getNeighbors(dfg, :x1x2f1) == ls(dfg, :x1x2f1)
 
     # Solvable
-    @test getNeighbors(dfg, :x5, solvable=1) == Symbol[]
+    @test getNeighbors(dfg, :x5, solvable=2) == Symbol[]
     @test getNeighbors(dfg, :x5, solvable=0) == [:x4x5f1,:x5x6f1]
     @test getNeighbors(dfg, :x5) == [:x4x5f1,:x5x6f1]
     @test getNeighbors(dfg, :x7x8f1, solvable=0) == [:x7, :x8]
     @test getNeighbors(dfg, :x7x8f1, solvable=1) == [:x7]
     @test getNeighbors(dfg, verts[1], solvable=0) == [:x1x2f1]
-    @test getNeighbors(dfg, verts[1], solvable=1) == Symbol[]
+    @test getNeighbors(dfg, verts[1], solvable=2) == Symbol[]
     @test getNeighbors(dfg, verts[1]) == [:x1x2f1]
 
 end
@@ -489,19 +1050,19 @@ end
     dfgSubgraph = getSubgraphAroundNode(dfg, getFactor(dfg, :x7x8f1), 1, true, solvable=1)
     @test symdiff([:x7x8f1, :x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
     # Test for distance = 2, should return orphans
-    #:x7x8f1 is not solvable
+    setSolvable!(dfg, :x8x9f1, 0)
     dfgSubgraph = getSubgraphAroundNode(dfg, getVariable(dfg, :x8), 2, true, solvable=1)
-    @test symdiff([:x8, :x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+    @test issetequal([:x8, :x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
 
     # DFG issue #95 - confirming that getSubgraphAroundNode retains order
     # REF: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/95
-    for fId in getVariableIds(dfg)
-        # Get a subgraph of this and it's related factors+variables
-        dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
-        # For each factor check that the order the copied graph == original
-        for fact in getFactors(dfgSubgraph)
-            @test fact._variableOrderSymbols == getFactor(dfg, fact.label)._variableOrderSymbols
-        end
+    for fId in listVariables(dfg)
+    # Get a subgraph of this and it's related factors+variables
+    dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
+    # For each factor check that the order the copied graph == original
+    for fact in getFactors(dfgSubgraph)
+        @test fact._variableOrderSymbols == getFactor(dfg, fact.label)._variableOrderSymbols
+    end
     end
 end
 

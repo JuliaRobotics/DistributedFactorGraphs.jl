@@ -31,15 +31,15 @@ addFactor!(dfg, [v1, v2], f1)
     f1 = FACTYPE(:f1)
     f2 = FACTYPE(:f2)
     # @testset "Creating Graphs" begin
-    @test addVariable!(dfg2, v1)
-    @test addVariable!(dfg2, v2)
-    @test_throws ErrorException updateVariable!(dfg2, v3)
-    @test addVariable!(dfg2, v3)
+    @test addVariable!(dfg2, v1) == v1
+    @test addVariable!(dfg2, v2) == v2
+    @test updateVariable!(dfg2, v3) == v3
     @test_throws ErrorException addVariable!(dfg2, v3)
-    @test addFactor!(dfg2, [v1, v2], f1)
+    @test_throws ErrorException addVariable!(dfg2, v3)
+    @test addFactor!(dfg2, [v1, v2], f1) == f1
     @test_throws ErrorException addFactor!(dfg2, [v1, v2], f1)
-    @test_throws ErrorException updateFactor!(dfg2, f2)
-    @test addFactor!(dfg2, [:b, :c], f2)
+    @test updateFactor!(dfg2, f2) == f2
+    @test_throws ErrorException addFactor!(dfg2, [:b, :c], f2)
     @test deleteVariable!(dfg2, v3) == v3
     @test symdiff(ls(dfg2),[:a,:b]) == []
     @test deleteFactor!(dfg2, f2) == f2
@@ -50,8 +50,8 @@ end
     global dfg,v1,v2,f1
     @test length(ls(dfg)) == 2
     @test length(lsf(dfg)) == 1
-    @test symdiff([:a, :b], getVariableIds(dfg)) == []
-    @test getFactorIds(dfg) == [:f1]
+    @test symdiff([:a, :b], listVariables(dfg)) == []
+    @test listFactors(dfg) == [:f1]
     #
     @test lsf(dfg, :a) == [f1.label]
     # Tags
@@ -179,14 +179,14 @@ end
 # Deletions
 @testset "Deletions" begin
     deleteFactor!(dfg, :f1)
-    @test getFactorIds(dfg) == []
+    @test listFactors(dfg) == []
     deleteVariable!(dfg, :b)
-    @test symdiff([:a, :orphan], getVariableIds(dfg)) == []
+    @test symdiff([:a, :orphan], listVariables(dfg)) == []
     #delete last also for the LightGraphs implementation coverage
     deleteVariable!(dfg, :orphan)
-    @test symdiff([:a], getVariableIds(dfg)) == []
+    @test symdiff([:a], listVariables(dfg)) == []
     deleteVariable!(dfg, :a)
-    @test getVariableIds(dfg) == []
+    @test listVariables(dfg) == []
 end
 
 
@@ -229,7 +229,7 @@ end
 
     # DFG issue #95 - confirming that getSubgraphAroundNode retains order
     # REF: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/95
-    for fId in getVariableIds(dfg)
+    for fId in listVariables(dfg)
         # Get a subgraph of this and it's related factors+variables
         dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
         # For each factor check that the order the copied graph == original

@@ -348,7 +348,7 @@ DevNotes:
 
 Related
 
-ls, getVariableIds, findClosestTimestamp
+ls, listVariables, findClosestTimestamp
 """
 function findVariableNearTimestamp(dfg::AbstractDFG,
                                    timest::DateTime,
@@ -359,8 +359,8 @@ function findVariableNearTimestamp(dfg::AbstractDFG,
                                    number::Int=1  )::Vector{Tuple{Vector{Symbol}, Millisecond}}
   #
   # get the variable labels based on filters
-  # syms = getVariableIds(dfg, regexFilter, tags=tags, solvable=solvable)
-  syms = getVariableIds(dfg, regexFilter, tags=tags, solvable=solvable)
+  # syms = listVariables(dfg, regexFilter, tags=tags, solvable=solvable)
+  syms = listVariables(dfg, regexFilter, tags=tags, solvable=solvable)
   # compile timestamps with label
   # vars = map( x->getVariable(dfg, x), syms )
   timeset = map(x->(getTimestamp(getVariable(dfg,x)), x), syms)
@@ -406,7 +406,8 @@ end
 Add tags to a variable or factor
 """
 function addTags!(dfg::InMemoryDFGTypes, sym::Symbol, tags::Vector{Symbol})
-  union!(getTags(getFactor(fg, sym)), tags)
+  getFnc = isVariable(dfg,sym) ? getVariable : getFactor
+  union!(getTags(getFnc(dfg, sym)), tags)
 end
 
 

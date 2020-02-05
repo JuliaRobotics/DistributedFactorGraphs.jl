@@ -203,8 +203,8 @@ function compareAllVariables(fgA::G1,
                              show::Bool=true,
                              skipsamples::Bool=true )::Bool where {G1 <: AbstractDFG, G2 <: AbstractDFG}
   # get all the variables in A or B
-  xlA =  getVariableIds(fgA)
-  xlB =  getVariableIds(fgB)
+  xlA =  listVariables(fgA)
+  xlB =  listVariables(fgB)
   vars = union(xlA, xlB)
 
   # compare all variables exist in both A and B
@@ -244,8 +244,8 @@ function compareSimilarVariables(fgA::G1,
                                  show::Bool=true,
                                  skipsamples::Bool=true )::Bool where {G1 <: AbstractDFG, G2 <: AbstractDFG}
   #
-  xlA = getVariableIds(fgA)
-  xlB = getVariableIds(fgB)
+  xlA = listVariables(fgA)
+  xlB = listVariables(fgB)
 
   # find common variables
   xlAB = intersect(xlA, xlB)
@@ -276,8 +276,8 @@ function compareSimilarFactors(fgA::G1,
                                skipcompute::Bool=true,
                                show::Bool=true  )::Bool where {G1 <: AbstractDFG, G2 <: AbstractDFG}
   #
-  xlA = getFactorIds(fgA)
-  xlB = getFactorIds(fgB)
+  xlA = listFactors(fgA)
+  xlB = listFactors(fgB)
 
   # find common variables
   xlAB = intersect(xlA, xlB)

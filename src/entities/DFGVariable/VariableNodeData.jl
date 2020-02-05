@@ -23,7 +23,7 @@ mutable struct VariableNodeData{T<:InferenceVariable}
     solveInProgress::Int
     solvedCount::Int
     VariableNodeData{T}() where {T <:InferenceVariable} =
-    new{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], T(), false, 0.0, false, false, 0)
+    new{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], T(), false, 0.0, false, false, 0, 0)
     VariableNodeData{T}(val::Array{Float64,2},
                         bw::Array{Float64,2},
                         BayesNetOutVertIDs::Array{Symbol,1},

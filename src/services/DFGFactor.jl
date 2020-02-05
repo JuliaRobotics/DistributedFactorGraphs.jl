@@ -59,8 +59,9 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any}, iifModule)::DFGFac
 
     # Rebuild DFGVariable
     factor = DFGFactor{typeof(fullFactor.fnc), Symbol}(Symbol(label), 0, timestamp)
-    factor.tags = tags
-    factor.data = fullFactor
+
+    union!(factor.tags, tags)
+    factor.data = fullFactor #TODO setSolverData!(factor, fullFactor)
     factor._variableOrderSymbols = _variableOrderSymbols
     factor.solvable = solvable
 
@@ -85,13 +86,14 @@ function compare(a::GenericFunctionNodeData{T1,S},b::GenericFunctionNodeData{T2,
   return TP
 end
 
-"""
-    $(SIGNATURES)
-Equality check for DFGFactor.
-"""
-function ==(a::DFGFactor, b::DFGFactor)::Bool
-    return compareFactor(a, b)
-end
+#FIXME
+# """
+#     $(SIGNATURES)
+# Equality check for DFGFactor.
+# """
+# function ==(a::DFGFactor, b::DFGFactor)::Bool
+#     return compareFactor(a, b)
+# end
 
 # Accessors
 
@@ -100,10 +102,6 @@ end
 
 Retrieve solver data structure stored in a factor.
 """
-function solverData(f::F) where F <: DFGFactor
-  @warn "Deprecated for 0.6 standardization. Please use getSolverData()"
-  return f.solverData
-end
 function getSolverData(f::F) where F <: DFGFactor
   return f.solverData
 end

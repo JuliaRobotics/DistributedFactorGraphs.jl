@@ -1,17 +1,5 @@
 
 
-# # Accessors
-# getLabelDict(dfg::LightDFG) = copy(dfg.g.labels.sym_int)
-# getDescription(dfg::LightDFG) = dfg.description
-# setDescription(dfg::LightDFG, description::String) = dfg.description = description
-# getAddHistory(dfg::LightDFG) = dfg.addHistory
-# getSolverParams(dfg::LightDFG) = dfg.solverParams
-#
-# # setSolverParams(dfg::LightDFG, solverParams) = dfg.solverParams = solverParams
-# function setSolverParams(dfg::LightDFG, solverParams::P) where P <: AbstractParams
-#   dfg.solverParams = solverParams
-# end
-
 function exists(dfg::LightDFG{P,V,F}, node::V) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
     return haskey(dfg.g.variables, node.label)
 end
@@ -33,7 +21,7 @@ function isFactor(dfg::LightDFG{P,V,F}, sym::Symbol) where {P <: AbstractParams,
 end
 
 
-function addVariable!(dfg::LightDFG{<:AbstractParams, V, <:AbstractDFGFactor}, variable::V)::Bool where V <: AbstractDFGVariable
+function addVariable!(dfg::LightDFG{<:AbstractParams, V, <:AbstractDFGFactor}, variable::V)::V where V <: AbstractDFGVariable
     #TODO should this be an error
     if haskey(dfg.g.variables, variable.label)
         error("Variable '$(variable.label)' already exists in the factor graph")
@@ -47,52 +35,55 @@ function addVariable!(dfg::LightDFG{<:AbstractParams, V, <:AbstractDFGFactor}, v
     # Track insertion
     push!(dfg.addHistory, variable.label)
 
-    return true
+    return variable
 end
 
-function addFactor!(dfg::LightDFG{<:AbstractParams, V, F}, variables::Vector{<:V}, factor::F)::Bool where {V <: AbstractDFGVariable, F <: AbstractDFGFactor}
-    # if haskey(dfg.g.metaindex[:label], factor.label)
-    #     error("Factor '$(factor.label)' already exists in the factor graph")
-    # end
-    #TODO should this be an error
+#moved to abstract
+# function addFactor!(dfg::LightDFG{<:AbstractParams, V, F}, variables::Vector{<:V}, factor::F)::F where {V <: AbstractDFGVariable, F <: AbstractDFGFactor}
+#
+#     #TODO should this be an error
+#     if haskey(dfg.g.factors, factor.label)
+#         error("Factor '$(factor.label)' already exists in the factor graph")
+#     end
+#     # for v in variables
+#     #     if !(v.label in keys(dfg.g.metaindex[:label]))
+#     #         error("Variable '$(v.label)' not found in graph when creating Factor '$(factor.label)'")
+#     #     end
+#     # end
+#
+#     variableLabels = map(v->v.label, variables)
+#
+#     resize!(factor._variableOrderSymbols, length(variableLabels))
+#     factor._variableOrderSymbols .= variableLabels
+#     # factor._variableOrderSymbols = copy(variableLabels)
+#
+#     @assert FactorGraphs.addFactor!(dfg.g, variableLabels, factor)
+#     return factor
+# end
+#
+# function addFactor!(dfg::LightDFG{<:AbstractParams, <:AbstractDFGVariable, F}, variableLabels::Vector{Symbol}, factor::F)::F where F <: AbstractDFGFactor
+#     #TODO should this be an error
+#     if haskey(dfg.g.factors, factor.label)
+#         error("Factor '$(factor.label)' already exists in the factor graph")
+#     end
+#
+#     resize!(factor._variableOrderSymbols, length(variableLabels))
+#     factor._variableOrderSymbols .= variableLabels
+#
+#     @assert FactorGraphs.addFactor!(dfg.g, variableLabels, factor)
+#
+#     return factor
+# end
+
+
+function addFactor!(dfg::LightDFG{<:AbstractParams, <:AbstractDFGVariable, F}, factor::F)::F where F <: AbstractDFGFactor
     if haskey(dfg.g.factors, factor.label)
         error("Factor '$(factor.label)' already exists in the factor graph")
     end
-    # for v in variables
-    #     if !(v.label in keys(dfg.g.metaindex[:label]))
-    #         error("Variable '$(v.label)' not found in graph when creating Factor '$(factor.label)'")
-    #     end
-    # end
-
-    variableLabels = map(v->v.label, variables)
-
-    resize!(factor._variableOrderSymbols, length(variableLabels))
-    factor._variableOrderSymbols .= variableLabels
-    # factor._variableOrderSymbols = copy(variableLabels)
-
-    return FactorGraphs.addFactor!(dfg.g, variableLabels, factor)
-end
-
-function addFactor!(dfg::LightDFG{<:AbstractParams, <:AbstractDFGVariable, F}, variableLabels::Vector{Symbol}, factor::F)::Bool where F <: AbstractDFGFactor
-    #TODO should this be an error
-    if haskey(dfg.g.factors, factor.label)
-        error("Factor '$(factor.label)' already exists in the factor graph")
-    end
-
-    resize!(factor._variableOrderSymbols, length(variableLabels))
-    factor._variableOrderSymbols .= variableLabels
-    # factor._variableOrderSymbols = copy(variableLabels)
-
-    return FactorGraphs.addFactor!(dfg.g, variableLabels, factor)
-end
-
-
-function addFactor!(dfg::LightDFG{<:AbstractParams, <:AbstractDFGVariable, F}, factor::F)::Bool where F <: AbstractDFGFactor
-    if haskey(dfg.g.factors, factor.label)
-        error("Factor '$(factor.label)' already exists in the factor graph")
-    end
-
-    return FactorGraphs.addFactor!(dfg.g, variableLabels, factor)
+    # TODO
+    # @assert FactorGraphs.addFactor!(dfg.g, getVariableOrder(factor), factor)
+    @assert FactorGraphs.addFactor!(dfg.g, factor._variableOrderSymbols, factor)
+    return factor
 end
 
 function getVariable(dfg::LightDFG, label::Symbol)::AbstractDFGVariable
@@ -112,7 +103,8 @@ end
 
 function updateVariable!(dfg::LightDFG, variable::V)::V where V <: AbstractDFGVariable
     if !haskey(dfg.g.variables, variable.label)
-        error("Variable label '$(variable.label)' does not exist in the factor graph")
+        @warn "Variable label '$(variable.label)' does not exist in the factor graph, adding"
+        return addVariable!(dfg, variable)
     end
     dfg.g.variables[variable.label] = variable
     return variable
@@ -120,7 +112,8 @@ end
 
 function updateFactor!(dfg::LightDFG, factor::F)::F where F <: AbstractDFGFactor
     if !haskey(dfg.g.factors, factor.label)
-        error("Factor label '$(factor.label)' does not exist in the factor graph")
+        @warn "Factor label '$(factor.label)' does not exist in the factor graph, adding"
+        return addFactor!(dfg, factor)
     end
     dfg.g.factors[factor.label] = factor
     return factor
@@ -162,7 +155,7 @@ function getVariables(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing;
     return variables
 end
 
-function getVariableIds(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol}
+function listVariables(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol}
 
     # variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGVariable, vertices(dfg.g)))
     if length(tags) > 0
@@ -187,7 +180,7 @@ function getFactors(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; s
     return factors
 end
 
-function getFactorIds(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{Symbol}
+function listFactors(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{Symbol}
     # factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGFactor, vertices(dfg.g)))
     factors = collect(keys(dfg.g.factors))
     if regexFilter != nothing
@@ -328,8 +321,8 @@ end
 # So I'm going with Biadjacency Matrix https://en.wikipedia.org/wiki/Adjacency_matrix#Of_a_bipartite_graph
 # TODO biadjacencyMatrix
 function getBiadjacencyMatrix(dfg::LightDFG; solvable::Int=0)::NamedTuple{(:B, :varLabels, :facLabels),Tuple{LightGraphs.SparseMatrixCSC,Vector{Symbol}, Vector{Symbol}}}
-    varLabels = getVariableIds(dfg, solvable=solvable)
-    factLabels = getFactorIds(dfg, solvable=solvable)
+    varLabels = listVariables(dfg, solvable=solvable)
+    factLabels = listFactors(dfg, solvable=solvable)
     varIndex = [dfg.g.labels[s] for s in varLabels]
     factIndex = [dfg.g.labels[s] for s in factLabels]
 
@@ -365,10 +358,10 @@ A replacement for to_dot that saves only hardcoded factor graph plotting attribu
 function savedot_attributes(io::IO, dfg::LightDFG)
     write(io, "graph G {\n")
 
-    for vl in getVariableIds(dfg)
+    for vl in listVariables(dfg)
         write(io, "$vl [color=red, shape=ellipse];\n")
     end
-    for fl in getFactorIds(dfg)
+    for fl in listFactors(dfg)
         write(io, "$fl [color=blue, shape=box];\n")
     end
 

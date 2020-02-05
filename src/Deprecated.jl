@@ -19,6 +19,18 @@ Base.getproperty(x::DFGVariable,f::Symbol) = begin
     end
   end
 
+Base.setproperty!(x::DFGVariable,f::Symbol, val) = begin
+    if f == :estimateDict
+        error("estimateDict is deprecated, use ppeDict instead")
+    elseif f == :solvable
+        getfield(x,:_dfgNodeParams).solvable = val
+    elseif f == :_internalId
+        getfield(x,:_dfgNodeParams)._internalId = val
+    else
+        setfield!(x,f,val)
+    end
+  end
+
 Base.getproperty(x::DFGVariableSummary,f::Symbol) = begin
     if f == :estimateDict
         @warn "estimateDict is deprecated, use ppeDict instead"
@@ -29,136 +41,115 @@ Base.getproperty(x::DFGVariableSummary,f::Symbol) = begin
   end
 
 
-
 Base.getproperty(x::DFGFactor,f::Symbol) = begin
   if f == :solvable
       getfield(x,:_dfgNodeParams).solvable
   elseif f == :_internalId
       getfield(x,:_dfgNodeParams)._internalId
+  elseif f == :data
+      @warn "data field is deprecated, use solverData or getSolverData"
+      getfield(x, :solverData)
   else
       getfield(x,f)
   end
 end
 
+Base.setproperty!(x::DFGFactor,f::Symbol, val) = begin
+    if f == :solvable
+        setfield!(x,f,val)
+        getfield(x,:_dfgNodeParams).solvable = val
+    elseif f == :_internalId
+        getfield(x,:_dfgNodeParams)._internalId = val
+    elseif f == :data
+        @warn "data field is deprecated, use ...TODO?"
+        setfield!(x,:solverData, val)
+    else
+        setfield!(x,f,val)
+    end
+  end
 
-"""
-$SIGNATURES
+@deprecate getEstimates(v::VariableDataLevel1) getVariablePPEs(v)
 
-Return the estimates for a variable.
-"""
-function getEstimates(v::VariableDataLevel1)
-  @warn "Deprecated getEstimates, use getVariablePPE/getPPE instead."
-  getVariablePPEs(vari)
-end
+@deprecate estimates(v::VariableDataLevel1) getVariablePPEs(v)
 
-"""
-  $SIGNATURES
+@deprecate getEstimate(v::VariableDataLevel1, key::Symbol=:default) getVariablePPE(v, key)
 
-Return the estimates for a variable.
+@deprecate estimate(v::VariableDataLevel1, key::Symbol=:default) getVariablePPE(v, key)
 
-DEPRECATED, estimates -> getVariablePPEs/getPPEs
-"""
-function estimates(v::VariableDataLevel1)
-  @warn "Deprecated estimates, use getVariablePPEs/getPPE instead."
-  getVariablePPEs(v)
-end
+@deprecate softtype(v::VariableDataLevel1) getSofttype(v)
 
-"""
-  $SIGNATURES
+@deprecate label(v::DataLevel0) getLabel(v)
 
-Return a keyed estimate (default is :default) for a variable.
+@deprecate tags(v::DataLevel0) getTags(v)
 
-DEPRECATED use getVariablePPE/getPPE instead.
-"""
-function getEstimate(v::VariableDataLevel1, key::Symbol=:default)
-@warn "Deprecated getEstimate, use getVariablePPE/getPPE instead."
-getVariablePPE(v, key)
-end
+#TODO doesn't look like this existed
+# @deprecate timestamp(v) getTimestamp(v)
 
-"""
-$SIGNATURES
+@deprecate getData(v::DFGVariable; solveKey::Symbol=:default) getSolverData(v, solveKey)
 
-Return a keyed estimate (default is :default) for a variable.
-"""
-function estimate(v::VariableDataLevel1, key::Symbol=:default)
-  @warn "DEPRECATED estimate, use getVariablePPE/getPPE instead."
-  getVariablePPE(v, key)
-end
+@deprecate getData(f::DFGFactor) getSolverData(f)
+
+@deprecate setSolverData(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) setSolverData!(v, data, key)
 
 
-"""
-$SIGNATURES
+@deprecate data(f::DFGFactor) getSolverData(f)
 
-Return the softtype for a variable.
+@deprecate setSolverParams(args...) setSolverParams!(args...)
 
-DEPRECATED, softtype -> getSofttype
-"""
-function softtype(v::VariableDataLevel1)
-    @warn "Deprecated softtype, use getSofttype instead."
-    getSofttype(v)
-end
+@deprecate setDescription(args...) setDescription!(args...)
 
+@deprecate getAdjacencyMatrixSparse(dfg::AbstractDFG; solvable::Int=0) getBiadjacencyMatrix(dfg, solvable=solvable)
 
-"""
-$SIGNATURES
+@deprecate solverData(f::DFGFactor) getSolverData(f)
 
-Return the label for a variable or factor.
+@deprecate solverData(v::DFGVariable, key::Symbol=:default) getSolverData(v, key)
 
-DEPRECATED label -> getLabel
-"""
-function label(v::DataLevel0)
-  @warn "Deprecated label, use getLabel instead."
-  getLabel(v)
-end
+@deprecate solverDataDict(args...) getSolverDataDict(args...)
+
+@deprecate internalId(args...) getInternalId(args...)
 
 
-"""
-$SIGNATURES
 
-Return the tags for a variable.
-
-DEPRECATED, tags -> getTags
-"""
-function tags(v::DataLevel0)
-  @warn "tags deprecated, use getTags instead"
-  getTags(v)
-end
-
-
-"""
-    $SIGNATURES
-
-Retrieve data structure stored in a variable.
-"""
-function getData(v::DFGVariable; solveKey::Symbol=:default)::VariableNodeData
-  @warn "getData is deprecated, please use getSolverData()"
-  return v.solverDataDict[solveKey]
-end
-
-
-"""
-    $SIGNATURES
-
-Set solver data structure stored in a variable.
-"""
-function setSolverData(v::DFGVariable, data::VariableNodeData, key::Symbol=:default)
-    @warn "Deprecated setSolverData, use setSolverData! instead."
-    setSolverData!(v, data, key)
-end
-
-
-"""
-    $SIGNATURES
-
-Retrieve solver data structure stored in a factor.
-"""
-function data(f::DFGFactor)::GenericFunctionNodeData
-  @warn "data() is deprecated, please use getSolverData()"
-  return f.data
-end
-
-
+export getLabelDict
 getLabelDict(dfg::AbstractDFG) = error("getLabelDict is deprecated, consider using listing functions")
 
-setSolverParams(args...) = error("setSolverParams is deprecated, use setSolverParams!")
-setDescription(args...) = error("setSolverParams is deprecated, use setDescription!")
+export getAdjacencyMatrix
+"""
+    $(SIGNATURES)
+Get a matrix indicating relationships between variables and factors. Rows are
+all factors, columns are all variables, and each cell contains either nothing or
+the symbol of the relating factor. The first row and first column are factor and
+variable headings respectively.
+"""
+function getAdjacencyMatrix(dfg::AbstractDFG; solvable::Int=0)::Matrix{Union{Nothing, Symbol}}
+    error("Deprecated function, please use getBiadjacencyMatrix")
+end
+
+
+export buildSubgraphFromLabels
+function buildSubgraphFromLabels(dfg::G,
+                                  syms::Vector{Symbol};
+                                  subfg::AbstractDFG=(G <: InMemoryDFGTypes ? G : GraphsDFG)(params=getSolverParams(dfg)),
+                                  solvable::Int=0,
+                                  allowedFactors::Union{Nothing, Vector{Symbol}}=nothing  )::G where G <: AbstractDFG
+  #
+  @warn "Deprecated buildSubgraphFromLabels, use buildSubgraphFromLabels! instead."
+  buildSubgraphFromLabels!(dfg, syms, subfg=subfg, solvable=solvable, allowedFactors=allowedFactors )
+end
+
+# NOTE Fully depcrecate nodeCounter and labelDict from LightGraphs
+# Base.propertynames(x::LightDFG, private::Bool=false) =
+#     (:g, :description, :userId, :robotId, :sessionId, :nodeCounter, :labelDict, :addHistory, :solverParams)
+#         # (private ? fieldnames(typeof(x)) : ())...)
+#
+# Base.getproperty(x::LightDFG,f::Symbol) = begin
+#     if f == :nodeCounter
+#         @error "Field nodeCounter deprecated. returning number of nodes"
+#         nv(x.g)
+#     elseif f == :labelDict
+#         @error "Field labelDict deprecated. Consider using exists(dfg,label) or getLabelDict(dfg) instead. Returning internals copy"
+#         copy(x.g.labels.sym_int)
+#     else
+#         getfield(x,f)
+#     end
+# end

@@ -30,17 +30,12 @@ function unpackVariable(dfg::G, packedProps::Dict{String, Any})::DFGVariable whe
 
     # Rebuild DFGVariable using the first solver softtype in solverData
     if length(solverData) > 0
-        variable = DFGVariable(Symbol(packedProps["label"]), first(solverData)[2].softtype)
+        # variable = DFGVariable(Symbol(packedProps["label"]), first(solverData)[2].softtype)
+        variable = DFGVariable(Symbol(packedProps["label"]), timestamp, Set(tags), ppeDict, solverData,  smallData, Dict{Symbol,AbstractBigDataEntry}(), DFGNodeParams(packedProps["solvable"],0))
     else
         @warn "The variable $label in this file does not have any solver data. This will not be supported in the future, please add at least one solverData structure."
-        variable = DFGVariable(Symbol(packedProps["label"]))
+        variable = DFGVariable(Symbol(packedProps["label"]), timestamp, Set(tags), ppeDict, solverData,  smallData, Dict{Symbol,AbstractBigDataEntry}(), DFGNodeParams(packedProps["solvable"],0))
     end
-    variable.timestamp = timestamp
-    variable.tags = tags
-    variable.ppeDict = ppeDict
-    variable.solverDataDict = solverData
-    variable.smallData = smallData
-    variable.solvable = packedProps["solvable"]
 
     # Now rehydrate complete bigData type.
     for (k,bdeInter) in bigDataIntermed
@@ -63,7 +58,8 @@ function pack(dfg::G, d::VariableNodeData)::PackedVariableNodeData where G <: Ab
                                 d.inferdim,
                                 d.ismargin,
                                 d.dontmargin,
-                                d.solveInProgress)
+                                d.solveInProgress,
+                                d.solvedCount)
 end
 
 function unpack(dfg::G, d::PackedVariableNodeData)::VariableNodeData where G <: AbstractDFG
@@ -123,13 +119,14 @@ function compare(a::VariableNodeData, b::VariableNodeData)
     return true
 end
 
-"""
-    $(SIGNATURES)
-Equality check for VariableNodeData.
-"""
-function ==(a::VariableNodeData,b::VariableNodeData, nt::Symbol=:var)
-  return DistributedFactorGraphs.compare(a,b)
-end
+#FIXME
+# """
+#     $(SIGNATURES)
+# Equality check for VariableNodeData.
+# """
+# function ==(a::VariableNodeData,b::VariableNodeData, nt::Symbol=:var)
+#   return DistributedFactorGraphs.compare(a,b)
+# end
 
 """
     ==(x::T, y::T) where T <: AbstractPointParametricEst
@@ -143,13 +140,14 @@ end
     mapreduce(n -> :(x.$n == y.$n), (a,b)->:($a && $b), fieldnames(x))
 end
 
-"""
-    $(SIGNATURES)
-Equality check for DFGVariable.
-"""
-function ==(a::DFGVariable, b::DFGVariable)::Bool
-    return compareVariable(a, b)
-end
+#FIXME
+# """
+#     $(SIGNATURES)
+# Equality check for DFGVariable.
+# """
+# function ==(a::DFGVariable, b::DFGVariable)::Bool
+#     return compareVariable(a, b)
+# end
 
 """
     $(SIGNATURES)
@@ -163,10 +161,10 @@ end
     $(SIGNATURES)
 Add Big Data Entry to a DFG variable
 """
-function addBigDataEntry!(var::AbstractDFGVariable, bde::AbstractBigDataEntry)::AbstractDFGVariable
+function addBigDataEntry!(var::AbstractDFGVariable, bde::AbstractBigDataEntry)::AbstractBigDataEntry
     haskey(var.bigData,bde.key) && error("BigData entry $(bde.key) already exists in variable")
     var.bigData[bde.key] = bde
-    return var
+    return bde
 end
 
 """
@@ -174,7 +172,7 @@ end
 Add Big Data Entry to distributed factor graph.
 Should be extended if DFG variable is not returned by reference.
 """
-function addBigDataEntry!(dfg::AbstractDFG, label::Symbol, bde::AbstractBigDataEntry)::AbstractDFGVariable
+function addBigDataEntry!(dfg::AbstractDFG, label::Symbol, bde::AbstractBigDataEntry)::AbstractBigDataEntry
     return addBigDataEntry!(getVariable(dfg, label), bde)
 end
 
@@ -183,9 +181,10 @@ end
 Get big data entry
 """
 function getBigDataEntry(var::AbstractDFGVariable, key::Symbol)::Union{Nothing, AbstractBigDataEntry}
-    !haskey(var.bigData, key) && return nothing
+    !haskey(var.bigData, key) && (error("BigData entry $(key) does not exist in variable"); return nothing)
     return var.bigData[key]
 end
+
 function getBigDataEntry(dfg::AbstractDFG, label::Symbol, key::Symbol)::Union{Nothing, AbstractBigDataEntry}
     return getBigDataEntry(getVariable(dfg, label), key)
 end
@@ -194,13 +193,13 @@ end
     $(SIGNATURES)
 Update big data entry
 """
-function updateBigDataEntry!(var::AbstractDFGVariable,  bde::AbstractBigDataEntry)::Union{Nothing, AbstractDFGVariable}
-    !haskey(var.bigData,bde.key) && (@error "$(bde.key) does not exist in variable!"; return nothing)
+function updateBigDataEntry!(var::AbstractDFGVariable,  bde::AbstractBigDataEntry)::Union{Nothing, AbstractBigDataEntry}
+    !haskey(var.bigData,bde.key) && (@warn "$(bde.key) does not exist in variable, adding")
     var.bigData[bde.key] = bde
-    return var
+    return bde
 end
-function updateBigDataEntry!(dfg::AbstractDFG, label::Symbol,  bde::AbstractBigDataEntry)::Union{Nothing, AbstractDFGVariable}
-    !isVariable(dfg, label) && return nothing
+function updateBigDataEntry!(dfg::AbstractDFG, label::Symbol,  bde::AbstractBigDataEntry)::Union{Nothing, AbstractBigDataEntry}
+    # !isVariable(dfg, label) && return nothing
     return updateBigDataEntry!(getVariable(dfg, label), bde)
 end
 
@@ -328,11 +327,6 @@ function getSolverData(v::DFGVariable, key::Symbol=:default)
     return haskey(v.solverDataDict, key) ? v.solverDataDict[key] : nothing
 end
 
-function solverData(v::DFGVariable, key::Symbol=:default)
-  @warn "Deprecated for 0.6 standardization. Please use getSolverData()"
-  return getSolverData(v, key)
-end
-
 """
     $SIGNATURES
 
@@ -348,6 +342,13 @@ Get solver data dictionary for a variable.
 getSolverDataDict(v::DFGVariable) = v.solverDataDict
 
 """
+    $SIGNATURES
+
+Get the PPE dictionary for a variable. Its use is not recomended.
+"""
+getPPEDict(v::DFGVariable) = v.ppeDict
+
+"""
 $SIGNATURES
 
 Get the small data for a variable.
@@ -358,9 +359,11 @@ getSmallData(v::DFGVariable)::Dict{String, String} = v.smallData
 $SIGNATURES
 
 Set the small data for a variable.
+This will overwrite old smallData.
 """
 function setSmallData!(v::DFGVariable, smallData::Dict{String, String})::Dict{String, String}
-    v.smallData = smallData
+    empty!(v.smallData)
+    merge!(v.smallData, smallData)
 end
 
 # WIP
@@ -386,6 +389,7 @@ Get the variable ordering for this factor.
 Should be equivalent to getNeighbors unless something was deleted in the graph.
 """
 getVariableOrder(fct::DFGFactor)::Vector{Symbol} = fct._variableOrderSymbols
+getVariableOrder(dfg::AbstractDFG, fct::Symbol) = getVariableOrder(getFactor(dfg, fct))
 
 """
     $SIGNATURES

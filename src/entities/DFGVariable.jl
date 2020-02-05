@@ -28,7 +28,7 @@ struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
     solverDataDict::Dict{Symbol, VariableNodeData{T}}
     """Dictionary of small data associated with this variable.
     Accessors: `addSmallData!`, `updateSmallData!`, and `deleteSmallData!`"""
-    smallData::Ref{Dict{String, String}}
+    smallData::Dict{String, String}#Ref{Dict{String, String}} #why was Ref here?
     """Dictionary of large data associated with this variable.
     Accessors: `addBigDataEntry!`, `getBigDataEntry`, `updateBigDataEntry!`, and `deleteBigDataEntry!`"""
     bigData::Dict{Symbol, AbstractBigDataEntry}

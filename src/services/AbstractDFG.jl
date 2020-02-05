@@ -73,7 +73,8 @@ setSessionId!(dfg::AbstractDFG, sessionId::String) = dfg.sessionId = sessionId
 """
     $(SIGNATURES)
 """
-#TODO don't know what error will be thrown if solverParams type does not mach the one in dfg
+#NOTE a MethodError will be thrown if solverParams type does not mach the one in dfg
+# TODO Is it ok or do we want any abstract solver paramters
 setSolverParams!(dfg::AbstractDFG, solverParams::AbstractParams) = dfg.solverParams = solverParams
 
 # Accessors and CRUD for user/robot/session Data
@@ -130,23 +131,23 @@ end
 
 #NOTE with API standardization this should become something like:
 # JT, I however do not feel we should force it, as I prever dot notation
-getUserData(dfg::AbstractDFG, key::Symbol)::Dict{Symbol, String} = dfg.UserData[key]
-getRobotData(dfg::AbstractDFG, key::Symbol)::Dict{Symbol, String} = dfg.RobotData[key]
-getSessionData(dfg::AbstractDFG, key::Symbol)::Dict{Symbol, String} = dfg.SessionData[key]
+getUserData(dfg::AbstractDFG, key::Symbol)::String = dfg.userData[key]
+getRobotData(dfg::AbstractDFG, key::Symbol)::String = dfg.robotData[key]
+getSessionData(dfg::AbstractDFG, key::Symbol)::String = dfg.sessionData[key]
 
 updateUserData!(dfg::AbstractDFG, pair::Pair{Symbol,String}) = push!(dfg.userData, pair)
-updateRobotData!(dfg::AbstractDFG, pair::Pair{Symbol,String}) = push!(dfg.userData, pair)
-updateSessionData!(dfg::AbstractDFG, pair::Pair{Symbol,String}) = push!(dfg.userData, pair)
+updateRobotData!(dfg::AbstractDFG, pair::Pair{Symbol,String}) = push!(dfg.robotData, pair)
+updateSessionData!(dfg::AbstractDFG, pair::Pair{Symbol,String}) = push!(dfg.sessionData, pair)
 
 deleteUserData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.userData, key)
-deleteRobotData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.userData, key)
-deleteSessionData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.userData, key)
+deleteRobotData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.robotData, key)
+deleteSessionData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.sessionData, key)
 
 emptyUserData!(dfg::AbstractDFG) = empty!(dfg.userData)
-emptyRobotData!(dfg::AbstractDFG) = empty!(dfg.userData)
-emptySessionData!(dfg::AbstractDFG) = empty!(dfg.userData)
+emptyRobotData!(dfg::AbstractDFG) = empty!(dfg.robotData)
+emptySessionData!(dfg::AbstractDFG) = empty!(dfg.sessionData)
 
-
+#TODO add__Data!?
 
 
 ##
@@ -195,19 +196,36 @@ function addVariable!(dfg::G, variable::V)::AbstractDFGVariable where {G <: Abst
 end
 
 """
-    $(SIGNATURES)
 Add a DFGFactor to a DFG.
+    $(SIGNATURES)
 """
-function addFactor!(dfg::G, variables::Vector{<:V}, factor::F)::AbstractDFGFactor where {G <: AbstractDFG, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
-    error("addFactor! not implemented for $(typeof(dfg))")
+function addFactor!(dfg::AbstractDFG, factor::F)::F where F <: AbstractDFGFactor
+    error("addFactor! not implemented for $(typeof(dfg))(dfg, factor)")
 end
 
 """
-    $(SIGNATURES)
-Add a DFGFactor to a DFG.
+$(SIGNATURES)
 """
-function addFactor!(dfg::G, variableIds::Vector{Symbol}, factor::F)::AbstractDFGFactor where {G <: AbstractDFG, F <: AbstractDFGFactor}
-    error("addFactor! not implemented for $(typeof(dfg))")
+function addFactor!(dfg::AbstractDFG, variables::Vector{<:AbstractDFGVariable}, factor::F)::F where  F <: AbstractDFGFactor
+
+        variableLabels = map(v->v.label, variables)
+
+        resize!(factor._variableOrderSymbols, length(variableLabels))
+        factor._variableOrderSymbols .= variableLabels
+
+        return addFactor!(dfg, factor)
+
+end
+
+"""
+$(SIGNATURES)
+"""
+function addFactor!(dfg::AbstractDFG, variableLabels::Vector{Symbol}, factor::F)::AbstractDFGFactor where F <: AbstractDFGFactor
+
+    resize!(factor._variableOrderSymbols, length(variableLabels))
+    factor._variableOrderSymbols .= variableLabels
+
+    return addFactor!(dfg, factor)
 end
 
 # TODO: Confirm we can remove this.
@@ -230,10 +248,17 @@ end
 """
     $(SIGNATURES)
 Get a DFGVariable with a specific solver key.
-Not used in memory, only defined for CGDFG.
+In memory types still return a reference, other types returns a variable with only solveKey.
 """
 function getVariable(dfg::G, label::Symbol, solveKey::Symbol)::AbstractDFGVariable where G <: AbstractDFG
-    return getVariable(dfg, Symbol(label))
+
+    var = getVariable(dfg, label)
+
+    if !haskey(var.solverDataDict, solveKey)
+        error("Solvekey '$solveKey' does not exists in the variable")
+    end
+
+    return var
 end
 
 # TODO: Confirm we can remove this.
@@ -321,16 +346,18 @@ Tags is a list of any tags that a node must have (at least one match).
 
 Example
 ```julia
-getVariableIds(dfg, r"l", tags=[:APRILTAG;])
+listVariables(dfg, r"l", tags=[:APRILTAG;])
 ```
 
 Related:
 - ls
 """
-function getVariableIds(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
+function listVariables(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
   vars = getVariables(dfg, regexFilter, tags=tags, solvable=solvable)
   return map(v -> v.label, vars)
 end
+#TODO alias or deprecate
+@deprecate getVariableIds(dfg::AbstractDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0) listVariables(dfg, regexFilter, tags=tags, solvable=solvable)
 
 # Alias
 """
@@ -341,7 +368,7 @@ Tags is a list of any tags that a node must have (at least one match).
 
 """
 function ls(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
-    return getVariableIds(dfg, regexFilter, tags=tags, solvable=solvable)
+    return listVariables(dfg, regexFilter, tags=tags, solvable=solvable)
 end
 
 """
@@ -355,12 +382,14 @@ end
 
 """
     $(SIGNATURES)
-Get a list of the IDs of the DFGFactors in the DFG.
+Get a list of the IDs (labels) of the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
-function getFactorIds(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
+function listFactors(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
     return map(f -> f.label, getFactors(dfg, regexFilter, solvable=solvable))
 end
+#TODO alias or deprecate
+@deprecate getFactorIds(dfg, regexFilter=nothing; solvable=0) listFactors(dfg, regexFilter, solvable=solvable)
 
 # Alias
 """
@@ -369,7 +398,7 @@ List the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
 function lsf(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
-    return getFactorIds(dfg, regexFilter, solvable=solvable)
+    return listFactors(dfg, regexFilter, solvable=solvable)
 end
 
 """
@@ -514,8 +543,8 @@ NOTE: copyGraphMetadata not supported yet.
 """
 function _copyIntoGraph!(sourceDFG::G, destDFG::H, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false; copyGraphMetadata::Bool=false)::Nothing where {G <: AbstractDFG, H <: AbstractDFG}
     # Split into variables and factors
-    sourceVariables = map(vId->getVariable(sourceDFG, vId), intersect(getVariableIds(sourceDFG), variableFactorLabels))
-    sourceFactors = map(fId->getFactor(sourceDFG, fId), intersect(getFactorIds(sourceDFG), variableFactorLabels))
+    sourceVariables = map(vId->getVariable(sourceDFG, vId), intersect(listVariables(sourceDFG), variableFactorLabels))
+    sourceFactors = map(fId->getFactor(sourceDFG, fId), intersect(listFactors(sourceDFG), variableFactorLabels))
     if length(sourceVariables) + length(sourceFactors) != length(variableFactorLabels)
         rem = symdiff(map(v->v.label, sourceVariables), variableFactorLabels)
         rem = symdiff(map(f->f.label, sourceFactors), variableFactorLabels)
@@ -570,7 +599,7 @@ Get variable solverdata for a given solve key.
 """
 function getVariableSolverData(dfg::AbstractDFG, variablekey::Symbol, solvekey::Symbol=:default)::VariableNodeData
     v = getVariable(dfg, variablekey)
-    !haskey(v.solverDataDict, solvekey) && error("Solve key '$solveKey' not found in variable '$variableKey'")
+    !haskey(v.solverDataDict, solvekey) && error("Solve key '$solvekey' not found in variable '$variablekey'")
     return v.solverDataDict[solvekey]
 end
 
@@ -579,13 +608,13 @@ end
     $(SIGNATURES)
 Add variable solver data, errors if it already exists.
 """
-function addVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData, solvekey::Symbol=:default)::Dict{Symbol, VariableNodeData}
+function addVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData, solvekey::Symbol=:default)::VariableNodeData
     var = getVariable(dfg, variablekey)
     if haskey(var.solverDataDict, solvekey)
         error("VariableNodeData '$(solvekey)' already exists")
     end
     var.solverDataDict[solvekey] = vnd
-    return var.solverDataDict
+    return vnd
 end
 
 """
@@ -601,12 +630,15 @@ addVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable, solvekey::
     $(SIGNATURES)
 Update variable solver data if it exists, otherwise add it.
 """
-function updateVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData, solvekey::Symbol=:default)::Dict{Symbol, VariableNodeData}
+function updateVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData, solvekey::Symbol=:default)::VariableNodeData
     #This is basically just setSolverData
     var = getVariable(dfg, variablekey)
+    if !haskey(var.solverDataDict, solvekey)
+        @warn "VariableNodeData '$(solvekey)' does not exist, adding"
+    end
     #for InMemoryDFGTypes, cloud would update here
     var.solverDataDict[solvekey] = vnd
-    return var.solverDataDict
+    return vnd
 end
 
 """
@@ -666,7 +698,7 @@ Get variable PPE for a given solve key.
 """
 function getPPE(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol=:default)::AbstractPointParametricEst
     v = getVariable(dfg, variablekey)
-    !haskey(v.ppeDict, ppekey) && error("PPE key '$ppeKey' not found in variable '$variableKey'")
+    !haskey(v.ppeDict, ppekey) && error("PPE key '$ppekey' not found in variable '$variablekey'")
     return v.ppeDict[ppekey]
 end
 
@@ -677,13 +709,13 @@ getPPE(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol=default)::A
     $(SIGNATURES)
 Add variable PPE, errors if it already exists.
 """
-function addPPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default)::Dict{Symbol, AbstractPointParametricEst} where P <: AbstractPointParametricEst
+function addPPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default)::AbstractPointParametricEst where P <: AbstractPointParametricEst
     var = getVariable(dfg, variablekey)
     if haskey(var.ppeDict, ppekey)
         error("PPE '$(ppekey)' already exists")
     end
     var.ppeDict[ppekey] = ppe
-    return var.ppeDict
+    return ppe
 end
 
 """
@@ -699,12 +731,15 @@ addPPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol=:default) 
     $(SIGNATURES)
 Update PPE data if it exists, otherwise add it.
 """
-function updatePPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default)::Dict{Symbol, AbstractPointParametricEst} where P <: AbstractPointParametricEst
-    #This is basically just setSolverData
+function updatePPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default)::P where P <: AbstractPointParametricEst
+
     var = getVariable(dfg, variablekey)
+    if !haskey(var.ppeDict, ppekey)
+        @warn "PPE '$(ppekey)' does not exist, adding"
+    end
     #for InMemoryDFGTypes, cloud would update here
     var.ppeDict[ppekey] = ppe
-    return var.ppeDict
+    return ppe
 end
 
 """
@@ -713,7 +748,7 @@ Update PPE data if it exists, otherwise add it.
 NOTE: Copies the PPE data.
 """
 updatePPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol=:default) =
-    updateVariableSolverData!(dfg, sourceVariable.label, deepcopy(getPPE(sourceVariable, ppekey)), ppekey)
+    updatePPE!(dfg, sourceVariable.label, deepcopy(getPPE(sourceVariable, ppekey)), ppekey)
 
 """
     $(SIGNATURES)
@@ -781,17 +816,7 @@ function mergeUpdateGraphSolverData!(sourceDFG::G, destDFG::H, varSyms::Vector{S
 end
 
 # Alias
-# TODO Can we not deprecate this completely in favor of only using a sparse matrix?
-"""
-    $(SIGNATURES)
-Get a matrix indicating relationships between variables and factors. Rows are
-all factors, columns are all variables, and each cell contains either nothing or
-the symbol of the relating factor. The first row and first column are factor and
-variable headings respectively.
-"""
-function getAdjacencyMatrix(dfg::AbstractDFG; solvable::Int=0)::Matrix{Union{Nothing, Symbol}}
-    error("Deprecated function, please use getBiadjacencyMatrix")
-end
+
 """
     $(SIGNATURES)
 Get a matrix indicating relationships between variables and factors. Rows are
@@ -822,9 +847,9 @@ end
 """
     $(SIGNATURES)
 Get a matrix indicating adjacency between variables and factors. Returned as
-a tuple: adjmat::SparseMatrixCSC{Int}, var_labels::Vector{Symbol)
-fac_labels::Vector{Symbol). Rows are the factors, columns are the variables,
-with the corresponding labels in fac_labels,var_labels.
+a named tuple: B::SparseMatrixCSC{Int}, varLabels::Vector{Symbol)
+facLabels::Vector{Symbol). Rows are the factors, columns are the variables,
+with the corresponding labels in varLabels,facLabels.
 """
 # TODO API name get seems wrong maybe just biadjacencyMatrix
 function getBiadjacencyMatrix(dfg::AbstractDFG; solvable::Int=0)::NamedTuple{(:B, :varLabels, :facLabels), Tuple{SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}}
@@ -842,11 +867,6 @@ function getBiadjacencyMatrix(dfg::AbstractDFG; solvable::Int=0)::NamedTuple{(:B
     return (B=adjMat, varLabels=varLabels, facLabels=factLabels)
 end
 
-function getAdjacencyMatrixSparse(dfg::AbstractDFG; solvable::Int=0)
-    @warn "Deprecated function, please use getBiadjacencyMatrix as this will be removed in v0.6.1"
-    return getBiadjacencyMatrix(dfg, solvable)
-end
-# -------------------------
 
 """
     $SIGNATURES
@@ -996,8 +1016,8 @@ Produces a dot-format of the graph for visualization.
 """
 function toDot(dfg::AbstractDFG)::String
     #TODO implement convert
-    graphsdfg = GraphsDFG{AbstractParams}()
-    DistributedFactorGraphs._copyIntoGraph!(dfg, graphsdfg, union(getVariableIds(dfg), getFactorIds(dfg)), true)
+    graphsdfg = GraphsDFG{NoSolverParams}()
+    DistributedFactorGraphs._copyIntoGraph!(dfg, graphsdfg, union(listVariables(dfg), listFactors(dfg)), true)
 
     # Calls down to GraphsDFG.toDot
     return toDot(graphsdfg)
@@ -1015,8 +1035,12 @@ Note
 """
 function toDotFile(dfg::AbstractDFG, fileName::String="/tmp/dfg.dot")::Nothing
     #TODO implement convert
-    graphsdfg = GraphsDFG{AbstractParams}()
-    DistributedFactorGraphs._copyIntoGraph!(dfg, graphsdfg, union(getVariableIds(dfg), getFactorIds(dfg)), true)
+    if isa(dfg, GraphsDFG)
+        graphsdfg = dfg
+    else
+        graphsdfg = GraphsDFG{NoSolverParams}()
+        DistributedFactorGraphs._copyIntoGraph!(dfg, graphsdfg, union(listVariables(dfg), listFactors(dfg)), true)
+    end
 
     open(fileName, "w") do fid
         write(fid,Graphs.to_dot(graphsdfg.g))

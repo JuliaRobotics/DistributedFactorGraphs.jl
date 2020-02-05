@@ -50,9 +50,9 @@ user.data = Dict{Symbol, String}(:a => "Hello", :b => "Goodbye")
 robot.data = Dict{Symbol, String}(:c => "Hello", :d => "Goodbye")
 session.data = Dict{Symbol, String}(:e => "Hello", :f => "Goodbye")
 
-setUserData(dfg, user.data)
-setRobotData(dfg, robot.data)
-setSessionData(dfg, session.data)
+setUserData!(dfg, user.data)
+setRobotData!(dfg, robot.data)
+setSessionData!(dfg, session.data)
 @test getUserData(dfg) == user.data
 @test getRobotData(dfg) == robot.data
 @test getSessionData(dfg) == session.data
