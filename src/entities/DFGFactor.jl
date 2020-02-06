@@ -88,3 +88,53 @@ const PackedFunctionNodeData{T} = GenericFunctionNodeData{T, <: AbstractString}
 PackedFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, x7::String="", x8::Vector{Int}=Int[], x9::Int=0) where {T <: PackedInferenceType, S <: AbstractString} = GenericFunctionNodeData(x1, x2, x3, x4, x5, x6, x7, x8, x9)
 const FunctionNodeData{T} = GenericFunctionNodeData{T, Symbol}
 FunctionNodeData(x1, x2, x3, x4, x5::Symbol, x6::T, x7::String="", x8::Vector{Int}=Int[], x9::Int=0) where {T <: Union{FunctorInferenceType, ConvolutionObject}}= GenericFunctionNodeData{T, Symbol}(x1, x2, x3, x4, x5, x6, x7, x8, x9)
+
+## DFGFactorSummary
+"""
+$(TYPEDEF)
+Read-only summary factor structure for a DistributedFactorGraph factor.
+
+  ---
+Fields:
+$(TYPEDFIELDS)
+"""
+struct DFGFactorSummary <: AbstractDFGFactor
+    """Factor label, e.g. :x1f1.
+    Accessor: `getLabel`"""
+    label::Symbol
+    """Variable timestamp.
+    Accessors: `getTimestamp`"""
+    timestamp::DateTime
+    """Factor tags, e.g [:FACTOR].
+    Accessors: `getTags`, `addTags!`, and `deleteTags!`"""
+    tags::Set{Symbol}
+    """Internal ID used by some of the DFG drivers. We don't suggest using this outside of DFG."""
+    _internalId::Int64
+    """Internal cache of the ordering of the neighbor variables. Rather use getNeighbors to get the list as this is an internal value.
+    Accessors: `getVariableOrder`"""
+    _variableOrderSymbols::Vector{Symbol}
+end
+
+## SkeletonDFGFactor
+"""
+$(TYPEDEF)
+Skeleton factor structure for a DistributedFactorGraph factor.
+
+  ---
+Fields:
+$(TYPEDFIELDS)
+"""
+struct SkeletonDFGFactor <: AbstractDFGFactor
+    """Factor label, e.g. :x1f1.
+    Accessor: `getLabel`"""
+    label::Symbol
+    """Factor tags, e.g [:FACTOR].
+    Accessors: `getTags`, `addTags!`, and `deleteTags!`"""
+    tags::Set{Symbol}
+    """Internal cache of the ordering of the neighbor variables. Rather use getNeighbors to get the list as this is an internal value.
+    Accessors: `getVariableOrder`"""
+    _variableOrderSymbols::Vector{Symbol}
+end
+
+#NOTE I feel like a want to force a variableOrderSymbols
+SkeletonDFGFactor(label::Symbol, variableOrderSymbols::Vector{Symbol} = Symbol[]) = SkeletonDFGFactor(label, Set{Symbol}(), variableOrderSymbols)
