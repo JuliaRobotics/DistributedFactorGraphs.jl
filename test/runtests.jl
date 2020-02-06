@@ -114,6 +114,11 @@ if get(ENV, "IIF_TEST", "") == "true"
         end
     end
 
+    @testset "IIF Compare Tests" begin
+        #run a copy of compare tests from IIF
+        include("iifCompareTests.jl")
+    end
+
     @testset "CGStructure Tests for CGDFG" begin
         # Run the CGStructure tests
         include("CGStructureTests.jl")
