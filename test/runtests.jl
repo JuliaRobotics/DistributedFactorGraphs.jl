@@ -16,6 +16,31 @@ using Dates
 # logger = SimpleLogger(stdout, Logging.Debug)
 # global_logger(logger)
 
+# TODO, dink meer aan: Trait based softtypes or hard type for VariableNodeData
+# Test InferenceVariable Types
+struct TestSofttype1 <: InferenceVariable
+    dims::Int
+    manifolds::Tuple{Symbol}
+    TestSofttype1() = new(1,(:Euclid,))
+end
+
+struct TestSofttype2 <: InferenceVariable
+    dims::Int
+    manifolds::Tuple{Symbol, Symbol}
+    TestSofttype2() = new(2,(:Euclid,:Circular,))
+end
+
+
+# Test Factor Types TODO same with factor type if I can figure out what it is and how it works
+struct TestFunctorInferenceType1 <: FunctorInferenceType end
+
+struct TestCCW1{T} <: ConvolutionObject where {T<:FunctorInferenceType} end
+
+
+@testset "Test generated ==" begin
+    include("compareTests.jl")
+end
+
 # Test each interface
 apis = [
     LightDFG,

@@ -1,9 +1,40 @@
+## @generated compare
+# Reference https://github.com/JuliaLang/julia/issues/4648
+
+import Base.==
+
+#=
+TODO <:InferenceVariable: please someone confirm this, I'm not fully up to date why softtype was created.
+For now abstract `InferenceVariable`s are considered equal if they are the same type (except for labels, that I feel are deprecated)
+If your implentation has aditional properties such as `DynPose2` with `ut::Int64` (microsecond time) or support different manifolds
+implement compare if needed. softtype sounds a bit if it can be a trait, or in the future, rather a normal julia type.
+=#
+==(a::InferenceVariable,b::InferenceVariable) = typeof(a) == typeof(b)
+
+==(a::ConvolutionObject, b::ConvolutionObject) = typeof(a) == typeof(b)
+
+==(a::FunctorInferenceType, b::FunctorInferenceType) = typeof(a) == typeof(b)
+
+# TestCCW1{TestFunctorInferenceType1}
+
+# Generate compares automatically for all in this union
+const GeneratedCompareUnion = Union{MeanMaxPPE, VariableNodeData, DFGNodeParams,
+                              DFGVariable, DFGVariableSummary, SkeletonDFGVariable,
+                              GenericFunctionNodeData,
+                              DFGFactor, DFGFactorSummary, SkeletonDFGFactor}
+
+@generated function ==(x::T, y::T) where T <: GeneratedCompareUnion
+    mapreduce(n -> :(x.$n == y.$n), (a,b)->:($a && $b), fieldnames(x))
+end
+
+
+##
 
 function compareField(Allc, Bllc, syms)::Bool
-  (!isdefined(Allc, syms) && !isdefined(Bllc, syms)) && return true
-  !isdefined(Allc, syms) && return false
-  !isdefined(Bllc, syms) && return false
-  return eval(:($Allc.$syms == $Bllc.$syms))
+    (!isdefined(Allc, syms) && !isdefined(Bllc, syms)) && return true
+    !isdefined(Allc, syms) && return false
+    !isdefined(Bllc, syms) && return false
+    return eval(:($Allc.$syms == $Bllc.$syms))
 end
 
 """
@@ -200,7 +231,7 @@ function compareFactor(A::DFGFactor,
                        skipsamples::Bool=true,
                        skipcompute::Bool=true  )
   #
-  TP =  compareAll(A, B, skip=union([:attributes;:data;:_variableOrderSymbols;:_internalId],skip), show=show)
+  TP =  compareAll(A, B, skip=union([:attributes;:solverData;:_variableOrderSymbols;:_internalId],skip), show=show)
   # TP = TP & compareAll(A.attributes, B.attributes, skip=[:data;], show=show)
   TP = TP & compareAllSpecial(getSolverData(A), getSolverData(B), skip=union([:fnc;:_internalId], skip), show=show)
   TP = TP & compareAllSpecial(getSolverData(A).fnc, getSolverData(B).fnc, skip=union([:cpt;:measurement;:params;:varidx;:threadmodel], skip), show=show)
