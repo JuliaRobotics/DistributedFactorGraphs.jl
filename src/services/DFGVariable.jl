@@ -98,7 +98,7 @@ function unpack(dfg::G, d::PackedVariableNodeData)::VariableNodeData where G <: 
 
   return VariableNodeData{typeof(st)}(M3,M4, d.BayesNetOutVertIDs,
     d.dimIDs, d.dims, d.eliminated, d.BayesNetVertID, d.separator,
-    st, d.initialized, d.inferdim, d.ismargin, d.dontmargin, d.solveInProgress)
+    st, d.initialized, d.inferdim, d.ismargin, d.dontmargin, d.solveInProgress, d.solvedCount)
 end
 
 function compare(a::VariableNodeData, b::VariableNodeData)
