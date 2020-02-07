@@ -434,7 +434,7 @@ end
 
 
 
-function getBiadjacencyMatrix(dfg::CloudGraphsDFG; solvable::Int=0)::NamedTuple{(:B, :varLabels, :facLabels),Tuple{LightGraphs.SparseMatrixCSC,Vector{Symbol}, Vector{Symbol}}}
+function getBiadjacencyMatrix(dfg::CloudGraphsDFG; solvable::Int=0)::NamedTuple{(:B, :varLabels, :facLabels),Tuple{SparseMatrixCSC,Vector{Symbol}, Vector{Symbol}}}
     varLabels = listVariables(dfg, solvable=solvable)
     factLabels = listFactors(dfg, solvable=solvable)
     vDict = Dict(varLabels .=> [1:length(varLabels)...])
