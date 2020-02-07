@@ -41,6 +41,10 @@ struct TestCCW1{T} <: ConvolutionObject where {T<:FunctorInferenceType} end
     include("compareTests.jl")
 end
 
+@testset "Testing LightDFG.FactorGraphs functions" begin
+    include("LightFactorGraphsTests.jl")
+end
+
 # Test each interface
 apis = [
     LightDFG,
@@ -140,9 +144,6 @@ else
     @warn "Skipping IncrementalInference driver tests"
 end
 
-@testset "Testing LightDFG.FactorGraphs functions" begin
-    include("LightFactorGraphsTests.jl")
-end
 
 struct NotImplementedDFG <: AbstractDFG end
 

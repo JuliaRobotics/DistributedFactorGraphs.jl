@@ -43,9 +43,9 @@ end
 @testset "LightDFGs.FactorGraphs" begin
 
 
-    @test isa(FactorGraph(), FactorGraph{Int64,AbstractDFGVariable,AbstractDFGFactor})
+    @test isa(FactorGraphs.FactorGraph(), FactorGraph{Int64,AbstractDFGVariable,AbstractDFGFactor})
 
-    fg = FactorGraph{Int, SkeletonDFGVariable, SkeletonDFGFactor}()
+    fg = FactorGraphs.FactorGraph{Int, SkeletonDFGVariable, SkeletonDFGFactor}()
 
     @test !FactorGraphs.is_directed(fg)
     @test !FactorGraphs.is_directed(FactorGraph{Int, SkeletonDFGVariable, SkeletonDFGFactor})
