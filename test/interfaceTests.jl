@@ -475,6 +475,11 @@ end
     # Add a new PPE of type MeanMaxPPE to :x0
     ppe = MeanMaxPPE(:default, [0.0], [0.0], [0.0])
 
+    @test getMaxPPE(ppe) === ppe.max
+    @test getMeanPPE(ppe) === ppe.mean
+    @test getSuggestedPPE(ppe) === ppe.suggested
+    @test getLastUpdatedTimestamp(ppe) === ppe.lastUpdatedTimestamp
+
     @test addPPE!(fg, :a, ppe) == ppe
     @test_throws ErrorException addPPE!(fg, :a, ppe)
 
