@@ -6,6 +6,8 @@ import Base: propertynames, getproperty
 # this hides all the propertynames and makes it hard to work with.
 # Base.propertynames(x::VariableDataLevel1, private::Bool=false) = private ? (:estimateDict, :ppeDict) : (:ppeDict,)
 
+## REMOVE in 0.6.1 #TODO look what should already be removed
+
 Base.getproperty(x::DFGVariable,f::Symbol) = begin
     if f == :estimateDict
         @warn "estimateDict is deprecated, use ppeDict instead"
@@ -47,7 +49,12 @@ Base.getproperty(x::DFGFactor,f::Symbol) = begin
   elseif f == :_internalId
       getfield(x,:_dfgNodeParams)._internalId
   elseif f == :data
-      @warn "data field is deprecated, use solverData or getSolverData"
+
+      if !(@isdefined getFactorDataWarnOnce)
+          @warn "get: data field is deprecated, use getSolverData. Further warnings are suppressed"
+          global getFactorDataWarnOnce = true
+      end
+
       getfield(x, :solverData)
   else
       getfield(x,f)
@@ -61,7 +68,12 @@ Base.setproperty!(x::DFGFactor,f::Symbol, val) = begin
     elseif f == :_internalId
         getfield(x,:_dfgNodeParams)._internalId = val
     elseif f == :data
-        @warn "data field is deprecated, use ...TODO?"
+
+        if !(@isdefined setFactorDataWarnOnce)
+            @warn "set: data field is deprecated, use ...TODO? Further warnings are suppressed"
+            global setFactorDataWarnOnce = true
+        end
+
         setfield!(x,:solverData, val)
     else
         setfield!(x,f,val)

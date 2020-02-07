@@ -44,10 +44,10 @@ dfg = LightDFG{SolverParams}()
     @test issetequal(ls(dfg), ls(retDFG))
     @test issetequal(lsf(dfg), lsf(retDFG))
     for var in ls(dfg)
-        @test_broken getVariable(dfg, var) == getVariable(retDFG, var)
+        @test getVariable(dfg, var) == getVariable(retDFG, var)
     end
     for fact in lsf(dfg)
-        @test_broken getFactor(dfg, fact) == getFactor(retDFG, fact)
+        @test getFactor(dfg, fact) == getFactor(retDFG, fact)
     end
 
     @test length(getBigDataEntries(getVariable(retDFG, :x1))) == 1

@@ -167,8 +167,8 @@ end
 # Gets
 @testset "Gets, Sets, and Accessors" begin
     global dfg,v1,v2,f1
-    @test_skip getVariable(dfg, v1.label) == v1
-    @test_skip getFactor(dfg, f1.label) == f1
+    @test getVariable(dfg, v1.label) == v1
+    @test getFactor(dfg, f1.label) == f1
     @test_throws Exception getVariable(dfg, :nope)
     @test_throws Exception getVariable(dfg, "nope")
     @test_throws Exception getFactor(dfg, :nope)
@@ -176,11 +176,11 @@ end
 
     # Sets
     v1Prime = deepcopy(v1)
-    @test_broken updateVariable!(dfg, v1Prime) == v1 #Maybe move to crud
-    @test_skip updateVariable!(dfg, v1Prime) == getVariable(dfg, v1.label)
+    @test updateVariable!(dfg, v1Prime) == v1 #Maybe move to crud
+    @test updateVariable!(dfg, v1Prime) == getVariable(dfg, v1.label)
     f1Prime = deepcopy(f1)
-    @test_broken updateFactor!(dfg, f1Prime) == f1 #Maybe move to crud
-    @test_skip updateFactor!(dfg, f1Prime) == getFactor(dfg, f1.label)
+    @test updateFactor!(dfg, f1Prime) == f1 #Maybe move to crud
+    @test updateFactor!(dfg, f1Prime) == getFactor(dfg, f1.label)
 
     # Accessors
     @test getLabel(v1) == v1.label
@@ -359,13 +359,13 @@ end
 
     # Filtered - REF DFG #201
     adjMat, v_ll, f_ll = getBiadjacencyMatrix(dfg, solvable=1)
-    @test_skip size(adjMat) == (0,1)
+    @test size(adjMat) == (0,1)
 
     # sparse
     adjMat, v_ll, f_ll = getBiadjacencyMatrix(dfg, solvable=1)
-    @test_skip size(adjMat) == (0,1)
-    @test_skip issetequal(v_ll, [:b])
-    @test_skip f_ll == []
+    @test size(adjMat) == (0,1)
+    @test issetequal(v_ll, [:b])
+    @test f_ll == []
 end
 
 # Deletions
@@ -475,19 +475,20 @@ end
     @test symdiff(ls(summaryGraph), ls(dfg)) == Symbol[]
     @test symdiff(lsf(summaryGraph), lsf(dfg)) == Symbol[]
     # Check all fields are equal for all variables
-    # for v in ls(summaryGraph)
-    #     for field in variableFields
-    #         if field != :softtypename
-    #             @test getfield(getVariable(dfg, v), field) == getfield(getVariable(summaryGraph, v), field)
-    #         else
-    #             # Special case to check the symbol softtype is equal to the full softtype.
-    #             @test Symbol(typeof(getSofttype(getVariable(dfg, v)))) == getSofttype(getVariable(summaryGraph, v))
-    #     end
-    # end
-    # end
-    # for f in lsf(summaryGraph)
-    #     for field in factorFields
-    #         @test getfield(getFactor(dfg, f), field) == getfield(getFactor(summaryGraph, f), field)
-    #     end
-    # end
+    for v in ls(summaryGraph)
+        for field in variableFields
+            if field != :softtypename
+                @test getproperty(getVariable(dfg, v), field) == getfield(getVariable(summaryGraph, v), field)
+            else
+                # Special case to check the symbol softtype is equal to the full softtype.
+                @test Symbol(typeof(getSofttype(getVariable(dfg, v)))) == getSofttype(getVariable(summaryGraph, v))
+            end
+        end
+    end
+    for f in lsf(summaryGraph)
+        for field in factorFields
+            @test getproperty(getFactor(dfg, f), field) == getfield(getFactor(summaryGraph, f), field)
+        end
+    end
+
 end
