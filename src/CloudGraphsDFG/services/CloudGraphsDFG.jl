@@ -429,37 +429,12 @@ function getSubgraph(dfg::CloudGraphsDFG,
     return addToDFG
 end
 
-function getIncidenceMatrix(dfg::CloudGraphsDFG; solvable::Int=0)::Matrix{Union{Nothing, Symbol}}
-    varLabels = sort(listVariables(dfg, solvable=solvable))
-    factLabels = sort(listFactors(dfg, solvable=solvable))
-    vDict = Dict(varLabels .=> [1:length(varLabels)...].+1)
-    fDict = Dict(factLabels .=> [1:length(factLabels)...].+1)
+#NOTE removed, exists in abstract as getAdjacencyMatrixSymbols and likeley to be removed entirely
+# function getAdjacencyMatrix(dfg::CloudGraphsDFG; solvable::Int=0)::Matrix{Union{Nothing, Symbol}}
 
-    adjMat = Matrix{Union{Nothing, Symbol}}(nothing, length(factLabels)+1, length(varLabels)+1)
-    # Set row/col headings
-    adjMat[2:end, 1] = factLabels
-    adjMat[1, 2:end] = varLabels
 
-    # Now ask for all relationships for this session graph
-    loadtx = transaction(dfg.neo4jInstance.connection)
-    query = "START n=node(*) MATCH (n:VARIABLE:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId))-[r:FACTORGRAPH]-(m:FACTOR:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId)) where n.solvable >= $solvable and m.solvable >= $solvable RETURN n.label as variable, m.label as factor;"
-    nodes = loadtx(query; submit=true)
-    # Have to finish the transaction
-    commit(loadtx)
-    if length(nodes.errors) > 0
-        error(string(nodes.errors))
-    end
-    # Add in the relationships
-    varRel = Symbol.(map(node -> node["row"][1], nodes.results[1]["data"]))
-    factRel = Symbol.(map(node -> node["row"][2], nodes.results[1]["data"]))
-    for i = 1:length(varRel)
-        adjMat[fDict[factRel[i]], vDict[varRel[i]]] = factRel[i]
-    end
 
-    return adjMat
-end
-
-function getIncidenceMatrixSparse(dfg::CloudGraphsDFG; solvable::Int=0)::Tuple{SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}
+function getBiadjacencyMatrix(dfg::CloudGraphsDFG; solvable::Int=0)::NamedTuple{(:B, :varLabels, :facLabels),Tuple{SparseMatrixCSC,Vector{Symbol}, Vector{Symbol}}}
     varLabels = listVariables(dfg, solvable=solvable)
     factLabels = listFactors(dfg, solvable=solvable)
     vDict = Dict(varLabels .=> [1:length(varLabels)...])
@@ -484,5 +459,5 @@ function getIncidenceMatrixSparse(dfg::CloudGraphsDFG; solvable::Int=0)::Tuple{S
         adjMat[fDict[factRel[i]], vDict[varRel[i]]] = 1
     end
 
-    return adjMat, varLabels, factLabels
+    return (B=adjMat, varLabels=varLabels, facLabels=factLabels)
 end
