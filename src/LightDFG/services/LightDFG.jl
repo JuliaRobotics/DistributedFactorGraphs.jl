@@ -317,9 +317,7 @@ function getSubgraph(dfg::LightDFG{P,V,F}, variableFactorLabels::Vector{Symbol},
 end
 
 
-#TODO This is just way too strange to call a function  getIncidenceMatrix that calls adjacency_matrix internally,
-# So I'm going with Biadjacency Matrix https://en.wikipedia.org/wiki/Adjacency_matrix#Of_a_bipartite_graph
-# TODO biadjacencyMatrix
+#  Biadjacency Matrix https://en.wikipedia.org/wiki/Adjacency_matrix#Of_a_bipartite_graph
 function getBiadjacencyMatrix(dfg::LightDFG; solvable::Int=0)::NamedTuple{(:B, :varLabels, :facLabels),Tuple{LightGraphs.SparseMatrixCSC,Vector{Symbol}, Vector{Symbol}}}
     varLabels = listVariables(dfg, solvable=solvable)
     factLabels = listFactors(dfg, solvable=solvable)
@@ -330,11 +328,6 @@ function getBiadjacencyMatrix(dfg::LightDFG; solvable::Int=0)::NamedTuple{(:B, :
 
     adjvf = adj[factIndex, varIndex]
     return (B=adjvf, varLabels=varLabels, facLabels=factLabels)
-end
-
-# this would be an incidence matrix
-function getIncidenceMatrix(dfg::LightDFG)
-    return incidence_matrix(dfg.g)
 end
 
 """
