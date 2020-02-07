@@ -2,6 +2,11 @@ using Test
 using DistributedFactorGraphs
 using Dates
 
+#TODO implement with tests on
+# TestFunctorInferenceType1
+# TestCCW1
+
+## Generated compare functions
 # VariableNodeData
 vnd1 = VariableNodeData(TestSofttype1())
 vnd2 = deepcopy(vnd1)
@@ -59,3 +64,29 @@ f2.solverData = gfnd1
 f2.solverData = gfnd2
 @test !(f1 == f2)
 @test !(f1 == f3)
+
+
+## Compare functions
+vnd1 = VariableNodeData(TestSofttype1())
+vnd2 = deepcopy(vnd1)
+vnd3 = VariableNodeData(TestSofttype2())
+@test compare(vnd1, vnd2)
+@test !compare(vnd1, vnd3)
+
+@test compare(vnd1, vnd2)
+vnd2.val = zeros(1,1)
+@test compare(vnd1, vnd2)
+vnd2.val[1] = 0.1
+@test !compare(vnd1, vnd2)
+@test !compare(vnd1, vnd3)
+
+gfnd1 = GenericFunctionNodeData([:a,:b], true, true, [1,2], :symbol, sin)
+gfnd2 = deepcopy(gfnd1)
+gfnd3 = GenericFunctionNodeData([:a,:b], true, true, [1,2], :symbol, cos)
+
+@test compare(gfnd1, gfnd2)
+gfnd2.fncargvID = [:a, :b]
+@test compare(gfnd1, gfnd2)
+gfnd2.fncargvID = [:b, :a]
+@test !(compare(gfnd1, gfnd2))
+@test_broken !(compare(gfnd1, gfnd3))

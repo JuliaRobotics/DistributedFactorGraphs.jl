@@ -140,8 +140,11 @@ else
     @warn "Skipping IncrementalInference driver tests"
 end
 
-struct NotImplementedDFG <: AbstractDFG end
+@testset "Testing LightDFG.FactorGraphs functions" begin
+    include("LightFactorGraphsTests.jl")
+end
 
+struct NotImplementedDFG <: AbstractDFG end
 
 @testset "No Interface tests" begin
     dfg = NotImplementedDFG()
@@ -167,5 +170,11 @@ struct NotImplementedDFG <: AbstractDFG end
     @test_throws ErrorException getFactors(dfg)
     @test_throws ErrorException isFullyConnected(dfg)
     @test_throws ErrorException getNeighbors(dfg, v1)
-    @test_throws ErrorException getNeighbors(dfg, v1)
+    @test_throws ErrorException getNeighbors(dfg, :a)
+
+    @test_throws ErrorException _getDuplicatedEmptyDFG(dfg)
+
+    @test_throws ErrorException isVariable(dfg, :a)
+    @test_throws ErrorException isFactor(dfg, :a)
+
 end

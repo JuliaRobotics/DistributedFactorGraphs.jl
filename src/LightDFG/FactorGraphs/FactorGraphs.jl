@@ -23,13 +23,13 @@ import LightGraphs.SimpleGraphs:
     SimpleEdge, fadj, badj
 
 export
-    FactorGraph,
+    FactorGraph
     # addVariable!,
     # addFactor!,
-    LightBayesGraph,
-    filter_edges,
-    filter_vertices,
-    reverse
+    # LightBayesGraph,
+    # filter_edges,
+    # filter_vertices,
+    # reverse
 
 # import DistributedFactorGraphs: DFGNode
 # const AbstractNodeType = DFGNode
@@ -61,7 +61,7 @@ end
 # fg = FactorGraph{Int, AbstractVariableType, AbstractFactorType}()
 
 FactorGraph() = FactorGraph{Int, AbstractVariableType, AbstractFactorType}()
-FactorGraph{V,F}() where {V <: AbstractVariableType, F <: AbstractFactorType} = FactorGraph{Int, V, F}()
+# FactorGraph{V,F}() where {V <: AbstractVariableType, F <: AbstractFactorType} = FactorGraph{Int, V, F}()
 
 
 function show(io::IO, g::FactorGraph)

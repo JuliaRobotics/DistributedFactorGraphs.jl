@@ -387,16 +387,3 @@ function compareFactorGraphs(fgA::G1,
 
   return TP
 end
-
-
-# """
-#     ==(x::T, y::T) where T <: AbstractPointParametricEst
-# Equality check for AbstractPointParametricEst.
-# """
-# @generated function ==(x::T, y::T) where T <: AbstractPointParametricEst
-#     mapreduce(n -> :(x.$n == y.$n), (a,b)->:($a && $b), fieldnames(x))
-# end
-#
-# @generated function Base.:(==)(x::T, y::T) where T <: Union{DFGFactorSummary, DFGVariableSummary, SkeletonDFGVariable, SkeletonDFGFactor}
-#     mapreduce(n -> :(x.$n == y.$n), (a,b)->:($a && $b), fieldnames(x))
-# end
