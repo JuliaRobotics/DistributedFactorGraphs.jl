@@ -675,14 +675,6 @@ end
 
 
 """
-    $SIGNATURES
-
-Display and return to console the user factor identified by tag name.
-"""
-showFactor(fgl::G, fsym::Symbol) where G <: AbstractDFG = @show getFactor(fgl,fsym)
-
-
-"""
     $(SIGNATURES)
 Produces a dot-format of the graph for visualization.
 """

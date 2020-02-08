@@ -28,6 +28,7 @@ export label, getTimestamp, setTimestamp!, tags, setTags!, estimates, estimate, 
 export DFGVariableSummary, DFGFactorSummary, AbstractDFGSummary
 export addBigDataEntry!, getBigDataEntry, updateBigDataEntry!, deleteBigDataEntry!, getBigDataEntries, getBigDataKeys
 export getNeighborhood, getSubgraph, getSubgraphAroundNode
+export printFactor, printVariable
 
 #Skeleton types
 export SkeletonDFGVariable, SkeletonDFGFactor
