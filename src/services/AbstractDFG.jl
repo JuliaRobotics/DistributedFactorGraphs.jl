@@ -694,7 +694,13 @@ end
 
 """
     $(SIGNATURES)
-Get variable PPE for a given solve key.
+Get the parametric point estimate (PPE) for a variable in the factor graph for a given solve key.
+
+Notes
+- Defaults on keywords `solveKey` and `method`
+
+Related
+getMeanPPE, getMaxPPE, getKDEMean, getKDEFit, getPPEs, getVariablePPEs
 """
 function getPPE(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol=:default)::AbstractPointParametricEst
     v = getVariable(dfg, variablekey)

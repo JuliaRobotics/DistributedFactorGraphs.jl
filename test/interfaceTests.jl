@@ -1,4 +1,4 @@
-# global testDFGAPI = LightDFG
+global testDFGAPI = LightDFG
 # global testDFGAPI = GraphsDFG
 
 #test Specific definitions
@@ -162,7 +162,7 @@ end
     @test setTags!(v3, Set(testTags)) == Set(testTags)
 
     #TODO Document
-    #NOTE there does not exist a thing like setTimestamp!, a variable's timestamp is considered similar to its label.
+    #NOTE  a variable's timestamp is considered similar to its label.  setTimestamp! (not implemented) would create a new variable and call updateVariable!
     v1ts = setTimestamp(v1, testTimestamp)
     @test getTimestamp(v1ts) == testTimestamp
     #follow with updateVariable!(fg, v1ts)
@@ -244,6 +244,9 @@ end
 
     #TODO setSolverData!(f1,...)????
 
+    # Deprecated functions
+    @test @test_deprecated solverData(f1) === f1.solverData
+    @test @test_deprecated getData(f1) === f1.data
     #TODO
     # getFactorFunction
     # getFactorType
@@ -261,9 +264,10 @@ end
     # add update delete
     @test addVariable!(fg, v1) == v1
     @test addVariable!(fg, v2) == v2
-    @test @test_logs (:warn, r"does not exist") updateVariable!(fg, v3) == v3
-    @test updateVariable!(fg, v3) == v3
-    @test_throws ErrorException addVariable!(fg, v3)
+
+    #TODO standardize this error and res also for that matter
+    @test_throws Exception addFactor!(fg, [:a, :nope], f1)
+    @test_throws Exception addFactor!(fg, [v1, v2, v3], f1)
 
     @test addFactor!(fg, [v1, v2], f1) === f1
     @test_throws ErrorException addFactor!(fg, [v1, v2], f1)
@@ -271,6 +275,10 @@ end
     @test updateFactor!(fg, f2) === f2
     @test_throws ErrorException addFactor!(fg, [:b, :c], f2)
     #TODO Graphs.jl, but look at refactoring absract @test_throws ErrorException addFactor!(fg, f2)
+
+    @test @test_logs (:warn, r"does not exist") updateVariable!(fg, v3) == v3
+    @test updateVariable!(fg, v3) == v3
+    @test_throws ErrorException addVariable!(fg, v3)
 
     #deletions
     @test deleteVariable!(fg, v3) == v3
@@ -331,6 +339,243 @@ end
 end
 
 
+@testset "tags" begin
+    #
+
+    v1Tags = deepcopy(getTags(v1))
+    @test issetequal(v1Tags, v1_tags)
+    @test issetequal(listTags(fg, :a), v1Tags)
+    @test issetequal(mergeTags!(fg, :a, [:TAG]), v1Tags ∪ [:TAG])
+    @test issetequal(removeTags!(fg, :a, [:TAG]), v1Tags)
+    @test emptyTags!(fg, :a) == Set{Symbol}()
+
+
+    v2Tags = [listTags(fg, :b)...]
+    @test hasTags(fg, :b, [v2Tags...])
+    @test hasTags(fg, :b, [:LANDMARK, :TAG], matchAll=false)
+
+    @test hasTagsNeighbors(fg, :f1, [:LANDMARK])
+    @test !hasTagsNeighbors(fg, :f1, [:LANDMARK, :TAG])
+
+end
+
+
+@testset "Parametric Point Estimates" begin
+
+    #  - `getPPEs`
+    # **Set**
+    # > - `emptyPPE!`
+    # > - `mergePPE!`
+
+    # Add a new PPE of type MeanMaxPPE to :x0
+    ppe = MeanMaxPPE(:default, [0.0], [0.0], [0.0])
+
+    @test getMaxPPE(ppe) === ppe.max
+    @test getMeanPPE(ppe) === ppe.mean
+    @test getSuggestedPPE(ppe) === ppe.suggested
+    @test getLastUpdatedTimestamp(ppe) === ppe.lastUpdatedTimestamp
+
+    @test addPPE!(fg, :a, ppe) == ppe
+    @test_throws ErrorException addPPE!(fg, :a, ppe)
+
+
+    @test listPPE(fg, :a) == [:default]
+    # Get the data back - note that this is a reference to above.
+    @test getPPE(fg, :a, :default) == ppe
+
+    # Delete it
+    @test deletePPE!(fg, :a, :default) == ppe
+
+    @test_throws ErrorException getPPE(fg, :a, :default)
+    # Update add it
+    #TODO warn key not exist
+    @test @test_logs (:warn, r"does not exist") updatePPE!(fg, :a, ppe, :default) == ppe
+    # Update update it
+    @test updatePPE!(fg, :a, ppe, :default) == ppe
+    # Bulk copy PPE's for x0 and x1
+    @test updatePPE!(fg, [v1], :default) == nothing
+    # Delete it
+    @test deletePPE!(fg, :a, :default) == ppe
+
+    #FIXME copied from lower
+    @test @test_deprecated getVariablePPEs(v1) == v1.ppeDict
+    @test_throws KeyError getVariablePPE(v1, :notfound)
+
+    # Add a new PPE of type MeanMaxPPE to :x0
+    ppe = MeanMaxPPE(:default, [0.0], [0.0], [0.0])
+    addPPE!(fg, :a, ppe)
+    @test listPPE(fg, :a) == [:default]
+    # Get the data back - note that this is a reference to above.
+    @test getPPE(fg, :a, :default) == ppe
+
+    # Delete it
+    @test deletePPE!(fg, :a, :default) == ppe
+    # Update add it
+    updatePPE!(fg, :a, ppe, :default)
+    # Update update it
+    updatePPE!(fg, :a, ppe, :default)
+    # Bulk copy PPE's for x0 and x1
+    updatePPE!(fg, [v1], :default)
+    # Delete it
+    @test deletePPE!(fg, :a, :default) == ppe
+
+    #TODO DEPRECATE
+    # getEstimates
+    # estimates
+    # getVariablePPEs
+    # getVariablePPE
+
+    # newvar = deepcopy(v1)
+    # getPPEDict(newvar)[:default] = MeanMaxPPE(:default, [150.0], [100.0], [50.0])
+    # @test !(getPPEDict(newvar) == getPPEDict(v1))
+    # delete!(getVariablePPEs(newvar), :default)
+    # getVariablePPEs(newvar)[:second] = MeanMaxPPE(:second, [15.0], [10.0], [5.0])
+    # @test symdiff(collect(keys(getVariablePPEs(v1))), [:default, :second]) == Symbol[]
+    # @test symdiff(collect(keys(getVariablePPEs(newvar))), [:second]) == Symbol[]
+    # # Get the source too.
+    # @test symdiff(collect(keys(getVariablePPEs(getVariable(dfg, :a)))), [:default, :second]) == Symbol[]
+    #update
+end
+
+@testset "Variable Solver Data" begin
+# #### Variable Solver Data
+# **CRUD**
+#  - `getVariableSolverData`
+#  - `addVariableSolverData!`
+#  - `updateVariableSolverData!`
+#  - `deleteVariableSolverData!`
+#
+# > - `getVariableSolverDataAll` #TODO Data is already plural so maybe Variables, All or Dict
+# > - `getVariablesSolverData`
+#
+# **Set like**
+#  - `listVariableSolverData`
+#
+# > - `emptyVariableSolverData!` #TODO ?
+# > - `mergeVariableSolverData!` #TODO ?
+#
+# **VariableNodeData**
+#  - `getSolveInProgress`
+
+    vnd = VariableNodeData{TestSofttype1}()
+    @test addVariableSolverData!(fg, :a, vnd, :parametric) == vnd
+
+    @test_throws ErrorException addVariableSolverData!(fg, :a, vnd, :parametric)
+
+    @test issetequal(listVariableSolverData(fg, :a), [:default, :parametric])
+
+    # Get the data back - note that this is a reference to above.
+    vndBack = getVariableSolverData(fg, :a, :parametric)
+    @test vndBack == vnd
+
+
+    # Delete it
+    @test deleteVariableSolverData!(fg, :a, :parametric) == vndBack
+    # Update add it
+    #TODO warn key not exist
+    @test @test_logs (:warn, r"does not exist") updateVariableSolverData!(fg, :a, vnd, :parametric) == vnd
+
+    # Update update it
+    @test updateVariableSolverData!(fg, :a, vnd, :parametric) == vnd
+    # Bulk copy update x0
+    @test updateVariableSolverData!(fg, [v1], :default) == nothing
+
+    # Delete parametric from v1
+    @test deleteVariableSolverData!(fg, :a, :parametric) == vnd
+
+    @test_throws ErrorException getVariableSolverData(fg, :a, :parametric)
+
+    #FIXME copied from lower
+    @test getSolverData(v1) === v1.solverDataDict[:default]
+    @test @test_logs (:warn, r"[Dd]eprecate") getData(v1) === v1.solverDataDict[:default]
+    @test @test_logs (:warn, r"[Dd]eprecate") solverData(v1, :default) === v1.solverDataDict[:default]
+
+    # Add new VND of type ContinuousScalar to :x0
+    # Could also do VariableNodeData(ContinuousScalar())
+
+    vnd = VariableNodeData{TestSofttype1}()
+    addVariableSolverData!(fg, :a, vnd, :parametric)
+    @test setdiff(listVariableSolverData(fg, :a), [:default, :parametric]) == []
+    # Get the data back - note that this is a reference to above.
+    vndBack = getVariableSolverData(fg, :a, :parametric)
+    @test vndBack == vnd
+    # Delete it
+    @test deleteVariableSolverData!(fg, :a, :parametric) == vndBack
+    # Update add it
+    updateVariableSolverData!(fg, :a, vnd, :parametric)
+    # Update update it
+    updateVariableSolverData!(fg, :a, vnd, :parametric)
+    # Bulk copy update x0
+    updateVariableSolverData!(fg, [v1], :default)
+    # Delete parametric from v1
+    deleteVariableSolverData!(fg, :a, :parametric)
+
+
+    #TODO solverDataDict() not deprecated
+    @test getSolverDataDict(newvar) == getSolverDataDict(v1)
+
+    mergeUpdateVariableSolverData!(fg, newvar)
+
+
+end
+
+@testset "BigData Entries" begin
+
+    # getBigDataEntry
+    # addBigDataEntry
+    # updateBigDataEntry
+    # deleteBigDataEntry
+    # getBigDataEntries
+    # getBigDataKeys
+    # listBigDataEntries
+    # emptyBigDataEntries
+    # mergeBigDataEntries
+
+    oid = zeros(UInt8,12); oid[12] = 0x01
+    de1 = MongodbBigDataEntry(:key1, NTuple{12,UInt8}(oid))
+
+    oid = zeros(UInt8,12); oid[12] = 0x02
+    de2 = MongodbBigDataEntry(:key2, NTuple{12,UInt8}(oid))
+
+    oid = zeros(UInt8,12); oid[12] = 0x03
+    de2_update = MongodbBigDataEntry(:key2, NTuple{12,UInt8}(oid))
+
+    #add
+    v1 = getVariable(fg, :a)
+    @test addBigDataEntry!(v1, de1) == de1
+    @test addBigDataEntry!(fg, :a, de2) == de2
+    @test_throws ErrorException addBigDataEntry!(v1, de1)
+    @test de2 in getBigDataEntries(v1)
+
+    #get
+    @test deepcopy(de1) == getBigDataEntry(v1, :key1)
+    @test deepcopy(de2) == getBigDataEntry(fg, :a, :key2)
+    @test_throws ErrorException getBigDataEntry(v2, :key1)
+    @test_throws ErrorException getBigDataEntry(fg, :b, :key1)
+
+    #update
+    @test updateBigDataEntry!(fg, :a, de2_update) == de2_update
+    @test deepcopy(de2_update) == getBigDataEntry(fg, :a, :key2)
+    @test @test_logs (:warn, r"does not exist") updateBigDataEntry!(fg, :b, de2_update) == de2_update
+
+    #list
+    entries = getBigDataEntries(fg, :a)
+    @test length(entries) == 2
+    @test issetequal(map(e->e.key, entries), [:key1, :key2])
+    @test length(getBigDataEntries(fg, :b)) == 1
+
+    @test issetequal(getBigDataKeys(fg, :a), [:key1, :key2])
+    @test getBigDataKeys(fg, :b) == Symbol[:key2]
+
+    #delete
+    @test deleteBigDataEntry!(v1, :key1) == v1
+    @test getBigDataKeys(v1) == Symbol[:key2]
+    #delete from dfg
+    @test deleteBigDataEntry!(fg, :a, :key2) == v1
+    @test getBigDataKeys(v1) == Symbol[]
+end
+
+
 @testset "TODO Sorteer groep" begin
 
     @testset "Listing Variables and Factors with filters" begin
@@ -371,6 +616,26 @@ end
         # FIXME return: Symbol[:b, :b] == Symbol[:b]
         varNearTs = findVariableNearTimestamp(fg, now())
         @test_skip varNearTs[1][1] == [:b]
+
+
+        # Additional testing for https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/201
+        # list solvable
+        @test symdiff([:a, :b], listVariables(fg, solvable=0)) == []
+        @test listVariables(fg, solvable=1) == [:b]
+
+        @test listFactors(fg, solvable=1) == [:f1]
+        @test listFactors(fg, solvable=0) == [:f1]
+        @test getFactors(fg, solvable=0)[1] === f1
+
+        @test lsf(fg, :a) == [f1.label]
+
+        # Tags
+        @test ls(fg, tags=[:POSE]) == []
+        @test issetequal(ls(fg, tags=[:POSE, :LANDMARK]), ls(fg, tags=[:VARIABLE]))
+
+        # Regexes
+        @test ls(fg, r"a") == [v1.label]
+        @test lsf(fg, r"f*") == [f1.label]
 
         #TODO test filters and options
         # regexFilter::Union{Nothing, Regex}=nothing;
@@ -442,599 +707,56 @@ end
         l = [:a1, :X1, :b1c2, :x2_2, :c, :x1, :x10, :x1_1, :x10_10,:a, :x2_1, :xy3, :l1, :x1_2, :x1l1f1, Symbol("1a1"), :x1x2f1]
         @test sort(l, lt=DistributedFactorGraphs.natural_lt) == [Symbol("1a1"), :X1, :a, :a1, :b1c2, :c, :l1, :x1, :x1_1, :x1_2, :x1l1f1, :x1x2f1, :x2_1, :x2_2, :x10, :x10_10, :xy3]
     end
+
+    @testset "Some more helpers to sort out" begin
+        # TODO
+        #solver data is initialized
+        @test !isInitialized(fg, :a)
+        @test !isInitialized(v2)
+        @test @test_logs (:error, r"Variable does not have solver data") !isInitialized(v2, key=:second)
+
+        # isSolvable and isSolveInProgress
+        #TODO implement or deprecate isSolvable
+        @test getSolvable(v1) == 0
+        @test getSolvable(v2) == 1
+        @test getSolvable(f1) == 1
+
+        #TODO isSolveInProgress was not deprecated
+        @test getSolveInProgress(v1) == 1
+        @test getSolveInProgress(f1) == 1
+
+
+        @test setSolvable!(v1, 1) == 1
+        @test getSolvable(v1) == 1
+        @test setSolvable!(fg, v1.label, 0) == 0
+        @test getSolvable(v1) == 0
+        @test setSolvable!(f1, 1) == 1
+        @test getSolvable(fg, f1.label) == 1
+        @test setSolvable!(fg, f1.label, 0) == 0
+        @test getSolvable(f1) == 0
+
+        # isFactor and isVariable
+        @test isFactor(fg, f1.label)
+        @test !isFactor(fg, v1.label)
+        @test isVariable(fg, v1.label)
+        @test !isVariable(fg, f1.label)
+        @test !isVariable(fg, :doesntexist)
+        @test !isFactor(fg, :doesntexist)
+
+        # test solveCount for variable
+        @test !isSolved(v1)
+        @test getSolvedCount(v1) == 0
+        setSolvedCount!(v1, 1)
+        @test getSolvedCount(v1) == 1
+        @test isSolved(v1)
+        setSolvedCount!(fg, getLabel(v1), 2)
+        @test getSolvedCount(fg, getLabel(v1)) == 2
+    end
 end
 
-@testset "tags" begin
-    #
 
-    v1Tags = deepcopy(getTags(v1))
-    @test issetequal(v1Tags, v1_tags)
-    @test issetequal(listTags(fg, :a), v1Tags)
-    @test issetequal(mergeTags!(fg, :a, [:TAG]), v1Tags ∪ [:TAG])
-    @test issetequal(removeTags!(fg, :a, [:TAG]), v1Tags)
-    @test emptyTags!(fg, :a) == Set{Symbol}()
 
 
-    v2Tags = [listTags(fg, :b)...]
-    @test hasTags(fg, :b, [v2Tags...])
-    @test hasTags(fg, :b, [:LANDMARK, :TAG], matchAll=false)
-
-    @test hasTagsNeighbors(fg, :f1, [:LANDMARK])
-    @test !hasTagsNeighbors(fg, :f1, [:LANDMARK, :TAG])
-
-end
-
-
-@testset "Parametric Point Estimates" begin
-
-    #  - `getPPEs`
-    # **Set**
-    # > - `emptyPPE!`
-    # > - `mergePPE!`
-
-    # Add a new PPE of type MeanMaxPPE to :x0
-    ppe = MeanMaxPPE(:default, [0.0], [0.0], [0.0])
-
-    @test getMaxPPE(ppe) === ppe.max
-    @test getMeanPPE(ppe) === ppe.mean
-    @test getSuggestedPPE(ppe) === ppe.suggested
-    @test getLastUpdatedTimestamp(ppe) === ppe.lastUpdatedTimestamp
-
-    @test addPPE!(fg, :a, ppe) == ppe
-    @test_throws ErrorException addPPE!(fg, :a, ppe)
-
-
-    @test listPPE(fg, :a) == [:default]
-    # Get the data back - note that this is a reference to above.
-    @test getPPE(fg, :a, :default) == ppe
-
-    # Delete it
-    @test deletePPE!(fg, :a, :default) == ppe
-
-    @test_throws ErrorException getPPE(fg, :a, :default)
-    # Update add it
-    #TODO warn key not exist
-    @test @test_logs (:warn, r"does not exist") updatePPE!(fg, :a, ppe, :default) == ppe
-    # Update update it
-    @test updatePPE!(fg, :a, ppe, :default) == ppe
-    # Bulk copy PPE's for x0 and x1
-    @test updatePPE!(fg, [v1], :default) == nothing
-    # Delete it
-    @test deletePPE!(fg, :a, :default) == ppe
-
-end
-
-@testset "Variable Solver Data" begin
-# #### Variable Solver Data
-# **CRUD**
-#  - `getVariableSolverData`
-#  - `addVariableSolverData!`
-#  - `updateVariableSolverData!`
-#  - `deleteVariableSolverData!`
-#
-# > - `getVariableSolverDataAll` #TODO Data is already plural so maybe Variables, All or Dict
-# > - `getVariablesSolverData`
-#
-# **Set like**
-#  - `listVariableSolverData`
-#
-# > - `emptyVariableSolverData!` #TODO ?
-# > - `mergeVariableSolverData!` #TODO ?
-#
-# **VariableNodeData**
-#  - `getSolveInProgress`
-
-    vnd = VariableNodeData{TestSofttype1}()
-    @test addVariableSolverData!(fg, :a, vnd, :parametric) == vnd
-
-    @test_throws ErrorException addVariableSolverData!(fg, :a, vnd, :parametric)
-
-    @test issetequal(listVariableSolverData(fg, :a), [:default, :parametric])
-
-    # Get the data back - note that this is a reference to above.
-    vndBack = getVariableSolverData(fg, :a, :parametric)
-    @test vndBack == vnd
-
-
-    # Delete it
-    @test deleteVariableSolverData!(fg, :a, :parametric) == vndBack
-    # Update add it
-    #TODO warn key not exist
-    @test @test_logs (:warn, r"does not exist") updateVariableSolverData!(fg, :a, vnd, :parametric) == vnd
-
-    # Update update it
-    @test updateVariableSolverData!(fg, :a, vnd, :parametric) == vnd
-    # Bulk copy update x0
-    @test updateVariableSolverData!(fg, [v1], :default) == nothing
-
-    # Delete parametric from v1
-    @test deleteVariableSolverData!(fg, :a, :parametric) == vnd
-
-    @test_throws ErrorException getVariableSolverData(fg, :a, :parametric)
-
-end
-
-@testset "BigData Entries" begin
-
-    # getBigDataEntry
-    # addBigDataEntry
-    # updateBigDataEntry
-    # deleteBigDataEntry
-    # getBigDataEntries
-    # getBigDataKeys
-    # listBigDataEntries
-    # emptyBigDataEntries
-    # mergeBigDataEntries
-
-    oid = zeros(UInt8,12); oid[12] = 0x01
-    de1 = MongodbBigDataEntry(:key1, NTuple{12,UInt8}(oid))
-
-    oid = zeros(UInt8,12); oid[12] = 0x02
-    de2 = MongodbBigDataEntry(:key2, NTuple{12,UInt8}(oid))
-
-    oid = zeros(UInt8,12); oid[12] = 0x03
-    de2_update = MongodbBigDataEntry(:key2, NTuple{12,UInt8}(oid))
-
-    #add
-    v1 = getVariable(fg, :a)
-    @test addBigDataEntry!(v1, de1) == de1
-    @test addBigDataEntry!(fg, :a, de2) == de2
-    @test_throws ErrorException addBigDataEntry!(v1, de1)
-    @test de2 in getBigDataEntries(v1)
-
-    #get
-    @test deepcopy(de1) == getBigDataEntry(v1, :key1)
-    @test deepcopy(de2) == getBigDataEntry(fg, :a, :key2)
-    @test_throws ErrorException getBigDataEntry(v2, :key1)
-    @test_throws ErrorException getBigDataEntry(fg, :b, :key1)
-
-    #update
-    @test updateBigDataEntry!(fg, :a, de2_update) == de2_update
-    @test deepcopy(de2_update) == getBigDataEntry(fg, :a, :key2)
-    @test @test_logs (:warn, r"does not exist") updateBigDataEntry!(fg, :b, de2_update) == de2_update
-
-    #list
-    entries = getBigDataEntries(fg, :a)
-    @test length(entries) == 2
-    @test issetequal(map(e->e.key, entries), [:key1, :key2])
-    @test length(getBigDataEntries(fg, :b)) == 1
-
-    @test issetequal(getBigDataKeys(fg, :a), [:key1, :key2])
-    @test getBigDataKeys(fg, :b) == Symbol[:key2]
-
-    #delete
-    @test deleteBigDataEntry!(v1, :key1) == v1
-    @test getBigDataKeys(v1) == Symbol[:key2]
-    #delete from dfg
-    @test deleteBigDataEntry!(fg, :a, :key2) == v1
-    @test getBigDataKeys(v1) == Symbol[]
-end
-
-## ========================================================================== ##
-
-## ========================================================================== ##
-#=
-dfg = testDFGAPI{NoSolverParams}()
-
-#add types for softtypes
-struct TestSofttype1 <: InferenceVariable end
-struct TestSofttype2 <: InferenceVariable end
-
-v1 = DFGVariable(:a, TestSofttype1())
-v2 = DFGVariable(:b, TestSofttype2())
-f1 = DFGFactor{Int, :Symbol}(:f1)
-
-#add tags for filters
-union!(v1.tags, [:VARIABLE, :POSE])
-union!(v2.tags, [:VARIABLE, :LANDMARK])
-union!(f1.tags, [:FACTOR])
-
-st1 = TestSofttype1()
-st2 = TestSofttype2()
-
-getSolverData(v1).softtype = deepcopy(st1)
-getSolverData(v2).softtype = deepcopy(st2)
-
-# set v1 to solvable=0
-setSolvable!(v1, 0)
-# set v1 and f1 solveInProgress
-getSolverData(v1).solveInProgress = 1
-getSolverData(f1).solveInProgress = 1
-
-
-# NOTE: Just for testing
-# Override compareAllSpecial for testing our DFGFactor{Int, :Symbol}
-# as we don't have IIF which overloads with the proper compareSpecial(::CommonConvWrapper)
-import DistributedFactorGraphs: compareAllSpecial
-function compareAllSpecial(A::T1, B::T2;
-                    skip=Symbol[], show::Bool=true) where {T1 <: Int, T2 <: Int}
-  #
-  T1 != T2 && return false
-  return compareAll(A, B, skip=skip, show=show)
-end
-
-# @testset "Creating Graphs" begin
-global dfg,v1,v2,f1
-addVariable!(dfg, v1)
-addVariable!(dfg, v2)
-addFactor!(dfg, [v1, v2], f1)
-@test_throws Exception addFactor!(dfg, DFGFactor{Int, :Symbol}("f2"), [v1, DFGVariable("Nope")])
-# end
-##
-@testset "Adding Removing Nodes" begin
-    dfg2 = testDFGAPI{NoSolverParams}()
-    v1 = DFGVariable(:a, TestSofttype1())
-    v2 = DFGVariable(:b, TestSofttype1())
-    v3 = DFGVariable(:c, TestSofttype1())
-    f1 = DFGFactor{Int, :Symbol}(:f1)
-    f2 = DFGFactor{Int, :Symbol}(:f2)
-    # @testset "Creating Graphs" begin
-    @test addVariable!(dfg2, v1)
-    @test addVariable!(dfg2, v2)
-    @test_throws ErrorException updateVariable!(dfg2, v3)
-    @test addVariable!(dfg2, v3)
-    @test_throws ErrorException addVariable!(dfg2, v3)
-    @test addFactor!(dfg2, [v1, v2], f1)
-    @test_throws ErrorException addFactor!(dfg2, [v1, v2], f1)
-    @test_throws ErrorException updateFactor!(dfg2, f2)
-    @test addFactor!(dfg2, [:b, :c], f2)
-    @test deleteVariable!(dfg2, v3) == v3
-    @test symdiff(ls(dfg2),[:a,:b]) == []
-    @test deleteFactor!(dfg2, f2) == f2
-    @test lsf(dfg2) == [:f1]
-end
-
-@testset "Listing Nodes" begin
-    global dfg,v1,v2,f1
-    @test length(ls(dfg)) == 2
-    @test length(lsf(dfg)) == 1
-    @test symdiff([:a, :b], listVariables(dfg)) == []
-    # Additional testing for https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/201
-    @test symdiff([:a, :b], listVariables(dfg, solvable=0)) == []
-    @test listVariables(dfg, solvable=1) == [:b]
-      # WHAT -- still does not work?
-      # v2b = deepcopy(v2)
-      # setTags!(v2b, [:VARIABLE; :LANDMARK])
-      # setSolvable!(v2b, 1)
-      # setTimestamp!(v2b, getTimestamp(getVariables(dfg, solvable=1)[1]))
-    @test getVariables(dfg, solvable=1) == [v2]
-    @test listFactors(dfg) == [:f1]
-    @test listFactors(dfg, solvable=1) == []
-    @test listFactors(dfg, solvable=0) == [:f1]
-    @test getFactors(dfg, solvable=0) == [f1]
-    #
-    @test lsf(dfg, :a) == [f1.label]
-    # Tags
-    @test ls(dfg, tags=[:POSE]) == [:a]
-    @test symdiff(ls(dfg, tags=[:POSE, :LANDMARK]), ls(dfg, tags=[:VARIABLE])) == []
-    # Regexes
-    @test ls(dfg, r"a") == [v1.label]
-    @test lsf(dfg, r"f*") == [f1.label]
-    # Accessors
-    @test getAddHistory(dfg) == [:a, :b] #, :f1
-    @test getDescription(dfg) != nothing
-    @test_throws ErrorException getLabelDict(dfg)
-    # Existence
-    @test exists(dfg, :a) == true
-    @test exists(dfg, v1) == true
-    @test exists(dfg, :nope) == false
-    # Sorting of results
-    # TODO - this function needs to be cleaned up
-    unsorted = [:x1_3;:x1_6;:l1;:april1] #this will not work for :x1x2f1
-    @test sortDFG(unsorted) == sortVarNested(unsorted)
-    @test sort([:x1x2f1, :x1l1f1], lt=DistributedFactorGraphs.natural_lt) == [:x1l1f1, :x1x2f1]
-    l = [:a1, :X1, :b1c2, :x2_2, :c, :x1, :x10, :x1_1, :x10_10,:a, :x2_1, :xy3, :l1, :x1_2, :x1l1f1, Symbol("1a1"), :x1x2f1]
-    @test sort(l, lt=DistributedFactorGraphs.natural_lt) == [Symbol("1a1"), :X1, :a, :a1, :b1c2, :c, :l1, :x1, :x1_1, :x1_2, :x1l1f1, :x1x2f1, :x2_1, :x2_2, :x10, :x10_10, :xy3]
-end
-
-# Gets
-@testset "Gets, Sets, and Accessors" begin
-    global dfg,v1,v2,f1
-    #TODO compare variable and factor
-    @test getVariable(dfg, v1.label) == v1
-    @test_broken getVariable(dfg, v2.label) != v1
-    @test getFactor(dfg, f1.label) == f1
-    f2 = deepcopy(f1)
-    f2.label = :something
-    @test f2 != f1
-    #TODO we should really finish defining error behaviour
-    @test_throws Exception getVariable(dfg, :nope)
-    # @test getVariable(dfg, :nope) == nothing
-    @test_throws Exception getVariable(dfg, "nope")
-    @test_throws Exception getFactor(dfg, :nope)
-    @test_throws Exception getFactor(dfg, "nope")
-
-    # Sets
-    v1Prime = deepcopy(v1)
-    #updateVariable! returns the variable updated, so should be equal
-    @test_broken updateVariable!(dfg, v1Prime) == v1
-    f1Prime = deepcopy(f1)
-    #updateFactor! returns the factor updated, so should be equal
-    @test_broken updateFactor!(dfg, f1Prime) == f1
-    # Revert
-    v1 = getVariable(dfg, v1.label)
-    f1 = getFactor(dfg, f1.label)
-
-    # Accessors
-    @test getLabel(v1) == v1.label
-    @test getTags(v1) == v1.tags
-    testTags = [:ha, :ha23]
-    @test setTags!(v1, testTags) == Set(testTags)
-    @test getTags(v1) == Set(testTags)
-
-    @test getTimestamp(v1) == v1.timestamp
-    testTimestamp = now()
-    #TODO set timestamp immutable, confirm behaviour
-    v1ts = setTimestamp(v1, testTimestamp)
-    updateVariable!(dfg, v1ts)
-    @test getVariable(dfg, v1ts.label) == v1ts
-    @test v1ts != v1
-    v1 = getVariable(dfg, v1ts.label)
-    @test getTimestamp(v1) == testTimestamp
-
-    @test getTimestamp(f1) == f1.timestamp
-    testTimestamp = now()
-    @test setTimestamp!(f1, testTimestamp) == testTimestamp
-    @test getTimestamp(f1) == f1.timestamp
-
-    @test getVariablePPEs(v1) == v1.ppeDict
-    @test getVariablePPE(v1, :notfound) == nothing
-    @test getSolverData(v1) === v1.solverDataDict[:default]
-    @test @test_logs (:warn, r"[Dd]eprecate") getData(v1) === v1.solverDataDict[:default]
-    @test @test_logs (:warn, r"[Dd]eprecate") solverData(v1, :default) === v1.solverDataDict[:default]
-    @test getSolverDataDict(v1) == v1.solverDataDict
-    @test getInternalId(v1) == v1._internalId
-
-    #TODO: Finish
-    # Add new VND of type ContinuousScalar to :x0
-    # Could also do VariableNodeData(ContinuousScalar())
-    vnd = VariableNodeData{TestSofttype1}()
-    addVariableSolverData!(dfg, :a, vnd, :parametric)
-    @test setdiff(listVariableSolverData(dfg, :a), [:default, :parametric]) == []
-    # Get the data back - note that this is a reference to above.
-    vndBack = getVariableSolverData(dfg, :a, :parametric)
-    @test vndBack == vnd
-    # Delete it
-    @test deleteVariableSolverData!(dfg, :a, :parametric) == vndBack
-    # Update add it
-    updateVariableSolverData!(dfg, :a, vnd, :parametric)
-    # Update update it
-    updateVariableSolverData!(dfg, :a, vnd, :parametric)
-    # Bulk copy update x0
-    updateVariableSolverData!(dfg, [v1], :default)
-    # Delete parametric from v1
-    deleteVariableSolverData!(dfg, :a, :parametric)
-
-    #TODO: Finish
-    # Add a new PPE of type MeanMaxPPE to :x0
-    ppe = MeanMaxPPE(:default, [0.0], [0.0], [0.0])
-    addPPE!(dfg, :a, ppe)
-    @test listPPE(dfg, :a) == [:default]
-    # Get the data back - note that this is a reference to above.
-    @test getPPE(dfg, :a, :default) == ppe
-
-    # Delete it
-    @test deletePPE!(dfg, :a, :default) == ppe
-    # Update add it
-    updatePPE!(dfg, :a, ppe, :default)
-    # Update update it
-    updatePPE!(dfg, :a, ppe, :default)
-    # Bulk copy PPE's for x0 and x1
-    updatePPE!(dfg, [v1], :default)
-    # Delete it
-    @test deletePPE!(dfg, :a, :default) == ppe
-
-    #TODO I don't know what is supposed to happen to softtype
-    @test getSofttype(v1) == st1
-    @test getSofttype(v2) == st2
-
-    @test getLabel(f1) == f1.label
-    @test getTags(f1) == f1.tags
-    @test setTags!(v1, testTags) == Set(testTags)
-    @test getTags(v1) == Set(testTags)
-
-    @test getSolverData(f1) == f1.solverData
-    # Deprecated functions
-    @test @test_logs (:warn, r"[Dd]eprecate") solverData(f1) == f1.solverData
-    # REMOVED? @test getData(f1) == f1.data
-    # Internal function
-    @test getInternalId(f1) == f1._dfgNodeParams._internalId
-
-    @test getSolverParams(dfg) != nothing
-    @test setSolverParams!(dfg, getSolverParams(dfg)) == getSolverParams(dfg)
-
-    #solver data is initialized
-    @test !isInitialized(dfg, :a)
-    @test !isInitialized(v2)
-    @test @test_logs (:error, r"Variable does not have solver data") !isInitialized(v2, key=:second)
-    # isSolvable and isSolveInProgress
-    #TODO implement or deprecate isSolvable
-    @test getSolvable(v1) == 0
-    @test getSolvable(v2) == 1
-    @test getSolvable(f1) == 0
-    @test getSolvable(v1) == 0
-
-    #TODO isSolveInProgress was not deprecated
-    @test getSolveInProgress(v1) == 1
-    @test getSolveInProgress(f1) == 1
-    # setSolvable, getSolvable, and variants
-    v1 = getVariable(dfg, v1.label)
-    f1 = getFactor(dfg, f1.label)
-    @test setSolvable!(v1, 1) == 1
-    @test getSolvable(v1) == 1
-    @test setSolvable!(dfg, v1.label, 0) == 0
-    @test getSolvable(v1) == 0
-    @test setSolvable!(f1, 1) == 1
-    @test getSolvable(dfg, f1.label) == 1
-    @test setSolvable!(dfg, f1.label, 0) == 0
-    @test getSolvable(f1) == 0
-
-
-    # isFactor and isVariable
-    @test isFactor(dfg, f1.label)
-    @test !isFactor(dfg, v1.label)
-    @test isVariable(dfg, v1.label)
-    @test !isVariable(dfg, f1.label)
-    @test !isVariable(dfg, :doesntexist)
-    @test !isFactor(dfg, :doesntexist)
-
-    # test solveCount for variable
-    @test !isSolved(v1)
-    @test getSolvedCount(v1) == 0
-    setSolvedCount!(v1, 1)
-    @test getSolvedCount(v1) == 1
-    @test isSolved(v1)
-    setSolvedCount!(dfg, getLabel(v1), 2)
-    @test getSolvedCount(dfg, getLabel(v1)) == 2
-
-    # Session, robot, and user small data tests
-    smallUserData = Dict{Symbol, String}(:a => "42", :b => "Hello")
-    smallRobotData = Dict{Symbol, String}(:a => "43", :b => "Hello")
-    smallSessionData = Dict{Symbol, String}(:a => "44", :b => "Hello")
-    setUserData!(dfg, deepcopy(smallUserData))
-    setRobotData!(dfg, deepcopy(smallRobotData))
-    setSessionData!(dfg, deepcopy(smallSessionData))
-    @test getUserData(dfg) == smallUserData
-    @test getRobotData(dfg) == smallRobotData
-    @test getSessionData(dfg) == smallSessionData
-
-end
-
-@testset "BigData Entries" begin
-    oid = zeros(UInt8,12); oid[12] = 0x01
-    de1 = MongodbBigDataEntry(:key1, NTuple{12,UInt8}(oid))
-
-    oid = zeros(UInt8,12); oid[12] = 0x02
-    de2 = MongodbBigDataEntry(:key2, NTuple{12,UInt8}(oid))
-
-    oid = zeros(UInt8,12); oid[12] = 0x03
-    de2_update = MongodbBigDataEntry(:key2, NTuple{12,UInt8}(oid))
-
-    #add
-    v1 = getVariable(dfg, :a)
-    @test addBigDataEntry!(v1, de1) == v1
-    @test addBigDataEntry!(dfg, :a, de2) == v1
-    @test_throws ErrorException addBigDataEntry!(v1, de1)
-    @test de2 in getBigDataEntries(v1)
-
-    #get
-    @test deepcopy(de1) == getBigDataEntry(v1, :key1)
-    @test deepcopy(de2) == getBigDataEntry(dfg, :a, :key2)
-    @test getBigDataEntry(v2, :key1) == nothing
-    @test getBigDataEntry(dfg, :b, :key1) == nothing
-
-    #update
-    @test updateBigDataEntry!(dfg, :a, de2_update) == v1
-    @test deepcopy(de2_update) == getBigDataEntry(dfg, :a, :key2)
-    @test @test_logs (:error, r"does not exist") updateBigDataEntry!(dfg, :b, de2_update) == nothing
-
-    #list
-    entries = getBigDataEntries(dfg, :a)
-    @test length(entries) == 2
-    @test symdiff(map(e->e.key, entries), [:key1, :key2]) == Symbol[]
-    @test length(getBigDataEntries(dfg, :b)) == 0
-
-    @test symdiff(getBigDataKeys(dfg, :a), [:key1, :key2]) == Symbol[]
-    @test getBigDataKeys(dfg, :b) == Symbol[]
-
-    #delete
-    @test deleteBigDataEntry!(v1, :key1) == v1
-    @test getBigDataKeys(v1) == Symbol[:key2]
-    #delete from dfg
-    @test deleteBigDataEntry!(dfg, :a, :key2) == v1
-    @test getBigDataKeys(v1) == Symbol[]
-end
-
-@testset "Updating Nodes" begin
-    global dfg
-    #get the variable
-    var = getVariable(dfg, :a)
-    #make a copy and simulate external changes
-    newvar = deepcopy(var)
-    getVariablePPEs(newvar)[:default] = MeanMaxPPE(:default, [150.0], [100.0], [50.0])
-    #update
-    mergeUpdateVariableSolverData!(dfg, newvar)
-
-    #For now spot check
-    #TODO solverDataDict() not deprecated
-    @test getSolverDataDict(newvar) == getSolverDataDict(var)
-    @test getVariablePPEs(newvar) == getVariablePPEs(var)
-    @test getMaxPPE(getVariablePPEs(newvar)[:default]) == getVariablePPEs(newvar)[:default].max
-    @test getMeanPPE(getVariablePPEs(newvar)[:default]) == getVariablePPEs(newvar)[:default].mean
-    @test getSuggestedPPE(getVariablePPEs(newvar)[:default]) == getVariablePPEs(newvar)[:default].suggested
-
-    # Delete :default and replace to see if new ones can be added
-    delete!(getVariablePPEs(newvar), :default)
-    getVariablePPEs(newvar)[:second] = MeanMaxPPE(:second, [15.0], [10.0], [5.0])
-
-    # Persist to the original variable.
-    mergeUpdateVariableSolverData!(dfg, newvar)
-    # At this point newvar will have only :second, and var should have both (it is the reference)
-    @test symdiff(collect(keys(getVariablePPEs(var))), [:default, :second]) == Symbol[]
-    @test symdiff(collect(keys(getVariablePPEs(newvar))), [:second]) == Symbol[]
-    # Get the source too.
-    @test symdiff(collect(keys(getVariablePPEs(getVariable(dfg, :a)))), [:default, :second]) == Symbol[]
-end
-
-# Connectivity test
-@testset "Connectivity Test" begin
-    global dfg,v1,v2,f1
-    @test isFullyConnected(dfg) == true
-    @test hasOrphans(dfg) == false
-    addVariable!(dfg, DFGVariable(:orphan, TestSofttype1()))
-    @test isFullyConnected(dfg) == false
-    @test hasOrphans(dfg) == true
-end
-
-# Adjacency matrices
-@testset "Adjacency Matrices" begin
-    global dfg,v1,v2,f1
-    # Normal
-    #deprecated
-    @test_throws ErrorException getAdjacencyMatrix(dfg)
-    adjMat = DistributedFactorGraphs.getAdjacencyMatrixSymbols(dfg)
-    @test size(adjMat) == (2,4)
-    @test symdiff(adjMat[1, :], [nothing, :a, :b, :orphan]) == Symbol[]
-    @test symdiff(adjMat[2, :], [:f1, :f1, :f1, nothing]) == Symbol[]
-    #
-    #sparse
-    #TODO this silly name thing has gone on too long
-    adjMat, v_ll, f_ll = getBiadjacencyMatrix(dfg)
-    @test size(adjMat) == (1,3)
-
-    # Checking the elements of adjacency, its not sorted so need indexing function
-    indexOf = (arr, el1) -> findfirst(el2->el2==el1, arr)
-    @test adjMat[1, indexOf(v_ll, :orphan)] == 0
-    @test adjMat[1, indexOf(v_ll, :a)] == 1
-    @test adjMat[1, indexOf(v_ll, :b)] == 1
-    @test symdiff(v_ll, [:a, :b, :orphan]) == Symbol[]
-    @test symdiff(f_ll, [:f1, :f1, :f1]) == Symbol[]
-
-    # Filtered - REF DFG #201
-    adjMat, v_ll, f_ll = getBiadjacencyMatrix(dfg, solvable=1)
-    @test size(adjMat) == (0,2)
-
-    # sparse
-    adjMat, v_ll, f_ll = getBiadjacencyMatrix(dfg, solvable=1)
-    @test size(adjMat) == (0,2)
-    @test v_ll == [:orphan, :b]
-    @test f_ll == []
-
-end
-
-# Deletions
-@testset "Deletions" begin
-    deleteFactor!(dfg, :f1)
-    @test listFactors(dfg) == []
-    deleteVariable!(dfg, :b)
-    @test symdiff([:a, :orphan], listVariables(dfg)) == []
-    #delete last also for the LightGraphs implementation coverage
-    deleteVariable!(dfg, :orphan)
-    @test symdiff([:a], listVariables(dfg)) == []
-    deleteVariable!(dfg, :a)
-    @test listVariables(dfg) == []
-end
-=#
 
 ## Now make a complex graph for connectivity tests
 #TODO Also improve
