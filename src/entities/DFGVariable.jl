@@ -22,39 +22,59 @@ mutable struct VariableNodeData{T<:InferenceVariable}
   ismargin::Bool
   dontmargin::Bool
   solveInProgress::Int
-  # Tonio surprise TODO
-  # frontalonly::Bool
+  solvedCount::Int
+  VariableNodeData{T}() where {T <:InferenceVariable} =
+  new{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], T(), false, 0.0, false, false, 0, 0)
+  VariableNodeData{T}(val::Array{Float64,2},
+                      bw::Array{Float64,2},
+                      BayesNetOutVertIDs::Array{Symbol,1},
+                      dimIDs::Array{Int,1},
+                      dims::Int,eliminated::Bool,
+                      BayesNetVertID::Symbol,
+                      separator::Array{Symbol,1},
+                      softtype::T,
+                      initialized::Bool,
+                      inferdim::Float64,
+                      ismargin::Bool,
+                      dontmargin::Bool,
+                      solveInProgress::Int=0,
+                      solvedCount::Int=0 ) where T <: InferenceVariable =
+                          new{T}(val,bw,BayesNetOutVertIDs,dimIDs,dims,
+                                 eliminated,BayesNetVertID,separator,
+                                 softtype::T,initialized,inferdim,ismargin,
+                                 dontmargin, solveInProgress, solvedCount)
 end
 
 VariableNodeData(val::Array{Float64,2},
-               bw::Array{Float64,2},
-               BayesNetOutVertIDs::Array{Symbol,1},
-               dimIDs::Array{Int,1},
-               dims::Int,eliminated::Bool,
-               BayesNetVertID::Symbol,
-               separator::Array{Symbol,1},
-               softtype::T,
-               initialized::Bool,
-               inferdim::Float64,
-               ismargin::Bool,
-               dontmargin::Bool,
-               solveInProgress::Int=0) where T <: InferenceVariable =
-                  VariableNodeData{T}(val,bw,BayesNetOutVertIDs,dimIDs,dims,eliminated,BayesNetVertID,separator,
-                                      softtype::T,initialized,inferdim,ismargin,dontmargin, solveInProgress)
-
+                 bw::Array{Float64,2},
+                 BayesNetOutVertIDs::Array{Symbol,1},
+                 dimIDs::Array{Int,1},
+                 dims::Int,eliminated::Bool,
+                 BayesNetVertID::Symbol,
+                 separator::Array{Symbol,1},
+                 softtype::T,
+                 initialized::Bool,
+                 inferdim::Float64,
+                 ismargin::Bool,
+                 dontmargin::Bool,
+                 solveInProgress::Int=0,
+                 solvedCount::Int=0) where T <: InferenceVariable =
+                   VariableNodeData{T}(val,bw,BayesNetOutVertIDs,dimIDs,dims,
+                                       eliminated,BayesNetVertID,separator,
+                                       softtype::T,initialized,inferdim,ismargin,
+                                       dontmargin, solveInProgress, solvedCount)
+#
+VariableNodeData(softtype::T) where T <: InferenceVariable =
+    VariableNodeData{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], softtype, false, 0.0, false, false, 0, 0)
 
 function VariableNodeData()
     st = stacktrace()
     @warn "VariableNodeData() is deprecated please use VariableNodeData{T}() or VariableNodeData(softtype::T) where T <: InferenceVariable. Enable DEBUG logging for stack trace."
     @debug st
-    VariableNodeData{InferenceVariable}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], SingletonInferenceVariable(), false, 0.0, false, false, 0)
+    VariableNodeData{InferenceVariable}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], SingletonInferenceVariable(), false, 0.0, false, false, 0, 0)
 end
 
-VariableNodeData{T}() where {T <:InferenceVariable} =
-        VariableNodeData{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], T(), false, 0.0, false, false, 0)
 
-VariableNodeData(softtype::T) where T <: InferenceVariable =
-        VariableNodeData{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], softtype, false, 0.0, false, false, 0)
 
 """
 $(TYPEDEF)
@@ -76,6 +96,7 @@ mutable struct PackedVariableNodeData
   ismargin::Bool
   dontmargin::Bool
   solveInProgress::Int
+  solvedCount::Int
   PackedVariableNodeData() = new()
   PackedVariableNodeData(x1::Vector{Float64},
                          x2::Int,
@@ -92,7 +113,8 @@ mutable struct PackedVariableNodeData
                          x13::Float64,
                          x14::Bool,
                          x15::Bool,
-                         x16::Int) = new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16)
+                         x16::Int,
+                         solvedCount::Int) = new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16,solvedCount)
 end
 
 # AbstractPointParametricEst interface
@@ -111,13 +133,13 @@ struct MeanMaxPPE <: AbstractPointParametricEst
 end
 MeanMaxPPE(solverKey::Symbol, suggested::Vector{Float64}, max::Vector{Float64},mean::Vector{Float64}) = MeanMaxPPE(solverKey, suggested, max, mean, now())
 
-getMaxPPE(est::AbstractPointParametricEst) = est.max
-getMeanPPE(est::AbstractPointParametricEst) = est.mean
-getSuggestedPPE(est::AbstractPointParametricEst) = est.suggested
-getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimestamp
+getMaxPPE(ppe::AbstractPointParametricEst) = ppe.max
+getMeanPPE(ppe::AbstractPointParametricEst) = ppe.mean
+getSuggestedPPE(ppe::AbstractPointParametricEst) = ppe.suggested
+getLastUpdatedTimestamp(ppe::AbstractPointParametricEst) = ppe.lastUpdatedTimestamp
 
 
-VariableEstimate(params...) = errror("VariableEstimate is depreciated, please use MeanMaxPPE")
+VariableEstimate(params...) = error("VariableEstimate is deprecated, please use MeanMaxPPE")
 
 
 """
@@ -128,7 +150,7 @@ mutable struct DFGVariable <: AbstractDFGVariable
     label::Symbol
     timestamp::DateTime
     tags::Vector{Symbol}
-    estimateDict::Dict{Symbol, <: AbstractPointParametricEst}
+    ppeDict::Dict{Symbol, <: AbstractPointParametricEst}
     solverDataDict::Dict{Symbol, VariableNodeData}
     smallData::Dict{String, String}
     bigData::Dict{Symbol, AbstractBigDataEntry}
@@ -142,7 +164,7 @@ DFGVariable constructors.
 """
 function DFGVariable(label::Symbol, _internalId::Int64 = 0) #where {T <:InferenceVariable}
     st = stacktrace()
-    @warn "DFGVariable(label::Symbol, _internalId::Int64 = 0) is depreciated please use DFGVariable(label::Symbol, softtype::T, _internalId::Int64 = 0) where T <: InferenceVariable. Enable DEBUG logging for the stack trace."
+    @warn "DFGVariable(label::Symbol, _internalId::Int64 = 0) is deprecated please use DFGVariable(label::Symbol, softtype::T, _internalId::Int64 = 0) where T <: InferenceVariable. Enable DEBUG logging for the stack trace."
     @debug st
     T = InferenceVariable
     DFGVariable(label, now(), Symbol[],
@@ -166,8 +188,8 @@ mutable struct DFGVariableSummary <: AbstractDFGVariable
     label::Symbol
     timestamp::DateTime
     tags::Vector{Symbol}
-    estimateDict::Dict{Symbol, <:AbstractPointParametricEst}
-    softtypename::Symbol
+    ppeDict::Dict{Symbol, <:AbstractPointParametricEst}
+    softtypename::Symbol # should be removed
     _internalId::Int64
 end
 
@@ -191,42 +213,46 @@ const VariableDataLevel0 = Union{DFGVariable, DFGVariableSummary, SkeletonDFGVar
 const VariableDataLevel1 = Union{DFGVariable, DFGVariableSummary}
 const VariableDataLevel2 = Union{DFGVariable}
 
-
 """
-$SIGNATURES
+    $SIGNATURES
 
-Return the estimates for a variable.
+Return dictionary with Parametric Point Estimates (PPE) values.
+
+Notes:
+- Equivalent to `getPPEs`.
 """
-getEstimates(v::VariableDataLevel1) = v.estimateDict
+getVariablePPEs(vari::VariableDataLevel1)::Dict = vari.ppeDict
 
 """
     $SIGNATURES
 
-Return the estimates for a variable.
+Return dictionary with Parametric Point Estimates (PPE) values.
 
-DEPRECATED, estimates -> getEstimates
+Notes:
+- Equivalent to `getVariablePPEs`.
 """
-function estimates(v::VariableDataLevel1)
-    @warn "Deprecated estimates, use getEstimates instead."
-    getEstimates(v)
-end
+getPPEs(vari::VariableDataLevel1)::Dict = getVariablePPEs(vari)
+
 
 """
     $SIGNATURES
 
-Return a keyed estimate (default is :default) for a variable.
-"""
-getEstimate(v::VariableDataLevel1, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
+Get the parametric point estimate (PPE) for a variable in the factor graph.
 
-"""
-$SIGNATURES
+Notes
+- Defaults on keywords `solveKey` and `method`
 
-Return a keyed estimate (default is :default) for a variable.
+Related
+
+getMeanPPE, getMaxPPE, getKDEMean, getKDEFit, getPPEs, getVariablePPEs
 """
-function estimate(v::VariableDataLevel1, key::Symbol=:default)
-    @warn "DEPRECATED estimate, use getEstimate instead."
-    getEstimate(v, key)
+function getVariablePPE(vari::VariableDataLevel1, solveKey::Symbol=:default)
+    ppeDict = getVariablePPEs(vari)
+    return haskey(ppeDict, solveKey) ? ppeDict[solveKey] : nothing
 end
+
+getVariablePPE(dfg::AbstractDFG, vsym::Symbol, solveKey::Symbol=:default) = getVariablePPE(getVariable(dfg,vsym), solveKey)
+
 
 """
    $(SIGNATURES)
@@ -253,47 +279,20 @@ TODO, DO NOT USE v.softtypename in DFGVariableSummary
 getSofttype(v::DFGVariableSummary)::Symbol = v.softtypename
 
 
-
-"""
-$SIGNATURES
-
-Return the softtype for a variable.
-
-DEPRECATED, softtype -> getSofttype
-"""
-function softtype(v::VariableDataLevel1)
-    @warn "Deprecated softtype, use getSofttype instead."
-    getSofttype(v)
-end
-
-
 """
     $SIGNATURES
 
 Retrieve solver data structure stored in a variable.
 """
 solverData(v::DFGVariable, key::Symbol=:default) = haskey(v.solverDataDict, key) ? v.solverDataDict[key] : nothing
-"""
-    $SIGNATURES
 
-Retrieve data structure stored in a variable.
-"""
-function getData(v::DFGVariable; solveKey::Symbol=:default)::VariableNodeData
-  @warn "getData is deprecated, please use solverData()"
-  return v.solverDataDict[solveKey]
-end
+
 """
     $SIGNATURES
 
 Set solver data structure stored in a variable.
 """
-setSolverData(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v.solverDataDict[key] = data
-"""
-    $SIGNATURES
-
-Set solver data structure stored in a variable.
-"""
-setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = setSolverData(v, data, key)
+setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v.solverDataDict[key] = data
 
 """
     $SIGNATURES
@@ -301,6 +300,47 @@ setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = s
 Get solver data dictionary for a variable.
 """
 solverDataDict(v::DFGVariable) = v.solverDataDict
+
+"""
+    $SIGNATURES
+
+Get the number of times a variable has been inferred -- i.e. `solvedCount`.
+
+Related
+
+isSolved, setSolvedCount!
+"""
+getSolvedCount(v::VariableNodeData) = v.solvedCount
+getSolvedCount(v::VariableDataLevel2, solveKey::Symbol=:default) = solverData(v, solveKey) |> getSolvedCount
+getSolvedCount(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = getSolvedCount(getVariable(dfg, sym), solveKey)
+
+"""
+    $SIGNATURES
+
+Boolean on whether the variable has been solved.
+
+Related
+
+getSolved, setSolved!
+"""
+isSolved(v::VariableNodeData) = 0 < v.solvedCount
+isSolved(v::VariableDataLevel2, solveKey::Symbol=:default) = solverData(v, solveKey) |> isSolved
+isSolved(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = isSolved(getVariable(dfg, sym), solveKey)
+
+
+"""
+    $SIGNATURES
+
+Update/set the `solveCount` value.
+
+Related
+
+getSolved, isSolved
+"""
+setSolvedCount!(v::VariableNodeData, val::Int) = v.solvedCount = val
+setSolvedCount!(v::VariableDataLevel2, val::Int, solveKey::Symbol=:default) = setSolvedCount!(solverData(v, solveKey), val)
+setSolvedCount!(dfg::AbstractDFG, sym::Symbol, val::Int, solveKey::Symbol=:default) = setSolvedCount!(getVariable(dfg, sym), val, solveKey)
+
 
 """
 $SIGNATURES

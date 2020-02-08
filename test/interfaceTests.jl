@@ -137,11 +137,11 @@ end
     f1 = getFactor(dfg, f1.label)
 
     # Accessors
-    @test label(v1) == v1.label
-    @test tags(v1) == v1.tags
+    @test getLabel(v1) == v1.label
+    @test getTags(v1) == v1.tags
     testTags = [:ha, :ha23]
     @test setTags!(v1, testTags) == testTags
-    @test tags(v1) == testTags
+    @test getTags(v1) == testTags
 
     @test getTimestamp(v1) == v1.timestamp
     testTimestamp = now()
@@ -153,26 +153,26 @@ end
     @test setTimestamp!(f1, testTimestamp) == testTimestamp
     @test getTimestamp(f1) == f1.timestamp
 
-    @test estimates(v1) == v1.estimateDict
-    @test estimate(v1, :notfound) == nothing
+    @test getVariablePPEs(v1) == v1.ppeDict
+    @test getVariablePPE(v1, :notfound) == nothing
     @test solverData(v1) === v1.solverDataDict[:default]
     @test getData(v1) === v1.solverDataDict[:default]
     @test solverData(v1, :default) === v1.solverDataDict[:default]
     @test solverDataDict(v1) == v1.solverDataDict
     @test internalId(v1) == v1._internalId
 
-    @test softtype(v1) == st1
-    @test softtype(v2) == st2
+    @test getSofttype(v1) == st1
+    @test getSofttype(v2) == st2
     @test getSofttype(v1) == st1
 
-    @test label(f1) == f1.label
-    @test tags(f1) == f1.tags
+    @test getLabel(f1) == f1.label
+    @test getTags(f1) == f1.tags
     @test setTags!(v1, testTags) == testTags
-    @test tags(v1) == testTags
+    @test getTags(v1) == testTags
 
     @test solverData(f1) == f1.data
     # Deprecated functions
-    @test data(f1) == f1.data
+    @test solverData(f1) == f1.data
     @test getData(f1) == f1.data
     # Internal function
     @test internalId(f1) == f1._internalId
@@ -210,6 +210,15 @@ end
     @test !isVariable(dfg, f1.label)
     @test !isVariable(dfg, :doesntexist)
     @test !isFactor(dfg, :doesntexist)
+
+    # test solveCount for variable
+    @test !isSolved(v1)
+    @test getSolvedCount(v1) == 0
+    setSolvedCount!(v1, 1)
+    @test getSolvedCount(v1) == 1
+    @test isSolved(v1)
+    setSolvedCount!(dfg, getLabel(v1), 2)
+    @test getSolvedCount(dfg, getLabel(v1)) == 2
 
     # Session, robot, and user small data tests
     smallUserData = Dict{Symbol, String}(:a => "42", :b => "Hello")
@@ -275,28 +284,28 @@ end
     var = getVariable(dfg, :a)
     #make a copy and simulate external changes
     newvar = deepcopy(var)
-    estimates(newvar)[:default] = MeanMaxPPE(:default, [150.0], [100.0], [50.0])
+    getVariablePPEs(newvar)[:default] = MeanMaxPPE(:default, [150.0], [100.0], [50.0])
     #update
     mergeUpdateVariableSolverData!(dfg, newvar)
 
     #For now spot check
     @test solverDataDict(newvar) == solverDataDict(var)
-    @test estimates(newvar) == estimates(var)
-    @test getMaxPPE(estimates(newvar)[:default]) == estimates(newvar)[:default].max
-    @test getMeanPPE(estimates(newvar)[:default]) == estimates(newvar)[:default].mean
-    @test getSuggestedPPE(estimates(newvar)[:default]) == estimates(newvar)[:default].suggested
+    @test getVariablePPEs(newvar) == getVariablePPEs(var)
+    @test getMaxPPE(getVariablePPEs(newvar)[:default]) == getVariablePPEs(newvar)[:default].max
+    @test getMeanPPE(getVariablePPEs(newvar)[:default]) == getVariablePPEs(newvar)[:default].mean
+    @test getSuggestedPPE(getVariablePPEs(newvar)[:default]) == getVariablePPEs(newvar)[:default].suggested
 
     # Delete :default and replace to see if new ones can be added
-    delete!(estimates(newvar), :default)
-    estimates(newvar)[:second] = MeanMaxPPE(:second, [15.0], [10.0], [5.0])
+    delete!(getVariablePPEs(newvar), :default)
+    getVariablePPEs(newvar)[:second] = MeanMaxPPE(:second, [15.0], [10.0], [5.0])
 
     # Persist to the original variable.
     mergeUpdateVariableSolverData!(dfg, newvar)
     # At this point newvar will have only :second, and var should have both (it is the reference)
-    @test symdiff(collect(keys(estimates(var))), [:default, :second]) == Symbol[]
-    @test symdiff(collect(keys(estimates(newvar))), [:second]) == Symbol[]
+    @test symdiff(collect(keys(getVariablePPEs(var))), [:default, :second]) == Symbol[]
+    @test symdiff(collect(keys(getVariablePPEs(newvar))), [:second]) == Symbol[]
     # Get the source too.
-    @test symdiff(collect(keys(estimates(getVariable(dfg, :a)))), [:default, :second]) == Symbol[]
+    @test symdiff(collect(keys(getVariablePPEs(getVariable(dfg, :a)))), [:default, :second]) == Symbol[]
 end
 
 # Connectivity test
@@ -416,6 +425,10 @@ end
     # Filter - always returns the node you start at but filters around that.
     dfgSubgraph = getSubgraphAroundNode(dfg, getFactor(dfg, :x7x8f1), 1, true, solvable=1)
     @test symdiff([:x7x8f1, :x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+    # Test for distance = 2, should return orphans
+    #:x7x8f1 is not solvable
+    dfgSubgraph = getSubgraphAroundNode(dfg, getVariable(dfg, :x8), 2, true, solvable=1)
+    @test symdiff([:x8, :x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
 
     # DFG issue #95 - confirming that getSubgraphAroundNode retains order
     # REF: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/95
@@ -447,7 +460,7 @@ end
                 @test getfield(getVariable(dfg, v), field) == getfield(getVariable(summaryGraph, v), field)
             else
                 # Special case to check the symbol softtype is equal to the full softtype.
-                @test Symbol(typeof(softtype(getVariable(dfg, v)))) == softtype(getVariable(summaryGraph, v))
+                @test Symbol(typeof(getSofttype(getVariable(dfg, v)))) == getSofttype(getVariable(summaryGraph, v))
             end
         end
     end

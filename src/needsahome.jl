@@ -25,7 +25,7 @@ function buildSubgraphFromLabels!(dfg::G,
                                   syms::Vector{Symbol};
                                   subfg::AbstractDFG=(G <: InMemoryDFGTypes ? G : GraphsDFG)(params=getSolverParams(dfg)),
                                   solvable::Int=0,
-                                  allowedFactors::Union{Nothing, Vector{Symbol}}=nothing  )::G where G <: AbstractDFG
+                                  allowedFactors::Union{Nothing, Vector{Symbol}}=nothing  )::AbstractDFG where G <: AbstractDFG
   #
 
   # add a little too many variables (since we need the factors)
