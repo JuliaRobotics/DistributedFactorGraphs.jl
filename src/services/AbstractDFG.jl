@@ -809,7 +809,7 @@ Note: Makes a copy of the estimates and solver data so that there is no coupling
 function mergeVariableSolverData!(destVariable::DFGVariable, sourceVariable::DFGVariable)::DFGVariable
     # We don't know which graph this came from, must be copied!
     merge!(destVariable.solverDataDict, deepcopy(sourceVariable.solverDataDict))
-    return var
+    return destVariable
 end
 
 """

@@ -597,6 +597,8 @@ function  VSDTestBlock!(fg, v1)
     # Delete parametric from v1
     deleteVariableSolverData!(fg, :a, :parametric)
 
+    #TODO
+    # mergeVariableSolverData!(...)
 
     #TODO solverDataDict() not deprecated
     # @test getSolverDataDict(newvar) == getSolverDataDict(v1)
