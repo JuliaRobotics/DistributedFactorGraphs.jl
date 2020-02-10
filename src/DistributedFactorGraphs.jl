@@ -6,7 +6,9 @@ using Requires
 using Dates
 using Distributions
 using Reexport
-using JSON2
+using JSON
+using Unmarshal
+using JSON2 # JSON2 requires all properties to be in correct sequence, can't guarantee that from DB.
 using LinearAlgebra
 using SparseArrays
 

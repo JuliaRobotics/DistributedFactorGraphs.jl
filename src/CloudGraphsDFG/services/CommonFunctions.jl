@@ -478,3 +478,14 @@ function _addGraphChangeNotification(userId::String, robotId::String, sessionId:
     Main.App.NaviConfig.addGraphChange(conn, gc)
     return true
 end
+
+"""
+$(SIGNATURES)
+
+Build a Cypher-compliant set of properies from a JSON dictionary.
+Note individual values are serialized if they are not already.
+"""
+function _dictToNeo4jProps(dict::Dict{String, Any})::String
+    # TODO: Use an IO buffer/stream for this
+    return "{" * join(map((k) -> "$k: $(JSON.json(dict[k]))", collect(keys(dict))), ", ")*"}"
+end

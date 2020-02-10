@@ -453,3 +453,101 @@ function getBiadjacencyMatrix(dfg::CloudGraphsDFG; solvable::Int=0)::NamedTuple{
 
     return (B=adjMat, varLabels=varLabels, facLabels=factLabels)
 end
+
+### PPEs with DB calls
+
+function listPPE(dfg::CloudGraphsDFG, variablekey::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Vector{Symbol}
+    query = "match (ppe:PPE:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$variablekey) return ppe.solverKey"
+    @debug "[CGDFG] PPE read query:\r\n$query"
+    result = nothing
+    if currentTransaction != nothing
+        result = currentTransaction(query; submit=true)
+    else
+        tx = transaction(dfg.neo4jInstance.connection)
+        tx(query)
+        result = commit(tx)
+    end
+    length(result.errors) > 0 && error(string(result.errors))
+    vals = map(d -> d["row"][1], result.results[1]["data"])
+    return Symbol.(vals)
+end
+
+function getPPE(dfg::CloudGraphsDFG, variablekey::Symbol, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::AbstractPointParametricEst
+    query = "match (ppe:PPE:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$variablekey:$(ppekey)) return properties(ppe)"
+    @debug "[CGDFG] PPE read query:\r\n$query"
+    result = nothing
+    if currentTransaction != nothing
+        result = currentTransaction(query; submit=true)
+    else
+        tx = transaction(dfg.neo4jInstance.connection)
+        tx(query)
+        result = commit(tx)
+    end
+    length(result.errors) > 0 && error(string(result.errors))
+    length(result.results[1]["data"]) != 1 && error("Cannot find PPE '$ppekey' for variable '$variablekey'")
+    length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot find PPE '$ppekey' for variable '$variablekey'")
+    return unpackPPE(dfg, result.results[1]["data"][1]["row"][1])
+end
+
+function addPPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::AbstractPointParametricEst where P <: AbstractPointParametricEst
+    if ppekey in listPPE(dfg, variablekey, ppekey, currentTransaction=currentTransaction)
+        error("PPE '$(ppekey)' already exists")
+    end
+    return updatePPE!(dfg, variablekey, ppe, ppekey, currentTransaction=currentTransaction)
+end
+
+function updatePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::P where P <: AbstractPointParametricEst
+    packed = packPPE(dfg, ppe)
+    query = """
+                MATCH (var:VARIABLE:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$variablekey)
+                MERGE (ppe:PPE:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$variablekey:$(ppe.solverKey))
+                SET ppe = $(_dictToNeo4jProps(packed))
+                CREATE UNIQUE (var)-[:PPE]->(ppe)
+                RETURN properties(ppe)"""
+    @debug "[CGDFG] PPE update query:\r\n$query"
+    result = nothing
+    if currentTransaction != nothing
+        result = currentTransaction(query; submit=true) # TODO: Maybe we should submit (; submit = true) for the results to fail early?
+    else
+        tx = transaction(dfg.neo4jInstance.connection)
+        tx(query)
+        result = commit(tx)
+    end
+    length(result.errors) > 0 && error(string(result.errors))
+    length(result.results[1]["data"]) != 1 && error("Cannot find PPE '$(ppe.solverKey)' for variable '$variablekey'")
+    length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot find PPE '$(ppe.solverKey)' for variable '$variablekey'")
+    return unpackPPE(dfg, result.results[1]["data"][1]["row"][1])
+end
+
+function updatePPE!(dfg::CloudGraphsDFG, sourceVariables::Vector{<:DFGVariable}, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+    tx = currentTransaction == nothing ? transaction(dfg.neo4jInstance.connection) : currentTransaction
+    for var in sourceVariables
+        updatePPE!(dfg, var.label, getPPE(dfg, var, ppekey), ppekey, currentTransaction=tx)
+    end
+    if currentTransaction == nothing
+        result = commit(tx)
+    end
+    return nothing
+end
+
+function deletePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::AbstractPointParametricEst
+    query = """
+    match (ppe:PPE:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$variablekey:$(ppekey))
+    with ppe, properties(ppe) as props
+    detach delete ppe
+    return props
+    """
+    @debug "[CGDFG] PPE delete query:\r\n$query"
+    result = nothing
+    if currentTransaction != nothing
+        result = currentTransaction(query; submit=true) # TODO: Maybe we should submit (; submit = true) for the results to fail early?
+    else
+        tx = transaction(dfg.neo4jInstance.connection)
+        tx(query)
+        result = commit(tx)
+    end
+    length(result.errors) > 0 && error(string(result.errors))
+    length(result.results[1]["data"]) != 1 && error("Cannot find PPE '$ppekey' for variable '$variablekey'")
+    length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot find PPE '$ppekey' for variable '$variablekey'")
+    return unpackPPE(dfg, @show result.results[1]["data"][1]["row"][1])
+end

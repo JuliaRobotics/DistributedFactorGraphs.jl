@@ -1,5 +1,8 @@
 import Base: ==, convert
 
+# For all types that pack their type into their own structure (e.g. PPE)
+const TYPEKEY = "_type"
+
 function packVariable(dfg::G, v::DFGVariable)::Dict{String, Any} where G <: AbstractDFG
     props = Dict{String, Any}()
     props["label"] = string(v.label)
@@ -82,23 +85,32 @@ function unpackVariableNodeData(dfg::G, d::PackedVariableNodeData)::VariableNode
     st(), d.initialized, d.inferdim, d.ismargin, d.dontmargin, d.solveInProgress, d.solvedCount)
 end
 
-# function compare(a::VariableNodeData, b::VariableNodeData)
-#     a.val != b.val && @debug("val is not equal")==nothing && return false
-#     a.bw != b.bw && @debug("bw is not equal")==nothing && return false
-#     a.BayesNetOutVertIDs != b.BayesNetOutVertIDs && @debug("BayesNetOutVertIDs is not equal")==nothing && return false
-#     a.dimIDs != b.dimIDs && @debug("dimIDs is not equal")==nothing && return false
-#     a.dims != b.dims && @debug("dims is not equal")==nothing && return false
-#     a.eliminated != b.eliminated && @debug("eliminated is not equal")==nothing && return false
-#     a.BayesNetVertID != b.BayesNetVertID && @debug("BayesNetVertID is not equal")==nothing && return false
-#     a.separator != b.separator && @debug("separator is not equal")==nothing && return false
-#     a.initialized != b.initialized && @debug("initialized is not equal")==nothing && return false
-#     abs(a.inferdim - b.inferdim) > 1e-14 && @debug("inferdim is not equal")==nothing && return false
-#     a.ismargin != b.ismargin && @debug("ismargin is not equal")==nothing && return false
-#     a.dontmargin != b.dontmargin && @debug("dontmargin is not equal")==nothing && return false
-#     a.solveInProgress != b.solveInProgress && @debug("solveInProgress is not equal")==nothing && return false
-#     typeof(a.softtype) != typeof(b.softtype) && @debug("softtype is not equal")==nothing && return false
-#     return true
-# end
+"""
+$(SIGNATURES)
+
+Pack a PPE into a Dict{String, Any}.
+"""
+function packPPE(dfg::G, ppe::P)::Dict{String, Any} where {G <: AbstractDFG, P <: AbstractPointParametricEst}
+    packedPPE = JSON.parse(JSON.json(ppe)) #TODO: Maybe better way to serialize as dictionary?
+    packedPPE[TYPEKEY] = string(typeof(ppe)) # Append the type
+    return packedPPE
+end
+
+"""
+$(SIGNATURES)
+
+Unpack a Dict{String, Any} into a PPE.
+"""
+function unpackPPE(dfg::G, packedPPE::Dict{String, Any})::AbstractPointParametricEst where G <: AbstractDFG
+    !haskey(packedPPE, TYPEKEY) && error("Cannot find type key '$TYPEKEY' in packed PPE data")
+    type = pop!(packedPPE, TYPEKEY)
+    (type == nothing || type == "") && error("Cannot deserialize PPE, type key is empty")
+    ppe = Unmarshal.unmarshal(
+            DistributedFactorGraphs.getTypeFromSerializationModule(dfg, Symbol(type)),
+            packedPPE)
+    return ppe
+end
+
 
 #FIXME
 # """
