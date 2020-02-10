@@ -235,8 +235,6 @@ function clearSession!!(dfg::CloudGraphsDFG)::Nothing
 
     # Clearing history
     dfg.addHistory = Symbol[]
-    empty!(dfg.variableCache)
-    empty!(dfg.factorCache)
     empty!(dfg.labelDict)
     return nothing
 end
@@ -251,8 +249,6 @@ function clearRobot!!(dfg::CloudGraphsDFG)::Nothing
 
     # Clearing history
     dfg.addHistory = Symbol[]
-    empty!(dfg.variableCache)
-    empty!(dfg.factorCache)
     empty!(dfg.labelDict)
     return nothing
 end
@@ -267,8 +263,6 @@ function clearUser!!(dfg::CloudGraphsDFG)::Nothing
 
     # Clearing history
     dfg.addHistory = Symbol[]
-    empty!(dfg.variableCache)
-    empty!(dfg.factorCache)
     empty!(dfg.labelDict)
     return nothing
 end

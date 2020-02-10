@@ -6,9 +6,10 @@ function packVariable(dfg::G, v::DFGVariable)::Dict{String, Any} where G <: Abst
     props["timestamp"] = string(v.timestamp)
     props["tags"] = JSON2.write(v.tags)
     props["ppeDict"] = JSON2.write(v.ppeDict)
-    props["solverDataDict"] = JSON2.write(Dict(keys(v.solverDataDict) .=> map(vnd -> pack(dfg, vnd), values(v.solverDataDict))))
+    props["solverDataDict"] = JSON2.write(Dict(keys(v.solverDataDict) .=> map(vnd -> packVariableNodeData(dfg, vnd), values(v.solverDataDict))))
     props["smallData"] = JSON2.write(v.smallData)
     props["solvable"] = v.solvable
+    props["softtype"] = string(typeof(getSofttype(v)))
     props["bigData"] = JSON2.write(Dict(keys(v.bigData) .=> map(bde -> JSON2.write(bde), values(v.bigData))))
     props["bigDataElemType"] = JSON2.write(Dict(keys(v.bigData) .=> map(bde -> typeof(bde), values(v.bigData))))
     return props
@@ -20,22 +21,18 @@ function unpackVariable(dfg::G, packedProps::Dict{String, Any})::DFGVariable whe
     tags =  JSON2.read(packedProps["tags"], Vector{Symbol})
     #TODO this will work for some time, but unpacking in an <: AbstractPointParametricEst would be lekker.
     ppeDict = JSON2.read(packedProps["ppeDict"], Dict{Symbol, MeanMaxPPE})
-    smallData = nothing
     smallData = JSON2.read(packedProps["smallData"], Dict{String, String})
     bigDataElemTypes = JSON2.read(packedProps["bigDataElemType"], Dict{Symbol, Symbol})
     bigDataIntermed = JSON2.read(packedProps["bigData"], Dict{Symbol, String})
+    softtypeString = packedProps["softtype"]
+    softtype = getTypeFromSerializationModule(dfg, Symbol(softtypeString))
+    softtype == nothing && error("Cannot deserialize softtype '$softtypeString' in variable '$label'")
 
     packed = JSON2.read(packedProps["solverDataDict"], Dict{String, PackedVariableNodeData})
-    solverData = Dict(Symbol.(keys(packed)) .=> map(p -> unpack(dfg, p), values(packed)))
+    solverData = Dict(Symbol.(keys(packed)) .=> map(p -> unpackVariableNodeData(dfg, p), values(packed)))
 
     # Rebuild DFGVariable using the first solver softtype in solverData
-    if length(solverData) > 0
-        # variable = DFGVariable(Symbol(packedProps["label"]), first(solverData)[2].softtype)
-        variable = DFGVariable(Symbol(packedProps["label"]), timestamp, Set(tags), ppeDict, solverData,  smallData, Dict{Symbol,AbstractBigDataEntry}(), DFGNodeParams(packedProps["solvable"],0))
-    else
-        @warn "The variable $label in this file does not have any solver data. This will not be supported in the future, please add at least one solverData structure."
-        variable = DFGVariable(Symbol(packedProps["label"]), timestamp, Set(tags), ppeDict, solverData,  smallData, Dict{Symbol,AbstractBigDataEntry}(), DFGNodeParams(packedProps["solvable"],0))
-    end
+    variable = DFGVariable{softtype}(Symbol(packedProps["label"]), timestamp, Set(tags), ppeDict, solverData,  smallData, Dict{Symbol,AbstractBigDataEntry}(), DFGNodeParams(packedProps["solvable"],0))
 
     # Now rehydrate complete bigData type.
     for (k,bdeInter) in bigDataIntermed
@@ -46,7 +43,7 @@ function unpackVariable(dfg::G, packedProps::Dict{String, Any})::DFGVariable whe
     return variable
 end
 
-function pack(dfg::G, d::VariableNodeData)::PackedVariableNodeData where G <: AbstractDFG
+function packVariableNodeData(dfg::G, d::VariableNodeData)::PackedVariableNodeData where G <: AbstractDFG
   @debug "Dispatching conversion variable -> packed variable for type $(string(d.softtype))"
   return PackedVariableNodeData(d.val[:],size(d.val,1),
                                 d.bw[:], size(d.bw,1),
@@ -62,7 +59,7 @@ function pack(dfg::G, d::VariableNodeData)::PackedVariableNodeData where G <: Ab
                                 d.solvedCount)
 end
 
-function unpack(dfg::G, d::PackedVariableNodeData)::VariableNodeData where G <: AbstractDFG
+function unpackVariableNodeData(dfg::G, d::PackedVariableNodeData)::VariableNodeData where G <: AbstractDFG
   r3 = d.dimval
   c3 = r3 > 0 ? floor(Int,length(d.vecval)/r3) : 0
   M3 = reshape(d.vecval,r3,c3)
@@ -73,32 +70,16 @@ function unpack(dfg::G, d::PackedVariableNodeData)::VariableNodeData where G <: 
 
   # TODO -- allow out of module type allocation (future feature, not currently in use)
   @debug "Dispatching conversion packed variable -> variable for type $(string(d.softtype))"
-  st = nothing #IncrementalInference.ContinuousMultivariate # eval(parse(d.softtype))
-  mainmod = getSerializationModule(dfg)
-  mainmod == nothing && error("Serialization module is null - please call setSerializationNamespace!(\"Main\" => Main) in your main program.")
-  try
-      if d.softtype != ""
-          unpackedTypeName = split(d.softtype, "(")[1]
-          unpackedTypeName = split(unpackedTypeName, '.')[end]
-          @debug "DECODING Softtype = $unpackedTypeName"
-          st = getfield(mainmod, Symbol(unpackedTypeName))()
-      end
-  catch ex
-      @error "Unable to deserialize soft type $(d.softtype)"
-      io = IOBuffer()
-      showerror(io, ex, catch_backtrace())
-      err = String(take!(io))
-      @error err
-  end
-  @debug "Net conversion result: $st"
+  # Figuring out the softtype
+  unpackedTypeName = split(d.softtype, "(")[1]
+  unpackedTypeName = split(unpackedTypeName, '.')[end]
+  @debug "DECODING Softtype = $unpackedTypeName"
+  st = getTypeFromSerializationModule(dfg, Symbol(unpackedTypeName))
+  st == nothing && error("The variable doesn't seem to have a softtype. It needs to set up with an InferenceVariable from IIF. This will happen if you use DFG to add serialized variables directly and try use them. Please use IncrementalInference.addVariable().")
 
-  if st == nothing
-      error("The variable doesn't seem to have a softtype. It needs to set up with an InferenceVariable from IIF. This will happen if you use DFG to add serialized variables directly and try use them. Please use IncrementalInference.addVariable().")
-  end
-
-  return VariableNodeData{typeof(st)}(M3,M4, d.BayesNetOutVertIDs,
+  return VariableNodeData{st}(M3,M4, d.BayesNetOutVertIDs,
     d.dimIDs, d.dims, d.eliminated, d.BayesNetVertID, d.separator,
-    st, d.initialized, d.inferdim, d.ismargin, d.dontmargin, d.solveInProgress, d.solvedCount)
+    st(), d.initialized, d.inferdim, d.ismargin, d.dontmargin, d.solveInProgress, d.solvedCount)
 end
 
 # function compare(a::VariableNodeData, b::VariableNodeData)
