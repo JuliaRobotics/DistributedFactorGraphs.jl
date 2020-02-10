@@ -334,6 +334,7 @@ end
 
 Set solver data structure stored in a variable.
 """
+#TODO Repeated functionality?
 setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v.solverDataDict[key] = data
 
 """
@@ -348,7 +349,7 @@ getSolverDataDict(v::DFGVariable) = v.solverDataDict
 
 Get the PPE dictionary for a variable. Its use is not recomended.
 """
-getPPEDict(v::DFGVariable) = v.ppeDict
+getPPEDict(v::VariableDataLevel1) = v.ppeDict
 
 
 #TODO FIXME don't know if this should exist, should rather always update with fg object to simplify inmem vs cloud

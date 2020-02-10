@@ -15,6 +15,7 @@
 # Getters
 """
     $(SIGNATURES)
+Convenience function to get all the matadata of a DFG
 """
 getDFGInfo(dfg::AbstractDFG) = (dfg.description, dfg.userId, dfg.robotId, dfg.sessionId, dfg.userData, dfg.robotData, dfg.sessionData, dfg.solverParams)
 
@@ -250,12 +251,14 @@ end
 Get a DFGVariable with a specific solver key.
 In memory types still return a reference, other types returns a variable with only solveKey.
 """
-function getVariable(dfg::G, label::Symbol, solveKey::Symbol)::AbstractDFGVariable where G <: AbstractDFG
+function getVariable(dfg::AbstractDFG, label::Symbol, solveKey::Symbol)::AbstractDFGVariable
 
     var = getVariable(dfg, label)
 
-    if !haskey(var.solverDataDict, solveKey)
+    if isa(var, DFGVariable) && !haskey(var.solverDataDict, solveKey)
         error("Solvekey '$solveKey' does not exists in the variable")
+    elseif !isa(var, DFGVariable)
+        @warn "getVariable(dfg, label, solveKey) only supported for type DFGVariable."
     end
 
     return var
@@ -709,7 +712,7 @@ function getPPE(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol=:default):
 end
 
 # Not the most efficient call but it at least reuses above (in memory it's probably ok)
-getPPE(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol=default)::AbstractPointParametricEst = getPPE(dfg, sourceVariable.label, ppekey)
+getPPE(dfg::AbstractDFG, sourceVariable::VariableDataLevel1, ppekey::Symbol=default)::AbstractPointParametricEst = getPPE(dfg, sourceVariable.label, ppekey)
 
 """
     $(SIGNATURES)
@@ -753,14 +756,14 @@ end
 Update PPE data if it exists, otherwise add it.
 NOTE: Copies the PPE data.
 """
-updatePPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol=:default) =
+updatePPE!(dfg::AbstractDFG, sourceVariable::VariableDataLevel1, ppekey::Symbol=:default) =
     updatePPE!(dfg, sourceVariable.label, deepcopy(getPPE(sourceVariable, ppekey)), ppekey)
 
 """
     $(SIGNATURES)
 Update PPE data if it exists, otherwise add it.
 """
-function updatePPE!(dfg::AbstractDFG, sourceVariables::Vector{<:DFGVariable}, ppekey::Symbol=:default)
+function updatePPE!(dfg::AbstractDFG, sourceVariables::Vector{<:VariableDataLevel1}, ppekey::Symbol=:default)
     #I think cloud would do this in bulk for speed
     for var in sourceVariables
         updatePPE!(dfg, var.label, getPPE(dfg, var, ppekey), ppekey)
@@ -790,22 +793,56 @@ deletePPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol=:defaul
 
 ####
 
+
+export mergeVariableSolverData!, mergePPEs!, mergeVariableData!, mergeGraphVariableData!
+# update is implied, see API wiki
+@deprecate mergeUpdateVariableSolverData!(dfg, sourceVariable) mergeVariableData!(dfg, sourceVariable)
+@deprecate mergeUpdateGraphSolverData!(sourceDFG, destDFG, varSyms) mergeGraphVariableData!(destDFG, sourceDFG, varSyms)
+
 """
     $(SIGNATURES)
 Merges and updates solver and estimate data for a variable (variable can be from another graph).
-Note: Makes a copy of the estimates and solver data so that there is no coupling
-between graphs.
+If the same key is present in another collection, the value for that key will be the value it has in the last collection listed (updated).
+Note: Makes a copy of the estimates and solver data so that there is no coupling between graphs.
 """
-function mergeUpdateVariableSolverData!(dfg::AbstractDFG, sourceVariable::AbstractDFGVariable)::AbstractDFGVariable
-    if !exists(dfg, sourceVariable)
-        error("Source variable '$(sourceVariable.label)' doesn't exist in the graph.")
-    end
-    var = getVariable(dfg, sourceVariable.label)
+#TODO API
+function mergeVariableSolverData!(destVariable::DFGVariable, sourceVariable::DFGVariable)::DFGVariable
     # We don't know which graph this came from, must be copied!
-    merge!(var.ppeDict, deepcopy(sourceVariable.ppeDict))
+    merge!(destVariable.solverDataDict, deepcopy(sourceVariable.solverDataDict))
+    return var
+end
+
+"""
+    $(SIGNATURES)
+Merges and updates solver and estimate data for a variable (variable can be from another graph).
+Note: Makes a copy of the estimates and solver data so that there is no coupling between graphs.
+"""
+#TODO API and only correct level
+function mergePPEs!(destVariable::AbstractDFGVariable, sourceVariable::AbstractDFGVariable)::AbstractDFGVariable
+    # We don't know which graph this came from, must be copied!
+    merge!(destVariable.ppeDict, deepcopy(sourceVariable.ppeDict))
+    return destVariable
+end
+
+"""
+    $(SIGNATURES)
+Merges and updates solver and estimate data for a variable (variable can be from another graph).
+Note: Makes a copy of the estimates and solver data so that there is no coupling between graphs.
+"""
+#TODO API
+function mergeVariableData!(dfg::AbstractDFG, sourceVariable::AbstractDFGVariable)::AbstractDFGVariable
+
+    var = getVariable(dfg, sourceVariable.label)
+
+    mergePPEs!(var, sourceVariable)
     # If this variable has solverDataDict (summaries do not)
-    :solverDataDict in fieldnames(typeof(var)) && merge!(var.solverDataDict, deepcopy(sourceVariable.solverDataDict))
-    return sourceVariable
+    :solverDataDict in fieldnames(typeof(var)) && mergeVariableSolverData!(var, sourceVariable)
+
+    #update if its not a InMemoryDFGTypes, otherwise it was a reference
+    # if satelite nodes are used it can be updated seprarately
+    # !(isa(dfg, InMemoryDFGTypes)) && updateVariable!(dfg, var)
+
+    return var
 end
 
 """
@@ -813,11 +850,12 @@ end
 Common function to update all solver data and estimates from one graph to another.
 This should be used to push local solve data back into a cloud graph, for example.
 """
-function mergeUpdateGraphSolverData!(sourceDFG::G, destDFG::H, varSyms::Vector{Symbol})::Nothing where {G <: AbstractDFG, H <: AbstractDFG}
+#TODO API
+function mergeGraphVariableData!(destDFG::H, sourceDFG::G, varSyms::Vector{Symbol})::Nothing where {G <: AbstractDFG, H <: AbstractDFG}
     # Update all variables in the destination
     # (For now... we may change this soon)
     for variableId in varSyms
-        mergeUpdateVariableSolverData!(destDFG, getVariable(sourceDFG, variableId))
+        mergeVariableData!(destDFG, getVariable(sourceDFG, variableId))
     end
 end
 

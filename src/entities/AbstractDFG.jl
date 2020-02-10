@@ -27,9 +27,8 @@ The common node parameters for variables and factors.
 mutable struct DFGNodeParams
     solvable::Int
     _internalId::Int64
-    DFGNodeParams() = new(0, 0)
-    DFGNodeParams(solvable::Int, _internalId::Int64) = new(solvable, _internalId)
 end
+DFGNodeParams() = DFGNodeParams(0, 0)
 
 """
 $(TYPEDEF)

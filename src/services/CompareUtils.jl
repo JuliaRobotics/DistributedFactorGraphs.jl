@@ -4,7 +4,7 @@
 import Base.==
 
 #=
-For now abstract `InferenceVariable`s are considered equal if they are the same type,dims, and manifolds (abels are deprecated)
+For now abstract `InferenceVariable`s are considered equal if they are the same type, dims, and manifolds (abels are deprecated)
 If your implentation has aditional properties such as `DynPose2` with `ut::Int64` (microsecond time) or support different manifolds
 implement compare if needed.
 =#

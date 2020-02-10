@@ -10,6 +10,10 @@ using JSON2
 using LinearAlgebra
 using SparseArrays
 
+# TODO
+# - hasOrphans: actually check if there are orphaned factors
+#
+
 # Entities
 include("entities/AbstractDFG.jl")
 
@@ -36,6 +40,7 @@ export DFGVariableSummary, DFGFactorSummary, AbstractDFGSummary
 export getNeighborhood, getSubgraph, getSubgraphAroundNode
 
 export getUserId, getRobotId, getSessionId
+export getDFGInfo
 
 # Define variable levels
 const VariableDataLevel0 = Union{DFGVariable, DFGVariableSummary, SkeletonDFGVariable}
