@@ -26,25 +26,26 @@ function packFactor(dfg::G, f::DFGFactor)::Dict{String, Any} where G <: Abstract
     # Include the type
     props["fnctype"] = String(_getname(fnctype))
     props["_variableOrderSymbols"] = JSON2.write(f._variableOrderSymbols)
-    props["solvable"] = f.solvable
+    props["solvable"] = getSolvable(f)
 
     return props
 end
 
-function unpackFactor(dfg::G, packedProps::Dict{String, Any}, iifModule)::DFGFactor where G <: AbstractDFG
+function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G <: AbstractDFG
     label = packedProps["label"]
     timestamp = DateTime(packedProps["timestamp"])
     tags = JSON2.read(packedProps["tags"], Vector{Symbol})
 
     data = packedProps["data"]
-    @debug "Decoding $label..."
     datatype = packedProps["fnctype"]
-    packtype = getfield(Main, Symbol("Packed"*datatype))
+    @debug "DECODING Softtype = '$unpackedTypeName' for factor '$label'"
+    packtype = getTypeFromSerializationModule(dfg, Symbol("Packed"*datatype))
+
     packed = nothing
     fullFactor = nothing
     try
         packed = JSON2.read(data, GenericFunctionNodeData{packtype,String})
-        fullFactor = iifModule.decodePackedType(dfg, packed)
+        fullFactor = getSerializationModule(dfg).decodePackedType(dfg, packed)
     catch ex
         io = IOBuffer()
         showerror(io, ex, catch_backtrace())
@@ -57,13 +58,13 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any}, iifModule)::DFGFac
     _variableOrderSymbols = JSON2.read(packedProps["_variableOrderSymbols"], Vector{Symbol})
     solvable = packedProps["solvable"]
 
-    # Rebuild DFGVariable
+    # Rebuild DFGFactor
     factor = DFGFactor{typeof(fullFactor.fnc), Symbol}(Symbol(label), 0, timestamp)
 
     union!(factor.tags, tags)
     factor.data = fullFactor #TODO setSolverData!(factor, fullFactor)
     factor._variableOrderSymbols = _variableOrderSymbols
-    factor.solvable = solvable
+    setSolvable!(factor, solvable)
 
     # GUARANTEED never to bite us in the ass in the future...
     # ... TODO: refactor if changed: https://github.com/JuliaRobotics/IncrementalInference.jl/issues/350

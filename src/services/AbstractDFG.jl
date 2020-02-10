@@ -177,7 +177,25 @@ function getSerializationModule(dfg::G)::Module where G <: AbstractDFG
     return Main
 end
 
-
+"""
+  $(SIGNATURES)
+Get a type from the serialization module inside DFG.
+"""
+function getTypeFromSerializationModule(dfg::G, moduleType::Symbol) where G <: AbstractDFG
+    st = nothing
+    mainmod = getSerializationModule(dfg)
+    mainmod == nothing && error("Serialization module is null - please call setSerializationNamespace!(\"Main\" => Main) in your main program.")
+    try
+        st = getfield(mainmod, Symbol(moduleType))
+    catch ex
+        @error "Unable to deserialize soft type $(d.softtype)"
+        io = IOBuffer()
+        showerror(io, ex, catch_backtrace())
+        err = String(take!(io))
+        @error err
+    end
+    return st
+end
 
 """
     $(SIGNATURES)

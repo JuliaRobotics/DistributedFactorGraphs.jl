@@ -3,18 +3,39 @@
     $(SIGNATURES)
 Create a new CloudGraphs-based DFG factor graph using a Neo4j.Connection.
 """
-function CloudGraphsDFG{T}(neo4jConnection::Neo4j.Connection, userId::String, robotId::String, sessionId::String, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, rebuildFactorMetadata!; description::String="CloudGraphs DFG", solverParams::T=NoSolverParams(), useCache::Bool=false) where T <: AbstractParams
+function CloudGraphsDFG{T}(neo4jConnection::Neo4j.Connection,
+                            userId::String,
+                            robotId::String,
+                            sessionId::String,
+                            encodePackedTypeFunc,
+                            getPackedTypeFunc,
+                            decodePackedTypeFunc,
+                            rebuildFactorMetadata!;
+                            description::String="CloudGraphs DFG",
+                            solverParams::T=NoSolverParams()) where T <: AbstractParams
     graph = Neo4j.getgraph(neo4jConnection)
     neo4jInstance = Neo4jInstance(neo4jConnection, graph)
-    return CloudGraphsDFG{T}(neo4jInstance, description, userId, robotId, sessionId, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, rebuildFactorMetadata!, Dict{Symbol, Int64}(), Dict{Symbol, DFGVariable}(), Dict{Symbol, DFGFactor}(), Symbol[], solverParams, useCache)
+    return CloudGraphsDFG{T}(neo4jInstance, description, userId, robotId, sessionId, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, rebuildFactorMetadata!, Dict{Symbol, Int64}(), Symbol[], solverParams)
 end
 """
     $(SIGNATURES)
 Create a new CloudGraphs-based DFG factor graph by specifying the Neo4j connection information.
 """
-function CloudGraphsDFG{T}(host::String, port::Int, dbUser::String, dbPassword::String, userId::String, robotId::String, sessionId::String, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, rebuildFactorMetadata!; description::String="CloudGraphs DFG", solverParams::T=NoSolverParams(), useCache::Bool=false) where T <: AbstractParams
+function CloudGraphsDFG{T}(host::String,
+                            port::Int,
+                            dbUser::String,
+                            dbPassword::String,
+                            userId::String,
+                            robotId::String,
+                            sessionId::String,
+                            encodePackedTypeFunc,
+                            getPackedTypeFunc,
+                            decodePackedTypeFunc,
+                            rebuildFactorMetadata!;
+                            description::String="CloudGraphs DFG",
+                            solverParams::T=NoSolverParams()) where T <: AbstractParams
     neo4jConnection = Neo4j.Connection(host, port=port, user=dbUser, password=dbPassword);
-    return CloudGraphsDFG{T}(neo4jConnection, userId, robotId, sessionId, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, rebuildFactorMetadata!, description=description, solverParams=solverParams, useCache=useCache)
+    return CloudGraphsDFG{T}(neo4jConnection, userId, robotId, sessionId, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, rebuildFactorMetadata!, description=description, solverParams=solverParams)
 end
 
 """
@@ -30,7 +51,7 @@ function _getDuplicatedEmptyDFG(dfg::CloudGraphsDFG)::CloudGraphsDFG
         length(_getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId):$(dfg.robotId):$(sessionId))")) == 0 && break
     end
     @debug "Unique+empty copy session name: $sessionId"
-    return CloudGraphsDFG{typeof(dfg.solverParams)}(dfg.neo4jInstance.connection, dfg.userId, dfg.robotId, sessionId, dfg.encodePackedTypeFunc, dfg.getPackedTypeFunc, dfg.decodePackedTypeFunc, dfg.rebuildFactorMetadata!, solverParams=deepcopy(dfg.solverParams), description="(Copy of) $(dfg.description)", useCache=dfg.useCache)
+    return CloudGraphsDFG{typeof(dfg.solverParams)}(dfg.neo4jInstance.connection, dfg.userId, dfg.robotId, sessionId, dfg.encodePackedTypeFunc, dfg.getPackedTypeFunc, dfg.decodePackedTypeFunc, dfg.rebuildFactorMetadata!, solverParams=deepcopy(dfg.solverParams), description="(Copy of) $(dfg.description)")
 end
 
 # Accessors
@@ -49,8 +70,6 @@ function getSerializationModule(dfg::CloudGraphsDFG)::Module where G <: Abstract
 end
 
 function exists(dfg::CloudGraphsDFG, nId::Symbol)
-    # If in the dictionary, then shortcut return true
-    dfg.useCache && haskey(dfg.labelDict, nId) && return true
     # Otherwise try get it
     nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, nId)
     if nodeId != nothing
@@ -80,12 +99,10 @@ function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariable
     Neo4j.updatenodelabels(neo4jNode, union([string(variable.label), "VARIABLE", dfg.userId, dfg.robotId, dfg.sessionId], variable.tags))
 
     # Make sure that if there exists a SESSION sentinel that it is attached.
-    # TODO: Optimize this.
     _bindSessionNodeToInitialVariable(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, string(variable.label))
 
     # Update our internal dictionaries.
     push!(dfg.labelDict, variable.label=>variable._internalId)
-    push!(dfg.variableCache, variable.label=>variable)
     # Track insertion
     push!(dfg.addHistory, variable.label)
 
@@ -120,7 +137,6 @@ function addFactor!(dfg::CloudGraphsDFG, variables::Vector{<:DFGVariable}, facto
 
     # Graphs.add_vertex!(dfg.g, v)
     push!(dfg.labelDict, factor.label=>factor._internalId)
-    push!(dfg.factorCache, factor.label=>factor)
     # Track insertion only for variables
     # push!(dfg.addHistory, factor.label
 
@@ -137,9 +153,6 @@ function getVariable(dfg::CloudGraphsDFG, variableId::Int64)::DFGVariable
     variable = unpackVariable(dfg, props)
     variable._internalId = variableId
 
-    # Add to cache
-    push!(dfg.variableCache, variable.label=>variable)
-
     return variable
 end
 
@@ -148,8 +161,6 @@ function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGVari
     if typeof(label) == String
         label = Symbol(label)
     end
-    dfg.useCache && haskey(dfg.variableCache, label) && return dfg.variableCache[label]
-    # Else try get it
     nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, label)
     if nodeId == nothing
         error("Unable to retrieve the ID for variable '$label'. Please check your connection to the database and that the variable exists.")
@@ -160,7 +171,7 @@ end
 
 function getFactor(dfg::CloudGraphsDFG, factorId::Int64)::DFGFactor
     props = getnodeproperties(dfg.neo4jInstance.graph, factorId)
-    factor = unpackFactor(dfg, props, getSerializationModule(dfg))
+    factor = unpackFactor(dfg, props)
     factor._internalId = factorId
 
     # Lastly, rebuild the metadata
@@ -169,9 +180,6 @@ function getFactor(dfg::CloudGraphsDFG, factorId::Int64)::DFGFactor
     # ... TODO: refactor if changed: https://github.com/JuliaRobotics/IncrementalInference.jl/issues/350
     getSolverData(factor).fncargvID = factor._variableOrderSymbols
 
-    # Add to cache
-    push!(dfg.factorCache, factor.label=>factor)
-
     return factor
 end
 
@@ -179,8 +187,6 @@ function getFactor(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGFactor
     if typeof(label) == String
         label = Symbol(label)
     end
-    dfg.useCache && haskey(dfg.factorCache, label) && return dfg.factorCache[label]
-    # Else try get it
     nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, label)
     if nodeId == nothing
         error("Unable to retrieve the ID for factor '$label'. Please check your connection to the database and that the factor exists.")
@@ -216,7 +222,7 @@ function mergeUpdateVariableSolverData!(dfg::CloudGraphsDFG, sourceVariable::DFG
     Neo4j.setnodeproperty(dfg.neo4jInstance.graph, var._internalId, "ppeDict",
         JSON2.write(newEsts))
     Neo4j.setnodeproperty(dfg.neo4jInstance.graph, var._internalId, "solverDataDict",
-        JSON2.write(Dict(keys(newSolveData) .=> map(vnd -> pack(dfg, vnd), values(newSolveData)))))
+        JSON2.write(Dict(keys(newSolveData) .=> map(vnd -> packVariableNodeData(dfg, vnd), values(newSolveData)))))
     return sourceVariable
 end
 
@@ -272,13 +278,7 @@ function updateFactor!(dfg::CloudGraphsDFG, variableIds::Vector{Symbol}, factor:
 end
 
 function deleteVariable!(dfg::CloudGraphsDFG, label::Symbol)::DFGVariable
-    variable = nothing
-    if dfg.useCache && haskey(dfg.variableCache, label)
-        variable = dfg.variableCache[label]
-    else
-        # Else try get it
-        variable = getVariable(dfg, label)
-    end
+    variable = getVariable(dfg, label)
     if variable == nothing
         error("Unable to retrieve the ID for variable '$label'. Please check your connection to the database and that the variable exists.")
     end
@@ -288,7 +288,6 @@ function deleteVariable!(dfg::CloudGraphsDFG, label::Symbol)::DFGVariable
 
     # Clearing history
     dfg.addHistory = symdiff(dfg.addHistory, [label])
-    haskey(dfg.variableCache, label) && delete!(dfg.variableCache, label)
     haskey(dfg.labelDict, label) && delete!(dfg.labelDict, label)
     return variable
 end
@@ -297,13 +296,7 @@ end
 deleteVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariable = deleteVariable!(dfg, variable.label)
 
 function deleteFactor!(dfg::CloudGraphsDFG, label::Symbol)::DFGFactor
-    factor = nothing
-    if dfg.useCache && haskey(dfg.factoreCache, label)
-        factor = dfg.factorCache[label]
-    else
-        # Else try get it
-        factor = getFactor(dfg, label)
-    end
+    factor = getFactor(dfg, label)
     if factor == nothing
         error("Unable to retrieve the ID for factor '$label'. Please check your connection to the database and that the factor exists.")
     end
@@ -313,7 +306,6 @@ function deleteFactor!(dfg::CloudGraphsDFG, label::Symbol)::DFGFactor
 
     # Clearing history
     dfg.addHistory = symdiff(dfg.addHistory, [label])
-    haskey(dfg.factorCache, label) && delete!(dfg.factorCache, label)
     haskey(dfg.labelDict, label) && delete!(dfg.labelDict, label)
     return factor
 end

@@ -124,7 +124,7 @@ function loadDFG(dst::String, iifModule, dfgLoadInto::G; loaddir=joinpath("/","t
     for factorFile in factorFiles
         io = open("$factorFolder/$factorFile")
         packedData = JSON2.read(io, Dict{String, Any})
-        push!(factors, unpackFactor(dfgLoadInto, packedData, iifModule))
+        push!(factors, unpackFactor(dfgLoadInto, packedData))
     end
     @info "Loaded $(length(variables)) factors - $(map(f->f.label, factors))"
     @info "Inserting factors into graph..."

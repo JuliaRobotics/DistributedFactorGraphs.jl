@@ -78,9 +78,9 @@ export mergeUpdateVariableSolverData!, mergeUpdateGraphSolverData!
 export VariableNodeData, PackedVariableNodeData
 export GenericFunctionNodeData
 export getSerializationModule, setSerializationModule!
-export pack, unpack
-# Resolve with above
+# Packing and unpacking
 export packVariable, unpackVariable, packFactor, unpackFactor
+export packVariableNodeData, unpackVariableNodeData
 
 # TODO TAGS
 export listTags, mergeTags!, removeTags!, emptyTags!
