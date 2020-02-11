@@ -12,6 +12,7 @@ using SparseArrays
 
 # TODO
 # - hasOrphans: actually check if there are orphaned factors
+# getFactorFunction vs getFactorType, does the same thing
 #
 
 # Entities
@@ -76,7 +77,7 @@ export getVariableOrder
 
 # Services/AbstractDFG Exports
 export isInitialized, getFactorFunction, isVariable, isFactor
-export isSolveInProgress, getSolvable, setSolvable!, getSolveInProgress
+export isSolveInProgress, getSolvable, setSolvable!, getSolveInProgress, isSolvable
 export mergeUpdateVariableSolverData!, mergeUpdateGraphSolverData!
 
 # Solver (IIF) Exports

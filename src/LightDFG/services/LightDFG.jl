@@ -168,7 +168,7 @@ function listVariables(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing
     end
 end
 
-function getFactors(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{AbstractDFGFactor}
+function getFactors(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{AbstractDFGFactor}
     # factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGFactor, vertices(dfg.g)))
     factors = collect(values(dfg.g.factors))
     if regexFilter != nothing
@@ -176,6 +176,10 @@ function getFactors(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; s
     end
     if solvable != 0
         factors = filter(f -> _isSolvable(dfg, f.label, solvable), factors)
+    end
+    if length(tags) > 0
+        mask = map(v -> length(intersect(v.tags, tags)) > 0, factors )
+        return factors[mask]
     end
     return factors
 end

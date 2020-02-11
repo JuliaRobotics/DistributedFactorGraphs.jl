@@ -14,6 +14,7 @@ dfg = LightDFG{NoSolverParams, VARTYPE, FACTYPE}()
 v1 = VARTYPE(:a)
 v2 = VARTYPE(:b)
 v3 = VARTYPE(:c)
+f0 = FACTYPE(:af1)
 f1 = FACTYPE(:abf1)
 f2 = FACTYPE(:bcf1)
 
@@ -23,7 +24,7 @@ union!(f1.tags, [:FACTOR])
 
 
 @testset "Variables and Factors CRUD and SET" begin
-    VariablesandFactorsCRUD_SET!(dfg,v1,v2,v3,f1,f2)
+    VariablesandFactorsCRUD_SET!(dfg,v1,v2,v3,f0,f1,f2)
 end
 
 

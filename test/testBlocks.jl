@@ -1,3 +1,6 @@
+using DistributedFactorGraphs
+using Test
+using Dates
 
 # TODO, dink meer aan: Trait based softtypes or hard type for VariableNodeData
 # Test InferenceVariable Types
@@ -15,12 +18,20 @@ end
 
 # Test Factor Types TODO same with factor type if I can figure out what it is and how it works
 struct TestFunctorInferenceType1 <: FunctorInferenceType end
+struct TestFunctorInferenceType2 <: FunctorInferenceType end
 
-struct TestCCW1{T} <: ConvolutionObject where {T<:FunctorInferenceType} end
+struct TestFunctorSingleton <: FunctorSingleton end
+struct TestFunctorPairwise <: FunctorPairwise end
+struct TestFunctorPairwiseMinimize <: FunctorPairwiseMinimize end
+
+struct TestCCW{T} <: ConvolutionObject where {T<:FunctorInferenceType}
+    usrfnc!::T
+end
+Base.:(==)(a::TestCCW, b::TestCCW) = a.usrfnc! == b.usrfnc!
 
 
-# global testDFGAPI = LightDFG
-# global testDFGAPI = GraphsDFG
+global testDFGAPI = LightDFG
+global testDFGAPI = GraphsDFG
 
 #test Specific definitions
 # struct TestInferenceVariable1 <: InferenceVariable end
@@ -31,12 +42,14 @@ struct TestCCW1{T} <: ConvolutionObject where {T<:FunctorInferenceType} end
 struct GeenSolverParams <: AbstractParams
 end
 
+T = testDFGAPI
+solparams=NoSolverParams()
 # DFG Accessors
-function DFGStructureAndAccessors(::Type{T}, params::AbstractParams=NoSolverParams()) where T <: AbstractDFG
+function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverParams()) where T <: AbstractDFG
     # "DFG Structure and Accessors"
     # Constructors
     # Constructors to be implemented
-    fg = T(params=params)
+    fg = T(params=solparams)
     #TODO test something better
     @test isa(fg, T)
 
@@ -47,7 +60,7 @@ function DFGStructureAndAccessors(::Type{T}, params::AbstractParams=NoSolverPara
     ud = :ud=>"udEntry"
     rd = :rd=>"rdEntry"
     sd = :sd=>"sdEntry"
-    fg = T(des, uId,  rId,  sId,  Dict{Symbol, String}(ud),  Dict{Symbol, String}(rd),  Dict{Symbol, String}(sd),  params)
+    fg = T(des, uId,  rId,  sId,  Dict{Symbol, String}(ud),  Dict{Symbol, String}(rd),  Dict{Symbol, String}(sd),  solparams)
 
     # accesssors
     # get
@@ -55,7 +68,7 @@ function DFGStructureAndAccessors(::Type{T}, params::AbstractParams=NoSolverPara
     @test getUserId(fg) == uId
     @test getRobotId(fg) == rId
     @test getSessionId(fg) == sId
-    @test getAddHistory(fg) == []
+    @test getAddHistory(fg) === fg.addHistory
 
     @test getUserData(fg) == Dict(ud)
     @test getRobotData(fg) == Dict(rd)
@@ -81,7 +94,7 @@ function DFGStructureAndAccessors(::Type{T}, params::AbstractParams=NoSolverPara
     @test_throws MethodError setSolverParams!(fg, GeenSolverParams()) == GeenSolverParams()
 
 
-    @test setSolverParams!(fg, typeof(params)()) == typeof(params)()
+    @test setSolverParams!(fg, typeof(solparams)()) == typeof(solparams)()
 
     @test setDescription!(fg, des*"_1") == des*"_1"
 
@@ -226,6 +239,8 @@ function DFGVariableSCA()
 
 end
 
+
+
 function  DFGFactorSCA()
     # "DFG Factor"
 
@@ -235,8 +250,12 @@ function  DFGFactorSCA()
     f1_tags = Set([:FACTOR])
     testTimestamp = now()
 
-    f1 = DFGFactor{TestFunctorInferenceType1, Symbol}(f1_lbl)
-    f1 = DFGFactor(f1_lbl, [:a,:b], GenericFunctionNodeData{TestFunctorInferenceType1,Symbol}(), tags = f1_tags, solvable=0)
+    gfnd_prior = GenericFunctionNodeData(Symbol[], false, false, Int[], :DistributedFactorGraphs, TestCCW(TestFunctorSingleton()))
+
+    gfnd = GenericFunctionNodeData(Symbol[], false, false, Int[], :DistributedFactorGraphs, TestCCW(TestFunctorInferenceType1()))
+
+    f1 = DFGFactor{TestCCW{TestFunctorInferenceType1}, Symbol}(f1_lbl)
+    f1 = DFGFactor(f1_lbl, [:a,:b], gfnd, tags = f1_tags, solvable=0)
 
     f2 = DFGFactor{TestFunctorInferenceType1, Symbol}(:f2)
 
@@ -258,6 +277,10 @@ function  DFGFactorSCA()
     getSolverData(f1).solveInProgress = 1
     @test setSolvable!(f1, 1) == 1
 
+    #TODO These 2 function are equivelent
+    @test typeof(getFactorType(f1)) == TestFunctorInferenceType1
+    @test typeof(getFactorFunction(f1)) == TestFunctorInferenceType1
+
 
     #TODO here for now, don't reccomend usage.
     testTags = [:tag1, :tag2]
@@ -275,20 +298,20 @@ function  DFGFactorSCA()
     @test setSolvable!(f1, 1) == 1
     @test getSolvable(f1) == 1
 
-    #TODO setSolverData!(f1,...)????
+    #TODO don't know if this should be used, added for completeness, it just wastes the gc's time
+    @test setSolverData!(f1, deepcopy(gfnd)) == gfnd
 
     # Deprecated functions
     @test @test_deprecated solverData(f1) === f1.solverData
     @test @test_deprecated getData(f1) === f1.data
-    #TODO
-    # getFactorFunction
-    # getFactorType
-    # isPrior
 
-    return  (f1=f1, f2=f2)
+    # create f0 here for a later timestamp
+    f0 = DFGFactor(:af1, [:a], gfnd_prior, tags = Set([:PRIOR]))
+
+    return  (f0=f0, f1=f1, f2=f2)
 end
 
-function  VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f1, f2)
+function  VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     # "Variables and Factors CRUD an SET"
 
     #TODO dont throw ErrorException
@@ -316,6 +339,8 @@ function  VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f1, f2)
     @test_throws ErrorException addFactor!(fg, [:b, :c], f2)
     #TODO Graphs.jl, but look at refactoring absract @test_throws ErrorException addFactor!(fg, f2)
 
+    @test getAddHistory(fg) == [:a, :b, :c]
+
     #deletions
     @test deleteVariable!(fg, v3) == v3
     @test_throws ErrorException deleteVariable!(fg, v3)
@@ -327,6 +352,8 @@ function  VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f1, f2)
 
     @test getVariable(fg, :a) == v1
     @test getVariable(fg, :a, :default) == v1
+
+    @test addFactor!(fg, f0) == f0
 
     if isa(v1, DFGVariable)
         #TODO decide if this should be @error or other type
@@ -341,12 +368,6 @@ function  VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f1, f2)
     @test_throws ErrorException getFactor(fg, :f2)
 
 
-    # TODO move
-    #getvariables and factors
-    @test length(getVariables(fg)) == 2
-    @test all(getFactors(fg) .=== [f1])
-
-
     # Existence
     @test exists(fg, :a)
     @test !exists(fg, :c)
@@ -358,48 +379,37 @@ function  VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f1, f2)
     @test exists(fg, f1)
     @test !exists(fg, f2)
 
+    # check types
     @test isVariable(fg, :a)
     @test !isVariable(fg, :abf1)
 
     @test isFactor(fg, :abf1)
     @test !isFactor(fg, :a)
 
+    if f0 isa DFGFactor
+        @test isPrior(fg, :af1)
+        @test !isPrior(fg, :abf1)
+    end
+    
     #list
+    @test length(getVariables(fg)) == 2
+    @test issetequal(getLabel.(getFactors(fg)), [:af1, :abf1])
+
     @test issetequal([:a,:b], listVariables(fg))
-    @test issetequal([:abf1], listFactors(fg))
+    @test issetequal([:af1,:abf1], listFactors(fg))
+
+    @test ls(fg) == listVariables(fg)
+    @test lsf(fg) == listFactors(fg)
 
     @test @test_deprecated getVariableIds(fg) == listVariables(fg)
     @test @test_deprecated getFactorIds(fg) == listFactors(fg)
-
-    # TODO SORT out
-    @test length(ls(fg)) == 2
-    @test length(lsf(fg)) == 1
-    @test symdiff([:a, :b], listVariables(fg)) == []
-    @test listFactors(fg) == [:abf1]
-    #
-    @test lsf(fg, :a) == [f1.label]
-    # Tags
-    @test ls(fg, tags=[:POSE]) == [:a]
-    @test symdiff(ls(fg, tags=[:POSE, :LANDMARK]), ls(fg, tags=[:VARIABLE])) == []
-    # Regexes
-    @test ls(fg, r"a") == [v1.label]
-    @test lsf(fg, r"f*") == [f1.label]
-    # Accessors
-    @test getAddHistory(fg) == [:a, :b, :c] #, :f1
-    @test getDescription(fg) != nothing
-    @test_throws ErrorException getLabelDict(fg)
-    # Existence
-    @test exists(fg, :a) == true
-    @test exists(fg, v1) == true
-    @test exists(fg, :nope) == false
 
 end
 
 
 function  tagsTestBlock!(fg, v1, v1_tags)
-    # "tags"
-    #
-
+# "tags"
+#
     v1Tags = deepcopy(getTags(v1))
     @test issetequal(v1Tags, v1_tags)
     @test issetequal(listTags(fg, :a), v1Tags)
@@ -447,7 +457,6 @@ function  PPETestBlock!(fg, v1)
 
     @test_throws ErrorException getPPE(fg, :a, :default)
     # Update add it
-    #TODO warn key not exist
     @test @test_logs (:warn, r"does not exist") updatePPE!(fg, :a, ppe, :default) == ppe
     # Update update it
     @test updatePPE!(fg, :a, ppe, :default) == ppe
@@ -559,7 +568,6 @@ function  VSDTestBlock!(fg, v1)
     # Delete it
     @test deleteVariableSolverData!(fg, :a, :parametric) == vndBack
     # Update add it
-    #TODO warn key not exist
     @test @test_logs (:warn, r"does not exist") updateVariableSolverData!(fg, :a, vnd, :parametric) == vnd
 
     # Update update it
@@ -670,39 +678,42 @@ function  BigDataEntriesTestBlock!(fg, v2)
 end
 
 
-function testGroup!(fg, v1, v2, f1)
+function testGroup!(fg, v1, v2, f0, f1)
     # "TODO Sorteer groep"
 
     @testset "Listing Variables and Factors with filters" begin
 
         @test issetequal([:a,:b], listVariables(fg))
-        @test issetequal([:abf1], listFactors(fg))
+        @test issetequal([:af1,:abf1], listFactors(fg))
 
         @test @test_deprecated getVariableIds(fg) == listVariables(fg)
         @test @test_deprecated getFactorIds(fg) == listFactors(fg)
 
         # TODO Mabye implement IIF type here
         # Requires IIF or a type in IIF
-        @test_skip @test_deprecated getfnctype(f1.solverData) === getFactorType(f1.solverData)
-        @test_skip @test_deprecated getfnctype(f1) === getFactorType(f1)
-        @test_skip @test_deprecated getfnctype(fg, :abf1) === getFactorType(fg, :abf1)
-        @test_broken getFactorType(f1.solverData) === f1.solverData.fnc.usrfnc!
-        @test_broken getFactorType(f1) === f1.solverData.fnc.usrfnc!
-        @test_broken getFactorType(fg, :abf1) === f1.solverData.fnc.usrfnc!
+        @test @test_deprecated getfnctype(f1.solverData) === getFactorType(f1.solverData)
+        @test @test_deprecated getfnctype(f1) === getFactorType(f1)
+        @test @test_deprecated getfnctype(fg, :abf1) === getFactorType(fg, :abf1)
+        @test getFactorType(f1.solverData) === f1.solverData.fnc.usrfnc!
+        @test getFactorType(f1) === f1.solverData.fnc.usrfnc!
+        @test getFactorType(fg, :abf1) === f1.solverData.fnc.usrfnc!
 
-        @test_broken isPrior(fg, :abf1) # if f1 is prior
-        @test_broken lsfPriors(fg) == [:abf1]
+        @test isPrior(fg, :af1) # if f1 is prior
+        @test lsfPriors(fg) == [:af1]
+
+        #TODO add test, don't know what we want from this
         @test_broken lsfTypes(fg)
 
-        @test_broken ls(fg, TestFunctorInferenceType1) == [f1]
-        @test_broken lsf(fg, TestFunctorInferenceType1) == [f1]
-        @test_broken lsfWho(fg, :TestFunctorInferenceType1) == [f1]
+        @test ls(fg, TestFunctorInferenceType1) == [:abf1]
+        @test lsf(fg, TestFunctorSingleton) == [:af1]
+        @test lsfWho(fg, :TestFunctorInferenceType1) == [:abf1]
 
         @test getVariableType(v1) == TestSofttype1()
         @test getVariableType(fg,:a) == TestSofttype1()
 
+
         #TODO what is lsTypes supposed to return?
-        lsTypes(fg)
+        @test_broken lsTypes(fg)
 
         @test ls(fg, TestSofttype1) == [:a]
 
@@ -719,9 +730,10 @@ function testGroup!(fg, v1, v2, f1)
         @test getVariables(fg, tags=[:LANDMARK])[1] == v2
 
         @test getFactors(fg, r"nope") == []
-        @test all(getFactors(fg, solvable=1) .=== [f1])
+        @test issetequal(getLabel.(getFactors(fg, solvable=1)), [:af1, :abf1])
         @test getFactors(fg, solvable=2) == []
-        @test_broken getFactors(fg, tags=[:tag1])[1] == f1
+        @test getFactors(fg, tags=[:tag1])[1] == f1
+        @test getFactors(fg, tags=[:PRIOR])[1] == f0
         ##/SORT
 
         # Additional testing for https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/201
@@ -729,11 +741,11 @@ function testGroup!(fg, v1, v2, f1)
         @test symdiff([:a, :b], listVariables(fg, solvable=0)) == []
         @test listVariables(fg, solvable=1) == [:b]
 
-        @test listFactors(fg, solvable=1) == [:abf1]
-        @test listFactors(fg, solvable=0) == [:abf1]
-        @test getFactors(fg, solvable=0)[1] === f1
+        @test issetequal(listFactors(fg, solvable=1), [:af1, :abf1])
+        @test issetequal(listFactors(fg, solvable=0), [:af1, :abf1])
+        @test all([f in [f0, f1] for f in getFactors(fg, solvable=1)])
 
-        @test lsf(fg, :a) == [f1.label]
+        @test lsf(fg, :b) == [f1.label]
 
         # Tags
         @test ls(fg, tags=[:POSE]) == []
@@ -741,7 +753,8 @@ function testGroup!(fg, v1, v2, f1)
 
         # Regexes
         @test ls(fg, r"a") == [v1.label]
-        @test lsf(fg, r"f*") == [f1.label]
+        @test lsf(fg, r"abf*") == [f1.label]
+
 
         #TODO test filters and options
         # regexFilter::Union{Nothing, Regex}=nothing;
@@ -752,13 +765,15 @@ function testGroup!(fg, v1, v2, f1)
 
     end
 
-
     @testset "Sorting" begin
         unsorted = [:x1_3;:x1_6;:l1;:april1] #this will not work for :x1x2f1
         @test sortDFG(unsorted) == sortVarNested(unsorted)
         @test sort([:x1x2f1, :x1l1f1], lt=DistributedFactorGraphs.natural_lt) == [:x1l1f1, :x1x2f1]
         l = [:a1, :X1, :b1c2, :x2_2, :c, :x1, :x10, :x1_1, :x10_10,:a, :x2_1, :xy3, :l1, :x1_2, :x1l1f1, Symbol("1a1"), :x1x2f1]
         @test sort(l, lt=DistributedFactorGraphs.natural_lt) == [Symbol("1a1"), :X1, :a, :a1, :b1c2, :c, :l1, :x1, :x1_1, :x1_2, :x1l1f1, :x1x2f1, :x2_1, :x2_2, :x10, :x10_10, :xy3]
+        # NOTE Some of what is possible with sort
+        @test getLabel.(sort(getVariables(fg), lt=DistributedFactorGraphs.natural_lt, by=getLabel)) == [:a, :b]
+        @test getLabel.(sort(getFactors(fg), by=getTimestamp)) == [:abf1, :af1]
     end
 
     @testset "Some more helpers to sort out" begin
@@ -768,16 +783,19 @@ function testGroup!(fg, v1, v2, f1)
         @test !isInitialized(v2)
         @test @test_logs (:error, r"Variable does not have solver data") !isInitialized(v2, key=:second)
 
-        # isSolvable and isSolveInProgress
-        #TODO implement or deprecate isSolvable
+        # solvables
         @test getSolvable(v1) == 0
         @test getSolvable(v2) == 1
         @test getSolvable(f1) == 1
 
-        #TODO isSolveInProgress was not deprecated
+        @test !isSolvable(v1)
+        @test isSolvable(v2)
+
+        #solves in progress
         @test getSolveInProgress(v1) == 1
         @test getSolveInProgress(f1) == 1
-
+        @test !isSolveInProgress(v2) && v2.solverDataDict[:default].solveInProgress == 0
+        @test isSolveInProgress(v1) && v1.solverDataDict[:default].solveInProgress > 0
 
         @test setSolvable!(v1, 1) == 1
         @test getSolvable(v1) == 1
@@ -992,7 +1010,7 @@ function  Summaries(testDFGAPI)
 end
 
 function ProducingDotFiles(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
-# "Producing Dot Files"
+    # "Producing Dot Files"
     # create a simpler graph for dot testing
     dotdfg = testDFGAPI()
     v1 = VARTYPE(:a, TestSofttype1())

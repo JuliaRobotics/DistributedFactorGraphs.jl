@@ -19,11 +19,11 @@ end
 
 # DFGFactor structure construction and accessors
 @testset "DFG Factor" begin
-    global fac1, fac2 = DFGFactorSCA()
+    global fac0, fac1, fac2 = DFGFactorSCA()
 end
 
 @testset "Variables and Factors CRUD and SET" begin
-    VariablesandFactorsCRUD_SET!(fg1, var1, var2, var3, fac1, fac2)
+    VariablesandFactorsCRUD_SET!(fg1, var1, var2, var3, fac0, fac1, fac2)
 end
 
 
@@ -45,7 +45,7 @@ end
 end
 
 @testset "TODO Sorteer groep" begin
-    testGroup!(fg1, var1, var2, fac1)
+    testGroup!(fg1, var1, var2, fac0, fac1)
 end
 
 # order up to here is important, TODO maybe make independant

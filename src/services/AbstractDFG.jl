@@ -379,7 +379,7 @@ end
 List the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
-function getFactors(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{AbstractDFGFactor} where G <: AbstractDFG
+function getFactors(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{AbstractDFGFactor} where G <: AbstractDFG
     error("getFactors not implemented for $(typeof(dfg))")
 end
 
@@ -950,12 +950,14 @@ Related
 
 isSolvable
 """
-function getSolveInProgress(var::Union{DFGVariable, DFGFactor}; solveKey::Symbol=:default)::Int
+function getSolveInProgress(var::Union{DFGVariable, DFGFactor}, solveKey::Symbol=:default)::Int
     # Variable
     var isa DFGVariable && return haskey(getSolverDataDict(var), solveKey) ? getSolverDataDict(var)[solveKey].solveInProgress : 0
     # Factor
     return getSolverData(var).solveInProgress
 end
+
+isSolveInProgress(node::Union{DFGVariable, DFGFactor}, solvekey::Symbol=:default) = getSolveInProgress(node, solvekey) > 0
 
 """
     $SIGNATURES
