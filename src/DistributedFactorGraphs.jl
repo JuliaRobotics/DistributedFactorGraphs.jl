@@ -39,6 +39,7 @@ export getPPEDict
 export getSolvedCount, isSolved, setSolvedCount!
 export DFGVariableSummary, DFGFactorSummary, AbstractDFGSummary
 export getNeighborhood, getSubgraph, getSubgraphAroundNode
+export printFactor, printVariable
 
 export getUserId, getRobotId, getSessionId
 export getDFGInfo
