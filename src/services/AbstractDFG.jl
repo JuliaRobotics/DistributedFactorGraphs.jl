@@ -1009,7 +1009,7 @@ Returns state of vertex data `.initialized` flag.
 Notes:
 - used by both factor graph variable and Bayes tree clique logic.
 """
-function isInitialized(var::DFGVariable; key::Symbol=:default)::Bool
+function isInitialized(var::DFGVariable, key::Symbol=:default)::Bool
       data = getSolverData(var, key)
       if data == nothing
         @error "Variable does not have solver data $(key)"
@@ -1019,8 +1019,8 @@ function isInitialized(var::DFGVariable; key::Symbol=:default)::Bool
     end
 end
 
-function isInitialized(dfg::AbstractDFG, label::Symbol; key::Symbol=:default)::Bool
-  return isInitialized(getVariable(dfg, label), key=key)
+function isInitialized(dfg::AbstractDFG, label::Symbol, key::Symbol=:default)::Bool
+  return isInitialized(getVariable(dfg, label), key)
 end
 
 

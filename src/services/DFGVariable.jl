@@ -288,8 +288,8 @@ getVariableType
 function getSofttype(vnd::VariableNodeData)
   return vnd.softtype
 end
-function getSofttype(v::DFGVariable)
-  return typeof(v).parameters[1]() # Get instantiated form of the parameter for the DFGVariable
+function getSofttype(v::DFGVariable, solvekey::Symbol=:default)
+  return v.solverDataDict[solvekey].softtype # Get instantiated form of the parameter for the DFGVariable
 end
 
 """

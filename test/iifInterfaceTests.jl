@@ -215,7 +215,7 @@ end
     @test !isInitialized(dfg, :a)
     @test !isInitialized(v2)
 
-    @test !isInitialized(v2, key=:second)
+    @test !isInitialized(v2, :second)
 
     # Session, robot, and user small data tests
     # NOTE: CloudGraphDFG isnt supporting this yet.
