@@ -38,7 +38,7 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G
 
     data = packedProps["data"]
     datatype = packedProps["fnctype"]
-    @debug "DECODING Softtype = '$unpackedTypeName' for factor '$label'"
+    @debug "DECODING Softtype = '$(datatype)' for factor '$label'"
     packtype = getTypeFromSerializationModule(dfg, Symbol("Packed"*datatype))
 
     packed = nothing

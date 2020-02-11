@@ -141,6 +141,8 @@ getPPEs(vari::VariableDataLevel1)::Dict = getVariablePPEs(vari)
 #FIXME TODO based on API definition of merge, in some cases the Noun is really not needed.
 # @deprecate mergeUpdateVariableSolverData!(args...) mergeVariableSolverData!(args...)
 
+@deprecate pack(dfg::AbstractDFG, d::VariableNodeData) packVariableNodeData(dfg, d)
+@deprecate unpack(dfg::AbstractDFG, d::PackedVariableNodeData) unpackVariableNodeData(dfg, d)
 
 export getLabelDict
 getLabelDict(dfg::AbstractDFG) = error("getLabelDict is deprecated, consider using listing functions")

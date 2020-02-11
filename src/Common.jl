@@ -137,11 +137,11 @@ sortDFG(vars::Vector{Symbol})::Vector{Symbol} = sortVarNested(vars)
 #   # this looks right
 #   return data.fnc.usrfnc!
 # end
-# function getfnctype(fact::DFGFactor; solveKey::Symbol=:default)
-#   data = getSolverData(fact) # TODO , solveKey=solveKey)
+# function getfnctype(fact::DFGFactor, solveKey::Symbol=:default)
+#   data = getSolverData(fact) # TODO , solveKey)
 #   return getfnctype(data)
 # end
-# function getfnctype(dfg::T, lbl::Symbol; solveKey::Symbol=:default) where T <: AbstractDFG
+# function getfnctype(dfg::T, lbl::Symbol, solveKey::Symbol=:default) where T <: AbstractDFG
 #   getfnctype(getFactor(dfg, exvertid))
 # end
 

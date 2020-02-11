@@ -390,7 +390,7 @@ function  VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
         @test isPrior(fg, :af1)
         @test !isPrior(fg, :abf1)
     end
-    
+
     #list
     @test length(getVariables(fg)) == 2
     @test issetequal(getLabel.(getFactors(fg)), [:af1, :abf1])
@@ -781,7 +781,7 @@ function testGroup!(fg, v1, v2, f0, f1)
         #solver data is initialized
         @test !isInitialized(fg, :a)
         @test !isInitialized(v2)
-        @test @test_logs (:error, r"Variable does not have solver data") !isInitialized(v2, key=:second)
+        @test @test_logs (:error, r"Variable does not have solver data") !isInitialized(v2, :second)
 
         # solvables
         @test getSolvable(v1) == 0
