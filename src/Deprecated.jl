@@ -80,9 +80,27 @@ Base.setproperty!(x::DFGFactor,f::Symbol, val) = begin
     end
   end
 
-@deprecate getEstimates(v::VariableDataLevel1) getVariablePPEs(v)
+@deprecate getEstimates(v::VariableDataLevel1) getPPEDict(v)
 
-@deprecate estimates(v::VariableDataLevel1) getVariablePPEs(v)
+@deprecate estimates(v::VariableDataLevel1) getPPEDict(v)
+
+@deprecate getVariablePPEs(v::VariableDataLevel1) getPPEDict(v)
+
+@deprecate getVariablePPE(args...) getPPE(args...)
+#FIXME SORT UIT en deprecate, too many aliases
+
+
+"""
+    $SIGNATURES
+
+Return dictionary with Parametric Point Estimates (PPE) values.
+
+Notes:
+- Equivalent to `getVariablePPEs`.
+"""
+#TODO deprecate, maar gebruik dalk naam om vector te kry soos getVariables/getFactors
+getPPEs(vari::VariableDataLevel1)::Dict = getVariablePPEs(vari)
+
 
 @deprecate getEstimate(v::VariableDataLevel1, key::Symbol=:default) getVariablePPE(v, key)
 
@@ -120,6 +138,8 @@ Base.setproperty!(x::DFGFactor,f::Symbol, val) = begin
 
 @deprecate internalId(args...) getInternalId(args...)
 
+#FIXME TODO based on API definition of merge, in some cases the Noun is really not needed.
+# @deprecate mergeUpdateVariableSolverData!(args...) mergeVariableSolverData!(args...)
 
 
 export getLabelDict

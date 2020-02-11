@@ -106,3 +106,6 @@ Retrieve solver data structure stored in a factor.
 function getSolverData(f::F) where F <: DFGFactor
   return f.solverData
 end
+
+#TODO don't know if this is used, added for completeness
+setSolverData!(f::DFGFactor, data::GenericFunctionNodeData) = f.solverData = data

@@ -202,11 +202,16 @@ function getVariables(dfg::GraphsDFG,
     return variables
 end
 
-function getFactors(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{DFGFactor}
+function getFactors(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{DFGFactor}
     factors = map(v -> v.dfgNode, filter(n -> (n.dfgNode isa DFGFactor) && (solvable != 0 ? solvable <= isSolvable(n.dfgNode) : true), Graphs.vertices(dfg.g)))
 
     if regexFilter != nothing
         factors = filter(f -> occursin(regexFilter, String(f.label)), factors)
+    end
+    
+    if length(tags) > 0
+        mask = map(v -> length(intersect(v.tags, tags)) > 0, factors )
+        return factors[mask]
     end
     return factors
 end

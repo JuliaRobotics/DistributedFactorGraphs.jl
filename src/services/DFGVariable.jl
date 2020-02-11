@@ -234,45 +234,47 @@ end
 # TODO: Temporary home
 # Accessors
 
-"""
-    $SIGNATURES
+#deprecated
+# """
+#     $SIGNATURES
+#
+# Return dictionary with Parametric Point Estimates (PPE) values.
+#
+# Notes:
+# - Equivalent to `getPPEs`.
+# """
+# getVariablePPEs(vari::VariableDataLevel1)::Dict = vari.ppeDict
+#
+# """
+#     $SIGNATURES
+#
+# Return dictionary with Parametric Point Estimates (PPE) values.
+#
+# Notes:
+# - Equivalent to `getVariablePPEs`.
+# """
+# getPPEs(vari::VariableDataLevel1)::Dict = getVariablePPEs(vari)
+#
+#
+# """
+#     $SIGNATURES
+#
+# Get the parametric point estimate (PPE) for a variable in the factor graph.
+#
+# Notes
+# - Defaults on keywords `solveKey` and `method`
+#
+# Related
+#
+# getMeanPPE, getMaxPPE, getKDEMean, getKDEFit, getPPEs, getVariablePPEs
+# """
+# function getVariablePPE(vari::VariableDataLevel1, solveKey::Symbol=:default)
+#     ppeDict = getVariablePPEs(vari)
+#     return haskey(ppeDict, solveKey) ? ppeDict[solveKey] : nothing
+# end
+#
+# getVariablePPE(dfg::AbstractDFG, vsym::Symbol, solveKey::Symbol=:default) = getVariablePPE(getVariable(dfg,vsym), solveKey)
 
-Return dictionary with Parametric Point Estimates (PPE) values.
-
-Notes:
-- Equivalent to `getPPEs`.
-"""
-getVariablePPEs(vari::VariableDataLevel1)::Dict = vari.ppeDict
-
-"""
-    $SIGNATURES
-
-Return dictionary with Parametric Point Estimates (PPE) values.
-
-Notes:
-- Equivalent to `getVariablePPEs`.
-"""
-getPPEs(vari::VariableDataLevel1)::Dict = getVariablePPEs(vari)
-
-
-"""
-    $SIGNATURES
-
-Get the parametric point estimate (PPE) for a variable in the factor graph.
-
-Notes
-- Defaults on keywords `solveKey` and `method`
-
-Related
-
-getMeanPPE, getMaxPPE, getKDEMean, getKDEFit, getPPEs, getVariablePPEs
-"""
-function getVariablePPE(vari::VariableDataLevel1, solveKey::Symbol=:default)
-    ppeDict = getVariablePPEs(vari)
-    return haskey(ppeDict, solveKey) ? ppeDict[solveKey] : nothing
-end
-
-getVariablePPE(dfg::AbstractDFG, vsym::Symbol, solveKey::Symbol=:default) = getVariablePPE(getVariable(dfg,vsym), solveKey)
 
 """
    $(SIGNATURES)
@@ -313,6 +315,7 @@ end
 
 Set solver data structure stored in a variable.
 """
+#TODO Repeated functionality?
 setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v.solverDataDict[key] = data
 
 """
@@ -327,7 +330,28 @@ getSolverDataDict(v::DFGVariable) = v.solverDataDict
 
 Get the PPE dictionary for a variable. Its use is not recomended.
 """
-getPPEDict(v::DFGVariable) = v.ppeDict
+getPPEDict(v::VariableDataLevel1) = v.ppeDict
+
+
+#TODO FIXME don't know if this should exist, should rather always update with fg object to simplify inmem vs cloud
+"""
+    $SIGNATURES
+
+Get the parametric point estimate (PPE) for a variable in the factor graph.
+
+Notes
+- Defaults on keywords `solveKey` and `method`
+
+Related
+
+getMeanPPE, getMaxPPE, getKDEMean, getKDEFit, getPPEs, getVariablePPEs
+"""
+function getPPE(vari::VariableDataLevel1, solveKey::Symbol=:default)
+    return  getPPEs(vari)[solveKey]
+    # return haskey(ppeDict, solveKey) ? ppeDict[solveKey] : nothing
+end
+
+
 
 """
 $SIGNATURES

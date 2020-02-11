@@ -4,12 +4,11 @@
 import Base.==
 
 #=
-TODO <:InferenceVariable: please someone confirm this, I'm not fully up to date why softtype was created.
-For now abstract `InferenceVariable`s are considered equal if they are the same type (except for labels, that I feel are deprecated)
+For now abstract `InferenceVariable`s are considered equal if they are the same type, dims, and manifolds (abels are deprecated)
 If your implentation has aditional properties such as `DynPose2` with `ut::Int64` (microsecond time) or support different manifolds
-implement compare if needed. softtype sounds a bit if it can be a trait, or in the future, rather a normal julia type.
+implement compare if needed.
 =#
-==(a::InferenceVariable,b::InferenceVariable) = typeof(a) == typeof(b)
+==(a::InferenceVariable,b::InferenceVariable) = typeof(a) == typeof(b) && a.dims == b.dims && a.manifolds == b.manifolds
 
 ==(a::ConvolutionObject, b::ConvolutionObject) = typeof(a) == typeof(b)
 

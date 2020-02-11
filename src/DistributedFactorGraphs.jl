@@ -10,6 +10,11 @@ using JSON2
 using LinearAlgebra
 using SparseArrays
 
+# TODO
+# - hasOrphans: actually check if there are orphaned factors
+# getFactorFunction vs getFactorType, does the same thing
+#
+
 # Entities
 include("entities/AbstractDFG.jl")
 
@@ -36,6 +41,7 @@ export DFGVariableSummary, DFGFactorSummary, AbstractDFGSummary
 export getNeighborhood, getSubgraph, getSubgraphAroundNode
 
 export getUserId, getRobotId, getSessionId
+export getDFGInfo
 
 # Define variable levels
 const VariableDataLevel0 = Union{DFGVariable, DFGVariableSummary, SkeletonDFGVariable}
@@ -71,7 +77,7 @@ export getVariableOrder
 
 # Services/AbstractDFG Exports
 export isInitialized, getFactorFunction, isVariable, isFactor
-export isSolveInProgress, getSolvable, setSolvable!, getSolveInProgress
+export isSolveInProgress, getSolvable, setSolvable!, getSolveInProgress, isSolvable
 export mergeUpdateVariableSolverData!, mergeUpdateGraphSolverData!
 
 # Solver (IIF) Exports
