@@ -98,8 +98,8 @@ end
 
 function compareAll(Al::T, Bl::T; show::Bool=true, skip::Vector{Symbol}=Symbol[])::Bool where T
   @debug "Comparing types $T:"
-  @debug "  Al = $Al"
-  @debug "  Bl = $Bl"
+  # @debug "  Al = $Al"
+  # @debug "  Bl = $Bl"
   !compareFields(Al, Bl, show=show, skip=skip) && return false
   for field in fieldnames(T)
     field in skip && continue
