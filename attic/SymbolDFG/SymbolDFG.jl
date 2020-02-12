@@ -34,8 +34,8 @@ import ...DistributedFactorGraphs:  setSolverParams,
                                     getNeighbors,
                                     getSubgraphAroundNode,
                                     getSubgraph,
-                                    getAdjacencyMatrix,
-                                    getAdjacencyMatrixSparse,
+                                    getIncidenceMatrix,
+                                    getIncidenceMatrixSparse,
                                     _getDuplicatedEmptyDFG
 
 include("SymbolFactorGraphs/SymbolFactorGraphs.jl")

@@ -10,52 +10,113 @@ using JSON2
 using LinearAlgebra
 using SparseArrays
 
+# TODO
+# - hasOrphans: actually check if there are orphaned factors
+# getFactorFunction vs getFactorType, does the same thing
+#
+
 # Entities
 include("entities/AbstractDFG.jl")
+
 include("entities/DFGFactor.jl")
+
 include("entities/DFGVariable.jl")
+
 include("entities/AbstractDFGSummary.jl")
 
+# Solver data
+export InferenceType, PackedInferenceType, FunctorInferenceType, InferenceVariable, ConvolutionObject
+export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
+
+# Graph Types
 export AbstractDFG
 export AbstractParams, NoSolverParams
 export DFGNode, DFGVariable, DFGFactor, AbstractDFGVariable, AbstractDFGFactor
-export InferenceType, PackedInferenceType, FunctorInferenceType, InferenceVariable, ConvolutionObject
-export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
-export getMaxPPE, getMeanPPE, getSuggestedPPE, getVariablePPE, getPPE, getVariablePPEs, getPPEs #, getEstimates
-export timestamp # DEPRECATED
+export DFGNodeParams
+export SkeletonDFGVariable, SkeletonDFGFactor
+export label, getTimestamp, setTimestamp!, setTimestamp, tags, setTags!, data, softtype, solverData, getData, solverDataDict, setSolverData, setSolverData!, internalId, smallData, setSmallData!, bigData
+export getPPEDict
 export getSolvedCount, isSolved, setSolvedCount!
-export label, getTimestamp, setTimestamp!, tags, setTags!, estimates, estimate, data, softtype, solverData, getData, solverDataDict, setSolverData, setSolverData!, internalId, smallData, setSmallData!, bigData
 export DFGVariableSummary, DFGFactorSummary, AbstractDFGSummary
-export addBigDataEntry!, getBigDataEntry, updateBigDataEntry!, deleteBigDataEntry!, getBigDataEntries, getBigDataKeys
 export getNeighborhood, getSubgraph, getSubgraphAroundNode
 export printFactor, printVariable
 
-#Skeleton types
-export SkeletonDFGVariable, SkeletonDFGFactor
+export getUserId, getRobotId, getSessionId
+export getDFGInfo
 
-#graph small data
-export getUserData, setUserData, getRobotData, setRobotData, getSessionData, setSessionData
-export pushUserData!, pushRobotData!, pushSessionData!, popUserData!, popRobotData!, popSessionData!
+# Define variable levels
+const VariableDataLevel0 = Union{DFGVariable, DFGVariableSummary, SkeletonDFGVariable}
+const VariableDataLevel1 = Union{DFGVariable, DFGVariableSummary}
+const VariableDataLevel2 = Union{DFGVariable}
+
+# Define factor levels
+const FactorDataLevel0 = Union{DFGFactor, DFGFactorSummary, SkeletonDFGFactor}
+const FactorDataLevel1 = Union{DFGFactor, DFGFactorSummary}
+const FactorDataLevel2 = Union{DFGFactor}
+
+# Data levels
+const DataLevel0 = Union{VariableDataLevel0, FactorDataLevel0}
+const DataLevel1 = Union{VariableDataLevel1, FactorDataLevel1}
+const DataLevel2 = Union{VariableDataLevel2, FactorDataLevel2}
+
+# Accessors
+# Level 0
+export getLabel, getTimestamp, setTimestamp!, getTags, setTags!
+# Level 1
+export getMaxPPE, getMeanPPE, getSuggestedPPE, getLastUpdatedTimestamp, getVariablePPE, getVariablePPEs, getPPEs #, getEstimates
+export listPPE, getPPE, addPPE!, updatePPE!, deletePPE!
+export getSofttype
+# Level 2
+export getData, getSolverData, getSolverDataDict, setSolverData!, getInternalId
+export listVariableSolverData, getVariableSolverData, addVariableSolverData!, updateVariableSolverData!, deleteVariableSolverData!
+
+export getSmallData, setSmallData!, bigData
+export addBigDataEntry!, getBigDataEntry, updateBigDataEntry!, deleteBigDataEntry!, getBigDataEntries, getBigDataKeys
+
+# Find a home
+export getVariableOrder
 
 # Services/AbstractDFG Exports
 export isInitialized, getFactorFunction, isVariable, isFactor
-export isSolvable, isSolveInProgress, getSolvable, setSolvable!
+export isSolveInProgress, getSolvable, setSolvable!, getSolveInProgress, isSolvable
 export mergeUpdateVariableSolverData!, mergeUpdateGraphSolverData!
 
 # Solver (IIF) Exports
 export VariableNodeData, PackedVariableNodeData
-export GenericFunctionNodeData#, FunctionNodeData
+export GenericFunctionNodeData
 export getSerializationModule, setSerializationModule!
-export pack, unpack
-# Resolve with above
+# Packing and unpacking
 export packVariable, unpackVariable, packFactor, unpackFactor
+export packVariableNodeData, unpackVariableNodeData
 
-#PPE exports
+# TODO TAGS
+export listTags, mergeTags!, removeTags!, emptyTags!
+# PPE exports
 export AbstractPointParametricEst
 export MeanMaxPPE
 
-#Interfaces
-export getAdjacencyMatrixSparse
+# AbstractDFG Interface
+#--------
+export setSerializationModule!, getSerializationModule
+export getDescription, setDescription!, getAddHistory, getSolverParams, setSolverParams!
+export getUserData, setUserData!, getRobotData, setRobotData!, getSessionData, setSessionData!
+
+# Not sure these are going to work everywhere, TODO implement in cloud?
+export updateUserData!, updateRobotData!, updateSessionData!, deleteUserData!, deleteRobotData!, deleteSessionData!
+export emptyUserData!, emptyRobotData!, emptySessionData!
+
+
+export exists, addVariable!, addFactor!, getVariable, getFactor, updateVariable!, updateFactor!, deleteVariable!, deleteFactor!
+export listVariables, listFactors, getVariables, getFactors, ls, lsf
+#TODO deprecate or alias
+export getVariableIds, getFactorIds
+
+export isFullyConnected, hasOrphans
+export getNeighbors, _getDuplicatedEmptyDFG, getSubgraphAroundNode, getSubgraph
+export getBiadjacencyMatrix
+
+export toDot, toDotFile
+#--------
 
 # File import and export
 export saveDFG, loadDFG
@@ -92,8 +153,9 @@ include("GraphsDFG/GraphsDFG.jl")
 # Include the FilesDFG API.
 include("FileDFG/FileDFG.jl")
 
-include("SymbolDFG/SymbolDFG.jl")
-using .SymbolDFGs
+# In the attic until it's needed again.
+# include("SymbolDFG/SymbolDFG.jl")
+# using .SymbolDFGs
 
 include("LightDFG/LightDFG.jl")
 @reexport using .LightDFGs

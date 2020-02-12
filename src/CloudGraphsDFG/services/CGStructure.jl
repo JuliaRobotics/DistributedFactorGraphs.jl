@@ -1,14 +1,3 @@
-# Additional exports
-export copySession!
-# Please be careful with these
-# With great power comes great "Oh crap, I deleted everything..."
-export clearSession!!, clearRobot!!, clearUser!!
-export createSession, createRobot, createUser, createDfgSessionIfNotExist
-export existsSession, existsRobot, existsUser
-export getSession, getRobot, getUser
-export updateSession, updateRobot, updateUser
-export lsSessions, lsRobots, lsUsers
-
 global _invalidIds = ["USER", "ROBOT", "SESSION", "VARIABLE", "FACTOR", "ENVIRONMENT", "PPE", "BIGDATA"]
 global _validLabelRegex = r"^[a-zA-Z]\w*$"
 
@@ -246,8 +235,6 @@ function clearSession!!(dfg::CloudGraphsDFG)::Nothing
 
     # Clearing history
     dfg.addHistory = Symbol[]
-    empty!(dfg.variableCache)
-    empty!(dfg.factorCache)
     empty!(dfg.labelDict)
     return nothing
 end
@@ -262,8 +249,6 @@ function clearRobot!!(dfg::CloudGraphsDFG)::Nothing
 
     # Clearing history
     dfg.addHistory = Symbol[]
-    empty!(dfg.variableCache)
-    empty!(dfg.factorCache)
     empty!(dfg.labelDict)
     return nothing
 end
@@ -278,8 +263,6 @@ function clearUser!!(dfg::CloudGraphsDFG)::Nothing
 
     # Clearing history
     dfg.addHistory = Symbol[]
-    empty!(dfg.variableCache)
-    empty!(dfg.factorCache)
     empty!(dfg.labelDict)
     return nothing
 end
@@ -293,7 +276,7 @@ function copySession!(sourceDFG::CloudGraphsDFG, destDFG::Union{Nothing, CloudGr
     if destDFG == nothing
         destDFG = _getDuplicatedEmptyDFG(sourceDFG)
     end
-    _copyIntoGraph!(sourceDFG, destDFG, union(getVariableIds(sourceDFG), getFactorIds(sourceDFG)), true)
+    _copyIntoGraph!(sourceDFG, destDFG, union(listVariables(sourceDFG), listFactors(sourceDFG)), true)
     return destDFG
 end
 """
@@ -307,7 +290,7 @@ function getUserData(dfg::CloudGraphsDFG)::Dict{Symbol, String}
     propVal = _getNodeProperty(dfg.neo4jInstance, [dfg.userId, "USER"], "data")
     return JSON2.read(String(base64decode(propVal)), Dict{Symbol, String})
 end
-function setUserData(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
+function setUserData!(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
     count = _setNodeProperty(dfg.neo4jInstance, [dfg.userId, "USER"], "data", base64encode(JSON2.write(data)))
     return count == 1
 end
@@ -315,7 +298,7 @@ function getRobotData(dfg::CloudGraphsDFG)::Dict{Symbol, String}
     propVal = _getNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, "ROBOT"], "data")
     return JSON2.read(String(base64decode(propVal)), Dict{Symbol, String})
 end
-function setRobotData(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
+function setRobotData!(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
     count = _setNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, "ROBOT"], "data", base64encode(JSON2.write(data)))
     return count == 1
 end
@@ -323,7 +306,7 @@ function getSessionData(dfg::CloudGraphsDFG)::Dict{Symbol, String}
     propVal = _getNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, "SESSION"], "data")
     return JSON2.read(String(base64decode(propVal)), Dict{Symbol, String})
 end
-function setSessionData(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
+function setSessionData!(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
     count = _setNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, "SESSION"], "data", base64encode(JSON2.write(data)))
     return count == 1
 end

@@ -115,34 +115,37 @@ ls, lsf
 """
 sortDFG(vars::Vector{Symbol})::Vector{Symbol} = sortVarNested(vars)
 
-"""
-    $SIGNATURES
+#TODO Is this deprecate in favor of getFactorType, or OBSOLETE?
+# """
+#     $SIGNATURES
+#
+# Return the factor type used in a `::DFGFactor`.
+#
+# Notes:
+# - OBSOLETE, use newer getFactorType instead.
+#
+# Related
+#
+# getFactorType
+# """
+# function getfnctype(data::GenericFunctionNodeData)
+#   # TODO what is this?
+#   if typeof(data).name.name == :VariableNodeData
+#     return VariableNodeData
+#   end
+#
+#   # this looks right
+#   return data.fnc.usrfnc!
+# end
+# function getfnctype(fact::DFGFactor, solveKey::Symbol=:default)
+#   data = getSolverData(fact) # TODO , solveKey)
+#   return getfnctype(data)
+# end
+# function getfnctype(dfg::T, lbl::Symbol, solveKey::Symbol=:default) where T <: AbstractDFG
+#   getfnctype(getFactor(dfg, exvertid))
+# end
 
-Return the factor type used in a `::DFGFactor`.
-
-Notes:
-- OBSOLETE, use newer getFactorType instead.
-
-Related
-
-getFactorType
-"""
-function getfnctype(data::GenericFunctionNodeData)
-  # TODO what is this?
-  if typeof(data).name.name == :VariableNodeData
-    return VariableNodeData
-  end
-
-  # this looks right
-  return data.fnc.usrfnc!
-end
-function getfnctype(fact::DFGFactor; solveKey::Symbol=:default)
-  data = solverData(fact) # TODO , solveKey=solveKey)
-  return getfnctype(data)
-end
-function getfnctype(dfg::T, lbl::Symbol; solveKey::Symbol=:default) where T <: AbstractDFG
-  getfnctype(getFactor(dfg, exvertid))
-end
+@deprecate getfnctype(args...) getFactorType(args...)
 
 """
     $SIGNATURES
@@ -153,7 +156,7 @@ Notes
 - Replaces older `getfnctype`.
 """
 getFactorType(data::GenericFunctionNodeData) = data.fnc.usrfnc!
-getFactorType(fct::DFGFactor) = getFactorType(solverData(fct))
+getFactorType(fct::DFGFactor) = getFactorType(getSolverData(fct))
 function getFactorType(dfg::G, lbl::Symbol) where G <: AbstractDFG
   getFactorType(getFactor(dfg, lbl))
 end
@@ -191,9 +194,9 @@ end
 
 Return the DFGVariable softtype in factor graph `dfg<:AbstractDFG` and label `::Symbol`.
 """
-getVariableType(var::DFGVariable; solveKey::Symbol=:default) = getSofttype(var, solveKey=solveKey)
-function getVariableType(dfg::G, lbl::Symbol; solveKey::Symbol=:default) where G <: AbstractDFG
-  getVariableType(getVariable(dfg, lbl), solveKey=solveKey)
+getVariableType(var::DFGVariable) = getSofttype(var)
+function getVariableType(dfg::G, lbl::Symbol) where G <: AbstractDFG
+  getVariableType(getVariable(dfg, lbl))
 end
 
 
@@ -242,9 +245,9 @@ function lsTypes(dfg::G)::Dict{Symbol, Vector{String}} where G <: AbstractDFG
 end
 
 
-function ls(dfg::G, ::Type{T}; solveKey::Symbol=:default) where {G <: AbstractDFG, T <: InferenceVariable}
+function ls(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: InferenceVariable}
   xx = getVariables(dfg)
-  mask = getVariableType.(xx, solveKey=solveKey) .|> typeof .== T
+  mask = getVariableType.(xx) .|> typeof .== T
   vxx = view(xx, mask)
   map(x->x.label, vxx)
 end
@@ -275,11 +278,11 @@ Related
 
 ls, lsf, lsfPriors
 """
-function lsWho(dfg::AbstractDFG, type::Symbol; solveKey::Symbol=:default)::Vector{Symbol}
+function lsWho(dfg::AbstractDFG, type::Symbol)::Vector{Symbol}
     vars = getVariables(dfg)
     labels = Symbol[]
     for v in vars
-        varType = typeof(getVariableType(v, solveKey=solveKey)).name |> Symbol
+        varType = typeof(getVariableType(v)).name |> Symbol
         varType == type && push!(labels, v.label)
     end
     return labels
@@ -349,7 +352,7 @@ DevNotes:
 
 Related
 
-ls, getVariableIds, findClosestTimestamp
+ls, listVariables, findClosestTimestamp
 """
 function findVariableNearTimestamp(dfg::AbstractDFG,
                                    timest::DateTime,
@@ -360,8 +363,8 @@ function findVariableNearTimestamp(dfg::AbstractDFG,
                                    number::Int=1  )::Vector{Tuple{Vector{Symbol}, Millisecond}}
   #
   # get the variable labels based on filters
-  # syms = getVariableIds(dfg, regexFilter, tags=tags, solvable=solvable)
-  syms = getVariableIds(dfg, regexFilter, tags=tags, solvable=solvable)
+  # syms = listVariables(dfg, regexFilter, tags=tags, solvable=solvable)
+  syms = listVariables(dfg, regexFilter, tags=tags, solvable=solvable)
   # compile timestamps with label
   # vars = map( x->getVariable(dfg, x), syms )
   timeset = map(x->(getTimestamp(getVariable(dfg,x)), x), syms)
@@ -391,24 +394,57 @@ function findVariableNearTimestamp(dfg::AbstractDFG,
   return RET
 end
 
+
+#TAGS as a set, list, merge, remove, empty
 """
 $SIGNATURES
 
 Return the tags for a variable or factor.
 """
-function getTags(dfg::InMemoryDFGTypes, sym::Symbol)
+function listTags(dfg::InMemoryDFGTypes, sym::Symbol)
   getFnc = isVariable(dfg,sym) ? getVariable : getFactor
   getTags(getFnc(dfg, sym))
 end
+#alias for completeness
+listTags(f::DataLevel0) = getTags(f)
 
 """
     $SIGNATURES
 
-Add tags to a variable or factor
+Merge add tags to a variable or factor (union)
 """
-function addTags!(dfg::InMemoryDFGTypes, sym::Symbol, tags::Vector{Symbol})
-  union!(getTags(getFactor(fg, sym)), tags)
+function mergeTags!(dfg::InMemoryDFGTypes, sym::Symbol, tags::Vector{Symbol})
+  getFnc = isVariable(dfg,sym) ? getVariable : getFactor
+  union!(getTags(getFnc(dfg, sym)), tags)
 end
+mergeTags!(f::DataLevel0, tags::Vector{Symbol}) = union!(f.tags, tags)
+
+
+"""
+$SIGNATURES
+
+Remove the tags from the node (setdiff)
+"""
+function removeTags!(dfg::InMemoryDFGTypes, sym::Symbol, tags::Vector{Symbol})
+  getFnc = isVariable(dfg,sym) ? getVariable : getFactor
+  setdiff!(getTags(getFnc(dfg, sym)), tags)
+end
+removeTags!(f::DataLevel0, tags::Vector{Symbol}) = setdiff!(f.tags, tags)
+
+"""
+$SIGNATURES
+
+Empty all tags from the node (empty)
+"""
+function emptyTags!(dfg::InMemoryDFGTypes, sym::Symbol)
+  getFnc = isVariable(dfg,sym) ? getVariable : getFactor
+  empty!(getTags(getFnc(dfg, sym)))
+end
+emptyTags!(f::DataLevel0) = empty!(f.tags)
+
+
+
+
 
 """
     $SIGNATURES
@@ -420,7 +456,7 @@ function hasTags(dfg::InMemoryDFGTypes,
                  tags::Vector{Symbol};
                  matchAll::Bool=true  )::Bool
   #
-  alltags = getTags(dfg, sym)
+  alltags = listTags(dfg, sym)
   length(filter(x->x in alltags, tags)) >= (matchAll ? length(tags) : 1)
 end
 
@@ -440,3 +476,29 @@ function hasTagsNeighbors(dfg::InMemoryDFGTypes,
   alltags = union( (ls(dfg, sym) .|> x->getTags(getNeiFnc(dfg,x)))... )
   length(filter(x->x in alltags, tags)) >= (matchAll ? length(tags) : 1)
 end
+
+
+
+#Natural Sorting
+# Adapted from https://rosettacode.org/wiki/Natural_sorting
+# split at digit to not digit change
+splitbynum(x::AbstractString) = split(x, r"(?<=\D)(?=\d)|(?<=\d)(?=\D)")
+#parse to Int
+numstringtonum(arr::Vector{<:AbstractString}) = [(n = tryparse(Int, e)) != nothing ? n : e for e in arr]
+#natural less than
+function natural_lt(x::T, y::T) where T <: AbstractString
+    xarr = numstringtonum(splitbynum(x))
+    yarr = numstringtonum(splitbynum(y))
+    for i in 1:min(length(xarr), length(yarr))
+        if typeof(xarr[i]) != typeof(yarr[i])
+            return isa(xarr[i], Int)
+        elseif xarr[i] == yarr[i]
+            continue
+        else
+            return xarr[i] < yarr[i]
+        end
+    end
+    return length(xarr) < length(yarr)
+end
+
+natural_lt(x::Symbol, y::Symbol) = natural_lt(string(x),string(y))

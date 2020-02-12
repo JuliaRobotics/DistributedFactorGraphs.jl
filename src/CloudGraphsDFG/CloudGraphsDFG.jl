@@ -12,19 +12,15 @@ include("services/CloudGraphsDFG.jl")
 
 # Exports
 export Neo4jInstance, CloudGraphsDFG
-export exists
-export clearSession!
-export getLabelDict, getDescription, setDescription, getAddHistory, getSolverParams, setSolverParams
-
-export getAddHistory, getDescription, getLabelDict
-export addVariable!, addFactor!
-export ls, lsf, getVariables, getFactors, getVariableIds, getFactorIds
-export getVariable, getFactor
-export updateVariable!, updateFactor!, mergeUpdateVariableSolverData!
-export deleteVariable!, deleteFactor!
-export getAdjacencyMatrix
-export getNeighbors
-export getSubgraphAroundNode
-export getSubgraph
-export isFullyConnected, hasOrphans
 export toDot, toDotFile
+
+# Additional exports for CGStructure
+export copySession!
+# Please be careful with these
+# With great power comes great "Oh crap, I deleted everything..."
+export clearSession!!, clearRobot!!, clearUser!!
+export createSession, createRobot, createUser, createDfgSessionIfNotExist
+export existsSession, existsRobot, existsUser
+export getSession, getRobot, getUser
+export updateSession, updateRobot, updateUser
+export lsSessions, lsRobots, lsUsers

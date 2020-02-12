@@ -1,9 +1,39 @@
+## @generated compare
+# Reference https://github.com/JuliaLang/julia/issues/4648
+
+import Base.==
+
+#=
+For now abstract `InferenceVariable`s are considered equal if they are the same type, dims, and manifolds (abels are deprecated)
+If your implentation has aditional properties such as `DynPose2` with `ut::Int64` (microsecond time) or support different manifolds
+implement compare if needed.
+=#
+==(a::InferenceVariable,b::InferenceVariable) = typeof(a) == typeof(b) && a.dims == b.dims && a.manifolds == b.manifolds
+
+==(a::ConvolutionObject, b::ConvolutionObject) = typeof(a) == typeof(b)
+
+==(a::FunctorInferenceType, b::FunctorInferenceType) = typeof(a) == typeof(b)
+
+# TestCCW1{TestFunctorInferenceType1}
+
+# Generate compares automatically for all in this union
+const GeneratedCompareUnion = Union{MeanMaxPPE, VariableNodeData, DFGNodeParams,
+                              DFGVariable, DFGVariableSummary, SkeletonDFGVariable,
+                              GenericFunctionNodeData,
+                              DFGFactor, DFGFactorSummary, SkeletonDFGFactor}
+
+@generated function ==(x::T, y::T) where T <: GeneratedCompareUnion
+    mapreduce(n -> :(x.$n == y.$n), (a,b)->:($a && $b), fieldnames(x))
+end
+
+
+##
 
 function compareField(Allc, Bllc, syms)::Bool
-  (!isdefined(Allc, syms) && !isdefined(Bllc, syms)) && return true
-  !isdefined(Allc, syms) && return false
-  !isdefined(Bllc, syms) && return false
-  return eval(:($Allc.$syms == $Bllc.$syms))
+    (!isdefined(Allc, syms) && !isdefined(Bllc, syms)) && return true
+    !isdefined(Allc, syms) && return false
+    !isdefined(Bllc, syms) && return false
+    return eval(:($Allc.$syms == $Bllc.$syms))
 end
 
 """
@@ -114,6 +144,25 @@ function compareAll(Al::T, Bl::T; show::Bool=true, skip::Vector{Symbol}=Symbol[]
   return true
 end
 
+#Compare VariableNodeData
+function compare(a::VariableNodeData, b::VariableNodeData)
+    a.val != b.val && @debug("val is not equal")==nothing && return false
+    a.bw != b.bw && @debug("bw is not equal")==nothing && return false
+    a.BayesNetOutVertIDs != b.BayesNetOutVertIDs && @debug("BayesNetOutVertIDs is not equal")==nothing && return false
+    a.dimIDs != b.dimIDs && @debug("dimIDs is not equal")==nothing && return false
+    a.dims != b.dims && @debug("dims is not equal")==nothing && return false
+    a.eliminated != b.eliminated && @debug("eliminated is not equal")==nothing && return false
+    a.BayesNetVertID != b.BayesNetVertID && @debug("BayesNetVertID is not equal")==nothing && return false
+    a.separator != b.separator && @debug("separator is not equal")==nothing && return false
+    a.initialized != b.initialized && @debug("initialized is not equal")==nothing && return false
+    abs(a.inferdim - b.inferdim) > 1e-14 && @debug("inferdim is not equal")==nothing && return false
+    a.ismargin != b.ismargin && @debug("ismargin is not equal")==nothing && return false
+    a.dontmargin != b.dontmargin && @debug("dontmargin is not equal")==nothing && return false
+    a.solveInProgress != b.solveInProgress && @debug("solveInProgress is not equal")==nothing && return false
+    typeof(a.softtype) != typeof(b.softtype) && @debug("softtype is not equal")==nothing && return false
+    return true
+end
+
 """
     $SIGNATURES
 
@@ -132,8 +181,8 @@ function compareVariable(A::DFGVariable,
   union!(skiplist, skip)
   TP = TP && compareAll(A.solverDataDict, B.solverDataDict, skip=skiplist, show=show)
 
-  Ad = solverData(A)
-  Bd = solverData(B)
+  Ad = getSolverData(A)
+  Bd = getSolverData(B)
 
   # TP = TP && compareAll(A.attributes, B.attributes, skip=[:softtype;], show=show)
   varskiplist = union(varskiplist, [:softtype;:_internalId])
@@ -155,6 +204,20 @@ function compareAllSpecial(A::T1,
   end
 end
 
+
+# Compare FunctionNodeData
+function compare(a::GenericFunctionNodeData{T1,S},b::GenericFunctionNodeData{T2,S}) where {T1, T2, S}
+  # TODO -- beef up this comparison to include the gwp
+  TP = true
+  TP = TP && a.fncargvID == b.fncargvID
+  TP = TP && a.eliminated == b.eliminated
+  TP = TP && a.potentialused == b.potentialused
+  TP = TP && a.edgeIDs == b.edgeIDs
+  TP = TP && a.frommodule == b.frommodule
+  # TP = TP && typeof(a.fnc) == typeof(b.fnc)
+  return TP
+end
+
 """
     $SIGNATURES
 
@@ -167,22 +230,22 @@ function compareFactor(A::DFGFactor,
                        skipsamples::Bool=true,
                        skipcompute::Bool=true  )
   #
-  TP =  compareAll(A, B, skip=union([:attributes;:data;:_variableOrderSymbols;:_internalId],skip), show=show)
+  TP =  compareAll(A, B, skip=union([:attributes;:solverData;:_variableOrderSymbols;:_internalId],skip), show=show)
   # TP = TP & compareAll(A.attributes, B.attributes, skip=[:data;], show=show)
-  TP = TP & compareAllSpecial(solverData(A), solverData(B), skip=union([:fnc;:_internalId], skip), show=show)
-  TP = TP & compareAllSpecial(solverData(A).fnc, solverData(B).fnc, skip=union([:cpt;:measurement;:params;:varidx;:threadmodel], skip), show=show)
-  TP = TP & (skipsamples || compareAll(solverData(A).fnc.measurement, solverData(B).fnc.measurement, show=show, skip=skip))
-  TP = TP & (skipcompute || compareAll(solverData(A).fnc.params, solverData(B).fnc.params, show=show, skip=skip))
-  TP = TP & (skipcompute || compareAll(solverData(A).fnc.varidx, solverData(B).fnc.varidx, show=show, skip=skip))
+  TP = TP & compareAllSpecial(getSolverData(A), getSolverData(B), skip=union([:fnc;:_internalId], skip), show=show)
+  TP = TP & compareAllSpecial(getSolverData(A).fnc, getSolverData(B).fnc, skip=union([:cpt;:measurement;:params;:varidx;:threadmodel], skip), show=show)
+  TP = TP & (skipsamples || compareAll(getSolverData(A).fnc.measurement, getSolverData(B).fnc.measurement, show=show, skip=skip))
+  TP = TP & (skipcompute || compareAll(getSolverData(A).fnc.params, getSolverData(B).fnc.params, show=show, skip=skip))
+  TP = TP & (skipcompute || compareAll(getSolverData(A).fnc.varidx, getSolverData(B).fnc.varidx, show=show, skip=skip))
 
   return TP
 end
-  # Ad = solverData(A)
-  # Bd = solverData(B)
+  # Ad = getSolverData(A)
+  # Bd = getSolverData(B)
   # TP =  compareAll(A, B, skip=[:attributes;:data], show=show)
   # TP &= compareAll(A.attributes, B.attributes, skip=[:data;], show=show)
-  # TP &= compareAllSpecial(solverData(A).fnc, solverData(B).fnc, skip=[:cpt;], show=show)
-  # TP &= compareAll(solverData(A).fnc.cpt, solverData(B).fnc.cpt, show=show)
+  # TP &= compareAllSpecial(getSolverData(A).fnc, getSolverData(B).fnc, skip=[:cpt;], show=show)
+  # TP &= compareAll(getSolverData(A).fnc.cpt, getSolverData(B).fnc.cpt, show=show)
 
 
 """
@@ -203,8 +266,8 @@ function compareAllVariables(fgA::G1,
                              show::Bool=true,
                              skipsamples::Bool=true )::Bool where {G1 <: AbstractDFG, G2 <: AbstractDFG}
   # get all the variables in A or B
-  xlA =  getVariableIds(fgA)
-  xlB =  getVariableIds(fgB)
+  xlA =  listVariables(fgA)
+  xlB =  listVariables(fgB)
   vars = union(xlA, xlB)
 
   # compare all variables exist in both A and B
@@ -244,8 +307,8 @@ function compareSimilarVariables(fgA::G1,
                                  show::Bool=true,
                                  skipsamples::Bool=true )::Bool where {G1 <: AbstractDFG, G2 <: AbstractDFG}
   #
-  xlA = getVariableIds(fgA)
-  xlB = getVariableIds(fgB)
+  xlA = listVariables(fgA)
+  xlB = listVariables(fgB)
 
   # find common variables
   xlAB = intersect(xlA, xlB)
@@ -276,8 +339,8 @@ function compareSimilarFactors(fgA::G1,
                                skipcompute::Bool=true,
                                show::Bool=true  )::Bool where {G1 <: AbstractDFG, G2 <: AbstractDFG}
   #
-  xlA = getFactorIds(fgA)
-  xlB = getFactorIds(fgB)
+  xlA = listFactors(fgA)
+  xlB = listFactors(fgB)
 
   # find common variables
   xlAB = intersect(xlA, xlB)

@@ -6,16 +6,16 @@ using DocStringExtensions
 import ...DistributedFactorGraphs: AbstractDFG, DFGNode, AbstractDFGVariable, AbstractDFGFactor, AbstractDFGSummary, AbstractParams, NoSolverParams, DFGVariable, DFGFactor
 
 # import DFG functions to extend
-import ...DistributedFactorGraphs:  setSolverParams,
+import ...DistributedFactorGraphs:  setSolverParams!,
                                     getFactor,
-                                    setDescription,
-                                    getLabelDict,
+                                    setDescription!,
+                                    # getLabelDict,
                                     getUserData,
-                                    setUserData,
+                                    setUserData!,
                                     getRobotData,
-                                    setRobotData,
+                                    setRobotData!,
                                     getSessionData,
-                                    setSessionData,
+                                    setSessionData!,
                                     addVariable!,
                                     getVariable,
                                     getAddHistory,
@@ -30,19 +30,20 @@ import ...DistributedFactorGraphs:  setSolverParams,
                                     deleteVariable!,
                                     deleteFactor!,
                                     getVariables,
-                                    getVariableIds,
+                                    listVariables,
                                     ls,
                                     getFactors,
-                                    getFactorIds,
+                                    listFactors,
                                     lsf,
                                     isFullyConnected,
                                     hasOrphans,
                                     getNeighbors,
                                     getSubgraphAroundNode,
                                     getSubgraph,
-                                    getAdjacencyMatrix,
-                                    getAdjacencyMatrixSparse,
-                                    _getDuplicatedEmptyDFG
+                                    getBiadjacencyMatrix,
+                                    _getDuplicatedEmptyDFG,
+                                    toDot,
+                                    toDotFile
 
 include("FactorGraphs/FactorGraphs.jl")
 using .FactorGraphs

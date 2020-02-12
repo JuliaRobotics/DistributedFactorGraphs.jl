@@ -16,31 +16,14 @@ end
 vertex_index(v::GraphsNode) = v.index
 
 # Accessors
-getLabelDict(dfg::GraphsDFG) = dfg.labelDict
-getDescription(dfg::GraphsDFG) = dfg.description
-setDescription(dfg::GraphsDFG, description::String) = dfg.description = description
-getAddHistory(dfg::GraphsDFG) = dfg.addHistory
-getSolverParams(dfg::GraphsDFG) = dfg.solverParams
-function setSolverParams(dfg::GraphsDFG, solverParams::T) where T <: AbstractParams
-    dfg.solverParams = solverParams
-end
-
-# Get user, robot, and session "small" data.
-getUserData(dfg::GraphsDFG)::Dict{Symbol, String} = return dfg.userData
-function setUserData(dfg::GraphsDFG, data::Dict{Symbol, String})::Bool
-    dfg.userData = data
-    return true
-end
-getRobotData(dfg::GraphsDFG)::Dict{Symbol, String} = return dfg.robotData
-function setRobotData(dfg::GraphsDFG, data::Dict{Symbol, String})::Bool
-    dfg.robotData = data
-    return true
-end
-getSessionData(dfg::GraphsDFG)::Dict{Symbol, String} = return dfg.sessionData
-function setSessionData(dfg::GraphsDFG, data::Dict{Symbol, String})::Bool
-    dfg.sessionData = data
-    return true
-end
+# getLabelDict(dfg::GraphsDFG) = dfg.labelDict
+# getDescription(dfg::GraphsDFG) = dfg.description
+# setDescription(dfg::GraphsDFG, description::String) = dfg.description = description
+# getAddHistory(dfg::GraphsDFG) = dfg.addHistory
+# getSolverParams(dfg::GraphsDFG) = dfg.solverParams
+# function setSolverParams(dfg::GraphsDFG, solverParams::T) where T <: AbstractParams
+#     dfg.solverParams = solverParams
+# end
 
 """
     $(SIGNATURES)
@@ -54,100 +37,83 @@ function _getDuplicatedEmptyDFG(dfg::GraphsDFG)::GraphsDFG
     return newDfg
 end
 
-"""
-    $(SIGNATURES)
-True if the variable or factor exists in the graph.
-"""
 function exists(dfg::GraphsDFG, node::N) where N <: DFGNode
     return haskey(dfg.labelDict, node.label)
 end
 exists(dfg::GraphsDFG, nId::Symbol) = haskey(dfg.labelDict, nId)
 
 function isVariable(dfg::GraphsDFG, sym::Symbol)
-	return exists(dfg, sym) && dfg.g.vertices[dfg.labelDict[sym]].dfgNode isa DFGVariable
+    return exists(dfg, sym) && dfg.g.vertices[dfg.labelDict[sym]].dfgNode isa DFGVariable
 end
 
 function isFactor(dfg::GraphsDFG, sym::Symbol)
-	return exists(dfg, sym) && dfg.g.vertices[dfg.labelDict[sym]].dfgNode isa DFGFactor
+    return exists(dfg, sym) && dfg.g.vertices[dfg.labelDict[sym]].dfgNode isa DFGFactor
 end
 
-"""
-    $(SIGNATURES)
-Add a DFGVariable to a DFG.
-"""
-function addVariable!(dfg::GraphsDFG, variable::DFGVariable)::Bool
+function addVariable!(dfg::GraphsDFG, variable::DFGVariable)::DFGVariable
     if haskey(dfg.labelDict, variable.label)
         error("Variable '$(variable.label)' already exists in the factor graph")
     end
     dfg.nodeCounter += 1
-    variable._internalId = dfg.nodeCounter
+    variable._dfgNodeParams._internalId = dfg.nodeCounter
     v = GraphsNode(dfg.nodeCounter, variable)
     Graphs.add_vertex!(dfg.g, v)
-    push!(dfg.labelDict, variable.label=>variable._internalId)
+    push!(dfg.labelDict, variable.label=>variable._dfgNodeParams._internalId)
     # Track insertion
     push!(dfg.addHistory, variable.label)
 
-    return true
+    return variable
 end
 
-"""
-    $(SIGNATURES)
-Add a DFGFactor to a DFG.
-"""
-function addFactor!(dfg::GraphsDFG, variables::Vector{DFGVariable}, factor::DFGFactor)::Bool
+function addFactor!(dfg::GraphsDFG, factor::DFGFactor)::DFGFactor
+
     if haskey(dfg.labelDict, factor.label)
         error("Factor '$(factor.label)' already exists in the factor graph")
     end
-    for v in variables
-        if !(v.label in keys(dfg.labelDict))
-            error("Variable '$(v.label)' not found in graph when creating Factor '$(factor.label)'")
+
+    variableLabels = factor._variableOrderSymbols
+    for v in variableLabels
+        if !(v in keys(dfg.labelDict))
+            error("Variable '$(v)' not found in graph when creating Factor '$(factor.label)'")
         end
     end
+
     dfg.nodeCounter += 1
-    factor._internalId = dfg.nodeCounter
-    factor._variableOrderSymbols = map(v->v.label, variables)
+    factor._dfgNodeParams._internalId = dfg.nodeCounter
+
     fNode = GraphsNode(dfg.nodeCounter, factor)
     f = Graphs.add_vertex!(dfg.g, fNode)
     # Add index
-    push!(dfg.labelDict, factor.label=>factor._internalId)
+    push!(dfg.labelDict, factor.label=>factor._dfgNodeParams._internalId)
     # Add the edges...
-    for variable in variables
-        v = dfg.g.vertices[variable._internalId]
+    for varLbl in variableLabels
+        variable = getVariable(dfg, varLbl)
+        v = dfg.g.vertices[variable._dfgNodeParams._internalId]
         edge = Graphs.make_edge(dfg.g, v, f)
         Graphs.add_edge!(dfg.g, edge)
     end
     # Track insertion
     # push!(dfg.addHistory, factor.label)
 
-    return true
+    return factor
 end
 
-"""
-    $(SIGNATURES)
-Add a DFGFactor to a DFG.
-"""
-function addFactor!(dfg::GraphsDFG, variableIds::Vector{Symbol}, factor::DFGFactor)::Bool
-    variables = map(vId -> getVariable(dfg, vId), variableIds)
-    return addFactor!(dfg, variables, factor)
-end
+#moved to abstract
+# function addFactor!(dfg::GraphsDFG, variableIds::Vector{Symbol}, factor::DFGFactor)::DFGFactor
+#     variables = map(vId -> getVariable(dfg, vId), variableIds)
+#     return addFactor!(dfg, variables, factor)
+# end
 
-"""
-    $(SIGNATURES)
-Get a DFGVariable from a DFG using its underlying integer ID.
-"""
-function getVariable(dfg::GraphsDFG, variableId::Int64)::DFGVariable
-    @warn "This may be slow, rather use by getVariable(dfg, label)"
-    #TODO: This may be slow (O(n)), can we make it better?
-    if !(variableId in values(dfg.labelDict))
-        error("Variable ID '$(variableId)' does not exist in the factor graph")
-    end
-    return dfg.g.vertices[variableId].dfgNode
-end
+# TODO: Confirm we can remove this.
+# function getVariable(dfg::GraphsDFG, variableId::Int64)::DFGVariable
+#     @warn "This may be slow, rather use by getVariable(dfg, label)"
+#     #TODO: This may be slow (O(n)), can we make it better?
+#     if !(variableId in values(dfg.labelDict))
+#         error("Variable ID '$(variableId)' does not exist in the factor graph")
+#     end
+#     return dfg.g.vertices[variableId].dfgNode
+# end
 
-"""
-    $(SIGNATURES)
-Get a DFGVariable from a DFG using its label.
-"""
 function getVariable(dfg::GraphsDFG, label::Union{Symbol, String})::DFGVariable
     if typeof(label) == String
         label = Symbol(label)
@@ -158,10 +124,6 @@ function getVariable(dfg::GraphsDFG, label::Union{Symbol, String})::DFGVariable
     return dfg.g.vertices[dfg.labelDict[label]].dfgNode
 end
 
-"""
-    $(SIGNATURES)
-Get a DFGFactor from a DFG using its underlying integer ID.
-"""
 function getFactor(dfg::GraphsDFG, factorId::Int64)::DFGFactor
     @warn "This may be slow, rather use by getFactor(dfg, label)"
     #TODO: This may be slow (O(n)), can we make it better?
@@ -171,10 +133,6 @@ function getFactor(dfg::GraphsDFG, factorId::Int64)::DFGFactor
     return dfg.g.vertices[factorId].dfgNode
 end
 
-"""
-    $(SIGNATURES)
-Get a DFGFactor from a DFG using its label.
-"""
 function getFactor(dfg::GraphsDFG, label::Union{Symbol, String})::DFGFactor
     if typeof(label) == String
         label = Symbol(label)
@@ -185,34 +143,24 @@ function getFactor(dfg::GraphsDFG, label::Union{Symbol, String})::DFGFactor
     return dfg.g.vertices[dfg.labelDict[label]].dfgNode
 end
 
-"""
-    $(SIGNATURES)
-Update a complete DFGVariable in the DFG.
-"""
 function updateVariable!(dfg::GraphsDFG, variable::DFGVariable)::DFGVariable
     if !haskey(dfg.labelDict, variable.label)
-        error("Variable label '$(variable.label)' does not exist in the factor graph")
+        @warn "Variable label '$(variable.label)' does not exist in the factor graph, adding"
+        return addVariable!(dfg, variable)
     end
     dfg.g.vertices[dfg.labelDict[variable.label]].dfgNode = variable
     return variable
 end
 
-"""
-    $(SIGNATURES)
-Update a complete DFGFactor in the DFG.
-"""
 function updateFactor!(dfg::GraphsDFG, factor::DFGFactor)::DFGFactor
     if !haskey(dfg.labelDict, factor.label)
-        error("Factor label '$(factor.label)' does not exist in the factor graph")
+        @warn "Factor label '$(factor.label)' does not exist in the factor graph, adding"
+        return addFactor!(dfg, factor._variableOrderSymbols, factor)
     end
     dfg.g.vertices[dfg.labelDict[factor.label]].dfgNode = factor
     return factor
 end
 
-"""
-    $(SIGNATURES)
-Delete a DFGVariable from the DFG using its label.
-"""
 function deleteVariable!(dfg::GraphsDFG, label::Symbol)::DFGVariable
     if !haskey(dfg.labelDict, label)
         error("Variable label '$(label)' does not exist in the factor graph")
@@ -223,10 +171,6 @@ function deleteVariable!(dfg::GraphsDFG, label::Symbol)::DFGVariable
     return variable
 end
 
-"""
-    $(SIGNATURES)
-Delete a DFGFactor from the DFG using its label.
-"""
 function deleteFactor!(dfg::GraphsDFG, label::Symbol)::DFGFactor
     if !haskey(dfg.labelDict, label)
         error("Factor label '$(label)' does not exist in the factor graph")
@@ -237,11 +181,6 @@ function deleteFactor!(dfg::GraphsDFG, label::Symbol)::DFGFactor
     return factor
 end
 
-"""
-    $(SIGNATURES)
-List the DFGVariables in the DFG.
-Optionally specify a label regular expression to retrieves a subset of the variables.
-"""
 function getVariables(dfg::GraphsDFG,
                       regexFilter::Union{Nothing, Regex}=nothing;
                       tags::Vector{Symbol}=Symbol[],
@@ -263,32 +202,24 @@ function getVariables(dfg::GraphsDFG,
     return variables
 end
 
-"""
-    $(SIGNATURES)
-List the DFGFactors in the DFG.
-Optionally specify a label regular expression to retrieves a subset of the factors.
-"""
-function getFactors(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{DFGFactor}
+function getFactors(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{DFGFactor}
     factors = map(v -> v.dfgNode, filter(n -> (n.dfgNode isa DFGFactor) && (solvable != 0 ? solvable <= isSolvable(n.dfgNode) : true), Graphs.vertices(dfg.g)))
 
     if regexFilter != nothing
         factors = filter(f -> occursin(regexFilter, String(f.label)), factors)
     end
+    
+    if length(tags) > 0
+        mask = map(v -> length(intersect(v.tags, tags)) > 0, factors )
+        return factors[mask]
+    end
     return factors
 end
 
-"""
-    $(SIGNATURES)
-Checks if the graph is fully connected, returns true if so.
-"""
 function isFullyConnected(dfg::GraphsDFG)::Bool
     return length(Graphs.connected_components(dfg.g)) == 1
 end
 
-"""
-    $(SIGNATURES)
-Retrieve a list of labels of the immediate neighbors around a given variable or factor.
-"""
 function getNeighbors(dfg::GraphsDFG, node::T; solvable::Int=0)::Vector{Symbol}  where T <: DFGNode
     if !haskey(dfg.labelDict, node.label)
         error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
@@ -305,10 +236,7 @@ function getNeighbors(dfg::GraphsDFG, node::T; solvable::Int=0)::Vector{Symbol} 
 
     return map(n -> n.dfgNode.label, neighbors)
 end
-"""
-    $(SIGNATURES)
-Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
-"""
+
 function getNeighbors(dfg::GraphsDFG, label::Symbol; solvable::Int=0)::Vector{Symbol}  where T <: DFGNode
     if !haskey(dfg.labelDict, label)
         error("Variable/factor with label '$(label)' does not exist in the factor graph")
@@ -327,7 +255,7 @@ function getNeighbors(dfg::GraphsDFG, label::Symbol; solvable::Int=0)::Vector{Sy
     return map(n -> n.dfgNode.label, neighbors)
 end
 
-#NOTE Replaced by abstract function in services/AbstractDFG.jl 
+#NOTE Replaced by abstract function in services/AbstractDFG.jl
 # """
 #     $(SIGNATURES)
 # Retrieve a deep subgraph copy around a given variable or factor.

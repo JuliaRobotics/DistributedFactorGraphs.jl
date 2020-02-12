@@ -16,11 +16,20 @@ using Dates
 # logger = SimpleLogger(stdout, Logging.Debug)
 # global_logger(logger)
 
+include("testBlocks.jl")
+
+@testset "Test generated ==" begin
+    include("compareTests.jl")
+end
+
+@testset "Testing LightDFG.FactorGraphs functions" begin
+    include("LightFactorGraphsTests.jl")
+end
+
 # Test each interface
 apis = [
+    LightDFG,
     GraphsDFG,
-    DistributedFactorGraphs.SymbolDFG,
-    LightDFG
     ]
 for api in apis
     @testset "Testing Driver: $(api)" begin
@@ -30,12 +39,7 @@ for api in apis
     end
 end
 
-@testset "Deprecated Drivers Test" begin
-    @test_throws UndefVarError SymbolDFG{NoSolverParams}()
-end
-
 # Test special cases
-
 @testset "Plotting Tests" begin
     include("plottingTest.jl")
 end
@@ -59,10 +63,11 @@ end
     end
 end
 
+
 if get(ENV, "IIF_TEST", "") == "true"
 
     # Switch to our upstream test branch.
-    Pkg.add(PackageSpec(name="IncrementalInference", rev="upstream/dfg_integration_test"))
+    Pkg.add(PackageSpec(name="IncrementalInference", rev="develop"))
     @info "------------------------------------------------------------------------"
     @info "These tests are using IncrementalInference to do additional driver tests"
     @info "------------------------------------------------------------------------"
@@ -70,9 +75,8 @@ if get(ENV, "IIF_TEST", "") == "true"
     using IncrementalInference
 
     apis = [
-        GraphsDFG{NoSolverParams}(),
-        LightDFG{NoSolverParams}(),
-        DistributedFactorGraphs.SymbolDFG{NoSolverParams}(),
+        GraphsDFG{SolverParams}(),
+        LightDFG{SolverParams}(),
         CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
                                     "testUser", "testRobot", "testSession",
                                     nothing,
@@ -95,6 +99,11 @@ if get(ENV, "IIF_TEST", "") == "true"
         end
     end
 
+    @testset "IIF Compare Tests" begin
+        #run a copy of compare tests from IIF
+        include("iifCompareTests.jl")
+    end
+
     @testset "CGStructure Tests for CGDFG" begin
         # Run the CGStructure tests
         include("CGStructureTests.jl")
@@ -114,4 +123,40 @@ if get(ENV, "IIF_TEST", "") == "true"
     end
 else
     @warn "Skipping IncrementalInference driver tests"
+end
+
+
+struct NotImplementedDFG <: AbstractDFG end
+
+@testset "No Interface tests" begin
+    dfg = NotImplementedDFG()
+    v1 = SkeletonDFGVariable(:v1)
+    f1 = SkeletonDFGFactor(:f1)
+
+    @test_throws ErrorException exists(dfg, v1)
+    @test_throws ErrorException exists(dfg, f1)
+    #TODO FIXME
+    # @test_throws ErrorException exists(dfg, :s)
+    @test_throws ErrorException addVariable!(dfg, v1)
+    @test_throws ErrorException addFactor!(dfg, [v1, v1], f1)
+    @test_throws ErrorException addFactor!(dfg,[:a, :b], f1)
+    #TODO only implement addFactor!(dfg, f1)
+    @test_throws ErrorException getVariable(dfg, :a)
+    @test_throws ErrorException getFactor(dfg, :a)
+    @test_throws ErrorException updateVariable!(dfg, v1)
+    @test_throws ErrorException updateFactor!(dfg, f1)
+
+    @test_throws ErrorException deleteVariable!(dfg, :a)
+    @test_throws ErrorException deleteFactor!(dfg, :a)
+    @test_throws ErrorException getVariables(dfg)
+    @test_throws ErrorException getFactors(dfg)
+    @test_throws ErrorException isFullyConnected(dfg)
+    @test_throws ErrorException getNeighbors(dfg, v1)
+    @test_throws ErrorException getNeighbors(dfg, :a)
+
+    @test_throws ErrorException _getDuplicatedEmptyDFG(dfg)
+
+    @test_throws ErrorException isVariable(dfg, :a)
+    @test_throws ErrorException isFactor(dfg, :a)
+
 end

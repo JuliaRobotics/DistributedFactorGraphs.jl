@@ -3,16 +3,16 @@ using Test
 
 # Build a basic graph.
 
-dfg = GraphsDFG{NoSolverParams}()
+dfg = LightDFG{NoSolverParams}()
 #add types for softtypes
 struct TestInferenceVariable1 <: InferenceVariable end
 v1 = DFGVariable(:a, TestInferenceVariable1())
 v2 = DFGVariable(:b, TestInferenceVariable1())
 f1 = DFGFactor{Int, :Symbol}(:f1)
 #add tags for filters
-append!(v1.tags, [:VARIABLE, :POSE])
-append!(v2.tags, [:VARIABLE, :LANDMARK])
-append!(f1.tags, [:FACTOR])
+union!(v1.tags, [:VARIABLE, :POSE])
+union!(v2.tags, [:VARIABLE, :LANDMARK])
+union!(f1.tags, [:FACTOR])
 # @testset "Creating Graphs" begin
 addVariable!(dfg, v1)
 addVariable!(dfg, v2)
@@ -33,10 +33,11 @@ for testStore in testStores
     @test addBigData!(ds, entry1, dataset) == dataset
     @test getBigData(ds, entry1) == dataset
     # Now add it to the variable
-    @test addBigDataEntry!(v1, entry1) == v1
+    @test addBigDataEntry!(v1, entry1) == entry1
     @test entry1 in getBigDataEntries(v1)
     # Update test
     copyEntry = deepcopy(entry1)
+    sleep(0.1)
     @test updateBigData!(ds, entry1, dataset2) == dataset2
     # Data updated?
     @test getBigData(ds, entry1) == dataset2

@@ -49,4 +49,14 @@ GraphsDFG{T}(   g::FGType=Graphs.incdict(GraphsNode,is_directed=false),
                 userData::Dict{Symbol, String} = Dict{Symbol, String}(),
                 robotData::Dict{Symbol, String} = Dict{Symbol, String}(),
                 sessionData::Dict{Symbol, String} = Dict{Symbol, String}(),
-                params::T=NoSolverParams()) where T <: AbstractParams = GraphsDFG{T}(g, d, userId, robotId, sessionId, userData, robotData, sessionData, n, l, a, params)
+                params::T=T()) where T <: AbstractParams = GraphsDFG{T}(g, d, userId, robotId, sessionId, userData, robotData, sessionData, n, l, a, params)
+
+GraphsDFG(description::String,
+          userId::String,
+          robotId::String,
+          sessionId::String,
+          userData::Dict{Symbol, String},
+          robotData::Dict{Symbol, String},
+          sessionData::Dict{Symbol, String},
+          solverParams::AbstractParams) =
+          GraphsDFG(Graphs.incdict(GraphsNode,is_directed=false), description, userId, robotId, sessionId, userData, robotData, sessionData, 0, Dict{Symbol, Int64}(), Symbol[], solverParams)

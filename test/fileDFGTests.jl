@@ -1,6 +1,7 @@
 using DistributedFactorGraphs
 using IncrementalInference
-dfg = LightDFG{NoSolverParams}()
+using Test
+dfg = LightDFG{SolverParams}()
 
 @testset "FileDFG Tests" begin
 
@@ -17,7 +18,7 @@ dfg = LightDFG{NoSolverParams}()
     #TODO fix this to use accessors
     verts[7].solvable = 1
     verts[8].solvable = 0
-    solverData(verts[8]).solveInProgress = 1
+    getSolverData(verts[8]).solveInProgress = 1
     setSolvedCount!(verts[1], 5)
     #call update to set it on cloud
     updateVariable!(dfg, verts[7])
@@ -40,8 +41,8 @@ dfg = LightDFG{NoSolverParams}()
     @info "Going to load $saveFolder"
     retDFG = loadDFG(saveFolder*".tar.gz", Main, copyDfg, loaddir="/tmp")
 
-    @test symdiff(ls(dfg), ls(retDFG)) == []
-    @test symdiff(lsf(dfg), lsf(retDFG)) == []
+    @test issetequal(ls(dfg), ls(retDFG))
+    @test issetequal(lsf(dfg), lsf(retDFG))
     for var in ls(dfg)
         @test getVariable(dfg, var) == getVariable(retDFG, var)
     end

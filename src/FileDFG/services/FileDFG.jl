@@ -124,7 +124,7 @@ function loadDFG(dst::String, iifModule, dfgLoadInto::G; loaddir=joinpath("/","t
     for factorFile in factorFiles
         io = open("$factorFolder/$factorFile")
         packedData = JSON2.read(io, Dict{String, Any})
-        push!(factors, unpackFactor(dfgLoadInto, packedData, iifModule))
+        push!(factors, unpackFactor(dfgLoadInto, packedData))
     end
     @info "Loaded $(length(variables)) factors - $(map(f->f.label, factors))"
     @info "Inserting factors into graph..."
@@ -140,7 +140,7 @@ function loadDFG(dst::String, iifModule, dfgLoadInto::G; loaddir=joinpath("/","t
     # PATCH - To update the fncargvID for factors, it's being cleared somewhere in rebuildFactorMetadata.
     # TEMPORARY
     # TODO: Remove in future
-    map(f->solverData(f).fncargvID = f._variableOrderSymbols, getFactors(dfgLoadInto))
+    map(f->getSolverData(f).fncargvID = f._variableOrderSymbols, getFactors(dfgLoadInto))
 
     # remove the temporary unzipped file
     if unzip

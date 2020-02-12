@@ -7,7 +7,6 @@ os:
 
 arch:
     - amd64
-    - arm64
 
 services:
     - neo4j
@@ -26,6 +25,7 @@ jobs:
     - julia: 1.2
       env: IIF_TEST=true
       if: NOT branch =~ ^release.*$
+    - arch: arm64
     - stage: "Documentation"
       julia: 1.2
       os: linux
@@ -50,4 +50,4 @@ before_script:
     - curl -v POST http://neo4j:neo4j@localhost:7474/user/neo4j/password -d"password=test"
 
 after_success:
-    - julia -e 'using Pkg; cd(Pkg.dir("DistributedFactorGraphs")); Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder()); Coveralls.submit(process_folder())'
+    - julia -e 'using Pkg; cd(Pkg.dir("DistributedFactorGraphs")); Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
