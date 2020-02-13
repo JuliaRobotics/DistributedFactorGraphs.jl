@@ -30,6 +30,20 @@ mutable struct GenericFunctionNodeData{T, S}
     # GenericFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, x7::String) where {T, S} = new{T,S}(x1, x2, x3, x4, x5, x6, x7)
 end
 
+Base.getproperty(x::GenericFunctionNodeData,f::Symbol) = begin
+    f == :fncargvID && Base.depwarn("GenericFunctionNodeData field fncargvID will be deprecated, use `getVariableOrder` instead",:getproperty)#@warn "fncargvID is deprecated, use `getVariableOrder` instead"
+
+    getfield(x, f)
+
+  end
+
+Base.setproperty!(x::GenericFunctionNodeData,f::Symbol, val) = begin
+    f == :fncargvID && Base.depwarn("GenericFunctionNodeData field fncargvID will be deprecated, use `getVariableOrder` instead",:getproperty)#@warn "fncargvID is deprecated, use `getVariableOrder` instead"
+
+    setfield!(x,f,val)
+
+  end
+
 """
 $(TYPEDEF)
 Complete factor structure for a DistributedFactorGraph factor.
