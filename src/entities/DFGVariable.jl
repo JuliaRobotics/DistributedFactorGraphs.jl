@@ -177,14 +177,27 @@ end
 The default DFGVariable constructor.
 """
 DFGVariable(label::Symbol, softtype::T;
+            timestamp::DateTime=now(),
             tags::Set{Symbol}=Set{Symbol}(),
             estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
-            solverDataDict::Dict{Symbol, VariableNodeData{T}}=Dict{Symbol, VariableNodeData{T}}(:default => VariableNodeData{T}()),
+            solverDataDict::Dict{Symbol, VariableNodeData{T}}=Dict{Symbol, VariableNodeData{T}}(),
             smallData::Dict{String, String}=Dict{String, String}(),
             bigData::Dict{Symbol, AbstractBigDataEntry}=Dict{Symbol,AbstractBigDataEntry}(),
             solvable::Int=1,
             _internalId::Int64=0) where {T <: InferenceVariable} =
-    DFGVariable{T}(label, now(), tags, estimateDict, solverDataDict, smallData, bigData, DFGNodeParams(solvable, _internalId))
+    DFGVariable{T}(label, timestamp, tags, estimateDict, solverDataDict, smallData, bigData, DFGNodeParams(solvable, _internalId))
+
+
+DFGVariable(label::Symbol,
+            solverData::VariableNodeData{T};
+            timestamp::DateTime=now(),
+            tags::Set{Symbol}=Set{Symbol}(),
+            estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
+            smallData::Dict{String, String}=Dict{String, String}(),
+            bigData::Dict{Symbol, AbstractBigDataEntry}=Dict{Symbol,AbstractBigDataEntry}(),
+            solvable::Int=1,
+            _internalId::Int64=0) where {T <: InferenceVariable} =
+    DFGVariable{T}(label, timestamp, tags, estimateDict, Dict{Symbol, VariableNodeData{T}}(:default=>solverData), smallData, bigData, DFGNodeParams(solvable, _internalId))
 
 function Base.copy(o::DFGVariable)::DFGVariable
     return DFGVariable(o.label, getSofttype(o)(), tags=copy(o.tags), estimateDict=copy(o.estimateDict),
