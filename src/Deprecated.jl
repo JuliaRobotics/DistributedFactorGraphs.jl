@@ -171,19 +171,7 @@ function buildSubgraphFromLabels(dfg::G,
   buildSubgraphFromLabels!(dfg, syms, subfg=subfg, solvable=solvable, allowedFactors=allowedFactors )
 end
 
-# NOTE Fully depcrecate nodeCounter and labelDict from LightGraphs
-# Base.propertynames(x::LightDFG, private::Bool=false) =
-#     (:g, :description, :userId, :robotId, :sessionId, :nodeCounter, :labelDict, :addHistory, :solverParams)
-#         # (private ? fieldnames(typeof(x)) : ())...)
-#
-# Base.getproperty(x::LightDFG,f::Symbol) = begin
-#     if f == :nodeCounter
-#         @error "Field nodeCounter deprecated. returning number of nodes"
-#         nv(x.g)
-#     elseif f == :labelDict
-#         @error "Field labelDict deprecated. Consider using exists(dfg,label) or getLabelDict(dfg) instead. Returning internals copy"
-#         copy(x.g.labels.sym_int)
-#     else
-#         getfield(x,f)
-#     end
-# end
+@deprecate sortVarNested(vars::Vector{Symbol}) sortDFG(vars)
+
+#TODO Deprecated or obsolete?
+@deprecate getfnctype(args...) getFactorType(args...)

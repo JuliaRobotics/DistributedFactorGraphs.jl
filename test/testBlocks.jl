@@ -767,13 +767,21 @@ function testGroup!(fg, v1, v2, f0, f1)
 
     @testset "Sorting" begin
         unsorted = [:x1_3;:x1_6;:l1;:april1] #this will not work for :x1x2f1
-        @test sortDFG(unsorted) == sortVarNested(unsorted)
-        @test sort([:x1x2f1, :x1l1f1], lt=DistributedFactorGraphs.natural_lt) == [:x1l1f1, :x1x2f1]
+        @test @test_deprecated  sortVarNested(unsorted) == sortDFG(unsorted)
+        @test sort([:x1x2f1, :x1l1f1], lt=natural_lt) == [:x1l1f1, :x1x2f1]
+
+        # NOTE Some of what is possible with sort and the wrappers
         l = [:a1, :X1, :b1c2, :x2_2, :c, :x1, :x10, :x1_1, :x10_10,:a, :x2_1, :xy3, :l1, :x1_2, :x1l1f1, Symbol("1a1"), :x1x2f1]
-        @test sort(l, lt=DistributedFactorGraphs.natural_lt) == [Symbol("1a1"), :X1, :a, :a1, :b1c2, :c, :l1, :x1, :x1_1, :x1_2, :x1l1f1, :x1x2f1, :x2_1, :x2_2, :x10, :x10_10, :xy3]
-        # NOTE Some of what is possible with sort
-        @test getLabel.(sort(getVariables(fg), lt=DistributedFactorGraphs.natural_lt, by=getLabel)) == [:a, :b]
+        @test sortDFG(l) == [Symbol("1a1"), :X1, :a, :a1, :b1c2, :c, :l1, :x1, :x1_1, :x1_2, :x1l1f1, :x1x2f1, :x2_1, :x2_2, :x10, :x10_10, :xy3]
+        @test sort(l, lt=natural_lt) == [Symbol("1a1"), :X1, :a, :a1, :b1c2, :c, :l1, :x1, :x1_1, :x1_2, :x1l1f1, :x1x2f1, :x2_1, :x2_2, :x10, :x10_10, :xy3]
+
+        @test getLabel.(sortDFG(getVariables(fg), lt=natural_lt, by=getLabel)) == [:a, :b]
+        @test getLabel.(sort(getVariables(fg), lt=natural_lt, by=getLabel)) == [:a, :b]
+
+        @test getLabel.(sortDFG(getFactors(fg))) == [:abf1, :af1]
         @test getLabel.(sort(getFactors(fg), by=getTimestamp)) == [:abf1, :af1]
+
+        @test getLabel.(sortDFG(vcat(getVariables(fg),getFactors(fg)), lt=natural_lt, by=getLabel)) == [:a,:abf1, :af1, :b]
     end
 
     @testset "Some more helpers to sort out" begin
