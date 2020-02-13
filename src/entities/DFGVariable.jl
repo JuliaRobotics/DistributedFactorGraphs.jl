@@ -23,8 +23,9 @@ mutable struct VariableNodeData{T<:InferenceVariable}
     dontmargin::Bool
     solveInProgress::Int
     solvedCount::Int
+    event::Condition #This object is NOT thread-safe. See Threads.Condition for a thread-safe version.
     VariableNodeData{T}() where {T <:InferenceVariable} =
-    new{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], T(), false, 0.0, false, false, 0, 0)
+    new{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], T(), false, 0.0, false, false, 0, 0, Condition())
     VariableNodeData{T}(val::Array{Float64,2},
                         bw::Array{Float64,2},
                         BayesNetOutVertIDs::Array{Symbol,1},
@@ -38,11 +39,12 @@ mutable struct VariableNodeData{T<:InferenceVariable}
                         ismargin::Bool,
                         dontmargin::Bool,
                         solveInProgress::Int=0,
-                        solvedCount::Int=0) where T <: InferenceVariable =
+                        solvedCount::Int=0,
+                        eventCondition::Condition=Condition()) where T <: InferenceVariable =
                             new{T}(val,bw,BayesNetOutVertIDs,dimIDs,dims,
                                    eliminated,BayesNetVertID,separator,
                                    softtype::T,initialized,inferdim,ismargin,
-                                   dontmargin, solveInProgress, solvedCount)
+                                   dontmargin, solveInProgress, solvedCount, eventCondition)
 end
 
 VariableNodeData(val::Array{Float64,2},
