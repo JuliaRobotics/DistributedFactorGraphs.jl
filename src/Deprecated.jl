@@ -80,14 +80,38 @@ Base.setproperty!(x::DFGFactor,f::Symbol, val) = begin
     end
   end
 
+Base.getproperty(x::GenericFunctionNodeData,f::Symbol) = begin
+  f == :fncargvID && Base.depwarn("GenericFunctionNodeData field fncargvID will be deprecated, use `getVariableOrder` instead",:getproperty)#@warn "fncargvID is deprecated, use `getVariableOrder` instead"
+
+  getfield(x, f)
+
+end
+
+Base.setproperty!(x::GenericFunctionNodeData,f::Symbol, val) = begin
+  f == :fncargvID && Base.depwarn("GenericFunctionNodeData field fncargvID will be deprecated, use `getVariableOrder` instead",:getproperty)#@warn "fncargvID is deprecated, use `getVariableOrder` instead"
+
+  setfield!(x,f,val)
+
+end
+
+# update is implied, see API wiki
+@deprecate mergeUpdateVariableSolverData!(dfg, sourceVariable) mergeVariableData!(dfg, sourceVariable)
+@deprecate mergeUpdateGraphSolverData!(sourceDFG, destDFG, varSyms) mergeGraphVariableData!(destDFG, sourceDFG, varSyms)
+
+#TODO alias or deprecate
+@deprecate getVariableIds(dfg::AbstractDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0) listVariables(dfg, regexFilter, tags=tags, solvable=solvable)
+
+#TODO alias or deprecate
+@deprecate getFactorIds(dfg, regexFilter=nothing; solvable=0) listFactors(dfg, regexFilter, solvable=solvable)
+
 @deprecate getEstimates(v::VariableDataLevel1) getPPEDict(v)
 
 @deprecate estimates(v::VariableDataLevel1) getPPEDict(v)
 
 @deprecate getVariablePPEs(v::VariableDataLevel1) getPPEDict(v)
 
-@deprecate getVariablePPE(args...) getPPE(args...)
 #FIXME SORT UIT en deprecate, too many aliases
+@deprecate getVariablePPE(args...) getPPE(args...)
 
 
 """

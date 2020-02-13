@@ -1,15 +1,21 @@
+##==============================================================================
+## Abstract Types
+##==============================================================================
 
 abstract type InferenceType end
 abstract type PackedInferenceType end
 
 abstract type FunctorInferenceType <: Function end
 
-abstract type InferenceVariable end
 abstract type ConvolutionObject <: Function end
 
 abstract type FunctorSingleton <: FunctorInferenceType end
 abstract type FunctorPairwise <: FunctorInferenceType end
 abstract type FunctorPairwiseMinimize <: FunctorInferenceType end
+
+##==============================================================================
+## GenericFunctionNodeData
+##==============================================================================
 
 """
 $(TYPEDEF)
@@ -30,19 +36,22 @@ mutable struct GenericFunctionNodeData{T, S}
     # GenericFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, x7::String) where {T, S} = new{T,S}(x1, x2, x3, x4, x5, x6, x7)
 end
 
-Base.getproperty(x::GenericFunctionNodeData,f::Symbol) = begin
-    f == :fncargvID && Base.depwarn("GenericFunctionNodeData field fncargvID will be deprecated, use `getVariableOrder` instead",:getproperty)#@warn "fncargvID is deprecated, use `getVariableOrder` instead"
+## Constructors
 
-    getfield(x, f)
+##------------------------------------------------------------------------------
+## PackedFunctionNodeData and FunctionNodeData
 
-  end
+# Simply for convenience - don't export, TODO Its used in IIF so maybe it should be exported
+const PackedFunctionNodeData{T} = GenericFunctionNodeData{T, <: AbstractString}
+PackedFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, x7::String="", x8::Vector{Int}=Int[], x9::Int=0) where {T <: PackedInferenceType, S <: AbstractString} = GenericFunctionNodeData(x1, x2, x3, x4, x5, x6, x7, x8, x9)
+const FunctionNodeData{T} = GenericFunctionNodeData{T, Symbol}
+FunctionNodeData(x1, x2, x3, x4, x5::Symbol, x6::T, x7::String="", x8::Vector{Int}=Int[], x9::Int=0) where {T <: Union{FunctorInferenceType, ConvolutionObject}}= GenericFunctionNodeData{T, Symbol}(x1, x2, x3, x4, x5, x6, x7, x8, x9)
 
-Base.setproperty!(x::GenericFunctionNodeData,f::Symbol, val) = begin
-    f == :fncargvID && Base.depwarn("GenericFunctionNodeData field fncargvID will be deprecated, use `getVariableOrder` instead",:getproperty)#@warn "fncargvID is deprecated, use `getVariableOrder` instead"
+##==============================================================================
+## Factors
+##==============================================================================
 
-    setfield!(x,f,val)
-
-  end
+## DFGFactor lv2
 
 """
 $(TYPEDEF)
@@ -77,6 +86,9 @@ mutable struct DFGFactor{T, S} <: AbstractDFGFactor
     _variableOrderSymbols::Vector{Symbol}
 end
 
+##------------------------------------------------------------------------------
+## Constructors
+
 """
 $(SIGNATURES)
 
@@ -97,13 +109,11 @@ DFGFactor(label::Symbol,
                 DFGFactor{T,S}(label,timestamp,tags,data,solvable,DFGNodeParams(solvable, _internalId),variableOrderSymbols)
 
 
-# Simply for convenience - don't export
-const PackedFunctionNodeData{T} = GenericFunctionNodeData{T, <: AbstractString}
-PackedFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, x7::String="", x8::Vector{Int}=Int[], x9::Int=0) where {T <: PackedInferenceType, S <: AbstractString} = GenericFunctionNodeData(x1, x2, x3, x4, x5, x6, x7, x8, x9)
-const FunctionNodeData{T} = GenericFunctionNodeData{T, Symbol}
-FunctionNodeData(x1, x2, x3, x4, x5::Symbol, x6::T, x7::String="", x8::Vector{Int}=Int[], x9::Int=0) where {T <: Union{FunctorInferenceType, ConvolutionObject}}= GenericFunctionNodeData{T, Symbol}(x1, x2, x3, x4, x5, x6, x7, x8, x9)
 
-## DFGFactorSummary
+##------------------------------------------------------------------------------
+## DFGFactorSummary lv1
+##------------------------------------------------------------------------------
+
 """
 $(TYPEDEF)
 Read-only summary factor structure for a DistributedFactorGraph factor.
@@ -129,7 +139,10 @@ struct DFGFactorSummary <: AbstractDFGFactor
     _variableOrderSymbols::Vector{Symbol}
 end
 
-## SkeletonDFGFactor
+##------------------------------------------------------------------------------
+## SkeletonDFGFactor lv0
+##------------------------------------------------------------------------------
+
 """
 $(TYPEDEF)
 Skeleton factor structure for a DistributedFactorGraph factor.
@@ -150,5 +163,80 @@ struct SkeletonDFGFactor <: AbstractDFGFactor
     _variableOrderSymbols::Vector{Symbol}
 end
 
+##------------------------------------------------------------------------------
+## Constructors
+
 #NOTE I feel like a want to force a variableOrderSymbols
 SkeletonDFGFactor(label::Symbol, variableOrderSymbols::Vector{Symbol} = Symbol[]) = SkeletonDFGFactor(label, Set{Symbol}(), variableOrderSymbols)
+
+##==============================================================================
+## Define factor levels
+##==============================================================================
+const FactorDataLevel0 = Union{DFGFactor, DFGFactorSummary, SkeletonDFGFactor}
+const FactorDataLevel1 = Union{DFGFactor, DFGFactorSummary}
+const FactorDataLevel2 = Union{DFGFactor}
+
+##==============================================================================
+## Convert
+##==============================================================================
+function Base.convert(::Type{DFGFactorSummary}, f::DFGFactor)
+    return DFGFactorSummary(f.label, f.timestamp, deepcopy(f.tags), f._dfgNodeParams._internalId, deepcopy(f._variableOrderSymbols))
+end
+
+#TODO TEST
+function Base.convert(::Type{SkeletonDFGFactor}, f::FactorDataLevel1)
+    return SkeletonDFGFactor(f.label, deepcopy(f.tags), deepcopy(f._variableOrderSymbols))
+end
+
+##==============================================================================
+## Accessors
+##==============================================================================
+
+function setTimestamp(f::DFGFactor, ts::DateTime)
+    return DFGFactor(f.label, ts, f.tags, f.solverData, f.solvable, f._dfgNodeParams, f._variableOrderSymbols)
+end
+
+function setTimestamp(f::DFGFactorSummary, ts::DateTime)
+    return DFGFactorSummary(f.label, ts, f.tags, f._internalId, f._variableOrderSymbols)
+end
+
+setTimestamp!(f::FactorDataLevel1, ts::DateTime) = f.timestamp = ts
+
+
+"""
+    $SIGNATURES
+
+Retrieve solver data structure stored in a factor.
+"""
+function getSolverData(f::F) where F <: DFGFactor
+  return f.solverData
+end
+
+#TODO don't know if this is used, added for completeness
+setSolverData!(f::DFGFactor, data::GenericFunctionNodeData) = f.solverData = data
+
+"""
+    $SIGNATURES
+
+Return reference to the user factor in `<:AbstractDFG` identified by `::Symbol`.
+"""
+getFactorFunction(fcd::GenericFunctionNodeData) = fcd.fnc.usrfnc!
+getFactorFunction(fc::DFGFactor) = getFactorFunction(getSolverData(fc))
+function getFactorFunction(dfg::G, fsym::Symbol) where G <: AbstractDFG
+  getFactorFunction(getFactor(dfg, fsym))
+end
+
+
+"""
+    $SIGNATURES
+
+Return user factor type from factor graph identified by label `::Symbol`.
+
+Notes
+- Replaces older `getfnctype`.
+"""
+getFactorType(data::GenericFunctionNodeData) = data.fnc.usrfnc!
+getFactorType(fct::DFGFactor) = getFactorType(getSolverData(fct))
+function getFactorType(dfg::G, lbl::Symbol) where G <: AbstractDFG
+  getFactorType(getFactor(dfg, lbl))
+end

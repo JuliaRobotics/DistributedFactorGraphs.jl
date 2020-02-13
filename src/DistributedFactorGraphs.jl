@@ -1,4 +1,18 @@
+"""
+DistributedFactorGraphs.jl provides a flexible factor graph API for use in the Caesar.jl ecosystem.
+
+The package supplies:
+
+- A standardized API for interacting with factor graphs
+- Implementations of the API for in-memory and database-driven operation
+- Visualization extensions to validate the underlying graph
+
+"""
 module DistributedFactorGraphs
+
+##==============================================================================
+## imports
+##==============================================================================
 
 using Base
 using DocStringExtensions
@@ -13,17 +27,10 @@ using SparseArrays
 # TODO
 # - hasOrphans: actually check if there are orphaned factors
 # getFactorFunction vs getFactorType, does the same thing
-#
 
-# Entities
-include("entities/AbstractDFG.jl")
-
-include("entities/DFGFactor.jl")
-
-include("entities/DFGVariable.jl")
-
-include("entities/AbstractDFGSummary.jl")
-
+##==============================================================================
+# Exports
+##==============================================================================
 # Solver data
 export InferenceType, PackedInferenceType, FunctorInferenceType, InferenceVariable, ConvolutionObject
 export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
@@ -40,24 +47,22 @@ export getSolvedCount, isSolved, setSolvedCount!
 export DFGVariableSummary, DFGFactorSummary, AbstractDFGSummary
 export getNeighborhood, getSubgraph, getSubgraphAroundNode
 export printFactor, printVariable
-
+export mergeVariableSolverData!, mergePPEs!, mergeVariableData!, mergeGraphVariableData!
 export getUserId, getRobotId, getSessionId
 export getDFGInfo
 
-# Define variable levels
-const VariableDataLevel0 = Union{DFGVariable, DFGVariableSummary, SkeletonDFGVariable}
-const VariableDataLevel1 = Union{DFGVariable, DFGVariableSummary}
-const VariableDataLevel2 = Union{DFGVariable}
+export sortDFG
+#Natural less than defined for sorting
+export natural_lt
 
-# Define factor levels
-const FactorDataLevel0 = Union{DFGFactor, DFGFactorSummary, SkeletonDFGFactor}
-const FactorDataLevel1 = Union{DFGFactor, DFGFactorSummary}
-const FactorDataLevel2 = Union{DFGFactor}
-
-# Data levels
-const DataLevel0 = Union{VariableDataLevel0, FactorDataLevel0}
-const DataLevel1 = Union{VariableDataLevel1, FactorDataLevel1}
-const DataLevel2 = Union{VariableDataLevel2, FactorDataLevel2}
+export isPrior, lsfPriors
+export getVariableType
+export getFactorType, getfnctype
+export lsTypes, lsfTypes
+export lsWho, lsfWho
+export findClosestTimestamp, findVariableNearTimestamp
+export addTags!
+export hasTags, hasTagsNeighbors
 
 # Accessors
 # Level 0
@@ -139,11 +144,28 @@ export
     compareSimilarFactors,
     compareFactorGraphs
 
+export InMemoryDFGTypes
+##==============================================================================
+## Files Includes
+##==============================================================================
+
+# Entities
+
+include("entities/AbstractDFG.jl")
+
+include("entities/DFGFactor.jl")
+
+include("entities/DFGVariable.jl")
+
+include("entities/AbstractDFGSummary.jl")
+
+include("CommonAccessors.jl")
+
 # Common includes
 include("services/AbstractDFG.jl")
+include("services/Serialization.jl")
 include("services/DFGVariable.jl")
 include("services/DFGFactor.jl")
-include("CommonAccessors.jl")
 include("Deprecated.jl")
 include("services/CompareUtils.jl")
 
@@ -153,10 +175,6 @@ include("GraphsDFG/GraphsDFG.jl")
 # Include the FilesDFG API.
 include("FileDFG/FileDFG.jl")
 
-# In the attic until it's needed again.
-# include("SymbolDFG/SymbolDFG.jl")
-# using .SymbolDFGs
-
 include("LightDFG/LightDFG.jl")
 @reexport using .LightDFGs
 
@@ -164,7 +182,6 @@ include("CloudGraphsDFG/CloudGraphsDFG.jl")
 
 #supported in Memory fg types
 const InMemoryDFGTypes = Union{GraphsDFG, LightDFG}
-export InMemoryDFGTypes
 
 # Needs a home.
 include("needsahome.jl")
