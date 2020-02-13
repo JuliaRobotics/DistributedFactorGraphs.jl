@@ -1012,7 +1012,7 @@ Notes:
 function isInitialized(var::DFGVariable, key::Symbol=:default)::Bool
       data = getSolverData(var, key)
       if data == nothing
-        @error "Variable does not have solver data $(key)"
+          #TODO we still have a mixture of 2 error behaviours
         return false
       else
           return data.initialized

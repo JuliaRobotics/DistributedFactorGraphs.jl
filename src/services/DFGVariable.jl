@@ -307,7 +307,9 @@ getSofttype(v::DFGVariableSummary)::Symbol = v.softtypename
 Retrieve solver data structure stored in a variable.
 """
 function getSolverData(v::DFGVariable, key::Symbol=:default)
-    return haskey(v.solverDataDict, key) ? v.solverDataDict[key] : nothing
+    #TODO this does not fit in with some of the other error behaviour. but its used so added @error
+    vnd =  haskey(v.solverDataDict, key) ? v.solverDataDict[key] : (@error "Variable does not have solver data $(key)"; nothing)
+    return vnd
 end
 
 """
