@@ -341,7 +341,7 @@ end
 
 function listFactors(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol}
     # Optimized for DB call
-    length(tags) > 0 @error "Filter on tags not implemented for CloudGraphsDFG"
+    length(tags) > 0 && (@error "Filter on tags not implemented for CloudGraphsDFG")
     if regexFilter == nothing
         return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):FACTOR) where node.solvable >= $solvable")
     else
