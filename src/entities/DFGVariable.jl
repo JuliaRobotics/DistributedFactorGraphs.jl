@@ -1,4 +1,13 @@
-## VariableNodeData.jl
+##==============================================================================
+## Abstract Types
+##==============================================================================
+
+abstract type InferenceVariable end
+
+##==============================================================================
+## VariableNodeData
+##==============================================================================
+
 """
 $(TYPEDEF)
 Data container for solver-specific data.
@@ -45,6 +54,9 @@ mutable struct VariableNodeData{T<:InferenceVariable}
                                    dontmargin, solveInProgress, solvedCount)
 end
 
+##------------------------------------------------------------------------------
+## Constructors
+
 VariableNodeData(val::Array{Float64,2},
                  bw::Array{Float64,2},
                  BayesNetOutVertIDs::Array{Symbol,1},
@@ -63,11 +75,15 @@ VariableNodeData(val::Array{Float64,2},
                                        eliminated,BayesNetVertID,separator,
                                        softtype::T,initialized,inferdim,ismargin,
                                        dontmargin, solveInProgress, solvedCount)
-#
+
+
 VariableNodeData(softtype::T) where T <: InferenceVariable =
     VariableNodeData{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], softtype, false, 0.0, false, false, 0, 0)
 
-##PackedVariableNodeData.jl
+##==============================================================================
+## PackedVariableNodeData.jl
+##==============================================================================
+
 """
 $(TYPEDEF)
 Packed VariabeNodeData structure for serializing DFGVariables.
@@ -114,9 +130,19 @@ mutable struct PackedVariableNodeData
                          solvedCount::Int) = new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16, solvedCount)
 end
 
-## PoiintParametricEst.jl
-# AbstractPointParametricEst interface
+##==============================================================================
+## PointParametricEst
+##==============================================================================
+
+##------------------------------------------------------------------------------
+## AbstractPointParametricEst interface
+##------------------------------------------------------------------------------
+
 abstract type AbstractPointParametricEst end
+
+##------------------------------------------------------------------------------
+## MeanMaxPPE
+##------------------------------------------------------------------------------
 """
     $TYPEDEF
 
@@ -129,14 +155,19 @@ struct MeanMaxPPE <: AbstractPointParametricEst
     mean::Vector{Float64}
     lastUpdatedTimestamp::DateTime
 end
+##------------------------------------------------------------------------------
+## Constructors
+
 MeanMaxPPE(solverKey::Symbol, suggested::Vector{Float64}, max::Vector{Float64},mean::Vector{Float64}) = MeanMaxPPE(solverKey, suggested, max, mean, now())
 
-getMaxPPE(est::AbstractPointParametricEst) = est.max
-getMeanPPE(est::AbstractPointParametricEst) = est.mean
-getSuggestedPPE(est::AbstractPointParametricEst) = est.suggested
-getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimestamp
 
-## DFGVariable.jl
+##==============================================================================
+## DFG Variables
+##==============================================================================
+
+##------------------------------------------------------------------------------
+## DFGVariable lv2
+##------------------------------------------------------------------------------
 """
 $(TYPEDEF)
 Complete variable structure for a DistributedFactorGraph variable.
@@ -162,7 +193,7 @@ struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
     Accessors: `addVariableSolverData!`, `updateVariableSolverData!`, and `deleteVariableSolverData!`"""
     solverDataDict::Dict{Symbol, VariableNodeData{T}}
     """Dictionary of small data associated with this variable.
-    Accessors: `addSmallData!`, `updateSmallData!`, and `deleteSmallData!`"""
+    Accessors: [`getSmallData!`](@ref), [`setSmallData!`](@ref)"""
     smallData::Dict{String, String}#Ref{Dict{String, String}} #why was Ref here?
     """Dictionary of large data associated with this variable.
     Accessors: `addBigDataEntry!`, `getBigDataEntry`, `updateBigDataEntry!`, and `deleteBigDataEntry!`"""
@@ -171,6 +202,9 @@ struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
     Accessors: `getSolvable`, `setSolvable!`"""
     _dfgNodeParams::DFGNodeParams
 end
+
+##------------------------------------------------------------------------------
+## Constructors
 
 """
     $SIGNATURES
@@ -199,13 +233,17 @@ DFGVariable(label::Symbol,
             _internalId::Int64=0) where {T <: InferenceVariable} =
     DFGVariable{T}(label, timestamp, tags, estimateDict, Dict{Symbol, VariableNodeData{T}}(:default=>solverData), smallData, bigData, DFGNodeParams(solvable, _internalId))
 
+##------------------------------------------------------------------------------
 function Base.copy(o::DFGVariable)::DFGVariable
     return DFGVariable(o.label, getSofttype(o)(), tags=copy(o.tags), estimateDict=copy(o.estimateDict),
                         solverDataDict=copy(o.solverDataDict), smallData=copy(o.smallData),
                         bigData=copy(o.bigData), solvable=getSolvable(o), _internalId=getInternalId(o))
 end
 
-## DFGVariableSummary.jl
+##------------------------------------------------------------------------------
+## DFGVariableSummary lv1
+##------------------------------------------------------------------------------
+
 """
 $(TYPEDEF)
 Summary variable structure for a DistributedFactorGraph variable.
@@ -237,7 +275,10 @@ struct DFGVariableSummary <: AbstractDFGVariable
     _internalId::Int64
 end
 
+##------------------------------------------------------------------------------
 ## SkeletonDFGVariable.jl
+##------------------------------------------------------------------------------
+
 """
 $(TYPEDEF)
 Skeleton variable structure for a DistributedFactorGraph variable.
@@ -256,3 +297,24 @@ struct SkeletonDFGVariable <: AbstractDFGVariable
 end
 
 SkeletonDFGVariable(label::Symbol) = SkeletonDFGVariable(label, Set{Symbol}())
+
+
+##==============================================================================
+# Define variable levels
+##==============================================================================
+const VariableDataLevel0 = Union{DFGVariable, DFGVariableSummary, SkeletonDFGVariable}
+const VariableDataLevel1 = Union{DFGVariable, DFGVariableSummary}
+const VariableDataLevel2 = Union{DFGVariable}
+
+##==============================================================================
+## converters
+##==============================================================================
+
+function Base.convert(::Type{DFGVariableSummary}, v::DFGVariable)
+    return DFGVariableSummary(v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.ppeDict), Symbol(typeof(getSofttype(v))), v.bigData, v._internalId)
+end
+
+#TODO Test
+function Base.convert(::Type{SkeletonDFGVariable}, v::VariableDataLevel1)
+    return SkeletonDFGVariable(v.label, deepcopy(v.tags))
+end
