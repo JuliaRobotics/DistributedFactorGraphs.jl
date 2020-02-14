@@ -1036,12 +1036,12 @@ end
 """
     $(SIGNATURES)
 Get a summary of the graph (first-class citizens of variables and factors).
-Returns a AbstractDFGSummary.
+Returns a DFGSummary.
 """
-function getSummary(dfg::G)::AbstractDFGSummary where {G <: AbstractDFG}
+function getSummary(dfg::G)::DFGSummary where {G <: AbstractDFG}
     vars = map(v -> convert(DFGVariableSummary, v), getVariables(dfg))
     facts = map(f -> convert(DFGFactorSummary, f), getFactors(dfg))
-    return AbstractDFGSummary(
+    return DFGSummary(
         Dict(map(v->v.label, vars) .=> vars),
         Dict(map(f->f.label, facts) .=> facts),
         dfg.userId,
