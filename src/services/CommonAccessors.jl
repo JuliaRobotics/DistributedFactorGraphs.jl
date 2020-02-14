@@ -10,6 +10,10 @@ const DataLevel0 = Union{VariableDataLevel0, FactorDataLevel0}
 const DataLevel1 = Union{VariableDataLevel1, FactorDataLevel1}
 const DataLevel2 = Union{VariableDataLevel2, FactorDataLevel2}
 
+##------------------------------------------------------------------------------
+## label
+##------------------------------------------------------------------------------
+
 """
 $SIGNATURES
 
@@ -17,13 +21,16 @@ Return the label for a DFGNode.
 """
 getLabel(v::DataLevel0) = v.label
 
+##------------------------------------------------------------------------------
+## tags
+##------------------------------------------------------------------------------
+
 """
 $SIGNATURES
 
 Return the tags for a DFGNode.
 """
 getTags(v::DataLevel0) = v.tags
-
 
 """
 $SIGNATURES
@@ -35,6 +42,10 @@ function setTags!(f::DataLevel0, tags::Union{Vector{Symbol},Set{Symbol}})
   union!(f.tags, tags)
 end
 
+##------------------------------------------------------------------------------
+## timestamp
+##------------------------------------------------------------------------------
+
 """
 $SIGNATURES
 
@@ -42,6 +53,11 @@ Get the timestamp of a DFGNode.
 """
 getTimestamp(v::DataLevel1) = v.timestamp
 
+
+
+##------------------------------------------------------------------------------
+## _internalId
+##------------------------------------------------------------------------------
 
 """
 $SIGNATURES
@@ -53,7 +69,9 @@ getInternalId(v::DataLevel2) = v._dfgNodeParams._internalId
 getInternalId(v::Union{DFGVariableSummary, DFGFactorSummary}) = v._internalId
 
 
-##
+##------------------------------------------------------------------------------
+## solvable
+##------------------------------------------------------------------------------
 
 """
     $SIGNATURES
@@ -79,6 +97,33 @@ function getSolvable(dfg::AbstractDFG, sym::Symbol)
   end
 end
 
+#TODO data level2 for N
+"""
+    $SIGNATURES
+
+Set the `solvable` parameter for either a variable or factor.
+"""
+function setSolvable!(node::N, solvable::Int)::Int where N <: DFGNode
+  node._dfgNodeParams.solvable = solvable
+  return solvable
+end
+
+
+"""
+    $SIGNATURES
+
+Set the `solvable` parameter for either a variable or factor.
+"""
+function setSolvable!(dfg::AbstractDFG, sym::Symbol, solvable::Int)::Int
+  if isVariable(dfg, sym)
+    getVariable(dfg, sym)._dfgNodeParams.solvable = solvable
+  elseif isFactor(dfg, sym)
+    getFactor(dfg, sym)._dfgNodeParams.solvable = solvable
+  end
+  return solvable
+end
+
+
 
 """
     $SIGNATURES
@@ -90,6 +135,10 @@ Related:
 """
 isSolvable(node::Union{DFGVariable, DFGFactor}) = getSolvable(node) > 0
 
+
+##------------------------------------------------------------------------------
+## solveInProgress
+##------------------------------------------------------------------------------
 
 """
     $SIGNATURES
@@ -110,33 +159,9 @@ function getSolveInProgress(var::Union{DFGVariable, DFGFactor}, solveKey::Symbol
     return getSolverData(var).solveInProgress
 end
 
+#TODO missing set solveInProgress and graph level accessor
 
 isSolveInProgress(node::Union{DFGVariable, DFGFactor}, solvekey::Symbol=:default) = getSolveInProgress(node, solvekey) > 0
-
-
-"""
-    $SIGNATURES
-
-Set the `solvable` parameter for either a variable or factor.
-"""
-function setSolvable!(dfg::AbstractDFG, sym::Symbol, solvable::Int)::Int
-  if isVariable(dfg, sym)
-    getVariable(dfg, sym)._dfgNodeParams.solvable = solvable
-  elseif isFactor(dfg, sym)
-    getFactor(dfg, sym)._dfgNodeParams.solvable = solvable
-  end
-  return solvable
-end
-
-"""
-    $SIGNATURES
-
-Set the `solvable` parameter for either a variable or factor.
-"""
-function setSolvable!(node::N, solvable::Int)::Int where N <: DFGNode
-  node._dfgNodeParams.solvable = solvable
-  return solvable
-end
 
 
 ##==============================================================================

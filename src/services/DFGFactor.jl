@@ -2,29 +2,15 @@
 ## Accessors
 ##==============================================================================
 
-function setTimestamp(f::DFGFactor, ts::DateTime)
-    return DFGFactor(f.label, ts, f.tags, f.solverData, f.solvable, f._dfgNodeParams, f._variableOrderSymbols)
-end
+##==============================================================================
+## GenericFunctionNodeData
+##==============================================================================
 
-function setTimestamp(f::DFGFactorSummary, ts::DateTime)
-    return DFGFactorSummary(f.label, ts, f.tags, f._internalId, f._variableOrderSymbols)
-end
+## COMMON
+# getSolveInProgress
+# isSolveInProgress
 
-setTimestamp!(f::FactorDataLevel1, ts::DateTime) = f.timestamp = ts
-
-
-"""
-    $SIGNATURES
-
-Retrieve solver data structure stored in a factor.
-"""
-function getSolverData(f::F) where F <: DFGFactor
-  return f.solverData
-end
-
-#TODO don't know if this is used, added for completeness
-setSolverData!(f::DFGFactor, data::GenericFunctionNodeData) = f.solverData = data
-
+#TODO  getFactorFunction = getFactorType
 """
     $SIGNATURES
 
@@ -35,7 +21,6 @@ getFactorFunction(fc::DFGFactor) = getFactorFunction(getSolverData(fc))
 function getFactorFunction(dfg::G, fsym::Symbol) where G <: AbstractDFG
   getFactorFunction(getFactor(dfg, fsym))
 end
-
 
 """
     $SIGNATURES
@@ -51,6 +36,101 @@ function getFactorType(dfg::G, lbl::Symbol) where G <: AbstractDFG
   getFactorType(getFactor(dfg, lbl))
 end
 
+##==============================================================================
+## Factors
+##==============================================================================
+# |                   | label | tags | timestamp | solvable | solverData |
+# |-------------------|:-----:|:----:|:---------:|:--------:|:----------:|
+# | SkeletonDFGFactor |   X   |   x  |           |          |            |
+# | DFGFactorSummary  |   X   |   X  |     X     |          |            |
+# | DFGFactor         |   X   |   X  |     X     |     X    |      X     |
+
+##------------------------------------------------------------------------------
+## label
+##------------------------------------------------------------------------------
+
+## COMMON
+# getLabel
+
+##------------------------------------------------------------------------------
+## tags
+##------------------------------------------------------------------------------
+
+## COMMON
+# getTags
+# setTags!
+
+##------------------------------------------------------------------------------
+## timestamp
+##------------------------------------------------------------------------------
+
+## COMMON
+# getTimestamp
+
+
+function setTimestamp(f::DFGFactor, ts::DateTime)
+    return DFGFactor(f.label, ts, f.tags, f.solverData, f.solvable, f._dfgNodeParams, f._variableOrderSymbols)
+end
+
+function setTimestamp(f::DFGFactorSummary, ts::DateTime)
+    return DFGFactorSummary(f.label, ts, f.tags, f._internalId, f._variableOrderSymbols)
+end
+
+setTimestamp!(f::FactorDataLevel1, ts::DateTime) = f.timestamp = ts
+
+
+##------------------------------------------------------------------------------
+## solvable
+##------------------------------------------------------------------------------
+
+## COMMON
+# getSolvable
+# setSolvable!
+# isSolvable
+
+##------------------------------------------------------------------------------
+## _dfgNodeParams [solvable _internalId]
+##------------------------------------------------------------------------------
+
+## COMMON
+# getInternalId
+
+
+##------------------------------------------------------------------------------
+## _variableOrderSymbols
+##------------------------------------------------------------------------------
+
+#TODO perhaps making _variableOrderSymbols imutable (NTuple) will be a save option
+"""
+$SIGNATURES
+
+Get the variable ordering for this factor.
+Should be equivalent to getNeighbors unless something was deleted in the graph.
+"""
+getVariableOrder(fct::DFGFactor)::Vector{Symbol} = fct._variableOrderSymbols
+getVariableOrder(dfg::AbstractDFG, fct::Symbol) = getVariableOrder(getFactor(dfg, fct))
+
+##------------------------------------------------------------------------------
+## solverData
+##------------------------------------------------------------------------------
+
+"""
+    $SIGNATURES
+
+Retrieve solver data structure stored in a factor.
+"""
+function getSolverData(f::F) where F <: DFGFactor
+  return f.solverData
+end
+
+#TODO don't know if this is used, added for completeness
+setSolverData!(f::DFGFactor, data::GenericFunctionNodeData) = f.solverData = data
+
+
+##------------------------------------------------------------------------------
+## utility
+##------------------------------------------------------------------------------
+
 
 """
     $SIGNATURES
@@ -63,9 +143,8 @@ function isPrior(dfg::G, fc::Symbol)::Bool where G <: AbstractDFG
 end
 
 
-
 ##==============================================================================
-## Layer 2 CRUD  (none) and Sets
+## Layer 2 CRUD (none) and Sets
 ##==============================================================================
 
 ##==============================================================================

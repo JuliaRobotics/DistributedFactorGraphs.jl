@@ -97,7 +97,7 @@ $SIGNATURES
 Set the user data associated with the graph.
 """
 function setUserData!(dfg::AbstractDFG, data::Dict{Symbol, String})::Union{Nothing, Dict{Symbol, String}}
-    dfg.userData = data
+    dfg.userData = data #TODO keep memory? use clear and then add
     return dfg.userData
 end
 
@@ -417,6 +417,7 @@ end
 ## Connectivity Alias
 ##------------------------------------------------------------------------------
 #Alias
+#TODO rather actually check if there are orphaned factors (factors without all variables)
 """
     $(SIGNATURES)
 Checks if the graph is not fully connected, returns true if it is not contiguous.

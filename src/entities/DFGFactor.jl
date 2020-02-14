@@ -50,6 +50,12 @@ FunctionNodeData(x1, x2, x3, x4, x5::Symbol, x6::T, x7::String="", x8::Vector{In
 ##==============================================================================
 ## Factors
 ##==============================================================================
+#
+# |                   | label | tags | timestamp | solvable | solverData |
+# |-------------------|:-----:|:----:|:---------:|:--------:|:----------:|
+# | SkeletonDFGFactor |   X   |   x  |           |          |            |
+# | DFGFactorSummary  |   X   |   X  |     X     |          |            |
+# | DFGFactor         |   X   |   X  |     X     |     X    |      X     |
 
 ## DFGFactor lv2
 
@@ -98,7 +104,7 @@ Construct a DFG factor given a label.
 DFGFactor{T, S}(label::Symbol, internalId::Int64=0, timestamp::DateTime=now()) where {T, S} =
                 DFGFactor(label, timestamp, Set{Symbol}(), GenericFunctionNodeData{T, S}(), 1, DFGNodeParams(1, internalId), Symbol[])
 
-#TODO update where this constructor was used. It was fundamentally broken.
+
 DFGFactor(label::Symbol,
           variableOrderSymbols::Vector{Symbol},
           data::GenericFunctionNodeData{T, S};

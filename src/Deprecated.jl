@@ -1,12 +1,40 @@
+##==============================================================================
 # deprecation staging area
+##==============================================================================
 
-## quick deprecation handle
-import Base: propertynames, getproperty
+#TODO look what should already be removed
 
-# this hides all the propertynames and makes it hard to work with.
-# Base.propertynames(x::VariableDataLevel1, private::Bool=false) = private ? (:estimateDict, :ppeDict) : (:ppeDict,)
+##==============================================================================
+## Remove in 0.6.0 or 0.6.1?
+##==============================================================================
 
-## REMOVE in 0.6.1 #TODO look what should already be removed
+@deprecate getEstimate(v::VariableDataLevel1, key::Symbol=:default) getVariablePPE(v, key)
+
+@deprecate estimate(v::VariableDataLevel1, key::Symbol=:default) getVariablePPE(v, key)
+
+@deprecate getEstimates(v::VariableDataLevel1) getPPEDict(v)
+
+@deprecate estimates(v::VariableDataLevel1) getPPEDict(v)
+
+@deprecate softtype(v::VariableDataLevel1) getSofttype(v)
+
+@deprecate label(v::DataLevel0) getLabel(v)
+
+@deprecate tags(v::DataLevel0) getTags(v)
+
+@deprecate getData(v::DFGVariable; solveKey::Symbol=:default) getSolverData(v, solveKey)
+
+@deprecate setSolverData(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) setSolverData!(v, data, key)
+
+@deprecate data(f::DFGFactor) getSolverData(f)
+
+
+@deprecate getData(f::DFGFactor) getSolverData(f)
+
+
+##==============================================================================
+## Remove in 0.7
+##==============================================================================
 
 Base.getproperty(x::DFGVariable,f::Symbol) = begin
     if f == :estimateDict
@@ -101,52 +129,19 @@ end
 #TODO alias or deprecate
 @deprecate getVariableIds(dfg::AbstractDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0) listVariables(dfg, regexFilter, tags=tags, solvable=solvable)
 
-#TODO alias or deprecate
 @deprecate getFactorIds(dfg, regexFilter=nothing; solvable=0) listFactors(dfg, regexFilter, solvable=solvable)
 
-@deprecate getEstimates(v::VariableDataLevel1) getPPEDict(v)
-
-@deprecate estimates(v::VariableDataLevel1) getPPEDict(v)
+#NOTE too many aliases on PPE
 
 @deprecate getVariablePPEs(v::VariableDataLevel1) getPPEDict(v)
 
-#FIXME SORT UIT en deprecate, too many aliases
+@deprecate getPPEs(vari::VariableDataLevel1) getPPEDict(v)
+
 @deprecate getVariablePPE(args...) getPPE(args...)
 
 
-"""
-    $SIGNATURES
-
-Return dictionary with Parametric Point Estimates (PPE) values.
-
-Notes:
-- Equivalent to `getVariablePPEs`.
-"""
-#TODO deprecate, maar gebruik dalk naam om vector te kry soos getVariables/getFactors
-getPPEs(vari::VariableDataLevel1)::Dict = getVariablePPEs(vari)
-
-
-@deprecate getEstimate(v::VariableDataLevel1, key::Symbol=:default) getVariablePPE(v, key)
-
-@deprecate estimate(v::VariableDataLevel1, key::Symbol=:default) getVariablePPE(v, key)
-
-@deprecate softtype(v::VariableDataLevel1) getSofttype(v)
-
-@deprecate label(v::DataLevel0) getLabel(v)
-
-@deprecate tags(v::DataLevel0) getTags(v)
-
 #TODO doesn't look like this existed
 # @deprecate timestamp(v) getTimestamp(v)
-
-@deprecate getData(v::DFGVariable; solveKey::Symbol=:default) getSolverData(v, solveKey)
-
-@deprecate getData(f::DFGFactor) getSolverData(f)
-
-@deprecate setSolverData(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) setSolverData!(v, data, key)
-
-
-@deprecate data(f::DFGFactor) getSolverData(f)
 
 @deprecate setSolverParams(args...) setSolverParams!(args...)
 

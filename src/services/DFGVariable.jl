@@ -1,20 +1,26 @@
 ##==============================================================================
 ## Accessors
 ##==============================================================================
-
-##------------------------------------------------------------------------------
+##==============================================================================
 ## PointParametricEst
-##------------------------------------------------------------------------------
+##==============================================================================
 
 getMaxPPE(est::AbstractPointParametricEst) = est.max
 getMeanPPE(est::AbstractPointParametricEst) = est.mean
 getSuggestedPPE(est::AbstractPointParametricEst) = est.suggested
 getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimestamp
 
-##------------------------------------------------------------------------------
+##==============================================================================
 ## Variable Node Data
-##------------------------------------------------------------------------------
+##==============================================================================
 
+## COMMON
+# getSolveInProgress
+# isSolveInProgress
+
+##------------------------------------------------------------------------------
+## softtype
+##------------------------------------------------------------------------------
 """
    $(SIGNATURES)
 
@@ -33,122 +39,20 @@ function getSofttype(v::DFGVariable, solvekey::Symbol=:default)
   return v.solverDataDict[solvekey].softtype # Get instantiated form of the parameter for the DFGVariable
 end
 
+## TODO repeated function and broken as it does not pass in solvekey
+"""
+    $SIGNATURES
+
+Return the DFGVariable softtype in factor graph `dfg<:AbstractDFG` and label `::Symbol`.
+"""
+getVariableType(var::DFGVariable) = getSofttype(var)
+function getVariableType(dfg::G, lbl::Symbol) where G <: AbstractDFG
+  getVariableType(getVariable(dfg, lbl))
+end
+
 ##------------------------------------------------------------------------------
-## Variables
+## solvedCount
 ##------------------------------------------------------------------------------
-
-"""
-$SIGNATURES
-
-Set the timestamp of a DFGVariable object returning a new DFGVariable.
-Note:
-Since `timestamp` is not mutable `setTimestamp` returns a new variable with the updated timestamp.
-Use `updateVariable!` to update it in the factor graph.
-"""
-function setTimestamp(v::DFGVariable, ts::DateTime)
-    return DFGVariable(v.label, ts, v.tags, v.ppeDict, v.solverDataDict, v.smallData, v.bigData, v._dfgNodeParams)
-end
-
-function setTimestamp(v::DFGVariableSummary, ts::DateTime)
-    return DFGVariableSummary(v.label, ts, v.tags, v.estimateDict, v.softtypename, v.bigData, v._internalId)
-end
-
-
-
-
-# TODO this should return the softtype object, or try to. it should be getSofttypename for the accessor
-# TODO Consider parameter N in softtype for dims, and storing constructor in softtypename
-# TODO or just not having this function at all
-"""
-    $SIGNATURES
-
-Retrieve the soft type name symbol for a DFGVariableSummary. ie :Point2, Pose2, etc.
-TODO, DO NOT USE v.softtypename in DFGVariableSummary
-"""
-getSofttype(v::DFGVariableSummary)::Symbol = v.softtypename
-
-
-"""
-    $SIGNATURES
-
-Retrieve solver data structure stored in a variable.
-"""
-function getSolverData(v::DFGVariable, key::Symbol=:default)
-    #TODO this does not fit in with some of the other error behaviour. but its used so added @error
-    vnd =  haskey(v.solverDataDict, key) ? v.solverDataDict[key] : (@error "Variable does not have solver data $(key)"; nothing)
-    return vnd
-end
-
-"""
-    $SIGNATURES
-
-Set solver data structure stored in a variable.
-"""
-#TODO Repeated functionality?
-setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v.solverDataDict[key] = data
-
-"""
-    $SIGNATURES
-
-Get solver data dictionary for a variable.
-"""
-getSolverDataDict(v::DFGVariable) = v.solverDataDict
-
-"""
-    $SIGNATURES
-
-Get the PPE dictionary for a variable. Its use is not recomended.
-"""
-getPPEDict(v::VariableDataLevel1) = v.ppeDict
-
-
-#TODO FIXME don't know if this should exist, should rather always update with fg object to simplify inmem vs cloud
-"""
-    $SIGNATURES
-
-Get the parametric point estimate (PPE) for a variable in the factor graph.
-
-Notes
-- Defaults on keywords `solveKey` and `method`
-
-Related
-
-getMeanPPE, getMaxPPE, getKDEMean, getKDEFit, getPPEs, getVariablePPEs
-"""
-function getPPE(vari::VariableDataLevel1, solveKey::Symbol=:default)
-    return  getPPEs(vari)[solveKey]
-    # return haskey(ppeDict, solveKey) ? ppeDict[solveKey] : nothing
-end
-
-
-
-"""
-$SIGNATURES
-
-Get the small data for a variable.
-"""
-getSmallData(v::DFGVariable)::Dict{String, String} = v.smallData
-
-"""
-$SIGNATURES
-
-Set the small data for a variable.
-This will overwrite old smallData.
-"""
-function setSmallData!(v::DFGVariable, smallData::Dict{String, String})::Dict{String, String}
-    empty!(v.smallData)
-    merge!(v.smallData, smallData)
-end
-
-
-"""
-$SIGNATURES
-
-Get the variable ordering for this factor.
-Should be equivalent to getNeighbors unless something was deleted in the graph.
-"""
-getVariableOrder(fct::DFGFactor)::Vector{Symbol} = fct._variableOrderSymbols
-getVariableOrder(dfg::AbstractDFG, fct::Symbol) = getVariableOrder(getFactor(dfg, fct))
 
 """
     $SIGNATURES
@@ -162,19 +66,6 @@ isSolved, setSolvedCount!
 getSolvedCount(v::VariableNodeData) = v.solvedCount
 getSolvedCount(v::VariableDataLevel2, solveKey::Symbol=:default) = getSolverData(v, solveKey) |> getSolvedCount
 getSolvedCount(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = getSolvedCount(getVariable(dfg, sym), solveKey)
-
-"""
-    $SIGNATURES
-
-Boolean on whether the variable has been solved.
-
-Related
-
-getSolved, setSolved!
-"""
-isSolved(v::VariableNodeData) = 0 < v.solvedCount
-isSolved(v::VariableDataLevel2, solveKey::Symbol=:default) = getSolverData(v, solveKey) |> isSolved
-isSolved(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = isSolved(getVariable(dfg, sym), solveKey)
 
 
 """
@@ -190,6 +81,23 @@ setSolvedCount!(v::VariableNodeData, val::Int) = v.solvedCount = val
 setSolvedCount!(v::VariableDataLevel2, val::Int, solveKey::Symbol=:default) = setSolvedCount!(getSolverData(v, solveKey), val)
 setSolvedCount!(dfg::AbstractDFG, sym::Symbol, val::Int, solveKey::Symbol=:default) = setSolvedCount!(getVariable(dfg, sym), val, solveKey)
 
+
+"""
+    $SIGNATURES
+
+Boolean on whether the variable has been solved.
+
+Related
+
+getSolved, setSolved!
+"""
+isSolved(v::VariableNodeData) = 0 < v.solvedCount
+isSolved(v::VariableDataLevel2, solveKey::Symbol=:default) = getSolverData(v, solveKey) |> isSolved
+isSolved(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = isSolved(getVariable(dfg, sym), solveKey)
+
+##------------------------------------------------------------------------------
+## initialized
+##------------------------------------------------------------------------------
 """
     $SIGNATURES
 
@@ -212,15 +120,180 @@ function isInitialized(dfg::AbstractDFG, label::Symbol, key::Symbol=:default)::B
   return isInitialized(getVariable(dfg, label), key)
 end
 
+
+##==============================================================================
+## Variables
+##==============================================================================
+#
+# |                     | label | tags | timestamp | ppe | softtypename | solvable | solverData | smallData | bigData |
+# |---------------------|:-----:|:----:|:---------:|:---:|:------------:|:--------:|:----------:|:---------:|:-------:|
+# | SkeletonDFGVariable |   X   |   X  |           |     |              |          |            |           |         |
+# | DFGVariableSummary  |   X   |   X  |     X     |  X  |       X      |          |            |           |    X    |
+# | DFGVariable         |   X   |   X  |     x     |  X  |              |     X    |      X     |     X     |    X    |
+#
+##------------------------------------------------------------------------------
+
+##------------------------------------------------------------------------------
+## label
+##------------------------------------------------------------------------------
+
+## COMMON
+# getLabel
+
+##------------------------------------------------------------------------------
+## tags
+##------------------------------------------------------------------------------
+
+## COMMON
+# getTags
+# setTags!
+
+##------------------------------------------------------------------------------
+## timestamp
+##------------------------------------------------------------------------------
+
+## COMMON
+# getTimestamp
+
+"""
+$SIGNATURES
+
+Set the timestamp of a DFGVariable object returning a new DFGVariable.
+Note:
+Since `timestamp` is not mutable `setTimestamp` returns a new variable with the updated timestamp.
+Use `updateVariable!` to update it in the factor graph.
+"""
+function setTimestamp(v::DFGVariable, ts::DateTime)
+    return DFGVariable(v.label, ts, v.tags, v.ppeDict, v.solverDataDict, v.smallData, v.bigData, v._dfgNodeParams)
+end
+
+function setTimestamp(v::DFGVariableSummary, ts::DateTime)
+    return DFGVariableSummary(v.label, ts, v.tags, v.estimateDict, v.softtypename, v.bigData, v._internalId)
+end
+
+#TODO something like:
+# setTimestamp!(dfg::AbstractDFG, var::DFGVariable, ts::DateTime) = updateVariable!(dfg, setTimestamp(var, ts))
+
+##------------------------------------------------------------------------------
+## _dfgNodeParams [_internalId, solvable]
+##------------------------------------------------------------------------------
+
+## COMMON: solvable
+# getSolvable
+# setSolvable!
+# isSolvable
+
+## COMMON: _internalId
+# getInternalId
+
+##------------------------------------------------------------------------------
+## ppeDict
+##------------------------------------------------------------------------------
+
 """
     $SIGNATURES
 
-Return the DFGVariable softtype in factor graph `dfg<:AbstractDFG` and label `::Symbol`.
+Get the PPE dictionary for a variable. Its direct use is not recomended.
 """
-getVariableType(var::DFGVariable) = getSofttype(var)
-function getVariableType(dfg::G, lbl::Symbol) where G <: AbstractDFG
-  getVariableType(getVariable(dfg, lbl))
+getPPEDict(v::VariableDataLevel1) = v.ppeDict
+
+
+#TODO FIXME don't know if this should exist, should rather always update with fg object to simplify inmem vs cloud
+"""
+    $SIGNATURES
+
+Get the parametric point estimate (PPE) for a variable in the factor graph.
+
+Notes
+- Defaults on keywords `solveKey` and `method`
+
+Related
+
+getMeanPPE, getMaxPPE, getKDEMean, getKDEFit, getPPEs, getVariablePPEs
+"""
+function getPPE(vari::VariableDataLevel1, solveKey::Symbol=:default)
+    return  getPPEDict(vari)[solveKey]
+    # return haskey(ppeDict, solveKey) ? ppeDict[solveKey] : nothing
 end
+
+##------------------------------------------------------------------------------
+## solverDataDict
+##------------------------------------------------------------------------------
+
+"""
+    $SIGNATURES
+
+Get solver data dictionary for a variable.
+"""
+getSolverDataDict(v::DFGVariable) = v.solverDataDict
+
+
+# TODO move to crud, don't know if this should exist, should rather always update with fg object to simplify inmem vs cloud
+"""
+    $SIGNATURES
+
+Retrieve solver data structure stored in a variable.
+"""
+function getSolverData(v::DFGVariable, key::Symbol=:default)
+    #TODO this does not fit in with some of the other error behaviour. but its used so added @error
+    vnd =  haskey(v.solverDataDict, key) ? v.solverDataDict[key] : (@error "Variable does not have solver data $(key)"; nothing)
+    return vnd
+end
+
+"""
+    $SIGNATURES
+
+Set solver data structure stored in a variable.
+"""
+#TODO Repeated functionality? same as update
+setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v.solverDataDict[key] = data
+
+##------------------------------------------------------------------------------
+## smallData
+##------------------------------------------------------------------------------
+
+"""
+$SIGNATURES
+
+Get the small data for a variable.
+"""
+getSmallData(v::DFGVariable)::Dict{String, String} = v.smallData
+
+"""
+$SIGNATURES
+
+Set the small data for a variable.
+This will overwrite old smallData.
+"""
+function setSmallData!(v::DFGVariable, smallData::Dict{String, String})::Dict{String, String}
+    empty!(v.smallData)
+    merge!(v.smallData, smallData)
+end
+
+##------------------------------------------------------------------------------
+## bigData
+##------------------------------------------------------------------------------
+
+## see Bigdata Folder
+
+##------------------------------------------------------------------------------
+## softtypename
+##------------------------------------------------------------------------------
+## getter in DFGVariableSummary only
+## can be utility function for others
+## TODO this should return the softtype object, or try to. it should be getSofttypename for the accessor
+## TODO Consider parameter N in softtype for dims, and storing constructor in softtypename
+## TODO or just not having this function at all
+##------------------------------------------------------------------------------
+
+"""
+    $SIGNATURES
+
+Retrieve the soft type name symbol for a DFGVariableSummary. ie :Point2, Pose2, etc.
+TODO, DO NOT USE v.softtypename in DFGVariableSummary
+"""
+getSofttype(v::DFGVariableSummary)::Symbol = v.softtypename
+
 
 ##==============================================================================
 ## Layer 2 CRUD and SET
@@ -234,16 +307,8 @@ end
 ## Variable Node Data
 ##==============================================================================
 ##------------------------------------------------------------------------------
-## CRUD
+## CRUD: get, add, update, delete
 ##------------------------------------------------------------------------------
-"""
-    $(SIGNATURES)
-List all the solver data keys in the variable.
-"""
-function listVariableSolverData(dfg::AbstractDFG, variablekey::Symbol)::Vector{Symbol}
-    v = getVariable(dfg, variablekey)
-    return collect(keys(v.solverDataDict))
-end
 
 """
     $(SIGNATURES)
@@ -334,8 +399,17 @@ deleteVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable, solveke
     deleteVariableSolverData!(dfg, sourceVariable.label, solvekey)
 
 ##------------------------------------------------------------------------------
-## SETs
+## SET: list, merge
 ##------------------------------------------------------------------------------
+
+"""
+    $(SIGNATURES)
+List all the solver data keys in the variable.
+"""
+function listVariableSolverData(dfg::AbstractDFG, variablekey::Symbol)::Vector{Symbol}
+    v = getVariable(dfg, variablekey)
+    return collect(keys(v.solverDataDict))
+end
 
 """
     $(SIGNATURES)
@@ -355,16 +429,8 @@ end
 ##==============================================================================
 
 ##------------------------------------------------------------------------------
-## CRUD
+## CRUD: get, add, update, delete
 ##------------------------------------------------------------------------------
-"""
-    $(SIGNATURES)
-List all the PPE data keys in the variable.
-"""
-function listPPE(dfg::AbstractDFG, variablekey::Symbol)::Vector{Symbol}
-    v = getVariable(dfg, variablekey)
-    return collect(keys(v.ppeDict))
-end
 
 """
     $(SIGNATURES)
@@ -463,8 +529,17 @@ deletePPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol=:defaul
     deletePPE!(dfg, sourceVariable.label, ppekey)
 
 ##------------------------------------------------------------------------------
-## Sets
+## SET: list, merge
 ##------------------------------------------------------------------------------
+
+"""
+    $(SIGNATURES)
+List all the PPE data keys in the variable.
+"""
+function listPPE(dfg::AbstractDFG, variablekey::Symbol)::Vector{Symbol}
+    v = getVariable(dfg, variablekey)
+    return collect(keys(v.ppeDict))
+end
 
 """
     $(SIGNATURES)
