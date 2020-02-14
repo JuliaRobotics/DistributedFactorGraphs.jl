@@ -162,10 +162,10 @@ emptySessionData!(dfg::AbstractDFG) = empty!(dfg.sessionData)
 
 
 ##==============================================================================
-## Variable And Factor CRUD
+## CRUD Interfaces
 ##==============================================================================
 ##------------------------------------------------------------------------------
-## Implement
+## Variable And Factor CRUD
 ##------------------------------------------------------------------------------
 """
     $(SIGNATURES)
@@ -256,18 +256,11 @@ function getFactors(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Ve
     error("getFactors not implemented for $(typeof(dfg))")
 end
 
-"""
-    $(SIGNATURES)
-Checks if the graph is fully connected, returns true if so.
-"""
-function isFullyConnected(dfg::G)::Bool where G <: AbstractDFG
-    error("isFullyConnected not implemented for $(typeof(dfg))")
-end
 
 
-##==============================================================================
+##------------------------------------------------------------------------------
 ## Checking Types
-##==============================================================================
+##------------------------------------------------------------------------------
 
 """
     $SIGNATURES
@@ -295,6 +288,13 @@ end
 ##------------------------------------------------------------------------------
 ## Neighbors
 ##------------------------------------------------------------------------------
+"""
+    $(SIGNATURES)
+Checks if the graph is fully connected, returns true if so.
+"""
+function isFullyConnected(dfg::G)::Bool where G <: AbstractDFG
+    error("isFullyConnected not implemented for $(typeof(dfg))")
+end
 
 """
     $(SIGNATURES)
@@ -413,11 +413,25 @@ function isFactor(dfg::G, node::N)::Bool where {G <: AbstractDFG, N <: DFGNode}
     return isFactor(dfg, node.label)
 end
 
+##------------------------------------------------------------------------------
+## Connectivity Alias
+##------------------------------------------------------------------------------
+#Alias
+"""
+    $(SIGNATURES)
+Checks if the graph is not fully connected, returns true if it is not contiguous.
+"""
+function hasOrphans(dfg::G)::Bool where G <: AbstractDFG
+    return !isFullyConnected(dfg)
+end
 
 ##==============================================================================
 ## Listing and listing aliases
 ##==============================================================================
 
+##------------------------------------------------------------------------------
+## Overwrite in driver for performance
+##------------------------------------------------------------------------------
 """
     $(SIGNATURES)
 Get a list of IDs of the DFGVariables in the DFG.
@@ -437,7 +451,22 @@ function listVariables(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags:
   return map(v -> v.label, vars)
 end
 
-# Alias
+"""
+    $(SIGNATURES)
+Get a list of the IDs (labels) of the DFGFactors in the DFG.
+Optionally specify a label regular expression to retrieves a subset of the factors.
+"""
+function listFactors(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
+    return map(f -> f.label, getFactors(dfg, regexFilter, solvable=solvable))
+end
+
+##------------------------------------------------------------------------------
+## Aliases and Other filtered lists
+##------------------------------------------------------------------------------
+
+
+## Aliases
+##--------
 """
     $(SIGNATURES)
 List the DFGVariables in the DFG.
@@ -449,18 +478,7 @@ function ls(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Sym
     return listVariables(dfg, regexFilter, tags=tags, solvable=solvable)
 end
 
-
-
-"""
-    $(SIGNATURES)
-Get a list of the IDs (labels) of the DFGFactors in the DFG.
-Optionally specify a label regular expression to retrieves a subset of the factors.
-"""
-function listFactors(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
-    return map(f -> f.label, getFactors(dfg, regexFilter, solvable=solvable))
-end
-
-# Alias
+#TODO tags kwarg
 """
     $(SIGNATURES)
 List the DFGFactors in the DFG.
@@ -470,27 +488,7 @@ function lsf(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0
     return listFactors(dfg, regexFilter, solvable=solvable)
 end
 
-"""
-    $(SIGNATURES)
-Alias for getNeighbors - returns neighbors around a given node label.
-"""
-function lsf(dfg::G, label::Symbol; solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
-  return getNeighbors(dfg, label, solvable=solvable)
-end
 
-
-
-#Alias
-"""
-    $(SIGNATURES)
-Checks if the graph is not fully connected, returns true if it is not contiguous.
-"""
-function hasOrphans(dfg::G)::Bool where G <: AbstractDFG
-    return !isFullyConnected(dfg)
-end
-
-
-# Aliases
 """
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor.
@@ -507,49 +505,15 @@ function ls(dfg::G, label::Symbol; solvable::Int=0)::Vector{Symbol} where G <: A
 end
 
 """
-    $SIGNATURES
-
-Return `::Dict{Symbol, Vector{String}}` of all unique factor types in factor graph.
+    $(SIGNATURES)
+Alias for getNeighbors - returns neighbors around a given node label.
 """
-function lsfTypes(dfg::G)::Dict{Symbol, Vector{String}} where G <: AbstractDFG
-  alltypes = Dict{Symbol,Vector{String}}()
-  for fc in lsf(dfg)
-    Tt = typeof(getFactorType(dfg, fc))
-    sTt = string(Tt)
-    name = Symbol(Tt.name)
-    if !haskey(alltypes, name)
-      alltypes[name] = String[string(Tt)]
-    else
-      if sum(alltypes[name] .== sTt) == 0
-        push!(alltypes[name], sTt)
-      end
-    end
-  end
-  return alltypes
+function lsf(dfg::G, label::Symbol; solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
+  return getNeighbors(dfg, label, solvable=solvable)
 end
 
-"""
-    $SIGNATURES
-
-Return `::Dict{Symbol, Vector{String}}` of all unique variable types in factor graph.
-"""
-function lsTypes(dfg::G)::Dict{Symbol, Vector{String}} where G <: AbstractDFG
-  alltypes = Dict{Symbol,Vector{String}}()
-  for fc in ls(dfg)
-    Tt = typeof(getVariableType(dfg, fc))
-    sTt = string(Tt)
-    name = Symbol(Tt.name)
-    if !haskey(alltypes, name)
-      alltypes[name] = String[string(Tt)]
-    else
-      if sum(alltypes[name] .== sTt) == 0
-        push!(alltypes[name], sTt)
-      end
-    end
-  end
-  return alltypes
-end
-
+## list by types
+##--------------
 
 function ls(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: InferenceVariable}
   xx = getVariables(dfg)
@@ -566,10 +530,30 @@ function ls(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: FunctorInferenceTyp
   map(x->x.label, vxx)
 end
 
+
 function lsf(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: FunctorInferenceType}
-  ls(dfg, T)
+    ls(dfg, T)
 end
 
+
+"""
+    $SIGNATURES
+
+Return vector of prior factor symbol labels in factor graph `dfg`.
+"""
+function lsfPriors(dfg::G)::Vector{Symbol} where G <: AbstractDFG
+  priors = Symbol[]
+  fcts = lsf(dfg)
+  for fc in fcts
+    if isPrior(dfg, fc)
+      push!(priors, fc)
+    end
+  end
+  return priors
+end
+
+
+#TODO is this repeated functionality?
 
 """
     $(SIGNATURES)
@@ -619,6 +603,59 @@ function lsfWho(dfg::AbstractDFG, type::Symbol)::Vector{Symbol}
 end
 
 
+## list types
+##-----------
+#TODO why a dictionary?
+"""
+    $SIGNATURES
+
+Return `::Dict{Symbol, Vector{String}}` of all unique variable types in factor graph.
+"""
+function lsTypes(dfg::G)::Dict{Symbol, Vector{String}} where G <: AbstractDFG
+  alltypes = Dict{Symbol,Vector{String}}()
+  for fc in ls(dfg)
+    Tt = typeof(getVariableType(dfg, fc))
+    sTt = string(Tt)
+    name = Symbol(Tt.name)
+    if !haskey(alltypes, name)
+      alltypes[name] = String[string(Tt)]
+    else
+      if sum(alltypes[name] .== sTt) == 0
+        push!(alltypes[name], sTt)
+      end
+    end
+  end
+  return alltypes
+end
+
+
+"""
+    $SIGNATURES
+
+Return `::Dict{Symbol, Vector{String}}` of all unique factor types in factor graph.
+"""
+function lsfTypes(dfg::G)::Dict{Symbol, Vector{String}} where G <: AbstractDFG
+  alltypes = Dict{Symbol,Vector{String}}()
+  for fc in lsf(dfg)
+    Tt = typeof(getFactorType(dfg, fc))
+    sTt = string(Tt)
+    name = Symbol(Tt.name)
+    if !haskey(alltypes, name)
+      alltypes[name] = String[string(Tt)]
+    else
+      if sum(alltypes[name] .== sTt) == 0
+        push!(alltypes[name], sTt)
+      end
+    end
+  end
+  return alltypes
+end
+
+
+
+##------------------------------------------------------------------------------
+## tags
+##------------------------------------------------------------------------------
 """
     $SIGNATURES
 

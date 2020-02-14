@@ -1,3 +1,6 @@
+##==============================================================================
+## Common Accessors
+##==============================================================================
 # Common get and set methods
 
 # NOTE this could be reduced with macros and function generation to even less code.
@@ -134,3 +137,57 @@ function setSolvable!(node::N, solvable::Int)::Int where N <: DFGNode
   node._dfgNodeParams.solvable = solvable
   return solvable
 end
+
+
+##==============================================================================
+## Common Layer 2 CRUD and SET
+##==============================================================================
+
+##==============================================================================
+## TAGS as a set, list, merge, remove, empty
+##==============================================================================
+"""
+$SIGNATURES
+
+Return the tags for a variable or factor.
+"""
+function listTags(dfg::AbstractDFG, sym::Symbol)
+  getFnc = isVariable(dfg,sym) ? getVariable : getFactor
+  getTags(getFnc(dfg, sym))
+end
+#alias for completeness
+listTags(f::DataLevel0) = getTags(f)
+
+"""
+    $SIGNATURES
+
+Merge add tags to a variable or factor (union)
+"""
+function mergeTags!(dfg::InMemoryDFGTypes, sym::Symbol, tags::Vector{Symbol})
+  getFnc = isVariable(dfg,sym) ? getVariable : getFactor
+  union!(getTags(getFnc(dfg, sym)), tags)
+end
+mergeTags!(f::DataLevel0, tags::Vector{Symbol}) = union!(f.tags, tags)
+
+
+"""
+$SIGNATURES
+
+Remove the tags from the node (setdiff)
+"""
+function removeTags!(dfg::InMemoryDFGTypes, sym::Symbol, tags::Vector{Symbol})
+  getFnc = isVariable(dfg,sym) ? getVariable : getFactor
+  setdiff!(getTags(getFnc(dfg, sym)), tags)
+end
+removeTags!(f::DataLevel0, tags::Vector{Symbol}) = setdiff!(f.tags, tags)
+
+"""
+$SIGNATURES
+
+Empty all tags from the node (empty)
+"""
+function emptyTags!(dfg::InMemoryDFGTypes, sym::Symbol)
+  getFnc = isVariable(dfg,sym) ? getVariable : getFactor
+  empty!(getTags(getFnc(dfg, sym)))
+end
+emptyTags!(f::DataLevel0) = empty!(f.tags)

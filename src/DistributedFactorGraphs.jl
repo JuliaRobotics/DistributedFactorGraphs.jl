@@ -159,29 +159,27 @@ include("entities/DFGVariable.jl")
 
 include("entities/AbstractDFGSummary.jl")
 
-include("CommonAccessors.jl")
+include("services/AbstractDFG.jl")
+
+# In Memory Types
+include("GraphsDFG/GraphsDFG.jl")
+include("LightDFG/LightDFG.jl")
+@reexport using .LightDFGs
+#supported in Memory fg types
+const InMemoryDFGTypes = Union{GraphsDFG, LightDFG}
 
 # Common includes
-include("services/AbstractDFG.jl")
+include("services/CommonAccessors.jl")
 include("services/Serialization.jl")
 include("services/DFGVariable.jl")
 include("services/DFGFactor.jl")
 include("Deprecated.jl")
 include("services/CompareUtils.jl")
 
-# Include the Graphs.jl API.
-include("GraphsDFG/GraphsDFG.jl")
-
 # Include the FilesDFG API.
 include("FileDFG/FileDFG.jl")
 
-include("LightDFG/LightDFG.jl")
-@reexport using .LightDFGs
-
 include("CloudGraphsDFG/CloudGraphsDFG.jl")
-
-#supported in Memory fg types
-const InMemoryDFGTypes = Union{GraphsDFG, LightDFG}
 
 # Needs a home.
 include("needsahome.jl")
