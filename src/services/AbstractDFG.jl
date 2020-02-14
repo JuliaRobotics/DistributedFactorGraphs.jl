@@ -292,7 +292,7 @@ end
     $(SIGNATURES)
 Checks if the graph is fully connected, returns true if so.
 """
-function isFullyConnected(dfg::G)::Bool where G <: AbstractDFG
+function isFullyConnected(dfg::AbstractDFG)::Bool
     error("isFullyConnected not implemented for $(typeof(dfg))")
 end
 
@@ -300,13 +300,10 @@ end
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
 """
-function getNeighbors(dfg::G, label::Symbol; solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
+function getNeighbors(dfg::AbstractDFG, label::Symbol; solvable::Int=0)::Vector{Symbol}
     error("getNeighbors not implemented for $(typeof(dfg))")
 end
-##TODO reduce with  getNeighbors(dfg, node.label)
-function getNeighbors(dfg::G, node::T; solvable::Int=0)::Vector{Symbol}  where {G <: AbstractDFG, T <: DFGNode}
-    error("getNeighbors not implemented for $(typeof(dfg))")
-end
+
 
 ##------------------------------------------------------------------------------
 ## copy and duplication
@@ -416,6 +413,11 @@ end
 ##------------------------------------------------------------------------------
 ## Connectivity Alias
 ##------------------------------------------------------------------------------
+
+function getNeighbors(dfg::AbstractDFG, node::DFGNode; solvable::Int=0)::Vector{Symbol}
+    getNeighbors(dfg, node.label, solvable=solvable)
+end
+
 #Alias
 #TODO rather actually check if there are orphaned factors (factors without all variables)
 """
@@ -457,8 +459,8 @@ end
 Get a list of the IDs (labels) of the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
-function listFactors(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
-    return map(f -> f.label, getFactors(dfg, regexFilter, solvable=solvable))
+function listFactors(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
+    return map(f -> f.label, getFactors(dfg, regexFilter, tags=tags, solvable=solvable))
 end
 
 ##------------------------------------------------------------------------------
@@ -485,8 +487,8 @@ end
 List the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
-function lsf(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
-    return listFactors(dfg, regexFilter, solvable=solvable)
+function lsf(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
+    return listFactors(dfg, regexFilter, tags=tags, solvable=solvable)
 end
 
 
@@ -1036,12 +1038,12 @@ end
 """
     $(SIGNATURES)
 Get a summary of the graph (first-class citizens of variables and factors).
-Returns a AbstractDFGSummary.
+Returns a DFGSummary.
 """
-function getSummary(dfg::G)::AbstractDFGSummary where {G <: AbstractDFG}
+function getSummary(dfg::G)::DFGSummary where {G <: AbstractDFG}
     vars = map(v -> convert(DFGVariableSummary, v), getVariables(dfg))
     facts = map(f -> convert(DFGFactorSummary, f), getFactors(dfg))
-    return AbstractDFGSummary(
+    return DFGSummary(
         Dict(map(v->v.label, vars) .=> vars),
         Dict(map(f->f.label, facts) .=> facts),
         dfg.userId,

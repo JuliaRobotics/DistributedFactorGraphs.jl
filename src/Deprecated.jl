@@ -8,6 +8,8 @@
 ## Remove in 0.6.0 or 0.6.1?
 ##==============================================================================
 
+@deprecate getfnctype(args...) getFactorType(args...)
+
 @deprecate getEstimate(v::VariableDataLevel1, key::Symbol=:default) getVariablePPE(v, key)
 
 @deprecate estimate(v::VariableDataLevel1, key::Symbol=:default) getVariablePPE(v, key)
@@ -157,9 +159,6 @@ end
 
 @deprecate internalId(args...) getInternalId(args...)
 
-#FIXME TODO based on API definition of merge, in some cases the Noun is really not needed.
-# @deprecate mergeUpdateVariableSolverData!(args...) mergeVariableSolverData!(args...)
-
 @deprecate pack(dfg::AbstractDFG, d::VariableNodeData) packVariableNodeData(dfg, d)
 @deprecate unpack(dfg::AbstractDFG, d::PackedVariableNodeData) unpackVariableNodeData(dfg, d)
 
@@ -191,6 +190,3 @@ function buildSubgraphFromLabels(dfg::G,
 end
 
 @deprecate sortVarNested(vars::Vector{Symbol}) sortDFG(vars)
-
-#TODO Deprecated or obsolete?
-@deprecate getfnctype(args...) getFactorType(args...)

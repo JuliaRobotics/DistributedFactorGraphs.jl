@@ -71,8 +71,8 @@ export isFullyConnected, hasOrphans
 
 export getBiadjacencyMatrix
 
-#summary structure #TODO Abstract name here is confusing
-export AbstractDFGSummary
+#summary structure
+export DFGSummary
 
 export getSummary, getSummaryGraph
 
@@ -110,7 +110,7 @@ export InferenceVariable
 
 # accessors
 export getSolverDataDict, setSolverData!
-export getSofttype
+export getSofttype, getSofttypename
 
 export getSolverData
 

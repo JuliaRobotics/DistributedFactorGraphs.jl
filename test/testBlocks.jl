@@ -710,6 +710,9 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test lsf(fg, TestFunctorSingleton) == [:af1]
         @test lsfWho(fg, :TestFunctorInferenceType1) == [:abf1]
 
+        @test getSofttype(v1) == TestSofttype1()
+        @test getSofttype(fg,:a) == TestSofttype1()
+
         @test getVariableType(v1) == TestSofttype1()
         @test getVariableType(fg,:a) == TestSofttype1()
 
@@ -1008,7 +1011,8 @@ function  Summaries(testDFGAPI)
                 @test getproperty(getVariable(dfg, v), field) == getproperty(getVariable(summaryGraph, v), field)
             else
                 # Special case to check the symbol softtype is equal to the full softtype.
-                @test Symbol(typeof(getSofttype(getVariable(dfg, v)))) == getSofttype(getVariable(summaryGraph, v))
+                @test Symbol(typeof(getSofttype(getVariable(dfg, v)))) == getSofttypename(getVariable(summaryGraph, v))
+                @test getSofttype(getVariable(dfg, v)) == getSofttype(getVariable(summaryGraph, v))
             end
         end
     end

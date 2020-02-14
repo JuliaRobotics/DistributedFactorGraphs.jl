@@ -34,21 +34,16 @@ function getSofttype(vnd::VariableNodeData)
   return vnd.softtype
 end
 
-#TODO getSofttype(v::DFGVariable, solvekey::Symbol=:default) getSofttype(getSolverData(v, solvekey))
-function getSofttype(v::DFGVariable, solvekey::Symbol=:default)
-  return v.solverDataDict[solvekey].softtype # Get instantiated form of the parameter for the DFGVariable
-end
+getSofttype(v::DFGVariable, solvekey::Symbol=:default) = getSofttype(getSolverData(v, solvekey))
 
-## TODO repeated function and broken as it does not pass in solvekey
-"""
-    $SIGNATURES
+getSofttype(dfg::AbstractDFG, lbl::Symbol, solvekey::Symbol=:default) = getSofttype(getVariable(dfg,lbl), solvekey)
 
-Return the DFGVariable softtype in factor graph `dfg<:AbstractDFG` and label `::Symbol`.
 """
-getVariableType(var::DFGVariable) = getSofttype(var)
-function getVariableType(dfg::G, lbl::Symbol) where G <: AbstractDFG
-  getVariableType(getVariable(dfg, lbl))
-end
+    getVariableType
+
+Alias for [`getSofttype`](@ref).
+"""
+getVariableType(params...) = getSofttype(params...)
 
 ##------------------------------------------------------------------------------
 ## solvedCount
@@ -284,16 +279,21 @@ end
 ## TODO this should return the softtype object, or try to. it should be getSofttypename for the accessor
 ## TODO Consider parameter N in softtype for dims, and storing constructor in softtypename
 ## TODO or just not having this function at all
+# getSofttype(v::DFGVariableSummary) = v.softypename()
 ##------------------------------------------------------------------------------
 
 """
     $SIGNATURES
 
 Retrieve the soft type name symbol for a DFGVariableSummary. ie :Point2, Pose2, etc.
-TODO, DO NOT USE v.softtypename in DFGVariableSummary
 """
-getSofttype(v::DFGVariableSummary)::Symbol = v.softtypename
+getSofttypename(v::DFGVariableSummary)::Symbol = v.softtypename
 
+
+function getSofttype(v::DFGVariableSummary)::InferenceVariable
+    @warn "Looking for type in `Main`. Only use if softtype has only one implementation,ie. Pose2. Otherwise use the full variable."
+    return getfield(Main, v.softtypename)()
+end
 
 ##==============================================================================
 ## Layer 2 CRUD and SET
