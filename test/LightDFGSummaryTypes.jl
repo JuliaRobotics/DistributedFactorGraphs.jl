@@ -42,7 +42,7 @@ end
         @test getTimestamp(v1) == v1.timestamp
         @test getVariablePPEs(v1) == v1.ppeDict
         @test_throws KeyError getVariablePPE(v1, :notfound)
-        @test getSofttype(v1) == :Pose2
+        @test getSofttypename(v1) == :Pose2
         @test getInternalId(v1) == v1._internalId
 
         # FACTYPE == DFGFactorSummary

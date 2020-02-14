@@ -110,7 +110,7 @@ export InferenceVariable
 
 # accessors
 export getSolverDataDict, setSolverData!
-export getSofttype
+export getSofttype, getSofttypename
 
 export getSolverData
 
