@@ -4,10 +4,13 @@
 ##==============================================================================
 ## PointParametricEst
 ##==============================================================================
-
+"$(SIGNATURES)"
 getMaxPPE(est::AbstractPointParametricEst) = est.max
+"$(SIGNATURES)"
 getMeanPPE(est::AbstractPointParametricEst) = est.mean
+"$(SIGNATURES)"
 getSuggestedPPE(est::AbstractPointParametricEst) = est.suggested
+"$(SIGNATURES)"
 getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimestamp
 
 ##==============================================================================
@@ -151,7 +154,7 @@ end
 # getTimestamp
 
 """
-$SIGNATURES
+    $SIGNATURES
 
 Set the timestamp of a DFGVariable object returning a new DFGVariable.
 Note:
@@ -235,12 +238,11 @@ function getSolverData(v::DFGVariable, key::Symbol=:default)
     return vnd
 end
 
+#TODO Repeated functionality? same as update
 """
     $SIGNATURES
-
 Set solver data structure stored in a variable.
 """
-#TODO Repeated functionality? same as update
 setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v.solverDataDict[key] = data
 
 ##------------------------------------------------------------------------------
@@ -248,15 +250,13 @@ setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v
 ##------------------------------------------------------------------------------
 
 """
-$SIGNATURES
-
+    $(SIGNATURES)
 Get the small data for a variable.
 """
 getSmallData(v::DFGVariable)::Dict{String, String} = v.smallData
 
 """
-$SIGNATURES
-
+    $(SIGNATURES)
 Set the small data for a variable.
 This will overwrite old smallData.
 """
@@ -284,7 +284,6 @@ end
 
 """
     $SIGNATURES
-
 Retrieve the soft type name symbol for a DFGVariableSummary. ie :Point2, Pose2, etc.
 """
 getSofttypename(v::DFGVariableSummary)::Symbol = v.softtypename
@@ -417,7 +416,6 @@ Merges and updates solver and estimate data for a variable (variable can be from
 If the same key is present in another collection, the value for that key will be the value it has in the last collection listed (updated).
 Note: Makes a copy of the estimates and solver data so that there is no coupling between graphs.
 """
-#TODO API
 function mergeVariableSolverData!(destVariable::DFGVariable, sourceVariable::DFGVariable)::DFGVariable
     # We don't know which graph this came from, must be copied!
     merge!(destVariable.solverDataDict, deepcopy(sourceVariable.solverDataDict))
@@ -541,12 +539,12 @@ function listPPE(dfg::AbstractDFG, variablekey::Symbol)::Vector{Symbol}
     return collect(keys(v.ppeDict))
 end
 
+#TODO API and only correct level
 """
     $(SIGNATURES)
 Merges and updates solver and estimate data for a variable (variable can be from another graph).
 Note: Makes a copy of the estimates and solver data so that there is no coupling between graphs.
 """
-#TODO API and only correct level
 function mergePPEs!(destVariable::AbstractDFGVariable, sourceVariable::AbstractDFGVariable)::AbstractDFGVariable
     # We don't know which graph this came from, must be copied!
     merge!(destVariable.ppeDict, deepcopy(sourceVariable.ppeDict))

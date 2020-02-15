@@ -966,6 +966,7 @@ end
 
 
 
+# TODO API name get seems wrong maybe just biadjacencyMatrix
 """
     $(SIGNATURES)
 Get a matrix indicating adjacency between variables and factors. Returned as
@@ -973,7 +974,6 @@ a named tuple: B::SparseMatrixCSC{Int}, varLabels::Vector{Symbol)
 facLabels::Vector{Symbol). Rows are the factors, columns are the variables,
 with the corresponding labels in varLabels,facLabels.
 """
-# TODO API name get seems wrong maybe just biadjacencyMatrix
 function getBiadjacencyMatrix(dfg::AbstractDFG; solvable::Int=0)::NamedTuple{(:B, :varLabels, :facLabels), Tuple{SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}}
     varLabels = map(v->v.label, getVariables(dfg, solvable=solvable))
     factLabels = map(f->f.label, getFactors(dfg, solvable=solvable))
