@@ -43,17 +43,13 @@ Labels are the principle identifier of a variable or factor.
 getLabel
 ```
 
-```@docs
-getLabel
-```
-
 #### Timestamps
 
 Each variable or factor can have a timestamp associated with it.
 
 ```@docs
 getTimestamp
-setTimestamp!
+setTimestamp
 ```
 
 #### Tags
@@ -61,9 +57,10 @@ setTimestamp!
 Tags are a set of symbols that contain identifiers for the variable or factor.
 
 ```@docs
-addTag
+listTags
 mergeTags!
-deleteTags!
+removeTags!
+emptyTags!
 ```
 
 ### Solvable
@@ -95,7 +92,6 @@ For each PPE structure, there are accessors for getting individual values:
 getMaxPPE
 getMeanPPE
 getSuggestedPPE
-getPPE
 ```
 
 Related functions for getting, adding/updating, and deleting PPE structures:
@@ -106,6 +102,7 @@ getPPE
 addPPE!
 updatePPE!
 deletePPE!
+mergePPEs!
 ```
 
 Example of PPE operations:
@@ -139,6 +136,7 @@ getVariableSolverData
 addVariableSolverData!
 updateVariableSolverData!
 deleteVariableSolverData!
+mergeVariableSolverData!
 ```
 
 Example of solver data operations:
@@ -163,7 +161,7 @@ itself, large entries will slow the graph down, so if data should exceed a
 few bytes/kb, it should rather be saved in bigData.
 
 ```@docs
-getSmallData,
+getSmallData
 setSmallData!
 ```
 

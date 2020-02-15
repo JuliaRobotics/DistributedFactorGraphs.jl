@@ -69,38 +69,38 @@ $(TYPEDFIELDS)
 """
 mutable struct DFGFactor{T, S} <: AbstractDFGFactor
     """Factor label, e.g. :x1f1.
-    Accessor: `getLabel`"""
+    Accessor: [`getLabel`](@ref)"""
     label::Symbol
     """Variable timestamp.
-    Accessors: `getTimestamp`, `setTimestamp!`"""
+    Accessors: [`getTimestamp`](@ref), [`setTimestamp`](@ref)"""
     timestamp::DateTime
     """Factor tags, e.g [:FACTOR].
-    Accessors: `getTags`, `addTags!`, and `deleteTags!`"""
+    Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
     tags::Set{Symbol}
     """Solver data.
-    Accessors: `getSolverData`, `setSolverData!`"""
+    Accessors: [`getSolverData`](@ref), [`setSolverData!`](@ref)"""
     solverData::GenericFunctionNodeData{T, S}
     """Solvable flag for the factor.
-    Accessors: `getSolvable`, `setSolvable!`
+    Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)
     TODO: Switch to `DFGNodeParams`"""
     solvable::Int #TODO we can go with DFGNodeParams or Reference the solvable field with getproperty overload
     """Mutable parameters for the variable. We suggest using accessors to get to this data.
-    Accessors: `getSolvable`, `setSolvable!`"""
+    Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)"""
     _dfgNodeParams::DFGNodeParams
     """Internal cache of the ordering of the neighbor variables. Rather use getNeighbors to get the list as this is an internal value.
-    Accessors: `getVariableOrder`"""
+    Accessors: [`getVariableOrder`](@ref)"""
     _variableOrderSymbols::Vector{Symbol}
 end
 
 ##------------------------------------------------------------------------------
 ## Constructors
 
+#TODO _internalId?
 """
 $(SIGNATURES)
 
 Construct a DFG factor given a label.
 """
-#TODO _internalId?
 DFGFactor{T, S}(label::Symbol, internalId::Int64=0, timestamp::DateTime=now()) where {T, S} =
                 DFGFactor(label, timestamp, Set{Symbol}(), GenericFunctionNodeData{T, S}(), 1, DFGNodeParams(1, internalId), Symbol[])
 
@@ -130,18 +130,18 @@ $(TYPEDFIELDS)
 """
 struct DFGFactorSummary <: AbstractDFGFactor
     """Factor label, e.g. :x1f1.
-    Accessor: `getLabel`"""
+    Accessor: [`getLabel`](@ref)"""
     label::Symbol
     """Variable timestamp.
-    Accessors: `getTimestamp`"""
+    Accessors: [`getTimestamp`](@ref)"""
     timestamp::DateTime
     """Factor tags, e.g [:FACTOR].
-    Accessors: `getTags`, `addTags!`, and `deleteTags!`"""
+    Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
     tags::Set{Symbol}
     """Internal ID used by some of the DFG drivers. We don't suggest using this outside of DFG."""
     _internalId::Int64
     """Internal cache of the ordering of the neighbor variables. Rather use getNeighbors to get the list as this is an internal value.
-    Accessors: `getVariableOrder`"""
+    Accessors: [`getVariableOrder`](@ref)"""
     _variableOrderSymbols::Vector{Symbol}
 end
 
@@ -159,13 +159,13 @@ $(TYPEDFIELDS)
 """
 struct SkeletonDFGFactor <: AbstractDFGFactor
     """Factor label, e.g. :x1f1.
-    Accessor: `getLabel`"""
+    Accessor: [`getLabel`](@ref)"""
     label::Symbol
     """Factor tags, e.g [:FACTOR].
-    Accessors: `getTags`, `addTags!`, and `deleteTags!`"""
+    Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
     tags::Set{Symbol}
     """Internal cache of the ordering of the neighbor variables. Rather use getNeighbors to get the list as this is an internal value.
-    Accessors: `getVariableOrder`"""
+    Accessors: [`getVariableOrder`](@ref)"""
     _variableOrderSymbols::Vector{Symbol}
 end
 
