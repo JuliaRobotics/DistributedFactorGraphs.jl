@@ -178,28 +178,28 @@ $(TYPEDFIELDS)
 """
 struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
     """Variable label, e.g. :x1.
-    Accessor: `getLabel`"""
+    Accessor: [`getLabel`](@ref)"""
     label::Symbol
     """Variable timestamp.
-    Accessors: `getTimestamp`, `setTimestamp!`"""
+    Accessors: [`getTimestamp`](@ref), [`setTimestamp`](@ref)"""
     timestamp::DateTime
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
-    Accessors: `getTags`, `addTags!`, and `deleteTags!`"""
+    Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
     tags::Set{Symbol}
     """Dictionary of parametric point estimates keyed by solverDataDict keys
-    Accessors: `addPPE!`, `updatePPE!`, and `deletePPE!`"""
+    Accessors: [`addPPE!`](@ref), [`updatePPE!`](@ref), and [`deletePPE!`](@ref)"""
     ppeDict::Dict{Symbol, <: AbstractPointParametricEst}
     """Dictionary of solver data. May be a subset of all solutions if a solver key was specified in the get call.
-    Accessors: `addVariableSolverData!`, `updateVariableSolverData!`, and `deleteVariableSolverData!`"""
+    Accessors: [`addVariableSolverData!`](@ref), [`updateVariableSolverData!`](@ref), and [`deleteVariableSolverData!`](@ref)"""
     solverDataDict::Dict{Symbol, VariableNodeData{T}}
     """Dictionary of small data associated with this variable.
     Accessors: [`getSmallData`](@ref), [`setSmallData!`](@ref)"""
     smallData::Dict{String, String}#Ref{Dict{String, String}} #why was Ref here?
     """Dictionary of large data associated with this variable.
-    Accessors: `addBigDataEntry!`, `getBigDataEntry`, `updateBigDataEntry!`, and `deleteBigDataEntry!`"""
+    Accessors: [`addBigDataEntry!`](@ref), [`getBigDataEntry`](@ref), [`updateBigDataEntry!`](@ref), and [`deleteBigDataEntry!`](@ref)"""
     bigData::Dict{Symbol, AbstractBigDataEntry}
     """Mutable parameters for the variable. We suggest using accessors to get to this data.
-    Accessors: `getSolvable`, `setSolvable!`"""
+    Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)"""
     _dfgNodeParams::DFGNodeParams
 end
 
@@ -254,22 +254,22 @@ $(TYPEDFIELDS)
 """
 struct DFGVariableSummary <: AbstractDFGVariable
     """Variable label, e.g. :x1.
-    Accessor: `getLabel`"""
+    Accessor: [`getLabel`](@ref)"""
     label::Symbol
     """Variable timestamp.
-    Accessors: `getTimestamp`, `setTimestamp!`"""
+    Accessors: [`getTimestamp`](@ref), [`setTimestamp`](@ref)"""
     timestamp::DateTime
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
-    Accessors: `getTags`, `addTags!`, and `deleteTags!`"""
+    Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
     tags::Set{Symbol}
     """Dictionary of parametric point estimates keyed by solverDataDict keys
-    Accessors: `addPPE!`, `updatePPE!`, and `deletePPE!`"""
+    Accessors: [`addPPE!`](@ref), [`updatePPE!`](@ref), and [`deletePPE!`](@ref)"""
     ppeDict::Dict{Symbol, <:AbstractPointParametricEst}
     """Symbol for the softtype for the underlying variable.
-    Accessor: `getSofttype`"""
+    Accessor: [`getSofttype`](@ref)"""
     softtypename::Symbol
     """Dictionary of large data associated with this variable.
-    Accessors: `addBigDataEntry!`, `getBigDataEntry`, `updateBigDataEntry!`, and `deleteBigDataEntry!`"""
+    Accessors: [`addBigDataEntry!`](@ref), [`getBigDataEntry`](@ref), [`updateBigDataEntry!`](@ref), and [`deleteBigDataEntry!`](@ref)"""
     bigData::Dict{Symbol, AbstractBigDataEntry}
     """Internal ID used by some of the DFG drivers. We don't suggest using this outside of DFG."""
     _internalId::Int64
@@ -289,10 +289,10 @@ $(TYPEDFIELDS)
 """
 struct SkeletonDFGVariable <: AbstractDFGVariable
     """Variable label, e.g. :x1.
-    Accessor: `getLabel`"""
+    Accessor: [`getLabel`](@ref)"""
     label::Symbol
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
-    Accessors: `getTags`, `addTags!`, and `deleteTags!`"""
+    Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
     tags::Set{Symbol}
 end
 
