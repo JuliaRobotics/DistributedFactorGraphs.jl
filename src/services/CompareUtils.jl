@@ -24,7 +24,8 @@ const GeneratedCompareUnion = Union{MeanMaxPPE, VariableNodeData, DFGNodeParams,
                               DFGFactor, DFGFactorSummary, SkeletonDFGFactor}
 
 @generated function ==(x::T, y::T) where T <: GeneratedCompareUnion
-    mapreduce(n -> :(x.$n == y.$n), (a,b)->:($a && $b), fieldnames(x))
+    ignored = [:_internalId]
+    mapreduce(n -> :(x.$n == y.$n), (a,b)->:($a && $b), setdiff(fieldnames(x), ignored))
 end
 
 
