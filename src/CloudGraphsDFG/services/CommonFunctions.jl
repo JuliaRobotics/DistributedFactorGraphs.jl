@@ -55,6 +55,7 @@ Get a node property - returns nothing if not found
 """
 function _getNodeProperty(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String}, property::String)
     query = "match (n:$(join(nodeLabels, ":"))) return n.$property"
+    @debug "[Query] $query"
     result = DistributedFactorGraphs._queryNeo4j(neo4jInstance, query)
     length(result.results[1]["data"]) != 1 && return 0
     length(result.results[1]["data"][1]["row"]) != 1 && return 0
@@ -65,8 +66,15 @@ end
 $(SIGNATURES)
 Set a node property - returns count of changed nodes.
 """
-function _setNodeProperty(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String}, property::String, value::String)
-    query = "match (n:$(join(nodeLabels, ":"))) set n.$property = \"$value\" return count(n)"
+function _setNodeProperty(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String}, property::String, value::Union{String, Int, Float64})
+    if value isa String
+        value = "\""*replace(value, "\"" => "\\\"")*"\"" # Escape strings
+    end
+    query = """
+    match (n:$(join(nodeLabels, ":")))
+    set n.$property = $value
+    return count(n)"""
+    @debug "[Query] $query"
     result = DistributedFactorGraphs._queryNeo4j(neo4jInstance, query)
     length(result.results[1]["data"]) != 1 && return 0
     length(result.results[1]["data"][1]["row"]) != 1 && return 0

@@ -17,10 +17,17 @@ end
 
 # Accessors
 function getDescription(dfg::CloudGraphsDFG)
-    return _getNodeProperty(dfg.neo4jInstance, [dfg.sessionId, dfg.robotId, dfg.userId, "SESSION"], "description")
+    return _getNodeProperty(
+        dfg.neo4jInstance,
+        [dfg.sessionId, dfg.robotId, dfg.userId, "SESSION"],
+        "description")
 end
 function setDescription!(dfg::CloudGraphsDFG, description::String)
-    _setNodeProperty(dfg.neo4jInstance, [dfg.sessionId, dfg.robotId, dfg.userId, "SESSION"], "description", description)
+    _setNodeProperty(
+        dfg.neo4jInstance,
+        [dfg.sessionId, dfg.robotId, dfg.userId, "SESSION"],
+        "description",
+        description)
 end
 
 function getSerializationModule(dfg::CloudGraphsDFG)::Module where G <: AbstractDFG
@@ -509,4 +516,82 @@ function deletePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppekey::Symbol=:de
     length(result.results[1]["data"]) != 1 && error("Cannot find PPE '$ppekey' for variable '$variablekey'")
     length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot find PPE '$ppekey' for variable '$variablekey'")
     return unpackPPE(dfg, @show result.results[1]["data"][1]["row"][1])
+end
+
+### Updated functions from AbstractDFG
+### These functions write back as you add the data.
+
+function addVariableSolverData!(dfg::CloudGraphsDFG, variablekey::Symbol, vnd::VariableNodeData, solvekey::Symbol=:default)::VariableNodeData
+    # TODO: Just get the property, update it, and send it back
+    var = getVariable(dfg, variablekey)
+    if haskey(var.solverDataDict, solvekey)
+        error("VariableNodeData '$(solvekey)' already exists")
+    end
+    var.solverDataDict[solvekey] = vnd
+    # TODO: Cleanup
+    solverDataDict = JSON2.write(Dict(keys(var.solverDataDict) .=> map(vnd -> packVariableNodeData(dfg, vnd), values(var.solverDataDict))))
+    _setNodeProperty(
+        dfg.neo4jInstance,
+        _getLabelsForInst(dfg, var),
+        "solverDataDict",
+        solverDataDict)
+    return vnd
+end
+
+function updateVariableSolverData!(dfg::CloudGraphsDFG, variablekey::Symbol, vnd::VariableNodeData, solvekey::Symbol=:default)::VariableNodeData
+    #This is basically just setSolverData
+    var = getVariable(dfg, variablekey)
+    if !haskey(var.solverDataDict, solvekey)
+        @warn "VariableNodeData '$(solvekey)' does not exist, adding"
+    end
+    var.solverDataDict[solvekey] = vnd
+    # TODO: Cleanup
+    solverDataDict = JSON2.write(Dict(keys(var.solverDataDict) .=> map(vnd -> packVariableNodeData(dfg, vnd), values(var.solverDataDict))))
+    _setNodeProperty(
+        dfg.neo4jInstance,
+        _getLabelsForInst(dfg, var),
+        "solverDataDict",
+        solverDataDict)
+    return vnd
+end
+
+function updateVariableSolverData!(dfg::CloudGraphsDFG, sourceVariables::Vector{<:DFGVariable}, solvekey::Symbol=:default)
+    #TODO: Do in bulk for speed.
+    for var in sourceVariables
+        updateVariableSolverData!(dfg, var.label, getSolverData(var, solvekey), solvekey)
+    end
+end
+
+function deleteVariableSolverData!(dfg::CloudGraphsDFG, variablekey::Symbol, solvekey::Symbol=:default)::VariableNodeData
+    var = getVariable(dfg, variablekey)
+
+    if !haskey(var.solverDataDict, solvekey)
+        error("VariableNodeData '$(solvekey)' does not exist")
+    end
+    vnd = pop!(var.solverDataDict, solvekey)
+    # TODO: Cleanup
+    solverDataDict = JSON2.write(Dict(keys(var.solverDataDict) .=> map(vnd -> packVariableNodeData(dfg, vnd), values(var.solverDataDict))))
+    _setNodeProperty(
+        dfg.neo4jInstance,
+        _getLabelsForInst(dfg, var),
+        "solverDataDict",
+        solverDataDict)
+    return vnd
+end
+
+function getSolvable(dfg::CloudGraphsDFG, sym::Symbol)
+    prop = _getNodeProperty(
+        dfg.neo4jInstance,
+        [dfg.sessionId, dfg.robotId, dfg.userId, String(sym)],
+        "solvable")
+    return prop
+end
+
+function setSolvable!(dfg::CloudGraphsDFG, sym::Symbol, solvable::Int)::Int
+    prop = _setNodeProperty(
+        dfg.neo4jInstance,
+        [dfg.sessionId, dfg.robotId, dfg.userId, String(sym)],
+        "solvable",
+        solvable)
+    return solvable
 end
