@@ -585,7 +585,7 @@ end
 function getSolvable(dfg::CloudGraphsDFG, sym::Symbol)
     prop = _getNodeProperty(
         dfg.neo4jInstance,
-        [dfg.sessionId, dfg.robotId, dfg.userId, String(sym)],
+        union(_getLabelsForType(dfg, isVariable(dfg, sym) ? DFGVariable : DFGFactor),[String(sym)]),
         "solvable")
     return prop
 end
@@ -593,7 +593,7 @@ end
 function setSolvable!(dfg::CloudGraphsDFG, sym::Symbol, solvable::Int)::Int
     prop = _setNodeProperty(
         dfg.neo4jInstance,
-        [dfg.sessionId, dfg.robotId, dfg.userId, String(sym)],
+        union(_getLabelsForType(dfg, isVariable(dfg, sym) ? DFGVariable : DFGFactor),[String(sym)]),
         "solvable",
         solvable)
     return solvable
