@@ -1059,7 +1059,7 @@ Returns a LightDFG{NoSolverParams, DFGVariableSummary, DFGFactorSummary}.
 """
 function getSummaryGraph(dfg::G)::LightDFG{NoSolverParams, DFGVariableSummary, DFGFactorSummary} where {G <: AbstractDFG}
     summaryDfg = LightDFG{NoSolverParams, DFGVariableSummary, DFGFactorSummary}(
-        description="Summary of $(dfg.description)",
+        description="Summary of $(getDescription(dfg))",
         userId=dfg.userId,
         robotId=dfg.robotId,
         sessionId=dfg.sessionId)

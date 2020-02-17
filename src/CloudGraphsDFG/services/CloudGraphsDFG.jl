@@ -12,7 +12,16 @@ function _getDuplicatedEmptyDFG(dfg::CloudGraphsDFG)::CloudGraphsDFG
         length(_getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId):$(dfg.robotId):$(sessionId))")) == 0 && break
     end
     @debug "Unique+empty copy session name: $sessionId"
-    return CloudGraphsDFG{typeof(dfg.solverParams)}(dfg.neo4jInstance.connection, dfg.userId, dfg.robotId, sessionId, dfg.encodePackedTypeFunc, dfg.getPackedTypeFunc, dfg.decodePackedTypeFunc, dfg.rebuildFactorMetadata!, solverParams=deepcopy(dfg.solverParams), description="(Copy of) $(dfg.description)")
+    return CloudGraphsDFG{typeof(dfg.solverParams)}(
+        dfg.neo4jInstance.connection,
+        dfg.userId,
+        dfg.robotId,
+        sessionId,
+        dfg.encodePackedTypeFunc,
+        dfg.getPackedTypeFunc,
+        dfg.decodePackedTypeFunc,
+        dfg.rebuildFactorMetadata!,
+        solverParams=deepcopy(dfg.solverParams))
 end
 
 # Accessors
@@ -170,6 +179,12 @@ function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGVari
 
     props = getnodeproperties(dfg.neo4jInstance.graph, nodeId)
     variable = unpackVariable(dfg, props)
+
+    # TODO - make this get PPE's in batch
+    for ppe in listPPE(dfg, label)
+        variable.ppeDict[ppe] = getPPE(dfg, label, ppe)
+    end
+    return variable
 end
 
 function getFactor(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGFactor
@@ -212,13 +227,12 @@ function mergeUpdateVariableSolverData!(dfg::CloudGraphsDFG, sourceVariable::DFG
     if !exists(dfg, sourceVariable)
         error("Source variable '$(sourceVariable.label)' doesn't exist in the graph.")
     end
-    var = getVariable(dfg, sourceVariable.label)
-    newEsts = merge!(var.ppeDict, deepcopy(sourceVariable.ppeDict))
-    newSolveData = merge!(var.solverDataDict, sourceVariable.solverDataDict)
-    Neo4j.setnodeproperty(dfg.neo4jInstance.graph, var._internalId, "ppeDict",
-        JSON2.write(newEsts))
-    Neo4j.setnodeproperty(dfg.neo4jInstance.graph, var._internalId, "solverDataDict",
-        JSON2.write(Dict(keys(newSolveData) .=> map(vnd -> packVariableNodeData(dfg, vnd), values(newSolveData)))))
+    for (k,v) in sourceVariable.ppeDict
+        updatePPE!(dfg, getLabel(sourceVariable), v, k)
+    end
+    for (k,v) in sourceVariable.solverDataDict
+        updateVariableSolverData!(dfg, getLabel(sourceVariable), v, k)
+    end
     return sourceVariable
 end
 
