@@ -246,15 +246,6 @@ function addFactor!(dfg::AbstractDFG, variableLabels::Vector{Symbol}, factor::F)
     return addFactor!(dfg, factor)
 end
 
-# TODO: Confirm we can remove this.
-# """
-#     $(SIGNATURES)
-# Get a DFGVariable from a DFG using its underlying integer ID.
-# """
-# function getVariable(dfg::G, variableId::Int64)::AbstractDFGVariable where G <: AbstractDFG
-#     error("getVariable not implemented for $(typeof(dfg))")
-# end
-
 """
     $(SIGNATURES)
 Get a DFGVariable from a DFG using its label.
@@ -278,15 +269,6 @@ function getVariable(dfg::G, label::Symbol, solveKey::Symbol)::AbstractDFGVariab
 
     return var
 end
-
-# TODO: Confirm we can remove this.
-# """
-#     $(SIGNATURES)
-# Get a DFGFactor from a DFG using its underlying integer ID.
-# """
-# function getFactor(dfg::G, factorId::Int64)::AbstractDFGFactor where G <: AbstractDFG
-#     error("getFactor not implemented for $(typeof(dfg))")
-# end
 
 """
     $(SIGNATURES)

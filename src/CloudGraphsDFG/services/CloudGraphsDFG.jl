@@ -1,45 +1,6 @@
 
 """
     $(SIGNATURES)
-Create a new CloudGraphs-based DFG factor graph using a Neo4j.Connection.
-"""
-function CloudGraphsDFG{T}(neo4jConnection::Neo4j.Connection,
-                            userId::String,
-                            robotId::String,
-                            sessionId::String,
-                            encodePackedTypeFunc,
-                            getPackedTypeFunc,
-                            decodePackedTypeFunc,
-                            rebuildFactorMetadata!;
-                            description::String="CloudGraphs DFG",
-                            solverParams::T=NoSolverParams()) where T <: AbstractParams
-    graph = Neo4j.getgraph(neo4jConnection)
-    neo4jInstance = Neo4jInstance(neo4jConnection, graph)
-    return CloudGraphsDFG{T}(neo4jInstance, description, userId, robotId, sessionId, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, rebuildFactorMetadata!, Dict{Symbol, Int64}(), Symbol[], solverParams)
-end
-"""
-    $(SIGNATURES)
-Create a new CloudGraphs-based DFG factor graph by specifying the Neo4j connection information.
-"""
-function CloudGraphsDFG{T}(host::String,
-                            port::Int,
-                            dbUser::String,
-                            dbPassword::String,
-                            userId::String,
-                            robotId::String,
-                            sessionId::String,
-                            encodePackedTypeFunc,
-                            getPackedTypeFunc,
-                            decodePackedTypeFunc,
-                            rebuildFactorMetadata!;
-                            description::String="CloudGraphs DFG",
-                            solverParams::T=NoSolverParams()) where T <: AbstractParams
-    neo4jConnection = Neo4j.Connection(host, port=port, user=dbUser, password=dbPassword);
-    return CloudGraphsDFG{T}(neo4jConnection, userId, robotId, sessionId, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, rebuildFactorMetadata!, description=description, solverParams=solverParams)
-end
-
-"""
-    $(SIGNATURES)
 Gets an empty and unique CloudGraphsDFG derived from an existing DFG.
 """
 function _getDuplicatedEmptyDFG(dfg::CloudGraphsDFG)::CloudGraphsDFG
@@ -55,13 +16,11 @@ function _getDuplicatedEmptyDFG(dfg::CloudGraphsDFG)::CloudGraphsDFG
 end
 
 # Accessors
-getLabelDict(dfg::CloudGraphsDFG) = dfg.labelDict
-getDescription(dfg::CloudGraphsDFG) = dfg.description
-setDescription!(dfg::CloudGraphsDFG, description::String) = dfg.description = description
-getAddHistory(dfg::CloudGraphsDFG) = dfg.addHistory
-getSolverParams(dfg::CloudGraphsDFG) = dfg.solverParams
-function setSolverParams!(dfg::CloudGraphsDFG, solverParams::T)::T where T <: AbstractParams
-    return dfg.solverParams = solverParams
+function getDescription(dfg::CloudGraphsDFG)
+    return _getNodeProperty(dfg.neo4jInstance, [dfg.sessionId, dfg.robotId, dfg.userId, "SESSION"], "description")
+end
+function setDescription!(dfg::CloudGraphsDFG, description::String)
+    _setNodeProperty(dfg.neo4jInstance, [dfg.sessionId, dfg.robotId, dfg.userId, "SESSION"], "description", description)
 end
 
 function getSerializationModule(dfg::CloudGraphsDFG)::Module where G <: AbstractDFG
@@ -69,13 +28,64 @@ function getSerializationModule(dfg::CloudGraphsDFG)::Module where G <: Abstract
     return Main
 end
 
-function exists(dfg::CloudGraphsDFG, nId::Symbol)
+##==============================================================================
+## User/Robot/Session Data CRUD
+##==============================================================================
+
+
+function getUserData(dfg::CloudGraphsDFG)::Dict{Symbol, String}
+    propVal = _getNodeProperty(dfg.neo4jInstance, _getLabelsForType(dfg, User), "data")
+    return JSON2.read(String(base64decode(propVal)), Dict{Symbol, String})
+end
+function setUserData!(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
+    count = _setNodeProperty(dfg.neo4jInstance, [dfg.userId, "USER"], "data", base64encode(JSON2.write(data)))
+    return count == 1
+end
+function getRobotData(dfg::CloudGraphsDFG)::Dict{Symbol, String}
+    propVal = _getNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, "ROBOT"], "data")
+    return JSON2.read(String(base64decode(propVal)), Dict{Symbol, String})
+end
+function setRobotData!(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
+    count = _setNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, "ROBOT"], "data", base64encode(JSON2.write(data)))
+    return count == 1
+end
+function getSessionData(dfg::CloudGraphsDFG)::Dict{Symbol, String}
+    propVal = _getNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, "SESSION"], "data")
+    return JSON2.read(String(base64decode(propVal)), Dict{Symbol, String})
+end
+function setSessionData!(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
+    count = _setNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, "SESSION"], "data", base64encode(JSON2.write(data)))
+    return count == 1
+end
+
+# New API
+getUserData(dfg::CloudGraphsDFG, key::Symbol)::String = error("Not supported yet")
+getRobotData(dfg::CloudGraphsDFG, key::Symbol)::String = error("Not supported yet")
+getSessionData(dfg::CloudGraphsDFG, key::Symbol)::String = error("Not supported yet")
+
+updateUserData!(dfg::CloudGraphsDFG, pair::Pair{Symbol,String}) = error("Not supported yet")
+updateRobotData!(dfg::CloudGraphsDFG, pair::Pair{Symbol,String}) = error("Not supported yet")
+updateSessionData!(dfg::CloudGraphsDFG, pair::Pair{Symbol,String}) = error("Not supported yet")
+
+deleteUserData!(dfg::CloudGraphsDFG, key::Symbol) = error("Not supported yet")
+deleteRobotData!(dfg::CloudGraphsDFG, key::Symbol) = error("Not supported yet")
+deleteSessionData!(dfg::CloudGraphsDFG, key::Symbol) = error("Not supported yet")
+
+emptyUserData!(dfg::CloudGraphsDFG) = error("Not supported yet")
+emptyRobotData!(dfg::CloudGraphsDFG) = error("Not supported yet")
+emptySessionData!(dfg::CloudGraphsDFG) = error("Not supported yet")
+
+##==============================================================================
+## CRUD Interfaces
+##==============================================================================
+##------------------------------------------------------------------------------
+## Variable And Factor CRUD
+##------------------------------------------------------------------------------
+
+function exists(dfg::CloudGraphsDFG, label::Symbol)
     # Otherwise try get it
-    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, nId)
-    if nodeId != nothing
-        push!(dfg.labelDict, nId=>nodeId)
-        return true
-    end
+    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, label)
+    nodeId != nothing && return true
     return false
 end
 function exists(dfg::CloudGraphsDFG, node::N) where N <: DFGNode
@@ -95,14 +105,11 @@ function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariable
     props = packVariable(dfg, variable)
 
     neo4jNode = Neo4j.createnode(dfg.neo4jInstance.graph, props);
-    variable._internalId = neo4jNode.id
     Neo4j.updatenodelabels(neo4jNode, union([string(variable.label), "VARIABLE", dfg.userId, dfg.robotId, dfg.sessionId], variable.tags))
 
     # Make sure that if there exists a SESSION sentinel that it is attached.
     _bindSessionNodeToInitialVariable(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, string(variable.label))
 
-    # Update our internal dictionaries.
-    push!(dfg.labelDict, variable.label=>variable._internalId)
     # Track insertion
     push!(dfg.addHistory, variable.label)
 
@@ -124,21 +131,18 @@ function addFactor!(dfg::CloudGraphsDFG, variables::Vector{<:DFGVariable}, facto
     # Construct the properties to save
     props = packFactor(dfg, factor)
 
+    # TODO - Pack this into a transaction.
     neo4jNode = Neo4j.createnode(dfg.neo4jInstance.graph, props);
-    factor._internalId = neo4jNode.id
     Neo4j.updatenodelabels(neo4jNode, union([string(factor.label), "FACTOR", dfg.userId, dfg.robotId, dfg.sessionId], factor.tags))
 
     # Add all the relationships - get them to cache them + make sure the links are correct
     for variable in variables
         v = getVariable(dfg, variable.label)
-        vNode = Neo4j.getnode(dfg.neo4jInstance.graph, v._internalId)
+        vNode = Neo4j.getnode(
+            dfg.neo4jInstance.graph,
+            _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, variable.label))
         Neo4j.createrel(neo4jNode, vNode, "FACTORGRAPH")
     end
-
-    # Graphs.add_vertex!(dfg.g, v)
-    push!(dfg.labelDict, factor.label=>factor._internalId)
-    # Track insertion only for variables
-    # push!(dfg.addHistory, factor.label
 
     return factor
 end
@@ -147,15 +151,6 @@ function addFactor!(dfg::CloudGraphsDFG, variableIds::Vector{Symbol}, factor::DF
     variables = map(vId -> getVariable(dfg, vId), variableIds)
     return addFactor!(dfg, variables, factor)
 end
-
-function getVariable(dfg::CloudGraphsDFG, variableId::Int64)::DFGVariable
-    props = getnodeproperties(dfg.neo4jInstance.graph, variableId)
-    variable = unpackVariable(dfg, props)
-    variable._internalId = variableId
-
-    return variable
-end
-
 
 function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGVariable
     if typeof(label) == String
@@ -166,21 +161,8 @@ function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGVari
         error("Unable to retrieve the ID for variable '$label'. Please check your connection to the database and that the variable exists.")
     end
 
-    return getVariable(dfg, nodeId)
-end
-
-function getFactor(dfg::CloudGraphsDFG, factorId::Int64)::DFGFactor
-    props = getnodeproperties(dfg.neo4jInstance.graph, factorId)
-    factor = unpackFactor(dfg, props)
-    factor._internalId = factorId
-
-    # Lastly, rebuild the metadata
-    factor = dfg.rebuildFactorMetadata!(dfg, factor)
-    # GUARANTEED never to bite us in the future...
-    # ... TODO: refactor if changed: https://github.com/JuliaRobotics/IncrementalInference.jl/issues/350
-    getSolverData(factor).fncargvID = factor._variableOrderSymbols
-
-    return factor
+    props = getnodeproperties(dfg.neo4jInstance.graph, nodeId)
+    variable = unpackVariable(dfg, props)
 end
 
 function getFactor(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGFactor
@@ -192,7 +174,16 @@ function getFactor(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGFactor
         error("Unable to retrieve the ID for factor '$label'. Please check your connection to the database and that the factor exists.")
     end
 
-    return getFactor(dfg, nodeId)
+    props = getnodeproperties(dfg.neo4jInstance.graph, nodeId)
+    factor = unpackFactor(dfg, props)
+
+    # Lastly, rebuild the metadata
+    factor = dfg.rebuildFactorMetadata!(dfg, factor)
+    # GUARANTEED never to bite us in the future...
+    # ... TODO: refactor if changed: https://github.com/JuliaRobotics/IncrementalInference.jl/issues/350
+    getSolverData(factor).fncargvID = factor._variableOrderSymbols
+
+    return factor
 end
 
 function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariable
@@ -201,12 +192,10 @@ function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariabl
         return addVariable!(dfg, variable)
     end
     nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, variable.label)
-    # Update the node ID
-    variable._internalId = nodeId
 
+    # TODO: Do this with a single query and/or a single transaction.
     neo4jNode = Neo4j.getnode(dfg.neo4jInstance.graph, nodeId)
     props = packVariable(dfg, variable)
-
     Neo4j.updatenodeproperties(neo4jNode, props)
     Neo4j.updatenodelabels(neo4jNode, union([string(variable.label), "VARIABLE", dfg.userId, dfg.robotId, dfg.sessionId], variable.tags))
     return variable
@@ -231,50 +220,22 @@ function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor
         @warn "Factor label '$(factor.label)' does not exist in the factor graph, adding"
         return addFactor!(dfg, factor)
     end
+
+    neighborsList = JSON2.read(
+        _getNodeProperty(dfg.neo4jInstance, _getLabelsForInst(dfg, factor), "_variableOrderSymbols"),
+        Vector{Symbol})
+
+    # Confirm that we're not updating the neighbors
+    neighborsList != factor._variableOrderSymbols && error("Cannot update the factor, the neighbors are not the same.")
+
+    # TODO: Optimize this as a single query with a single transaction.
     nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, factor.label)
-    # Update the _internalId
-    factor._internalId = nodeId
     neo4jNode = Neo4j.getnode(dfg.neo4jInstance.graph, nodeId)
     props = packFactor(dfg, factor)
-
     Neo4j.updatenodeproperties(neo4jNode, props)
     Neo4j.updatenodelabels(neo4jNode, union([string(factor.label), "FACTOR", dfg.userId, dfg.robotId, dfg.sessionId], factor.tags))
 
     return factor
-end
-
-
-function updateFactor!(dfg::CloudGraphsDFG, variables::Vector{DFGVariable}, factor::DFGFactor)::DFGFactor
-    # Update the body
-    factor = updateFactor!(dfg, factor)
-
-    # Now update the relationships
-    existingNeighbors = getNeighbors(dfg, factor)
-    if symdiff(existingNeighbors, map(v->v.label, variables)) == []
-        # Done, otherwise we need to remake the edges.
-        return factor
-    end
-    # Delete existing relationships
-    fNode = Neo4j.getnode(dfg.neo4jInstance.graph, factor._internalId)
-    for relationship in Neo4j.getrels(fNode)
-        if relationship.reltype == "FACTORGRAPH"
-            Neo4j.deleterel(relationship)
-        end
-    end
-    # Make new ones
-    for variable in variables
-        v = getVariable(dfg, variable.label)
-        vNode = Neo4j.getnode(dfg.neo4jInstance.graph, v._internalId)
-        @info "Creating REL between factor $(fNode) and variable $(vNode)"
-        Neo4j.createrel(fNode, vNode, "FACTORGRAPH")
-    end
-
-    return factor
-end
-
-function updateFactor!(dfg::CloudGraphsDFG, variableIds::Vector{Symbol}, factor::DFGFactor)::DFGFactor
-    variables = map(vId -> getVariable(dfg, vId), variableIds)
-    return updateFactor!(dfg, variables, factor)
 end
 
 function deleteVariable!(dfg::CloudGraphsDFG, label::Symbol)::DFGVariable
@@ -284,11 +245,10 @@ function deleteVariable!(dfg::CloudGraphsDFG, label::Symbol)::DFGVariable
     end
 
     # Perform detach+deletion
-    _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:VARIABLE) where id(node)=$(variable._internalId) detach delete node ")
+    _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:$label:$(join(_getLabelsForType(dfg, DFGVariable),':'))) detach delete node ")
 
     # Clearing history
     dfg.addHistory = symdiff(dfg.addHistory, [label])
-    haskey(dfg.labelDict, label) && delete!(dfg.labelDict, label)
     return variable
 end
 
@@ -302,11 +262,10 @@ function deleteFactor!(dfg::CloudGraphsDFG, label::Symbol)::DFGFactor
     end
 
     # Perform detach+deletion
-    _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:FACTOR) where id(node)=$(factor._internalId) detach delete node ")
+    _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:$label:$(join(_getLabelsForType(dfg, DFGFactor),':'))) detach delete node ")
 
     # Clearing history
     dfg.addHistory = symdiff(dfg.addHistory, [label])
-    haskey(dfg.labelDict, label) && delete!(dfg.labelDict, label)
     return factor
 end
 
@@ -328,13 +287,14 @@ function listVariables(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=n
     # Optimized for DB call
     tagsFilter = length(tags) > 0 ? " and "*join("node:".*String.(tags), " or ") : ""
     if regexFilter == nothing
-        return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):VARIABLE) where node.solvable >= $solvable $tagsFilter")
+        return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(join(_getLabelsForType(dfg, DFGVariable),':'))) where node.solvable >= $solvable $tagsFilter")
     else
-        return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):VARIABLE) where node.label =~ '$(regexFilter.pattern)' and node.solvable >= $solvable $tagsFilter")
+        return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(join(_getLabelsForType(dfg, DFGVariable),':'))) where node.label =~ '$(regexFilter.pattern)' and node.solvable >= $solvable $tagsFilter")
     end
 end
 
 function getFactors(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{DFGFactor}
+    # TODO: Use optimized cypher query.
     factorIds = listFactors(dfg, regexFilter, solvable=solvable)
     return map(vId->getFactor(dfg, vId), factorIds)
 end
@@ -342,9 +302,9 @@ end
 function listFactors(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{Symbol}
     # Optimized for DB call
     if regexFilter == nothing
-        return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):FACTOR) where node.solvable >= $solvable")
+        return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(join(_getLabelsForType(dfg, DFGFactor),':'))) where node.solvable >= $solvable")
     else
-        return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):FACTOR) where node.label =~ '$(regexFilter.pattern)' and node.solvable >= $solvable")
+        return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(join(_getLabelsForType(dfg, DFGFactor),':'))) where node.label =~ '$(regexFilter.pattern)' and node.solvable >= $solvable")
     end
 end
 
@@ -362,7 +322,7 @@ function isFullyConnected(dfg::CloudGraphsDFG)::Bool
         WITH collect(n)+collect(node) as nodelist
         unwind nodelist as nodes
         return count(distinct nodes)"""
-    @debug "[Querying] $query"
+    @debug "[Query] $query"
     result = _queryNeo4j(dfg.neo4jInstance, query)
     # Neo4j.jl data structure sometimes feels brittle... like below
     return result.results[1]["data"][1]["row"][1] == length(varIds) + length(factIds)
@@ -421,11 +381,6 @@ function getSubgraph(dfg::CloudGraphsDFG,
     return addToDFG
 end
 
-#NOTE removed, exists in abstract as getAdjacencyMatrixSymbols and likeley to be removed entirely
-# function getAdjacencyMatrix(dfg::CloudGraphsDFG; solvable::Int=0)::Matrix{Union{Nothing, Symbol}}
-
-
-
 function getBiadjacencyMatrix(dfg::CloudGraphsDFG; solvable::Int=0)::NamedTuple{(:B, :varLabels, :facLabels),Tuple{SparseMatrixCSC,Vector{Symbol}, Vector{Symbol}}}
     varLabels = listVariables(dfg, solvable=solvable)
     factLabels = listFactors(dfg, solvable=solvable)
@@ -436,7 +391,11 @@ function getBiadjacencyMatrix(dfg::CloudGraphsDFG; solvable::Int=0)::NamedTuple{
 
     # Now ask for all relationships for this session graph
     loadtx = transaction(dfg.neo4jInstance.connection)
-    query = "START n=node(*) MATCH (n:VARIABLE:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId))-[r:FACTORGRAPH]-(m:FACTOR:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId)) where n.solvable >= $solvable and m.solvable >= $solvable RETURN n.label as variable, m.label as factor;"
+    query = """
+    START n=node(*)
+    MATCH (n:$(join(_getLabelsForType(dfg, DFGVariable),':')))-[r:FACTORGRAPH]-(m:$(join(_getLabelsForType(dfg, DFGFactor),':')))
+    where n.solvable >= $solvable and m.solvable >= $solvable
+    RETURN n.label as variable, m.label as factor;"""
     @debug "[Query] $query"
     nodes = loadtx(query; submit=true)
     # Have to finish the transaction
@@ -457,8 +416,8 @@ end
 ### PPEs with DB calls
 
 function listPPE(dfg::CloudGraphsDFG, variablekey::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Vector{Symbol}
-    query = "match (ppe:PPE:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$variablekey) return ppe.solverKey"
-    @debug "[CGDFG] PPE read query:\r\n$query"
+    query = "match (ppe:$(join(_getLabelsForType(dfg, MeanMaxPPE, parentKey=variablekey),':'))) return ppe.solverKey"
+    @debug "[Query] PPE read query:\r\n$query"
     result = nothing
     if currentTransaction != nothing
         result = currentTransaction(query; submit=true)
@@ -473,8 +432,8 @@ function listPPE(dfg::CloudGraphsDFG, variablekey::Symbol; currentTransaction::U
 end
 
 function getPPE(dfg::CloudGraphsDFG, variablekey::Symbol, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::AbstractPointParametricEst
-    query = "match (ppe:PPE:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$variablekey:$(ppekey)) return properties(ppe)"
-    @debug "[CGDFG] PPE read query:\r\n$query"
+    query = "match (ppe:$(join(_getLabelsForType(dfg, MeanMaxPPE, parentKey=variablekey),':')):$(ppekey)) return properties(ppe)"
+    @debug "[Query] PPE read query:\r\n$query"
     result = nothing
     if currentTransaction != nothing
         result = currentTransaction(query; submit=true)
@@ -490,7 +449,7 @@ function getPPE(dfg::CloudGraphsDFG, variablekey::Symbol, ppekey::Symbol=:defaul
 end
 
 function addPPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::AbstractPointParametricEst where P <: AbstractPointParametricEst
-    if ppekey in listPPE(dfg, variablekey, ppekey, currentTransaction=currentTransaction)
+    if ppekey in listPPE(dfg, variablekey, currentTransaction=currentTransaction)
         error("PPE '$(ppekey)' already exists")
     end
     return updatePPE!(dfg, variablekey, ppe, ppekey, currentTransaction=currentTransaction)
@@ -499,12 +458,12 @@ end
 function updatePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::P where P <: AbstractPointParametricEst
     packed = packPPE(dfg, ppe)
     query = """
-                MATCH (var:VARIABLE:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$variablekey)
-                MERGE (ppe:PPE:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$variablekey:$(ppe.solverKey))
+                MATCH (var:$variablekey:$(join(_getLabelsForType(dfg, DFGVariable, parentKey=variablekey),':')))
+                MERGE (ppe:$(join(_getLabelsForInst(dfg, ppe, parentKey=variablekey),':')))
                 SET ppe = $(_dictToNeo4jProps(packed))
                 CREATE UNIQUE (var)-[:PPE]->(ppe)
                 RETURN properties(ppe)"""
-    @debug "[CGDFG] PPE update query:\r\n$query"
+    @debug "[Query] PPE update query:\r\n$query"
     result = nothing
     if currentTransaction != nothing
         result = currentTransaction(query; submit=true) # TODO: Maybe we should submit (; submit = true) for the results to fail early?
@@ -532,12 +491,12 @@ end
 
 function deletePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::AbstractPointParametricEst
     query = """
-    match (ppe:PPE:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$variablekey:$(ppekey))
+    match (ppe:$ppekey:$(join(_getLabelsForType(dfg, MeanMaxPPE, parentKey=variablekey),':')))
     with ppe, properties(ppe) as props
     detach delete ppe
     return props
     """
-    @debug "[CGDFG] PPE delete query:\r\n$query"
+    @debug "[Query] PPE delete query:\r\n$query"
     result = nothing
     if currentTransaction != nothing
         result = currentTransaction(query; submit=true) # TODO: Maybe we should submit (; submit = true) for the results to fail early?
