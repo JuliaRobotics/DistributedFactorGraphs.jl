@@ -522,7 +522,7 @@ end
 ### These functions write back as you add the data.
 
 function addVariableSolverData!(dfg::CloudGraphsDFG, variablekey::Symbol, vnd::VariableNodeData, solvekey::Symbol=:default)::VariableNodeData
-    # TODO: Just get the property, update it, and send it back
+    # TODO: Switch out to their own nodes, don't get the whole variable
     var = getVariable(dfg, variablekey)
     if haskey(var.solverDataDict, solvekey)
         error("VariableNodeData '$(solvekey)' already exists")
@@ -539,7 +539,7 @@ function addVariableSolverData!(dfg::CloudGraphsDFG, variablekey::Symbol, vnd::V
 end
 
 function updateVariableSolverData!(dfg::CloudGraphsDFG, variablekey::Symbol, vnd::VariableNodeData, solvekey::Symbol=:default)::VariableNodeData
-    #This is basically just setSolverData
+    # TODO: Switch out to their own nodes, don't get the whole variable
     var = getVariable(dfg, variablekey)
     if !haskey(var.solverDataDict, solvekey)
         @warn "VariableNodeData '$(solvekey)' does not exist, adding"
@@ -556,6 +556,7 @@ function updateVariableSolverData!(dfg::CloudGraphsDFG, variablekey::Symbol, vnd
 end
 
 function updateVariableSolverData!(dfg::CloudGraphsDFG, sourceVariables::Vector{<:DFGVariable}, solvekey::Symbol=:default)
+    # TODO: Switch out to their own nodes, don't get the whole variable
     #TODO: Do in bulk for speed.
     for var in sourceVariables
         updateVariableSolverData!(dfg, var.label, getSolverData(var, solvekey), solvekey)
@@ -563,6 +564,7 @@ function updateVariableSolverData!(dfg::CloudGraphsDFG, sourceVariables::Vector{
 end
 
 function deleteVariableSolverData!(dfg::CloudGraphsDFG, variablekey::Symbol, solvekey::Symbol=:default)::VariableNodeData
+    # TODO: Switch out to their own nodes, don't get the whole variable
     var = getVariable(dfg, variablekey)
 
     if !haskey(var.solverDataDict, solvekey)
