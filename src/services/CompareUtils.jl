@@ -1,21 +1,21 @@
+##==============================================================================
+## (==)
+##==============================================================================
+import Base.==
 ## @generated compare
 # Reference https://github.com/JuliaLang/julia/issues/4648
 
-import Base.==
-
 #=
-TODO <:InferenceVariable: please someone confirm this, I'm not fully up to date why softtype was created.
-For now abstract `InferenceVariable`s are considered equal if they are the same type (except for labels, that I feel are deprecated)
+For now abstract `InferenceVariable`s are considered equal if they are the same type, dims, and manifolds (abels are deprecated)
 If your implentation has aditional properties such as `DynPose2` with `ut::Int64` (microsecond time) or support different manifolds
-implement compare if needed. softtype sounds a bit if it can be a trait, or in the future, rather a normal julia type.
+implement compare if needed.
 =#
-==(a::InferenceVariable,b::InferenceVariable) = typeof(a) == typeof(b)
+==(a::InferenceVariable,b::InferenceVariable) = typeof(a) == typeof(b) && a.dims == b.dims && a.manifolds == b.manifolds
 
 ==(a::ConvolutionObject, b::ConvolutionObject) = typeof(a) == typeof(b)
 
 ==(a::FunctorInferenceType, b::FunctorInferenceType) = typeof(a) == typeof(b)
 
-# TestCCW1{TestFunctorInferenceType1}
 
 # Generate compares automatically for all in this union
 const GeneratedCompareUnion = Union{MeanMaxPPE, VariableNodeData, DFGNodeParams,
@@ -28,7 +28,9 @@ const GeneratedCompareUnion = Union{MeanMaxPPE, VariableNodeData, DFGNodeParams,
 end
 
 
-##
+##==============================================================================
+## Compare
+##==============================================================================
 
 function compareField(Allc, Bllc, syms)::Bool
     (!isdefined(Allc, syms) && !isdefined(Bllc, syms)) && return true
@@ -129,8 +131,8 @@ end
 
 function compareAll(Al::T, Bl::T; show::Bool=true, skip::Vector{Symbol}=Symbol[])::Bool where T
   @debug "Comparing types $T:"
-  @debug "  Al = $Al"
-  @debug "  Bl = $Bl"
+  # @debug "  Al = $Al"
+  # @debug "  Bl = $Bl"
   !compareFields(Al, Bl, show=show, skip=skip) && return false
   for field in fieldnames(T)
     field in skip && continue

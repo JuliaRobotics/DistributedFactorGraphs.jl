@@ -168,7 +168,7 @@ function listVariables(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing
     end
 end
 
-function getFactors(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{AbstractDFGFactor}
+function getFactors(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{AbstractDFGFactor}
     # factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGFactor, vertices(dfg.g)))
     factors = collect(values(dfg.g.factors))
     if regexFilter != nothing
@@ -177,11 +177,18 @@ function getFactors(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; s
     if solvable != 0
         factors = filter(f -> _isSolvable(dfg, f.label, solvable), factors)
     end
+    if length(tags) > 0
+        mask = map(v -> length(intersect(v.tags, tags)) > 0, factors )
+        return factors[mask]
+    end
     return factors
 end
 
-function listFactors(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{Symbol}
+function listFactors(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol}
     # factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGFactor, vertices(dfg.g)))
+    if length(tags) > 0
+        return map(v -> v.label, getFactor(dfg, regexFilter, tags=tags, solvable=solvable))
+    end
     factors = collect(keys(dfg.g.factors))
     if regexFilter != nothing
         factors = filter(f -> occursin(regexFilter, String(f)), factors)

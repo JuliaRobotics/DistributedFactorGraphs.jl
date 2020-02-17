@@ -1,6 +1,7 @@
-export buildSubgraphFromLabels!, buildSubgraphFromLabels!_SPECIAL
-export buildSubgraphFromLabels
 
+# TODO needsahome: home should be in IIF, calling just deepcopyGraph, or copyGraph
+#                  Into, Labels, Subgraph are all implied from the parameters.
+#                  can alies names but like Sam suggested only on copy is needed.
 
 """
     $SIGNATURES
@@ -61,6 +62,39 @@ function buildSubgraphFromLabels!(dfg::G,
   return subfg
 end
 
+"""
+    $SIGNATURES
+
+Display and return to console the user factor identified by tag name.
+"""
+printFactor(fgl::AbstractDFG, fsym::Symbol) = @show getFactor(fgl,fsym)
+
+
+"""
+   $SIGNATURES
+
+Display the content of `VariableNodeData` to console for a given factor graph and variable tag`::Symbol`.
+
+Dev Notes
+- TODO split as two show macros between AMP and DFG
+"""
+function printVariable(fgl::AbstractDFG, vsym::Symbol, solveKey::Symbol=:default)
+  vert = getVariable(fgl, vsym)
+  vnd = solverData(vert, solveKey)
+  println("label: $(vert.label)")
+  println("tags: $(getTags(vert))")
+  println("size marginal samples $(size(vnd.val))")
+  println("kde bandwidths: $((vnd.bw)[:,1])")
+  if 0 < length(getVariablePPEs(vert))
+    println("PPE.suggested: $(round.(getVariablePPE(vert).suggested,digits=4))")
+  else
+    println("No PPEs")
+  end
+  # println("kde max: $(round.(getKDEMax(getKDE(vnd)),digits=4))")
+  # println("kde max: $(round.(getKDEMax(getKDE(vnd)),digits=4))")
+  println()
+  vnd
+end
 
 ## KEEPING COMMENT, WANT TO BE CONSOLIDATED WITH FUNCTION ABOVE -- KEEPING ONLY ONE FOR MAINTAINABILITY
 ## STILL NEEDS TO BE CONSOLIDATED WITH `DFG._copyIntoGraph`

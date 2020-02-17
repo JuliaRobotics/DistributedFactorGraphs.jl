@@ -7,33 +7,33 @@ os:
 
 arch:
     - amd64
-#FIXME#    - arm64
 
 services:
     - neo4j
 
 julia:
-#FIXME#    - 1.0
+    - 1.0
     - 1.2
-#FIXME#    - 1.3
-#FIXME#    - nightly
+    - 1.3
+    - nightly
 
 env:
-    - IIF_TEST=true
+    - IIF_TEST=false
 
-#FIXME#jobs:
-#FIXME#  include:
-#FIXME#    - julia: 1.2
-#FIXME#      env: IIF_TEST=true
-#FIXME#      if: NOT branch =~ ^release.*$
-#FIXME#    - stage: "Documentation"
-#FIXME#      julia: 1.2
-#FIXME#      os: linux
-#FIXME#      script:
-#FIXME#        - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
-#FIXME#        - julia --project=docs/ docs/make.jl
-#FIXME#      after_success: skip
-#FIXME#  fast_finish: true
+jobs:
+  include:
+    - julia: 1.2
+      env: IIF_TEST=true
+      if: NOT branch =~ ^release.*$
+    - arch: arm64
+    - stage: "Documentation"
+      julia: 1.2
+      os: linux
+      script:
+        - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+        - julia --project=docs/ docs/make.jl
+      after_success: skip
+  fast_finish: true
 
 notifications:
     email: false
