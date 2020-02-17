@@ -9,7 +9,7 @@ getMaxPPE(est::AbstractPointParametricEst) = est.max
 "$(SIGNATURES)"
 getMeanPPE(est::AbstractPointParametricEst) = est.mean
 "$(SIGNATURES)"
-getSuggestedPPE(est::AbstractPointParametricEst) = est.suggestedisInit
+getSuggestedPPE(est::AbstractPointParametricEst) = est.suggested
 "$(SIGNATURES)"
 getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimestamp
 
