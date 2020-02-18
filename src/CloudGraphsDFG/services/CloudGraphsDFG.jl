@@ -337,10 +337,11 @@ function isFullyConnected(dfg::CloudGraphsDFG)::Bool
     factIds = listFactors(dfg)
     length(varIds) + length(factIds) == 0 && return false
 
-    # Total connected nodes - thank you Neo4j for 0..* awesomeness!!
+    # Total distinct connected nodes - thank you Neo4j for 0..* awesomeness!!
+    # TODO: Deprecated matching technique and it's technically an expensive call - optimize.
     query = """
         match (n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(varIds[1]))-[FACTORGRAPH*]-(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId))
-        WHERE (n:VARIABLE OR n:FACTOR OR node:VARIABLE OR node:FACTOR) and not (node:SESSION)
+        WHERE (n:VARIABLE OR n:FACTOR OR node:VARIABLE OR node:FACTOR) and not (node:SESSION or n:SESSION) and not (n:PPE) and not (node:PPE)
         WITH collect(n)+collect(node) as nodelist
         unwind nodelist as nodes
         return count(distinct nodes)"""
