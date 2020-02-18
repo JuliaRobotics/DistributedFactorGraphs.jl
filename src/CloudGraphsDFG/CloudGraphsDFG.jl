@@ -12,7 +12,6 @@ include("services/CloudGraphsDFG.jl")
 
 # Exports
 export Neo4jInstance, CloudGraphsDFG
-export toDot, toDotFile
 
 # Additional exports for CGStructure
 export copySession!
