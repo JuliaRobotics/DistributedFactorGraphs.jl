@@ -1,7 +1,8 @@
 ##==============================================================================
 ## (==)
 ##==============================================================================
-import Base.==
+import Base.==, Base.≈
+
 ## @generated compare
 # Reference https://github.com/JuliaLang/julia/issues/4648
 
@@ -23,11 +24,28 @@ const GeneratedCompareUnion = Union{MeanMaxPPE, VariableNodeData, DFGNodeParams,
                               GenericFunctionNodeData,
                               DFGFactor, DFGFactorSummary, SkeletonDFGFactor}
 
-@generated function ==(x::T, y::T) where T <: GeneratedCompareUnion
-    ignored = [:_internalId]
-    mapreduce(n -> :(x.$n == y.$n), (a,b)->:($a && $b), setdiff(fieldnames(x), ignored))
+function _compVerbose(type, prop, x, y, ignored)
+  @debug "Comparing: $type.$prop: $x ?= $y"
+  # Propagate the ignores if it's a GeneratedCompareUnion
+  if typeof(x) <: GeneratedCompareUnion
+      !(==(x,y, ignored)) && @info("$type.$prop: $x != $y")
+      return ==(x,y, ignored)
+  else
+      # Otherwise ignore ignored
+      !(==(x,y)) && @info("$type.$prop: $x != $y")
+      return ==(x,y)
+  end
+end
+function ==(x::T, y::T, ignored::Vector{Symbol}=Symbol[]) where T <: GeneratedCompareUnion
+    mapreduce(
+      n -> (_compVerbose(T, n, getfield(x,n), getfield(y,n), ignored)),
+      (a,b)-> (a && b),
+      setdiff(fieldnames(typeof(x)), ignored))
 end
 
+# Based these on the calls below, need to be confirmed
+≈(x::V, y::V) where V <: DFGVariable = ==(x,y, [:attributes, :solverDataDict, :_internalId, :createdTimestamp, :lastUpdatedTimestamp])
+≈(x::F, y::F) where F <: DFGFactor = ==(x,y, [:fnc, :attributes, :_variableOrderSymbols, :_internalId])
 
 ##==============================================================================
 ## Compare
