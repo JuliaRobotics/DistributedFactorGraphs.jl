@@ -11,18 +11,25 @@ dfg = initfg()
 # ... Add stuff to graph using either IIF or DFG:
 v1 = addVariable!(dfg, :a, ContinuousScalar, labels = [:POSE], solvable=0)
 # Now save it:
-saveDFG(dfg, "/tmp/saveDFG")
+saveDFG(dfg, "/tmp/saveDFG.tar.gz")
 ```
 """
-function saveDFG(dfg::AbstractDFG, folder::String; compress::Symbol=:gzip)
+function saveDFG(dfg::AbstractDFG, folder::String)
+
+    # TODO: Deprecate the folder functionality in v0.6.1
+
+    # Clean up save path if a file is specified
+    savepath = folder[end] == '/' ? folder[1:end-1] : folder
+    savepath = splitext(splitext(savepath)[1])[1] # In case of .tar.gz
+
     variables = getVariables(dfg)
     factors = getFactors(dfg)
-    varFolder = "$folder/variables"
-    factorFolder = "$folder/factors"
+    varFolder = "$savepath/variables"
+    factorFolder = "$savepath/factors"
     # Folder preparations
-    if !isdir(folder)
-        @info "Folder '$folder' doesn't exist, creating..."
-        mkpath(folder)
+    if !isdir(savepath)
+        @info "Folder '$savepath' doesn't exist, creating..."
+        mkpath(savepath)
     end
     !isdir(varFolder) && mkpath(varFolder)
     !isdir(factorFolder) && mkpath(factorFolder)
@@ -39,19 +46,16 @@ function saveDFG(dfg::AbstractDFG, folder::String; compress::Symbol=:gzip)
     # Factors
     for f in factors
         fPacked = packFactor(dfg, f)
-        io = open("$folder/factors/$(f.label).json", "w")
+        io = open("$factorFolder/$(f.label).json", "w")
         JSON2.write(io, fPacked)
         close(io)
     end
 
-    # compress newly saved folder, skip if not supported format
-    !(compress in [:gzip]) && return
-    savepath = folder[end] == '/' ? folder[1:end-1] : folder
     savedir = dirname(savepath)
-    savename = splitpath(string(savepath))[end]
+    savename = basename(string(savepath))
     @assert savename != ""
-    # temporarily change working directory to get correct zipped path
-    run( pipeline(`tar -zcf - -C $savedir $savename`, stdout="$savepath.tar.gz") )
+    destfile = joinpath(savedir, savename*".tar.gz")
+    run( pipeline(`tar -zcf - -C $savedir $savename`, stdout="$destfile"))
     Base.rm(joinpath(savedir,savename), recursive=true)
 end
 
@@ -67,7 +71,6 @@ using DistributedFactorGraphs, IncrementalInference
 dfg = initfg()
 # Load the graph
 loadDFG("/tmp/savedgraph.tar.gz", IncrementalInference, dfg)
-loadDFG("/tmp/savedgraph", IncrementalInference, dfg) # alternative
 # Use the DFG as you do normally.
 ls(dfg)
 ```
