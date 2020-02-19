@@ -900,12 +900,12 @@ end
 ## Variable Data: VND and PPE
 ##==============================================================================
 
+#TODO API
 """
     $(SIGNATURES)
 Merges and updates solver and estimate data for a variable (variable can be from another graph).
 Note: Makes a copy of the estimates and solver data so that there is no coupling between graphs.
 """
-#TODO API
 function mergeVariableData!(dfg::AbstractDFG, sourceVariable::AbstractDFGVariable)::AbstractDFGVariable
 
     var = getVariable(dfg, sourceVariable.label)
@@ -921,12 +921,12 @@ function mergeVariableData!(dfg::AbstractDFG, sourceVariable::AbstractDFGVariabl
     return var
 end
 
+#TODO API
 """
     $(SIGNATURES)
 Common function to update all solver data and estimates from one graph to another.
 This should be used to push local solve data back into a cloud graph, for example.
 """
-#TODO API
 function mergeGraphVariableData!(destDFG::H, sourceDFG::G, varSyms::Vector{Symbol})::Nothing where {G <: AbstractDFG, H <: AbstractDFG}
     # Update all variables in the destination
     # (For now... we may change this soon)
