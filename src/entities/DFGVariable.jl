@@ -32,7 +32,7 @@ mutable struct VariableNodeData{T<:InferenceVariable}
     dontmargin::Bool
     solveInProgress::Int
     solvedCount::Int
-    event::Condition #This object is NOT thread-safe. See Threads.Condition for a thread-safe version.
+    event::Threads.Condition #This object is NOT thread-safe. See Threads.Condition for a thread-safe version. julia 1.2
     VariableNodeData{T}() where {T <:InferenceVariable} =
     new{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], T(), false, 0.0, false, false, 0, 0, Condition())
     VariableNodeData{T}(val::Array{Float64,2},
