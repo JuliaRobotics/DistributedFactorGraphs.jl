@@ -22,7 +22,7 @@ add DistributedFactorGraphs
 
 # Usage
 DistributedFactorGraphs (DFG) currently supports two implementations:
-* An in-memory factor graph based on Graphs.jl
+* An in-memory factor graphs based on Graphs.jl and LightGraphs.jl
 * A Neo4j-based factor graph based on Neo4j.jl
 
 The in-memory implementation is the default. The Neo4j driver can be enabled by importing Neo4j before DFG:
