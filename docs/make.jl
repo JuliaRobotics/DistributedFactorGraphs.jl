@@ -1,4 +1,5 @@
 using Documenter
+using GraphPlot
 using DistributedFactorGraphs
 
 makedocs(

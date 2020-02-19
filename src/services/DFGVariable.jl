@@ -1,281 +1,29 @@
-import Base: ==, convert
+##==============================================================================
+## Accessors
+##==============================================================================
+##==============================================================================
+## PointParametricEst
+##==============================================================================
+"$(SIGNATURES)"
+getMaxPPE(est::AbstractPointParametricEst) = est.max
+"$(SIGNATURES)"
+getMeanPPE(est::AbstractPointParametricEst) = est.mean
+"$(SIGNATURES)"
+getSuggestedPPE(est::AbstractPointParametricEst) = est.suggested
+"$(SIGNATURES)"
+getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimestamp
 
-function packVariable(dfg::G, v::DFGVariable)::Dict{String, Any} where G <: AbstractDFG
-    props = Dict{String, Any}()
-    props["label"] = string(v.label)
-    props["timestamp"] = string(v.timestamp)
-    props["tags"] = JSON2.write(v.tags)
-    props["ppeDict"] = JSON2.write(v.ppeDict)
-    props["solverDataDict"] = JSON2.write(Dict(keys(v.solverDataDict) .=> map(vnd -> packVariableNodeData(dfg, vnd), values(v.solverDataDict))))
-    props["smallData"] = JSON2.write(v.smallData)
-    props["solvable"] = v.solvable
-    props["softtype"] = string(typeof(getSofttype(v)))
-    props["bigData"] = JSON2.write(Dict(keys(v.bigData) .=> map(bde -> JSON2.write(bde), values(v.bigData))))
-    props["bigDataElemType"] = JSON2.write(Dict(keys(v.bigData) .=> map(bde -> typeof(bde), values(v.bigData))))
-    return props
-end
+##==============================================================================
+## Variable Node Data
+##==============================================================================
 
-function unpackVariable(dfg::G, packedProps::Dict{String, Any})::DFGVariable where G <: AbstractDFG
-    label = Symbol(packedProps["label"])
-    timestamp = DateTime(packedProps["timestamp"])
-    tags =  JSON2.read(packedProps["tags"], Vector{Symbol})
-    #TODO this will work for some time, but unpacking in an <: AbstractPointParametricEst would be lekker.
-    ppeDict = JSON2.read(packedProps["ppeDict"], Dict{Symbol, MeanMaxPPE})
-    smallData = JSON2.read(packedProps["smallData"], Dict{String, String})
-    bigDataElemTypes = JSON2.read(packedProps["bigDataElemType"], Dict{Symbol, Symbol})
-    bigDataIntermed = JSON2.read(packedProps["bigData"], Dict{Symbol, String})
-    softtypeString = packedProps["softtype"]
-    softtype = getTypeFromSerializationModule(dfg, Symbol(softtypeString))
-    softtype == nothing && error("Cannot deserialize softtype '$softtypeString' in variable '$label'")
+## COMMON
+# getSolveInProgress
+# isSolveInProgress
 
-    packed = JSON2.read(packedProps["solverDataDict"], Dict{String, PackedVariableNodeData})
-    solverData = Dict(Symbol.(keys(packed)) .=> map(p -> unpackVariableNodeData(dfg, p), values(packed)))
-
-    # Rebuild DFGVariable using the first solver softtype in solverData
-    variable = DFGVariable{softtype}(Symbol(packedProps["label"]), timestamp, Set(tags), ppeDict, solverData,  smallData, Dict{Symbol,AbstractBigDataEntry}(), DFGNodeParams(packedProps["solvable"],0))
-
-    # Now rehydrate complete bigData type.
-    for (k,bdeInter) in bigDataIntermed
-        fullVal = JSON2.read(bdeInter, getfield(DistributedFactorGraphs, bigDataElemTypes[k]))
-        variable.bigData[k] = fullVal
-    end
-
-    return variable
-end
-
-function packVariableNodeData(dfg::G, d::VariableNodeData)::PackedVariableNodeData where G <: AbstractDFG
-  @debug "Dispatching conversion variable -> packed variable for type $(string(d.softtype))"
-  return PackedVariableNodeData(d.val[:],size(d.val,1),
-                                d.bw[:], size(d.bw,1),
-                                d.BayesNetOutVertIDs,
-                                d.dimIDs, d.dims, d.eliminated,
-                                d.BayesNetVertID, d.separator,
-                                d.softtype != nothing ? string(d.softtype) : nothing,
-                                d.initialized,
-                                d.inferdim,
-                                d.ismargin,
-                                d.dontmargin,
-                                d.solveInProgress,
-                                d.solvedCount)
-end
-
-function unpackVariableNodeData(dfg::G, d::PackedVariableNodeData)::VariableNodeData where G <: AbstractDFG
-  r3 = d.dimval
-  c3 = r3 > 0 ? floor(Int,length(d.vecval)/r3) : 0
-  M3 = reshape(d.vecval,r3,c3)
-
-  r4 = d.dimbw
-  c4 = r4 > 0 ? floor(Int,length(d.vecbw)/r4) : 0
-  M4 = reshape(d.vecbw,r4,c4)
-
-  # TODO -- allow out of module type allocation (future feature, not currently in use)
-  @debug "Dispatching conversion packed variable -> variable for type $(string(d.softtype))"
-  # Figuring out the softtype
-  unpackedTypeName = split(d.softtype, "(")[1]
-  unpackedTypeName = split(unpackedTypeName, '.')[end]
-  @debug "DECODING Softtype = $unpackedTypeName"
-  st = getTypeFromSerializationModule(dfg, Symbol(unpackedTypeName))
-  st == nothing && error("The variable doesn't seem to have a softtype. It needs to set up with an InferenceVariable from IIF. This will happen if you use DFG to add serialized variables directly and try use them. Please use IncrementalInference.addVariable().")
-
-  return VariableNodeData{st}(M3,M4, d.BayesNetOutVertIDs,
-    d.dimIDs, d.dims, d.eliminated, d.BayesNetVertID, d.separator,
-    st(), d.initialized, d.inferdim, d.ismargin, d.dontmargin, d.solveInProgress, d.solvedCount)
-end
-
-# function compare(a::VariableNodeData, b::VariableNodeData)
-#     a.val != b.val && @debug("val is not equal")==nothing && return false
-#     a.bw != b.bw && @debug("bw is not equal")==nothing && return false
-#     a.BayesNetOutVertIDs != b.BayesNetOutVertIDs && @debug("BayesNetOutVertIDs is not equal")==nothing && return false
-#     a.dimIDs != b.dimIDs && @debug("dimIDs is not equal")==nothing && return false
-#     a.dims != b.dims && @debug("dims is not equal")==nothing && return false
-#     a.eliminated != b.eliminated && @debug("eliminated is not equal")==nothing && return false
-#     a.BayesNetVertID != b.BayesNetVertID && @debug("BayesNetVertID is not equal")==nothing && return false
-#     a.separator != b.separator && @debug("separator is not equal")==nothing && return false
-#     a.initialized != b.initialized && @debug("initialized is not equal")==nothing && return false
-#     abs(a.inferdim - b.inferdim) > 1e-14 && @debug("inferdim is not equal")==nothing && return false
-#     a.ismargin != b.ismargin && @debug("ismargin is not equal")==nothing && return false
-#     a.dontmargin != b.dontmargin && @debug("dontmargin is not equal")==nothing && return false
-#     a.solveInProgress != b.solveInProgress && @debug("solveInProgress is not equal")==nothing && return false
-#     typeof(a.softtype) != typeof(b.softtype) && @debug("softtype is not equal")==nothing && return false
-#     return true
-# end
-
-#FIXME
-# """
-#     $(SIGNATURES)
-# Equality check for VariableNodeData.
-# """
-# function ==(a::VariableNodeData,b::VariableNodeData, nt::Symbol=:var)
-#   return DistributedFactorGraphs.compare(a,b)
-# end
-
-# """
-#     ==(x::T, y::T) where T <: AbstractPointParametricEst
-# Equality check for AbstractPointParametricEst.
-# """
-# @generated function ==(x::T, y::T) where T <: AbstractPointParametricEst
-#     mapreduce(n -> :(x.$n == y.$n), (a,b)->:($a && $b), fieldnames(x))
-# end
-#
-# @generated function Base.:(==)(x::T, y::T) where T <: Union{DFGFactorSummary, DFGVariableSummary, SkeletonDFGVariable, SkeletonDFGFactor}
-#     mapreduce(n -> :(x.$n == y.$n), (a,b)->:($a && $b), fieldnames(x))
-# end
-
-#FIXME
-# """
-#     $(SIGNATURES)
-# Equality check for DFGVariable.
-# """
-# function ==(a::DFGVariable, b::DFGVariable)::Bool
-#     return compareVariable(a, b)
-# end
-
-"""
-    $(SIGNATURES)
-Convert a DFGVariable to a DFGVariableSummary.
-"""
-function convert(::Type{DFGVariableSummary}, v::DFGVariable)
-    return DFGVariableSummary(v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.ppeDict), Symbol(typeof(getSofttype(v))), v.bigData, v._internalId)
-end
-
-"""
-    $(SIGNATURES)
-Add Big Data Entry to a DFG variable
-"""
-function addBigDataEntry!(var::AbstractDFGVariable, bde::AbstractBigDataEntry)::AbstractBigDataEntry
-    haskey(var.bigData,bde.key) && error("BigData entry $(bde.key) already exists in variable")
-    var.bigData[bde.key] = bde
-    return bde
-end
-
-"""
-    $(SIGNATURES)
-Add Big Data Entry to distributed factor graph.
-Should be extended if DFG variable is not returned by reference.
-"""
-function addBigDataEntry!(dfg::AbstractDFG, label::Symbol, bde::AbstractBigDataEntry)::AbstractBigDataEntry
-    return addBigDataEntry!(getVariable(dfg, label), bde)
-end
-
-"""
-    $(SIGNATURES)
-Get big data entry
-"""
-function getBigDataEntry(var::AbstractDFGVariable, key::Symbol)::Union{Nothing, AbstractBigDataEntry}
-    !haskey(var.bigData, key) && (error("BigData entry $(key) does not exist in variable"); return nothing)
-    return var.bigData[key]
-end
-
-function getBigDataEntry(dfg::AbstractDFG, label::Symbol, key::Symbol)::Union{Nothing, AbstractBigDataEntry}
-    return getBigDataEntry(getVariable(dfg, label), key)
-end
-
-"""
-    $(SIGNATURES)
-Update big data entry
-"""
-function updateBigDataEntry!(var::AbstractDFGVariable,  bde::AbstractBigDataEntry)::Union{Nothing, AbstractBigDataEntry}
-    !haskey(var.bigData,bde.key) && (@warn "$(bde.key) does not exist in variable, adding")
-    var.bigData[bde.key] = bde
-    return bde
-end
-function updateBigDataEntry!(dfg::AbstractDFG, label::Symbol,  bde::AbstractBigDataEntry)::Union{Nothing, AbstractBigDataEntry}
-    # !isVariable(dfg, label) && return nothing
-    return updateBigDataEntry!(getVariable(dfg, label), bde)
-end
-
-"""
-    $(SIGNATURES)
-Delete big data entry from the factor graph.
-Note this doesn't remove it from any data stores.
-"""
-function deleteBigDataEntry!(var::AbstractDFGVariable, key::Symbol)::Union{Nothing, AbstractDFGVariable} #users responsibility to delete big data in db before deleting entry
-    bde = getBigDataEntry(var, key)
-    bde == nothing && return nothing
-    delete!(var.bigData, key)
-    return var
-end
-function deleteBigDataEntry!(dfg::AbstractDFG, label::Symbol, key::Symbol)::Union{Nothing, AbstractDFGVariable} #users responsibility to delete big data in db before deleting entry
-    !isVariable(dfg, label) && return nothing
-    return deleteBigDataEntry!(getVariable(dfg, label), key)
-end
-
-function deleteBigDataEntry!(var::AbstractDFGVariable, entry::AbstractBigDataEntry)::Union{Nothing, AbstractDFGVariable} #users responsibility to delete big data in db before deleting entry
-    return deleteBigDataEntry!(var, entry.key)
-end
-
-"""
-    $(SIGNATURES)
-Get big data entries, Vector{AbstractBigDataEntry}
-"""
-function getBigDataEntries(var::AbstractDFGVariable)::Vector{AbstractBigDataEntry}
-    #or should we return the iterator, Base.ValueIterator{Dict{Symbol,AbstractBigDataEntry}}?
-    collect(values(var.bigData))
-end
-function getBigDataEntries(dfg::AbstractDFG, label::Symbol)::Union{Nothing, Vector{AbstractBigDataEntry}}
-    !isVariable(dfg, label) && return nothing
-    #or should we return the iterator, Base.ValueIterator{Dict{Symbol,AbstractBigDataEntry}}?
-    getBigDataEntries(getVariable(dfg, label))
-end
-
-
-"""
-    $(SIGNATURES)
-getBigDataKeys
-"""
-function getBigDataKeys(var::AbstractDFGVariable)::Vector{Symbol}
-    collect(keys(var.bigData))
-end
-function getBigDataKeys(dfg::AbstractDFG, label::Symbol)::Union{Nothing, Vector{Symbol}}
-    !isVariable(dfg, label) && return nothing
-    getBigDataKeys(getVariable(dfg, label))
-end
-
-# TODO: Temporary home
-# Accessors
-
-#deprecated
-# """
-#     $SIGNATURES
-#
-# Return dictionary with Parametric Point Estimates (PPE) values.
-#
-# Notes:
-# - Equivalent to `getPPEs`.
-# """
-# getVariablePPEs(vari::VariableDataLevel1)::Dict = vari.ppeDict
-#
-# """
-#     $SIGNATURES
-#
-# Return dictionary with Parametric Point Estimates (PPE) values.
-#
-# Notes:
-# - Equivalent to `getVariablePPEs`.
-# """
-# getPPEs(vari::VariableDataLevel1)::Dict = getVariablePPEs(vari)
-#
-#
-# """
-#     $SIGNATURES
-#
-# Get the parametric point estimate (PPE) for a variable in the factor graph.
-#
-# Notes
-# - Defaults on keywords `solveKey` and `method`
-#
-# Related
-#
-# getMeanPPE, getMaxPPE, getKDEMean, getKDEFit, getPPEs, getVariablePPEs
-# """
-# function getVariablePPE(vari::VariableDataLevel1, solveKey::Symbol=:default)
-#     ppeDict = getVariablePPEs(vari)
-#     return haskey(ppeDict, solveKey) ? ppeDict[solveKey] : nothing
-# end
-#
-# getVariablePPE(dfg::AbstractDFG, vsym::Symbol, solveKey::Symbol=:default) = getVariablePPE(getVariable(dfg,vsym), solveKey)
-
-
+##------------------------------------------------------------------------------
+## softtype
+##------------------------------------------------------------------------------
 """
    $(SIGNATURES)
 
@@ -288,47 +36,162 @@ getVariableType
 function getSofttype(vnd::VariableNodeData)
   return vnd.softtype
 end
-function getSofttype(v::DFGVariable, solvekey::Symbol=:default)
-  return v.solverDataDict[solvekey].softtype # Get instantiated form of the parameter for the DFGVariable
+
+getSofttype(v::DFGVariable, solvekey::Symbol=:default) = getSofttype(getSolverData(v, solvekey))
+
+getSofttype(dfg::AbstractDFG, lbl::Symbol, solvekey::Symbol=:default) = getSofttype(getVariable(dfg,lbl), solvekey)
+
+"""
+    getVariableType
+
+Alias for [`getSofttype`](@ref).
+"""
+getVariableType(params...) = getSofttype(params...)
+
+##------------------------------------------------------------------------------
+## solvedCount
+##------------------------------------------------------------------------------
+
+"""
+    $SIGNATURES
+
+Get the number of times a variable has been inferred -- i.e. `solvedCount`.
+
+Related
+
+isSolved, setSolvedCount!
+"""
+getSolvedCount(v::VariableNodeData) = v.solvedCount
+getSolvedCount(v::VariableDataLevel2, solveKey::Symbol=:default) = getSolverData(v, solveKey) |> getSolvedCount
+getSolvedCount(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = getSolvedCount(getVariable(dfg, sym), solveKey)
+
+
+"""
+    $SIGNATURES
+
+Update/set the `solveCount` value.
+
+Related
+
+getSolved, isSolved
+"""
+setSolvedCount!(v::VariableNodeData, val::Int) = v.solvedCount = val
+setSolvedCount!(v::VariableDataLevel2, val::Int, solveKey::Symbol=:default) = setSolvedCount!(getSolverData(v, solveKey), val)
+setSolvedCount!(dfg::AbstractDFG, sym::Symbol, val::Int, solveKey::Symbol=:default) = setSolvedCount!(getVariable(dfg, sym), val, solveKey)
+
+
+"""
+    $SIGNATURES
+
+Boolean on whether the variable has been solved.
+
+Related
+
+getSolved, setSolved!
+"""
+isSolved(v::VariableNodeData) = 0 < v.solvedCount
+isSolved(v::VariableDataLevel2, solveKey::Symbol=:default) = getSolverData(v, solveKey) |> isSolved
+isSolved(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = isSolved(getVariable(dfg, sym), solveKey)
+
+##------------------------------------------------------------------------------
+## initialized
+##------------------------------------------------------------------------------
+"""
+    $SIGNATURES
+
+Returns state of vertex data `.initialized` flag.
+
+Notes:
+- used by both factor graph variable and Bayes tree clique logic.
+"""
+function isInitialized(var::DFGVariable, key::Symbol=:default)::Bool
+      data = getSolverData(var, key)
+      if data == nothing
+          #TODO we still have a mixture of 2 error behaviours
+        return false
+      else
+          return data.initialized
+    end
 end
 
-"""
-    $SIGNATURES
-
-Retrieve the soft type name symbol for a DFGVariableSummary. ie :Point2, Pose2, etc.
-TODO, DO NOT USE v.softtypename in DFGVariableSummary
-"""
-getSofttype(v::DFGVariableSummary)::Symbol = v.softtypename
-
-
-"""
-    $SIGNATURES
-
-Retrieve solver data structure stored in a variable.
-"""
-function getSolverData(v::DFGVariable, key::Symbol=:default)
-    return haskey(v.solverDataDict, key) ? v.solverDataDict[key] : nothing
+function isInitialized(dfg::AbstractDFG, label::Symbol, key::Symbol=:default)::Bool
+  return isInitialized(getVariable(dfg, label), key)
 end
 
+
+##==============================================================================
+## Variables
+##==============================================================================
+#
+# |                     | label | tags | timestamp | ppe | softtypename | solvable | solverData | smallData | bigData |
+# |---------------------|:-----:|:----:|:---------:|:---:|:------------:|:--------:|:----------:|:---------:|:-------:|
+# | SkeletonDFGVariable |   X   |   X  |           |     |              |          |            |           |         |
+# | DFGVariableSummary  |   X   |   X  |     X     |  X  |       X      |          |            |           |    X    |
+# | DFGVariable         |   X   |   X  |     x     |  X  |              |     X    |      X     |     X     |    X    |
+#
+##------------------------------------------------------------------------------
+
+##------------------------------------------------------------------------------
+## label
+##------------------------------------------------------------------------------
+
+## COMMON
+# getLabel
+
+##------------------------------------------------------------------------------
+## tags
+##------------------------------------------------------------------------------
+
+## COMMON
+# getTags
+# setTags!
+
+##------------------------------------------------------------------------------
+## timestamp
+##------------------------------------------------------------------------------
+
+## COMMON
+# getTimestamp
+
 """
     $SIGNATURES
 
-Set solver data structure stored in a variable.
+Set the timestamp of a DFGVariable object returning a new DFGVariable.
+Note:
+Since `timestamp` is not mutable `setTimestamp` returns a new variable with the updated timestamp.
+Use `updateVariable!` to update it in the factor graph.
 """
-#TODO Repeated functionality?
-setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v.solverDataDict[key] = data
+function setTimestamp(v::DFGVariable, ts::DateTime)
+    return DFGVariable(v.label, ts, v.tags, v.ppeDict, v.solverDataDict, v.smallData, v.bigData, v._dfgNodeParams)
+end
+
+function setTimestamp(v::DFGVariableSummary, ts::DateTime)
+    return DFGVariableSummary(v.label, ts, v.tags, v.estimateDict, v.softtypename, v.bigData, v._internalId)
+end
+
+#TODO something like:
+# setTimestamp!(dfg::AbstractDFG, var::DFGVariable, ts::DateTime) = updateVariable!(dfg, setTimestamp(var, ts))
+
+##------------------------------------------------------------------------------
+## _dfgNodeParams [_internalId, solvable]
+##------------------------------------------------------------------------------
+
+## COMMON: solvable
+# getSolvable
+# setSolvable!
+# isSolvable
+
+## COMMON: _internalId
+# getInternalId
+
+##------------------------------------------------------------------------------
+## ppeDict
+##------------------------------------------------------------------------------
 
 """
     $SIGNATURES
 
-Get solver data dictionary for a variable.
-"""
-getSolverDataDict(v::DFGVariable) = v.solverDataDict
-
-"""
-    $SIGNATURES
-
-Get the PPE dictionary for a variable. Its use is not recomended.
+Get the PPE dictionary for a variable. Its direct use is not recomended.
 """
 getPPEDict(v::VariableDataLevel1) = v.ppeDict
 
@@ -347,22 +210,53 @@ Related
 getMeanPPE, getMaxPPE, getKDEMean, getKDEFit, getPPEs, getVariablePPEs
 """
 function getPPE(vari::VariableDataLevel1, solveKey::Symbol=:default)
-    return  getPPEs(vari)[solveKey]
+    return  getPPEDict(vari)[solveKey]
     # return haskey(ppeDict, solveKey) ? ppeDict[solveKey] : nothing
 end
 
-
+##------------------------------------------------------------------------------
+## solverDataDict
+##------------------------------------------------------------------------------
 
 """
-$SIGNATURES
+    $SIGNATURES
 
+Get solver data dictionary for a variable.
+"""
+getSolverDataDict(v::DFGVariable) = v.solverDataDict
+
+
+# TODO move to crud, don't know if this should exist, should rather always update with fg object to simplify inmem vs cloud
+"""
+    $SIGNATURES
+
+Retrieve solver data structure stored in a variable.
+"""
+function getSolverData(v::DFGVariable, key::Symbol=:default)
+    #TODO this does not fit in with some of the other error behaviour. but its used so added @error
+    vnd =  haskey(v.solverDataDict, key) ? v.solverDataDict[key] : (@error "Variable does not have solver data $(key)"; nothing)
+    return vnd
+end
+
+#TODO Repeated functionality? same as update
+"""
+    $SIGNATURES
+Set solver data structure stored in a variable.
+"""
+setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v.solverDataDict[key] = data
+
+##------------------------------------------------------------------------------
+## smallData
+##------------------------------------------------------------------------------
+
+"""
+    $(SIGNATURES)
 Get the small data for a variable.
 """
 getSmallData(v::DFGVariable)::Dict{String, String} = v.smallData
 
 """
-$SIGNATURES
-
+    $(SIGNATURES)
 Set the small data for a variable.
 This will overwrite old smallData.
 """
@@ -371,67 +265,288 @@ function setSmallData!(v::DFGVariable, smallData::Dict{String, String})::Dict{St
     merge!(v.smallData, smallData)
 end
 
-# WIP
-# """
-# $SIGNATURES
-#
-# Set the small data for a variable.
-# """
-# function addSmallData!(v::DFGVariable, smallData::Dict{String, String})::Dict{String, String}
-#     v.smallData = smallData
-# end
-#
-# function updateSmallData!()
-# end
-#
-# function deleteSmallData!()
-# end
+##------------------------------------------------------------------------------
+## bigData
+##------------------------------------------------------------------------------
 
-"""
-$SIGNATURES
+## see Bigdata Folder
 
-Get the variable ordering for this factor.
-Should be equivalent to getNeighbors unless something was deleted in the graph.
-"""
-getVariableOrder(fct::DFGFactor)::Vector{Symbol} = fct._variableOrderSymbols
-getVariableOrder(dfg::AbstractDFG, fct::Symbol) = getVariableOrder(getFactor(dfg, fct))
+##------------------------------------------------------------------------------
+## softtypename
+##------------------------------------------------------------------------------
+## getter in DFGVariableSummary only
+## can be utility function for others
+## TODO this should return the softtype object, or try to. it should be getSofttypename for the accessor
+## TODO Consider parameter N in softtype for dims, and storing constructor in softtypename
+## TODO or just not having this function at all
+# getSofttype(v::DFGVariableSummary) = v.softypename()
+##------------------------------------------------------------------------------
 
 """
     $SIGNATURES
+Retrieve the soft type name symbol for a DFGVariableSummary. ie :Point2, Pose2, etc.
+"""
+getSofttypename(v::DFGVariableSummary)::Symbol = v.softtypename
 
-Get the number of times a variable has been inferred -- i.e. `solvedCount`.
+
+function getSofttype(v::DFGVariableSummary)::InferenceVariable
+    @warn "Looking for type in `Main`. Only use if softtype has only one implementation,ie. Pose2. Otherwise use the full variable."
+    return getfield(Main, v.softtypename)()
+end
+
+##==============================================================================
+## Layer 2 CRUD and SET
+##==============================================================================
+
+##==============================================================================
+## TAGS - See CommonAccessors
+##==============================================================================
+
+##==============================================================================
+## Variable Node Data
+##==============================================================================
+##------------------------------------------------------------------------------
+## CRUD: get, add, update, delete
+##------------------------------------------------------------------------------
+
+"""
+    $(SIGNATURES)
+Get variable solverdata for a given solve key.
+"""
+function getVariableSolverData(dfg::AbstractDFG, variablekey::Symbol, solvekey::Symbol=:default)::VariableNodeData
+    v = getVariable(dfg, variablekey)
+    !haskey(v.solverDataDict, solvekey) && error("Solve key '$solvekey' not found in variable '$variablekey'")
+    return v.solverDataDict[solvekey]
+end
+
+
+"""
+    $(SIGNATURES)
+Add variable solver data, errors if it already exists.
+"""
+function addVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData, solvekey::Symbol=:default)::VariableNodeData
+    var = getVariable(dfg, variablekey)
+    if haskey(var.solverDataDict, solvekey)
+        error("VariableNodeData '$(solvekey)' already exists")
+    end
+    var.solverDataDict[solvekey] = vnd
+    return vnd
+end
+
+"""
+    $(SIGNATURES)
+Add a new solver data  entry from a deepcopy of the source variable solver data.
+NOTE: Copies the solver data.
+"""
+addVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable, solvekey::Symbol=:default) =
+    addVariableSolverData!(dfg, sourceVariable.label, deepcopy(getSolverData(sourceVariable, solvekey)), solvekey)
+
+
+"""
+    $(SIGNATURES)
+Update variable solver data if it exists, otherwise add it.
+"""
+function updateVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData, solvekey::Symbol=:default)::VariableNodeData
+    #This is basically just setSolverData
+    var = getVariable(dfg, variablekey)
+    if !haskey(var.solverDataDict, solvekey)
+        @warn "VariableNodeData '$(solvekey)' does not exist, adding"
+    end
+    #for InMemoryDFGTypes, cloud would update here
+    var.solverDataDict[solvekey] = vnd
+    return vnd
+end
+
+"""
+    $(SIGNATURES)
+Update variable solver data if it exists, otherwise add it.
+NOTE: Copies the solver data.
+"""
+updateVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable, solvekey::Symbol=:default) =
+    updateVariableSolverData!(dfg, sourceVariable.label, deepcopy(getSolverData(sourceVariable, solvekey)), solvekey)
+
+"""
+    $(SIGNATURES)
+Update variable solver data if it exists, otherwise add it.
+"""
+function updateVariableSolverData!(dfg::AbstractDFG, sourceVariables::Vector{<:DFGVariable}, solvekey::Symbol=:default)
+    #I think cloud would do this in bulk for speed
+    for var in sourceVariables
+        updateVariableSolverData!(dfg, var.label, getSolverData(var, solvekey), solvekey)
+    end
+end
+
+"""
+    $(SIGNATURES)
+Delete variable solver data, returns the deleted element.
+"""
+function deleteVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, solvekey::Symbol=:default)::VariableNodeData
+    var = getVariable(dfg, variablekey)
+
+    if !haskey(var.solverDataDict, solvekey)
+        error("VariableNodeData '$(solvekey)' does not exist")
+    end
+    vnd = pop!(var.solverDataDict, solvekey)
+    return vnd
+end
+
+"""
+    $(SIGNATURES)
+Delete variable solver data, returns the deleted element.
+"""
+deleteVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable, solvekey::Symbol=:default) =
+    deleteVariableSolverData!(dfg, sourceVariable.label, solvekey)
+
+##------------------------------------------------------------------------------
+## SET: list, merge
+##------------------------------------------------------------------------------
+
+"""
+    $(SIGNATURES)
+List all the solver data keys in the variable.
+"""
+function listVariableSolverData(dfg::AbstractDFG, variablekey::Symbol)::Vector{Symbol}
+    v = getVariable(dfg, variablekey)
+    return collect(keys(v.solverDataDict))
+end
+
+"""
+    $(SIGNATURES)
+Merges and updates solver and estimate data for a variable (variable can be from another graph).
+If the same key is present in another collection, the value for that key will be the value it has in the last collection listed (updated).
+Note: Makes a copy of the estimates and solver data so that there is no coupling between graphs.
+"""
+function mergeVariableSolverData!(destVariable::DFGVariable, sourceVariable::DFGVariable)::DFGVariable
+    # We don't know which graph this came from, must be copied!
+    merge!(destVariable.solverDataDict, deepcopy(sourceVariable.solverDataDict))
+    return destVariable
+end
+
+##==============================================================================
+## Point Parametric Estimates
+##==============================================================================
+
+##------------------------------------------------------------------------------
+## CRUD: get, add, update, delete
+##------------------------------------------------------------------------------
+
+"""
+    $(SIGNATURES)
+Get the parametric point estimate (PPE) for a variable in the factor graph for a given solve key.
+
+Notes
+- Defaults on keywords `solveKey` and `method`
 
 Related
-
-isSolved, setSolvedCount!
+getMeanPPE, getMaxPPE, getKDEMean, getKDEFit, getPPEs, getVariablePPEs
 """
-getSolvedCount(v::VariableNodeData) = v.solvedCount
-getSolvedCount(v::VariableDataLevel2, solveKey::Symbol=:default) = getSolverData(v, solveKey) |> getSolvedCount
-getSolvedCount(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = getSolvedCount(getVariable(dfg, sym), solveKey)
+function getPPE(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol=:default)::AbstractPointParametricEst
+    v = getVariable(dfg, variablekey)
+    !haskey(v.ppeDict, ppekey) && error("PPE key '$ppekey' not found in variable '$variablekey'")
+    return v.ppeDict[ppekey]
+end
 
-"""
-    $SIGNATURES
-
-Boolean on whether the variable has been solved.
-
-Related
-
-getSolved, setSolved!
-"""
-isSolved(v::VariableNodeData) = 0 < v.solvedCount
-isSolved(v::VariableDataLevel2, solveKey::Symbol=:default) = getSolverData(v, solveKey) |> isSolved
-isSolved(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = isSolved(getVariable(dfg, sym), solveKey)
-
+# Not the most efficient call but it at least reuses above (in memory it's probably ok)
+getPPE(dfg::AbstractDFG, sourceVariable::VariableDataLevel1, ppekey::Symbol=default)::AbstractPointParametricEst = getPPE(dfg, sourceVariable.label, ppekey)
 
 """
-    $SIGNATURES
-
-Update/set the `solveCount` value.
-
-Related
-
-getSolved, isSolved
+    $(SIGNATURES)
+Add variable PPE, errors if it already exists.
 """
-setSolvedCount!(v::VariableNodeData, val::Int) = v.solvedCount = val
-setSolvedCount!(v::VariableDataLevel2, val::Int, solveKey::Symbol=:default) = setSolvedCount!(getSolverData(v, solveKey), val)
-setSolvedCount!(dfg::AbstractDFG, sym::Symbol, val::Int, solveKey::Symbol=:default) = setSolvedCount!(getVariable(dfg, sym), val, solveKey)
+function addPPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default)::AbstractPointParametricEst where P <: AbstractPointParametricEst
+    var = getVariable(dfg, variablekey)
+    if haskey(var.ppeDict, ppekey)
+        error("PPE '$(ppekey)' already exists")
+    end
+    var.ppeDict[ppekey] = ppe
+    return ppe
+end
+
+"""
+    $(SIGNATURES)
+Add a new PPE entry from a deepcopy of the source variable PPE.
+NOTE: Copies the solver data.
+"""
+addPPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol=:default) =
+    addPPE!(dfg, sourceVariable.label, deepcopy(getPPE(sourceVariable, ppekey)), ppekey)
+
+
+"""
+    $(SIGNATURES)
+Update PPE data if it exists, otherwise add it.
+"""
+function updatePPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default)::P where P <: AbstractPointParametricEst
+
+    var = getVariable(dfg, variablekey)
+    if !haskey(var.ppeDict, ppekey)
+        @warn "PPE '$(ppekey)' does not exist, adding"
+    end
+    #for InMemoryDFGTypes, cloud would update here
+    var.ppeDict[ppekey] = ppe
+    return ppe
+end
+
+"""
+    $(SIGNATURES)
+Update PPE data if it exists, otherwise add it.
+NOTE: Copies the PPE data.
+"""
+updatePPE!(dfg::AbstractDFG, sourceVariable::VariableDataLevel1, ppekey::Symbol=:default) =
+    updatePPE!(dfg, sourceVariable.label, deepcopy(getPPE(sourceVariable, ppekey)), ppekey)
+
+"""
+    $(SIGNATURES)
+Update PPE data if it exists, otherwise add it.
+"""
+function updatePPE!(dfg::AbstractDFG, sourceVariables::Vector{<:VariableDataLevel1}, ppekey::Symbol=:default)
+    #I think cloud would do this in bulk for speed
+    for var in sourceVariables
+        updatePPE!(dfg, var.label, getPPE(dfg, var, ppekey), ppekey)
+    end
+end
+
+"""
+    $(SIGNATURES)
+Delete PPE data, returns the deleted element.
+"""
+function deletePPE!(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol=:default)::AbstractPointParametricEst
+    var = getVariable(dfg, variablekey)
+
+    if !haskey(var.ppeDict, ppekey)
+        error("VariableNodeData '$(ppekey)' does not exist")
+    end
+    vnd = pop!(var.ppeDict, ppekey)
+    return vnd
+end
+
+"""
+    $(SIGNATURES)
+Delete PPE data, returns the deleted element.
+"""
+deletePPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol=:default) =
+    deletePPE!(dfg, sourceVariable.label, ppekey)
+
+##------------------------------------------------------------------------------
+## SET: list, merge
+##------------------------------------------------------------------------------
+
+"""
+    $(SIGNATURES)
+List all the PPE data keys in the variable.
+"""
+function listPPE(dfg::AbstractDFG, variablekey::Symbol)::Vector{Symbol}
+    v = getVariable(dfg, variablekey)
+    return collect(keys(v.ppeDict))
+end
+
+#TODO API and only correct level
+"""
+    $(SIGNATURES)
+Merges and updates solver and estimate data for a variable (variable can be from another graph).
+Note: Makes a copy of the estimates and solver data so that there is no coupling between graphs.
+"""
+function mergePPEs!(destVariable::AbstractDFGVariable, sourceVariable::AbstractDFGVariable)::AbstractDFGVariable
+    # We don't know which graph this came from, must be copied!
+    merge!(destVariable.ppeDict, deepcopy(sourceVariable.ppeDict))
+    return destVariable
+end

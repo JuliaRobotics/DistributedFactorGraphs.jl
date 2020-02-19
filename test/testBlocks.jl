@@ -167,9 +167,9 @@ function DFGVariableSCA()
     small = Dict("small"=>"data")
     testTimestamp = now()
     # Constructors
-    v1 = DFGVariable(v1_lbl, TestSofttype1(), tags=v1_tags, solvable=0)
-    v2 = DFGVariable(:b, TestSofttype2(), tags=Set([:VARIABLE, :LANDMARK]))
-    v3 = DFGVariable(:c, TestSofttype2())
+    v1 = DFGVariable(v1_lbl, TestSofttype1(), tags=v1_tags, solvable=0, solverDataDict=Dict(:default=>VariableNodeData{TestSofttype1}()))
+    v2 = DFGVariable(:b, VariableNodeData{TestSofttype2}(), tags=Set([:VARIABLE, :LANDMARK]))
+    v3 = DFGVariable(:c, VariableNodeData{TestSofttype2}())
 
 
     getSolverData(v1).solveInProgress = 1
@@ -467,7 +467,9 @@ function  PPETestBlock!(fg, v1)
 
     #FIXME copied from lower
     @test @test_deprecated getVariablePPEs(v1) == v1.ppeDict
-    @test_throws KeyError getVariablePPE(v1, :notfound)
+    @test_throws KeyError getPPE(v1, :notfound)
+    #TODO
+    # @test_deprecated getVariablePPE(v1)
 
     # Add a new PPE of type MeanMaxPPE to :x0
     ppe = MeanMaxPPE(:default, [0.0], [0.0], [0.0])
@@ -708,6 +710,9 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test lsf(fg, TestFunctorSingleton) == [:af1]
         @test lsfWho(fg, :TestFunctorInferenceType1) == [:abf1]
 
+        @test getSofttype(v1) == TestSofttype1()
+        @test getSofttype(fg,:a) == TestSofttype1()
+
         @test getVariableType(v1) == TestSofttype1()
         @test getVariableType(fg,:a) == TestSofttype1()
 
@@ -885,8 +890,8 @@ function connectivityTestGraph(::Type{T}; VARTYPE=DFGVariable, FACTYPE=DFGFactor
 
     dfg = T()
 
-    vars = vcat(map(n -> VARTYPE(Symbol("x$n"), TestSofttype1()), 1:numNodesType1),
-                map(n -> VARTYPE(Symbol("x$(numNodesType1+n)"), TestSofttype2()), 1:numNodesType2))
+    vars = vcat(map(n -> VARTYPE(Symbol("x$n"), VariableNodeData{TestSofttype1}()), 1:numNodesType1),
+                map(n -> VARTYPE(Symbol("x$(numNodesType1+n)"), VariableNodeData{TestSofttype2}()), 1:numNodesType2))
 
     foreach(v -> addVariable!(dfg, v), vars)
 
@@ -900,7 +905,7 @@ function connectivityTestGraph(::Type{T}; VARTYPE=DFGVariable, FACTYPE=DFGFactor
         setSolvable!(dfg, :x7x8f1, 0)
 
     else
-        facs = map(n -> addFactor!(dfg, [vars[n], vars[n+1]],                 FACTYPE(Symbol("x$(n)x$(n+1)f1"))), 1:length(vars)-1)
+        facs = map(n -> addFactor!(dfg, [vars[n], vars[n+1]], FACTYPE(Symbol("x$(n)x$(n+1)f1"))), 1:length(vars)-1)
     end
 
     return (dfg=dfg, variables=vars, factors=facs)
@@ -1006,7 +1011,8 @@ function  Summaries(testDFGAPI)
                 @test getproperty(getVariable(dfg, v), field) == getproperty(getVariable(summaryGraph, v), field)
             else
                 # Special case to check the symbol softtype is equal to the full softtype.
-                @test Symbol(typeof(getSofttype(getVariable(dfg, v)))) == getSofttype(getVariable(summaryGraph, v))
+                @test Symbol(typeof(getSofttype(getVariable(dfg, v)))) == getSofttypename(getVariable(summaryGraph, v))
+                @test getSofttype(getVariable(dfg, v)) == getSofttype(getVariable(summaryGraph, v))
             end
         end
     end
@@ -1021,8 +1027,8 @@ function ProducingDotFiles(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
     # "Producing Dot Files"
     # create a simpler graph for dot testing
     dotdfg = testDFGAPI()
-    v1 = VARTYPE(:a, TestSofttype1())
-    v2 = VARTYPE(:b, TestSofttype1())
+    v1 = VARTYPE(:a, VariableNodeData{TestSofttype1}())
+    v2 = VARTYPE(:b, VariableNodeData{TestSofttype1}())
     if FACTYPE==DFGFactor
         f1 = DFGFactor{Int, :Symbol}(:abf1)
     else

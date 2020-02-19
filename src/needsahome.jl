@@ -1,6 +1,7 @@
-export buildSubgraphFromLabels!, buildSubgraphFromLabels!_SPECIAL
-export buildSubgraphFromLabels
 
+# TODO needsahome: home should be in IIF, calling just deepcopyGraph, or copyGraph
+#                  Into, Labels, Subgraph are all implied from the parameters.
+#                  can alies names but like Sam suggested only on copy is needed.
 
 """
     $SIGNATURES
