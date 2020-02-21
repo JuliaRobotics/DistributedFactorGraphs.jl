@@ -80,13 +80,13 @@ Dev Notes
 """
 function printVariable(fgl::AbstractDFG, vsym::Symbol, solveKey::Symbol=:default)
   vert = getVariable(fgl, vsym)
-  vnd = solverData(vert, solveKey)
+  vnd = getSolverData(vert, solveKey)
   println("label: $(vert.label)")
   println("tags: $(getTags(vert))")
   println("size marginal samples $(size(vnd.val))")
   println("kde bandwidths: $((vnd.bw)[:,1])")
-  if 0 < length(getVariablePPEs(vert))
-    println("PPE.suggested: $(round.(getVariablePPE(vert).suggested,digits=4))")
+  if 0 < length(getPPEDict(vert))
+    println("PPE.suggested: $(round.(getPPE(vert).suggested,digits=4))")
   else
     println("No PPEs")
   end
