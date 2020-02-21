@@ -217,12 +217,8 @@ function DFGVariableSCA()
     #no accessors on BigData, only CRUD
 
     #deprecated
-    @test @test_deprecated getData(v1) === v1.solverDataDict[:default]
     @test @test_deprecated solverData(v1, :default) === v1.solverDataDict[:default]
 
-    #what TODO
-    # @test_deprecated setSolverData()
-    # setSolverData!()
 
     # #TODO sort out
     # getPPEs
@@ -302,7 +298,6 @@ function  DFGFactorSCA()
 
     # Deprecated functions
     @test @test_deprecated solverData(f1) === f1.solverData
-    @test @test_deprecated getData(f1) === f1.data
 
     # create f0 here for a later timestamp
     f0 = DFGFactor(:af1, [:a], gfnd_prior, tags = Set([:PRIOR]))
@@ -591,7 +586,6 @@ function  VSDTestBlock!(fg, v1)
 
     #FIXME copied from lower
     @test getSolverData(v1) === v1.solverDataDict[:default]
-    @test @test_logs (:warn, r"[Dd]eprecate") getData(v1) === v1.solverDataDict[:default]
     @test @test_logs (:warn, r"[Dd]eprecate") solverData(v1, :default) === v1.solverDataDict[:default]
 
     # Add new VND of type ContinuousScalar to :x0
