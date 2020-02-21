@@ -200,12 +200,11 @@ function DFGVariableSCA()
     @test setTags!(v3, testTags) == Set(testTags)
     @test setTags!(v3, Set(testTags)) == Set(testTags)
 
-    #TODO Document
     #NOTE  a variable's timestamp is considered similar to its label.  setTimestamp! (not implemented) would create a new variable and call updateVariable!
     v1ts = setTimestamp(v1, testTimestamp)
     @test getTimestamp(v1ts) == testTimestamp
     #follow with updateVariable!(fg, v1ts)
-    # setTimestamp!(v1, testTimestamp) not implemented, we can do an setTimestamp() updateVariable!() for a setTimestamp!(dfg, v1, testTimestamp)
+
     @test_throws MethodError setTimestamp!(v1, testTimestamp)
 
     @test setSolvable!(v1, 1) == 1
@@ -257,7 +256,7 @@ function  DFGFactorSCA()
     f1 = DFGFactor{TestCCW{TestFunctorInferenceType1}, Symbol}(f1_lbl)
     f1 = DFGFactor(f1_lbl, [:a,:b], gfnd, tags = f1_tags, solvable=0)
 
-    f2 = DFGFactor{TestFunctorInferenceType1, Symbol}(:f2)
+    f2 = DFGFactor{TestFunctorInferenceType1, Symbol}(:bcf1)
 
     @test getLabel(f1) == f1_lbl
     @test getTags(f1) == f1_tags
@@ -291,7 +290,7 @@ function  DFGFactorSCA()
     f1ts = setTimestamp(f1, testTimestamp)
     @test !(f1ts === f1)
     @test getTimestamp(f1ts) == testTimestamp
-    #follow with updateVariable!(fg, v1ts)
+    #follow with updateFactor!(fg, v1ts)
     @test setTimestamp!(f1, testTimestamp) == testTimestamp
     #/TODO
 
@@ -341,11 +340,20 @@ function  VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
 
     @test getAddHistory(fg) == [:a, :b, :c]
 
+    # Extra timestamp functions https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/315
+    if !(v1 isa SkeletonDFGVariable)
+        newtimestamp = now()
+        @test !(setTimestamp!(fg, :c, newtimestamp) === v3)
+        @test getVariable(fg, :c) |> getTimestamp == newtimestamp
+
+        @test !(setTimestamp!(fg, :bcf1, newtimestamp) === f2)
+        @test getFactor(fg, :bcf1) |> getTimestamp == newtimestamp
+    end
     #deletions
-    @test deleteVariable!(fg, v3) == v3
+    @test getVariable(fg, :c) === deleteVariable!(fg, v3)
     @test_throws ErrorException deleteVariable!(fg, v3)
     @test setdiff(ls(fg),[:a,:b]) == []
-    @test deleteFactor!(fg, f2) === f2
+    @test getFactor(fg, :bcf1) === deleteFactor!(fg, f2)
     @test_throws ErrorException deleteFactor!(fg, f2)
     @test lsf(fg) == [:abf1]
 
@@ -365,14 +373,13 @@ function  VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     @test getFactor(fg, :abf1) === f1
 
     @test_throws ErrorException getVariable(fg, :c)
-    @test_throws ErrorException getFactor(fg, :f2)
-
+    @test_throws ErrorException getFactor(fg, :bcf1)
 
     # Existence
     @test exists(fg, :a)
     @test !exists(fg, :c)
     @test exists(fg, :abf1)
-    @test !exists(fg, :f2)
+    @test !exists(fg, :bcf1)
 
     @test exists(fg, v1)
     @test !exists(fg, v3)
