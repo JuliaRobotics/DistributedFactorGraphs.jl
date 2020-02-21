@@ -189,7 +189,7 @@ end
     @test getVariablePPEs(v1) == v1.ppeDict
     @test_throws Exception DistributedFactorGraphs.getVariablePPE(v1, :notfound)
     @test solverData(v1) === v1.solverDataDict[:default]
-    @test getData(v1) === v1.solverDataDict[:default]
+    @test getSolverData(v1) === v1.solverDataDict[:default]
     @test solverData(v1, :default) === v1.solverDataDict[:default]
     @test getSolverDataDict(v1) == v1.solverDataDict
     @test getInternalId(v1) == v1._internalId
