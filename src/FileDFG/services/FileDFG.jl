@@ -22,7 +22,7 @@ function saveDFG(dfg::AbstractDFG, folder::String; compress::Symbol=:null)
     if compress != :null
       @warn "saveDFG keyword args are deprecated, and folders will be tarred as standard in current and future versions."
     end
-        
+
     # TODO: Deprecate the folder functionality in v0.6.1
 
     # Clean up save path if a file is specified
@@ -146,11 +146,6 @@ function loadDFG(dst::String, iifModule, dfgLoadInto::G; loaddir=joinpath("/","t
     for factor in factors
         iifModule.rebuildFactorMetadata!(dfgLoadInto, factor)
     end
-
-    # PATCH - To update the fncargvID for factors, it's being cleared somewhere in rebuildFactorMetadata.
-    # TEMPORARY
-    # TODO: Remove in future
-    map(f->getSolverData(f).fncargvID = f._variableOrderSymbols, getFactors(dfgLoadInto))
 
     # remove the temporary unzipped file
     if unzip

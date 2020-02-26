@@ -47,10 +47,6 @@ gfnd2 = deepcopy(gfnd1)
 gfnd3 = GenericFunctionNodeData([:a,:b], true, true, [1,2], :symbol, cos)
 
 @test gfnd1 == gfnd2
-gfnd2.fncargvID = [:a, :b]
-@test gfnd1 == gfnd2
-gfnd2.fncargvID = [:b, :a]
-@test !(gfnd1 == gfnd2)
 @test !(gfnd1 == gfnd3)
 
 # DFGFactor
@@ -85,8 +81,4 @@ gfnd2 = deepcopy(gfnd1)
 gfnd3 = GenericFunctionNodeData([:a,:b], true, true, [1,2], :symbol, cos)
 
 @test compare(gfnd1, gfnd2)
-gfnd2.fncargvID = [:a, :b]
-@test compare(gfnd1, gfnd2)
-gfnd2.fncargvID = [:b, :a]
-@test !(compare(gfnd1, gfnd2))
 @test_broken !(compare(gfnd1, gfnd3))
