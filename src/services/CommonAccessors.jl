@@ -106,7 +106,7 @@ getSolvable(var::Union{DFGVariable, DFGFactor})::Int = var._dfgNodeParams.solvab
 
 Get 'solvable' parameter for either a variable or factor.
 """
-function getSolvable(dfg::AbstractDFG, sym::Symbol)
+function getSolvable(dfg::AbstractDFG, sym::Symbol)::Int
   if isVariable(dfg, sym)
     return getVariable(dfg, sym)._dfgNodeParams.solvable
   elseif isFactor(dfg, sym)

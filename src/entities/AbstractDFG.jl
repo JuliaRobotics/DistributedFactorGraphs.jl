@@ -27,8 +27,16 @@ The common node parameters for variables and factors.
 mutable struct DFGNodeParams
     solvable::Int
     _internalId::Int64
+    DFGNodeParams(s1=0,s2=0) = new(s1,s2)
 end
-DFGNodeParams() = DFGNodeParams(0, 0)
+
+# import Base: convert
+#
+# function convert(::Type{Symbol},::DFGNodeParams)
+#   # error("WTF")
+#   :WTF
+# end
+# export convert
 
 """
 $(TYPEDEF)
