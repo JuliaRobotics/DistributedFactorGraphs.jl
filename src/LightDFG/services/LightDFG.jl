@@ -255,6 +255,9 @@ function getNeighbors(dfg::LightDFG, label::Symbol; solvable::Int=0)::Vector{Sym
 end
 
 function _copyIntoGraph!(sourceDFG::LightDFG{<:AbstractParams, V, F}, destDFG::LightDFG{<:AbstractParams, V, F}, ns::Vector{Int}, includeOrphanFactors::Bool=false)::Nothing where {V <: AbstractDFGVariable, F <: AbstractDFGFactor}
+
+    includeOrphanFactors && (@error "Adding orphaned factors is not supported")
+    
     #kan ek die in bulk copy, soos graph en dan nuwe map maak
     # Add all variables first,
     labels = [sourceDFG.g.labels[i] for i in ns]
@@ -283,7 +286,7 @@ function _copyIntoGraph!(sourceDFG::LightDFG{<:AbstractParams, V, F}, destDFG::L
 
             # Only if we have all of them should we add it (otherwise strange things may happen on evaluation)
             if includeOrphanFactors || length(factVariables) == length(neigh_labels)
-                exists(destDFG, f.label) ? (@warn "_copyIntoGraph $(f.label) exists, ignoring pending error behaviour decision") : addFactor!(destDFG, factVariables, deepcopy(f))
+                exists(destDFG, f.label) ? (@warn "_copyIntoGraph $(f.label) exists, ignoring pending error behaviour decision") : addFactor!(destDFG, deepcopy(f))
             end
         end
     end
