@@ -283,7 +283,7 @@ function _copyIntoGraph!(sourceDFG::LightDFG{<:AbstractParams, V, F}, destDFG::L
 
             # Only if we have all of them should we add it (otherwise strange things may happen on evaluation)
             if includeOrphanFactors || length(factVariables) == length(neigh_labels)
-                exists(destDFG, f.label) ? (@warn "_copyIntoGraph $(f.label) exists, ignoring pending error behaviour decision") : addFactor!(destDFG, factVariables, deepcopy(f))
+                exists(destDFG, f.label) ? (@warn "_copyIntoGraph $(f.label) exists, ignoring pending error behaviour decision") : addFactor!(destDFG, deepcopy(f))
             end
         end
     end
