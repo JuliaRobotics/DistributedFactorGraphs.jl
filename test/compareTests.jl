@@ -55,10 +55,6 @@ f2 = deepcopy(f1)
 f3 = DFGFactor(:f1, [:b, :a], gfnd1)
 
 @test f1 == f2
-f2.solverData = gfnd1
-@test f1 == f2
-f2.solverData = gfnd2
-@test !(f1 == f2)
 @test !(f1 == f3)
 
 
