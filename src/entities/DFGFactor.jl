@@ -31,8 +31,8 @@ mutable struct GenericFunctionNodeData{T, S}
     certainhypo::Vector{Int}
     solveInProgress::Int
     GenericFunctionNodeData{T, S}() where {T, S} = new{T,S}()
-    GenericFunctionNodeData{T, S}(x1, x2, x3, x4, x5::S, x6::T, multihypo::Vector{<:Real}=Float64[], x8::Vector{Int}=Int[], x9::Int=0) where {T, S} = new{T,S}(x1, x2, x3, x4, x5, x6, multihypo, x8, x9)
-    GenericFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, multihypo::Vector{<:Real}=Float64[], x8::Vector{Int}=Int[], x9::Int=0) where {T, S} = new{T,S}(x1, x2, x3, x4, x5, x6, multihypo, x8, x9)
+    GenericFunctionNodeData{T, S}(x1, x2, x3, x4, x5::S, x6::T, multihypo::Vector{<:Real}=Float64[], certainhypo::Vector{Int}=Int[], x9::Int=0) where {T, S} = new{T,S}(x1, x2, x3, x4, x5, x6, multihypo, certainhypo, x9)
+    GenericFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, multihypo::Vector{<:Real}=Float64[], certainhypo::Vector{Int}=Int[], x9::Int=0) where {T, S} = new{T,S}(x1, x2, x3, x4, x5, x6, multihypo, certainhypo, x9)
     # GenericFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, x7::String) where {T, S} = new{T,S}(x1, x2, x3, x4, x5, x6, x7)
 end
 
@@ -43,9 +43,9 @@ end
 
 # Simply for convenience - don't export, TODO Its used in IIF so maybe it should be exported
 const PackedFunctionNodeData{T} = GenericFunctionNodeData{T, <: AbstractString}
-PackedFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, multihypo::Vector{Float64}=[], x8::Vector{Int}=Int[], x9::Int=0) where {T <: PackedInferenceType, S <: AbstractString} = GenericFunctionNodeData(x1, x2, x3, x4, x5, x6, multihypo, x8, x9)
+PackedFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, multihypo::Vector{Float64}=[], certainhypo::Vector{Int}=Int[], x9::Int=0) where {T <: PackedInferenceType, S <: AbstractString} = GenericFunctionNodeData(x1, x2, x3, x4, x5, x6, multihypo, certainhypo, x9)
 const FunctionNodeData{T} = GenericFunctionNodeData{T, Symbol}
-FunctionNodeData(x1, x2, x3, x4, x5::Symbol, x6::T, multihypo::Vector{Float64}=[], x8::Vector{Int}=Int[], x9::Int=0) where {T <: Union{FunctorInferenceType, ConvolutionObject}}= GenericFunctionNodeData{T, Symbol}(x1, x2, x3, x4, x5, x6, multihypo, x8, x9)
+FunctionNodeData(x1, x2, x3, x4, x5::Symbol, x6::T, multihypo::Vector{Float64}=[], certainhypo::Vector{Int}=Int[], x9::Int=0) where {T <: Union{FunctorInferenceType, ConvolutionObject}}= GenericFunctionNodeData{T, Symbol}(x1, x2, x3, x4, x5, x6, multihypo, certainhypo, x9)
 
 ##==============================================================================
 ## Factors
