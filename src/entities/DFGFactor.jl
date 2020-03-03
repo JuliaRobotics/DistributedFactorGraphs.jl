@@ -20,7 +20,7 @@ abstract type FunctorPairwiseMinimize <: FunctorInferenceType end
 """
 $(TYPEDEF)
 """
-mutable struct GenericFunctionNodeData{T<:Union{PackedInferenceType, FunctorInferenceType, ConvolutionObject}, S<:Union{Symbol, AbstractString}}
+mutable struct GenericFunctionNodeData{T<:Union{PackedInferenceType, FunctorInferenceType, ConvolutionObject, Function}, S<:Union{Symbol, AbstractString}}
     fncargvID::Vector{Symbol}
     eliminated::Bool
     potentialused::Bool
