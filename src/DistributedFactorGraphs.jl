@@ -144,6 +144,9 @@ export getPPEDict
 
 # CRUD & SET
 export getPPE,
+       getPPEs,
+       getVariablePPE,
+       getVariablePPEs,
        addPPE!,
        updatePPE!,
        deletePPE!,

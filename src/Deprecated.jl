@@ -101,14 +101,6 @@ end
 
 @deprecate getFactorIds(dfg, regexFilter=nothing; solvable=0) listFactors(dfg, regexFilter, solvable=solvable)
 
-#NOTE too many aliases on PPE
-
-@deprecate getVariablePPEs(v::VariableDataLevel1) getPPEDict(v)
-
-@deprecate getPPEs(vari::VariableDataLevel1) getPPEDict(v)
-
-@deprecate getVariablePPE(args...) getPPE(args...)
-
 
 #TODO doesn't look like this existed
 # @deprecate timestamp(v) getTimestamp(v)

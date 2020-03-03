@@ -89,7 +89,7 @@ print(fct::DFGFactor) = @show fct
 
 Display and return to console the user factor identified by tag name.
 """
-printFactor(fgl::AbstractDFG, fsym::Symbol) = print(getFactor(dfg, sym))
+printFactor(dfg::AbstractDFG, sym::Symbol) = print(getFactor(dfg, sym))
 
 """
    $SIGNATURES
@@ -99,10 +99,18 @@ Display the content of `VariableNodeData` to console for a given factor graph an
 Dev Notes
 - TODO split as two show macros between AMP and DFG
 """
-printVariable(fgl::AbstractDFG, vsym::Symbol, solveKey::Symbol=:default) = print(getVariable(dfg, sym))
+printVariable(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = print(getVariable(dfg, sym))
 
-print(fgl::AbstractDFG, fsym::Symbol) = isVariable(dfg,fsym) ? printVariable(dfg, fsym) : printFactor(dfg, sym)
+print(dfg::AbstractDFG, sym::Symbol) = isVariable(dfg,sym) ? printVariable(dfg, sym) : printFactor(dfg, sym)
 
+
+#NOT too many aliases on PPE, brought back from deprecated DF
+
+getVariablePPEs(v::VariableDataLevel1) = getPPEDict(v)
+
+getPPEs(vari::VariableDataLevel1) = getPPEDict(v)
+
+getVariablePPE(args...) = getPPE(args...)
 
 ## KEEPING COMMENT, WANT TO BE CONSOLIDATED WITH FUNCTION ABOVE -- KEEPING ONLY ONE FOR MAINTAINABILITY
 ## STILL NEEDS TO BE CONSOLIDATED WITH `DFG._copyIntoGraph`
