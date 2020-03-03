@@ -58,11 +58,15 @@ function saveDFG(dfg::AbstractDFG, folder::String; compress::Symbol=:null)
         close(io)
     end
 
-    savedir = dirname(savepath)
+    savedir = dirname(savepath) # is this a path of just local name? #344 -- workaround with unique names
     savename = basename(string(savepath))
     @assert savename != ""
     destfile = joinpath(savedir, savename*".tar.gz")
-    run( pipeline(`tar -zcf - -C $savedir $savename`, stdout="$destfile"))
+    if length(savedir) != 0
+      run( pipeline(`tar -zcf - -C $savedir $savename`, stdout="$destfile"))
+    else
+      run( pipeline(`tar -zcf - $savename`, stdout="$destfile"))
+    end
     Base.rm(joinpath(savedir,savename), recursive=true)
 end
 
