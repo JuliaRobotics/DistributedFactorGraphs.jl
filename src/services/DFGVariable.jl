@@ -162,12 +162,18 @@ Since the `timestamp` field is not mutable `setTimestamp` returns a new variable
 Use [`updateVariable!`](@ref) on the returened variable to update it in the factor graph if needed. Alternatively use [`setTimestamp!`](@ref).
 See issue #315.
 """
-function setTimestamp(v::DFGVariable, ts::DateTime)
+function setTimestamp(v::DFGVariable, ts::DateTime; verbose::Bool=true)
+    if verbose
+        @warn "verbose=true: setTimestamp(::DFGVariable,...) creates a returns a new immutable DFGVariable object (and didn't change a distributed factor graph object), make sure you are using the right pointers: getVariable(...).  See setTimestamp!(...) and note suggested use is at addVariable!(..., [timestamp=...]).  See DFG #315 for explanation."
+    end
     return DFGVariable(v.label, ts, v.tags, v.ppeDict, v.solverDataDict, v.smallData, v.bigData, v._dfgNodeParams)
 end
 
-function setTimestamp(v::DFGVariableSummary, ts::DateTime)
-    return DFGVariableSummary(v.label, ts, v.tags, v.estimateDict, v.softtypename, v.bigData, v._internalId)
+function setTimestamp(v::DFGVariableSummary, ts::DateTime; verbose::Bool=true)
+    if verbose
+        @warn "verbose=true: setTimestamp(::DFGVariableSummary,...) creates and returns a new immutable DFGVariable object (and didn't change a distributed factor graph object), make sure you are using the right pointers: getVariable(...).  See setTimestamp!(...) and note suggested use is at addVariable!(..., [timestamp=...]).  See DFG #315 for explanation."
+    end
+    return DFGVariableSummary(v.label, ts, v.tags, v.ppeDict, v.softtypename, v.bigData, v._internalId)
 end
 
 

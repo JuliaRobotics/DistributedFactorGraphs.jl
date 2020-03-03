@@ -107,7 +107,6 @@ function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverP
 
     #deprecated
     @test_throws ErrorException getLabelDict(fg)
-    @test @test_deprecated setDescription(fg, des) == des
 
 
     #TODO
@@ -179,9 +178,6 @@ function DFGVariableSCA()
 
     @test getTimestamp(v1) == v1.timestamp
 
-    @test getInternalId(v1) == v1._internalId
-    @test getInternalId(v1) == v1._dfgNodeParams._internalId
-
     @test getSolvable(v1) == 0
     @test getSolvable(v2) == 1
 
@@ -217,7 +213,7 @@ function DFGVariableSCA()
     #no accessors on BigData, only CRUD
 
     #deprecated
-    @test @test_deprecated solverData(v1, :default) === v1.solverDataDict[:default]
+    # @test @test_deprecated solverData(v1, :default) === v1.solverDataDict[:default]
 
 
     # #TODO sort out
@@ -259,7 +255,6 @@ function  DFGFactorSCA()
 
     @test getTimestamp(f1) == f1.timestamp
 
-    @test getInternalId(f1) == f1._internalId
     @test getInternalId(f1) == f1._dfgNodeParams._internalId
 
     @test getSolvable(f1) == 0
@@ -295,9 +290,6 @@ function  DFGFactorSCA()
 
     #TODO don't know if this should be used, added for completeness, it just wastes the gc's time
     @test setSolverData!(f1, deepcopy(gfnd)) == gfnd
-
-    # Deprecated functions
-    @test @test_deprecated solverData(f1) === f1.solverData
 
     # create f0 here for a later timestamp
     f0 = DFGFactor(:af1, [:a], gfnd_prior, tags = Set([:PRIOR]))
@@ -468,8 +460,8 @@ function  PPETestBlock!(fg, v1)
     @test deletePPE!(fg, :a, :default) == ppe
 
     #FIXME copied from lower
-    @test @test_deprecated getVariablePPEs(v1) == v1.ppeDict
-    @test_throws KeyError getPPE(v1, :notfound)
+    # @test @test_deprecated getVariablePPEs(v1) == v1.ppeDict
+    @test_throws Union{KeyError,UndefVarError} getPPE(v1, :notfound)
     #TODO
     # @test_deprecated getVariablePPE(v1)
 
@@ -586,7 +578,6 @@ function  VSDTestBlock!(fg, v1)
 
     #FIXME copied from lower
     @test getSolverData(v1) === v1.solverDataDict[:default]
-    @test @test_logs (:warn, r"[Dd]eprecate") solverData(v1, :default) === v1.solverDataDict[:default]
 
     # Add new VND of type ContinuousScalar to :x0
     # Could also do VariableNodeData(ContinuousScalar())
@@ -694,9 +685,6 @@ function testGroup!(fg, v1, v2, f0, f1)
 
         # TODO Mabye implement IIF type here
         # Requires IIF or a type in IIF
-        @test @test_deprecated getfnctype(f1.solverData) === getFactorType(f1.solverData)
-        @test @test_deprecated getfnctype(f1) === getFactorType(f1)
-        @test @test_deprecated getfnctype(fg, :abf1) === getFactorType(fg, :abf1)
         @test getFactorType(f1.solverData) === f1.solverData.fnc.usrfnc!
         @test getFactorType(f1) === f1.solverData.fnc.usrfnc!
         @test getFactorType(fg, :abf1) === f1.solverData.fnc.usrfnc!
@@ -705,6 +693,7 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test lsfPriors(fg) == [:af1]
 
         #TODO add test, don't know what we want from this
+        # desire is to list all factor types present a graph.
         @test_broken lsfTypes(fg)
 
         @test ls(fg, TestFunctorInferenceType1) == [:abf1]
@@ -773,7 +762,6 @@ function testGroup!(fg, v1, v2, f0, f1)
 
     @testset "Sorting" begin
         unsorted = [:x1_3;:x1_6;:l1;:april1] #this will not work for :x1x2f1
-        @test @test_deprecated  sortVarNested(unsorted) == sortDFG(unsorted)
         @test sort([:x1x2f1, :x1l1f1], lt=natural_lt) == [:x1l1f1, :x1x2f1]
 
         # NOTE Some of what is possible with sort and the wrappers
