@@ -32,7 +32,7 @@ function copyGraph!(destDFG::AbstractDFG, sourceDFG::AbstractDFG, variableFactor
         # Only if we have all of them should we add it (otherwise strange things may happen on evaluation)
         if includeOrphanFactors || length(factVariableIds) == length(sourceFactorVariableIds)
             if !exists(destDFG, factor)
-                addFactor!(destDFG, factVariableIds, factor)
+                addFactor!(destDFG, factor)
             end
         end
     end

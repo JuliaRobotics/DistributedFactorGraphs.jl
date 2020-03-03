@@ -95,11 +95,6 @@ zero(g::FactorGraph{T,V,F}) where {T,V,F} = FactorGraph{T,V,F}(0,0)
 
 # TODO issubset(g::T, h::T) where T <: FactorGraph = issubset(g.graph, h.graph)
 
-"""
-    add_edge!(g, u, v)
-    Add an edge `(u, v)` to FactorGraph `g`.
-    return true if the edge has been added, false otherwise
-"""
 @inline add_edge!(g::FactorGraph, x...) = add_edge!(g.graph, x...)
 
 @inline rem_edge!(g::FactorGraph, x...) = rem_edge!(g.graph, x...)

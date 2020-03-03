@@ -30,9 +30,9 @@ Create an in-memory LightDFG with the following parameters:
 """
 function LightDFG{T,V,F}(g::FactorGraph{Int,V,F}=FactorGraph{Int,V,F}();
                            description::String="LightGraphs.jl implementation",
-                           userId::String="User ID",
-                           robotId::String="Robot ID",
-                           sessionId::String="Session ID",
+                           userId::String="UserID",
+                           robotId::String="RobotID",
+                           sessionId::String="SessionID",
                            userData::Dict{Symbol, String} = Dict{Symbol, String}(),
                            robotData::Dict{Symbol, String} = Dict{Symbol, String}(),
                            sessionData::Dict{Symbol, String} = Dict{Symbol, String}(),

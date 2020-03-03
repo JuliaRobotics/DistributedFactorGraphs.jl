@@ -4,6 +4,5 @@
 getNeighbors
 getSubgraphAroundNode
 getSubgraph
-getIncidenceMatrix
-getIncidenceMatrixSparse
+getBiadjacencyMatrix
 ```

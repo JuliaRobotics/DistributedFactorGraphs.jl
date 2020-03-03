@@ -2,8 +2,8 @@
 $(TYPEDEF)
 Structure for a graph summary.
 """
-# TODO why is this called Abstract...
-struct AbstractDFGSummary
+
+struct DFGSummary
   variables::Dict{Symbol, DFGVariableSummary}
   factors::Dict{Symbol, DFGFactorSummary}
   userId::String

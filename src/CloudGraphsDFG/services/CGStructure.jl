@@ -235,7 +235,6 @@ function clearSession!!(dfg::CloudGraphsDFG)::Nothing
 
     # Clearing history
     dfg.addHistory = Symbol[]
-    empty!(dfg.labelDict)
     return nothing
 end
 
@@ -249,7 +248,6 @@ function clearRobot!!(dfg::CloudGraphsDFG)::Nothing
 
     # Clearing history
     dfg.addHistory = Symbol[]
-    empty!(dfg.labelDict)
     return nothing
 end
 
@@ -263,7 +261,6 @@ function clearUser!!(dfg::CloudGraphsDFG)::Nothing
 
     # Clearing history
     dfg.addHistory = Symbol[]
-    empty!(dfg.labelDict)
     return nothing
 end
 
@@ -284,29 +281,3 @@ end
 DANGER: Copies the source to a new unique destination.
 """
 copySession!(sourceDFG::CloudGraphsDFG)::CloudGraphsDFG = copySession!(sourceDFG, nothing)
-
-
-function getUserData(dfg::CloudGraphsDFG)::Dict{Symbol, String}
-    propVal = _getNodeProperty(dfg.neo4jInstance, [dfg.userId, "USER"], "data")
-    return JSON2.read(String(base64decode(propVal)), Dict{Symbol, String})
-end
-function setUserData!(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
-    count = _setNodeProperty(dfg.neo4jInstance, [dfg.userId, "USER"], "data", base64encode(JSON2.write(data)))
-    return count == 1
-end
-function getRobotData(dfg::CloudGraphsDFG)::Dict{Symbol, String}
-    propVal = _getNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, "ROBOT"], "data")
-    return JSON2.read(String(base64decode(propVal)), Dict{Symbol, String})
-end
-function setRobotData!(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
-    count = _setNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, "ROBOT"], "data", base64encode(JSON2.write(data)))
-    return count == 1
-end
-function getSessionData(dfg::CloudGraphsDFG)::Dict{Symbol, String}
-    propVal = _getNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, "SESSION"], "data")
-    return JSON2.read(String(base64decode(propVal)), Dict{Symbol, String})
-end
-function setSessionData!(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
-    count = _setNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, "SESSION"], "data", base64encode(JSON2.write(data)))
-    return count == 1
-end

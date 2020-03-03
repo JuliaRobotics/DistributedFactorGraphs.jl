@@ -111,16 +111,16 @@ Reading, updating, and deleting all use DFG functions (as opposed to adding,
 where using the IncrementalInference functions are recommended).
 
 Each variable and factor is uniquely identified by its label. The list of
-variable and factor labels can be retrieved with the `ls`/`getVariableIds` and
-`lsf`/`getFactorIds` functions:
+variable and factor labels can be retrieved with the `ls`/`listVariables` and
+`lsf`/`listFactors` functions:
 
 ```@docs
-getVariableIds
+listVariables
 ls
 ```
 
 ```@docs
-getFactorIds
+listFactors
 lsf
 ```
 

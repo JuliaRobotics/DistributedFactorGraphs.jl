@@ -1,7 +1,9 @@
+##==============================================================================
+## (==)
+##==============================================================================
+import Base.==
 ## @generated compare
 # Reference https://github.com/JuliaLang/julia/issues/4648
-
-import Base.==
 
 #=
 For now abstract `InferenceVariable`s are considered equal if they are the same type, dims, and manifolds (abels are deprecated)
@@ -14,7 +16,6 @@ implement compare if needed.
 
 ==(a::FunctorInferenceType, b::FunctorInferenceType) = typeof(a) == typeof(b)
 
-# TestCCW1{TestFunctorInferenceType1}
 
 # Generate compares automatically for all in this union
 const GeneratedCompareUnion = Union{MeanMaxPPE, VariableNodeData, DFGNodeParams,
@@ -23,11 +24,14 @@ const GeneratedCompareUnion = Union{MeanMaxPPE, VariableNodeData, DFGNodeParams,
                               DFGFactor, DFGFactorSummary, SkeletonDFGFactor}
 
 @generated function ==(x::T, y::T) where T <: GeneratedCompareUnion
-    mapreduce(n -> :(x.$n == y.$n), (a,b)->:($a && $b), fieldnames(x))
+    ignored = [:_internalId]
+    mapreduce(n -> :(x.$n == y.$n), (a,b)->:($a && $b), setdiff(fieldnames(x), ignored))
 end
 
 
-##
+##==============================================================================
+## Compare
+##==============================================================================
 
 function compareField(Allc, Bllc, syms)::Bool
     (!isdefined(Allc, syms) && !isdefined(Bllc, syms)) && return true
@@ -209,7 +213,6 @@ end
 function compare(a::GenericFunctionNodeData{T1,S},b::GenericFunctionNodeData{T2,S}) where {T1, T2, S}
   # TODO -- beef up this comparison to include the gwp
   TP = true
-  TP = TP && a.fncargvID == b.fncargvID
   TP = TP && a.eliminated == b.eliminated
   TP = TP && a.potentialused == b.potentialused
   TP = TP && a.edgeIDs == b.edgeIDs

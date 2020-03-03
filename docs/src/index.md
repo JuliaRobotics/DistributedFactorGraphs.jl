@@ -1,11 +1,17 @@
 # Introduction
 
-This package is a specialized Julia graphing wrapper.
+DistributedFactorGraphs.jl provides a flexible factor graph API for use in the [Caesar.jl](https://github.com/JuliaRobotics/Caesar.jl) ecosystem. The package supplies:
+* A standardized API for interacting with factor graphs
+* Implementations of the API for in-memory and database-driven operation
+* Visualization extensions to validate the underlying graph
+
+**Note** this package is still under initial development, and will adopt parts of the functionality currently contained in [IncrementalInference.jl](http://www.github.com/JuliaRobotics/IncrementalInference.jl).
 
 ## Installation
-This package is not yet registered with JuliaLang/METADATA.jl, but can be easily installed in Julia 0.6 with:
+
+DistributedFactorGraphs can be installed from Julia packages using:
 ```julia
-julia> ]add https://github.com/GearsAD/GraffSDK.jl.git
+julia> ]add DistributedFactorGraphs
 ```
 
 ## Manual Outline
