@@ -58,11 +58,15 @@ function saveDFG(dfg::AbstractDFG, folder::String; compress::Symbol=:null)
         close(io)
     end
 
-    savedir = dirname(savepath)
+    savedir = dirname(savepath) # is this a path of just local name? #344 -- workaround with unique names
     savename = basename(string(savepath))
     @assert savename != ""
     destfile = joinpath(savedir, savename*".tar.gz")
-    run( pipeline(`tar -zcf - -C $savedir $savename`, stdout="$destfile"))
+    if length(savedir) != 0
+      run( pipeline(`tar -zcf - -C $savedir $savename`, stdout="$destfile"))
+    else
+      run( pipeline(`tar -zcf - $savename`, stdout="$destfile"))
+    end
     Base.rm(joinpath(savedir,savename), recursive=true)
 end
 
@@ -82,7 +86,14 @@ loadDFG("/tmp/savedgraph.tar.gz", IncrementalInference, dfg)
 ls(dfg)
 ```
 """
-function loadDFG(dst::String, iifModule, dfgLoadInto::G; loaddir=joinpath("/","tmp","caesar","random")) where G <: AbstractDFG
+function loadDFG(dst::String,
+                 iifModule::Module,
+                 dfgLoadInto::G) where G <: AbstractDFG
+
+
+    #
+    # loaddir gets deleted so needs to be unique
+    loaddir=joinpath("/","tmp","caesar","random", string(uuid1()))
     # Check if zipped destination (dst) by first doing fuzzy search from user supplied dst
     folder = dst  # working directory for fileDFG variable and factor operations
     dstname = dst # path name could either be legacy FileDFG dir or .tar.gz file of FileDFG files.
@@ -149,9 +160,9 @@ function loadDFG(dst::String, iifModule, dfgLoadInto::G; loaddir=joinpath("/","t
 
     # remove the temporary unzipped file
     if unzip
-      @info "DFG.loadDFG is deleting a temp folder created during unzip, $folder"
+      @info "DFG.loadDFG is deleting a temp folder created during unzip, $loaddir"
       # need this because the number of files created in /tmp/caesar/random is becoming redonkulous.
-      Base.rm(folder, recursive=true)
+      Base.rm(loaddir, recursive=true)
     end
 
     return dfgLoadInto
