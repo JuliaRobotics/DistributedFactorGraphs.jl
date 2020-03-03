@@ -228,7 +228,9 @@ export
 ## needsahome.jl
 
 export buildSubgraphFromLabels!
-export printFactor, printVariable
+
+import Base: print
+export printFactor, printVariable, print
 
 ##==============================================================================
 ## Files Includes

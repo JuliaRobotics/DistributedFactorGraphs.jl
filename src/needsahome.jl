@@ -3,6 +3,7 @@
 #                  Into, Labels, Subgraph are all implied from the parameters.
 #                  can alies names but like Sam suggested only on copy is needed.
 
+
 """
     $SIGNATURES
 Construct a new factor graph object as a subgraph of `dfg <: AbstractDFG` based on the
@@ -62,24 +63,8 @@ function buildSubgraphFromLabels!(dfg::G,
   return subfg
 end
 
-"""
-    $SIGNATURES
 
-Display and return to console the user factor identified by tag name.
-"""
-printFactor(fgl::AbstractDFG, fsym::Symbol) = @show getFactor(fgl,fsym)
-
-
-"""
-   $SIGNATURES
-
-Display the content of `VariableNodeData` to console for a given factor graph and variable tag`::Symbol`.
-
-Dev Notes
-- TODO split as two show macros between AMP and DFG
-"""
-function printVariable(fgl::AbstractDFG, vsym::Symbol, solveKey::Symbol=:default)
-  vert = getVariable(fgl, vsym)
+function print(vert::DFGVariable, solveKey::Symbol=:default)
   vnd = getSolverData(vert, solveKey)
   println("label: $(vert.label)")
   println("tags: $(getTags(vert))")
@@ -95,6 +80,29 @@ function printVariable(fgl::AbstractDFG, vsym::Symbol, solveKey::Symbol=:default
   println()
   vnd
 end
+
+print(fct::DFGFactor) = @show fct
+
+
+"""
+    $SIGNATURES
+
+Display and return to console the user factor identified by tag name.
+"""
+printFactor(fgl::AbstractDFG, fsym::Symbol) = print(getFactor(dfg, sym))
+
+"""
+   $SIGNATURES
+
+Display the content of `VariableNodeData` to console for a given factor graph and variable tag`::Symbol`.
+
+Dev Notes
+- TODO split as two show macros between AMP and DFG
+"""
+printVariable(fgl::AbstractDFG, vsym::Symbol, solveKey::Symbol=:default) = print(getVariable(dfg, sym))
+
+print(fgl::AbstractDFG, fsym::Symbol) = isVariable(dfg,fsym) ? printVariable(dfg, fsym) : printFactor(dfg, sym)
+
 
 ## KEEPING COMMENT, WANT TO BE CONSOLIDATED WITH FUNCTION ABOVE -- KEEPING ONLY ONE FOR MAINTAINABILITY
 ## STILL NEEDS TO BE CONSOLIDATED WITH `DFG._copyIntoGraph`
