@@ -760,7 +760,7 @@ function findVariableNearTimestamp(dfg::AbstractDFG,
   while 0 < CORRS + NUMBER
     # get closest
     link, mdt, corrs = findClosestTimestamp([(timest,0)], timeset[mask])
-    push!(SYMS, syms[link[2]])
+    union!(SYMS, syms[link[2]])
     mask[link[2]] = false
     CORRS = corrs-1
     # last match, done with this delta time
