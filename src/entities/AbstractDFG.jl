@@ -30,14 +30,6 @@ mutable struct DFGNodeParams
     DFGNodeParams(s1=0,s2=0) = new(s1,s2)
 end
 
-# import Base: convert
-#
-# function convert(::Type{Symbol},::DFGNodeParams)
-#   # error("WTF")
-#   :WTF
-# end
-# export convert
-
 """
 $(TYPEDEF)
 Abstract parent struct for a DFG graph.
