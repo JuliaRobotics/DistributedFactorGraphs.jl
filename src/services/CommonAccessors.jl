@@ -54,6 +54,23 @@ Get the timestamp of a DFGNode.
 getTimestamp(v::DataLevel1) = v.timestamp
 
 
+"""
+    $SIGNATURES
+
+Set the timestamp of a Variable/Factor object in a factor graph.
+Note:
+Since `timestamp` is not mutable `setTimestamp!` calls `updateVariable!` internally.
+See also [`setTimestamp`](@ref)
+"""
+function setTimestamp!(dfg::AbstractDFG, lbl::Symbol, ts::DateTime)
+    if isVariable(dfg, lbl)
+        return updateVariable!(dfg, setTimestamp(getVariable(dfg,lbl), ts))
+    else
+        return updateFactor!(dfg, setTimestamp(getFactor(dfg,lbl), ts))
+    end
+end
+
+
 
 ##------------------------------------------------------------------------------
 ## _internalId

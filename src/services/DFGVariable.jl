@@ -158,8 +158,9 @@ end
 
 Set the timestamp of a DFGVariable object returning a new DFGVariable.
 Note:
-Since `timestamp` is not mutable `setTimestamp` returns a new variable with the updated timestamp.
-Use `updateVariable!` to update it in the factor graph.
+Since the `timestamp` field is not mutable `setTimestamp` returns a new variable with the updated timestamp (note the absence of `!`).
+Use [`updateVariable!`](@ref) on the returened variable to update it in the factor graph if needed. Alternatively use [`setTimestamp!`](@ref).
+See issue #315.
 """
 function setTimestamp(v::DFGVariable, ts::DateTime)
     return DFGVariable(v.label, ts, v.tags, v.ppeDict, v.solverDataDict, v.smallData, v.bigData, v._dfgNodeParams)
@@ -169,8 +170,6 @@ function setTimestamp(v::DFGVariableSummary, ts::DateTime)
     return DFGVariableSummary(v.label, ts, v.tags, v.estimateDict, v.softtypename, v.bigData, v._internalId)
 end
 
-#TODO something like:
-# setTimestamp!(dfg::AbstractDFG, var::DFGVariable, ts::DateTime) = updateVariable!(dfg, setTimestamp(var, ts))
 
 ##------------------------------------------------------------------------------
 ## _dfgNodeParams [_internalId, solvable]

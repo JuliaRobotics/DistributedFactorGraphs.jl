@@ -3,6 +3,9 @@
     $(SIGNATURES)
 Save a DFG to a folder. Will create/overwrite folder if it exists.
 
+DevNotes:
+- TODO remove `compress` kwarg.
+
 # Example
 ```julia
 using DistributedFactorGraphs, IncrementalInference
@@ -14,7 +17,11 @@ v1 = addVariable!(dfg, :a, ContinuousScalar, labels = [:POSE], solvable=0)
 saveDFG(dfg, "/tmp/saveDFG.tar.gz")
 ```
 """
-function saveDFG(dfg::AbstractDFG, folder::String)
+function saveDFG(dfg::AbstractDFG, folder::String; compress::Symbol=:null)
+
+    if compress != :null
+      @warn "saveDFG keyword args are deprecated, and folders will be tarred as standard in current and future versions."
+    end
 
     # TODO: Deprecate the folder functionality in v0.6.1
 
@@ -139,11 +146,6 @@ function loadDFG(dst::String, iifModule, dfgLoadInto::G; loaddir=joinpath("/","t
     for factor in factors
         iifModule.rebuildFactorMetadata!(dfgLoadInto, factor)
     end
-
-    # PATCH - To update the fncargvID for factors, it's being cleared somewhere in rebuildFactorMetadata.
-    # TEMPORARY
-    # TODO: Remove in future
-    map(f->getSolverData(f).fncargvID = f._variableOrderSymbols, getFactors(dfgLoadInto))
 
     # remove the temporary unzipped file
     if unzip

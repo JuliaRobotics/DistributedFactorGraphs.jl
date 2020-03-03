@@ -2,38 +2,6 @@
 # deprecation staging area
 ##==============================================================================
 
-#TODO look what should already be removed
-
-##==============================================================================
-## Remove in 0.6.0 or 0.6.1?
-##==============================================================================
-
-@deprecate getfnctype(args...) getFactorType(args...)
-
-@deprecate getEstimate(v::VariableDataLevel1, key::Symbol=:default) getVariablePPE(v, key)
-
-@deprecate estimate(v::VariableDataLevel1, key::Symbol=:default) getVariablePPE(v, key)
-
-@deprecate getEstimates(v::VariableDataLevel1) getPPEDict(v)
-
-@deprecate estimates(v::VariableDataLevel1) getPPEDict(v)
-
-@deprecate softtype(v::VariableDataLevel1) getSofttype(v)
-
-@deprecate label(v::DataLevel0) getLabel(v)
-
-@deprecate tags(v::DataLevel0) getTags(v)
-
-@deprecate getData(v::DFGVariable; solveKey::Symbol=:default) getSolverData(v, solveKey)
-
-@deprecate setSolverData(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) setSolverData!(v, data, key)
-
-@deprecate data(f::DFGFactor) getSolverData(f)
-
-
-@deprecate getData(f::DFGFactor) getSolverData(f)
-
-
 ##==============================================================================
 ## Remove in 0.7
 ##==============================================================================
@@ -190,3 +158,7 @@ function buildSubgraphFromLabels(dfg::G,
 end
 
 @deprecate sortVarNested(vars::Vector{Symbol}) sortDFG(vars)
+
+
+#NOTE This one is still used in IIF so maybe leave a bit longer
+@deprecate getfnctype(args...) getFactorType(args...)

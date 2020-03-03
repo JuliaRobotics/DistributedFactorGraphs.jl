@@ -153,10 +153,6 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G
     factor._variableOrderSymbols = _variableOrderSymbols
     setSolvable!(factor, solvable)
 
-    # GUARANTEED never to bite us in the ass in the future...
-    # ... TODO: refactor if changed: https://github.com/JuliaRobotics/IncrementalInference.jl/issues/350
-    factor.data.fncargvID = deepcopy(_variableOrderSymbols)
-
     # Note, once inserted, you still need to call IIF.rebuildFactorMetadata!
     return factor
 end

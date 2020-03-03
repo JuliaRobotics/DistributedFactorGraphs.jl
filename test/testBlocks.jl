@@ -200,12 +200,11 @@ function DFGVariableSCA()
     @test setTags!(v3, testTags) == Set(testTags)
     @test setTags!(v3, Set(testTags)) == Set(testTags)
 
-    #TODO Document
     #NOTE  a variable's timestamp is considered similar to its label.  setTimestamp! (not implemented) would create a new variable and call updateVariable!
     v1ts = setTimestamp(v1, testTimestamp)
     @test getTimestamp(v1ts) == testTimestamp
     #follow with updateVariable!(fg, v1ts)
-    # setTimestamp!(v1, testTimestamp) not implemented, we can do an setTimestamp() updateVariable!() for a setTimestamp!(dfg, v1, testTimestamp)
+
     @test_throws MethodError setTimestamp!(v1, testTimestamp)
 
     @test setSolvable!(v1, 1) == 1
@@ -218,12 +217,8 @@ function DFGVariableSCA()
     #no accessors on BigData, only CRUD
 
     #deprecated
-    @test @test_deprecated getData(v1) === v1.solverDataDict[:default]
     @test @test_deprecated solverData(v1, :default) === v1.solverDataDict[:default]
 
-    #what TODO
-    # @test_deprecated setSolverData()
-    # setSolverData!()
 
     # #TODO sort out
     # getPPEs
@@ -257,7 +252,7 @@ function  DFGFactorSCA()
     f1 = DFGFactor{TestCCW{TestFunctorInferenceType1}, Symbol}(f1_lbl)
     f1 = DFGFactor(f1_lbl, [:a,:b], gfnd, tags = f1_tags, solvable=0)
 
-    f2 = DFGFactor{TestFunctorInferenceType1, Symbol}(:f2)
+    f2 = DFGFactor{TestFunctorInferenceType1, Symbol}(:bcf1)
 
     @test getLabel(f1) == f1_lbl
     @test getTags(f1) == f1_tags
@@ -291,7 +286,7 @@ function  DFGFactorSCA()
     f1ts = setTimestamp(f1, testTimestamp)
     @test !(f1ts === f1)
     @test getTimestamp(f1ts) == testTimestamp
-    #follow with updateVariable!(fg, v1ts)
+    #follow with updateFactor!(fg, v1ts)
     @test setTimestamp!(f1, testTimestamp) == testTimestamp
     #/TODO
 
@@ -303,7 +298,6 @@ function  DFGFactorSCA()
 
     # Deprecated functions
     @test @test_deprecated solverData(f1) === f1.solverData
-    @test @test_deprecated getData(f1) === f1.data
 
     # create f0 here for a later timestamp
     f0 = DFGFactor(:af1, [:a], gfnd_prior, tags = Set([:PRIOR]))
@@ -341,11 +335,20 @@ function  VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
 
     @test getAddHistory(fg) == [:a, :b, :c]
 
+    # Extra timestamp functions https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/315
+    if !(v1 isa SkeletonDFGVariable)
+        newtimestamp = now()
+        @test !(setTimestamp!(fg, :c, newtimestamp) === v3)
+        @test getVariable(fg, :c) |> getTimestamp == newtimestamp
+
+        @test !(setTimestamp!(fg, :bcf1, newtimestamp) === f2)
+        @test getFactor(fg, :bcf1) |> getTimestamp == newtimestamp
+    end
     #deletions
-    @test deleteVariable!(fg, v3) == v3
+    @test getVariable(fg, :c) === deleteVariable!(fg, v3)
     @test_throws ErrorException deleteVariable!(fg, v3)
     @test setdiff(ls(fg),[:a,:b]) == []
-    @test deleteFactor!(fg, f2) === f2
+    @test getFactor(fg, :bcf1) === deleteFactor!(fg, f2)
     @test_throws ErrorException deleteFactor!(fg, f2)
     @test lsf(fg) == [:abf1]
 
@@ -365,14 +368,13 @@ function  VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     @test getFactor(fg, :abf1) === f1
 
     @test_throws ErrorException getVariable(fg, :c)
-    @test_throws ErrorException getFactor(fg, :f2)
-
+    @test_throws ErrorException getFactor(fg, :bcf1)
 
     # Existence
     @test exists(fg, :a)
     @test !exists(fg, :c)
     @test exists(fg, :abf1)
-    @test !exists(fg, :f2)
+    @test !exists(fg, :bcf1)
 
     @test exists(fg, v1)
     @test !exists(fg, v3)
@@ -584,7 +586,6 @@ function  VSDTestBlock!(fg, v1)
 
     #FIXME copied from lower
     @test getSolverData(v1) === v1.solverDataDict[:default]
-    @test @test_logs (:warn, r"[Dd]eprecate") getData(v1) === v1.solverDataDict[:default]
     @test @test_logs (:warn, r"[Dd]eprecate") solverData(v1, :default) === v1.solverDataDict[:default]
 
     # Add new VND of type ContinuousScalar to :x0
@@ -943,6 +944,7 @@ function  GettingNeighbors(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
 end
 
 function  GettingSubgraphs(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
+
     # "Getting Subgraphs"
     dfg, verts, facs = connectivityTestGraph(testDFGAPI, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
     # Subgraphs
@@ -950,11 +952,13 @@ function  GettingSubgraphs(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
     # Only returns x1 and x2
     @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
     # Test include orphan factors
-    dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 1, true)
-    @test symdiff([:x1, :x1x2f1], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
-    # Test adding to the dfg
-    dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2, true, dfgSubgraph)
-    @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+    @test_broken begin
+        dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 1, true)
+        @test symdiff([:x1, :x1x2f1], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+        # Test adding to the dfg
+        dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2, true, dfgSubgraph)
+        @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+    end
     #
     dfgSubgraph = getSubgraph(dfg,[:x1, :x2, :x1x2f1])
     # Only returns x1 and x2
@@ -963,11 +967,13 @@ function  GettingSubgraphs(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
     #TODO if not a LightDFG with and summary or skeleton
     if VARTYPE == DFGVariable
         # DFG issue #201 Test include orphan factors with filtering - should only return x7 with solvable=1
-        dfgSubgraph = getSubgraphAroundNode(dfg, getFactor(dfg, :x7x8f1), 1, true, solvable=0)
-        @test symdiff([:x7, :x8, :x7x8f1], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
-        # Filter - always returns the node you start at but filters around that.
-        dfgSubgraph = getSubgraphAroundNode(dfg, getFactor(dfg, :x7x8f1), 1, true, solvable=1)
-        @test symdiff([:x7x8f1, :x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+        @test_broken begin
+            dfgSubgraph = getSubgraphAroundNode(dfg, getFactor(dfg, :x7x8f1), 1, true, solvable=0)
+            @test symdiff([:x7, :x8, :x7x8f1], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+            # Filter - always returns the node you start at but filters around that.
+            dfgSubgraph = getSubgraphAroundNode(dfg, getFactor(dfg, :x7x8f1), 1, true, solvable=1)
+            @test symdiff([:x7x8f1, :x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+            end
         # Test for distance = 2, should return orphans
         setSolvable!(dfg, :x8x9f1, 0)
         dfgSubgraph = getSubgraphAroundNode(dfg, getVariable(dfg, :x8), 2, true, solvable=1)
@@ -984,6 +990,7 @@ function  GettingSubgraphs(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
             @test fact._variableOrderSymbols == getFactor(dfg, fact.label)._variableOrderSymbols
         end
     end
+
 end
 
 #TODO Summaries and Summary Graphs
