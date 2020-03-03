@@ -855,6 +855,8 @@ NOTE: copyGraphMetadata not supported yet.
 """
 function _copyIntoGraph!(sourceDFG::G, destDFG::H, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false; copyGraphMetadata::Bool=false)::Nothing where {G <: AbstractDFG, H <: AbstractDFG}
     # Split into variables and factors
+    includeOrphanFactors && (@error "Adding orphaned factors is not supported")
+
     sourceVariables = map(vId->getVariable(sourceDFG, vId), intersect(listVariables(sourceDFG), variableFactorLabels))
     sourceFactors = map(fId->getFactor(sourceDFG, fId), intersect(listFactors(sourceDFG), variableFactorLabels))
     if length(sourceVariables) + length(sourceFactors) != length(variableFactorLabels)
@@ -883,7 +885,7 @@ function _copyIntoGraph!(sourceDFG::G, destDFG::H, variableFactorLabels::Vector{
         # Only if we have all of them should we add it (otherwise strange things may happen on evaluation)
         if includeOrphanFactors || length(factVariableIds) == length(sourceFactorVariableIds)
             if !exists(destDFG, factor)
-                addFactor!(destDFG, factVariableIds, deepcopy(factor))
+                addFactor!(destDFG, deepcopy(factor))
             end
         end
     end

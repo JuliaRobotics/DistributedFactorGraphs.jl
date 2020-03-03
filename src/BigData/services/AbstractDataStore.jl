@@ -49,13 +49,13 @@ Returns the list of copied entries.
 """
 function copyStore(sourceStore::D1, destStore::D2; sourceEntries=listEntries(sourceStore))::Vector{E} where {T, D1 <: AbstractDataStore{T}, D2 <: AbstractDataStore{T}, E <: AbstractBigDataEntry}
     # Quick check
-    destEntries = listEntries(destStore)
+    destEntries = listStoreEntries(destStore)
     typeof(sourceEntries) != typeof(destEntries) && error("Can't copy stores, source has entries of type $(typeof(sourceEntries)), destination has entries of type $(typeof(destEntries)).")
     # Same source/destination check
     sourceStore == destStore && error("Can't specify same store for source and destination.")
     # Otherwise, continue
     for sourceEntry in sourceEntries
-        addData!(destStore, deepcopy(sourceEntry), getData(sourceStore, sourceEntry))
+        addBigData!(destStore, deepcopy(sourceEntry), getBigData(sourceStore, sourceEntry))
     end
     return sourceEntries
 end

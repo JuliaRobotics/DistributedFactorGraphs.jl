@@ -82,3 +82,20 @@ end
 @testset "Connectivity Test" begin
      ConnectivityTest(testDFGAPI)
 end
+
+
+@testset "Copy Functions" begin
+
+    fg = testDFGAPI()
+    addVariable!(fg, DFGVariable(:a, TestSofttype1()))
+    addVariable!(fg, DFGVariable(:b, TestSofttype1()))
+    addVariable!(fg, DFGVariable(:c, TestSofttype1()))
+    addFactor!(fg, DFGFactor(:f1, [:a,:b,:c], GenericFunctionNodeData{TestFunctorInferenceType1, Symbol}()))
+
+    fgcopy = testDFGAPI()
+    DFG._copyIntoGraph!(fg, fgcopy, union(ls(fg), lsf(fg)))
+
+    @test getVariableOrder(fg,:f1) == getVariableOrder(fgcopy,:f1)
+
+
+end
