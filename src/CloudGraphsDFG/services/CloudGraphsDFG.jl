@@ -181,7 +181,7 @@ function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGVari
     variable = unpackVariable(dfg, props)
 
     # TODO - make this get PPE's in batch
-    for ppe in listPPE(dfg, label)
+    for ppe in listPPEs(dfg, label)
         variable.ppeDict[ppe] = getPPE(dfg, label, ppe)
     end
     return variable
@@ -220,17 +220,23 @@ function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariabl
     return variable
 end
 
-function mergeUpdateVariableSolverData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable)::DFGVariable
+function mergeVariableData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable)::DFGVariable
     if !exists(dfg, sourceVariable)
         error("Source variable '$(sourceVariable.label)' doesn't exist in the graph.")
     end
     for (k,v) in sourceVariable.ppeDict
+        # TODO what is happening inside, is this truely an update or is it a merge? (API consistency hounds are apon you)
         updatePPE!(dfg, getLabel(sourceVariable), v, k)
     end
     for (k,v) in sourceVariable.solverDataDict
         updateVariableSolverData!(dfg, getLabel(sourceVariable), v, k)
     end
     return sourceVariable
+end
+
+function mergeUpdateVariableSolverData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable)::DFGVariable
+  @warn "Deprecated CloudGraphsDFG.mergeUpdateVariableSolverData!, use mergeVariableData! instead."
+  mergeVariableData!(dfg, sourceVariable)
 end
 
 function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor
@@ -435,7 +441,7 @@ end
 
 ### PPEs with DB calls
 
-function listPPE(dfg::CloudGraphsDFG, variablekey::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Vector{Symbol}
+function listPPEs(dfg::CloudGraphsDFG, variablekey::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Vector{Symbol}
     query = "match (ppe:$(join(_getLabelsForType(dfg, MeanMaxPPE, parentKey=variablekey),':'))) return ppe.solverKey"
     @debug "[Query] PPE read query:\r\n$query"
     result = nothing
@@ -469,7 +475,7 @@ function getPPE(dfg::CloudGraphsDFG, variablekey::Symbol, ppekey::Symbol=:defaul
 end
 
 function addPPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::AbstractPointParametricEst where P <: AbstractPointParametricEst
-    if ppekey in listPPE(dfg, variablekey, currentTransaction=currentTransaction)
+    if ppekey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction)
         error("PPE '$(ppekey)' already exists")
     end
     return updatePPE!(dfg, variablekey, ppe, ppekey, currentTransaction=currentTransaction)

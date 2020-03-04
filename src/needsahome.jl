@@ -104,13 +104,6 @@ printVariable(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = print(
 print(dfg::AbstractDFG, sym::Symbol) = isVariable(dfg,sym) ? printVariable(dfg, sym) : printFactor(dfg, sym)
 
 
-#NOT too many aliases on PPE, brought back from deprecated DF
-
-getVariablePPEs(v::VariableDataLevel1) = getPPEDict(v)
-
-getPPEs(vari::VariableDataLevel1) = getPPEDict(v)
-
-getVariablePPE(args...) = getPPE(args...)
 
 ## KEEPING COMMENT, WANT TO BE CONSOLIDATED WITH FUNCTION ABOVE -- KEEPING ONLY ONE FOR MAINTAINABILITY
 ## STILL NEEDS TO BE CONSOLIDATED WITH `DFG._copyIntoGraph`

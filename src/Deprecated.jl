@@ -12,6 +12,7 @@
 
 @deprecate getFactorIds(dfg, regexFilter=nothing; solvable=0) listFactors(dfg, regexFilter, solvable=solvable)
 
+@deprecate listPPE(args...) listPPEs(args...)
 
 export getLabelDict
 getLabelDict(dfg::AbstractDFG) = error("getLabelDict is deprecated, consider using listing functions")

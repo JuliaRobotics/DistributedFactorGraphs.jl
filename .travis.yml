@@ -41,7 +41,7 @@ matrix:
   allow_failures:
   - julia: nightly
   - arch: arm64
-  - env: IIF_TEST=true
+  #- env: IIF_TEST=true
 
 # Set the password for Neo4j to neo4j:test
 before_script:

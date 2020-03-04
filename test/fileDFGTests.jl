@@ -40,7 +40,7 @@ using Test
 
         copyDfg = DistributedFactorGraphs._getDuplicatedEmptyDFG(dfg)
         @info "Going to load $filename"
-        retDFG = loadDFG(filename, Main, copyDfg, loaddir="/tmp")
+        retDFG = loadDFG(filename, Main, copyDfg) #, loaddir="/tmp")
 
         @test issetequal(ls(dfg), ls(retDFG))
         @test issetequal(lsf(dfg), lsf(retDFG))
