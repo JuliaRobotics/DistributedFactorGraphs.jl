@@ -427,6 +427,9 @@ function mergeVariableSolverData!(destVariable::DFGVariable, sourceVariable::DFG
     return destVariable
 end
 
+mergeVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable) =     mergeVariableSolverData!(getVariable(dfg,getLabel(sourceVariable)), sourceVariable)
+
+
 ##==============================================================================
 ## Point Parametric Estimates
 ##==============================================================================
