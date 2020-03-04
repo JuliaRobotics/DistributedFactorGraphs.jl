@@ -481,7 +481,7 @@ addPPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol=:default) 
 
 """
     $(SIGNATURES)
-Update PPE data if it exists, otherwise add it.
+Update PPE data if it exists, otherwise add it -- one call per `key::Symbol=:default`.
 """
 function updatePPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default)::P where P <: AbstractPointParametricEst
 
