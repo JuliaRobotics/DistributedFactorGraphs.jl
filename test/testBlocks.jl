@@ -461,7 +461,7 @@ function  PPETestBlock!(fg, v1)
 
     #FIXME copied from lower
     # @test @test_deprecated getVariablePPEs(v1) == v1.ppeDict
-    @test_throws Union{KeyError,UndefVarError} getPPE(v1, :notfound)
+    @test_throws KeyError getPPE(v1, :notfound)
     #TODO
     # @test_deprecated getVariablePPE(v1)
 
