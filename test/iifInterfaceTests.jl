@@ -132,10 +132,6 @@ end
     @test @test_deprecated getFactorIds(dfg) == listFactors(dfg)
 
 
-    @test @test_deprecated getfnctype(f1.solverData) === getFactorType(f1.solverData)
-    @test @test_deprecated getfnctype(f1) === getFactorType(f1)
-    @test @test_deprecated getfnctype(dfg, :abf1) === getFactorType(dfg, :abf1)
-
     @test getFactorType(f1.solverData) === f1.solverData.fnc.usrfnc!
     @test getFactorType(f1) === f1.solverData.fnc.usrfnc!
     @test getFactorType(dfg, :abf1) === f1.solverData.fnc.usrfnc!
@@ -188,13 +184,13 @@ end
     @test getTimestamp(v1) == v1.timestamp
     @test getVariablePPEs(v1) == v1.ppeDict
     @test_throws Exception DistributedFactorGraphs.getVariablePPE(v1, :notfound)
-    @test solverData(v1) === v1.solverDataDict[:default]
     @test getSolverData(v1) === v1.solverDataDict[:default]
-    @test solverData(v1, :default) === v1.solverDataDict[:default]
+    @test getSolverData(v1) === v1.solverDataDict[:default]
+    @test getSolverData(v1, :default) === v1.solverDataDict[:default]
     @test getSolverDataDict(v1) == v1.solverDataDict
     @test getInternalId(v1) == v1._internalId
     # legacy compat test
-    @test getVariablePPEs(v1) == v1.estimateDict # changed to .ppeDict -- delete by DFG v0.7
+    @test getVariablePPEs(v1) == v1.ppeDict # changed to .ppeDict -- delete by DFG v0.7
 
 
     @test typeof(getSofttype(v1)) == ContinuousScalar
@@ -203,10 +199,10 @@ end
 
     @test getLabel(f1) == f1.label
     @test getTags(f1) == f1.tags
-    @test solverData(f1) == f1.solverData
+    @test getSolverData(f1) == f1.solverData
 
     # Internal function
-    @test @test_deprecated internalId(f1) == f1._internalId
+    # @test @test_deprecated internalId(f1) == f1._internalId
 
     @test getSolverParams(dfg) != nothing
     @test setSolverParams!(dfg, getSolverParams(dfg)) == getSolverParams(dfg)
@@ -286,7 +282,8 @@ end
     newvar = deepcopy(var1)
     getVariablePPEs(newvar)[:default] = MeanMaxPPE(:default, [150.0], [100.0], [50.0])
     #update
-    mergeUpdateVariableSolverData!(dfg, newvar)
+    # mergeUpdateVariableSolverData!(dfg, newvar)
+    mergeVariableSolverData!(dfg, newvar)
 
     #Check if variable is updated
     var1 = getVariable(dfg, :a)
@@ -395,7 +392,7 @@ verts = map(n -> addVariable!(dfg, Symbol("x$n"), ContinuousScalar, labels = [:P
 #TODO fix this to use accessors
 setSolvable!(verts[7], 1)
 setSolvable!(verts[8], 0)
-solverData(verts[8]).solveInProgress = 1
+getSolverData(verts[8]).solveInProgress = 1
 #call update to set it on cloud
 updateVariable!(dfg, verts[7])
 updateVariable!(dfg, verts[8])
