@@ -310,8 +310,8 @@ end
     #confirm delete
     @test symdiff(collect(keys(getVariablePPEs(newvar))), [:second]) == Symbol[]
     # Persist it., and test #357
-    mergeUpdateVariableSolverData!(dfg, newvar)
-    # mergeVariableSolverData!(getVariable(dfg, getLabel(newvar)), newvar)
+    mergeVariableSolverData!(dfg, newvar)
+    # mergeUpdateVariableSolverData!(dfg, newvar)
 
     # Get the latest and confirm they're the same, :second
     var1 = getVariable(dfg, :a)
