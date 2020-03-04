@@ -220,17 +220,22 @@ function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariabl
     return variable
 end
 
-function mergeUpdateVariableSolverData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable)::DFGVariable
+function mergeVariableData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable)::DFGVariable
     if !exists(dfg, sourceVariable)
         error("Source variable '$(sourceVariable.label)' doesn't exist in the graph.")
     end
     for (k,v) in sourceVariable.ppeDict
+        # TODO what is happening inside, is this truely an update or is it a merge? (API consistency hounds are apon you)
         updatePPE!(dfg, getLabel(sourceVariable), v, k)
     end
     for (k,v) in sourceVariable.solverDataDict
         updateVariableSolverData!(dfg, getLabel(sourceVariable), v, k)
     end
     return sourceVariable
+end
+
+function mergeUpdateVariableSolverData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable)::DFGVariable
+  mergeVariableData!(dfg, sourceVariable)
 end
 
 function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor
