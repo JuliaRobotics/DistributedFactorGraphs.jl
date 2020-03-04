@@ -196,7 +196,7 @@ end
 """
     $SIGNATURES
 
-Get the PPE dictionary for a variable. Its direct use is not recomended.
+Get the PPE dictionary for a variable.  Recommended to use CRUD operations instead, [`getPPE`](@ref), [`addPPE!`](@ref), [`updatePPE!`](@ref), [`deletePPE!`](@ref).
 """
 getPPEDict(v::VariableDataLevel1) = v.ppeDict
 
@@ -219,6 +219,17 @@ function getPPE(vari::VariableDataLevel1, solveKey::Symbol=:default)
     # return haskey(ppeDict, solveKey) ? ppeDict[solveKey] : nothing
 end
 
+# afew more aliases on PPE, brought back from deprecated DF
+
+"""
+    $SIGNATURES
+
+Return full dictionary of PPEs in a variable, recommended to rather use CRUD: [`getPPE`](@ref), 
+"""
+getVariablePPEDict(vari::VariableDataLevel1) = getPPEDict(vari)
+
+getVariablePPE(args...) = getPPE(args...)
+
 ##------------------------------------------------------------------------------
 ## solverDataDict
 ##------------------------------------------------------------------------------
@@ -226,7 +237,7 @@ end
 """
     $SIGNATURES
 
-Get solver data dictionary for a variable.
+Get solver data dictionary for a variable.  Advised to use graph CRUD operations instead.
 """
 getSolverDataDict(v::DFGVariable) = v.solverDataDict
 
@@ -542,7 +553,7 @@ deletePPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol=:defaul
     $(SIGNATURES)
 List all the PPE data keys in the variable.
 """
-function listPPE(dfg::AbstractDFG, variablekey::Symbol)::Vector{Symbol}
+function listPPEs(dfg::AbstractDFG, variablekey::Symbol)::Vector{Symbol}
     v = getVariable(dfg, variablekey)
     return collect(keys(v.ppeDict))
 end

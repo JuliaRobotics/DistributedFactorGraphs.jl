@@ -182,7 +182,7 @@ end
     @test getLabel(v1) == v1.label
     @test getTags(v1) == v1.tags
     @test getTimestamp(v1) == v1.timestamp
-    @test getVariablePPEs(v1) == v1.ppeDict
+    @test getVariablePPEDict(v1) == v1.ppeDict
     @test_throws Exception DistributedFactorGraphs.getVariablePPE(v1, :notfound)
     @test getSolverData(v1) === v1.solverDataDict[:default]
     @test getSolverData(v1) === v1.solverDataDict[:default]
@@ -190,7 +190,7 @@ end
     @test getSolverDataDict(v1) == v1.solverDataDict
     @test getInternalId(v1) == v1._internalId
     # legacy compat test
-    @test getVariablePPEs(v1) == v1.ppeDict # changed to .ppeDict -- delete by DFG v0.7
+    @test getVariablePPEDict(v1) == v1.ppeDict # changed to .ppeDict -- delete by DFG v0.7
 
 
     @test typeof(getSofttype(v1)) == ContinuousScalar
@@ -280,7 +280,7 @@ end
     var1 = getVariable(dfg, :a)
     #make a copy and simulate external changes
     newvar = deepcopy(var1)
-    getVariablePPEs(newvar)[:default] = MeanMaxPPE(:default, [150.0], [100.0], [50.0])
+    getVariablePPEDict(newvar)[:default] = MeanMaxPPE(:default, [150.0], [100.0], [50.0])
     #update
     # mergeUpdateVariableSolverData!(dfg, newvar)
     # mergeVariableSolverData!(getVariable(dfg,getLabel(newvar)), newvar)
@@ -289,29 +289,29 @@ end
 
     #Check if variable is updated
     var1 = getVariable(dfg, :a)
-    @test getVariablePPEs(newvar) == getVariablePPEs(var1)
+    @test getVariablePPEDict(newvar) == getVariablePPEDict(var1)
 
     # Add a new estimate.
-    getVariablePPEs(newvar)[:second] = MeanMaxPPE(:second, [15.0], [10.0], [5.0])
+    getVariablePPEDict(newvar)[:second] = MeanMaxPPE(:second, [15.0], [10.0], [5.0])
 
     # Confirm they're different
-    @test getVariablePPEs(newvar) != getVariablePPEs(var1)
+    @test getVariablePPEDict(newvar) != getVariablePPEDict(var1)
     # Persist it.
     # mergeUpdateVariableSolverData!(dfg, newvar)
     # mergeVariableSolverData!(getVariable(dfg, getLabel(newvar)), newvar)
     mergeVariableData!(dfg, newvar)
     # Get the latest
     var1 = getVariable(dfg, :a)
-    @test symdiff(collect(keys(getVariablePPEs(var1))), [:default, :second]) == Symbol[]
+    @test symdiff(collect(keys(getVariablePPEDict(var1))), [:default, :second]) == Symbol[]
 
     #Check if variable is updated
-    @test getVariablePPEs(newvar) == getVariablePPEs(var1)
+    @test getVariablePPEDict(newvar) == getVariablePPEDict(var1)
 
 
     # Delete :default and replace to see if new ones can be added
-    delete!(getVariablePPEs(newvar), :default)
+    delete!(getVariablePPEDict(newvar), :default)
     #confirm delete
-    @test symdiff(collect(keys(getVariablePPEs(newvar))), [:second]) == Symbol[]
+    @test symdiff(collect(keys(getVariablePPEDict(newvar))), [:second]) == Symbol[]
     # Persist it., and test
     mergeVariableData!(dfg, newvar)
     # mergeUpdateVariableSolverData!(dfg, newvar)  #357 #358
@@ -320,8 +320,8 @@ end
     var1 = getVariable(dfg, :a)
 
     # TODO issue #166
-    @test getVariablePPEs(newvar) != getVariablePPEs(var1)
-    @test collect(keys(getVariablePPEs(var1))) ==  [:default, :second]
+    @test getVariablePPEDict(newvar) != getVariablePPEDict(var1)
+    @test collect(keys(getVariablePPEDict(var1))) ==  [:default, :second]
 
     # @test symdiff(collect(keys(getVariablePPE(getVariable(dfg, :a)))), [:default, :second]) == Symbol[]
 end

@@ -141,17 +141,15 @@ export getMaxPPE, getMeanPPE, getSuggestedPPE, getLastUpdatedTimestamp
 
 # accessors
 
-export getPPEDict
+export getPPEDict, getVariablePPEDict, getVariablePPE
 
 # CRUD & SET
 export getPPE,
-       getPPEs,
        getVariablePPE,
-       getVariablePPEs,
        addPPE!,
        updatePPE!,
        deletePPE!,
-       listPPE,
+       listPPEs,
        mergePPEs! #TODO look at rename to just mergePPE to match with cloud?
 
 

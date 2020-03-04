@@ -111,7 +111,7 @@ Example of PPE operations:
 # Add a new PPE of type MeanMaxPPE to :x0
 ppe = MeanMaxPPE(:default, [0.0], [0.0], [0.0])
 addPPE!(dfg, :x0, ppe)
-@show listPPE(dfg, :x0)
+@show listPPEs(dfg, :x0)
 # Get the data back - note that this is a reference to above.
 v = getPPE(dfg, :x0, :default)
 # Delete it

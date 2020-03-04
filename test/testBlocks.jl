@@ -442,7 +442,7 @@ function  PPETestBlock!(fg, v1)
     @test_throws ErrorException addPPE!(fg, :a, ppe)
 
 
-    @test listPPE(fg, :a) == [:default]
+    @test listPPEs(fg, :a) == [:default]
     # Get the data back - note that this is a reference to above.
     @test getPPE(fg, :a, :default) == ppe
 
@@ -468,7 +468,7 @@ function  PPETestBlock!(fg, v1)
     # Add a new PPE of type MeanMaxPPE to :x0
     ppe = MeanMaxPPE(:default, [0.0], [0.0], [0.0])
     addPPE!(fg, :a, ppe)
-    @test listPPE(fg, :a) == [:default]
+    @test listPPEs(fg, :a) == [:default]
     # Get the data back - note that this is a reference to above.
     @test getPPE(fg, :a, :default) == ppe
 
