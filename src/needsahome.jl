@@ -106,9 +106,9 @@ print(dfg::AbstractDFG, sym::Symbol) = isVariable(dfg,sym) ? printVariable(dfg, 
 
 #NOT too many aliases on PPE, brought back from deprecated DF
 
-getVariablePPEs(v::VariableDataLevel1) = getPPEDict(v)
+getVariablePPEDict(v::VariableDataLevel1) = getPPEDict(v)
 
-getPPEs(vari::VariableDataLevel1) = getPPEDict(v)
+getPPEDict(vari::VariableDataLevel1) = getPPEDict(v)
 
 getVariablePPE(args...) = getPPE(args...)
 
