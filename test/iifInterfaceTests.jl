@@ -283,7 +283,7 @@ end
     getVariablePPEs(newvar)[:default] = MeanMaxPPE(:default, [150.0], [100.0], [50.0])
     #update
     # mergeUpdateVariableSolverData!(dfg, newvar)
-    mergeVariableSolverData!(dfg, newvar)
+    mergeVariableSolverData!(getVariable(dfg,getLabel(newvar)), newvar)
 
     #Check if variable is updated
     var1 = getVariable(dfg, :a)
@@ -295,7 +295,8 @@ end
     # Confirm they're different
     @test getVariablePPEs(newvar) != getVariablePPEs(var1)
     # Persist it.
-    mergeUpdateVariableSolverData!(dfg, newvar)
+    # mergeUpdateVariableSolverData!(dfg, newvar)
+    mergeVariableSolverData!(getVariable(dfg, getLabel(newvar)), newvar)
     # Get the latest
     var1 = getVariable(dfg, :a)
     @test symdiff(collect(keys(getVariablePPEs(var1))), [:default, :second]) == Symbol[]
@@ -308,8 +309,9 @@ end
     delete!(getVariablePPEs(newvar), :default)
     #confirm delete
     @test symdiff(collect(keys(getVariablePPEs(newvar))), [:second]) == Symbol[]
-    # Persist it.
+    # Persist it., and test #357
     mergeUpdateVariableSolverData!(dfg, newvar)
+    # mergeVariableSolverData!(getVariable(dfg, getLabel(newvar)), newvar)
 
     # Get the latest and confirm they're the same, :second
     var1 = getVariable(dfg, :a)
