@@ -442,7 +442,7 @@ function  PPETestBlock!(fg, v1)
     @test_throws ErrorException addPPE!(fg, :a, ppe)
 
 
-    @test listPPE(fg, :a) == [:default]
+    @test listPPEs(fg, :a) == [:default]
     # Get the data back - note that this is a reference to above.
     @test getPPE(fg, :a, :default) == ppe
 
@@ -461,14 +461,14 @@ function  PPETestBlock!(fg, v1)
 
     #FIXME copied from lower
     # @test @test_deprecated getVariablePPEs(v1) == v1.ppeDict
-    @test_throws Union{KeyError,UndefVarError} getPPE(v1, :notfound)
+    @test_throws KeyError getPPE(v1, :notfound)
     #TODO
     # @test_deprecated getVariablePPE(v1)
 
     # Add a new PPE of type MeanMaxPPE to :x0
     ppe = MeanMaxPPE(:default, [0.0], [0.0], [0.0])
     addPPE!(fg, :a, ppe)
-    @test listPPE(fg, :a) == [:default]
+    @test listPPEs(fg, :a) == [:default]
     # Get the data back - note that this is a reference to above.
     @test getPPE(fg, :a, :default) == ppe
 
