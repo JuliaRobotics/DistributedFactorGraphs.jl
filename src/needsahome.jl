@@ -11,10 +11,12 @@ variable labels `syms::Vector{Symbols}`.
 
 SamC: Can we not just use _copyIntoGraph! for this? Looks like a small refactor to make it work.
 Will paste in as-is for now and we can figure it out as we go.
+  DF: Absolutely agree that subgraph functions should use `DFG._copyIntoGraph!` as a single dependency in the code base.  There have been a repeated new rewrites of IIF.buildSubGraphFromLabels (basic wrapper is fine) but nominal should be to NOT duplicate DFG functionality in IIF -- rather use/improve the existing features in DFG. FYI, I have repeatedly refactored this function over and over to use DFG properly but somehow this (add/delete/Variable/Factor) version keeps coming back without using `_copyIntoGraph`!!???  See my latest effort commented out below `buildSubgraphFromLabels!_SPECIAL` ... sigh.
 
 Notes
 - Slighly messy internals, but gets the job done -- some room for performance improvement.
 - Defaults to GraphDFG, but likely to change to LightDFG in future.
+  - since DFG v0.6 LightDFG is the default.
 
 DevNotes
 - TODO: still needs to be consolidated with `DFG._copyIntoGraph`
