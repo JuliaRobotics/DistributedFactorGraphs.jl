@@ -224,7 +224,7 @@ end
 """
     $SIGNATURES
 
-Return full dictionary of PPEs in a variable, recommended to rather use CRUD: [`getPPE`](@ref), 
+Return full dictionary of PPEs in a variable, recommended to rather use CRUD: [`getPPE`](@ref),
 """
 getVariablePPEDict(vari::VariableDataLevel1) = getPPEDict(vari)
 
@@ -361,34 +361,37 @@ addVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable, solvekey::
 """
     $(SIGNATURES)
 Update variable solver data if it exists, otherwise add it.
+Notes:
+- `useDeepcopy=true` to copy solver data and keep separate memory.
 """
-function updateVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData, solvekey::Symbol=:default)::VariableNodeData
+function updateVariableSolverData!(dfg::AbstractDFG,
+                                   variablekey::Symbol,
+                                   vnd::VariableNodeData,
+                                   solvekey::Symbol=:default,
+                                   useDeepcopy::Bool=true  )::VariableNodeData
+    #
     #This is basically just setSolverData
     var = getVariable(dfg, variablekey)
     if !haskey(var.solverDataDict, solvekey)
         @warn "VariableNodeData '$(solvekey)' does not exist, adding"
     end
     #for InMemoryDFGTypes, cloud would update here
-    var.solverDataDict[solvekey] = vnd
+    var.solverDataDict[solvekey] = useDeepcopy ? deepcopy(vnd) : vnd
     return vnd
 end
 
-"""
-    $(SIGNATURES)
-Update variable solver data if it exists, otherwise add it.
-NOTE: Copies the solver data.
-"""
-updateVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable, solvekey::Symbol=:default) =
-    updateVariableSolverData!(dfg, sourceVariable.label, deepcopy(getSolverData(sourceVariable, solvekey)), solvekey)
+updateVariableSolverData!(dfg::AbstractDFG,
+                          sourceVariable::DFGVariable,
+                          solvekey::Symbol=:default, useDeepcopy::Bool=true) =
+    updateVariableSolverData!(dfg, sourceVariable.label, getSolverData(sourceVariable, solvekey), solvekey, useDeepcopy)
 
-"""
-    $(SIGNATURES)
-Update variable solver data if it exists, otherwise add it.
-"""
-function updateVariableSolverData!(dfg::AbstractDFG, sourceVariables::Vector{<:DFGVariable}, solvekey::Symbol=:default)
+function updateVariableSolverData!(dfg::AbstractDFG,
+                                   sourceVariables::Vector{<:DFGVariable},
+                                   solvekey::Symbol=:default,
+                                   useDeepcopy::Bool=true  )
     #I think cloud would do this in bulk for speed
     for var in sourceVariables
-        updateVariableSolverData!(dfg, var.label, getSolverData(var, solvekey), solvekey)
+        updateVariableSolverData!(dfg, var.label, getSolverData(var, solvekey), solvekey, useDeepcopy)
     end
 end
 
