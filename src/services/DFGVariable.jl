@@ -362,36 +362,60 @@ addVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable, solvekey::
     $(SIGNATURES)
 Update variable solver data if it exists, otherwise add it.
 Notes:
-- `useDeepcopy=true` to copy solver data and keep separate memory.
+- `useCopy=true` to copy solver data and keep separate memory.
 """
 function updateVariableSolverData!(dfg::AbstractDFG,
                                    variablekey::Symbol,
                                    vnd::VariableNodeData,
                                    solvekey::Symbol=:default,
-                                   useDeepcopy::Bool=true  )::VariableNodeData
+                                   useCopy::Bool=true,
+                                   fields::Vector{Symbol}=Symbol[]  )::VariableNodeData
     #
     #This is basically just setSolverData
     var = getVariable(dfg, variablekey)
     if !haskey(var.solverDataDict, solvekey)
         @warn "VariableNodeData '$(solvekey)' does not exist, adding"
     end
-    #for InMemoryDFGTypes, cloud would update here
-    var.solverDataDict[solvekey] = useDeepcopy ? deepcopy(vnd) : vnd
-    return vnd
+
+    # for InMemoryDFGTypes do memory copy or repointing, for cloud this would be an different kind of update.
+    usevnd = useCopy ? deepcopy(vnd) : vnd
+    # should just one, or many pointers be updated?
+    if haskey(var.solverDataDict, solvekey) && isa(var.solverDataDict[solvekey], VariableNodeData) && length(fields) != 0
+      # change multiple pointers inside the VND var.solverDataDict[solvekey]
+      for field in fields
+        destField = getfield(var.solverDataDict[solvekey], field)
+        srcField = getfield(usevnd, field)
+        if isa(destField, Array)
+          # use broadcast (in-place operation)
+          destField .= srcField
+        else
+          # change pointer of destination VND object member
+          setfield!(var.solverDataDict[solvekey], field, srcField)
+        end
+      end
+    else
+      # change a single pointer in var.solverDataDict
+      var.solverDataDict[solvekey] = usevnd
+    end
+
+    return var.solverDataDict[solvekey]
 end
 
 updateVariableSolverData!(dfg::AbstractDFG,
                           sourceVariable::DFGVariable,
-                          solvekey::Symbol=:default, useDeepcopy::Bool=true) =
-    updateVariableSolverData!(dfg, sourceVariable.label, getSolverData(sourceVariable, solvekey), solvekey, useDeepcopy)
+                          solvekey::Symbol=:default,
+                          useCopy::Bool=true,
+                          fields::Vector{Symbol}=Symbol[] ) =
+    updateVariableSolverData!(dfg, sourceVariable.label, getSolverData(sourceVariable, solvekey), solvekey, useCopy, fields)
 
 function updateVariableSolverData!(dfg::AbstractDFG,
                                    sourceVariables::Vector{<:DFGVariable},
                                    solvekey::Symbol=:default,
-                                   useDeepcopy::Bool=true  )
+                                   useCopy::Bool=true,
+                                   fields::Vector{Symbol}=Symbol[]  )
     #I think cloud would do this in bulk for speed
     for var in sourceVariables
-        updateVariableSolverData!(dfg, var.label, getSolverData(var, solvekey), solvekey, useDeepcopy)
+        updateVariableSolverData!(dfg, var.label, getSolverData(var, solvekey), solvekey, useCopy, fields)
     end
 end
 

@@ -281,10 +281,6 @@ end
     #make a copy and simulate external changes
     newvar = deepcopy(var1)
     getVariablePPEDict(newvar)[:default] = MeanMaxPPE(:default, [150.0], [100.0], [50.0])
-    #update
-    # mergeUpdateVariableSolverData!(dfg, newvar)
-    # mergeVariableSolverData!(getVariable(dfg,getLabel(newvar)), newvar)
-    # mergeVariableData!(getVariable(dfg,getLabel(newvar)), newvar)
     mergeVariableData!(dfg, newvar)
 
     #Check if variable is updated
@@ -297,8 +293,6 @@ end
     # Confirm they're different
     @test getVariablePPEDict(newvar) != getVariablePPEDict(var1)
     # Persist it.
-    # mergeUpdateVariableSolverData!(dfg, newvar)
-    # mergeVariableSolverData!(getVariable(dfg, getLabel(newvar)), newvar)
     mergeVariableData!(dfg, newvar)
     # Get the latest
     var1 = getVariable(dfg, :a)
@@ -313,8 +307,7 @@ end
     #confirm delete
     @test symdiff(collect(keys(getVariablePPEDict(newvar))), [:second]) == Symbol[]
     # Persist it., and test
-    mergeVariableData!(dfg, newvar)
-    # mergeUpdateVariableSolverData!(dfg, newvar)  #357 #358
+    mergeVariableData!(dfg, newvar)  #357 #358
 
     # Get the latest and confirm they're the same, :second
     var1 = getVariable(dfg, :a)
