@@ -361,8 +361,14 @@ addVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable, solvekey::
 """
     $(SIGNATURES)
 Update variable solver data if it exists, otherwise add it.
+
 Notes:
 - `useCopy=true` to copy solver data and keep separate memory.
+- Use `fields` to updated only a few VND.fields while adhering to `useCopy`.
+
+Related
+
+mergeVariableSolverData!
 """
 function updateVariableSolverData!(dfg::AbstractDFG,
                                    variablekey::Symbol,
