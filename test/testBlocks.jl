@@ -568,8 +568,29 @@ function  VSDTestBlock!(fg, v1)
 
     # Update update it
     @test updateVariableSolverData!(fg, :a, vnd, :parametric) == vnd
+    # test without deepcopy
+    @test updateVariableSolverData!(fg, :a, vnd, :parametric, false) == vnd
     # Bulk copy update x0
     @test updateVariableSolverData!(fg, [v1], :default) == nothing
+
+    altVnd = vnd |> deepcopy
+    keepVnd = getSolverData(getVariable(fg, :a), :parametric) |> deepcopy
+    altVnd.inferdim = -99.0
+    retVnd = updateVariableSolverData!(fg, :a, altVnd, :parametric, false, [:inferdim;])
+    @test retVnd == altVnd
+
+    fill!(altVnd.bw, -1.0)
+    retVnd = updateVariableSolverData!(fg, :a, altVnd, :parametric, false, [:bw;])
+    @test retVnd == altVnd
+
+    altVnd.inferdim = -98.0
+    @test retVnd != altVnd
+
+    # restore without copy
+    # @show vnd.inferdim
+    @test updateVariableSolverData!(fg, :a, keepVnd, :parametric, false, [:inferdim;:bw]) == vnd
+    @test getSolverData(getVariable(fg, :a), :parametric).inferdim !=  altVnd.inferdim
+    @test getSolverData(getVariable(fg, :a), :parametric).bw !=  altVnd.bw
 
     # Delete parametric from v1
     @test deleteVariableSolverData!(fg, :a, :parametric) == vnd
