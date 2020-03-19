@@ -391,7 +391,7 @@ function updateVariableSolverData!(dfg::AbstractDFG,
       for field in fields
         destField = getfield(var.solverDataDict[solvekey], field)
         srcField = getfield(usevnd, field)
-        if isa(destField, Array)
+        if isa(destField, Array) && size(destField) == size(srcField)
           # use broadcast (in-place operation)
           destField .= srcField
         else
