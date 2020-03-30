@@ -249,6 +249,9 @@ function  DFGFactorSCA()
     f1 = DFGFactor(f1_lbl, [:a,:b], gfnd, tags = f1_tags, solvable=0)
 
     f2 = DFGFactor{TestFunctorInferenceType1, Symbol}(:bcf1)
+    #TODO add tests for mutating vos in updateFactor and orphan related checks.
+    # we should perhaps prevent an empty vos
+    f2._variableOrderSymbols = [:b, :c]
 
     @test getLabel(f1) == f1_lbl
     @test getTags(f1) == f1_tags
@@ -337,13 +340,26 @@ function  VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
         @test getFactor(fg, :bcf1) |> getTimestamp == newtimestamp
     end
     #deletions
-    @test getVariable(fg, :c) === deleteVariable!(fg, v3)
+    delvarCompare = getVariable(fg, :c)
+    delfacCompare = getFactor(fg, :bcf1)
+    delvar, delfacs = deleteVariable!(fg, v3)
+    @test delvarCompare === delvar
+    @test delfacCompare === delfacs[1]
     @test_throws ErrorException deleteVariable!(fg, v3)
     @test setdiff(ls(fg),[:a,:b]) == []
+
+    @test addVariable!(fg, v3) === v3
+    @test addFactor!(fg, f2) === f2
+
     @test getFactor(fg, :bcf1) === deleteFactor!(fg, f2)
     @test_throws ErrorException deleteFactor!(fg, f2)
     @test lsf(fg) == [:abf1]
 
+    delvarCompare = getVariable(fg, :c)
+    delfacCompare = []
+    delvar, delfacs = deleteVariable!(fg, v3)
+    @test delvarCompare === delvar
+    @test delfacCompare == []
 
     @test getVariable(fg, :a) == v1
     @test getVariable(fg, :a, :default) == v1

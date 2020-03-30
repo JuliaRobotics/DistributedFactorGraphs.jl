@@ -161,14 +161,21 @@ function updateFactor!(dfg::GraphsDFG, factor::DFGFactor)::DFGFactor
     return factor
 end
 
-function deleteVariable!(dfg::GraphsDFG, label::Symbol)::DFGVariable
+function deleteVariable!(dfg::GraphsDFG, label::Symbol)::Tuple{AbstractDFGVariable, Vector{<:AbstractDFGFactor}}
     if !haskey(dfg.labelDict, label)
         error("Variable label '$(label)' does not exist in the factor graph")
     end
+
+    deleteNeighbors = true # reserved, orphaned factors are not supported at this time
+    if deleteNeighbors
+        neigfacs = map(l->deleteFactor!(dfg, l), getNeighbors(dfg, label))
+    end
+
+
     variable = dfg.g.vertices[dfg.labelDict[label]].dfgNode
     delete_vertex!(dfg.g.vertices[dfg.labelDict[label]], dfg.g)
     delete!(dfg.labelDict, label)
-    return variable
+    return variable, neigfacs
 end
 
 function deleteFactor!(dfg::GraphsDFG, label::Symbol)::DFGFactor
@@ -208,7 +215,7 @@ function getFactors(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; 
     if regexFilter != nothing
         factors = filter(f -> occursin(regexFilter, String(f.label)), factors)
     end
-    
+
     if length(tags) > 0
         mask = map(v -> length(intersect(v.tags, tags)) > 0, factors )
         return factors[mask]

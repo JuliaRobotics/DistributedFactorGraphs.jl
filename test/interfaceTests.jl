@@ -44,6 +44,13 @@ end
     BigDataEntriesTestBlock!(fg1, var2)
 end
 
+# fg = fg1
+# v1 = var1
+# v2 = var2
+# v3 = var3
+# f0 = fac0
+# f1 = fac1
+# f2 = fac2
 @testset "TODO Sorteer groep" begin
     testGroup!(fg1, var1, var2, fac0, fac1)
 end
