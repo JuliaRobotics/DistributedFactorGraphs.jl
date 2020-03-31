@@ -848,6 +848,27 @@ function getSubgraph(dfg::G,
     return addToDFG
 end
 
+
+function buildSubgraph(::Type{G}, dfg::AbstractDFG, variableFactorLabels::Vector{Symbol}, distance::Int=0; solvable::Int=0, kwargs...) where G <: AbstractDFG
+
+    # find neighbors at distance to add
+    neighbors = Symbol[]
+    if distance > 0
+        for l in variableFactorLabels
+            union!(neighbors, getNeighborhood(dfg, l, distance))
+        end
+    end
+
+    allvarfacs = union(variableFactorLabels, neighbors)
+
+    solvable != 0 && filter!(nlbl -> (getSolvable(dfg, nlbl) >= solvable), allvarfacs)
+
+    # Copy the section of graph we want
+    destDFG = deepcopyGraph(G, dfg, allvarfacs; kwargs...)
+    return destDFG
+end
+
+
 """
     $(SIGNATURES)
 Common function for copying nodes from one graph into another graph.
@@ -1002,9 +1023,9 @@ Produces a dot-format of the graph for visualization.
 """
 function toDot(dfg::AbstractDFG)::String
     #TODO implement convert
-    graphsdfg = GraphsDFG{NoSolverParams}()
-    DistributedFactorGraphs._copyIntoGraph!(dfg, graphsdfg, union(listVariables(dfg), listFactors(dfg)), true)
-
+    # graphsdfg = GraphsDFG{NoSolverParams}()
+    # DistributedFactorGraphs._copyIntoGraph!(dfg, graphsdfg, union(listVariables(dfg), listFactors(dfg)), true)
+    graphsdfg = convert(GraphsDFG{NoSolverParams}, dfg)
     # Calls down to GraphsDFG.toDot
     return toDot(graphsdfg)
 end

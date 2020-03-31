@@ -250,6 +250,8 @@ include("entities/AbstractDFGSummary.jl")
 
 include("services/AbstractDFG.jl")
 
+include("services/copyFunctions.jl")
+
 # In Memory Types
 include("GraphsDFG/GraphsDFG.jl")
 include("LightDFG/LightDFG.jl")
