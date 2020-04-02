@@ -309,14 +309,11 @@ const VariableDataLevel1 = Union{DFGVariable, DFGVariableSummary}
 const VariableDataLevel2 = Union{DFGVariable}
 
 ##==============================================================================
-## converters
+## Convertion constructors
 ##==============================================================================
 
-function Base.convert(::Type{DFGVariableSummary}, v::DFGVariable)
-    return DFGVariableSummary(v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.ppeDict), Symbol(typeof(getSofttype(v))), v.bigData, v._internalId)
-end
+DFGVariableSummary(v::DFGVariable) =
+        DFGVariableSummary(v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.ppeDict), Symbol(typeof(getSofttype(v))), v.bigData, v._internalId)
 
-#TODO Test
-function Base.convert(::Type{SkeletonDFGVariable}, v::VariableDataLevel1)
-    return SkeletonDFGVariable(v.label, deepcopy(v.tags))
-end
+SkeletonDFGVariable(v::VariableDataLevel1) =
+            SkeletonDFGVariable(v.label, deepcopy(v.tags))

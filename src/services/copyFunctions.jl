@@ -77,5 +77,3 @@ function deepcopyGraph( ::Type{T},
     copyGraph!(destDFG, sourceDFG, variableFactorLabels; deepcopyNodes=true, kwargs...)
     return destDFG
 end
-
-Base.convert(::Type{T}, fg::AbstractDFG) where T <: AbstractDFG = deepcopyGraph(T, fg)

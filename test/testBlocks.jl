@@ -1083,3 +1083,65 @@ function ConnectivityTest(testDFGAPI; kwargs...)
         @test hasOrphans(dfg) == true
     end
 end
+
+
+function CopyFunctionsTest(testDFGAPI; kwargs...)
+
+    # testDFGAPI = LightDFG
+    # kwargs = ()
+
+    dfg, verts, facs = connectivityTestGraph(testDFGAPI; kwargs...)
+
+    varlbls = ls(dfg)
+    faclbls = lsf(dfg)
+
+    dcdfg = DFG.deepcopyGraph(LightDFG, dfg)
+
+    @test issetequal(ls(dcdfg), varlbls)
+    @test issetequal(lsf(dcdfg), faclbls)
+
+    lbls = [:x2, :x3, :x2x3f1]
+    dcdfg_part = DFG.deepcopyGraph(LightDFG, dfg, lbls)
+
+    @test issetequal(union(ls(dcdfg_part), lsf(dcdfg_part)), lbls)
+
+    # deepcopy subgraph ignoring orphans
+    @test_logs (:warn, r"orphan") dcdfg_part = DFG.deepcopyGraph(LightDFG, dfg, union(lbls, [:x1x2f1]))
+    @test issetequal(union(ls(dcdfg_part), lsf(dcdfg_part)), lbls)
+
+    # deepcopy subgraph with 2 parts
+    lbls = [:x2, :x3, :x2x3f1, :x5, :x6, :x5x6f1, :x10]
+    dcdfg_part = DFG.deepcopyGraph(LightDFG, dfg, lbls)
+    @test issetequal(union(ls(dcdfg_part), lsf(dcdfg_part)), lbls)
+    @test !isFullyConnected(dcdfg_part)
+    # dfgplot(dcdfg_part)
+
+    # not found errors
+    @test_throws ErrorException DFG.deepcopyGraph(LightDFG, dfg, [:x0, :a])
+
+    # already exists errors
+    dcdfg_part = DFG.deepcopyGraph(LightDFG, dfg, [:x1, :x2, :x3, :x1x2f1, :x2x3f1])
+    @test_throws ErrorException DFG.deepcopyGraph!(dcdfg_part, dfg, [:x4, :x2, :x3, :x1x2f1, :x2x3f1])
+    @test_throws ErrorException DFG.deepcopyGraph!(dcdfg_part, dfg, [:x1x2f1])
+
+    # same but overwrite destination
+    DFG.deepcopyGraph!(dcdfg_part, dfg, [:x4, :x2, :x3, :x1x2f1, :x2x3f1]; overwriteDest = true)
+
+    DFG.deepcopyGraph!(dcdfg_part, dfg, [:x1x2f1]; overwriteDest=true)
+
+
+    # convert to...
+    # condfg = convert(GraphsDFG, dfg)
+    # @test condfg isa GraphsDFG
+    # @test issetequal(ls(condfg), varlbls)
+    # @test issetequal(lsf(condfg), faclbls)
+    #
+    # condfg = convert(LightDFG, dfg)
+    # @test condfg isa LightDFG
+    # @test issetequal(ls(condfg), varlbls)
+    # @test issetequal(lsf(condfg), faclbls)
+
+    # GraphsDFG(dfg::AbstractDFG) = convert(GraphsDFG,dfg)
+    # GraphsDFG(dfg)
+
+end

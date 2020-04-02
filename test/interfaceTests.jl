@@ -94,8 +94,13 @@ end
 
     fgcopy = testDFGAPI()
     DFG._copyIntoGraph!(fg, fgcopy, union(ls(fg), lsf(fg)))
-
     @test getVariableOrder(fg,:f1) == getVariableOrder(fgcopy,:f1)
 
+    #test copyGraph, deepcopyGraph[!]
+    fgcopy = testDFGAPI()
+    DFG.deepcopyGraph!(fgcopy, fg)
+    @test getVariableOrder(fg,:f1) == getVariableOrder(fgcopy,:f1)
+
+    CopyFunctionsTest(testDFGAPI)
 
 end

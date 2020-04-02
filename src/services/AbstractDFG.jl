@@ -1023,9 +1023,8 @@ Produces a dot-format of the graph for visualization.
 """
 function toDot(dfg::AbstractDFG)::String
     #TODO implement convert
-    # graphsdfg = GraphsDFG{NoSolverParams}()
-    # DistributedFactorGraphs._copyIntoGraph!(dfg, graphsdfg, union(listVariables(dfg), listFactors(dfg)), true)
-    graphsdfg = convert(GraphsDFG{NoSolverParams}, dfg)
+    graphsdfg = GraphsDFG{NoSolverParams}()
+    DistributedFactorGraphs._copyIntoGraph!(dfg, graphsdfg, union(listVariables(dfg), listFactors(dfg)), true)
     # Calls down to GraphsDFG.toDot
     return toDot(graphsdfg)
 end
@@ -1065,8 +1064,8 @@ Get a summary of the graph (first-class citizens of variables and factors).
 Returns a DFGSummary.
 """
 function getSummary(dfg::G)::DFGSummary where {G <: AbstractDFG}
-    vars = map(v -> convert(DFGVariableSummary, v), getVariables(dfg))
-    facts = map(f -> convert(DFGFactorSummary, f), getFactors(dfg))
+    vars = map(v -> DFGVariableSummary(v), getVariables(dfg))
+    facts = map(f -> DFGFactorSummary(f), getFactors(dfg))
     return DFGSummary(
         Dict(map(v->v.label, vars) .=> vars),
         Dict(map(f->f.label, facts) .=> facts),
@@ -1087,11 +1086,12 @@ function getSummaryGraph(dfg::G)::LightDFG{NoSolverParams, DFGVariableSummary, D
         userId=dfg.userId,
         robotId=dfg.robotId,
         sessionId=dfg.sessionId)
-    for v in getVariables(dfg)
-        newV = addVariable!(summaryDfg, convert(DFGVariableSummary, v))
-    end
-    for f in getFactors(dfg)
-        addFactor!(summaryDfg, getNeighbors(dfg, f), convert(DFGFactorSummary, f))
-    end
+    deepcopyGraph!(summaryDfg, dfg)
+    # for v in getVariables(dfg)
+    #     newV = addVariable!(summaryDfg, DFGVariableSummary(v))
+    # end
+    # for f in getFactors(dfg)
+    #     addFactor!(summaryDfg, getNeighbors(dfg, f), DFGFactorSummary(f))
+    # end
     return summaryDfg
 end

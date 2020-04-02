@@ -38,6 +38,12 @@ function addVariable!(dfg::LightDFG{<:AbstractParams, V, <:AbstractDFGFactor}, v
     return variable
 end
 
+function addVariable!(dfg::LightDFG{<:AbstractParams, VD, <:AbstractDFGFactor},
+                      variable::AbstractDFGVariable)::VD where VD <: AbstractDFGVariable
+    return addVariable!(dfg, VD(variable))
+end
+
+
 #moved to abstract
 # function addFactor!(dfg::LightDFG{<:AbstractParams, V, F}, variables::Vector{<:V}, factor::F)::F where {V <: AbstractDFGVariable, F <: AbstractDFGFactor}
 #
@@ -84,6 +90,11 @@ function addFactor!(dfg::LightDFG{<:AbstractParams, <:AbstractDFGVariable, F}, f
     # @assert FactorGraphs.addFactor!(dfg.g, getVariableOrder(factor), factor)
     @assert FactorGraphs.addFactor!(dfg.g, factor._variableOrderSymbols, factor)
     return factor
+end
+
+function addFactor!(dfg::LightDFG{<:AbstractParams, <:AbstractDFGVariable, F},
+                      factor::AbstractDFGFactor)::F where F <: AbstractDFGFactor
+    return addFactor!(dfg, F(factor))
 end
 
 function getVariable(dfg::LightDFG, label::Symbol)::AbstractDFGVariable
@@ -257,7 +268,7 @@ end
 function _copyIntoGraph!(sourceDFG::LightDFG{<:AbstractParams, V, F}, destDFG::LightDFG{<:AbstractParams, V, F}, ns::Vector{Int}, includeOrphanFactors::Bool=false)::Nothing where {V <: AbstractDFGVariable, F <: AbstractDFGFactor}
 
     includeOrphanFactors && (@error "Adding orphaned factors is not supported")
-    
+
     #kan ek die in bulk copy, soos graph en dan nuwe map maak
     # Add all variables first,
     labels = [sourceDFG.g.labels[i] for i in ns]

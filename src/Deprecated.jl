@@ -95,4 +95,23 @@ Base.setproperty!(x::DFGFactor,f::Symbol, val) = begin
     end
 
 
-#
+#NOTE deprecate in favor of constructors because its not lossless: https://docs.julialang.org/en/v1/manual/conversion-and-promotion/#Conversion-vs.-Construction-1
+function Base.convert(::Type{DFGVariableSummary}, v::DFGVariable)
+    Base.depwarn("convert to type DFGVariableSummary is deprecated use the constructor", :convert)
+    return DFGVariableSummary(v)
+end
+
+function Base.convert(::Type{SkeletonDFGVariable}, v::VariableDataLevel1)
+    Base.depwarn("convert to type SkeletonDFGVariable is deprecated use the constructor", :convert)
+    return SkeletonDFGVariable(v)
+end
+
+function Base.convert(::Type{DFGFactorSummary}, f::DFGFactor)
+    Base.depwarn("convert to type DFGFactorSummary is deprecated use the constructor", :convert)
+    return DFGFactorSummary(f)
+end
+
+function Base.convert(::Type{SkeletonDFGFactor}, f::FactorDataLevel1)
+    Base.depwarn("convert to type SkeletonDFGFactor is deprecated use the constructor", :convert)
+    return SkeletonDFGFactor(f)
+end
