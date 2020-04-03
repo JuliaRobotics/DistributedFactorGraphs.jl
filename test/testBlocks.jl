@@ -1002,6 +1002,43 @@ function  GettingSubgraphs(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
 
 end
 
+
+function  BuildingSubgraphs(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
+
+    # "Getting Subgraphs"
+    dfg, verts, facs = connectivityTestGraph(testDFGAPI, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
+    # Subgraphs
+    dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [verts[1].label], 2)
+    # Only returns x1 and x2
+    @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+    #
+    dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [:x1, :x2, :x1x2f1])
+    # Only returns x1 and x2
+    @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+
+    dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [:x1x2f1], 1)
+    # Only returns x1 and x2
+    @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+
+    #TODO if not a LightDFG with and summary or skeleton
+    if VARTYPE == DFGVariable
+        dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [:x8], 2, solvable=1)
+        @test issetequal([:x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
+        #end if not a LightDFG with and summary or skeleton
+    end
+    # DFG issue #95 - confirming that getSubgraphAroundNode retains order
+    # REF: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/95
+    for fId in listVariables(dfg)
+        # Get a subgraph of this and it's related factors+variables
+        dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [fId], 2)
+        # For each factor check that the order the copied graph == original
+        for fact in getFactors(dfgSubgraph)
+            @test fact._variableOrderSymbols == getFactor(dfg, fact.label)._variableOrderSymbols
+        end
+    end
+
+end
+
 #TODO Summaries and Summary Graphs
 function  Summaries(testDFGAPI)
     # "Summaries and Summary Graphs"

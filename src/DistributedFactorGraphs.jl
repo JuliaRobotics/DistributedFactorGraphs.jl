@@ -161,8 +161,10 @@ export packVariableNodeData, unpackVariableNodeData
 
 export getSolvedCount, isSolved, setSolvedCount!, isInitialized
 
-export getNeighborhood, getSubgraph, getSubgraphAroundNode, getNeighbors, _getDuplicatedEmptyDFG
-
+export getNeighborhood, getNeighbors, _getDuplicatedEmptyDFG
+export buildSubgraph
+# TODO Deprecate in favor of buildSubgraph
+export getSubgraph, getSubgraphAroundNode
 # Big Data
 ##------------------------------------------------------------------------------
 export addBigDataEntry!, getBigDataEntry, updateBigDataEntry!, deleteBigDataEntry!, getBigDataEntries, getBigDataKeys

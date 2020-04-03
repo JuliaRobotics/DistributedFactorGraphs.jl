@@ -70,6 +70,10 @@ end
     GettingSubgraphs(testDFGAPI)
 end
 
+@testset "Building Subgraphs" begin
+    BuildingSubgraphs(testDFGAPI)
+end
+
 #TODO Summaries and Summary Graphs
 @testset "Summaries and Summary Graphs" begin
     Summaries(testDFGAPI)
