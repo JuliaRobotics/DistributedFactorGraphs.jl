@@ -848,7 +848,13 @@ function getSubgraph(dfg::G,
     return addToDFG
 end
 
-
+"""
+    $(SIGNATURES)
+Build a deep subgraph copy from the DFG given a list of variables and factors and an optional distance.
+Note: Orphaned factors (where the subgraph does not contain all the related variables) are not returned.
+Dev Notes
+- Bulk vs node for node: a list of labels are compiled and the sugraph is copied in bulk. 
+"""
 function buildSubgraph(::Type{G}, dfg::AbstractDFG, variableFactorLabels::Vector{Symbol}, distance::Int=0; solvable::Int=0, kwargs...) where G <: AbstractDFG
 
     # find neighbors at distance to add

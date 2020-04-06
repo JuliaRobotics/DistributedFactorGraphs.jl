@@ -6,14 +6,20 @@ Orphaned factors are not added.
 Set `overwriteDest` to overwrite existing variables and factors in the destination DFG.
 NOTE: copyGraphMetadata not supported yet.
 """
-function copyGraph!(destDFG::AbstractDFG, sourceDFG::AbstractDFG, variableFactorLabels::Vector{Symbol}; copyGraphMetadata::Bool=false, overwriteDest::Bool=false, deepcopyNodes::Bool=false)
+function copyGraph!(destDFG::AbstractDFG,
+                    sourceDFG::AbstractDFG,
+                    variableFactorLabels::Vector{Symbol};
+                    copyGraphMetadata::Bool=false,
+                    overwriteDest::Bool=false,
+                    deepcopyNodes::Bool=false,
+                    verbose::Bool = true)
     # Split into variables and factors
     sourceVariables = map(vId->getVariable(sourceDFG, vId), intersect(listVariables(sourceDFG), variableFactorLabels))
     sourceFactors = map(fId->getFactor(sourceDFG, fId), intersect(listFactors(sourceDFG), variableFactorLabels))
     if length(sourceVariables) + length(sourceFactors) != length(variableFactorLabels)
-        rem = symdiff(map(v->v.label, sourceVariables), variableFactorLabels)
-        rem = symdiff(map(f->f.label, sourceFactors), variableFactorLabels)
-        error("Cannot copy because cannot find the following nodes in the source graph: $rem")
+        remv = setdiff(map(v->v.label, sourceVariables), variableFactorLabels)
+        remf = setdiff(map(f->f.label, sourceFactors), variableFactorLabels)
+        error("Cannot copy because cannot find the following nodes in the source graph: $remv, $remf")
     end
 
     # Now we have to add all variables first,
@@ -48,7 +54,7 @@ function copyGraph!(destDFG::AbstractDFG, sourceDFG::AbstractDFG, variableFactor
             else
                 error("Factor $(factor.label) already exists in destination graph!")
             end
-        else
+        elseif verbose
             @warn "Factor $(factor.label) will be an orphan in the destination graph, and therefore not added."
         end
     end
@@ -60,6 +66,7 @@ function copyGraph!(destDFG::AbstractDFG, sourceDFG::AbstractDFG, variableFactor
     end
     return nothing
 end
+
 
 function deepcopyGraph!(destDFG::AbstractDFG,
                         sourceDFG::AbstractDFG,
