@@ -777,6 +777,98 @@ function findVariableNearTimestamp(dfg::AbstractDFG,
   return RET
 end
 
+##==============================================================================
+## Copy Functions
+##==============================================================================
+
+"""
+    $(SIGNATURES)
+Common function for copying nodes from one graph into another graph.
+This is overwritten in specialized implementations for performance.
+Orphaned factors are not added, with a warning if verbose.
+Set `overwriteDest` to overwrite existing variables and factors in the destination DFG.
+NOTE: copyGraphMetadata not supported yet.
+Dev Note:
+- Adapted from and replaces internal _copyIntoGraph!
+"""
+function copyGraph!(destDFG::AbstractDFG,
+                    sourceDFG::AbstractDFG,
+                    variableFactorLabels::Vector{Symbol};
+                    copyGraphMetadata::Bool=false,
+                    overwriteDest::Bool=false,
+                    deepcopyNodes::Bool=false,
+                    verbose::Bool = true)
+    # Split into variables and factors
+    sourceVariables = map(vId->getVariable(sourceDFG, vId), intersect(listVariables(sourceDFG), variableFactorLabels))
+    sourceFactors = map(fId->getFactor(sourceDFG, fId), intersect(listFactors(sourceDFG), variableFactorLabels))
+    if length(sourceVariables) + length(sourceFactors) != length(variableFactorLabels)
+        remv = setdiff(map(v->v.label, sourceVariables), variableFactorLabels)
+        remf = setdiff(map(f->f.label, sourceFactors), variableFactorLabels)
+        error("Cannot copy because cannot find the following nodes in the source graph: $remv, $remf")
+    end
+
+    # Now we have to add all variables first,
+    for variable in sourceVariables
+        variableCopy = deepcopyNodes ? deepcopy(variable) : variable
+        if !exists(destDFG, variable)
+            addVariable!(destDFG, variableCopy)
+        elseif overwriteDest
+            updateVariable!(destDFG, variableCopy)
+        else
+            error("Variable $(variable.label) already exists in destination graph!")
+        end
+    end
+    # And then all factors to the destDFG.
+    for factor in sourceFactors
+        # Get the original factor variables (we need them to create it)
+        sourceFactorVariableIds = getNeighbors(sourceDFG, factor)
+        # Find the labels and associated variables in our new subgraph
+        factVariableIds = Symbol[]
+        for variable in sourceFactorVariableIds
+            if exists(destDFG, variable)
+                push!(factVariableIds, variable)
+            end
+        end
+        # Only if we have all of them should we add it (otherwise strange things may happen on evaluation)
+        if length(factVariableIds) == length(sourceFactorVariableIds)
+            factorCopy = deepcopyNodes ? deepcopy(factor) : factor
+            if !exists(destDFG, factor)
+                addFactor!(destDFG, factorCopy)
+            elseif overwriteDest
+                updateFactor!(destDFG, factorCopy)
+            else
+                error("Factor $(factor.label) already exists in destination graph!")
+            end
+        elseif verbose
+            @warn "Factor $(factor.label) will be an orphan in the destination graph, and therefore not added."
+        end
+    end
+
+    if copyGraphMetadata
+        setUserData(destDFG, getUserData(sourceDFG))
+        setRobotData(destDFG, getRobotData(sourceDFG))
+        setSessionData(destDFG, getSessionData(sourceDFG))
+    end
+    return nothing
+end
+
+
+function deepcopyGraph!(destDFG::AbstractDFG,
+                        sourceDFG::AbstractDFG,
+                        variableFactorLabels::Vector{Symbol} = union(ls(sourceDFG), lsf(sourceDFG));
+                        kwargs...)
+    copyGraph!(destDFG, sourceDFG, variableFactorLabels; deepcopyNodes=true, kwargs...)
+end
+
+
+function deepcopyGraph( ::Type{T},
+                        sourceDFG::AbstractDFG,
+                        variableFactorLabels::Vector{Symbol} = union(ls(sourceDFG), lsf(sourceDFG));
+                        kwargs...) where T <: AbstractDFG
+    destDFG = T(getDFGInfo(sourceDFG)...)
+    copyGraph!(destDFG, sourceDFG, variableFactorLabels; deepcopyNodes=true, kwargs...)
+    return destDFG
+end
 
 ##==============================================================================
 ## Subgraphs and Neighborhoods
@@ -806,54 +898,10 @@ end
 
 """
     $(SIGNATURES)
-Retrieve a deep subgraph copy around a given variable or factor.
-Optionally provide a distance to specify the number of edges should be followed.
-Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
-Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
-Note: Always returns the node at the center, but filters around it if solvable is set.
-"""
-function getSubgraphAroundNode(dfg::AbstractDFG, node::DFGNode, distance::Int=1, includeOrphanFactors::Bool=false, addToDFG::AbstractDFG=_getDuplicatedEmptyDFG(dfg); solvable::Int=0)::AbstractDFG
-
-    if !exists(dfg, node.label)
-        error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
-    end
-
-    neighbors = getNeighborhood(dfg, node.label, distance)
-
-    # for some reason: always returns the node at the center with  || (nlbl == node.label)
-    solvable != 0 && filter!(nlbl -> (getSolvable(dfg, nlbl) >= solvable) || (nlbl == node.label), neighbors)
-
-    # Copy the section of graph we want
-    _copyIntoGraph!(dfg, addToDFG, neighbors, includeOrphanFactors)
-    return addToDFG
-end
-
-"""
-    $(SIGNATURES)
-Get a deep subgraph copy from the DFG given a list of variables and factors.
-Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
-Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
-"""
-function getSubgraph(dfg::G,
-                     variableFactorLabels::Vector{Symbol},
-                     includeOrphanFactors::Bool=false,
-                     addToDFG::H=_getDuplicatedEmptyDFG(dfg))::H where {G <: AbstractDFG, H <: AbstractDFG}
-    for label in variableFactorLabels
-        if !exists(dfg, label)
-            error("Variable/factor with label '$(label)' does not exist in the factor graph")
-        end
-    end
-
-    _copyIntoGraph!(dfg, addToDFG, variableFactorLabels, includeOrphanFactors)
-    return addToDFG
-end
-
-"""
-    $(SIGNATURES)
 Build a deep subgraph copy from the DFG given a list of variables and factors and an optional distance.
 Note: Orphaned factors (where the subgraph does not contain all the related variables) are not returned.
 Dev Notes
-- Bulk vs node for node: a list of labels are compiled and the sugraph is copied in bulk. 
+- Bulk vs node for node: a list of labels are compiled and the sugraph is copied in bulk.
 """
 function buildSubgraph(::Type{G}, dfg::AbstractDFG, variableFactorLabels::Vector{Symbol}, distance::Int=0; solvable::Int=0, kwargs...) where G <: AbstractDFG
 
@@ -874,57 +922,6 @@ function buildSubgraph(::Type{G}, dfg::AbstractDFG, variableFactorLabels::Vector
     return destDFG
 end
 
-
-"""
-    $(SIGNATURES)
-Common function for copying nodes from one graph into another graph.
-This is overridden in specialized implementations for performance.
-NOTE: copyGraphMetadata not supported yet.
-"""
-function _copyIntoGraph!(sourceDFG::G, destDFG::H, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false; copyGraphMetadata::Bool=false)::Nothing where {G <: AbstractDFG, H <: AbstractDFG}
-    # Split into variables and factors
-    includeOrphanFactors && (@error "Adding orphaned factors is not supported")
-
-    sourceVariables = map(vId->getVariable(sourceDFG, vId), intersect(listVariables(sourceDFG), variableFactorLabels))
-    sourceFactors = map(fId->getFactor(sourceDFG, fId), intersect(listFactors(sourceDFG), variableFactorLabels))
-    if length(sourceVariables) + length(sourceFactors) != length(variableFactorLabels)
-        rem = symdiff(map(v->v.label, sourceVariables), variableFactorLabels)
-        rem = symdiff(map(f->f.label, sourceFactors), variableFactorLabels)
-        error("Cannot copy because cannot find the following nodes in the source graph: $rem")
-    end
-
-    # Now we have to add all variables first,
-    for variable in sourceVariables
-        if !exists(destDFG, variable)
-            addVariable!(destDFG, deepcopy(variable))
-        end
-    end
-    # And then all factors to the destDFG.
-    for factor in sourceFactors
-        # Get the original factor variables (we need them to create it)
-        sourceFactorVariableIds = getNeighbors(sourceDFG, factor)
-        # Find the labels and associated variables in our new subgraph
-        factVariableIds = Symbol[]
-        for variable in sourceFactorVariableIds
-            if exists(destDFG, variable)
-                push!(factVariableIds, variable)
-            end
-        end
-        # Only if we have all of them should we add it (otherwise strange things may happen on evaluation)
-        if includeOrphanFactors || length(factVariableIds) == length(sourceFactorVariableIds)
-            if !exists(destDFG, factor)
-                addFactor!(destDFG, deepcopy(factor))
-            end
-        end
-    end
-
-    if copyGraphMetadata
-        setUserData(destDFG, getUserData(sourceDFG))
-        setRobotData(destDFG, getRobotData(sourceDFG))
-        setSessionData(destDFG, getSessionData(sourceDFG))
-    end
-    return nothing
-end
 
 ##==============================================================================
 ## Variable Data: VND and PPE
@@ -1030,7 +1027,7 @@ Produces a dot-format of the graph for visualization.
 function toDot(dfg::AbstractDFG)::String
     #TODO implement convert
     graphsdfg = GraphsDFG{NoSolverParams}()
-    DistributedFactorGraphs._copyIntoGraph!(dfg, graphsdfg, union(listVariables(dfg), listFactors(dfg)), true)
+    copyGraph!(graphsdfg, dfg, union(listVariables(dfg), listFactors(dfg)))
     # Calls down to GraphsDFG.toDot
     return toDot(graphsdfg)
 end
@@ -1051,7 +1048,7 @@ function toDotFile(dfg::AbstractDFG, fileName::String="/tmp/dfg.dot")::Nothing
         graphsdfg = dfg
     else
         graphsdfg = GraphsDFG{NoSolverParams}()
-        DistributedFactorGraphs._copyIntoGraph!(dfg, graphsdfg, union(listVariables(dfg), listFactors(dfg)), true)
+        copyGraph!(graphsdfg, dfg, union(listVariables(dfg), listFactors(dfg)))
     end
 
     open(fileName, "w") do fid

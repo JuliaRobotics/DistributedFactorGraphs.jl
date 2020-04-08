@@ -162,7 +162,7 @@ export packVariableNodeData, unpackVariableNodeData
 export getSolvedCount, isSolved, setSolvedCount!, isInitialized
 
 export getNeighborhood, getNeighbors, _getDuplicatedEmptyDFG
-export buildSubgraph
+export copyGraph!, deepcopyGraph, deepcopyGraph!, buildSubgraph
 # TODO Deprecate in favor of buildSubgraph
 export getSubgraph, getSubgraphAroundNode
 # Big Data
@@ -251,8 +251,6 @@ include("entities/DFGVariable.jl")
 include("entities/AbstractDFGSummary.jl")
 
 include("services/AbstractDFG.jl")
-
-include("services/copyFunctions.jl")
 
 # In Memory Types
 include("GraphsDFG/GraphsDFG.jl")
