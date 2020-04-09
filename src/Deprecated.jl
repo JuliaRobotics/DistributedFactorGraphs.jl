@@ -119,6 +119,9 @@ end
 ##==============================================================================
 ## WIP on consolidated subgraph functions, aim to remove in 0.8
 ##==============================================================================
+# Deprecate in favor of buildSubgraph, mergeGraph
+export getSubgraph, getSubgraphAroundNode
+export buildSubgraphFromLabels!
 
 """
     $(SIGNATURES)

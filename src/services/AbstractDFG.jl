@@ -784,10 +784,16 @@ end
 """
     $(SIGNATURES)
 Common function for copying nodes from one graph into another graph.
-This is overwritten in specialized implementations for performance.
+This is overridden in specialized implementations for performance.
 Orphaned factors are not added, with a warning if verbose.
 Set `overwriteDest` to overwrite existing variables and factors in the destination DFG.
 NOTE: copyGraphMetadata not supported yet.
+Related:
+- [`deepcopyGraph`](@ref)
+- [`deepcopyGraph!`](@ref)
+- [`buildSubgraph`](@ref)
+- [`getNeighborhood`](@ref)
+- [`mergeGraph!`](@ref)
 Dev Note:
 - Adapted from and replaces internal _copyIntoGraph!
 """
@@ -877,6 +883,11 @@ end
 """
     $(SIGNATURES)
 Build a list of all unique neighbors inside 'distance'
+Related:
+- [`copyGraph!`](@ref)
+- [`buildSubgraph`](@ref)
+- [`deepcopyGraph`](@ref)
+- [`mergeGraph!`](@ref)
 """
 function getNeighborhood(dfg::AbstractDFG, label::Symbol, distance::Int)::Vector{Symbol}
     neighborList = Set{Symbol}([label])
@@ -896,15 +907,7 @@ function getNeighborhood(dfg::AbstractDFG, label::Symbol, distance::Int)::Vector
     return collect(neighborList)
 end
 
-"""
-    $(SIGNATURES)
-Build a deep subgraph copy from the DFG given a list of variables and factors and an optional distance.
-Note: Orphaned factors (where the subgraph does not contain all the related variables) are not returned.
-Dev Notes
-- Bulk vs node for node: a list of labels are compiled and the sugraph is copied in bulk.
-"""
-function buildSubgraph(::Type{G}, dfg::AbstractDFG, variableFactorLabels::Vector{Symbol}, distance::Int=0; solvable::Int=0, kwargs...) where G <: AbstractDFG
-
+function getNeighborhood(dfg::AbstractDFG, variableFactorLabels::Vector{Symbol}, distance::Int; solvable::Int=0)::Vector{Symbol}
     # find neighbors at distance to add
     neighbors = Symbol[]
     if distance > 0
@@ -917,11 +920,63 @@ function buildSubgraph(::Type{G}, dfg::AbstractDFG, variableFactorLabels::Vector
 
     solvable != 0 && filter!(nlbl -> (getSolvable(dfg, nlbl) >= solvable), allvarfacs)
 
+    return allvarfacs
+
+end
+
+"""
+    $(SIGNATURES)
+Build a deep subgraph copy from the DFG given a list of variables and factors and an optional distance.
+Note: Orphaned factors (where the subgraph does not contain all the related variables) are not returned.
+Related:
+- [`copyGraph!`](@ref)
+- [`getNeighborhood`](@ref)
+- [`deepcopyGraph`](@ref)
+- [`mergeGraph!`](@ref)
+Dev Notes
+- Bulk vs node for node: a list of labels are compiled and the sugraph is copied in bulk.
+"""
+function buildSubgraph(::Type{G},
+                       dfg::AbstractDFG,
+                       variableFactorLabels::Vector{Symbol},
+                       distance::Int=0;
+                       solvable::Int=0,
+                       kwargs...) where G <: AbstractDFG
+
+    #build up the neighborhood from variableFactorLabels
+    allvarfacs = getNeighborhood(dfg, variableFactorLabels, distance; solvable=solvable)
+
     # Copy the section of graph we want
     destDFG = deepcopyGraph(G, dfg, allvarfacs; kwargs...)
     return destDFG
 end
 
+"""
+    $(SIGNATURES)
+Merger sourceDFG to destDFG given an optional list of variables and factors and distance.
+Notes:
+- Nodes already in the destination graph are updated from sourceDFG.
+- Orphaned factors (where the subgraph does not contain all the related variables) are not included.
+Related:
+- [`copyGraph!`](@ref)
+- [`buildSubgraph`](@ref)
+- [`getNeighborhood`](@ref)
+- [`deepcopyGraph`](@ref)
+"""
+function mergeGraph!(destDFG::AbstractDFG,
+                     sourceDFG::AbstractDFG,
+                     variableFactorLabels::Vector{Symbol} = union(ls(sourceDFG), lsf(sourceDFG)),
+                     distance::Int = 0;
+                     solvable::Int = 0,
+                     kwargs...)
+
+    # find neighbors at distance to add
+    allvarfacs = getNeighborhood(sourceDFG, variableFactorLabels, distance; solvable=solvable)
+
+    copyGraph!(destDFG, sourceDFG, allvarfacs; deepcopyNodes=true, overwriteDest=true, kwargs...)
+
+    return destDFG
+end
 
 ##==============================================================================
 ## Variable Data: VND and PPE
