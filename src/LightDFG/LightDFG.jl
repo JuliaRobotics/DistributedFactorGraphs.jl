@@ -3,7 +3,9 @@ module LightDFGs
 using LightGraphs
 using DocStringExtensions
 
-import ...DistributedFactorGraphs: AbstractDFG, DFGNode, AbstractDFGVariable, AbstractDFGFactor, DFGSummary, AbstractParams, NoSolverParams, DFGVariable, DFGFactor
+using ...DistributedFactorGraphs
+
+# import ...DistributedFactorGraphs: AbstractDFG, DFGNode, AbstractDFGVariable, AbstractDFGFactor, DFGSummary, AbstractParams, NoSolverParams, DFGVariable, DFGFactor
 
 # import DFG functions to extend
 import ...DistributedFactorGraphs:  setSolverParams!,
@@ -38,8 +40,8 @@ import ...DistributedFactorGraphs:  setSolverParams!,
                                     isFullyConnected,
                                     hasOrphans,
                                     getNeighbors,
-                                    getSubgraphAroundNode,
-                                    getSubgraph,
+                                    buildSubgraph,
+                                    copyGraph!,
                                     getBiadjacencyMatrix,
                                     _getDuplicatedEmptyDFG,
                                     toDot,

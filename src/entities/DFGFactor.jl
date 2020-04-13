@@ -183,13 +183,11 @@ const FactorDataLevel1 = Union{DFGFactor, DFGFactorSummary}
 const FactorDataLevel2 = Union{DFGFactor}
 
 ##==============================================================================
-## Convert
+## Convertion constructors
 ##==============================================================================
-function Base.convert(::Type{DFGFactorSummary}, f::DFGFactor)
-    return DFGFactorSummary(f.label, f.timestamp, deepcopy(f.tags), f._dfgNodeParams._internalId, deepcopy(f._variableOrderSymbols))
-end
 
-#TODO TEST
-function Base.convert(::Type{SkeletonDFGFactor}, f::FactorDataLevel1)
-    return SkeletonDFGFactor(f.label, deepcopy(f.tags), deepcopy(f._variableOrderSymbols))
-end
+DFGFactorSummary(f::DFGFactor) =
+    DFGFactorSummary(f.label, f.timestamp, deepcopy(f.tags), f._dfgNodeParams._internalId, deepcopy(f._variableOrderSymbols))
+
+SkeletonDFGFactor(f::FactorDataLevel1) =
+    SkeletonDFGFactor(f.label, deepcopy(f.tags), deepcopy(f._variableOrderSymbols))
