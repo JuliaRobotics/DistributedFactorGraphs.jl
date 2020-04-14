@@ -974,8 +974,8 @@ function mergeGraph!(destDFG::AbstractDFG,
     # find neighbors at distance to add
     allvarfacs = getNeighborhood(sourceDFG, union(variableLabels, factorLabels), distance; solvable=solvable)
 
-    sourceVariables = map(vId->getVariable(sourceDFG, vId), intersect(listVariables(sourceDFG), variableFactorLabels))
-    sourceFactors = map(fId->getFactor(sourceDFG, fId), intersect(listFactors(sourceDFG), variableFactorLabels))
+    sourceVariables = intersect(listVariables(sourceDFG), allvarfacs)
+    sourceFactors = intersect(listFactors(sourceDFG), allvarfacs)
 
     copyGraph!(destDFG, sourceDFG, sourceVariables, sourceFactors; deepcopyNodes=true, overwriteDest=true, kwargs...)
 

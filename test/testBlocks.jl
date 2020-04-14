@@ -1182,7 +1182,17 @@ function CopyFunctionsTest(testDFGAPI; kwargs...)
 
     deepcopyGraph!(dcdfg_part, dfg, Symbol[], [:x1x2f1]; overwriteDest=true)
 
+    vlbls1 = [:x1, :x2, :x3]
+    vlbls2 = [:x4, :x5, :x6]
+    dcdfg_part1 = deepcopyGraph(LightDFG, dfg, vlbls1)
+    dcdfg_part2 = deepcopyGraph(GraphsDFG, dfg, vlbls2)
 
+    mergedGraph = testDFGAPI()
+    mergeGraph!(mergedGraph, dcdfg_part1)
+    mergeGraph!(mergedGraph, dcdfg_part2)
+
+    @test issetequal(ls(mergedGraph), union(vlbls1, vlbls2))
+    @test issetequal(lsf(mergedGraph), union(lsf(dcdfg_part1), lsf(dcdfg_part2)))
     # convert to...
     # condfg = convert(GraphsDFG, dfg)
     # @test condfg isa GraphsDFG
