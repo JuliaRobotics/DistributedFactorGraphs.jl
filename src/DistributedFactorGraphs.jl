@@ -191,7 +191,7 @@ export mergeVariableData!, mergeGraphVariableData!
 export natural_lt, sortDFG
 
 ## List
-export ls, lsf
+export ls, lsf, ls2
 export lsTypes, lsfTypes
 export lsWho, lsfWho
 export isPrior, lsfPriors
@@ -224,7 +224,7 @@ export
     compareFactorGraphs
 
 
-## Deprecated exports should be listed in Deprecated.jl if possible, otherwise here 
+## Deprecated exports should be listed in Deprecated.jl if possible, otherwise here
 
 
 ## needsahome.jl
