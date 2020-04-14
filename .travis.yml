@@ -24,7 +24,7 @@ jobs:
     - julia: 1.3
       env: IIF_TEST=true
       if: NOT branch =~ ^release.*$
-    - arch: arm64
+    # - arch: arm64
     - stage: "Documentation"
       julia: 1.3
       os: linux
@@ -33,15 +33,14 @@ jobs:
         - julia --project=docs/ docs/make.jl
       after_success: skip
   fast_finish: true
+  allow_failures:
+      - julia: nightly
+      # - arch: arm64
+      #- env: IIF_TEST=true
 
 notifications:
     email: false
 
-matrix:
-  allow_failures:
-  - julia: nightly
-  - arch: arm64
-  #- env: IIF_TEST=true
 
 # Set the password for Neo4j to neo4j:test
 before_script:

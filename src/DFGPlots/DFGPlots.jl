@@ -88,7 +88,7 @@ More information at [GraphPlot.jl](https://github.com/JuliaGraphs/GraphPlot.jl)
 function dfgplot(dfg::AbstractDFG, p::DFGPlotProps = DFGPlotProps())
     # TODO implement convert functions
     ldfg = LightDFG{NoSolverParams}()
-    DistributedFactorGraphs._copyIntoGraph!(dfg, ldfg, union(listVariables(dfg), listFactors(dfg)), true, copyGraphMetadata=false)
+    copyGraph!(ldfg, dfg, listVariables(dfg), listFactors(dfg), copyGraphMetadata=false)
     dfgplot(ldfg, p)
 end
 

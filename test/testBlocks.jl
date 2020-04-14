@@ -362,6 +362,10 @@ function  VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     @test_throws ErrorException getVariable(fg, :c)
     @test_throws ErrorException getFactor(fg, :bcf1)
 
+    #test issue #375
+    @test_skip @test_throws ErrorException getVariable(fg, :abf1)
+    @test_skip @test_throws ErrorException getFactor(fg, :a)
+
     # Existence
     @test exists(fg, :a)
     @test !exists(fg, :c)
@@ -1002,6 +1006,43 @@ function  GettingSubgraphs(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
 
 end
 
+
+function  BuildingSubgraphs(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
+
+        # "Getting Subgraphs"
+    dfg, verts, facs = connectivityTestGraph(testDFGAPI, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
+    # Subgraphs
+    dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [verts[1].label], 2)
+    # Only returns x1 and x2
+    @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+    #
+    dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [:x1, :x2, :x1x2f1])
+    # Only returns x1 and x2
+    @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+
+    dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [:x1x2f1], 1)
+    # Only returns x1 and x2
+    @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+
+    #TODO if not a LightDFG with and summary or skeleton
+    if VARTYPE == DFGVariable
+        dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [:x8], 2, solvable=1)
+        @test issetequal([:x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
+        #end if not a LightDFG with and summary or skeleton
+    end
+    # DFG issue #95 - confirming that getSubgraphAroundNode retains order
+    # REF: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/95
+    for fId in listVariables(dfg)
+        # Get a subgraph of this and it's related factors+variables
+        dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [fId], 2)
+        # For each factor check that the order the copied graph == original
+        for fact in getFactors(dfgSubgraph)
+            @test fact._variableOrderSymbols == getFactor(dfg, fact.label)._variableOrderSymbols
+        end
+    end
+
+end
+
 #TODO Summaries and Summary Graphs
 function  Summaries(testDFGAPI)
     # "Summaries and Summary Graphs"
@@ -1082,4 +1123,88 @@ function ConnectivityTest(testDFGAPI; kwargs...)
         @test isFullyConnected(dfg) == false
         @test hasOrphans(dfg) == true
     end
+end
+
+
+function CopyFunctionsTest(testDFGAPI; kwargs...)
+
+    # testDFGAPI = LightDFG
+    # kwargs = ()
+
+    dfg, verts, facs = connectivityTestGraph(testDFGAPI; kwargs...)
+
+    varlbls = ls(dfg)
+    faclbls = lsf(dfg)
+
+    dcdfg = deepcopyGraph(LightDFG, dfg)
+
+    @test issetequal(ls(dcdfg), varlbls)
+    @test issetequal(lsf(dcdfg), faclbls)
+
+    vlbls = [:x2, :x3]
+    flbls = [:x2x3f1]
+    dcdfg_part = deepcopyGraph(LightDFG, dfg, vlbls, flbls)
+
+    @test issetequal(ls(dcdfg_part), vlbls)
+    @test issetequal(lsf(dcdfg_part), flbls)
+
+    # deepcopy subgraph ignoring orphans
+    @test_logs (:warn, r"orphan") dcdfg_part = deepcopyGraph(LightDFG, dfg, vlbls, union(flbls, [:x1x2f1]))
+    @test issetequal(ls(dcdfg_part), vlbls)
+    @test issetequal(lsf(dcdfg_part), flbls)
+
+    # deepcopy subgraph with 2 parts
+    vlbls = [:x2, :x3, :x5, :x6, :x10]
+    flbls = [:x2x3f1, :x5x6f1]
+    dcdfg_part = deepcopyGraph(LightDFG, dfg, vlbls, flbls)
+    @test issetequal(ls(dcdfg_part), vlbls)
+    @test issetequal(lsf(dcdfg_part), flbls)
+    @test !isFullyConnected(dcdfg_part)
+    # dfgplot(dcdfg_part)
+
+
+    vlbls = [:x2, :x3]
+    dcdfg_part =  deepcopyGraph(LightDFG, dfg, vlbls; verbose=false)
+    @test issetequal(ls(dcdfg_part), vlbls)
+    @test issetequal(lsf(dcdfg_part), [:x2x3f1])
+
+    # not found errors
+    @test_throws ErrorException deepcopyGraph(LightDFG, dfg, [:x1, :a])
+    @test_throws ErrorException deepcopyGraph(LightDFG, dfg, [:x1], [:f1])
+
+    # already exists errors
+    dcdfg_part = deepcopyGraph(LightDFG, dfg, [:x1, :x2, :x3], [:x1x2f1, :x2x3f1])
+    @test_throws ErrorException deepcopyGraph!(dcdfg_part, dfg, [:x4, :x2, :x3], [:x1x2f1, :x2x3f1])
+    @test_skip @test_throws ErrorException deepcopyGraph!(dcdfg_part, dfg, [:x1x2f1])
+
+    # same but overwrite destination
+    deepcopyGraph!(dcdfg_part, dfg, [:x4, :x2, :x3], [:x1x2f1, :x2x3f1]; overwriteDest = true)
+
+    deepcopyGraph!(dcdfg_part, dfg, Symbol[], [:x1x2f1]; overwriteDest=true)
+
+    vlbls1 = [:x1, :x2, :x3]
+    vlbls2 = [:x4, :x5, :x6]
+    dcdfg_part1 = deepcopyGraph(LightDFG, dfg, vlbls1)
+    dcdfg_part2 = deepcopyGraph(GraphsDFG, dfg, vlbls2)
+
+    mergedGraph = testDFGAPI()
+    mergeGraph!(mergedGraph, dcdfg_part1)
+    mergeGraph!(mergedGraph, dcdfg_part2)
+
+    @test issetequal(ls(mergedGraph), union(vlbls1, vlbls2))
+    @test issetequal(lsf(mergedGraph), union(lsf(dcdfg_part1), lsf(dcdfg_part2)))
+    # convert to...
+    # condfg = convert(GraphsDFG, dfg)
+    # @test condfg isa GraphsDFG
+    # @test issetequal(ls(condfg), varlbls)
+    # @test issetequal(lsf(condfg), faclbls)
+    #
+    # condfg = convert(LightDFG, dfg)
+    # @test condfg isa LightDFG
+    # @test issetequal(ls(condfg), varlbls)
+    # @test issetequal(lsf(condfg), faclbls)
+
+    # GraphsDFG(dfg::AbstractDFG) = convert(GraphsDFG,dfg)
+    # GraphsDFG(dfg)
+
 end

@@ -161,8 +161,8 @@ export packVariableNodeData, unpackVariableNodeData
 
 export getSolvedCount, isSolved, setSolvedCount!, isInitialized
 
-export getNeighborhood, getSubgraph, getSubgraphAroundNode, getNeighbors, _getDuplicatedEmptyDFG
-
+export getNeighborhood, getNeighbors, _getDuplicatedEmptyDFG
+export copyGraph!, deepcopyGraph, deepcopyGraph!, buildSubgraph, mergeGraph!
 # Big Data
 ##------------------------------------------------------------------------------
 export addBigDataEntry!, getBigDataEntry, updateBigDataEntry!, deleteBigDataEntry!, getBigDataEntries, getBigDataKeys
@@ -224,13 +224,10 @@ export
     compareFactorGraphs
 
 
-## Deprecated.jl should be listed there
+## Deprecated exports should be listed in Deprecated.jl if possible, otherwise here 
 
 
 ## needsahome.jl
-
-export buildSubgraphFromLabels!
-
 import Base: print
 export printFactor, printVariable, print
 
