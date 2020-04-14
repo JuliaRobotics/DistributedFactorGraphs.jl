@@ -799,19 +799,15 @@ Dev Note:
 """
 function copyGraph!(destDFG::AbstractDFG,
                     sourceDFG::AbstractDFG,
-                    variableFactorLabels::Vector{Symbol};
+                    variableLabels::Vector{Symbol},
+                    factorLabels::Vector{Symbol};
                     copyGraphMetadata::Bool=false,
                     overwriteDest::Bool=false,
                     deepcopyNodes::Bool=false,
                     verbose::Bool = true)
     # Split into variables and factors
-    sourceVariables = map(vId->getVariable(sourceDFG, vId), intersect(listVariables(sourceDFG), variableFactorLabels))
-    sourceFactors = map(fId->getFactor(sourceDFG, fId), intersect(listFactors(sourceDFG), variableFactorLabels))
-    if length(sourceVariables) + length(sourceFactors) != length(variableFactorLabels)
-        remv = setdiff(map(v->v.label, sourceVariables), variableFactorLabels)
-        remf = setdiff(map(f->f.label, sourceFactors), variableFactorLabels)
-        error("Cannot copy because cannot find the following nodes in the source graph: $remv, $remf")
-    end
+    sourceVariables = map(vId->getVariable(sourceDFG, vId), variableLabels)
+    sourceFactors = map(fId->getFactor(sourceDFG, fId), factorLabels)
 
     # Now we have to add all variables first,
     for variable in sourceVariables
@@ -861,18 +857,20 @@ end
 
 function deepcopyGraph!(destDFG::AbstractDFG,
                         sourceDFG::AbstractDFG,
-                        variableFactorLabels::Vector{Symbol} = union(ls(sourceDFG), lsf(sourceDFG));
+                        variableLabels::Vector{Symbol} = ls(sourceDFG),
+                        factorLabels::Vector{Symbol} = lsf(sourceDFG);
                         kwargs...)
-    copyGraph!(destDFG, sourceDFG, variableFactorLabels; deepcopyNodes=true, kwargs...)
+    copyGraph!(destDFG, sourceDFG, variableLabels, factorLabels; deepcopyNodes=true, kwargs...)
 end
 
 
-function deepcopyGraph( ::Type{T},
-                        sourceDFG::AbstractDFG,
-                        variableFactorLabels::Vector{Symbol} = union(ls(sourceDFG), lsf(sourceDFG));
-                        kwargs...) where T <: AbstractDFG
+function deepcopyGraph(::Type{T},
+                       sourceDFG::AbstractDFG,
+                       variableLabels::Vector{Symbol} = ls(sourceDFG),
+                       factorLabels::Vector{Symbol} = lsf(sourceDFG);
+                       kwargs...) where T <: AbstractDFG
     destDFG = T(getDFGInfo(sourceDFG)...)
-    copyGraph!(destDFG, sourceDFG, variableFactorLabels; deepcopyNodes=true, kwargs...)
+    copyGraph!(destDFG, sourceDFG, variableLabels, factorLabels; deepcopyNodes=true, kwargs...)
     return destDFG
 end
 
@@ -946,8 +944,10 @@ function buildSubgraph(::Type{G},
     #build up the neighborhood from variableFactorLabels
     allvarfacs = getNeighborhood(dfg, variableFactorLabels, distance; solvable=solvable)
 
+    variableLabels = intersect(listVariables(dfg), allvarfacs)
+    factorLabels = intersect(listFactors(dfg), allvarfacs)
     # Copy the section of graph we want
-    destDFG = deepcopyGraph(G, dfg, allvarfacs; kwargs...)
+    destDFG = deepcopyGraph(G, dfg, variableLabels, factorLabels; kwargs...)
     return destDFG
 end
 
@@ -965,15 +965,19 @@ Related:
 """
 function mergeGraph!(destDFG::AbstractDFG,
                      sourceDFG::AbstractDFG,
-                     variableFactorLabels::Vector{Symbol} = union(ls(sourceDFG), lsf(sourceDFG)),
+                     variableLabels::Vector{Symbol} = ls(sourceDFG),
+                     factorLabels::Vector{Symbol} = lsf(sourceDFG),
                      distance::Int = 0;
                      solvable::Int = 0,
                      kwargs...)
 
     # find neighbors at distance to add
-    allvarfacs = getNeighborhood(sourceDFG, variableFactorLabels, distance; solvable=solvable)
+    allvarfacs = getNeighborhood(sourceDFG, union(variableLabels, factorLabels), distance; solvable=solvable)
 
-    copyGraph!(destDFG, sourceDFG, allvarfacs; deepcopyNodes=true, overwriteDest=true, kwargs...)
+    sourceVariables = map(vId->getVariable(sourceDFG, vId), intersect(listVariables(sourceDFG), variableFactorLabels))
+    sourceFactors = map(fId->getFactor(sourceDFG, fId), intersect(listFactors(sourceDFG), variableFactorLabels))
+
+    copyGraph!(destDFG, sourceDFG, sourceVariables, sourceFactors; deepcopyNodes=true, overwriteDest=true, kwargs...)
 
     return destDFG
 end
@@ -1082,7 +1086,7 @@ Produces a dot-format of the graph for visualization.
 function toDot(dfg::AbstractDFG)::String
     #TODO implement convert
     graphsdfg = GraphsDFG{NoSolverParams}()
-    copyGraph!(graphsdfg, dfg, union(listVariables(dfg), listFactors(dfg)))
+    copyGraph!(graphsdfg, dfg, listVariables(dfg), listFactors(dfg))
     # Calls down to GraphsDFG.toDot
     return toDot(graphsdfg)
 end
@@ -1103,7 +1107,7 @@ function toDotFile(dfg::AbstractDFG, fileName::String="/tmp/dfg.dot")::Nothing
         graphsdfg = dfg
     else
         graphsdfg = GraphsDFG{NoSolverParams}()
-        copyGraph!(graphsdfg, dfg, union(listVariables(dfg), listFactors(dfg)))
+        copyGraph!(graphsdfg, dfg, listVariables(dfg), listFactors(dfg))
     end
 
     open(fileName, "w") do fid

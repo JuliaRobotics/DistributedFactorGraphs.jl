@@ -265,6 +265,21 @@ function getNeighbors(dfg::LightDFG, label::Symbol; solvable::Int=0)::Vector{Sym
 
 end
 
+function getNeighborhood(dfg::LightDFG, variableFactorLabels::Vector{Symbol}, distance::Int; solvable::Int=0)::Vector{Symbol}
+    # find neighbors at distance to add
+    nbhood = Int[]
+
+    for l in variableFactorLabels
+        union!(nbhood, neighborhood(dfg.g, dfg.g.labels[l], distance))
+    end
+
+    allvarfacs = [dfg.g.labels[id] for id in nbhood]
+
+    solvable != 0 && filter!(nlbl -> (getSolvable(dfg, nlbl) >= solvable), allvarfacs)
+
+    return allvarfacs
+
+end
 
 # TODO copy LightDFG to LightDFG overwrite
 # function copyGraph!(destDFG::LightDFG,
@@ -274,23 +289,6 @@ end
 #                     overwriteDest::Bool=false,
 #                     deepcopyNodes::Bool=false,
 #                     verbose::Bool = true)
-
-function buildSubgraph(::Type{G}, dfg::LightDFG, variableFactorLabels::Vector{Symbol}, distance::Int=0; solvable::Int=0, kwargs...) where G <: AbstractDFG
-
-    # find neighbors at distance to add
-    nbhood = Int[]
-
-    for l in variableFactorLabels
-        union!(nbhood, neighborhood(dfg.g, dfg.g.labels[l], distance))
-    end
-
-    solvable != 0 && (filter!(id -> _isSolvable(dfg, dfg.g.labels[id], solvable), nbhood))
-
-    allvarfacs = [dfg.g.labels[id] for id in nbhood]
-    # Copy the section of graph we want
-    destDFG = deepcopyGraph(G, dfg, allvarfacs; kwargs...)
-    return destDFG
-end
 
 
 #  Biadjacency Matrix https://en.wikipedia.org/wiki/Adjacency_matrix#Of_a_bipartite_graph
