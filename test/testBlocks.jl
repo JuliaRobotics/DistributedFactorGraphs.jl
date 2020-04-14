@@ -362,6 +362,10 @@ function  VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     @test_throws ErrorException getVariable(fg, :c)
     @test_throws ErrorException getFactor(fg, :bcf1)
 
+    #test issue #375
+    @test_skip @test_throws ErrorException getVariable(fg, :abf1)
+    @test_skip @test_throws ErrorException getFactor(fg, :a)
+
     # Existence
     @test exists(fg, :a)
     @test !exists(fg, :c)
@@ -1005,7 +1009,7 @@ end
 
 function  BuildingSubgraphs(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
 
-    # "Getting Subgraphs"
+        # "Getting Subgraphs"
     dfg, verts, facs = connectivityTestGraph(testDFGAPI, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
     # Subgraphs
     dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [verts[1].label], 2)
@@ -1132,41 +1136,63 @@ function CopyFunctionsTest(testDFGAPI; kwargs...)
     varlbls = ls(dfg)
     faclbls = lsf(dfg)
 
-    dcdfg = DFG.deepcopyGraph(LightDFG, dfg)
+    dcdfg = deepcopyGraph(LightDFG, dfg)
 
     @test issetequal(ls(dcdfg), varlbls)
     @test issetequal(lsf(dcdfg), faclbls)
 
-    lbls = [:x2, :x3, :x2x3f1]
-    dcdfg_part = DFG.deepcopyGraph(LightDFG, dfg, lbls)
+    vlbls = [:x2, :x3]
+    flbls = [:x2x3f1]
+    dcdfg_part = deepcopyGraph(LightDFG, dfg, vlbls, flbls)
 
-    @test issetequal(union(ls(dcdfg_part), lsf(dcdfg_part)), lbls)
+    @test issetequal(ls(dcdfg_part), vlbls)
+    @test issetequal(lsf(dcdfg_part), flbls)
 
     # deepcopy subgraph ignoring orphans
-    @test_logs (:warn, r"orphan") dcdfg_part = DFG.deepcopyGraph(LightDFG, dfg, union(lbls, [:x1x2f1]))
-    @test issetequal(union(ls(dcdfg_part), lsf(dcdfg_part)), lbls)
+    @test_logs (:warn, r"orphan") dcdfg_part = deepcopyGraph(LightDFG, dfg, vlbls, union(flbls, [:x1x2f1]))
+    @test issetequal(ls(dcdfg_part), vlbls)
+    @test issetequal(lsf(dcdfg_part), flbls)
 
     # deepcopy subgraph with 2 parts
-    lbls = [:x2, :x3, :x2x3f1, :x5, :x6, :x5x6f1, :x10]
-    dcdfg_part = DFG.deepcopyGraph(LightDFG, dfg, lbls)
-    @test issetequal(union(ls(dcdfg_part), lsf(dcdfg_part)), lbls)
+    vlbls = [:x2, :x3, :x5, :x6, :x10]
+    flbls = [:x2x3f1, :x5x6f1]
+    dcdfg_part = deepcopyGraph(LightDFG, dfg, vlbls, flbls)
+    @test issetequal(ls(dcdfg_part), vlbls)
+    @test issetequal(lsf(dcdfg_part), flbls)
     @test !isFullyConnected(dcdfg_part)
     # dfgplot(dcdfg_part)
 
+
+    vlbls = [:x2, :x3]
+    dcdfg_part =  deepcopyGraph(LightDFG, dfg, vlbls; verbose=false)
+    @test issetequal(ls(dcdfg_part), vlbls)
+    @test issetequal(lsf(dcdfg_part), [:x2x3f1])
+
     # not found errors
-    @test_throws ErrorException DFG.deepcopyGraph(LightDFG, dfg, [:x0, :a])
+    @test_throws ErrorException deepcopyGraph(LightDFG, dfg, [:x1, :a])
+    @test_throws ErrorException deepcopyGraph(LightDFG, dfg, [:x1], [:f1])
 
     # already exists errors
-    dcdfg_part = DFG.deepcopyGraph(LightDFG, dfg, [:x1, :x2, :x3, :x1x2f1, :x2x3f1])
-    @test_throws ErrorException DFG.deepcopyGraph!(dcdfg_part, dfg, [:x4, :x2, :x3, :x1x2f1, :x2x3f1])
-    @test_throws ErrorException DFG.deepcopyGraph!(dcdfg_part, dfg, [:x1x2f1])
+    dcdfg_part = deepcopyGraph(LightDFG, dfg, [:x1, :x2, :x3], [:x1x2f1, :x2x3f1])
+    @test_throws ErrorException deepcopyGraph!(dcdfg_part, dfg, [:x4, :x2, :x3], [:x1x2f1, :x2x3f1])
+    @test_skip @test_throws ErrorException deepcopyGraph!(dcdfg_part, dfg, [:x1x2f1])
 
     # same but overwrite destination
-    DFG.deepcopyGraph!(dcdfg_part, dfg, [:x4, :x2, :x3, :x1x2f1, :x2x3f1]; overwriteDest = true)
+    deepcopyGraph!(dcdfg_part, dfg, [:x4, :x2, :x3], [:x1x2f1, :x2x3f1]; overwriteDest = true)
 
-    DFG.deepcopyGraph!(dcdfg_part, dfg, [:x1x2f1]; overwriteDest=true)
+    deepcopyGraph!(dcdfg_part, dfg, Symbol[], [:x1x2f1]; overwriteDest=true)
 
+    vlbls1 = [:x1, :x2, :x3]
+    vlbls2 = [:x4, :x5, :x6]
+    dcdfg_part1 = deepcopyGraph(LightDFG, dfg, vlbls1)
+    dcdfg_part2 = deepcopyGraph(GraphsDFG, dfg, vlbls2)
 
+    mergedGraph = testDFGAPI()
+    mergeGraph!(mergedGraph, dcdfg_part1)
+    mergeGraph!(mergedGraph, dcdfg_part2)
+
+    @test issetequal(ls(mergedGraph), union(vlbls1, vlbls2))
+    @test issetequal(lsf(mergedGraph), union(lsf(dcdfg_part1), lsf(dcdfg_part2)))
     # convert to...
     # condfg = convert(GraphsDFG, dfg)
     # @test condfg isa GraphsDFG
