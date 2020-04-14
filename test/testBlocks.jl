@@ -30,8 +30,8 @@ end
 Base.:(==)(a::TestCCW, b::TestCCW) = a.usrfnc! == b.usrfnc!
 
 
-global testDFGAPI = LightDFG
 global testDFGAPI = GraphsDFG
+global testDFGAPI = LightDFG
 
 #test Specific definitions
 # struct TestInferenceVariable1 <: InferenceVariable end
@@ -731,6 +731,7 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test getVariableType(v1) == TestSofttype1()
         @test getVariableType(fg,:a) == TestSofttype1()
 
+        @test ls2(fg, :a) == [:b]
 
         #TODO what is lsTypes supposed to return?
         @test_broken lsTypes(fg)

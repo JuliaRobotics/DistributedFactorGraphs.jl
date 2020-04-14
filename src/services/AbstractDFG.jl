@@ -538,6 +538,15 @@ function lsf(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: FunctorInferenceTy
     ls(dfg, T)
 end
 
+"""
+    $(SIGNATURES)
+Helper to return neighbors at distance 2 around a given node label.
+"""
+function ls2(dfg::AbstractDFG, label::Symbol)
+    l2 = getNeighborhood(dfg, label, 2)
+    l1 = getNeighborhood(dfg, label, 1)
+    return setdiff(l2, l1)
+end
 
 """
     $SIGNATURES
