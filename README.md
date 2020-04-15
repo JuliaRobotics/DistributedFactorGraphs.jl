@@ -58,17 +58,17 @@ addFactor!(dfg, [v1, v2], DFGFactor{Int, :Symbol}(:f1)) # Rather use a RoME-type
 Please see the documentation for more information on interacting with the factor graph.
 
 ## Setting up a Quick Neo4j Database
-The simplest way to set up a test database is with Docker.
+The simplest way to set up a test database is with Docker. The Neo4j driver currenly doesn't work with Neo4j 4.0, version 3.5 can be used as in this example.
 
 To pull the Neo4j image:
 ```bash
-docker pull neo4j
+docker pull neo4j:3.5
 ```
 
 To run the image with user `neo4j` and password `test`:
 
 ```bash
-docker run -d --publish=7474:7474 --publish=7687:7687 --env NEO4J_AUTH=neo4j/test neo4j
+docker run -d --publish=7474:7474 --publish=7687:7687 --env NEO4J_AUTH=neo4j/test neo4j:3.5
 ```
 
 > **Note** If you just installed docker and having permission issues, please see [this ask Ubuntu forum](https://askubuntu.com/questions/941816/permission-denied-when-running-docker-after-installing-it-as-a-snap).
