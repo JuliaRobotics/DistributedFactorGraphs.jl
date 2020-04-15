@@ -58,7 +58,7 @@ addFactor!(dfg, [v1, v2], DFGFactor{Int, :Symbol}(:f1)) # Rather use a RoME-type
 Please see the documentation for more information on interacting with the factor graph.
 
 ## Setting up a Quick Neo4j Database
-The simplest way to set up a test database is with Docker. The Neo4j driver currenly doesn't work with Neo4j 4.0, vertion 3.5 can be used as in this example.
+The simplest way to set up a test database is with Docker. The Neo4j driver currenly doesn't work with Neo4j 4.0, version 3.5 can be used as in this example.
 
 To pull the Neo4j image:
 ```bash
