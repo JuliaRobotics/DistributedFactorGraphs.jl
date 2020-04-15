@@ -1086,18 +1086,17 @@ end
 
 
 ##==============================================================================
-## DOT Files, falls back to GraphsDFG
+## DOT Files, falls back to LightDFG dot functions
 ##==============================================================================
 """
     $(SIGNATURES)
 Produces a dot-format of the graph for visualization.
 """
 function toDot(dfg::AbstractDFG)::String
-    #TODO implement convert
-    graphsdfg = GraphsDFG{NoSolverParams}()
-    copyGraph!(graphsdfg, dfg, listVariables(dfg), listFactors(dfg))
-    # Calls down to GraphsDFG.toDot
-    return toDot(graphsdfg)
+    #convert to LightDFG
+    ldfg = LightDFG{NoSolverParams}()
+    copyGraph!(ldfg, dfg, listVariables(dfg), listFactors(dfg))
+    return toDot(ldfg)
 end
 
 """
@@ -1111,18 +1110,12 @@ Note
 - Based on graphviz.org
 """
 function toDotFile(dfg::AbstractDFG, fileName::String="/tmp/dfg.dot")::Nothing
-    #TODO implement convert
-    if isa(dfg, GraphsDFG)
-        graphsdfg = dfg
-    else
-        graphsdfg = GraphsDFG{NoSolverParams}()
-        copyGraph!(graphsdfg, dfg, listVariables(dfg), listFactors(dfg))
-    end
 
-    open(fileName, "w") do fid
-        write(fid,Graphs.to_dot(graphsdfg.g))
-    end
-    return nothing
+    #convert to LightDFG
+    ldfg = LightDFG{NoSolverParams}()
+    copyGraph!(ldfg, dfg, listVariables(dfg), listFactors(dfg))
+
+    return toDotFile(ldfg, fileName)
 end
 
 ##==============================================================================
