@@ -53,6 +53,12 @@ function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverP
     #TODO test something better
     @test isa(fg, T)
 
+    #TODO I don't like, so not exporting, and not recommended to use
+    #     Technically if you set Ids its a new object
+    @test DistributedFactorGraphs.setUserId!(fg, "userId_1") == "userId_1"
+    @test DistributedFactorGraphs.setRobotId!(fg, "robotId_1") == "robotId_1"
+    @test DistributedFactorGraphs.setSessionId!(fg, "sessionId_1") == "sessionId_1"
+
     des = "description"
     uId = "userId"
     rId = "robotId"
@@ -97,13 +103,6 @@ function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverP
     @test setSolverParams!(fg, typeof(solparams)()) == typeof(solparams)()
 
     @test setDescription!(fg, des*"_1") == des*"_1"
-
-    #TODO I don't like, so not exporting, and not recommended to use
-    #     Technically if you set Ids its a new object
-    @test DistributedFactorGraphs.setUserId!(fg, uId*"_1") == uId*"_1"
-    @test DistributedFactorGraphs.setRobotId!(fg, rId*"_1") == rId*"_1"
-    @test DistributedFactorGraphs.setSessionId!(fg, sId*"_1") == sId*"_1"
-
 
     #deprecated
     @test_throws ErrorException getLabelDict(fg)
