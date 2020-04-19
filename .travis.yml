@@ -30,7 +30,7 @@ jobs:
         - echo 'deb https://debian.neo4j.com stable 3.5' | sudo tee /etc/apt/sources.list.d/neo4j.list
         - sudo apt-get update
         - apt list -a neo4j
-        - sudo apt-get install neo4j=1:3.5
+        - sudo apt-get install neo4j
         - sudo service neo4j start
         - sleep 10
         - sudo neo4j-admin set-initial-password test
