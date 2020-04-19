@@ -39,6 +39,12 @@ for api in apis
     end
 end
 
+@testset "Testing Driver: CloudGraphsDFG" begin
+    @info "Testing Driver: CloudGraphsDFG"
+    global testDFGAPI = CloudGraphsDFG
+    include("consolInterfaceDev.jl")
+end
+
 # Test special cases
 @testset "Plotting Tests" begin
     include("plottingTest.jl")
