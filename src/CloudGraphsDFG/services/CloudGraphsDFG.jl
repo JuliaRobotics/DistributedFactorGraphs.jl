@@ -540,14 +540,18 @@ end
 ### Updated functions from AbstractDFG
 ### These functions write back as you add the data.
 
-function addVariableSolverData!(dfg::CloudGraphsDFG, variablekey::Symbol, vnd::VariableNodeData, solvekey::Symbol=:default)::VariableNodeData
+function addVariableSolverData!(dfg::CloudGraphsDFG,
+                                variablekey::Symbol,
+                                vnd::VariableNodeData,
+                                solvekey::Symbol=:default)::VariableNodeData
     # TODO: Switch out to their own nodes, don't get the whole variable
     var = getVariable(dfg, variablekey)
     if haskey(var.solverDataDict, solvekey)
         error("VariableNodeData '$(solvekey)' already exists")
     end
     var.solverDataDict[solvekey] = vnd
-    # TODO: Cleanup
+
+    # TODO: Cleanup and consolidate as one function.
     solverDataDict = JSON2.write(Dict(keys(var.solverDataDict) .=> map(vnd -> packVariableNodeData(dfg, vnd), values(var.solverDataDict))))
     _setNodeProperty(
         dfg.neo4jInstance,
@@ -557,28 +561,58 @@ function addVariableSolverData!(dfg::CloudGraphsDFG, variablekey::Symbol, vnd::V
     return vnd
 end
 
-function updateVariableSolverData!(dfg::CloudGraphsDFG, variablekey::Symbol, vnd::VariableNodeData, solvekey::Symbol=:default)::VariableNodeData
+function updateVariableSolverData!(dfg::CloudGraphsDFG,
+                                   variablekey::Symbol,
+                                   vnd::VariableNodeData,
+                                   solvekey::Symbol=:default,
+                                   useCopy::Bool=true,
+                                   fields::Vector{Symbol}=Symbol[])::VariableNodeData
     # TODO: Switch out to their own nodes, don't get the whole variable
     var = getVariable(dfg, variablekey)
     if !haskey(var.solverDataDict, solvekey)
         @warn "VariableNodeData '$(solvekey)' does not exist, adding"
     end
-    var.solverDataDict[solvekey] = vnd
-    # TODO: Cleanup
+
+    # Unnecessary for cloud, but (probably) being (too) conservative (just because).
+    usevnd = useCopy ? deepcopy(vnd) : vnd
+    # should just one, or many pointers be updated?
+    if haskey(var.solverDataDict, solvekey) && isa(var.solverDataDict[solvekey], VariableNodeData) && length(fields) != 0
+      # change multiple pointers inside the VND var.solverDataDict[solvekey]
+      for field in fields
+        destField = getfield(var.solverDataDict[solvekey], field)
+        srcField = getfield(usevnd, field)
+        if isa(destField, Array) && size(destField) == size(srcField)
+          # use broadcast (in-place operation)
+          destField .= srcField
+        else
+          # change pointer of destination VND object member
+          setfield!(var.solverDataDict[solvekey], field, srcField)
+        end
+      end
+    else
+      # change a single pointer in var.solverDataDict
+      var.solverDataDict[solvekey] = usevnd
+    end
+
+    # TODO: Cleanup and consolidate
     solverDataDict = JSON2.write(Dict(keys(var.solverDataDict) .=> map(vnd -> packVariableNodeData(dfg, vnd), values(var.solverDataDict))))
     _setNodeProperty(
         dfg.neo4jInstance,
         _getLabelsForInst(dfg, var),
         "solverDataDict",
         solverDataDict)
-    return vnd
+    return var.solverDataDict[solvekey]
 end
 
-function updateVariableSolverData!(dfg::CloudGraphsDFG, sourceVariables::Vector{<:DFGVariable}, solvekey::Symbol=:default)
+function updateVariableSolverData!(dfg::CloudGraphsDFG,
+                                   sourceVariables::Vector{<:DFGVariable},
+                                   solvekey::Symbol=:default,
+                                   useCopy::Bool=true,
+                                   fields::Vector{Symbol}=Symbol[] )
     # TODO: Switch out to their own nodes, don't get the whole variable
     #TODO: Do in bulk for speed.
     for var in sourceVariables
-        updateVariableSolverData!(dfg, var.label, getSolverData(var, solvekey), solvekey)
+        updateVariableSolverData!(dfg, var.label, getSolverData(var, solvekey), solvekey, useCopy, fields)
     end
 end
 
@@ -590,7 +624,7 @@ function deleteVariableSolverData!(dfg::CloudGraphsDFG, variablekey::Symbol, sol
         error("VariableNodeData '$(solvekey)' does not exist")
     end
     vnd = pop!(var.solverDataDict, solvekey)
-    # TODO: Cleanup
+    # TODO: Cleanup and consolidate... yadda yadda just do it already :)
     solverDataDict = JSON2.write(Dict(keys(var.solverDataDict) .=> map(vnd -> packVariableNodeData(dfg, vnd), values(var.solverDataDict))))
     _setNodeProperty(
         dfg.neo4jInstance,
@@ -598,6 +632,22 @@ function deleteVariableSolverData!(dfg::CloudGraphsDFG, variablekey::Symbol, sol
         "solverDataDict",
         solverDataDict)
     return vnd
+end
+
+function mergeVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable)
+    # TODO: Switch out to their own nodes, don't get the whole variable
+    var = getVariable(dfg, sourceVariable.label)
+
+    merge!(var.solverDataDict, deepcopy(sourceVariable.solverDataDict))
+
+    # TODO: Cleanup and consolidate
+    solverDataDict = JSON2.write(Dict(keys(var.solverDataDict) .=> map(vnd -> packVariableNodeData(dfg, vnd), values(var.solverDataDict))))
+    _setNodeProperty(
+        dfg.neo4jInstance,
+        _getLabelsForInst(dfg, var),
+        "solverDataDict",
+        solverDataDict)
+    return var
 end
 
 function getSolvable(dfg::CloudGraphsDFG, sym::Symbol)
