@@ -33,7 +33,8 @@ jobs:
         - sudo apt-get install neo4j
         - sudo service neo4j start
         - sleep 10
-        - sudo neo4j-admin set-initial-password test
+        - curl -v POST http://neo4j:neo4j@localhost:7474/user/neo4j/password -d"password=test"
+#         - sudo neo4j-admin set-initial-password test
         - curl -I http://localhost:7474/
     - arch: arm64
     - stage: "Documentation"
