@@ -5,6 +5,13 @@ using DistributedFactorGraphs
 using Pkg
 using Dates
 
+using IncrementalInference
+
+include("testBlocks.jl")
+
+##
+testDFGAPI = CloudGraphsDFG
+
 # TODO maybe move to cloud graphs permanantly as standard easy to use functions
 function DFG.CloudGraphsDFG(; params=NoSolverParams())
     cgfg = CloudGraphsDFG{typeof(params)}("localhost", 7474, "neo4j", "test",
@@ -12,8 +19,8 @@ function DFG.CloudGraphsDFG(; params=NoSolverParams())
                                   "description",
                                   nothing,
                                   nothing,
-                                  (dfg,f)->f,
-                                  (dfg,f)->f,
+                                  IncrementalInference.decodePackedType,#(dfg,f)->f,
+                                  IncrementalInference.rebuildFactorMetadata!,#(dfg,f)->f,
                                   solverParams=params)
     createDfgSessionIfNotExist(cgfg)
     return cgfg
@@ -42,8 +49,8 @@ function DFG.CloudGraphsDFG(description::String,
                                                 description,
                                                 nothing,
                                                 nothing,
-                                                (dfg,f)->f,
-                                                (dfg,f)->f,
+                                                IncrementalInference.decodePackedType,#(dfg,f)->f,
+                                                IncrementalInference.rebuildFactorMetadata!,#(dfg,f)->f,
                                                 solverParams=solverParams)
 
     createDfgSessionIfNotExist(cdfg)
@@ -75,12 +82,39 @@ end
 end
 
 # DFGVariable structure construction and accessors
-@testset "DFG Variable" begin
-    global var1, var2, var3, v1_tags
-    var1, var2, var3, v1_tags = DFGVariableSCA()
-end
+# @testset "DFG Variable" begin
+#     global var1, var2, var3, v1_tags
+#     var1, var2, var3, v1_tags = DFGVariableSCA()
+# end
+newfg = initfg()
+var1 = addVariable!(newfg, :a, ContinuousScalar, labels=[:POSE])
+var2 = addVariable!(newfg, :b, ContinuousScalar, labels=[:LANDMARK])
+var3 = addVariable!(newfg, :c, ContinuousScalar)
+v1_tags = Set([:VARIABLE, :POSE])
+
 
 # DFGFactor structure construction and accessors
-@testset "DFG Factor" begin
-    global fac0, fac1, fac2 = DFGFactorSCA()
+# @testset "DFG Factor" begin
+#     global fac0, fac1, fac2 = DFGFactorSCA()
+# end
+
+fac0 = addFactor!(newfg, [:a], Prior(Normal()))
+fac1 = addFactor!(newfg, [:a, :b], LinearConditional(Normal()))
+fac2 = addFactor!(newfg, [:b, :c], LinearConditional(Normal()))
+
+@testset "Variables and Factors CRUD and SET" begin
+    VariablesandFactorsCRUD_SET!(fg1, var1, var2, var3, fac0, fac1, fac2)
 end
+
+# @testset "tags" begin
+#     tagsTestBlock!(fg1, var1, v1_tags)
+# end
+#
+#
+# fg = fg1
+# v1 = var1
+# v2 = var2
+# v3 = var3
+# f0 = fac0
+# f1 = fac1
+# f2 = fac2

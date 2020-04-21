@@ -181,17 +181,15 @@ function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariable
     return variable
 end
 
-function addFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)
-    addFactor!(dfg, factor._variableOrderSymbols, factor)
-end
 
-function addFactor!(dfg::CloudGraphsDFG, variables::Vector{<:DFGVariable}, factor::DFGFactor)::DFGFactor
+function addFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor
     if exists(dfg, factor)
         error("Factor '$(factor.label)' already exists in the factor graph")
     end
 
-    # Update the variable ordering
-    factor._variableOrderSymbols = map(v->v.label, variables)
+    variableIds = factor._variableOrderSymbols
+    variables = map(vId -> getVariable(dfg, vId), variableIds)
+
 
     # Construct the properties to save
     props = packFactor(dfg, factor)
@@ -210,11 +208,6 @@ function addFactor!(dfg::CloudGraphsDFG, variables::Vector{<:DFGVariable}, facto
     end
 
     return factor
-end
-
-function addFactor!(dfg::CloudGraphsDFG, variableIds::Vector{Symbol}, factor::DFGFactor)::DFGFactor
-    variables = map(vId -> getVariable(dfg, vId), variableIds)
-    return addFactor!(dfg, variables, factor)
 end
 
 function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGVariable
