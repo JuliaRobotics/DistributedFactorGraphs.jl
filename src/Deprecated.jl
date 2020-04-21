@@ -38,12 +38,7 @@ Base.getproperty(x::DFGFactor,f::Symbol) = begin
   elseif f == :_internalId
       getfield(x,:_dfgNodeParams)._internalId
   elseif f == :data
-
-      if !(@isdefined getFactorDataWarnOnce)
-          @warn "get: data field is deprecated, use getSolverData. Further warnings are suppressed"
-          global getFactorDataWarnOnce = true
-      end
-
+      Base.depwarn("DFGFactor get: data field is deprecated, use getSolverData", :getproperty)
       getfield(x, :solverData)
   else
       getfield(x,f)
@@ -57,12 +52,7 @@ Base.setproperty!(x::DFGFactor,f::Symbol, val) = begin
     elseif f == :_internalId
         getfield(x,:_dfgNodeParams)._internalId = val
     elseif f == :data
-
-        if !(@isdefined setFactorDataWarnOnce)
-            @warn "set: data field is deprecated, use ...TODO? Further warnings are suppressed"
-            global setFactorDataWarnOnce = true
-        end
-
+        Base.depwarn("DFGFactor set: data field is deprecated, use getSolverData", :getproperty)
         setfield!(x,:solverData, val)
     else
         setfield!(x,f,val)

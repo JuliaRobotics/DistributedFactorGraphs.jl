@@ -98,10 +98,10 @@ function packFactor(dfg::G, f::DFGFactor)::Dict{String, Any} where G <: Abstract
     props["timestamp"] = string(f.timestamp)
     props["tags"] = JSON2.write(f.tags)
     # Pack the node data
-    fnctype = f.data.fnc.usrfnc!
+    fnctype = getSolverData(f).fnc.usrfnc!
     try
         packtype = getfield(_getmodule(fnctype), Symbol("Packed$(_getname(fnctype))"))
-        packed = convert(PackedFunctionNodeData{packtype}, f.data)
+        packed = convert(PackedFunctionNodeData{packtype}, getSolverData(f))
         props["data"] = JSON2.write(packed)
     catch ex
         io = IOBuffer()
@@ -149,7 +149,8 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G
     factor = DFGFactor{typeof(fullFactor.fnc), Symbol}(Symbol(label), 0, timestamp)
 
     union!(factor.tags, tags)
-    factor.data = fullFactor #TODO setSolverData!(factor, fullFactor)
+    # factor.data = fullFactor #TODO 
+    setSolverData!(factor, fullFactor)
     factor._variableOrderSymbols = _variableOrderSymbols
     setSolvable!(factor, solvable)
 
