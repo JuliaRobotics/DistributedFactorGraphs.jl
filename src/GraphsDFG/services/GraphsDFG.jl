@@ -121,7 +121,9 @@ function getVariable(dfg::GraphsDFG, label::Union{Symbol, String})::DFGVariable
     if !haskey(dfg.labelDict, label)
         error("Variable label '$(label)' does not exist in the factor graph")
     end
-    return dfg.g.vertices[dfg.labelDict[label]].dfgNode
+    node = dfg.g.vertices[dfg.labelDict[label]].dfgNode
+    !isa(node, AbstractDFGVariable) && error("Node with label '$(label)' is not a variable")
+    return node
 end
 
 function getFactor(dfg::GraphsDFG, factorId::Int64)::DFGFactor
@@ -140,7 +142,9 @@ function getFactor(dfg::GraphsDFG, label::Union{Symbol, String})::DFGFactor
     if !haskey(dfg.labelDict, label)
         error("Factor label '$(label)' does not exist in the factor graph")
     end
-    return dfg.g.vertices[dfg.labelDict[label]].dfgNode
+    node = dfg.g.vertices[dfg.labelDict[label]].dfgNode
+    !isa(node, AbstractDFGFactor) && error("Node with label '$(label)' is not a factor")
+    return node
 end
 
 function updateVariable!(dfg::GraphsDFG, variable::DFGVariable)::DFGVariable
