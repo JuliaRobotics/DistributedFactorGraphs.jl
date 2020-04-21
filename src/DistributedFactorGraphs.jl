@@ -249,6 +249,7 @@ include("services/AbstractDFG.jl")
 
 # In Memory Types
 include("GraphsDFG/GraphsDFG.jl")
+@reexport using .GraphsDFGs
 include("LightDFG/LightDFG.jl")
 @reexport using .LightDFGs
 #supported in Memory fg types

@@ -266,3 +266,10 @@ Produces a dot-format of the graph for visualization.
 function toDot(dfg::GraphsDFG)::String
     return Graphs.to_dot(dfg.g)
 end
+
+function toDotFile(dfg::GraphsDFG, fileName::String="/tmp/dfg.dot")::Nothing
+    open(fileName, "w") do fid
+        write(fid, Graphs.to_dot(dfg.g))
+    end
+    return nothing
+end
