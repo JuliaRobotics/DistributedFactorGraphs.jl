@@ -296,6 +296,13 @@ function  DFGFactorSCA()
     # create f0 here for a later timestamp
     f0 = DFGFactor(:af1, [:a], gfnd_prior, tags = Set([:PRIOR]))
 
+    #fill in undefined fields
+    f2.solverData.certainhypo = Int[]
+    f2.solverData.fncargvID = Symbol[]
+    f2.solverData.frommodule = :DistributedFactorGraphs
+    f2.solverData.multihypo = Float64[]
+    f2.solverData.edgeIDs = Int64[]
+
     return  (f0=f0, f1=f1, f2=f2)
 end
 
