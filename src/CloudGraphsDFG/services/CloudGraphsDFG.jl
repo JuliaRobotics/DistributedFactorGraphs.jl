@@ -634,7 +634,7 @@ function deleteVariableSolverData!(dfg::CloudGraphsDFG, variablekey::Symbol, sol
     return vnd
 end
 
-function mergeVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable)
+function mergeVariableSolverData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable)
     # TODO: Switch out to their own nodes, don't get the whole variable
     var = getVariable(dfg, sourceVariable.label)
 
