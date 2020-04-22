@@ -24,6 +24,9 @@ struct TestFunctorSingleton <: FunctorSingleton end
 struct TestFunctorPairwise <: FunctorPairwise end
 struct TestFunctorPairwiseMinimize <: FunctorPairwiseMinimize end
 
+struct PackedTestFunctorInferenceType1 end
+Base.convert(::Type{GenericFunctionNodeData{PackedTestFunctorInferenceType1,AbstractString}}, d) = d
+
 struct TestCCW{T} <: ConvolutionObject where {T<:FunctorInferenceType}
     usrfnc!::T
 end
@@ -52,6 +55,12 @@ function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverP
     fg = T(params=solparams)
     #TODO test something better
     @test isa(fg, T)
+
+    #TODO I don't like, so not exporting, and not recommended to use
+    #     Technically if you set Ids its a new object
+    @test DistributedFactorGraphs.setUserId!(fg, "userId_1") == "userId_1"
+    @test DistributedFactorGraphs.setRobotId!(fg, "robotId_1") == "robotId_1"
+    @test DistributedFactorGraphs.setSessionId!(fg, "sessionId_1") == "sessionId_1"
 
     des = "description"
     uId = "userId"
@@ -97,13 +106,6 @@ function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverP
     @test setSolverParams!(fg, typeof(solparams)()) == typeof(solparams)()
 
     @test setDescription!(fg, des*"_1") == des*"_1"
-
-    #TODO I don't like, so not exporting, and not recommended to use
-    #     Technically if you set Ids its a new object
-    @test DistributedFactorGraphs.setUserId!(fg, uId*"_1") == uId*"_1"
-    @test DistributedFactorGraphs.setRobotId!(fg, rId*"_1") == rId*"_1"
-    @test DistributedFactorGraphs.setSessionId!(fg, sId*"_1") == sId*"_1"
-
 
     #deprecated
     @test_throws ErrorException getLabelDict(fg)
@@ -294,6 +296,13 @@ function  DFGFactorSCA()
     # create f0 here for a later timestamp
     f0 = DFGFactor(:af1, [:a], gfnd_prior, tags = Set([:PRIOR]))
 
+    #fill in undefined fields
+    f2.solverData.certainhypo = Int[]
+    f2.solverData.fncargvID = Symbol[]
+    f2.solverData.frommodule = :DistributedFactorGraphs
+    f2.solverData.multihypo = Float64[]
+    f2.solverData.edgeIDs = Int64[]
+
     return  (f0=f0, f1=f1, f2=f2)
 end
 
@@ -337,13 +346,13 @@ function  VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
         @test getFactor(fg, :bcf1) |> getTimestamp == newtimestamp
     end
     #deletions
-    @test getVariable(fg, :c) === deleteVariable!(fg, v3)
+    @test getVariable(fg, :c) == deleteVariable!(fg, v3)
     @test_throws ErrorException deleteVariable!(fg, v3)
-    @test setdiff(ls(fg),[:a,:b]) == []
-    @test getFactor(fg, :bcf1) === deleteFactor!(fg, f2)
+    @test issetequal(ls(fg),[:a,:b])
+
+    @test getFactor(fg, :bcf1) == deleteFactor!(fg, f2)
     @test_throws ErrorException deleteFactor!(fg, f2)
     @test lsf(fg) == [:abf1]
-
 
     @test getVariable(fg, :a) == v1
     @test getVariable(fg, :a, :default) == v1
@@ -357,14 +366,14 @@ function  VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
         @test_logs (:warn, r"supported for type DFGVariable") getVariable(fg, :a, :missingfoo)
     end
 
-    @test getFactor(fg, :abf1) === f1
+    @test getFactor(fg, :abf1) == f1
 
     @test_throws ErrorException getVariable(fg, :c)
     @test_throws ErrorException getFactor(fg, :bcf1)
 
     #test issue #375
-    @test_skip @test_throws ErrorException getVariable(fg, :abf1)
-    @test_skip @test_throws ErrorException getFactor(fg, :a)
+    @test_throws ErrorException getVariable(fg, :abf1)
+    @test_throws ErrorException getFactor(fg, :a)
 
     # Existence
     @test exists(fg, :a)

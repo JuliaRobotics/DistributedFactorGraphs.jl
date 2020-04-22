@@ -17,6 +17,7 @@ function _getDuplicatedEmptyDFG(dfg::CloudGraphsDFG)::CloudGraphsDFG
         dfg.userId,
         dfg.robotId,
         sessionId,
+        dfg.description,
         dfg.encodePackedTypeFunc,
         dfg.getPackedTypeFunc,
         dfg.decodePackedTypeFunc,
@@ -32,11 +33,13 @@ function getDescription(dfg::CloudGraphsDFG)
         "description")
 end
 function setDescription!(dfg::CloudGraphsDFG, description::String)
-    _setNodeProperty(
-        dfg.neo4jInstance,
-        [dfg.sessionId, dfg.robotId, dfg.userId, "SESSION"],
-        "description",
-        description)
+    count = _setNodeProperty(dfg.neo4jInstance,
+                            [dfg.sessionId, dfg.robotId, dfg.userId, "SESSION"],
+                            "description",
+                            description)
+    @assert(count == 1)
+    dfg.description = description
+    return getDescription(dfg)
 end
 
 function getSerializationModule(dfg::CloudGraphsDFG)::Module where G <: AbstractDFG
@@ -53,43 +56,89 @@ function getUserData(dfg::CloudGraphsDFG)::Dict{Symbol, String}
     propVal = _getNodeProperty(dfg.neo4jInstance, _getLabelsForType(dfg, User), "data")
     return JSON2.read(String(base64decode(propVal)), Dict{Symbol, String})
 end
-function setUserData!(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
+function setUserData!(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Dict{Symbol, String}
     count = _setNodeProperty(dfg.neo4jInstance, [dfg.userId, "USER"], "data", base64encode(JSON2.write(data)))
-    return count == 1
+    @assert(count == 1)
+    return  getUserData(dfg)
 end
+
 function getRobotData(dfg::CloudGraphsDFG)::Dict{Symbol, String}
     propVal = _getNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, "ROBOT"], "data")
     return JSON2.read(String(base64decode(propVal)), Dict{Symbol, String})
 end
-function setRobotData!(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
+function setRobotData!(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Dict{Symbol, String}
     count = _setNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, "ROBOT"], "data", base64encode(JSON2.write(data)))
-    return count == 1
+    @assert(count == 1)
+    return  getRobotData(dfg)
 end
+
 function getSessionData(dfg::CloudGraphsDFG)::Dict{Symbol, String}
     propVal = _getNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, "SESSION"], "data")
     return JSON2.read(String(base64decode(propVal)), Dict{Symbol, String})
 end
-function setSessionData!(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
+function setSessionData!(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Dict{Symbol, String}
     count = _setNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, "SESSION"], "data", base64encode(JSON2.write(data)))
-    return count == 1
+    @assert(count == 1)
+    return  getSessionData(dfg)
 end
 
 # New API
-getUserData(dfg::CloudGraphsDFG, key::Symbol)::String = error("Not supported yet")
-getRobotData(dfg::CloudGraphsDFG, key::Symbol)::String = error("Not supported yet")
-getSessionData(dfg::CloudGraphsDFG, key::Symbol)::String = error("Not supported yet")
+getUserData(dfg::CloudGraphsDFG, key::Symbol) = getUserData(dfg::CloudGraphsDFG)[key]
+getRobotData(dfg::CloudGraphsDFG, key::Symbol)::String = getRobotData(dfg::CloudGraphsDFG)[key]
+getSessionData(dfg::CloudGraphsDFG, key::Symbol)::String = getSessionData(dfg::CloudGraphsDFG)[key]
 
-updateUserData!(dfg::CloudGraphsDFG, pair::Pair{Symbol,String}) = error("Not supported yet")
-updateRobotData!(dfg::CloudGraphsDFG, pair::Pair{Symbol,String}) = error("Not supported yet")
-updateSessionData!(dfg::CloudGraphsDFG, pair::Pair{Symbol,String}) = error("Not supported yet")
+function updateUserData!(dfg::CloudGraphsDFG, pair::Pair{Symbol,String})
+    data = getUserData(dfg::CloudGraphsDFG)
+    push!(data, pair)
+    setUserData!(dfg, data)
+end
 
-deleteUserData!(dfg::CloudGraphsDFG, key::Symbol) = error("Not supported yet")
-deleteRobotData!(dfg::CloudGraphsDFG, key::Symbol) = error("Not supported yet")
-deleteSessionData!(dfg::CloudGraphsDFG, key::Symbol) = error("Not supported yet")
+function updateRobotData!(dfg::CloudGraphsDFG, pair::Pair{Symbol,String})
+    data = getRobotData(dfg::CloudGraphsDFG)
+    push!(data, pair)
+    setRobotData!(dfg, data)
+end
 
-emptyUserData!(dfg::CloudGraphsDFG) = error("Not supported yet")
-emptyRobotData!(dfg::CloudGraphsDFG) = error("Not supported yet")
-emptySessionData!(dfg::CloudGraphsDFG) = error("Not supported yet")
+function updateSessionData!(dfg::CloudGraphsDFG, pair::Pair{Symbol,String})
+    data = getSessionData(dfg::CloudGraphsDFG)
+    push!(data, pair)
+    setSessionData!(dfg, data)
+end
+
+function deleteUserData!(dfg::CloudGraphsDFG, key::Symbol)
+    data = getUserData(dfg::CloudGraphsDFG)
+    delval = pop!(data, key)
+    setUserData!(dfg, data)
+    return delval
+end
+
+function deleteRobotData!(dfg::CloudGraphsDFG, key::Symbol)
+    data = getRobotData(dfg::CloudGraphsDFG)
+    delval = pop!(data, key)
+    setRobotData!(dfg, data)
+    return delval
+end
+
+function deleteSessionData!(dfg::CloudGraphsDFG, key::Symbol)
+    data = getSessionData(dfg::CloudGraphsDFG)
+    delval = pop!(data, key)
+    setSessionData!(dfg, data)
+    return delval
+end
+
+
+function emptyUserData!(dfg::CloudGraphsDFG)
+    return setUserData!(dfg, Dict{Symbol, String}())
+end
+
+function emptyRobotData!(dfg::CloudGraphsDFG)
+    return setRobotData!(dfg, Dict{Symbol, String}())
+end
+
+function emptySessionData!(dfg::CloudGraphsDFG)
+    return setSessionData!(dfg, Dict{Symbol, String}())
+end
+
 
 ##==============================================================================
 ## CRUD Interfaces
@@ -132,17 +181,15 @@ function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariable
     return variable
 end
 
-function addFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)
-    addFactor!(dfg, factor._variableOrderSymbols, factor)
-end
 
-function addFactor!(dfg::CloudGraphsDFG, variables::Vector{<:DFGVariable}, factor::DFGFactor)::DFGFactor
+function addFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor
     if exists(dfg, factor)
         error("Factor '$(factor.label)' already exists in the factor graph")
     end
 
-    # Update the variable ordering
-    factor._variableOrderSymbols = map(v->v.label, variables)
+    variableIds = factor._variableOrderSymbols
+    variables = map(vId -> getVariable(dfg, vId), variableIds)
+
 
     # Construct the properties to save
     props = packFactor(dfg, factor)
@@ -163,16 +210,11 @@ function addFactor!(dfg::CloudGraphsDFG, variables::Vector{<:DFGVariable}, facto
     return factor
 end
 
-function addFactor!(dfg::CloudGraphsDFG, variableIds::Vector{Symbol}, factor::DFGFactor)::DFGFactor
-    variables = map(vId -> getVariable(dfg, vId), variableIds)
-    return addFactor!(dfg, variables, factor)
-end
-
 function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGVariable
     if typeof(label) == String
         label = Symbol(label)
     end
-    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, label)
+    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, label, nodeType="VARIABLE")
     if nodeId == nothing
         error("Unable to retrieve the ID for variable '$label'. Please check your connection to the database and that the variable exists.")
     end
@@ -191,7 +233,7 @@ function getFactor(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGFactor
     if typeof(label) == String
         label = Symbol(label)
     end
-    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, label)
+    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, label, nodeType="FACTOR")
     if nodeId == nothing
         error("Unable to retrieve the ID for factor '$label'. Please check your connection to the database and that the factor exists.")
     end
