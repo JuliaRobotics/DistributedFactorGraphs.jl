@@ -106,9 +106,9 @@ fac2 = addFactor!(newfg, [:b, :c], LinearConditional(Normal()))
     VariablesandFactorsCRUD_SET!(fg1, var1, var2, var3, fac0, fac1, fac2)
 end
 
-# @testset "tags" begin
-#     tagsTestBlock!(fg1, var1, v1_tags)
-# end
+@testset "tags" begin
+    tagsTestBlock!(fg1, var1, v1_tags)
+end
 #
 #
 # fg = fg1

@@ -714,6 +714,65 @@ end
 ## TAGS as a set, list, merge, remove, empty
 ## CloudGraphsDFG functions
 ##==============================================================================
+function mergeTags!(dfg::CloudGraphsDFG, sym::Symbol, tags::Vector{Symbol})
+
+    if isVariable(dfg,sym)
+        getNode = getVariable
+        updateNode! = updateVariable!
+    else
+        getNode = getFactor
+        updateNode! = updateFactor!
+    end
+
+    node = getNode(dfg, sym)
+    union!(getTags(node), tags)
+
+    updateNode!(dfg, node)
+
+    return getTags(getNode(dfg, sym))
+
+end
+
+function removeTags!(dfg::CloudGraphsDFG, sym::Symbol, tags::Vector{Symbol})
+
+    if isVariable(dfg,sym)
+        getNode = getVariable
+        updateNode! = updateVariable!
+    else
+        getNode = getFactor
+        updateNode! = updateFactor!
+    end
+
+    node = getNode(dfg, sym)
+    setdiff!(getTags(node), tags)
+
+    updateNode!(dfg, node)
+
+    return getTags(getNode(dfg, sym))
+
+end
+
+function emptyTags!(dfg::CloudGraphsDFG, sym::Symbol)
+
+    if isVariable(dfg,sym)
+        getNode = getVariable
+        updateNode! = updateVariable!
+    else
+        getNode = getFactor
+        updateNode! = updateFactor!
+    end
+
+    node = getNode(dfg, sym)
+    empty!(getTags(node))
+
+    updateNode!(dfg, node)
+
+    return getTags(getNode(dfg, sym))
+
+end
+
+
+
 function RESERVED_mergeTags!(dfg::CloudGraphsDFG, sym::Symbol, tags::Vector{Symbol})
 
     nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance,
