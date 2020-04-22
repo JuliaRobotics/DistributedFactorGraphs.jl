@@ -18,9 +18,9 @@
 ##------------------------------------------------------------------------------
 """
     $(SIGNATURES)
-Convenience function to get all the matadata of a DFG
+Convenience function to get all the metadata of a DFG
 """
-getDFGInfo(dfg::AbstractDFG) = (dfg.description, dfg.userId, dfg.robotId, dfg.sessionId, dfg.userData, dfg.robotData, dfg.sessionData, dfg.solverParams)
+getDFGInfo(dfg::AbstractDFG) = (getDescription(dfg), getUserId(dfg), getRobotId(dfg), getSessionId(dfg), getUserData(dfg), getRobotData(dfg), getSessionData(dfg), getSolverParams(dfg))
 
 """
     $(SIGNATURES)
