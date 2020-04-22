@@ -296,6 +296,13 @@ function  DFGFactorSCA()
     # create f0 here for a later timestamp
     f0 = DFGFactor(:af1, [:a], gfnd_prior, tags = Set([:PRIOR]))
 
+    #fill in undefined fields
+    f2.solverData.certainhypo = Int[]
+    f2.solverData.fncargvID = Symbol[]
+    f2.solverData.frommodule = :DistributedFactorGraphs
+    f2.solverData.multihypo = Float64[]
+    f2.solverData.edgeIDs = Int64[]
+
     return  (f0=f0, f1=f1, f2=f2)
 end
 
@@ -339,13 +346,13 @@ function  VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
         @test getFactor(fg, :bcf1) |> getTimestamp == newtimestamp
     end
     #deletions
-    @test getVariable(fg, :c) === deleteVariable!(fg, v3)
+    @test getVariable(fg, :c) == deleteVariable!(fg, v3)
     @test_throws ErrorException deleteVariable!(fg, v3)
     @test issetequal(ls(fg),[:a,:b])
-    @test getFactor(fg, :bcf1) === deleteFactor!(fg, f2)
+
+    @test getFactor(fg, :bcf1) == deleteFactor!(fg, f2)
     @test_throws ErrorException deleteFactor!(fg, f2)
     @test lsf(fg) == [:abf1]
-
 
     @test getVariable(fg, :a) == v1
     @test getVariable(fg, :a, :default) == v1

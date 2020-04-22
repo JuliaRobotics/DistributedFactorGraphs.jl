@@ -39,13 +39,6 @@ for api in apis
     end
 end
 
-if get(ENV, "IIF_TEST", "") == "true"
-    @testset "Testing Driver: CloudGraphsDFG" begin
-        @info "Testing Driver: CloudGraphsDFG"
-        global testDFGAPI = CloudGraphsDFG
-        include("consolInterfaceDev.jl")
-    end
-end
 
 # Test special cases
 @testset "Plotting Tests" begin
@@ -81,6 +74,12 @@ if get(ENV, "IIF_TEST", "") == "true"
     @info "------------------------------------------------------------------------"
 
     using IncrementalInference
+
+    @testset "Consolidation WIP Testing Driver: CloudGraphsDFG" begin
+        @info "Testing Driver: CloudGraphsDFG"
+        global testDFGAPI = CloudGraphsDFG
+        include("consolInterfaceDev.jl")
+    end
 
     apis = [
         GraphsDFG{SolverParams}(),
