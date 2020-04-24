@@ -375,11 +375,12 @@ function updateVariableSolverData!(dfg::AbstractDFG,
                                    vnd::VariableNodeData,
                                    solvekey::Symbol=:default,
                                    useCopy::Bool=true,
-                                   fields::Vector{Symbol}=Symbol[]  )::VariableNodeData
+                                   fields::Vector{Symbol}=Symbol[],
+                                   verbose::Bool=true  )
     #
     #This is basically just setSolverData
     var = getVariable(dfg, variablekey)
-    if !haskey(var.solverDataDict, solvekey)
+    if verbose && !haskey(var.solverDataDict, solvekey)
         @warn "VariableNodeData '$(solvekey)' does not exist, adding"
     end
 
