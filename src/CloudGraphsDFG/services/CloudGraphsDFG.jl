@@ -708,3 +708,126 @@ function setSolvable!(dfg::CloudGraphsDFG, sym::Symbol, solvable::Int)::Int
         solvable)
     return solvable
 end
+
+
+##==============================================================================
+## TAGS as a set, list, merge, remove, empty
+## CloudGraphsDFG functions
+##==============================================================================
+function mergeTags!(dfg::CloudGraphsDFG, sym::Symbol, tags::Vector{Symbol})
+
+    if isVariable(dfg,sym)
+        getNode = getVariable
+        updateNode! = updateVariable!
+    else
+        getNode = getFactor
+        updateNode! = updateFactor!
+    end
+
+    node = getNode(dfg, sym)
+    union!(getTags(node), tags)
+
+    updateNode!(dfg, node)
+
+    return getTags(getNode(dfg, sym))
+
+end
+
+function removeTags!(dfg::CloudGraphsDFG, sym::Symbol, tags::Vector{Symbol})
+
+    if isVariable(dfg,sym)
+        getNode = getVariable
+        updateNode! = updateVariable!
+    else
+        getNode = getFactor
+        updateNode! = updateFactor!
+    end
+
+    node = getNode(dfg, sym)
+    setdiff!(getTags(node), tags)
+
+    updateNode!(dfg, node)
+
+    return getTags(getNode(dfg, sym))
+
+end
+
+function emptyTags!(dfg::CloudGraphsDFG, sym::Symbol)
+
+    if isVariable(dfg,sym)
+        getNode = getVariable
+        updateNode! = updateVariable!
+    else
+        getNode = getFactor
+        updateNode! = updateFactor!
+    end
+
+    node = getNode(dfg, sym)
+    empty!(getTags(node))
+
+    updateNode!(dfg, node)
+
+    return getTags(getNode(dfg, sym))
+
+end
+
+
+
+function RESERVED_mergeTags!(dfg::CloudGraphsDFG, sym::Symbol, tags::Vector{Symbol})
+
+    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance,
+                                            dfg.userId,
+                                            dfg.robotId,
+                                            dfg.sessionId,
+                                            sym)
+
+    neo4jNode = Neo4j.getnode(dfg.neo4jInstance.graph, nodeId)
+
+    addnodelabels(neo4jNode, string.(tags))
+
+    return Set(setdiff(Symbol.(getnodelabels(neo4jNode)), Symbol.([dfg.userId, dfg.robotId, dfg.sessionId]), [sym]))
+
+end
+
+
+function RESERVED_removeTags!(dfg::CloudGraphsDFG, sym::Symbol, tags::Vector{Symbol})
+
+    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance,
+                                            dfg.userId,
+                                            dfg.robotId,
+                                            dfg.sessionId,
+                                            sym)
+
+    neo4jNode = Neo4j.getnode(dfg.neo4jInstance.graph, nodeId)
+
+    shouldStay = Symbol.([dfg.userId, dfg.robotId, dfg.sessionId]) ∪ [sym, :VARIABLE, :FACTOR]
+
+    for tag in tags
+        if tag in shouldStay
+            @warn("Label:$tag is not allowed to be removed from tags and will be ignored.")
+        else
+            deletenodelabel(neo4jNode, string(tag))
+        end
+    end
+
+    return Set(setdiff(Symbol.(getnodelabels(neo4jNode)), shouldStay))
+
+end
+
+
+function RESERVED_emptyTags!(dfg::CloudGraphsDFG, sym::Symbol)
+
+    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance,
+                                            dfg.userId,
+                                            dfg.robotId,
+                                            dfg.sessionId,
+                                            sym)
+
+    neo4jNode = Neo4j.getnode(dfg.neo4jInstance.graph, nodeId)
+
+    shouldStay = Symbol.([dfg.userId, dfg.robotId, dfg.sessionId]) ∪ [sym, :VARIABLE, :FACTOR]
+    tags = setdiff(Symbol.(getnodelabels(neo4jNode)), shouldStay)
+    # tags = Symbol.(getnodelabels(neo4jNode))
+
+    return removeTags!(dfg, sym, tags)
+end
