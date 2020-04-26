@@ -2,6 +2,8 @@ using DistributedFactorGraphs
 using Test
 using Dates
 
+import Base: convert
+
 # TODO, dink meer aan: Trait based softtypes or hard type for VariableNodeData
 # Test InferenceVariable Types
 struct TestSofttype1 <: InferenceVariable
@@ -16,7 +18,7 @@ struct TestSofttype2 <: InferenceVariable
     TestSofttype2() = new(2,(:Euclid,:Circular,))
 end
 
-# Test Factor Types TODO same with factor type if I can figure out what it is and how it works
+
 struct TestFunctorInferenceType1 <: FunctorInferenceType end
 struct TestFunctorInferenceType2 <: FunctorInferenceType end
 
@@ -24,8 +26,35 @@ struct TestFunctorSingleton <: FunctorSingleton end
 struct TestFunctorPairwise <: FunctorPairwise end
 struct TestFunctorPairwiseMinimize <: FunctorPairwiseMinimize end
 
-struct PackedTestFunctorInferenceType1 end
-Base.convert(::Type{GenericFunctionNodeData{PackedTestFunctorInferenceType1,AbstractString}}, d) = d
+struct PackedTestFunctorInferenceType1 <: PackedInferenceType
+    s::String
+end
+PackedTestFunctorInferenceType1() = PackedTestFunctorInferenceType1("")
+
+function Base.convert(::Type{PackedTestFunctorInferenceType1}, d::TestFunctorInferenceType1)
+    # @info "convert(::Type{PackedTestFunctorInferenceType1}, d::TestFunctorInferenceType1)"
+    PackedTestFunctorInferenceType1()
+end
+
+function Base.convert(::Type{TestFunctorInferenceType1}, d::PackedTestFunctorInferenceType1)
+    # @info "convert(::Type{TestFunctorInferenceType1}, d::PackedTestFunctorInferenceType1)"
+    TestFunctorInferenceType1()
+end
+
+struct PackedTestFunctorSingleton <: PackedInferenceType
+    s::String
+end
+PackedTestFunctorSingleton() = PackedTestFunctorSingleton("")
+
+function Base.convert(::Type{PackedTestFunctorSingleton}, d::TestFunctorSingleton)
+    # @info "convert(::Type{PackedTestFunctorSingleton}, d::TestFunctorSingleton)"
+    PackedTestFunctorSingleton()
+end
+
+function Base.convert(::Type{TestFunctorSingleton}, d::PackedTestFunctorSingleton)
+    # @info "onvert(::Type{TestFunctorSingleton}, d::PackedTestFunctorSingleton)"
+    TestFunctorSingleton()
+end
 
 struct TestCCW{T} <: ConvolutionObject where {T<:FunctorInferenceType}
     usrfnc!::T
@@ -33,6 +62,45 @@ end
 Base.:(==)(a::TestCCW, b::TestCCW) = a.usrfnc! == b.usrfnc!
 
 
+function Base.convert(::Type{DFG.FunctionNodeData{TestCCW{F}}},
+                     d::DFG.PackedFunctionNodeData{<:PackedInferenceType}) where F<:FunctorInferenceType
+
+    return DFG.FunctionNodeData(d.fncargvID,
+                                d.eliminated,
+                                d.potentialused,
+                                d.edgeIDs,
+                                Symbol(d.frommodule),
+                                TestCCW(convert(F, d.fnc)),
+                                d.multihypo,
+                                d.certainhypo,
+                                d.solveInProgress)
+end
+
+function Base.convert(::Type{DFG.PackedFunctionNodeData{P}}, d::DFG.FunctionNodeData{<:ConvolutionObject}) where P <: PackedInferenceType
+  # mhstr = packmultihypo(d.fnc)  # this is where certainhypo error occurs
+  return DFG.PackedFunctionNodeData(d.fncargvID,
+                                    d.eliminated,
+                                    d.potentialused,
+                                    d.edgeIDs,
+                                    string(d.frommodule),
+                                    convert(P, d.fnc.usrfnc!),
+                                    d.multihypo,
+                                    d.certainhypo,
+                                    d.solveInProgress)
+end
+
+
+
+function decodePackedType(dfg::G, packeddata::GenericFunctionNodeData{PT,<:AbstractString}) where {PT, G <: AbstractDFG}
+  # usrtyp = convert(FunctorInferenceType, packeddata.fnc)
+  # Also look at parentmodule
+  usrtyp = getfield(PT.name.module, Symbol(string(PT.name.name)[7:end]))
+  fulltype = DFG.FunctionNodeData{TestCCW{usrtyp}}
+  factor = convert(fulltype, packeddata)
+  return factor
+end
+
+##
 global testDFGAPI = GraphsDFG
 global testDFGAPI = LightDFG
 
@@ -250,7 +318,7 @@ function  DFGFactorSCA()
     f1 = DFGFactor{TestCCW{TestFunctorInferenceType1}, Symbol}(f1_lbl)
     f1 = DFGFactor(f1_lbl, [:a,:b], gfnd, tags = f1_tags, solvable=0)
 
-    f2 = DFGFactor{TestFunctorInferenceType1, Symbol}(:bcf1)
+    f2 = DFGFactor{TestCCW{TestFunctorInferenceType1}, Symbol}(:bcf1)
 
     @test getLabel(f1) == f1_lbl
     @test getTags(f1) == f1_tags
@@ -315,101 +383,101 @@ function  VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     # fg = GraphsDFG(params=NoSolverParams())
     # fg = LightDFG(params=NoSolverParams())
     # add update delete
-    @test addVariable!(fg, v1) == v1
-    @test addVariable!(fg, v2) == v2
+@test addVariable!(fg, v1) == v1
+@test addVariable!(fg, v2) == v2
 
-    #TODO standardize this error and res also for that matter
-    @test_throws Exception addFactor!(fg, [:a, :nope], f1)
-    @test_throws Exception addFactor!(fg, [v1, v2, v3], f1)
+#TODO standardize this error and res also for that matter
+@test_throws Exception addFactor!(fg, [:a, :nope], f1)
+@test_throws Exception addFactor!(fg, [v1, v2, v3], f1)
 
-    @test addFactor!(fg, [v1, v2], f1) === f1
-    @test_throws ErrorException addFactor!(fg, [v1, v2], f1)
+@test addFactor!(fg, [v1, v2], f1) === f1
+@test_throws ErrorException addFactor!(fg, [v1, v2], f1)
 
-    @test @test_logs (:warn, r"does not exist") updateVariable!(fg, v3) == v3
-    @test updateVariable!(fg, v3) == v3
-    @test_throws ErrorException addVariable!(fg, v3)
+@test @test_logs (:warn, r"does not exist") updateVariable!(fg, v3) == v3
+@test updateVariable!(fg, v3) == v3
+@test_throws ErrorException addVariable!(fg, v3)
 
-    @test @test_logs (:warn, r"does not exist") updateFactor!(fg, f2) === f2
-    @test updateFactor!(fg, f2) === f2
-    @test_throws ErrorException addFactor!(fg, [:b, :c], f2)
-    #TODO Graphs.jl, but look at refactoring absract @test_throws ErrorException addFactor!(fg, f2)
+@test @test_logs (:warn, r"does not exist") updateFactor!(fg, f2) === f2
+@test updateFactor!(fg, f2) === f2
+@test_throws ErrorException addFactor!(fg, [:b, :c], f2)
+#TODO Graphs.jl, but look at refactoring absract @test_throws ErrorException addFactor!(fg, f2)
 
-    @test getAddHistory(fg) == [:a, :b, :c]
+@test getAddHistory(fg) == [:a, :b, :c]
 
-    # Extra timestamp functions https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/315
-    if !(v1 isa SkeletonDFGVariable)
-        newtimestamp = now()
-        @test !(setTimestamp!(fg, :c, newtimestamp) === v3)
-        @test getVariable(fg, :c) |> getTimestamp == newtimestamp
+# Extra timestamp functions https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/315
+if !(v1 isa SkeletonDFGVariable)
+    newtimestamp = now()
+    @test !(setTimestamp!(fg, :c, newtimestamp) === v3)
+    @test getVariable(fg, :c) |> getTimestamp == newtimestamp
 
-        @test !(setTimestamp!(fg, :bcf1, newtimestamp) === f2)
-        @test getFactor(fg, :bcf1) |> getTimestamp == newtimestamp
-    end
-    #deletions
-    @test getVariable(fg, :c) == deleteVariable!(fg, v3)
-    @test_throws ErrorException deleteVariable!(fg, v3)
-    @test issetequal(ls(fg),[:a,:b])
+    @test !(setTimestamp!(fg, :bcf1, newtimestamp) === f2)
+    @test getFactor(fg, :bcf1) |> getTimestamp == newtimestamp
+end
+#deletions
+@test getVariable(fg, :c) == deleteVariable!(fg, v3)
+@test_throws ErrorException deleteVariable!(fg, v3)
+@test issetequal(ls(fg),[:a,:b])
 
-    @test getFactor(fg, :bcf1) == deleteFactor!(fg, f2)
-    @test_throws ErrorException deleteFactor!(fg, f2)
-    @test lsf(fg) == [:abf1]
+@test getFactor(fg, :bcf1) == deleteFactor!(fg, f2)
+@test_throws ErrorException deleteFactor!(fg, f2)
+@test lsf(fg) == [:abf1]
 
-    @test getVariable(fg, :a) == v1
-    @test getVariable(fg, :a, :default) == v1
+@test getVariable(fg, :a) == v1
+@test getVariable(fg, :a, :default) == v1
 
-    @test addFactor!(fg, f0) == f0
+@test addFactor!(fg, f0) == f0
 
-    if isa(v1, DFGVariable)
-        #TODO decide if this should be @error or other type
-        @test_throws ErrorException getVariable(fg, :a, :missingfoo)
-    else
-        @test_logs (:warn, r"supported for type DFGVariable") getVariable(fg, :a, :missingfoo)
-    end
+if isa(v1, DFGVariable)
+    #TODO decide if this should be @error or other type
+    @test_throws ErrorException getVariable(fg, :a, :missingfoo)
+else
+    @test_logs (:warn, r"supported for type DFGVariable") getVariable(fg, :a, :missingfoo)
+end
 
-    @test getFactor(fg, :abf1) == f1
+@test getFactor(fg, :abf1) == f1
 
-    @test_throws ErrorException getVariable(fg, :c)
-    @test_throws ErrorException getFactor(fg, :bcf1)
+@test_throws ErrorException getVariable(fg, :c)
+@test_throws ErrorException getFactor(fg, :bcf1)
 
-    #test issue #375
-    @test_throws ErrorException getVariable(fg, :abf1)
-    @test_throws ErrorException getFactor(fg, :a)
+#test issue #375
+@test_throws ErrorException getVariable(fg, :abf1)
+@test_throws ErrorException getFactor(fg, :a)
 
-    # Existence
-    @test exists(fg, :a)
-    @test !exists(fg, :c)
-    @test exists(fg, :abf1)
-    @test !exists(fg, :bcf1)
+# Existence
+@test exists(fg, :a)
+@test !exists(fg, :c)
+@test exists(fg, :abf1)
+@test !exists(fg, :bcf1)
 
-    @test exists(fg, v1)
-    @test !exists(fg, v3)
-    @test exists(fg, f1)
-    @test !exists(fg, f2)
+@test exists(fg, v1)
+@test !exists(fg, v3)
+@test exists(fg, f1)
+@test !exists(fg, f2)
 
-    # check types
-    @test isVariable(fg, :a)
-    @test !isVariable(fg, :abf1)
+# check types
+@test isVariable(fg, :a)
+@test !isVariable(fg, :abf1)
 
-    @test isFactor(fg, :abf1)
-    @test !isFactor(fg, :a)
+@test isFactor(fg, :abf1)
+@test !isFactor(fg, :a)
 
-    if f0 isa DFGFactor
-        @test isPrior(fg, :af1)
-        @test !isPrior(fg, :abf1)
-    end
+if f0 isa DFGFactor
+    @test isPrior(fg, :af1)
+    @test !isPrior(fg, :abf1)
+end
 
-    #list
-    @test length(getVariables(fg)) == 2
-    @test issetequal(getLabel.(getFactors(fg)), [:af1, :abf1])
+#list
+@test length(getVariables(fg)) == 2
+@test issetequal(getLabel.(getFactors(fg)), [:af1, :abf1])
 
-    @test issetequal([:a,:b], listVariables(fg))
-    @test issetequal([:af1,:abf1], listFactors(fg))
+@test issetequal([:a,:b], listVariables(fg))
+@test issetequal([:af1,:abf1], listFactors(fg))
 
-    @test ls(fg) == listVariables(fg)
-    @test lsf(fg) == listFactors(fg)
+@test ls(fg) == listVariables(fg)
+@test lsf(fg) == listFactors(fg)
 
-    @test @test_deprecated getVariableIds(fg) == listVariables(fg)
-    @test @test_deprecated getFactorIds(fg) == listFactors(fg)
+@test @test_deprecated getVariableIds(fg) == listVariables(fg)
+@test @test_deprecated getFactorIds(fg) == listFactors(fg)
 
 end
 
@@ -875,8 +943,8 @@ function AdjacencyMatricesTestBlock(fg)
     @test_throws ErrorException getAdjacencyMatrix(fg)
     adjMat = DistributedFactorGraphs.getAdjacencyMatrixSymbols(fg)
     @test size(adjMat) == (2,4)
-    @test symdiff(adjMat[1, :], [nothing, :a, :b, :orphan]) == Symbol[]
-    @test symdiff(adjMat[2, :], [:abf1, :abf1, :abf1, nothing]) == Symbol[]
+    @test issetequal(adjMat[1, :], [nothing, :a, :b, :orphan])
+    @test issetequal(adjMat[2, :], [:abf1, :abf1, :abf1, nothing])
     #
     #sparse
     adjMat, v_ll, f_ll = getBiadjacencyMatrix(fg)

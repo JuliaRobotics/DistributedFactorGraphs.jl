@@ -7,6 +7,14 @@ abstract type PackedInferenceType end
 
 abstract type FunctorInferenceType <: Function end
 
+# DF suggestion1 (this is a first guess)  `ConvolutionObject` --> `FactorInsituObject`
+# DF second guess,  ConvolutionObject <: FactorInsituObject
+# JT Maybe second guess as intermediate step where ConvolutionObject is moved to IIF.
+# then it can be removed to CommonConvWrapper <: FactorInsituObject
+
+# DF, Convolution is IIF idea, but DFG should know about "FactorOperationalMemory"
+# DF, IIF.CommonConvWrapper <: FactorOperationalMemory # FIXME
+# MAYBE rename "FactorOperationalMemory"
 abstract type ConvolutionObject <: Function end
 
 abstract type FunctorSingleton <: FunctorInferenceType end
@@ -19,13 +27,22 @@ abstract type FunctorPairwiseMinimize <: FunctorInferenceType end
 
 """
 $(TYPEDEF)
+
+Notes
+- S::Symbol
+
+Designing (WIP)
+- T <: Union{FactorOperationalMemory, PackedInferenceType}
+# in IIF.CCW{T <: DFG.InferenceType}
+# in IIF.FunctorPairwiseMinimize <: InferenceType # DFG whatever, something, we'll figure it out
+# in Main/User, SomeFactor <: FunctorPairwiseMinimize
 """
-mutable struct GenericFunctionNodeData{T, S}
+mutable struct GenericFunctionNodeData{T, S} #{T<:Union{PackedInferenceType, FunctorInferenceType, ConvolutionObject}, S<:Union{Symbol, AbstractString}}
     fncargvID::Vector{Symbol}
     eliminated::Bool
     potentialused::Bool
     edgeIDs::Array{Int,1}
-    frommodule::S #Union{Symbol, AbstractString}
+    frommodule::S # JT TODO remove frommodule, not used at all as far as i can tell
     fnc::T
     multihypo::Array{Float64} # likely to moved when GenericWrapParam is refactored
     certainhypo::Vector{Int}
