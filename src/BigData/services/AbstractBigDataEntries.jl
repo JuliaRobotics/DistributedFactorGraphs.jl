@@ -42,7 +42,7 @@ $(SIGNATURES)
 Add Big Data Entry to distributed factor graph.
 Should be extended if DFG variable is not returned by reference.
 """
-function addDataEntry!(dfg::AbsstractDFG,
+function addDataEntry!(dfg::AbstractDFG,
                        lbl::Symbol,
                        descr::Symbol,
                        mimeType::AbstractString,
