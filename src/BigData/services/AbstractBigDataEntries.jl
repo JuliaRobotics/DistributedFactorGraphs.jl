@@ -35,6 +35,28 @@ function addBigDataEntry!(dfg::AbstractDFG, label::Symbol, bde::AbstractBigDataE
     return addBigDataEntry!(getVariable(dfg, label), bde)
 end
 
+addDataEntry!(x...) = addBigDataEntry!(x...)
+
+"""
+$(SIGNATURES)
+Add Big Data Entry to distributed factor graph.
+Should be extended if DFG variable is not returned by reference.
+"""
+function addDataEntry!(dfg::AbsstractDFG,
+                       lbl::Symbol,
+                       descr::Symbol,
+                       mimeType::AbstractString,
+                       data::Vector{UInt8} )
+  #
+  node = isVariable(dfg, lbl) ? getVariable(dfg, lbl) : getFactor(dfg, lbl)
+  # Make a big data entry in the graph - use JSON2 to just write this
+  element = GeneralBigDataEntry(dfg, node, descr, mimeType=mimeType)
+  # Set it in the store
+  addBigData!(fec.datastore, element, data)
+  # Add the entry to the graph
+  addBigDataEntry!(node, element)
+end
+
 """
     $SIGNATURES
 
