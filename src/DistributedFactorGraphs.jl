@@ -165,7 +165,7 @@ export getNeighborhood, getNeighbors, _getDuplicatedEmptyDFG
 export copyGraph!, deepcopyGraph, deepcopyGraph!, buildSubgraph, mergeGraph!
 # Big Data
 ##------------------------------------------------------------------------------
-export addBigDataEntry!, getBigDataEntry, updateBigDataEntry!, deleteBigDataEntry!, getBigDataEntries, getBigDataKeys
+export addBigDataEntry!, addDataEntry!, getBigDataEntry, updateBigDataEntry!, deleteBigDataEntry!, getBigDataEntries, getBigDataKeys, hasDataEntry, hasBigDataEntry
 
 
 ##------------------------------------------------------------------------------
@@ -249,6 +249,7 @@ include("services/AbstractDFG.jl")
 
 # In Memory Types
 include("GraphsDFG/GraphsDFG.jl")
+@reexport using .GraphsDFGs
 include("LightDFG/LightDFG.jl")
 @reexport using .LightDFGs
 #supported in Memory fg types

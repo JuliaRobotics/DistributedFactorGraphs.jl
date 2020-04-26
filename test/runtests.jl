@@ -7,8 +7,9 @@ using Dates
 
 ## To run the IIF tests, you need a local Neo4j with user/pass neo4j:test
 # To run a Docker image
-# Install: docker pull neo4j
-# Run: docker run -d --publish=7474:7474 --publish=7687:7687 --env NEO4J_AUTH=neo4j/test neo4j
+# NOTE: that Neo4j.jl doesn't currently support > Neo4j 3.x
+# Install: docker pull neo4j:3.5.6
+# Run: docker run -d --publish=7474:7474 --publish=7687:7687 --env NEO4J_AUTH=neo4j/test neo4j:3.5.6
 ##
 
 # If you want to enable debugging logging (very verbose!)
@@ -38,6 +39,7 @@ for api in apis
         include("interfaceTests.jl")
     end
 end
+
 
 # Test special cases
 @testset "Plotting Tests" begin
@@ -74,11 +76,18 @@ if get(ENV, "IIF_TEST", "") == "true"
 
     using IncrementalInference
 
+    @testset "Consolidation WIP Testing Driver: CloudGraphsDFG" begin
+        @info "Testing Driver: CloudGraphsDFG"
+        global testDFGAPI = CloudGraphsDFG
+        include("consolInterfaceDev.jl")
+    end
+
     apis = [
         GraphsDFG{SolverParams}(),
         LightDFG{SolverParams}(),
         CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
                                     "testUser", "testRobot", "testSession",
+                                    "Description of test Session",
                                     nothing,
                                     nothing,
                                     IncrementalInference.decodePackedType,
