@@ -2,6 +2,8 @@ using DistributedFactorGraphs
 using Test
 using Dates
 
+import Base: convert
+
 # TODO, dink meer aan: Trait based softtypes or hard type for VariableNodeData
 # Test InferenceVariable Types
 struct TestSofttype1 <: InferenceVariable
@@ -16,7 +18,7 @@ struct TestSofttype2 <: InferenceVariable
     TestSofttype2() = new(2,(:Euclid,:Circular,))
 end
 
-# Test Factor Types TODO same with factor type if I can figure out what it is and how it works
+
 struct TestFunctorInferenceType1 <: FunctorInferenceType end
 struct TestFunctorInferenceType2 <: FunctorInferenceType end
 
@@ -24,8 +26,35 @@ struct TestFunctorSingleton <: FunctorSingleton end
 struct TestFunctorPairwise <: FunctorPairwise end
 struct TestFunctorPairwiseMinimize <: FunctorPairwiseMinimize end
 
-struct PackedTestFunctorInferenceType1 end
-Base.convert(::Type{GenericFunctionNodeData{PackedTestFunctorInferenceType1,AbstractString}}, d) = d
+struct PackedTestFunctorInferenceType1 <: PackedInferenceType
+    s::String
+end
+PackedTestFunctorInferenceType1() = PackedTestFunctorInferenceType1("")
+
+function Base.convert(::Type{PackedTestFunctorInferenceType1}, d::TestFunctorInferenceType1)
+    # @info "convert(::Type{PackedTestFunctorInferenceType1}, d::TestFunctorInferenceType1)"
+    PackedTestFunctorInferenceType1()
+end
+
+function Base.convert(::Type{TestFunctorInferenceType1}, d::PackedTestFunctorInferenceType1)
+    # @info "convert(::Type{TestFunctorInferenceType1}, d::PackedTestFunctorInferenceType1)"
+    TestFunctorInferenceType1()
+end
+
+struct PackedTestFunctorSingleton <: PackedInferenceType
+    s::String
+end
+PackedTestFunctorSingleton() = PackedTestFunctorSingleton("")
+
+function Base.convert(::Type{PackedTestFunctorSingleton}, d::TestFunctorSingleton)
+    # @info "convert(::Type{PackedTestFunctorSingleton}, d::TestFunctorSingleton)"
+    PackedTestFunctorSingleton()
+end
+
+function Base.convert(::Type{TestFunctorSingleton}, d::PackedTestFunctorSingleton)
+    # @info "onvert(::Type{TestFunctorSingleton}, d::PackedTestFunctorSingleton)"
+    TestFunctorSingleton()
+end
 
 struct TestCCW{T} <: ConvolutionObject where {T<:FunctorInferenceType}
     usrfnc!::T
@@ -33,6 +62,36 @@ end
 Base.:(==)(a::TestCCW, b::TestCCW) = a.usrfnc! == b.usrfnc!
 
 
+function Base.convert(::Type{DFG.FunctionNodeData{TestCCW{F}}},
+                     d::DFG.PackedFunctionNodeData{<:PackedInferenceType}) where F<:FunctorInferenceType
+
+    return DFG.FunctionNodeData(d.fncargvID,
+                                d.eliminated,
+                                d.potentialused,
+                                d.edgeIDs,
+                                Symbol(d.frommodule),
+                                TestCCW(convert(F, d.fnc)),
+                                d.multihypo,
+                                d.certainhypo,
+                                d.solveInProgress)
+end
+
+function Base.convert(::Type{DFG.PackedFunctionNodeData{P}}, d::DFG.FunctionNodeData{<:ConvolutionObject}) where P <: PackedInferenceType
+  # mhstr = packmultihypo(d.fnc)  # this is where certainhypo error occurs
+  return DFG.PackedFunctionNodeData(d.fncargvID,
+                                    d.eliminated,
+                                    d.potentialused,
+                                    d.edgeIDs,
+                                    string(d.frommodule),
+                                    convert(P, d.fnc.usrfnc!),
+                                    d.multihypo,
+                                    d.certainhypo,
+                                    d.solveInProgress)
+end
+
+
+
+##
 global testDFGAPI = GraphsDFG
 global testDFGAPI = LightDFG
 
@@ -172,6 +231,7 @@ function DFGVariableSCA()
     v2 = DFGVariable(:b, VariableNodeData{TestSofttype2}(), tags=Set([:VARIABLE, :LANDMARK]))
     v3 = DFGVariable(:c, VariableNodeData{TestSofttype2}())
 
+    vorphan = DFGVariable(:orphan, TestSofttype1(), tags=v1_tags, solvable=0, solverDataDict=Dict(:default=>VariableNodeData{TestSofttype1}()))
 
     getSolverData(v1).solveInProgress = 1
 
@@ -228,7 +288,7 @@ function DFGVariableSCA()
     # isSolved
     # setSolvedCount
 
-    return (v1=v1, v2=v2, v3=v3, v1_tags=v1_tags)
+    return (v1=v1, v2=v2, v3=v3, vorphan = vorphan, v1_tags=v1_tags)
 
 end
 
@@ -250,7 +310,7 @@ function  DFGFactorSCA()
     f1 = DFGFactor{TestCCW{TestFunctorInferenceType1}, Symbol}(f1_lbl)
     f1 = DFGFactor(f1_lbl, [:a,:b], gfnd, tags = f1_tags, solvable=0)
 
-    f2 = DFGFactor{TestFunctorInferenceType1, Symbol}(:bcf1)
+    f2 = DFGFactor{TestCCW{TestFunctorInferenceType1}, Symbol}(:bcf1)
 
     @test getLabel(f1) == f1_lbl
     @test getTags(f1) == f1_tags
@@ -875,8 +935,8 @@ function AdjacencyMatricesTestBlock(fg)
     @test_throws ErrorException getAdjacencyMatrix(fg)
     adjMat = DistributedFactorGraphs.getAdjacencyMatrixSymbols(fg)
     @test size(adjMat) == (2,4)
-    @test symdiff(adjMat[1, :], [nothing, :a, :b, :orphan]) == Symbol[]
-    @test symdiff(adjMat[2, :], [:abf1, :abf1, :abf1, nothing]) == Symbol[]
+    @test issetequal(adjMat[1, :], [nothing, :a, :b, :orphan])
+    @test issetequal(adjMat[2, :], [:abf1, :abf1, :abf1, nothing])
     #
     #sparse
     adjMat, v_ll, f_ll = getBiadjacencyMatrix(fg)
@@ -907,12 +967,14 @@ function AdjacencyMatricesTestBlock(fg)
 end
 
 # Now make a complex graph for connectivity tests
-function connectivityTestGraph(::Type{T}; VARTYPE=DFGVariable, FACTYPE=DFGFactor) where T <: InMemoryDFGTypes
+function connectivityTestGraph(::Type{T}; VARTYPE=DFGVariable, FACTYPE=DFGFactor) where T <: AbstractDFG#InMemoryDFGTypes
     #settings
     numNodesType1 = 5
     numNodesType2 = 5
 
     dfg = T()
+
+    isa(dfg, CloudGraphsDFG) && clearUser!!(dfg)
 
     vars = vcat(map(n -> VARTYPE(Symbol("x$n"), VariableNodeData{TestSofttype1}()), 1:numNodesType1),
                 map(n -> VARTYPE(Symbol("x$(numNodesType1+n)"), VariableNodeData{TestSofttype2}()), 1:numNodesType2))
@@ -925,7 +987,16 @@ function connectivityTestGraph(::Type{T}; VARTYPE=DFGVariable, FACTYPE=DFGFactor
         #NOTE because defaults changed
         setSolvable!(dfg, :x8, 0)
         setSolvable!(dfg, :x9, 0)
-        facs = map(n -> addFactor!(dfg, [vars[n], vars[n+1]], DFGFactor{Int, :Symbol}(Symbol("x$(n)x$(n+1)f1"))), 1:length(vars)-1)
+
+        gfnd = GenericFunctionNodeData(Symbol[], false, false, Int[], :DistributedFactorGraphs, TestCCW(TestFunctorInferenceType1()))
+        f_tags = Set([:FACTOR])
+        # f1 = DFGFactor(f1_lbl, [:a,:b], gfnd, tags = f_tags)
+
+        facs = map(n -> addFactor!(dfg, DFGFactor(Symbol("x$(n)x$(n+1)f1"),
+                                                  [vars[n].label, vars[n+1].label],
+                                                  deepcopy(gfnd),
+                                                  tags=deepcopy(f_tags))),
+                                                   1:length(vars)-1)
         setSolvable!(dfg, :x7x8f1, 0)
 
     else
@@ -955,8 +1026,8 @@ function  GettingNeighbors(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
     #TODO if not a LightDFG with and summary or skeleton
     if VARTYPE == DFGVariable
         @test getNeighbors(dfg, :x5, solvable=2) == Symbol[]
-        @test getNeighbors(dfg, :x5, solvable=0) == [:x4x5f1,:x5x6f1]
-        @test getNeighbors(dfg, :x5) == [:x4x5f1,:x5x6f1]
+        @test issetequal(getNeighbors(dfg, :x5, solvable=0), [:x4x5f1,:x5x6f1])
+        @test issetequal(getNeighbors(dfg, :x5), [:x4x5f1,:x5x6f1])
         @test getNeighbors(dfg, :x7x8f1, solvable=0) == [:x7, :x8]
         @test getNeighbors(dfg, :x7x8f1, solvable=1) == [:x7]
         @test getNeighbors(dfg, verts[1], solvable=0) == [:x1x2f1]
