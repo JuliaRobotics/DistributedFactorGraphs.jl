@@ -400,7 +400,7 @@ function getNeighbors(dfg::CloudGraphsDFG, node::T; solvable::Int=0)::Vector{Sym
     query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(node.label))--(node) where (node:VARIABLE or node:FACTOR) and node.solvable >= $solvable"
     @debug "[Query] $query"
     neighbors = _getLabelsFromCyphonQuery(dfg.neo4jInstance, query)
-    # If factor, need to do variable ordering
+    # If factor, need to do variable ordering TODO, Do we? does it matter if we always use _variableOrderSymbols in calculations?
     if T <: DFGFactor
         neighbors = intersect(node._variableOrderSymbols, neighbors)
     end
@@ -411,7 +411,7 @@ function getNeighbors(dfg::CloudGraphsDFG, label::Symbol; solvable::Int=0)::Vect
     query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(label))--(node) where (node:VARIABLE or node:FACTOR) and node.solvable >= $solvable"
     @debug "[Query] $query"
     neighbors = _getLabelsFromCyphonQuery(dfg.neo4jInstance, query)
-    # If factor, need to do variable ordering
+    # If factor, need to do variable ordering TODO, Do we? does it matter if we always use _variableOrderSymbols in calculations?
     if isFactor(dfg, label)
         # Server is authority
         serverOrder = Symbol.(JSON2.read(_getNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, String(label)], "_variableOrderSymbols")))

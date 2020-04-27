@@ -40,6 +40,22 @@ for api in apis
     end
 end
 
+if get(ENV, "IIF_TEST", "") != "true"
+    @testset "Consolidation WIP Testing Driver: CloudGraphsDFG" begin
+        global decodePackedType
+        function decodePackedType(dfg::G, packeddata::GenericFunctionNodeData{PT,<:AbstractString}) where {PT, G <: AbstractDFG}
+          # usrtyp = convert(FunctorInferenceType, packeddata.fnc)
+          # Also look at parentmodule
+          usrtyp = getfield(PT.name.module, Symbol(string(PT.name.name)[7:end]))
+          fulltype = DFG.FunctionNodeData{TestCCW{usrtyp}}
+          factor = convert(fulltype, packeddata)
+          return factor
+        end
+        @info "Testing Driver: CloudGraphsDFG"
+        global testDFGAPI = CloudGraphsDFG
+        include("consolInterfaceDev.jl")
+    end
+end
 
 # Test special cases
 @testset "Plotting Tests" begin
@@ -75,12 +91,6 @@ if get(ENV, "IIF_TEST", "") == "true"
     @info "------------------------------------------------------------------------"
 
     using IncrementalInference
-
-    @testset "Consolidation WIP Testing Driver: CloudGraphsDFG" begin
-        @info "Testing Driver: CloudGraphsDFG"
-        global testDFGAPI = CloudGraphsDFG
-        include("consolInterfaceDev.jl")
-    end
 
     apis = [
         GraphsDFG{SolverParams}(),
