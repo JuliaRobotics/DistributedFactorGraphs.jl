@@ -520,10 +520,11 @@ function addPPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Symbo
     if ppekey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction)
         error("PPE '$(ppekey)' already exists")
     end
-    return updatePPE!(dfg, variablekey, ppe, ppekey, currentTransaction=currentTransaction)
+    return _matchmergePPE!(dfg, variablekey, ppe, ppekey, currentTransaction=currentTransaction)
 end
 
-function updatePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::P where P <: AbstractPointParametricEst
+#TODO clean this, just to match api for update
+function _matchmergePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::P where P <: AbstractPointParametricEst
     packed = packPPE(dfg, ppe)
     query = """
                 MATCH (var:$variablekey:$(join(_getLabelsForType(dfg, DFGVariable, parentKey=variablekey),':')))
@@ -546,10 +547,17 @@ function updatePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Sy
     return unpackPPE(dfg, result.results[1]["data"][1]["row"][1])
 end
 
+function updatePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::P where P <: AbstractPointParametricEst
+    if !(ppekey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction))
+        @warn "PPE '$(ppekey)' does not exist, adding"
+    end
+    return _matchmergePPE!(dfg, variablekey, ppe, ppekey, currentTransaction=currentTransaction)
+end
+
 function updatePPE!(dfg::CloudGraphsDFG, sourceVariables::Vector{<:DFGVariable}, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
     tx = currentTransaction == nothing ? transaction(dfg.neo4jInstance.connection) : currentTransaction
     for var in sourceVariables
-        updatePPE!(dfg, var.label, getPPE(dfg, var, ppekey), ppekey, currentTransaction=tx)
+        updatePPE!(dfg, var.label, getPPE(var, ppekey), ppekey, currentTransaction=tx)
     end
     if currentTransaction == nothing
         result = commit(tx)
