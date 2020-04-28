@@ -43,13 +43,13 @@ end
 if get(ENV, "IIF_TEST", "") != "true"
     @testset "Consolidation WIP Testing Driver: CloudGraphsDFG" begin
         global decodePackedType
-        function decodePackedType(dfg::G, packeddata::GenericFunctionNodeData{PT,<:AbstractString}) where {PT, G <: AbstractDFG}
+        function decodePackedType(dfg::AbstractDFG, packeddata::GenericFunctionNodeData{PT,<:AbstractString}) where PT
           # usrtyp = convert(FunctorInferenceType, packeddata.fnc)
           # Also look at parentmodule
           usrtyp = getfield(PT.name.module, Symbol(string(PT.name.name)[7:end]))
           fulltype = DFG.FunctionNodeData{TestCCW{usrtyp}}
-          factor = convert(fulltype, packeddata)
-          return factor
+          factordata = convert(fulltype, packeddata)
+          return factordata
         end
         @info "Testing Driver: CloudGraphsDFG"
         global testDFGAPI = CloudGraphsDFG

@@ -100,9 +100,9 @@ end
     tagsTestBlock!(fg1, var1, v1_tags)
 end
 
-# @testset "Parametric Point Estimates" begin
-#     PPETestBlock!(fg1, var1)
-# end
+@testset "Parametric Point Estimates" begin
+    PPETestBlock!(fg1, var1)
+end
 
 @testset "Variable Solver Data" begin
     VSDTestBlock!(fg1, var1)

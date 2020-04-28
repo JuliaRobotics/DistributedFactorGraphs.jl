@@ -527,7 +527,11 @@ function  PPETestBlock!(fg, v1)
     @test @test_logs (:warn, r"does not exist") updatePPE!(fg, :a, ppe, :default) == ppe
     # Update update it
     @test updatePPE!(fg, :a, ppe, :default) == ppe
-    # Bulk copy PPE's for x0 and x1
+    @test deletePPE!(fg, :a, :default) == ppe
+
+    # manually add ppe to v1 for tests
+    v1.ppeDict[:default] = deepcopy(ppe)
+    # Bulk copy PPE's for :x1
     @test updatePPE!(fg, [v1], :default) == nothing
     # Delete it
     @test deletePPE!(fg, :a, :default) == ppe
@@ -551,6 +555,8 @@ function  PPETestBlock!(fg, v1)
     updatePPE!(fg, :a, ppe, :default)
     # Update update it
     updatePPE!(fg, :a, ppe, :default)
+
+    v1.ppeDict[:default] = deepcopy(ppe)
     # Bulk copy PPE's for x0 and x1
     updatePPE!(fg, [v1], :default)
     # Delete it
