@@ -158,19 +158,41 @@ end
 end
 #
 # #TODO Summaries and Summary Graphs
-# @testset "Summaries and Summary Graphs" begin
-#     Summaries(testDFGAPI)
-# end
-#
-# @testset "Producing Dot Files" begin
-#     ProducingDotFiles(testDFGAPI)
-# end
-#
-# @testset "Connectivity Test" begin
-#      ConnectivityTest(testDFGAPI)
-# end
+@testset "Summaries and Summary Graphs" begin
+    Summaries(testDFGAPI)
+end
 
+@testset "Producing Dot Files" begin
+    ProducingDotFiles(testDFGAPI, var1, var2, fac1)
+end
+#
+@testset "Connectivity Test" begin
+    fg = testDFGAPI()
+    clearUser!!(fg)
+    ConnectivityTest(testDFGAPI)
+end
 
+@testset "Copy Functions" begin
+    fg = testDFGAPI()
+    clearUser!!(fg)
+    fg = testDFGAPI()
+    addVariable!(fg, var1)
+    addVariable!(fg, var2)
+    addVariable!(fg, var3)
+    addFactor!(fg, fac1)
+
+    fgcopy = testDFGAPI()
+    DFG._copyIntoGraph!(fg, fgcopy, union(ls(fg), lsf(fg)))
+    @test getVariableOrder(fg,:abf1) == getVariableOrder(fgcopy,:abf1)
+
+    #test copyGraph, deepcopyGraph[!]
+    fgcopy = testDFGAPI()
+    DFG.deepcopyGraph!(fgcopy, fg)
+    @test getVariableOrder(fg,:abf1) == getVariableOrder(fgcopy,:abf1)
+
+    CopyFunctionsTest(testDFGAPI)
+
+end
 #
 #=
 fg = fg1

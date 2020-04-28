@@ -1165,22 +1165,21 @@ function  Summaries(testDFGAPI)
     end
 end
 
-function ProducingDotFiles(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
+function ProducingDotFiles(testDFGAPI,
+                           v1 = VARTYPE(:a, VariableNodeData{TestSofttype1}()),
+                           v2 = VARTYPE(:b, VariableNodeData{TestSofttype1}()),
+                           f1 = (FACTYPE==DFGFactor) ? DFGFactor{Int, :Symbol}(:abf1) : FACTYPE(:abf1);
+                           VARTYPE=DFGVariable,
+                           FACTYPE=DFGFactor)
     # "Producing Dot Files"
     # create a simpler graph for dot testing
     dotdfg = testDFGAPI()
-    v1 = VARTYPE(:a, VariableNodeData{TestSofttype1}())
-    v2 = VARTYPE(:b, VariableNodeData{TestSofttype1}())
-    if FACTYPE==DFGFactor
-        f1 = DFGFactor{Int, :Symbol}(:abf1)
-    else
-        f1 = FACTYPE(:abf1)
-    end
+
     addVariable!(dotdfg, v1)
     addVariable!(dotdfg, v2)
     addFactor!(dotdfg, [v1, v2], f1)
     #NOTE hardcoded toDot will have different results so test LightGraphs seperately
-    if testDFGAPI <: LightDFG
+    if testDFGAPI <: LightDFG || testDFGAPI <: CloudGraphsDFG
         @test toDot(dotdfg) == "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box];\na -- abf1\nb -- abf1\n}\n"
     else
         @test toDot(dotdfg) == "graph graphname {\n2 [\"label\"=\"b\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n2 -- 3\n3 [\"label\"=\"abf1\",\"shape\"=\"box\",\"fillcolor\"=\"blue\",\"color\"=\"blue\"]\n1 [\"label\"=\"a\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n1 -- 3\n}\n"
