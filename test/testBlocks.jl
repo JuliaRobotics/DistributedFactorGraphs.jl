@@ -1166,14 +1166,24 @@ function  Summaries(testDFGAPI)
 end
 
 function ProducingDotFiles(testDFGAPI,
-                           v1 = VARTYPE(:a, VariableNodeData{TestSofttype1}()),
-                           v2 = VARTYPE(:b, VariableNodeData{TestSofttype1}()),
-                           f1 = (FACTYPE==DFGFactor) ? DFGFactor{Int, :Symbol}(:abf1) : FACTYPE(:abf1);
+                           v1 = nothing,
+                           v2 = nothing,
+                           f1 = nothing;
                            VARTYPE=DFGVariable,
                            FACTYPE=DFGFactor)
     # "Producing Dot Files"
     # create a simpler graph for dot testing
     dotdfg = testDFGAPI()
+
+    if v1 == nothing
+        v1 = VARTYPE(:a, VariableNodeData{TestSofttype1}())
+    end
+    if v2 == nothing
+        v2 = VARTYPE(:b, VariableNodeData{TestSofttype1}())
+    end
+    if f1 == nothing
+        f1 = (FACTYPE==DFGFactor) ? DFGFactor{Int, :Symbol}(:abf1) : FACTYPE(:abf1)
+    end
 
     addVariable!(dotdfg, v1)
     addVariable!(dotdfg, v2)

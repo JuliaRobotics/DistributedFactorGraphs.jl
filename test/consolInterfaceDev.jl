@@ -163,6 +163,8 @@ end
 end
 
 @testset "Producing Dot Files" begin
+    fg = testDFGAPI()
+    clearUser!!(fg)
     ProducingDotFiles(testDFGAPI, var1, var2, fac1)
 end
 #
