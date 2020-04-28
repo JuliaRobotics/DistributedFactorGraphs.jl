@@ -877,8 +877,16 @@ function deepcopyGraph(::Type{T},
                        sourceDFG::AbstractDFG,
                        variableLabels::Vector{Symbol} = ls(sourceDFG),
                        factorLabels::Vector{Symbol} = lsf(sourceDFG);
+                       sessionId::String = "",
                        kwargs...) where T <: AbstractDFG
-    destDFG = T(getDFGInfo(sourceDFG)...)
+
+    ginfo = [getDFGInfo(sourceDFG)...]
+    if sessionId == ""
+        ginfo[4] *= "_copy$(string(uuid4())[1:6])"
+    else
+        ginfo[4] = sessionId
+    end
+    destDFG = T(ginfo...)
     copyGraph!(destDFG, sourceDFG, variableLabels, factorLabels; deepcopyNodes=true, kwargs...)
     return destDFG
 end

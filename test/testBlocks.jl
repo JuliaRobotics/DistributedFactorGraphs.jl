@@ -820,10 +820,10 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test_skip varNearTs[1][1] == [:b]
 
         ## SORT copied from CRUD
-        @test all(getVariables(fg, r"a") .== [v1])
-        @test all(getVariables(fg, solvable=1) .== [v2])
+        @test all(getVariables(fg, r"a") .== [getVariable(fg,v1.label)])
+        @test all(getVariables(fg, solvable=1) .== [getVariable(fg,v2.label)])
         @test getVariables(fg, r"a", solvable=1) == []
-        @test getVariables(fg, tags=[:LANDMARK])[1] == v2
+        @test getVariables(fg, tags=[:LANDMARK])[1] == getVariable(fg, v2.label)
 
         @test getFactors(fg, r"nope") == []
         @test issetequal(getLabel.(getFactors(fg, solvable=1)), [:af1, :abf1])
@@ -979,8 +979,6 @@ function connectivityTestGraph(::Type{T}; VARTYPE=DFGVariable, FACTYPE=DFGFactor
     numNodesType2 = 5
 
     dfg = T()
-
-    isa(dfg, CloudGraphsDFG) && clearUser!!(dfg)
 
     vars = vcat(map(n -> VARTYPE(Symbol("x$n"), VariableNodeData{TestSofttype1}()), 1:numNodesType1),
                 map(n -> VARTYPE(Symbol("x$(numNodesType1+n)"), VariableNodeData{TestSofttype2}()), 1:numNodesType2))
