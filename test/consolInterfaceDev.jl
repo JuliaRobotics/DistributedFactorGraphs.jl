@@ -4,7 +4,7 @@ using Neo4j
 using DistributedFactorGraphs
 using Pkg
 using Dates
-
+using UUIDs
 # using IncrementalInference
 
 include("testBlocks.jl")
@@ -15,14 +15,20 @@ testDFGAPI = CloudGraphsDFG
 # TODO maybe move to cloud graphs permanantly as standard easy to use functions
 function DFG.CloudGraphsDFG(; params=NoSolverParams())
     cgfg = CloudGraphsDFG{typeof(params)}("localhost", 7474, "neo4j", "test",
-                                  "testUser", "testRobot", "testSession",
+                                  "testUser", "testRobot", "testSession_$(string(uuid4())[1:6])",
                                   "description",
                                   nothing,
                                   nothing,
-                                  (dfg,f)->f,#IncrementalInference.decodePackedType,#(dfg,f)->f,
-                                  (dfg,f)->f,#ncrementalInference.rebuildFactorMetadata!,#(dfg,f)->f,
+                                  (dfg,f)->f,#IncrementalInference.decodePackedType,
+                                  (dfg,f)->f,#ncrementalInference.rebuildFactorMetadata!,
                                   solverParams=params)
     createDfgSessionIfNotExist(cgfg)
+
+    setUserData!(cgfg, Dict{Symbol, String}())
+    setRobotData!(cgfg, Dict{Symbol, String}())
+    setSessionData!(cgfg, Dict{Symbol, String}())
+    setDescription!(cgfg, cgfg.description)
+
     return cgfg
 end
 
@@ -49,8 +55,8 @@ function DFG.CloudGraphsDFG(description::String,
                                                 description,
                                                 nothing,
                                                 nothing,
-                                                (dfg,f)->f,#IncrementalInference.decodePackedType,#(dfg,f)->f,
-                                                (dfg,f)->f,#IncrementalInference.rebuildFactorMetadata!,#(dfg,f)->f,
+                                                (dfg,f)->f,#IncrementalInference.decodePackedType,
+                                                (dfg,f)->f,#IncrementalInference.rebuildFactorMetadata!,
                                                 solverParams=solverParams)
 
     createDfgSessionIfNotExist(cdfg)
@@ -119,7 +125,7 @@ end
 
 @testset "Adjacency Matrices" begin
     fg = testDFGAPI()
-    clearRobot!!(fg)
+    clearUser!!(fg)
 
     DFGVariable(:a, TestSofttype1())
     addVariable!(fg, var1)
@@ -133,38 +139,69 @@ end
 
 
 @testset "Getting Neighbors" begin
+    fg = testDFGAPI()
+    clearUser!!(fg)
     GettingNeighbors(testDFGAPI)
 end
 
 
 @testset "Getting Subgraphs" begin
+    fg = testDFGAPI()
+    clearUser!!(fg)
     GettingSubgraphs(testDFGAPI)
 end
 
-# @testset "Building Subgraphs" begin
-#     BuildingSubgraphs(testDFGAPI)
-# end
+@testset "Building Subgraphs" begin
+    fg = testDFGAPI()
+    clearUser!!(fg)
+    BuildingSubgraphs(testDFGAPI)
+end
 #
 # #TODO Summaries and Summary Graphs
-# @testset "Summaries and Summary Graphs" begin
-#     Summaries(testDFGAPI)
-# end
-#
-# @testset "Producing Dot Files" begin
-#     ProducingDotFiles(testDFGAPI)
-# end
-#
-# @testset "Connectivity Test" begin
-#      ConnectivityTest(testDFGAPI)
-# end
+@testset "Summaries and Summary Graphs" begin
+    Summaries(testDFGAPI)
+end
 
+@testset "Producing Dot Files" begin
+    fg = testDFGAPI()
+    clearUser!!(fg)
+    ProducingDotFiles(testDFGAPI, var1, var2, fac1)
+end
+#
+@testset "Connectivity Test" begin
+    fg = testDFGAPI()
+    clearUser!!(fg)
+    ConnectivityTest(testDFGAPI)
+end
 
+@testset "Copy Functions" begin
+    fg = testDFGAPI()
+    clearUser!!(fg)
+    fg = testDFGAPI()
+    addVariable!(fg, var1)
+    addVariable!(fg, var2)
+    addVariable!(fg, var3)
+    addFactor!(fg, fac1)
+
+    fgcopy = testDFGAPI()
+    DFG._copyIntoGraph!(fg, fgcopy, union(ls(fg), lsf(fg)))
+    @test getVariableOrder(fg,:abf1) == getVariableOrder(fgcopy,:abf1)
+
+    #test copyGraph, deepcopyGraph[!]
+    fgcopy = testDFGAPI()
+    DFG.deepcopyGraph!(fgcopy, fg)
+    @test getVariableOrder(fg,:abf1) == getVariableOrder(fgcopy,:abf1)
+
+    CopyFunctionsTest(testDFGAPI)
+
+end
 #
-#
-# fg = fg1
-# v1 = var1
-# v2 = var2
-# v3 = var3
-# f0 = fac0
-# f1 = fac1
-# f2 = fac2
+#=
+fg = fg1
+v1 = var1
+v2 = var2
+v3 = var3
+f0 = fac0
+f1 = fac1
+f2 = fac2
+=#

@@ -820,10 +820,10 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test_skip varNearTs[1][1] == [:b]
 
         ## SORT copied from CRUD
-        @test all(getVariables(fg, r"a") .== [v1])
-        @test all(getVariables(fg, solvable=1) .== [v2])
+        @test all(getVariables(fg, r"a") .== [getVariable(fg,v1.label)])
+        @test all(getVariables(fg, solvable=1) .== [getVariable(fg,v2.label)])
         @test getVariables(fg, r"a", solvable=1) == []
-        @test getVariables(fg, tags=[:LANDMARK])[1] == v2
+        @test getVariables(fg, tags=[:LANDMARK])[1] == getVariable(fg, v2.label)
 
         @test getFactors(fg, r"nope") == []
         @test issetequal(getLabel.(getFactors(fg, solvable=1)), [:af1, :abf1])
@@ -979,8 +979,6 @@ function connectivityTestGraph(::Type{T}; VARTYPE=DFGVariable, FACTYPE=DFGFactor
     numNodesType2 = 5
 
     dfg = T()
-
-    isa(dfg, CloudGraphsDFG) && clearUser!!(dfg)
 
     vars = vcat(map(n -> VARTYPE(Symbol("x$n"), VariableNodeData{TestSofttype1}()), 1:numNodesType1),
                 map(n -> VARTYPE(Symbol("x$(numNodesType1+n)"), VariableNodeData{TestSofttype2}()), 1:numNodesType2))
@@ -1167,22 +1165,31 @@ function  Summaries(testDFGAPI)
     end
 end
 
-function ProducingDotFiles(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
+function ProducingDotFiles(testDFGAPI,
+                           v1 = nothing,
+                           v2 = nothing,
+                           f1 = nothing;
+                           VARTYPE=DFGVariable,
+                           FACTYPE=DFGFactor)
     # "Producing Dot Files"
     # create a simpler graph for dot testing
     dotdfg = testDFGAPI()
-    v1 = VARTYPE(:a, VariableNodeData{TestSofttype1}())
-    v2 = VARTYPE(:b, VariableNodeData{TestSofttype1}())
-    if FACTYPE==DFGFactor
-        f1 = DFGFactor{Int, :Symbol}(:abf1)
-    else
-        f1 = FACTYPE(:abf1)
+
+    if v1 == nothing
+        v1 = VARTYPE(:a, VariableNodeData{TestSofttype1}())
     end
+    if v2 == nothing
+        v2 = VARTYPE(:b, VariableNodeData{TestSofttype1}())
+    end
+    if f1 == nothing
+        f1 = (FACTYPE==DFGFactor) ? DFGFactor{Int, :Symbol}(:abf1) : FACTYPE(:abf1)
+    end
+
     addVariable!(dotdfg, v1)
     addVariable!(dotdfg, v2)
     addFactor!(dotdfg, [v1, v2], f1)
     #NOTE hardcoded toDot will have different results so test LightGraphs seperately
-    if testDFGAPI <: LightDFG
+    if testDFGAPI <: LightDFG || testDFGAPI <: CloudGraphsDFG
         @test toDot(dotdfg) == "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box];\na -- abf1\nb -- abf1\n}\n"
     else
         @test toDot(dotdfg) == "graph graphname {\n2 [\"label\"=\"b\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n2 -- 3\n3 [\"label\"=\"abf1\",\"shape\"=\"box\",\"fillcolor\"=\"blue\",\"color\"=\"blue\"]\n1 [\"label\"=\"a\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n1 -- 3\n}\n"
