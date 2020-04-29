@@ -114,7 +114,7 @@ function createDfgSessionIfNotExist(dfg::CloudGraphsDFG)::Session
     strip(dfg.sessionId) == "" && error("Session ID is not populated in DFG.")
     user = User(Symbol(dfg.userId), dfg.userId, "Description for $(dfg.userId)", Dict{Symbol, String}())
     robot = Robot(Symbol(dfg.robotId), Symbol(dfg.userId), dfg.robotId, "Description for $(dfg.userId):$(dfg.robotId)", Dict{Symbol, String}())
-    session = Session(Symbol(dfg.sessionId), Symbol(dfg.robotId), Symbol(dfg.userId), dfg.sessionId, "Description for $(dfg.userId):$(dfg.robotId):$(dfg.sessionId)", Dict{Symbol, String}())
+    session = Session(Symbol(dfg.sessionId), Symbol(dfg.robotId), Symbol(dfg.userId), dfg.sessionId, dfg.description, Dict{Symbol, String}())
 
     _getNodeCount(dfg.neo4jInstance, [dfg.userId, "USER"]) == 0 && createUser(dfg, user)
     _getNodeCount(dfg.neo4jInstance, [dfg.userId, dfg.robotId, "ROBOT"]) == 0 && createRobot(dfg, robot)
