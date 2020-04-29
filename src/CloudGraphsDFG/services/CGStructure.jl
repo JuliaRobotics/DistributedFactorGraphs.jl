@@ -32,7 +32,9 @@ function _convertDictToSession(dict::Dict{String, Any})::Session
         Symbol(dict["userId"]),
         dict["name"],
         dict["description"],
-        data)
+        data,
+        dict["createdTimestamp"],
+        dict["lastUpdatedTimestamp"])
     return session
 end
 #TODO: Refactor, #HACK :D (but it works!)
@@ -43,7 +45,9 @@ function _convertDictToRobot(dict::Dict{String, Any})::Robot
         Symbol(dict["userId"]),
         dict["name"],
         dict["description"],
-        data)
+        data,
+        dict["createdTimestamp"],
+        dict["lastUpdatedTimestamp"])
     return robot
 end
 #TODO: Refactor, #HACK :D (but it works!)
@@ -53,7 +57,9 @@ function _convertDictToUser(dict::Dict{String, Any})::User
         Symbol(dict["id"]),
         dict["name"],
         dict["description"],
-        data)
+        data,
+        dict["createdTimestamp"],
+        dict["lastUpdatedTimestamp"])
     return user
 end
 
