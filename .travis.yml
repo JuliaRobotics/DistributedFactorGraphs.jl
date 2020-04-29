@@ -17,6 +17,12 @@ julia:
 env:
     - IIF_TEST=false
 
+branches:
+  only:
+  - master
+  - develop
+  - /^release-.*$/
+  
 jobs:
   include:
     - julia: 1.4
