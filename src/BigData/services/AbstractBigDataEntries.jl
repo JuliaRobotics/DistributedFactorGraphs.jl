@@ -44,6 +44,7 @@ Should be extended if DFG variable is not returned by reference.
 """
 function addDataEntry!(dfg::AbstractDFG,
                        lbl::Symbol,
+                       datastore::Union{FileDataStore, InMemoryDataStore},
                        descr::Symbol,
                        mimeType::AbstractString,
                        data::Vector{UInt8} )
@@ -52,7 +53,7 @@ function addDataEntry!(dfg::AbstractDFG,
   # Make a big data entry in the graph - use JSON2 to just write this
   element = GeneralBigDataEntry(dfg, node, descr, mimeType=mimeType)
   # Set it in the store
-  addBigData!(fec.datastore, element, data)
+  addBigData!(datastore, element, data)
   # Add the entry to the graph
   addBigDataEntry!(node, element)
 end

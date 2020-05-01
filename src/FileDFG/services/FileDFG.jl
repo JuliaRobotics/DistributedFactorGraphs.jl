@@ -162,7 +162,7 @@ function loadDFG(dst::String,
     if unzip
       @info "DFG.loadDFG is deleting a temp folder created during unzip, $loaddir"
       # need this because the number of files created in /tmp/caesar/random is becoming redonkulous.
-      Base.rm(loaddir, recursive=true)
+      Base.rm(loaddir, recursive=true, force=true)
     end
 
     return dfgLoadInto
