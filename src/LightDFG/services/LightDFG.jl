@@ -210,8 +210,9 @@ function listFactors(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; 
     return factors
 end
 
-function isFullyConnected(dfg::LightDFG)::Bool
-    return length(LightGraphs.connected_components(dfg.g)) == 1
+function isConnected(dfg::LightDFG)::Bool
+    return LightGraphs.is_connected(dfg.g)
+    # return length(LightGraphs.connected_components(dfg.g)) == 1
 end
 
 function _isSolvable(dfg::LightDFG, label::Symbol, ready::Int)::Bool

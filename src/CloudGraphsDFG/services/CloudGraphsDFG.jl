@@ -375,7 +375,7 @@ function listFactors(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=not
     end
 end
 
-function isFullyConnected(dfg::CloudGraphsDFG)::Bool
+function isConnected(dfg::CloudGraphsDFG)::Bool
     # If the total number of nodes == total number of distinct connected nodes, then it is fully connected
     # Total nodes
     varIds = listVariables(dfg)

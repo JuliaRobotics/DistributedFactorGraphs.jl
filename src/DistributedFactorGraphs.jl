@@ -71,7 +71,7 @@ export exists,
        getVariables, getFactors,
        isVariable, isFactor
 
-export isFullyConnected, hasOrphans
+export isConnected
 
 export getBiadjacencyMatrix
 

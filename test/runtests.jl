@@ -169,7 +169,7 @@ struct NotImplementedDFG <: AbstractDFG end
     @test_throws ErrorException deleteFactor!(dfg, :a)
     @test_throws ErrorException getVariables(dfg)
     @test_throws ErrorException getFactors(dfg)
-    @test_throws ErrorException isFullyConnected(dfg)
+    @test_throws ErrorException isConnected(dfg)
     @test_throws ErrorException getNeighbors(dfg, v1)
     @test_throws ErrorException getNeighbors(dfg, :a)
 

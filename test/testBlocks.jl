@@ -1204,21 +1204,19 @@ end
 
 function ConnectivityTest(testDFGAPI; kwargs...)
     dfg, verts, facs = connectivityTestGraph(testDFGAPI; kwargs...)
-    @test isFullyConnected(dfg) == true
-    @test hasOrphans(dfg) == false
+    @test isConnected(dfg) == true
+    @test @test_deprecated isFullyConnected(dfg) == true
+    @test @test_deprecated hasOrphans(dfg) == false
 
     deleteFactor!(dfg, :x9x10f1)
-    @test isFullyConnected(dfg) == false
-    @test hasOrphans(dfg) == true
+    @test isConnected(dfg) == false
 
     deleteVariable!(dfg, :x5)
     if testDFGAPI == GraphsDFG
-        @error "FIXME: isFullyConnected is partially broken for GraphsDFG see #286"
-        @test_broken isFullyConnected(dfg) == false
-        @test_broken hasOrphans(dfg) == true
+        @error "FIXME: isConnected is partially broken for GraphsDFG see #286"
+        @test_broken isConnected(dfg) == false
     else
-        @test isFullyConnected(dfg) == false
-        @test hasOrphans(dfg) == true
+        @test isConnected(dfg) == false
     end
 end
 
@@ -1256,7 +1254,7 @@ function CopyFunctionsTest(testDFGAPI; kwargs...)
     dcdfg_part = deepcopyGraph(LightDFG, dfg, vlbls, flbls)
     @test issetequal(ls(dcdfg_part), vlbls)
     @test issetequal(lsf(dcdfg_part), flbls)
-    @test !isFullyConnected(dcdfg_part)
+    @test !isConnected(dcdfg_part)
     # dfgplot(dcdfg_part)
 
 
