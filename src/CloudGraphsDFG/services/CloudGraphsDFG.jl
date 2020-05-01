@@ -9,7 +9,7 @@ function _getDuplicatedEmptyDFG(dfg::CloudGraphsDFG)::CloudGraphsDFG
     while true #do..while loop
         count += 1
         sessionId = dfg.sessionId*"_$count"
-        length(_getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId):$(dfg.robotId):$(sessionId))")) == 0 && break
+        _getNodeCount(dfg.neo4jInstance, [dfg.userId, dfg.robotId, sessionId]) == 0 && break
     end
     @debug "Unique+empty copy session name: $sessionId"
     return CloudGraphsDFG{typeof(dfg.solverParams)}(
