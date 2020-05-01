@@ -2,6 +2,7 @@ module GraphsDFGs
 
 using Graphs
 using DocStringExtensions
+using UUIDs
 
 using ...DistributedFactorGraphs
 
@@ -43,7 +44,8 @@ import ...DistributedFactorGraphs:  setSolverParams!,
                                     getBiadjacencyMatrix,
                                     _getDuplicatedEmptyDFG,
                                     toDot,
-                                    toDotFile
+                                    toDotFile,
+                                    isValidLabel
 
 # Imports
 include("entities/GraphsDFG.jl")

@@ -2,6 +2,7 @@ module LightDFGs
 
 using LightGraphs
 using DocStringExtensions
+using UUIDs
 
 using ...DistributedFactorGraphs
 
@@ -45,7 +46,8 @@ import ...DistributedFactorGraphs:  setSolverParams!,
                                     getBiadjacencyMatrix,
                                     _getDuplicatedEmptyDFG,
                                     toDot,
-                                    toDotFile
+                                    toDotFile,
+                                    isValidLabel
 
 include("FactorGraphs/FactorGraphs.jl")
 using .FactorGraphs

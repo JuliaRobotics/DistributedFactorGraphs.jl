@@ -33,6 +33,11 @@ function CloudGraphsDFG{T}(neo4jConnection::Neo4j.Connection,
                             decodePackedTypeFunc,
                             rebuildFactorMetadata!;
                             solverParams::T=NoSolverParams()) where T <: AbstractParams
+    # Validate the userId, robotId, and sessionId
+    !isValidLabel(userId) && error("'$userId' is not a valid User ID")
+    !isValidLabel(robotId) && error("'$robotId' is not a valid Robot ID")
+    !isValidLabel(sessionId) && error("'$sessionId' is not a valid Session ID")
+
     graph = Neo4j.getgraph(neo4jConnection)
     neo4jInstance = Neo4jInstance(neo4jConnection, graph)
     return CloudGraphsDFG{T}(neo4jInstance, userId, robotId, sessionId, description, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, rebuildFactorMetadata!, Symbol[], solverParams)
