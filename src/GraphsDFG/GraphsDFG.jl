@@ -44,8 +44,7 @@ import ...DistributedFactorGraphs:  setSolverParams!,
                                     getBiadjacencyMatrix,
                                     _getDuplicatedEmptyDFG,
                                     toDot,
-                                    toDotFile,
-                                    isValidLabel
+                                    toDotFile
 
 # Imports
 include("entities/GraphsDFG.jl")
