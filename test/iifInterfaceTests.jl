@@ -10,33 +10,34 @@ end
 @testset "Building a simple Graph" begin
     global dfg,v1,v2,f1
     # Use IIF to add the variables and factors
-    v1 = addVariable!(dfg, :a, ContinuousScalar, labels = [:POSE])
-    v2 = addVariable!(dfg, :b, ContinuousScalar, labels = [:LANDMARK])
-    f1 = addFactor!(dfg, [:a; :b], LinearConditional(Normal(50.0,2.0)) )
-    # f1 = addFactor!(fg,[:x0], Prior( pd ) )
-    # @test_throws Exception addFactor!(dfg, DFGFactor{Int, :Symbol}("f2"), [v1, DFGVariable("Nope")])
+    v1 = addVariable!(dfg, :a, ContinuousScalar, labels = [:POSE], solvable=0)
+    v2 = addVariable!(dfg, :b, ContinuousScalar, labels = [:LANDMARK], solvable=1)
+    f1 = addFactor!(dfg, [:a; :b], LinearConditional(Normal(50.0,2.0)), solvable=0)
 end
 
 #test before anything changes
 @testset "Producing Dot Files" begin
     global dfg
     todotstr = toDot(dfg)
-    #TODO consider using a regex, but for now test both orders
+    #TODO consider using a regex, but for now test all orders
     todota = todotstr == "graph graphname {\n2 [\"label\"=\"a\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n2 -- 3\n3 [\"label\"=\"abf1\",\"shape\"=\"box\",\"fillcolor\"=\"blue\",\"color\"=\"blue\"]\n1 [\"label\"=\"b\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n1 -- 3\n}\n"
     todotb = todotstr == "graph graphname {\n2 [\"label\"=\"b\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n2 -- 3\n3 [\"label\"=\"abf1\",\"shape\"=\"box\",\"fillcolor\"=\"blue\",\"color\"=\"blue\"]\n1 [\"label\"=\"a\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n1 -- 3\n}\n"
-    @test (todota || todotb)
+    todotc = todotstr == "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box];\na -- abf1\nb -- abf1\n}\n"
+    todotd = todotstr == "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box];\nb -- abf1\na -- abf1\n}\n"
+    @test (todota || todotb || todotc || todotd)
     @test toDotFile(dfg, "something.dot") == nothing
     Base.rm("something.dot")
 end
 
 @testset "Testing CRUD, return and Failures from a GraphsDFG" begin
     global dfg
-    # fg to copy to
+    # dfg to copy to
     # creating a whole new graph with the same labels
     T = typeof(dfg)
     if T <: CloudGraphsDFG
         dfg2 = CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
                                             "testUser", "testRobot", "testSession2",
+                                            "Description of test session 2",
                                             nothing,
                                             nothing,
                                             IncrementalInference.decodePackedType,
@@ -55,15 +56,15 @@ end
     f2 = deepcopy(addFactor!(iiffg, [:b; :c], LinearConditional(Normal(10.0,1.0)) ))
 
     # Add it to the new graph.
-    @test addVariable!(dfg2, v1)
-    @test addVariable!(dfg2, v2)
-    @test_throws ErrorException updateVariable!(dfg2, v3)
-    @test addVariable!(dfg2, v3)
+    @test addVariable!(dfg2, v1) == v1
+    @test addVariable!(dfg2, v2) == v2
+    @test @test_logs (:warn, r"exist") updateVariable!(dfg2, v3) == v3
     @test_throws ErrorException addVariable!(dfg2, v3)
-    @test addFactor!(dfg2, [v1, v2], f1)
+    @test addFactor!(dfg2, [v1, v2], f1) == f1
     @test_throws ErrorException addFactor!(dfg2, [v1, v2], f1)
-    @test_throws ErrorException updateFactor!(dfg2, f2)
-    @test addFactor!(dfg2, [:b, :c], f2)
+    # @test @test_logs (:warn, r"exist") updateFactor!(dfg2, f2) == f2
+    @test updateFactor!(dfg2, f2) == f2
+    @test_throws ErrorException addFactor!(dfg2, [:b, :c], f2)
 
     dv3 = deleteVariable!(dfg2, v3)
     #TODO write compare if we want to compare complete one, for now just label
@@ -71,7 +72,7 @@ end
     @test dv3.label == v3.label
     @test_throws ErrorException deleteVariable!(dfg2, v3)
 
-    @test symdiff(ls(dfg2),[:a,:b]) == []
+    @test issetequal(ls(dfg2),[:a,:b])
     df2 = deleteFactor!(dfg2, f2)
     #TODO write compare if we want to compare complete one, for now just label
     # @test df2 == f2
@@ -86,8 +87,17 @@ end
     global dfg,v1,v2,f1
     @test length(ls(dfg)) == 2
     @test length(lsf(dfg)) == 1 # Unless we add the prior!
-    @test symdiff([:a, :b], getVariableIds(dfg)) == []
-    @test getFactorIds(dfg) == [:abf1] # Unless we add the prior!
+    @test symdiff([:a, :b], listVariables(dfg)) == []
+    @test listFactors(dfg) == [:abf1] # Unless we add the prior!
+    # Additional testing for https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/201
+    @test symdiff([:a, :b], listVariables(dfg, solvable=0)) == []
+    @test listVariables(dfg, solvable=1) == [:b]
+    @test map(v->v.label, getVariables(dfg, solvable=1)) == [:b]
+    @test listFactors(dfg) == [:abf1]
+    @test listFactors(dfg, solvable=1) == []
+    @test listFactors(dfg, solvable=0) == [:abf1]
+    @test map(f->f.label, getFactors(dfg, solvable=0)) == [:abf1]
+    @test map(f->f.label, getFactors(dfg, solvable=1)) == []
     #
     @test lsf(dfg, :a) == [f1.label]
     # Tags
@@ -103,16 +113,53 @@ end
     # Accessors
     @test getAddHistory(dfg) == [:a, :b] #, :abf1
     @test getDescription(dfg) != nothing
-    @test getLabelDict(dfg) != nothing
+    #TODO Deprecate
+    # @test_throws ErrorException getLabelDict(dfg)
     # Existence
     @test exists(dfg, :a) == true
     @test exists(dfg, v1) == true
     @test exists(dfg, :nope) == false
-    # Sorting of results
-    # TODO - this function needs to be cleaned up
-    unsorted = [:x1_3;:x1_6;:l1;:april1] #this will not work for :x1x2f1
-    @test sortDFG(unsorted) == sortVarNested(unsorted)
-    @test_skip sortDFG([:x1x2f1, :x1l1f1]) == [:x1l1f1, :x1x2f1]
+    # isFactor and isVariable
+    @test isFactor(dfg, f1.label)
+    @test !isFactor(dfg, v1.label)
+    @test isVariable(dfg, v1.label)
+    @test !isVariable(dfg, f1.label)
+    @test !isVariable(dfg, :doesntexist)
+    @test !isFactor(dfg, :doesntexist)
+
+    @test issetequal([:a,:b], listVariables(dfg))
+    @test issetequal([:abf1], listFactors(dfg))
+
+    @test @test_deprecated getVariableIds(dfg) == listVariables(dfg)
+    @test @test_deprecated getFactorIds(dfg) == listFactors(dfg)
+
+
+    @test getFactorType(f1.solverData) === f1.solverData.fnc.usrfnc!
+    @test getFactorType(f1) === f1.solverData.fnc.usrfnc!
+    @test getFactorType(dfg, :abf1) === f1.solverData.fnc.usrfnc!
+
+    @test !isPrior(dfg, :abf1) # f1 is not a prior
+    @test lsfPriors(dfg) == []
+    #FIXME don't know what it is supposed to do
+    @test_broken lsfTypes(dfg)
+
+    @test ls(dfg, LinearConditional) == [:abf1]
+    @test lsf(dfg, LinearConditional) == [:abf1]
+    @test lsfWho(dfg, :LinearConditional) == [:abf1]
+
+    @test getVariableType(v1) isa ContinuousScalar
+    @test getVariableType(dfg,:a) isa ContinuousScalar
+
+    #TODO what is lsTypes supposed to return?
+    @test_broken lsTypes(dfg)
+
+    @test issetequal(ls(dfg, ContinuousScalar), [:a, :b])
+
+    @test issetequal(lsWho(dfg, :ContinuousScalar),[:a, :b])
+
+    varNearTs = findVariableNearTimestamp(dfg, now())
+    @test_skip varNearTs[1][1]  == [:b]
+
 end
 
 # Gets
@@ -134,52 +181,51 @@ end
     @test updateFactor!(dfg, f1Prime) == getFactor(dfg, f1.label)
 
     # Accessors
-    @test label(v1) == v1.label
-    @test tags(v1) == v1.tags
-    @test timestamp(v1) == v1.timestamp
-    @test estimates(v1) == v1.estimateDict
-    @test DistributedFactorGraphs.estimate(v1, :notfound) == nothing
-    @test solverData(v1) === v1.solverDataDict[:default]
-    @test getData(v1) === v1.solverDataDict[:default]
-    @test solverData(v1, :default) === v1.solverDataDict[:default]
-    @test solverDataDict(v1) == v1.solverDataDict
-    @test internalId(v1) == v1._internalId
+    @test getLabel(v1) == v1.label
+    @test getTags(v1) == v1.tags
+    @test getTimestamp(v1) == v1.timestamp
+    @test getVariablePPEDict(v1) == v1.ppeDict
+    @test_throws Exception DistributedFactorGraphs.getVariablePPE(v1, :notfound)
+    @test getSolverData(v1) === v1.solverDataDict[:default]
+    @test getSolverData(v1) === v1.solverDataDict[:default]
+    @test getSolverData(v1, :default) === v1.solverDataDict[:default]
+    @test getSolverDataDict(v1) == v1.solverDataDict
+    @test getInternalId(v1) == v1._internalId
+    # legacy compat test
+    @test getVariablePPEDict(v1) == v1.ppeDict # changed to .ppeDict -- delete by DFG v0.7
 
-    @test softtype(v1) == :ContinuousScalar#Symbol(typeof(st1))
-    @test softtype(v2) == :ContinuousScalar#Symbol(typeof(st2))
-    @test typeof(getSofttype(v1)) == typeof(ContinuousScalar())
 
-    @test label(f1) == f1.label
-    @test tags(f1) == f1.tags
-    @test solverData(f1) == f1.data
-    # Deprecated functions
-    @test data(f1) == f1.data
-    @test getData(f1) == f1.data
+    @test typeof(getSofttype(v1)) == ContinuousScalar
+    @test typeof(getSofttype(v2)) == ContinuousScalar
+    @test typeof(getSofttype(v1)) == ContinuousScalar
+
+    @test getLabel(f1) == f1.label
+    @test getTags(f1) == f1.tags
+    @test getSolverData(f1) == f1.solverData
+
     # Internal function
-    @test internalId(f1) == f1._internalId
+    # @test @test_deprecated internalId(f1) == f1._internalId
 
     @test getSolverParams(dfg) != nothing
-    @test setSolverParams(dfg, getSolverParams(dfg)) == getSolverParams(dfg)
+    @test setSolverParams!(dfg, getSolverParams(dfg)) == getSolverParams(dfg)
 
     #solver data is initialized
     @test !isInitialized(dfg, :a)
     @test !isInitialized(v2)
 
-    @test !isInitialized(v2, key=:second)
+    @test !isInitialized(v2, :second)
 
     # Session, robot, and user small data tests
     # NOTE: CloudGraphDFG isnt supporting this yet.
-    if !(typeof(dfg) <: CloudGraphsDFG)
-        smallUserData = Dict{Symbol, String}(:a => "42", :b => "Hello")
-        smallRobotData = Dict{Symbol, String}(:a => "43", :b => "Hello")
-        smallSessionData = Dict{Symbol, String}(:a => "44", :b => "Hello")
-        setUserData(dfg, deepcopy(smallUserData))
-        setRobotData(dfg, deepcopy(smallRobotData))
-        setSessionData(dfg, deepcopy(smallSessionData))
-        @test getUserData(dfg) == smallUserData
-        @test getRobotData(dfg) == smallRobotData
-        @test getSessionData(dfg) == smallSessionData
-    end
+    smallUserData = Dict{Symbol, String}(:a => "42", :b => "Hello")
+    smallRobotData = Dict{Symbol, String}(:a => "43", :b => "Hello")
+    smallSessionData = Dict{Symbol, String}(:a => "44", :b => "Hello")
+    setUserData!(dfg, deepcopy(smallUserData))
+    setRobotData!(dfg, deepcopy(smallRobotData))
+    setSessionData!(dfg, deepcopy(smallSessionData))
+    @test getUserData(dfg) == smallUserData
+    @test getRobotData(dfg) == smallRobotData
+    @test getSessionData(dfg) == smallSessionData
 end
 
 @testset "BigData" begin
@@ -196,35 +242,36 @@ end
 
         #add
         v1 = getVariable(dfg, :a)
-        @test addBigDataEntry!(v1, de1)
-        @test addBigDataEntry!(dfg, :a, de2)
-        @test addBigDataEntry!(v1, de1)
+        @test addBigDataEntry!(v1, de1) == de1
+        @test addBigDataEntry!(dfg, :a, de2) == de2
+        @test_throws ErrorException addBigDataEntry!(v1, de1)
+        @test de2 in getBigDataEntries(v1)
 
         #get
         @test deepcopy(de1) == getBigDataEntry(v1, :key1)
         @test deepcopy(de2) == getBigDataEntry(dfg, :a, :key2)
-        @test_throws Any getBigDataEntry(v2, :key1)
-        @test_throws Any getBigDataEntry(dfg, :b, :key1)
+        @test_throws ErrorException getBigDataEntry(v2, :key1)
+        @test_throws ErrorException getBigDataEntry(dfg, :b, :key1)
 
         #update
-        @test updateBigDataEntry!(dfg, :a, de2_update)
+        @test updateBigDataEntry!(dfg, :a, de2_update) == de2_update
         @test deepcopy(de2_update) == getBigDataEntry(dfg, :a, :key2)
-        @test !updateBigDataEntry!(dfg, :b, de2_update)
+        @test @test_logs (:warn, r"does not exist") updateBigDataEntry!(dfg, :b, de2_update) == de2_update
 
         #list
         entries = getBigDataEntries(dfg, :a)
         @test length(entries) == 2
-        @test symdiff(map(e->e.key, entries), [:key1, :key2]) == Symbol[]
-        @test length(getBigDataEntries(dfg, :b)) == 0
+        @test issetequal(map(e->e.key, entries), [:key1, :key2])
+        @test length(getBigDataEntries(dfg, :b)) == 1
 
-        @test symdiff(getBigDataKeys(dfg, :a), [:key1, :key2]) == Symbol[]
-        @test getBigDataKeys(dfg, :b) == Symbol[]
+        @test issetequal(getBigDataKeys(dfg, :a), [:key1, :key2])
+        @test getBigDataKeys(dfg, :b) == Symbol[:key2]
 
         #delete
-        @test deepcopy(de1) == deleteBigDataEntry!(v1, :key1)
+        @test deleteBigDataEntry!(v1, :key1) == v1
         @test getBigDataKeys(v1) == Symbol[:key2]
-        #delete from dfg
-        @test deepcopy(de2_update) == deleteBigDataEntry!(dfg, :a, :key2)
+        #delete from ddfg
+        @test deleteBigDataEntry!(dfg, :a, :key2) == v1
         @test getBigDataKeys(v1) == Symbol[]
     end
 end
@@ -232,47 +279,46 @@ end
 @testset "Updating Nodes and Estimates" begin
     global dfg
     #get the variable
-    var = getVariable(dfg, :a)
+    var1 = getVariable(dfg, :a)
     #make a copy and simulate external changes
-    newvar = deepcopy(var)
-    estimates(newvar)[:default] = MeanMaxPPE(:default, [100.0], [50.0])
-    #update
-    mergeUpdateVariableSolverData!(dfg, newvar)
+    newvar = deepcopy(var1)
+    getVariablePPEDict(newvar)[:default] = MeanMaxPPE(:default, [150.0], [100.0], [50.0])
+    mergeVariableData!(dfg, newvar)
 
     #Check if variable is updated
-    var = getVariable(dfg, :a)
-    @test estimates(newvar) == estimates(var)
+    var1 = getVariable(dfg, :a)
+    @test getVariablePPEDict(newvar) == getVariablePPEDict(var1)
 
     # Add a new estimate.
-    estimates(newvar)[:second] = MeanMaxPPE(:second, [10.0], [5.0])
+    getVariablePPEDict(newvar)[:second] = MeanMaxPPE(:second, [15.0], [10.0], [5.0])
 
     # Confirm they're different
-    @test estimates(newvar) != estimates(var)
+    @test getVariablePPEDict(newvar) != getVariablePPEDict(var1)
     # Persist it.
-    mergeUpdateVariableSolverData!(dfg, newvar)
+    mergeVariableData!(dfg, newvar)
     # Get the latest
-    var = getVariable(dfg, :a)
-    @test symdiff(collect(keys(estimates(var))), [:default, :second]) == Symbol[]
+    var1 = getVariable(dfg, :a)
+    @test symdiff(collect(keys(getVariablePPEDict(var1))), [:default, :second]) == Symbol[]
 
     #Check if variable is updated
-    @test estimates(newvar) == estimates(var)
+    @test getVariablePPEDict(newvar) == getVariablePPEDict(var1)
 
 
     # Delete :default and replace to see if new ones can be added
-    delete!(estimates(newvar), :default)
+    delete!(getVariablePPEDict(newvar), :default)
     #confirm delete
-    @test symdiff(collect(keys(estimates(newvar))), [:second]) == Symbol[]
-    # Persist it.
-    mergeUpdateVariableSolverData!(dfg, newvar)
+    @test symdiff(collect(keys(getVariablePPEDict(newvar))), [:second]) == Symbol[]
+    # Persist it., and test
+    mergeVariableData!(dfg, newvar)  #357 #358
 
     # Get the latest and confirm they're the same, :second
-    var = getVariable(dfg, :a)
+    var1 = getVariable(dfg, :a)
 
     # TODO issue #166
-    @test estimates(newvar) != estimates(var)
-    @test collect(keys(estimates(var))) ==  [:default, :second]
+    @test getVariablePPEDict(newvar) != getVariablePPEDict(var1)
+    @test collect(keys(getVariablePPEDict(var1))) ==  [:default, :second]
 
-    # @test symdiff(collect(keys(estimates(getVariable(dfg, :a)))), [:default, :second]) == Symbol[]
+    # @test symdiff(collect(keys(getVariablePPE(getVariable(dfg, :a)))), [:default, :second]) == Symbol[]
 end
 
 # Connectivity test
@@ -280,7 +326,7 @@ end
     global dfg,v1,v2,f1
     @test isFullyConnected(dfg) == true
     @test hasOrphans(dfg) == false
-    addVariable!(dfg, :orphan, ContinuousScalar, labels = [:POSE])
+    addVariable!(dfg, :orphan, ContinuousScalar, labels = [:POSE], solvable=0)
     @test isFullyConnected(dfg) == false
     @test hasOrphans(dfg) == true
 end
@@ -288,13 +334,16 @@ end
 # Adjacency matrices
 @testset "Adjacency Matrices" begin
     global dfg,v1,v2,f1
-    # Normal
-    adjMat = getAdjacencyMatrix(dfg)
+
+        # Normal
+    @test_throws ErrorException getAdjacencyMatrix(dfg)
+    adjMat = DistributedFactorGraphs.getAdjacencyMatrixSymbols(dfg)
     @test size(adjMat) == (2,4)
     @test symdiff(adjMat[1, :], [nothing, :a, :b, :orphan]) == Symbol[]
     @test symdiff(adjMat[2, :], [:abf1, :abf1, :abf1, nothing]) == Symbol[]
+
     #sparse
-    adjMat, v_ll, f_ll = getAdjacencyMatrixSparse(dfg)
+    adjMat, v_ll, f_ll = getBiadjacencyMatrix(dfg)
     @test size(adjMat) == (1,3)
 
     # Checking the elements of adjacency, its not sorted so need indexing function
@@ -304,44 +353,52 @@ end
     @test adjMat[1, indexOf(v_ll, :b)] == 1
     @test symdiff(v_ll, [:a, :b, :orphan]) == Symbol[]
     @test symdiff(f_ll, [:abf1, :abf1, :abf1]) == Symbol[]
+
+    # Filtered - REF DFG #201
+    adjMat, v_ll, f_ll = getBiadjacencyMatrix(dfg, solvable=1)
+    @test size(adjMat) == (0,1)
+
+    # sparse
+    adjMat, v_ll, f_ll = getBiadjacencyMatrix(dfg, solvable=1)
+    @test size(adjMat) == (0,1)
+    @test issetequal(v_ll, [:b])
+    @test f_ll == []
 end
 
 # Deletions
 @testset "Deletions" begin
     deleteFactor!(dfg, :abf1)
-    @test getFactorIds(dfg) == []
+    @test listFactors(dfg) == []
     deleteVariable!(dfg, :b)
-    @test symdiff([:a, :orphan], getVariableIds(dfg)) == []
+    @test symdiff([:a, :orphan], listVariables(dfg)) == []
     #delete last also for the LightGraphs implementation coverage
     deleteVariable!(dfg, :orphan)
-    @test symdiff([:a], getVariableIds(dfg)) == []
+    @test symdiff([:a], listVariables(dfg)) == []
     deleteVariable!(dfg, :a)
-    @test getVariableIds(dfg) == []
+    @test listVariables(dfg) == []
 end
 
 
 # Now make a complex graph for connectivity tests
 numNodes = 10
-#the deletions in last test should have cleared out the fg
+#the deletions in last test should have cleared out the dfg
 # dfg = DistributedFactorGraphs._getDuplicatedEmptyDFG(dfg)
 # if typeof(dfg) <: CloudGraphsDFG
 #     clearSession!!(dfg)
 # end
 
-#change ready and backendset for x7,x8 for improved tests on x7x8f1
+#change solvable and solveInProgress for x7,x8 for improved tests on x7x8f1
 verts = map(n -> addVariable!(dfg, Symbol("x$n"), ContinuousScalar, labels = [:POSE]), 1:numNodes)
 #TODO fix this to use accessors
-verts[7].ready = 1
-# verts[7].backendset = 0
-verts[8].ready = 0
-verts[8].backendset = 1
+setSolvable!(verts[7], 1)
+setSolvable!(verts[8], 0)
+getSolverData(verts[8]).solveInProgress = 1
 #call update to set it on cloud
 updateVariable!(dfg, verts[7])
 updateVariable!(dfg, verts[8])
 
-facts = map(n -> addFactor!(dfg, [verts[n], verts[n+1]], LinearConditional(Normal(50.0,2.0))), 1:(numNodes-1))
-
-
+facts = map(n ->
+    addFactor!(dfg, [verts[n], verts[n+1]], LinearConditional(Normal(50.0,2.0)),solvable=0), 1:(numNodes-1))
 
 @testset "Getting Neighbors" begin
     global dfg,verts
@@ -355,20 +412,16 @@ facts = map(n -> addFactor!(dfg, [verts[n], verts[n+1]], LinearConditional(Norma
     @test getNeighbors(dfg, getFactor(dfg, :x1x2f1)) == ls(dfg, getFactor(dfg, :x1x2f1))
     @test getNeighbors(dfg, :x1x2f1) == ls(dfg, :x1x2f1)
 
-    # ready and backendset
-    @test getNeighbors(dfg, :x5, ready=1) == Symbol[]
+    # solvable checks
+    @test getNeighbors(dfg, :x5, solvable=1) == Symbol[]
     #TODO Confirm: test failed on GraphsDFG, don't know if the order is important for isa variable.
-    @test symdiff(getNeighbors(dfg, :x5, ready=0), [:x4x5f1,:x5x6f1]) == []
-    @test getNeighbors(dfg, :x5, backendset=1) == Symbol[]
-    @test symdiff(getNeighbors(dfg, :x5, backendset=0),[:x4x5f1,:x5x6f1]) == []
-    @test getNeighbors(dfg, :x7x8f1, ready=0) == [:x8]
-    @test getNeighbors(dfg, :x7x8f1, backendset=0) == [:x7]
-    @test getNeighbors(dfg, :x7x8f1, ready=1) == [:x7]
-    @test getNeighbors(dfg, :x7x8f1, backendset=1) == [:x8]
-    @test getNeighbors(dfg, verts[1], ready=0) == [:x1x2f1]
-    @test getNeighbors(dfg, verts[1], ready=1) == Symbol[]
-    @test getNeighbors(dfg, verts[1], backendset=0) == [:x1x2f1]
-    @test getNeighbors(dfg, verts[1], backendset=1) == Symbol[]
+    @test symdiff(getNeighbors(dfg, :x5, solvable=0), [:x4x5f1,:x5x6f1]) == []
+    @test symdiff(getNeighbors(dfg, :x5),[:x4x5f1,:x5x6f1]) == []
+    @test getNeighbors(dfg, :x7x8f1, solvable=0) == [:x7, :x8]
+    @test getNeighbors(dfg, :x7x8f1, solvable=1) == [:x7]
+    @test getNeighbors(dfg, verts[1], solvable=0) == [:x1x2f1]
+    @test getNeighbors(dfg, verts[1], solvable=1) == Symbol[]
+    @test getNeighbors(dfg, verts[1]) == [:x1x2f1]
 
 end
 
@@ -378,19 +431,28 @@ end
     # Only returns x1 and x2
     @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
     # Test include orphan factorsVoid
-    dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 1, true)
-    @test symdiff([:x1, :x1x2f1], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
-    # Test adding to the dfg
-    dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2, true, dfgSubgraph)
-    @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
-    #
+    @test_broken begin
+        dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 1, true)
+        @test symdiff([:x1, :x1x2f1], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+        # Test adding to the dfg
+        dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2, true, dfgSubgraph)
+        @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+    end
     dfgSubgraph = getSubgraph(dfg,[:x1, :x2, :x1x2f1])
     # Only returns x1 and x2
     @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
 
+    @test_broken begin
+        # DFG issue #201 Test include orphan factors with filtering - should only return x7 with solvable=1
+        dfgSubgraph = getSubgraphAroundNode(dfg, getFactor(dfg, :x7x8f1), 1, true, solvable=0)
+        @test symdiff([:x7, :x8, :x7x8f1], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+        # Filter - always returns the node you start at but filters around that.
+        dfgSubgraph = getSubgraphAroundNode(dfg, getFactor(dfg, :x7x8f1), 1, true, solvable=1)
+        @test symdiff([:x7x8f1, :x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+    end
     # DFG issue #95 - confirming that getSubgraphAroundNode retains order
     # REF: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/95
-    for fId in getVariableIds(dfg)
+    for fId in listVariables(dfg)
         # Get a subgraph of this and it's related factors+variables
         dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
         # For each factor check that the order the copied graph == original
@@ -415,15 +477,17 @@ end
     for v in ls(summaryGraph)
         for field in variableFields
             if field != :softtypename
-            @test getfield(getVariable(dfg, v), field) == getfield(getVariable(summaryGraph, v), field)
+                @test getproperty(getVariable(dfg, v), field) == getfield(getVariable(summaryGraph, v), field)
             else
-                @test softtype(getVariable(dfg, v)) == softtype(getVariable(summaryGraph, v))
+                # Special case to check the symbol softtype is equal to the full softtype.
+                @test Symbol(typeof(getSofttype(getVariable(dfg, v)))) == getSofttypename(getVariable(summaryGraph, v))
+            end
         end
-    end
     end
     for f in lsf(summaryGraph)
         for field in factorFields
-            @test getfield(getFactor(dfg, f), field) == getfield(getFactor(summaryGraph, f), field)
+            @test getproperty(getFactor(dfg, f), field) == getfield(getFactor(summaryGraph, f), field)
         end
     end
+
 end

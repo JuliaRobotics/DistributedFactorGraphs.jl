@@ -4,6 +4,7 @@ using MetaGraphs
 # Imports
 include("entities/MetaGraphsDFG.jl")
 include("services/MetaGraphsDFG.jl")
+include("DFGPlots.jl")
 
 # Exports
 # Deprecated -
@@ -17,7 +18,7 @@ export ls, lsf, getVariables, getFactors, getVariableIds, getFactorIds
 export getVariable, getFactor
 export updateVariable!, updateFactor!
 export deleteVariable!, deleteFactor!
-export getAdjacencyMatrix, getAdjacencyMatrixSparse
+export getIncidenceMatrix, getIncidenceMatrixSparse
 export getNeighbors
 export getSubgraphAroundNode
 export getSubgraph

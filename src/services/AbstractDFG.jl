@@ -1,133 +1,194 @@
-## ===== Interface for an AbstractDFG =====
+##==============================================================================
+## Interface for an AbstractDFG
+##==============================================================================
+# Standard recommended fields to implement for AbstractDFG
+# - `description::String`
+# - `userId::String`
+# - `robotId::String`
+# - `sessionId::String`
+# - `userData::Dict{Symbol, String}`
+# - `robotData::Dict{Symbol, String}`
+# - `sessionData::Dict{Symbol, String}`
+# - `solverParams::T<:AbstractParams`
+# - `addHistory::Vector{Symbol}`
+# AbstractDFG Accessors
+
+##------------------------------------------------------------------------------
+## Getters
+##------------------------------------------------------------------------------
+"""
+    $(SIGNATURES)
+Convenience function to get all the metadata of a DFG
+"""
+getDFGInfo(dfg::AbstractDFG) = (getDescription(dfg), getUserId(dfg), getRobotId(dfg), getSessionId(dfg), getUserData(dfg), getRobotData(dfg), getSessionData(dfg), getSolverParams(dfg))
 
 """
     $(SIGNATURES)
-
-De-serialization of IncrementalInference objects require discovery of foreign types.
-
-Example:
-
-Template to tunnel types from a user module:
-```julia
-# or more generic solution -- will always try Main if available
-IIF.setSerializationNamespace!(Main)
-
-# or a specific package such as RoME if you import all variable and factor types into a specific module.
-using RoME
-IIF.setSerializationNamespace!(RoME)
-```
 """
-function setSerializationModule!(dfg::G, mod::Module)::Nothing where G <: AbstractDFG
-    @warn "Setting serialization module from AbstractDFG - override this in the '$(typeof(dfg)) structure! This is being ignored."
+getDescription(dfg::AbstractDFG) = dfg.description
+
+"""
+    $(SIGNATURES)
+"""
+getUserId(dfg::AbstractDFG) = dfg.userId
+
+"""
+    $(SIGNATURES)
+"""
+getRobotId(dfg::AbstractDFG) = dfg.robotId
+
+"""
+    $(SIGNATURES)
+"""
+getSessionId(dfg::AbstractDFG) = dfg.sessionId
+
+"""
+    $(SIGNATURES)
+"""
+getAddHistory(dfg::AbstractDFG) = dfg.addHistory
+
+"""
+    $(SIGNATURES)
+"""
+getSolverParams(dfg::AbstractDFG) = dfg.solverParams
+
+##------------------------------------------------------------------------------
+## Setters
+##------------------------------------------------------------------------------
+
+"""
+    $(SIGNATURES)
+"""
+setDescription!(dfg::AbstractDFG, description::String) = dfg.description = description
+
+"""
+    $(SIGNATURES)
+"""
+setUserId!(dfg::AbstractDFG, userId::String) = dfg.userId = userId
+
+"""
+    $(SIGNATURES)
+"""
+setRobotId!(dfg::AbstractDFG, robotId::String) = dfg.robotId = robotId
+
+"""
+    $(SIGNATURES)
+"""
+setSessionId!(dfg::AbstractDFG, sessionId::String) = dfg.sessionId = sessionId
+
+"""
+    $(SIGNATURES)
+"""
+#NOTE a MethodError will be thrown if solverParams type does not mach the one in dfg
+# TODO Is it ok or do we want any abstract solver paramters
+setSolverParams!(dfg::AbstractDFG, solverParams::AbstractParams) = dfg.solverParams = solverParams
+
+# Accessors and CRUD for user/robot/session Data
+"""
+$SIGNATURES
+
+Get the user data associated with the graph.
+"""
+getUserData(dfg::AbstractDFG)::Union{Nothing, Dict{Symbol, String}} = return dfg.userData
+
+"""
+$SIGNATURES
+
+Set the user data associated with the graph.
+"""
+function setUserData!(dfg::AbstractDFG, data::Dict{Symbol, String})::Union{Nothing, Dict{Symbol, String}}
+    dfg.userData = data #TODO keep memory? use clear and then add
+    return dfg.userData
 end
 
-function getSerializationModule(dfg::G)::Module where G <: AbstractDFG
-    @warn "Retrieving serialization module from AbstractDFG - override this in the '$(typeof(dfg)) structure! This is returning Main"
-    return Main
+"""
+$SIGNATURES
+
+Get the robot data associated with the graph.
+"""
+getRobotData(dfg::AbstractDFG)::Union{Nothing, Dict{Symbol, String}} = return dfg.robotData
+
+"""
+$SIGNATURES
+
+Set the robot data associated with the graph.
+"""
+function setRobotData!(dfg::AbstractDFG, data::Dict{Symbol, String})::Union{Nothing, Dict{Symbol, String}}
+    dfg.robotData = data
+    return dfg.robotData
 end
 
-# Accessors
-function getLabelDict(dfg::G) where G <: AbstractDFG
-	error("getLabelDict not implemented for $(typeof(dfg))")
-end
-function getDescription(dfg::G) where G <: AbstractDFG
-	error("getDescription not implemented for $(typeof(dfg))")
-end
-function setDescription(dfg::G, description::String) where G <: AbstractDFG
-	error("setDescription not implemented for $(typeof(dfg))")
-end
-function getAddHistory(dfg::G) where G <: AbstractDFG
-	error("getAddHistory not implemented for $(typeof(dfg))")
-end
-function getSolverParams(dfg::G) where G <: AbstractDFG
-	error("getSolverParams not implemented for $(typeof(dfg))")
-end
-function setSolverParams(dfg::G, solverParams::T) where {G <: AbstractDFG, T <: AbstractParams}
-	error("setSolverParams not implemented for $(typeof(dfg))")
-end
+"""
+$SIGNATURES
 
-# Get user, robot, and session "small" data.
-# function getUserData(dfg::G)::Dict{Symbol, String} where {G <: AbstractDFG}
-# 	error("getUserData not implemented for $(typeof(dfg))")
-# end
-# function setUserData(dfg::G, data::Dict{Symbol, String})::Bool where {G <: AbstractDFG}
-# 	error("setUserData not implemented for $(typeof(dfg))")
-# end
-# function getRobotData(dfg::G)::Dict{Symbol, String} where {G <: AbstractDFG}
-# 	error("getRobotData not implemented for $(typeof(dfg))")
-# end
-# function setRobotData(dfg::G, data::Dict{Symbol, String})::Bool where {G <: AbstractDFG}
-# 	error("setRobotData not implemented for $(typeof(dfg))")
-# end
-# function getSessionData(dfg::G)::Dict{Symbol, String} where {G <: AbstractDFG}
-# 	error("getSessionData not implemented for $(typeof(dfg))")
-# end
-# function setSessionData(dfg::G, data::Dict{Symbol, String})::Bool where {G <: AbstractDFG}
-# 	error("setSessionData not implemented for $(typeof(dfg))")
-# end
-
-getUserData(dfg::AbstractDFG)::Dict{Symbol, String} = return dfg.userData
-function setUserData(dfg::AbstractDFG, data::Dict{Symbol, String})::Bool
-	dfg.userData = data
-	return true
-end
-getRobotData(dfg::AbstractDFG)::Dict{Symbol, String} = return dfg.robotData
-function setRobotData(dfg::AbstractDFG, data::Dict{Symbol, String})::Bool
-	dfg.robotData = data
-	return true
-end
+Get the session data associated with the graph.
+"""
 getSessionData(dfg::AbstractDFG)::Dict{Symbol, String} = return dfg.sessionData
-function setSessionData(dfg::AbstractDFG, data::Dict{Symbol, String})::Bool
-	dfg.sessionData = data
-	return true
+
+"""
+$SIGNATURES
+
+Set the session data associated with the graph.
+"""
+function setSessionData!(dfg::AbstractDFG, data::Dict{Symbol, String})::Union{Nothing, Dict{Symbol, String}}
+    dfg.sessionData = data
+    return dfg.sessionData
 end
 
-pushUserData!(dfg::AbstractDFG, pair::Pair{Symbol,String}) = push!(dfg.userData, pair)
-pushRobotData!(dfg::AbstractDFG, pair::Pair{Symbol,String}) = push!(dfg.userData, pair)
-pushSessionData!(dfg::AbstractDFG, pair::Pair{Symbol,String}) = push!(dfg.userData, pair)
+##==============================================================================
+## User/Robot/Session Data CRUD
+##==============================================================================
 
-popUserData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.userData, key)
-popRobotData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.userData, key)
-popSessionData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.userData, key)
+#NOTE with API standardization this should become something like:
+# JT, I however do not feel we should force it, as I prever dot notation
+getUserData(dfg::AbstractDFG, key::Symbol)::String = dfg.userData[key]
+getRobotData(dfg::AbstractDFG, key::Symbol)::String = dfg.robotData[key]
+getSessionData(dfg::AbstractDFG, key::Symbol)::String = dfg.sessionData[key]
 
+updateUserData!(dfg::AbstractDFG, pair::Pair{Symbol,String}) = push!(dfg.userData, pair)
+updateRobotData!(dfg::AbstractDFG, pair::Pair{Symbol,String}) = push!(dfg.robotData, pair)
+updateSessionData!(dfg::AbstractDFG, pair::Pair{Symbol,String}) = push!(dfg.sessionData, pair)
+
+deleteUserData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.userData, key)
+deleteRobotData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.robotData, key)
+deleteSessionData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.sessionData, key)
+
+emptyUserData!(dfg::AbstractDFG) = empty!(dfg.userData)
+emptyRobotData!(dfg::AbstractDFG) = empty!(dfg.robotData)
+emptySessionData!(dfg::AbstractDFG) = empty!(dfg.sessionData)
+
+#TODO add__Data!?
+
+
+
+##==============================================================================
+## CRUD Interfaces
+##==============================================================================
+##------------------------------------------------------------------------------
+## Variable And Factor CRUD
+##------------------------------------------------------------------------------
 """
     $(SIGNATURES)
 True if the variable or factor exists in the graph.
 """
 function exists(dfg::G, node::N) where {G <: AbstractDFG, N <: DFGNode}
-	error("exists not implemented for $(typeof(dfg))")
+    error("exists not implemented for $(typeof(dfg))")
 end
 
 """
     $(SIGNATURES)
 Add a DFGVariable to a DFG.
 """
-function addVariable!(dfg::G, variable::V)::Bool where {G <: AbstractDFG, V <: AbstractDFGVariable}
-	error("addVariable! not implemented for $(typeof(dfg))")
+function addVariable!(dfg::G, variable::V)::AbstractDFGVariable where {G <: AbstractDFG, V <: AbstractDFGVariable}
+    error("addVariable! not implemented for $(typeof(dfg))")
 end
 
 """
-    $(SIGNATURES)
 Add a DFGFactor to a DFG.
-"""
-function addFactor!(dfg::G, variables::Vector{V}, factor::F)::Bool where {G <: AbstractDFG, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
-	error("addFactor! not implemented for $(typeof(dfg))")
-end
-
-"""
     $(SIGNATURES)
-Add a DFGFactor to a DFG.
 """
-function addFactor!(dfg::G, variableIds::Vector{Symbol}, factor::F)::Bool where {G <: AbstractDFG, F <: AbstractDFGFactor}
-	error("addFactor! not implemented for $(typeof(dfg))")
-end
-
-"""
-    $(SIGNATURES)
-Get a DFGVariable from a DFG using its underlying integer ID.
-"""
-function getVariable(dfg::G, variableId::Int64)::AbstractDFGVariable where G <: AbstractDFG
-	error("getVariable not implemented for $(typeof(dfg))")
+function addFactor!(dfg::AbstractDFG, factor::F)::F where F <: AbstractDFGFactor
+    error("addFactor! not implemented for $(typeof(dfg))(dfg, factor)")
 end
 
 """
@@ -135,15 +196,7 @@ end
 Get a DFGVariable from a DFG using its label.
 """
 function getVariable(dfg::G, label::Union{Symbol, String})::AbstractDFGVariable where G <: AbstractDFG
-	return getVariable(dfg, Symbol(label))
-end
-
-"""
-    $(SIGNATURES)
-Get a DFGFactor from a DFG using its underlying integer ID.
-"""
-function getFactor(dfg::G, factorId::Int64)::AbstractDFGFactor where G <: AbstractDFG
-	error("getFactor not implemented for $(typeof(dfg))")
+    error("getVariable not implemented for $(typeof(dfg))")
 end
 
 """
@@ -151,15 +204,14 @@ end
 Get a DFGFactor from a DFG using its label.
 """
 function getFactor(dfg::G, label::Union{Symbol, String})::AbstractDFGFactor where G <: AbstractDFG
-	return getFactor(dfg, Symbol(label))
+    error("getFactor not implemented for $(typeof(dfg))")
 end
-
 """
     $(SIGNATURES)
 Update a complete DFGVariable in the DFG.
 """
 function updateVariable!(dfg::G, variable::V)::AbstractDFGVariable where {G <: AbstractDFG, V <: AbstractDFGVariable}
-	error("updateVariable! not implemented for $(typeof(dfg))")
+    error("updateVariable! not implemented for $(typeof(dfg))")
 end
 
 """
@@ -167,7 +219,7 @@ end
 Update a complete DFGFactor in the DFG.
 """
 function updateFactor!(dfg::G, factor::F)::AbstractDFGFactor where {G <: AbstractDFG, F <: AbstractDFGFactor}
-	error("updateFactor! not implemented for $(typeof(dfg))")
+    error("updateFactor! not implemented for $(typeof(dfg))")
 end
 
 """
@@ -175,72 +227,24 @@ end
 Delete a DFGVariable from the DFG using its label.
 """
 function deleteVariable!(dfg::G, label::Symbol)::AbstractDFGVariable where G <: AbstractDFG
-	error("deleteVariable! not implemented for $(typeof(dfg))")
+    error("deleteVariable! not implemented for $(typeof(dfg))")
 end
-
-#Alias
-"""
-    $(SIGNATURES)
-Delete a referenced DFGVariable from the DFG.
-"""
-function deleteVariable!(dfg::G, variable::V)::AbstractDFGVariable where {G <: AbstractDFG, V <: AbstractDFGVariable}
-	return deleteVariable!(dfg, variable.label)
-end
-
 """
     $(SIGNATURES)
 Delete a DFGFactor from the DFG using its label.
 """
 function deleteFactor!(dfg::G, label::Symbol)::AbstractDFGFactor where G <: AbstractDFG
-	error("deleteFactors not implemented for $(typeof(dfg))")
-end
-
-# Alias
-"""
-    $(SIGNATURES)
-Delete the referened DFGFactor from the DFG.
-"""
-function deleteFactor!(dfg::G, factor::F)::AbstractDFGFactor where {G <: AbstractDFG, F <: AbstractDFGFactor}
-	return deleteFactor!(dfg, factor.label)
+    error("deleteFactors not implemented for $(typeof(dfg))")
 end
 
 """
     $(SIGNATURES)
 List the DFGVariables in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the variables.
+Tags is a list of any tags that a node must have (at least one match).
 """
-function getVariables(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{AbstractDFGVariable} where G <: AbstractDFG
-	error("getVariables not implemented for $(typeof(dfg))")
-end
-
-"""
-    $(SIGNATURES)
-Get a list of IDs of the DFGVariables in the DFG.
-Optionally specify a label regular expression to retrieves a subset of the variables.
-
-Example
-```julia
-getVariableIds(dfg, r"l", tags=[:APRILTAG;])
-```
-
-Related
-
-ls
-"""
-function getVariableIds(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{Symbol} where G <: AbstractDFG
-  vars = getVariables(dfg, regexFilter, tags=tags)
-  # mask = map(v -> length(intersect(v.tags, tags)) > 0, vars )
-  return map(v -> v.label, vars)
-end
-
-# Alias
-"""
-    $(SIGNATURES)
-List the DFGVariables in the DFG.
-Optionally specify a label regular expression to retrieves a subset of the variables.
-"""
-function ls(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[])::Vector{Symbol} where G <: AbstractDFG
-	return getVariableIds(dfg, regexFilter, tags=tags)
+function getVariables(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{AbstractDFGVariable} where G <: AbstractDFG
+    error("getVariables not implemented for $(typeof(dfg))")
 end
 
 """
@@ -248,145 +252,581 @@ end
 List the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
-function getFactors(dfg::G, regexFilter::Union{Nothing, Regex}=nothing)::Vector{AbstractDFGFactor} where G <: AbstractDFG
-	error("getFactors not implemented for $(typeof(dfg))")
+function getFactors(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{AbstractDFGFactor} where G <: AbstractDFG
+    error("getFactors not implemented for $(typeof(dfg))")
+end
+
+
+
+##------------------------------------------------------------------------------
+## Checking Types
+##------------------------------------------------------------------------------
+
+"""
+    $SIGNATURES
+
+Return whether `sym::Symbol` represents a variable vertex in the graph DFG.
+Checks whether it both exists in the graph and is a variable.
+(If you rather want a quick for type, just do node isa DFGVariable)
+"""
+function isVariable(dfg::G, sym::Symbol) where G <: AbstractDFG
+    error("isVariable not implemented for $(typeof(dfg))")
 end
 
 """
-    $(SIGNATURES)
-Get a list of the IDs of the DFGFactors in the DFG.
-Optionally specify a label regular expression to retrieves a subset of the factors.
+    $SIGNATURES
+
+Return whether `sym::Symbol` represents a factor vertex in the graph DFG.
+Checks whether it both exists in the graph and is a factor.
+(If you rather want a quicker for type, just do node isa DFGFactor)
 """
-function getFactorIds(dfg::G, regexFilter::Union{Nothing, Regex}=nothing)::Vector{Symbol} where G <: AbstractDFG
-	return map(f -> f.label, getFactors(dfg, regexFilter))
+function isFactor(dfg::G, sym::Symbol) where G <: AbstractDFG
+    error("isFactor not implemented for $(typeof(dfg))")
 end
 
-"""
-    $(SIGNATURES)
-List the DFGFactors in the DFG.
-Optionally specify a label regular expression to retrieves a subset of the factors.
-"""
-# Alias
-function lsf(dfg::G, regexFilter::Union{Nothing, Regex}=nothing)::Vector{Symbol} where G <: AbstractDFG
-	return getFactorIds(dfg, regexFilter)
-end
 
-"""
-	$(SIGNATURES)
-Alias for getNeighbors - returns neighbors around a given node label.
-"""
-function lsf(dfg::G, label::Symbol)::Vector{Symbol} where G <: AbstractDFG
-  return getNeighbors(dfg, label)
-end
-
+##------------------------------------------------------------------------------
+## Neighbors
+##------------------------------------------------------------------------------
 """
     $(SIGNATURES)
 Checks if the graph is fully connected, returns true if so.
 """
-function isFullyConnected(dfg::G)::Bool where G <: AbstractDFG
-	error("isFullyConnected not implemented for $(typeof(dfg))")
+function isFullyConnected(dfg::AbstractDFG)::Bool
+    error("isFullyConnected not implemented for $(typeof(dfg))")
 end
 
-#Alias
-"""
-    $(SIGNATURES)
-Checks if the graph is not fully connected, returns true if it is not contiguous.
-"""
-function hasOrphans(dfg::G)::Bool where G <: AbstractDFG
-	return !isFullyConnected(dfg)
-end
-
-"""
-    $(SIGNATURES)
-Retrieve a list of labels of the immediate neighbors around a given variable or factor.
-"""
-function getNeighbors(dfg::G, node::T; ready::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol}  where {G <: AbstractDFG, T <: DFGNode}
-	error("getNeighbors not implemented for $(typeof(dfg))")
-end
 """
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
 """
-function getNeighbors(dfg::G, label::Symbol; ready::Union{Nothing, Int}=nothing, backendset::Union{Nothing, Int}=nothing)::Vector{Symbol} where G <: AbstractDFG
-	error("getNeighbors not implemented for $(typeof(dfg))")
+function getNeighbors(dfg::AbstractDFG, label::Symbol; solvable::Int=0)::Vector{Symbol}
+    error("getNeighbors not implemented for $(typeof(dfg))")
 end
 
-# Aliases
-"""
-    $(SIGNATURES)
-Retrieve a list of labels of the immediate neighbors around a given variable or factor.
-"""
-function ls(dfg::G, node::T)::Vector{Symbol} where {G <: AbstractDFG, T <: DFGNode}
-    return getNeighbors(dfg, node)
-end
-"""
-    $(SIGNATURES)
-Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
-"""
-function ls(dfg::G, label::Symbol)::Vector{Symbol} where G <: AbstractDFG
-    return getNeighbors(dfg, label)
-end
 
+##------------------------------------------------------------------------------
+## copy and duplication
+##------------------------------------------------------------------------------
+
+#TODO use copy functions currently in attic
 """
     $(SIGNATURES)
 Gets an empty and unique CloudGraphsDFG derived from an existing DFG.
 """
 function _getDuplicatedEmptyDFG(dfg::G)::G where G <: AbstractDFG
-	error("_getDuplicatedEmptyDFG not implemented for $(typeof(dfg))")
+    error("_getDuplicatedEmptyDFG not implemented for $(typeof(dfg))")
 end
 
-# TODO: NEED TO FIGURE OUT SIGNATURE FOR DEFAULT ARGS
+
+##------------------------------------------------------------------------------
+## CRUD Aliases
+##------------------------------------------------------------------------------
+
+# TODO: Confirm we can remove this.
+# """
+#     $(SIGNATURES)
+# Get a DFGVariable from a DFG using its underlying integer ID.
+# """
+# function getVariable(dfg::G, variableId::Int64)::AbstractDFGVariable where G <: AbstractDFG
+#     error("getVariable not implemented for $(typeof(dfg))")
+# end
+# TODO: Confirm we can remove this.
+# """
+#     $(SIGNATURES)
+# Get a DFGFactor from a DFG using its underlying integer ID.
+# """
+# function getFactor(dfg::G, factorId::Int64)::AbstractDFGFactor where G <: AbstractDFG
+#     error("getFactor not implemented for $(typeof(dfg))")
+# end
 
 """
     $(SIGNATURES)
-Retrieve a deep subgraph copy around a given variable or factor.
-Optionally provide a distance to specify the number of edges should be followed.
-Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
-Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
+Get a DFGVariable with a specific solver key.
+In memory types still return a reference, other types returns a variable with only solveKey.
 """
-function getSubgraphAroundNode(dfg::G, node::T, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::H=_getDuplicatedEmptyDFG(dfg))::G where {G <: AbstractDFG, H <: AbstractDFG, P <: AbstractParams, T <: DFGNode}
-	error("getSubgraphAroundNode not implemented for $(typeof(dfg))")
-end
+function getVariable(dfg::AbstractDFG, label::Symbol, solveKey::Symbol)::AbstractDFGVariable
 
-"""
-    $(SIGNATURES)
-Get a deep subgraph copy from the DFG given a list of variables and factors.
-Optionally provide an existing subgraph addToDFG, the extracted nodes will be copied into this graph. By default a new subgraph will be created.
-Note: By default orphaned factors (where the subgraph does not contain all the related variables) are not returned. Set includeOrphanFactors to return the orphans irrespective of whether the subgraph contains all the variables.
-"""
-function getSubgraph(dfg::G,
-					 variableFactorLabels::Vector{Symbol},
-					 includeOrphanFactors::Bool=false,
-					 addToDFG::H=_getDuplicatedEmptyDFG(dfg))::H where {G <: AbstractDFG, H <: AbstractDFG}
-    for label in variableFactorLabels
-        if !exists(dfg, label)
-            error("Variable/factor with label '$(label)' does not exist in the factor graph")
-        end
+    var = getVariable(dfg, label)
+
+    if isa(var, DFGVariable) && !haskey(var.solverDataDict, solveKey)
+        error("Solvekey '$solveKey' does not exists in the variable")
+    elseif !isa(var, DFGVariable)
+        @warn "getVariable(dfg, label, solveKey) only supported for type DFGVariable."
     end
 
-    _copyIntoGraph!(dfg, addToDFG, variableFactorLabels, includeOrphanFactors)
-    return addToDFG
+    return var
 end
+
+
+"""
+$(SIGNATURES)
+"""
+function addFactor!(dfg::AbstractDFG, variables::Vector{<:AbstractDFGVariable}, factor::F)::F where  F <: AbstractDFGFactor
+
+        variableLabels = map(v->v.label, variables)
+
+        resize!(factor._variableOrderSymbols, length(variableLabels))
+        factor._variableOrderSymbols .= variableLabels
+
+        return addFactor!(dfg, factor)
+
+end
+
+"""
+$(SIGNATURES)
+"""
+function addFactor!(dfg::AbstractDFG, variableLabels::Vector{Symbol}, factor::F)::AbstractDFGFactor where F <: AbstractDFGFactor
+
+    resize!(factor._variableOrderSymbols, length(variableLabels))
+    factor._variableOrderSymbols .= variableLabels
+
+    return addFactor!(dfg, factor)
+end
+
+
+"""
+    $(SIGNATURES)
+Delete a referenced DFGVariable from the DFG.
+"""
+function deleteVariable!(dfg::G, variable::V)::AbstractDFGVariable where {G <: AbstractDFG, V <: AbstractDFGVariable}
+    return deleteVariable!(dfg, variable.label)
+end
+
+"""
+    $(SIGNATURES)
+Delete the referened DFGFactor from the DFG.
+"""
+function deleteFactor!(dfg::G, factor::F)::AbstractDFGFactor where {G <: AbstractDFG, F <: AbstractDFGFactor}
+    return deleteFactor!(dfg, factor.label)
+end
+
+# Alias - bit ridiculous but know it'll come up at some point. Does existential and type check.
+function isVariable(dfg::G, node::N)::Bool where {G <: AbstractDFG, N <: DFGNode}
+    return isVariable(dfg, node.label)
+end
+# Alias - bit ridiculous but know it'll come up at some point. Does existential and type check.
+function isFactor(dfg::G, node::N)::Bool where {G <: AbstractDFG, N <: DFGNode}
+    return isFactor(dfg, node.label)
+end
+
+##------------------------------------------------------------------------------
+## Connectivity Alias
+##------------------------------------------------------------------------------
+
+function getNeighbors(dfg::AbstractDFG, node::DFGNode; solvable::Int=0)::Vector{Symbol}
+    getNeighbors(dfg, node.label, solvable=solvable)
+end
+
+#Alias
+#TODO rather actually check if there are orphaned factors (factors without all variables)
+"""
+    $(SIGNATURES)
+Checks if the graph is not fully connected, returns true if it is not contiguous.
+"""
+function hasOrphans(dfg::G)::Bool where G <: AbstractDFG
+    return !isFullyConnected(dfg)
+end
+
+##==============================================================================
+## Listing and listing aliases
+##==============================================================================
+
+##------------------------------------------------------------------------------
+## Overwrite in driver for performance
+##------------------------------------------------------------------------------
+"""
+    $(SIGNATURES)
+Get a list of IDs of the DFGVariables in the DFG.
+Optionally specify a label regular expression to retrieves a subset of the variables.
+Tags is a list of any tags that a node must have (at least one match).
+
+Example
+```julia
+listVariables(dfg, r"l", tags=[:APRILTAG;])
+```
+
+Related:
+- ls
+"""
+function listVariables(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
+  vars = getVariables(dfg, regexFilter, tags=tags, solvable=solvable)
+  return map(v -> v.label, vars)
+end
+
+"""
+    $(SIGNATURES)
+Get a list of the IDs (labels) of the DFGFactors in the DFG.
+Optionally specify a label regular expression to retrieves a subset of the factors.
+"""
+function listFactors(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
+    return map(f -> f.label, getFactors(dfg, regexFilter, tags=tags, solvable=solvable))
+end
+
+##------------------------------------------------------------------------------
+## Aliases and Other filtered lists
+##------------------------------------------------------------------------------
+
+
+## Aliases
+##--------
+"""
+    $(SIGNATURES)
+List the DFGVariables in the DFG.
+Optionally specify a label regular expression to retrieves a subset of the variables.
+Tags is a list of any tags that a node must have (at least one match).
+
+"""
+function ls(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
+    return listVariables(dfg, regexFilter, tags=tags, solvable=solvable)
+end
+
+#TODO tags kwarg
+"""
+    $(SIGNATURES)
+List the DFGFactors in the DFG.
+Optionally specify a label regular expression to retrieves a subset of the factors.
+"""
+function lsf(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
+    return listFactors(dfg, regexFilter, tags=tags, solvable=solvable)
+end
+
+
+"""
+    $(SIGNATURES)
+Retrieve a list of labels of the immediate neighbors around a given variable or factor.
+"""
+function ls(dfg::G, node::T; solvable::Int=0)::Vector{Symbol} where {G <: AbstractDFG, T <: DFGNode}
+    return getNeighbors(dfg, node, solvable=solvable)
+end
+"""
+    $(SIGNATURES)
+Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
+"""
+function ls(dfg::G, label::Symbol; solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
+    return getNeighbors(dfg, label, solvable=solvable)
+end
+
+"""
+    $(SIGNATURES)
+Alias for getNeighbors - returns neighbors around a given node label.
+"""
+function lsf(dfg::G, label::Symbol; solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
+  return getNeighbors(dfg, label, solvable=solvable)
+end
+
+## list by types
+##--------------
+
+function ls(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: InferenceVariable}
+  xx = getVariables(dfg)
+  mask = getVariableType.(xx) .|> typeof .== T
+  vxx = view(xx, mask)
+  map(x->x.label, vxx)
+end
+
+
+function ls(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: FunctorInferenceType}
+  xx = getFactors(dfg)
+  names = getfield.(typeof.(getFactorType.(xx)), :name) .|> Symbol
+  vxx = view(xx, names .== Symbol(T))
+  map(x->x.label, vxx)
+end
+
+
+function lsf(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: FunctorInferenceType}
+    ls(dfg, T)
+end
+
+"""
+    $(SIGNATURES)
+Helper to return neighbors at distance 2 around a given node label.
+"""
+function ls2(dfg::AbstractDFG, label::Symbol)
+    l2 = getNeighborhood(dfg, label, 2)
+    l1 = getNeighborhood(dfg, label, 1)
+    return setdiff(l2, l1)
+end
+
+"""
+    $SIGNATURES
+
+Return vector of prior factor symbol labels in factor graph `dfg`.
+"""
+function lsfPriors(dfg::G)::Vector{Symbol} where G <: AbstractDFG
+  priors = Symbol[]
+  fcts = lsf(dfg)
+  for fc in fcts
+    if isPrior(dfg, fc)
+      push!(priors, fc)
+    end
+  end
+  return priors
+end
+
+
+#TODO is this repeated functionality?
+
+"""
+    $(SIGNATURES)
+Gives back all factor labels that fit the bill:
+    lsWho(dfg, :Pose3)
+
+Dev Notes
+- Cloud versions will benefit from less data transfer
+ - `ls(dfg::C, ::T) where {C <: CloudDFG, T <: ..}`
+
+Related
+
+ls, lsf, lsfPriors
+"""
+function lsWho(dfg::AbstractDFG, type::Symbol)::Vector{Symbol}
+    vars = getVariables(dfg)
+    labels = Symbol[]
+    for v in vars
+        varType = typeof(getVariableType(v)).name |> Symbol
+        varType == type && push!(labels, v.label)
+    end
+    return labels
+end
+
+
+"""
+    $(SIGNATURES)
+Gives back all factor labels that fit the bill:
+    lsfWho(dfg, :Point2Point2)
+
+Dev Notes
+- Cloud versions will benefit from less data transfer
+ - `ls(dfg::C, ::T) where {C <: CloudDFG, T <: ..}`
+
+Related
+
+ls, lsf, lsfPriors
+"""
+function lsfWho(dfg::AbstractDFG, type::Symbol)::Vector{Symbol}
+    facs = getFactors(dfg)
+    labels = Symbol[]
+    for f in facs
+        facType = typeof(getFactorType(f)).name |> Symbol
+        facType == type && push!(labels, f.label)
+    end
+    return labels
+end
+
+
+## list types
+##-----------
+#TODO why a dictionary?
+"""
+    $SIGNATURES
+
+Return `::Dict{Symbol, Vector{String}}` of all unique variable types in factor graph.
+"""
+function lsTypes(dfg::G)::Dict{Symbol, Vector{String}} where G <: AbstractDFG
+  alltypes = Dict{Symbol,Vector{String}}()
+  for fc in ls(dfg)
+    Tt = typeof(getVariableType(dfg, fc))
+    sTt = string(Tt)
+    name = Symbol(Tt.name)
+    if !haskey(alltypes, name)
+      alltypes[name] = String[string(Tt)]
+    else
+      if sum(alltypes[name] .== sTt) == 0
+        push!(alltypes[name], sTt)
+      end
+    end
+  end
+  return alltypes
+end
+
+
+"""
+    $SIGNATURES
+
+Return `::Dict{Symbol, Vector{String}}` of all unique factor types in factor graph.
+"""
+function lsfTypes(dfg::G)::Dict{Symbol, Vector{String}} where G <: AbstractDFG
+  alltypes = Dict{Symbol,Vector{String}}()
+  for fc in lsf(dfg)
+    Tt = typeof(getFactorType(dfg, fc))
+    sTt = string(Tt)
+    name = Symbol(Tt.name)
+    if !haskey(alltypes, name)
+      alltypes[name] = String[string(Tt)]
+    else
+      if sum(alltypes[name] .== sTt) == 0
+        push!(alltypes[name], sTt)
+      end
+    end
+  end
+  return alltypes
+end
+
+
+
+##------------------------------------------------------------------------------
+## tags
+##------------------------------------------------------------------------------
+"""
+    $SIGNATURES
+
+Determine if the variable or factor neighbors have the `tags:;Vector{Symbol}`, and `matchAll::Bool`.
+"""
+function hasTags(dfg::AbstractDFG,
+                 sym::Symbol,
+                 tags::Vector{Symbol};
+                 matchAll::Bool=true  )::Bool
+  #
+  alltags = listTags(dfg, sym)
+  length(filter(x->x in alltags, tags)) >= (matchAll ? length(tags) : 1)
+end
+
+
+"""
+    $SIGNATURES
+
+Determine if the variable or factor neighbors have the `tags:;Vector{Symbol}`, and `matchAll::Bool`.
+"""
+function hasTagsNeighbors(dfg::AbstractDFG,
+                          sym::Symbol,
+                          tags::Vector{Symbol};
+                          matchAll::Bool=true  )::Bool
+  #
+  # assume only variables or factors are neighbors
+  getNeiFnc = isVariable(dfg, sym) ? getFactor : getVariable
+  alltags = union( (ls(dfg, sym) .|> x->getTags(getNeiFnc(dfg,x)))... )
+  length(filter(x->x in alltags, tags)) >= (matchAll ? length(tags) : 1)
+end
+
+##==============================================================================
+## Finding
+##==============================================================================
+
+"""
+    $SIGNATURES
+
+Find and return the closest timestamp from two sets of Tuples.  Also return the minimum delta-time (`::Millisecond`) and how many elements match from the two sets are separated by the minimum delta-time.
+"""
+function findClosestTimestamp(setA::Vector{Tuple{DateTime,T}},
+                              setB::Vector{Tuple{DateTime,S}}) where {S,T}
+  #
+  # build matrix of delta times, ranges on rows x vars on columns
+  DT = Array{Millisecond, 2}(undef, length(setA), length(setB))
+  for i in 1:length(setA), j in 1:length(setB)
+    DT[i,j] = setB[j][1] - setA[i][1]
+  end
+
+  DT .= abs.(DT)
+
+  # absolute time differences
+  # DTi = (x->x.value).(DT) .|> abs
+
+  # find the smallest element
+  mdt = minimum(DT)
+  corrs = findall(x->x==mdt, DT)
+
+  # return the closest timestamp, deltaT, number of correspondences
+  return corrs[1].I, mdt, length(corrs)
+end
+
+
+"""
+    $SIGNATURES
+
+Find and return nearest variable labels per delta time.  Function will filter on `regexFilter`, `tags`, and `solvable`.
+
+DevNotes:
+- TODO `number` should allow returning more than one for k-nearest matches.
+- Future versions likely will require some optimization around the internal `getVariable` call.
+  - Perhaps a dedicated/efficient `getVariableTimestamp` for all DFG flavors.
+
+Related
+
+ls, listVariables, findClosestTimestamp
+"""
+function findVariableNearTimestamp(dfg::AbstractDFG,
+                                   timest::DateTime,
+                                   regexFilter::Union{Nothing, Regex}=nothing;
+                                   tags::Vector{Symbol}=Symbol[],
+                                   solvable::Int=0,
+                                   warnDuplicate::Bool=true,
+                                   number::Int=1  )::Vector{Tuple{Vector{Symbol}, Millisecond}}
+  #
+  # get the variable labels based on filters
+  # syms = listVariables(dfg, regexFilter, tags=tags, solvable=solvable)
+  syms = listVariables(dfg, regexFilter, tags=tags, solvable=solvable)
+  # compile timestamps with label
+  # vars = map( x->getVariable(dfg, x), syms )
+  timeset = map(x->(getTimestamp(getVariable(dfg,x)), x), syms)
+  mask = BitArray{1}(undef, length(syms))
+  fill!(mask, true)
+
+  RET = Vector{Tuple{Vector{Symbol},Millisecond}}()
+  SYMS = Symbol[]
+  CORRS = 1
+  NUMBER = number
+  while 0 < CORRS + NUMBER
+    # get closest
+    link, mdt, corrs = findClosestTimestamp([(timest,0)], timeset[mask])
+    newsym = syms[link[2]]
+    union!(SYMS, !isa(newsym, Vector) ? [newsym] : newsym)
+    mask[link[2]] = false
+    CORRS = corrs-1
+    # last match, done with this delta time
+    if corrs == 1
+      NUMBER -=  1
+      push!(RET, (deepcopy(SYMS),mdt))
+      SYMS = Symbol[]
+    end
+  end
+  # warn if duplicates found
+  # warnDuplicate && 1 < corrs ? @warn("getVariableNearTimestamp found more than one variable at $timestamp") :   nothing
+
+  return RET
+end
+
+##==============================================================================
+## Copy Functions
+##==============================================================================
 
 """
     $(SIGNATURES)
 Common function for copying nodes from one graph into another graph.
 This is overridden in specialized implementations for performance.
+Orphaned factors are not added, with a warning if verbose.
+Set `overwriteDest` to overwrite existing variables and factors in the destination DFG.
+NOTE: copyGraphMetadata not supported yet.
+Related:
+- [`deepcopyGraph`](@ref)
+- [`deepcopyGraph!`](@ref)
+- [`buildSubgraph`](@ref)
+- [`getNeighborhood`](@ref)
+- [`mergeGraph!`](@ref)
+Dev Note:
+- Adapted from and replaces internal _copyIntoGraph!
 """
-function _copyIntoGraph!(sourceDFG::G, destDFG::H, variableFactorLabels::Vector{Symbol}, includeOrphanFactors::Bool=false)::Nothing where {G <: AbstractDFG, H <: AbstractDFG}
+function copyGraph!(destDFG::AbstractDFG,
+                    sourceDFG::AbstractDFG,
+                    variableLabels::Vector{Symbol},
+                    factorLabels::Vector{Symbol};
+                    copyGraphMetadata::Bool=false,
+                    overwriteDest::Bool=false,
+                    deepcopyNodes::Bool=false,
+                    verbose::Bool = true)
     # Split into variables and factors
-    sourceVariables = map(vId->getVariable(sourceDFG, vId), intersect(getVariableIds(sourceDFG), variableFactorLabels))
-    sourceFactors = map(fId->getFactor(sourceDFG, fId), intersect(getFactorIds(sourceDFG), variableFactorLabels))
-    if length(sourceVariables) + length(sourceFactors) != length(variableFactorLabels)
-        rem = symdiff(map(v->v.label, sourceVariables), variableFactorLabels)
-        rem = symdiff(map(f->f.label, sourceFactors), variableFactorLabels)
-        error("Cannot copy because cannot find the following nodes in the source graph: $rem")
-    end
+    sourceVariables = map(vId->getVariable(sourceDFG, vId), variableLabels)
+    sourceFactors = map(fId->getFactor(sourceDFG, fId), factorLabels)
 
     # Now we have to add all variables first,
     for variable in sourceVariables
+        variableCopy = deepcopyNodes ? deepcopy(variable) : variable
         if !exists(destDFG, variable)
-            addVariable!(destDFG, deepcopy(variable))
+            addVariable!(destDFG, variableCopy)
+        elseif overwriteDest
+            updateVariable!(destDFG, variableCopy)
+        else
+            error("Variable $(variable.label) already exists in destination graph!")
         end
     end
     # And then all factors to the destDFG.
@@ -401,55 +841,219 @@ function _copyIntoGraph!(sourceDFG::G, destDFG::H, variableFactorLabels::Vector{
             end
         end
         # Only if we have all of them should we add it (otherwise strange things may happen on evaluation)
-        if includeOrphanFactors || length(factVariableIds) == length(sourceFactorVariableIds)
+        if length(factVariableIds) == length(sourceFactorVariableIds)
+            factorCopy = deepcopyNodes ? deepcopy(factor) : factor
             if !exists(destDFG, factor)
-                addFactor!(destDFG, factVariableIds, deepcopy(factor))
+                addFactor!(destDFG, factorCopy)
+            elseif overwriteDest
+                updateFactor!(destDFG, factorCopy)
+            else
+                error("Factor $(factor.label) already exists in destination graph!")
             end
+        elseif verbose
+            @warn "Factor $(factor.label) will be an orphan in the destination graph, and therefore not added."
         end
+    end
+
+    if copyGraphMetadata
+        setUserData(destDFG, getUserData(sourceDFG))
+        setRobotData(destDFG, getRobotData(sourceDFG))
+        setSessionData(destDFG, getSessionData(sourceDFG))
     end
     return nothing
 end
 
+
+function deepcopyGraph!(destDFG::AbstractDFG,
+                        sourceDFG::AbstractDFG,
+                        variableLabels::Vector{Symbol} = ls(sourceDFG),
+                        factorLabels::Vector{Symbol} = lsf(sourceDFG);
+                        kwargs...)
+    copyGraph!(destDFG, sourceDFG, variableLabels, factorLabels; deepcopyNodes=true, kwargs...)
+end
+
+
+function deepcopyGraph(::Type{T},
+                       sourceDFG::AbstractDFG,
+                       variableLabels::Vector{Symbol} = ls(sourceDFG),
+                       factorLabels::Vector{Symbol} = lsf(sourceDFG);
+                       sessionId::String = "",
+                       kwargs...) where T <: AbstractDFG
+
+    ginfo = [getDFGInfo(sourceDFG)...]
+    if sessionId == ""
+        ginfo[4] *= "_copy$(string(uuid4())[1:6])"
+    else
+        ginfo[4] = sessionId
+    end
+    destDFG = T(ginfo...)
+    copyGraph!(destDFG, sourceDFG, variableLabels, factorLabels; deepcopyNodes=true, kwargs...)
+    return destDFG
+end
+
+##==============================================================================
+## Subgraphs and Neighborhoods
+##==============================================================================
+
+"""
+    $(SIGNATURES)
+Build a list of all unique neighbors inside 'distance'
+Related:
+- [`copyGraph!`](@ref)
+- [`buildSubgraph`](@ref)
+- [`deepcopyGraph`](@ref)
+- [`mergeGraph!`](@ref)
+"""
+function getNeighborhood(dfg::AbstractDFG, label::Symbol, distance::Int)::Vector{Symbol}
+    neighborList = Set{Symbol}([label])
+    curList = Set{Symbol}([label])
+
+    for dist in 1:distance
+        newNeighbors = Set{Symbol}()
+        for node in curList
+            neighbors = getNeighbors(dfg, node)
+            for neighbor in neighbors
+                push!(neighborList, neighbor)
+                push!(newNeighbors, neighbor)
+            end
+        end
+        curList = newNeighbors
+    end
+    return collect(neighborList)
+end
+
+function getNeighborhood(dfg::AbstractDFG, variableFactorLabels::Vector{Symbol}, distance::Int; solvable::Int=0)::Vector{Symbol}
+    # find neighbors at distance to add
+    neighbors = Symbol[]
+    if distance > 0
+        for l in variableFactorLabels
+            union!(neighbors, getNeighborhood(dfg, l, distance))
+        end
+    end
+
+    allvarfacs = union(variableFactorLabels, neighbors)
+
+    solvable != 0 && filter!(nlbl -> (getSolvable(dfg, nlbl) >= solvable), allvarfacs)
+
+    return allvarfacs
+
+end
+
+"""
+    $(SIGNATURES)
+Build a deep subgraph copy from the DFG given a list of variables and factors and an optional distance.
+Note: Orphaned factors (where the subgraph does not contain all the related variables) are not returned.
+Related:
+- [`copyGraph!`](@ref)
+- [`getNeighborhood`](@ref)
+- [`deepcopyGraph`](@ref)
+- [`mergeGraph!`](@ref)
+Dev Notes
+- Bulk vs node for node: a list of labels are compiled and the sugraph is copied in bulk.
+"""
+function buildSubgraph(::Type{G},
+                       dfg::AbstractDFG,
+                       variableFactorLabels::Vector{Symbol},
+                       distance::Int=0;
+                       solvable::Int=0,
+                       kwargs...) where G <: AbstractDFG
+
+    #build up the neighborhood from variableFactorLabels
+    allvarfacs = getNeighborhood(dfg, variableFactorLabels, distance; solvable=solvable)
+
+    variableLabels = intersect(listVariables(dfg), allvarfacs)
+    factorLabels = intersect(listFactors(dfg), allvarfacs)
+    # Copy the section of graph we want
+    destDFG = deepcopyGraph(G, dfg, variableLabels, factorLabels; kwargs...)
+    return destDFG
+end
+
+"""
+    $(SIGNATURES)
+Merger sourceDFG to destDFG given an optional list of variables and factors and distance.
+Notes:
+- Nodes already in the destination graph are updated from sourceDFG.
+- Orphaned factors (where the subgraph does not contain all the related variables) are not included.
+Related:
+- [`copyGraph!`](@ref)
+- [`buildSubgraph`](@ref)
+- [`getNeighborhood`](@ref)
+- [`deepcopyGraph`](@ref)
+"""
+function mergeGraph!(destDFG::AbstractDFG,
+                     sourceDFG::AbstractDFG,
+                     variableLabels::Vector{Symbol} = ls(sourceDFG),
+                     factorLabels::Vector{Symbol} = lsf(sourceDFG),
+                     distance::Int = 0;
+                     solvable::Int = 0,
+                     kwargs...)
+
+    # find neighbors at distance to add
+    allvarfacs = getNeighborhood(sourceDFG, union(variableLabels, factorLabels), distance; solvable=solvable)
+
+    sourceVariables = intersect(listVariables(sourceDFG), allvarfacs)
+    sourceFactors = intersect(listFactors(sourceDFG), allvarfacs)
+
+    copyGraph!(destDFG, sourceDFG, sourceVariables, sourceFactors; deepcopyNodes=true, overwriteDest=true, kwargs...)
+
+    return destDFG
+end
+
+##==============================================================================
+## Variable Data: VND and PPE
+##==============================================================================
+
+#TODO API
 """
     $(SIGNATURES)
 Merges and updates solver and estimate data for a variable (variable can be from another graph).
-Note: Makes a copy of the estimates and solver data so that there is no coupling
-between graphs.
+Note: Makes a copy of the estimates and solver data so that there is no coupling between graphs.
 """
-function mergeUpdateVariableSolverData!(dfg::AbstractDFG, sourceVariable::AbstractDFGVariable)::AbstractDFGVariable
-    if !exists(dfg, sourceVariable)
-        error("Source variable '$(sourceVariable.label)' doesn't exist in the graph.")
-    end
+function mergeVariableData!(dfg::AbstractDFG, sourceVariable::AbstractDFGVariable)::AbstractDFGVariable
+
     var = getVariable(dfg, sourceVariable.label)
-    # We don't know which graph this came from, must be copied!
-    merge!(var.estimateDict, deepcopy(sourceVariable.estimateDict))
-	# If this variable has solverDataDict (summaries do not)
-	:solverDataDict in fieldnames(typeof(var)) && merge!(var.solverDataDict, deepcopy(sourceVariable.solverDataDict))
-    return sourceVariable
+
+    mergePPEs!(var, sourceVariable)
+    # If this variable has solverDataDict (summaries do not)
+    :solverDataDict in fieldnames(typeof(var)) && mergeVariableSolverData!(var, sourceVariable)
+
+    #update if its not a InMemoryDFGTypes, otherwise it was a reference
+    # if satelite nodes are used it can be updated seprarately
+    # !(isa(dfg, InMemoryDFGTypes)) && updateVariable!(dfg, var)
+
+    return var
 end
 
+#TODO API
 """
     $(SIGNATURES)
 Common function to update all solver data and estimates from one graph to another.
 This should be used to push local solve data back into a cloud graph, for example.
 """
-function mergeUpdateGraphSolverData!(sourceDFG::G, destDFG::H, varSyms::Vector{Symbol})::Nothing where {G <: AbstractDFG, H <: AbstractDFG}
+function mergeGraphVariableData!(destDFG::H, sourceDFG::G, varSyms::Vector{Symbol})::Nothing where {G <: AbstractDFG, H <: AbstractDFG}
     # Update all variables in the destination
     # (For now... we may change this soon)
     for variableId in varSyms
-        mergeUpdateVariableSolverData!(destDFG, getVariable(sourceDFG, variableId))
+        mergeVariableData!(destDFG, getVariable(sourceDFG, variableId))
     end
 end
 
+
+##==============================================================================
+## Graphs Structures (Abstract, overwrite for performance)
+##==============================================================================
 """
     $(SIGNATURES)
-Get an adjacency matrix for the DFG, returned as a Matrix{Union{Nothing, Symbol}}.
-Rows are all factors, columns are all variables, and each cell contains either nothing or the symbol of the relating factor.
-The first row and first column are factor and variable headings respectively.
+Get a matrix indicating relationships between variables and factors. Rows are
+all factors, columns are all variables, and each cell contains either nothing or
+the symbol of the relating factor. The first row and first column are factor and
+variable headings respectively.
+Note: rather use getBiadjacencyMatrix
 """
-function getAdjacencyMatrix(dfg::G)::Matrix{Union{Nothing, Symbol}} where G <: AbstractDFG
-	varLabels = sort(map(v->v.label, getVariables(dfg)))
-    factLabels = sort(map(f->f.label, getFactors(dfg)))
+function getAdjacencyMatrixSymbols(dfg::AbstractDFG; solvable::Int=0)::Matrix{Union{Nothing, Symbol}}
+    #
+    varLabels = sort(map(v->v.label, getVariables(dfg, solvable=solvable)))
+    factLabels = sort(map(f->f.label, getFactors(dfg, solvable=solvable)))
     vDict = Dict(varLabels .=> [1:length(varLabels)...].+1)
 
     adjMat = Matrix{Union{Nothing, Symbol}}(nothing, length(factLabels)+1, length(varLabels)+1)
@@ -457,121 +1061,50 @@ function getAdjacencyMatrix(dfg::G)::Matrix{Union{Nothing, Symbol}} where G <: A
     adjMat[2:end, 1] = factLabels
     adjMat[1, 2:end] = varLabels
     for (fIndex, factLabel) in enumerate(factLabels)
-        factVars = getNeighbors(dfg, getFactor(dfg, factLabel))
+        factVars = getNeighbors(dfg, getFactor(dfg, factLabel), solvable=solvable)
         map(vLabel -> adjMat[fIndex+1,vDict[vLabel]] = factLabel, factVars)
     end
     return adjMat
 end
 
+
+
+# TODO API name get seems wrong maybe just biadjacencyMatrix
 """
     $(SIGNATURES)
-Get an adjacency matrix for the DFG, returned as a tuple: adjmat::SparseMatrixCSC{Int}, var_labels::Vector{Symbol) fac_labels::Vector{Symbol).
-Rows are the factors, columns are the variables, with the corresponding labels in fac_labels,var_labels.
+Get a matrix indicating adjacency between variables and factors. Returned as
+a named tuple: B::SparseMatrixCSC{Int}, varLabels::Vector{Symbol)
+facLabels::Vector{Symbol). Rows are the factors, columns are the variables,
+with the corresponding labels in varLabels,facLabels.
 """
-function getAdjacencyMatrixSparse(dfg::G)::Tuple{LightGraphs.SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}} where G <: AbstractDFG
-	varLabels = map(v->v.label, getVariables(dfg))
-	factLabels = map(f->f.label, getFactors(dfg))
+function getBiadjacencyMatrix(dfg::AbstractDFG; solvable::Int=0)::NamedTuple{(:B, :varLabels, :facLabels), Tuple{SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}}
+    varLabels = map(v->v.label, getVariables(dfg, solvable=solvable))
+    factLabels = map(f->f.label, getFactors(dfg, solvable=solvable))
 
-	vDict = Dict(varLabels .=> [1:length(varLabels)...])
+    vDict = Dict(varLabels .=> [1:length(varLabels)...])
 
-	adjMat = spzeros(Int, length(factLabels), length(varLabels))
+    adjMat = spzeros(Int, length(factLabels), length(varLabels))
 
-	for (fIndex, factLabel) in enumerate(factLabels)
-		factVars = getNeighbors(dfg, getFactor(dfg, factLabel))
-	    map(vLabel -> adjMat[fIndex,vDict[vLabel]] = 1, factVars)
-	end
-	return adjMat, varLabels, factLabels
-end
-
-"""
-    $SIGNATURES
-
-Return boolean whether a factor `label` is present in `<:AbstractDFG`.
-"""
-function hasFactor(dfg::G, label::Symbol)::Bool where {G <: AbstractDFG}
-	@warn "hasFactor() deprecated, please use exists()"
-	return exists(dfg, label)
-end
-
-"""
-    $(SIGNATURES)
-
-Return `::Bool` on whether `dfg` contains the variable `lbl::Symbol`.
-"""
-function hasVariable(dfg::G, label::Symbol)::Bool where {G <: AbstractDFG}
-	@warn "hasVariable() deprecated, please use exists()"
-	return exists(dfg, label) # haskey(vertices(dfg.g), label)
+    for (fIndex, factLabel) in enumerate(factLabels)
+        factVars = getNeighbors(dfg, getFactor(dfg, factLabel), solvable=solvable)
+        map(vLabel -> adjMat[fIndex,vDict[vLabel]] = 1, factVars)
+    end
+    return (B=adjMat, varLabels=varLabels, facLabels=factLabels)
 end
 
 
-"""
-    $SIGNATURES
-
-Returns state of vertex data `.initialized` flag.
-
-Notes:
-- used by both factor graph variable and Bayes tree clique logic.
-"""
-function isInitialized(var::DFGVariable; key::Symbol=:default)::Bool
-  	data = solverData(var, key)
-  	if data == nothing
-		@error "Variable does not have solver data $(key)"
-		return false
-  	else
-  		return data.initialized
-	end
-end
-
-function isInitialized(dfg::AbstractDFG, label::Symbol; key::Symbol=:default)::Bool
-  return isInitialized(getVariable(dfg, label), key=key)
-end
-
-
-"""
-    $SIGNATURES
-
-Return whether `sym::Symbol` represents a variable vertex in the graph.
-"""
-isVariable(dfg::G, sym::Symbol) where G <: AbstractDFG = hasVariable(dfg, sym)
-
-"""
-    $SIGNATURES
-
-Return whether `sym::Symbol` represents a factor vertex in the graph.
-"""
-isFactor(dfg::G, sym::Symbol) where G <: AbstractDFG = hasFactor(dfg, sym)
-
-"""
-    $SIGNATURES
-
-Return reference to the user factor in `<:AbstractDFG` identified by `::Symbol`.
-"""
-getFactorFunction(fcd::GenericFunctionNodeData) = fcd.fnc.usrfnc!
-getFactorFunction(fc::DFGFactor) = getFactorFunction(solverData(fc))
-function getFactorFunction(dfg::G, fsym::Symbol) where G <: AbstractDFG
-  getFactorFunction(getFactor(dfg, fsym))
-end
-
-
-"""
-    $SIGNATURES
-
-Display and return to console the user factor identified by tag name.
-"""
-showFactor(fgl::G, fsym::Symbol) where G <: AbstractDFG = @show getFactor(fgl,fsym)
-
-
+##==============================================================================
+## DOT Files, falls back to LightDFG dot functions
+##==============================================================================
 """
     $(SIGNATURES)
 Produces a dot-format of the graph for visualization.
 """
 function toDot(dfg::AbstractDFG)::String
-    #TODO implement convert
-    graphsdfg = GraphsDFG{AbstractParams}()
-    DistributedFactorGraphs._copyIntoGraph!(dfg, graphsdfg, union(getVariableIds(dfg), getFactorIds(dfg)), true)
-
-	# Calls down to GraphsDFG.toDot
-    return toDot(graphsdfg)
+    #convert to LightDFG
+    ldfg = LightDFG{NoSolverParams}()
+    copyGraph!(ldfg, dfg, listVariables(dfg), listFactors(dfg))
+    return toDot(ldfg)
 end
 
 """
@@ -585,30 +1118,32 @@ Note
 - Based on graphviz.org
 """
 function toDotFile(dfg::AbstractDFG, fileName::String="/tmp/dfg.dot")::Nothing
-    #TODO implement convert
-    graphsdfg = GraphsDFG{AbstractParams}()
-    DistributedFactorGraphs._copyIntoGraph!(dfg, graphsdfg, union(getVariableIds(dfg), getFactorIds(dfg)), true)
 
-    open(fileName, "w") do fid
-        write(fid,Graphs.to_dot(graphsdfg.g))
-    end
-    return nothing
+    #convert to LightDFG
+    ldfg = LightDFG{NoSolverParams}()
+    copyGraph!(ldfg, dfg, listVariables(dfg), listFactors(dfg))
+
+    return toDotFile(ldfg, fileName)
 end
+
+##==============================================================================
+## Summaries
+##==============================================================================
 
 """
     $(SIGNATURES)
 Get a summary of the graph (first-class citizens of variables and factors).
-Returns a AbstractDFGSummary.
+Returns a DFGSummary.
 """
-function getSummary(dfg::G)::AbstractDFGSummary where {G <: AbstractDFG}
-	vars = map(v -> convert(DFGVariableSummary, v), getVariables(dfg))
-	facts = map(f -> convert(DFGFactorSummary, f), getFactors(dfg))
-	return AbstractDFGSummary(
-		Dict(map(v->v.label, vars) .=> vars),
-		Dict(map(f->f.label, facts) .=> facts),
-		dfg.userId,
-		dfg.robotId,
-		dfg.sessionId)
+function getSummary(dfg::G)::DFGSummary where {G <: AbstractDFG}
+    vars = map(v -> DFGVariableSummary(v), getVariables(dfg))
+    facts = map(f -> DFGFactorSummary(f), getFactors(dfg))
+    return DFGSummary(
+        Dict(map(v->v.label, vars) .=> vars),
+        Dict(map(f->f.label, facts) .=> facts),
+        dfg.userId,
+        dfg.robotId,
+        dfg.sessionId)
 end
 
 """
@@ -618,16 +1153,17 @@ Note this is a copy of the original.
 Returns a LightDFG{NoSolverParams, DFGVariableSummary, DFGFactorSummary}.
 """
 function getSummaryGraph(dfg::G)::LightDFG{NoSolverParams, DFGVariableSummary, DFGFactorSummary} where {G <: AbstractDFG}
-	summaryDfg = LightDFG{NoSolverParams, DFGVariableSummary, DFGFactorSummary}(
-		description="Summary of $(dfg.description)",
-		userId=dfg.userId,
-		robotId=dfg.robotId,
-		sessionId=dfg.sessionId)
-	for v in getVariables(dfg)
-		newV = addVariable!(summaryDfg, convert(DFGVariableSummary, v))
-	end
-	for f in getFactors(dfg)
-		addFactor!(summaryDfg, getNeighbors(dfg, f), convert(DFGFactorSummary, f))
-	end
-	return summaryDfg
+    summaryDfg = LightDFG{NoSolverParams, DFGVariableSummary, DFGFactorSummary}(
+        description="Summary of $(getDescription(dfg))",
+        userId=dfg.userId,
+        robotId=dfg.robotId,
+        sessionId=dfg.sessionId)
+    deepcopyGraph!(summaryDfg, dfg)
+    # for v in getVariables(dfg)
+    #     newV = addVariable!(summaryDfg, DFGVariableSummary(v))
+    # end
+    # for f in getFactors(dfg)
+    #     addFactor!(summaryDfg, getNeighbors(dfg, f), DFGFactorSummary(f))
+    # end
+    return summaryDfg
 end

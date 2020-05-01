@@ -1,13 +1,42 @@
 
-function saveDFG(dfg::G, folder::String) where G <: AbstractDFG
+"""
+    $(SIGNATURES)
+Save a DFG to a folder. Will create/overwrite folder if it exists.
+
+DevNotes:
+- TODO remove `compress` kwarg.
+
+# Example
+```julia
+using DistributedFactorGraphs, IncrementalInference
+# Create a DFG - can make one directly, e.g. GraphsDFG{NoSolverParams}() or use IIF:
+dfg = initfg()
+# ... Add stuff to graph using either IIF or DFG:
+v1 = addVariable!(dfg, :a, ContinuousScalar, labels = [:POSE], solvable=0)
+# Now save it:
+saveDFG(dfg, "/tmp/saveDFG.tar.gz")
+```
+"""
+function saveDFG(dfg::AbstractDFG, folder::String; compress::Symbol=:null)
+
+    if compress != :null
+      @warn "saveDFG keyword args are deprecated, and folders will be tarred as standard in current and future versions."
+    end
+
+    # TODO: Deprecate the folder functionality in v0.6.1
+
+    # Clean up save path if a file is specified
+    savepath = folder[end] == '/' ? folder[1:end-1] : folder
+    savepath = splitext(splitext(savepath)[1])[1] # In case of .tar.gz
+
     variables = getVariables(dfg)
     factors = getFactors(dfg)
-    varFolder = "$folder/variables"
-    factorFolder = "$folder/factors"
+    varFolder = "$savepath/variables"
+    factorFolder = "$savepath/factors"
     # Folder preparations
-    if !isdir(folder)
-        @info "Folder '$folder' doesn't exist, creating..."
-        mkpath(folder)
+    if !isdir(savepath)
+        @info "Folder '$savepath' doesn't exist, creating..."
+        mkpath(savepath)
     end
     !isdir(varFolder) && mkpath(varFolder)
     !isdir(factorFolder) && mkpath(factorFolder)
@@ -24,21 +53,82 @@ function saveDFG(dfg::G, folder::String) where G <: AbstractDFG
     # Factors
     for f in factors
         fPacked = packFactor(dfg, f)
-        io = open("$folder/factors/$(f.label).json", "w")
+        io = open("$factorFolder/$(f.label).json", "w")
         JSON2.write(io, fPacked)
         close(io)
     end
+
+    savedir = dirname(savepath) # is this a path of just local name? #344 -- workaround with unique names
+    savename = basename(string(savepath))
+    @assert savename != ""
+    destfile = joinpath(savedir, savename*".tar.gz")
+    if length(savedir) != 0
+      run( pipeline(`tar -zcf - -C $savedir $savename`, stdout="$destfile"))
+    else
+      run( pipeline(`tar -zcf - $savename`, stdout="$destfile"))
+    end
+    Base.rm(joinpath(savedir,savename), recursive=true)
 end
 
-function loadDFG(folder::String, iifModule, dfgLoadInto::G) where G <: AbstractDFG
+"""
+    $(SIGNATURES)
+Load a DFG from a saved folder. Always provide the IIF module as the second
+parameter.
+
+# Example
+```julia
+using DistributedFactorGraphs, IncrementalInference
+# Create a DFG - can make one directly, e.g. GraphsDFG{NoSolverParams}() or use IIF:
+dfg = initfg()
+# Load the graph
+loadDFG("/tmp/savedgraph.tar.gz", IncrementalInference, dfg)
+# Use the DFG as you do normally.
+ls(dfg)
+```
+"""
+function loadDFG(dst::String,
+                 iifModule::Module,
+                 dfgLoadInto::G) where G <: AbstractDFG
+
+
+    #
+    # loaddir gets deleted so needs to be unique
+    loaddir=joinpath("/","tmp","caesar","random", string(uuid1()))
+    # Check if zipped destination (dst) by first doing fuzzy search from user supplied dst
+    folder = dst  # working directory for fileDFG variable and factor operations
+    dstname = dst # path name could either be legacy FileDFG dir or .tar.gz file of FileDFG files.
+    unzip = false
+    # add if doesn't have .tar.gz extension
+    lastdirname = splitpath(dstname)[end]
+    if !isdir(dst)
+        unzip = true
+        sdst = split(lastdirname, '.')
+        if sdst[end] != "gz" #  length(sdst) == 1 &&
+            dstname *= ".tar.gz"
+            lastdirname *= ".tar.gz"
+        end
+    end
+    # TODO -- what if it is not a tar.gz but classic folder instead?
+    # do actual unzipping
+    filename = lastdirname[1:(end-length(".tar.gz"))] |> string
+    if unzip
+        @show sfolder = split(dstname, '.')
+        Base.mkpath(loaddir)
+        folder = joinpath(loaddir, filename) #splitpath(string(sfolder[end-2]))[end]
+        @info "loadDFG detected a gzip $dstname -- unpacking via $loaddir now..."
+        Base.rm(folder, recursive=true, force=true)
+        # unzip the tar file
+        run(`tar -zxf $dstname -C $loaddir`)
+    end
+    # extract the factor graph from fileDFG folder
     variables = DFGVariable[]
     factors = DFGFactor[]
     varFolder = "$folder/variables"
     factorFolder = "$folder/factors"
     # Folder preparations
     !isdir(folder) && error("Can't load DFG graph - folder '$folder' doesn't exist")
-    !isdir(varFolder) && error("Can't load DFG graph - folder '$folder' doesn't exist")
-    !isdir(factorFolder) && error("Can't load DFG graph - folder '$folder' doesn't exist")
+    !isdir(varFolder) && error("Can't load DFG graph - folder '$varFolder' doesn't exist")
+    !isdir(factorFolder) && error("Can't load DFG graph - folder '$factorFolder' doesn't exist")
 
     varFiles = readdir(varFolder)
     factorFiles = readdir(factorFolder)
@@ -55,7 +145,7 @@ function loadDFG(folder::String, iifModule, dfgLoadInto::G) where G <: AbstractD
     for factorFile in factorFiles
         io = open("$factorFolder/$factorFile")
         packedData = JSON2.read(io, Dict{String, Any})
-        push!(factors, unpackFactor(dfgLoadInto, packedData, iifModule))
+        push!(factors, unpackFactor(dfgLoadInto, packedData))
     end
     @info "Loaded $(length(variables)) factors - $(map(f->f.label, factors))"
     @info "Inserting factors into graph..."
@@ -68,10 +158,12 @@ function loadDFG(folder::String, iifModule, dfgLoadInto::G) where G <: AbstractD
         iifModule.rebuildFactorMetadata!(dfgLoadInto, factor)
     end
 
-    # PATCH - To update the fncargvID for factors, it's being cleared somewhere in rebuildFactorMetadata.
-    # TEMPORARY
-    # TODO: Remove in future
-    map(f->solverData(f).fncargvID = f._variableOrderSymbols, getFactors(dfgLoadInto))
+    # remove the temporary unzipped file
+    if unzip
+      @info "DFG.loadDFG is deleting a temp folder created during unzip, $loaddir"
+      # need this because the number of files created in /tmp/caesar/random is becoming redonkulous.
+      Base.rm(loaddir, recursive=true, force=true)
+    end
 
     return dfgLoadInto
 end

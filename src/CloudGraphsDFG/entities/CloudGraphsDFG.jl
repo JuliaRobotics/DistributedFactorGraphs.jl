@@ -7,25 +7,66 @@ end
 
 mutable struct CloudGraphsDFG{T <: AbstractParams} <: AbstractDFG
     neo4jInstance::Neo4jInstance
-    description::String
     userId::String
     robotId::String
     sessionId::String
+    description::String
     encodePackedTypeFunc
     getPackedTypeFunc
     decodePackedTypeFunc
     rebuildFactorMetadata!
-    labelDict::Dict{Symbol, Int64}
-    variableCache::Dict{Symbol, DFGVariable}
-    factorCache::Dict{Symbol, DFGFactor}
-    addHistory::Vector{Symbol} #TODO: Discuss more - is this an audit trail?
+    addHistory::Vector{Symbol}
     solverParams::T # Solver parameters
-    useCache::Bool
 end
+
+"""
+    $(SIGNATURES)
+Create a new CloudGraphs-based DFG factor graph using a Neo4j.Connection.
+"""
+function CloudGraphsDFG{T}(neo4jConnection::Neo4j.Connection,
+                            userId::String,
+                            robotId::String,
+                            sessionId::String,
+                            description::String,
+                            encodePackedTypeFunc,
+                            getPackedTypeFunc,
+                            decodePackedTypeFunc,
+                            rebuildFactorMetadata!;
+                            solverParams::T=NoSolverParams(),
+                            createSessionNodes::Bool=true) where T <: AbstractParams
+    graph = Neo4j.getgraph(neo4jConnection)
+    neo4jInstance = Neo4jInstance(neo4jConnection, graph)
+    dfg = CloudGraphsDFG{T}(neo4jInstance, userId, robotId, sessionId, description, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, rebuildFactorMetadata!, Symbol[], solverParams)
+    # Create the session if it doesn't already exist
+    createSessionNodes && createDfgSessionIfNotExist(dfg)
+    return dfg
+end
+"""
+    $(SIGNATURES)
+Create a new CloudGraphs-based DFG factor graph by specifying the Neo4j connection information.
+"""
+function CloudGraphsDFG{T}(host::String,
+                           port::Int,
+                           dbUser::String,
+                           dbPassword::String,
+                           userId::String,
+                           robotId::String,
+                           sessionId::String,
+                           description::String,
+                           encodePackedTypeFunc,
+                           getPackedTypeFunc,
+                           decodePackedTypeFunc,
+                           rebuildFactorMetadata!;
+                           solverParams::T=NoSolverParams(),
+                           createSessionNodes::Bool=true) where T <: AbstractParams
+    neo4jConnection = Neo4j.Connection(host, port=port, user=dbUser, password=dbPassword);
+    return CloudGraphsDFG{T}(neo4jConnection, userId, robotId, sessionId, description, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, rebuildFactorMetadata!, solverParams=solverParams, createSessionNodes=createSessionNodes)
+end
+
 
 function show(io::IO, c::CloudGraphsDFG)
     println(io, "CloudGraphsDFG:")
     println(io, " - Neo4J instance: $(c.neo4jInstance.connection.host)")
     println(io, " - Session: $(c.userId):$(c.robotId):$(c.sessionId)")
-    println(io, " - Caching: $(c.useCache)")
+    println(io, " - Description: ", c.description)
 end

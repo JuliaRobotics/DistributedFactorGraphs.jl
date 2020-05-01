@@ -1,4 +1,49 @@
+module GraphsDFGs
+
 using Graphs
+using DocStringExtensions
+
+using ...DistributedFactorGraphs
+
+# import DFG functions to extend
+import ...DistributedFactorGraphs:  setSolverParams!,
+                                    getFactor,
+                                    setDescription!,
+                                    # getLabelDict,
+                                    getUserData,
+                                    setUserData!,
+                                    getRobotData,
+                                    setRobotData!,
+                                    getSessionData,
+                                    setSessionData!,
+                                    addVariable!,
+                                    getVariable,
+                                    getAddHistory,
+                                    addFactor!,
+                                    getSolverParams,
+                                    exists,
+                                    isVariable,
+                                    isFactor,
+                                    getDescription,
+                                    updateVariable!,
+                                    updateFactor!,
+                                    deleteVariable!,
+                                    deleteFactor!,
+                                    getVariables,
+                                    listVariables,
+                                    ls,
+                                    getFactors,
+                                    listFactors,
+                                    lsf,
+                                    isFullyConnected,
+                                    hasOrphans,
+                                    getNeighbors,
+                                    buildSubgraph,
+                                    copyGraph!,
+                                    getBiadjacencyMatrix,
+                                    _getDuplicatedEmptyDFG,
+                                    toDot,
+                                    toDotFile
 
 # Imports
 include("entities/GraphsDFG.jl")
@@ -6,18 +51,5 @@ include("services/GraphsDFG.jl")
 
 # Exports
 export GraphsDFG
-export exists
-export getLabelDict, getDescription, setDescription, getAddHistory, getSolverParams, setSolverParams
 
-export getAddHistory, getDescription, getLabelDict
-export addVariable!, addFactor!
-export ls, lsf, getVariables, getFactors, getVariableIds, getFactorIds
-export getVariable, getFactor
-export updateVariable!, updateFactor!, updateVariableSolverData!
-export deleteVariable!, deleteFactor!
-export getAdjacencyMatrix
-export getNeighbors
-export getSubgraphAroundNode
-export getSubgraph
-export isFullyConnected, hasOrphans
-export toDot, toDotFile
+end

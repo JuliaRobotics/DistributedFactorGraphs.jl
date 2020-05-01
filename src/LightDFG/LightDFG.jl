@@ -3,44 +3,49 @@ module LightDFGs
 using LightGraphs
 using DocStringExtensions
 
-import ...DistributedFactorGraphs: AbstractDFG, DFGNode, AbstractDFGVariable, AbstractDFGFactor, AbstractDFGSummary, AbstractParams, NoSolverParams, DFGVariable, DFGFactor
+using ...DistributedFactorGraphs
+
+# import ...DistributedFactorGraphs: AbstractDFG, DFGNode, AbstractDFGVariable, AbstractDFGFactor, DFGSummary, AbstractParams, NoSolverParams, DFGVariable, DFGFactor
 
 # import DFG functions to extend
-import ...DistributedFactorGraphs:  setSolverParams,
+import ...DistributedFactorGraphs:  setSolverParams!,
                                     getFactor,
-                                    setDescription,
-                                    getLabelDict,
+                                    setDescription!,
+                                    # getLabelDict,
                                     getUserData,
-                                    setUserData,
+                                    setUserData!,
                                     getRobotData,
-                                    setRobotData,
+                                    setRobotData!,
                                     getSessionData,
-                                    setSessionData,
+                                    setSessionData!,
                                     addVariable!,
                                     getVariable,
                                     getAddHistory,
                                     addFactor!,
                                     getSolverParams,
                                     exists,
+                                    isVariable,
+                                    isFactor,
                                     getDescription,
                                     updateVariable!,
                                     updateFactor!,
                                     deleteVariable!,
                                     deleteFactor!,
                                     getVariables,
-                                    getVariableIds,
+                                    listVariables,
                                     ls,
                                     getFactors,
-                                    getFactorIds,
+                                    listFactors,
                                     lsf,
                                     isFullyConnected,
                                     hasOrphans,
                                     getNeighbors,
-                                    getSubgraphAroundNode,
-                                    getSubgraph,
-                                    getAdjacencyMatrix,
-                                    getAdjacencyMatrixSparse,
-                                    _getDuplicatedEmptyDFG
+                                    buildSubgraph,
+                                    copyGraph!,
+                                    getBiadjacencyMatrix,
+                                    _getDuplicatedEmptyDFG,
+                                    toDot,
+                                    toDotFile
 
 include("FactorGraphs/FactorGraphs.jl")
 using .FactorGraphs

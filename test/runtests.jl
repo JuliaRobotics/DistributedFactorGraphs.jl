@@ -3,20 +3,35 @@ using GraphPlot # For plotting tests
 using Neo4j
 using DistributedFactorGraphs
 using Pkg
+using Dates
 
 ## To run the IIF tests, you need a local Neo4j with user/pass neo4j:test
 # To run a Docker image
-# Install: docker pull neo4j
-# Run: docker run -d --publish=7474:7474 --publish=7687:7687 --env NEO4J_AUTH=neo4j/test neo4j
+# NOTE: that Neo4j.jl doesn't currently support > Neo4j 3.x
+# Install: docker pull neo4j:3.5.6
+# Run: docker run -d --publish=7474:7474 --publish=7687:7687 --env NEO4J_AUTH=neo4j/test neo4j:3.5.6
 ##
 
+# If you want to enable debugging logging (very verbose!)
+# using Logging
+# logger = SimpleLogger(stdout, Logging.Debug)
+# global_logger(logger)
+
+include("testBlocks.jl")
+
+@testset "Test generated ==" begin
+    include("compareTests.jl")
+end
+
+@testset "Testing LightDFG.FactorGraphs functions" begin
+    include("LightFactorGraphsTests.jl")
+end
+
 # Test each interface
-# Still test LightDFG and MetaGraphsDFG for the moment until we remove in 0.4.2
 apis = [
+    LightDFG,
     GraphsDFG,
-    DistributedFactorGraphs.MetaGraphsDFG,
-    DistributedFactorGraphs.SymbolDFG,
-    LightDFG]
+    ]
 for api in apis
     @testset "Testing Driver: $(api)" begin
         @info "Testing Driver: $(api)"
@@ -25,16 +40,34 @@ for api in apis
     end
 end
 
-# Test that we don't export LightDFG and MetaGraphsDFG
-@testset "Deprecated Drivers Test" begin
-    @test_throws UndefVarError SymbolDFG{NoSolverParams}()
-    @test_throws UndefVarError MetaGraphsDFG{NoSolverParams}()
+if get(ENV, "IIF_TEST", "") != "true"
+    @testset "Consolidation WIP Testing Driver: CloudGraphsDFG" begin
+        global decodePackedType
+        function decodePackedType(dfg::AbstractDFG, packeddata::GenericFunctionNodeData{PT,<:AbstractString}) where PT
+          # usrtyp = convert(FunctorInferenceType, packeddata.fnc)
+          # Also look at parentmodule
+          usrtyp = getfield(PT.name.module, Symbol(string(PT.name.name)[7:end]))
+          fulltype = DFG.FunctionNodeData{TestCCW{usrtyp}}
+          factordata = convert(fulltype, packeddata)
+          return factordata
+        end
+        @info "Testing Driver: CloudGraphsDFG"
+        global testDFGAPI = CloudGraphsDFG
+        include("consolInterfaceDev.jl")
+    end
 end
 
 # Test special cases
-
 @testset "Plotting Tests" begin
     include("plottingTest.jl")
+end
+
+@testset "Data Store Tests" begin
+    include("DataStoreTests.jl")
+end
+
+@testset "Needs-a-Home Tests" begin
+    include("needsahomeTests.jl")
 end
 
 @testset "LightDFG subtype tests" begin
@@ -48,11 +81,11 @@ end
     end
 end
 
+
 if get(ENV, "IIF_TEST", "") == "true"
 
-    Pkg.add("IncrementalInference")
-    # TODO: Remove this once we move to v0.5.0
-    Pkg.add(PackageSpec(name="IncrementalInference", rev="enhancement/compare_move_dfg"))
+    # Switch to our upstream test branch.
+    Pkg.add(PackageSpec(name="IncrementalInference", rev="upstream/dfg_integration_test"))
     @info "------------------------------------------------------------------------"
     @info "These tests are using IncrementalInference to do additional driver tests"
     @info "------------------------------------------------------------------------"
@@ -60,12 +93,11 @@ if get(ENV, "IIF_TEST", "") == "true"
     using IncrementalInference
 
     apis = [
-        GraphsDFG{NoSolverParams}(),
-        LightDFG{NoSolverParams}(),
-        # DistributedFactorGraphs.MetaGraphsDFG{NoSolverParams}(),
-        # DistributedFactorGraphs.SymbolDFG{NoSolverParams}(),
+        GraphsDFG{SolverParams}(),
+        LightDFG{SolverParams}(),
         CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
                                     "testUser", "testRobot", "testSession",
+                                    "Description of test Session",
                                     nothing,
                                     nothing,
                                     IncrementalInference.decodePackedType,
@@ -86,10 +118,64 @@ if get(ENV, "IIF_TEST", "") == "true"
         end
     end
 
+    @testset "IIF Compare Tests" begin
+        #run a copy of compare tests from IIF
+        include("iifCompareTests.jl")
+    end
+
     @testset "CGStructure Tests for CGDFG" begin
         # Run the CGStructure tests
         include("CGStructureTests.jl")
     end
+
+    # Simple graph solving test
+    @testset "Simple graph solving test" begin
+        # This is just to validate we're not going to blow up downstream.
+        apis = [
+            GraphsDFG{SolverParams}(params=SolverParams()),
+            LightDFG{SolverParams}(params=SolverParams())]
+        for api in apis
+            @info "Running simple solver test: $(typeof(api))"
+            global dfg = deepcopy(api)
+            include("solveTest.jl")
+        end
+    end
 else
     @warn "Skipping IncrementalInference driver tests"
+end
+
+
+struct NotImplementedDFG <: AbstractDFG end
+
+@testset "No Interface tests" begin
+    dfg = NotImplementedDFG()
+    v1 = SkeletonDFGVariable(:v1)
+    f1 = SkeletonDFGFactor(:f1)
+
+    @test_throws ErrorException exists(dfg, v1)
+    @test_throws ErrorException exists(dfg, f1)
+    #TODO FIXME
+    # @test_throws ErrorException exists(dfg, :s)
+    @test_throws ErrorException addVariable!(dfg, v1)
+    @test_throws ErrorException addFactor!(dfg, [v1, v1], f1)
+    @test_throws ErrorException addFactor!(dfg,[:a, :b], f1)
+    #TODO only implement addFactor!(dfg, f1)
+    @test_throws ErrorException getVariable(dfg, :a)
+    @test_throws ErrorException getFactor(dfg, :a)
+    @test_throws ErrorException updateVariable!(dfg, v1)
+    @test_throws ErrorException updateFactor!(dfg, f1)
+
+    @test_throws ErrorException deleteVariable!(dfg, :a)
+    @test_throws ErrorException deleteFactor!(dfg, :a)
+    @test_throws ErrorException getVariables(dfg)
+    @test_throws ErrorException getFactors(dfg)
+    @test_throws ErrorException isFullyConnected(dfg)
+    @test_throws ErrorException getNeighbors(dfg, v1)
+    @test_throws ErrorException getNeighbors(dfg, :a)
+
+    @test_throws ErrorException _getDuplicatedEmptyDFG(dfg)
+
+    @test_throws ErrorException isVariable(dfg, :a)
+    @test_throws ErrorException isFactor(dfg, :a)
+
 end

@@ -23,13 +23,13 @@ import LightGraphs.SimpleGraphs:
     SimpleEdge, fadj, badj
 
 export
-    FactorGraph,
+    FactorGraph
     # addVariable!,
     # addFactor!,
-    LightBayesGraph,
-    filter_edges,
-    filter_vertices,
-    reverse
+    # LightBayesGraph,
+    # filter_edges,
+    # filter_vertices,
+    # reverse
 
 # import DistributedFactorGraphs: DFGNode
 # const AbstractNodeType = DFGNode
@@ -61,7 +61,7 @@ end
 # fg = FactorGraph{Int, AbstractVariableType, AbstractFactorType}()
 
 FactorGraph() = FactorGraph{Int, AbstractVariableType, AbstractFactorType}()
-FactorGraph{V,F}() where {V <: AbstractVariableType, F <: AbstractFactorType} = FactorGraph{Int, V, F}()
+# FactorGraph{V,F}() where {V <: AbstractVariableType, F <: AbstractFactorType} = FactorGraph{Int, V, F}()
 
 
 function show(io::IO, g::FactorGraph)
@@ -95,11 +95,6 @@ zero(g::FactorGraph{T,V,F}) where {T,V,F} = FactorGraph{T,V,F}(0,0)
 
 # TODO issubset(g::T, h::T) where T <: FactorGraph = issubset(g.graph, h.graph)
 
-"""
-    add_edge!(g, u, v)
-    Add an edge `(u, v)` to FactorGraph `g`.
-    return true if the edge has been added, false otherwise
-"""
 @inline add_edge!(g::FactorGraph, x...) = add_edge!(g.graph, x...)
 
 @inline rem_edge!(g::FactorGraph, x...) = rem_edge!(g.graph, x...)

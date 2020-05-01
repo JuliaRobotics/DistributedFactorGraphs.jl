@@ -1,8 +1,9 @@
 """
-    $(SIGNATURES)
+$(TYPEDEF)
 Structure for a graph summary.
 """
-struct AbstractDFGSummary
+
+struct DFGSummary
   variables::Dict{Symbol, DFGVariableSummary}
   factors::Dict{Symbol, DFGFactorSummary}
   userId::String

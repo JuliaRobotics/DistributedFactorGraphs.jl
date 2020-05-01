@@ -2,7 +2,6 @@ module DFGPlots
 
 using Colors
 using LightGraphs
-using MetaGraphs
 using GraphPlot
 using DocStringExtensions
 import GraphPlot: gplot
@@ -25,7 +24,7 @@ end
 DFGPlotProps() = DFGPlotProps(  (var=colorant"seagreen", fac=colorant"cyan3"),
                                 (var=1.0, fac=0.3),
                                 (var=:box, fac=:elipse),
-                                spectral_layout,
+                                spring_layout,
                                 true)
 
 
@@ -42,7 +41,7 @@ using DistributedFactorGraphs, DistributedFactorGraphs.DFGPlots
 # ... Make graph...
 # Using GraphViz plotting
 dfgplot(fg)
-# Save to PDFG
+# Save to PDF
 using Compose
 draw(PDF("/tmp/graph.pdf", 16cm, 16cm), dfgplot(fg))
 ```
@@ -79,40 +78,7 @@ using DistributedFactorGraphs, DistributedFactorGraphs.DFGPlots
 # ... Make graph...
 # Using GraphViz plotting
 dfgplot(fg)
-# Save to PDFG
-using Compose
-draw(PDF("/tmp/graph.pdf", 16cm, 16cm), dfgplot(fg))
-```
-
-More information at [GraphPlot.jl](https://github.com/JuliaGraphs/GraphPlot.jl)
-"""
-function dfgplot(dfg::DistributedFactorGraphs.MetaGraphsDFG, p::DFGPlotProps = DFGPlotProps())
-    @info "Deprecated, please use GraphsDFG or LightDFG."
-    nodesize = [has_prop(dfg.g,i,:factor) ?  p.nodesize.fac : p.nodesize.var for i=vertices(dfg.g)]
-    if p.drawlabels
-        nodelabel = [has_prop(dfg.g,i,:factor) ? "" : string(get_prop(dfg.g,i,:label)) for i=vertices(dfg.g)]
-    else
-        nodelabel = nothing
-    end
-    nodefillc = [has_prop(dfg.g,i,:factor) ? p.nodefillc.fac : p.nodefillc.var for i=vertices(dfg.g)]
-
-    gplot(dfg.g, nodelabel=nodelabel, nodesize=nodesize, nodefillc=nodefillc, layout=p.layout)
-
-end
-
-"""
-    $(SIGNATURES)
-Plots the structure of the factor graph. GraphPlot must be imported before DistributedFactoGraphs for these functions to be available.
-Returns the plot context.
-
-E.g.
-```
-using GraphPlot
-using DistributedFactorGraphs, DistributedFactorGraphs.DFGPlots
-# ... Make graph...
-# Using GraphViz plotting
-dfgplot(fg)
-# Save to PDFG
+# Save to PDF
 using Compose
 draw(PDF("/tmp/graph.pdf", 16cm, 16cm), dfgplot(fg))
 ```
@@ -121,16 +87,9 @@ More information at [GraphPlot.jl](https://github.com/JuliaGraphs/GraphPlot.jl)
 """
 function dfgplot(dfg::AbstractDFG, p::DFGPlotProps = DFGPlotProps())
     # TODO implement convert functions
-    @warn "TODO Implement convert"
-    ldfg = LightDFG{AbstractParams}()
-    DistributedFactorGraphs._copyIntoGraph!(dfg, ldfg, union(getVariableIds(dfg), getFactorIds(dfg)), true)
-
+    ldfg = LightDFG{NoSolverParams}()
+    copyGraph!(ldfg, dfg, listVariables(dfg), listFactors(dfg), copyGraphMetadata=false)
     dfgplot(ldfg, p)
-end
-
-function gplot(dfg::DistributedFactorGraphs.MetaGraphsDFG; keyargs...)
-    @info "Deprecated, please use GraphsDFG or LightDFG."
-    gplot(dfg.g; keyargs...)
 end
 
 function gplot(dfg::LightDFG; keyargs...)

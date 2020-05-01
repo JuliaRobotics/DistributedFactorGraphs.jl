@@ -5,7 +5,7 @@ using SparseArrays
 using DocStringExtensions
 
 import ...DistributedFactorGraphs: AbstractDFG, DFGNode, AbstractParams, NoSolverParams, DFGVariable, DFGFactor
-# import DFG functions to exstend
+# import DFG functions to extend
 import ...DistributedFactorGraphs:  setSolverParams,
                                     getFactor,
                                     setDescription,
@@ -16,6 +16,8 @@ import ...DistributedFactorGraphs:  setSolverParams,
                                     addFactor!,
                                     getSolverParams,
                                     exists,
+                                    isVariable,
+                                    isFactor,
                                     getDescription,
                                     updateVariable!,
                                     updateFactor!,
@@ -32,8 +34,8 @@ import ...DistributedFactorGraphs:  setSolverParams,
                                     getNeighbors,
                                     getSubgraphAroundNode,
                                     getSubgraph,
-                                    getAdjacencyMatrix,
-                                    getAdjacencyMatrixSparse,
+                                    getIncidenceMatrix,
+                                    getIncidenceMatrixSparse,
                                     _getDuplicatedEmptyDFG
 
 include("SymbolFactorGraphs/SymbolFactorGraphs.jl")

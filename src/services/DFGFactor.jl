@@ -1,82 +1,152 @@
-import Base: convert
+##==============================================================================
+## Accessors
+##==============================================================================
 
-function convert(::Type{DFGFactorSummary}, f::DFGFactor)
-    return DFGFactorSummary(f.label, deepcopy(f.tags), f._internalId, deepcopy(f._variableOrderSymbols))
-end
+##==============================================================================
+## GenericFunctionNodeData
+##==============================================================================
 
-function packFactor(dfg::G, f::DFGFactor)::Dict{String, Any} where G <: AbstractDFG
-    # Construct the properties to save
-    props = Dict{String, Any}()
-    props["label"] = string(f.label)
-    props["tags"] = JSON2.write(f.tags)
-    # Pack the node data
-    fnctype = f.data.fnc.usrfnc!
-    try
-        packtype = getfield(_getmodule(fnctype), Symbol("Packed$(_getname(fnctype))"))
-        packed = convert(PackedFunctionNodeData{packtype}, f.data)
-        props["data"] = JSON2.write(packed)
-    catch ex
-        io = IOBuffer()
-        showerror(io, ex, catch_backtrace())
-        err = String(take!(io))
-        msg = "Error while packing '$(f.label)' as '$fnctype', please check the unpacking/packing converters for this factor - \r\n$err"
-        error(msg)
-    end
-    # Include the type
-    props["fnctype"] = String(_getname(fnctype))
-    props["_variableOrderSymbols"] = JSON2.write(f._variableOrderSymbols)
-    props["backendset"] = f.backendset
-    props["ready"] = f.ready
+## COMMON
+# getSolveInProgress
+# isSolveInProgress
 
-    return props
-end
+#TODO  getFactorFunction = getFactorType
+"""
+    $SIGNATURES
 
-function unpackFactor(dfg::G, packedProps::Dict{String, Any}, iifModule)::DFGFactor where G <: AbstractDFG
-    label = packedProps["label"]
-    tags = JSON2.read(packedProps["tags"], Vector{Symbol})
-
-    data = packedProps["data"]
-    @debug "Decoding $label..."
-    datatype = packedProps["fnctype"]
-    packtype = getfield(Main, Symbol("Packed"*datatype))
-    packed = nothing
-    fullFactor = nothing
-    try
-        packed = JSON2.read(data, GenericFunctionNodeData{packtype,String})
-        fullFactor = iifModule.decodePackedType(dfg, packed)
-    catch ex
-        io = IOBuffer()
-        showerror(io, ex, catch_backtrace())
-        err = String(take!(io))
-        msg = "Error while unpacking '$label' as '$datatype', please check the unpacking/packing converters for this factor - \r\n$err"
-        error(msg)
-    end
-
-    # Include the type
-    _variableOrderSymbols = JSON2.read(packedProps["_variableOrderSymbols"], Vector{Symbol})
-    backendset = packedProps["backendset"]
-    ready = packedProps["ready"]
-
-    # Rebuild DFGVariable
-    factor = DFGFactor{typeof(fullFactor.fnc), Symbol}(Symbol(label))
-    factor.tags = tags
-    factor.data = fullFactor
-    factor._variableOrderSymbols = _variableOrderSymbols
-    factor.ready = ready
-    factor.backendset = backendset
-
-    # GUARANTEED never to bite us in the ass in the future...
-    # ... TODO: refactor if changed: https://github.com/JuliaRobotics/IncrementalInference.jl/issues/350
-    factor.data.fncargvID = deepcopy(_variableOrderSymbols)
-
-    # Note, once inserted, you still need to call IIF.rebuildFactorMetadata!
-    return factor
+Return reference to the user factor in `<:AbstractDFG` identified by `::Symbol`.
+"""
+getFactorFunction(fcd::GenericFunctionNodeData) = fcd.fnc.usrfnc!
+getFactorFunction(fc::DFGFactor) = getFactorFunction(getSolverData(fc))
+function getFactorFunction(dfg::G, fsym::Symbol) where G <: AbstractDFG
+  getFactorFunction(getFactor(dfg, fsym))
 end
 
 """
-    $(SIGNATURES)
-Equality check for DFGFactor.
+    $SIGNATURES
+
+Return user factor type from factor graph identified by label `::Symbol`.
+
+Notes
+- Replaces older `getfnctype`.
 """
-function ==(a::DFGFactor, b::DFGFactor)::Bool
-    return compareFactor(a, b)
+getFactorType(data::GenericFunctionNodeData) = data.fnc.usrfnc!
+getFactorType(fct::DFGFactor) = getFactorType(getSolverData(fct))
+function getFactorType(dfg::G, lbl::Symbol) where G <: AbstractDFG
+  getFactorType(getFactor(dfg, lbl))
 end
+
+##==============================================================================
+## Factors
+##==============================================================================
+# |                   | label | tags | timestamp | solvable | solverData |
+# |-------------------|:-----:|:----:|:---------:|:--------:|:----------:|
+# | SkeletonDFGFactor |   X   |   x  |           |          |            |
+# | DFGFactorSummary  |   X   |   X  |     X     |          |            |
+# | DFGFactor         |   X   |   X  |     X     |     X    |      X     |
+
+##------------------------------------------------------------------------------
+## label
+##------------------------------------------------------------------------------
+
+## COMMON
+# getLabel
+
+##------------------------------------------------------------------------------
+## tags
+##------------------------------------------------------------------------------
+
+## COMMON
+# getTags
+# setTags!
+
+##------------------------------------------------------------------------------
+## timestamp
+##------------------------------------------------------------------------------
+
+## COMMON
+# getTimestamp
+
+
+function setTimestamp(f::DFGFactor, ts::DateTime)
+    return DFGFactor(f.label, ts, f.tags, f.solverData, f.solvable, f._dfgNodeParams, f._variableOrderSymbols)
+end
+
+function setTimestamp(f::DFGFactorSummary, ts::DateTime)
+    return DFGFactorSummary(f.label, ts, f.tags, f._internalId, f._variableOrderSymbols)
+end
+
+setTimestamp!(f::FactorDataLevel1, ts::DateTime) = f.timestamp = ts
+
+
+##------------------------------------------------------------------------------
+## solvable
+##------------------------------------------------------------------------------
+
+## COMMON
+# getSolvable
+# setSolvable!
+# isSolvable
+
+##------------------------------------------------------------------------------
+## _dfgNodeParams [solvable _internalId]
+##------------------------------------------------------------------------------
+
+## COMMON
+# getInternalId
+
+
+##------------------------------------------------------------------------------
+## _variableOrderSymbols
+##------------------------------------------------------------------------------
+
+#TODO perhaps making _variableOrderSymbols imutable (NTuple) will be a save option
+"""
+$SIGNATURES
+
+Get the variable ordering for this factor.
+Should be equivalent to getNeighbors unless something was deleted in the graph.
+"""
+getVariableOrder(fct::DFGFactor)::Vector{Symbol} = fct._variableOrderSymbols
+getVariableOrder(dfg::AbstractDFG, fct::Symbol) = getVariableOrder(getFactor(dfg, fct))
+
+##------------------------------------------------------------------------------
+## solverData
+##------------------------------------------------------------------------------
+
+"""
+    $SIGNATURES
+
+Retrieve solver data structure stored in a factor.
+"""
+function getSolverData(f::F) where F <: DFGFactor
+  return f.solverData
+end
+
+#TODO don't know if this is used, added for completeness
+setSolverData!(f::DFGFactor, data::GenericFunctionNodeData) = f.solverData = data
+
+
+##------------------------------------------------------------------------------
+## utility
+##------------------------------------------------------------------------------
+
+
+"""
+    $SIGNATURES
+
+Return `::Bool` on whether given factor `fc::Symbol` is a prior in factor graph `dfg`.
+"""
+function isPrior(dfg::G, fc::Symbol)::Bool where G <: AbstractDFG
+  fco = getFactor(dfg, fc)
+  getFactorType(fco) isa FunctorSingleton
+end
+
+
+##==============================================================================
+## Layer 2 CRUD (none) and Sets
+##==============================================================================
+
+##==============================================================================
+## TAGS - See CommonAccessors
+##==============================================================================

@@ -1,47 +1,57 @@
 
 """
-    $(SIGNATURES)
+$(TYPEDEF)
 Abstract parent struct for DFG variables and factors.
 """
 abstract type DFGNode
 end
 
 """
-    $(SIGNATURES)
+$(TYPEDEF)
 An abstract DFG variable.
 """
 abstract type AbstractDFGVariable <: DFGNode
 end
 
 """
-    $(SIGNATURES)
+$(TYPEDEF)
 An abstract DFG factor.
 """
 abstract type AbstractDFGFactor <: DFGNode
 end
 
 """
-    $(SIGNATURES)
+$(TYPEDEF)
+The common node parameters for variables and factors.
+"""
+mutable struct DFGNodeParams
+    solvable::Int
+    _internalId::Int64
+    DFGNodeParams(s1=0,s2=0) = new(s1,s2)
+end
+
+"""
+$(TYPEDEF)
 Abstract parent struct for a DFG graph.
 """
 abstract type AbstractDFG
 end
 
 """
-    $(SIGNATURES)
+$(TYPEDEF)
 Abstract parent struct for solver parameters.
 """
 abstract type AbstractParams end
 
 """
-    $(SIGNATURES)
+$(TYPEDEF)
 Empty structure for solver parameters.
 """
-mutable struct NoSolverParams <: AbstractParams
+struct NoSolverParams <: AbstractParams
 end
 
 """
-    $(TYPEDEF)
+$(TYPEDEF)
 Abstract parent struct for big data entry.
 """
 abstract type AbstractBigDataEntry end

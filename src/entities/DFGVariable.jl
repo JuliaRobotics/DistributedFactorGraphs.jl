@@ -1,52 +1,119 @@
-#TODO don't know what to do if it is uninitalized
-#so for now defining a Singleton for the default
-struct SingletonInferenceVariable <: InferenceVariable end
+##==============================================================================
+## Abstract Types
+##==============================================================================
+
+abstract type InferenceVariable end
+
+##==============================================================================
+## VariableNodeData
+##==============================================================================
 
 """
 $(TYPEDEF)
-"""
-mutable struct VariableNodeData #TODO v0.5.0 {T<:InferenceVariable}
-  val::Array{Float64,2}
-  bw::Array{Float64,2}
-  BayesNetOutVertIDs::Array{Symbol,1}
-  dimIDs::Array{Int,1} # Likely deprecate
-  dims::Int
-  eliminated::Bool
-  BayesNetVertID::Symbol #  Union{Nothing, }
-  separator::Array{Symbol,1}
-  softtype::InferenceVariable #TODO v0.5.0 T
-  initialized::Bool
-  inferdim::Float64
-  ismargin::Bool
-  dontmargin::Bool
-  # Tonio surprise TODO
-  # frontalonly::Bool
-  # A valid, packable default constructor is needed.
+Data container for solver-specific data.
 
+  ---
+Fields:
+$(TYPEDFIELDS)
+"""
+mutable struct VariableNodeData{T<:InferenceVariable}
+    val::Array{Float64,2}
+    bw::Array{Float64,2}
+    BayesNetOutVertIDs::Array{Symbol,1}
+    dimIDs::Array{Int,1} # Likely deprecate
+    dims::Int
+    eliminated::Bool
+    BayesNetVertID::Symbol #  Union{Nothing, }
+    separator::Array{Symbol,1}
+    softtype::T
+    initialized::Bool
+    inferdim::Float64
+    ismargin::Bool
+    dontmargin::Bool
+    solveInProgress::Int
+    solvedCount::Int
+    events::Dict{Symbol,Threads.Condition}
+    VariableNodeData{T}() where {T <:InferenceVariable} =
+    new{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], T(), false, 0.0, false, false, 0, 0, Dict{Symbol,Threads.Condition}())
+    VariableNodeData{T}(val::Array{Float64,2},
+                        bw::Array{Float64,2},
+                        BayesNetOutVertIDs::Array{Symbol,1},
+                        dimIDs::Array{Int,1},
+                        dims::Int,eliminated::Bool,
+                        BayesNetVertID::Symbol,
+                        separator::Array{Symbol,1},
+                        softtype::T,
+                        initialized::Bool,
+                        inferdim::Float64,
+                        ismargin::Bool,
+                        dontmargin::Bool,
+                        solveInProgress::Int=0,
+                        solvedCount::Int=0,
+                        events::Dict{Symbol,Threads.Condition}=Dict{Symbol,Threads.Condition}()) where T <: InferenceVariable =
+                            new{T}(val,bw,BayesNetOutVertIDs,dimIDs,dims,
+                                   eliminated,BayesNetVertID,separator,
+                                   softtype::T,initialized,inferdim,ismargin,
+                                   dontmargin, solveInProgress, solvedCount, events)
 end
-VariableNodeData() = VariableNodeData(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], SingletonInferenceVariable(), false, 0.0, false, false)
+
+##------------------------------------------------------------------------------
+## Constructors
+
+VariableNodeData(val::Array{Float64,2},
+                 bw::Array{Float64,2},
+                 BayesNetOutVertIDs::Array{Symbol,1},
+                 dimIDs::Array{Int,1},
+                 dims::Int,eliminated::Bool,
+                 BayesNetVertID::Symbol,
+                 separator::Array{Symbol,1},
+                 softtype::T,
+                 initialized::Bool,
+                 inferdim::Float64,
+                 ismargin::Bool,
+                 dontmargin::Bool,
+                 solveInProgress::Int=0,
+                 solvedCount::Int=0) where T <: InferenceVariable =
+                   VariableNodeData{T}(val,bw,BayesNetOutVertIDs,dimIDs,dims,
+                                       eliminated,BayesNetVertID,separator,
+                                       softtype::T,initialized,inferdim,ismargin,
+                                       dontmargin, solveInProgress, solvedCount)
+
+
+VariableNodeData(softtype::T) where T <: InferenceVariable =
+    VariableNodeData{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], softtype, false, 0.0, false, false, 0, 0)
+
+##==============================================================================
+## PackedVariableNodeData.jl
+##==============================================================================
 
 """
 $(TYPEDEF)
+Packed VariabeNodeData structure for serializing DFGVariables.
+
+  ---
+Fields:
+$(TYPEDFIELDS)
 """
 mutable struct PackedVariableNodeData
-  vecval::Array{Float64,1}
-  dimval::Int
-  vecbw::Array{Float64,1}
-  dimbw::Int
-  BayesNetOutVertIDs::Array{Symbol,1} # Int
-  dimIDs::Array{Int,1}
-  dims::Int
-  eliminated::Bool
-  BayesNetVertID::Symbol # Int
-  separator::Array{Symbol,1} # Int
-  softtype::String
-  initialized::Bool
-  inferdim::Float64
-  ismargin::Bool
-  dontmargin::Bool
-  PackedVariableNodeData() = new()
-  PackedVariableNodeData(x1::Vector{Float64},
+    vecval::Array{Float64,1}
+    dimval::Int
+    vecbw::Array{Float64,1}
+    dimbw::Int
+    BayesNetOutVertIDs::Array{Symbol,1} # Int
+    dimIDs::Array{Int,1}
+    dims::Int
+    eliminated::Bool
+    BayesNetVertID::Symbol # Int
+    separator::Array{Symbol,1} # Int
+    softtype::String
+    initialized::Bool
+    inferdim::Float64
+    ismargin::Bool
+    dontmargin::Bool
+    solveInProgress::Int
+    solvedCount::Int
+    PackedVariableNodeData() = new()
+    PackedVariableNodeData(x1::Vector{Float64},
                          x2::Int,
                          x3::Vector{Float64},
                          x4::Int,
@@ -60,11 +127,24 @@ mutable struct PackedVariableNodeData
                          x12::Bool,
                          x13::Float64,
                          x14::Bool,
-                         x15::Bool ) = new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15)
+                         x15::Bool,
+                         x16::Int,
+                         solvedCount::Int) = new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16, solvedCount)
 end
 
-# AbstractPointParametricEst interface
+##==============================================================================
+## PointParametricEst
+##==============================================================================
+
+##------------------------------------------------------------------------------
+## AbstractPointParametricEst interface
+##------------------------------------------------------------------------------
+
 abstract type AbstractPointParametricEst end
+
+##------------------------------------------------------------------------------
+## MeanMaxPPE
+##------------------------------------------------------------------------------
 """
     $TYPEDEF
 
@@ -72,124 +152,168 @@ Data container to store Parameteric Point Estimate (PPE) for mean and max.
 """
 struct MeanMaxPPE <: AbstractPointParametricEst
     solverKey::Symbol #repeated because of Sam's request
+    suggested::Vector{Float64}
     max::Vector{Float64}
     mean::Vector{Float64}
     lastUpdatedTimestamp::DateTime
 end
-MeanMaxPPE(solverKey::Symbol,max::Vector{Float64},mean::Vector{Float64}) = MeanMaxPPE(solverKey, max, mean, now())
+##------------------------------------------------------------------------------
+## Constructors
 
-getMaxPPE(est::AbstractPointParametricEst) = est.max
-getMeanPPE(est::AbstractPointParametricEst) = est.mean
-getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimestamp
-
-
-VariableEstimate(params...) = errror("VariableEstimate is depreciated, please use MeanMaxPPE")
+MeanMaxPPE(solverKey::Symbol, suggested::Vector{Float64}, max::Vector{Float64},mean::Vector{Float64}) = MeanMaxPPE(solverKey, suggested, max, mean, now())
 
 
+##==============================================================================
+## DFG Variables
+##==============================================================================
+
+##------------------------------------------------------------------------------
+## DFGVariable lv2
+##------------------------------------------------------------------------------
 """
-    $(TYPEDEF)
-Fundamental structure for a DFG variable with fields:
+$(TYPEDEF)
+Complete variable structure for a DistributedFactorGraph variable.
+
+  ---
+Fields:
 $(TYPEDFIELDS)
 """
-mutable struct DFGVariable <: AbstractDFGVariable
+struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
+    """Variable label, e.g. :x1.
+    Accessor: [`getLabel`](@ref)"""
     label::Symbol
+    """Variable timestamp.
+    Accessors: [`getTimestamp`](@ref), [`setTimestamp`](@ref)"""
     timestamp::DateTime
-    tags::Vector{Symbol}
-    estimateDict::Dict{Symbol, <: AbstractPointParametricEst}
-    solverDataDict::Dict{Symbol, VariableNodeData}
-    smallData::Dict{String, String}
+    """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
+    Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
+    tags::Set{Symbol}
+    """Dictionary of parametric point estimates keyed by solverDataDict keys
+    Accessors: [`addPPE!`](@ref), [`updatePPE!`](@ref), and [`deletePPE!`](@ref)"""
+    ppeDict::Dict{Symbol, <: AbstractPointParametricEst}
+    """Dictionary of solver data. May be a subset of all solutions if a solver key was specified in the get call.
+    Accessors: [`addVariableSolverData!`](@ref), [`updateVariableSolverData!`](@ref), and [`deleteVariableSolverData!`](@ref)"""
+    solverDataDict::Dict{Symbol, VariableNodeData{T}}
+    """Dictionary of small data associated with this variable.
+    Accessors: [`getSmallData`](@ref), [`setSmallData!`](@ref)"""
+    smallData::Dict{String, String}#Ref{Dict{String, String}} #why was Ref here?
+    """Dictionary of large data associated with this variable.
+    Accessors: [`addBigDataEntry!`](@ref), [`getBigDataEntry`](@ref), [`updateBigDataEntry!`](@ref), and [`deleteBigDataEntry!`](@ref)"""
     bigData::Dict{Symbol, AbstractBigDataEntry}
-    ready::Int
-    backendset::Int
-    _internalId::Int64
+    """Mutable parameters for the variable. We suggest using accessors to get to this data.
+    Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)"""
+    _dfgNodeParams::DFGNodeParams
 end
 
-"""
-    $SIGNATURES
-DFGVariable constructors.
-"""
-DFGVariable(label::Symbol, _internalId::Int64) =
-        DFGVariable(label, now(), Symbol[], Dict{Symbol, MeanMaxPPE}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), Dict{String, String}(), Dict{Symbol,AbstractBigDataEntry}(), 0, 0, _internalId)
-
-DFGVariable(label::Symbol) =
-        DFGVariable(label, now(), Symbol[], Dict{Symbol, MeanMaxPPE}(), Dict{Symbol, VariableNodeData}(:default => VariableNodeData()), Dict{String, String}(), Dict{Symbol,AbstractBigDataEntry}(), 0, 0, 0)
-
-# Accessors
-label(v::DFGVariable) = v.label
-timestamp(v::DFGVariable) = v.timestamp
-tags(v::DFGVariable) = v.tags
-estimates(v::DFGVariable) = v.estimateDict
-estimate(v::DFGVariable, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
+##------------------------------------------------------------------------------
+## Constructors
 
 """
     $SIGNATURES
+The default DFGVariable constructor.
+"""
+DFGVariable(label::Symbol, softtype::T;
+            timestamp::DateTime=now(),
+            tags::Set{Symbol}=Set{Symbol}(),
+            estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
+            solverDataDict::Dict{Symbol, VariableNodeData{T}}=Dict{Symbol, VariableNodeData{T}}(),
+            smallData::Dict{String, String}=Dict{String, String}(),
+            bigData::Dict{Symbol, AbstractBigDataEntry}=Dict{Symbol,AbstractBigDataEntry}(),
+            solvable::Int=1,
+            _internalId::Int64=0) where {T <: InferenceVariable} =
+    DFGVariable{T}(label, timestamp, tags, estimateDict, solverDataDict, smallData, bigData, DFGNodeParams(solvable, _internalId))
 
-Retrieve the soft type name symbol for a DFGVariable or DFGVariableSummary. ie :Point2, Pose2, etc.
-"""
-softtype(v::DFGVariable)::Symbol = Symbol(typeof(getSofttype(v)))
 
-"""
-    $SIGNATURES
+DFGVariable(label::Symbol,
+            solverData::VariableNodeData{T};
+            timestamp::DateTime=now(),
+            tags::Set{Symbol}=Set{Symbol}(),
+            estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
+            smallData::Dict{String, String}=Dict{String, String}(),
+            bigData::Dict{Symbol, AbstractBigDataEntry}=Dict{Symbol,AbstractBigDataEntry}(),
+            solvable::Int=1,
+            _internalId::Int64=0) where {T <: InferenceVariable} =
+    DFGVariable{T}(label, timestamp, tags, estimateDict, Dict{Symbol, VariableNodeData{T}}(:default=>solverData), smallData, bigData, DFGNodeParams(solvable, _internalId))
 
-Retrieve solver data structure stored in a variable.
-"""
-solverData(v::DFGVariable, key::Symbol=:default) = haskey(v.solverDataDict, key) ? v.solverDataDict[key] : nothing
-"""
-    $SIGNATURES
-
-Retrieve data structure stored in a variable.
-"""
-function getData(v::DFGVariable; solveKey::Symbol=:default)::VariableNodeData
-  @warn "getData is deprecated, please use solverData()"
-  return v.solverDataDict[solveKey]
+##------------------------------------------------------------------------------
+function Base.copy(o::DFGVariable)::DFGVariable
+    return DFGVariable(o.label, getSofttype(o)(), tags=copy(o.tags), estimateDict=copy(o.estimateDict),
+                        solverDataDict=copy(o.solverDataDict), smallData=copy(o.smallData),
+                        bigData=copy(o.bigData), solvable=getSolvable(o), _internalId=getInternalId(o))
 end
-"""
-    $SIGNATURES
 
-Set solver data structure stored in a variable.
-"""
-setSolverData(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v.solverDataDict[key] = data
-solverDataDict(v::DFGVariable) = v.solverDataDict
-internalId(v::DFGVariable) = v._internalId
-# Todo: Complete this.
-smallData(v::DFGVariable) = v.smallData
-bigData(v::DFGVariable) = v.bigData
+##------------------------------------------------------------------------------
+## DFGVariableSummary lv1
+##------------------------------------------------------------------------------
 
 """
-    $(SIGNATURES)
-Structure for first-class citizens of a DFGVariable.
+$(TYPEDEF)
+Summary variable structure for a DistributedFactorGraph variable.
+
+  ---
+Fields:
+$(TYPEDFIELDS)
 """
-mutable struct DFGVariableSummary <: AbstractDFGVariable
+struct DFGVariableSummary <: AbstractDFGVariable
+    """Variable label, e.g. :x1.
+    Accessor: [`getLabel`](@ref)"""
     label::Symbol
+    """Variable timestamp.
+    Accessors: [`getTimestamp`](@ref), [`setTimestamp`](@ref)"""
     timestamp::DateTime
-    tags::Vector{Symbol}
-    estimateDict::Dict{Symbol, <:AbstractPointParametricEst}
+    """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
+    Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
+    tags::Set{Symbol}
+    """Dictionary of parametric point estimates keyed by solverDataDict keys
+    Accessors: [`addPPE!`](@ref), [`updatePPE!`](@ref), and [`deletePPE!`](@ref)"""
+    ppeDict::Dict{Symbol, <:AbstractPointParametricEst}
+    """Symbol for the softtype for the underlying variable.
+    Accessor: [`getSofttype`](@ref)"""
     softtypename::Symbol
+    """Dictionary of large data associated with this variable.
+    Accessors: [`addBigDataEntry!`](@ref), [`getBigDataEntry`](@ref), [`updateBigDataEntry!`](@ref), and [`deleteBigDataEntry!`](@ref)"""
+    bigData::Dict{Symbol, AbstractBigDataEntry}
+    """Internal ID used by some of the DFG drivers. We don't suggest using this outside of DFG."""
     _internalId::Int64
 end
-label(v::DFGVariableSummary) = v.label
-timestamp(v::DFGVariableSummary) = v.timestamp
-tags(v::DFGVariableSummary) = v.tags
-estimates(v::DFGVariableSummary) = v.estimateDict
-estimate(v::DFGVariableSummary, key::Symbol=:default) = haskey(v.estimateDict, key) ? v.estimateDict[key] : nothing
-softtype(v::DFGVariableSummary)::Symbol = v.softtypename
-internalId(v::DFGVariableSummary) = v._internalId
 
+##------------------------------------------------------------------------------
+## SkeletonDFGVariable.jl
+##------------------------------------------------------------------------------
 
-
-# SKELETON DFG
 """
-	$(TYPEDEF)
-Skeleton factor with essentials.
+$(TYPEDEF)
+Skeleton variable structure for a DistributedFactorGraph variable.
+
+  ---
+Fields:
+$(TYPEDFIELDS)
 """
-struct SkeletonDFGFactor <: AbstractDFGFactor
+struct SkeletonDFGVariable <: AbstractDFGVariable
+    """Variable label, e.g. :x1.
+    Accessor: [`getLabel`](@ref)"""
     label::Symbol
-	tags::Vector{Symbol}
-	_variableOrderSymbols::Vector{Symbol}
+    """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
+    Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
+    tags::Set{Symbol}
 end
 
-#NOTE I feel like a want to force a variableOrderSymbols
-SkeletonDFGFactor(label::Symbol, variableOrderSymbols::Vector{Symbol} = Symbol[]) = SkeletonDFGFactor(label, Symbol[], variableOrderSymbols)
+SkeletonDFGVariable(label::Symbol) = SkeletonDFGVariable(label, Set{Symbol}())
 
-label(f::SkeletonDFGFactor) = f.label
-tags(f::SkeletonDFGFactor) = f.tags
+
+##==============================================================================
+# Define variable levels
+##==============================================================================
+const VariableDataLevel0 = Union{DFGVariable, DFGVariableSummary, SkeletonDFGVariable}
+const VariableDataLevel1 = Union{DFGVariable, DFGVariableSummary}
+const VariableDataLevel2 = Union{DFGVariable}
+
+##==============================================================================
+## Convertion constructors
+##==============================================================================
+
+DFGVariableSummary(v::DFGVariable) =
+        DFGVariableSummary(v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.ppeDict), Symbol(typeof(getSofttype(v))), v.bigData, v._internalId)
+
+SkeletonDFGVariable(v::VariableDataLevel1) =
+            SkeletonDFGVariable(v.label, deepcopy(v.tags))

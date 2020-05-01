@@ -1,9 +1,8 @@
 # DistributedFactorGraphs.jl
 
-[![Build Status](https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl.svg?branch=master)](https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl)
-[![Codecov Status](https://codecov.io/gh/JuliaRobotics/DistributedFactorGraphs.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaRobotics/DistributedFactorGraphs.jl)
-[![Coverage Status](https://img.shields.io/coveralls/JuliaRobotics/DistributedFactorGraphs.jl.svg)](https://coveralls.io/r/JuliaRobotics/DistributedFactorGraphs.jl?branch=master)
-[![docs](https://img.shields.io/badge/docs-latest-blue.svg)](http://juliarobotics.github.io/DistributedFactorGraphs.jl/latest/)
+Release v0.7 | Dev | Coverage | Docs
+---------|-----|----------|------
+[![Build Status](https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl.svg?branch=release/v0.7)](https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl) |  [![Build Status](https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl.svg?branch=master)](https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl) | [![Codecov Status](https://codecov.io/gh/JuliaRobotics/DistributedFactorGraphs.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaRobotics/DistributedFactorGraphs.jl) | [![docs](https://img.shields.io/badge/docs-latest-blue.svg)](http://juliarobotics.github.io/DistributedFactorGraphs.jl/latest/)
 
 DistributedFactorGraphs.jl provides a flexible factor graph API for use in the [Caesar.jl](https://github.com/JuliaRobotics/Caesar.jl) ecosystem. The package supplies:
 * A standardized API for interacting with factor graphs
@@ -23,7 +22,7 @@ add DistributedFactorGraphs
 
 # Usage
 DistributedFactorGraphs (DFG) currently supports two implementations:
-* An in-memory factor graph based on Graphs.jl
+* An in-memory factor graphs based on Graphs.jl and LightGraphs.jl
 * A Neo4j-based factor graph based on Neo4j.jl
 
 The in-memory implementation is the default. The Neo4j driver can be enabled by importing Neo4j before DFG:
@@ -59,17 +58,17 @@ addFactor!(dfg, [v1, v2], DFGFactor{Int, :Symbol}(:f1)) # Rather use a RoME-type
 Please see the documentation for more information on interacting with the factor graph.
 
 ## Setting up a Quick Neo4j Database
-The simplest way to set up a test database is with Docker.
+The simplest way to set up a test database is with Docker. The Neo4j driver currenly doesn't work with Neo4j 4.0, version 3.5 can be used as in this example.
 
 To pull the Neo4j image:
 ```bash
-docker pull neo4j
+docker pull neo4j:3.5
 ```
 
 To run the image with user `neo4j` and password `test`:
 
 ```bash
-docker run -d --publish=7474:7474 --publish=7687:7687 --env NEO4J_AUTH=neo4j/test neo4j
+docker run -d --publish=7474:7474 --publish=7687:7687 --env NEO4J_AUTH=neo4j/test neo4j:3.5
 ```
 
 > **Note** If you just installed docker and having permission issues, please see [this ask Ubuntu forum](https://askubuntu.com/questions/941816/permission-denied-when-running-docker-after-installing-it-as-a-snap).

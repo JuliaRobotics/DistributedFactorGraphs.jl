@@ -30,13 +30,13 @@ Create an in-memory LightDFG with the following parameters:
 """
 function LightDFG{T,V,F}(g::FactorGraph{Int,V,F}=FactorGraph{Int,V,F}();
                            description::String="LightGraphs.jl implementation",
-                           userId::String="User ID",
-                           robotId::String="Robot ID",
-                           sessionId::String="Session ID",
+                           userId::String="UserID",
+                           robotId::String="RobotID",
+                           sessionId::String="SessionID",
                            userData::Dict{Symbol, String} = Dict{Symbol, String}(),
                            robotData::Dict{Symbol, String} = Dict{Symbol, String}(),
                            sessionData::Dict{Symbol, String} = Dict{Symbol, String}(),
-                           params::T=NoSolverParams()) where {T <: AbstractParams, V <:AbstractDFGVariable, F<:AbstractDFGFactor}
+                           params::T=T()) where {T <: AbstractParams, V <:AbstractDFGVariable, F<:AbstractDFGFactor}
 
     LightDFG{T,V,F}(g, description, userId, robotId, sessionId, userData, robotData, sessionData, Symbol[], params)
 end
@@ -50,21 +50,30 @@ Create an in-memory LightDFG with the following parameters:
 - V: Variable type
 - F: Factor type
 """
-LightDFG{T}(g::FactorGraph{Int,DFGVariable,DFGFactor}=FactorGraph{Int,DFGVariable,DFGFactor}(); kwargs...) where T <: AbstractParams = LightDFG{T,DFGVariable,DFGFactor}(g; kwargs...)
+LightDFG{T}(g::FactorGraph{Int,DFGVariable,DFGFactor}=FactorGraph{Int,DFGVariable,DFGFactor}(); kwargs...) where T <: AbstractParams =
+        LightDFG{T,DFGVariable,DFGFactor}(g; kwargs...)
 
-Base.propertynames(x::LightDFG, private::Bool=false) =
-    (:g, :description, :userId, :robotId, :sessionId, :nodeCounter, :labelDict, :addHistory, :solverParams)
-        # (private ? fieldnames(typeof(x)) : ())...)
+LightDFG(g::FactorGraph{Int,DFGVariable,DFGFactor}=FactorGraph{Int,DFGVariable,DFGFactor}(); params::T=NoSolverParams(), kwargs...)  where T =
+        LightDFG{T,DFGVariable,DFGFactor}(g; params=params, kwargs...)
 
-Base.getproperty(x::LightDFG,f::Symbol) = begin
-    if f == :nodeCounter
-        @error "Field nodeCounter depreciated. returning number of nodes"
-        nv(x.g)
-    elseif f == :labelDict
-        @error "Field labelDict depreciated. Consider using exists(dfg,label) or getLabelDict(dfg) instead. Returning internals copy"
-        #TODO: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/111
-        copy(x.g.labels.sym_int)
-    else
-        getfield(x,f)
-    end
-end
+
+LightDFG(description::String,
+         userId::String,
+         robotId::String,
+         sessionId::String,
+         userData::Dict{Symbol, String},
+         robotData::Dict{Symbol, String},
+         sessionData::Dict{Symbol, String},
+         solverParams::AbstractParams) =
+         LightDFG(FactorGraph{Int,DFGVariable,DFGFactor}(), description, userId, robotId, sessionId, userData, robotData, sessionData, Symbol[], solverParams)
+
+
+LightDFG{T,V,F}(description::String,
+                userId::String,
+                robotId::String,
+                sessionId::String,
+                userData::Dict{Symbol, String},
+                robotData::Dict{Symbol, String},
+                sessionData::Dict{Symbol, String},
+                solverParams::T) where {T <: AbstractParams, V <:AbstractDFGVariable, F<:AbstractDFGFactor} =
+                LightDFG(FactorGraph{Int,V,F}(), description, userId, robotId, sessionId, userData, robotData, sessionData, Symbol[], solverParams)

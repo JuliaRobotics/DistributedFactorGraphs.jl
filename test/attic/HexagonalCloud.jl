@@ -50,10 +50,10 @@ tree, smtasks = solveTree!(localFg)
 # Checking estimates
 for variable in getVariables(localFg)
     @show variable.label
-    @show variable.estimateDict
+    @show variable.ppeDict
 
     # means = mean(getData(variable).val, dims=2)[:]
-    # variable.estimateDict[:default] = Dict{Symbol, VariableEstimate}(:Mean => VariableEstimate(:default, :Mean, means, now()))
+    # variable.ppeDict[:default] = Dict{Symbol, VariableEstimate}(:Mean => VariableEstimate(:default, :Mean, means, now()))
 end
 
 bel = getKDE(getVariable(localFg, :x0))

@@ -42,6 +42,7 @@ So can make orderProperty = label or id.
 """
 function _getLabelsFromCyphonQuery(neo4jInstance::Neo4jInstance, matchCondition::String, orderProperty::String="")::Vector{Symbol}
     query = "match $matchCondition return distinct(node.label) $(orderProperty != "" ? "order by node.$orderProperty" : "")";
+    @debug "[Query] $query"
     result = _queryNeo4j(neo4jInstance, query)
     nodeIds = map(node -> node["row"][1], result.results[1]["data"])
     return Symbol.(nodeIds)
@@ -54,9 +55,10 @@ Get a node property - returns nothing if not found
 """
 function _getNodeProperty(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String}, property::String)
     query = "match (n:$(join(nodeLabels, ":"))) return n.$property"
+    @debug "[Query] $query"
     result = DistributedFactorGraphs._queryNeo4j(neo4jInstance, query)
-    length(result.results[1]["data"]) != 1 && return 0
-    length(result.results[1]["data"][1]["row"]) != 1 && return 0
+    length(result.results[1]["data"]) != 1 && error("No data returned from the query.")
+    length(result.results[1]["data"][1]["row"]) != 1 && error("No data returned from the query.")
     return result.results[1]["data"][1]["row"][1]
 end
 
@@ -64,8 +66,15 @@ end
 $(SIGNATURES)
 Set a node property - returns count of changed nodes.
 """
-function _setNodeProperty(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String}, property::String, value::String)
-    query = "match (n:$(join(nodeLabels, ":"))) set n.$property = \"$value\" return count(n)"
+function _setNodeProperty(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String}, property::String, value::Union{String, Int, Float64})
+    if value isa String
+        value = "\""*replace(value, "\"" => "\\\"")*"\"" # Escape strings
+    end
+    query = """
+    match (n:$(join(nodeLabels, ":")))
+    set n.$property = $value
+    return count(n)"""
+    @debug "[Query] $query"
     result = DistributedFactorGraphs._queryNeo4j(neo4jInstance, query)
     length(result.results[1]["data"]) != 1 && return 0
     length(result.results[1]["data"][1]["row"]) != 1 && return 0
@@ -116,32 +125,6 @@ function _getNeoNodesFromCyphonQuery(neo4jInstance::Neo4jInstance, matchConditio
     return nodes
 end
 
-"""
-$(SIGNATURES)
-Utility function to get a Neo4j node for a robot.
-"""
-function _getRobotNeoNodeForUser(neo4jInstance::Neo4jInstance, userId::String, robotId::String)::Neo4j.Node
-    # 2. Perform the transactionfunction _getLatestPoseForSession(userId::String, robotId::String, sessionId::String)::Neo4j.Node
-    nodes = _getNeoNodesFromCyphonQuery(neo4jInstance, "(u:USER:$userId)-[:ROBOT]->(node:ROBOT:$robotId)")
-    if(length(nodes) != 1)
-        throw("Expected a single robot with ID '$robotId', retrieved $(length(nodes)). Should only be a single node")
-    end
-    return nodes[1]
-end
-
-"""
-$(SIGNATURES)
-Utility function to get a user root node given an ID.
-"""
-function _getUserNeoNode(neo4jInstance::Neo4jInstance, userId::String)::Neo4j.Node
-    # 2. Perform the transaction
-    nodes = _getNeoNodesFromCyphonQuery(neo4jInstance, "(node:USER:$userId)")
-    if(length(nodes) != 1)
-        error("Expected one user node with labels $userId and USER, received $(length(nodes)).")
-    end
-    return nodes[1]
-end
-
 
 """
 $(SIGNATURES)
@@ -173,29 +156,36 @@ function _bindSessionNodeToInitialVariable(neo4jInstance::Neo4jInstance, userId:
     return nothing
 end
 
-"""
-$(SIGNATURES)
-Utility function to get a Neo4j node for a session.
-"""
-function _getSessionNeoNodeForRobot(userId::String, robotId::String, sessionId::String)::Neo4j.Node
-    sessions = _getSessionNeoNodesForRobot(userId, robotId)
-    for session in sessions
-        sessionLabels = getnodelabels(session)
-        if(sessionId in sessionLabels)
-            return session
-        end
-    end
-    error("Cannot find session $sessionId associated with robot $robotId and user $userId")
-end
+# TODO JT merge conflict, Should be able to delete, master does not have this and PR didn't add it
+# """
+# $(SIGNATURES)
+# Utility function to get a Neo4j node for a session.
+# """
+# function _getSessionNeoNodeForRobot(userId::String, robotId::String, sessionId::String)::Neo4j.Node
+#     sessions = _getSessionNeoNodesForRobot(userId, robotId)
+#     for session in sessions
+#         sessionLabels = getnodelabels(session)
+#         if(sessionId in sessionLabels)
+#             return session
+#         end
+#     end
+#     error("Cannot find session $sessionId associated with robot $robotId and user $userId")
+# end
+#
 
 """
 $(SIGNATURES)
 Try get a Neo4j node ID from a node label.
 """
-function _tryGetNeoNodeIdFromNodeLabel(neo4jInstance::Neo4jInstance, userId::String, robotId::String, sessionId::String, nodeLabel::Symbol)::Union{Nothing, Int}
+function _tryGetNeoNodeIdFromNodeLabel(neo4jInstance::Neo4jInstance, userId::String, robotId::String, sessionId::String, nodeLabel::Symbol; nodeType::Union{Nothing, String}=nothing)::Union{Nothing, Int}
     @debug "Looking up symbolic node ID where n.label = '$nodeLabel'..."
-    nodes = _getNeoNodesFromCyphonQuery(neo4jInstance, "(node:$userId:$robotId:$sessionId) where exists(node.label) and node.label = \"$(string(nodeLabel))\"")
-    if(length(nodes) != 1)
+    if nodeType == nothing
+        nodes = _getNeoNodesFromCyphonQuery(neo4jInstance, "(node:$userId:$robotId:$sessionId) where exists(node.label) and node.label = \"$(string(nodeLabel))\"")
+    else
+        nodes = _getNeoNodesFromCyphonQuery(neo4jInstance, "(node:$nodeType:$userId:$robotId:$sessionId) where exists(node.label) and node.label = \"$(string(nodeLabel))\"")
+    end
+
+    if length(nodes) != 1
         return nothing
     end
     nodeId = nodes[1].id
@@ -203,175 +193,63 @@ function _tryGetNeoNodeIdFromNodeLabel(neo4jInstance::Neo4jInstance, userId::Str
     return nodeId
 end
 
+"""
+$(SIGNATURES)
+Gets the searchable labels for any CGDFG type.
+"""
 
 """
 $(SIGNATURES)
-Get a Neo4j node ID from a node label.
+
+Build a Cypher-compliant set of properies from a JSON dictionary.
+Note individual values are serialized if they are not already.
 """
-function _getNeoNodeIdFromNodeLabel(neo4jInstance::Neo4jInstance, userId::String, robotId::String, sessionId::String, nodeLabel::Symbol)::Int
-    nodeId = _tryGetNeoNodeIdFromNodeLabel(neo4jInstance, userId, robotId, sessionId, nodeLabel)
-    if(nodeId == nothing)
-        error("Cannot find a single symbolic node for label '$nodeLabel', received $(length(nodes)) nodes...")
-    end
-    return nodeId
-end
-
-"""
-$(SIGNATURES)
-Get a specific node given the Neo4j node ID.
-"""
-function _getSynchronyNodeFromId(userId::String, robotId::String, sessionId::String, nodeId::Union{Int, String})::NodeDetails
-    cloudGraph = Main.App.NaviConfig.cgConnection
-
-    if(typeof(nodeId) == String)
-        nodeId = _getNeoNodeIdFromNodeLabel(userId, robotId, sessionId, nodeId)
-    end
-
-    node = CloudGraphs.get_vertex(cloudGraph, nodeId, false)
-
-    # 3. Format the result
-    rootPath = "/api/v0/users/$userId/robots/$robotId/sessions/$sessionId/nodes/$nodeId"
-    node = NodeDetails(
-        nodeId,
-        haskey(node.properties, "label") ? node.properties["label"] : "",
-        node.exVertexId,
-        :softtype in fieldnames(typeof(node.packed)) ? string(typeof(node.packed.softtype)) : "",
-        node.properties,
-        node.packed,
-        node.labels,
-        Dict{String, String}("self" => rootPath, "data" => rootPath*"/data"))
-    if !(robotId in node.labels) ||
-        !(sessionId in node.labels) ||
-        !(userId in node.labels)
-        # Making sure user is asking for their session nodes.
-        error("Node not found")
-    end
-    return(node)
+function _dictToNeo4jProps(dict::Dict{String, Any})::String
+    # TODO: Use an IO buffer/stream for this
+    return "{" * join(map((k) -> "$k: $(JSON.json(dict[k]))", collect(keys(dict))), ", ")*"}"
 end
 
 """
 $(SIGNATURES)
-Sets the ready status of the complete session.
-"""
-function _setSessionReadyStatus(userId::String, robotId::String, sessionId::String, ready::Bool)::Nothing
-    # 2. Perform the transaction
-    cloudGraph = Main.App.NaviConfig.cgConnection
-    loadtx = transaction(cloudGraph.neo4j.connection)
-    query = "match (n:$userId:$robotId:$sessionId) where exists(n.ready) set n.ready=$(ready ? 1 : 0) return count(n)";
-    loadtx(query; submit=true)
-    commit(loadtx)
-    return nothing
-end
 
+Get the Neo4j labels for any node type.
+"""
+function _getLabelsForType(dfg::CloudGraphsDFG, type::Type; parentKey::Union{Nothing, Symbol}=nothing)::Vector{String}
+    # Simple validation
+    isempty(dfg.userId) && error("The DFG object's userID is empty, please specify a user ID.")
+    isempty(dfg.robotId) && error("The DFG object's robotID is empty, please specify a robot ID.")
+    isempty(dfg.sessionId) && error("The DFG object's sessionId is empty, please specify a session ID.")
 
-"""
-$(SIGNATURES)
-Convert Vector{<:AbstractString} to square braced single quoted list of elements ready for Cypher query use"
-"""
-function _stringArrToCyphonList(stra::Vector{<:AbstractString})
-    qs = "["
-    for el in stra
-        qs *= "'"*el*"', "
-    end
-    qs = chop(chop(qs))
-    qs *= "]"
-    return qs
-end
-
-"""
-$(SIGNATURES)
-Returns the BigDataElements for the node.
-"""
-function _getDataEntriesForNode(nodeId::Int)::Vector{BigDataElement}
-    cloudGraph = Main.App.NaviConfig.cgConnection
-    node = CloudGraphs.get_vertex(cloudGraph, nodeId, false)
-    return node.bigData.dataElements
+    labels = []
+    type == User && (labels = [dfg.userId, "USER"])
+    type == Robot && (labels = [dfg.userId, dfg.robotId, "ROBOT"])
+    type == Session && (labels = [dfg.userId, dfg.robotId, dfg.sessionId, "SESSION"])
+    type <: DFGVariable &&
+        (labels = [dfg.userId, dfg.robotId, dfg.sessionId, "VARIABLE"])
+    type <: DFGFactor &&
+        (labels = [dfg.userId, dfg.robotId, dfg.sessionId, "FACTOR"])
+    type <: AbstractPointParametricEst &&
+        (labels = [dfg.userId, dfg.robotId, dfg.sessionId, "PPE"])
+    type <: AbstractBigDataEntry &&
+        (labels = [dfg.userId, dfg.robotId, dfg.sessionId, "DATA"])
+    # Some are children of nodes, so add that in if it's set.
+    parentKey != nothing && push!(labels, String(parentKey))
+    return labels
 end
 
 """
 $(SIGNATURES)
-Sets the ready status of the complete session.
+
+Get the Neo4j labels for any node instance.
 """
-function _setReadyStatus(userId::String, robotId::String, sessionId::String, nodeLabels::Vector{String}, ready::Bool)::Nothing
-    # 2. Perform the transaction
-    cloudGraph = Main.App.NaviConfig.cgConnection
-
-    loadtx = transaction(cloudGraph.neo4j.connection)
-    query = "match (n:$userId:$robotId:$sessionId) where exists(n.ready) and exists(n.label) and n.label in $(_stringArrToCyphonList(nodeLabels)) set n.ready=$(ready ? 1 : 0) return count(n)";
-    loadtx(query; submit=true)
-    commit(loadtx)
-    return nothing
-end
-
-"""
-$(SIGNATURES)
-Validate all given inputs and return the results.
-Error if any missing or blank.
-Returns: A list of strings/ints/floats of all the inputs.
-"""
-function _validateHttpInputs(requiredInputs::Vector{Symbol}, params::Dict{Symbol, Any})::Vector{Any}
-    rets = Vector{Any}()
-    for input in requiredInputs
-        input = haskey(params, input) ? params[input] : ""
-        if(typeof(input) == String && isempty(lstrip(input)))
-            error("'$(string(input))' is empty string.")
-        end
-        typeof(input) == String && !occursin(alphaOnlyMatchRegex, input) && error("$input is not alphanumeric, please only use alphanumeric and underscores for parameters.")
-        push!(rets, input)
-    end
-    return rets
-end
-
-function readAndReturnFile(filename::String, mimeType::String="application/octet-stream")::HTTP.Response
-    if !isfile(filename)
-        error("The file to be returned does not exist - $filename")
-    end
-
-    s = open(filename, "r");
-    data = read(s);
-    close(s);
-
-    headers = Dict{AbstractString, AbstractString}( "Server" => "Julia/$VERSION",
-                    "Content-Type"     => mimeType,
-                    "Date"             => Dates.format(now(Dates.UTC), Dates.RFC1123Format) )
-    return HTTP.Response(200, headers; body=data)
-end
-
-function jsonReponse(jsonData::String; returnCode::Int=200)::HTTP.Response
-    headers = Dict{AbstractString, AbstractString}( "Server" => "Julia/$VERSION",
-                    "Content-Type"     => "application/json",
-                    "Date"             => Dates.format(now(Dates.UTC), Dates.RFC1123Format) )
-    return HTTP.Response(returnCode, headers; body=jsonData)
-end
-
-"""
-Try to gracefully handle errors.
-"""
-function handleError(ex::Any)::HTTP.Response
-    @show ex
-    io = IOBuffer()
-    showerror(io, ex, catch_backtrace())
-    err = String(take!(io))
-    @error "Error! $err"
-    msg = (:msg in fieldnames(typeof(ex)) ? ex.msg : err)
-    return jsonReponse(msg; returnCode=400)
-end
-
-"""
-Push a graph change notification.
-"""
-function _addGraphChangeNotification(userId::String, robotId::String, sessionId::String, isWholeGraph::Bool)::Bool
-    conn = Main.App.NaviConfig.redisConnection
-    if !Redis.is_connected(conn)
-        # Reinvigorate connection
-        @warn "[AQP] Redis connection failed - reestablishing a connection!"
-        conn = Redis.RedisConnection(host=conn.host, port=conn.port, db=conn.db, password=conn.password)
-        Main.App.NaviConfig.redisConnection = conn
-    end
-
-    # 2. Perform the transaction
-    @info "Pushing graph change notification..."
-    gc = Main.App.NaviConfig.GraphChange(userId, robotId, sessionId, isWholeGraph)
-    Main.App.NaviConfig.addGraphChange(conn, gc)
-    return true
+function _getLabelsForInst(dfg::CloudGraphsDFG,
+                            inst::Union{User, Robot, Session, N, APPE, ABDE}; parentKey::Union{Nothing, Symbol}=nothing)::Vector{String} where
+                            {N <: DFGNode, APPE <: AbstractPointParametricEst, ABDE <: AbstractBigDataEntry}
+    labels = _getLabelsForType(dfg, typeof(inst), parentKey=parentKey)
+    typeof(inst) <: DFGVariable && push!(labels, String(getLabel(inst)))
+    typeof(inst) <: DFGFactor && push!(labels, String(getLabel(inst)))
+    typeof(inst) <: AbstractPointParametricEst && push!(labels, String(inst.solverKey))
+    typeof(inst) <: AbstractBigDataEntry && push!(labels, String(inst.key))
+    # Some are children of nodes, so add that in if it's set.
+    return labels
 end
