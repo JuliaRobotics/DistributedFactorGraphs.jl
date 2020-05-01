@@ -12,7 +12,7 @@ implement compare if needed.
 =#
 ==(a::InferenceVariable,b::InferenceVariable) = typeof(a) == typeof(b) && a.dims == b.dims && a.manifolds == b.manifolds
 
-==(a::ConvolutionObject, b::ConvolutionObject) = typeof(a) == typeof(b)
+==(a::FactorOperationalMemory, b::FactorOperationalMemory) = typeof(a) == typeof(b)
 
 ==(a::FunctorInferenceType, b::FunctorInferenceType) = typeof(a) == typeof(b)
 
