@@ -40,7 +40,7 @@ for api in apis
     end
 end
 
-if get(ENV, "IIF_TEST", "") != "true"
+if get(ENV, "SKIP_CGDFG_TESTS", "") != "true"
     @testset "Consolidation WIP Testing Driver: CloudGraphsDFG" begin
         global decodePackedType
         function decodePackedType(dfg::AbstractDFG, packeddata::GenericFunctionNodeData{PT,<:AbstractString}) where PT
