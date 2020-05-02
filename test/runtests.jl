@@ -133,7 +133,16 @@ if get(ENV, "IIF_TEST", "") == "true"
         # This is just to validate we're not going to blow up downstream.
         apis = [
             GraphsDFG{SolverParams}(params=SolverParams()),
-            LightDFG{SolverParams}(params=SolverParams())]
+            LightDFG{SolverParams}(params=SolverParams()),
+            CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
+                                        "testUser", "testRobot", "simpleSolveSession",
+                                        "Description of test Session",
+                                        nothing,
+                                        nothing,
+                                        IncrementalInference.decodePackedType,
+                                        IncrementalInference.rebuildFactorMetadata!,
+                                        solverParams=SolverParams())
+            ]
         for api in apis
             @info "Running simple solver test: $(typeof(api))"
             global dfg = deepcopy(api)
