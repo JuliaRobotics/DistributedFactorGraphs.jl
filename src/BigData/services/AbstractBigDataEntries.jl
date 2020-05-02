@@ -114,6 +114,7 @@ mydata = Dict(:soundBite => randn(Float32, 10000), :meta => "something about laz
 addDataEntry!( fg, :x0, datastore, :SOUND_DATA, "application/json", Vector{UInt8}(JSON2.write( mydata ))  )
 
 # get/fetch the data
+entry, rawData = fetchData(fg, :x0, datastore, :SOUND_DATA)
 
 # unpack data to original format (this must be done by the user)
 @show entry.mimeType # "applicatio/json"
@@ -126,7 +127,7 @@ addDataEntry!, addData!, fetchData, fetchDataEntryElement
 """
 function getDataEntryElement(dfg::AbstractDFG,
                              dfglabel::Symbol,
-                             datastore::Union{FileDataStore, InMemoryDataStore}, 
+                             datastore::Union{FileDataStore, InMemoryDataStore},
                              datalabel::Symbol)
   #
   vari = getVariable(dfg, dfglabel)
