@@ -4,8 +4,8 @@ using Neo4j
 using DistributedFactorGraphs
 using Pkg
 using Dates
-
-using IncrementalInference
+using UUIDs
+# using IncrementalInference
 
 include("testBlocks.jl")
 
@@ -15,14 +15,20 @@ testDFGAPI = CloudGraphsDFG
 # TODO maybe move to cloud graphs permanantly as standard easy to use functions
 function DFG.CloudGraphsDFG(; params=NoSolverParams())
     cgfg = CloudGraphsDFG{typeof(params)}("localhost", 7474, "neo4j", "test",
-                                  "testUser", "testRobot", "testSession",
+                                  "testUser", "testRobot", "testSession_$(string(uuid4())[1:6])",
                                   "description",
                                   nothing,
                                   nothing,
-                                  IncrementalInference.decodePackedType,#(dfg,f)->f,
-                                  IncrementalInference.rebuildFactorMetadata!,#(dfg,f)->f,
+                                  (dfg,f)->f,#IncrementalInference.decodePackedType,
+                                  (dfg,f)->f,#ncrementalInference.rebuildFactorMetadata!,
                                   solverParams=params)
     createDfgSessionIfNotExist(cgfg)
+
+    setUserData!(cgfg, Dict{Symbol, String}())
+    setRobotData!(cgfg, Dict{Symbol, String}())
+    setSessionData!(cgfg, Dict{Symbol, String}())
+    setDescription!(cgfg, cgfg.description)
+
     return cgfg
 end
 
@@ -49,8 +55,8 @@ function DFG.CloudGraphsDFG(description::String,
                                                 description,
                                                 nothing,
                                                 nothing,
-                                                IncrementalInference.decodePackedType,#(dfg,f)->f,
-                                                IncrementalInference.rebuildFactorMetadata!,#(dfg,f)->f,
+                                                (dfg,f)->f,#IncrementalInference.decodePackedType,
+                                                (dfg,f)->f,#IncrementalInference.rebuildFactorMetadata!,
                                                 solverParams=solverParams)
 
     createDfgSessionIfNotExist(cdfg)
@@ -82,25 +88,15 @@ end
 end
 
 # DFGVariable structure construction and accessors
-# @testset "DFG Variable" begin
-#     global var1, var2, var3, v1_tags
-#     var1, var2, var3, v1_tags = DFGVariableSCA()
-# end
-newfg = initfg()
-var1 = addVariable!(newfg, :a, ContinuousScalar, labels=[:POSE])
-var2 = addVariable!(newfg, :b, ContinuousScalar, labels=[:LANDMARK])
-var3 = addVariable!(newfg, :c, ContinuousScalar)
-v1_tags = Set([:VARIABLE, :POSE])
-
+@testset "DFG Variable" begin
+    global var1, var2, var3, v1_tags, vorphan
+    var1, var2, var3, vorphan, v1_tags = DFGVariableSCA()
+end
 
 # DFGFactor structure construction and accessors
-# @testset "DFG Factor" begin
-#     global fac0, fac1, fac2 = DFGFactorSCA()
-# end
-
-fac0 = addFactor!(newfg, [:a], Prior(Normal()))
-fac1 = addFactor!(newfg, [:a, :b], LinearConditional(Normal()))
-fac2 = addFactor!(newfg, [:b, :c], LinearConditional(Normal()))
+@testset "DFG Factor" begin
+    global fac0, fac1, fac2 = DFGFactorSCA()
+end
 
 @testset "Variables and Factors CRUD and SET" begin
     VariablesandFactorsCRUD_SET!(fg1, var1, var2, var3, fac0, fac1, fac2)
@@ -109,12 +105,103 @@ end
 @testset "tags" begin
     tagsTestBlock!(fg1, var1, v1_tags)
 end
+
+@testset "Parametric Point Estimates" begin
+    PPETestBlock!(fg1, var1)
+end
+
+@testset "Variable Solver Data" begin
+    VSDTestBlock!(fg1, var1)
+end
+
+@testset "BigData Entries" begin
+    @test_skip BigDataEntriesTestBlock!(fg1, var2)
+end
+
+# @testset "TODO Sorteer groep" begin
+#     testGroup!(fg1, var1, var2, fac0, fac1)
+# end
+
+
+@testset "Adjacency Matrices" begin
+    fg = testDFGAPI()
+    clearUser!!(fg)
+
+    DFGVariable(:a, TestSofttype1())
+    addVariable!(fg, var1)
+    setSolvable!(fg, :a, 1)
+    addVariable!(fg, var2)
+    addFactor!(fg, fac1)
+    addVariable!(fg, vorphan)
+
+    AdjacencyMatricesTestBlock(fg)
+end
+
+
+@testset "Getting Neighbors" begin
+    fg = testDFGAPI()
+    clearUser!!(fg)
+    GettingNeighbors(testDFGAPI)
+end
+
+
+@testset "Getting Subgraphs" begin
+    fg = testDFGAPI()
+    clearUser!!(fg)
+    GettingSubgraphs(testDFGAPI)
+end
+
+@testset "Building Subgraphs" begin
+    fg = testDFGAPI()
+    clearUser!!(fg)
+    BuildingSubgraphs(testDFGAPI)
+end
 #
+# #TODO Summaries and Summary Graphs
+@testset "Summaries and Summary Graphs" begin
+    Summaries(testDFGAPI)
+end
+
+@testset "Producing Dot Files" begin
+    fg = testDFGAPI()
+    clearUser!!(fg)
+    ProducingDotFiles(testDFGAPI, var1, var2, fac1)
+end
 #
-# fg = fg1
-# v1 = var1
-# v2 = var2
-# v3 = var3
-# f0 = fac0
-# f1 = fac1
-# f2 = fac2
+@testset "Connectivity Test" begin
+    fg = testDFGAPI()
+    clearUser!!(fg)
+    ConnectivityTest(testDFGAPI)
+end
+
+@testset "Copy Functions" begin
+    fg = testDFGAPI()
+    clearUser!!(fg)
+    fg = testDFGAPI()
+    addVariable!(fg, var1)
+    addVariable!(fg, var2)
+    addVariable!(fg, var3)
+    addFactor!(fg, fac1)
+
+    fgcopy = testDFGAPI()
+    DFG._copyIntoGraph!(fg, fgcopy, union(ls(fg), lsf(fg)))
+    @test getVariableOrder(fg,:abf1) == getVariableOrder(fgcopy,:abf1)
+
+    #test copyGraph, deepcopyGraph[!]
+    fgcopy = testDFGAPI()
+    DFG.deepcopyGraph!(fgcopy, fg)
+    @test getVariableOrder(fg,:abf1) == getVariableOrder(fgcopy,:abf1)
+
+    CopyFunctionsTest(testDFGAPI)
+
+end
+#
+#=
+fg = fg1
+v1 = var1
+v2 = var2
+v3 = var3
+f0 = fac0
+f1 = fac1
+f2 = fac2
+=#

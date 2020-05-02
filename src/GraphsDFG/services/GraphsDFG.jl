@@ -220,7 +220,7 @@ function getFactors(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; 
     return factors
 end
 
-function isFullyConnected(dfg::GraphsDFG)::Bool
+function isConnected(dfg::GraphsDFG)::Bool
     return length(Graphs.connected_components(dfg.g)) == 1
 end
 

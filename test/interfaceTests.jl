@@ -14,7 +14,7 @@ end
 # DFGVariable structure construction and accessors
 @testset "DFG Variable" begin
     global var1, var2, var3, v1_tags
-    var1, var2, var3, v1_tags = DFGVariableSCA()
+    var1, var2, var3, vorphan, v1_tags = DFGVariableSCA()
 end
 
 # DFGFactor structure construction and accessors

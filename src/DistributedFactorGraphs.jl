@@ -71,7 +71,7 @@ export exists,
        getVariables, getFactors,
        isVariable, isFactor
 
-export isFullyConnected, hasOrphans
+export isConnected
 
 export getBiadjacencyMatrix
 
@@ -165,7 +165,11 @@ export getNeighborhood, getNeighbors, _getDuplicatedEmptyDFG
 export copyGraph!, deepcopyGraph, deepcopyGraph!, buildSubgraph, mergeGraph!
 # Big Data
 ##------------------------------------------------------------------------------
-export addBigDataEntry!, addDataEntry!, getBigDataEntry, updateBigDataEntry!, deleteBigDataEntry!, getBigDataEntries, getBigDataKeys, hasDataEntry, hasBigDataEntry
+export addBigDataEntry!, getBigDataEntry, updateBigDataEntry!, deleteBigDataEntry!, getBigDataEntries, getBigDataKeys, hasDataEntry, hasBigDataEntry
+# convenience wrappers
+export addDataEntry!, getDataEntryElement
+# aliases
+export addData!, fetchData, fetchDataEntryElement
 
 
 ##------------------------------------------------------------------------------
@@ -173,7 +177,7 @@ export addBigDataEntry!, addDataEntry!, getBigDataEntry, updateBigDataEntry!, de
 ##------------------------------------------------------------------------------
 # Factor Data
 export GenericFunctionNodeData
-export InferenceType, PackedInferenceType, FunctorInferenceType, ConvolutionObject
+export InferenceType, PackedInferenceType, FunctorInferenceType, FactorOperationalMemory
 export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
 
 # accessors
@@ -225,7 +229,8 @@ export
 
 
 ## Deprecated exports should be listed in Deprecated.jl if possible, otherwise here
-
+#TODO remove export in DFG v0.8.0
+export ConvolutionObject
 
 ## needsahome.jl
 import Base: print

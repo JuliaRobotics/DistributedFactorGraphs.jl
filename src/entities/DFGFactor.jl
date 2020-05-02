@@ -7,7 +7,12 @@ abstract type PackedInferenceType end
 
 abstract type FunctorInferenceType <: Function end
 
-abstract type ConvolutionObject <: Function end
+# NOTE DF, Convolution is IIF idea, but DFG should know about "FactorOperationalMemory"
+# DF, IIF.CommonConvWrapper <: FactorOperationalMemory #
+abstract type FactorOperationalMemory <: Function end
+# TODO to be removed from DFG,
+# we can add to IIF or have IIF.CommonConvWrapper <: FactorOperationalMemory directly
+abstract type ConvolutionObject <: FactorOperationalMemory end
 
 abstract type FunctorSingleton <: FunctorInferenceType end
 abstract type FunctorPairwise <: FunctorInferenceType end
@@ -19,13 +24,22 @@ abstract type FunctorPairwiseMinimize <: FunctorInferenceType end
 
 """
 $(TYPEDEF)
+
+Notes
+- S::Symbol
+
+Designing (WIP)
+- T <: Union{FactorOperationalMemory, PackedInferenceType}
+# in IIF.CCW{T <: DFG.InferenceType}
+# in IIF.FunctorPairwiseMinimize <: InferenceType # DFG whatever, something, we'll figure it out
+# in Main/User, SomeFactor <: FunctorPairwiseMinimize
 """
-mutable struct GenericFunctionNodeData{T, S}
+mutable struct GenericFunctionNodeData{T, S} #{T<:Union{PackedInferenceType, FunctorInferenceType, FactorOperationalMemory}, S<:Union{Symbol, AbstractString}}
     fncargvID::Vector{Symbol}
     eliminated::Bool
     potentialused::Bool
     edgeIDs::Array{Int,1}
-    frommodule::S #Union{Symbol, AbstractString}
+    frommodule::S # JT TODO remove frommodule, not used at all as far as i can tell
     fnc::T
     multihypo::Array{Float64} # likely to moved when GenericWrapParam is refactored
     certainhypo::Vector{Int}
@@ -45,7 +59,7 @@ end
 const PackedFunctionNodeData{T} = GenericFunctionNodeData{T, <: AbstractString}
 PackedFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, multihypo::Vector{Float64}=[], certainhypo::Vector{Int}=Int[], x9::Int=0) where {T <: PackedInferenceType, S <: AbstractString} = GenericFunctionNodeData(x1, x2, x3, x4, x5, x6, multihypo, certainhypo, x9)
 const FunctionNodeData{T} = GenericFunctionNodeData{T, Symbol}
-FunctionNodeData(x1, x2, x3, x4, x5::Symbol, x6::T, multihypo::Vector{Float64}=[], certainhypo::Vector{Int}=Int[], x9::Int=0) where {T <: Union{FunctorInferenceType, ConvolutionObject}}= GenericFunctionNodeData{T, Symbol}(x1, x2, x3, x4, x5, x6, multihypo, certainhypo, x9)
+FunctionNodeData(x1, x2, x3, x4, x5::Symbol, x6::T, multihypo::Vector{Float64}=[], certainhypo::Vector{Int}=Int[], x9::Int=0) where {T <: Union{FunctorInferenceType, FactorOperationalMemory}}= GenericFunctionNodeData{T, Symbol}(x1, x2, x3, x4, x5, x6, multihypo, certainhypo, x9)
 
 ##==============================================================================
 ## Factors
@@ -87,7 +101,7 @@ mutable struct DFGFactor{T, S} <: AbstractDFGFactor
     """Mutable parameters for the variable. We suggest using accessors to get to this data.
     Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)"""
     _dfgNodeParams::DFGNodeParams
-    """Internal cache of the ordering of the neighbor variables. Rather use getNeighbors to get the list as this is an internal value.
+    """Internal cache of the ordering of the neighbor variables. Rather use getVariableOrder to get the list as this is an internal value.
     Accessors: [`getVariableOrder`](@ref)"""
     _variableOrderSymbols::Vector{Symbol}
 end

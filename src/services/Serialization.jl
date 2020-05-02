@@ -146,10 +146,11 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G
     solvable = packedProps["solvable"]
 
     # Rebuild DFGFactor
+    #TODO use constuctor to create factor
     factor = DFGFactor{typeof(fullFactor.fnc), Symbol}(Symbol(label), 0, timestamp)
 
     union!(factor.tags, tags)
-    # factor.data = fullFactor #TODO 
+    # factor.data = fullFactor #TODO
     setSolverData!(factor, fullFactor)
     factor._variableOrderSymbols = _variableOrderSymbols
     setSolvable!(factor, solvable)

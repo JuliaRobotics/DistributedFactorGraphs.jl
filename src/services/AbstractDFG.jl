@@ -292,8 +292,8 @@ end
     $(SIGNATURES)
 Checks if the graph is fully connected, returns true if so.
 """
-function isFullyConnected(dfg::AbstractDFG)::Bool
-    error("isFullyConnected not implemented for $(typeof(dfg))")
+function isConnected(dfg::AbstractDFG)::Bool
+    error("isConnected not implemented for $(typeof(dfg))")
 end
 
 """
@@ -418,15 +418,6 @@ function getNeighbors(dfg::AbstractDFG, node::DFGNode; solvable::Int=0)::Vector{
     getNeighbors(dfg, node.label, solvable=solvable)
 end
 
-#Alias
-#TODO rather actually check if there are orphaned factors (factors without all variables)
-"""
-    $(SIGNATURES)
-Checks if the graph is not fully connected, returns true if it is not contiguous.
-"""
-function hasOrphans(dfg::G)::Bool where G <: AbstractDFG
-    return !isFullyConnected(dfg)
-end
 
 ##==============================================================================
 ## Listing and listing aliases
@@ -877,8 +868,16 @@ function deepcopyGraph(::Type{T},
                        sourceDFG::AbstractDFG,
                        variableLabels::Vector{Symbol} = ls(sourceDFG),
                        factorLabels::Vector{Symbol} = lsf(sourceDFG);
+                       sessionId::String = "",
                        kwargs...) where T <: AbstractDFG
-    destDFG = T(getDFGInfo(sourceDFG)...)
+
+    ginfo = [getDFGInfo(sourceDFG)...]
+    if sessionId == ""
+        ginfo[4] *= "_copy$(string(uuid4())[1:6])"
+    else
+        ginfo[4] = sessionId
+    end
+    destDFG = T(ginfo...)
     copyGraph!(destDFG, sourceDFG, variableLabels, factorLabels; deepcopyNodes=true, kwargs...)
     return destDFG
 end

@@ -9,7 +9,7 @@ function _getDuplicatedEmptyDFG(dfg::CloudGraphsDFG)::CloudGraphsDFG
     while true #do..while loop
         count += 1
         sessionId = dfg.sessionId*"_$count"
-        length(_getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId):$(dfg.robotId):$(sessionId))")) == 0 && break
+        _getNodeCount(dfg.neo4jInstance, [dfg.userId, dfg.robotId, sessionId]) == 0 && break
     end
     @debug "Unique+empty copy session name: $sessionId"
     return CloudGraphsDFG{typeof(dfg.solverParams)}(
@@ -375,7 +375,7 @@ function listFactors(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=not
     end
 end
 
-function isFullyConnected(dfg::CloudGraphsDFG)::Bool
+function isConnected(dfg::CloudGraphsDFG)::Bool
     # If the total number of nodes == total number of distinct connected nodes, then it is fully connected
     # Total nodes
     varIds = listVariables(dfg)
@@ -400,7 +400,7 @@ function getNeighbors(dfg::CloudGraphsDFG, node::T; solvable::Int=0)::Vector{Sym
     query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(node.label))--(node) where (node:VARIABLE or node:FACTOR) and node.solvable >= $solvable"
     @debug "[Query] $query"
     neighbors = _getLabelsFromCyphonQuery(dfg.neo4jInstance, query)
-    # If factor, need to do variable ordering
+    # If factor, need to do variable ordering TODO, Do we? does it matter if we always use _variableOrderSymbols in calculations?
     if T <: DFGFactor
         neighbors = intersect(node._variableOrderSymbols, neighbors)
     end
@@ -411,7 +411,7 @@ function getNeighbors(dfg::CloudGraphsDFG, label::Symbol; solvable::Int=0)::Vect
     query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(label))--(node) where (node:VARIABLE or node:FACTOR) and node.solvable >= $solvable"
     @debug "[Query] $query"
     neighbors = _getLabelsFromCyphonQuery(dfg.neo4jInstance, query)
-    # If factor, need to do variable ordering
+    # If factor, need to do variable ordering TODO, Do we? does it matter if we always use _variableOrderSymbols in calculations?
     if isFactor(dfg, label)
         # Server is authority
         serverOrder = Symbol.(JSON2.read(_getNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, String(label)], "_variableOrderSymbols")))
@@ -520,10 +520,11 @@ function addPPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Symbo
     if ppekey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction)
         error("PPE '$(ppekey)' already exists")
     end
-    return updatePPE!(dfg, variablekey, ppe, ppekey, currentTransaction=currentTransaction)
+    return _matchmergePPE!(dfg, variablekey, ppe, ppekey, currentTransaction=currentTransaction)
 end
 
-function updatePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::P where P <: AbstractPointParametricEst
+#TODO clean this, just to match api for update
+function _matchmergePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::P where P <: AbstractPointParametricEst
     packed = packPPE(dfg, ppe)
     query = """
                 MATCH (var:$variablekey:$(join(_getLabelsForType(dfg, DFGVariable, parentKey=variablekey),':')))
@@ -546,10 +547,17 @@ function updatePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Sy
     return unpackPPE(dfg, result.results[1]["data"][1]["row"][1])
 end
 
+function updatePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::P where P <: AbstractPointParametricEst
+    if !(ppekey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction))
+        @warn "PPE '$(ppekey)' does not exist, adding"
+    end
+    return _matchmergePPE!(dfg, variablekey, ppe, ppekey, currentTransaction=currentTransaction)
+end
+
 function updatePPE!(dfg::CloudGraphsDFG, sourceVariables::Vector{<:DFGVariable}, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
     tx = currentTransaction == nothing ? transaction(dfg.neo4jInstance.connection) : currentTransaction
     for var in sourceVariables
-        updatePPE!(dfg, var.label, getPPE(dfg, var, ppekey), ppekey, currentTransaction=tx)
+        updatePPE!(dfg, var.label, getPPE(var, ppekey), ppekey, currentTransaction=tx)
     end
     if currentTransaction == nothing
         result = commit(tx)
