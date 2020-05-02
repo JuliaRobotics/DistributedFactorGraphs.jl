@@ -324,11 +324,11 @@ end
 # Connectivity test
 @testset "Connectivity Test" begin
     global dfg,v1,v2,f1
-    @test isFullyConnected(dfg) == true
-    @test hasOrphans(dfg) == false
+    @test isConnected(dfg) == true
+    @test @test_deprecated isFullyConnected(dfg) == true
+    @test @test_deprecated hasOrphans(dfg) == false
     addVariable!(dfg, :orphan, ContinuousScalar, labels = [:POSE], solvable=0)
-    @test isFullyConnected(dfg) == false
-    @test hasOrphans(dfg) == true
+    @test isConnected(dfg) == false
 end
 
 # Adjacency matrices
