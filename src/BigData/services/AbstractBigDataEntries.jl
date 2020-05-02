@@ -124,7 +124,11 @@ Related
 
 addDataEntry!, addData!, fetchData, fetchDataEntryElement
 """
-function getDataEntryElement(dfg::AbstractDFG, dfglabel::Symbol, datastore::DataStore, datalabel::Symbol)
+function getDataEntryElement(dfg::AbstractDFG,
+                             dfglabel::Symbol,
+                             datastore::Union{FileDataStore, InMemoryDataStore}, 
+                             datalabel::Symbol)
+  #
   vari = getVariable(dfg, dfglabel)
   if !hasDataEntry(vari, datalabel)
     @error "missing data entry $datalabel in $dfglabel"
