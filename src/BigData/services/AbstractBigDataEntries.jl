@@ -41,6 +41,14 @@ addDataEntry!(x...) = addBigDataEntry!(x...)
 $(SIGNATURES)
 Add Big Data Entry to distributed factor graph.
 Should be extended if DFG variable is not returned by reference.
+
+Example
+
+See docs for `getDataEntryElement`.
+
+Related
+
+addData!, getDataEntryElement, fetchData
 """
 function addDataEntry!(dfg::AbstractDFG,
                        lbl::Symbol,
@@ -51,12 +59,13 @@ function addDataEntry!(dfg::AbstractDFG,
   #
   node = isVariable(dfg, lbl) ? getVariable(dfg, lbl) : getFactor(dfg, lbl)
   # Make a big data entry in the graph - use JSON2 to just write this
-  element = GeneralBigDataEntry(dfg, node, descr, mimeType=mimeType)
+  entry = GeneralBigDataEntry(dfg, node, descr, mimeType=mimeType)
   # Set it in the store
-  addBigData!(datastore, element, data)
+  addBigData!(datastore, entry, data)
   # Add the entry to the graph
-  addBigDataEntry!(node, element)
+  addBigDataEntry!(node, entry)
 end
+const addData! = addDataEntry!
 
 """
     $SIGNATURES
@@ -80,8 +89,62 @@ function getBigDataEntry(dfg::AbstractDFG, label::Symbol, key::Symbol)
 end
 
 """
+$SIGNATURES
+Get both the entry and raw data element from datastore returning as a tuple.
+
+Notes:
+- This is the counterpart to `addDataEntry!`.
+- Data is identified by the node in the DFG object `dfglabel::Symbol` as well as `datalabel::Symbol`.
+- The data should have been stored along with a `entry.mimeType::String` which describes the format of the data.
+- ImageMagick.jl is useful for storing images in png or jpg compressed format.
+
+Example
+
+```julia
+# some dfg object
+fg = initfg()
+addVariable!(fg, :x0, IIF.ContinuousScalar) # using IncrementalInference
+# FileDataStore (as example)
+datastore = FileDataStore(joinLogPath(fg,"datastore"))
+
+# now some data comes in
+mydata = Dict(:soundBite => randn(Float32, 10000), :meta => "something about lazy foxes and fences.")
+
+# store the data
+addDataEntry!( fg, :x0, datastore, :SOUND_DATA, "application/json", Vector{UInt8}(JSON2.write( mydata ))  )
+
+# get/fetch the data
+
+# unpack data to original format (this must be done by the user)
+@show entry.mimeType # "applicatio/json"
+userFormat = JSON2.read(IOBuffer(rawData))
+```
+
+Related
+
+addDataEntry!, addData!, fetchData, fetchDataEntryElement
+"""
+function getDataEntryElement(dfg::AbstractDFG, dfglabel::Symbol, datastore::DataStore, datalabel::Symbol)
+  vari = getVariable(dfg, dfglabel)
+  if !hasDataEntry(vari, datalabel)
+    @error "missing data entry $datalabel in $dfglabel"
+    return nothing, nothing
+  end
+  entry = getBigDataEntry(vari, datalabel)
+  element = getBigData(datastore, entry)
+  return entry, element
+end
+const fetchDataEntryElement = getDataEntryElement
+const fetchData = getDataEntryElement
+
+
+
+"""
     $(SIGNATURES)
 Update big data entry
+
+DevNote
+- DF, unclear if `update` verb is applicable in this case, see #404
 """
 function updateBigDataEntry!(var::AbstractDFGVariable,  bde::AbstractBigDataEntry)
     !haskey(var.bigData,bde.key) && (@warn "$(bde.key) does not exist in variable, adding")

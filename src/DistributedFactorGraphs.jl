@@ -165,7 +165,11 @@ export getNeighborhood, getNeighbors, _getDuplicatedEmptyDFG
 export copyGraph!, deepcopyGraph, deepcopyGraph!, buildSubgraph, mergeGraph!
 # Big Data
 ##------------------------------------------------------------------------------
-export addBigDataEntry!, addDataEntry!, getBigDataEntry, updateBigDataEntry!, deleteBigDataEntry!, getBigDataEntries, getBigDataKeys, hasDataEntry, hasBigDataEntry
+export addBigDataEntry!, getBigDataEntry, updateBigDataEntry!, deleteBigDataEntry!, getBigDataEntries, getBigDataKeys, hasDataEntry, hasBigDataEntry
+# convenience wrappers
+export addDataEntry!, getDataEntryElement
+# aliases
+export addData!, fetchData, fetchDataEntryElement
 
 
 ##------------------------------------------------------------------------------
