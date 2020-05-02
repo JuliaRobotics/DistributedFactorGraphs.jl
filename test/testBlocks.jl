@@ -56,7 +56,7 @@ function Base.convert(::Type{TestFunctorSingleton}, d::PackedTestFunctorSingleto
     TestFunctorSingleton()
 end
 
-struct TestCCW{T} <: ConvolutionObject where {T<:FunctorInferenceType}
+struct TestCCW{T} <: FactorOperationalMemory where {T<:FunctorInferenceType}
     usrfnc!::T
 end
 Base.:(==)(a::TestCCW, b::TestCCW) = a.usrfnc! == b.usrfnc!
@@ -76,7 +76,7 @@ function Base.convert(::Type{DFG.FunctionNodeData{TestCCW{F}}},
                                 d.solveInProgress)
 end
 
-function Base.convert(::Type{DFG.PackedFunctionNodeData{P}}, d::DFG.FunctionNodeData{<:ConvolutionObject}) where P <: PackedInferenceType
+function Base.convert(::Type{DFG.PackedFunctionNodeData{P}}, d::DFG.FunctionNodeData{<:FactorOperationalMemory}) where P <: PackedInferenceType
   # mhstr = packmultihypo(d.fnc)  # this is where certainhypo error occurs
   return DFG.PackedFunctionNodeData(d.fncargvID,
                                     d.eliminated,
