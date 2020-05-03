@@ -13,16 +13,32 @@ include("testBlocks.jl")
 testDFGAPI = CloudGraphsDFG
 
 # TODO maybe move to cloud graphs permanantly as standard easy to use functions
-function DFG.CloudGraphsDFG(; params=NoSolverParams())
-    cgfg = CloudGraphsDFG{typeof(params)}("localhost", 7474, "neo4j", "test",
-                                  "testUser", "testRobot", "testSession_$(string(uuid4())[1:6])",
-                                  "description",
-                                  nothing,
-                                  nothing,
-                                  (dfg,f)->f,#IncrementalInference.decodePackedType,
-                                  (dfg,f)->f,#ncrementalInference.rebuildFactorMetadata!,
-                                  solverParams=params)
-    createDfgSessionIfNotExist(cgfg)
+function DFG.CloudGraphsDFG(; hostname="localhost",
+                              port=7474,
+                              username="neo4j",
+                              password="test",
+                              params=NoSolverParams(),
+                              description::String="CloudGraphsDFG implementation",
+                              userId::String="DefaultUser",
+                              robotId::String="DefaultRobot",
+                              sessionId::String="Session_$(string(uuid4())[1:6])",
+                              userData::Dict{Symbol, String} = Dict{Symbol, String}(),
+                              robotData::Dict{Symbol, String} = Dict{Symbol, String}(),
+                              sessionData::Dict{Symbol, String} = Dict{Symbol, String}())
+
+    cgfg = CloudGraphsDFG{typeof(params)}(hostname,
+                                          port,
+                                          username,
+                                          password,
+                                          userId,
+                                          robotId,
+                                          sessionId,
+                                          description,
+                                          nothing,
+                                          nothing,
+                                          (dfg,f)->f,#IncrementalInference.decodePackedType,
+                                          (dfg,f)->f,#ncrementalInference.rebuildFactorMetadata!,
+                                          solverParams=params)
 
     setUserData!(cgfg, Dict{Symbol, String}())
     setRobotData!(cgfg, Dict{Symbol, String}())
@@ -59,7 +75,6 @@ function DFG.CloudGraphsDFG(description::String,
                                                 (dfg,f)->f,#IncrementalInference.rebuildFactorMetadata!,
                                                 solverParams=solverParams)
 
-    createDfgSessionIfNotExist(cdfg)
 
     setUserData!(cdfg, userData)
     setRobotData!(cdfg, robotData)
