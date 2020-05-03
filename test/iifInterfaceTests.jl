@@ -66,14 +66,14 @@ end
     @test updateFactor!(dfg2, f2) == f2
     @test_throws ErrorException addFactor!(dfg2, [:b, :c], f2)
 
-    dv3 = deleteVariable!(dfg2, v3)
+    dv3, dv3facs = deleteVariable!(dfg2, v3)
     #TODO write compare if we want to compare complete one, for now just label
     # @test dv3 == v3
     @test dv3.label == v3.label
     @test_throws ErrorException deleteVariable!(dfg2, v3)
 
     @test issetequal(ls(dfg2),[:a,:b])
-    df2 = deleteFactor!(dfg2, f2)
+    df2 = dv3facs[1]
     #TODO write compare if we want to compare complete one, for now just label
     # @test df2 == f2
     @test df2.label == f2.label

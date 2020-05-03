@@ -130,14 +130,19 @@ function updateFactor!(dfg::LightDFG, factor::F)::F where F <: AbstractDFGFactor
     return factor
 end
 
-function deleteVariable!(dfg::LightDFG, label::Symbol)::AbstractDFGVariable
+function deleteVariable!(dfg::LightDFG, label::Symbol)#::Tuple{AbstractDFGVariable, Vector{<:AbstractDFGFactor}}
     if !haskey(dfg.g.variables, label)
         error("Variable label '$(label)' does not exist in the factor graph")
+    end
+
+    deleteNeighbors = true # reserved, orphaned factors are not supported at this time
+    if deleteNeighbors
+        neigfacs = map(l->deleteFactor!(dfg, l), getNeighbors(dfg, label))
     end
     variable = dfg.g.variables[label]
     rem_vertex!(dfg.g, dfg.g.labels[label])
 
-    return variable
+    return variable, neigfacs
 end
 
 function deleteFactor!(dfg::LightDFG, label::Symbol)::AbstractDFGFactor
