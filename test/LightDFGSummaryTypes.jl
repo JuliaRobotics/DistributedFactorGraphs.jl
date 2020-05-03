@@ -17,6 +17,7 @@ v3 = VARTYPE(:c)
 f0 = FACTYPE(:af1)
 f1 = FACTYPE(:abf1)
 f2 = FACTYPE(:bcf1)
+append!(f2._variableOrderSymbols, [:b,:c])
 
 union!(v1.tags, [:VARIABLE, :POSE])
 union!(v2.tags, [:VARIABLE, :LANDMARK])

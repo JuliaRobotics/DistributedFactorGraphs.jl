@@ -304,10 +304,15 @@ function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor
     return factor
 end
 
-function deleteVariable!(dfg::CloudGraphsDFG, label::Symbol)::DFGVariable
+function deleteVariable!(dfg::CloudGraphsDFG, label::Symbol)#::Tuple{AbstractDFGVariable, Vector{<:AbstractDFGFactor}}
     variable = getVariable(dfg, label)
     if variable == nothing
         error("Unable to retrieve the ID for variable '$label'. Please check your connection to the database and that the variable exists.")
+    end
+
+    deleteNeighbors = true # reserved, orphaned factors are not supported at this time
+    if deleteNeighbors
+        neigfacs = map(l->deleteFactor!(dfg, l), getNeighbors(dfg, label))
     end
 
     # Perform detach+deletion
@@ -315,11 +320,11 @@ function deleteVariable!(dfg::CloudGraphsDFG, label::Symbol)::DFGVariable
 
     # Clearing history
     dfg.addHistory = symdiff(dfg.addHistory, [label])
-    return variable
+    return variable, neigfacs
 end
 
 #Alias
-deleteVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariable = deleteVariable!(dfg, variable.label)
+deleteVariable!(dfg::CloudGraphsDFG, variable::DFGVariable) = deleteVariable!(dfg, variable.label)
 
 function deleteFactor!(dfg::CloudGraphsDFG, label::Symbol)::DFGFactor
     factor = getFactor(dfg, label)
@@ -375,7 +380,7 @@ function listFactors(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=not
     end
 end
 
-function isFullyConnected(dfg::CloudGraphsDFG)::Bool
+function isConnected(dfg::CloudGraphsDFG)::Bool
     # If the total number of nodes == total number of distinct connected nodes, then it is fully connected
     # Total nodes
     varIds = listVariables(dfg)
@@ -397,7 +402,7 @@ function isFullyConnected(dfg::CloudGraphsDFG)::Bool
 end
 
 function getNeighbors(dfg::CloudGraphsDFG, node::T; solvable::Int=0)::Vector{Symbol}  where T <: DFGNode
-    query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(node.label))--(node) where (node:VARIABLE or node:FACTOR) and node.solvable >= $solvable"
+    query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(node.label))-[r:FACTORGRAPH]-(node) where (node:VARIABLE or node:FACTOR) and node.solvable >= $solvable"
     @debug "[Query] $query"
     neighbors = _getLabelsFromCyphonQuery(dfg.neo4jInstance, query)
     # If factor, need to do variable ordering TODO, Do we? does it matter if we always use _variableOrderSymbols in calculations?
@@ -408,7 +413,7 @@ function getNeighbors(dfg::CloudGraphsDFG, node::T; solvable::Int=0)::Vector{Sym
 end
 
 function getNeighbors(dfg::CloudGraphsDFG, label::Symbol; solvable::Int=0)::Vector{Symbol}
-    query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(label))--(node) where (node:VARIABLE or node:FACTOR) and node.solvable >= $solvable"
+    query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(label))-[r:FACTORGRAPH]-(node) where (node:VARIABLE or node:FACTOR) and node.solvable >= $solvable"
     @debug "[Query] $query"
     neighbors = _getLabelsFromCyphonQuery(dfg.neo4jInstance, query)
     # If factor, need to do variable ordering TODO, Do we? does it matter if we always use _variableOrderSymbols in calculations?

@@ -130,14 +130,19 @@ function updateFactor!(dfg::LightDFG, factor::F)::F where F <: AbstractDFGFactor
     return factor
 end
 
-function deleteVariable!(dfg::LightDFG, label::Symbol)::AbstractDFGVariable
+function deleteVariable!(dfg::LightDFG, label::Symbol)#::Tuple{AbstractDFGVariable, Vector{<:AbstractDFGFactor}}
     if !haskey(dfg.g.variables, label)
         error("Variable label '$(label)' does not exist in the factor graph")
+    end
+
+    deleteNeighbors = true # reserved, orphaned factors are not supported at this time
+    if deleteNeighbors
+        neigfacs = map(l->deleteFactor!(dfg, l), getNeighbors(dfg, label))
     end
     variable = dfg.g.variables[label]
     rem_vertex!(dfg.g, dfg.g.labels[label])
 
-    return variable
+    return variable, neigfacs
 end
 
 function deleteFactor!(dfg::LightDFG, label::Symbol)::AbstractDFGFactor
@@ -210,8 +215,9 @@ function listFactors(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; 
     return factors
 end
 
-function isFullyConnected(dfg::LightDFG)::Bool
-    return length(LightGraphs.connected_components(dfg.g)) == 1
+function isConnected(dfg::LightDFG)::Bool
+    return LightGraphs.is_connected(dfg.g)
+    # return length(LightGraphs.connected_components(dfg.g)) == 1
 end
 
 function _isSolvable(dfg::LightDFG, label::Symbol, ready::Int)::Bool

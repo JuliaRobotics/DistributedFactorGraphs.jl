@@ -56,7 +56,7 @@ function Base.convert(::Type{TestFunctorSingleton}, d::PackedTestFunctorSingleto
     TestFunctorSingleton()
 end
 
-struct TestCCW{T} <: ConvolutionObject where {T<:FunctorInferenceType}
+struct TestCCW{T} <: FactorOperationalMemory where {T<:FunctorInferenceType}
     usrfnc!::T
 end
 Base.:(==)(a::TestCCW, b::TestCCW) = a.usrfnc! == b.usrfnc!
@@ -76,7 +76,7 @@ function Base.convert(::Type{DFG.FunctionNodeData{TestCCW{F}}},
                                 d.solveInProgress)
 end
 
-function Base.convert(::Type{DFG.PackedFunctionNodeData{P}}, d::DFG.FunctionNodeData{<:ConvolutionObject}) where P <: PackedInferenceType
+function Base.convert(::Type{DFG.PackedFunctionNodeData{P}}, d::DFG.FunctionNodeData{<:FactorOperationalMemory}) where P <: PackedInferenceType
   # mhstr = packmultihypo(d.fnc)  # this is where certainhypo error occurs
   return DFG.PackedFunctionNodeData(d.fncargvID,
                                     d.eliminated,
@@ -315,6 +315,9 @@ function  DFGFactorSCA()
     f1 = DFGFactor(f1_lbl, [:a,:b], gfnd, tags = f1_tags, solvable=0)
 
     f2 = DFGFactor{TestCCW{TestFunctorInferenceType1}, Symbol}(:bcf1)
+    #TODO add tests for mutating vos in updateFactor and orphan related checks.
+    # we should perhaps prevent an empty vos
+    f2._variableOrderSymbols = [:b, :c]
 
     @test getLabel(f1) == f1_lbl
     @test getTags(f1) == f1_tags
@@ -410,13 +413,26 @@ function  VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
         @test getFactor(fg, :bcf1) |> getTimestamp == newtimestamp
     end
     #deletions
-    @test getVariable(fg, :c) == deleteVariable!(fg, v3)
+    delvarCompare = getVariable(fg, :c)
+    delfacCompare = getFactor(fg, :bcf1)
+    delvar, delfacs = deleteVariable!(fg, v3)
+    @test delvarCompare == delvar
+    @test delfacCompare == delfacs[1]
     @test_throws ErrorException deleteVariable!(fg, v3)
-    @test issetequal(ls(fg),[:a,:b])
+    @test setdiff(ls(fg),[:a,:b]) == []
+
+    @test addVariable!(fg, v3) === v3
+    @test addFactor!(fg, f2) === f2
 
     @test getFactor(fg, :bcf1) == deleteFactor!(fg, f2)
     @test_throws ErrorException deleteFactor!(fg, f2)
     @test lsf(fg) == [:abf1]
+
+    delvarCompare = getVariable(fg, :c)
+    delfacCompare = []
+    delvar, delfacs = deleteVariable!(fg, v3)
+    @test delvarCompare == delvar
+    @test delfacCompare == []
 
     @test getVariable(fg, :a) == v1
     @test getVariable(fg, :a, :default) == v1
@@ -1208,21 +1224,19 @@ end
 
 function ConnectivityTest(testDFGAPI; kwargs...)
     dfg, verts, facs = connectivityTestGraph(testDFGAPI; kwargs...)
-    @test isFullyConnected(dfg) == true
-    @test hasOrphans(dfg) == false
+    @test isConnected(dfg) == true
+    @test @test_deprecated isFullyConnected(dfg) == true
+    @test @test_deprecated hasOrphans(dfg) == false
 
     deleteFactor!(dfg, :x9x10f1)
-    @test isFullyConnected(dfg) == false
-    @test hasOrphans(dfg) == true
+    @test isConnected(dfg) == false
 
     deleteVariable!(dfg, :x5)
     if testDFGAPI == GraphsDFG
-        @error "FIXME: isFullyConnected is partially broken for GraphsDFG see #286"
-        @test_broken isFullyConnected(dfg) == false
-        @test_broken hasOrphans(dfg) == true
+        @error "FIXME: isConnected is partially broken for GraphsDFG see #286"
+        @test_broken isConnected(dfg) == false
     else
-        @test isFullyConnected(dfg) == false
-        @test hasOrphans(dfg) == true
+        @test isConnected(dfg) == false
     end
 end
 
@@ -1260,7 +1274,7 @@ function CopyFunctionsTest(testDFGAPI; kwargs...)
     dcdfg_part = deepcopyGraph(LightDFG, dfg, vlbls, flbls)
     @test issetequal(ls(dcdfg_part), vlbls)
     @test issetequal(lsf(dcdfg_part), flbls)
-    @test !isFullyConnected(dcdfg_part)
+    @test !isConnected(dcdfg_part)
     # dfgplot(dcdfg_part)
 
 

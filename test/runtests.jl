@@ -133,7 +133,16 @@ if get(ENV, "IIF_TEST", "") == "true"
         # This is just to validate we're not going to blow up downstream.
         apis = [
             GraphsDFG{SolverParams}(params=SolverParams()),
-            LightDFG{SolverParams}(params=SolverParams())]
+            LightDFG{SolverParams}(params=SolverParams()),
+            CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
+                                        "testUser", "testRobot", "simpleSolveSession",
+                                        "Description of test Session",
+                                        nothing,
+                                        nothing,
+                                        IncrementalInference.decodePackedType,
+                                        IncrementalInference.rebuildFactorMetadata!,
+                                        solverParams=SolverParams())
+            ]
         for api in apis
             @info "Running simple solver test: $(typeof(api))"
             global dfg = deepcopy(api)
@@ -169,7 +178,7 @@ struct NotImplementedDFG <: AbstractDFG end
     @test_throws ErrorException deleteFactor!(dfg, :a)
     @test_throws ErrorException getVariables(dfg)
     @test_throws ErrorException getFactors(dfg)
-    @test_throws ErrorException isFullyConnected(dfg)
+    @test_throws ErrorException isConnected(dfg)
     @test_throws ErrorException getNeighbors(dfg, v1)
     @test_throws ErrorException getNeighbors(dfg, :a)
 

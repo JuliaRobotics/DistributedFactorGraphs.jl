@@ -226,7 +226,7 @@ end
     $(SIGNATURES)
 Delete a DFGVariable from the DFG using its label.
 """
-function deleteVariable!(dfg::G, label::Symbol)::AbstractDFGVariable where G <: AbstractDFG
+function deleteVariable!(dfg::AbstractDFG, label::Symbol)#::Tuple{AbstractDFGVariable, Vector{<:AbstractDFGFactor}}
     error("deleteVariable! not implemented for $(typeof(dfg))")
 end
 """
@@ -292,8 +292,8 @@ end
     $(SIGNATURES)
 Checks if the graph is fully connected, returns true if so.
 """
-function isFullyConnected(dfg::AbstractDFG)::Bool
-    error("isFullyConnected not implemented for $(typeof(dfg))")
+function isConnected(dfg::AbstractDFG)::Bool
+    error("isConnected not implemented for $(typeof(dfg))")
 end
 
 """
@@ -389,7 +389,7 @@ end
     $(SIGNATURES)
 Delete a referenced DFGVariable from the DFG.
 """
-function deleteVariable!(dfg::G, variable::V)::AbstractDFGVariable where {G <: AbstractDFG, V <: AbstractDFGVariable}
+function deleteVariable!(dfg::AbstractDFG, variable::AbstractDFGVariable)#::Tuple{AbstractDFGVariable, Vector{<:AbstractDFGFactor}}
     return deleteVariable!(dfg, variable.label)
 end
 
@@ -418,15 +418,6 @@ function getNeighbors(dfg::AbstractDFG, node::DFGNode; solvable::Int=0)::Vector{
     getNeighbors(dfg, node.label, solvable=solvable)
 end
 
-#Alias
-#TODO rather actually check if there are orphaned factors (factors without all variables)
-"""
-    $(SIGNATURES)
-Checks if the graph is not fully connected, returns true if it is not contiguous.
-"""
-function hasOrphans(dfg::G)::Bool where G <: AbstractDFG
-    return !isFullyConnected(dfg)
-end
 
 ##==============================================================================
 ## Listing and listing aliases

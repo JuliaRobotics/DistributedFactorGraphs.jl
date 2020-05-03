@@ -165,14 +165,21 @@ function updateFactor!(dfg::GraphsDFG, factor::DFGFactor)::DFGFactor
     return factor
 end
 
-function deleteVariable!(dfg::GraphsDFG, label::Symbol)::DFGVariable
+function deleteVariable!(dfg::GraphsDFG, label::Symbol)#::Tuple{AbstractDFGVariable, Vector{<:AbstractDFGFactor}}
     if !haskey(dfg.labelDict, label)
         error("Variable label '$(label)' does not exist in the factor graph")
     end
+
+    deleteNeighbors = true # reserved, orphaned factors are not supported at this time
+    if deleteNeighbors
+        neigfacs = map(l->deleteFactor!(dfg, l), getNeighbors(dfg, label))
+    end
+
+
     variable = dfg.g.vertices[dfg.labelDict[label]].dfgNode
     delete_vertex!(dfg.g.vertices[dfg.labelDict[label]], dfg.g)
     delete!(dfg.labelDict, label)
-    return variable
+    return variable, neigfacs
 end
 
 function deleteFactor!(dfg::GraphsDFG, label::Symbol)::DFGFactor
@@ -220,7 +227,7 @@ function getFactors(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; 
     return factors
 end
 
-function isFullyConnected(dfg::GraphsDFG)::Bool
+function isConnected(dfg::GraphsDFG)::Bool
     return length(Graphs.connected_components(dfg.g)) == 1
 end
 

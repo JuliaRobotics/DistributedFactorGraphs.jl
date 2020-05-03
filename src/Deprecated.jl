@@ -106,6 +106,10 @@ function Base.convert(::Type{SkeletonDFGFactor}, f::FactorDataLevel1)
     return SkeletonDFGFactor(f)
 end
 
+
+@deprecate hasOrphans(dfg) !isConnected(dfg)
+@deprecate isFullyConnected(dfg) isConnected(dfg)
+
 ##==============================================================================
 ## WIP on consolidated subgraph functions, aim to remove in 0.8
 ##==============================================================================
