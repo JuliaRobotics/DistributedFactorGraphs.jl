@@ -118,6 +118,17 @@ function packFactor(dfg::G, f::DFGFactor)::Dict{String, Any} where G <: Abstract
     return props
 end
 
+
+function decodePackedType(::Type{T}, packeddata::GenericFunctionNodeData{PT,<:AbstractString}) where {T<:FactorOperationalMemory, PT}
+  # usrtyp = convert(FunctorInferenceType, packeddata.fnc)
+  # Also look at parentmodule
+  usrtyp = getfield(PT.name.module, Symbol(string(PT.name.name)[7:end]))
+  fulltype = DFG.FunctionNodeData{T{usrtyp}}
+  factordata = convert(fulltype, packeddata)
+  return factordata
+end
+
+
 function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G <: AbstractDFG
     label = packedProps["label"]
     timestamp = DateTime(packedProps["timestamp"])
@@ -129,10 +140,11 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G
     packtype = getTypeFromSerializationModule(dfg, Symbol("Packed"*datatype))
 
     packed = nothing
-    fullFactor = nothing
+    fullFactorData = nothing
     try
         packed = JSON2.read(data, GenericFunctionNodeData{packtype,String})
-        fullFactor = getSerializationModule(dfg).decodePackedType(dfg, packed)
+        decodeType = getFactorOperationalMemoryType(dfg)
+        fullFactorData = decodePackedType(decodeType, packed)
     catch ex
         io = IOBuffer()
         showerror(io, ex, catch_backtrace())
@@ -147,11 +159,11 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G
 
     # Rebuild DFGFactor
     #TODO use constuctor to create factor
-    factor = DFGFactor{typeof(fullFactor.fnc), Symbol}(Symbol(label), 0, timestamp)
+    factor = DFGFactor{typeof(fullFactorData.fnc), Symbol}(Symbol(label), 0, timestamp)
 
     union!(factor.tags, tags)
-    # factor.data = fullFactor #TODO
-    setSolverData!(factor, fullFactor)
+    # factor.data = fullFactorData #TODO
+    setSolverData!(factor, fullFactorData)
     factor._variableOrderSymbols = _variableOrderSymbols
     setSolvable!(factor, solvable)
 

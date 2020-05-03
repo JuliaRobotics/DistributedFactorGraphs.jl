@@ -36,7 +36,7 @@ function DFG.CloudGraphsDFG(; hostname="localhost",
                                           description,
                                           nothing,
                                           nothing,
-                                          (dfg,f)->f,#IncrementalInference.decodePackedType,
+                                          nothing,#IncrementalInference.CommonConvWrapper,
                                           (dfg,f)->f,#ncrementalInference.rebuildFactorMetadata!,
                                           solverParams=params)
 
@@ -71,7 +71,7 @@ function DFG.CloudGraphsDFG(description::String,
                                                 description,
                                                 nothing,
                                                 nothing,
-                                                (dfg,f)->f,#IncrementalInference.decodePackedType,
+                                                nothing,#IncrementalInference.CommonConvWrapper,
                                                 (dfg,f)->f,#IncrementalInference.rebuildFactorMetadata!,
                                                 solverParams=solverParams)
 

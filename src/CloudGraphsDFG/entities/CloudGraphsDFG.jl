@@ -11,9 +11,9 @@ mutable struct CloudGraphsDFG{T <: AbstractParams} <: AbstractDFG
     robotId::String
     sessionId::String
     description::String
-    encodePackedTypeFunc
-    getPackedTypeFunc
-    decodePackedTypeFunc
+    encodePackedTypeFunc #TODO Is this planed to be used or deprecated?
+    getPackedTypeFunc #TODO Is this planed to be used or deprecated?
+    decodePackedTypeFunc #TODO Is this planed to be used or deprecated?
     rebuildFactorMetadata!
     addHistory::Vector{Symbol}
     solverParams::T # Solver parameters

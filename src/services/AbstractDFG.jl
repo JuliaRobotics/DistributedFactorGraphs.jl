@@ -52,6 +52,13 @@ getAddHistory(dfg::AbstractDFG) = dfg.addHistory
 """
 getSolverParams(dfg::AbstractDFG) = dfg.solverParams
 
+"""
+    $(SIGNATURES)
+"""
+getFactorOperationalMemoryType(par::AbstractParams) = par.factorOperationalMemoryType
+
+getFactorOperationalMemoryType(dfg::AbstractDFG) = getFactorOperationalMemoryType(getSolverParams(dfg))
+
 ##------------------------------------------------------------------------------
 ## Setters
 ##------------------------------------------------------------------------------
