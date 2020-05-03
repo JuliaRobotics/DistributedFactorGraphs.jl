@@ -2,6 +2,8 @@ using DistributedFactorGraphs
 using Test
 using Dates
 
+import Base: convert
+
 # TODO, dink meer aan: Trait based softtypes or hard type for VariableNodeData
 # Test InferenceVariable Types
 struct TestSofttype1 <: InferenceVariable
@@ -16,7 +18,7 @@ struct TestSofttype2 <: InferenceVariable
     TestSofttype2() = new(2,(:Euclid,:Circular,))
 end
 
-# Test Factor Types TODO same with factor type if I can figure out what it is and how it works
+
 struct TestFunctorInferenceType1 <: FunctorInferenceType end
 struct TestFunctorInferenceType2 <: FunctorInferenceType end
 
@@ -24,14 +26,74 @@ struct TestFunctorSingleton <: FunctorSingleton end
 struct TestFunctorPairwise <: FunctorPairwise end
 struct TestFunctorPairwiseMinimize <: FunctorPairwiseMinimize end
 
-struct TestCCW{T} <: ConvolutionObject where {T<:FunctorInferenceType}
+struct PackedTestFunctorInferenceType1 <: PackedInferenceType
+    s::String
+end
+PackedTestFunctorInferenceType1() = PackedTestFunctorInferenceType1("")
+
+function Base.convert(::Type{PackedTestFunctorInferenceType1}, d::TestFunctorInferenceType1)
+    # @info "convert(::Type{PackedTestFunctorInferenceType1}, d::TestFunctorInferenceType1)"
+    PackedTestFunctorInferenceType1()
+end
+
+function Base.convert(::Type{TestFunctorInferenceType1}, d::PackedTestFunctorInferenceType1)
+    # @info "convert(::Type{TestFunctorInferenceType1}, d::PackedTestFunctorInferenceType1)"
+    TestFunctorInferenceType1()
+end
+
+struct PackedTestFunctorSingleton <: PackedInferenceType
+    s::String
+end
+PackedTestFunctorSingleton() = PackedTestFunctorSingleton("")
+
+function Base.convert(::Type{PackedTestFunctorSingleton}, d::TestFunctorSingleton)
+    # @info "convert(::Type{PackedTestFunctorSingleton}, d::TestFunctorSingleton)"
+    PackedTestFunctorSingleton()
+end
+
+function Base.convert(::Type{TestFunctorSingleton}, d::PackedTestFunctorSingleton)
+    # @info "onvert(::Type{TestFunctorSingleton}, d::PackedTestFunctorSingleton)"
+    TestFunctorSingleton()
+end
+
+struct TestCCW{T} <: FactorOperationalMemory where {T<:FunctorInferenceType}
     usrfnc!::T
 end
 Base.:(==)(a::TestCCW, b::TestCCW) = a.usrfnc! == b.usrfnc!
 
 
-global testDFGAPI = LightDFG
+function Base.convert(::Type{DFG.FunctionNodeData{TestCCW{F}}},
+                     d::DFG.PackedFunctionNodeData{<:PackedInferenceType}) where F<:FunctorInferenceType
+
+    return DFG.FunctionNodeData(d.fncargvID,
+                                d.eliminated,
+                                d.potentialused,
+                                d.edgeIDs,
+                                Symbol(d.frommodule),
+                                TestCCW(convert(F, d.fnc)),
+                                d.multihypo,
+                                d.certainhypo,
+                                d.solveInProgress)
+end
+
+function Base.convert(::Type{DFG.PackedFunctionNodeData{P}}, d::DFG.FunctionNodeData{<:FactorOperationalMemory}) where P <: PackedInferenceType
+  # mhstr = packmultihypo(d.fnc)  # this is where certainhypo error occurs
+  return DFG.PackedFunctionNodeData(d.fncargvID,
+                                    d.eliminated,
+                                    d.potentialused,
+                                    d.edgeIDs,
+                                    string(d.frommodule),
+                                    convert(P, d.fnc.usrfnc!),
+                                    d.multihypo,
+                                    d.certainhypo,
+                                    d.solveInProgress)
+end
+
+
+
+##
 global testDFGAPI = GraphsDFG
+global testDFGAPI = LightDFG
 
 #test Specific definitions
 # struct TestInferenceVariable1 <: InferenceVariable end
@@ -52,6 +114,12 @@ function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverP
     fg = T(params=solparams)
     #TODO test something better
     @test isa(fg, T)
+
+    #TODO I don't like, so not exporting, and not recommended to use
+    #     Technically if you set Ids its a new object
+    @test DistributedFactorGraphs.setUserId!(fg, "userId_1") == "userId_1"
+    @test DistributedFactorGraphs.setRobotId!(fg, "robotId_1") == "robotId_1"
+    @test DistributedFactorGraphs.setSessionId!(fg, "sessionId_1") == "sessionId_1"
 
     des = "description"
     uId = "userId"
@@ -97,13 +165,6 @@ function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverP
     @test setSolverParams!(fg, typeof(solparams)()) == typeof(solparams)()
 
     @test setDescription!(fg, des*"_1") == des*"_1"
-
-    #TODO I don't like, so not exporting, and not recommended to use
-    #     Technically if you set Ids its a new object
-    @test DistributedFactorGraphs.setUserId!(fg, uId*"_1") == uId*"_1"
-    @test DistributedFactorGraphs.setRobotId!(fg, rId*"_1") == rId*"_1"
-    @test DistributedFactorGraphs.setSessionId!(fg, sId*"_1") == sId*"_1"
-
 
     #deprecated
     @test_throws ErrorException getLabelDict(fg)
@@ -170,6 +231,7 @@ function DFGVariableSCA()
     v2 = DFGVariable(:b, VariableNodeData{TestSofttype2}(), tags=Set([:VARIABLE, :LANDMARK]))
     v3 = DFGVariable(:c, VariableNodeData{TestSofttype2}())
 
+    vorphan = DFGVariable(:orphan, TestSofttype1(), tags=v1_tags, solvable=0, solverDataDict=Dict(:default=>VariableNodeData{TestSofttype1}()))
 
     getSolverData(v1).solveInProgress = 1
 
@@ -226,7 +288,7 @@ function DFGVariableSCA()
     # isSolved
     # setSolvedCount
 
-    return (v1=v1, v2=v2, v3=v3, v1_tags=v1_tags)
+    return (v1=v1, v2=v2, v3=v3, vorphan = vorphan, v1_tags=v1_tags)
 
 end
 
@@ -248,7 +310,7 @@ function  DFGFactorSCA()
     f1 = DFGFactor{TestCCW{TestFunctorInferenceType1}, Symbol}(f1_lbl)
     f1 = DFGFactor(f1_lbl, [:a,:b], gfnd, tags = f1_tags, solvable=0)
 
-    f2 = DFGFactor{TestFunctorInferenceType1, Symbol}(:bcf1)
+    f2 = DFGFactor{TestCCW{TestFunctorInferenceType1}, Symbol}(:bcf1)
     #TODO add tests for mutating vos in updateFactor and orphan related checks.
     # we should perhaps prevent an empty vos
     f2._variableOrderSymbols = [:b, :c]
@@ -297,6 +359,13 @@ function  DFGFactorSCA()
     # create f0 here for a later timestamp
     f0 = DFGFactor(:af1, [:a], gfnd_prior, tags = Set([:PRIOR]))
 
+    #fill in undefined fields
+    f2.solverData.certainhypo = Int[]
+    f2.solverData.fncargvID = Symbol[]
+    f2.solverData.frommodule = :DistributedFactorGraphs
+    f2.solverData.multihypo = Float64[]
+    f2.solverData.edgeIDs = Int64[]
+
     return  (f0=f0, f1=f1, f2=f2)
 end
 
@@ -343,22 +412,22 @@ function  VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     delvarCompare = getVariable(fg, :c)
     delfacCompare = getFactor(fg, :bcf1)
     delvar, delfacs = deleteVariable!(fg, v3)
-    @test delvarCompare === delvar
-    @test delfacCompare === delfacs[1]
+    @test delvarCompare == delvar
+    @test delfacCompare == delfacs[1]
     @test_throws ErrorException deleteVariable!(fg, v3)
     @test setdiff(ls(fg),[:a,:b]) == []
 
     @test addVariable!(fg, v3) === v3
     @test addFactor!(fg, f2) === f2
 
-    @test getFactor(fg, :bcf1) === deleteFactor!(fg, f2)
+    @test getFactor(fg, :bcf1) == deleteFactor!(fg, f2)
     @test_throws ErrorException deleteFactor!(fg, f2)
     @test lsf(fg) == [:abf1]
 
     delvarCompare = getVariable(fg, :c)
     delfacCompare = []
     delvar, delfacs = deleteVariable!(fg, v3)
-    @test delvarCompare === delvar
+    @test delvarCompare == delvar
     @test delfacCompare == []
 
     @test getVariable(fg, :a) == v1
@@ -373,10 +442,14 @@ function  VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
         @test_logs (:warn, r"supported for type DFGVariable") getVariable(fg, :a, :missingfoo)
     end
 
-    @test getFactor(fg, :abf1) === f1
+    @test getFactor(fg, :abf1) == f1
 
     @test_throws ErrorException getVariable(fg, :c)
     @test_throws ErrorException getFactor(fg, :bcf1)
+
+    #test issue #375
+    @test_throws ErrorException getVariable(fg, :abf1)
+    @test_throws ErrorException getFactor(fg, :a)
 
     # Existence
     @test exists(fg, :a)
@@ -470,7 +543,11 @@ function  PPETestBlock!(fg, v1)
     @test @test_logs (:warn, r"does not exist") updatePPE!(fg, :a, ppe, :default) == ppe
     # Update update it
     @test updatePPE!(fg, :a, ppe, :default) == ppe
-    # Bulk copy PPE's for x0 and x1
+    @test deletePPE!(fg, :a, :default) == ppe
+
+    # manually add ppe to v1 for tests
+    v1.ppeDict[:default] = deepcopy(ppe)
+    # Bulk copy PPE's for :x1
     @test updatePPE!(fg, [v1], :default) == nothing
     # Delete it
     @test deletePPE!(fg, :a, :default) == ppe
@@ -494,6 +571,8 @@ function  PPETestBlock!(fg, v1)
     updatePPE!(fg, :a, ppe, :default)
     # Update update it
     updatePPE!(fg, :a, ppe, :default)
+
+    v1.ppeDict[:default] = deepcopy(ppe)
     # Bulk copy PPE's for x0 and x1
     updatePPE!(fg, [v1], :default)
     # Delete it
@@ -743,6 +822,7 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test getVariableType(v1) == TestSofttype1()
         @test getVariableType(fg,:a) == TestSofttype1()
 
+        @test ls2(fg, :a) == [:b]
 
         #TODO what is lsTypes supposed to return?
         @test_broken lsTypes(fg)
@@ -756,10 +836,10 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test_skip varNearTs[1][1] == [:b]
 
         ## SORT copied from CRUD
-        @test all(getVariables(fg, r"a") .== [v1])
-        @test all(getVariables(fg, solvable=1) .== [v2])
+        @test all(getVariables(fg, r"a") .== [getVariable(fg,v1.label)])
+        @test all(getVariables(fg, solvable=1) .== [getVariable(fg,v2.label)])
         @test getVariables(fg, r"a", solvable=1) == []
-        @test getVariables(fg, tags=[:LANDMARK])[1] == v2
+        @test getVariables(fg, tags=[:LANDMARK])[1] == getVariable(fg, v2.label)
 
         @test getFactors(fg, r"nope") == []
         @test issetequal(getLabel.(getFactors(fg, solvable=1)), [:af1, :abf1])
@@ -877,8 +957,8 @@ function AdjacencyMatricesTestBlock(fg)
     @test_throws ErrorException getAdjacencyMatrix(fg)
     adjMat = DistributedFactorGraphs.getAdjacencyMatrixSymbols(fg)
     @test size(adjMat) == (2,4)
-    @test symdiff(adjMat[1, :], [nothing, :a, :b, :orphan]) == Symbol[]
-    @test symdiff(adjMat[2, :], [:abf1, :abf1, :abf1, nothing]) == Symbol[]
+    @test issetequal(adjMat[1, :], [nothing, :a, :b, :orphan])
+    @test issetequal(adjMat[2, :], [:abf1, :abf1, :abf1, nothing])
     #
     #sparse
     adjMat, v_ll, f_ll = getBiadjacencyMatrix(fg)
@@ -909,7 +989,7 @@ function AdjacencyMatricesTestBlock(fg)
 end
 
 # Now make a complex graph for connectivity tests
-function connectivityTestGraph(::Type{T}; VARTYPE=DFGVariable, FACTYPE=DFGFactor) where T <: InMemoryDFGTypes
+function connectivityTestGraph(::Type{T}; VARTYPE=DFGVariable, FACTYPE=DFGFactor) where T <: AbstractDFG#InMemoryDFGTypes
     #settings
     numNodesType1 = 5
     numNodesType2 = 5
@@ -927,7 +1007,16 @@ function connectivityTestGraph(::Type{T}; VARTYPE=DFGVariable, FACTYPE=DFGFactor
         #NOTE because defaults changed
         setSolvable!(dfg, :x8, 0)
         setSolvable!(dfg, :x9, 0)
-        facs = map(n -> addFactor!(dfg, [vars[n], vars[n+1]], DFGFactor{Int, :Symbol}(Symbol("x$(n)x$(n+1)f1"))), 1:length(vars)-1)
+
+        gfnd = GenericFunctionNodeData(Symbol[], false, false, Int[], :DistributedFactorGraphs, TestCCW(TestFunctorInferenceType1()))
+        f_tags = Set([:FACTOR])
+        # f1 = DFGFactor(f1_lbl, [:a,:b], gfnd, tags = f_tags)
+
+        facs = map(n -> addFactor!(dfg, DFGFactor(Symbol("x$(n)x$(n+1)f1"),
+                                                  [vars[n].label, vars[n+1].label],
+                                                  deepcopy(gfnd),
+                                                  tags=deepcopy(f_tags))),
+                                                   1:length(vars)-1)
         setSolvable!(dfg, :x7x8f1, 0)
 
     else
@@ -957,8 +1046,8 @@ function  GettingNeighbors(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
     #TODO if not a LightDFG with and summary or skeleton
     if VARTYPE == DFGVariable
         @test getNeighbors(dfg, :x5, solvable=2) == Symbol[]
-        @test getNeighbors(dfg, :x5, solvable=0) == [:x4x5f1,:x5x6f1]
-        @test getNeighbors(dfg, :x5) == [:x4x5f1,:x5x6f1]
+        @test issetequal(getNeighbors(dfg, :x5, solvable=0), [:x4x5f1,:x5x6f1])
+        @test issetequal(getNeighbors(dfg, :x5), [:x4x5f1,:x5x6f1])
         @test getNeighbors(dfg, :x7x8f1, solvable=0) == [:x7, :x8]
         @test getNeighbors(dfg, :x7x8f1, solvable=1) == [:x7]
         @test getNeighbors(dfg, verts[1], solvable=0) == [:x1x2f1]
@@ -1018,6 +1107,43 @@ function  GettingSubgraphs(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
 
 end
 
+
+function  BuildingSubgraphs(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
+
+        # "Getting Subgraphs"
+    dfg, verts, facs = connectivityTestGraph(testDFGAPI, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
+    # Subgraphs
+    dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [verts[1].label], 2)
+    # Only returns x1 and x2
+    @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+    #
+    dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [:x1, :x2, :x1x2f1])
+    # Only returns x1 and x2
+    @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+
+    dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [:x1x2f1], 1)
+    # Only returns x1 and x2
+    @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+
+    #TODO if not a LightDFG with and summary or skeleton
+    if VARTYPE == DFGVariable
+        dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [:x8], 2, solvable=1)
+        @test issetequal([:x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
+        #end if not a LightDFG with and summary or skeleton
+    end
+    # DFG issue #95 - confirming that getSubgraphAroundNode retains order
+    # REF: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/95
+    for fId in listVariables(dfg)
+        # Get a subgraph of this and it's related factors+variables
+        dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [fId], 2)
+        # For each factor check that the order the copied graph == original
+        for fact in getFactors(dfgSubgraph)
+            @test fact._variableOrderSymbols == getFactor(dfg, fact.label)._variableOrderSymbols
+        end
+    end
+
+end
+
 #TODO Summaries and Summary Graphs
 function  Summaries(testDFGAPI)
     # "Summaries and Summary Graphs"
@@ -1055,23 +1181,35 @@ function  Summaries(testDFGAPI)
     end
 end
 
-function ProducingDotFiles(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
+function ProducingDotFiles(testDFGAPI,
+                           v1 = nothing,
+                           v2 = nothing,
+                           f1 = nothing;
+                           VARTYPE=DFGVariable,
+                           FACTYPE=DFGFactor)
     # "Producing Dot Files"
     # create a simpler graph for dot testing
     dotdfg = testDFGAPI()
-    v1 = VARTYPE(:a, VariableNodeData{TestSofttype1}())
-    v2 = VARTYPE(:b, VariableNodeData{TestSofttype1}())
-    if FACTYPE==DFGFactor
-        f1 = DFGFactor{Int, :Symbol}(:abf1)
-    else
-        f1 = FACTYPE(:abf1)
+
+    if v1 == nothing
+        v1 = VARTYPE(:a, VariableNodeData{TestSofttype1}())
     end
+    if v2 == nothing
+        v2 = VARTYPE(:b, VariableNodeData{TestSofttype1}())
+    end
+    if f1 == nothing
+        f1 = (FACTYPE==DFGFactor) ? DFGFactor{Int, :Symbol}(:abf1) : FACTYPE(:abf1)
+    end
+
     addVariable!(dotdfg, v1)
     addVariable!(dotdfg, v2)
     addFactor!(dotdfg, [v1, v2], f1)
     #NOTE hardcoded toDot will have different results so test LightGraphs seperately
-    if testDFGAPI <: LightDFG
-        @test toDot(dotdfg) == "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box];\na -- abf1\nb -- abf1\n}\n"
+    if testDFGAPI <: LightDFG || testDFGAPI <: CloudGraphsDFG
+        todotstr = toDot(dotdfg)
+        todota = todotstr == "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box];\na -- abf1\nb -- abf1\n}\n"
+        todotb = todotstr == "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box];\nb -- abf1\na -- abf1\n}\n"
+        @test (todota || todotb)
     else
         @test toDot(dotdfg) == "graph graphname {\n2 [\"label\"=\"b\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n2 -- 3\n3 [\"label\"=\"abf1\",\"shape\"=\"box\",\"fillcolor\"=\"blue\",\"color\"=\"blue\"]\n1 [\"label\"=\"a\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n1 -- 3\n}\n"
     end
@@ -1082,20 +1220,102 @@ end
 
 function ConnectivityTest(testDFGAPI; kwargs...)
     dfg, verts, facs = connectivityTestGraph(testDFGAPI; kwargs...)
-    @test isFullyConnected(dfg) == true
-    @test hasOrphans(dfg) == false
+    @test isConnected(dfg) == true
+    @test @test_deprecated isFullyConnected(dfg) == true
+    @test @test_deprecated hasOrphans(dfg) == false
 
     deleteFactor!(dfg, :x9x10f1)
-    @test isFullyConnected(dfg) == false
-    @test hasOrphans(dfg) == true
+    @test isConnected(dfg) == false
 
     deleteVariable!(dfg, :x5)
     if testDFGAPI == GraphsDFG
-        @error "FIXME: isFullyConnected is partially broken for GraphsDFG see #286"
-        @test_broken isFullyConnected(dfg) == false
-        @test_broken hasOrphans(dfg) == true
+        @error "FIXME: isConnected is partially broken for GraphsDFG see #286"
+        @test_broken isConnected(dfg) == false
     else
-        @test isFullyConnected(dfg) == false
-        @test hasOrphans(dfg) == true
+        @test isConnected(dfg) == false
     end
+end
+
+
+function CopyFunctionsTest(testDFGAPI; kwargs...)
+
+    # testDFGAPI = LightDFG
+    # kwargs = ()
+
+    dfg, verts, facs = connectivityTestGraph(testDFGAPI; kwargs...)
+
+    varlbls = ls(dfg)
+    faclbls = lsf(dfg)
+
+    dcdfg = deepcopyGraph(LightDFG, dfg)
+
+    @test issetequal(ls(dcdfg), varlbls)
+    @test issetequal(lsf(dcdfg), faclbls)
+
+    vlbls = [:x2, :x3]
+    flbls = [:x2x3f1]
+    dcdfg_part = deepcopyGraph(LightDFG, dfg, vlbls, flbls)
+
+    @test issetequal(ls(dcdfg_part), vlbls)
+    @test issetequal(lsf(dcdfg_part), flbls)
+
+    # deepcopy subgraph ignoring orphans
+    @test_logs (:warn, r"orphan") dcdfg_part = deepcopyGraph(LightDFG, dfg, vlbls, union(flbls, [:x1x2f1]))
+    @test issetequal(ls(dcdfg_part), vlbls)
+    @test issetequal(lsf(dcdfg_part), flbls)
+
+    # deepcopy subgraph with 2 parts
+    vlbls = [:x2, :x3, :x5, :x6, :x10]
+    flbls = [:x2x3f1, :x5x6f1]
+    dcdfg_part = deepcopyGraph(LightDFG, dfg, vlbls, flbls)
+    @test issetequal(ls(dcdfg_part), vlbls)
+    @test issetequal(lsf(dcdfg_part), flbls)
+    @test !isConnected(dcdfg_part)
+    # dfgplot(dcdfg_part)
+
+
+    vlbls = [:x2, :x3]
+    dcdfg_part =  deepcopyGraph(LightDFG, dfg, vlbls; verbose=false)
+    @test issetequal(ls(dcdfg_part), vlbls)
+    @test issetequal(lsf(dcdfg_part), [:x2x3f1])
+
+    # not found errors
+    @test_throws ErrorException deepcopyGraph(LightDFG, dfg, [:x1, :a])
+    @test_throws ErrorException deepcopyGraph(LightDFG, dfg, [:x1], [:f1])
+
+    # already exists errors
+    dcdfg_part = deepcopyGraph(LightDFG, dfg, [:x1, :x2, :x3], [:x1x2f1, :x2x3f1])
+    @test_throws ErrorException deepcopyGraph!(dcdfg_part, dfg, [:x4, :x2, :x3], [:x1x2f1, :x2x3f1])
+    @test_skip @test_throws ErrorException deepcopyGraph!(dcdfg_part, dfg, [:x1x2f1])
+
+    # same but overwrite destination
+    deepcopyGraph!(dcdfg_part, dfg, [:x4, :x2, :x3], [:x1x2f1, :x2x3f1]; overwriteDest = true)
+
+    deepcopyGraph!(dcdfg_part, dfg, Symbol[], [:x1x2f1]; overwriteDest=true)
+
+    vlbls1 = [:x1, :x2, :x3]
+    vlbls2 = [:x4, :x5, :x6]
+    dcdfg_part1 = deepcopyGraph(LightDFG, dfg, vlbls1)
+    dcdfg_part2 = deepcopyGraph(GraphsDFG, dfg, vlbls2)
+
+    mergedGraph = testDFGAPI()
+    mergeGraph!(mergedGraph, dcdfg_part1)
+    mergeGraph!(mergedGraph, dcdfg_part2)
+
+    @test issetequal(ls(mergedGraph), union(vlbls1, vlbls2))
+    @test issetequal(lsf(mergedGraph), union(lsf(dcdfg_part1), lsf(dcdfg_part2)))
+    # convert to...
+    # condfg = convert(GraphsDFG, dfg)
+    # @test condfg isa GraphsDFG
+    # @test issetequal(ls(condfg), varlbls)
+    # @test issetequal(lsf(condfg), faclbls)
+    #
+    # condfg = convert(LightDFG, dfg)
+    # @test condfg isa LightDFG
+    # @test issetequal(ls(condfg), varlbls)
+    # @test issetequal(lsf(condfg), faclbls)
+
+    # GraphsDFG(dfg::AbstractDFG) = convert(GraphsDFG,dfg)
+    # GraphsDFG(dfg)
+
 end

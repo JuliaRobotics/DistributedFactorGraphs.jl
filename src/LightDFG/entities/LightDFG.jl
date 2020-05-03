@@ -66,3 +66,14 @@ LightDFG(description::String,
          sessionData::Dict{Symbol, String},
          solverParams::AbstractParams) =
          LightDFG(FactorGraph{Int,DFGVariable,DFGFactor}(), description, userId, robotId, sessionId, userData, robotData, sessionData, Symbol[], solverParams)
+
+
+LightDFG{T,V,F}(description::String,
+                userId::String,
+                robotId::String,
+                sessionId::String,
+                userData::Dict{Symbol, String},
+                robotData::Dict{Symbol, String},
+                sessionData::Dict{Symbol, String},
+                solverParams::T) where {T <: AbstractParams, V <:AbstractDFGVariable, F<:AbstractDFGFactor} =
+                LightDFG(FactorGraph{Int,V,F}(), description, userId, robotId, sessionId, userData, robotData, sessionData, Symbol[], solverParams)

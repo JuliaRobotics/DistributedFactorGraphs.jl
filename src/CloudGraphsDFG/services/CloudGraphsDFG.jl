@@ -9,7 +9,7 @@ function _getDuplicatedEmptyDFG(dfg::CloudGraphsDFG)::CloudGraphsDFG
     while true #do..while loop
         count += 1
         sessionId = dfg.sessionId*"_$count"
-        length(_getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId):$(dfg.robotId):$(sessionId))")) == 0 && break
+        _getNodeCount(dfg.neo4jInstance, [dfg.userId, dfg.robotId, sessionId]) == 0 && break
     end
     @debug "Unique+empty copy session name: $sessionId"
     return CloudGraphsDFG{typeof(dfg.solverParams)}(
@@ -17,6 +17,7 @@ function _getDuplicatedEmptyDFG(dfg::CloudGraphsDFG)::CloudGraphsDFG
         dfg.userId,
         dfg.robotId,
         sessionId,
+        dfg.description,
         dfg.encodePackedTypeFunc,
         dfg.getPackedTypeFunc,
         dfg.decodePackedTypeFunc,
@@ -32,11 +33,13 @@ function getDescription(dfg::CloudGraphsDFG)
         "description")
 end
 function setDescription!(dfg::CloudGraphsDFG, description::String)
-    _setNodeProperty(
-        dfg.neo4jInstance,
-        [dfg.sessionId, dfg.robotId, dfg.userId, "SESSION"],
-        "description",
-        description)
+    count = _setNodeProperty(dfg.neo4jInstance,
+                            [dfg.sessionId, dfg.robotId, dfg.userId, "SESSION"],
+                            "description",
+                            description)
+    @assert(count == 1)
+    dfg.description = description
+    return getDescription(dfg)
 end
 
 function getSerializationModule(dfg::CloudGraphsDFG)::Module where G <: AbstractDFG
@@ -53,43 +56,89 @@ function getUserData(dfg::CloudGraphsDFG)::Dict{Symbol, String}
     propVal = _getNodeProperty(dfg.neo4jInstance, _getLabelsForType(dfg, User), "data")
     return JSON2.read(String(base64decode(propVal)), Dict{Symbol, String})
 end
-function setUserData!(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
+function setUserData!(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Dict{Symbol, String}
     count = _setNodeProperty(dfg.neo4jInstance, [dfg.userId, "USER"], "data", base64encode(JSON2.write(data)))
-    return count == 1
+    @assert(count == 1)
+    return  getUserData(dfg)
 end
+
 function getRobotData(dfg::CloudGraphsDFG)::Dict{Symbol, String}
     propVal = _getNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, "ROBOT"], "data")
     return JSON2.read(String(base64decode(propVal)), Dict{Symbol, String})
 end
-function setRobotData!(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
+function setRobotData!(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Dict{Symbol, String}
     count = _setNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, "ROBOT"], "data", base64encode(JSON2.write(data)))
-    return count == 1
+    @assert(count == 1)
+    return  getRobotData(dfg)
 end
+
 function getSessionData(dfg::CloudGraphsDFG)::Dict{Symbol, String}
     propVal = _getNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, "SESSION"], "data")
     return JSON2.read(String(base64decode(propVal)), Dict{Symbol, String})
 end
-function setSessionData!(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Bool
+function setSessionData!(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Dict{Symbol, String}
     count = _setNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, "SESSION"], "data", base64encode(JSON2.write(data)))
-    return count == 1
+    @assert(count == 1)
+    return  getSessionData(dfg)
 end
 
 # New API
-getUserData(dfg::CloudGraphsDFG, key::Symbol)::String = error("Not supported yet")
-getRobotData(dfg::CloudGraphsDFG, key::Symbol)::String = error("Not supported yet")
-getSessionData(dfg::CloudGraphsDFG, key::Symbol)::String = error("Not supported yet")
+getUserData(dfg::CloudGraphsDFG, key::Symbol) = getUserData(dfg::CloudGraphsDFG)[key]
+getRobotData(dfg::CloudGraphsDFG, key::Symbol)::String = getRobotData(dfg::CloudGraphsDFG)[key]
+getSessionData(dfg::CloudGraphsDFG, key::Symbol)::String = getSessionData(dfg::CloudGraphsDFG)[key]
 
-updateUserData!(dfg::CloudGraphsDFG, pair::Pair{Symbol,String}) = error("Not supported yet")
-updateRobotData!(dfg::CloudGraphsDFG, pair::Pair{Symbol,String}) = error("Not supported yet")
-updateSessionData!(dfg::CloudGraphsDFG, pair::Pair{Symbol,String}) = error("Not supported yet")
+function updateUserData!(dfg::CloudGraphsDFG, pair::Pair{Symbol,String})
+    data = getUserData(dfg::CloudGraphsDFG)
+    push!(data, pair)
+    setUserData!(dfg, data)
+end
 
-deleteUserData!(dfg::CloudGraphsDFG, key::Symbol) = error("Not supported yet")
-deleteRobotData!(dfg::CloudGraphsDFG, key::Symbol) = error("Not supported yet")
-deleteSessionData!(dfg::CloudGraphsDFG, key::Symbol) = error("Not supported yet")
+function updateRobotData!(dfg::CloudGraphsDFG, pair::Pair{Symbol,String})
+    data = getRobotData(dfg::CloudGraphsDFG)
+    push!(data, pair)
+    setRobotData!(dfg, data)
+end
 
-emptyUserData!(dfg::CloudGraphsDFG) = error("Not supported yet")
-emptyRobotData!(dfg::CloudGraphsDFG) = error("Not supported yet")
-emptySessionData!(dfg::CloudGraphsDFG) = error("Not supported yet")
+function updateSessionData!(dfg::CloudGraphsDFG, pair::Pair{Symbol,String})
+    data = getSessionData(dfg::CloudGraphsDFG)
+    push!(data, pair)
+    setSessionData!(dfg, data)
+end
+
+function deleteUserData!(dfg::CloudGraphsDFG, key::Symbol)
+    data = getUserData(dfg::CloudGraphsDFG)
+    delval = pop!(data, key)
+    setUserData!(dfg, data)
+    return delval
+end
+
+function deleteRobotData!(dfg::CloudGraphsDFG, key::Symbol)
+    data = getRobotData(dfg::CloudGraphsDFG)
+    delval = pop!(data, key)
+    setRobotData!(dfg, data)
+    return delval
+end
+
+function deleteSessionData!(dfg::CloudGraphsDFG, key::Symbol)
+    data = getSessionData(dfg::CloudGraphsDFG)
+    delval = pop!(data, key)
+    setSessionData!(dfg, data)
+    return delval
+end
+
+
+function emptyUserData!(dfg::CloudGraphsDFG)
+    return setUserData!(dfg, Dict{Symbol, String}())
+end
+
+function emptyRobotData!(dfg::CloudGraphsDFG)
+    return setRobotData!(dfg, Dict{Symbol, String}())
+end
+
+function emptySessionData!(dfg::CloudGraphsDFG)
+    return setSessionData!(dfg, Dict{Symbol, String}())
+end
+
 
 ##==============================================================================
 ## CRUD Interfaces
@@ -132,17 +181,15 @@ function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariable
     return variable
 end
 
-function addFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)
-    addFactor!(dfg, factor._variableOrderSymbols, factor)
-end
 
-function addFactor!(dfg::CloudGraphsDFG, variables::Vector{<:DFGVariable}, factor::DFGFactor)::DFGFactor
+function addFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor
     if exists(dfg, factor)
         error("Factor '$(factor.label)' already exists in the factor graph")
     end
 
-    # Update the variable ordering
-    factor._variableOrderSymbols = map(v->v.label, variables)
+    variableIds = factor._variableOrderSymbols
+    variables = map(vId -> getVariable(dfg, vId), variableIds)
+
 
     # Construct the properties to save
     props = packFactor(dfg, factor)
@@ -163,16 +210,11 @@ function addFactor!(dfg::CloudGraphsDFG, variables::Vector{<:DFGVariable}, facto
     return factor
 end
 
-function addFactor!(dfg::CloudGraphsDFG, variableIds::Vector{Symbol}, factor::DFGFactor)::DFGFactor
-    variables = map(vId -> getVariable(dfg, vId), variableIds)
-    return addFactor!(dfg, variables, factor)
-end
-
 function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGVariable
     if typeof(label) == String
         label = Symbol(label)
     end
-    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, label)
+    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, label, nodeType="VARIABLE")
     if nodeId == nothing
         error("Unable to retrieve the ID for variable '$label'. Please check your connection to the database and that the variable exists.")
     end
@@ -191,7 +233,7 @@ function getFactor(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGFactor
     if typeof(label) == String
         label = Symbol(label)
     end
-    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, label)
+    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, label, nodeType="FACTOR")
     if nodeId == nothing
         error("Unable to retrieve the ID for factor '$label'. Please check your connection to the database and that the factor exists.")
     end
@@ -338,7 +380,7 @@ function listFactors(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=not
     end
 end
 
-function isFullyConnected(dfg::CloudGraphsDFG)::Bool
+function isConnected(dfg::CloudGraphsDFG)::Bool
     # If the total number of nodes == total number of distinct connected nodes, then it is fully connected
     # Total nodes
     varIds = listVariables(dfg)
@@ -363,7 +405,7 @@ function getNeighbors(dfg::CloudGraphsDFG, node::T; solvable::Int=0)::Vector{Sym
     query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(node.label))-[r:FACTORGRAPH]-(node) where (node:VARIABLE or node:FACTOR) and node.solvable >= $solvable"
     @debug "[Query] $query"
     neighbors = _getLabelsFromCyphonQuery(dfg.neo4jInstance, query)
-    # If factor, need to do variable ordering
+    # If factor, need to do variable ordering TODO, Do we? does it matter if we always use _variableOrderSymbols in calculations?
     if T <: DFGFactor
         neighbors = intersect(node._variableOrderSymbols, neighbors)
     end
@@ -374,7 +416,7 @@ function getNeighbors(dfg::CloudGraphsDFG, label::Symbol; solvable::Int=0)::Vect
     query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(label))-[r:FACTORGRAPH]-(node) where (node:VARIABLE or node:FACTOR) and node.solvable >= $solvable"
     @debug "[Query] $query"
     neighbors = _getLabelsFromCyphonQuery(dfg.neo4jInstance, query)
-    # If factor, need to do variable ordering
+    # If factor, need to do variable ordering TODO, Do we? does it matter if we always use _variableOrderSymbols in calculations?
     if isFactor(dfg, label)
         # Server is authority
         serverOrder = Symbol.(JSON2.read(_getNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, String(label)], "_variableOrderSymbols")))
@@ -483,10 +525,11 @@ function addPPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Symbo
     if ppekey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction)
         error("PPE '$(ppekey)' already exists")
     end
-    return updatePPE!(dfg, variablekey, ppe, ppekey, currentTransaction=currentTransaction)
+    return _matchmergePPE!(dfg, variablekey, ppe, ppekey, currentTransaction=currentTransaction)
 end
 
-function updatePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::P where P <: AbstractPointParametricEst
+#TODO clean this, just to match api for update
+function _matchmergePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::P where P <: AbstractPointParametricEst
     packed = packPPE(dfg, ppe)
     query = """
                 MATCH (var:$variablekey:$(join(_getLabelsForType(dfg, DFGVariable, parentKey=variablekey),':')))
@@ -509,10 +552,17 @@ function updatePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Sy
     return unpackPPE(dfg, result.results[1]["data"][1]["row"][1])
 end
 
+function updatePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::P where P <: AbstractPointParametricEst
+    if !(ppekey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction))
+        @warn "PPE '$(ppekey)' does not exist, adding"
+    end
+    return _matchmergePPE!(dfg, variablekey, ppe, ppekey, currentTransaction=currentTransaction)
+end
+
 function updatePPE!(dfg::CloudGraphsDFG, sourceVariables::Vector{<:DFGVariable}, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
     tx = currentTransaction == nothing ? transaction(dfg.neo4jInstance.connection) : currentTransaction
     for var in sourceVariables
-        updatePPE!(dfg, var.label, getPPE(dfg, var, ppekey), ppekey, currentTransaction=tx)
+        updatePPE!(dfg, var.label, getPPE(var, ppekey), ppekey, currentTransaction=tx)
     end
     if currentTransaction == nothing
         result = commit(tx)
@@ -545,14 +595,18 @@ end
 ### Updated functions from AbstractDFG
 ### These functions write back as you add the data.
 
-function addVariableSolverData!(dfg::CloudGraphsDFG, variablekey::Symbol, vnd::VariableNodeData, solvekey::Symbol=:default)::VariableNodeData
+function addVariableSolverData!(dfg::CloudGraphsDFG,
+                                variablekey::Symbol,
+                                vnd::VariableNodeData,
+                                solvekey::Symbol=:default)::VariableNodeData
     # TODO: Switch out to their own nodes, don't get the whole variable
     var = getVariable(dfg, variablekey)
     if haskey(var.solverDataDict, solvekey)
         error("VariableNodeData '$(solvekey)' already exists")
     end
     var.solverDataDict[solvekey] = vnd
-    # TODO: Cleanup
+
+    # TODO: Cleanup and consolidate as one function.
     solverDataDict = JSON2.write(Dict(keys(var.solverDataDict) .=> map(vnd -> packVariableNodeData(dfg, vnd), values(var.solverDataDict))))
     _setNodeProperty(
         dfg.neo4jInstance,
@@ -562,28 +616,58 @@ function addVariableSolverData!(dfg::CloudGraphsDFG, variablekey::Symbol, vnd::V
     return vnd
 end
 
-function updateVariableSolverData!(dfg::CloudGraphsDFG, variablekey::Symbol, vnd::VariableNodeData, solvekey::Symbol=:default)::VariableNodeData
+function updateVariableSolverData!(dfg::CloudGraphsDFG,
+                                   variablekey::Symbol,
+                                   vnd::VariableNodeData,
+                                   solvekey::Symbol=:default,
+                                   useCopy::Bool=true,
+                                   fields::Vector{Symbol}=Symbol[])::VariableNodeData
     # TODO: Switch out to their own nodes, don't get the whole variable
     var = getVariable(dfg, variablekey)
     if !haskey(var.solverDataDict, solvekey)
         @warn "VariableNodeData '$(solvekey)' does not exist, adding"
     end
-    var.solverDataDict[solvekey] = vnd
-    # TODO: Cleanup
+
+    # Unnecessary for cloud, but (probably) being (too) conservative (just because).
+    usevnd = useCopy ? deepcopy(vnd) : vnd
+    # should just one, or many pointers be updated?
+    if haskey(var.solverDataDict, solvekey) && isa(var.solverDataDict[solvekey], VariableNodeData) && length(fields) != 0
+      # change multiple pointers inside the VND var.solverDataDict[solvekey]
+      for field in fields
+        destField = getfield(var.solverDataDict[solvekey], field)
+        srcField = getfield(usevnd, field)
+        if isa(destField, Array) && size(destField) == size(srcField)
+          # use broadcast (in-place operation)
+          destField .= srcField
+        else
+          # change pointer of destination VND object member
+          setfield!(var.solverDataDict[solvekey], field, srcField)
+        end
+      end
+    else
+      # change a single pointer in var.solverDataDict
+      var.solverDataDict[solvekey] = usevnd
+    end
+
+    # TODO: Cleanup and consolidate
     solverDataDict = JSON2.write(Dict(keys(var.solverDataDict) .=> map(vnd -> packVariableNodeData(dfg, vnd), values(var.solverDataDict))))
     _setNodeProperty(
         dfg.neo4jInstance,
         _getLabelsForInst(dfg, var),
         "solverDataDict",
         solverDataDict)
-    return vnd
+    return var.solverDataDict[solvekey]
 end
 
-function updateVariableSolverData!(dfg::CloudGraphsDFG, sourceVariables::Vector{<:DFGVariable}, solvekey::Symbol=:default)
+function updateVariableSolverData!(dfg::CloudGraphsDFG,
+                                   sourceVariables::Vector{<:DFGVariable},
+                                   solvekey::Symbol=:default,
+                                   useCopy::Bool=true,
+                                   fields::Vector{Symbol}=Symbol[] )
     # TODO: Switch out to their own nodes, don't get the whole variable
     #TODO: Do in bulk for speed.
     for var in sourceVariables
-        updateVariableSolverData!(dfg, var.label, getSolverData(var, solvekey), solvekey)
+        updateVariableSolverData!(dfg, var.label, getSolverData(var, solvekey), solvekey, useCopy, fields)
     end
 end
 
@@ -595,7 +679,7 @@ function deleteVariableSolverData!(dfg::CloudGraphsDFG, variablekey::Symbol, sol
         error("VariableNodeData '$(solvekey)' does not exist")
     end
     vnd = pop!(var.solverDataDict, solvekey)
-    # TODO: Cleanup
+    # TODO: Cleanup and consolidate... yadda yadda just do it already :)
     solverDataDict = JSON2.write(Dict(keys(var.solverDataDict) .=> map(vnd -> packVariableNodeData(dfg, vnd), values(var.solverDataDict))))
     _setNodeProperty(
         dfg.neo4jInstance,
@@ -603,6 +687,22 @@ function deleteVariableSolverData!(dfg::CloudGraphsDFG, variablekey::Symbol, sol
         "solverDataDict",
         solverDataDict)
     return vnd
+end
+
+function mergeVariableSolverData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable)
+    # TODO: Switch out to their own nodes, don't get the whole variable
+    var = getVariable(dfg, sourceVariable.label)
+
+    merge!(var.solverDataDict, deepcopy(sourceVariable.solverDataDict))
+
+    # TODO: Cleanup and consolidate
+    solverDataDict = JSON2.write(Dict(keys(var.solverDataDict) .=> map(vnd -> packVariableNodeData(dfg, vnd), values(var.solverDataDict))))
+    _setNodeProperty(
+        dfg.neo4jInstance,
+        _getLabelsForInst(dfg, var),
+        "solverDataDict",
+        solverDataDict)
+    return var
 end
 
 function getSolvable(dfg::CloudGraphsDFG, sym::Symbol)
@@ -620,4 +720,127 @@ function setSolvable!(dfg::CloudGraphsDFG, sym::Symbol, solvable::Int)::Int
         "solvable",
         solvable)
     return solvable
+end
+
+
+##==============================================================================
+## TAGS as a set, list, merge, remove, empty
+## CloudGraphsDFG functions
+##==============================================================================
+function mergeTags!(dfg::CloudGraphsDFG, sym::Symbol, tags::Vector{Symbol})
+
+    if isVariable(dfg,sym)
+        getNode = getVariable
+        updateNode! = updateVariable!
+    else
+        getNode = getFactor
+        updateNode! = updateFactor!
+    end
+
+    node = getNode(dfg, sym)
+    union!(getTags(node), tags)
+
+    updateNode!(dfg, node)
+
+    return getTags(getNode(dfg, sym))
+
+end
+
+function removeTags!(dfg::CloudGraphsDFG, sym::Symbol, tags::Vector{Symbol})
+
+    if isVariable(dfg,sym)
+        getNode = getVariable
+        updateNode! = updateVariable!
+    else
+        getNode = getFactor
+        updateNode! = updateFactor!
+    end
+
+    node = getNode(dfg, sym)
+    setdiff!(getTags(node), tags)
+
+    updateNode!(dfg, node)
+
+    return getTags(getNode(dfg, sym))
+
+end
+
+function emptyTags!(dfg::CloudGraphsDFG, sym::Symbol)
+
+    if isVariable(dfg,sym)
+        getNode = getVariable
+        updateNode! = updateVariable!
+    else
+        getNode = getFactor
+        updateNode! = updateFactor!
+    end
+
+    node = getNode(dfg, sym)
+    empty!(getTags(node))
+
+    updateNode!(dfg, node)
+
+    return getTags(getNode(dfg, sym))
+
+end
+
+
+
+function RESERVED_mergeTags!(dfg::CloudGraphsDFG, sym::Symbol, tags::Vector{Symbol})
+
+    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance,
+                                            dfg.userId,
+                                            dfg.robotId,
+                                            dfg.sessionId,
+                                            sym)
+
+    neo4jNode = Neo4j.getnode(dfg.neo4jInstance.graph, nodeId)
+
+    addnodelabels(neo4jNode, string.(tags))
+
+    return Set(setdiff(Symbol.(getnodelabels(neo4jNode)), Symbol.([dfg.userId, dfg.robotId, dfg.sessionId]), [sym]))
+
+end
+
+
+function RESERVED_removeTags!(dfg::CloudGraphsDFG, sym::Symbol, tags::Vector{Symbol})
+
+    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance,
+                                            dfg.userId,
+                                            dfg.robotId,
+                                            dfg.sessionId,
+                                            sym)
+
+    neo4jNode = Neo4j.getnode(dfg.neo4jInstance.graph, nodeId)
+
+    shouldStay = Symbol.([dfg.userId, dfg.robotId, dfg.sessionId]) ∪ [sym, :VARIABLE, :FACTOR]
+
+    for tag in tags
+        if tag in shouldStay
+            @warn("Label:$tag is not allowed to be removed from tags and will be ignored.")
+        else
+            deletenodelabel(neo4jNode, string(tag))
+        end
+    end
+
+    return Set(setdiff(Symbol.(getnodelabels(neo4jNode)), shouldStay))
+
+end
+
+
+function RESERVED_emptyTags!(dfg::CloudGraphsDFG, sym::Symbol)
+
+    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance,
+                                            dfg.userId,
+                                            dfg.robotId,
+                                            dfg.sessionId,
+                                            sym)
+
+    neo4jNode = Neo4j.getnode(dfg.neo4jInstance.graph, nodeId)
+
+    shouldStay = Symbol.([dfg.userId, dfg.robotId, dfg.sessionId]) ∪ [sym, :VARIABLE, :FACTOR]
+    tags = setdiff(Symbol.(getnodelabels(neo4jNode)), shouldStay)
+    # tags = Symbol.(getnodelabels(neo4jNode))
+
+    return removeTags!(dfg, sym, tags)
 end

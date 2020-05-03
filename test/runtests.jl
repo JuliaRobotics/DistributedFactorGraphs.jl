@@ -7,8 +7,9 @@ using Dates
 
 ## To run the IIF tests, you need a local Neo4j with user/pass neo4j:test
 # To run a Docker image
-# Install: docker pull neo4j
-# Run: docker run -d --publish=7474:7474 --publish=7687:7687 --env NEO4J_AUTH=neo4j/test neo4j
+# NOTE: that Neo4j.jl doesn't currently support > Neo4j 3.x
+# Install: docker pull neo4j:3.5.6
+# Run: docker run -d --publish=7474:7474 --publish=7687:7687 --env NEO4J_AUTH=neo4j/test neo4j:3.5.6
 ##
 
 # If you want to enable debugging logging (very verbose!)
@@ -36,6 +37,23 @@ for api in apis
         @info "Testing Driver: $(api)"
         global testDFGAPI = api
         include("interfaceTests.jl")
+    end
+end
+
+if get(ENV, "SKIP_CGDFG_TESTS", "") != "true"
+    @testset "Consolidation WIP Testing Driver: CloudGraphsDFG" begin
+        global decodePackedType
+        function decodePackedType(dfg::AbstractDFG, packeddata::GenericFunctionNodeData{PT,<:AbstractString}) where PT
+          # usrtyp = convert(FunctorInferenceType, packeddata.fnc)
+          # Also look at parentmodule
+          usrtyp = getfield(PT.name.module, Symbol(string(PT.name.name)[7:end]))
+          fulltype = DFG.FunctionNodeData{TestCCW{usrtyp}}
+          factordata = convert(fulltype, packeddata)
+          return factordata
+        end
+        @info "Testing Driver: CloudGraphsDFG"
+        global testDFGAPI = CloudGraphsDFG
+        include("consolInterfaceDev.jl")
     end
 end
 
@@ -79,6 +97,7 @@ if get(ENV, "IIF_TEST", "") == "true"
         LightDFG{SolverParams}(),
         CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
                                     "testUser", "testRobot", "testSession",
+                                    "Description of test Session",
                                     nothing,
                                     nothing,
                                     IncrementalInference.decodePackedType,
@@ -114,7 +133,16 @@ if get(ENV, "IIF_TEST", "") == "true"
         # This is just to validate we're not going to blow up downstream.
         apis = [
             GraphsDFG{SolverParams}(params=SolverParams()),
-            LightDFG{SolverParams}(params=SolverParams())]
+            LightDFG{SolverParams}(params=SolverParams()),
+            CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
+                                        "testUser", "testRobot", "simpleSolveSession",
+                                        "Description of test Session",
+                                        nothing,
+                                        nothing,
+                                        IncrementalInference.decodePackedType,
+                                        IncrementalInference.rebuildFactorMetadata!,
+                                        solverParams=SolverParams())
+            ]
         for api in apis
             @info "Running simple solver test: $(typeof(api))"
             global dfg = deepcopy(api)
@@ -150,7 +178,7 @@ struct NotImplementedDFG <: AbstractDFG end
     @test_throws ErrorException deleteFactor!(dfg, :a)
     @test_throws ErrorException getVariables(dfg)
     @test_throws ErrorException getFactors(dfg)
-    @test_throws ErrorException isFullyConnected(dfg)
+    @test_throws ErrorException isConnected(dfg)
     @test_throws ErrorException getNeighbors(dfg, v1)
     @test_throws ErrorException getNeighbors(dfg, :a)
 

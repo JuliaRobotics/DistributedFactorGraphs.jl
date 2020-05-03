@@ -71,7 +71,7 @@ export exists,
        getVariables, getFactors,
        isVariable, isFactor
 
-export isFullyConnected, hasOrphans
+export isConnected
 
 export getBiadjacencyMatrix
 
@@ -161,11 +161,15 @@ export packVariableNodeData, unpackVariableNodeData
 
 export getSolvedCount, isSolved, setSolvedCount!, isInitialized
 
-export getNeighborhood, getSubgraph, getSubgraphAroundNode, getNeighbors, _getDuplicatedEmptyDFG
-
+export getNeighborhood, getNeighbors, _getDuplicatedEmptyDFG
+export copyGraph!, deepcopyGraph, deepcopyGraph!, buildSubgraph, mergeGraph!
 # Big Data
 ##------------------------------------------------------------------------------
-export addBigDataEntry!, getBigDataEntry, updateBigDataEntry!, deleteBigDataEntry!, getBigDataEntries, getBigDataKeys
+export addBigDataEntry!, getBigDataEntry, updateBigDataEntry!, deleteBigDataEntry!, getBigDataEntries, getBigDataKeys, hasDataEntry, hasBigDataEntry
+# convenience wrappers
+export addDataEntry!, getDataEntryElement
+# aliases
+export addData!, fetchData, fetchDataEntryElement
 
 
 ##------------------------------------------------------------------------------
@@ -173,7 +177,7 @@ export addBigDataEntry!, getBigDataEntry, updateBigDataEntry!, deleteBigDataEntr
 ##------------------------------------------------------------------------------
 # Factor Data
 export GenericFunctionNodeData
-export InferenceType, PackedInferenceType, FunctorInferenceType, ConvolutionObject
+export InferenceType, PackedInferenceType, FunctorInferenceType, FactorOperationalMemory
 export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
 
 # accessors
@@ -191,7 +195,7 @@ export mergeVariableData!, mergeGraphVariableData!
 export natural_lt, sortDFG
 
 ## List
-export ls, lsf
+export ls, lsf, ls2
 export lsTypes, lsfTypes
 export lsWho, lsfWho
 export isPrior, lsfPriors
@@ -224,13 +228,11 @@ export
     compareFactorGraphs
 
 
-## Deprecated.jl should be listed there
-
+## Deprecated exports should be listed in Deprecated.jl if possible, otherwise here
+#TODO remove export in DFG v0.8.0
+export ConvolutionObject
 
 ## needsahome.jl
-
-export buildSubgraphFromLabels!
-
 import Base: print
 export printFactor, printVariable, print
 
@@ -252,6 +254,7 @@ include("services/AbstractDFG.jl")
 
 # In Memory Types
 include("GraphsDFG/GraphsDFG.jl")
+@reexport using .GraphsDFGs
 include("LightDFG/LightDFG.jl")
 @reexport using .LightDFGs
 #supported in Memory fg types
