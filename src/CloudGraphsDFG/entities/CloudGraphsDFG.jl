@@ -32,7 +32,8 @@ function CloudGraphsDFG{T}(neo4jConnection::Neo4j.Connection,
                             getPackedTypeFunc,
                             decodePackedTypeFunc,
                             rebuildFactorMetadata!;
-                            solverParams::T=NoSolverParams()) where T <: AbstractParams
+                            solverParams::T=NoSolverParams(),
+                            createSessionNodes::Bool=true) where T <: AbstractParams
     # Validate the userId, robotId, and sessionId
     !isValidLabel(userId) && error("'$userId' is not a valid User ID")
     !isValidLabel(robotId) && error("'$robotId' is not a valid Robot ID")
@@ -40,7 +41,10 @@ function CloudGraphsDFG{T}(neo4jConnection::Neo4j.Connection,
 
     graph = Neo4j.getgraph(neo4jConnection)
     neo4jInstance = Neo4jInstance(neo4jConnection, graph)
-    return CloudGraphsDFG{T}(neo4jInstance, userId, robotId, sessionId, description, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, rebuildFactorMetadata!, Symbol[], solverParams)
+    dfg = CloudGraphsDFG{T}(neo4jInstance, userId, robotId, sessionId, description, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, rebuildFactorMetadata!, Symbol[], solverParams)
+    # Create the session if it doesn't already exist
+    createSessionNodes && createDfgSessionIfNotExist(dfg)
+    return dfg
 end
 """
     $(SIGNATURES)
@@ -58,9 +62,10 @@ function CloudGraphsDFG{T}(host::String,
                            getPackedTypeFunc,
                            decodePackedTypeFunc,
                            rebuildFactorMetadata!;
-                           solverParams::T=NoSolverParams()) where T <: AbstractParams
+                           solverParams::T=NoSolverParams(),
+                           createSessionNodes::Bool=true) where T <: AbstractParams
     neo4jConnection = Neo4j.Connection(host, port=port, user=dbUser, password=dbPassword);
-    return CloudGraphsDFG{T}(neo4jConnection, userId, robotId, sessionId, description, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, rebuildFactorMetadata!, solverParams=solverParams)
+    return CloudGraphsDFG{T}(neo4jConnection, userId, robotId, sessionId, description, encodePackedTypeFunc, getPackedTypeFunc, decodePackedTypeFunc, rebuildFactorMetadata!, solverParams=solverParams, createSessionNodes=createSessionNodes)
 end
 
 

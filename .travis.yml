@@ -22,13 +22,17 @@ branches:
   - master
   - develop
   - /^release-.*$/
-  
+
 jobs:
   include:
     - julia: 1.4
-      env: IIF_TEST=true
+      env:
+        - IIF_TEST=true
+        - SKIP_CGDFG_TESTS=true
       if: NOT branch =~ ^release.*$
     - arch: arm64
+      env: SKIP_CGDFG_TESTS=true
+      before_script:
     - stage: "Documentation"
       julia: 1.4
       os: linux
