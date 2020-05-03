@@ -2,6 +2,7 @@ module LightDFGs
 
 using LightGraphs
 using DocStringExtensions
+using UUIDs
 
 using ...DistributedFactorGraphs
 

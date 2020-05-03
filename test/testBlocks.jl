@@ -114,6 +114,10 @@ function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverP
     fg = T(params=solparams)
     #TODO test something better
     @test isa(fg, T)
+    # Test the validation of the robot, session, and user IDs.
+    @test_throws ErrorException T(params=solparams, sessionId="!notValid")
+    @test_throws ErrorException T(params=solparams, robotId="!notValid")
+    @test_throws ErrorException T(params=solparams, userId="!notValid")
 
     #TODO I don't like, so not exporting, and not recommended to use
     #     Technically if you set Ids its a new object

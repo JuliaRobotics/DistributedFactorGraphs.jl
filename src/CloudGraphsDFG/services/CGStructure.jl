@@ -1,14 +1,4 @@
-global _invalidIds = ["USER", "ROBOT", "SESSION", "VARIABLE", "FACTOR", "ENVIRONMENT", "PPE", "BIGDATA"]
-global _validLabelRegex = r"^[a-zA-Z]\w*$"
-
-function _isValid(id::Union{Symbol, String})::Bool
-    if typeof(id) == Symbol
-        id = String(id)
-    end
-    return all(t -> t != uppercase(id), _invalidIds) && match(_validLabelRegex, id) != nothing
-end
-
-function _isValid(abstractNode::N)::Bool where N <: AbstractCGNode
+function isValidLabel(abstractNode::N)::Bool where N <: AbstractCGNode
     id = String(abstractNode.id)
     return all(t -> t != uppercase(id), _invalidIds) && match(_validLabelRegex, id) != nothing
 end
@@ -65,7 +55,7 @@ end
 
 function createUser(dfg::CloudGraphsDFG, user::User)::User
     Symbol(dfg.userId) != user.id && error("DFG user ID must match user's ID")
-    !_isValid(user) && error("Node cannot have an ID '$(user.id)'.")
+    !isValidLabel(user) && error("Node cannot have an ID '$(user.id)'.")
 
     props = _convertNodeToDict(user)
     retNode = _createNode(dfg.neo4jInstance, ["USER", String(user.id)], props, nothing)
@@ -75,7 +65,7 @@ end
 function createRobot(dfg::CloudGraphsDFG, robot::Robot)::Robot
     Symbol(dfg.robotId) != robot.id && error("DFG robot ID must match robot's ID")
     Symbol(dfg.userId) != robot.userId && error("DFG user ID must match robot's user ID")
-    !_isValid(robot) && error("Node cannot have an ID '$(robot.id)'.")
+    !isValidLabel(robot) && error("Node cannot have an ID '$(robot.id)'.")
 
     # Find the parent
     parents = _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:USER:$(dfg.userId))")
@@ -94,7 +84,7 @@ end
 function createSession(dfg::CloudGraphsDFG, session::Session)::Session
     Symbol(dfg.robotId) != session.robotId && error("DFG robot ID must match session's robot ID")
     Symbol(dfg.userId) != session.userId && error("DFG user ID must match session's->robot's->user ID")
-    !_isValid(session) && error("Node cannot have an ID '$(session.id)'.")
+    !isValidLabel(session) && error("Node cannot have an ID '$(session.id)'.")
 
     # Find the parent
     parents = _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:ROBOT:$(dfg.robotId):$(dfg.userId))")
@@ -167,9 +157,9 @@ Get a session specified by userId:robotId:sessionId.
 Returns nothing if it isn't found.
 """
 function getSession(dfg::CloudGraphsDFG, userId::Symbol, robotId::Symbol, sessionId::Symbol)::Union{Session, Nothing}
-    !_isValid(userId) && error("Can't receive session with user ID '$(userId)'.")
-    !_isValid(robotId) && error("Can't receive session with robot ID '$(robotId)'.")
-    !_isValid(sessionId) && error("Can't receive session with session ID '$(sessionId)'.")
+    !isValidLabel(userId) && error("Can't retrieve session with user ID '$(userId)'.")
+    !isValidLabel(robotId) && error("Can't retrieve session with robot ID '$(robotId)'.")
+    !isValidLabel(sessionId) && error("Can't retrieve session with session ID '$(sessionId)'.")
     sessionNode = _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:SESSION:$(sessionId):$(robotId):$(userId))")
     length(sessionNode) == 0 && return nothing
     length(sessionNode) > 1 && error("There look to be $(length(sessionNode)) sessions identified for $(sessionId):$(robotId):$(userId)")
@@ -191,8 +181,8 @@ Get a robot specified by userId:robotId.
 Returns nothing if it isn't found.
 """
 function getRobot(dfg::CloudGraphsDFG, userId::Symbol, robotId::Symbol)::Union{Robot, Nothing}
-    !_isValid(userId) && error("Can't receive session with user ID '$(userId)'.")
-    !_isValid(robotId) && error("Can't receive session with robot ID '$(robotId)'.")
+    !isValidLabel(userId) && error("Can't retrieve robot with user ID '$(userId)'.")
+    !isValidLabel(robotId) && error("Can't retrieve robot with robot ID '$(robotId)'.")
     robotNode = _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:ROBOT:$(robotId):$(userId))")
     length(robotNode) == 0 && return nothing
     length(robotNode) > 1 && error("There look to be $(length(robotNode)) robots identified for $(robotId):$(userId)")
@@ -214,7 +204,7 @@ Get a user specified by userId.
 Returns nothing if it isn't found.
 """
 function getUser(dfg::CloudGraphsDFG, userId::Symbol)::Union{User, Nothing}
-    !_isValid(userId) && error("Can't receive session with user ID '$(userId)'.")
+    !isValidLabel(userId) && error("Can't retrieve user with user ID '$(userId)'.")
     userNode = _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:USER:$(userId))")
     length(userNode) == 0 && return nothing
     length(userNode) > 1 && error("There look to be $(length(userNode)) robots identified for $(userId)")

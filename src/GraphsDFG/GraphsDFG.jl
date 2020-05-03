@@ -2,6 +2,7 @@ module GraphsDFGs
 
 using Graphs
 using DocStringExtensions
+using UUIDs
 
 using ...DistributedFactorGraphs
 

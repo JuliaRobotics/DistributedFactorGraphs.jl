@@ -30,15 +30,18 @@ Create an in-memory LightDFG with the following parameters:
 """
 function LightDFG{T,V,F}(g::FactorGraph{Int,V,F}=FactorGraph{Int,V,F}();
                            description::String="LightGraphs.jl implementation",
-                           userId::String="UserID",
-                           robotId::String="RobotID",
-                           sessionId::String="SessionID",
+                           userId::String="DefaultUser",
+                           robotId::String="DefaultRobot",
+                           sessionId::String="Session_$(string(uuid4())[1:6])",
                            userData::Dict{Symbol, String} = Dict{Symbol, String}(),
                            robotData::Dict{Symbol, String} = Dict{Symbol, String}(),
                            sessionData::Dict{Symbol, String} = Dict{Symbol, String}(),
                            params::T=T()) where {T <: AbstractParams, V <:AbstractDFGVariable, F<:AbstractDFGFactor}
-
-    LightDFG{T,V,F}(g, description, userId, robotId, sessionId, userData, robotData, sessionData, Symbol[], params)
+   # Validate the userId, robotId, and sessionId
+   !isValidLabel(userId) && error("'$userId' is not a valid User ID")
+   !isValidLabel(robotId) && error("'$robotId' is not a valid Robot ID")
+   !isValidLabel(sessionId) && error("'$sessionId' is not a valid Session ID")
+   return LightDFG{T,V,F}(g, description, userId, robotId, sessionId, userData, robotData, sessionData, Symbol[], params)
 end
 
 # LightDFG{T}(; kwargs...) where T <: AbstractParams = LightDFG{T,DFGVariable,DFGFactor}(;kwargs...)

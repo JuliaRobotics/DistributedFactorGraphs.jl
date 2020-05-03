@@ -25,31 +25,43 @@ mutable struct GraphsDFG{T <: AbstractParams} <: AbstractDFG
 end
 
 
-GraphsDFG(   g::FGType=Graphs.incdict(GraphsNode,is_directed=false),
-                d::String="Graphs.jl implementation",
-                n::Int64=0,
-                l::Dict{Symbol, Int64}=Dict{Symbol, Int64}(),
-                a::Vector{Symbol}=Symbol[];
-                userId::String = "UserID",
-                robotId::String = "robotID",
-                sessionId::String = "sessionID",
-                userData::Dict{Symbol, String} = Dict{Symbol, String}(),
-                robotData::Dict{Symbol, String} = Dict{Symbol, String}(),
-                sessionData::Dict{Symbol, String} = Dict{Symbol, String}(),
-                params::T=NoSolverParams()) where T <: AbstractParams = GraphsDFG{T}(g, d, userId, robotId, sessionId, userData, robotData, sessionData, n, l, a, params)
+function GraphsDFG( g::FGType=Graphs.incdict(GraphsNode,is_directed=false),
+                    d::String="Graphs.jl implementation",
+                    n::Int64=0,
+                    l::Dict{Symbol, Int64}=Dict{Symbol, Int64}(),
+                    a::Vector{Symbol}=Symbol[];
+                    userId::String = "DefaultUser",
+                    robotId::String = "DefaultRobot",
+                    sessionId::String = "Session_$(string(uuid4())[1:6])",
+                    userData::Dict{Symbol, String} = Dict{Symbol, String}(),
+                    robotData::Dict{Symbol, String} = Dict{Symbol, String}(),
+                    sessionData::Dict{Symbol, String} = Dict{Symbol, String}(),
+                    params::T=NoSolverParams()) where T <: AbstractParams
+    # Validate the userId, robotId, and sessionId
+    !isValidLabel(userId) && error("'$userId' is not a valid User ID")
+    !isValidLabel(robotId) && error("'$robotId' is not a valid Robot ID")
+    !isValidLabel(sessionId) && error("'$sessionId' is not a valid Session ID")
+    return GraphsDFG{T}(g, d, userId, robotId, sessionId, userData, robotData, sessionData, n, l, a, params)
+end
 
-GraphsDFG{T}(   g::FGType=Graphs.incdict(GraphsNode,is_directed=false),
-                d::String="Graphs.jl implementation",
-                n::Int64=0,
-                l::Dict{Symbol, Int64}=Dict{Symbol, Int64}(),
-                a::Vector{Symbol}=Symbol[];
-                userId::String = "UserID",
-                robotId::String = "robotID",
-                sessionId::String = "sessionID",
-                userData::Dict{Symbol, String} = Dict{Symbol, String}(),
-                robotData::Dict{Symbol, String} = Dict{Symbol, String}(),
-                sessionData::Dict{Symbol, String} = Dict{Symbol, String}(),
-                params::T=T()) where T <: AbstractParams = GraphsDFG{T}(g, d, userId, robotId, sessionId, userData, robotData, sessionData, n, l, a, params)
+function GraphsDFG{T}(  g::FGType=Graphs.incdict(GraphsNode,is_directed=false),
+                        d::String="Graphs.jl implementation",
+                        n::Int64=0,
+                        l::Dict{Symbol, Int64}=Dict{Symbol, Int64}(),
+                        a::Vector{Symbol}=Symbol[];
+                        userId::String = "DefaultUser",
+                        robotId::String = "DefaultRobot",
+                        sessionId::String = "Session_$(string(uuid4())[1:6])",
+                        userData::Dict{Symbol, String} = Dict{Symbol, String}(),
+                        robotData::Dict{Symbol, String} = Dict{Symbol, String}(),
+                        sessionData::Dict{Symbol, String} = Dict{Symbol, String}(),
+                        params::T=T()) where T <: AbstractParams
+    # Validate the userId, robotId, and sessionId
+    !isValidLabel(userId) && error("'$userId' is not a valid User ID")
+    !isValidLabel(robotId) && error("'$robotId' is not a valid Robot ID")
+    !isValidLabel(sessionId) && error("'$sessionId' is not a valid Session ID")
+    return GraphsDFG{T}(g, d, userId, robotId, sessionId, userData, robotData, sessionData, n, l, a, params)
+end
 
 GraphsDFG(description::String,
           userId::String,

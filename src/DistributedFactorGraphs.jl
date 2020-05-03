@@ -188,11 +188,14 @@ export getFactorType, getFactorFunction
 export mergeVariableData!, mergeGraphVariableData!
 
 ##------------------------------------------------------------------------------
-## Other utility funtions
+## Other utility functions
 ##------------------------------------------------------------------------------
 
 # Sort
 export natural_lt, sortDFG
+
+# Validation
+export isValidLabel
 
 ## List
 export ls, lsf, ls2

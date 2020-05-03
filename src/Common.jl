@@ -64,3 +64,22 @@ ls, lsf
 """
 sortDFG(vars::Vector{<:DFGNode}; by=getTimestamp, kwargs...) = sort(vars; by=by, kwargs...)
 sortDFG(vars::Vector{Symbol}; lt=natural_lt, kwargs...)::Vector{Symbol} = sort(vars; lt=lt, kwargs...)
+
+##==============================================================================
+## Validation of session, robot, and user IDs.
+##==============================================================================
+
+global _invalidIds = ["USER", "ROBOT", "SESSION", "VARIABLE", "FACTOR", "ENVIRONMENT", "PPE", "BIGDATA"]
+global _validLabelRegex = r"^[a-zA-Z]\w*$"
+
+"""
+$(SIGNATURES)
+
+Returns true if the label is valid for a session, robot, or user ID.
+"""
+function isValidLabel(id::Union{Symbol, String})::Bool
+    if typeof(id) == Symbol
+        id = String(id)
+    end
+    return all(t -> t != uppercase(id), _invalidIds) && match(_validLabelRegex, id) != nothing
+end
