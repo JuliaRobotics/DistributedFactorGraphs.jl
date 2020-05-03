@@ -304,7 +304,7 @@ function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor
     return factor
 end
 
-function deleteVariable!(dfg::CloudGraphsDFG, label::Symbol)::Tuple{AbstractDFGVariable, Vector{<:AbstractDFGFactor}}
+function deleteVariable!(dfg::CloudGraphsDFG, label::Symbol)#::Tuple{AbstractDFGVariable, Vector{<:AbstractDFGFactor}}
     variable = getVariable(dfg, label)
     if variable == nothing
         error("Unable to retrieve the ID for variable '$label'. Please check your connection to the database and that the variable exists.")

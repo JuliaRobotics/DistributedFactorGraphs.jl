@@ -165,7 +165,7 @@ function updateFactor!(dfg::GraphsDFG, factor::DFGFactor)::DFGFactor
     return factor
 end
 
-function deleteVariable!(dfg::GraphsDFG, label::Symbol)::Tuple{AbstractDFGVariable, Vector{<:AbstractDFGFactor}}
+function deleteVariable!(dfg::GraphsDFG, label::Symbol)#::Tuple{AbstractDFGVariable, Vector{<:AbstractDFGFactor}}
     if !haskey(dfg.labelDict, label)
         error("Variable label '$(label)' does not exist in the factor graph")
     end

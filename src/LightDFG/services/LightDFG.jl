@@ -130,7 +130,7 @@ function updateFactor!(dfg::LightDFG, factor::F)::F where F <: AbstractDFGFactor
     return factor
 end
 
-function deleteVariable!(dfg::LightDFG, label::Symbol)::Tuple{AbstractDFGVariable, Vector{<:AbstractDFGFactor}}
+function deleteVariable!(dfg::LightDFG, label::Symbol)#::Tuple{AbstractDFGVariable, Vector{<:AbstractDFGFactor}}
     if !haskey(dfg.g.variables, label)
         error("Variable label '$(label)' does not exist in the factor graph")
     end

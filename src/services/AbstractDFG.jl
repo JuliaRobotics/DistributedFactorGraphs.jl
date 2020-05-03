@@ -226,7 +226,7 @@ end
     $(SIGNATURES)
 Delete a DFGVariable from the DFG using its label.
 """
-function deleteVariable!(dfg::AbstractDFG, label::Symbol)::Tuple{AbstractDFGVariable, Vector{<:AbstractDFGFactor}}
+function deleteVariable!(dfg::AbstractDFG, label::Symbol)#::Tuple{AbstractDFGVariable, Vector{<:AbstractDFGFactor}}
     error("deleteVariable! not implemented for $(typeof(dfg))")
 end
 """
@@ -389,7 +389,7 @@ end
     $(SIGNATURES)
 Delete a referenced DFGVariable from the DFG.
 """
-function deleteVariable!(dfg::AbstractDFG, variable::AbstractDFGVariable)::Tuple{AbstractDFGVariable, Vector{<:AbstractDFGFactor}}
+function deleteVariable!(dfg::AbstractDFG, variable::AbstractDFGVariable)#::Tuple{AbstractDFGVariable, Vector{<:AbstractDFGFactor}}
     return deleteVariable!(dfg, variable.label)
 end
 
