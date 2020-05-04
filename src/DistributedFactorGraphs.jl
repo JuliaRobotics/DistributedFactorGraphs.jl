@@ -233,7 +233,7 @@ export
 
 ## Deprecated exports should be listed in Deprecated.jl if possible, otherwise here
 #TODO remove export in DFG v0.8.0
-export ConvolutionObject
+# export ConvolutionObject
 
 ## needsahome.jl
 import Base: print
