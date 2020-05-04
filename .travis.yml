@@ -60,6 +60,9 @@ before_script:
   - sudo service neo4j start
   - sleep 10
   - curl -v POST http://neo4j:neo4j@localhost:7474/user/neo4j/password -d"password=test"
+# Run the database initialization script
+  - curl -i -v -H "Content-Type: application/json; charset=UTF-8" -X POST http://neo4j:test@localhost:7474/db/data/transaction/commit --data-binary "@database/init.cql"
+
 # - sudo neo4j-admin set-initial-password test
   - curl -I http://localhost:7474/
 
