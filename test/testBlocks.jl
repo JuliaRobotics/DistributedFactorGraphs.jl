@@ -61,7 +61,7 @@ struct TestCCW{T} <: FactorOperationalMemory where {T<:FunctorInferenceType}
 end
 Base.:(==)(a::TestCCW, b::TestCCW) = a.usrfnc! == b.usrfnc!
 
-DFG.getFactorOperationalMemoryType(par::NoSolverParams) = TestCCW 
+DFG.getFactorOperationalMemoryType(par::NoSolverParams) = TestCCW
 
 function Base.convert(::Type{DFG.FunctionNodeData{TestCCW{F}}},
                      d::DFG.PackedFunctionNodeData{<:PackedInferenceType}) where F<:FunctorInferenceType
@@ -1203,7 +1203,7 @@ function ProducingDotFiles(testDFGAPI,
         v2 = VARTYPE(:b, VariableNodeData{TestSofttype1}())
     end
     if f1 == nothing
-        f1 = (FACTYPE==DFGFactor) ? DFGFactor{Int, :Symbol}(:abf1) : FACTYPE(:abf1)
+        f1 = (FACTYPE==DFGFactor) ? DFGFactor{TestFunctorInferenceType1, Symbol}(:abf1) : FACTYPE(:abf1)
     end
 
     addVariable!(dotdfg, v1)

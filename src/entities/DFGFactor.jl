@@ -34,7 +34,7 @@ Designing (WIP)
 # in IIF.FunctorPairwiseMinimize <: InferenceType # DFG whatever, something, we'll figure it out
 # in Main/User, SomeFactor <: FunctorPairwiseMinimize
 """
-mutable struct GenericFunctionNodeData{T, S} #{T<:Union{PackedInferenceType, FunctorInferenceType, FactorOperationalMemory}, S<:Union{Symbol, AbstractString}}
+mutable struct GenericFunctionNodeData{T<:Union{PackedInferenceType, FunctorInferenceType, FactorOperationalMemory}, S<:Union{Symbol, AbstractString}}
     fncargvID::Vector{Symbol}
     eliminated::Bool
     potentialused::Bool
