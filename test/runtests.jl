@@ -42,15 +42,6 @@ end
 
 if get(ENV, "SKIP_CGDFG_TESTS", "") != "true"
     @testset "Consolidation WIP Testing Driver: CloudGraphsDFG" begin
-        # global decodePackedType
-        # function decodePackedType(dfg::AbstractDFG, packeddata::GenericFunctionNodeData{PT,<:AbstractString}) where PT
-        #   # usrtyp = convert(FunctorInferenceType, packeddata.fnc)
-        #   # Also look at parentmodule
-        #   usrtyp = getfield(PT.name.module, Symbol(string(PT.name.name)[7:end]))
-        #   fulltype = DFG.FunctionNodeData{TestCCW{usrtyp}}
-        #   factordata = convert(fulltype, packeddata)
-        #   return factordata
-        # end
         @info "Testing Driver: CloudGraphsDFG"
         global testDFGAPI = CloudGraphsDFG
         include("consolInterfaceDev.jl")

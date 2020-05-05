@@ -171,9 +171,6 @@ function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverP
 
     @test setDescription!(fg, des*"_1") == des*"_1"
 
-    #deprecated
-    @test_throws ErrorException getLabelDict(fg)
-
 
     #TODO
     # duplicateEmptyDFG
@@ -489,9 +486,6 @@ function  VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     @test ls(fg) == listVariables(fg)
     @test lsf(fg) == listFactors(fg)
 
-    @test @test_deprecated getVariableIds(fg) == listVariables(fg)
-    @test @test_deprecated getFactorIds(fg) == listFactors(fg)
-
 end
 
 
@@ -801,8 +795,8 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test issetequal([:a,:b], listVariables(fg))
         @test issetequal([:af1,:abf1], listFactors(fg))
 
-        @test @test_deprecated getVariableIds(fg) == listVariables(fg)
-        @test @test_deprecated getFactorIds(fg) == listFactors(fg)
+        # @test @test_deprecated getVariableIds(fg) == listVariables(fg)
+        # @test @test_deprecated getFactorIds(fg) == listFactors(fg)
 
         # TODO Mabye implement IIF type here
         # Requires IIF or a type in IIF
@@ -959,7 +953,7 @@ end
 function AdjacencyMatricesTestBlock(fg)
     # Normal
     #deprecated
-    @test_throws ErrorException getAdjacencyMatrix(fg)
+    # @test_throws ErrorException getAdjacencyMatrix(fg)
     adjMat = DistributedFactorGraphs.getAdjacencyMatrixSymbols(fg)
     @test size(adjMat) == (2,4)
     @test issetequal(adjMat[1, :], [nothing, :a, :b, :orphan])
@@ -1226,8 +1220,8 @@ end
 function ConnectivityTest(testDFGAPI; kwargs...)
     dfg, verts, facs = connectivityTestGraph(testDFGAPI; kwargs...)
     @test isConnected(dfg) == true
-    @test @test_deprecated isFullyConnected(dfg) == true
-    @test @test_deprecated hasOrphans(dfg) == false
+    # @test @test_deprecated isFullyConnected(dfg) == true
+    # @test @test_deprecated hasOrphans(dfg) == false
 
     deleteFactor!(dfg, :x9x10f1)
     @test isConnected(dfg) == false
