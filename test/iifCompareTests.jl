@@ -85,7 +85,7 @@ end
     addVariable!(fg, :l1, ContinuousScalar)
     addFactor!(fg, [:x1;:l1], LinearConditional(Rayleigh()))
 
-    sfg = buildSubgraphFromLabels!(fg, [:x0;:x1])
+    sfg = buildSubgraph(LightDFG, fg, [:x0;:x1])
 
     @warn "FIXME This is NOT supposed to pass"
     @test_skip compareFactorGraphs(fg, sfg, skip=[:labelDict;:addHistory;:logpath])
