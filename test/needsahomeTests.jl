@@ -10,7 +10,7 @@ struct TestInferenceVariable2 <: InferenceVariable end
     # Build a graph
     v1 = DFGVariable(:a, TestInferenceVariable1())
     v2 = DFGVariable(:b, TestInferenceVariable1())
-    f1 = DFGFactor{TestFunctorInferenceType1, Symbol}(:f1)
+    f1 = DFGFactor{TestFunctorInferenceType1}(:f1)
     addVariable!(dfg, v1)
     addVariable!(dfg, v2)
     addFactor!(dfg, [v1, v2], f1)

@@ -62,7 +62,7 @@ end
     fg = testDFGAPI()
     addVariable!(fg, DFGVariable(:a, TestSofttype1()))
     addVariable!(fg, DFGVariable(:b, TestSofttype1()))
-    addFactor!(fg, DFGFactor(:abf1, [:a,:b], GenericFunctionNodeData{TestFunctorInferenceType1, Symbol}()))
+    addFactor!(fg, DFGFactor(:abf1, [:a,:b], GenericFunctionNodeData{TestFunctorInferenceType1}()))
     addVariable!(fg, DFGVariable(:orphan, TestSofttype1(), solvable = 0))
 
     AdjacencyMatricesTestBlock(fg)
@@ -101,7 +101,7 @@ end
     addVariable!(fg, DFGVariable(:a, TestSofttype1()))
     addVariable!(fg, DFGVariable(:b, TestSofttype1()))
     addVariable!(fg, DFGVariable(:c, TestSofttype1()))
-    addFactor!(fg, DFGFactor(:f1, [:a,:b,:c], GenericFunctionNodeData{TestFunctorInferenceType1, Symbol}()))
+    addFactor!(fg, DFGFactor(:f1, [:a,:b,:c], GenericFunctionNodeData{TestFunctorInferenceType1}()))
 
     fgcopy = testDFGAPI()
     DFG._copyIntoGraph!(fg, fgcopy, union(ls(fg), lsf(fg)))

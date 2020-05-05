@@ -42,9 +42,9 @@ v2.solvable = 0
 @test !(DFGVariable(:x1, TestSofttype1()) == DFGVariable(:x1, TestSofttype2()))
 
 # GenericFunctionNodeData
-gfnd1 = GenericFunctionNodeData([:a,:b], true, true, [1,2], :symbol, TestFunctorInferenceType1())
+gfnd1 = GenericFunctionNodeData(true, true, [1,2], TestFunctorInferenceType1())
 gfnd2 = deepcopy(gfnd1)
-gfnd3 = GenericFunctionNodeData([:a,:b], true, true, [1,2], :symbol, TestFunctorInferenceType2())
+gfnd3 = GenericFunctionNodeData(true, true, [1,2], TestFunctorInferenceType2())
 
 @test gfnd1 == gfnd2
 @test !(gfnd1 == gfnd3)
@@ -72,9 +72,9 @@ vnd2.val[1] = 0.1
 @test !compare(vnd1, vnd2)
 @test !compare(vnd1, vnd3)
 
-gfnd1 = GenericFunctionNodeData([:a,:b], true, true, [1,2], :symbol, TestFunctorInferenceType1())
+gfnd1 = GenericFunctionNodeData(true, true, [1,2], TestFunctorInferenceType1())
 gfnd2 = deepcopy(gfnd1)
-gfnd3 = GenericFunctionNodeData([:a,:b], true, true, [1,2], :symbol, PackedTestFunctorInferenceType1())
+gfnd3 = GenericFunctionNodeData(true, true, [1,2], PackedTestFunctorInferenceType1())
 
 @test compare(gfnd1, gfnd2)
 @test_broken !(compare(gfnd1, gfnd3))
