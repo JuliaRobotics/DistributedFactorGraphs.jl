@@ -1,8 +1,8 @@
 # DistributedFactorGraphs.jl
 
-Release v0.7 | Dev | Coverage | Docs
----------|-----|----------|------
-[![Build Status](https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl.svg?branch=release/v0.7)](https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl) |  [![Build Status](https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl.svg?branch=master)](https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl) | [![Codecov Status](https://codecov.io/gh/JuliaRobotics/DistributedFactorGraphs.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaRobotics/DistributedFactorGraphs.jl) | [![docs](https://img.shields.io/badge/docs-latest-blue.svg)](http://juliarobotics.github.io/DistributedFactorGraphs.jl/latest/)
+Release v0.7 | Dev | Coverage | DFG Docs | Caesar Docs |
+---------|-----|----------|------|------------
+[![Build Status](https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl.svg?branch=release/v0.7)](https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl) |  [![Build Status](https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl.svg?branch=master)](https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl) | [![Codecov Status](https://codecov.io/gh/JuliaRobotics/DistributedFactorGraphs.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaRobotics/DistributedFactorGraphs.jl) | [![docs](https://img.shields.io/badge/docs-latest-blue.svg)](http://juliarobotics.github.io/DistributedFactorGraphs.jl/latest/) | [![docs](https://img.shields.io/badge/docs-latest-blue.svg)](http://juliarobotics.github.io/Caesar.jl/latest/)
 
 DistributedFactorGraphs.jl provides a flexible factor graph API for use in the [Caesar.jl](https://github.com/JuliaRobotics/Caesar.jl) ecosystem. The package supplies:
 * A standardized API for interacting with factor graphs
@@ -37,38 +37,9 @@ Both drivers support the same functions, so choose which you want to use when cr
 
 ```julia
 # In-memory DFG
-dfg = GraphsDFG{NoSolverParams}()
+dfg = LightDFG{NoSolverParams}()
 addVariable!(dfg, DFGVariable(:a))
 addVariable!(dfg, DFGVariable(:b))
 addFactor!(dfg, [v1, v2], DFGFactor{Int, :Symbol}(:f1)) # Rather use a RoME-type factor here (e.g. Pose2Pose2) rather than an Int, this is just for demonstrative purposes.
 ```
 
-```julia
-# Neo4j-based DFG
-dfg = CloudGraphsDFG{NoSolverParams}("localhost", 7474, "neo4j", "test",
-      "testUser", "testRobot", "testSession",
-      nothing,
-      nothing,
-      IncrementalInference.decodePackedType)
-addVariable!(dfg, DFGVariable(:a))
-addVariable!(dfg, DFGVariable(:b))
-addFactor!(dfg, [v1, v2], DFGFactor{Int, :Symbol}(:f1)) # Rather use a RoME-type factor here (e.g. Pose2Pose2) rather than an Int, this is just for demonstrative purposes.
-```
-
-Please see the documentation for more information on interacting with the factor graph.
-
-## Setting up a Quick Neo4j Database
-The simplest way to set up a test database is with Docker. The Neo4j driver currenly doesn't work with Neo4j 4.0, version 3.5 can be used as in this example.
-
-To pull the Neo4j image:
-```bash
-docker pull neo4j:3.5
-```
-
-To run the image with user `neo4j` and password `test`:
-
-```bash
-docker run -d --publish=7474:7474 --publish=7687:7687 --env NEO4J_AUTH=neo4j/test neo4j:3.5
-```
-
-> **Note** If you just installed docker and having permission issues, please see [this ask Ubuntu forum](https://askubuntu.com/questions/941816/permission-denied-when-running-docker-after-installing-it-as-a-snap).
