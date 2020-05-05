@@ -69,8 +69,7 @@ f2 = addFactor!(dfg, [:b; :c], LinearConditional(Normal(50.0,2.0)) )
 sessions = lsSessions(dfg)
 @test map(s -> s.id, sessions) == [session.id]
 
-dfgLocal = GraphsDFG{SolverParams}(params=SolverParams())
-DistributedFactorGraphs.getSubgraph(dfg, union(ls(dfg), lsf(dfg)), true, dfgLocal)
+dfgLocal = buildSubgraph(LightDFG, dfg, union(ls(dfg), lsf(dfg)))
 # Confirm that with sentinels we still have the same graph (doesn't pull in the sentinels)
 @test symdiff(ls(dfgLocal), ls(dfg)) == []
 @test symdiff(lsf(dfgLocal), lsf(dfg)) == []

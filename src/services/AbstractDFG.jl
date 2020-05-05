@@ -954,7 +954,12 @@ function buildSubgraph(::Type{G},
                        variableFactorLabels::Vector{Symbol},
                        distance::Int=0;
                        solvable::Int=0,
+                       sessionId::String = "",
                        kwargs...) where G <: AbstractDFG
+
+    if sessionId == ""
+        sessionId = getSessionId(dfg) * "_sub_$(string(uuid4())[1:6])"
+    end
 
     #build up the neighborhood from variableFactorLabels
     allvarfacs = getNeighborhood(dfg, variableFactorLabels, distance; solvable=solvable)
@@ -962,7 +967,7 @@ function buildSubgraph(::Type{G},
     variableLabels = intersect(listVariables(dfg), allvarfacs)
     factorLabels = intersect(listFactors(dfg), allvarfacs)
     # Copy the section of graph we want
-    destDFG = deepcopyGraph(G, dfg, variableLabels, factorLabels; kwargs...)
+    destDFG = deepcopyGraph(G, dfg, variableLabels, factorLabels; sessionId=sessionId, kwargs...)
     return destDFG
 end
 

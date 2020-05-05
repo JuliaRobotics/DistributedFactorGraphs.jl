@@ -160,11 +160,11 @@ end
 end
 
 
-@testset "Getting Subgraphs" begin
-    fg = testDFGAPI()
-    clearUser!!(fg)
-    GettingSubgraphs(testDFGAPI)
-end
+# @testset "Getting Subgraphs" begin
+#     fg = testDFGAPI()
+#     clearUser!!(fg)
+#     GettingSubgraphs(testDFGAPI)
+# end
 
 @testset "Building Subgraphs" begin
     fg = testDFGAPI()
@@ -197,10 +197,6 @@ end
     addVariable!(fg, var2)
     addVariable!(fg, var3)
     addFactor!(fg, fac1)
-
-    fgcopy = testDFGAPI()
-    DFG._copyIntoGraph!(fg, fgcopy, union(ls(fg), lsf(fg)))
-    @test getVariableOrder(fg,:abf1) == getVariableOrder(fgcopy,:abf1)
 
     #test copyGraph, deepcopyGraph[!]
     fgcopy = testDFGAPI()
