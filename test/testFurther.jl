@@ -22,7 +22,7 @@ f1 = addFactor!(dfg, [:a; :b], LinearConditional(Normal(50.0,2.0)) )
 f2 = addFactor!(dfg, [:b; :c], LinearConditional(Normal(50.0,2.0)) )
 
 # Pull and solve this graph
-dfgLocal = GraphsDFG{SolverParams}(params=SolverParams())
+dfgLocal = LightDFG{SolverParams}(params=SolverParams())
 DistributedFactorGraphs.getSubgraph(dfg, union(ls(dfg), lsf(dfg)), true, dfgLocal)
 
 # Solve it

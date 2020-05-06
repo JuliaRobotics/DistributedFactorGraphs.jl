@@ -97,7 +97,6 @@ end
 
 
 ##
-global testDFGAPI = GraphsDFG
 global testDFGAPI = LightDFG
 
 #test Specific definitions
@@ -1229,12 +1228,8 @@ function ConnectivityTest(testDFGAPI; kwargs...)
     @test isConnected(dfg) == false
 
     deleteVariable!(dfg, :x5)
-    if testDFGAPI == GraphsDFG
-        @error "FIXME: isConnected is partially broken for GraphsDFG see #286"
-        @test_broken isConnected(dfg) == false
-    else
-        @test isConnected(dfg) == false
-    end
+    @test isConnected(dfg) == false
+
 end
 
 
@@ -1297,7 +1292,7 @@ function CopyFunctionsTest(testDFGAPI; kwargs...)
     vlbls1 = [:x1, :x2, :x3]
     vlbls2 = [:x4, :x5, :x6]
     dcdfg_part1 = deepcopyGraph(LightDFG, dfg, vlbls1)
-    dcdfg_part2 = deepcopyGraph(GraphsDFG, dfg, vlbls2)
+    dcdfg_part2 = deepcopyGraph(LightDFG, dfg, vlbls2)
 
     mergedGraph = testDFGAPI()
     mergeGraph!(mergedGraph, dcdfg_part1)

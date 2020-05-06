@@ -256,12 +256,13 @@ include("entities/AbstractDFGSummary.jl")
 include("services/AbstractDFG.jl")
 
 # In Memory Types
-include("GraphsDFG/GraphsDFG.jl")
-@reexport using .GraphsDFGs
+# include("GraphsDFG/GraphsDFG.jl")
+# @reexport using .GraphsDFGs
 include("LightDFG/LightDFG.jl")
 @reexport using .LightDFGs
 #supported in Memory fg types
-const InMemoryDFGTypes = Union{GraphsDFG, LightDFG}
+# const InMemoryDFGTypes = Union{GraphsDFG, LightDFG}
+const InMemoryDFGTypes = LightDFG
 
 # Common includes
 include("services/CommonAccessors.jl")

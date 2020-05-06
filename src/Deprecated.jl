@@ -7,8 +7,14 @@
 ## Remove in 0.9
 ##==============================================================================
 
+include("../attic/GraphsDFG/GraphsDFG.jl")
+@reexport using .GraphsDFGs
+
+
 @deprecate buildSubgraphFromLabels!(dfg::AbstractDFG, varList::Vector{Symbol}) buildSubgraph(dfg, varList, 1)
 
+
+## TODO: I think these are handy, so move to Factor and Variable
 Base.getproperty(x::DFGFactor,f::Symbol) = begin
     if f == :solvable
         getfield(x,:_dfgNodeParams).solvable

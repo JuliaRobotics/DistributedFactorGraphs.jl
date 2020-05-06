@@ -30,7 +30,6 @@ end
 # Test each interface
 apis = [
     LightDFG,
-    GraphsDFG,
     ]
 for api in apis
     @testset "Testing Driver: $(api)" begin
@@ -86,7 +85,7 @@ if get(ENV, "IIF_TEST", "") == "true"
     using IncrementalInference
 
     apis = [
-        GraphsDFG{SolverParams}(),
+        # GraphsDFG{SolverParams}(),
         LightDFG{SolverParams}(),
         CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
                                     "testUser", "testRobot", "testSession",
@@ -125,7 +124,7 @@ if get(ENV, "IIF_TEST", "") == "true"
     @testset "Simple graph solving test" begin
         # This is just to validate we're not going to blow up downstream.
         apis = [
-            GraphsDFG{SolverParams}(params=SolverParams()),
+            # GraphsDFG{SolverParams}(params=SolverParams()),
             LightDFG{SolverParams}(params=SolverParams()),
             CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
                                         "testUser", "testRobot", "simpleSolveSession",
