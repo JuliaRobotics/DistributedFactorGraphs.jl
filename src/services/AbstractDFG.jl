@@ -971,6 +971,14 @@ function buildSubgraph(::Type{G},
     return destDFG
 end
 
+# Perhaps IIF.InMemDFGType should perhaps be incorporated as a DFG value, but this has been much debated in the past and hence just left as breadcrum.
+buildSubgraph(dfg::AbstractDFG,
+              variableFactorLabels::Vector{Symbol},
+              distance::Int=1;
+              solvable::Int=0,
+              sessionId::String = "",
+              kwargs...) = buildSubgraph(typeof(LightDFG(params=getSolverParams(dfg))), dfg, variableFactorLabels, distance, solvable=solvable, sessionId=sessionId, kwargs...)
+
 """
     $(SIGNATURES)
 Merger sourceDFG to destDFG given an optional list of variables and factors and distance.
