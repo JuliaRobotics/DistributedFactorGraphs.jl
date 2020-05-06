@@ -41,7 +41,7 @@ mutable struct GenericFunctionNodeData{T<:Union{PackedInferenceType, FunctorInfe
     edgeIDs::Array{Int,1}
     frommodule::S # JT TODO remove frommodule, not used at all as far as i can tell
     fnc::T
-    multihypo::Array{Float64} # likely to moved when GenericWrapParam is refactored
+    multihypo::Vector{Float64} # likely to moved when GenericWrapParam is refactored
     certainhypo::Vector{Int}
     solveInProgress::Int
     GenericFunctionNodeData{T, S}() where {T, S} = new{T,S}()
