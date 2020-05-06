@@ -54,10 +54,11 @@ getSolverParams(dfg::AbstractDFG) = dfg.solverParams
 
 """
     $(SIGNATURES)
-"""
-getFactorOperationalMemoryType(par::AbstractParams) = par.factorOperationalMemoryType
 
-getFactorOperationalMemoryType(dfg::AbstractDFG) = getFactorOperationalMemoryType(getSolverParams(dfg))
+Method must be overloaded by the user for Serialization to work.  E.g. IncrementalInference uses `CommonConvWrapper <: FactorOperationalMemory`.
+"""
+getFactorOperationalMemoryType(dummy) = error("Please define this function getFactorOperationalMemoryType for your usecase, e.g. = `IIF.CommonConvWrapper <: FactorOperationalMemory`")
+
 
 ##------------------------------------------------------------------------------
 ## Setters

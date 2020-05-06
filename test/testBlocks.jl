@@ -61,7 +61,8 @@ struct TestCCW{T} <: FactorOperationalMemory where {T<:FunctorInferenceType}
 end
 Base.:(==)(a::TestCCW, b::TestCCW) = a.usrfnc! == b.usrfnc!
 
-DFG.getFactorOperationalMemoryType(par::NoSolverParams) = TestCCW
+# DF, dropping DFG. so that Main context is used and can be overridden by IIF.getFac...Type
+getFactorOperationalMemoryType(par::NoSolverParams) = TestCCW
 
 function Base.convert(::Type{DFG.FunctionNodeData{TestCCW{F}}},
                      d::DFG.PackedFunctionNodeData{<:PackedInferenceType}) where F<:FunctorInferenceType
