@@ -12,7 +12,7 @@ abstract type FunctorInferenceType <: Function end
 abstract type FactorOperationalMemory <: Function end
 # TODO to be removed from DFG,
 # we can add to IIF or have IIF.CommonConvWrapper <: FactorOperationalMemory directly
-abstract type ConvolutionObject <: FactorOperationalMemory end
+# abstract type ConvolutionObject <: FactorOperationalMemory end
 
 abstract type FunctorSingleton <: FunctorInferenceType end
 abstract type FunctorPairwise <: FunctorInferenceType end

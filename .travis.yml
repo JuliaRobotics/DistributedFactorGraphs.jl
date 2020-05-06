@@ -28,7 +28,6 @@ jobs:
     - julia: 1.4
       env:
         - IIF_TEST=true
-        - SKIP_CGDFG_TESTS=true
       if: NOT branch =~ ^release.*$
     - arch: arm64
       env: SKIP_CGDFG_TESTS=true

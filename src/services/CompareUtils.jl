@@ -365,6 +365,8 @@ Compare and return if two factor graph objects are the same, by comparing simila
 Notes:
 - Default items to skip with `skipsamples`, `skipcompute`.
 - User defined fields to skip can be specified with `skip::Vector{Symbol}`.
+- To enable debug messages for viewing which fields are not the same:
+  - https://stackoverflow.com/questions/53548681/how-to-enable-debugging-messages-in-juno-julia-editor
 
 Related:
 

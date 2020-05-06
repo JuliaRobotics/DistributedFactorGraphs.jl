@@ -73,9 +73,9 @@ end
     GettingNeighbors(testDFGAPI)
 end
 
-@testset "Getting Subgraphs" begin
-    GettingSubgraphs(testDFGAPI)
-end
+# @testset "Getting Subgraphs" begin
+#     GettingSubgraphs(testDFGAPI)
+# end
 
 @testset "Building Subgraphs" begin
     BuildingSubgraphs(testDFGAPI)
@@ -103,9 +103,9 @@ end
     addVariable!(fg, DFGVariable(:c, TestSofttype1()))
     addFactor!(fg, DFGFactor(:f1, [:a,:b,:c], GenericFunctionNodeData{TestFunctorInferenceType1}()))
 
-    fgcopy = testDFGAPI()
-    DFG._copyIntoGraph!(fg, fgcopy, union(ls(fg), lsf(fg)))
-    @test getVariableOrder(fg,:f1) == getVariableOrder(fgcopy,:f1)
+    # fgcopy = testDFGAPI()
+    # DFG._copyIntoGraph!(fg, fgcopy, union(ls(fg), lsf(fg)))
+    # @test getVariableOrder(fg,:f1) == getVariableOrder(fgcopy,:f1)
 
     #test copyGraph, deepcopyGraph[!]
     fgcopy = testDFGAPI()

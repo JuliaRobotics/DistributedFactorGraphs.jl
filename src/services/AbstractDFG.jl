@@ -54,10 +54,12 @@ getSolverParams(dfg::AbstractDFG) = dfg.solverParams
 
 """
     $(SIGNATURES)
-"""
-getFactorOperationalMemoryType(par::AbstractParams) = par.factorOperationalMemoryType
 
+Method must be overloaded by the user for Serialization to work.  E.g. IncrementalInference uses `CommonConvWrapper <: FactorOperationalMemory`.
+"""
+getFactorOperationalMemoryType(dummy) = error("Please extend your workspace with function getFactorOperationalMemoryType(<:AbstractParams) for your usecase, e.g. IncrementalInference uses `CommonConvWrapper <: FactorOperationalMemory`")
 getFactorOperationalMemoryType(dfg::AbstractDFG) = getFactorOperationalMemoryType(getSolverParams(dfg))
+
 
 ##------------------------------------------------------------------------------
 ## Setters
@@ -954,7 +956,12 @@ function buildSubgraph(::Type{G},
                        variableFactorLabels::Vector{Symbol},
                        distance::Int=0;
                        solvable::Int=0,
+                       sessionId::String = "",
                        kwargs...) where G <: AbstractDFG
+
+    if sessionId == ""
+        sessionId = getSessionId(dfg) * "_sub_$(string(uuid4())[1:6])"
+    end
 
     #build up the neighborhood from variableFactorLabels
     allvarfacs = getNeighborhood(dfg, variableFactorLabels, distance; solvable=solvable)
@@ -962,9 +969,17 @@ function buildSubgraph(::Type{G},
     variableLabels = intersect(listVariables(dfg), allvarfacs)
     factorLabels = intersect(listFactors(dfg), allvarfacs)
     # Copy the section of graph we want
-    destDFG = deepcopyGraph(G, dfg, variableLabels, factorLabels; kwargs...)
+    destDFG = deepcopyGraph(G, dfg, variableLabels, factorLabels; sessionId=sessionId, kwargs...)
     return destDFG
 end
+
+# Perhaps IIF.InMemDFGType should perhaps be incorporated as a DFG value, but this has been much debated in the past and hence just left as breadcrum.
+buildSubgraph(dfg::AbstractDFG,
+              variableFactorLabels::Vector{Symbol},
+              distance::Int=1;
+              solvable::Int=0,
+              sessionId::String = "",
+              kwargs...) = buildSubgraph(typeof(LightDFG(params=getSolverParams(dfg))), dfg, variableFactorLabels, distance, solvable=solvable, sessionId=sessionId, kwargs...)
 
 """
     $(SIGNATURES)
