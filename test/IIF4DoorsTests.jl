@@ -15,7 +15,7 @@ DistributedFactorGraphs.CloudGraphsDFG{SolverParams}() = CloudGraphsDFG{SolverPa
 
 N=100
 # fg = initfg(CloudGraphsDFG{SolverParams}())
-fg = initfg(GraphsDFG{SolverParams})
+fg = initfg(LightDFG{SolverParams})
 
 doors = reshape(Float64[-100.0;0.0;100.0;300.0],1,4)
 pd = kde!(doors,[3.0])

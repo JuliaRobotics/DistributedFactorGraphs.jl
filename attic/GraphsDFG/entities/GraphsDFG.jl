@@ -38,6 +38,7 @@ function GraphsDFG( g::FGType=Graphs.incdict(GraphsNode,is_directed=false),
                     sessionData::Dict{Symbol, String} = Dict{Symbol, String}(),
                     params::T=NoSolverParams()) where T <: AbstractParams
     # Validate the userId, robotId, and sessionId
+    Base.depwarn("GraphsDFG is voetstoots and will no longer be maintaind, use LightDFG", :GraphsDFG)
     !isValidLabel(userId) && error("'$userId' is not a valid User ID")
     !isValidLabel(robotId) && error("'$robotId' is not a valid Robot ID")
     !isValidLabel(sessionId) && error("'$sessionId' is not a valid Session ID")
@@ -57,6 +58,7 @@ function GraphsDFG{T}(  g::FGType=Graphs.incdict(GraphsNode,is_directed=false),
                         sessionData::Dict{Symbol, String} = Dict{Symbol, String}(),
                         params::T=T()) where T <: AbstractParams
     # Validate the userId, robotId, and sessionId
+    Base.depwarn("GraphsDFG is voetstoots and will no longer be maintaind, use LightDFG", :GraphsDFG)
     !isValidLabel(userId) && error("'$userId' is not a valid User ID")
     !isValidLabel(robotId) && error("'$robotId' is not a valid Robot ID")
     !isValidLabel(sessionId) && error("'$sessionId' is not a valid Session ID")

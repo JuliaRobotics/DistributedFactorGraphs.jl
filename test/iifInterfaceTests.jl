@@ -29,7 +29,7 @@ end
     Base.rm("something.dot")
 end
 
-@testset "Testing CRUD, return and Failures from a GraphsDFG" begin
+@testset "Testing CRUD, return and Failures from a LightDFG" begin
     global dfg
     # dfg to copy to
     # creating a whole new graph with the same labels
@@ -40,7 +40,7 @@ end
                                             "Description of test session 2",
                                             nothing,
                                             nothing,
-                                            IncrementalInference.decodePackedType,
+                                            nothing,
                                             IncrementalInference.rebuildFactorMetadata!,
                                             solverParams=SolverParams())
     else
@@ -413,7 +413,6 @@ facts = map(n ->
 
     # solvable checks
     @test getNeighbors(dfg, :x5, solvable=1) == Symbol[]
-    #TODO Confirm: test failed on GraphsDFG, don't know if the order is important for isa variable.
     @test symdiff(getNeighbors(dfg, :x5, solvable=0), [:x4x5f1,:x5x6f1]) == []
     @test symdiff(getNeighbors(dfg, :x5),[:x4x5f1,:x5x6f1]) == []
     @test getNeighbors(dfg, :x7x8f1, solvable=0) == [:x7, :x8]

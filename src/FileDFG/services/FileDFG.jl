@@ -9,7 +9,7 @@ DevNotes:
 # Example
 ```julia
 using DistributedFactorGraphs, IncrementalInference
-# Create a DFG - can make one directly, e.g. GraphsDFG{NoSolverParams}() or use IIF:
+# Create a DFG - can make one directly, e.g. LightDFG{NoSolverParams}() or use IIF:
 dfg = initfg()
 # ... Add stuff to graph using either IIF or DFG:
 v1 = addVariable!(dfg, :a, ContinuousScalar, labels = [:POSE], solvable=0)
@@ -74,7 +74,7 @@ parameter.
 # Example
 ```julia
 using DistributedFactorGraphs, IncrementalInference
-# Create a DFG - can make one directly, e.g. GraphsDFG{NoSolverParams}() or use IIF:
+# Create a DFG - can make one directly, e.g. LightDFG{NoSolverParams}() or use IIF:
 dfg = initfg()
 # Load the graph
 loadDFG("/tmp/savedgraph.tar.gz", IncrementalInference, dfg)
