@@ -59,6 +59,9 @@ end
 struct TestCCW{T} <: FactorOperationalMemory where {T<:FunctorInferenceType}
     usrfnc!::T
 end
+
+TestCCW{T}() where T = TestCCW(T())
+
 Base.:(==)(a::TestCCW, b::TestCCW) = a.usrfnc! == b.usrfnc!
 
 
@@ -71,11 +74,9 @@ getFactorOperationalMemoryType(par::NoSolverParams) = TestCCW
 function Base.convert(::Type{DFG.FunctionNodeData{TestCCW{F}}},
                      d::DFG.PackedFunctionNodeData{<:PackedInferenceType}) where F<:FunctorInferenceType
 
-    return DFG.FunctionNodeData(d.fncargvID,
-                                d.eliminated,
+    return DFG.FunctionNodeData(d.eliminated,
                                 d.potentialused,
                                 d.edgeIDs,
-                                Symbol(d.frommodule),
                                 TestCCW(convert(F, d.fnc)),
                                 d.multihypo,
                                 d.certainhypo,
@@ -84,11 +85,9 @@ end
 
 function Base.convert(::Type{DFG.PackedFunctionNodeData{P}}, d::DFG.FunctionNodeData{<:FactorOperationalMemory}) where P <: PackedInferenceType
   # mhstr = packmultihypo(d.fnc)  # this is where certainhypo error occurs
-  return DFG.PackedFunctionNodeData(d.fncargvID,
-                                    d.eliminated,
+  return DFG.PackedFunctionNodeData(d.eliminated,
                                     d.potentialused,
                                     d.edgeIDs,
-                                    string(d.frommodule),
                                     convert(P, d.fnc.usrfnc!),
                                     d.multihypo,
                                     d.certainhypo,
@@ -310,14 +309,14 @@ function  DFGFactorSCA()
     f1_tags = Set([:FACTOR])
     testTimestamp = now()
 
-    gfnd_prior = GenericFunctionNodeData(Symbol[], false, false, Int[], :DistributedFactorGraphs, TestCCW(TestFunctorSingleton()))
+    gfnd_prior = GenericFunctionNodeData(false, false, Int[], TestCCW(TestFunctorSingleton()))
 
-    gfnd = GenericFunctionNodeData(Symbol[], false, false, Int[], :DistributedFactorGraphs, TestCCW(TestFunctorInferenceType1()))
+    gfnd = GenericFunctionNodeData(false, false, Int[], TestCCW(TestFunctorInferenceType1()))
 
-    f1 = DFGFactor{TestCCW{TestFunctorInferenceType1}, Symbol}(f1_lbl)
+    f1 = DFGFactor{TestCCW{TestFunctorInferenceType1}}(f1_lbl)
     f1 = DFGFactor(f1_lbl, [:a,:b], gfnd, tags = f1_tags, solvable=0)
 
-    f2 = DFGFactor{TestCCW{TestFunctorInferenceType1}, Symbol}(:bcf1)
+    f2 = DFGFactor{TestCCW{TestFunctorInferenceType1}}(:bcf1)
     #TODO add tests for mutating vos in updateFactor and orphan related checks.
     # we should perhaps prevent an empty vos
     f2._variableOrderSymbols = [:b, :c]
@@ -367,11 +366,9 @@ function  DFGFactorSCA()
     f0 = DFGFactor(:af1, [:a], gfnd_prior, tags = Set([:PRIOR]))
 
     #fill in undefined fields
-    f2.solverData.certainhypo = Int[]
-    f2.solverData.fncargvID = Symbol[]
-    f2.solverData.frommodule = :DistributedFactorGraphs
-    f2.solverData.multihypo = Float64[]
-    f2.solverData.edgeIDs = Int64[]
+    # f2.solverData.certainhypo = Int[]
+    # f2.solverData.multihypo = Float64[]
+    # f2.solverData.edgeIDs = Int64[]
 
     return  (f0=f0, f1=f1, f2=f2)
 end
@@ -1012,7 +1009,7 @@ function connectivityTestGraph(::Type{T}; VARTYPE=DFGVariable, FACTYPE=DFGFactor
         setSolvable!(dfg, :x8, 0)
         setSolvable!(dfg, :x9, 0)
 
-        gfnd = GenericFunctionNodeData(Symbol[], false, false, Int[], :DistributedFactorGraphs, TestCCW(TestFunctorInferenceType1()))
+        gfnd = GenericFunctionNodeData(false, false, Int[], TestCCW(TestFunctorInferenceType1()))
         f_tags = Set([:FACTOR])
         # f1 = DFGFactor(f1_lbl, [:a,:b], gfnd, tags = f_tags)
 
@@ -1202,7 +1199,7 @@ function ProducingDotFiles(testDFGAPI,
         v2 = VARTYPE(:b, VariableNodeData{TestSofttype1}())
     end
     if f1 == nothing
-        f1 = (FACTYPE==DFGFactor) ? DFGFactor{TestFunctorInferenceType1, Symbol}(:abf1) : FACTYPE(:abf1)
+        f1 = (FACTYPE==DFGFactor) ? DFGFactor{TestFunctorInferenceType1}(:abf1) : FACTYPE(:abf1)
     end
 
     addVariable!(dotdfg, v1)

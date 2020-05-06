@@ -176,7 +176,7 @@ export addData!, fetchData, fetchDataEntryElement
 # Factors
 ##------------------------------------------------------------------------------
 # Factor Data
-export GenericFunctionNodeData
+export GenericFunctionNodeData, PackedFunctionNodeData, FunctionNodeData
 export InferenceType, PackedInferenceType, FunctorInferenceType, FactorOperationalMemory
 export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
 

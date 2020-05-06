@@ -30,36 +30,49 @@ Notes
 
 Designing (WIP)
 - T <: Union{FactorOperationalMemory, PackedInferenceType}
-# in IIF.CCW{T <: DFG.InferenceType}
-# in IIF.FunctorPairwiseMinimize <: InferenceType # DFG whatever, something, we'll figure it out
-# in Main/User, SomeFactor <: FunctorPairwiseMinimize
+- in IIF.CCW{T <: DFG.InferenceType}
+- in IIF.FunctorPairwiseMinimize <: InferenceType # DFG whatever, something, we'll figure it out
+- in Main/User, SomeFactor <: FunctorPairwiseMinimize
 """
-mutable struct GenericFunctionNodeData{T<:Union{PackedInferenceType, FunctorInferenceType, FactorOperationalMemory}, S<:Union{Symbol, AbstractString}}
-    fncargvID::Vector{Symbol}
+mutable struct GenericFunctionNodeData{T<:Union{PackedInferenceType, FunctorInferenceType, FactorOperationalMemory}}
     eliminated::Bool
     potentialused::Bool
-    edgeIDs::Array{Int,1}
-    frommodule::S # JT TODO remove frommodule, not used at all as far as i can tell
+    edgeIDs::Vector{Int}
     fnc::T
     multihypo::Vector{Float64} # likely to moved when GenericWrapParam is refactored
     certainhypo::Vector{Int}
     solveInProgress::Int
-    GenericFunctionNodeData{T, S}() where {T, S} = new{T,S}()
-    GenericFunctionNodeData{T, S}(x1, x2, x3, x4, x5::S, x6::T, multihypo::Vector{<:Real}=Float64[], certainhypo::Vector{Int}=Int[], x9::Int=0) where {T, S} = new{T,S}(x1, x2, x3, x4, x5, x6, multihypo, certainhypo, x9)
-    GenericFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, multihypo::Vector{<:Real}=Float64[], certainhypo::Vector{Int}=Int[], x9::Int=0) where {T, S} = new{T,S}(x1, x2, x3, x4, x5, x6, multihypo, certainhypo, x9)
-    # GenericFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, x7::String) where {T, S} = new{T,S}(x1, x2, x3, x4, x5, x6, x7)
 end
 
 ## Constructors
 
+GenericFunctionNodeData{T}() where T =
+    GenericFunctionNodeData{T}(false, false, Int[], T(), Float64[], Int[], 0)
+
+function GenericFunctionNodeData(eliminated,
+                                 potentialused,
+                                 edgeIDs,
+                                 fnc,
+                                 multihypo=Float64[],
+                                 certainhypo=Int[])
+    return GenericFunctionNodeData(eliminated, potentialused, edgeIDs, fnc, multihypo, certainhypo, 0)
+end
+
+
 ##------------------------------------------------------------------------------
 ## PackedFunctionNodeData and FunctionNodeData
 
-# Simply for convenience - don't export, TODO Its used in IIF so maybe it should be exported
-const PackedFunctionNodeData{T} = GenericFunctionNodeData{T, <: AbstractString}
-PackedFunctionNodeData(x1, x2, x3, x4, x5::S, x6::T, multihypo::Vector{Float64}=[], certainhypo::Vector{Int}=Int[], x9::Int=0) where {T <: PackedInferenceType, S <: AbstractString} = GenericFunctionNodeData(x1, x2, x3, x4, x5, x6, multihypo, certainhypo, x9)
-const FunctionNodeData{T} = GenericFunctionNodeData{T, Symbol}
-FunctionNodeData(x1, x2, x3, x4, x5::Symbol, x6::T, multihypo::Vector{Float64}=[], certainhypo::Vector{Int}=Int[], x9::Int=0) where {T <: Union{FunctorInferenceType, FactorOperationalMemory}}= GenericFunctionNodeData{T, Symbol}(x1, x2, x3, x4, x5, x6, multihypo, certainhypo, x9)
+const PackedFunctionNodeData{T} = GenericFunctionNodeData{T} where T <: PackedInferenceType
+PackedFunctionNodeData(args...) = PackedFunctionNodeData{typeof(args[4])}(args...)
+
+const FunctionNodeData{T} = GenericFunctionNodeData{T} where T <: Union{FunctorInferenceType, FactorOperationalMemory}
+FunctionNodeData(args...) = FunctionNodeData{typeof(args[4])}(args...)
+
+
+# PackedFunctionNodeData(x2, x3, x4, x6::T, multihypo::Vector{Float64}=[], certainhypo::Vector{Int}=Int[], x9::Int=0) where T <: PackedInferenceType =
+#     GenericFunctionNodeData{T}(x2, x3, x4, x6, multihypo, certainhypo, x9)
+# FunctionNodeData(x2, x3, x4, x6::T, multihypo::Vector{Float64}=[], certainhypo::Vector{Int}=Int[], x9::Int=0) where T <: Union{FunctorInferenceType, FactorOperationalMemory} =
+#     GenericFunctionNodeData{T}(x2, x3, x4, x6, multihypo, certainhypo, x9)
 
 ##==============================================================================
 ## Factors
@@ -81,7 +94,7 @@ Complete factor structure for a DistributedFactorGraph factor.
 Fields:
 $(TYPEDFIELDS)
 """
-mutable struct DFGFactor{T, S} <: AbstractDFGFactor
+mutable struct DFGFactor{T} <: AbstractDFGFactor
     """Factor label, e.g. :x1f1.
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
@@ -93,7 +106,7 @@ mutable struct DFGFactor{T, S} <: AbstractDFGFactor
     tags::Set{Symbol}
     """Solver data.
     Accessors: [`getSolverData`](@ref), [`setSolverData!`](@ref)"""
-    solverData::GenericFunctionNodeData{T, S}
+    solverData::GenericFunctionNodeData{T}
     """Solvable flag for the factor.
     Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)
     TODO: Switch to `DFGNodeParams`"""
@@ -115,18 +128,18 @@ $(SIGNATURES)
 
 Construct a DFG factor given a label.
 """
-DFGFactor{T, S}(label::Symbol, internalId::Int64=0, timestamp::DateTime=now()) where {T, S} =
-                DFGFactor(label, timestamp, Set{Symbol}(), GenericFunctionNodeData{T, S}(), 1, DFGNodeParams(1, internalId), Symbol[])
+DFGFactor{T}(label::Symbol, internalId::Int64=0, timestamp::DateTime=now()) where {T} =
+                DFGFactor(label, timestamp, Set{Symbol}(), GenericFunctionNodeData{T}(), 1, DFGNodeParams(1, internalId), Symbol[])
 
 
 DFGFactor(label::Symbol,
           variableOrderSymbols::Vector{Symbol},
-          data::GenericFunctionNodeData{T, S};
+          data::GenericFunctionNodeData{T};
           tags::Set{Symbol}=Set{Symbol}(),
           timestamp::DateTime=now(),
           solvable::Int=1,
-          _internalId::Int64=0) where {T, S} =
-                DFGFactor{T,S}(label,timestamp,tags,data,solvable,DFGNodeParams(solvable, _internalId),variableOrderSymbols)
+          _internalId::Int64=0) where {T} =
+                DFGFactor{T}(label,timestamp,tags,data,solvable,DFGNodeParams(solvable, _internalId),variableOrderSymbols)
 
 
 
