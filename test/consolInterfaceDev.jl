@@ -7,6 +7,12 @@ using Dates
 using UUIDs
 # using IncrementalInference
 
+## must overload the function
+import DistributedFactorGraphs: getFactorOperationalMemoryType
+# DF, dropping DFG. so that Main context is used and can be overridden by IIF.getFac...Type
+getFactorOperationalMemoryType(::CloudGraphsDFG) = TestCCW
+
+
 include("testBlocks.jl")
 
 ##
