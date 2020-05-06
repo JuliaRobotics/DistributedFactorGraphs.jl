@@ -92,7 +92,7 @@ if get(ENV, "IIF_TEST", "") == "true"
                                     "Description of test Session",
                                     nothing,
                                     nothing,
-                                    IncrementalInference.decodePackedType,
+                                    nothing,
                                     IncrementalInference.rebuildFactorMetadata!,
                                     solverParams=SolverParams())
             ]

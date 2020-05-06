@@ -3,7 +3,7 @@ dfg = CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
                             "Description of test session",
                             nothing,
                             nothing,
-                            IncrementalInference.decodePackedType,
+                            nothing,
                             IncrementalInference.rebuildFactorMetadata!,
                             solverParams=SolverParams())
 

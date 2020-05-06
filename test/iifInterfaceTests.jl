@@ -40,7 +40,7 @@ end
                                             "Description of test session 2",
                                             nothing,
                                             nothing,
-                                            IncrementalInference.decodePackedType,
+                                            nothing,
                                             IncrementalInference.rebuildFactorMetadata!,
                                             solverParams=SolverParams())
     else
