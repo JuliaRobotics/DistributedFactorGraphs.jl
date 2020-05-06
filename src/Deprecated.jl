@@ -7,6 +7,7 @@
 ## Remove in 0.9
 ##==============================================================================
 
+@deprecate buildSubgraphFromLabels!(dfg::AbstractDFG, varList::Vector{Symbol}) buildSubgraph(dfg, varList, 1)
 
 Base.getproperty(x::DFGFactor,f::Symbol) = begin
     if f == :solvable
