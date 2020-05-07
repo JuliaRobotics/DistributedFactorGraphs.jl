@@ -90,10 +90,6 @@ if get(ENV, "IIF_TEST", "") == "true"
         CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
                                     "testUser", "testRobot", "testSession",
                                     "Description of test Session",
-                                    nothing,
-                                    nothing,
-                                    nothing,
-                                    nothing,
                                     solverParams=SolverParams())
             ]
     for api in apis
@@ -129,10 +125,6 @@ if get(ENV, "IIF_TEST", "") == "true"
             CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
                                         "testUser", "testRobot", "simpleSolveSession",
                                         "Description of test Session",
-                                        nothing,
-                                        nothing,
-                                        nothing,
-                                        nothing,
                                         solverParams=SolverParams())
             ]
         for api in apis

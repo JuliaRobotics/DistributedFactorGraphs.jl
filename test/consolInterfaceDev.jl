@@ -35,10 +35,6 @@ function DFG.CloudGraphsDFG(; hostname="localhost",
                                           robotId,
                                           sessionId,
                                           description,
-                                          nothing,
-                                          nothing,
-                                          nothing,
-                                          nothing,
                                           solverParams=params)
 
     setUserData!(cgfg, Dict{Symbol, String}())
@@ -70,10 +66,6 @@ function DFG.CloudGraphsDFG(description::String,
                                                 robotId,
                                                 sessionId,
                                                 description,
-                                                nothing,
-                                                nothing,
-                                                nothing,
-                                                nothing,
                                                 solverParams=solverParams)
 
 

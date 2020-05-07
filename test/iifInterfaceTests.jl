@@ -38,10 +38,6 @@ end
         dfg2 = CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
                                             "testUser", "testRobot", "testSession2",
                                             "Description of test session 2",
-                                            nothing,
-                                            nothing,
-                                            nothing,
-                                            nothing,
                                             solverParams=SolverParams())
     else
         dfg2 = T()

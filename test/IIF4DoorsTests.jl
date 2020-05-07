@@ -7,10 +7,6 @@ using IncrementalInference
 
 DistributedFactorGraphs.CloudGraphsDFG{SolverParams}() = CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
                                                                     "testUser", "testRobot", "testSession",
-                                                                    nothing,
-                                                                    nothing,
-                                                                    nothing,
-                                                                    nothing,
                                                                     solverParams=SolverParams())
 
 N=100
