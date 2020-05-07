@@ -60,12 +60,6 @@ Method must be overloaded by the user for Serialization to work.  E.g. Increment
 getFactorOperationalMemoryType(dummy) = error("Please extend your workspace with function getFactorOperationalMemoryType(<:AbstractParams) for your usecase, e.g. IncrementalInference uses `CommonConvWrapper <: FactorOperationalMemory`")
 getFactorOperationalMemoryType(dfg::AbstractDFG) = getFactorOperationalMemoryType(getSolverParams(dfg))
 
-"""
-    $(SIGNATURES)
-
-Method must be overloaded by the user for Serialization to work.
-"""
-rebuildFactorMetadata!(dfg::AbstractDFG{<:AbstractParams}, factor::AbstractDFGFactor) = error("rebuildFactorMetadata! is not implemented for $(typeof(dfg))")
 
 ##------------------------------------------------------------------------------
 ## Setters

@@ -11,8 +11,6 @@ include("../attic/GraphsDFG/GraphsDFG.jl")
 @reexport using .GraphsDFGs
 
 
-@deprecate loadDFG(source::String, iifModule::Module, dest::AbstractDFG) loadDFG!(dest, source)
-
 @deprecate buildSubgraphFromLabels!(dfg::AbstractDFG, varList::Vector{Symbol}) buildSubgraph(dfg, varList, 1)
 
 

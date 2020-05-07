@@ -90,6 +90,10 @@ if get(ENV, "IIF_TEST", "") == "true"
         CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
                                     "testUser", "testRobot", "testSession",
                                     "Description of test Session",
+                                    nothing,
+                                    nothing,
+                                    nothing,
+                                    IncrementalInference.rebuildFactorMetadata!,
                                     solverParams=SolverParams())
             ]
     for api in apis
@@ -125,6 +129,10 @@ if get(ENV, "IIF_TEST", "") == "true"
             CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
                                         "testUser", "testRobot", "simpleSolveSession",
                                         "Description of test Session",
+                                        nothing,
+                                        nothing,
+                                        IncrementalInference.decodePackedType,
+                                        IncrementalInference.rebuildFactorMetadata!,
                                         solverParams=SolverParams())
             ]
         for api in apis
@@ -138,10 +146,10 @@ else
 end
 
 
-struct NotImplementedDFG{T} <: AbstractDFG{T} end
+struct NotImplementedDFG <: AbstractDFG end
 
 @testset "No Interface tests" begin
-    dfg = NotImplementedDFG{NoSolverParams}()
+    dfg = NotImplementedDFG()
     v1 = SkeletonDFGVariable(:v1)
     f1 = SkeletonDFGFactor(:f1)
 

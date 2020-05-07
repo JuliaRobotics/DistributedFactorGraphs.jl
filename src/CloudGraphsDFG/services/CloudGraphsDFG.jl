@@ -18,6 +18,10 @@ function _getDuplicatedEmptyDFG(dfg::CloudGraphsDFG)::CloudGraphsDFG
         dfg.robotId,
         sessionId,
         dfg.description,
+        dfg.encodePackedTypeFunc,
+        dfg.getPackedTypeFunc,
+        dfg.decodePackedTypeFunc,
+        dfg.rebuildFactorMetadata!,
         solverParams=deepcopy(dfg.solverParams))
 end
 
@@ -238,7 +242,7 @@ function getFactor(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGFactor
     factor = unpackFactor(dfg, props)
 
     # Lastly, rebuild the metadata
-    factor = rebuildFactorMetadata!(dfg, factor)
+    factor = dfg.rebuildFactorMetadata!(dfg, factor)
 
     return factor
 end

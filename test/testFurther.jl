@@ -4,6 +4,10 @@ using IncrementalInference
 dfg = CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
                             "testUser", "testRobot", "testSession",
                             "description of test session",
+                            nothing,
+                            nothing,
+                            IncrementalInference.decodePackedType,
+                            IncrementalInference.rebuildFactorMetadata!,
                             solverParams=SolverParams())
 
 # Nuke the user

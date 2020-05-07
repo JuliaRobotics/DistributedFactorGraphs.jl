@@ -7,7 +7,7 @@ An in-memory DistributedFactorGraph based on LightGraphs.jl with parameters:
 - V: Variable type
 - F: Factor type
 """
-mutable struct LightDFG{T <: AbstractParams, V <: AbstractDFGVariable, F <:AbstractDFGFactor} <: AbstractDFG{T}
+mutable struct LightDFG{T <: AbstractParams, V <: AbstractDFGVariable, F <:AbstractDFGFactor} <: AbstractDFG
     g::FactorGraph{Int, V, F}
     description::String
     userId::String

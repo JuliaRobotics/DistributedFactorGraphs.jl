@@ -8,7 +8,7 @@ mutable struct GraphsNode
 end
 const FGType = Graphs.GenericIncidenceList{GraphsNode,Graphs.Edge{GraphsNode},Dict{Int,GraphsNode},Dict{Int,Array{Graphs.Edge{GraphsNode},1}}}
 
-mutable struct GraphsDFG{T <: AbstractParams} <: AbstractDFG{T}
+mutable struct GraphsDFG{T <: AbstractParams} <: AbstractDFG
     g::FGType
     description::String
     userId::String
