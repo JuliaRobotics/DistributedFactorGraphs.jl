@@ -82,9 +82,7 @@ loadDFG("/tmp/savedgraph.tar.gz", IncrementalInference, dfg)
 ls(dfg)
 ```
 """
-function loadDFG(dst::String,
-                 iifModule::Module,
-                 dfgLoadInto::G) where G <: AbstractDFG
+function loadDFG!(dfgLoadInto::AbstractDFG, dst::String)
 
 
     #
@@ -151,7 +149,7 @@ function loadDFG(dst::String,
     # Finally, rebuild the CCW's for the factors to completely reinflate them
     @info "Rebuilding CCW's for the factors..."
     for factor in factors
-        iifModule.rebuildFactorMetadata!(dfgLoadInto, factor)
+        rebuildFactorMetadata!(dfgLoadInto, factor)
     end
 
     # remove the temporary unzipped file

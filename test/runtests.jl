@@ -93,7 +93,7 @@ if get(ENV, "IIF_TEST", "") == "true"
                                     nothing,
                                     nothing,
                                     nothing,
-                                    IncrementalInference.rebuildFactorMetadata!,
+                                    nothing,
                                     solverParams=SolverParams())
             ]
     for api in apis
@@ -131,8 +131,8 @@ if get(ENV, "IIF_TEST", "") == "true"
                                         "Description of test Session",
                                         nothing,
                                         nothing,
-                                        IncrementalInference.decodePackedType,
-                                        IncrementalInference.rebuildFactorMetadata!,
+                                        nothing,
+                                        nothing,
                                         solverParams=SolverParams())
             ]
         for api in apis
@@ -146,10 +146,10 @@ else
 end
 
 
-struct NotImplementedDFG <: AbstractDFG end
+struct NotImplementedDFG{T} <: AbstractDFG{T} end
 
 @testset "No Interface tests" begin
-    dfg = NotImplementedDFG()
+    dfg = NotImplementedDFG{NoSolverParams}()
     v1 = SkeletonDFGVariable(:v1)
     f1 = SkeletonDFGFactor(:f1)
 

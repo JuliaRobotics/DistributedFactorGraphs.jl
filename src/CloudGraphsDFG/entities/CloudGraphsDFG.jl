@@ -5,7 +5,7 @@ mutable struct Neo4jInstance
   graph::Neo4j.Graph
 end
 
-mutable struct CloudGraphsDFG{T <: AbstractParams} <: AbstractDFG
+mutable struct CloudGraphsDFG{T <: AbstractParams} <: AbstractDFG{T}
     neo4jInstance::Neo4jInstance
     userId::String
     robotId::String

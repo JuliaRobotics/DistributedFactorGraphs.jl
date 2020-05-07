@@ -242,7 +242,7 @@ function getFactor(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGFactor
     factor = unpackFactor(dfg, props)
 
     # Lastly, rebuild the metadata
-    factor = dfg.rebuildFactorMetadata!(dfg, factor)
+    factor = rebuildFactorMetadata!(dfg, factor)
 
     return factor
 end

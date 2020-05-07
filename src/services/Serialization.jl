@@ -167,7 +167,7 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G
     factor._variableOrderSymbols = _variableOrderSymbols
     setSolvable!(factor, solvable)
 
-    # Note, once inserted, you still need to call IIF.rebuildFactorMetadata!
+    # Note, once inserted, you still need to call rebuildFactorMetadata!
     return factor
 end
 

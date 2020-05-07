@@ -41,7 +41,7 @@ end
                                             nothing,
                                             nothing,
                                             nothing,
-                                            IncrementalInference.rebuildFactorMetadata!,
+                                            nothing,
                                             solverParams=SolverParams())
     else
         dfg2 = T()

@@ -4,7 +4,7 @@ dfg = CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
                             nothing,
                             nothing,
                             nothing,
-                            IncrementalInference.rebuildFactorMetadata!,
+                            nothing,
                             solverParams=SolverParams())
 
 # Nuke the user

@@ -64,12 +64,8 @@ TestCCW{T}() where T = TestCCW(T())
 
 Base.:(==)(a::TestCCW, b::TestCCW) = a.usrfnc! == b.usrfnc!
 
-
-## must overload the function
-import DistributedFactorGraphs: getFactorOperationalMemoryType
-
-# DF, dropping DFG. so that Main context is used and can be overridden by IIF.getFac...Type
-getFactorOperationalMemoryType(par::NoSolverParams) = TestCCW
+DFG.getFactorOperationalMemoryType(par::NoSolverParams) = TestCCW
+DFG.rebuildFactorMetadata!(dfg::AbstractDFG{NoSolverParams}, f::DFGFactor) = f
 
 function Base.convert(::Type{DFG.FunctionNodeData{TestCCW{F}}},
                      d::DFG.PackedFunctionNodeData{<:PackedInferenceType}) where F<:FunctorInferenceType

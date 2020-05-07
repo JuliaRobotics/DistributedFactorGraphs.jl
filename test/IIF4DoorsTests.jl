@@ -9,8 +9,8 @@ DistributedFactorGraphs.CloudGraphsDFG{SolverParams}() = CloudGraphsDFG{SolverPa
                                                                     "testUser", "testRobot", "testSession",
                                                                     nothing,
                                                                     nothing,
-                                                                    IncrementalInference.decodePackedType,
-                                                                    IncrementalInference.rebuildFactorMetadata!,
+                                                                    nothing,
+                                                                    nothing,
                                                                     solverParams=SolverParams())
 
 N=100

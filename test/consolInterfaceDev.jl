@@ -37,8 +37,8 @@ function DFG.CloudGraphsDFG(; hostname="localhost",
                                           description,
                                           nothing,
                                           nothing,
-                                          nothing,#IncrementalInference.CommonConvWrapper,
-                                          (dfg,f)->f,#ncrementalInference.rebuildFactorMetadata!,
+                                          nothing,
+                                          nothing,
                                           solverParams=params)
 
     setUserData!(cgfg, Dict{Symbol, String}())
@@ -72,8 +72,8 @@ function DFG.CloudGraphsDFG(description::String,
                                                 description,
                                                 nothing,
                                                 nothing,
-                                                nothing,#IncrementalInference.CommonConvWrapper,
-                                                (dfg,f)->f,#IncrementalInference.rebuildFactorMetadata!,
+                                                nothing,
+                                                nothing,
                                                 solverParams=solverParams)
 
 
