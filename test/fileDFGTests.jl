@@ -35,11 +35,19 @@ using Test
 
         facts = map(n -> addFactor!(dfg, [verts[n], verts[n+1]], LinearConditional(Normal(50.0,2.0))), 1:(numNodes-1))
 
+        #FIXME a lot of these makes test fail
+        # facts[4].solverData.solveInProgress = 1
+        # facts[4].solverData.multihypo = [1, 0.1, 0.9]
+        # facts[4].solverData.eliminated = true
+        # facts[4].solverData.potentialused = true
+        # updateFactor!(dfg, facts[4])
         # Save and load the graph to test.
         saveDFG(dfg, filename)
 
         copyDfg = DistributedFactorGraphs._getDuplicatedEmptyDFG(dfg)
         @info "Going to load $filename"
+
+        #FIXME loadDFG!(copyDfg, filename), but use this to test deprecation
         retDFG = loadDFG(filename, Main, copyDfg) #, loaddir="/tmp")
 
         @test issetequal(ls(dfg), ls(retDFG))
