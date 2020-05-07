@@ -32,16 +32,15 @@ end
 
 """
 $(TYPEDEF)
-Abstract parent struct for a DFG graph.
-"""
-abstract type AbstractDFG
-end
-
-"""
-$(TYPEDEF)
 Abstract parent struct for solver parameters.
 """
 abstract type AbstractParams end
+
+"""
+$(TYPEDEF)
+Abstract parent struct for a DFG graph.
+    """
+abstract type AbstractDFG{T<:AbstractParams} end
 
 """
 $(TYPEDEF)

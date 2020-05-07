@@ -35,10 +35,6 @@ function DFG.CloudGraphsDFG(; hostname="localhost",
                                           robotId,
                                           sessionId,
                                           description,
-                                          nothing,
-                                          nothing,
-                                          nothing,#IncrementalInference.CommonConvWrapper,
-                                          (dfg,f)->f,#ncrementalInference.rebuildFactorMetadata!,
                                           solverParams=params)
 
     setUserData!(cgfg, Dict{Symbol, String}())
@@ -70,10 +66,6 @@ function DFG.CloudGraphsDFG(description::String,
                                                 robotId,
                                                 sessionId,
                                                 description,
-                                                nothing,
-                                                nothing,
-                                                nothing,#IncrementalInference.CommonConvWrapper,
-                                                (dfg,f)->f,#IncrementalInference.rebuildFactorMetadata!,
                                                 solverParams=solverParams)
 
 
@@ -206,6 +198,29 @@ end
 
     CopyFunctionsTest(testDFGAPI)
 
+end
+
+@testset "Copy Functions" begin
+
+    filename = "/tmp/fileDFG"
+
+    dfg, vars, facs = connectivityTestGraph(testDFGAPI)
+
+    saveDFG(dfg, filename)
+
+    copyDfg = DistributedFactorGraphs._getDuplicatedEmptyDFG(dfg)
+
+    @info "Going to load $filename"
+
+    loadDFG!(copyDfg, filename)
+
+    for var in vars
+        @test getVariable(dfg, var.label) == getVariable(copyDfg, var.label)
+    end
+    for fac in facs
+        @test getFactor(dfg, fac.label) == getFactor(copyDfg, fac.label)
+        # @test getFactor(dfg, fac.label) == fac
+    end
 end
 #
 #=

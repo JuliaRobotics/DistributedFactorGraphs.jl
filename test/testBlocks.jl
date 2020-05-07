@@ -64,12 +64,8 @@ TestCCW{T}() where T = TestCCW(T())
 
 Base.:(==)(a::TestCCW, b::TestCCW) = a.usrfnc! == b.usrfnc!
 
-
-## must overload the function
-import DistributedFactorGraphs: getFactorOperationalMemoryType
-
-# DF, dropping DFG. so that Main context is used and can be overridden by IIF.getFac...Type
-getFactorOperationalMemoryType(par::NoSolverParams) = TestCCW
+DFG.getFactorOperationalMemoryType(par::NoSolverParams) = TestCCW
+DFG.rebuildFactorMetadata!(dfg::AbstractDFG{NoSolverParams}, f::DFGFactor) = f
 
 function Base.convert(::Type{DFG.FunctionNodeData{TestCCW{F}}},
                      d::DFG.PackedFunctionNodeData{<:PackedInferenceType}) where F<:FunctorInferenceType
@@ -1008,7 +1004,7 @@ function connectivityTestGraph(::Type{T}; VARTYPE=DFGVariable, FACTYPE=DFGFactor
         setSolvable!(dfg, :x8, 0)
         setSolvable!(dfg, :x9, 0)
 
-        gfnd = GenericFunctionNodeData(false, false, Int[], TestCCW(TestFunctorInferenceType1()))
+        gfnd = GenericFunctionNodeData(true, true, Int[], TestCCW(TestFunctorInferenceType1()), Float64[], Int[], 1)
         f_tags = Set([:FACTOR])
         # f1 = DFGFactor(f1_lbl, [:a,:b], gfnd, tags = f_tags)
 

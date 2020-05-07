@@ -212,7 +212,7 @@ export setSerializationModule!, getSerializationModule
 export packVariable, unpackVariable, packFactor, unpackFactor
 
 # File import and export
-export saveDFG, loadDFG
+export saveDFG, loadDFG!
 export toDot, toDotFile
 
 # Comparisons
