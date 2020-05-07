@@ -321,8 +321,6 @@ function  DFGFactorSCA()
 
     @test getTimestamp(f1) == f1.timestamp
 
-    @test getInternalId(f1) == f1._dfgNodeParams._internalId
-
     @test getSolvable(f1) == 0
 
 

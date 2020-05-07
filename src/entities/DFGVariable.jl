@@ -219,9 +219,8 @@ DFGVariable(label::Symbol, softtype::T;
             solverDataDict::Dict{Symbol, VariableNodeData{T}}=Dict{Symbol, VariableNodeData{T}}(),
             smallData::Dict{String, String}=Dict{String, String}(),
             bigData::Dict{Symbol, AbstractBigDataEntry}=Dict{Symbol,AbstractBigDataEntry}(),
-            solvable::Int=1,
-            _internalId::Int64=0) where {T <: InferenceVariable} =
-    DFGVariable{T}(label, timestamp, tags, estimateDict, solverDataDict, smallData, bigData, DFGNodeParams(solvable, _internalId))
+            solvable::Int=1) where {T <: InferenceVariable} =
+    DFGVariable{T}(label, timestamp, tags, estimateDict, solverDataDict, smallData, bigData, DFGNodeParams(solvable))
 
 
 DFGVariable(label::Symbol,
@@ -231,15 +230,14 @@ DFGVariable(label::Symbol,
             estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
             smallData::Dict{String, String}=Dict{String, String}(),
             bigData::Dict{Symbol, AbstractBigDataEntry}=Dict{Symbol,AbstractBigDataEntry}(),
-            solvable::Int=1,
-            _internalId::Int64=0) where {T <: InferenceVariable} =
-    DFGVariable{T}(label, timestamp, tags, estimateDict, Dict{Symbol, VariableNodeData{T}}(:default=>solverData), smallData, bigData, DFGNodeParams(solvable, _internalId))
+            solvable::Int=1) where {T <: InferenceVariable} =
+    DFGVariable{T}(label, timestamp, tags, estimateDict, Dict{Symbol, VariableNodeData{T}}(:default=>solverData), smallData, bigData, DFGNodeParams(solvable))
 
 ##------------------------------------------------------------------------------
 function Base.copy(o::DFGVariable)::DFGVariable
     return DFGVariable(o.label, getSofttype(o)(), tags=copy(o.tags), estimateDict=copy(o.estimateDict),
                         solverDataDict=copy(o.solverDataDict), smallData=copy(o.smallData),
-                        bigData=copy(o.bigData), solvable=getSolvable(o), _internalId=getInternalId(o))
+                        bigData=copy(o.bigData), solvable=getSolvable(o))
 end
 
 ##------------------------------------------------------------------------------
@@ -273,8 +271,6 @@ struct DFGVariableSummary <: AbstractDFGVariable
     """Dictionary of large data associated with this variable.
     Accessors: [`addBigDataEntry!`](@ref), [`getBigDataEntry`](@ref), [`updateBigDataEntry!`](@ref), and [`deleteBigDataEntry!`](@ref)"""
     bigData::Dict{Symbol, AbstractBigDataEntry}
-    """Internal ID used by some of the DFG drivers. We don't suggest using this outside of DFG."""
-    _internalId::Int64
 end
 
 ##------------------------------------------------------------------------------
@@ -313,7 +309,7 @@ const VariableDataLevel2 = Union{DFGVariable}
 ##==============================================================================
 
 DFGVariableSummary(v::DFGVariable) =
-        DFGVariableSummary(v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.ppeDict), Symbol(typeof(getSofttype(v))), v.bigData, v._internalId)
+        DFGVariableSummary(v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.ppeDict), Symbol(typeof(getSofttype(v))), v.bigData)
 
 SkeletonDFGVariable(v::VariableDataLevel1) =
             SkeletonDFGVariable(v.label, deepcopy(v.tags))

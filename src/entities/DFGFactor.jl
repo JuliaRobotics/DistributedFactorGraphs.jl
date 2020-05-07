@@ -122,14 +122,13 @@ end
 ##------------------------------------------------------------------------------
 ## Constructors
 
-#TODO _internalId?
 """
 $(SIGNATURES)
 
 Construct a DFG factor given a label.
 """
-DFGFactor{T}(label::Symbol, internalId::Int64=0, timestamp::DateTime=now()) where {T} =
-                DFGFactor(label, timestamp, Set{Symbol}(), GenericFunctionNodeData{T}(), 1, DFGNodeParams(1, internalId), Symbol[])
+DFGFactor{T}(label::Symbol, timestamp::DateTime=now()) where {T} =
+                DFGFactor(label, timestamp, Set{Symbol}(), GenericFunctionNodeData{T}(), 1, DFGNodeParams(1), Symbol[])
 
 
 DFGFactor(label::Symbol,
@@ -137,9 +136,8 @@ DFGFactor(label::Symbol,
           data::GenericFunctionNodeData{T};
           tags::Set{Symbol}=Set{Symbol}(),
           timestamp::DateTime=now(),
-          solvable::Int=1,
-          _internalId::Int64=0) where {T} =
-                DFGFactor{T}(label,timestamp,tags,data,solvable,DFGNodeParams(solvable, _internalId),variableOrderSymbols)
+          solvable::Int=1) where {T} =
+                DFGFactor{T}(label,timestamp,tags,data,solvable,DFGNodeParams(solvable),variableOrderSymbols)
 
 
 
@@ -165,8 +163,6 @@ struct DFGFactorSummary <: AbstractDFGFactor
     """Factor tags, e.g [:FACTOR].
     Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
     tags::Set{Symbol}
-    """Internal ID used by some of the DFG drivers. We don't suggest using this outside of DFG."""
-    _internalId::Int64
     """Internal cache of the ordering of the neighbor variables. Rather use getNeighbors to get the list as this is an internal value.
     Accessors: [`getVariableOrder`](@ref)"""
     _variableOrderSymbols::Vector{Symbol}
@@ -214,7 +210,7 @@ const FactorDataLevel2 = Union{DFGFactor}
 ##==============================================================================
 
 DFGFactorSummary(f::DFGFactor) =
-    DFGFactorSummary(f.label, f.timestamp, deepcopy(f.tags), f._dfgNodeParams._internalId, deepcopy(f._variableOrderSymbols))
+    DFGFactorSummary(f.label, f.timestamp, deepcopy(f.tags), deepcopy(f._variableOrderSymbols))
 
 SkeletonDFGFactor(f::FactorDataLevel1) =
     SkeletonDFGFactor(f.label, deepcopy(f.tags), deepcopy(f._variableOrderSymbols))
