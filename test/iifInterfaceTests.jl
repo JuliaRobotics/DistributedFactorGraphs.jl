@@ -186,7 +186,6 @@ end
     @test getSolverData(v1) === v1.solverDataDict[:default]
     @test getSolverData(v1, :default) === v1.solverDataDict[:default]
     @test getSolverDataDict(v1) == v1.solverDataDict
-    @test getInternalId(v1) == v1._internalId
     # legacy compat test
     @test getVariablePPEDict(v1) == v1.ppeDict # changed to .ppeDict -- delete by DFG v0.7
 
@@ -198,9 +197,6 @@ end
     @test getLabel(f1) == f1.label
     @test getTags(f1) == f1.tags
     @test getSolverData(f1) == f1.solverData
-
-    # Internal function
-    # @test @test_deprecated internalId(f1) == f1._internalId
 
     @test getSolverParams(dfg) != nothing
     @test setSolverParams!(dfg, getSolverParams(dfg)) == getSolverParams(dfg)
@@ -222,6 +218,9 @@ end
     @test getUserData(dfg) == smallUserData
     @test getRobotData(dfg) == smallRobotData
     @test getSessionData(dfg) == smallSessionData
+
+    # deprecated
+    @test_throws ErrorException getInternalId(v1)
 end
 
 @testset "BigData" begin

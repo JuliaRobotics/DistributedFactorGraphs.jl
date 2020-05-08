@@ -10,6 +10,7 @@
 include("../attic/GraphsDFG/GraphsDFG.jl")
 @reexport using .GraphsDFGs
 
+@deprecate getInternalId(args...) error("getInternalId is no longer in use")
 
 @deprecate loadDFG(source::String, iifModule::Module, dest::AbstractDFG) loadDFG!(dest, source)
 
@@ -20,8 +21,6 @@ include("../attic/GraphsDFG/GraphsDFG.jl")
 Base.getproperty(x::DFGFactor,f::Symbol) = begin
     if f == :solvable
         getfield(x,:_dfgNodeParams).solvable
-    elseif f == :_internalId
-        getfield(x,:_dfgNodeParams)._internalId
     else
         getfield(x,f)
     end
@@ -31,8 +30,6 @@ Base.setproperty!(x::DFGFactor,f::Symbol, val) = begin
     if f == :solvable
         setfield!(x,f,val)
         getfield(x,:_dfgNodeParams).solvable = val
-    elseif f == :_internalId
-        getfield(x,:_dfgNodeParams)._internalId = val
     else
         setfield!(x,f,val)
     end
@@ -41,8 +38,6 @@ end
 Base.getproperty(x::DFGVariable,f::Symbol) = begin
     if f == :solvable
         getfield(x,:_dfgNodeParams).solvable
-    elseif f == :_internalId
-        getfield(x,:_dfgNodeParams)._internalId
     else
         getfield(x,f)
     end
@@ -51,8 +46,6 @@ end
 Base.setproperty!(x::DFGVariable,f::Symbol, val) = begin
     if f == :solvable
         getfield(x,:_dfgNodeParams).solvable = val
-    elseif f == :_internalId
-        getfield(x,:_dfgNodeParams)._internalId = val
     else
         setfield!(x,f,val)
     end

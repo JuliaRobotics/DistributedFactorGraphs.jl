@@ -73,7 +73,7 @@ function setTimestamp(f::DFGFactor, ts::DateTime)
 end
 
 function setTimestamp(f::DFGFactorSummary, ts::DateTime)
-    return DFGFactorSummary(f.label, ts, f.tags, f._internalId, f._variableOrderSymbols)
+    return DFGFactorSummary(f.label, ts, f.tags, f._variableOrderSymbols)
 end
 
 setTimestamp!(f::FactorDataLevel1, ts::DateTime) = f.timestamp = ts
@@ -89,11 +89,10 @@ setTimestamp!(f::FactorDataLevel1, ts::DateTime) = f.timestamp = ts
 # isSolvable
 
 ##------------------------------------------------------------------------------
-## _dfgNodeParams [solvable _internalId]
+## _dfgNodeParams [solvable]
 ##------------------------------------------------------------------------------
 
 ## COMMON
-# getInternalId
 
 
 ##------------------------------------------------------------------------------

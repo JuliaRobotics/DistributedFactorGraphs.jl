@@ -73,20 +73,6 @@ end
 
 
 ##------------------------------------------------------------------------------
-## _internalId
-##------------------------------------------------------------------------------
-
-"""
-$SIGNATURES
-
-Return the internal ID for DFGNode.
-"""
-getInternalId(v::DataLevel2) = v._dfgNodeParams._internalId
-
-getInternalId(v::Union{DFGVariableSummary, DFGFactorSummary}) = v._internalId
-
-
-##------------------------------------------------------------------------------
 ## solvable
 ##------------------------------------------------------------------------------
 

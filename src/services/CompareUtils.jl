@@ -24,7 +24,7 @@ const GeneratedCompareUnion = Union{MeanMaxPPE, VariableNodeData, DFGNodeParams,
                               DFGFactor, DFGFactorSummary, SkeletonDFGFactor}
 
 @generated function ==(x::T, y::T) where T <: GeneratedCompareUnion
-    ignored = [:_internalId]
+    ignored = []
     mapreduce(n -> :(x.$n == y.$n), (a,b)->:($a && $b), setdiff(fieldnames(x), ignored))
 end
 
@@ -178,7 +178,7 @@ function compareVariable(A::DFGVariable,
                          show::Bool=true,
                          skipsamples::Bool=true  )::Bool
   #
-  skiplist = union([:attributes;:solverDataDict;:_internalId;:createdTimestamp;:lastUpdatedTimestamp],skip)
+  skiplist = union([:attributes;:solverDataDict;:createdTimestamp;:lastUpdatedTimestamp],skip)
   TP = compareAll(A, B, skip=skiplist, show=show)
   varskiplist = skipsamples ? [:val; :bw] : Symbol[]
   skiplist = union([:softtype;],varskiplist)
@@ -189,7 +189,7 @@ function compareVariable(A::DFGVariable,
   Bd = getSolverData(B)
 
   # TP = TP && compareAll(A.attributes, B.attributes, skip=[:softtype;], show=show)
-  varskiplist = union(varskiplist, [:softtype;:_internalId])
+  varskiplist = union(varskiplist, [:softtype])
   union!(varskiplist, skip)
   TP = TP && compareAll(Ad, Bd, skip=varskiplist, show=show)
   TP = TP && typeof(Ad.softtype) == typeof(Bd.softtype)
@@ -232,9 +232,9 @@ function compareFactor(A::DFGFactor,
                        skipsamples::Bool=true,
                        skipcompute::Bool=true  )
   #
-  TP =  compareAll(A, B, skip=union([:attributes;:solverData;:_variableOrderSymbols;:_internalId],skip), show=show)
+  TP =  compareAll(A, B, skip=union([:attributes;:solverData;:_variableOrderSymbols],skip), show=show)
   # TP = TP & compareAll(A.attributes, B.attributes, skip=[:data;], show=show)
-  TP = TP & compareAllSpecial(getSolverData(A), getSolverData(B), skip=union([:fnc;:_internalId], skip), show=show)
+  TP = TP & compareAllSpecial(getSolverData(A), getSolverData(B), skip=union([:fnc], skip), show=show)
   TP = TP & compareAllSpecial(getSolverData(A).fnc, getSolverData(B).fnc, skip=union([:cpt;:measurement;:params;:varidx;:threadmodel], skip), show=show)
   TP = TP & (skipsamples || compareAll(getSolverData(A).fnc.measurement, getSolverData(B).fnc.measurement, show=show, skip=skip))
   TP = TP & (skipcompute || compareAll(getSolverData(A).fnc.params, getSolverData(B).fnc.params, show=show, skip=skip))

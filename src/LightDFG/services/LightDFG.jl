@@ -27,9 +27,6 @@ function addVariable!(dfg::LightDFG{<:AbstractParams, V, <:AbstractDFGFactor}, v
         error("Variable '$(variable.label)' already exists in the factor graph")
     end
 
-    #NOTE Internal ID always set to zero as it is not needed?
-    # variable._internalId = 0
-
     FactorGraphs.addVariable!(dfg.g, variable) || return false
 
     # Track insertion

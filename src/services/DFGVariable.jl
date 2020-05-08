@@ -173,12 +173,12 @@ function setTimestamp(v::DFGVariableSummary, ts::DateTime; verbose::Bool=true)
     if verbose
         @warn "verbose=true: setTimestamp(::DFGVariableSummary,...) creates and returns a new immutable DFGVariable object (and didn't change a distributed factor graph object), make sure you are using the right pointers: getVariable(...).  See setTimestamp!(...) and note suggested use is at addVariable!(..., [timestamp=...]).  See DFG #315 for explanation."
     end
-    return DFGVariableSummary(v.label, ts, v.tags, v.ppeDict, v.softtypename, v.bigData, v._internalId)
+    return DFGVariableSummary(v.label, ts, v.tags, v.ppeDict, v.softtypename, v.bigData)
 end
 
 
 ##------------------------------------------------------------------------------
-## _dfgNodeParams [_internalId, solvable]
+## _dfgNodeParams [solvable]
 ##------------------------------------------------------------------------------
 
 ## COMMON: solvable
@@ -186,8 +186,7 @@ end
 # setSolvable!
 # isSolvable
 
-## COMMON: _internalId
-# getInternalId
+## COMMON:
 
 ##------------------------------------------------------------------------------
 ## ppeDict

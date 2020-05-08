@@ -37,7 +37,7 @@ function unpackVariable(dfg::G, packedProps::Dict{String, Any})::DFGVariable whe
     solverData = Dict(Symbol.(keys(packed)) .=> map(p -> unpackVariableNodeData(dfg, p), values(packed)))
 
     # Rebuild DFGVariable using the first solver softtype in solverData
-    variable = DFGVariable{softtype}(Symbol(packedProps["label"]), timestamp, Set(tags), ppeDict, solverData,  smallData, Dict{Symbol,AbstractBigDataEntry}(), DFGNodeParams(packedProps["solvable"],0))
+    variable = DFGVariable{softtype}(Symbol(packedProps["label"]), timestamp, Set(tags), ppeDict, solverData,  smallData, Dict{Symbol,AbstractBigDataEntry}(), DFGNodeParams(packedProps["solvable"]))
 
     # Now rehydrate complete bigData type.
     for (k,bdeInter) in bigDataIntermed
@@ -159,7 +159,7 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G
 
     # Rebuild DFGFactor
     #TODO use constuctor to create factor
-    factor = DFGFactor{typeof(fullFactorData.fnc)}(Symbol(label), 0, timestamp)
+    factor = DFGFactor{typeof(fullFactorData.fnc)}(Symbol(label), timestamp)
 
     union!(factor.tags, tags)
     # factor.data = fullFactorData #TODO
