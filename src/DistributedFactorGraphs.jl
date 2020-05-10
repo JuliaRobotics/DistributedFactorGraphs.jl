@@ -235,9 +235,8 @@ export
 #TODO remove export in DFG v0.8.0
 # export ConvolutionObject
 
-## needsahome.jl
-import Base: print
-export printFactor, printVariable, print
+## CustomPrinting.jl
+export printFactor, printVariable
 
 ##==============================================================================
 ## Files Includes
@@ -277,8 +276,8 @@ include("FileDFG/FileDFG.jl")
 
 include("CloudGraphsDFG/CloudGraphsDFG.jl")
 
-# Needs a home.
-include("needsahome.jl")
+# Custom show and printing for variable factor etc.
+include("services/CustomPrinting.jl")
 
 function __init__()
     @require GraphPlot = "a2cc645c-3eea-5389-862e-a155d0052231" begin
