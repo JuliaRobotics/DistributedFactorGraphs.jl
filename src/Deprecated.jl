@@ -15,6 +15,8 @@ include("../attic/GraphsDFG/GraphsDFG.jl")
 @deprecate loadDFG(source::String, iifModule::Module, dest::AbstractDFG) loadDFG!(dest, source)
 
 
+export buildSubgraphFromLabels!
+
 # leave a bit longer
 #NOTE buildSubgraphFromLabels! does not have a 1-1 replacement in DFG
 # if you have a set of variables and factors use copyGraph
