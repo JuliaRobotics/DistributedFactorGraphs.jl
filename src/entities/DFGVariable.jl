@@ -233,6 +233,23 @@ DFGVariable(label::Symbol,
             solvable::Int=1) where {T <: InferenceVariable} =
     DFGVariable{T}(label, timestamp, tags, estimateDict, Dict{Symbol, VariableNodeData{T}}(:default=>solverData), smallData, bigData, DFGNodeParams(solvable))
 
+Base.getproperty(x::DFGVariable,f::Symbol) = begin
+    if f == :solvable
+        getfield(x,:_dfgNodeParams).solvable
+    else
+        getfield(x,f)
+    end
+end
+
+Base.setproperty!(x::DFGVariable,f::Symbol, val) = begin
+    if f == :solvable
+        getfield(x,:_dfgNodeParams).solvable = val
+    else
+        setfield!(x,f,val)
+    end
+end
+
+
 ##------------------------------------------------------------------------------
 function Base.copy(o::DFGVariable)::DFGVariable
     return DFGVariable(o.label, getSofttype(o)(), tags=copy(o.tags), estimateDict=copy(o.estimateDict),
