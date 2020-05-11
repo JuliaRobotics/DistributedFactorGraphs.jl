@@ -236,7 +236,7 @@ export
 # export ConvolutionObject
 
 ## CustomPrinting.jl
-export printFactor, printVariable
+export printFactor, printVariable, printNode
 
 ##==============================================================================
 ## Files Includes
