@@ -14,48 +14,18 @@ include("../attic/GraphsDFG/GraphsDFG.jl")
 
 @deprecate loadDFG(source::String, iifModule::Module, dest::AbstractDFG) loadDFG!(dest, source)
 
-
 # leave a bit longer
-#NOTE buildSubgraphFromLabels! does not have a 1-1 replacement in DFG
-# if you have a set of variables and factors use copyGraph
-# if you want neighbors automaticallyinclued use buildSubgraph
-# if you want a clique subgraph use buildCliqueSubgraph! from IIF
+export buildSubgraphFromLabels!
 function buildSubgraphFromLabels!(dfg::AbstractDFG,
                                   syms::Vector{Symbol};
                                   subfg::AbstractDFG=LightDFG(params=getSolverParams(dfg)),
                                   solvable::Int=0,
                                   allowedFactors::Union{Nothing, Vector{Symbol}}=nothing  )
-  #
-  Base.depwarn("buildSubgraphFromLabels! is deprecated use copyGraph, buildSubgraph or buildCliqueSubgraph!(IIF)", :buildSubgraphFromLabels!)
-  # add a little too many variables (since we need the factors)
-  for sym in syms
-    if solvable <= getSolvable(dfg, sym)
-      getSubgraphAroundNode(dfg, getVariable(dfg, sym), 2, false, subfg, solvable=solvable)
-    end
-  end
+  error("""buildSubgraphFromLabels! is deprecated
+        NOTE buildSubgraphFromLabels! does not have a 1-1 replacement in DFG
+        - if you have a set of variables and factors use copyGraph
+        - if you want neighbors automatically included use buildSubgraph
+        - if you want a clique subgraph use buildCliqueSubgraph! from IIF
+        """)
 
-  # remove excessive variables that were copied by neighbors distance 2
-  currVars = listVariables(subfg)
-  toDelVars = setdiff(currVars, syms)
-  for dv in toDelVars
-    # delete any neighboring factors first
-    for fc in lsf(subfg, dv)
-      deleteFactor!(subfg, fc)
-    end
-
-    # and the variable itself
-    deleteVariable!(subfg, dv)
-  end
-
-  # delete any factors not in the allowed list
-  if allowedFactors != nothing
-    delFcts = setdiff(lsf(subfg), allowedFactors)
-    for dfct in delFcts
-      deleteFactor!(subfg, dfct)
-    end
-  end
-
-  # orphaned variables are allowed, but not orphaned factors
-
-  return subfg
 end
