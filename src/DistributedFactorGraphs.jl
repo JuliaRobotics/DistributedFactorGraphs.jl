@@ -54,7 +54,7 @@ export updateUserData!, updateRobotData!, updateSessionData!, deleteUserData!, d
 export emptyUserData!, emptyRobotData!, emptySessionData!
 
 # Graph Types: exported from modules or @reexport
-export InMemoryDFGTypes
+export InMemoryDFGTypes, DefaultDFG
 # LightDFG
 # GraphsDFG
 
@@ -262,6 +262,7 @@ include("LightDFG/LightDFG.jl")
 #supported in Memory fg types
 # const InMemoryDFGTypes = Union{GraphsDFG, LightDFG}
 const InMemoryDFGTypes = LightDFG
+const DefaultDFG = LightDFG
 
 # Common includes
 include("services/CommonAccessors.jl")

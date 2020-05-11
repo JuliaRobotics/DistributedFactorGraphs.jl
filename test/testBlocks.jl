@@ -1136,6 +1136,18 @@ function  BuildingSubgraphs(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
         end
     end
 
+    #TODO buildSubgraph default constructors for skeleton and summary 
+    if VARTYPE == DFGVariable
+        dfgSubgraph = buildSubgraph(dfg, [:x1, :x2, :x1x2f1])
+        @test issetequal([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
+
+        dfgSubgraph = buildSubgraph(dfg, [:x2, :x3], 2)
+        @test issetequal([:x2, :x3, :x1, :x4, :x3x4f1, :x1x2f1, :x2x3f1], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
+
+        dfgSubgraph = buildSubgraph(dfg, [:x1x2f1], 1)
+        @test issetequal([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
+    end
+
 end
 
 #TODO Summaries and Summary Graphs
