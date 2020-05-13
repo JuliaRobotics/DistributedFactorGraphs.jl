@@ -96,4 +96,46 @@ function gplot(dfg::LightDFG; keyargs...)
     gplot(dfg.g; keyargs...)
 end
 
+
+function Base.show(io::IO, ::MIME"application/prs.juno.plotpane+html", dfg::AbstractDFG)
+    size = get(io, :juno_plotsize, [100, 100])
+
+    plot_output = IOBuffer()
+    draw(SVGJS(plot_output, GraphPlot.Compose.default_graphic_width,
+               GraphPlot.Compose.default_graphic_width, false), dfgplot(dfg))
+    plotsvg = String(take!(plot_output))
+
+    print(io,
+        """
+            <div style="
+            background-color: #eee;
+            color: #222;
+            width: $(size[1]-40)px;
+            height: $(size[2]-40)px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            padding: 20px;
+            margin: 0;
+            ">
+            $(typeof(dfg))
+            <ul>
+                <li>$(dfg.userId)</li>
+                <li>$(dfg.robotId)</li>
+                <li>$(dfg.sessionId)</li>
+                <li>$(dfg.description)</li>
+            </ul>
+            <script charset="utf-8">
+                $(read(Compose.snapsvgjs, String))
+            </script>
+            <script charset="utf-8">
+                $(read(GraphPlot.gadflyjs, String))
+            </script>
+            $(plotsvg)
+            </div>
+        """)
+
+end
+
+
 end

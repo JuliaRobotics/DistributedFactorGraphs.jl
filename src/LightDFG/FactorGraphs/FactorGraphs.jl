@@ -64,7 +64,7 @@ FactorGraph() = FactorGraph{Int, AbstractVariableType, AbstractFactorType}()
 # FactorGraph{V,F}() where {V <: AbstractVariableType, F <: AbstractFactorType} = FactorGraph{Int, V, F}()
 
 
-function show(io::IO, g::FactorGraph)
+function show(io::IO, ::MIME"text/plain", g::FactorGraph)
     dir = is_directed(g) ? "directed" : "undirected"
     print(io, "{$(nv(g)), $(ne(g))} $dir $(eltype(g)) $(typeof(g))")
 end

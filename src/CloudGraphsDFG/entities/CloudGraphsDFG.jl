@@ -57,7 +57,7 @@ function CloudGraphsDFG{T}(host::String,
 end
 
 
-function show(io::IO, c::CloudGraphsDFG)
+function show(io::IO, ::MIME"text/plain", c::CloudGraphsDFG)
     println(io, "CloudGraphsDFG:")
     println(io, " - Neo4J instance: $(c.neo4jInstance.connection.host)")
     println(io, " - Session: $(c.userId):$(c.robotId):$(c.sessionId)")
