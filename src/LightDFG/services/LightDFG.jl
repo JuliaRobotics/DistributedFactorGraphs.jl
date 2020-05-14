@@ -123,6 +123,10 @@ function updateFactor!(dfg::LightDFG, factor::F)::F where F <: AbstractDFGFactor
         @warn "Factor label '$(factor.label)' does not exist in the factor graph, adding"
         return addFactor!(dfg, factor)
     end
+
+    # Confirm that we're not updating the neighbors
+    dfg.g.factors[factor.label]._variableOrderSymbols != factor._variableOrderSymbols && error("Cannot update the factor, the neighbors are not the same.")
+
     dfg.g.factors[factor.label] = factor
     return factor
 end

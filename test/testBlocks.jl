@@ -394,6 +394,11 @@ function  VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     @test_throws ErrorException addFactor!(fg, [:b, :c], f2)
     #TODO Graphs.jl, but look at refactoring absract @test_throws ErrorException addFactor!(fg, f2)
 
+    f2_mod = deepcopy(f2)
+    pop!(f2_mod._variableOrderSymbols)
+    @test_throws ErrorException updateFactor!(fg, f2_mod)
+    @test issetequal(lsf(fg), [:bcf1, :abf1])
+
     @test getAddHistory(fg) == [:a, :b, :c]
 
     # Extra timestamp functions https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/315
@@ -1136,7 +1141,7 @@ function  BuildingSubgraphs(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
         end
     end
 
-    #TODO buildSubgraph default constructors for skeleton and summary 
+    #TODO buildSubgraph default constructors for skeleton and summary
     if VARTYPE == DFGVariable
         dfgSubgraph = buildSubgraph(dfg, [:x1, :x2, :x1x2f1])
         @test issetequal([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
