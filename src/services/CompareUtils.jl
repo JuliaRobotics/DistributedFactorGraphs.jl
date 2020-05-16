@@ -18,7 +18,7 @@ implement compare if needed.
 
 
 # Generate compares automatically for all in this union
-const GeneratedCompareUnion = Union{MeanMaxPPE, VariableNodeData, DFGNodeParams,
+const GeneratedCompareUnion = Union{MeanMaxPPE, VariableNodeData,
                               DFGVariable, DFGVariableSummary, SkeletonDFGVariable,
                               GenericFunctionNodeData,
                               DFGFactor, DFGFactorSummary, SkeletonDFGFactor}

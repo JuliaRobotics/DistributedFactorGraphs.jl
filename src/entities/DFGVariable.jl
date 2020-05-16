@@ -200,9 +200,9 @@ struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
     """Dictionary of large data associated with this variable.
     Accessors: [`addBigDataEntry!`](@ref), [`getBigDataEntry`](@ref), [`updateBigDataEntry!`](@ref), and [`deleteBigDataEntry!`](@ref)"""
     bigData::Dict{Symbol, AbstractBigDataEntry}
-    """Mutable parameters for the variable. We suggest using accessors to get to this data.
+    """Solvable flag for the variable.
     Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)"""
-    _dfgNodeParams::DFGNodeParams
+    solvable::Base.RefValue{Int}
 end
 
 ##------------------------------------------------------------------------------
@@ -220,7 +220,7 @@ DFGVariable(label::Symbol, softtype::T;
             smallData::Dict{String, String}=Dict{String, String}(),
             bigData::Dict{Symbol, AbstractBigDataEntry}=Dict{Symbol,AbstractBigDataEntry}(),
             solvable::Int=1) where {T <: InferenceVariable} =
-    DFGVariable{T}(label, timestamp, tags, estimateDict, solverDataDict, smallData, bigData, DFGNodeParams(solvable))
+    DFGVariable{T}(label, timestamp, tags, estimateDict, solverDataDict, smallData, bigData, Ref(solvable))
 
 
 DFGVariable(label::Symbol,
@@ -231,11 +231,11 @@ DFGVariable(label::Symbol,
             smallData::Dict{String, String}=Dict{String, String}(),
             bigData::Dict{Symbol, AbstractBigDataEntry}=Dict{Symbol,AbstractBigDataEntry}(),
             solvable::Int=1) where {T <: InferenceVariable} =
-    DFGVariable{T}(label, timestamp, tags, estimateDict, Dict{Symbol, VariableNodeData{T}}(:default=>solverData), smallData, bigData, DFGNodeParams(solvable))
+    DFGVariable{T}(label, timestamp, tags, estimateDict, Dict{Symbol, VariableNodeData{T}}(:default=>solverData), smallData, bigData, Ref(solvable))
 
 Base.getproperty(x::DFGVariable,f::Symbol) = begin
     if f == :solvable
-        getfield(x,:_dfgNodeParams).solvable
+        getfield(x,f)[]
     else
         getfield(x,f)
     end
@@ -243,7 +243,7 @@ end
 
 Base.setproperty!(x::DFGVariable,f::Symbol, val) = begin
     if f == :solvable
-        getfield(x,:_dfgNodeParams).solvable = val
+        getfield(x,f)[] = val
     else
         setfield!(x,f,val)
     end

@@ -69,14 +69,12 @@ end
 
 
 function setTimestamp(f::DFGFactor, ts::DateTime)
-    return DFGFactor(f.label, ts, f.tags, f.solverData, f.solvable, f._dfgNodeParams, f._variableOrderSymbols)
+    return DFGFactor(f.label, ts, f.tags, f.solverData, f.solvable, getfield(f,:_variableOrderSymbols))
 end
 
 function setTimestamp(f::DFGFactorSummary, ts::DateTime)
     return DFGFactorSummary(f.label, ts, f.tags, f._variableOrderSymbols)
 end
-
-setTimestamp!(f::FactorDataLevel1, ts::DateTime) = f.timestamp = ts
 
 
 ##------------------------------------------------------------------------------
@@ -89,7 +87,7 @@ setTimestamp!(f::FactorDataLevel1, ts::DateTime) = f.timestamp = ts
 # isSolvable
 
 ##------------------------------------------------------------------------------
-## _dfgNodeParams [solvable]
+## solvable
 ##------------------------------------------------------------------------------
 
 ## COMMON
@@ -122,7 +120,6 @@ function getSolverData(f::F) where F <: DFGFactor
   return f.solverData
 end
 
-#TODO don't know if this is used, added for completeness
 setSolverData!(f::DFGFactor, data::GenericFunctionNodeData) = f.solverData = data
 
 

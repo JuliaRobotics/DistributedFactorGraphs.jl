@@ -379,12 +379,18 @@ $(SIGNATURES)
 """
 function addFactor!(dfg::AbstractDFG, variables::Vector{<:AbstractDFGVariable}, factor::F)::F where  F <: AbstractDFGFactor
 
-        variableLabels = map(v->v.label, variables)
+    Base.depwarn("addFactor!(dfg, variables, factor) is deprecated, use addFactor!(dfg, factor)", :addFactor!)
+    variableLabels = map(v->v.label, variables)
 
+    if factor isa DFGFactor
+        f = factor
+        newfactor =  DFGFactor(f.label, f.timestamp, f.tags, f.solverData, f.solvable, Tuple(variableLabels))
+        return addFactor!(dfg, newfactor)
+    else
         resize!(factor._variableOrderSymbols, length(variableLabels))
         factor._variableOrderSymbols .= variableLabels
-
         return addFactor!(dfg, factor)
+    end
 
 end
 
@@ -393,10 +399,18 @@ $(SIGNATURES)
 """
 function addFactor!(dfg::AbstractDFG, variableLabels::Vector{Symbol}, factor::F)::AbstractDFGFactor where F <: AbstractDFGFactor
 
-    resize!(factor._variableOrderSymbols, length(variableLabels))
-    factor._variableOrderSymbols .= variableLabels
+    Base.depwarn("addFactor!(dfg, variables, factor) is deprecated, use addFactor!(dfg, factor)", :addFactor!)
 
-    return addFactor!(dfg, factor)
+    if factor isa DFGFactor
+        f = factor
+        newfactor =  DFGFactor(f.label, f.timestamp, f.tags, f.solverData, f.solvable, Tuple(variableLabels))
+        return addFactor!(dfg, newfactor)
+    else
+        resize!(factor._variableOrderSymbols, length(variableLabels))
+        factor._variableOrderSymbols .= variableLabels
+        return addFactor!(dfg, factor)
+    end
+
 end
 
 
