@@ -42,11 +42,6 @@ function setDescription!(dfg::CloudGraphsDFG, description::String)
     return getDescription(dfg)
 end
 
-function getSerializationModule(dfg::CloudGraphsDFG)::Module where G <: AbstractDFG
-    # TODO: If we need to specialize this for RoME etc, here is where we'll change it.
-    return Main
-end
-
 ##==============================================================================
 ## User/Robot/Session Data CRUD
 ##==============================================================================

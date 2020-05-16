@@ -186,7 +186,7 @@ function setSerializationModule!(dfg::G, mod::Module)::Nothing where G <: Abstra
 end
 
 function getSerializationModule(dfg::G)::Module where G <: AbstractDFG
-    @warn "Retrieving serialization module from AbstractDFG - override this in the '$(typeof(dfg)) structure! This is returning Main"
+    #NOTE @warn "Retrieving serialization module from AbstractDFG - override this in the '$(typeof(dfg)) structure! This is returning Main"
     return Main
 end
 
