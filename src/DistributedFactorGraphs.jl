@@ -90,7 +90,6 @@ export DFGVariable, DFGVariableSummary, SkeletonDFGVariable
 export DFGFactor, DFGFactorSummary, SkeletonDFGFactor
 
 # Common
-export DFGNodeParams
 export getSolvable, setSolvable!, isSolvable
 export getInternalId
 

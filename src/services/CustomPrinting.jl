@@ -52,7 +52,7 @@ function printVariable(io::IO, vert::DFGVariable;
 
         for f in fields
             printstyled(ioc, f,":\n", color=:blue)
-            show(ioc, getfield(vert, f))
+            show(ioc, getproperty(vert, f))
             println(ioc)
         end
     end
@@ -86,7 +86,7 @@ function printFactor(io::IO, vert::DFGFactor;
 
         for f in fields
             printstyled(ioc, f,":\n", color=:blue)
-            show(ioc, getfield(vert, f))
+            show(ioc, getproperty(vert, f))
             println(ioc)
         end
     end

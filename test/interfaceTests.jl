@@ -36,7 +36,7 @@ end
     @test printFactor(fac1) == nothing
 
     @test printVariable(iobuf, var1, skipfields=[:timestamp, :solver, :ppe]) == nothing
-    @test String(take!(iobuf)) == "DFGVariable{TestSofttype1}\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict(\"small\"=>\"data\")\nbigData:\nDict{Symbol,AbstractBigDataEntry}()\n_dfgNodeParams:\nDFGNodeParams(0)\n"
+    @test String(take!(iobuf)) == "DFGVariable{TestSofttype1}\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict(\"small\"=>\"data\")\nbigData:\nDict{Symbol,AbstractBigDataEntry}()\nsolvable:\n0\n"
 
     @test printVariable(iobuf, var1, short=true) == nothing
     @test String(take!(iobuf)) == "DFGVariable{TestSofttype1}\nlabel: a\ntags: Set([:VARIABLE, :POSE])\nsize marginal samples: (1, 1)\nkde bandwidths: [0.0]\nNo PPEs\n"
@@ -45,7 +45,7 @@ end
     @test printFactor(iobuf, fac1, skipfields=[:timestamp, :solver]) == nothing
     @test occursin(r"DFGFactor.*\nlabel:\n:abf1", String(take!(iobuf)))
 
-    String(take!(iobuf)) == "DFGFactor{TestCCW{TestFunctorInferenceType1}}\nlabel:\n:abf1\ntags:\nSet([:tag1, :tag2])\nsolvable:\n0\n_dfgNodeParams:\nDFGNodeParams(1)\n_variableOrderSymbols:\n[:a, :b]\n"
+    String(take!(iobuf)) == "DFGFactor{TestCCW{TestFunctorInferenceType1}}\nlabel:\n:abf1\ntags:\nSet([:tag1, :tag2])\nsolvable:\n0\nsolvable:\n1\n_variableOrderSymbols:\n[:a, :b]\n"
 
     @test printFactor(iobuf, fac1, short=true) == nothing
     @test occursin(r"DFGFactor.*\nlabel.*\ntimestamp.*\ntags.*\nsolvable", String(take!(iobuf)))

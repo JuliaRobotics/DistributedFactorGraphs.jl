@@ -7,6 +7,8 @@
 ## Remove in 0.9
 ##==============================================================================
 
+setTimestamp!(f::FactorDataLevel1, ts::DateTime) = error("setTimestamp!(f::FactorDataLevel1, ts::DateTime) is deprecated")
+
 include("../attic/GraphsDFG/GraphsDFG.jl")
 @reexport using .GraphsDFGs
 

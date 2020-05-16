@@ -94,7 +94,7 @@ Complete factor structure for a DistributedFactorGraph factor.
 Fields:
 $(TYPEDFIELDS)
 """
-mutable struct DFGFactor{T} <: AbstractDFGFactor
+struct DFGFactor{T, N} <: AbstractDFGFactor
     """Factor label, e.g. :x1f1.
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
@@ -106,17 +106,23 @@ mutable struct DFGFactor{T} <: AbstractDFGFactor
     tags::Set{Symbol}
     """Solver data.
     Accessors: [`getSolverData`](@ref), [`setSolverData!`](@ref)"""
-    solverData::GenericFunctionNodeData{T}
+    solverData::Base.RefValue{GenericFunctionNodeData{T}}
     """Solvable flag for the factor.
-    Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)
-    TODO: Switch to `DFGNodeParams`"""
-    solvable::Int #TODO we can go with DFGNodeParams or Reference the solvable field with getproperty overload
-    """Mutable parameters for the variable. We suggest using accessors to get to this data.
     Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)"""
-    _dfgNodeParams::DFGNodeParams
+    solvable::Base.RefValue{Int}
     """Internal cache of the ordering of the neighbor variables. Rather use getVariableOrder to get the list as this is an internal value.
     Accessors: [`getVariableOrder`](@ref)"""
-    _variableOrderSymbols::Vector{Symbol}
+    _variableOrderSymbols::NTuple{N,Symbol}
+
+    # Inner constructor
+    DFGFactor{T}(label::Symbol,
+                 timestamp::DateTime,
+                 tags::Set{Symbol},
+                 solverData::GenericFunctionNodeData{T},
+                 solvable::Int,
+                 _variableOrderSymbols::NTuple{N,Symbol}) where {T,N} =
+                 new{T,N}(label, timestamp, tags, Ref(solverData), Ref(solvable), _variableOrderSymbols)
+
 end
 
 ##------------------------------------------------------------------------------
@@ -127,8 +133,17 @@ $(SIGNATURES)
 
 Construct a DFG factor given a label.
 """
-DFGFactor{T}(label::Symbol, timestamp::DateTime=now()) where {T} =
-                DFGFactor(label, timestamp, Set{Symbol}(), GenericFunctionNodeData{T}(), 1, DFGNodeParams(1), Symbol[])
+DFGFactor(label::Symbol,
+          timestamp::DateTime,
+          tags::Set{Symbol},
+          solverData::GenericFunctionNodeData{T},
+          solvable::Int,
+          _variableOrderSymbols::Tuple) where {T} =
+          DFGFactor{T}(label, timestamp, tags, solverData, solvable, _variableOrderSymbols)
+
+
+DFGFactor{T}(label::Symbol, variableOrderSymbols::Vector{Symbol}, timestamp::DateTime=now(), data::GenericFunctionNodeData{T} = GenericFunctionNodeData{T}()) where {T} =
+                DFGFactor(label, timestamp, Set{Symbol}(), data, 1, Tuple(variableOrderSymbols))
 
 
 DFGFactor(label::Symbol,
@@ -137,22 +152,23 @@ DFGFactor(label::Symbol,
           tags::Set{Symbol}=Set{Symbol}(),
           timestamp::DateTime=now(),
           solvable::Int=1) where {T} =
-                DFGFactor{T}(label,timestamp,tags,data,solvable,DFGNodeParams(solvable),variableOrderSymbols)
+                DFGFactor{T}(label, timestamp, tags, data, solvable, Tuple(variableOrderSymbols))
 
 
 
 Base.getproperty(x::DFGFactor,f::Symbol) = begin
-    if f == :solvable
-        getfield(x,:_dfgNodeParams).solvable
+    if f == :solvable || f == :solverData
+        getfield(x, f)[]
+    elseif f == :_variableOrderSymbols
+        [getfield(x,f)...]
     else
         getfield(x,f)
     end
 end
 
 Base.setproperty!(x::DFGFactor,f::Symbol, val) = begin
-    if f == :solvable
-        setfield!(x,f,val)
-        getfield(x,:_dfgNodeParams).solvable = val
+    if f == :solvable || f == :solverData
+        getfield(x,f)[] = val
     else
         setfield!(x,f,val)
     end

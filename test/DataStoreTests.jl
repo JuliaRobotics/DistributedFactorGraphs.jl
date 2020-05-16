@@ -8,7 +8,7 @@ dfg = LightDFG{NoSolverParams}()
 struct TestInferenceVariable1 <: InferenceVariable end
 v1 = DFGVariable(:a, TestInferenceVariable1())
 v2 = DFGVariable(:b, TestInferenceVariable1())
-f1 = DFGFactor{TestFunctorInferenceType1}(:f1)
+f1 = DFGFactor{TestFunctorInferenceType1}(:f1, [:a,:b])
 #add tags for filters
 union!(v1.tags, [:VARIABLE, :POSE])
 union!(v2.tags, [:VARIABLE, :LANDMARK])
@@ -16,7 +16,7 @@ union!(f1.tags, [:FACTOR])
 # @testset "Creating Graphs" begin
 addVariable!(dfg, v1)
 addVariable!(dfg, v2)
-addFactor!(dfg, [v1, v2], f1)
+addFactor!(dfg, f1)
 
 # Stores to test
 testStores = [InMemoryDataStore(), FileDataStore("/tmp/dfgFilestore")]

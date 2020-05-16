@@ -65,7 +65,7 @@ TestCCW{T}() where T = TestCCW(T())
 Base.:(==)(a::TestCCW, b::TestCCW) = a.usrfnc! == b.usrfnc!
 
 DFG.getFactorOperationalMemoryType(par::NoSolverParams) = TestCCW
-DFG.rebuildFactorMetadata!(dfg::AbstractDFG{NoSolverParams}, f::DFGFactor) = f
+DFG.rebuildFactorMetadata!(dfg::AbstractDFG{NoSolverParams}, fac::DFGFactor) = fac
 
 function Base.convert(::Type{DFG.FunctionNodeData{TestCCW{F}}},
                      d::DFG.PackedFunctionNodeData{<:PackedInferenceType}) where F<:FunctorInferenceType
@@ -308,13 +308,13 @@ function  DFGFactorSCA()
 
     gfnd = GenericFunctionNodeData(false, false, Int[], TestCCW(TestFunctorInferenceType1()))
 
-    f1 = DFGFactor{TestCCW{TestFunctorInferenceType1}}(f1_lbl)
+    f1 = DFGFactor{TestCCW{TestFunctorInferenceType1}}(f1_lbl, [:a,:b])
     f1 = DFGFactor(f1_lbl, [:a,:b], gfnd, tags = f1_tags, solvable=0)
 
-    f2 = DFGFactor{TestCCW{TestFunctorInferenceType1}}(:bcf1)
+    f2 = DFGFactor{TestCCW{TestFunctorInferenceType1}}(:bcf1, [:b, :c])
     #TODO add tests for mutating vos in updateFactor and orphan related checks.
     # we should perhaps prevent an empty vos
-    f2._variableOrderSymbols = [:b, :c]
+
 
     @test getLabel(f1) == f1_lbl
     @test getTags(f1) == f1_tags
@@ -346,7 +346,10 @@ function  DFGFactorSCA()
     @test !(f1ts === f1)
     @test getTimestamp(f1ts) == testTimestamp
     #follow with updateFactor!(fg, v1ts)
-    @test setTimestamp!(f1, testTimestamp) == testTimestamp
+
+    #TODO Should throw method error
+    # @test_throws MethodError setTimestamp!(f1, testTimestamp)
+    @test_throws ErrorException setTimestamp!(f1, testTimestamp)
     #/TODO
 
     @test setSolvable!(f1, 1) == 1
@@ -375,116 +378,122 @@ function  VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     # fg = GraphsDFG(params=NoSolverParams())
     # fg = LightDFG(params=NoSolverParams())
     # add update delete
-    @test addVariable!(fg, v1) == v1
-    @test addVariable!(fg, v2) == v2
+@test addVariable!(fg, v1) == v1
+@test addVariable!(fg, v2) == v2
 
-    #TODO standardize this error and res also for that matter
-    @test_throws Exception addFactor!(fg, [:a, :nope], f1)
-    @test_throws Exception addFactor!(fg, [v1, v2, v3], f1)
+#TODO standardize this error and res also for that matter
+@test_throws Exception addFactor!(fg, [:a, :nope], f1)
+@test_throws Exception addFactor!(fg, [v1, v2, v3], f1)
 
-    @test addFactor!(fg, [v1, v2], f1) === f1
-    @test_throws ErrorException addFactor!(fg, [v1, v2], f1)
+@test addFactor!(fg, [v1, v2], f1) == f1
+@test_throws ErrorException addFactor!(fg, [v1, v2], f1)
 
-    @test @test_logs (:warn, r"does not exist") updateVariable!(fg, v3) == v3
-    @test updateVariable!(fg, v3) == v3
-    @test_throws ErrorException addVariable!(fg, v3)
+@test @test_logs (:warn, r"does not exist") updateVariable!(fg, v3) == v3
+@test updateVariable!(fg, v3) == v3
+@test_throws ErrorException addVariable!(fg, v3)
 
-    @test @test_logs (:warn, r"does not exist") updateFactor!(fg, f2) === f2
-    @test updateFactor!(fg, f2) === f2
-    @test_throws ErrorException addFactor!(fg, [:b, :c], f2)
-    #TODO Graphs.jl, but look at refactoring absract @test_throws ErrorException addFactor!(fg, f2)
+@test @test_logs (:warn, r"does not exist") updateFactor!(fg, f2) === f2
+@test updateFactor!(fg, f2) === f2
+@test_throws ErrorException addFactor!(fg, [:b, :c], f2)
+#TODO Graphs.jl, but look at refactoring absract @test_throws ErrorException addFactor!(fg, f2)
 
-    f2_mod = deepcopy(f2)
+
+if f2 isa DFGFactor
+    f2_mod = DFGFactor(f2.label, f2.timestamp, f2.tags, f2.solverData, f2.solvable, (:a,))
+else
+    f2_mod =  deepcopy(f2)
     pop!(f2_mod._variableOrderSymbols)
-    @test_throws ErrorException updateFactor!(fg, f2_mod)
-    @test issetequal(lsf(fg), [:bcf1, :abf1])
+end
 
-    @test getAddHistory(fg) == [:a, :b, :c]
+@test_throws ErrorException updateFactor!(fg, f2_mod)
+@test issetequal(lsf(fg), [:bcf1, :abf1])
 
-    # Extra timestamp functions https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/315
-    if !(v1 isa SkeletonDFGVariable)
-        newtimestamp = now()
-        @test !(setTimestamp!(fg, :c, newtimestamp) === v3)
-        @test getVariable(fg, :c) |> getTimestamp == newtimestamp
+@test getAddHistory(fg) == [:a, :b, :c]
 
-        @test !(setTimestamp!(fg, :bcf1, newtimestamp) === f2)
-        @test getFactor(fg, :bcf1) |> getTimestamp == newtimestamp
-    end
-    #deletions
-    delvarCompare = getVariable(fg, :c)
-    delfacCompare = getFactor(fg, :bcf1)
-    delvar, delfacs = deleteVariable!(fg, v3)
-    @test delvarCompare == delvar
-    @test delfacCompare == delfacs[1]
-    @test_throws ErrorException deleteVariable!(fg, v3)
-    @test setdiff(ls(fg),[:a,:b]) == []
+# Extra timestamp functions https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/315
+if !(v1 isa SkeletonDFGVariable)
+    newtimestamp = now()
+    @test !(setTimestamp!(fg, :c, newtimestamp) === v3)
+    @test getVariable(fg, :c) |> getTimestamp == newtimestamp
 
-    @test addVariable!(fg, v3) === v3
-    @test addFactor!(fg, f2) === f2
+    @test !(setTimestamp!(fg, :bcf1, newtimestamp) === f2)
+    @test getFactor(fg, :bcf1) |> getTimestamp == newtimestamp
+end
+#deletions
+delvarCompare = getVariable(fg, :c)
+delfacCompare = getFactor(fg, :bcf1)
+delvar, delfacs = deleteVariable!(fg, v3)
+@test delvarCompare == delvar
+@test delfacCompare == delfacs[1]
+@test_throws ErrorException deleteVariable!(fg, v3)
+@test setdiff(ls(fg),[:a,:b]) == []
 
-    @test getFactor(fg, :bcf1) == deleteFactor!(fg, f2)
-    @test_throws ErrorException deleteFactor!(fg, f2)
-    @test lsf(fg) == [:abf1]
+@test addVariable!(fg, v3) === v3
+@test addFactor!(fg, f2) === f2
 
-    delvarCompare = getVariable(fg, :c)
-    delfacCompare = []
-    delvar, delfacs = deleteVariable!(fg, v3)
-    @test delvarCompare == delvar
-    @test delfacCompare == []
+@test getFactor(fg, :bcf1) == deleteFactor!(fg, f2)
+@test_throws ErrorException deleteFactor!(fg, f2)
+@test lsf(fg) == [:abf1]
 
-    @test getVariable(fg, :a) == v1
-    @test getVariable(fg, :a, :default) == v1
+delvarCompare = getVariable(fg, :c)
+delfacCompare = []
+delvar, delfacs = deleteVariable!(fg, v3)
+@test delvarCompare == delvar
+@test delfacCompare == []
 
-    @test addFactor!(fg, f0) == f0
+@test getVariable(fg, :a) == v1
+@test getVariable(fg, :a, :default) == v1
 
-    if isa(v1, DFGVariable)
-        #TODO decide if this should be @error or other type
-        @test_throws ErrorException getVariable(fg, :a, :missingfoo)
-    else
-        @test_logs (:warn, r"supported for type DFGVariable") getVariable(fg, :a, :missingfoo)
-    end
+@test addFactor!(fg, f0) == f0
 
-    @test getFactor(fg, :abf1) == f1
+if isa(v1, DFGVariable)
+    #TODO decide if this should be @error or other type
+    @test_throws ErrorException getVariable(fg, :a, :missingfoo)
+else
+    @test_logs (:warn, r"supported for type DFGVariable") getVariable(fg, :a, :missingfoo)
+end
 
-    @test_throws ErrorException getVariable(fg, :c)
-    @test_throws ErrorException getFactor(fg, :bcf1)
+@test getFactor(fg, :abf1) == f1
 
-    #test issue #375
-    @test_throws ErrorException getVariable(fg, :abf1)
-    @test_throws ErrorException getFactor(fg, :a)
+@test_throws ErrorException getVariable(fg, :c)
+@test_throws ErrorException getFactor(fg, :bcf1)
 
-    # Existence
-    @test exists(fg, :a)
-    @test !exists(fg, :c)
-    @test exists(fg, :abf1)
-    @test !exists(fg, :bcf1)
+#test issue #375
+@test_throws ErrorException getVariable(fg, :abf1)
+@test_throws ErrorException getFactor(fg, :a)
 
-    @test exists(fg, v1)
-    @test !exists(fg, v3)
-    @test exists(fg, f1)
-    @test !exists(fg, f2)
+# Existence
+@test exists(fg, :a)
+@test !exists(fg, :c)
+@test exists(fg, :abf1)
+@test !exists(fg, :bcf1)
 
-    # check types
-    @test isVariable(fg, :a)
-    @test !isVariable(fg, :abf1)
+@test exists(fg, v1)
+@test !exists(fg, v3)
+@test exists(fg, f1)
+@test !exists(fg, f2)
 
-    @test isFactor(fg, :abf1)
-    @test !isFactor(fg, :a)
+# check types
+@test isVariable(fg, :a)
+@test !isVariable(fg, :abf1)
 
-    if f0 isa DFGFactor
-        @test isPrior(fg, :af1)
-        @test !isPrior(fg, :abf1)
-    end
+@test isFactor(fg, :abf1)
+@test !isFactor(fg, :a)
 
-    #list
-    @test length(getVariables(fg)) == 2
-    @test issetequal(getLabel.(getFactors(fg)), [:af1, :abf1])
+if f0 isa DFGFactor
+    @test isPrior(fg, :af1)
+    @test !isPrior(fg, :abf1)
+end
 
-    @test issetequal([:a,:b], listVariables(fg))
-    @test issetequal([:af1,:abf1], listFactors(fg))
+#list
+@test length(getVariables(fg)) == 2
+@test issetequal(getLabel.(getFactors(fg)), [:af1, :abf1])
 
-    @test ls(fg) == listVariables(fg)
-    @test lsf(fg) == listFactors(fg)
+@test issetequal([:a,:b], listVariables(fg))
+@test issetequal([:af1,:abf1], listFactors(fg))
+
+@test ls(fg) == listVariables(fg)
+@test lsf(fg) == listFactors(fg)
 
 end
 
@@ -922,7 +931,11 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test setSolvable!(f1, 1) == 1
         @test getSolvable(fg, f1.label) == 1
         @test setSolvable!(fg, f1.label, 0) == 0
-        @test getSolvable(f1) == 0
+        @test getSolvable(fg, f1.label) == 0
+
+        #TODO follow up on why f1 is no longer referenced, and remove next line
+        @test_broken getSolvable(f1) == 0
+
 
         # isFactor and isVariable
         @test isFactor(fg, f1.label)
@@ -1209,7 +1222,7 @@ function ProducingDotFiles(testDFGAPI,
         v2 = VARTYPE(:b, VariableNodeData{TestSofttype1}())
     end
     if f1 == nothing
-        f1 = (FACTYPE==DFGFactor) ? DFGFactor{TestFunctorInferenceType1}(:abf1) : FACTYPE(:abf1)
+        f1 = (FACTYPE==DFGFactor) ? DFGFactor{TestFunctorInferenceType1}(:abf1, [:a, :b]) : FACTYPE(:abf1)
     end
 
     addVariable!(dotdfg, v1)

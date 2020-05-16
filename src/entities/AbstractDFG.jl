@@ -20,13 +20,6 @@ An abstract DFG factor.
 abstract type AbstractDFGFactor <: DFGNode
 end
 
-"""
-$(TYPEDEF)
-The common node parameters for variables and factors.
-"""
-mutable struct DFGNodeParams
-    solvable::Int
-end
 
 """
 $(TYPEDEF)
