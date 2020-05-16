@@ -207,7 +207,6 @@ export hasTags, hasTagsNeighbors
 export findClosestTimestamp, findVariableNearTimestamp
 
 # Serialization
-export setSerializationModule!, getSerializationModule
 export packVariable, unpackVariable, packFactor, unpackFactor
 
 # File import and export
