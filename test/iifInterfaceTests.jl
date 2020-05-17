@@ -35,10 +35,7 @@ end
     # creating a whole new graph with the same labels
     T = typeof(dfg)
     if T <: CloudGraphsDFG
-        dfg2 = CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
-                                            "testUser", "testRobot", "testSession2",
-                                            "Description of test session 2",
-                                            solverParams=SolverParams())
+        dfg2 = CloudGraphsDFG(params=SolverParams(), userId="testUserId")
     else
         dfg2 = T()
     end

@@ -93,6 +93,7 @@ end
 
 
 ##
+global testDFGAPI = CloudGraphsDFG
 global testDFGAPI = LightDFG
 
 #test Specific definitions
@@ -111,24 +112,34 @@ function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverP
     # "DFG Structure and Accessors"
     # Constructors
     # Constructors to be implemented
-    fg = T(params=solparams)
+    fg = T(params=solparams, userId="testUserId")
     #TODO test something better
     @test isa(fg, T)
+    @test getUserId(fg)=="testUserId"
+    @test getRobotId(fg)=="DefaultRobot"
+    @test getSessionId(fg)[1:8] == "Session_"
+
     # Test the validation of the robot, session, and user IDs.
-    @test_throws ErrorException T(params=solparams, sessionId="!notValid")
-    @test_throws ErrorException T(params=solparams, robotId="!notValid")
-    @test_throws ErrorException T(params=solparams, userId="!notValid")
+    notAllowedList = ["!notValid", "1notValid", "_notValid", "USER", "ROBOT", "SESSION",
+                      "VARIABLE", "FACTOR", "ENVIRONMENT", "PPE", "BIGDATA", "FACTORGRAPH"]
 
-    #TODO I don't like, so not exporting, and not recommended to use
+    for s in notAllowedList
+        @test_throws ErrorException T(params=solparams, sessionId=s)
+        @test_throws ErrorException T(params=solparams, robotId=s)
+        @test_throws ErrorException T(params=solparams, userId=s)
+    end
+
+
+    #NOTE I don't like, so not exporting, and not recommended to use
     #     Technically if you set Ids its a new object
-    @test DistributedFactorGraphs.setUserId!(fg, "userId_1") == "userId_1"
-    @test DistributedFactorGraphs.setRobotId!(fg, "robotId_1") == "robotId_1"
-    @test DistributedFactorGraphs.setSessionId!(fg, "sessionId_1") == "sessionId_1"
+    @test DistributedFactorGraphs.setUserId!(fg, "testUserId") == "testUserId"
+    @test DistributedFactorGraphs.setRobotId!(fg, "testRobotId") == "testRobotId"
+    @test DistributedFactorGraphs.setSessionId!(fg, "testSessionId") == "testSessionId"
 
-    des = "description"
-    uId = "userId"
-    rId = "robotId"
-    sId = "sessionId"
+    des = "description for runtest"
+    uId = "testUserId"
+    rId = "testRobotId"
+    sId = "testSessionId"
     ud = :ud=>"udEntry"
     rd = :rd=>"rdEntry"
     sd = :sd=>"sdEntry"
@@ -1006,7 +1017,7 @@ function connectivityTestGraph(::Type{T}; VARTYPE=DFGVariable, FACTYPE=DFGFactor
     numNodesType1 = 5
     numNodesType2 = 5
 
-    dfg = T()
+    dfg = T(userId="testUserId")
 
     vars = vcat(map(n -> VARTYPE(Symbol("x$n"), VariableNodeData{TestSofttype1}()), 1:numNodesType1),
                 map(n -> VARTYPE(Symbol("x$(numNodesType1+n)"), VariableNodeData{TestSofttype2}()), 1:numNodesType2))
@@ -1213,7 +1224,7 @@ function ProducingDotFiles(testDFGAPI,
                            FACTYPE=DFGFactor)
     # "Producing Dot Files"
     # create a simpler graph for dot testing
-    dotdfg = testDFGAPI()
+    dotdfg = testDFGAPI(userId="testUserId")
 
     if v1 == nothing
         v1 = VARTYPE(:a, VariableNodeData{TestSofttype1}())
@@ -1306,7 +1317,7 @@ function CopyFunctionsTest(testDFGAPI; kwargs...)
     # already exists errors
     dcdfg_part = deepcopyGraph(LightDFG, dfg, [:x1, :x2, :x3], [:x1x2f1, :x2x3f1])
     @test_throws ErrorException deepcopyGraph!(dcdfg_part, dfg, [:x4, :x2, :x3], [:x1x2f1, :x2x3f1])
-    @test_skip @test_throws ErrorException deepcopyGraph!(dcdfg_part, dfg, [:x1x2f1])
+    @test_throws ErrorException deepcopyGraph!(dcdfg_part, dfg, [:x1x2f1])
 
     # same but overwrite destination
     deepcopyGraph!(dcdfg_part, dfg, [:x4, :x2, :x3], [:x1x2f1, :x2x3f1]; overwriteDest = true)
@@ -1318,7 +1329,7 @@ function CopyFunctionsTest(testDFGAPI; kwargs...)
     dcdfg_part1 = deepcopyGraph(LightDFG, dfg, vlbls1)
     dcdfg_part2 = deepcopyGraph(LightDFG, dfg, vlbls2)
 
-    mergedGraph = testDFGAPI()
+    mergedGraph = testDFGAPI(userId="testUserId")
     mergeGraph!(mergedGraph, dcdfg_part1)
     mergeGraph!(mergedGraph, dcdfg_part2)
 
