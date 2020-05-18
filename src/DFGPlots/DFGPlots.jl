@@ -101,7 +101,7 @@ function Base.show(io::IO, ::MIME"application/prs.juno.plotpane+html", dfg::Abst
     size = get(io, :juno_plotsize, [100, 100])
 
     plot_output = IOBuffer()
-    draw(SVGJS(plot_output, GraphPlot.Compose.default_graphic_width,
+    GraphPlot.draw(GraphPlot.SVGJS(plot_output, GraphPlot.Compose.default_graphic_width,
                GraphPlot.Compose.default_graphic_width, false), dfgplot(dfg))
     plotsvg = String(take!(plot_output))
 
@@ -126,7 +126,7 @@ function Base.show(io::IO, ::MIME"application/prs.juno.plotpane+html", dfg::Abst
                 <li>$(dfg.description)</li>
             </ul>
             <script charset="utf-8">
-                $(read(Compose.snapsvgjs, String))
+                $(read(GraphPlot.Compose.snapsvgjs, String))
             </script>
             <script charset="utf-8">
                 $(read(GraphPlot.gadflyjs, String))
