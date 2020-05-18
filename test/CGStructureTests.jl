@@ -1,7 +1,7 @@
 dfg = CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
                             "testUser", "testRobot", "testSession",
                             "Description of test session",
-                            solverParams=SolverParams())
+                            params=SolverParams())
 
 # Nuke the user
 clearUser!!(dfg)

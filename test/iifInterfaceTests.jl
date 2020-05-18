@@ -34,13 +34,11 @@ end
     # dfg to copy to
     # creating a whole new graph with the same labels
     T = typeof(dfg)
-    if T <: CloudGraphsDFG
-        dfg2 = CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
-                                            "testUser", "testRobot", "testSession2",
-                                            "Description of test session 2",
-                                            solverParams=SolverParams())
+    if dfg isa CloudGraphsDFG
+        #TODO
+        dfg2 = CloudGraphsDFG(params=SolverParams(), userId="testUserId")
     else
-        dfg2 = T()
+        dfg2 = T(params=SolverParams(), userId="testUserId")
     end
 
     # Build a new in-memory IIF graph to transfer into the new graph.

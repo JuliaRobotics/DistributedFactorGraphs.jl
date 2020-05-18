@@ -80,9 +80,6 @@ end
     GettingNeighbors(LightDFG{NoSolverParams, VARTYPE, FACTYPE}, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
 end
 
-# @testset "Getting Subgraphs" begin
-#     GettingSubgraphs(LightDFG{NoSolverParams, VARTYPE, FACTYPE}, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
-# end
 @testset "Building Subgraphs" begin
     BuildingSubgraphs(LightDFG{NoSolverParams, VARTYPE, FACTYPE}, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
 end

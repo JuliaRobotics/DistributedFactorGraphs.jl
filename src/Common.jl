@@ -1,10 +1,4 @@
 
-import Base: *
-
-
-# FIXME remove! is it really needed? This is type piracy
-*(a::Symbol, b::AbstractString)::Symbol = Symbol(string(a,b))
-
 ## Utility functions for getting type names and modules (from IncrementalInference)
 function _getmodule(t::T) where T
   T.name.module
@@ -69,7 +63,7 @@ sortDFG(vars::Vector{Symbol}; lt=natural_lt, kwargs...)::Vector{Symbol} = sort(v
 ## Validation of session, robot, and user IDs.
 ##==============================================================================
 
-global _invalidIds = ["USER", "ROBOT", "SESSION", "VARIABLE", "FACTOR", "ENVIRONMENT", "PPE", "BIGDATA"]
+global _invalidIds = ["USER", "ROBOT", "SESSION", "VARIABLE", "FACTOR", "ENVIRONMENT", "PPE", "BIGDATA", "FACTORGRAPH"]
 global _validLabelRegex = r"^[a-zA-Z]\w*$"
 
 """

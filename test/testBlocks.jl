@@ -93,6 +93,7 @@ end
 
 
 ##
+global testDFGAPI = CloudGraphsDFG
 global testDFGAPI = LightDFG
 
 #test Specific definitions
@@ -111,24 +112,34 @@ function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverP
     # "DFG Structure and Accessors"
     # Constructors
     # Constructors to be implemented
-    fg = T(params=solparams)
+    fg = T(params=solparams, userId="testUserId")
     #TODO test something better
     @test isa(fg, T)
+    @test getUserId(fg)=="testUserId"
+    @test getRobotId(fg)=="DefaultRobot"
+    @test getSessionId(fg)[1:8] == "Session_"
+
     # Test the validation of the robot, session, and user IDs.
-    @test_throws ErrorException T(params=solparams, sessionId="!notValid")
-    @test_throws ErrorException T(params=solparams, robotId="!notValid")
-    @test_throws ErrorException T(params=solparams, userId="!notValid")
+    notAllowedList = ["!notValid", "1notValid", "_notValid", "USER", "ROBOT", "SESSION",
+                      "VARIABLE", "FACTOR", "ENVIRONMENT", "PPE", "BIGDATA", "FACTORGRAPH"]
 
-    #TODO I don't like, so not exporting, and not recommended to use
+    for s in notAllowedList
+        @test_throws ErrorException T(params=solparams, sessionId=s)
+        @test_throws ErrorException T(params=solparams, robotId=s)
+        @test_throws ErrorException T(params=solparams, userId=s)
+    end
+
+
+    #NOTE I don't like, so not exporting, and not recommended to use
     #     Technically if you set Ids its a new object
-    @test DistributedFactorGraphs.setUserId!(fg, "userId_1") == "userId_1"
-    @test DistributedFactorGraphs.setRobotId!(fg, "robotId_1") == "robotId_1"
-    @test DistributedFactorGraphs.setSessionId!(fg, "sessionId_1") == "sessionId_1"
+    @test DistributedFactorGraphs.setUserId!(fg, "testUserId") == "testUserId"
+    @test DistributedFactorGraphs.setRobotId!(fg, "testRobotId") == "testRobotId"
+    @test DistributedFactorGraphs.setSessionId!(fg, "testSessionId") == "testSessionId"
 
-    des = "description"
-    uId = "userId"
-    rId = "robotId"
-    sId = "sessionId"
+    des = "description for runtest"
+    uId = "testUserId"
+    rId = "testRobotId"
+    sId = "testSessionId"
     ud = :ud=>"udEntry"
     rd = :rd=>"rdEntry"
     sd = :sd=>"sdEntry"
@@ -816,9 +827,12 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test isPrior(fg, :af1) # if f1 is prior
         @test lsfPriors(fg) == [:af1]
 
-        #TODO add test, don't know what we want from this
-        # desire is to list all factor types present a graph.
-        @test_broken lsfTypes(fg)
+        @test issetequal([:TestFunctorInferenceType1, :TestFunctorSingleton], lsfTypes(fg))
+
+        facTypesDict = lsfTypesDict(fg)
+        @test issetequal(collect(keys(facTypesDict)), lsfTypes(fg))
+        @test issetequal(facTypesDict[:TestFunctorInferenceType1], [:abf1])
+        @test issetequal(facTypesDict[:TestFunctorSingleton], [:af1])
 
         @test ls(fg, TestFunctorInferenceType1) == [:abf1]
         @test lsf(fg, TestFunctorSingleton) == [:af1]
@@ -832,8 +846,12 @@ function testGroup!(fg, v1, v2, f0, f1)
 
         @test ls2(fg, :a) == [:b]
 
-        #TODO what is lsTypes supposed to return?
-        @test_broken lsTypes(fg)
+        @test issetequal([:TestSofttype1, :TestSofttype2], lsTypes(fg))
+
+        varTypesDict = lsTypesDict(fg)
+        @test issetequal(collect(keys(varTypesDict)), lsTypes(fg))
+        @test issetequal(varTypesDict[:TestSofttype1], [:a])
+        @test issetequal(varTypesDict[:TestSofttype2], [:b])
 
         @test ls(fg, TestSofttype1) == [:a]
 
@@ -1006,7 +1024,7 @@ function connectivityTestGraph(::Type{T}; VARTYPE=DFGVariable, FACTYPE=DFGFactor
     numNodesType1 = 5
     numNodesType2 = 5
 
-    dfg = T()
+    dfg = T(userId="testUserId")
 
     vars = vcat(map(n -> VARTYPE(Symbol("x$n"), VariableNodeData{TestSofttype1}()), 1:numNodesType1),
                 map(n -> VARTYPE(Symbol("x$(numNodesType1+n)"), VariableNodeData{TestSofttype2}()), 1:numNodesType2))
@@ -1069,55 +1087,56 @@ function  GettingNeighbors(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
 
 end
 
-function  GettingSubgraphs(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
-
-    # "Getting Subgraphs"
-    dfg, verts, facs = connectivityTestGraph(testDFGAPI, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
-    # Subgraphs
-    dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
-    # Only returns x1 and x2
-    @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
-    # Test include orphan factors
-    @test_broken begin
-        dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 1, true)
-        @test symdiff([:x1, :x1x2f1], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
-        # Test adding to the dfg
-        dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2, true, dfgSubgraph)
-        @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
-    end
-    #
-    dfgSubgraph = getSubgraph(dfg,[:x1, :x2, :x1x2f1])
-    # Only returns x1 and x2
-    @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
-
-    #TODO if not a LightDFG with and summary or skeleton
-    if VARTYPE == DFGVariable
-        # DFG issue #201 Test include orphan factors with filtering - should only return x7 with solvable=1
-        @test_broken begin
-            dfgSubgraph = getSubgraphAroundNode(dfg, getFactor(dfg, :x7x8f1), 1, true, solvable=0)
-            @test symdiff([:x7, :x8, :x7x8f1], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
-            # Filter - always returns the node you start at but filters around that.
-            dfgSubgraph = getSubgraphAroundNode(dfg, getFactor(dfg, :x7x8f1), 1, true, solvable=1)
-            @test symdiff([:x7x8f1, :x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
-            end
-        # Test for distance = 2, should return orphans
-        setSolvable!(dfg, :x8x9f1, 0)
-        dfgSubgraph = getSubgraphAroundNode(dfg, getVariable(dfg, :x8), 2, true, solvable=1)
-        @test issetequal([:x8, :x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
-        #end if not a LightDFG with and summary or skeleton
-    end
-    # DFG issue #95 - confirming that getSubgraphAroundNode retains order
-    # REF: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/95
-    for fId in listVariables(dfg)
-        # Get a subgraph of this and it's related factors+variables
-        dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
-        # For each factor check that the order the copied graph == original
-        for fact in getFactors(dfgSubgraph)
-            @test fact._variableOrderSymbols == getFactor(dfg, fact.label)._variableOrderSymbols
-        end
-    end
-
-end
+#TODO confirm these tests are covered somewhere then delete
+# function  GettingSubgraphs(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
+#
+#     # "Getting Subgraphs"
+#     dfg, verts, facs = connectivityTestGraph(testDFGAPI, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
+#     # Subgraphs
+#     dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
+#     # Only returns x1 and x2
+#     @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+#     # Test include orphan factors
+#     @test_broken begin
+#         dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 1, true)
+#         @test symdiff([:x1, :x1x2f1], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+#         # Test adding to the dfg
+#         dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2, true, dfgSubgraph)
+#         @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+#     end
+#     #
+#     dfgSubgraph = getSubgraph(dfg,[:x1, :x2, :x1x2f1])
+#     # Only returns x1 and x2
+#     @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+#
+#     #TODO if not a LightDFG with and summary or skeleton
+#     if VARTYPE == DFGVariable
+#         # DFG issue #201 Test include orphan factors with filtering - should only return x7 with solvable=1
+#         @test_broken begin
+#             dfgSubgraph = getSubgraphAroundNode(dfg, getFactor(dfg, :x7x8f1), 1, true, solvable=0)
+#             @test symdiff([:x7, :x8, :x7x8f1], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+#             # Filter - always returns the node you start at but filters around that.
+#             dfgSubgraph = getSubgraphAroundNode(dfg, getFactor(dfg, :x7x8f1), 1, true, solvable=1)
+#             @test symdiff([:x7x8f1, :x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+#             end
+#         # Test for distance = 2, should return orphans
+#         setSolvable!(dfg, :x8x9f1, 0)
+#         dfgSubgraph = getSubgraphAroundNode(dfg, getVariable(dfg, :x8), 2, true, solvable=1)
+#         @test issetequal([:x8, :x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
+#         #end if not a LightDFG with and summary or skeleton
+#     end
+#     # DFG issue #95 - confirming that getSubgraphAroundNode retains order
+#     # REF: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/95
+#     for fId in listVariables(dfg)
+#         # Get a subgraph of this and it's related factors+variables
+#         dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
+#         # For each factor check that the order the copied graph == original
+#         for fact in getFactors(dfgSubgraph)
+#             @test fact._variableOrderSymbols == getFactor(dfg, fact.label)._variableOrderSymbols
+#         end
+#     end
+#
+# end
 
 
 function  BuildingSubgraphs(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
@@ -1213,7 +1232,7 @@ function ProducingDotFiles(testDFGAPI,
                            FACTYPE=DFGFactor)
     # "Producing Dot Files"
     # create a simpler graph for dot testing
-    dotdfg = testDFGAPI()
+    dotdfg = testDFGAPI(userId="testUserId")
 
     if v1 == nothing
         v1 = VARTYPE(:a, VariableNodeData{TestSofttype1}())
@@ -1306,7 +1325,7 @@ function CopyFunctionsTest(testDFGAPI; kwargs...)
     # already exists errors
     dcdfg_part = deepcopyGraph(LightDFG, dfg, [:x1, :x2, :x3], [:x1x2f1, :x2x3f1])
     @test_throws ErrorException deepcopyGraph!(dcdfg_part, dfg, [:x4, :x2, :x3], [:x1x2f1, :x2x3f1])
-    @test_skip @test_throws ErrorException deepcopyGraph!(dcdfg_part, dfg, [:x1x2f1])
+    @test_throws ErrorException deepcopyGraph!(dcdfg_part, dfg, [:x1x2f1])
 
     # same but overwrite destination
     deepcopyGraph!(dcdfg_part, dfg, [:x4, :x2, :x3], [:x1x2f1, :x2x3f1]; overwriteDest = true)
@@ -1318,7 +1337,7 @@ function CopyFunctionsTest(testDFGAPI; kwargs...)
     dcdfg_part1 = deepcopyGraph(LightDFG, dfg, vlbls1)
     dcdfg_part2 = deepcopyGraph(LightDFG, dfg, vlbls2)
 
-    mergedGraph = testDFGAPI()
+    mergedGraph = testDFGAPI(userId="testUserId")
     mergeGraph!(mergedGraph, dcdfg_part1)
     mergeGraph!(mergedGraph, dcdfg_part2)
 

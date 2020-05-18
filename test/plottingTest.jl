@@ -15,3 +15,10 @@ map(n -> addFactor!(dfg, DFGFactor{TestFunctorInferenceType1}(Symbol("x$(n)x$(n+
 # Using GraphPlot plotting
 plot = dfgplot(dfg)
 @test plot != nothing
+
+
+#TODO test something more
+#NOTE just running function to see if it plots
+iobuf = IOBuffer()
+dfgplot(iobuf, MIME("application/prs.juno.plotpane+html"), dfg)
+@test length(take!(iobuf)) > 1e3
