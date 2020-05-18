@@ -637,51 +637,80 @@ end
 
 ## list types
 ##-----------
-#TODO why a dictionary?
-"""
-    $SIGNATURES
-
-Return `::Dict{Symbol, Vector{String}}` of all unique variable types in factor graph.
-"""
-function lsTypes(dfg::G)::Dict{Symbol, Vector{String}} where G <: AbstractDFG
-  alltypes = Dict{Symbol,Vector{String}}()
-  for fc in ls(dfg)
-    Tt = typeof(getVariableType(dfg, fc))
-    sTt = string(Tt)
-    name = Symbol(Tt.name)
-    if !haskey(alltypes, name)
-      alltypes[name] = String[string(Tt)]
-    else
-      if sum(alltypes[name] .== sTt) == 0
-        push!(alltypes[name], sTt)
-      end
-    end
-  end
-  return alltypes
-end
-
 
 """
     $SIGNATURES
 
-Return `::Dict{Symbol, Vector{String}}` of all unique factor types in factor graph.
+Return `Vector{Symbol}` of all unique variable types in factor graph.
 """
-function lsfTypes(dfg::G)::Dict{Symbol, Vector{String}} where G <: AbstractDFG
-  alltypes = Dict{Symbol,Vector{String}}()
-  for fc in lsf(dfg)
-    Tt = typeof(getFactorType(dfg, fc))
-    sTt = string(Tt)
-    name = Symbol(Tt.name)
-    if !haskey(alltypes, name)
-      alltypes[name] = String[string(Tt)]
-    else
-      if sum(alltypes[name] .== sTt) == 0
-        push!(alltypes[name], sTt)
-      end
+function lsTypes(dfg::AbstractDFG)
+    vars = getVariables(dfg)
+    alltypes = Set{Symbol}()
+    for v in vars
+        varType = typeof(getVariableType(v)).name |> Symbol
+        push!(alltypes, varType)
     end
-  end
-  return alltypes
+    return collect(alltypes)
 end
+
+"""
+    $SIGNATURES
+
+Return `Vector{Symbol}` of all unique factor types in factor graph.
+"""
+function lsfTypes(dfg::AbstractDFG)
+    facs = getFactors(dfg)
+    alltypes = Set{Symbol}()
+    for f in facs
+        facType = typeof(getFactorType(f)).name |> Symbol
+        push!(alltypes, facType)
+    end
+    return collect(alltypes)
+end
+
+# """
+#     $SIGNATURES
+#
+# Return `::Dict{Symbol, Vector{String}}` of all unique variable types in factor graph.
+# """
+# function lsTypesDict(dfg::AbstractDFG)
+#   alltypes = Dict{Symbol,Vector{String}}()
+#   for fc in ls(dfg)
+#     Tt = typeof(getVariableType(dfg, fc))
+#     sTt = string(Tt)
+#     name = Symbol(Tt.name)
+#     if !haskey(alltypes, name)
+#       alltypes[name] = String[string(Tt)]
+#     else
+#       if sum(alltypes[name] .== sTt) == 0
+#         push!(alltypes[name], sTt)
+#       end
+#     end
+#   end
+#   return alltypes
+# end
+
+# """
+#     $SIGNATURES
+#
+# Return `::Dict{Symbol, Vector{String}}` of all unique factor types in factor graph.
+# """
+# function lsfTypesDict(dfg::G)::Dict{Symbol, Vector{String}} where G <: AbstractDFG
+#   alltypes = Dict{Symbol,Vector{String}}()
+#   for fc in lsf(dfg)
+#     Tt = typeof(getFactorType(dfg, fc))
+#     sTt = string(Tt)
+#     name = Symbol(Tt.name)
+#     if !haskey(alltypes, name)
+#       alltypes[name] = String[string(Tt)]
+#     else
+#       if sum(alltypes[name] .== sTt) == 0
+#         push!(alltypes[name], sTt)
+#       end
+#     end
+#   end
+#   return alltypes
+# end
 
 
 

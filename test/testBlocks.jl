@@ -827,9 +827,7 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test isPrior(fg, :af1) # if f1 is prior
         @test lsfPriors(fg) == [:af1]
 
-        #TODO add test, don't know what we want from this
-        # desire is to list all factor types present a graph.
-        @test_broken lsfTypes(fg)
+        @test issetequal([:TestFunctorInferenceType1, :TestFunctorSingleton], lsfTypes(fg))
 
         @test ls(fg, TestFunctorInferenceType1) == [:abf1]
         @test lsf(fg, TestFunctorSingleton) == [:af1]
@@ -843,8 +841,7 @@ function testGroup!(fg, v1, v2, f0, f1)
 
         @test ls2(fg, :a) == [:b]
 
-        #TODO what is lsTypes supposed to return?
-        @test_broken lsTypes(fg)
+        @test issetequal([:TestSofttype1, :TestSofttype2], lsTypes(fg))
 
         @test ls(fg, TestSofttype1) == [:a]
 
