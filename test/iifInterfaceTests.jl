@@ -34,7 +34,12 @@ end
     # dfg to copy to
     # creating a whole new graph with the same labels
     T = typeof(dfg)
-    dfg2 = T(params=SolverParams(), userId="testUserId"vv)
+    if dfg isa CloudGraphsDFG
+        #TODO
+        dfg2 = CloudGraphsDFG(params=SolverParams(), userId="testUserId")
+    else
+        dfg2 = T(params=SolverParams(), userId="testUserId")
+    end
 
     # Build a new in-memory IIF graph to transfer into the new graph.
     iiffg = initfg()
