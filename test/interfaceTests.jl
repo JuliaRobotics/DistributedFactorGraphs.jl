@@ -133,10 +133,6 @@ end
     GettingNeighbors(testDFGAPI)
 end
 
-# @testset "Getting Subgraphs" begin
-#     GettingSubgraphs(testDFGAPI)
-# end
-
 @testset "Building Subgraphs" begin
     rand(2)
     BuildingSubgraphs(testDFGAPI)

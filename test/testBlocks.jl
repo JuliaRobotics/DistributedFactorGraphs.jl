@@ -1080,55 +1080,56 @@ function  GettingNeighbors(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
 
 end
 
-function  GettingSubgraphs(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
-
-    # "Getting Subgraphs"
-    dfg, verts, facs = connectivityTestGraph(testDFGAPI, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
-    # Subgraphs
-    dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
-    # Only returns x1 and x2
-    @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
-    # Test include orphan factors
-    @test_broken begin
-        dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 1, true)
-        @test symdiff([:x1, :x1x2f1], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
-        # Test adding to the dfg
-        dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2, true, dfgSubgraph)
-        @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
-    end
-    #
-    dfgSubgraph = getSubgraph(dfg,[:x1, :x2, :x1x2f1])
-    # Only returns x1 and x2
-    @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
-
-    #TODO if not a LightDFG with and summary or skeleton
-    if VARTYPE == DFGVariable
-        # DFG issue #201 Test include orphan factors with filtering - should only return x7 with solvable=1
-        @test_broken begin
-            dfgSubgraph = getSubgraphAroundNode(dfg, getFactor(dfg, :x7x8f1), 1, true, solvable=0)
-            @test symdiff([:x7, :x8, :x7x8f1], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
-            # Filter - always returns the node you start at but filters around that.
-            dfgSubgraph = getSubgraphAroundNode(dfg, getFactor(dfg, :x7x8f1), 1, true, solvable=1)
-            @test symdiff([:x7x8f1, :x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
-            end
-        # Test for distance = 2, should return orphans
-        setSolvable!(dfg, :x8x9f1, 0)
-        dfgSubgraph = getSubgraphAroundNode(dfg, getVariable(dfg, :x8), 2, true, solvable=1)
-        @test issetequal([:x8, :x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
-        #end if not a LightDFG with and summary or skeleton
-    end
-    # DFG issue #95 - confirming that getSubgraphAroundNode retains order
-    # REF: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/95
-    for fId in listVariables(dfg)
-        # Get a subgraph of this and it's related factors+variables
-        dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
-        # For each factor check that the order the copied graph == original
-        for fact in getFactors(dfgSubgraph)
-            @test fact._variableOrderSymbols == getFactor(dfg, fact.label)._variableOrderSymbols
-        end
-    end
-
-end
+#TODO confirm these tests are covered somewhere then delete
+# function  GettingSubgraphs(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
+#
+#     # "Getting Subgraphs"
+#     dfg, verts, facs = connectivityTestGraph(testDFGAPI, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
+#     # Subgraphs
+#     dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
+#     # Only returns x1 and x2
+#     @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+#     # Test include orphan factors
+#     @test_broken begin
+#         dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 1, true)
+#         @test symdiff([:x1, :x1x2f1], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+#         # Test adding to the dfg
+#         dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2, true, dfgSubgraph)
+#         @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+#     end
+#     #
+#     dfgSubgraph = getSubgraph(dfg,[:x1, :x2, :x1x2f1])
+#     # Only returns x1 and x2
+#     @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+#
+#     #TODO if not a LightDFG with and summary or skeleton
+#     if VARTYPE == DFGVariable
+#         # DFG issue #201 Test include orphan factors with filtering - should only return x7 with solvable=1
+#         @test_broken begin
+#             dfgSubgraph = getSubgraphAroundNode(dfg, getFactor(dfg, :x7x8f1), 1, true, solvable=0)
+#             @test symdiff([:x7, :x8, :x7x8f1], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+#             # Filter - always returns the node you start at but filters around that.
+#             dfgSubgraph = getSubgraphAroundNode(dfg, getFactor(dfg, :x7x8f1), 1, true, solvable=1)
+#             @test symdiff([:x7x8f1, :x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+#             end
+#         # Test for distance = 2, should return orphans
+#         setSolvable!(dfg, :x8x9f1, 0)
+#         dfgSubgraph = getSubgraphAroundNode(dfg, getVariable(dfg, :x8), 2, true, solvable=1)
+#         @test issetequal([:x8, :x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
+#         #end if not a LightDFG with and summary or skeleton
+#     end
+#     # DFG issue #95 - confirming that getSubgraphAroundNode retains order
+#     # REF: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/95
+#     for fId in listVariables(dfg)
+#         # Get a subgraph of this and it's related factors+variables
+#         dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
+#         # For each factor check that the order the copied graph == original
+#         for fact in getFactors(dfgSubgraph)
+#             @test fact._variableOrderSymbols == getFactor(dfg, fact.label)._variableOrderSymbols
+#         end
+#     end
+#
+# end
 
 
 function  BuildingSubgraphs(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
