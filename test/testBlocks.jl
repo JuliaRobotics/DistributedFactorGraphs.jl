@@ -829,6 +829,11 @@ function testGroup!(fg, v1, v2, f0, f1)
 
         @test issetequal([:TestFunctorInferenceType1, :TestFunctorSingleton], lsfTypes(fg))
 
+        facTypesDict = lsfTypesDict(fg)
+        @test issetequal(collect(keys(facTypesDict)), lsfTypes(fg))
+        @test issetequal(facTypesDict[:TestFunctorInferenceType1], [:abf1])
+        @test issetequal(facTypesDict[:TestFunctorSingleton], [:af1])
+
         @test ls(fg, TestFunctorInferenceType1) == [:abf1]
         @test lsf(fg, TestFunctorSingleton) == [:af1]
         @test lsfWho(fg, :TestFunctorInferenceType1) == [:abf1]
@@ -842,6 +847,11 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test ls2(fg, :a) == [:b]
 
         @test issetequal([:TestSofttype1, :TestSofttype2], lsTypes(fg))
+
+        varTypesDict = lsTypesDict(fg)
+        @test issetequal(collect(keys(varTypesDict)), lsTypes(fg))
+        @test issetequal(varTypesDict[:TestSofttype1], [:a])
+        @test issetequal(varTypesDict[:TestSofttype2], [:b])
 
         @test ls(fg, TestSofttype1) == [:a]
 

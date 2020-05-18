@@ -656,6 +656,23 @@ end
 """
     $SIGNATURES
 
+Return `::Dict{Symbol, Vector{Symbol}}` of all unique variable types with labels in a factor graph.
+"""
+function lsTypesDict(dfg::AbstractDFG)
+
+    vars = getVariables(dfg)
+    alltypes = Dict{Symbol,Vector{Symbol}}()
+    for v in vars
+        varType = typeof(getVariableType(v)).name |> Symbol
+        d = get!(alltypes, varType, Symbol[])
+        push!(d, v.label)
+    end
+  return alltypes
+end
+
+"""
+    $SIGNATURES
+
 Return `Vector{Symbol}` of all unique factor types in factor graph.
 """
 function lsfTypes(dfg::AbstractDFG)
@@ -668,50 +685,21 @@ function lsfTypes(dfg::AbstractDFG)
     return collect(alltypes)
 end
 
-# """
-#     $SIGNATURES
-#
-# Return `::Dict{Symbol, Vector{String}}` of all unique variable types in factor graph.
-# """
-# function lsTypesDict(dfg::AbstractDFG)
-#   alltypes = Dict{Symbol,Vector{String}}()
-#   for fc in ls(dfg)
-#     Tt = typeof(getVariableType(dfg, fc))
-#     sTt = string(Tt)
-#     name = Symbol(Tt.name)
-#     if !haskey(alltypes, name)
-#       alltypes[name] = String[string(Tt)]
-#     else
-#       if sum(alltypes[name] .== sTt) == 0
-#         push!(alltypes[name], sTt)
-#       end
-#     end
-#   end
-#   return alltypes
-# end
+"""
+    $SIGNATURES
 
-# """
-#     $SIGNATURES
-#
-# Return `::Dict{Symbol, Vector{String}}` of all unique factor types in factor graph.
-# """
-# function lsfTypesDict(dfg::G)::Dict{Symbol, Vector{String}} where G <: AbstractDFG
-#   alltypes = Dict{Symbol,Vector{String}}()
-#   for fc in lsf(dfg)
-#     Tt = typeof(getFactorType(dfg, fc))
-#     sTt = string(Tt)
-#     name = Symbol(Tt.name)
-#     if !haskey(alltypes, name)
-#       alltypes[name] = String[string(Tt)]
-#     else
-#       if sum(alltypes[name] .== sTt) == 0
-#         push!(alltypes[name], sTt)
-#       end
-#     end
-#   end
-#   return alltypes
-# end
-
+Return `::Dict{Symbol, Vector{Symbol}}` of all unique factors types with labels in a factor graph.
+"""
+function lsfTypesDict(dfg::AbstractDFG)
+    facs = getFactors(dfg)
+    alltypes = Dict{Symbol,Vector{Symbol}}()
+    for f in facs
+        facType = typeof(getFactorType(f)).name |> Symbol
+        d = get!(alltypes, facType, Symbol[])
+        push!(d, f.label)
+    end
+  return alltypes
+end
 
 
 ##------------------------------------------------------------------------------
