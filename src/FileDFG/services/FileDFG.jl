@@ -127,9 +127,10 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::String)
     varFiles = readdir(varFolder)
     factorFiles = readdir(factorFolder)
     for varFile in varFiles
-        io = open("$varFolder/$varFile")
-        packedData = JSON2.read(io, Dict{String, Any})
-        push!(variables, unpackVariable(dfgLoadInto, packedData))
+        open("$varFolder/$varFile") do io
+            packedData = JSON2.read(io, Dict{String, Any})
+            push!(variables, unpackVariable(dfgLoadInto, packedData))
+        end
     end
     @info "Loaded $(length(variables)) variables - $(map(v->v.label, variables))"
     @info "Inserting variables into graph..."
@@ -137,9 +138,10 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::String)
     map(v->addVariable!(dfgLoadInto, v), variables)
 
     for factorFile in factorFiles
-        io = open("$factorFolder/$factorFile")
-        packedData = JSON2.read(io, Dict{String, Any})
-        push!(factors, unpackFactor(dfgLoadInto, packedData))
+        open("$factorFolder/$factorFile") do io
+            packedData = JSON2.read(io, Dict{String, Any})
+            push!(factors, unpackFactor(dfgLoadInto, packedData))
+        end
     end
     @info "Loaded $(length(variables)) factors - $(map(f->f.label, factors))"
     @info "Inserting factors into graph..."
