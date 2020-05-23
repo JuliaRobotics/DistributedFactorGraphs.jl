@@ -101,7 +101,7 @@ struct DFGFactor{T, N} <: AbstractDFGFactor
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref), [`setTimestamp`](@ref)"""
     timestamp::DateTime
-    """Nano second time, for more resulution on timestamp"""
+    """Nano second time, for more resulution on timestamp (only subsecond information)"""
     nstime::Nanosecond
     """Factor tags, e.g [:FACTOR].
     Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
