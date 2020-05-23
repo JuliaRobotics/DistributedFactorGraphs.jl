@@ -1,4 +1,14 @@
 ##==============================================================================
+## AbstractDFG
+##==============================================================================
+##------------------------------------------------------------------------------
+## Broadcasting
+##------------------------------------------------------------------------------
+# to allow stuff like `getFactorType.(dfg, [:x1x2f1;:x10l3f2])`
+# https://docs.julialang.org/en/v1/manual/interfaces/#
+Base.Broadcast.broadcastable(dfg::AbstractDFG) = Ref(dfg)
+
+##==============================================================================
 ## Interface for an AbstractDFG
 ##==============================================================================
 # Standard recommended fields to implement for AbstractDFG
@@ -1216,15 +1226,3 @@ function getSummaryGraph(dfg::G)::LightDFG{NoSolverParams, DFGVariableSummary, D
     # end
     return summaryDfg
 end
-
-
-
-## features for broadcasting
-import Base: length, iterate
-
-# to allow stuff like `getFactorType.(dfg, [:x1x2f1;:x10l3f2])`
-# not working properly yet -- trying to immitate `add=+; add.(3,[1;2])`
-# ie shortcut for getFactorType.([dfg;dfg], [:x1x2f1;:x10l3f2]) but using Julian interfaces properly
-# https://docs.julialang.org/en/v1/manual/interfaces/#
-length(::AbstractDFG) = 1
-iterate(dfg::AbstractDFG, state::Int=0) = (dfg,state+1)

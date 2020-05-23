@@ -506,6 +506,9 @@ end
 @test ls(fg) == listVariables(fg)
 @test lsf(fg) == listFactors(fg)
 
+# simple broadcast test
+@test issetequal(getFactorType.(fg, lsf(fg)),  [TestFunctorInferenceType1(), TestFunctorSingleton()])
+@test getVariable.(fg, [:a]) == [getVariable(fg, :a)]
 end
 
 

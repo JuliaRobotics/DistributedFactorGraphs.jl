@@ -146,7 +146,7 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::String)
     @info "Loaded $(length(variables)) factors - $(map(f->f.label, factors))"
     @info "Inserting factors into graph..."
     # # Adding factors
-    map(f->addFactor!(dfgLoadInto, f._variableOrderSymbols, f), factors)
+    map(f->addFactor!(dfgLoadInto, f), factors)
 
     # Finally, rebuild the CCW's for the factors to completely reinflate them
     @info "Rebuilding CCW's for the factors..."
