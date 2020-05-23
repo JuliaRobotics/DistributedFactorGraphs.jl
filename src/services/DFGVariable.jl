@@ -46,7 +46,7 @@ getSofttype(dfg::AbstractDFG, lbl::Symbol, solvekey::Symbol=:default) = getSoftt
 
 Alias for [`getSofttype`](@ref).
 """
-getVariableType(params...) = getSofttype(params...)
+getVariableType(args...) = getSofttype(args...)
 
 ##------------------------------------------------------------------------------
 ## solvedCount

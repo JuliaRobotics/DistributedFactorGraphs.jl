@@ -89,8 +89,8 @@ if get(ENV, "IIF_TEST", "") == "true"
 
     apis = [
         # GraphsDFG{SolverParams}(),
-        LightDFG(params=SolverParams(), userId="testUserId"),
-        CloudGraphsDFG(params=SolverParams(), userId="testUserId")
+        LightDFG(solverParams=SolverParams(), userId="testUserId"),
+        CloudGraphsDFG(solverParams=SolverParams(), userId="testUserId")
         ]
     for api in apis
         @testset "Testing Driver: $(typeof(api))" begin
@@ -121,8 +121,8 @@ if get(ENV, "IIF_TEST", "") == "true"
         # This is just to validate we're not going to blow up downstream.
         apis = [
             # GraphsDFG{SolverParams}(),
-            LightDFG(params=SolverParams(), userId="testUserId"),
-            CloudGraphsDFG(params=SolverParams(), userId="testUserId")
+            LightDFG(solverParams=SolverParams(), userId="testUserId"),
+            CloudGraphsDFG(solverParams=SolverParams(), userId="testUserId")
             ]
         for api in apis
             @info "Running simple solver test: $(typeof(api))"

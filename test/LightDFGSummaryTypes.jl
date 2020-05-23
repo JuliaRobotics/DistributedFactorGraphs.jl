@@ -7,7 +7,7 @@ DistributedFactorGraphs.DFGVariableSummary(label::Symbol) = DFGVariableSummary(l
 DistributedFactorGraphs.DFGFactorSummary(label::Symbol) = DFGFactorSummary(label, DistributedFactorGraphs.now(), Set{Symbol}(), Symbol[])
 
 DistributedFactorGraphs.DFGVariableSummary(label::Symbol, ::VariableNodeData{T}) where T = DFGVariableSummary(label, DistributedFactorGraphs.now(), Set{Symbol}(), Dict{Symbol, MeanMaxPPE}(), Symbol(T), Dict{Symbol,AbstractBigDataEntry}())
-DistributedFactorGraphs.SkeletonDFGVariable(label::Symbol, params...) = SkeletonDFGVariable(label)
+DistributedFactorGraphs.SkeletonDFGVariable(label::Symbol, args...) = SkeletonDFGVariable(label)
 
 
 dfg = LightDFG{NoSolverParams, VARTYPE, FACTYPE}()

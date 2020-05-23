@@ -58,13 +58,13 @@ function CloudGraphsDFG{T}(neo4jConnection::Neo4j.Connection,
                            robotId::String,
                            sessionId::String,
                            description::String;
-                           params::T=NoSolverParams(), #TODO parameter name is not consistent
+                           solverParams::T=NoSolverParams(),
                            kwargs...) where T <: AbstractParams
 
     graph = Neo4j.getgraph(neo4jConnection)
     neo4jInstance = Neo4jInstance(neo4jConnection, graph)
 
-    return CloudGraphsDFG{T}(neo4jInstance, userId, robotId, sessionId, description, Symbol[], params; kwargs...)
+    return CloudGraphsDFG{T}(neo4jInstance, userId, robotId, sessionId, description, Symbol[], solverParams; kwargs...)
 
 end
 
@@ -90,7 +90,7 @@ function CloudGraphsDFG(; hostname="localhost",
                           robotId::String="DefaultRobot",
                           sessionId::String="Session_$(string(uuid4())[1:6])", #TODO randstring(['a':'z';'A':'Z'],1) ipv Session
                           description::String="CloudGraphsDFG implementation",
-                          params::T=NoSolverParams(),
+                          solverParams::T=NoSolverParams(),
                           kwargs...) where T <: AbstractParams
 
     @info "Creating $sessionId"
@@ -102,7 +102,7 @@ function CloudGraphsDFG(; hostname="localhost",
                              robotId,
                              sessionId,
                              description;
-                             params=params,
+                             solverParams=solverParams,
                              kwargs...)
 end
 
@@ -127,7 +127,7 @@ function CloudGraphsDFG(description::String,
                                                 robotId,
                                                 sessionId,
                                                 description;
-                                                params=solverParams,
+                                                solverParams=solverParams,
                                                 userData=userData,
                                                 robotData=robotData,
                                                 sessionData=sessionData)

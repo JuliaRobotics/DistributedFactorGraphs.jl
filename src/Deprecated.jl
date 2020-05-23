@@ -20,7 +20,7 @@ include("../attic/GraphsDFG/GraphsDFG.jl")
 export buildSubgraphFromLabels!
 function buildSubgraphFromLabels!(dfg::AbstractDFG,
                                   syms::Vector{Symbol};
-                                  subfg::AbstractDFG=LightDFG(params=getSolverParams(dfg)),
+                                  subfg::AbstractDFG=LightDFG(solverParams=getSolverParams(dfg)),
                                   solvable::Int=0,
                                   allowedFactors::Union{Nothing, Vector{Symbol}}=nothing  )
   error("""buildSubgraphFromLabels! is deprecated

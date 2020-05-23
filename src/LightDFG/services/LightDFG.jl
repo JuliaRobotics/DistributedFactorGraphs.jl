@@ -318,7 +318,7 @@ Gets an empty and unique LightDFG derived from an existing DFG.
 function _getDuplicatedEmptyDFG(dfg::LightDFG{P,V,F})::LightDFG where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
     newDfg = LightDFG{P,V,F}(;
         userId=dfg.userId, robotId=dfg.robotId, sessionId=dfg.sessionId,
-        params=deepcopy(dfg.solverParams))
+        solverParams=deepcopy(dfg.solverParams))
     newDfg.description ="(Copy of) $(dfg.description)"
     return newDfg
 end
