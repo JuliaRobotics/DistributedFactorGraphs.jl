@@ -18,7 +18,7 @@ function _getDuplicatedEmptyDFG(dfg::CloudGraphsDFG)::CloudGraphsDFG
         dfg.robotId,
         sessionId,
         dfg.description,
-        params=deepcopy(dfg.solverParams))
+        solverParams=deepcopy(dfg.solverParams))
 end
 
 # Accessors

@@ -112,7 +112,7 @@ function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverP
     # "DFG Structure and Accessors"
     # Constructors
     # Constructors to be implemented
-    fg = T(params=solparams, userId="testUserId")
+    fg = T(solverParams=solparams, userId="testUserId")
     #TODO test something better
     @test isa(fg, T)
     @test getUserId(fg)=="testUserId"
@@ -124,9 +124,9 @@ function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverP
                       "VARIABLE", "FACTOR", "ENVIRONMENT", "PPE", "BIGDATA", "FACTORGRAPH"]
 
     for s in notAllowedList
-        @test_throws ErrorException T(params=solparams, sessionId=s)
-        @test_throws ErrorException T(params=solparams, robotId=s)
-        @test_throws ErrorException T(params=solparams, userId=s)
+        @test_throws ErrorException T(solverParams=solparams, sessionId=s)
+        @test_throws ErrorException T(solverParams=solparams, robotId=s)
+        @test_throws ErrorException T(solverParams=solparams, userId=s)
     end
 
 
@@ -386,8 +386,8 @@ function  VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     #TODO dont throw ErrorException
     #TODO test remaining add signitures
     # global fg
-    # fg = GraphsDFG(params=NoSolverParams())
-    # fg = LightDFG(params=NoSolverParams())
+    # fg = GraphsDFG(solverParams=NoSolverParams())
+    # fg = LightDFG(solverParams=NoSolverParams())
     # add update delete
 @test addVariable!(fg, v1) == v1
 @test addVariable!(fg, v2) == v2

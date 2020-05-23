@@ -36,9 +36,9 @@ end
     T = typeof(dfg)
     if dfg isa CloudGraphsDFG
         #TODO
-        dfg2 = CloudGraphsDFG(params=SolverParams(), userId="testUserId")
+        dfg2 = CloudGraphsDFG(solverParams=SolverParams(), userId="testUserId")
     else
-        dfg2 = T(params=SolverParams(), userId="testUserId")
+        dfg2 = T(solverParams=SolverParams(), userId="testUserId")
     end
 
     # Build a new in-memory IIF graph to transfer into the new graph.
