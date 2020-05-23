@@ -394,7 +394,7 @@ function addFactor!(dfg::AbstractDFG, variables::Vector{<:AbstractDFGVariable}, 
 
     if factor isa DFGFactor
         f = factor
-        newfactor =  DFGFactor(f.label, f.timestamp, f.tags, f.solverData, f.solvable, Tuple(variableLabels))
+        newfactor =  DFGFactor(f.label, f.timestamp, f.nstime, f.tags, f.solverData, f.solvable, Tuple(variableLabels))
         return addFactor!(dfg, newfactor)
     else
         resize!(factor._variableOrderSymbols, length(variableLabels))
@@ -413,7 +413,7 @@ function addFactor!(dfg::AbstractDFG, variableLabels::Vector{Symbol}, factor::F)
 
     if factor isa DFGFactor
         f = factor
-        newfactor =  DFGFactor(f.label, f.timestamp, f.tags, f.solverData, f.solvable, Tuple(variableLabels))
+        newfactor =  DFGFactor(f.label, f.timestamp, f.nstime, f.tags, f.solverData, f.solvable, Tuple(variableLabels))
         return addFactor!(dfg, newfactor)
     else
         resize!(factor._variableOrderSymbols, length(variableLabels))
