@@ -185,7 +185,7 @@ struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref), [`setTimestamp`](@ref)"""
     timestamp::DateTime
-    """Nano second time, for more resulution on timestamp"""
+    """Nano second time, for more resulution on timestamp (only subsecond information)"""
     nstime::Nanosecond
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
     Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
