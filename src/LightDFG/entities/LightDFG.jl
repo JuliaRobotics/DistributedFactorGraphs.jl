@@ -60,18 +60,20 @@ function LightDFG{T}(g::FactorGraph{Int,DFGVariable,DFGFactor}=FactorGraph{Int,D
 
     #TODO remove params deprecation error in v0.9
     if params != nothing
-        error("keyword `params` is deprecated, please use solverParams")
+        @warn "keyword `params` is deprecated, please use solverParams"
+        return LightDFG{T,DFGVariable,DFGFactor}(g; solverParams = params, kwargs...)
     end
-    LightDFG{T,DFGVariable,DFGFactor}(g; kwargs...)
+    return LightDFG{T,DFGVariable,DFGFactor}(g; kwargs...)
 end
 
 function LightDFG(g::FactorGraph{Int,DFGVariable,DFGFactor}=FactorGraph{Int,DFGVariable,DFGFactor}();
                   solverParams::T=NoSolverParams(), params=nothing, kwargs...) where T
     #TODO remove params deprecation error in v0.9
     if params != nothing
-        error("keyword `params` is deprecated, please use solverParams")
+        @warn "keyword `params` is deprecated, please use solverParams"
+        return LightDFG{typeof(params),DFGVariable,DFGFactor}(g; solverParams=params, kwargs...)
     end
-    LightDFG{T,DFGVariable,DFGFactor}(g; solverParams=solverParams, kwargs...)
+    return LightDFG{T,DFGVariable,DFGFactor}(g; solverParams=solverParams, kwargs...)
 end
 
 
