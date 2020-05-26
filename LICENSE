@@ -1,8 +1,8 @@
-This repository includes two parts that are licensed separately.  MIT license is used for all components but the CloudGraphDFG driver which is licensed separately.  See CloudGraphsDFG [folder here](https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/LICENSE) for more details.
+This repository includes two parts that are licensed separately.  MIT license is used for all components but the CloudGraphDFG driver which is licensed separately.  See [separate CloudGraphsDFG Driver LICENSE](https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/blob/develop/src/CloudGraphsDFG/LICENSE) for more details.
 
 MIT License for all components excluding CloudGraphDFG Driver.
 
-Copyright (c) 2020 NavAbility
+Copyright (c) 2017-2020 NavAbility
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
