@@ -1,0 +1,5 @@
+Copyright (c) 2020 NavAbility
+
+This CloudGraphDFG Driver is not yet licensed for public use but an open-source license is in the works.
+
+The CloudGraphDFG driver should be considered an optional internal library of the larger DistributedFactorGraphs package.  The code is available as part of a cooperative work, but the work is underway to satisfy all prospective license requirements.
