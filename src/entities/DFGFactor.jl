@@ -101,6 +101,8 @@ struct DFGFactor{T, N} <: AbstractDFGFactor
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref), [`setTimestamp`](@ref)"""
     timestamp::DateTime
+    """Nano second time, for more resolution on timestamp (only subsecond information)"""
+    nstime::Nanosecond
     """Factor tags, e.g [:FACTOR].
     Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
     tags::Set{Symbol}
@@ -113,15 +115,15 @@ struct DFGFactor{T, N} <: AbstractDFGFactor
     """Internal cache of the ordering of the neighbor variables. Rather use getVariableOrder to get the list as this is an internal value.
     Accessors: [`getVariableOrder`](@ref)"""
     _variableOrderSymbols::NTuple{N,Symbol}
-
     # Inner constructor
     DFGFactor{T}(label::Symbol,
                  timestamp::DateTime,
+                 nstime::Nanosecond,
                  tags::Set{Symbol},
                  solverData::GenericFunctionNodeData{T},
                  solvable::Int,
                  _variableOrderSymbols::NTuple{N,Symbol}) where {T,N} =
-                 new{T,N}(label, timestamp, tags, Ref(solverData), Ref(solvable), _variableOrderSymbols)
+                 new{T,N}(label, timestamp, nstime, tags, Ref(solverData), Ref(solvable), _variableOrderSymbols)
 
 end
 
@@ -135,15 +137,16 @@ Construct a DFG factor given a label.
 """
 DFGFactor(label::Symbol,
           timestamp::DateTime,
+          nstime::Nanosecond,
           tags::Set{Symbol},
           solverData::GenericFunctionNodeData{T},
           solvable::Int,
           _variableOrderSymbols::Tuple) where {T} =
-          DFGFactor{T}(label, timestamp, tags, solverData, solvable, _variableOrderSymbols)
+          DFGFactor{T}(label, timestamp, nstime, tags, solverData, solvable, _variableOrderSymbols)
 
 
 DFGFactor{T}(label::Symbol, variableOrderSymbols::Vector{Symbol}, timestamp::DateTime=now(), data::GenericFunctionNodeData{T} = GenericFunctionNodeData{T}()) where {T} =
-                DFGFactor(label, timestamp, Set{Symbol}(), data, 1, Tuple(variableOrderSymbols))
+                DFGFactor(label, timestamp, Nanosecond(0), Set{Symbol}(), data, 1, Tuple(variableOrderSymbols))
 
 
 DFGFactor(label::Symbol,
@@ -151,8 +154,9 @@ DFGFactor(label::Symbol,
           data::GenericFunctionNodeData{T};
           tags::Set{Symbol}=Set{Symbol}(),
           timestamp::DateTime=now(),
-          solvable::Int=1) where {T} =
-                DFGFactor{T}(label, timestamp, tags, data, solvable, Tuple(variableOrderSymbols))
+          solvable::Int=1,
+          nstime::Nanosecond = Nanosecond(0)) where {T} =
+                DFGFactor{T}(label, timestamp, nstime, tags, data, solvable, Tuple(variableOrderSymbols))
 
 
 

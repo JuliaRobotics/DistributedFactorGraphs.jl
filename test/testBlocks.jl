@@ -410,7 +410,7 @@ function  VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
 
 
 if f2 isa DFGFactor
-    f2_mod = DFGFactor(f2.label, f2.timestamp, f2.tags, f2.solverData, f2.solvable, (:a,))
+    f2_mod = DFGFactor(f2.label, f2.timestamp, f2.nstime, f2.tags, f2.solverData, f2.solvable, (:a,))
 else
     f2_mod =  deepcopy(f2)
     pop!(f2_mod._variableOrderSymbols)

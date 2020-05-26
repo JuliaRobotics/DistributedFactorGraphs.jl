@@ -166,7 +166,7 @@ function setTimestamp(v::DFGVariable, ts::DateTime; verbose::Bool=true)
     if verbose
         @warn "verbose=true: setTimestamp(::DFGVariable,...) creates a returns a new immutable DFGVariable object (and didn't change a distributed factor graph object), make sure you are using the right pointers: getVariable(...).  See setTimestamp!(...) and note suggested use is at addVariable!(..., [timestamp=...]).  See DFG #315 for explanation."
     end
-    return DFGVariable(v.label, ts, v.tags, v.ppeDict, v.solverDataDict, v.smallData, v.bigData, Ref(v.solvable))
+    return DFGVariable(v.label, ts, v.nstime, v.tags, v.ppeDict, v.solverDataDict, v.smallData, v.bigData, Ref(v.solvable))
 end
 
 function setTimestamp(v::DFGVariableSummary, ts::DateTime; verbose::Bool=true)
