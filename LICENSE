@@ -1,4 +1,6 @@
-This repository includes two parts that are licensed separately.  MIT license is used for all components but the CloudGraphDFG driver which is licensed separately.  See [separate CloudGraphsDFG Driver LICENSE](https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/blob/develop/src/CloudGraphsDFG/LICENSE) for more details.
+This repository includes two parts that are licensed separately.  MIT license 
+is used for all components but the CloudGraphDFG driver which is licensed separately.  
+See [separate CloudGraphsDFG Driver LICENSE](https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/blob/develop/src/CloudGraphsDFG/LICENSE) for more details.
 
 MIT License for all components excluding CloudGraphDFG Driver.
 
