@@ -6,8 +6,22 @@ Base.show(io::IO, ::MIME"text/plain", v::DFGVariable) = show(IOContext(io, :limi
 
 Base.show(io::IO, ::MIME"text/plain", f::DFGFactor) = show(IOContext(io, :limit=>true, :compact=>true), f)
 
+function Base.show(io::IO, ::MIME"text/plain", dfg::AbstractDFG)
+    summary(io, dfg)
+    println("\n  UserId: ", dfg.userId)
+    println("  RobotId: ", dfg.robotId)
+    println("  SessionId: ", dfg.sessionId)
+    println("  Description: ", dfg.description)
+    println("  Nr variables: ", length(ls(dfg)))
+    println("  Nr factors: ",length(lsf(dfg)))
+    println("  User Data: ", keys(dfg.userData))
+    println("  Robot Data: ", keys(dfg.robotData))
+    println("  Session Data: ", keys(dfg.sessionData))
+end
+
+
 #default for Atom/Juno
-Base.show(io::IO, ::MIME"application/prs.juno.inline", x::Union{DFGVariable, DFGFactor}) = x
+Base.show(io::IO, ::MIME"application/prs.juno.inline", x::Union{AbstractDFG, DFGVariable, DFGFactor}) = x
 
 
 ##==============================================================================

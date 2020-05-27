@@ -5,7 +5,7 @@ struct TestInferenceVariable1 <: InferenceVariable end
 struct TestInferenceVariable2 <: InferenceVariable end
 
 @testset "Needs-a-home tests" begin
-    dfg = LightDFG{NoSolverParams}(params=NoSolverParams())
+    dfg = LightDFG{NoSolverParams}(solverParams=NoSolverParams())
 
     # Build a graph
     v1 = DFGVariable(:a, TestInferenceVariable1())

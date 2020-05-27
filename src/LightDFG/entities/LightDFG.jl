@@ -36,15 +36,16 @@ function LightDFG{T,V,F}(g::FactorGraph{Int,V,F}=FactorGraph{Int,V,F}();
                            userData::Dict{Symbol, String} = Dict{Symbol, String}(),
                            robotData::Dict{Symbol, String} = Dict{Symbol, String}(),
                            sessionData::Dict{Symbol, String} = Dict{Symbol, String}(),
-                           params::T=T()) where {T <: AbstractParams, V <:AbstractDFGVariable, F<:AbstractDFGFactor}
+                           solverParams::T=T()) where {T <: AbstractParams, V <:AbstractDFGVariable, F<:AbstractDFGFactor}
    # Validate the userId, robotId, and sessionId
    !isValidLabel(userId) && error("'$userId' is not a valid User ID")
    !isValidLabel(robotId) && error("'$robotId' is not a valid Robot ID")
    !isValidLabel(sessionId) && error("'$sessionId' is not a valid Session ID")
-   return LightDFG{T,V,F}(g, description, userId, robotId, sessionId, userData, robotData, sessionData, Symbol[], params)
+   return LightDFG{T,V,F}(g, description, userId, robotId, sessionId, userData, robotData, sessionData, Symbol[], solverParams)
 end
 
 # LightDFG{T}(; kwargs...) where T <: AbstractParams = LightDFG{T,DFGVariable,DFGFactor}(;kwargs...)
+
 """
     $(SIGNATURES)
 
@@ -53,11 +54,27 @@ Create an in-memory LightDFG with the following parameters:
 - V: Variable type
 - F: Factor type
 """
-LightDFG{T}(g::FactorGraph{Int,DFGVariable,DFGFactor}=FactorGraph{Int,DFGVariable,DFGFactor}(); kwargs...) where T <: AbstractParams =
-        LightDFG{T,DFGVariable,DFGFactor}(g; kwargs...)
+function LightDFG{T}(g::FactorGraph{Int,DFGVariable,DFGFactor}=FactorGraph{Int,DFGVariable,DFGFactor}();
+                     params=nothing,
+                     kwargs...) where T <: AbstractParams
 
-LightDFG(g::FactorGraph{Int,DFGVariable,DFGFactor}=FactorGraph{Int,DFGVariable,DFGFactor}(); params::T=NoSolverParams(), kwargs...)  where T =
-        LightDFG{T,DFGVariable,DFGFactor}(g; params=params, kwargs...)
+    #TODO remove params deprecation error in v0.9
+    if params != nothing
+        @warn "keyword `params` is deprecated, please use solverParams"
+        return LightDFG{T,DFGVariable,DFGFactor}(g; solverParams = params, kwargs...)
+    end
+    return LightDFG{T,DFGVariable,DFGFactor}(g; kwargs...)
+end
+
+function LightDFG(g::FactorGraph{Int,DFGVariable,DFGFactor}=FactorGraph{Int,DFGVariable,DFGFactor}();
+                  solverParams::T=NoSolverParams(), params=nothing, kwargs...) where T
+    #TODO remove params deprecation error in v0.9
+    if params != nothing
+        @warn "keyword `params` is deprecated, please use solverParams"
+        return LightDFG{typeof(params),DFGVariable,DFGFactor}(g; solverParams=params, kwargs...)
+    end
+    return LightDFG{T,DFGVariable,DFGFactor}(g; solverParams=solverParams, kwargs...)
+end
 
 
 LightDFG(description::String,

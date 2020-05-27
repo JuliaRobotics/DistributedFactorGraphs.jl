@@ -1,3 +1,17 @@
+if false
+using Test
+using GraphPlot
+using Neo4j
+using DistributedFactorGraphs
+using Pkg
+using Dates
+using UUIDs
+
+include("testBlocks.jl")
+
+testDFGAPI = CloudGraphsDFG
+testDFGAPI = LightDFG
+end
 
 # DFG Accessors
 @testset "DFG Structure and Accessors" begin
@@ -13,7 +27,7 @@ end
 
 # DFGVariable structure construction and accessors
 @testset "DFG Variable" begin
-    global var1, var2, var3, v1_tags
+    global var1, var2, var3, v1_tags, vorphan
     var1, var2, var3, vorphan, v1_tags = DFGVariableSCA()
 end
 
@@ -35,14 +49,14 @@ end
     @test printVariable(var1) == nothing
     @test printFactor(fac1) == nothing
 
-    @test printVariable(iobuf, var1, skipfields=[:timestamp, :solver, :ppe]) == nothing
+    @test printVariable(iobuf, var1, skipfields=[:timestamp, :solver, :ppe, :nstime]) == nothing
     @test String(take!(iobuf)) == "DFGVariable{TestSofttype1}\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict(\"small\"=>\"data\")\nbigData:\nDict{Symbol,AbstractBigDataEntry}()\nsolvable:\n0\n"
 
     @test printVariable(iobuf, var1, short=true) == nothing
     @test String(take!(iobuf)) == "DFGVariable{TestSofttype1}\nlabel: a\ntags: Set([:VARIABLE, :POSE])\nsize marginal samples: (1, 1)\nkde bandwidths: [0.0]\nNo PPEs\n"
 
 
-    @test printFactor(iobuf, fac1, skipfields=[:timestamp, :solver]) == nothing
+    @test printFactor(iobuf, fac1, skipfields=[:timestamp, :solver, :nstime]) == nothing
     @test occursin(r"DFGFactor.*\nlabel:\n:abf1", String(take!(iobuf)))
 
     String(take!(iobuf)) == "DFGFactor{TestCCW{TestFunctorInferenceType1}}\nlabel:\n:abf1\ntags:\nSet([:tag1, :tag2])\nsolvable:\n0\nsolvable:\n1\n_variableOrderSymbols:\n[:a, :b]\n"
@@ -84,77 +98,116 @@ end
 end
 
 @testset "BigData Entries" begin
-    BigDataEntriesTestBlock!(fg1, var2)
+    if fg1 isa CloudGraphsDFG
+        @test_skip BigDataEntriesTestBlock!(fg1, var2)
+    else
+        BigDataEntriesTestBlock!(fg1, var2)
+    end
 end
 
-# fg = fg1
-# v1 = var1
-# v2 = var2
-# v3 = var3
-# f0 = fac0
-# f1 = fac1
-# f2 = fac2
 @testset "TODO Sorteer groep" begin
-    testGroup!(fg1, var1, var2, fac0, fac1)
+    if fg1 isa CloudGraphsDFG
+        @test_skip testGroup!(fg1, var1, var2, fac0, fac1)
+    else
+        testGroup!(fg1, var1, var2, fac0, fac1)
+    end
 end
 
 # order up to here is important, TODO maybe make independant
 ##
 @testset "Adjacency Matrices" begin
 
-    fg = testDFGAPI()
-    addVariable!(fg, DFGVariable(:a, TestSofttype1()))
-    addVariable!(fg, DFGVariable(:b, TestSofttype1()))
-    addFactor!(fg, DFGFactor(:abf1, [:a,:b], GenericFunctionNodeData{TestFunctorInferenceType1}()))
-    addVariable!(fg, DFGVariable(:orphan, TestSofttype1(), solvable = 0))
+    fg = testDFGAPI(userId="testUserId")
+    addVariable!(fg, var1)
+    setSolvable!(fg, :a, 1)
+    addVariable!(fg, var2)
+    addFactor!(fg, fac1)
+    addVariable!(fg, vorphan)
 
     AdjacencyMatricesTestBlock(fg)
 
 end
 
 @testset "Getting Neighbors" begin
+    rand(1)
     GettingNeighbors(testDFGAPI)
 end
 
-# @testset "Getting Subgraphs" begin
-#     GettingSubgraphs(testDFGAPI)
-# end
-
 @testset "Building Subgraphs" begin
+    rand(2)
     BuildingSubgraphs(testDFGAPI)
 end
 
 #TODO Summaries and Summary Graphs
 @testset "Summaries and Summary Graphs" begin
+    rand(3)
     Summaries(testDFGAPI)
 end
 
 @testset "Producing Dot Files" begin
-    ProducingDotFiles(testDFGAPI)
+    rand(4)
+    if testDFGAPI == CloudGraphsDFG
+        ProducingDotFiles(testDFGAPI, var1, var2, fac1)
+    else
+        ProducingDotFiles(testDFGAPI)
+    end
 end
 
 @testset "Connectivity Test" begin
-     ConnectivityTest(testDFGAPI)
+    rand(5)
+    ConnectivityTest(testDFGAPI)
 end
 
 
 @testset "Copy Functions" begin
-
-    fg = testDFGAPI()
-    addVariable!(fg, DFGVariable(:a, TestSofttype1()))
-    addVariable!(fg, DFGVariable(:b, TestSofttype1()))
-    addVariable!(fg, DFGVariable(:c, TestSofttype1()))
-    addFactor!(fg, DFGFactor(:f1, [:a,:b,:c], GenericFunctionNodeData{TestFunctorInferenceType1}()))
+    rand(6)
+    fg = testDFGAPI(userId="testUserId")
+    addVariable!(fg, var1)
+    addVariable!(fg, var2)
+    addVariable!(fg, var3)
+    addFactor!(fg, fac1)
 
     # fgcopy = testDFGAPI()
     # DFG._copyIntoGraph!(fg, fgcopy, union(ls(fg), lsf(fg)))
     # @test getVariableOrder(fg,:f1) == getVariableOrder(fgcopy,:f1)
 
     #test copyGraph, deepcopyGraph[!]
-    fgcopy = testDFGAPI()
+    fgcopy = testDFGAPI(userId="testUserId")
     DFG.deepcopyGraph!(fgcopy, fg)
-    @test getVariableOrder(fg,:f1) == getVariableOrder(fgcopy,:f1)
+    @test getVariableOrder(fg,:abf1) == getVariableOrder(fgcopy,:abf1)
 
     CopyFunctionsTest(testDFGAPI)
 
 end
+
+@testset "File Save Functions" begin
+    rand(7)
+    filename = "/tmp/fileDFG"
+
+    dfg, vars, facs = connectivityTestGraph(testDFGAPI)
+
+    saveDFG(dfg, filename)
+
+    copyDfg = DistributedFactorGraphs._getDuplicatedEmptyDFG(dfg)
+
+    @info "Going to load $filename"
+
+    loadDFG!(copyDfg, filename)
+
+    for var in vars
+        @test getVariable(dfg, var.label) == getVariable(copyDfg, var.label)
+    end
+    for fac in facs
+        @test getFactor(dfg, fac.label) == getFactor(copyDfg, fac.label)
+        # @test getFactor(dfg, fac.label) == fac
+    end
+end
+#=
+fg = fg1
+v1 = var1
+v2 = var2
+v3 = var3
+f0 = fac0
+f1 = fac1
+f2 = fac2
+=#

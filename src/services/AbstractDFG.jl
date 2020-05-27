@@ -1,4 +1,14 @@
 ##==============================================================================
+## AbstractDFG
+##==============================================================================
+##------------------------------------------------------------------------------
+## Broadcasting
+##------------------------------------------------------------------------------
+# to allow stuff like `getFactorType.(dfg, [:x1x2f1;:x10l3f2])`
+# https://docs.julialang.org/en/v1/manual/interfaces/#
+Base.Broadcast.broadcastable(dfg::AbstractDFG) = Ref(dfg)
+
+##==============================================================================
 ## Interface for an AbstractDFG
 ##==============================================================================
 # Standard recommended fields to implement for AbstractDFG
@@ -384,7 +394,7 @@ function addFactor!(dfg::AbstractDFG, variables::Vector{<:AbstractDFGVariable}, 
 
     if factor isa DFGFactor
         f = factor
-        newfactor =  DFGFactor(f.label, f.timestamp, f.tags, f.solverData, f.solvable, Tuple(variableLabels))
+        newfactor =  DFGFactor(f.label, f.timestamp, f.nstime, f.tags, f.solverData, f.solvable, Tuple(variableLabels))
         return addFactor!(dfg, newfactor)
     else
         resize!(factor._variableOrderSymbols, length(variableLabels))
@@ -403,7 +413,7 @@ function addFactor!(dfg::AbstractDFG, variableLabels::Vector{Symbol}, factor::F)
 
     if factor isa DFGFactor
         f = factor
-        newfactor =  DFGFactor(f.label, f.timestamp, f.tags, f.solverData, f.solvable, Tuple(variableLabels))
+        newfactor =  DFGFactor(f.label, f.timestamp, f.nstime, f.tags, f.solverData, f.solvable, Tuple(variableLabels))
         return addFactor!(dfg, newfactor)
     else
         resize!(factor._variableOrderSymbols, length(variableLabels))
@@ -637,52 +647,69 @@ end
 
 ## list types
 ##-----------
-#TODO why a dictionary?
-"""
-    $SIGNATURES
-
-Return `::Dict{Symbol, Vector{String}}` of all unique variable types in factor graph.
-"""
-function lsTypes(dfg::G)::Dict{Symbol, Vector{String}} where G <: AbstractDFG
-  alltypes = Dict{Symbol,Vector{String}}()
-  for fc in ls(dfg)
-    Tt = typeof(getVariableType(dfg, fc))
-    sTt = string(Tt)
-    name = Symbol(Tt.name)
-    if !haskey(alltypes, name)
-      alltypes[name] = String[string(Tt)]
-    else
-      if sum(alltypes[name] .== sTt) == 0
-        push!(alltypes[name], sTt)
-      end
-    end
-  end
-  return alltypes
-end
-
 
 """
     $SIGNATURES
 
-Return `::Dict{Symbol, Vector{String}}` of all unique factor types in factor graph.
+Return `Vector{Symbol}` of all unique variable types in factor graph.
 """
-function lsfTypes(dfg::G)::Dict{Symbol, Vector{String}} where G <: AbstractDFG
-  alltypes = Dict{Symbol,Vector{String}}()
-  for fc in lsf(dfg)
-    Tt = typeof(getFactorType(dfg, fc))
-    sTt = string(Tt)
-    name = Symbol(Tt.name)
-    if !haskey(alltypes, name)
-      alltypes[name] = String[string(Tt)]
-    else
-      if sum(alltypes[name] .== sTt) == 0
-        push!(alltypes[name], sTt)
-      end
+function lsTypes(dfg::AbstractDFG)
+    vars = getVariables(dfg)
+    alltypes = Set{Symbol}()
+    for v in vars
+        varType = typeof(getVariableType(v)).name |> Symbol
+        push!(alltypes, varType)
     end
-  end
+    return collect(alltypes)
+end
+
+"""
+    $SIGNATURES
+
+Return `::Dict{Symbol, Vector{Symbol}}` of all unique variable types with labels in a factor graph.
+"""
+function lsTypesDict(dfg::AbstractDFG)
+
+    vars = getVariables(dfg)
+    alltypes = Dict{Symbol,Vector{Symbol}}()
+    for v in vars
+        varType = typeof(getVariableType(v)).name |> Symbol
+        d = get!(alltypes, varType, Symbol[])
+        push!(d, v.label)
+    end
   return alltypes
 end
 
+"""
+    $SIGNATURES
+
+Return `Vector{Symbol}` of all unique factor types in factor graph.
+"""
+function lsfTypes(dfg::AbstractDFG)
+    facs = getFactors(dfg)
+    alltypes = Set{Symbol}()
+    for f in facs
+        facType = typeof(getFactorType(f)).name |> Symbol
+        push!(alltypes, facType)
+    end
+    return collect(alltypes)
+end
+
+"""
+    $SIGNATURES
+
+Return `::Dict{Symbol, Vector{Symbol}}` of all unique factors types with labels in a factor graph.
+"""
+function lsfTypesDict(dfg::AbstractDFG)
+    facs = getFactors(dfg)
+    alltypes = Dict{Symbol,Vector{Symbol}}()
+    for f in facs
+        facType = typeof(getFactorType(f)).name |> Symbol
+        d = get!(alltypes, facType, Symbol[])
+        push!(d, f.label)
+    end
+  return alltypes
+end
 
 
 ##------------------------------------------------------------------------------

@@ -69,7 +69,7 @@ end
 
 
 function setTimestamp(f::DFGFactor, ts::DateTime)
-    return DFGFactor(f.label, ts, f.tags, f.solverData, f.solvable, getfield(f,:_variableOrderSymbols))
+    return DFGFactor(f.label, ts, f.nstime, f.tags, f.solverData, f.solvable, getfield(f,:_variableOrderSymbols))
 end
 
 function setTimestamp(f::DFGFactorSummary, ts::DateTime)

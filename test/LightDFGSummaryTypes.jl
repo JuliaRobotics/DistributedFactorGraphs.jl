@@ -7,7 +7,7 @@ DistributedFactorGraphs.DFGVariableSummary(label::Symbol) = DFGVariableSummary(l
 DistributedFactorGraphs.DFGFactorSummary(label::Symbol) = DFGFactorSummary(label, DistributedFactorGraphs.now(), Set{Symbol}(), Symbol[])
 
 DistributedFactorGraphs.DFGVariableSummary(label::Symbol, ::VariableNodeData{T}) where T = DFGVariableSummary(label, DistributedFactorGraphs.now(), Set{Symbol}(), Dict{Symbol, MeanMaxPPE}(), Symbol(T), Dict{Symbol,AbstractBigDataEntry}())
-DistributedFactorGraphs.SkeletonDFGVariable(label::Symbol, params...) = SkeletonDFGVariable(label)
+DistributedFactorGraphs.SkeletonDFGVariable(label::Symbol, args...) = SkeletonDFGVariable(label)
 
 
 dfg = LightDFG{NoSolverParams, VARTYPE, FACTYPE}()
@@ -80,9 +80,6 @@ end
     GettingNeighbors(LightDFG{NoSolverParams, VARTYPE, FACTYPE}, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
 end
 
-# @testset "Getting Subgraphs" begin
-#     GettingSubgraphs(LightDFG{NoSolverParams, VARTYPE, FACTYPE}, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
-# end
 @testset "Building Subgraphs" begin
     BuildingSubgraphs(LightDFG{NoSolverParams, VARTYPE, FACTYPE}, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
 end

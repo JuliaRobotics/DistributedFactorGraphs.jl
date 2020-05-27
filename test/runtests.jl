@@ -27,23 +27,26 @@ end
     include("LightFactorGraphsTests.jl")
 end
 
-# Test each interface
-apis = [
-    LightDFG,
-    ]
+
+if get(ENV, "SKIP_CGDFG_TESTS", "") != "true"
+    apis = [
+        LightDFG,
+        CloudGraphsDFG,
+        ]
+    @warn "TEST: Nuking all data for user 'testUserId'!"
+    clearUser!!(CloudGraphsDFG(userId="testUserId"))
+
+else
+    apis = [
+        LightDFG,
+        ]
+end
+
 for api in apis
     @testset "Testing Driver: $(api)" begin
         @info "Testing Driver: $(api)"
         global testDFGAPI = api
         include("interfaceTests.jl")
-    end
-end
-
-if get(ENV, "SKIP_CGDFG_TESTS", "") != "true"
-    @testset "Consolidation WIP Testing Driver: CloudGraphsDFG" begin
-        @info "Testing Driver: CloudGraphsDFG"
-        global testDFGAPI = CloudGraphsDFG
-        include("consolInterfaceDev.jl")
     end
 end
 
@@ -86,12 +89,9 @@ if get(ENV, "IIF_TEST", "") == "true"
 
     apis = [
         # GraphsDFG{SolverParams}(),
-        LightDFG{SolverParams}(),
-        CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
-                                    "testUser", "testRobot", "testSession",
-                                    "Description of test Session",
-                                    solverParams=SolverParams())
-            ]
+        LightDFG(solverParams=SolverParams(), userId="testUserId"),
+        CloudGraphsDFG(solverParams=SolverParams(), userId="testUserId")
+        ]
     for api in apis
         @testset "Testing Driver: $(typeof(api))" begin
             @info "Testing Driver: $(api)"
@@ -120,12 +120,9 @@ if get(ENV, "IIF_TEST", "") == "true"
     @testset "Simple graph solving test" begin
         # This is just to validate we're not going to blow up downstream.
         apis = [
-            # GraphsDFG{SolverParams}(params=SolverParams()),
-            LightDFG{SolverParams}(params=SolverParams()),
-            CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
-                                        "testUser", "testRobot", "simpleSolveSession",
-                                        "Description of test Session",
-                                        solverParams=SolverParams())
+            # GraphsDFG{SolverParams}(),
+            LightDFG(solverParams=SolverParams(), userId="testUserId"),
+            CloudGraphsDFG(solverParams=SolverParams(), userId="testUserId")
             ]
         for api in apis
             @info "Running simple solver test: $(typeof(api))"

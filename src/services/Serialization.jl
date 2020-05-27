@@ -9,6 +9,7 @@ function packVariable(dfg::G, v::DFGVariable)::Dict{String, Any} where G <: Abst
     props = Dict{String, Any}()
     props["label"] = string(v.label)
     props["timestamp"] = string(v.timestamp)
+    props["nstime"] = string(v.nstime.value)
     props["tags"] = JSON2.write(v.tags)
     props["ppeDict"] = JSON2.write(v.ppeDict)
     props["solverDataDict"] = JSON2.write(Dict(keys(v.solverDataDict) .=> map(vnd -> packVariableNodeData(dfg, vnd), values(v.solverDataDict))))
@@ -23,6 +24,7 @@ end
 function unpackVariable(dfg::G, packedProps::Dict{String, Any})::DFGVariable where G <: AbstractDFG
     label = Symbol(packedProps["label"])
     timestamp = DateTime(packedProps["timestamp"])
+    nstime = Nanosecond(get(packedProps, "nstime", 0))
     tags =  JSON2.read(packedProps["tags"], Vector{Symbol})
     #TODO this will work for some time, but unpacking in an <: AbstractPointParametricEst would be lekker.
     ppeDict = JSON2.read(packedProps["ppeDict"], Dict{Symbol, MeanMaxPPE})
@@ -37,7 +39,7 @@ function unpackVariable(dfg::G, packedProps::Dict{String, Any})::DFGVariable whe
     solverData = Dict(Symbol.(keys(packed)) .=> map(p -> unpackVariableNodeData(dfg, p), values(packed)))
 
     # Rebuild DFGVariable using the first solver softtype in solverData
-    variable = DFGVariable{softtype}(Symbol(packedProps["label"]), timestamp, Set(tags), ppeDict, solverData,  smallData, Dict{Symbol,AbstractBigDataEntry}(), Ref(packedProps["solvable"]))
+    variable = DFGVariable{softtype}(Symbol(packedProps["label"]), timestamp, nstime, Set(tags), ppeDict, solverData,  smallData, Dict{Symbol,AbstractBigDataEntry}(), Ref(packedProps["solvable"]))
 
     # Now rehydrate complete bigData type.
     for (k,bdeInter) in bigDataIntermed
@@ -96,6 +98,7 @@ function packFactor(dfg::G, f::DFGFactor)::Dict{String, Any} where G <: Abstract
     props = Dict{String, Any}()
     props["label"] = string(f.label)
     props["timestamp"] = string(f.timestamp)
+    props["nstime"] = string(f.nstime.value)
     props["tags"] = JSON2.write(f.tags)
     # Pack the node data
     fnctype = getSolverData(f).fnc.usrfnc!
@@ -132,6 +135,7 @@ end
 function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G <: AbstractDFG
     label = packedProps["label"]
     timestamp = DateTime(packedProps["timestamp"])
+    nstime = Nanosecond(get(packedProps, "nstime", 0))
     tags = JSON2.read(packedProps["tags"], Vector{Symbol})
 
     data = packedProps["data"]
@@ -161,6 +165,7 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G
     #TODO use constuctor to create factor
     factor = DFGFactor(Symbol(label),
                        timestamp,
+                       nstime,
                        Set(tags),
                        fullFactorData,
                        solvable,
