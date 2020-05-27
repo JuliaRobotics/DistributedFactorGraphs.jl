@@ -7,6 +7,14 @@
 ## Remove in 0.9
 ##==============================================================================
 
+import Base: *
+
+# FIXME remove! is it really needed? This is type piracy
+function *(a::Symbol, b::AbstractString)
+  @warn "product * on ::Symbol ::String has been deprecated, please use Symbol(string(a,b)) directly"
+  Symbol(string(a,b))
+end
+
 setTimestamp!(f::FactorDataLevel1, ts::DateTime) = error("setTimestamp!(f::FactorDataLevel1, ts::DateTime) is deprecated")
 
 include("../attic/GraphsDFG/GraphsDFG.jl")
