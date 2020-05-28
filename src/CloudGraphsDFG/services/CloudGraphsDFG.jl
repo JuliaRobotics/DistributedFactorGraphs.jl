@@ -267,10 +267,6 @@ function mergeVariableData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable)::D
     return sourceVariable
 end
 
-function mergeUpdateVariableSolverData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable)::DFGVariable
-  @warn "Deprecated CloudGraphsDFG.mergeUpdateVariableSolverData!, use mergeVariableData! instead."
-  mergeVariableData!(dfg, sourceVariable)
-end
 
 function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor
     if !exists(dfg, factor)

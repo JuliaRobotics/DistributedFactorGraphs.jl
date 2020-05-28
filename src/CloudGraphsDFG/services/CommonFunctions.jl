@@ -56,7 +56,7 @@ Get a node property - returns nothing if not found
 function _getNodeProperty(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String}, property::String)
     query = "match (n:$(join(nodeLabels, ":"))) return n.$property"
     @debug "[Query] $query"
-    result = DistributedFactorGraphs._queryNeo4j(neo4jInstance, query)
+    result = _queryNeo4j(neo4jInstance, query)
     length(result.results[1]["data"]) != 1 && error("No data returned from the query.")
     length(result.results[1]["data"][1]["row"]) != 1 && error("No data returned from the query.")
     return result.results[1]["data"][1]["row"][1]
@@ -75,7 +75,7 @@ function _setNodeProperty(neo4jInstance::Neo4jInstance, nodeLabels::Vector{Strin
     set n.$property = $value
     return count(n)"""
     @debug "[Query] $query"
-    result = DistributedFactorGraphs._queryNeo4j(neo4jInstance, query)
+    result = _queryNeo4j(neo4jInstance, query)
     length(result.results[1]["data"]) != 1 && return 0
     length(result.results[1]["data"][1]["row"]) != 1 && return 0
     return result.results[1]["data"][1]["row"][1]
@@ -87,14 +87,14 @@ Get a node's tags
 """
 function _getNodeTags(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String})::Union{Nothing, Vector{String}}
     query = "match (n:$(join(nodeLabels, ":"))) return labels(n)"
-    result = DistributedFactorGraphs._queryNeo4j(neo4jInstance, query)
+    result = _queryNeo4j(neo4jInstance, query)
     length(result.results[1]["data"]) != 1 && return nothing
     return result.results[1]["data"][1]["row"][1]
 end
 
 function _getNodeCount(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String})::Int
     query = "match (n:$(join(nodeLabels, ":"))) return count(n)"
-    result = DistributedFactorGraphs._queryNeo4j(neo4jInstance, query)
+    result = _queryNeo4j(neo4jInstance, query)
     length(result.results[1]["data"]) != 1 && return 0
     length(result.results[1]["data"][1]["row"]) != 1 && return 0
     return result.results[1]["data"][1]["row"][1]

@@ -1,6 +1,7 @@
 using Test
 using GraphPlot # For plotting tests
 using Neo4j
+push!(ENV,"DFG_USE_CGDFG"=>"true")
 using DistributedFactorGraphs
 using Pkg
 using Dates
