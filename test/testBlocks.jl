@@ -1,6 +1,7 @@
 using DistributedFactorGraphs
 using Test
 using Dates
+using UUIDs
 
 import Base: convert
 
@@ -93,8 +94,9 @@ end
 
 
 ##
-global testDFGAPI = CloudGraphsDFG
-global testDFGAPI = LightDFG
+# global testDFGAPI = CloudGraphsDFG
+# global testDFGAPI = LightDFG
+# T = testDFGAPI
 
 #test Specific definitions
 # struct TestInferenceVariable1 <: InferenceVariable end
@@ -105,7 +107,6 @@ global testDFGAPI = LightDFG
 struct GeenSolverParams <: AbstractParams
 end
 
-T = testDFGAPI
 solparams=NoSolverParams()
 # DFG Accessors
 function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverParams()) where T <: AbstractDFG
@@ -217,7 +218,7 @@ function  UserRobotSessionData!(fg::AbstractDFG)
     @test getSessionData(fg, :a) == "44"
     #TODO
     @test_broken addSessionData!
-    updateSessionData!(fg, :b=>"3") == getSessionData(fg)
+    @test updateSessionData!(fg, :b=>"3") == getSessionData(fg)
     @test getSessionData(fg, :b) == deleteSessionData!(fg, :b)
     @test emptySessionData!(fg) == Dict{Symbol,String}()
 

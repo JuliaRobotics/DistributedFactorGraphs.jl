@@ -98,18 +98,18 @@ end
 end
 
 @testset "BigData Entries" begin
-    if fg1 isa CloudGraphsDFG
-        @test_skip BigDataEntriesTestBlock!(fg1, var2)
-    else
+    if typeof(fg1) <: InMemoryDFGTypes
         BigDataEntriesTestBlock!(fg1, var2)
+    else
+        @test_skip BigDataEntriesTestBlock!(fg1, var2)
     end
 end
 
 @testset "TODO Sorteer groep" begin
-    if fg1 isa CloudGraphsDFG
-        @test_skip testGroup!(fg1, var1, var2, fac0, fac1)
-    else
+    if typeof(fg1)  <: InMemoryDFGTypes
         testGroup!(fg1, var1, var2, fac0, fac1)
+    else
+        @test_skip testGroup!(fg1, var1, var2, fac0, fac1)
     end
 end
 
@@ -146,10 +146,10 @@ end
 
 @testset "Producing Dot Files" begin
     rand(4)
-    if testDFGAPI == CloudGraphsDFG
-        ProducingDotFiles(testDFGAPI, var1, var2, fac1)
-    else
+    if testDFGAPI <: InMemoryDFGTypes
         ProducingDotFiles(testDFGAPI)
+    else
+        ProducingDotFiles(testDFGAPI, var1, var2, fac1)
     end
 end
 

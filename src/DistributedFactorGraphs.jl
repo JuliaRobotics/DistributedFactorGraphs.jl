@@ -208,6 +208,7 @@ export findClosestTimestamp, findVariableNearTimestamp
 
 # Serialization
 export packVariable, unpackVariable, packFactor, unpackFactor
+export rebuildFactorMetadata!
 
 # File import and export
 export saveDFG, loadDFG!
@@ -273,10 +274,14 @@ include("services/CompareUtils.jl")
 # Include the FilesDFG API.
 include("FileDFG/FileDFG.jl")
 
-include("CloudGraphsDFG/CloudGraphsDFG.jl")
-
 # Custom show and printing for variable factor etc.
 include("services/CustomPrinting.jl")
+
+# To be moved as necessary.
+include("Common.jl")
+
+# Big data extensions
+include("BigData/BigData.jl")
 
 function __init__()
     @require GraphPlot = "a2cc645c-3eea-5389-862e-a155d0052231" begin
@@ -285,12 +290,12 @@ function __init__()
         @reexport using .DFGPlots
     end
 
+    if get(ENV, "DFG_USE_CGDFG", "") == "true"
+        @info "Including CloudGraphsDFG"
+        @eval Base.include(DistributedFactorGraphs, joinpath(@__DIR__, "CloudGraphsDFG/CloudGraphsDFG.jl"))
+        @eval DistributedFactorGraphs @reexport using .CloudGraphsDFGs
+    end
 end
 
-# To be moved as necessary.
-include("Common.jl")
-
-# Big data extensions
-include("BigData/BigData.jl")
 
 end
