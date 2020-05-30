@@ -938,6 +938,41 @@ function deepcopyGraph(::Type{T},
     return destDFG
 end
 
+
+
+##==============================================================================
+## Automated Graph Searching
+##==============================================================================
+
+"""
+    $SIGNATURES
+
+Relatively naive function counting linearly from-to
+
+DevNotes
+- Convert to using LightGraphs shortest path methods instead.
+"""
+function findFactorsBetweenNaive(dfg::AbstractDFG, from::Symbol, to::Symbol, assertSingles::Bool=false)
+  @info "findFactorsBetweenNaive is naive linear number method -- improvements welcome"
+  SRT = getVariableLabelNumber(from)
+  STP = getVariableLabelNumber(to)
+  prefix = string(from)[1]
+  @assert prefix == string(to)[1] "from-to prefixes must match, one is $prefix, other $(string(to)[1])"
+  prev = from
+  fctlist = Symbol[]
+  for num in (SRT+1):STP
+    next = Symbol(prefix,num)
+    fct = intersect(ls(dfg, prev),ls(dfg,next))
+    !assertSingles ? nothing : @assert length(fct) == 1 "assertSingles=true, won't return multiple factors joining variables at this time"
+    union!(fctlist, fct)
+    prev = next
+  end
+
+  return fctlist
+end
+
+
+
 ##==============================================================================
 ## Subgraphs and Neighborhoods
 ##==============================================================================
