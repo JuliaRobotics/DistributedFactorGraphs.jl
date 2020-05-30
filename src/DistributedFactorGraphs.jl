@@ -92,6 +92,7 @@ export DFGFactor, DFGFactorSummary, SkeletonDFGFactor
 # Common
 export getSolvable, setSolvable!, isSolvable
 export getInternalId
+export getVariableLabelNumber
 
 # accessors
 export getLabel, getTimestamp, setTimestamp, setTimestamp!, getTags, setTags!
@@ -161,6 +162,7 @@ export packVariableNodeData, unpackVariableNodeData
 export getSolvedCount, isSolved, setSolvedCount!, isInitialized
 
 export getNeighborhood, getNeighbors, _getDuplicatedEmptyDFG
+export findFactorsBetweenNaive
 export copyGraph!, deepcopyGraph, deepcopyGraph!, buildSubgraph, mergeGraph!
 # Big Data
 ##------------------------------------------------------------------------------

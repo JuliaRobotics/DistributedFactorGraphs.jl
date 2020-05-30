@@ -57,7 +57,7 @@ Related
 ls, lsf
 """
 sortDFG(vars::Vector{<:DFGNode}; by=getTimestamp, kwargs...) = sort(vars; by=by, kwargs...)
-sortDFG(vars::Vector{Symbol}; lt=natural_lt, kwargs...)::Vector{Symbol} = sort(vars; lt=lt, kwargs...)
+sortDFG(vars::Vector{Symbol}; lt=natural_lt, kwargs...) = sort(vars; lt=lt, kwargs...)
 
 ##==============================================================================
 ## Validation of session, robot, and user IDs.
@@ -77,3 +77,23 @@ function isValidLabel(id::Union{Symbol, String})::Bool
     end
     return all(t -> t != uppercase(id), _invalidIds) && match(_validLabelRegex, id) != nothing
 end
+
+
+"""
+    $SIGNATURES
+
+Small utility to return `::Int`, e.g. `0` from `getVariableLabelNumber(:x0)`
+
+Examples
+--------
+```julia
+getVariableLabelNumber(:l10)          # 10
+getVariableLabelNumber(:x1)           # 1
+getVariableLabelNumber(:x1_10, "x1_") # 10
+```
+
+DevNotes
+- make prefix Regex based for longer -- i.e. `:apriltag578`, `:lm1_4`
+
+"""
+getVariableLabelNumber(vs::Symbol, prefix=string(vs)[1]) = parse(Int, string(vs)[(length(prefix)+1):end])
