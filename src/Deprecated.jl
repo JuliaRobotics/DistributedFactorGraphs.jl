@@ -9,16 +9,20 @@
 
 import Base: *
 
-# FIXME remove! is it really needed? This is type piracy
 function *(a::Symbol, b::AbstractString)
-  @warn "product * on ::Symbol ::String has been deprecated, please use Symbol(string(a,b)) directly"
+  @warn "product * on ::Symbol ::String has been deprecated, please use Symbol(string(a,b)) or Symbol(a,b) directly"
   Symbol(string(a,b))
 end
 
 setTimestamp!(f::FactorDataLevel1, ts::DateTime) = error("setTimestamp!(f::FactorDataLevel1, ts::DateTime) is deprecated")
 
-include("../attic/GraphsDFG/GraphsDFG.jl")
-@reexport using .GraphsDFGs
+export GraphsDFG
+struct GraphsDFG{AbstractParams}
+  GraphsDFG{T}() where T = error("GraphsDFG is deprecated, use LightDFG, see https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/398")
+end
+GraphsDFG(args...; kwargs...) = GraphsDFG{AbstractParams}()
+GraphsDFG{T}(args...; kwargs...) where T = GraphsDFG{T}()
+
 
 @deprecate getInternalId(args...) error("getInternalId is no longer in use")
 
