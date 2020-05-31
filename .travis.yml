@@ -12,6 +12,7 @@ services:
 
 julia:
     - 1.4
+    - 1.5
     - nightly
 
 env:
