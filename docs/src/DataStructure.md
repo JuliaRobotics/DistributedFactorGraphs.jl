@@ -1,4 +1,4 @@
-# Data Structure
+# DFG Data Structures
 
 Variables and factors can potentially contain a lot of data, so DFG has
 different structures that are specialized for each use-case and level of detail.
@@ -6,7 +6,7 @@ For example, if you  want to retrieve just a simple summary of the structure,
 you can use the summary or skeleton structures to identify variables and factors
 of interest and then retrieve more detail on the subset.
 
-Note that drivers support all of the structures.
+Note that not all drivers support all of the structures.
 
 The following section discusses the datastructures for each level. A quick
 summary of the types and the available properties (some of which are derived) is provided below.
@@ -29,24 +29,18 @@ Accessible properties for each of the factor structures:
 
 ## DFG Skeleton
 
-```@docs
-SkeletonDFGVariable
-SkeletonDFGFactor
-```
+- [`SkeletonDFGVariable`](@ref)
+- [`SkeletonDFGFactor`](@ref)
 
 ## DFG Summary
 
-```@docs
-DFGVariableSummary
-DFGFactorSummary
-```
+- [`DFGVariableSummary`](@ref)
+- [`DFGFactorSummary`](@ref)
 
 ## Full DFG Node
 
-```@docs
-DFGVariable
-DFGFactor
-```
+- [`DFGVariable`](@ref)
+- [`DFGFactor`](@ref)
 
 ## Additional Offloaded Data
 

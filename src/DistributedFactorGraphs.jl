@@ -294,7 +294,7 @@ function __init__()
 
     if get(ENV, "DFG_USE_CGDFG", "") == "true"
         @info "Including CloudGraphsDFG"
-        @eval Base.include(DistributedFactorGraphs, joinpath(@__DIR__, "CloudGraphsDFG/CloudGraphsDFG.jl"))
+        Base.include(DistributedFactorGraphs, joinpath(@__DIR__, "CloudGraphsDFG/CloudGraphsDFG.jl"))
         @eval DistributedFactorGraphs @reexport using .CloudGraphsDFGs
     end
 end

@@ -1,4 +1,4 @@
-## Function Reference
+# DistributedFactorGraphs Functions Reference
 
 ```@contents
 Pages = [
@@ -7,6 +7,144 @@ Pages = [
 Depth = 3
 ```
 
+## DistributedFactorGraphs Module
+
 ```@autodocs
-Modules = [DistributedFactorGraphs, LightDFGs, DFGPlots]
+Modules = [DistributedFactorGraphs]
+Pages = ["DistributedFactorGraphs.jl"]
+```
+
+## Entities
+
+### Abstract DFG
+
+```@autodocs
+Modules = [DistributedFactorGraphs]
+Pages = ["entities/AbstractDFG.jl"]
+```
+
+### Summary DFG
+
+```@autodocs
+Modules = [DistributedFactorGraphs]
+Pages = ["entities/AbstractDFGSummary.jl"]
+```
+
+### DFG Variable Nodes
+
+```@autodocs
+Modules = [DistributedFactorGraphs]
+Pages = ["entities/DFGVariable.jl"]
+```
+
+### DFG Factor Nodes
+
+```@autodocs
+Modules = [DistributedFactorGraphs]
+Pages = ["entities/DFGFactor.jl"]
+```
+
+## Services
+
+### Abstract DFG
+
+```@autodocs
+Modules = [DistributedFactorGraphs]
+Pages = ["services/AbstractDFG.jl"]
+```
+
+### Common Accessors
+
+Common Accessors to both variable and factor nodes
+
+```@autodocs
+Modules = [DistributedFactorGraphs]
+Pages = ["services/CommonAccessors.jl"]
+```
+
+### DFG Variable Accessors CRUD and SET opperations
+
+```@autodocs
+Modules = [DistributedFactorGraphs]
+Pages = ["services/DFGVariable.jl"]
+```
+
+### DFG Factor Accessors CRUD and SET opperations
+
+```@autodocs
+Modules = [DistributedFactorGraphs]
+Pages = ["services/DFGFactor.jl"]
+```
+
+### Printing
+
+```@autodocs
+Modules = [DistributedFactorGraphs]
+Pages = ["services/CustomPrinting.jl"]
+```
+
+### Compare Utilities
+
+```@autodocs
+Modules = [DistributedFactorGraphs]
+Pages = ["services/CompareUtils.jl"]
+```
+
+### Common Functions
+
+```@autodocs
+Modules = [DistributedFactorGraphs]
+Pages = ["src/Common.jl"]
+```
+
+### Serialization
+
+```@autodocs
+Modules = [DistributedFactorGraphs]
+Pages = ["services/Serialization.jl"]
+```
+
+## DFG Plots [GraphPlot.jl]
+
+```@autodocs
+Modules = [DFGPlots]
+```
+
+## Drivers
+
+### LightDFGs
+
+```@autodocs
+Modules = [LightDFGs]
+```
+
+### FileDFG
+
+```@autodocs
+Modules = [DistributedFactorGraphs]
+Pages = ["FileDFG.jl"]
+```
+
+### CloudGraphsDFGs
+
+```@autodocs
+Modules = [CloudGraphsDFGs]
+```
+
+
+
+## Big Data
+
+```@autodocs
+Modules = [DistributedFactorGraphs]
+
+Pages = ["entities/AbstractBigDataEntries.jl",
+        "entities/AbstractDataStore.jl",
+        "entities/FileDataStore.jl",
+        "entities/InMemoryDataStore.jl",
+        "services/AbstractBigDataEntries.jl",
+        "services/AbstractDataStore.jl",
+        "services/FileDataStore.jl",
+        "services/InMemoryDataStore.jl"]
+
 ```

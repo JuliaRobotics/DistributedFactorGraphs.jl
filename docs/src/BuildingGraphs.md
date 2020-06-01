@@ -1,4 +1,4 @@
-# Creating Graphs
+# Building Graphs
 
 In this section constructing DFG graphs will be discussed. To start, bring DistributedFactorGraphs into your workspace:
 
@@ -18,21 +18,13 @@ using IncrementalInference
 
 ## Initializing a Graph
 
-DFG graphs can be built using various drivers (different representations of the underlying graph). At the moment DFG supports 3 drivers:
-- GraphsDFG: An in-memory graph that uses Graphs.jl for representing the graph.
+DFG graphs can be built using various drivers (different representations of the underlying graph). At the moment DFG supports 2 drivers:
 - LightDFG: An in-memory graph that uses LightGraphs.jl for representing the graph.
 - CloudGraphs: A database-driven graph that uses Neo4j.jl for interacting with the graph.
 
-In general the first two are used for building and solving graphs, and CloudGraphs is used for persisting in-memory graphs into a database. In the long term we recommend using the LightDFG driver for in-memory operation because Graphs.jl is not actively supported and over time that driver may be deprecated.
+In general the in-memory drivers are used for building and solving graphs, and CloudGraphs is used for persisting in-memory graphs into a database.
 
 To continue the example, run one of the following to create a DFG driver:
-
-### Creating a GraphsDFG Graph
-
-```julia
-# Create a DFG with default solver parameters using the Graphs.jl driver.
-dfg = GraphsDFG{SolverParams}(params=SolverParams())
-```
 
 ### Creating a LightDFG Graph
 
@@ -46,11 +38,7 @@ dfg = LightDFG{SolverParams}(params=SolverParams())
 ```julia
 # Create a DFG with no solver parameters (just to demonstrate the difference) using the CloudGraphs driver, and connect it to a local Neo4j instance.
 dfg = CloudGraphsDFG{NoSolverParams}("localhost", 7474, "neo4j", "test",
-                                "testUser", "testRobot", "testSession",
-                                nothing,
-                                nothing,
-                                IncrementalInference.decodePackedType,
-                                IncrementalInference.rebuildFactorMetadata!)
+                                     "testUser", "testRobot", "testSession")
 ```
 
 ## Creating Variables and Factors
@@ -64,7 +52,7 @@ Variables are added using IncrementalInference's `addVariable!` function. To cre
 - The variable's label (e.g. :x1 or :a)
 - The variable inference type (aka soft type), which is a subtype of InferenceVariable
 
-**NOTE**: Once variables are initialized to a specific soft type, variable node data (solver data) is templated to that type. 
+**NOTE**: Once variables are initialized to a specific soft type, variable node data (solver data) is templated to that type.
 
 In addition, the following optional parameters are provided:
 - Additional labels for the variable (in DFG these are referred to as tags)
@@ -114,40 +102,29 @@ Each variable and factor is uniquely identified by its label. The list of
 variable and factor labels can be retrieved with the `ls`/`listVariables` and
 `lsf`/`listFactors` functions:
 
-```@docs
-listVariables
-ls
-```
-
-```@docs
-listFactors
-lsf
-```
+- [`listVariables`](@ref)
+- [`ls`](@ref)
+- [`listFactors`](@ref)
+- [`lsf`](@ref)
 
 To list all variables or factors (instead of just their labels), use the
 `getVariables` and `getFactors` functions:
 
-```@docs
-getVariables
-getFactors
-```
+- [`getVariables`](@ref)
+- [`getFactors`](@ref)
 
-**NOTE**: `getNeighbors` is also worth mentioning at this point as it is a simple way to
-find the bigraph relationships. More information on this and other ways to
-retrieve filtered lists of variables/factors (an area that's currently WIP in
-DFG) can be found in [Traversing and Querying](TraversingAndQuerying.md).  
+Traversing and Querying functions for finding the relationships and building subtraphs include:  
+
+- [`getNeighbors`](@ref)
+- [`buildSubgraph`](@ref)
+- [`getBiadjacencyMatrix`](@ref)
 
 ## Getting (Reading) Variables and Factors
 
 Individual variables and factors can be retrieved from their labels using the following functions:
 
-```@docs
-getVariable
-```
-
-```@docs
-getFactor
-```
+- [`getVariable`](@ref)
+- [`getFactor`](@ref)
 
 It is worth noting that `getVariable` allows a user to retrieve only a single
 solver entry, so that subsets of the solver data can be retrieved individually
@@ -158,13 +135,9 @@ independently using the functions as discussed in the update section below.
 
 Full variables and factors can be updated using the following functions:
 
-```@docs
-updateVariable!
-```
+- [`updateVariable!`](@ref)
+- [`updateFactor!`](@ref)
 
-```@docs
-updateFactor!
-```
 
 **NOTE**: Skeleton and summary variables are read-only. To perform updates you
 should use the full factors and variables.
@@ -178,10 +151,5 @@ more detail in [Data Structure](DataStructure.md).
 
 Variables and factors can be deleted using the following functions:
 
-```@docs
-deleteVariable!
-```
-
-```@docs
-deleteFactor!
-```
+- [`deleteVariable!`](@ref)
+- [`deleteFactor!`](@ref)

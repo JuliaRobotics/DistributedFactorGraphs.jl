@@ -850,8 +850,6 @@ Related:
 - [`buildSubgraph`](@ref)
 - [`getNeighborhood`](@ref)
 - [`mergeGraph!`](@ref)
-Dev Note:
-- Adapted from and replaces internal _copyIntoGraph!
 """
 function copyGraph!(destDFG::AbstractDFG,
                     sourceDFG::AbstractDFG,
@@ -910,7 +908,16 @@ function copyGraph!(destDFG::AbstractDFG,
     return nothing
 end
 
-
+"""
+    $(SIGNATURES)
+Copy nodes from one graph into another graph by making deepcopies.
+see [`copyGraph!`](@ref) for more detail.
+Related:
+- [`deepcopyGraph`](@ref)
+- [`buildSubgraph`](@ref)
+- [`getNeighborhood`](@ref)
+- [`mergeGraph!`](@ref)
+"""
 function deepcopyGraph!(destDFG::AbstractDFG,
                         sourceDFG::AbstractDFG,
                         variableLabels::Vector{Symbol} = ls(sourceDFG),
@@ -919,7 +926,16 @@ function deepcopyGraph!(destDFG::AbstractDFG,
     copyGraph!(destDFG, sourceDFG, variableLabels, factorLabels; deepcopyNodes=true, kwargs...)
 end
 
-
+"""
+    $(SIGNATURES)
+Copy nodes from one graph into a new graph by making deepcopies.
+see [`copyGraph!`](@ref) for more detail.
+Related:
+- [`deepcopyGraph!`](@ref)
+- [`buildSubgraph`](@ref)
+- [`getNeighborhood`](@ref)
+- [`mergeGraph!`](@ref)
+"""
 function deepcopyGraph(::Type{T},
                        sourceDFG::AbstractDFG,
                        variableLabels::Vector{Symbol} = ls(sourceDFG),

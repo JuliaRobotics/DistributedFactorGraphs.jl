@@ -9,7 +9,7 @@ Packing is done with the exposed functions `packVariable()::Dict{String, Any}` a
 `packFactor()::Dict{String, Any}`. You can then serialize this into a string or JSON
 as you would normally.
 
-> Note: When you deserialize a factor and want to use it for solving, you must call IncrementalInference.rebuildFactorMetadata!(dfgLoadInto, factor) to reinflate it completely. Please review [FileDFG service](src/FileDFG/services/FileDFG.jl) for an example.
+> Note: When you deserialize a factor and want to use it for solving, you must call IncrementalInference.rebuildFactorMetadata!(dfgLoadInto, factor) to reinflate it completely. Please review FileDFG service for an example.
 
 For example:
 ```julia

@@ -19,7 +19,7 @@ The following is a guideline to using these parameters.
 
 **NOTE**: All data is passed by reference, so if you update the returned structure it will update in the graph. The database driver is an exception, and once the variable or factor is updated you need to call update* to persist the changes to the graph.
 
-The following examples make use this data:
+The following examples make use of this data:
 
 ```julia
 using IncrementalInference
@@ -39,38 +39,35 @@ f1 = addFactor!(dfg, [:x0; :x1], LinearConditional(Normal(50.0,2.0)), solvable=1
 
 Labels are the principle identifier of a variable or factor.
 
-```@docs
-getLabel
-```
+- [`getLabel`](@ref)
+
 
 #### Timestamps
 
 Each variable or factor can have a timestamp associated with it.
 
-```@docs
-getTimestamp
-setTimestamp
-```
+- [`getTimestamp`](@ref)
+- [`setTimestamp!`](@ref)
+
 
 #### Tags
 
 Tags are a set of symbols that contain identifiers for the variable or factor.
 
-```@docs
-listTags
-mergeTags!
-removeTags!
-emptyTags!
-```
+- [`listTags`](@ref)
+- [`mergeTags!`](@ref)
+- [`removeTags!`](@ref)
+- [`emptyTags!`](@ref)
+
 
 ### Solvable
 
 The solvable flag indicates whether the solver should make use of the variable or factor while solving the graph. This can be used to construct graphs in chunks while solving asynchronously, or for selectively solving portions of the graph.
 
-```@docs
-getSolvable
-setSolvable!
-```
+
+- [`getSolvable`](@ref)
+- [`setSolvable!`](@ref)
+
 
 ### Variables
 
@@ -78,9 +75,8 @@ setSolvable!
 
 The soft type is the underlying inference variable type, such as a Pose2.
 
-```@docs
-getSofttype
-```
+- [`getSofttype`](@ref)
+
 
 #### Packed Parametric Estimates
 
@@ -88,22 +84,21 @@ Solved graphs contain packed parametric estimates for the variables, which are k
 
 For each PPE structure, there are accessors for getting individual values:
 
-```@docs
-getMaxPPE
-getMeanPPE
-getSuggestedPPE
-```
+- [`getMaxPPE`](@ref)
+- [`getMeanPPE`](@ref)
+- [`getSuggestedPPE`](@ref)
+
 
 Related functions for getting, adding/updating, and deleting PPE structures:
 
-```@docs
-listPPE
-getPPE
-addPPE!
-updatePPE!
-deletePPE!
-mergePPEs!
-```
+
+- [`listPPEs`](@ref)
+- [`getPPE`](@ref)
+- [`addPPE!`](@ref)
+- [`updatePPE!`](@ref)
+- [`deletePPE!`](@ref)
+- [`mergePPEs!`](@ref)
+
 
 Example of PPE operations:
 
@@ -130,14 +125,14 @@ Solver data is used by IncrementalInference/RoME/Caesar solver to produce the ab
 
 Related functions:
 
-```@docs
-listVariableSolverData
-getVariableSolverData
-addVariableSolverData!
-updateVariableSolverData!
-deleteVariableSolverData!
-mergeVariableSolverData!
-```
+
+- [`listVariableSolverData`](@ref)
+- [`getVariableSolverData`](@ref)
+- [`addVariableSolverData!`](@ref)
+- [`updateVariableSolverData!`](@ref)
+- [`deleteVariableSolverData!`](@ref)
+- [`mergeVariableSolverData!`](@ref)
+
 
 Example of solver data operations:
 
@@ -160,10 +155,10 @@ keep small amounts of string data in a variable. As it is stored in the graph
 itself, large entries will slow the graph down, so if data should exceed a
 few bytes/kb, it should rather be saved in bigData.
 
-```@docs
-getSmallData
-setSmallData!
-```
+
+- [`getSmallData`](@ref)
+- [`setSmallData!`](@ref)
+
 
 Example:
 
@@ -195,19 +190,17 @@ Graphs reside inside a hierarchy made up in the following way:
 
 This data can be retrieved with the follow functions:
 
-```@docs
-getUserData
-getRobotData
-getSessionData
-```
+- [`getUserData`](@ref)
+- [`getRobotData`](@ref)
+- [`getSessionData`](@ref)
+
 
 It can be set using the following functions:
 
-```@docs
-setUserData!
-setRobotData!
-setSessionData!
-```
+- [`setUserData!`](@ref)
+- [`setRobotData!`](@ref)
+- [`setSessionData!`](@ref)
+
 
 Example of using graph-level data:
 
