@@ -8,7 +8,7 @@ Graphs can be visualized by using either `GraphPlot` or rendering to .dot files 
 
 ```julia
 using Pkg
-Pkg.install("GraphPlot")
+Pkg.add("GraphPlot")
 ```
 
 Then bring `GraphPlot` in before DFG:
@@ -18,13 +18,13 @@ using GraphPlot
 using DistributedFactorGraphs
 ```
 
-Any factor graph can then be drawn by calling `dfgPlot`:
+Any factor graph can then be drawn by calling `dfgplot`:
 
 ```julia
 # Construct graph using IIF
 using IncrementalInference
 # Create graph
-dfg = GraphsDFG{SolverParams}(params=SolverParams())
+dfg = LightDFG{SolverParams}(params=SolverParams())
 v1 = addVariable!(dfg, :x0, ContinuousScalar, labels = [:POSE], solvable=1)
 v2 = addVariable!(dfg, :x1, ContinuousScalar, labels = [:POSE], solvable=1)
 v3 = addVariable!(dfg, :l0, ContinuousScalar, labels = [:LANDMARK], solvable=1)
@@ -39,9 +39,7 @@ dfgplot(dfg)
 
 ![imgs/initialgraph.jpg](imgs/initialgraph.jpg)
 
-```@docs
-dfgplot
-```
+- [`dfgplot`](@ref)
 
 ### Rendering GraphPlot to PDF
 
@@ -62,8 +60,8 @@ More information at [GraphPlot.jl](https://github.com/JuliaGraphs/GraphPlot.jl)
 Dot files are a standard format for visualizing graphs and applications such as
 xdot are available to view the files. Dot plotting does not require `GraphPlot`
 and can be drawn by either:
-- Calling `toDot` on any graph to produce a string of the graph
-- Calling `toDotFile` on any graph to save it directly to a dotfile
+- Calling [`toDot`](@ref) on any graph to produce a string of the graph
+- Calling [`toDotFile`](@ref) on any graph to save it directly to a dotfile
 
 ```julia
 using DistributedFactorGraphs
@@ -82,9 +80,4 @@ f1 = addFactor!(dfg, [:l0; :x1], LinearConditional(Normal(-10.0,5.0)), solvable=
 toDotFile(dfg, "/tmp/test.dot")
 # Open with xdot
 run(`xdot /tmp/test.dot`)
-```
-
-```@docs
-toDot
-toDotFile
 ```

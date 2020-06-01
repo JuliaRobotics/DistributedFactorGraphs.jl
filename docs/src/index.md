@@ -18,10 +18,11 @@ julia> ]add DistributedFactorGraphs
 ```@contents
 Pages = [
     "index.md"
-    "getting_started.md"
-    "variables_and_factors.md"
+    "DataStructure.md"
+    "BuildingGraphs.md"
+    "GraphData.md"
+    "DrawingGraphs.md"
     "ref_api.md"
-    "example.md"
     "func_ref.md"
 ]
 ```

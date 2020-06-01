@@ -1,3 +1,3 @@
-# Common API Interface
+# Quick API Reference
 
 ![imgs/CoreAPI.png](imgs/CoreAPI.png)

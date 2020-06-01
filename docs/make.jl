@@ -1,5 +1,6 @@
 using Documenter
 using GraphPlot
+push!(ENV,"DFG_USE_CGDFG"=>"true")
 using DistributedFactorGraphs
 
 makedocs(
@@ -8,21 +9,18 @@ makedocs(
     sitename = "DistributedFactorGraphs.jl",
     pages = Any[
         "Home" => "index.md",
-        "Data Structure" => "DataStructure.md",
         "Getting Started" => [
-            "Introduction" => "getting_started.md",
+            "DFG Data Structures" => "DataStructure.md",
             "Building Graphs" => "BuildingGraphs.md",
-            "Using Graph Data" => "GraphData.md",
+            "Using Graph Elements" => "GraphData.md",
             "Drawing Graphs" => "DrawingGraphs.md",
-            "Traversing and Querying" => "TraversingAndQuerying.md",
-            "Common API Interface" => "ref_api.md"
+            "Quick API Reference" => "ref_api.md"
         ],
-        "DistributedFactorGraph API's" => [
-            "Graphs.jl" => "apis/graphs.md",
-            "LightGraphs.jl" => "apis/graphs.md",
-            "CloudGraphs.jl" => "apis/graphs.md",
-        ],
-        "Reference" => "func_ref.md"
+        # "DistributedFactorGraph API's" => [
+        #     "LightDFGs" => "apis/LightGraphs.md",
+        #     "CloudGraphsDFGs" => "apis/CloudGraphs.md",
+        # ],
+        "Function Reference" => "func_ref.md"
     ]
     # html_prettyurls = !("local" in ARGS),
     )
@@ -30,5 +28,5 @@ makedocs(
 deploydocs(
     repo   = "github.com/JuliaRobotics/DistributedFactorGraphs.jl.git",
     target = "build",
-    deps   = Deps.pip("mkdocs", "python-markdown-math")
+    # deps   = Deps.pip("mkdocs", "python-markdown-math")
 )
