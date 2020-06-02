@@ -2,7 +2,7 @@
 
 In this section constructing DFG graphs will be discussed. To start, bring DistributedFactorGraphs into your workspace:
 
-```julia
+```@example buildingGraphs; continued = true
 using DistributedFactorGraphs
 ```
 
@@ -13,6 +13,8 @@ So for the following examples, IncrementalInference will be used to create the v
 ```julia
 using Pkg
 Pkg.add("IncrementalInference")
+```
+```@example buildingGraphs; continued = true
 using IncrementalInference
 ```
 
@@ -28,16 +30,16 @@ To continue the example, run one of the following to create a DFG driver:
 
 ### Creating a LightDFG Graph
 
-```julia
+```@example buildingGraphs; continued = true
 # Create a DFG with default solver parameters using the LightGraphs.jl driver.
-dfg = LightDFG{SolverParams}(params=SolverParams())
+dfg = LightDFG{SolverParams}(solverParams=SolverParams())
 ```
 
 ### Creating a CloudGraphsDFG Graph
 
 ```julia
 # Create a DFG with no solver parameters (just to demonstrate the difference) using the CloudGraphs driver, and connect it to a local Neo4j instance.
-dfg = CloudGraphsDFG{NoSolverParams}("localhost", 7474, "neo4j", "test",
+cfg = CloudGraphsDFG{NoSolverParams}("localhost", 7474, "neo4j", "test",
                                      "testUser", "testRobot", "testSession")
 ```
 
@@ -60,7 +62,7 @@ In addition, the following optional parameters are provided:
 
 Three variables are added:
 
-```julia
+```@example buildingGraphs; continued = true
 v1 = addVariable!(dfg, :x0, ContinuousScalar, labels = [:POSE], solvable=1)
 v2 = addVariable!(dfg, :x1, ContinuousScalar, labels = [:POSE], solvable=1)
 v3 = addVariable!(dfg, :l0, ContinuousScalar, labels = [:LANDMARK], solvable=1)
@@ -79,7 +81,7 @@ Additionally, the solvable flag is also set to indicate that the factor can be u
 
 Four factors are added: a prior, a linear conditional relationship with a normal distribution between x0 and x1, and a pair of linear conditional relationships between each pose and the landmark.
 
-```julia
+```@example buildingGraphs; continued = true
 prior = addFactor!(dfg, [:x0], Prior(Normal(0,1)))
 f1 = addFactor!(dfg, [:x0; :x1], LinearConditional(Normal(50.0,2.0)), solvable=1)
 f1 = addFactor!(dfg, [:l0; :x0], LinearConditional(Normal(40.0,5.0)), solvable=1)
@@ -99,13 +101,19 @@ Reading, updating, and deleting all use DFG functions (as opposed to adding,
 where using the IncrementalInference functions are recommended).
 
 Each variable and factor is uniquely identified by its label. The list of
-variable and factor labels can be retrieved with the `ls`/`listVariables` and
-`lsf`/`listFactors` functions:
+variable and factor labels can be retrieved with the [`ls`](@ref)/[`listVariables`](@ref) and
+[`lsf`](@ref)/[`listFactors`](@ref) functions:
 
-- [`listVariables`](@ref)
-- [`ls`](@ref)
-- [`listFactors`](@ref)
-- [`lsf`](@ref)
+For example listing the variables in the graph we created above:
+```@example buildingGraphs
+ls(dfg)
+```
+
+Or listing the factors:
+```@example buildingGraphs
+lsf(dfg)
+```
+
 
 To list all variables or factors (instead of just their labels), use the
 `getVariables` and `getFactors` functions:
