@@ -26,7 +26,8 @@ GraphsDFG{T}(args...; kwargs...) where T = GraphsDFG{T}()
 
 @deprecate getInternalId(args...) error("getInternalId is no longer in use")
 
-@deprecate loadDFG(source::String, iifModule::Module, dest::AbstractDFG) loadDFG!(dest, source)
+@deprecate loadDFG(source::AbstractString, iifModule::Module, dest::AbstractDFG) loadDFG!(dest, source)
+@deprecate loadDFG(dest::AbstractDFG, source::AbstractString) loadDFG!(dest, source)
 
 # leave a bit longer
 export buildSubgraphFromLabels!
