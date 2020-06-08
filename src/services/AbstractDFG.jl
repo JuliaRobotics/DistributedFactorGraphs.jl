@@ -196,7 +196,11 @@ emptySessionData!(dfg::AbstractDFG) = empty!(dfg.sessionData)
     $(SIGNATURES)
 True if the variable or factor exists in the graph.
 """
-function exists(dfg::G, node::N) where {G <: AbstractDFG, N <: DFGNode}
+function exists(dfg::AbstractDFG, node::DFGNode)
+    error("exists not implemented for $(typeof(dfg))")
+end
+
+function exists(dfg::AbstractDFG, label::Symbol)
     error("exists not implemented for $(typeof(dfg))")
 end
 
@@ -347,23 +351,6 @@ end
 ##------------------------------------------------------------------------------
 ## CRUD Aliases
 ##------------------------------------------------------------------------------
-
-# TODO: Confirm we can remove this.
-# """
-#     $(SIGNATURES)
-# Get a DFGVariable from a DFG using its underlying integer ID.
-# """
-# function getVariable(dfg::G, variableId::Int64)::AbstractDFGVariable where G <: AbstractDFG
-#     error("getVariable not implemented for $(typeof(dfg))")
-# end
-# TODO: Confirm we can remove this.
-# """
-#     $(SIGNATURES)
-# Get a DFGFactor from a DFG using its underlying integer ID.
-# """
-# function getFactor(dfg::G, factorId::Int64)::AbstractDFGFactor where G <: AbstractDFG
-#     error("getFactor not implemented for $(typeof(dfg))")
-# end
 
 """
     $(SIGNATURES)
