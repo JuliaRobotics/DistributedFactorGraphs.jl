@@ -1,45 +1,4 @@
 ##==============================================================================
-## Overloading show
-##==============================================================================
-# Base.show_default(io, v)
-Base.show(io::IO, ::MIME"text/plain", v::DFGVariable) = show(IOContext(io, :limit=>true, :compact=>true), v)
-
-function Base.show(io::IO, ::MIME"text/plain", f::DFGFactor)
-  # show(IOContext(io, :limit=>true, :compact=>true), f)
-  fctt = getFactorType(f)
-  println(io, "$(typeof(f))")
-  println(io, "  Name: $(f.label)")
-  println(io, "  VariableOrder: $(getVariableOrder(f))")
-  println(io, "  multihypo: $(getSolverData(f).multihypo)") # FIXME #477
-  println(io, "  nullhypo: TBD")
-  println(io, "  solvable: $(f.solvable)")
-  println(io, "  timestamp: $(f.timestamp)")
-  println(io, "  nstime: $(f.nstime)")
-  println(io, "  tags: $(f.tags)")
-  println(io, "  Type: $(typeof(fctt))")
-  println(io, "    Fields: $(fieldnames(typeof(fctt)))")
-  show(IOContext(io, :limit=>true, :compact=>true), fctt)
-end
-
-function Base.show(io::IO, ::MIME"text/plain", dfg::AbstractDFG)
-    summary(io, dfg)
-    println(io, "\n  UserId: ", dfg.userId)
-    println(io, "  RobotId: ", dfg.robotId)
-    println(io, "  SessionId: ", dfg.sessionId)
-    println(io, "  Description: ", dfg.description)
-    println(io, "  Nr variables: ", length(ls(dfg)))
-    println(io, "  Nr factors: ",length(lsf(dfg)))
-    println(io, "  User Data: ", keys(dfg.userData))
-    println(io, "  Robot Data: ", keys(dfg.robotData))
-    println(io, "  Session Data: ", keys(dfg.sessionData))
-end
-
-
-#default for Atom/Juno
-Base.show(io::IO, ::MIME"application/prs.juno.inline", x::Union{AbstractDFG, DFGVariable, DFGFactor}) = x
-
-
-##==============================================================================
 ## Printing Variables and Factors
 ##==============================================================================
 
@@ -98,11 +57,23 @@ function printFactor(io::IO, vert::DFGFactor;
 
     if short
         printstyled(ioc, summary(vert),"\n", bold=true)
-        println(ioc, "label: ", vert.label)
-        println(ioc, "timestamp: ", vert.timestamp)
-        println(ioc, "tags: ", vert.tags)
-        println(ioc, "solvable: ", vert.solvable)
-        println(ioc, "VariableOrder: ", vert._variableOrderSymbols)
+        println(ioc, "  label: ", vert.label)
+        println(ioc, "  solvable: ", vert.solvable)
+        println(ioc, "  VariableOrder: ", vert._variableOrderSymbols)
+        println(ioc, "  multihypo: ", getSolverData(vert).multihypo) # FIXME #477
+        println(ioc, "  nullhypo: ", "see DFG #477")
+        println(ioc, "  timestamp: ", vert.timestamp)
+        println(ioc, "  nstime: ",vert.nstime)
+        println(ioc, "  tags: ", vert.tags)
+        fct = getFactorType(vert)
+        fctt = fct |> typeof
+        println(ioc, "  Type: ", fctt)
+        # show(ioc, fctt)
+        for f in setdiff(fieldnames(fctt), skipfields)
+            printstyled(ioc, f,":\n", color=:blue)
+            show(ioc, getproperty(fct, f))
+            println(ioc)
+        end
     else
 
         printstyled(ioc, summary(vert),"\n", bold=true, color=:blue)
@@ -140,3 +111,29 @@ Dev Notes
 printVariable(dfg::AbstractDFG, sym::Symbol) = print(getVariable(dfg, sym))
 
 printNode(dfg::AbstractDFG, sym::Symbol) = isVariable(dfg,sym) ? printVariable(dfg, sym) : printFactor(dfg, sym)
+
+
+##==============================================================================
+## Overloading show
+##==============================================================================
+# Base.show_default(io, v)
+Base.show(io::IO, ::MIME"text/plain", v::DFGVariable) = show(IOContext(io, :limit=>true, :compact=>true), v)
+
+Base.show(io::IO, ::MIME"text/plain", f::DFGFactor) = printFactor(io, f, short=true, limit=false)
+
+function Base.show(io::IO, ::MIME"text/plain", dfg::AbstractDFG)
+    summary(io, dfg)
+    println(io, "\n  UserId: ", dfg.userId)
+    println(io, "  RobotId: ", dfg.robotId)
+    println(io, "  SessionId: ", dfg.sessionId)
+    println(io, "  Description: ", dfg.description)
+    println(io, "  Nr variables: ", length(ls(dfg)))
+    println(io, "  Nr factors: ",length(lsf(dfg)))
+    println(io, "  User Data: ", keys(dfg.userData))
+    println(io, "  Robot Data: ", keys(dfg.robotData))
+    println(io, "  Session Data: ", keys(dfg.sessionData))
+end
+
+
+#default for Atom/Juno
+Base.show(io::IO, ::MIME"application/prs.juno.inline", x::Union{AbstractDFG, DFGVariable, DFGFactor}) = x
