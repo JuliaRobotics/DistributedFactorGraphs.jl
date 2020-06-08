@@ -13,6 +13,10 @@ end
     v1 = addVariable!(dfg, :a, ContinuousScalar, labels = [:POSE], solvable=0)
     v2 = addVariable!(dfg, :b, ContinuousScalar, labels = [:LANDMARK], solvable=1)
     f1 = addFactor!(dfg, [:a; :b], LinearConditional(Normal(50.0,2.0)), solvable=0)
+
+    @show dfg
+    @show f1
+    @show v1
 end
 
 #test before anything changes

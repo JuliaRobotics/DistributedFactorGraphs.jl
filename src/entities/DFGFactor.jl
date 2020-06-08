@@ -39,7 +39,7 @@ mutable struct GenericFunctionNodeData{T<:Union{PackedInferenceType, FunctorInfe
     potentialused::Bool
     edgeIDs::Vector{Int}
     fnc::T
-    multihypo::Vector{Float64} # likely to moved when GenericWrapParam is refactored
+    multihypo::Vector{Float64} # FIXME likely to moved when GenericWrapParam is refactored #477
     certainhypo::Vector{Int}
     solveInProgress::Int
 end
