@@ -4,19 +4,30 @@
 # Base.show_default(io, v)
 Base.show(io::IO, ::MIME"text/plain", v::DFGVariable) = show(IOContext(io, :limit=>true, :compact=>true), v)
 
-Base.show(io::IO, ::MIME"text/plain", f::DFGFactor) = show(IOContext(io, :limit=>true, :compact=>true), f)
+function Base.show(io::IO, ::MIME"text/plain", f::DFGFactor)
+  # show(IOContext(io, :limit=>true, :compact=>true), f)
+  fctt = getFactorType(f)
+  println(io, "$(typeof(f))")
+  println(io, "  Name: $(f.label)")
+  println(io, "  VariableOrder: $(getVariableOrder(f))")
+  println(io, "  Multihypo: $(getSolverData(f).multihypo)") # FIXME #477
+  println(io, "  Nullhypo: TBD")
+  println(io, "  Type: $(typeof(fctt))")
+  println(io, "    Fields: $(fieldnames(typeof(fctt)))")
+  show(IOContext(io, :limit=>true, :compact=>true), fctt)
+end
 
 function Base.show(io::IO, ::MIME"text/plain", dfg::AbstractDFG)
     summary(io, dfg)
-    println("\n  UserId: ", dfg.userId)
-    println("  RobotId: ", dfg.robotId)
-    println("  SessionId: ", dfg.sessionId)
-    println("  Description: ", dfg.description)
-    println("  Nr variables: ", length(ls(dfg)))
-    println("  Nr factors: ",length(lsf(dfg)))
-    println("  User Data: ", keys(dfg.userData))
-    println("  Robot Data: ", keys(dfg.robotData))
-    println("  Session Data: ", keys(dfg.sessionData))
+    println(io, "\n  UserId: ", dfg.userId)
+    println(io, "  RobotId: ", dfg.robotId)
+    println(io, "  SessionId: ", dfg.sessionId)
+    println(io, "  Description: ", dfg.description)
+    println(io, "  Nr variables: ", length(ls(dfg)))
+    println(io, "  Nr factors: ",length(lsf(dfg)))
+    println(io, "  User Data: ", keys(dfg.userData))
+    println(io, "  Robot Data: ", keys(dfg.robotData))
+    println(io, "  Session Data: ", keys(dfg.sessionData))
 end
 
 
