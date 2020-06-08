@@ -56,7 +56,6 @@ function printFactor(io::IO, vert::DFGFactor;
     ioc = IOContext(io, :limit=>limit, :compact=>compact)
 
     if short
-        fctt = getFactorType(vert)
         printstyled(ioc, summary(vert),"\n", bold=true)
         println(ioc, "  label: ", vert.label)
         println(ioc, "  solvable: ", vert.solvable)
@@ -66,9 +65,15 @@ function printFactor(io::IO, vert::DFGFactor;
         println(ioc, "  timestamp: ", vert.timestamp)
         println(ioc, "  nstime: ",vert.nstime)
         println(ioc, "  tags: ", vert.tags)
-        println(ioc, "  Type: ", typeof(fctt))
-        println(ioc, "    Fields: ", fieldnames(typeof(fctt)))
-        show(ioc, fctt)
+        fct = getFactorType(vert)
+        fctt = fct |> typeof
+        println(ioc, "  Type: ", fctt)
+        # show(ioc, fctt)
+        for f in setdiff(fieldnames(fctt), skipfields)
+            printstyled(ioc, f,":\n", color=:blue)
+            show(ioc, getproperty(fct, f))
+            println(ioc)
+        end
     else
 
         printstyled(ioc, summary(vert),"\n", bold=true, color=:blue)
