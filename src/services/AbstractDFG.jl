@@ -493,6 +493,24 @@ function listFactors(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::V
     return map(f -> f.label, getFactors(dfg, regexFilter, tags=tags, solvable=solvable))
 end
 
+"""
+    $SIGNATURES
+List all the solvekeys used amongst all variables in the distributed factor graph object.
+
+Related
+
+listSupersolves, getSolverDataDict, listVariables
+"""
+function listSolvekeys(dfg::AbstractDFG)
+  skeys = Set{Symbol}()
+  for vs in listVariables(dfg), ky in keys(getSolverDataDict(getVariable(dfg, vs)))
+    push!(skeys, ky)
+  end
+  return skeys
+end
+const listSupersolves = listSolvekeys
+
+
 ##------------------------------------------------------------------------------
 ## Aliases and Other filtered lists
 ##------------------------------------------------------------------------------
