@@ -102,6 +102,8 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString)
             lastdirname *= ".tar.gz"
         end
     end
+    # check the file actually exists
+    @assert isfile(dstname) "cannot find file $dstname"
     # TODO -- what if it is not a tar.gz but classic folder instead?
     # do actual unzipping
     filename = lastdirname[1:(end-length(".tar.gz"))] |> string
