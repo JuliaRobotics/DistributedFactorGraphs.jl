@@ -62,7 +62,12 @@ end
     String(take!(iobuf)) == "DFGFactor{TestCCW{TestFunctorInferenceType1}}\nlabel:\n:abf1\ntags:\nSet([:tag1, :tag2])\nsolvable:\n0\nsolvable:\n1\n_variableOrderSymbols:\n[:a, :b]\n"
 
     @test printFactor(iobuf, fac1, short=true) == nothing
-    @test occursin(r"DFGFactor.*\nlabel.*\ntimestamp.*\ntags.*\nsolvable", String(take!(iobuf)))
+    @show teststr = String(take!(iobuf))
+    @test occursin(r"DFGFactor", teststr)
+    @test occursin(r"label", teststr)
+    @test occursin(r"timestamp", teststr)
+    @test occursin(r"tags", teststr)
+    @test occursin(r"solvable", teststr)
 
     # s = String(take!(iobuf))
 

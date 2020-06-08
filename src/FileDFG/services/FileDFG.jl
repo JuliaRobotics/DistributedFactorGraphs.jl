@@ -17,7 +17,7 @@ v1 = addVariable!(dfg, :a, ContinuousScalar, labels = [:POSE], solvable=0)
 saveDFG(dfg, "/tmp/saveDFG.tar.gz")
 ```
 """
-function saveDFG( dfg::AbstractDFG, folder::String )
+function saveDFG( dfg::AbstractDFG, folder::AbstractString )
 
     # TODO: Deprecate the folder functionality in v0.6.1
 
@@ -82,7 +82,7 @@ loadDFG("/tmp/savedgraph.tar.gz", IncrementalInference, dfg)
 ls(dfg)
 ```
 """
-function loadDFG!(dfgLoadInto::AbstractDFG, dst::String)
+function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString)
 
 
     #
@@ -102,6 +102,8 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::String)
             lastdirname *= ".tar.gz"
         end
     end
+    # check the file actually exists
+    @assert isfile(dstname) "cannot find file $dstname"
     # TODO -- what if it is not a tar.gz but classic folder instead?
     # do actual unzipping
     filename = lastdirname[1:(end-length(".tar.gz"))] |> string

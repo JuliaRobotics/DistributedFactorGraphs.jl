@@ -506,6 +506,11 @@ end
 @test ls(fg) == listVariables(fg)
 @test lsf(fg) == listFactors(fg)
 
+if getVariable(fg, ls(fg)[1]) isa DFGVariable
+  @test :default in listSolvekeys(fg)
+  @test :default in listSupersolves(fg)
+end
+
 # simple broadcast test
 if f0 isa DFGFactor
     @test issetequal(getFactorType.(fg, lsf(fg)),  [TestFunctorInferenceType1(), TestFunctorSingleton()])

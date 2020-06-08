@@ -45,10 +45,14 @@ using Test
         saveDFG(dfg, filename)
 
         copyDfg = DistributedFactorGraphs._getDuplicatedEmptyDFG(dfg)
+        copyDf2 = DistributedFactorGraphs._getDuplicatedEmptyDFG(dfg)
         @info "Going to load $filename"
 
-        #FIXME loadDFG!(copyDfg, filename), but use this to test deprecation
-        retDFG = loadDFG(filename, Main, copyDfg) #, loaddir="/tmp")
+        @test_throws AssertionError loadDFG!(copyDf2,"badfilename")
+
+        retDFG = loadDFG!(copyDfg, filename)
+        # TODO REMOVE test deprecation
+        retDFG_ = loadDFG(filename, Main, copyDf2) #, loaddir="/tmp")
 
         @test issetequal(ls(dfg), ls(retDFG))
         @test issetequal(lsf(dfg), lsf(retDFG))
