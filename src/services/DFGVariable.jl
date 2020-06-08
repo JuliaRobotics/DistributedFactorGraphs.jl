@@ -426,6 +426,24 @@ function updateVariableSolverData!(dfg::AbstractDFG,
 end
 
 """
+    $SIGNATURES
+Duplicate a supersolve (solvekey).
+"""
+function deepcopySolvekeys!(dfg::AbstractDFG,
+                            dest::Symbol,
+                            src::Symbol;
+                            solvable::Int=0,
+                            labels=ls(dfg, solvable=solvable),
+                            verbose::Bool=false  )
+  #
+  foreach(x->updateVariableSolverData!(dfg, x,
+                                       getSolverData(getVariable(dfg,x), src),
+                                       dest, true, Symbol[], verbose ),
+          labels)
+end
+const deepcopySupersolve! = deepcopySolvekeys! 
+
+"""
     $(SIGNATURES)
 Delete variable solver data, returns the deleted element.
 """
