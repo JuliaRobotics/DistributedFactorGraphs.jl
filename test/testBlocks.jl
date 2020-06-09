@@ -5,7 +5,6 @@ using UUIDs
 
 import Base: convert
 
-# TODO, dink meer aan: Trait based softtypes or hard type for VariableNodeData
 # Test InferenceVariable Types
 struct TestSofttype1 <: InferenceVariable
     dims::Int
@@ -103,7 +102,7 @@ end
 # struct TestInferenceVariable2 <: InferenceVariable end
 # struct TestFunctorInferenceType1 <: FunctorInferenceType end
 
-# TODO see note in AbstractDFG.jl setSolverParams!
+# NOTE see note in AbstractDFG.jl setSolverParams!
 struct GeenSolverParams <: AbstractParams
 end
 
@@ -174,7 +173,7 @@ function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverP
     @test getSessionData(fg) == smallSessionData
 
 
-    # TODO see note in AbstractDFG.jl setSolverParams!
+    # NOTE see note in AbstractDFG.jl setSolverParams!
     @test_throws MethodError setSolverParams!(fg, GeenSolverParams()) == GeenSolverParams()
 
 

@@ -60,11 +60,6 @@ end
     include("DataStoreTests.jl")
 end
 
-#TODO confirm functionality of this test is covered
-# @testset "Needs-a-Home Tests" begin
-#     include("needsahomeTests.jl")
-# end
-
 @testset "LightDFG subtype tests" begin
     for type in [(var=DFGVariableSummary, fac=DFGFactorSummary), (var=SkeletonDFGVariable,fac=SkeletonDFGFactor)]
         @testset "$(type.var) and $(type.fac) tests" begin
@@ -145,12 +140,10 @@ struct NotImplementedDFG{T} <: AbstractDFG{T} end
 
     @test_throws ErrorException exists(dfg, v1)
     @test_throws ErrorException exists(dfg, f1)
-    #TODO FIXME
-    # @test_throws ErrorException exists(dfg, :s)
+
+    @test_throws ErrorException exists(dfg, :s)
     @test_throws ErrorException addVariable!(dfg, v1)
-    @test_throws ErrorException addFactor!(dfg, [v1, v1], f1)
-    @test_throws ErrorException addFactor!(dfg,[:a, :b], f1)
-    #TODO only implement addFactor!(dfg, f1)
+
     @test_throws ErrorException getVariable(dfg, :a)
     @test_throws ErrorException getFactor(dfg, :a)
     @test_throws ErrorException updateVariable!(dfg, v1)

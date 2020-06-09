@@ -98,7 +98,7 @@ end
 
 Display and return to console the user factor identified by tag name.
 """
-printFactor(dfg::AbstractDFG, sym::Symbol) = print(getFactor(dfg, sym))
+printFactor(dfg::AbstractDFG, sym::Symbol; kwargs...) = printFactor(getFactor(dfg, sym); kwargs...)
 
 """
    $SIGNATURES
@@ -108,9 +108,9 @@ Display the content of `VariableNodeData` to console for a given factor graph an
 Dev Notes
 - TODO split as two show macros between AMP and DFG
 """
-printVariable(dfg::AbstractDFG, sym::Symbol) = print(getVariable(dfg, sym))
+printVariable(dfg::AbstractDFG, sym::Symbol; kwargs...) = printVariable(getVariable(dfg, sym); kwargs...)
 
-printNode(dfg::AbstractDFG, sym::Symbol) = isVariable(dfg,sym) ? printVariable(dfg, sym) : printFactor(dfg, sym)
+printNode(dfg::AbstractDFG, sym::Symbol; kwargs...) = isVariable(dfg,sym) ? printVariable(dfg, sym; kwargs...) : printFactor(dfg, sym; kwargs...)
 
 
 ##==============================================================================

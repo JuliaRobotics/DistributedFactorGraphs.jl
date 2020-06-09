@@ -1,3 +1,4 @@
+#TODO Test with standard generated graphs from IIF
 # Add some nodes.
 v1 = addVariable!(dfg, :a, ContinuousScalar, labels = [:POSE])
 addFactor!(dfg, [:a], Prior(Normal(0,1)))
