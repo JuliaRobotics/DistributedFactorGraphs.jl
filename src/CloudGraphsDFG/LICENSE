@@ -4,25 +4,26 @@ The Caesar.jl ecosystem, including DistributedFactorGraphs.jl, is
 not publically licensed for building, incorporating, or using in any 
 manner related to webservices public or private cloud offerings. 
 Further information or interest for such an additional license can be 
-requested by emailing <info@navability.io>.  NavAbility retains all 
-rights with regard to use of ths software for private or public 
-webservice/cloud offerings, development, or deployments.
+requested by emailing <info@navability.io>.
 
-Use CloudGraphDFG driver library outside of webservice development 
-or offering is governed by the the LGPLv3 license which is copied 
-below.  NavAbility reserves all rights to deny use for webservice 
-offerings over and above any conflicts that may arise with the 
-unmodified LGPLv3 license copied hereafter.
+NavAbility reserves all rights regarding, and to deny use of the software 
+for private or public, webservice or cloud use, offerings, development, 
+or deployments; over and above any conflicts that may arise 
+with the unmodified LGPLv3 license.
 
-The CloudGraphDFG driver is an optional library used by the 
+Other public use or modification of CloudGraphDFG driver library outside 
+of webservice or cloud (private or public) use is permitted according 
+to terms defined by LGPLv3 copied hereafter. 
+
+The CloudGraphDFG driver is an optional library/driver used by the 
 DistributedFactorGraph.jl/Caesar.jl related ecosystem, 
-and is not required for SLAM related computations as provided by 
+and is not required for related computations as provided by 
 the Caesar.jl system -- please visit JuliaRobotics/Caesar.jl for 
 more details.
 
 A standalone CloudGraphsDFG driver can be obtained by simply copying
 the folder src/CloudGraphsDFG, and a library header definition 
-(i.e. a "Julia Module") is defined in the file CloudGraphsDFG.jl.
+(i.e. a "Julia Module") can be found in the file CloudGraphsDFG.jl.
 
 
                    GNU LESSER GENERAL PUBLIC LICENSE
