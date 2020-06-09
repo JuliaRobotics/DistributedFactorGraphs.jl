@@ -56,7 +56,10 @@ function printFactor(io::IO, vert::DFGFactor;
     ioc = IOContext(io, :limit=>limit, :compact=>compact)
 
     if short
-        printstyled(ioc, summary(vert),"\n", bold=true)
+        opmemt = (getSolverData(vert).fnc |> typeof).name
+        fct = getFactorType(vert)
+        fctt = fct |> typeof
+        printstyled(ioc, typeof(vert).name, "{",opmemt,"{",fctt.name,"...}}","\n", bold=true)
         println(ioc, "  label: ", vert.label)
         println(ioc, "  solvable: ", vert.solvable)
         println(ioc, "  VariableOrder: ", vert._variableOrderSymbols)
@@ -65,9 +68,7 @@ function printFactor(io::IO, vert::DFGFactor;
         println(ioc, "  timestamp: ", vert.timestamp)
         println(ioc, "  nstime: ",vert.nstime)
         println(ioc, "  tags: ", vert.tags)
-        fct = getFactorType(vert)
-        fctt = fct |> typeof
-        println(ioc, "  Type: ", fctt)
+        println(ioc, "  TYPE: ", fctt)
         # show(ioc, fctt)
         for f in setdiff(fieldnames(fctt), skipfields)
             printstyled(ioc, f,":\n", color=:blue)
