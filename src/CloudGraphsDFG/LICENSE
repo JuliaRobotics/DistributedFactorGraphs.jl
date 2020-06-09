@@ -1,28 +1,27 @@
 Copyright (c) 2017-2020 NavAbility
 
 The Caesar.jl ecosystem, including DistributedFactorGraphs.jl, is 
-not publically licensed for building, incorporating, or using in any 
-manner related to webservices public or private cloud offerings. 
-Further information or interest for such an additional license can be 
-requested by emailing <info@navability.io>.
-
+not licensed for using, building, incorporating, or using in any 
+manner related to a public or private webservice or cloud system. 
+Further information or potential interest for such an 
+additional license can be requested by emailing <info@navability.io>.
 NavAbility reserves all rights regarding, and to deny use of the software 
 for private or public, webservice or cloud use, offerings, development, 
 or deployments; over and above any conflicts that may arise 
-with the unmodified LGPLv3 license.
+with the unmodified LGPLv3 license copied hereafter.
 
-Other public use or modification of CloudGraphDFG driver library outside 
-of webservice or cloud (private or public) use is permitted according 
-to terms defined by LGPLv3 copied hereafter. 
+Other open-source use or modification of the CloudGraphDFG library/driver 
+beyond that of webservices or clouds (private or public) is permitted 
+according to terms defined by LGPLv3.
 
-The CloudGraphDFG driver is an optional library/driver used by the 
+The CloudGraphDFG library/driver is an optional library of the 
 DistributedFactorGraph.jl/Caesar.jl related ecosystem, 
-and is not required for related computations as provided by 
-the Caesar.jl system -- please visit JuliaRobotics/Caesar.jl for 
-more details.
+but is NOT required for related computations and other features offered 
+by the Caesar.jl system.  Please visit JuliaRobotics/Caesar.jl for 
+more details on use of the software without the CloudGraphsDFG library.
 
 A standalone CloudGraphsDFG driver can be obtained by simply copying
-the folder src/CloudGraphsDFG, and a library header definition 
+the folder src/CloudGraphsDFG, and a library "header" definition 
 (i.e. a "Julia Module") can be found in the file CloudGraphsDFG.jl.
 
 
