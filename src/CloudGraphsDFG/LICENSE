@@ -1,9 +1,8 @@
 Copyright (c) 2017-2020 NavAbility
 
-The Caesar.jl ecosystem, including DistributedFactorGraphs.jl, is 
-not licensed for hosted, webservice or cloud solutions (public or private). 
-Please contact NavAbility via email at <info@navability.io> for clarification 
-or additional licensing options.
+DistributedFactorGraphs.jl is not licensed for hosted, webservice or cloud 
+solutions (public or private).  Please contact NavAbility via email at 
+<info@navability.io> for clarification or additional licensing options.
 NavAbility reserves all rights regarding, and to deny use of the software 
 for hosted webservice or cloud offerings or deployments; over and above 
 any conflicts that may arise with the LGPLv3 license copied hereafter.
