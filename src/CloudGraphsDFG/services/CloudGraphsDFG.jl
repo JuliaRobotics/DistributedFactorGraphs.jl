@@ -163,8 +163,8 @@ function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariable
     neo4jNode = Neo4j.createnode(dfg.neo4jInstance.graph, props);
     Neo4j.updatenodelabels(neo4jNode, union([string(variable.label), "VARIABLE", dfg.userId, dfg.robotId, dfg.sessionId], variable.tags))
 
-    # Make sure that if there exists a SESSION sentinel that it is attached.
-    _bindSessionNodeToInitialVariable(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, string(variable.label))
+    # Attach the node to the session sentinel.
+    _bindSessionNodeToSessionData(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, string(variable.label))
 
     # Track insertion
     push!(dfg.addHistory, variable.label)
@@ -181,7 +181,6 @@ function addFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor
     variableIds = factor._variableOrderSymbols
     variables = map(vId -> getVariable(dfg, vId), variableIds)
 
-
     # Construct the properties to save
     props = packFactor(dfg, factor)
 
@@ -197,6 +196,9 @@ function addFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor
             _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, variable.label))
         Neo4j.createrel(neo4jNode, vNode, "FACTORGRAPH")
     end
+
+    # Attach the node to the session sentinel.
+    _bindSessionNodeToSessionData(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, string(factor.label))
 
     return factor
 end
@@ -475,9 +477,9 @@ end
 
 ### PPEs with DB calls
 
-function listPPEs(dfg::CloudGraphsDFG, variablekey::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Vector{Symbol}
-    query = "match (ppe:$(join(_getLabelsForType(dfg, MeanMaxPPE, parentKey=variablekey),':'))) return ppe.solverKey"
-    @debug "[Query] PPE read query:\r\n$query"
+function listVarSubnodesForType(dfg::CloudGraphsDFG, variablekey::Symbol, dfgType::Type, keyToReturn::String; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Vector{Symbol}
+    query = "match (ppe:$(join(_getLabelsForType(dfg, dfgType, parentKey=variablekey),':'))) return ppe.$keyToReturn"
+    @debug "[Query] listVarSubnodesForType query:\r\n$query"
     result = nothing
     if currentTransaction != nothing
         result = currentTransaction(query; submit=true)
@@ -491,9 +493,9 @@ function listPPEs(dfg::CloudGraphsDFG, variablekey::Symbol; currentTransaction::
     return Symbol.(vals)
 end
 
-function getPPE(dfg::CloudGraphsDFG, variablekey::Symbol, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::AbstractPointParametricEst
-    query = "match (ppe:$(join(_getLabelsForType(dfg, MeanMaxPPE, parentKey=variablekey),':')):$(ppekey)) return properties(ppe)"
-    @debug "[Query] PPE read query:\r\n$query"
+function getVarSubnodeProperties(dfg::CloudGraphsDFG, variablekey::Symbol, dfgType::Type, nodeKey::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+    query = "match (node:$(join(_getLabelsForType(dfg, dfgType, parentKey=variablekey),':')):$nodeKey) return properties(node)"
+    @debug "[Query] getVarSubnodeProperties query:\r\n$query"
     result = nothing
     if currentTransaction != nothing
         result = currentTransaction(query; submit=true)
@@ -503,28 +505,26 @@ function getPPE(dfg::CloudGraphsDFG, variablekey::Symbol, ppekey::Symbol=:defaul
         result = commit(tx)
     end
     length(result.errors) > 0 && error(string(result.errors))
-    length(result.results[1]["data"]) != 1 && error("Cannot find PPE '$ppekey' for variable '$variablekey'")
-    length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot find PPE '$ppekey' for variable '$variablekey'")
-    return unpackPPE(dfg, result.results[1]["data"][1]["row"][1])
+    length(result.results[1]["data"]) != 1 && error("Cannot find PPE '$nodeKey' for variable '$variablekey'")
+    length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot find PPE '$nodeKey' for variable '$variablekey'")
+    return result.results[1]["data"][1]["row"][1]
 end
 
-function addPPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::AbstractPointParametricEst where P <: AbstractPointParametricEst
-    if ppekey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction)
-        error("PPE '$(ppekey)' already exists")
-    end
-    return _matchmergePPE!(dfg, variablekey, ppe, ppekey, currentTransaction=currentTransaction)
-end
-
-#TODO clean this, just to match api for update
-function _matchmergePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::P where P <: AbstractPointParametricEst
-    packed = packPPE(dfg, ppe)
+function _matchmergeVarSubnode!(
+        dfg::CloudGraphsDFG,
+        variablekey::Symbol,
+        packedProperties::Dict{String, Any},
+        relationshipKey::Symbol,
+        nodeLabels::Vector{String},
+        nodeKey::Symbol=:default;
+        currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
     query = """
                 MATCH (var:$variablekey:$(join(_getLabelsForType(dfg, DFGVariable, parentKey=variablekey),':')))
-                MERGE (ppe:$(join(_getLabelsForInst(dfg, ppe, parentKey=variablekey),':')))
-                SET ppe = $(_dictToNeo4jProps(packed))
-                CREATE UNIQUE (var)-[:PPE]->(ppe)
-                RETURN properties(ppe)"""
-    @debug "[Query] PPE update query:\r\n$query"
+                MERGE (subnode:$(join(nodeLabels,':')))
+                SET subnode = $(_dictToNeo4jProps(packedProperties))
+                CREATE UNIQUE (var)-[:$relationshipKey]->(subnode)
+                RETURN properties(subnode)"""
+    @debug "[Query] _matchmergeVarSubnode! query:\r\n$query"
     result = nothing
     if currentTransaction != nothing
         result = currentTransaction(query; submit=true) # TODO: Maybe we should submit (; submit = true) for the results to fail early?
@@ -534,16 +534,102 @@ function _matchmergePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppeke
         result = commit(tx)
     end
     length(result.errors) > 0 && error(string(result.errors))
-    length(result.results[1]["data"]) != 1 && error("Cannot find PPE '$(ppe.solverKey)' for variable '$variablekey'")
-    length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot find PPE '$(ppe.solverKey)' for variable '$variablekey'")
-    return unpackPPE(dfg, result.results[1]["data"][1]["row"][1])
+    length(result.results[1]["data"]) != 1 && error("Cannot find subnode '$(ppe.solverKey)' for variable '$variablekey'")
+    length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot find subnode '$(ppe.solverKey)' for variable '$variablekey'")
+    return result.results[1]["data"][1]["row"][1]
+end
+
+function _deleteVarSubnode!(
+        dfg::CloudGraphsDFG,
+        variablekey::Symbol,
+        relationshipKey::Symbol,
+        nodeLabels::Vector{String},
+        nodekey::Symbol=:default;
+        currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+    query = """
+    match (node:$nodekey:$(join(nodeLabels,':')))
+    with node, properties(node) as props
+    detach delete node
+    return props
+    """
+    @debug "[Query] _deleteVarSubnode delete query:\r\n$query"
+    result = nothing
+    if currentTransaction != nothing
+        result = currentTransaction(query; submit=true) # TODO: Maybe we should submit (; submit = true) for the results to fail early?
+    else
+        tx = transaction(dfg.neo4jInstance.connection)
+        tx(query)
+        result = commit(tx)
+    end
+    length(result.errors) > 0 && error(string(result.errors))
+    length(result.results[1]["data"]) != 1 && error("Cannot find subnode '$nodekey' for variable '$variablekey'")
+    length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot find subnode '$nodekey' for variable '$variablekey'")
+    return result.results[1]["data"][1]["row"][1]
+end
+
+function listPPEs(dfg::CloudGraphsDFG, variablekey::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Vector{Symbol}
+    return listVarSubnodesForType(dfg, variablekey, MeanMaxPPE, "solverKey"; currentTransaction=currentTransaction)
+end
+
+function getPPE(dfg::CloudGraphsDFG, variablekey::Symbol, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::AbstractPointParametricEst
+    properties = getVarSubnodeProperties(dfg, variablekey, MeanMaxPPE, ppekey; currentTransaction=currentTransaction)
+    return unpackPPE(dfg, properties)
+end
+
+function listVariableSolverData(dfg::CloudGraphsDFG, variablekey::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Vector{Symbol}
+    return listVarSubnodesForType(dfg, variablekey, VariableNodeData, "solverKey"; currentTransaction=currentTransaction)
+end
+
+function getVariableSolverData(dfg::CloudGraphsDFG, variablekey::Symbol, solverkey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::VariableNodeData
+    properties = getVarSubnodeProperties(dfg, variablekey, VariableNodeData, solverkey; currentTransaction=currentTransaction)
+    return unpackVariableNodeData(dfg, properties)
+end
+
+
+function addPPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::AbstractPointParametricEst where P <: AbstractPointParametricEst
+    if ppekey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction)
+        error("PPE '$(ppekey)' already exists")
+    end
+    return unpackPPE(dfg, _matchmergeVarSubnode!(
+        dfg,
+        variablekey,
+        packPPE(dfg, ppe),
+        :PPE,
+        _getLabelsForInst(dfg, ppe, parentKey=variablekey),
+        ppekey,
+        currentTransaction=currentTransaction))
+end
+
+function addVariableSolverData!(dfg::CloudGraphsDFG,
+                                variablekey::Symbol,
+                                vnd::VariableNodeData,
+                                solvekey::Symbol=:default;
+                                currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::VariableNodeData
+    if solvekey in listVariableSolverData(dfg, variablekey, currentTransaction=currentTransaction)
+        error("Solver data '$(solvekey)' already exists")
+    end
+    return unpackVariableNodeData(dfg, _matchmergeVarSubnode!(
+        dfg,
+        variablekey,
+        packVariableNodeData(dfg, vnd),
+        :SOLVERDATA,
+        _getLabelsForInst(dfg, vnd, parentKey=variablekey),
+        solvekey,
+        currentTransaction=currentTransaction))
 end
 
 function updatePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::P where P <: AbstractPointParametricEst
     if !(ppekey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction))
         @warn "PPE '$(ppekey)' does not exist, adding"
     end
-    return _matchmergePPE!(dfg, variablekey, ppe, ppekey, currentTransaction=currentTransaction)
+    return unpackPPE(dfg, _matchmergeVarSubnode!(
+        dfg,
+        variablekey,
+        packPPE(dfg, ppe),
+        :PPE,
+        _getLabelsForInst(dfg, ppe, parentKey=variablekey),
+        ppekey,
+        currentTransaction=currentTransaction))
 end
 
 function updatePPE!(dfg::CloudGraphsDFG, sourceVariables::Vector{<:DFGVariable}, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
@@ -558,50 +644,39 @@ function updatePPE!(dfg::CloudGraphsDFG, sourceVariables::Vector{<:DFGVariable},
 end
 
 function deletePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::AbstractPointParametricEst
-    query = """
-    match (ppe:$ppekey:$(join(_getLabelsForType(dfg, MeanMaxPPE, parentKey=variablekey),':')))
-    with ppe, properties(ppe) as props
-    detach delete ppe
-    return props
-    """
-    @debug "[Query] PPE delete query:\r\n$query"
-    result = nothing
-    if currentTransaction != nothing
-        result = currentTransaction(query; submit=true) # TODO: Maybe we should submit (; submit = true) for the results to fail early?
-    else
-        tx = transaction(dfg.neo4jInstance.connection)
-        tx(query)
-        result = commit(tx)
-    end
-    length(result.errors) > 0 && error(string(result.errors))
-    length(result.results[1]["data"]) != 1 && error("Cannot find PPE '$ppekey' for variable '$variablekey'")
-    length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot find PPE '$ppekey' for variable '$variablekey'")
-    return unpackPPE(dfg, @show result.results[1]["data"][1]["row"][1])
+    props = _deleteVarSubnode!(
+        dfg,
+        variablekey,
+        :PPE,
+        _getLabelsForType(dfg, MeanMaxPPE, parentKey=variablekey),
+        ppekey,
+        currentTransaction=currentTransaction)
+    return unpackPPE(dfg, props)
 end
 
 ### Updated functions from AbstractDFG
 ### These functions write back as you add the data.
 
-function addVariableSolverData!(dfg::CloudGraphsDFG,
-                                variablekey::Symbol,
-                                vnd::VariableNodeData,
-                                solvekey::Symbol=:default)::VariableNodeData
-    # TODO: Switch out to their own nodes, don't get the whole variable
-    var = getVariable(dfg, variablekey)
-    if haskey(var.solverDataDict, solvekey)
-        error("VariableNodeData '$(solvekey)' already exists")
-    end
-    var.solverDataDict[solvekey] = vnd
-
-    # TODO: Cleanup and consolidate as one function.
-    solverDataDict = JSON2.write(Dict(keys(var.solverDataDict) .=> map(vnd -> packVariableNodeData(dfg, vnd), values(var.solverDataDict))))
-    _setNodeProperty(
-        dfg.neo4jInstance,
-        _getLabelsForInst(dfg, var),
-        "solverDataDict",
-        solverDataDict)
-    return vnd
-end
+# function addVariableSolverData!(dfg::CloudGraphsDFG,
+#                                 variablekey::Symbol,
+#                                 vnd::VariableNodeData,
+#                                 solvekey::Symbol=:default)::VariableNodeData
+#     # TODO: Switch out to their own nodes, don't get the whole variable
+#     var = getVariable(dfg, variablekey)
+#     if haskey(var.solverDataDict, solvekey)
+#         error("VariableNodeData '$(solvekey)' already exists")
+#     end
+#     var.solverDataDict[solvekey] = vnd
+#
+#     # TODO: Cleanup and consolidate as one function.
+#     solverDataDict = JSON2.write(Dict(keys(var.solverDataDict) .=> map(vnd -> packVariableNodeData(dfg, vnd), values(var.solverDataDict))))
+#     _setNodeProperty(
+#         dfg.neo4jInstance,
+#         _getLabelsForInst(dfg, var),
+#         "solverDataDict",
+#         solverDataDict)
+#     return vnd
+# end
 
 function updateVariableSolverData!(dfg::CloudGraphsDFG,
                                    variablekey::Symbol,

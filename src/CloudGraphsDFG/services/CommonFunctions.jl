@@ -138,18 +138,18 @@ end
 
 """
 $(SIGNATURES)
-Bind the SESSION node to the inital variable.
+Bind the SESSION node to the variable or factor.
 Checks for existence.
 """
-function _bindSessionNodeToInitialVariable(neo4jInstance::Neo4jInstance, userId::String, robotId::String, sessionId::String, initialVariableLabel::String)::Nothing
+function _bindSessionNodeToSessionData(neo4jInstance::Neo4jInstance, userId::String, robotId::String, sessionId::String, nodeLabel::String)::Nothing
     # 2. Perform the transaction
     loadtx = transaction(neo4jInstance.connection)
     query = """
     match (session:SESSION:$userId:$robotId:$sessionId),
-    (var:VARIABLE:$userId:$robotId:$sessionId
-    {label: '$initialVariableLabel'})
-    WHERE NOT (session)-[:VARIABLE]->()
-    CREATE (session)-[:VARIABLE]->(var) return id(var)
+    (n:$userId:$robotId:$sessionId:$nodeLabel
+    {label: '$nodeLabel'})
+    WHERE NOT (session)-[:SESSIONDATA]->()
+    CREATE (session)-[:SESSIONDATA]->(n) return id(n)
     """;
     loadtx(query; submit=true)
     commit(loadtx)
@@ -213,6 +213,8 @@ function _getLabelsForType(dfg::CloudGraphsDFG, type::Type; parentKey::Union{Not
         (labels = [dfg.userId, dfg.robotId, dfg.sessionId, "FACTOR"])
     type <: AbstractPointParametricEst &&
         (labels = [dfg.userId, dfg.robotId, dfg.sessionId, "PPE"])
+    type <: VariableNodeData &&
+        (labels = [dfg.userId, dfg.robotId, dfg.sessionId, "SOLVERDATA"])
     type <: AbstractBigDataEntry &&
         (labels = [dfg.userId, dfg.robotId, dfg.sessionId, "DATA"])
     # Some are children of nodes, so add that in if it's set.
@@ -226,13 +228,13 @@ $(SIGNATURES)
 Get the Neo4j labels for any node instance.
 """
 function _getLabelsForInst(dfg::CloudGraphsDFG,
-                            inst::Union{User, Robot, Session, N, APPE, ABDE}; parentKey::Union{Nothing, Symbol}=nothing)::Vector{String} where
-                            {N <: DFGNode, APPE <: AbstractPointParametricEst, ABDE <: AbstractBigDataEntry}
+                            inst::Union{User, Robot, Session, N, APPE, ABDE, AVND}; parentKey::Union{Nothing, Symbol}=nothing)::Vector{String} where
+                            {N <: DFGNode, APPE <: AbstractPointParametricEst, ABDE <: AbstractBigDataEntry, AVND <: VariableNodeData}
     labels = _getLabelsForType(dfg, typeof(inst), parentKey=parentKey)
     typeof(inst) <: DFGVariable && push!(labels, String(getLabel(inst)))
     typeof(inst) <: DFGFactor && push!(labels, String(getLabel(inst)))
     typeof(inst) <: AbstractPointParametricEst && push!(labels, String(inst.solverKey))
+    # typeof(inst) <: VariableNodeData && push!(labels, String(inst.solverKey))
     typeof(inst) <: AbstractBigDataEntry && push!(labels, String(inst.key))
-    # Some are children of nodes, so add that in if it's set.
     return labels
 end
