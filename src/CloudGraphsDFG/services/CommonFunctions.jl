@@ -148,8 +148,7 @@ function _bindSessionNodeToSessionData(neo4jInstance::Neo4jInstance, userId::Str
     match (session:SESSION:$userId:$robotId:$sessionId),
     (n:$userId:$robotId:$sessionId:$nodeLabel
     {label: '$nodeLabel'})
-    WHERE NOT (session)-[:SESSIONDATA]->()
-    CREATE (session)-[:SESSIONDATA]->(n) return id(n)
+    CREATE UNIQUE (session)-[:SESSIONDATA]->(n) return id(n)
     """;
     loadtx(query; submit=true)
     commit(loadtx)
@@ -197,7 +196,9 @@ $(SIGNATURES)
 
 Get the Neo4j labels for any node type.
 """
-function _getLabelsForType(dfg::CloudGraphsDFG, type::Type; parentKey::Union{Nothing, Symbol}=nothing)::Vector{String}
+function _getLabelsForType(dfg::CloudGraphsDFG,
+        type::Type;
+        parentKey::Union{Nothing, Symbol}=nothing)::Vector{String}
     # Simple validation
     isempty(dfg.userId) && error("The DFG object's userID is empty, please specify a user ID.")
     isempty(dfg.robotId) && error("The DFG object's robotID is empty, please specify a robot ID.")
@@ -228,13 +229,15 @@ $(SIGNATURES)
 Get the Neo4j labels for any node instance.
 """
 function _getLabelsForInst(dfg::CloudGraphsDFG,
-                            inst::Union{User, Robot, Session, N, APPE, ABDE, AVND}; parentKey::Union{Nothing, Symbol}=nothing)::Vector{String} where
-                            {N <: DFGNode, APPE <: AbstractPointParametricEst, ABDE <: AbstractBigDataEntry, AVND <: VariableNodeData}
+                            inst::Union{User, Robot, Session, VariableNodeData, N, APPE, ABDE};
+                            parentKey::Union{Nothing, Symbol}=nothing)::Vector{String} where
+                            {N <: DFGNode, APPE <: AbstractPointParametricEst, ABDE <: AbstractBigDataEntry}
     labels = _getLabelsForType(dfg, typeof(inst), parentKey=parentKey)
     typeof(inst) <: DFGVariable && push!(labels, String(getLabel(inst)))
     typeof(inst) <: DFGFactor && push!(labels, String(getLabel(inst)))
     typeof(inst) <: AbstractPointParametricEst && push!(labels, String(inst.solverKey))
-    # typeof(inst) <: VariableNodeData && push!(labels, String(inst.solverKey))
+    typeof(inst) isa VariableNodeData && push!(labels, String(inst.solverKey))
     typeof(inst) <: AbstractBigDataEntry && push!(labels, String(inst.key))
+    @show typeof(inst)
     return labels
 end

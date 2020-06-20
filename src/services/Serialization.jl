@@ -63,7 +63,8 @@ function packVariableNodeData(dfg::G, d::VariableNodeData)::PackedVariableNodeDa
                                 d.ismargin,
                                 d.dontmargin,
                                 d.solveInProgress,
-                                d.solvedCount)
+                                d.solvedCount,
+                                d.solverKey)
 end
 
 function unpackVariableNodeData(dfg::G, d::PackedVariableNodeData)::VariableNodeData where G <: AbstractDFG
@@ -86,7 +87,7 @@ function unpackVariableNodeData(dfg::G, d::PackedVariableNodeData)::VariableNode
 
   return VariableNodeData{st}(M3,M4, d.BayesNetOutVertIDs,
     d.dimIDs, d.dims, d.eliminated, d.BayesNetVertID, d.separator,
-    st(), d.initialized, d.inferdim, d.ismargin, d.dontmargin, d.solveInProgress, d.solvedCount)
+    st(), d.initialized, d.inferdim, d.ismargin, d.dontmargin, d.solveInProgress, d.solvedCount, d.solverKey)
 end
 
 ##==============================================================================
