@@ -84,8 +84,8 @@ VariableNodeData(val::Array{Float64,2},
                                        solverKey)
 
 
-VariableNodeData(softtype::T) where T <: InferenceVariable =
-    VariableNodeData{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], softtype, false, 0.0, false, false, 0, 0, :default)
+VariableNodeData(softtype::T; solverKey::Symbol=:default) where T <: InferenceVariable =
+    VariableNodeData{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], softtype, false, 0.0, false, false, 0, 0, solverKey)
 
 ##==============================================================================
 ## PackedVariableNodeData.jl

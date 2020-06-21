@@ -513,10 +513,9 @@ end
 function _matchmergeVarSubnode!(
         dfg::CloudGraphsDFG,
         variablekey::Symbol,
-        packedProperties::Dict{String, Any},
-        relationshipKey::Symbol,
         nodeLabels::Vector{String},
-        nodeKey::Symbol=:default;
+        packedProperties::Dict{String, Any},
+        relationshipKey::Symbol;
         currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
     query = """
                 MATCH (var:$variablekey:$(join(_getLabelsForType(dfg, DFGVariable, parentKey=variablekey),':')))
@@ -547,10 +546,10 @@ function _deleteVarSubnode!(
         nodekey::Symbol=:default;
         currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
     query = """
-    match (node:$nodekey:$(join(nodeLabels,':')))
-    with node, properties(node) as props
-    detach delete node
-    return props
+    MATCH (node:$nodekey:$(join(nodeLabels,':')))
+    WITH node, properties(node) as props
+    DETACH DELETE node
+    RETURN props
     """
     @debug "[Query] _deleteVarSubnode delete query:\r\n$query"
     result = nothing
@@ -580,91 +579,85 @@ function listVariableSolverData(dfg::CloudGraphsDFG, variablekey::Symbol; curren
     return listVarSubnodesForType(dfg, variablekey, VariableNodeData, "solverKey"; currentTransaction=currentTransaction)
 end
 
-function getVariableSolverData(dfg::CloudGraphsDFG, variablekey::Symbol, solverkey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::VariableNodeData
-    properties = getVarSubnodeProperties(dfg, variablekey, VariableNodeData, "solverKey"; currentTransaction=currentTransaction)
+function getVariableSolverData(dfg::CloudGraphsDFG, variablekey::Symbol, solverKey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::VariableNodeData
+    properties = getVarSubnodeProperties(dfg, variablekey, VariableNodeData, solverKey; currentTransaction=currentTransaction)
     vnd = JSON2.read(properties["data"], PackedVariableNodeData)
     return unpackVariableNodeData(dfg, vnd)
 end
 
 
-function addPPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::AbstractPointParametricEst where P <: AbstractPointParametricEst
-    if ppekey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction)
-        error("PPE '$(ppekey)' already exists")
+function addPPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::AbstractPointParametricEst where P <: AbstractPointParametricEst
+    if ppe.solverKey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction)
+        error("PPE '$(ppe.solverKey)' already exists")
     end
     return unpackPPE(dfg, _matchmergeVarSubnode!(
         dfg,
         variablekey,
+        @show _getLabelsForInst(dfg, ppe, parentKey=variablekey),
         packPPE(dfg, ppe),
         :PPE,
-        _getLabelsForInst(dfg, ppe, parentKey=variablekey),
-        ppekey,
         currentTransaction=currentTransaction))
 end
 
 function addVariableSolverData!(dfg::CloudGraphsDFG,
                                 variablekey::Symbol,
-                                vnd::VariableNodeData,
-                                solverkey::Symbol=:default;
+                                vnd::VariableNodeData;
                                 currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::VariableNodeData
-    if solverkey in listVariableSolverData(dfg, variablekey, currentTransaction=currentTransaction)
-        error("Solver data '$(solverkey)' already exists")
+    if vnd.solverKey in listVariableSolverData(dfg, variablekey, currentTransaction=currentTransaction)
+        error("Solver data '$(vnd.solverKey)' already exists")
     end
     # Pack the data into a single property because we're not using it for filtering.
     packData = Dict{String, Any}(
         "data" => JSON2.write(packVariableNodeData(dfg, vnd)),
-        "solverKey" => String(solverkey))
+        "solverKey" => String(vnd.solverKey))
     retPacked = _matchmergeVarSubnode!(
         dfg,
         variablekey,
+        _getLabelsForInst(dfg, vnd, parentKey=variablekey),
         packData,
         :SOLVERDATA,
-        _getLabelsForInst(dfg, vnd, parentKey=variablekey),
-        solverkey,
         currentTransaction=currentTransaction)
     return unpackVariableNodeData(dfg, JSON2.read(retPacked["data"], PackedVariableNodeData))
 end
 
 function updateVariableSolverData!(dfg::CloudGraphsDFG,
                                 variablekey::Symbol,
-                                vnd::VariableNodeData,
-                                solverkey::Symbol=:default;
+                                vnd::VariableNodeData;
                                 currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::VariableNodeData
-    if !(solverkey in listVariableSolverData(dfg, variablekey, currentTransaction=currentTransaction))
-        @warn "Solver data '$(solverkey)' does not exist, adding"
+    if !(vnd.solverKey in listVariableSolverData(dfg, variablekey, currentTransaction=currentTransaction))
+        @warn "Solver data '$(vnd.solverKey)' does not exist, adding"
     end
     # Pack the data into a single property because we're not using it for filtering.
     packData = Dict{String, Any}(
         "data" => JSON2.write(packVariableNodeData(dfg, vnd)),
-        "solverKey" => String(solverkey))
+        "solverKey" => String(vnd.solverKey))
     retPacked = _matchmergeVarSubnode!(
         dfg,
         variablekey,
+        _getLabelsForInst(dfg, vnd, parentKey=variablekey),
         packData,
         :SOLVERDATA,
-        _getLabelsForInst(dfg, vnd, parentKey=variablekey),
-        solverkey,
         currentTransaction=currentTransaction)
     return unpackVariableNodeData(dfg, JSON2.read(retPacked["data"], PackedVariableNodeData))
 end
 
-function updatePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::P where P <: AbstractPointParametricEst
-    if !(ppekey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction))
+function updatePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::P where P <: AbstractPointParametricEst
+    if !(ppe.solverKey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction))
         @warn "PPE '$(ppekey)' does not exist, adding"
     end
     return unpackPPE(dfg, _matchmergeVarSubnode!(
         dfg,
         variablekey,
+        _getLabelsForInst(dfg, ppe, parentKey=variablekey),
         packPPE(dfg, ppe),
         :PPE,
-        _getLabelsForInst(dfg, ppe, parentKey=variablekey),
-        ppekey,
         currentTransaction=currentTransaction))
 end
 
 function updatePPE!(dfg::CloudGraphsDFG, sourceVariables::Vector{<:DFGVariable}, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
     tx = currentTransaction == nothing ? transaction(dfg.neo4jInstance.connection) : currentTransaction
     for var in sourceVariables
-        updatePPE!(dfg, var.label, getPPE(var, ppekey), ppekey, currentTransaction=tx)
+        updatePPE!(dfg, var.label, getPPE(var, ppekey), currentTransaction=tx)
     end
     if currentTransaction == nothing
         result = commit(tx)
@@ -766,7 +759,6 @@ function updateVariableSolverData!(dfg::CloudGraphsDFG,
                                    solvekey::Symbol=:default,
                                    useCopy::Bool=true,
                                    fields::Vector{Symbol}=Symbol[] )
-    # TODO: Switch out to their own nodes, don't get the whole variable
     #TODO: Do in bulk for speed.
     for var in sourceVariables
         updateVariableSolverData!(dfg, var.label, getSolverData(var, solvekey), solvekey, useCopy, fields)
@@ -792,19 +784,13 @@ end
 # end
 
 function mergeVariableSolverData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable)
-    # TODO: Switch out to their own nodes, don't get the whole variable
-    var = getVariable(dfg, sourceVariable.label)
-
-    merge!(var.solverDataDict, deepcopy(sourceVariable.solverDataDict))
-
-    # TODO: Cleanup and consolidate
-    solverDataDict = JSON2.write(Dict(keys(var.solverDataDict) .=> map(vnd -> packVariableNodeData(dfg, vnd), values(var.solverDataDict))))
-    _setNodeProperty(
-        dfg.neo4jInstance,
-        _getLabelsForInst(dfg, var),
-        "solverDataDict",
-        solverDataDict)
-    return var
+    for solverKey in listVariableSolverData(dfg, sourceVariable.label)
+        updateVariableSolverData!(
+            dfg,
+            sourceVariable.label,
+            getVariableSolverData(dfg, sourceVariable, solverKey),
+            solverKey)
+    end
 end
 
 function getSolvable(dfg::CloudGraphsDFG, sym::Symbol)

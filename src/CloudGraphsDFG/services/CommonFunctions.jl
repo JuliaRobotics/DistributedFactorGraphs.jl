@@ -236,7 +236,7 @@ function _getLabelsForInst(dfg::CloudGraphsDFG,
     typeof(inst) <: DFGVariable && push!(labels, String(getLabel(inst)))
     typeof(inst) <: DFGFactor && push!(labels, String(getLabel(inst)))
     typeof(inst) <: AbstractPointParametricEst && push!(labels, String(inst.solverKey))
-    typeof(inst) isa VariableNodeData && push!(labels, String(inst.solverKey))
+    typeof(inst) <: VariableNodeData && push!(labels, String(inst.solverKey))
     typeof(inst) <: AbstractBigDataEntry && push!(labels, String(inst.key))
     @show typeof(inst)
     return labels
