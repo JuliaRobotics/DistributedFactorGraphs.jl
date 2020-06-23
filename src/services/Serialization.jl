@@ -199,27 +199,3 @@ function getTypeFromSerializationModule(dfg::G, moduleType::Symbol) where G <: A
     end
     return st
 end
-
-"""
-$(SIGNATURES)
-Pack a PPE into a Dict{String, Any}.
-"""
-function packPPE(dfg::G, ppe::P)::Dict{String, Any} where {G <: AbstractDFG, P <: AbstractPointParametricEst}
-    packedPPE = JSON.parse(JSON.json(ppe)) #TODO: Maybe better way to serialize as dictionary?
-    packedPPE[TYPEKEY] = string(typeof(ppe)) # Append the type
-    return packedPPE
-end
-
-"""
-$(SIGNATURES)
-Unpack a Dict{String, Any} into a PPE.
-"""
-function unpackPPE(dfg::G, packedPPE::Dict{String, Any})::AbstractPointParametricEst where G <: AbstractDFG
-    !haskey(packedPPE, TYPEKEY) && error("Cannot find type key '$TYPEKEY' in packed PPE data")
-    type = pop!(packedPPE, TYPEKEY)
-    (type == nothing || type == "") && error("Cannot deserialize PPE, type key is empty")
-    ppe = Unmarshal.unmarshal(
-            DistributedFactorGraphs.getTypeFromSerializationModule(dfg, Symbol(type)),
-            packedPPE)
-    return ppe
-end

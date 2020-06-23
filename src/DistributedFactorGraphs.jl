@@ -17,7 +17,7 @@ module DistributedFactorGraphs
 using Base
 using DocStringExtensions
 using Requires
-using Dates
+using Dates, TimeZones
 using Distributions
 using Reexport
 using JSON

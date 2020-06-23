@@ -137,6 +137,30 @@ mutable struct PackedVariableNodeData
                          x16::Int,
                          solvedCount::Int,
                          solverKey::Symbol) = new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16, solvedCount, solverKey)
+     # More permissive constructor needed for unmarshalling
+     PackedVariableNodeData(x1::Vector,
+                          x2::Int,
+                          x3::Vector,
+                          x4::Int,
+                          x5::Vector, # Int
+                          x6::Vector,
+                          x7::Int,
+                          x8::Bool,
+                          x9::Symbol, # Int
+                          x10::Vector, # Int
+                          x11::String,
+                          x12::Bool,
+                          x13::Float64,
+                          x14::Bool,
+                          x15::Bool,
+                          x16::Int,
+                          solvedCount::Int,
+                          solverKey::Symbol) = new(
+                                convert(Vector{Float64},x1),x2,
+                                convert(Vector{Float64},x3),x4,
+                                convert(Vector{Symbol},x5),
+                                convert(Vector{Int},x6),x7,x8,x9,
+                                convert(Vector{Symbol},x10),x11,x12,x13,x14,x15,x16, solvedCount, solverKey)
 end
 
 ##==============================================================================
@@ -162,13 +186,12 @@ struct MeanMaxPPE <: AbstractPointParametricEst
     suggested::Vector{Float64}
     max::Vector{Float64}
     mean::Vector{Float64}
-    lastUpdatedTimestamp::DateTime
+    lastUpdatedTimestamp::ZonedDateTime
 end
 ##------------------------------------------------------------------------------
 ## Constructors
 
-MeanMaxPPE(solverKey::Symbol, suggested::Vector{Float64}, max::Vector{Float64},mean::Vector{Float64}) = MeanMaxPPE(solverKey, suggested, max, mean, now())
-
+MeanMaxPPE(solverKey::Symbol, suggested::Vector{Float64}, max::Vector{Float64}, mean::Vector{Float64}) = MeanMaxPPE(solverKey, suggested, max, mean, now(tz"UTC"))
 
 ##==============================================================================
 ## DFG Variables

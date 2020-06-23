@@ -177,18 +177,32 @@ end
 
 """
 $(SIGNATURES)
-Gets the searchable labels for any CGDFG type.
-"""
 
-"""
-$(SIGNATURES)
-
-Build a Cypher-compliant set of properies from a JSON dictionary.
+Build a Cypher-compliant set of properies from a subnode type.
 Note individual values are serialized if they are not already.
 """
-function _dictToNeo4jProps(dict::Dict{String, Any})::String
-    # TODO: Use an IO buffer/stream for this
-    return "{" * join(map((k) -> "$k: $(JSON.json(dict[k]))", collect(keys(dict))), ", ")*"}"
+function _structToNeo4jProps(inst::Union{User, Robot, Session, PVND, N, APPE, ABDE})::String where
+        {N <: DFGNode, APPE <: AbstractPointParametricEst, ABDE <: AbstractBigDataEntry, PVND <: PackedVariableNodeData}
+    props = Dict{String, String}()
+    io = IOBuffer()
+    write(io, "{")
+    for fieldname in fieldnames(typeof(inst))
+        field = getfield(inst, fieldname)
+        val = nothing
+        # Neo4j type conversion if possible - keep timestamps timestamps, etc.
+        # TODO: Handle the cartesian conversion etc.
+        if field isa ZonedDateTime
+            val = "datetime(\"$(field)\")"
+        else
+            val = JSON2.write(field)
+        end
+        write(io, "$fieldname: $val,")
+    end
+    write(io, "_type: \"$(typeof(inst))\"")
+    write(io, "}")
+    # Ref String(): "When possible, the memory of v will be used without copying when the String object is created.
+    # This is guaranteed to be the case for byte vectors returned by take!" # Apparent replacement for takebuf_string()
+    return String(take!(io))
 end
 
 """
@@ -238,6 +252,97 @@ function _getLabelsForInst(dfg::CloudGraphsDFG,
     typeof(inst) <: AbstractPointParametricEst && push!(labels, String(inst.solverKey))
     typeof(inst) <: VariableNodeData && push!(labels, String(inst.solverKey))
     typeof(inst) <: AbstractBigDataEntry && push!(labels, String(inst.key))
-    @show typeof(inst)
     return labels
+end
+
+## Common CRUD calls for subnode types (PPEs, VariableSolverData, BigData)
+
+function _listVarSubnodesForType(dfg::CloudGraphsDFG, variablekey::Symbol, dfgType::Type, keyToReturn::String; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Vector{Symbol}
+    query = "match (subnode:$(join(_getLabelsForType(dfg, dfgType, parentKey=variablekey),':'))) return subnode.$keyToReturn"
+    @debug "[Query] _listVarSubnodesForType query:\r\n$query"
+    result = nothing
+    if currentTransaction != nothing
+        result = currentTransaction(query; submit=true)
+    else
+        tx = transaction(dfg.neo4jInstance.connection)
+        tx(query)
+        result = commit(tx)
+    end
+    length(result.errors) > 0 && error(string(result.errors))
+    vals = map(d -> d["row"][1], result.results[1]["data"])
+    return Symbol.(vals)
+end
+
+function _getVarSubnodeProperties(dfg::CloudGraphsDFG, variablekey::Symbol, dfgType::Type, nodeKey::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+    query = "match (subnode:$(join(_getLabelsForType(dfg, dfgType, parentKey=variablekey),':')):$nodeKey) return properties(subnode)"
+    @debug "[Query] _getVarSubnodeProperties query:\r\n$query"
+    result = nothing
+    if currentTransaction != nothing
+        result = currentTransaction(query; submit=true)
+    else
+        tx = transaction(dfg.neo4jInstance.connection)
+        tx(query)
+        result = commit(tx)
+    end
+    length(result.errors) > 0 && error(string(result.errors))
+    length(result.results[1]["data"]) != 1 && error("Cannot find subnode '$nodeKey' for variable '$variablekey'")
+    length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot find subnode '$nodeKey' for variable '$variablekey'")
+    return result.results[1]["data"][1]["row"][1]
+end
+
+function _matchmergeVarSubnode!(
+        dfg::CloudGraphsDFG,
+        variablekey::Symbol,
+        nodeLabels::Vector{String},
+        subnode::Union{APPE, ABDE, PVND},
+        relationshipKey::Symbol;
+        currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing) where
+        {N <: DFGNode, APPE <: AbstractPointParametricEst, ABDE <: AbstractBigDataEntry, PVND <: PackedVariableNodeData}
+    query = """
+                MATCH (var:$variablekey:$(join(_getLabelsForType(dfg, DFGVariable, parentKey=variablekey),':')))
+                MERGE (subnode:$(join(nodeLabels,':')))
+                SET subnode = $(_structToNeo4jProps(subnode))
+                CREATE UNIQUE (var)-[:$relationshipKey]->(subnode)
+                RETURN properties(subnode)"""
+    @debug "[Query] _matchmergeVarSubnode! query:\r\n$query"
+    result = nothing
+    if currentTransaction != nothing
+        result = currentTransaction(query; submit=true) # TODO: Maybe we should submit (; submit = true) for the results to fail early?
+    else
+        tx = transaction(dfg.neo4jInstance.connection)
+        tx(query)
+        result = commit(tx)
+    end
+    length(result.errors) > 0 && error(string(result.errors))
+    length(result.results[1]["data"]) != 1 && error("Cannot find subnode '$(ppe.solverKey)' for variable '$variablekey'")
+    length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot find subnode '$(ppe.solverKey)' for variable '$variablekey'")
+    return result.results[1]["data"][1]["row"][1]
+end
+
+function _deleteVarSubnode!(
+        dfg::CloudGraphsDFG,
+        variablekey::Symbol,
+        relationshipKey::Symbol,
+        nodeLabels::Vector{String},
+        nodekey::Symbol=:default;
+        currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+    query = """
+    MATCH (node:$nodekey:$(join(nodeLabels,':')))
+    WITH node, properties(node) as props
+    DETACH DELETE node
+    RETURN props
+    """
+    @debug "[Query] _deleteVarSubnode delete query:\r\n$query"
+    result = nothing
+    if currentTransaction != nothing
+        result = currentTransaction(query; submit=true) # TODO: Maybe we should submit (; submit = true) for the results to fail early?
+    else
+        tx = transaction(dfg.neo4jInstance.connection)
+        tx(query)
+        result = commit(tx)
+    end
+    length(result.errors) > 0 && error(string(result.errors))
+    length(result.results[1]["data"]) != 1 && error("Cannot find subnode '$nodekey' for variable '$variablekey'")
+    length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot find subnode '$nodekey' for variable '$variablekey'")
+    return result.results[1]["data"][1]["row"][1]
 end
