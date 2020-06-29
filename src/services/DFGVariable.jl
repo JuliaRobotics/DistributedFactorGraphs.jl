@@ -441,7 +441,7 @@ function deepcopySolvekeys!(dfg::AbstractDFG,
                                        dest, true, Symbol[], verbose ),
           labels)
 end
-const deepcopySupersolve! = deepcopySolvekeys! 
+const deepcopySupersolve! = deepcopySolvekeys!
 
 """
     $(SIGNATURES)
@@ -540,6 +540,17 @@ NOTE: Copies the solver data.
 addPPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol=:default) =
     addPPE!(dfg, sourceVariable.label, deepcopy(getPPE(sourceVariable, ppekey)), ppekey)
 
+"""
+    $(SIGNATURES)
+Add variable PPE, used by CGDFG to determine what to persist.
+"""
+function addPPE!(dfg::AbstractDFG,
+                 variablekey::Symbol,
+                 softType::ST,
+                 ppe::P)::AbstractPointParametricEst where
+                 {P <: AbstractPointParametricEst, ST <: InferenceVariable}
+     return addPPE!(dfg, variablekey, ppe, ppe.solverKey)
+end
 
 """
     $(SIGNATURES)
@@ -573,6 +584,19 @@ function updatePPE!(dfg::AbstractDFG, sourceVariables::Vector{<:VariableDataLeve
     for var in sourceVariables
         updatePPE!(dfg, var.label, getPPE(dfg, var, ppekey), ppekey)
     end
+end
+
+"""
+    $(SIGNATURES)
+Update variable PPE, used by CGDFG to determine what to persist.
+"""
+function updatePPE!(
+        dfg::AbstractDFG,
+        variablekey::Symbol,
+        softType::ST,
+        ppe::P)::P where
+        {P <: AbstractPointParametricEst, ST <: InferenceVariable}
+    return updatePPE!(dfg, variablekey, ppe, ppe.solverKey)
 end
 
 """

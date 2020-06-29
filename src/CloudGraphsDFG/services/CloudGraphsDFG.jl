@@ -482,8 +482,8 @@ $(SIGNATURES)
 Unpack a Dict{String, Any} into a PPE.
 """
 function _unpackPPE(dfg::G, packedPPE::Dict{String, Any})::AbstractPointParametricEst where G <: AbstractDFG
-    !haskey(packedPPE, TYPEKEY) && error("Cannot find type key '$TYPEKEY' in packed PPE data")
-    type = pop!(packedPPE, TYPEKEY)
+    !haskey(packedPPE, "_type") && error("Cannot find type key '$TYPEKEY' in packed PPE data")
+    type = pop!(packedPPE, "_type")
     (type == nothing || type == "") && error("Cannot deserialize PPE, type key is empty")
     ppe = Unmarshal.unmarshal(
             DistributedFactorGraphs.getTypeFromSerializationModule(dfg, Symbol(type)),
@@ -500,29 +500,56 @@ function getPPE(dfg::CloudGraphsDFG, variablekey::Symbol, ppekey::Symbol=:defaul
     return _unpackPPE(dfg, properties)
 end
 
-function addPPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::AbstractPointParametricEst where P <: AbstractPointParametricEst
+function _generateAdditionalProperties(softType::ST, ppe::P)::Dict{String, String} where {P <: AbstractPointParametricEst, ST <: InferenceVariable}
+    addProps = Dict{String, String}()
+    for field in DistributedFactorGraphs.getEstimateFields(ppe)
+        est = getfield(ppe, field)
+        cart = Main.projectCartesian(softType, est) # Assuming we've imported the variables into Main
+        addProps["$(field)_cart3"] = "point({x:$(cart[1]),y:$(cart[2]),y:$(cart[3])})" # Need to look at 3D too soon.
+    end
+    return addProps
+end
+
+function addPPE!(dfg::CloudGraphsDFG,
+                 variablekey::Symbol,
+                 softType::ST,
+                 ppe::P;
+                 currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::AbstractPointParametricEst where
+                 {P <: AbstractPointParametricEst, ST <: InferenceVariable}
     if ppe.solverKey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction)
         error("PPE '$(ppe.solverKey)' already exists")
     end
+    # Add additional properties for the PPE
+    addProps = _generateAdditionalProperties(softType, ppe)
     return _unpackPPE(dfg, _matchmergeVarSubnode!(
         dfg,
         variablekey,
         _getLabelsForInst(dfg, ppe, parentKey=variablekey),
         ppe,
         :PPE,
+        addProps=addProps,
         currentTransaction=currentTransaction))
 end
 
-function updatePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::P where P <: AbstractPointParametricEst
+function updatePPE!(
+        dfg::CloudGraphsDFG,
+        variablekey::Symbol,
+        softType::ST,
+        ppe::P;
+        currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::P where
+        {P <: AbstractPointParametricEst, ST <: InferenceVariable}
     if !(ppe.solverKey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction))
         @warn "PPE '$(ppekey)' does not exist, adding"
     end
+    # Add additional properties for the PPE
+    addProps = _generateAdditionalProperties(softType, ppe)
     return _unpackPPE(dfg, _matchmergeVarSubnode!(
         dfg,
         variablekey,
         _getLabelsForInst(dfg, ppe, parentKey=variablekey),
         ppe,
         :PPE,
+        addProps=addProps,
         currentTransaction=currentTransaction))
 end
 
@@ -547,6 +574,15 @@ function deletePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppekey::Symbol=:de
         currentTransaction=currentTransaction)
     return _unpackPPE(dfg, props)
 end
+
+# Error when the generic functions are used.
+function addPPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default)::AbstractPointParametricEst where P <: AbstractPointParametricEst
+    error("This function is not supported by CGDFG, use addPPE!(dfg, variablekey, softType, ppe).")
+end
+function updatePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default)::P where P <: AbstractPointParametricEst
+    error("This function is not supported by CGDFG, use updatePPE!(dfg, variablekey, softType, ppe).")
+end
+
 
 ## VariableSolverData CRUD
 
@@ -594,6 +630,7 @@ function updateVariableSolverData!(dfg::CloudGraphsDFG,
     if !(vnd.solverKey in listVariableSolverData(dfg, variablekey, currentTransaction=currentTransaction))
         @warn "Solver data '$(vnd.solverKey)' does not exist, adding"
     end
+    # TODO: Update this to use the selective parameters from fields.
     retPacked = _matchmergeVarSubnode!(
         dfg,
         variablekey,

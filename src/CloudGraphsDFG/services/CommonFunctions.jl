@@ -179,27 +179,33 @@ end
 $(SIGNATURES)
 
 Build a Cypher-compliant set of properies from a subnode type.
-Note individual values are serialized if they are not already.
+Note: Individual values are serialized if they are not already.
+If the additional properties is provided, the additional
+properties will be added in verbatim when serializing.
 """
-function _structToNeo4jProps(inst::Union{User, Robot, Session, PVND, N, APPE, ABDE})::String where
+function _structToNeo4jProps(inst::Union{User, Robot, Session, PVND, N, APPE, ABDE},
+                             addProps::Dict{String, String}=Dict{String, String}(),
+                             cypherNodeName::String="subnode")::String where
         {N <: DFGNode, APPE <: AbstractPointParametricEst, ABDE <: AbstractBigDataEntry, PVND <: PackedVariableNodeData}
     props = Dict{String, String}()
     io = IOBuffer()
-    write(io, "{")
     for fieldname in fieldnames(typeof(inst))
         field = getfield(inst, fieldname)
         val = nothing
         # Neo4j type conversion if possible - keep timestamps timestamps, etc.
-        # TODO: Handle the cartesian conversion etc.
         if field isa ZonedDateTime
             val = "datetime(\"$(field)\")"
         else
             val = JSON2.write(field)
         end
-        write(io, "$fieldname: $val,")
+        write(io, "$cypherNodeName.$fieldname=$val,")
     end
-    write(io, "_type: \"$(typeof(inst))\"")
-    write(io, "}")
+    # The additional properties
+    for (k, v) in addProps
+        write(io, "$cypherNodeName.$k= $v,")
+    end
+    # The node type
+    write(io, "$cypherNodeName._type=\"$(typeof(inst))\"")
     # Ref String(): "When possible, the memory of v will be used without copying when the String object is created.
     # This is guaranteed to be the case for byte vectors returned by take!" # Apparent replacement for takebuf_string()
     return String(take!(io))
@@ -296,13 +302,15 @@ function _matchmergeVarSubnode!(
         nodeLabels::Vector{String},
         subnode::Union{APPE, ABDE, PVND},
         relationshipKey::Symbol;
+        addProps::Dict{String, String}=Dict{String, String}(),
         currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing) where
         {N <: DFGNode, APPE <: AbstractPointParametricEst, ABDE <: AbstractBigDataEntry, PVND <: PackedVariableNodeData}
+
     query = """
                 MATCH (var:$variablekey:$(join(_getLabelsForType(dfg, DFGVariable, parentKey=variablekey),':')))
-                MERGE (subnode:$(join(nodeLabels,':')))
-                SET subnode = $(_structToNeo4jProps(subnode))
-                CREATE UNIQUE (var)-[:$relationshipKey]->(subnode)
+                MERGE (var)-[:PPE]->(subnode:$(join(nodeLabels,':')))
+                ON CREATE SET $(_structToNeo4jProps(subnode, addProps))
+                ON MATCH SET $(_structToNeo4jProps(subnode, addProps))
                 RETURN properties(subnode)"""
     @debug "[Query] _matchmergeVarSubnode! query:\r\n$query"
     result = nothing

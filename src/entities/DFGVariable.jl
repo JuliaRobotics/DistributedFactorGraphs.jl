@@ -188,10 +188,20 @@ struct MeanMaxPPE <: AbstractPointParametricEst
     mean::Vector{Float64}
     lastUpdatedTimestamp::ZonedDateTime
 end
+
 ##------------------------------------------------------------------------------
 ## Constructors
 
 MeanMaxPPE(solverKey::Symbol, suggested::Vector{Float64}, max::Vector{Float64}, mean::Vector{Float64}) = MeanMaxPPE(solverKey, suggested, max, mean, now(tz"UTC"))
+
+## Metadata
+"""
+    $SIGNATURES
+Return the fields of MeanMaxPPE that are estimates.
+NOTE: This is needed for each AbstractPointParametricEst.
+Closest we can get to a decorator pattern.
+"""
+getEstimateFields(::MeanMaxPPE) = [:suggested, :max, :mean]
 
 ##==============================================================================
 ## DFG Variables

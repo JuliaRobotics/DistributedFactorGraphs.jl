@@ -70,10 +70,9 @@ import ...DistributedFactorGraphs:  setSolverParams!,
                                     listPPEs,
                                     deletePPE!,
                                     updatePPE!,
-                                    packPPE,
-                                    unpackPPE,
                                     getSolvable,
-                                    setSolvable!
+                                    setSolvable!,
+                                    getEstimateFields
 
 using Neo4j
 using Base64
