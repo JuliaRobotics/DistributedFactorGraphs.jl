@@ -138,7 +138,7 @@ end
 ## Variable And Factor CRUD
 ##------------------------------------------------------------------------------
 
-function exists(dfg::CloudGraphsDFG, label::Symbol)
+function exists(dfg::CloudGraphsDFG, label::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
     # Otherwise try get it
     nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, label)
     nodeId != nothing && return true
@@ -158,20 +158,42 @@ function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariable
     if exists(dfg, variable)
         error("Variable '$(variable.label)' already exists in the factor graph")
     end
-    props = packVariable(dfg, variable)
 
-    neo4jNode = Neo4j.createnode(dfg.neo4jInstance.graph, props);
-    Neo4j.updatenodelabels(neo4jNode, union([string(variable.label), "VARIABLE", dfg.userId, dfg.robotId, dfg.sessionId], variable.tags))
+    # Do a variable update
+    return updateVariable!(dfg, variable, skipError=true)
+end
 
-    # Attach the node to the session sentinel.
-    _bindSessionNodeToSessionData(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, string(variable.label))
+function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable; skipError::Bool=false)::DFGVariable
+    !exists(dfg, variable) && @warn "Variable label '$(variable.label)' does not exist in the factor graph, adding"
+    # Start the transaction
 
+    # Create/update the base variable
+    query = """
+    MATCH (session:$(join(_getLabelsForType(dfg, Session), ":")))
+    MERGE (node:$(join(_getLabelsForInst(dfg, variable), ":")))
+    ON CREATE SET $(_structToNeo4jProps(variable, cypherNodeName="node"))
+    ON MATCH SET $(_structToNeo4jProps(variable, cypherNodeName="node"))
+    MERGE (node)<-[:SESSIONDATA]-(session)
+    RETURN node
+    """
+    @debug "[Query] updateVariable! query:\r\n$query"
+
+    # Merge the solver data
+    tx = transaction(dfg.neo4jInstance.connection)
+    result = tx(query, submit=true)
+    length(result.errors) > 0 && error(string(result.errors))
+    length(result.results[1]["data"]) != 1 && error("Cannot update or add variable '$(getLabel(variable))'")
+    length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot update or add variable '$(getLabel(variable))'")
+
+    # Merge the PPE's, SolverData, and BigData
+    mergeVariableData!(dfg, variable; currentTransaction=tx)
+
+    commit(tx)
     # Track insertion
     push!(dfg.addHistory, variable.label)
 
     return variable
 end
-
 
 function addFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor
     if exists(dfg, factor)
@@ -240,28 +262,12 @@ function getFactor(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGFactor
     return factor
 end
 
-function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariable
-    if !exists(dfg, variable)
-        @warn "Variable label '$(variable.label)' does not exist in the factor graph, adding"
-        return addVariable!(dfg, variable)
-    end
-    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, variable.label)
-
-    # TODO: Do this with a single query and/or a single transaction.
-    neo4jNode = Neo4j.getnode(dfg.neo4jInstance.graph, nodeId)
-    props = packVariable(dfg, variable)
-    Neo4j.updatenodeproperties(neo4jNode, props)
-    Neo4j.updatenodelabels(neo4jNode, union([string(variable.label), "VARIABLE", dfg.userId, dfg.robotId, dfg.sessionId], variable.tags))
-    return variable
-end
-
-function mergeVariableData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable)::DFGVariable
+function mergeVariableData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::DFGVariable
     if !exists(dfg, sourceVariable)
         error("Source variable '$(sourceVariable.label)' doesn't exist in the graph.")
     end
     for (k,v) in sourceVariable.ppeDict
-        # TODO what is happening inside, is this truely an update or is it a merge? (API consistency hounds are apon you)
-        updatePPE!(dfg, getLabel(sourceVariable), v, k)
+        updatePPE!(dfg, getLabel(sourceVariable), getSofttype(sourceVariable), v, k, currentTransaction=currentTransaction)
     end
     for (k,v) in sourceVariable.solverDataDict
         updateVariableSolverData!(dfg, getLabel(sourceVariable), v, k)
@@ -556,7 +562,7 @@ end
 function updatePPE!(dfg::CloudGraphsDFG, sourceVariables::Vector{<:DFGVariable}, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
     tx = currentTransaction == nothing ? transaction(dfg.neo4jInstance.connection) : currentTransaction
     for var in sourceVariables
-        updatePPE!(dfg, var.label, getPPE(var, ppekey), currentTransaction=tx)
+        updatePPE!(dfg, var.label, getSofttype(dfg, var), getPPE(var, ppekey), currentTransaction=tx)
     end
     if currentTransaction == nothing
         result = commit(tx)

@@ -224,7 +224,7 @@ struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
     label::Symbol
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref), [`setTimestamp`](@ref)"""
-    timestamp::DateTime
+    timestamp::ZonedDateTime
     """Nano second time, for more resolution on timestamp (only subsecond information)"""
     nstime::Nanosecond
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
@@ -263,19 +263,19 @@ DFGVariable(label::Symbol, softtype::T;
             smallData::Dict{String, String}=Dict{String, String}(),
             bigData::Dict{Symbol, AbstractBigDataEntry}=Dict{Symbol,AbstractBigDataEntry}(),
             solvable::Int=1) where {T <: InferenceVariable} =
-    DFGVariable{T}(label, timestamp, nstime, tags, estimateDict, solverDataDict, smallData, bigData, Ref(solvable))
+    DFGVariable{T}(label, ZonedDateTime(timestamp, tz"UTC"), nstime, tags, estimateDict, solverDataDict, smallData, bigData, Ref(solvable))
 
 
 DFGVariable(label::Symbol,
             solverData::VariableNodeData{T};
-            timestamp::DateTime=now(),
+            timestamp::DateTime,
             nstime::Nanosecond = Nanosecond(0),
             tags::Set{Symbol}=Set{Symbol}(),
             estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
             smallData::Dict{String, String}=Dict{String, String}(),
             bigData::Dict{Symbol, AbstractBigDataEntry}=Dict{Symbol,AbstractBigDataEntry}(),
             solvable::Int=1) where {T <: InferenceVariable} =
-    DFGVariable{T}(label, timestamp, nstime, tags, estimateDict, Dict{Symbol, VariableNodeData{T}}(:default=>solverData), smallData, bigData, Ref(solvable))
+    DFGVariable{T}(label, ZonedDateTime(timestamp, tz"UTC"), nstime, tags, estimateDict, Dict{Symbol, VariableNodeData{T}}(:default=>solverData), smallData, bigData, Ref(solvable))
 
 Base.getproperty(x::DFGVariable,f::Symbol) = begin
     if f == :solvable
@@ -320,7 +320,7 @@ struct DFGVariableSummary <: AbstractDFGVariable
     label::Symbol
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref), [`setTimestamp`](@ref)"""
-    timestamp::DateTime
+    timestamp::ZonedDateTime
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
     Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
     tags::Set{Symbol}

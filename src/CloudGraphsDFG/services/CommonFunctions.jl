@@ -5,9 +5,11 @@ $(SIGNATURES)
 Returns the transaction for a given query.
 NOTE: Must commit(transaction) after you're done.
 """
-function _queryNeo4j(neo4jInstance::Neo4jInstance, query::String)
-    loadtx = transaction(neo4jInstance.connection)
-    result = loadtx(query; submit=true)
+function _queryNeo4j(neo4jInstance::Neo4jInstance, query::String; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+    if transaction == nothing
+        transaction = transaction(neo4jInstance.connection)
+    else
+        result = loadtx(query; submit=true)
     if length(result.errors) > 0
         error(string(result.errors))
     end
@@ -110,18 +112,22 @@ Will return all sessions because of 'node:Session'.
 If orderProperty is not ==, then 'order by n.{orderProperty} will be appended to the query'.
 So can make orderProperty = label or id.
 """
-function _getNeoNodesFromCyphonQuery(neo4jInstance::Neo4jInstance, matchCondition::String, orderProperty::String="")::Vector{Neo4j.Node}
+function _getNeoNodesFromCyphonQuery(neo4jInstance::Neo4jInstance, matchCondition::String, orderProperty::String=""; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Vector{Neo4j.Node}
     # 2. Perform the transaction
-    loadtx = transaction(neo4jInstance.connection)
     query = "match $matchCondition return id(node) $(orderProperty != "" ? "order by node.$orderProperty" : "")";
-    nodes = loadtx(query; submit=true)
+    if currentTransaction == nothing
+        loadtx = transaction(neo4jInstance.connection)
+        nodes = loadtx(query; submit=true)
+        # Have to finish the transaction
+        commit(loadtx)
+    else
+        nodes = loadtx(query; submit=true)
+    end
     if length(nodes.errors) > 0
         error(string(nodes.errors))
     end
     # 3. Format the result
     nodes = map(node -> getnode(neo4jInstance.graph, node["row"][1]), nodes.results[1]["data"])
-    # Have to finish the transaction
-    commit(loadtx)
     return nodes
 end
 
@@ -138,33 +144,14 @@ end
 
 """
 $(SIGNATURES)
-Bind the SESSION node to the variable or factor.
-Checks for existence.
-"""
-function _bindSessionNodeToSessionData(neo4jInstance::Neo4jInstance, userId::String, robotId::String, sessionId::String, nodeLabel::String)::Nothing
-    # 2. Perform the transaction
-    loadtx = transaction(neo4jInstance.connection)
-    query = """
-    match (session:SESSION:$userId:$robotId:$sessionId),
-    (n:$userId:$robotId:$sessionId:$nodeLabel
-    {label: '$nodeLabel'})
-    CREATE UNIQUE (session)-[:SESSIONDATA]->(n) return id(n)
-    """;
-    loadtx(query; submit=true)
-    commit(loadtx)
-    return nothing
-end
-
-"""
-$(SIGNATURES)
 Try get a Neo4j node ID from a node label.
 """
-function _tryGetNeoNodeIdFromNodeLabel(neo4jInstance::Neo4jInstance, userId::String, robotId::String, sessionId::String, nodeLabel::Symbol; nodeType::Union{Nothing, String}=nothing)::Union{Nothing, Int}
+function _tryGetNeoNodeIdFromNodeLabel(neo4jInstance::Neo4jInstance, userId::String, robotId::String, sessionId::String, nodeLabel::Symbol; nodeType::Union{Nothing, String}=nothing; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Union{Nothing, Int}
     @debug "Looking up symbolic node ID where n.label = '$nodeLabel'..."
     if nodeType == nothing
-        nodes = _getNeoNodesFromCyphonQuery(neo4jInstance, "(node:$userId:$robotId:$sessionId) where exists(node.label) and node.label = \"$(string(nodeLabel))\"")
+        nodes = _getNeoNodesFromCyphonQuery(neo4jInstance, "(node:$userId:$robotId:$sessionId) where exists(node.label) and node.label = \"$(string(nodeLabel))\"", currentTransaction=currentTransaction)
     else
-        nodes = _getNeoNodesFromCyphonQuery(neo4jInstance, "(node:$nodeType:$userId:$robotId:$sessionId) where exists(node.label) and node.label = \"$(string(nodeLabel))\"")
+        nodes = _getNeoNodesFromCyphonQuery(neo4jInstance, "(node:$nodeType:$userId:$robotId:$sessionId) where exists(node.label) and node.label = \"$(string(nodeLabel))\"", currentTransaction=currentTransaction)
     end
 
     if length(nodes) != 1
@@ -184,7 +171,7 @@ If the additional properties is provided, the additional
 properties will be added in verbatim when serializing.
 """
 function _structToNeo4jProps(inst::Union{User, Robot, Session, PVND, N, APPE, ABDE},
-                             addProps::Dict{String, String}=Dict{String, String}(),
+                             addProps::Dict{String, String}=Dict{String, String}();
                              cypherNodeName::String="subnode")::String where
         {N <: DFGNode, APPE <: AbstractPointParametricEst, ABDE <: AbstractBigDataEntry, PVND <: PackedVariableNodeData}
     props = Dict{String, String}()
@@ -197,6 +184,23 @@ function _structToNeo4jProps(inst::Union{User, Robot, Session, PVND, N, APPE, AB
             val = "datetime(\"$(field)\")"
         else
             val = JSON2.write(field)
+        end
+        # TODO: Switch this to decorator pattern
+        if typeof(inst) <: DFGNode
+            fieldname == :solverDataDict && continue
+            fieldname == :ppeDict && continue
+            # TODO: Finish smallData
+            fieldname == :smallData && continue
+            fieldname == :bigData && continue
+            if fieldname == :solvable
+                val = field.x
+            end
+            if fieldname == :nstime
+                val = field.value
+            end
+            if fieldname == :softtype
+                val = string(typeof(getSofttype(inst)))
+            end
         end
         write(io, "$cypherNodeName.$fieldname=$val,")
     end
