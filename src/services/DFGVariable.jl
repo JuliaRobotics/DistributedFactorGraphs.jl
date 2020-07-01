@@ -37,9 +37,11 @@ function getSofttype(vnd::VariableNodeData)
   return vnd.softtype
 end
 
-getSofttype(v::DFGVariable, solvekey::Symbol=:default) = getSofttype(getSolverData(v, solvekey))
+# TODO: Confirm that we can switch this out, instead of retrieving the complete variable.
+# Original getSofttype(getVariable(dfg,lbl), solvekey)
+getSofttype(v::DFGVariable) = typeof(v).parameters[1]()
 
-getSofttype(dfg::AbstractDFG, lbl::Symbol, solvekey::Symbol=:default) = getSofttype(getVariable(dfg,lbl), solvekey)
+getSofttype(dfg::AbstractDFG, lbl::Symbol) = getSofttype(getVariable(dfg,lbl), solvekey)
 
 """
     getVariableType

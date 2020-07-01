@@ -21,30 +21,44 @@ function packVariable(dfg::G, v::DFGVariable)::Dict{String, Any} where G <: Abst
     return props
 end
 
-function unpackVariable(dfg::G, packedProps::Dict{String, Any})::DFGVariable where G <: AbstractDFG
+function unpackVariable(dfg::G,
+        packedProps::Dict{String, Any};
+        unpackPPEs::Bool=true,
+        unpackSolverData::Bool=true,
+        unpackBigData::Bool=true)::DFGVariable where G <: AbstractDFG
+    @debug "Unpacking variable:\r\n$packedProps"
     label = Symbol(packedProps["label"])
-    timestamp = DateTime(packedProps["timestamp"])
+    timestamp = ZonedDateTime(packedProps["timestamp"])
     nstime = Nanosecond(get(packedProps, "nstime", 0))
-    tags =  JSON2.read(packedProps["tags"], Vector{Symbol})
-    #TODO this will work for some time, but unpacking in an <: AbstractPointParametricEst would be lekker.
-    ppeDict = JSON2.read(packedProps["ppeDict"], Dict{Symbol, MeanMaxPPE})
+    # Supporting string serialization using packVariable and CGDFG serialization (Vector{String})
+    if packedProps["tags"] isa String
+        tags = JSON2.read(packedProps["tags"], Vector{Symbol})
+    else
+        tags = Symbol.(packedProps["tags"])
+    end
+    ppeDict = unpackPPEs ? JSON2.read(packedProps["ppeDict"], Dict{Symbol, MeanMaxPPE}) : Dict{Symbol, MeanMaxPPE}()
     smallData = JSON2.read(packedProps["smallData"], Dict{String, String})
-    bigDataElemTypes = JSON2.read(packedProps["bigDataElemType"], Dict{Symbol, Symbol})
-    bigDataIntermed = JSON2.read(packedProps["bigData"], Dict{Symbol, String})
     softtypeString = packedProps["softtype"]
     softtype = getTypeFromSerializationModule(dfg, Symbol(softtypeString))
     softtype == nothing && error("Cannot deserialize softtype '$softtypeString' in variable '$label'")
 
-    packed = JSON2.read(packedProps["solverDataDict"], Dict{String, PackedVariableNodeData})
-    solverData = Dict(Symbol.(keys(packed)) .=> map(p -> unpackVariableNodeData(dfg, p), values(packed)))
-
+    if unpackSolverData
+        packed = JSON2.read(packedProps["solverDataDict"], Dict{String, PackedVariableNodeData})
+        solverData = Dict(Symbol.(keys(packed)) .=> map(p -> unpackVariableNodeData(dfg, p), values(packed)))
+    else
+        solverData = Dict{Symbol, VariableNodeData}()
+    end
     # Rebuild DFGVariable using the first solver softtype in solverData
     variable = DFGVariable{softtype}(Symbol(packedProps["label"]), timestamp, nstime, Set(tags), ppeDict, solverData,  smallData, Dict{Symbol,AbstractBigDataEntry}(), Ref(packedProps["solvable"]))
 
-    # Now rehydrate complete bigData type.
-    for (k,bdeInter) in bigDataIntermed
-        fullVal = JSON2.read(bdeInter, getfield(DistributedFactorGraphs, bigDataElemTypes[k]))
-        variable.bigData[k] = fullVal
+    if unpackBigData
+        bigDataElemTypes = JSON2.read(packedProps["bigDataElemType"], Dict{Symbol, Symbol})
+        bigDataIntermed = JSON2.read(packedProps["bigData"], Dict{Symbol, String})
+        # Now rehydrate complete bigData type.
+        for (k,bdeInter) in bigDataIntermed
+            fullVal = JSON2.read(bdeInter, getfield(DistributedFactorGraphs, bigDataElemTypes[k]))
+            variable.bigData[k] = fullVal
+        end
     end
 
     return variable

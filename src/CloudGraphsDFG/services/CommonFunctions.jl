@@ -188,9 +188,10 @@ function _structToNeo4jProps(inst::Union{User, Robot, Session, PVND, N, APPE, AB
         if typeof(inst) <: DFGNode
             fieldname == :solverDataDict && continue
             fieldname == :ppeDict && continue
-            # TODO: Finish smallData
-            fieldname == :smallData && continue
             fieldname == :bigData && continue
+            if fieldname == :smallData
+                val = "\"$(JSON2.write(inst.smallData))\""
+            end
             if fieldname == :solvable
                 val = field.x
             end

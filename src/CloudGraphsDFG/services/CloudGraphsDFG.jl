@@ -165,11 +165,12 @@ function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable; skipError::
     # Start the transaction
 
     # Create/update the base variable
+    addProps = Dict("softtype" => "\"$(string(typeof(getSofttype(variable))))\"")
     query = """
     MATCH (session:$(join(_getLabelsForType(dfg, Session), ":")))
     MERGE (node:$(join(_getLabelsForInst(dfg, variable), ":")))
-    ON CREATE SET $(_structToNeo4jProps(variable, cypherNodeName="node"))
-    ON MATCH SET $(_structToNeo4jProps(variable, cypherNodeName="node"))
+    ON CREATE SET $(_structToNeo4jProps(variable, addProps, cypherNodeName="node"))
+    ON MATCH SET $(_structToNeo4jProps(variable, addProps, cypherNodeName="node"))
     MERGE (node)<-[:SESSIONDATA]-(session)
     RETURN node
     """
@@ -232,7 +233,7 @@ function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGVari
     end
 
     props = getnodeproperties(dfg.neo4jInstance.graph, nodeId)
-    variable = unpackVariable(dfg, props)
+    variable = unpackVariable(dfg, props, unpackPPEs=false, unpackSolverData=false, unpackBigData=false)
 
     # TODO - make this get PPE's in batch
     for ppe in listPPEs(dfg, label)
@@ -264,7 +265,7 @@ function mergeVariableData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable; cu
         error("Source variable '$(sourceVariable.label)' doesn't exist in the graph.")
     end
     for (k,v) in sourceVariable.ppeDict
-        updatePPE!(dfg, getLabel(sourceVariable), getSofttype(sourceVariable), v, k, currentTransaction=currentTransaction)
+        updatePPE!(dfg, getLabel(sourceVariable), getSofttype(sourceVariable), v, currentTransaction=currentTransaction)
     end
     @info "Still need to do updateVariableSolverData"
     # for (k,v) in sourceVariable.solverDataDict
