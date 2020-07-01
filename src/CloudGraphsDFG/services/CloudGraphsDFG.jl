@@ -139,13 +139,10 @@ end
 ##------------------------------------------------------------------------------
 
 function exists(dfg::CloudGraphsDFG, label::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
-    # Otherwise try get it
-    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, label)
-    nodeId != nothing && return true
-    return false
+    return _getNodeCount(dfg.neo4jInstance, String.([dfg.userId, dfg.robotId, dfg.sessionId, label]), currentTransaction=currentTransaction) > 0
 end
-function exists(dfg::CloudGraphsDFG, node::N) where N <: DFGNode
-    return exists(dfg, node.label)
+function exists(dfg::CloudGraphsDFG, node::N; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing) where N <: DFGNode
+    return exists(dfg, node.label, currentTransaction=currentTransaction)
 end
 
 isVariable(dfg::CloudGraphsDFG, sym::Symbol)::Bool =
@@ -263,15 +260,16 @@ function getFactor(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGFactor
 end
 
 function mergeVariableData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::DFGVariable
-    if !exists(dfg, sourceVariable)
+    if !exists(dfg, sourceVariable, currentTransaction=currentTransaction)
         error("Source variable '$(sourceVariable.label)' doesn't exist in the graph.")
     end
     for (k,v) in sourceVariable.ppeDict
         updatePPE!(dfg, getLabel(sourceVariable), getSofttype(sourceVariable), v, k, currentTransaction=currentTransaction)
     end
-    for (k,v) in sourceVariable.solverDataDict
-        updateVariableSolverData!(dfg, getLabel(sourceVariable), v, k)
-    end
+    @info "Still need to do updateVariableSolverData"
+    # for (k,v) in sourceVariable.solverDataDict
+    #     updateVariableSolverData!(dfg, getLabel(sourceVariable), v, k, currentTransaction=currentTransaction)
+    # end
     return sourceVariable
 end
 

@@ -6,15 +6,14 @@ Returns the transaction for a given query.
 NOTE: Must commit(transaction) after you're done.
 """
 function _queryNeo4j(neo4jInstance::Neo4jInstance, query::String; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
-    if transaction == nothing
-        transaction = transaction(neo4jInstance.connection)
-    else
+    if currentTransaction == nothing
+        loadtx = transaction(neo4jInstance.connection)
         result = loadtx(query; submit=true)
-    if length(result.errors) > 0
-        error(string(result.errors))
+        # Have to finish the transaction
+        commit(loadtx)
+    else
+        result = currentTransaction(query; submit=true)
     end
-    # Have to finish the transaction
-    commit(loadtx)
     return result
 end
 
@@ -94,13 +93,14 @@ function _getNodeTags(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String}):
     return result.results[1]["data"][1]["row"][1]
 end
 
-function _getNodeCount(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String})::Int
+function _getNodeCount(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String}; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Int
     query = "match (n:$(join(nodeLabels, ":"))) return count(n)"
-    result = _queryNeo4j(neo4jInstance, query)
+    result = _queryNeo4j(neo4jInstance, query, currentTransaction=currentTransaction)
     length(result.results[1]["data"]) != 1 && return 0
     length(result.results[1]["data"][1]["row"]) != 1 && return 0
     return result.results[1]["data"][1]["row"][1]
 end
+
 
 """
 $(SIGNATURES)
@@ -115,19 +115,13 @@ So can make orderProperty = label or id.
 function _getNeoNodesFromCyphonQuery(neo4jInstance::Neo4jInstance, matchCondition::String, orderProperty::String=""; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Vector{Neo4j.Node}
     # 2. Perform the transaction
     query = "match $matchCondition return id(node) $(orderProperty != "" ? "order by node.$orderProperty" : "")";
-    if currentTransaction == nothing
-        loadtx = transaction(neo4jInstance.connection)
-        nodes = loadtx(query; submit=true)
-        # Have to finish the transaction
-        commit(loadtx)
-    else
-        nodes = loadtx(query; submit=true)
-    end
-    if length(nodes.errors) > 0
+    result = _queryNeo4j(neo4jInstance, query, currentTransaction=currentTransaction)
+    if length(result.errors) > 0
         error(string(nodes.errors))
     end
     # 3. Format the result
-    nodes = map(node -> getnode(neo4jInstance.graph, node["row"][1]), nodes.results[1]["data"])
+    # TODO: Fix, this is awful.
+    nodes = map(node -> getnode(neo4jInstance.graph, node["row"][1]), result.results[1]["data"])
     return nodes
 end
 
@@ -146,7 +140,12 @@ end
 $(SIGNATURES)
 Try get a Neo4j node ID from a node label.
 """
-function _tryGetNeoNodeIdFromNodeLabel(neo4jInstance::Neo4jInstance, userId::String, robotId::String, sessionId::String, nodeLabel::Symbol; nodeType::Union{Nothing, String}=nothing; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Union{Nothing, Int}
+function _tryGetNeoNodeIdFromNodeLabel(
+        neo4jInstance::Neo4jInstance,
+        userId::String, robotId::String, sessionId::String,
+        nodeLabel::Symbol;
+        nodeType::Union{Nothing, String}=nothing,
+        currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Union{Nothing, Int}
     @debug "Looking up symbolic node ID where n.label = '$nodeLabel'..."
     if nodeType == nothing
         nodes = _getNeoNodesFromCyphonQuery(neo4jInstance, "(node:$userId:$robotId:$sessionId) where exists(node.label) and node.label = \"$(string(nodeLabel))\"", currentTransaction=currentTransaction)
