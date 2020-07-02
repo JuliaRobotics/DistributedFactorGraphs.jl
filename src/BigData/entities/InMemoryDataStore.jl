@@ -20,5 +20,5 @@ end
 Create an in-memory store using binary data (UInt8) as a type.
 """
 function InMemoryDataStore()
-    return InMemoryDataStore{Vector{UInt8}, GeneralBigDataEntry}()
+    return InMemoryDataStore{Vector{UInt8}, GeneralDataEntry}()
 end

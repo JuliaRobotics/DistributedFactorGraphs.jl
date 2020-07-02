@@ -58,6 +58,7 @@ end
 
 @testset "Data Store Tests" begin
     include("DataStoreTests.jl")
+    include("consol_BigDataTests.jl")
 end
 
 @testset "LightDFG subtype tests" begin

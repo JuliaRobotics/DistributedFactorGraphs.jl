@@ -1,6 +1,6 @@
 import Base: ==
 
-function ==(a::GeneralBigDataEntry, b::GeneralBigDataEntry)
+function ==(a::GeneralDataEntry, b::GeneralDataEntry)
     return a.key == b.key &&
         a.storeKey == b.storeKey &&
         a.mimeType == b.mimeType &&
@@ -8,11 +8,11 @@ function ==(a::GeneralBigDataEntry, b::GeneralBigDataEntry)
         Dates.value(a.lastUpdatedTimestamp - b.lastUpdatedTimestamp) < 1000 #1 second
 end
 
-function ==(a::MongodbBigDataEntry, b::MongodbBigDataEntry)
+function ==(a::MongodbDataEntry, b::MongodbDataEntry)
     return a.key == b.key && a.oid == b.oid
 end
 
-function ==(a::FileBigDataEntry, b::FileBigDataEntry)
+function ==(a::FileDataEntry, b::FileDataEntry)
     return a.key == b.key && a.filename == b.filename
 end
 
@@ -20,22 +20,23 @@ end
     $(SIGNATURES)
 Add Big Data Entry to a DFG variable
 """
-function addBigDataEntry!(var::AbstractDFGVariable, bde::AbstractBigDataEntry)
+function addDataEntry!(var::AbstractDFGVariable, bde::AbstractBigDataEntry)
     haskey(var.bigData,bde.key) && error("BigData entry $(bde.key) already exists in variable")
     var.bigData[bde.key] = bde
     return bde
 end
+
 
 """
     $(SIGNATURES)
 Add Big Data Entry to distributed factor graph.
 Should be extended if DFG variable is not returned by reference.
 """
-function addBigDataEntry!(dfg::AbstractDFG, label::Symbol, bde::AbstractBigDataEntry)
+function addDataEntry!(dfg::AbstractDFG, label::Symbol, bde::AbstractBigDataEntry)
     return addBigDataEntry!(getVariable(dfg, label), bde)
 end
 
-addDataEntry!(x...) = addBigDataEntry!(x...)
+@deprecate addBigDataEntry!(args...)  addDataEntry!(args...)
 
 """
 $(SIGNATURES)
@@ -50,22 +51,22 @@ Related
 
 addData!, getDataEntryElement, fetchData
 """
-function addDataEntry!(dfg::AbstractDFG,
-                       lbl::Symbol,
-                       datastore::Union{FileDataStore, InMemoryDataStore},
-                       descr::Symbol,
-                       mimeType::AbstractString,
-                       data::Vector{UInt8} )
+function addData!(dfg::AbstractDFG,
+                  lbl::Symbol,
+                  datastore::Union{FileDataStore, InMemoryDataStore},
+                  descr::Symbol,
+                  mimeType::AbstractString,
+                  data::Vector{UInt8} )
   #
   node = isVariable(dfg, lbl) ? getVariable(dfg, lbl) : getFactor(dfg, lbl)
   # Make a big data entry in the graph - use JSON2 to just write this
-  entry = GeneralBigDataEntry(dfg, node, descr, mimeType=mimeType)
+  entry = GeneralDataEntry(dfg, node, descr, mimeType=mimeType)
   # Set it in the store
-  addBigData!(datastore, entry, data)
+  addDataBlob!(datastore, entry, data)
   # Add the entry to the graph
-  addBigDataEntry!(node, entry)
+  addDataEntry!(node, entry)
 end
-const addData! = addDataEntry!
+# const addDataEntry! = addData!
 
 """
     $SIGNATURES
@@ -79,14 +80,16 @@ const hasBigDataEntry = hasDataEntry
     $(SIGNATURES)
 Get big data entry
 """
-function getBigDataEntry(var::AbstractDFGVariable, key::Symbol)
+function getDataEntry(var::AbstractDFGVariable, key::Symbol)
     !hasDataEntry(var, key) && (error("BigData entry $(key) does not exist in variable"); return nothing)
     return var.bigData[key]
 end
 
-function getBigDataEntry(dfg::AbstractDFG, label::Symbol, key::Symbol)
+function getDataEntry(dfg::AbstractDFG, label::Symbol, key::Symbol)
     return getBigDataEntry(getVariable(dfg, label), key)
 end
+
+@deprecate getBigDataEntry(args...) getDataEntry(args...)
 
 """
 $SIGNATURES
@@ -125,24 +128,26 @@ Related
 
 addDataEntry!, addData!, fetchData, fetchDataEntryElement
 """
-function getDataEntryElement(dfg::AbstractDFG,
-                             dfglabel::Symbol,
-                             datastore::Union{FileDataStore, InMemoryDataStore},
-                             datalabel::Symbol)
+function getDataEntryBlob(dfg::AbstractDFG,
+                          dfglabel::Symbol,
+                          datastore::Union{FileDataStore, InMemoryDataStore},
+                          datalabel::Symbol)
   #
   vari = getVariable(dfg, dfglabel)
   if !hasDataEntry(vari, datalabel)
-    @error "missing data entry $datalabel in $dfglabel"
-    return nothing, nothing
+      # current standards is to fail hard
+    error("missing data entry $datalabel in $dfglabel")
+    # return nothing, nothing
   end
-  entry = getBigDataEntry(vari, datalabel)
-  element = getBigData(datastore, entry)
+  entry = getDataEntry(vari, datalabel)
+  element = getDataBlob(datastore, entry)
   return entry, element
 end
-const fetchDataEntryElement = getDataEntryElement
-const fetchData = getDataEntryElement
+const fetchDataEntryElement = getDataEntryBlob
+const fetchData = getDataEntryBlob
 
-
+#
+@deprecate getDataEntryElement(args...) getDataEntryBlob(args...)
 
 """
     $(SIGNATURES)
@@ -151,15 +156,17 @@ Update big data entry
 DevNote
 - DF, unclear if `update` verb is applicable in this case, see #404
 """
-function updateBigDataEntry!(var::AbstractDFGVariable,  bde::AbstractBigDataEntry)
+function updateDataEntry!(var::AbstractDFGVariable,  bde::AbstractBigDataEntry)
     !haskey(var.bigData,bde.key) && (@warn "$(bde.key) does not exist in variable, adding")
     var.bigData[bde.key] = bde
     return bde
 end
-function updateBigDataEntry!(dfg::AbstractDFG, label::Symbol,  bde::AbstractBigDataEntry)
+function updateDataEntry!(dfg::AbstractDFG, label::Symbol,  bde::AbstractBigDataEntry)
     # !isVariable(dfg, label) && return nothing
-    return updateBigDataEntry!(getVariable(dfg, label), bde)
+    return updateDataEntry!(getVariable(dfg, label), bde)
 end
+
+@deprecate updateBigDataEntry!(args...) updateDataEntry!(args...)
 
 """
     $(SIGNATURES)
@@ -169,46 +176,52 @@ Note this doesn't remove it from any data stores.
 Notes:
 - users responsibility to delete big data in db before deleting entry
 """
-function deleteBigDataEntry!(var::AbstractDFGVariable, key::Symbol)
-    bde = getBigDataEntry(var, key)
+function deleteDataEntry!(var::AbstractDFGVariable, key::Symbol)
+    bde = getDataEntry(var, key)
     bde == nothing && return nothing
     delete!(var.bigData, key)
     return var
 end
-function deleteBigDataEntry!(dfg::AbstractDFG, label::Symbol, key::Symbol)
+function deleteDataEntry!(dfg::AbstractDFG, label::Symbol, key::Symbol)
     #users responsibility to delete big data in db before deleting entry
     !isVariable(dfg, label) && return nothing
-    return deleteBigDataEntry!(getVariable(dfg, label), key)
+    return deleteDataEntry!(getVariable(dfg, label), key)
 end
 
-function deleteBigDataEntry!(var::AbstractDFGVariable, entry::AbstractBigDataEntry)
+function deleteDataEntry!(var::AbstractDFGVariable, entry::AbstractBigDataEntry)
     #users responsibility to delete big data in db before deleting entry
-    return deleteBigDataEntry!(var, entry.key)
+    return deleteDataEntry!(var, entry.key)
 end
+
+@deprecate deleteBigDataEntry!(args...) deleteDataEntry!(args...)
 
 """
     $(SIGNATURES)
 Get big data entries, Vector{AbstractBigDataEntry}
 """
-function getBigDataEntries(var::AbstractDFGVariable)
+function getDataEntries(var::AbstractDFGVariable)
     #or should we return the iterator, Base.ValueIterator{Dict{Symbol,AbstractBigDataEntry}}?
     collect(values(var.bigData))
 end
-function getBigDataEntries(dfg::AbstractDFG, label::Symbol)
+function getDataEntries(dfg::AbstractDFG, label::Symbol)
     !isVariable(dfg, label) && return nothing
     #or should we return the iterator, Base.ValueIterator{Dict{Symbol,AbstractBigDataEntry}}?
-    getBigDataEntries(getVariable(dfg, label))
+    getDataEntries(getVariable(dfg, label))
 end
+
+@deprecate getBigDataEntries(args...) getDataEntries(args...)
 
 
 """
     $(SIGNATURES)
-getBigDataKeys
+listDataEntries
 """
-function getBigDataKeys(var::AbstractDFGVariable)
+function listDataEntries(var::AbstractDFGVariable)
     collect(keys(var.bigData))
 end
-function getBigDataKeys(dfg::AbstractDFG, label::Symbol)
+function listDataEntries(dfg::AbstractDFG, label::Symbol)
     !isVariable(dfg, label) && return nothing
-    getBigDataKeys(getVariable(dfg, label))
+    listDataEntries(getVariable(dfg, label))
 end
+
+@deprecate getBigDataKeys(args...) listDataEntries(args...)

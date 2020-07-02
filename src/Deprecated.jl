@@ -44,3 +44,14 @@ function buildSubgraphFromLabels!(dfg::AbstractDFG,
         """)
 
 end
+
+
+##==============================================================================
+## Remove in 0.10
+##==============================================================================
+
+@deprecate getBigData(args...) getDataBlob(args...)
+@deprecate addBigData!(args...) addDataBlob!(args...)
+@deprecate deleteBigData!(args...) deleteDataBlob!(args...)
+@deprecate listStoreEntries(args...) listDataBlobs(args...)
+@deprecate updateBigData!(args...) updateDataBlob!(args...)

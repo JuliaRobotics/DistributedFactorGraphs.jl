@@ -169,11 +169,11 @@ export findFactorsBetweenNaive
 export copyGraph!, deepcopyGraph, deepcopyGraph!, buildSubgraph, mergeGraph!
 # Big Data
 ##------------------------------------------------------------------------------
-export addBigDataEntry!, getBigDataEntry, updateBigDataEntry!, deleteBigDataEntry!, getBigDataEntries, getBigDataKeys, hasDataEntry, hasBigDataEntry
+export addDataEntry!, getDataEntry, updateDataEntry!, deleteDataEntry!, getDataEntries, listDataEntries, hasDataEntry, hasDataEntry
 # convenience wrappers
-export addDataEntry!, getDataEntryElement
+export addDataEntry!, getDataEntryBlob
 # aliases
-export addData!, fetchData, fetchDataEntryElement
+export addData!, fetchData, fetchDataEntryBlob
 
 
 ##------------------------------------------------------------------------------

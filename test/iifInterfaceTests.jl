@@ -261,15 +261,15 @@ end
         @test issetequal(map(e->e.key, entries), [:key1, :key2])
         @test length(getBigDataEntries(dfg, :b)) == 1
 
-        @test issetequal(getBigDataKeys(dfg, :a), [:key1, :key2])
-        @test getBigDataKeys(dfg, :b) == Symbol[:key2]
+        @test issetequal(listDataEntries(dfg, :a), [:key1, :key2])
+        @test listDataEntries(dfg, :b) == Symbol[:key2]
 
         #delete
         @test deleteBigDataEntry!(v1, :key1) == v1
-        @test getBigDataKeys(v1) == Symbol[:key2]
+        @test listDataEntries(v1) == Symbol[:key2]
         #delete from ddfg
         @test deleteBigDataEntry!(dfg, :a, :key2) == v1
-        @test getBigDataKeys(v1) == Symbol[]
+        @test listDataEntries(v1) == Symbol[]
     end
 end
 
