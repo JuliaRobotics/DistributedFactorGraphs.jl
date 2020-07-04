@@ -14,7 +14,7 @@ testDFGAPI = LightDFG
 end
 # Build a basic graph.
 
-
+testDFGAPI = LightDFG
 
 # Stores to test
 testStores = [InMemoryDataStore(), FileDataStore("/tmp/dfgFilestore")]
@@ -109,7 +109,7 @@ v1 = getVariable(fg, :a)
 
 #update
 @test updateDataEntry!(fg, :a, de2_update) == de2_update
-@test deepcopy(de2_update) == getBigDataEntry(fg, :a, :key2)
+@test deepcopy(de2_update) == getDataEntry(fg, :a, :key2)
 @test @test_logs (:warn, r"does not exist") updateDataEntry!(fg, :b, de2_update) == de2_update
 
 #list

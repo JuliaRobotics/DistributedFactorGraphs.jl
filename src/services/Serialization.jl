@@ -16,8 +16,10 @@ function packVariable(dfg::G, v::DFGVariable)::Dict{String, Any} where G <: Abst
     props["smallData"] = JSON2.write(v.smallData)
     props["solvable"] = v.solvable
     props["softtype"] = string(typeof(getSofttype(v)))
-    props["bigData"] = JSON2.write(Dict(keys(v.bigData) .=> map(bde -> JSON2.write(bde), values(v.bigData))))
-    props["bigDataElemType"] = JSON2.write(Dict(keys(v.bigData) .=> map(bde -> typeof(bde), values(v.bigData))))
+    # props["bigData"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> JSON2.write(bde), values(v.dataDict))))
+    # props["bigDataElemType"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> typeof(bde), values(v.dataDict))))
+    props["dataEntry"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> JSON2.write(bde), values(v.dataDict))))
+    props["dataEntryType"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> typeof(bde), values(v.dataDict))))
     return props
 end
 
@@ -29,8 +31,23 @@ function unpackVariable(dfg::G, packedProps::Dict{String, Any})::DFGVariable whe
     #TODO this will work for some time, but unpacking in an <: AbstractPointParametricEst would be lekker.
     ppeDict = JSON2.read(packedProps["ppeDict"], Dict{Symbol, MeanMaxPPE})
     smallData = JSON2.read(packedProps["smallData"], Dict{String, String})
-    bigDataElemTypes = JSON2.read(packedProps["bigDataElemType"], Dict{Symbol, Symbol})
-    bigDataIntermed = JSON2.read(packedProps["bigData"], Dict{Symbol, String})
+
+    #TODO Deprecate - for backward compatibility between v0.8 and v0.9, remove in v0.10
+    if haskey(packedProps, "bigDataElemType")
+        @warn "`bigDataElemType` is deprecate, please save data again with new version that uses `dataEntryType`"
+        dataElemTypes = JSON2.read(packedProps["bigDataElemType"], Dict{Symbol, Symbol})
+    else
+        dataElemTypes = JSON2.read(packedProps["dataEntryType"], Dict{Symbol, Symbol})
+    end
+
+    #TODO Deprecate - for backward compatibility between v0.8 and v0.9, remove in v0.10
+    if haskey(packedProps, "bigData")
+        @warn "`bigData` is deprecate, please save data again with new version"
+        dataIntermed = JSON2.read(packedProps["bigData"], Dict{Symbol, String})
+    else
+        dataIntermed = JSON2.read(packedProps["dataEntry"], Dict{Symbol, String})
+    end
+
     softtypeString = packedProps["softtype"]
     softtype = getTypeFromSerializationModule(dfg, Symbol(softtypeString))
     softtype == nothing && error("Cannot deserialize softtype '$softtypeString' in variable '$label'")
@@ -39,12 +56,12 @@ function unpackVariable(dfg::G, packedProps::Dict{String, Any})::DFGVariable whe
     solverData = Dict(Symbol.(keys(packed)) .=> map(p -> unpackVariableNodeData(dfg, p), values(packed)))
 
     # Rebuild DFGVariable using the first solver softtype in solverData
-    variable = DFGVariable{softtype}(Symbol(packedProps["label"]), timestamp, nstime, Set(tags), ppeDict, solverData,  smallData, Dict{Symbol,AbstractBigDataEntry}(), Ref(packedProps["solvable"]))
+    variable = DFGVariable{softtype}(Symbol(packedProps["label"]), timestamp, nstime, Set(tags), ppeDict, solverData,  smallData, Dict{Symbol,AbstractDataEntry}(), Ref(packedProps["solvable"]))
 
-    # Now rehydrate complete bigData type.
-    for (k,bdeInter) in bigDataIntermed
-        fullVal = JSON2.read(bdeInter, getfield(DistributedFactorGraphs, bigDataElemTypes[k]))
-        variable.bigData[k] = fullVal
+    # Now rehydrate complete DataEntry type.
+    for (k,bdeInter) in dataIntermed
+        fullVal = JSON2.read(bdeInter, getfield(DistributedFactorGraphs, dataElemTypes[k]))
+        variable.dataDict[k] = fullVal
     end
 
     return variable

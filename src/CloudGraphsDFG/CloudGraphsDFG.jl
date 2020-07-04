@@ -39,7 +39,7 @@ import ...DistributedFactorGraphs:  setSolverParams!,
                                     _getDuplicatedEmptyDFG,
                                     toDot,
                                     toDotFile,
-                                    AbstractBigDataEntry,
+                                    AbstractDataEntry,
                                     isValidLabel,
                                     _invalidIds,#TODO Export from DFG
                                     _validLabelRegex, #TODO Export from DFG

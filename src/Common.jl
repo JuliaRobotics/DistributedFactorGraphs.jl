@@ -62,7 +62,7 @@ sortDFG(vars::Vector{Symbol}; lt=natural_lt, kwargs...) = sort(vars; lt=lt, kwar
 ##==============================================================================
 ## Validation of session, robot, and user IDs.
 ##==============================================================================
-global _invalidIds = ["USER", "ROBOT", "SESSION", "VARIABLE", "FACTOR", "ENVIRONMENT", "PPE", "BIGDATA", "FACTORGRAPH"]
+global _invalidIds = ["USER", "ROBOT", "SESSION", "VARIABLE", "FACTOR", "ENVIRONMENT", "PPE", "DATA_ENTRY", "FACTORGRAPH"]
 
 global _validLabelRegex = r"^[a-zA-Z]\w*$"
 

@@ -20,9 +20,9 @@ end
     $(SIGNATURES)
 Add Big Data Entry to a DFG variable
 """
-function addDataEntry!(var::AbstractDFGVariable, bde::AbstractBigDataEntry)
-    haskey(var.bigData,bde.key) && error("BigData entry $(bde.key) already exists in variable")
-    var.bigData[bde.key] = bde
+function addDataEntry!(var::AbstractDFGVariable, bde::AbstractDataEntry)
+    haskey(var.dataDict, bde.key) && error("Data entry $(bde.key) already exists in variable")
+    var.dataDict[bde.key] = bde
     return bde
 end
 
@@ -32,11 +32,10 @@ end
 Add Big Data Entry to distributed factor graph.
 Should be extended if DFG variable is not returned by reference.
 """
-function addDataEntry!(dfg::AbstractDFG, label::Symbol, bde::AbstractBigDataEntry)
-    return addBigDataEntry!(getVariable(dfg, label), bde)
+function addDataEntry!(dfg::AbstractDFG, label::Symbol, bde::AbstractDataEntry)
+    return addDataEntry!(getVariable(dfg, label), bde)
 end
 
-@deprecate addBigDataEntry!(args...)  addDataEntry!(args...)
 
 """
 $(SIGNATURES)
@@ -73,23 +72,20 @@ end
 
 Does a data entry (element) exist at `key`.
 """
-hasDataEntry(var::DFGVariable, key::Symbol) = haskey(var.bigData, key)
-const hasBigDataEntry = hasDataEntry
+hasDataEntry(var::DFGVariable, key::Symbol) = haskey(var.dataDict, key)
 
 """
     $(SIGNATURES)
 Get big data entry
 """
 function getDataEntry(var::AbstractDFGVariable, key::Symbol)
-    !hasDataEntry(var, key) && (error("BigData entry $(key) does not exist in variable"); return nothing)
-    return var.bigData[key]
+    !hasDataEntry(var, key) && (error("Data entry $(key) does not exist in variable"); return nothing)
+    return var.dataDict[key]
 end
 
 function getDataEntry(dfg::AbstractDFG, label::Symbol, key::Symbol)
-    return getBigDataEntry(getVariable(dfg, label), key)
+    return getDataEntry(getVariable(dfg, label), key)
 end
-
-@deprecate getBigDataEntry(args...) getDataEntry(args...)
 
 """
 $SIGNATURES
@@ -147,7 +143,6 @@ const fetchDataEntryElement = getDataEntryBlob
 const fetchData = getDataEntryBlob
 
 #
-@deprecate getDataEntryElement(args...) getDataEntryBlob(args...)
 
 """
     $(SIGNATURES)
@@ -156,17 +151,15 @@ Update big data entry
 DevNote
 - DF, unclear if `update` verb is applicable in this case, see #404
 """
-function updateDataEntry!(var::AbstractDFGVariable,  bde::AbstractBigDataEntry)
-    !haskey(var.bigData,bde.key) && (@warn "$(bde.key) does not exist in variable, adding")
-    var.bigData[bde.key] = bde
+function updateDataEntry!(var::AbstractDFGVariable,  bde::AbstractDataEntry)
+    !haskey(var.dataDict, bde.key) && (@warn "$(bde.key) does not exist in variable, adding")
+    var.dataDict[bde.key] = bde
     return bde
 end
-function updateDataEntry!(dfg::AbstractDFG, label::Symbol,  bde::AbstractBigDataEntry)
+function updateDataEntry!(dfg::AbstractDFG, label::Symbol,  bde::AbstractDataEntry)
     # !isVariable(dfg, label) && return nothing
     return updateDataEntry!(getVariable(dfg, label), bde)
 end
-
-@deprecate updateBigDataEntry!(args...) updateDataEntry!(args...)
 
 """
     $(SIGNATURES)
@@ -179,7 +172,7 @@ Notes:
 function deleteDataEntry!(var::AbstractDFGVariable, key::Symbol)
     bde = getDataEntry(var, key)
     bde == nothing && return nothing
-    delete!(var.bigData, key)
+    delete!(var.dataDict, key)
     return var
 end
 function deleteDataEntry!(dfg::AbstractDFG, label::Symbol, key::Symbol)
@@ -188,28 +181,24 @@ function deleteDataEntry!(dfg::AbstractDFG, label::Symbol, key::Symbol)
     return deleteDataEntry!(getVariable(dfg, label), key)
 end
 
-function deleteDataEntry!(var::AbstractDFGVariable, entry::AbstractBigDataEntry)
+function deleteDataEntry!(var::AbstractDFGVariable, entry::AbstractDataEntry)
     #users responsibility to delete big data in db before deleting entry
     return deleteDataEntry!(var, entry.key)
 end
 
-@deprecate deleteBigDataEntry!(args...) deleteDataEntry!(args...)
-
 """
     $(SIGNATURES)
-Get big data entries, Vector{AbstractBigDataEntry}
+Get big data entries, Vector{AbstractDataEntry}
 """
 function getDataEntries(var::AbstractDFGVariable)
-    #or should we return the iterator, Base.ValueIterator{Dict{Symbol,AbstractBigDataEntry}}?
-    collect(values(var.bigData))
+    #or should we return the iterator, Base.ValueIterator{Dict{Symbol,AbstractDataEntry}}?
+    collect(values(var.dataDict))
 end
 function getDataEntries(dfg::AbstractDFG, label::Symbol)
     !isVariable(dfg, label) && return nothing
-    #or should we return the iterator, Base.ValueIterator{Dict{Symbol,AbstractBigDataEntry}}?
+    #or should we return the iterator, Base.ValueIterator{Dict{Symbol,AbstractDataEntry}}?
     getDataEntries(getVariable(dfg, label))
 end
-
-@deprecate getBigDataEntries(args...) getDataEntries(args...)
 
 
 """
@@ -217,11 +206,10 @@ end
 listDataEntries
 """
 function listDataEntries(var::AbstractDFGVariable)
-    collect(keys(var.bigData))
+    collect(keys(var.dataDict))
 end
+
 function listDataEntries(dfg::AbstractDFG, label::Symbol)
     !isVariable(dfg, label) && return nothing
     listDataEntries(getVariable(dfg, label))
 end
-
-@deprecate getBigDataKeys(args...) listDataEntries(args...)

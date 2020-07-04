@@ -121,7 +121,7 @@ function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverP
 
     # Test the validation of the robot, session, and user IDs.
     notAllowedList = ["!notValid", "1notValid", "_notValid", "USER", "ROBOT", "SESSION",
-                      "VARIABLE", "FACTOR", "ENVIRONMENT", "PPE", "BIGDATA", "FACTORGRAPH"]
+                      "VARIABLE", "FACTOR", "ENVIRONMENT", "PPE", "DATA_ENTRY", "FACTORGRAPH"]
 
     for s in notAllowedList
         @test_throws ErrorException T(solverParams=solparams, sessionId=s)
@@ -284,7 +284,7 @@ function DFGVariableSCA()
     @test setSmallData!(v1, small) == small
     @test getSmallData(v1) == small
 
-    #no accessors on BigData, only CRUD
+    #no accessors on dataDict, only CRUD
 
     #deprecated
     # @test @test_deprecated solverData(v1, :default) === v1.solverDataDict[:default]
@@ -759,18 +759,17 @@ function  VSDTestBlock!(fg, v1)
 
 end
 
-function  BigDataEntriesTestBlock!(fg, v2)
-    # "BigData Entries"
+function  DataEntriesTestBlock!(fg, v2)
+    # "Data Entries"
 
-    # getBigDataEntry
-    # addBigDataEntry
-    # updateBigDataEntry
-    # deleteBigDataEntry
-    # getBigDataEntries
-    # getBigDataKeys
-    # listBigDataEntries
-    # emptyBigDataEntries
-    # mergeBigDataEntries
+    # getDataEntry
+    # addDataEntry
+    # updateDataEntry
+    # deleteDataEntry
+    # getDataEntries
+    # listDataEntries
+    # emptyDataEntries
+    # mergeDataEntries
 
     oid = zeros(UInt8,12); oid[12] = 0x01
     de1 = MongodbDataEntry(:key1, NTuple{12,UInt8}(oid))
@@ -796,7 +795,7 @@ function  BigDataEntriesTestBlock!(fg, v2)
 
     #update
     @test updateDataEntry!(fg, :a, de2_update) == de2_update
-    @test deepcopy(de2_update) == getBigDataEntry(fg, :a, :key2)
+    @test deepcopy(de2_update) == getDataEntry(fg, :a, :key2)
     @test @test_logs (:warn, r"does not exist") updateDataEntry!(fg, :b, de2_update) == de2_update
 
     #list

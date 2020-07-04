@@ -225,50 +225,50 @@ end
     @test_throws ErrorException getInternalId(v1)
 end
 
-@testset "BigData" begin
+@testset "Data Entries" begin
     # NOTE: CloudGraphDFG isnt supporting this yet.
     if !(typeof(dfg) <: CloudGraphsDFG)
         oid = zeros(UInt8,12); oid[12] = 0x01
-        de1 = MongodbBigDataEntry(:key1, NTuple{12,UInt8}(oid))
+        de1 = MongodbDataEntry(:key1, NTuple{12,UInt8}(oid))
 
         oid = zeros(UInt8,12); oid[12] = 0x02
-        de2 = MongodbBigDataEntry(:key2, NTuple{12,UInt8}(oid))
+        de2 = MongodbDataEntry(:key2, NTuple{12,UInt8}(oid))
 
         oid = zeros(UInt8,12); oid[12] = 0x03
-        de2_update = MongodbBigDataEntry(:key2, NTuple{12,UInt8}(oid))
+        de2_update = MongodbDataEntry(:key2, NTuple{12,UInt8}(oid))
 
         #add
         v1 = getVariable(dfg, :a)
-        @test addBigDataEntry!(v1, de1) == de1
-        @test addBigDataEntry!(dfg, :a, de2) == de2
-        @test_throws ErrorException addBigDataEntry!(v1, de1)
-        @test de2 in getBigDataEntries(v1)
+        @test addDataEntry!(v1, de1) == de1
+        @test addDataEntry!(dfg, :a, de2) == de2
+        @test_throws ErrorException addDataEntry!(v1, de1)
+        @test de2 in getDataEntries(v1)
 
         #get
-        @test deepcopy(de1) == getBigDataEntry(v1, :key1)
-        @test deepcopy(de2) == getBigDataEntry(dfg, :a, :key2)
-        @test_throws ErrorException getBigDataEntry(v2, :key1)
-        @test_throws ErrorException getBigDataEntry(dfg, :b, :key1)
+        @test deepcopy(de1) == getDataEntry(v1, :key1)
+        @test deepcopy(de2) == getDataEntry(dfg, :a, :key2)
+        @test_throws ErrorException getDataEntry(v2, :key1)
+        @test_throws ErrorException getDataEntry(dfg, :b, :key1)
 
         #update
-        @test updateBigDataEntry!(dfg, :a, de2_update) == de2_update
-        @test deepcopy(de2_update) == getBigDataEntry(dfg, :a, :key2)
-        @test @test_logs (:warn, r"does not exist") updateBigDataEntry!(dfg, :b, de2_update) == de2_update
+        @test updateDataEntry!(dfg, :a, de2_update) == de2_update
+        @test deepcopy(de2_update) == getDataEntry(dfg, :a, :key2)
+        @test @test_logs (:warn, r"does not exist") updateDataEntry!(dfg, :b, de2_update) == de2_update
 
         #list
-        entries = getBigDataEntries(dfg, :a)
+        entries = getDataEntries(dfg, :a)
         @test length(entries) == 2
         @test issetequal(map(e->e.key, entries), [:key1, :key2])
-        @test length(getBigDataEntries(dfg, :b)) == 1
+        @test length(getDataEntries(dfg, :b)) == 1
 
         @test issetequal(listDataEntries(dfg, :a), [:key1, :key2])
         @test listDataEntries(dfg, :b) == Symbol[:key2]
 
         #delete
-        @test deleteBigDataEntry!(v1, :key1) == v1
+        @test deleteDataEntry!(v1, :key1) == v1
         @test listDataEntries(v1) == Symbol[:key2]
         #delete from ddfg
-        @test deleteBigDataEntry!(dfg, :a, :key2) == v1
+        @test deleteDataEntry!(dfg, :a, :key2) == v1
         @test listDataEntries(v1) == Symbol[]
     end
 end

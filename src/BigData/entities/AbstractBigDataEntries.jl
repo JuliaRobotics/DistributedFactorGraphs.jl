@@ -1,9 +1,9 @@
 """
     $(TYPEDEF)
-GeneralBigDataEntry is a generic multipurpose data entry that creates a unique
+GeneralDataEntry is a generic multipurpose data entry that creates a unique
 reproducible key using userId_robotId_sessionId_variableId_key.
 """
-mutable struct GeneralDataEntry <: AbstractBigDataEntry
+mutable struct GeneralDataEntry <: AbstractDataEntry
     key::Symbol
     storeKey::Symbol # Could swap this to string, but using it as an index later, so better as a symbol I believe.
     createdTimestamp::DateTime
@@ -31,13 +31,11 @@ function GeneralDataEntry(dfg::G, var::V, key::Symbol;
     return GeneralDataEntry(key, _uniqueKey(dfg, var, key), mimeType=mimeType)
 end
 
-@deprecate GeneralBigDataEntry(args...; kwargs...) GeneralDataEntry(args...; kwargs...)
-
 """
     $(TYPEDEF)
-BigDataEntry in MongoDB.
+Data Entry in MongoDB.
 """
-struct MongodbDataEntry <: AbstractBigDataEntry
+struct MongodbDataEntry <: AbstractDataEntry
     key::Symbol
     oid::NTuple{12, UInt8} #mongodb object id
     #maybe other fields such as:
@@ -45,15 +43,12 @@ struct MongodbDataEntry <: AbstractBigDataEntry
     #MIMEType::String
 end
 
-@deprecate MongodbBigDataEntry(args...)  MongodbDataEntry(args...)
 
 """
     $(TYPEDEF)
-BigDataEntry in a file.
+Data Entry in a file.
 """
-struct FileDataEntry <: AbstractBigDataEntry
+struct FileDataEntry <: AbstractDataEntry
     key::Symbol
     filename::String
 end
-
-@deprecate FileBigDataEntry(args...)  FileDataEntry(args...)
