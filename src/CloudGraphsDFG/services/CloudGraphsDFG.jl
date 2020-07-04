@@ -347,7 +347,10 @@ function listVariables(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=n
     if regexFilter == nothing
         return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(join(_getLabelsForType(dfg, DFGVariable),':'))) where node.solvable >= $solvable $tagsFilter")
     else
-        return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(join(_getLabelsForType(dfg, DFGVariable),':'))) where node.label =~ '$(regexFilter.pattern)' and node.solvable >= $solvable $tagsFilter")
+        # Neoj4j needs regexes to have double slashes, such as \\d, instead of \d.
+        # This may cause issues with complex expressions, hoping Neo4j is consistent with this!
+        doubleSlashesExpr = replace(regexFilter.pattern, "\\" => "\\\\")
+        return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(join(_getLabelsForType(dfg, DFGVariable),':'))) where node.label =~ '$doubleSlashesExpr' and node.solvable >= $solvable $tagsFilter")
     end
 end
 
