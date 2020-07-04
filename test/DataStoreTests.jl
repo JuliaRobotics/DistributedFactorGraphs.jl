@@ -10,10 +10,10 @@ using UUIDs
 include("testBlocks.jl")
 
 testDFGAPI = CloudGraphsDFG
-testDFGAPI = LightDFG
 end
 # Build a basic graph.
 
+testDFGAPI = LightDFG
 dfg = testDFGAPI{NoSolverParams}()
 #add types for softtypes
 # struct TestInferenceVariable1 <: InferenceVariable end
@@ -79,3 +79,7 @@ sleep(0.1)
 #TODO
     #listStoreEntries(ds)
 end
+
+1320*4
+
+3600+2200
