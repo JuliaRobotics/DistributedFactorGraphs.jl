@@ -73,7 +73,8 @@ import ...DistributedFactorGraphs:  setSolverParams!,
                                     getSolvable,
                                     setSolvable!,
                                     getEstimateFields,
-                                    _getname
+                                    _getname,
+                                    _getmodule
 
 using Neo4j
 using Base64

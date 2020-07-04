@@ -195,9 +195,22 @@ function _structToNeo4jProps(inst::Union{User, Robot, Session, PVND, N, APPE, AB
                 val = string(typeof(getSofttype(inst)))
             end
             # Factors
+            # TODO: Consolidate with packFactor in Serialization.jl - https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/525
             if fieldname == :solverData
-                val = "\"$(replace(JSON2.write(field), "\"" => "\\\""))\"" # Escape slashes too
-                fieldname = :data #Keeping with FileDFG format
+                fnctype = getSolverData(inst).fnc.usrfnc!
+                try
+                    packtype = getfield(_getmodule(fnctype), Symbol("Packed$(_getname(fnctype))"))
+                    packed = convert(PackedFunctionNodeData{packtype}, getSolverData(inst))
+                    packedJson = JSON2.write(packed)
+                    val = "\"$(replace(packedJson, "\"" => "\\\""))\"" # Escape slashes too
+                    fieldname = :data #Keeping with FileDFG format
+                catch ex
+                    io = IOBuffer()
+                    showerror(io, ex, catch_backtrace())
+                    err = String(take!(io))
+                    msg = "Error while packing '$(inst.label)' as '$fnctype', please check the unpacking/packing converters for this factor - \r\n$err"
+                    error(msg)
+                end
             end
         end
         write(io, "$cypherNodeName.$fieldname=$val,")
