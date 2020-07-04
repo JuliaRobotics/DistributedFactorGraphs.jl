@@ -151,8 +151,11 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G
     label = packedProps["label"]
     timestamp = DateTime(packedProps["timestamp"])
     nstime = Nanosecond(get(packedProps, "nstime", 0))
-    tags = JSON2.read(packedProps["tags"], Vector{Symbol})
-
+    if packedProps["tags"] isa String
+        tags = JSON2.read(packedProps["tags"], Vector{Symbol})
+    else
+        tags = Symbol.(packedProps["tags"])
+    end
     data = packedProps["data"]
     datatype = packedProps["fnctype"]
     @debug "DECODING Softtype = '$(datatype)' for factor '$label'"

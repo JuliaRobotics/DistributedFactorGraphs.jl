@@ -208,28 +208,28 @@ function addFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor
     end
 
     # Do a variable update
-    return updateFactor!(dfg, variable, skipAddError=true)
+    return updateFactor!(dfg, factor, skipAddError=true)
 
-    variableIds = factor._variableOrderSymbols
-    variables = map(vId -> getVariable(dfg, vId), variableIds)
-
-    # Construct the properties to save
-    props = packFactor(dfg, factor)
-
-    # TODO - Pack this into a transaction.
-    neo4jNode = Neo4j.createnode(dfg.neo4jInstance.graph, props);
-    Neo4j.updatenodelabels(neo4jNode, union([string(factor.label), "FACTOR", dfg.userId, dfg.robotId, dfg.sessionId], factor.tags))
-
-    # Add all the relationships - get them to cache them + make sure the links are correct
-    for variable in variables
-        v = getVariable(dfg, variable.label)
-        vNode = Neo4j.getnode(
-            dfg.neo4jInstance.graph,
-            _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, variable.label))
-        Neo4j.createrel(neo4jNode, vNode, "FACTORGRAPH")
-    end
-
-    return factor
+    # variableIds = factor._variableOrderSymbols
+    # variables = map(vId -> getVariable(dfg, vId), variableIds)
+    #
+    # # Construct the properties to save
+    # props = packFactor(dfg, factor)
+    #
+    # # TODO - Pack this into a transaction.
+    # neo4jNode = Neo4j.createnode(dfg.neo4jInstance.graph, props);
+    # Neo4j.updatenodelabels(neo4jNode, union([string(factor.label), "FACTOR", dfg.userId, dfg.robotId, dfg.sessionId], factor.tags))
+    #
+    # # Add all the relationships - get them to cache them + make sure the links are correct
+    # for variable in variables
+    #     v = getVariable(dfg, variable.label)
+    #     vNode = Neo4j.getnode(
+    #         dfg.neo4jInstance.graph,
+    #         _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, variable.label))
+    #     Neo4j.createrel(neo4jNode, vNode, "FACTORGRAPH")
+    # end
+    #
+    # return factor
 end
 
 function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGVariable
@@ -283,7 +283,6 @@ function getFactor(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGFactor
     if props["timestamp"][end] == 'Z'
         props["timestamp"] = props["timestamp"][1:end-1]
     end
-
     return rebuildFactorMetadata!(dfg, unpackFactor(dfg, props))
 end
 
@@ -300,26 +299,37 @@ function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor; skipAddError::Boo
         neighborsList != factor._variableOrderSymbols && error("Cannot update the factor, the neighbors are not the same.")
     end
 
+    @show props = packFactor(dfg, factor)
+
     # Create/update the factor
     # NOTE: We are no merging the factor tags into the labels anymore. We can index by that but not
     # going to pollute the graph with unnecessary (and potentially dangerous) labels.
-    addProps = Dict("softtype" => "\"$(string(typeof(getSofttype(variable))))\"")
+    fnctype = getSolverData(factor).fnc.usrfnc!
+    addProps = Dict("fnctype" => "\"$(String(_getname(fnctype)))\"")
     query = """
     MATCH (session:$(join(_getLabelsForType(dfg, Session), ":")))
-    MERGE (node:$(join(_getLabelsForInst(dfg, variable), ":")))
-    ON CREATE SET $(_structToNeo4jProps(variable, addProps, cypherNodeName="node"))
-    ON MATCH SET $(_structToNeo4jProps(variable, addProps, cypherNodeName="node"))
+    MERGE (node:$(join(_getLabelsForInst(dfg, factor), ":")))
+    ON CREATE SET $(_structToNeo4jProps(factor, addProps, cypherNodeName="node"))
+    ON MATCH SET $(_structToNeo4jProps(factor, addProps, cypherNodeName="node"))
     MERGE (node)<-[:SESSIONDATA]-(session)
     RETURN node
     """
-    @debug "[Query] updateVariable! query:\r\n$query"
+    @debug "[Query] updateFactor! query:\r\n$query"
 
-    # TODO: Optimize this as a single query with a single transaction.
-    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, factor.label)
-    neo4jNode = Neo4j.getnode(dfg.neo4jInstance.graph, nodeId)
-    props = packFactor(dfg, factor)
-    Neo4j.updatenodeproperties(neo4jNode, props)
-    Neo4j.updatenodelabels(neo4jNode, union([string(factor.label), "FACTOR", dfg.userId, dfg.robotId, dfg.sessionId], factor.tags))
+    # Don't really need the transaction here, but keeping with the updateVariable pattern.
+    tx = transaction(dfg.neo4jInstance.connection)
+    try
+        result = tx(query, submit=true)
+        length(result.errors) > 0 && error(string(result.errors))
+        length(result.results[1]["data"]) != 1 && error("Cannot update or add factor '$(getLabel(factor))'")
+        length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot update or add facator '$(getLabel(factor))'")
+
+        commit(tx)
+    catch ex
+        @warn "Rolling back transaction because of error: $(string(ex))"
+        rollback(tx)
+        throw(ex)
+    end
 
     return factor
 end
@@ -839,65 +849,4 @@ function emptyTags!(dfg::CloudGraphsDFG, sym::Symbol)
 
     return getTags(getNode(dfg, sym))
 
-end
-
-
-
-function RESERVED_mergeTags!(dfg::CloudGraphsDFG, sym::Symbol, tags::Vector{Symbol})
-
-    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance,
-                                            dfg.userId,
-                                            dfg.robotId,
-                                            dfg.sessionId,
-                                            sym)
-
-    neo4jNode = Neo4j.getnode(dfg.neo4jInstance.graph, nodeId)
-
-    addnodelabels(neo4jNode, string.(tags))
-
-    return Set(setdiff(Symbol.(getnodelabels(neo4jNode)), Symbol.([dfg.userId, dfg.robotId, dfg.sessionId]), [sym]))
-
-end
-
-
-function RESERVED_removeTags!(dfg::CloudGraphsDFG, sym::Symbol, tags::Vector{Symbol})
-
-    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance,
-                                            dfg.userId,
-                                            dfg.robotId,
-                                            dfg.sessionId,
-                                            sym)
-
-    neo4jNode = Neo4j.getnode(dfg.neo4jInstance.graph, nodeId)
-
-    shouldStay = Symbol.([dfg.userId, dfg.robotId, dfg.sessionId]) ∪ [sym, :VARIABLE, :FACTOR]
-
-    for tag in tags
-        if tag in shouldStay
-            @warn("Label:$tag is not allowed to be removed from tags and will be ignored.")
-        else
-            deletenodelabel(neo4jNode, string(tag))
-        end
-    end
-
-    return Set(setdiff(Symbol.(getnodelabels(neo4jNode)), shouldStay))
-
-end
-
-
-function RESERVED_emptyTags!(dfg::CloudGraphsDFG, sym::Symbol)
-
-    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance,
-                                            dfg.userId,
-                                            dfg.robotId,
-                                            dfg.sessionId,
-                                            sym)
-
-    neo4jNode = Neo4j.getnode(dfg.neo4jInstance.graph, nodeId)
-
-    shouldStay = Symbol.([dfg.userId, dfg.robotId, dfg.sessionId]) ∪ [sym, :VARIABLE, :FACTOR]
-    tags = setdiff(Symbol.(getnodelabels(neo4jNode)), shouldStay)
-    # tags = Symbol.(getnodelabels(neo4jNode))
-
-    return removeTags!(dfg, sym, tags)
 end

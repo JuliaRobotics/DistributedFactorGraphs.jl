@@ -128,41 +128,30 @@ function _getNeoNodesFromCyphonQuery(neo4jInstance::Neo4jInstance, matchConditio
     return nodes
 end
 
-
-"""
-$(SIGNATURES)
-Utility function to get a Neo4j node sessions for a robot.
-"""
-function _getSessionNeoNodesForRobot(neo4jInstance::Neo4jInstance, userId::String, robotId::String)::Vector{Neo4j.Node}
-    # 2. Perform the transaction
-    nodes = _getNeoNodesFromCyphonQuery(neo4jInstance, "(u:USER:$userId)-[:ROBOT]->(r:ROBOT:$robotId)-[:SESSION]->(node:SESSION)", "id")
-    return nodes
-end
-
-"""
-$(SIGNATURES)
-Try get a Neo4j node ID from a node label.
-"""
-function _tryGetNeoNodeIdFromNodeLabel(
-        neo4jInstance::Neo4jInstance,
-        userId::String, robotId::String, sessionId::String,
-        nodeLabel::Symbol;
-        nodeType::Union{Nothing, String}=nothing,
-        currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Union{Nothing, Int}
-    @debug "Looking up symbolic node ID where n.label = '$nodeLabel'..."
-    if nodeType == nothing
-        nodes = _getNeoNodesFromCyphonQuery(neo4jInstance, "(node:$userId:$robotId:$sessionId) where exists(node.label) and node.label = \"$(string(nodeLabel))\"", currentTransaction=currentTransaction)
-    else
-        nodes = _getNeoNodesFromCyphonQuery(neo4jInstance, "(node:$nodeType:$userId:$robotId:$sessionId) where exists(node.label) and node.label = \"$(string(nodeLabel))\"", currentTransaction=currentTransaction)
-    end
-
-    if length(nodes) != 1
-        return nothing
-    end
-    nodeId = nodes[1].id
-    @debug "Found NeoNode ID = $nodeId..."
-    return nodeId
-end
+# """
+# $(SIGNATURES)
+# Try get a Neo4j node ID from a node label.
+# """
+# function _tryGetNeoNodeIdFromNodeLabel(
+#         neo4jInstance::Neo4jInstance,
+#         userId::String, robotId::String, sessionId::String,
+#         nodeLabel::Symbol;
+#         nodeType::Union{Nothing, String}=nothing,
+#         currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Union{Nothing, Int}
+#     @debug "Looking up symbolic node ID where n.label = '$nodeLabel'..."
+#     if nodeType == nothing
+#         nodes = _getNeoNodesFromCyphonQuery(neo4jInstance, "(node:$userId:$robotId:$sessionId) where exists(node.label) and node.label = \"$(string(nodeLabel))\"", currentTransaction=currentTransaction)
+#     else
+#         nodes = _getNeoNodesFromCyphonQuery(neo4jInstance, "(node:$nodeType:$userId:$robotId:$sessionId) where exists(node.label) and node.label = \"$(string(nodeLabel))\"", currentTransaction=currentTransaction)
+#     end
+#
+#     if length(nodes) != 1
+#         return nothing
+#     end
+#     nodeId = nodes[1].id
+#     @debug "Found NeoNode ID = $nodeId..."
+#     return nodeId
+# end
 
 """
 $(SIGNATURES)
@@ -189,11 +178,12 @@ function _structToNeo4jProps(inst::Union{User, Robot, Session, PVND, N, APPE, AB
         end
         # TODO: Switch this to decorator pattern
         if typeof(inst) <: DFGNode
+            # Variables
             fieldname == :solverDataDict && continue
             fieldname == :ppeDict && continue
             fieldname == :bigData && continue
             if fieldname == :smallData
-                val = "\"$(JSON2.write(inst.smallData))\""
+                val = "\"$(JSON2.write(field))\""
             end
             if fieldname == :solvable
                 val = field.x
@@ -203,6 +193,11 @@ function _structToNeo4jProps(inst::Union{User, Robot, Session, PVND, N, APPE, AB
             end
             if fieldname == :softtype
                 val = string(typeof(getSofttype(inst)))
+            end
+            # Factors
+            if fieldname == :solverData
+                val = "\"$(replace(JSON2.write(field), "\"" => "\\\""))\"" # Escape slashes too
+                fieldname = :data #Keeping with FileDFG format
             end
         end
         write(io, "$cypherNodeName.$fieldname=$val,")
