@@ -45,7 +45,6 @@ So can make orderProperty = label or id.
 """
 function _getLabelsFromCyphonQuery(neo4jInstance::Neo4jInstance, matchCondition::String, orderProperty::String="")::Vector{Symbol}
     query = "match $matchCondition return distinct(node.label) $(orderProperty != "" ? "order by node.$orderProperty" : "")";
-    @debug "[Query] $query"
     result = _queryNeo4j(neo4jInstance, query)
     nodeIds = map(node -> node["row"][1], result.results[1]["data"])
     return Symbol.(nodeIds)
@@ -127,31 +126,6 @@ function _getNeoNodesFromCyphonQuery(neo4jInstance::Neo4jInstance, matchConditio
     nodes = map(node -> getnode(neo4jInstance.graph, node["row"][1]), result.results[1]["data"])
     return nodes
 end
-
-# """
-# $(SIGNATURES)
-# Try get a Neo4j node ID from a node label.
-# """
-# function _tryGetNeoNodeIdFromNodeLabel(
-#         neo4jInstance::Neo4jInstance,
-#         userId::String, robotId::String, sessionId::String,
-#         nodeLabel::Symbol;
-#         nodeType::Union{Nothing, String}=nothing,
-#         currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Union{Nothing, Int}
-#     @debug "Looking up symbolic node ID where n.label = '$nodeLabel'..."
-#     if nodeType == nothing
-#         nodes = _getNeoNodesFromCyphonQuery(neo4jInstance, "(node:$userId:$robotId:$sessionId) where exists(node.label) and node.label = \"$(string(nodeLabel))\"", currentTransaction=currentTransaction)
-#     else
-#         nodes = _getNeoNodesFromCyphonQuery(neo4jInstance, "(node:$nodeType:$userId:$robotId:$sessionId) where exists(node.label) and node.label = \"$(string(nodeLabel))\"", currentTransaction=currentTransaction)
-#     end
-#
-#     if length(nodes) != 1
-#         return nothing
-#     end
-#     nodeId = nodes[1].id
-#     @debug "Found NeoNode ID = $nodeId..."
-#     return nodeId
-# end
 
 """
 $(SIGNATURES)

@@ -209,27 +209,6 @@ function addFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor
 
     # Do a variable update
     return updateFactor!(dfg, factor, skipAddError=true)
-
-    # variableIds = factor._variableOrderSymbols
-    # variables = map(vId -> getVariable(dfg, vId), variableIds)
-    #
-    # # Construct the properties to save
-    # props = packFactor(dfg, factor)
-    #
-    # # TODO - Pack this into a transaction.
-    # neo4jNode = Neo4j.createnode(dfg.neo4jInstance.graph, props);
-    # Neo4j.updatenodelabels(neo4jNode, union([string(factor.label), "FACTOR", dfg.userId, dfg.robotId, dfg.sessionId], factor.tags))
-    #
-    # # Add all the relationships - get them to cache them + make sure the links are correct
-    # for variable in variables
-    #     v = getVariable(dfg, variable.label)
-    #     vNode = Neo4j.getnode(
-    #         dfg.neo4jInstance.graph,
-    #         _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, variable.label))
-    #     Neo4j.createrel(neo4jNode, vNode, "FACTORGRAPH")
-    # end
-    #
-    # return factor
 end
 
 function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGVariable
@@ -292,9 +271,8 @@ function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor; skipAddError::Boo
 
     if exist
         # Check that the neighbors are the same
-        neighborsList = JSON2.read(
-            _getNodeProperty(dfg.neo4jInstance, _getLabelsForInst(dfg, factor), "_variableOrderSymbols"),
-            Vector{Symbol})
+        neighborsList = Symbol.(
+            _getNodeProperty(dfg.neo4jInstance, _getLabelsForInst(dfg, factor), "_variableOrderSymbols"))
         # Confirm that we're not updating the neighbors
         neighborsList != factor._variableOrderSymbols && error("Cannot update the factor, the neighbors are not the same.")
     end
@@ -316,13 +294,21 @@ function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor; skipAddError::Boo
     """
     @debug "[Query] updateFactor! query:\r\n$query"
 
-    # Don't really need the transaction here, but keeping with the updateVariable pattern.
     tx = transaction(dfg.neo4jInstance.connection)
     try
-        result = tx(query, submit=true)
-        length(result.errors) > 0 && error(string(result.errors))
+        result = _queryNeo4j(dfg.neo4jInstance, query, currentTransaction=tx)
         length(result.results[1]["data"]) != 1 && error("Cannot update or add factor '$(getLabel(factor))'")
         length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot update or add facator '$(getLabel(factor))'")
+
+        # Create the relationships to the variables
+        query = """
+        MATCH (factor:$(join(_getLabelsForInst(dfg, factor), ":"))),
+        (var:$(join(_getLabelsForType(dfg, DFGVariable), ":")))
+        where var.label in [$(join(map(v->"\"$v\"", factor._variableOrderSymbols), ","))]
+        MERGE (factor)<-[:FACTORGRAPH]-(var)
+        RETURN factor
+        """
+        result = _queryNeo4j(dfg.neo4jInstance, query, currentTransaction=tx)
 
         commit(tx)
     catch ex
@@ -451,12 +437,11 @@ end
 
 function getNeighbors(dfg::CloudGraphsDFG, label::Symbol; solvable::Int=0)::Vector{Symbol}
     query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(label))-[r:FACTORGRAPH]-(node) where (node:VARIABLE or node:FACTOR) and node.solvable >= $solvable"
-    @debug "[Query] $query"
     neighbors = _getLabelsFromCyphonQuery(dfg.neo4jInstance, query)
     # If factor, need to do variable ordering TODO, Do we? does it matter if we always use _variableOrderSymbols in calculations?
     if isFactor(dfg, label)
-        # Server is authority
-        serverOrder = Symbol.(JSON2.read(_getNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, String(label)], "_variableOrderSymbols")))
+        # Server is authorixty
+        serverOrder = Symbol.(_getNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, String(label)], "_variableOrderSymbols"))
         neighbors = intersect(serverOrder, neighbors)
     end
     return neighbors

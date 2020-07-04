@@ -353,8 +353,8 @@ Add variable solver data, errors if it already exists.
 function addVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData)::VariableNodeData
     vnd.solverKey != solverKey && error("The solverKey in the VariableNodeData $(vnd.solverKey) does not match the solverKey provided $solverKey. The two need to match until this function is refactored.")
     var = getVariable(dfg, variablekey)
-    if haskey(var.solverDataDict, solverKey)
-        error("VariableNodeData '$(solverKey)' already exists")
+    if haskey(var.solverDataDict, vnd.solverKey)
+        error("VariableNodeData '$(vnd.solverKey)' already exists")
     end
     var.solverDataDict[solverKey] = vnd
     return vnd
@@ -411,32 +411,32 @@ function updateVariableSolverData!(dfg::AbstractDFG,
                                    verbose::Bool=true  )
     #This is basically just setSolverData
     var = getVariable(dfg, variablekey)
-    if verbose && !haskey(var.solverDataDict, solverKey)
-        @warn "VariableNodeData '$(solverKey)' does not exist, adding"
+    if verbose && !haskey(var.solverDataDict, vnd.solverKey)
+        @warn "VariableNodeData '$(vnd.solverKey)' does not exist, adding"
     end
 
     # for InMemoryDFGTypes do memory copy or repointing, for cloud this would be an different kind of update.
     usevnd = useCopy ? deepcopy(vnd) : vnd
     # should just one, or many pointers be updated?
-    if haskey(var.solverDataDict, solverKey) && isa(var.solverDataDict[solverKey], VariableNodeData) && length(fields) != 0
+    if haskey(var.solverDataDict, vnd.solverKey) && isa(var.solverDataDict[vnd.solverKey], VariableNodeData) && length(fields) != 0
       # change multiple pointers inside the VND var.solverDataDict[solvekey]
       for field in fields
-        destField = getfield(var.solverDataDict[solverKey], field)
+        destField = getfield(var.solverDataDict[vnd.solverKey], field)
         srcField = getfield(usevnd, field)
         if isa(destField, Array) && size(destField) == size(srcField)
           # use broadcast (in-place operation)
           destField .= srcField
         else
           # change pointer of destination VND object member
-          setfield!(var.solverDataDict[solverKey], field, srcField)
+          setfield!(var.solverDataDict[vnd.solverKey], field, srcField)
         end
       end
     else
       # change a single pointer in var.solverDataDict
-      var.solverDataDict[solverKey] = usevnd
+      var.solverDataDict[vnd.solverKey] = usevnd
     end
 
-    return var.solverDataDict[solverKey]
+    return var.solverDataDict[vnd.solverKey]
 end
 
 updateVariableSolverData!(dfg::AbstractDFG,
