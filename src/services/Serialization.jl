@@ -28,7 +28,7 @@ function unpackVariable(dfg::G,
         unpackBigData::Bool=true)::DFGVariable where G <: AbstractDFG
     @debug "Unpacking variable:\r\n$packedProps"
     label = Symbol(packedProps["label"])
-    timestamp = ZonedDateTime(packedProps["timestamp"])
+    timestamp = DateTime(packedProps["timestamp"])
     nstime = Nanosecond(get(packedProps, "nstime", 0))
     # Supporting string serialization using packVariable and CGDFG serialization (Vector{String})
     if packedProps["tags"] isa String

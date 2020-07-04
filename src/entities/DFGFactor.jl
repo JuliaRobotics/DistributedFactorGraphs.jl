@@ -145,7 +145,7 @@ DFGFactor(label::Symbol,
           DFGFactor{T}(label, timestamp, nstime, tags, solverData, solvable, _variableOrderSymbols)
 
 
-DFGFactor{T}(label::Symbol, variableOrderSymbols::Vector{Symbol}, timestamp::DateTime=now(), data::GenericFunctionNodeData{T} = GenericFunctionNodeData{T}()) where {T} =
+DFGFactor{T}(label::Symbol, variableOrderSymbols::Vector{Symbol}, timestamp::DateTime=now(UTC), data::GenericFunctionNodeData{T} = GenericFunctionNodeData{T}()) where {T} =
                 DFGFactor(label, timestamp, Nanosecond(0), Set{Symbol}(), data, 1, Tuple(variableOrderSymbols))
 
 
@@ -153,7 +153,7 @@ DFGFactor(label::Symbol,
           variableOrderSymbols::Vector{Symbol},
           data::GenericFunctionNodeData{T};
           tags::Set{Symbol}=Set{Symbol}(),
-          timestamp::DateTime=now(),
+          timestamp::DateTime=now(UTC),
           solvable::Int=1,
           nstime::Nanosecond = Nanosecond(0)) where {T} =
                 DFGFactor{T}(label, timestamp, nstime, tags, data, solvable, Tuple(variableOrderSymbols))

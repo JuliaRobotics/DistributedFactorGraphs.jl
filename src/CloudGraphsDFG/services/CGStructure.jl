@@ -58,6 +58,7 @@ function createUser(dfg::CloudGraphsDFG, user::User)::User
     !isValidLabel(user) && error("Node cannot have an ID '$(user.id)'.")
 
     props = _convertNodeToDict(user)
+    # TODO: Switch to _queryNeo4j
     retNode = _createNode(dfg.neo4jInstance, ["USER", String(user.id)], props, nothing)
     return user
 end
@@ -77,6 +78,7 @@ function createRobot(dfg::CloudGraphsDFG, robot::Robot)::Robot
         error("Robot '$(robot.id)' already exists for user '$(robot.userId)'")
 
     props = _convertNodeToDict(robot)
+    # TODO: Switch to _queryNeo4j
     retNode = _createNode(dfg.neo4jInstance, ["ROBOT", String(robot.userId), String(robot.id)], props, parents[1], :ROBOT)
     return robot
 end
@@ -96,6 +98,7 @@ function createSession(dfg::CloudGraphsDFG, session::Session)::Session
         error("Session '$(session.id)' already exists for robot '$(session.robotId)' and user '$(session.userId)'")
 
     props = _convertNodeToDict(session)
+    # TODO: Switch to _queryNeo4j
     retNode = _createNode(dfg.neo4jInstance, ["SESSION", String(session.userId), String(session.robotId), String(session.id)], props, parents[1], :SESSION)
     return session
 end

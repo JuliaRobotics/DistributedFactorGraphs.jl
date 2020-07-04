@@ -157,14 +157,15 @@ function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariable
     end
 
     # Do a variable update
-    return updateVariable!(dfg, variable, skipError=true)
+    return updateVariable!(dfg, variable, skipAddError=true)
 end
 
-function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable; skipError::Bool=false)::DFGVariable
-    !exists(dfg, variable) && @warn "Variable label '$(variable.label)' does not exist in the factor graph, adding"
-    # Start the transaction
+function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable; skipAddError::Bool=false)::DFGVariable
+    !skipAddError && !exists(dfg, variable) && @warn "Variable label '$(variable.label)' does not exist in the factor graph, adding"
 
     # Create/update the base variable
+    # NOTE: We are no merging the variable.tags into the labels anymore. We can index by that but not
+    # going to pollute the graph with unnecessary (and potentially dangerous) labels.
     addProps = Dict("softtype" => "\"$(string(typeof(getSofttype(variable))))\"")
     query = """
     MATCH (session:$(join(_getLabelsForType(dfg, Session), ":")))
@@ -176,17 +177,24 @@ function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable; skipError::
     """
     @debug "[Query] updateVariable! query:\r\n$query"
 
-    # Merge the solver data
+    # Start the transaction
     tx = transaction(dfg.neo4jInstance.connection)
-    result = tx(query, submit=true)
-    length(result.errors) > 0 && error(string(result.errors))
-    length(result.results[1]["data"]) != 1 && error("Cannot update or add variable '$(getLabel(variable))'")
-    length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot update or add variable '$(getLabel(variable))'")
+    try
+        result = tx(query, submit=true)
+        length(result.errors) > 0 && error(string(result.errors))
+        length(result.results[1]["data"]) != 1 && error("Cannot update or add variable '$(getLabel(variable))'")
+        length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot update or add variable '$(getLabel(variable))'")
 
-    # Merge the PPE's, SolverData, and BigData
-    mergeVariableData!(dfg, variable; currentTransaction=tx)
+        # Merge the PPE's, SolverData, and BigData
+        mergeVariableData!(dfg, variable; currentTransaction=tx)
 
-    commit(tx)
+        commit(tx)
+    catch ex
+        @warn "Rolling back transaction because of error: $(string(ex))"
+        rollback(tx)
+        throw(ex)
+    end
+
     # Track insertion
     push!(dfg.addHistory, variable.label)
 
@@ -194,9 +202,13 @@ function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable; skipError::
 end
 
 function addFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor
+    # TODO: Refactor
     if exists(dfg, factor)
         error("Factor '$(factor.label)' already exists in the factor graph")
     end
+
+    # Do a variable update
+    return updateFactor!(dfg, variable, skipAddError=true)
 
     variableIds = factor._variableOrderSymbols
     variables = map(vId -> getVariable(dfg, vId), variableIds)
@@ -217,47 +229,33 @@ function addFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor
         Neo4j.createrel(neo4jNode, vNode, "FACTORGRAPH")
     end
 
-    # Attach the node to the session sentinel.
-    _bindSessionNodeToSessionData(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, string(factor.label))
-
     return factor
 end
 
 function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGVariable
-    if typeof(label) == String
-        label = Symbol(label)
-    end
-    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, label, nodeType="VARIABLE")
-    if nodeId == nothing
-        error("Unable to retrieve the ID for variable '$label'. Please check your connection to the database and that the variable exists.")
-    end
+    query = "MATCH (node:$(join(_getLabelsForType(dfg, DFGVariable, parentKey=label), ":"))) return properties(node)"
+    result = _queryNeo4j(dfg.neo4jInstance, query)
+    length(result.results[1]["data"]) != 1 && error("Cannot get variable '$label'")
+    length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot get variable '$label'")
+    props = result.results[1]["data"][1]["row"][1]
 
-    props = getnodeproperties(dfg.neo4jInstance.graph, nodeId)
+    # This is to handle the ZonedDateTime that we receive from Neo4j.
+    # It looks like it's always UTC, so we can safely strip off the Z without switching to ZoneDateTimes for everything.
+    if props["timestamp"][end] == 'Z'
+        props["timestamp"] = props["timestamp"][1:end-1]
+    end
     variable = unpackVariable(dfg, props, unpackPPEs=false, unpackSolverData=false, unpackBigData=false)
 
-    # TODO - make this get PPE's in batch
+    # TODO - make this get PPE's and solverdata in batch
     for ppe in listPPEs(dfg, label)
         variable.ppeDict[ppe] = getPPE(dfg, label, ppe)
     end
+    for solverKey in listVariableSolverData(dfg, label)
+        variable.solverDataDict[solverKey] = getVariableSolverData(dfg, label, solverKey)
+    end
+    # TODO - data entries
+
     return variable
-end
-
-function getFactor(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGFactor
-    if typeof(label) == String
-        label = Symbol(label)
-    end
-    nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, label, nodeType="FACTOR")
-    if nodeId == nothing
-        error("Unable to retrieve the ID for factor '$label'. Please check your connection to the database and that the factor exists.")
-    end
-
-    props = getnodeproperties(dfg.neo4jInstance.graph, nodeId)
-    factor = unpackFactor(dfg, props)
-
-    # Lastly, rebuild the metadata
-    factor = rebuildFactorMetadata!(dfg, factor)
-
-    return factor
 end
 
 function mergeVariableData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::DFGVariable
@@ -267,26 +265,54 @@ function mergeVariableData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable; cu
     for (k,v) in sourceVariable.ppeDict
         updatePPE!(dfg, getLabel(sourceVariable), getSofttype(sourceVariable), v, currentTransaction=currentTransaction)
     end
-    @info "Still need to do updateVariableSolverData"
-    # for (k,v) in sourceVariable.solverDataDict
-    #     updateVariableSolverData!(dfg, getLabel(sourceVariable), v, k, currentTransaction=currentTransaction)
-    # end
+    for (k,v) in sourceVariable.solverDataDict
+        updateVariableSolverData!(dfg, getLabel(sourceVariable), v, currentTransaction=currentTransaction)
+    end
     return sourceVariable
 end
 
+function getFactor(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGFactor
+    query = "MATCH (node:$(join(_getLabelsForType(dfg, DFGFactor, parentKey=label), ":"))) return properties(node)"
+    result = _queryNeo4j(dfg.neo4jInstance, query)
+    length(result.results[1]["data"]) != 1 && error("Cannot get factor '$label'")
+    length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot get factor '$label'")
+    props = result.results[1]["data"][1]["row"][1]
 
-function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor
-    if !exists(dfg, factor)
-        @warn "Factor label '$(factor.label)' does not exist in the factor graph, adding"
-        return addFactor!(dfg, factor)
+    # This is to handle the ZonedDateTime that we receive from Neo4j.
+    # It looks like it's always UTC, so we can safely strip off the Z without switching to ZoneDateTimes for everything.
+    if props["timestamp"][end] == 'Z'
+        props["timestamp"] = props["timestamp"][1:end-1]
     end
 
-    neighborsList = JSON2.read(
-        _getNodeProperty(dfg.neo4jInstance, _getLabelsForInst(dfg, factor), "_variableOrderSymbols"),
-        Vector{Symbol})
+    return rebuildFactorMetadata!(dfg, unpackFactor(dfg, props))
+end
 
-    # Confirm that we're not updating the neighbors
-    neighborsList != factor._variableOrderSymbols && error("Cannot update the factor, the neighbors are not the same.")
+function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor; skipAddError::Bool=false)::DFGFactor
+    exist = exists(dfg, factor)
+    !skipAddError && !exist && @warn "Factor label '$(factor.label)' does not exist in the factor graph, adding"
+
+    if exist
+        # Check that the neighbors are the same
+        neighborsList = JSON2.read(
+            _getNodeProperty(dfg.neo4jInstance, _getLabelsForInst(dfg, factor), "_variableOrderSymbols"),
+            Vector{Symbol})
+        # Confirm that we're not updating the neighbors
+        neighborsList != factor._variableOrderSymbols && error("Cannot update the factor, the neighbors are not the same.")
+    end
+
+    # Create/update the factor
+    # NOTE: We are no merging the factor tags into the labels anymore. We can index by that but not
+    # going to pollute the graph with unnecessary (and potentially dangerous) labels.
+    addProps = Dict("softtype" => "\"$(string(typeof(getSofttype(variable))))\"")
+    query = """
+    MATCH (session:$(join(_getLabelsForType(dfg, Session), ":")))
+    MERGE (node:$(join(_getLabelsForInst(dfg, variable), ":")))
+    ON CREATE SET $(_structToNeo4jProps(variable, addProps, cypherNodeName="node"))
+    ON MATCH SET $(_structToNeo4jProps(variable, addProps, cypherNodeName="node"))
+    MERGE (node)<-[:SESSIONDATA]-(session)
+    RETURN node
+    """
+    @debug "[Query] updateVariable! query:\r\n$query"
 
     # TODO: Optimize this as a single query with a single transaction.
     nodeId = _tryGetNeoNodeIdFromNodeLabel(dfg.neo4jInstance, dfg.userId, dfg.robotId, dfg.sessionId, factor.label)
@@ -303,14 +329,17 @@ function deleteVariable!(dfg::CloudGraphsDFG, label::Symbol)#::Tuple{AbstractDFG
     if variable == nothing
         error("Unable to retrieve the ID for variable '$label'. Please check your connection to the database and that the variable exists.")
     end
+    # Get neighbors to return... this is pretty expensive.
+    neigfacs = map(f -> getFactor(dfg, f), getNeighbors(dfg, variable))
 
     deleteNeighbors = true # reserved, orphaned factors are not supported at this time
-    if deleteNeighbors
-        neigfacs = map(l->deleteFactor!(dfg, l), getNeighbors(dfg, label))
-    end
-
-    # Perform detach+deletion
-    _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:$label:$(join(_getLabelsForType(dfg, DFGVariable),':'))) detach delete node ")
+    # Very 'assertive' deletion - delete the variable, all PPE's, solver data, data, and related factors in a single bound.
+    query = """
+    MATCH (node:$(join(_getLabelsForType(dfg, DFGVariable, parentKey=label),':')))--(m)
+    WHERE (m:PPE OR m:SOLVERDATA OR m:DATA $(deleteNeighbors ? "OR m:FACTOR" : ""))
+    DETACH DELETE node, m
+    """
+    _queryNeo4j(dfg.neo4jInstance, query)
 
     # Clearing history
     dfg.addHistory = symdiff(dfg.addHistory, [label])
@@ -327,7 +356,11 @@ function deleteFactor!(dfg::CloudGraphsDFG, label::Symbol)::DFGFactor
     end
 
     # Perform detach+deletion
-    _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:$label:$(join(_getLabelsForType(dfg, DFGFactor),':'))) detach delete node ")
+    query = """
+    MATCH (node:$(join(_getLabelsForType(dfg, DFGVariable, parentKey=label),':')))
+    DETACH DELETE node
+    """
+    _queryNeo4j(dfg.neo4jInstance, query)
 
     # Clearing history
     dfg.addHistory = symdiff(dfg.addHistory, [label])
@@ -487,6 +520,11 @@ $(SIGNATURES)
 Unpack a Dict{String, Any} into a PPE.
 """
 function _unpackPPE(dfg::G, packedPPE::Dict{String, Any})::AbstractPointParametricEst where G <: AbstractDFG
+    # Cleanup Zoned timestamp, which is always UTC
+    if packedPPE["lastUpdatedTimestamp"][end] == 'Z'
+        packedPPE["lastUpdatedTimestamp"] = packedPPE["lastUpdatedTimestamp"][1:end-1]
+    end
+
     !haskey(packedPPE, "_type") && error("Cannot find type key '$TYPEKEY' in packed PPE data")
     type = pop!(packedPPE, "_type")
     (type == nothing || type == "") && error("Cannot deserialize PPE, type key is empty")
@@ -526,7 +564,7 @@ function addPPE!(dfg::CloudGraphsDFG,
     end
     # Add additional properties for the PPE
     addProps = _generateAdditionalProperties(softType, ppe)
-    return _unpackPPE(dfg, _matchmergeVarSubnode!(
+    return _unpackPPE(dfg, _matchmergeVariableSubnode!(
         dfg,
         variablekey,
         _getLabelsForInst(dfg, ppe, parentKey=variablekey),
@@ -548,7 +586,7 @@ function updatePPE!(
     end
     # Add additional properties for the PPE
     addProps = _generateAdditionalProperties(softType, ppe)
-    return _unpackPPE(dfg, _matchmergeVarSubnode!(
+    return _unpackPPE(dfg, _matchmergeVariableSubnode!(
         dfg,
         variablekey,
         _getLabelsForInst(dfg, ppe, parentKey=variablekey),
@@ -616,7 +654,7 @@ function addVariableSolverData!(dfg::CloudGraphsDFG,
     if vnd.solverKey in listVariableSolverData(dfg, variablekey, currentTransaction=currentTransaction)
         error("Solver data '$(vnd.solverKey)' already exists")
     end
-    retPacked = _matchmergeVarSubnode!(
+    retPacked = _matchmergeVariableSubnode!(
         dfg,
         variablekey,
         _getLabelsForInst(dfg, vnd, parentKey=variablekey),
@@ -636,7 +674,7 @@ function updateVariableSolverData!(dfg::CloudGraphsDFG,
         @warn "Solver data '$(vnd.solverKey)' does not exist, adding"
     end
     # TODO: Update this to use the selective parameters from fields.
-    retPacked = _matchmergeVarSubnode!(
+    retPacked = _matchmergeVariableSubnode!(
         dfg,
         variablekey,
         _getLabelsForInst(dfg, vnd, parentKey=variablekey),
@@ -646,13 +684,13 @@ function updateVariableSolverData!(dfg::CloudGraphsDFG,
     return _unpackVariableNodeData(dfg, retPacked)
 end
 
-function deleteVariableSolverData!(dfg::CloudGraphsDFG, variablekey::Symbol, solverkey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::VariableNodeData
+function deleteVariableSolverData!(dfg::CloudGraphsDFG, variablekey::Symbol, solverKey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::VariableNodeData
     retPacked = _deleteVarSubnode!(
         dfg,
         variablekey,
         :SOLVERDATA,
         _getLabelsForType(dfg, VariableNodeData, parentKey=variablekey),
-        solverkey,
+        solverKey,
         currentTransaction=currentTransaction)
     return _unpackVariableNodeData(dfg, retPacked)
 end

@@ -6,14 +6,16 @@ Returns the transaction for a given query.
 NOTE: Must commit(transaction) after you're done.
 """
 function _queryNeo4j(neo4jInstance::Neo4jInstance, query::String; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+    @debug "[Query] $(currentTransaction != nothing ? "[TRANSACTION]" : "") $query"
     if currentTransaction == nothing
         loadtx = transaction(neo4jInstance.connection)
-        result = loadtx(query; submit=true)
+        loadtx(query)
         # Have to finish the transaction
-        commit(loadtx)
+        result = commit(loadtx)
     else
         result = currentTransaction(query; submit=true)
     end
+    length(result.errors) > 0 && error(string(result.errors))
     return result
 end
 
@@ -113,6 +115,7 @@ If orderProperty is not ==, then 'order by n.{orderProperty} will be appended to
 So can make orderProperty = label or id.
 """
 function _getNeoNodesFromCyphonQuery(neo4jInstance::Neo4jInstance, matchCondition::String, orderProperty::String=""; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Vector{Neo4j.Node}
+    # TODO: Burn this function to the ground.
     # 2. Perform the transaction
     query = "match $matchCondition return id(node) $(orderProperty != "" ? "order by node.$orderProperty" : "")";
     result = _queryNeo4j(neo4jInstance, query, currentTransaction=currentTransaction)
@@ -179,8 +182,8 @@ function _structToNeo4jProps(inst::Union{User, Robot, Session, PVND, N, APPE, AB
         field = getfield(inst, fieldname)
         val = nothing
         # Neo4j type conversion if possible - keep timestamps timestamps, etc.
-        if field isa ZonedDateTime
-            val = "datetime(\"$(field)\")"
+        if field isa DateTime
+            val = "datetime(\"$(string(ZonedDateTime(field, tz"UTC")))\")"
         else
             val = JSON2.write(field)
         end
@@ -300,7 +303,7 @@ function _getVarSubnodeProperties(dfg::CloudGraphsDFG, variablekey::Symbol, dfgT
     return result.results[1]["data"][1]["row"][1]
 end
 
-function _matchmergeVarSubnode!(
+function _matchmergeVariableSubnode!(
         dfg::CloudGraphsDFG,
         variablekey::Symbol,
         nodeLabels::Vector{String},
@@ -312,11 +315,11 @@ function _matchmergeVarSubnode!(
 
     query = """
                 MATCH (var:$variablekey:$(join(_getLabelsForType(dfg, DFGVariable, parentKey=variablekey),':')))
-                MERGE (var)-[:PPE]->(subnode:$(join(nodeLabels,':')))
+                MERGE (var)-[:$relationshipKey]->(subnode:$(join(nodeLabels,':')))
                 ON CREATE SET $(_structToNeo4jProps(subnode, addProps))
                 ON MATCH SET $(_structToNeo4jProps(subnode, addProps))
                 RETURN properties(subnode)"""
-    @debug "[Query] _matchmergeVarSubnode! query:\r\n$query"
+    @debug "[Query] _matchmergeVariableSubnode! query:\r\n$query"
     result = nothing
     if currentTransaction != nothing
         result = currentTransaction(query; submit=true) # TODO: Maybe we should submit (; submit = true) for the results to fail early?
