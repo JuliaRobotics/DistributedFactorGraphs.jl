@@ -151,6 +151,9 @@ isVariable(dfg::CloudGraphsDFG, sym::Symbol)::Bool =
 isFactor(dfg::CloudGraphsDFG, sym::Symbol)::Bool =
     _getNodeCount(dfg.neo4jInstance, ["FACTOR", dfg.userId, dfg.robotId, dfg.sessionId, String(sym)]) == 1
 
+#Optimization
+getSofttype(dfg::CloudGraphsDFG, lbl::Symbol) = getSofttype(getVariable(dfg,lbl))
+
 function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariable
     if exists(dfg, variable)
         error("Variable '$(variable.label)' already exists in the factor graph")
@@ -383,10 +386,7 @@ function listVariables(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=n
     if regexFilter == nothing
         return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(join(_getLabelsForType(dfg, DFGVariable),':'))) where node.solvable >= $solvable $tagsFilter")
     else
-        # Neoj4j needs regexes to have double slashes, such as \\d, instead of \d.
-        # This may cause issues with complex expressions, hoping Neo4j is consistent with this!
-        doubleSlashesExpr = replace(regexFilter.pattern, "\\" => "\\\\")
-        return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(join(_getLabelsForType(dfg, DFGVariable),':'))) where node.label =~ '$doubleSlashesExpr' and node.solvable >= $solvable $tagsFilter")
+        return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(join(_getLabelsForType(dfg, DFGVariable),':'))) where node.label =~ '$(regexFilter.pattern)' and node.solvable >= $solvable $tagsFilter")
     end
 end
 
@@ -597,7 +597,7 @@ end
 function updatePPE!(dfg::CloudGraphsDFG, sourceVariables::Vector{<:DFGVariable}, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
     tx = currentTransaction == nothing ? transaction(dfg.neo4jInstance.connection) : currentTransaction
     for var in sourceVariables
-        updatePPE!(dfg, var.label, getSofttype(dfg, var), getPPE(var, ppekey), currentTransaction=tx)
+        updatePPE!(dfg, var.label, getSofttype(var), getPPE(var, ppekey), currentTransaction=tx)
     end
     if currentTransaction == nothing
         result = commit(tx)
@@ -615,15 +615,6 @@ function deletePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppekey::Symbol=:de
         currentTransaction=currentTransaction)
     return _unpackPPE(dfg, props)
 end
-
-# Error when the generic functions are used.
-function addPPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default)::AbstractPointParametricEst where P <: AbstractPointParametricEst
-    error("This function is not supported by CGDFG, use addPPE!(dfg, variablekey, softType, ppe).")
-end
-function updatePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default)::P where P <: AbstractPointParametricEst
-    error("This function is not supported by CGDFG, use updatePPE!(dfg, variablekey, softType, ppe).")
-end
-
 
 ## VariableSolverData CRUD
 

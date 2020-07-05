@@ -557,11 +557,19 @@ getPPE(dfg::AbstractDFG, sourceVariable::VariableDataLevel1, ppekey::Symbol=defa
 Add variable PPE, errors if it already exists.
 """
 function addPPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default)::AbstractPointParametricEst where P <: AbstractPointParametricEst
+    return addPPE!(dfg, variablekey, ppe)
+end
+
+"""
+    $(SIGNATURES)
+Add variable PPE, errors if it already exists.
+"""
+function addPPE!(dfg::AbstractDFG, variablekey::Symbol, softType::ST, ppe::P)::AbstractPointParametricEst where {P <: AbstractPointParametricEst, ST <: InferenceVariable}
     var = getVariable(dfg, variablekey)
-    if haskey(var.ppeDict, ppekey)
-        error("PPE '$(ppekey)' already exists")
+    if haskey(var.ppeDict, ppe.solverKey)
+        error("PPE '$(ppe.solverKey)' already exists")
     end
-    var.ppeDict[ppekey] = ppe
+    var.ppeDict[ppe.solverKey] = ppe
     return ppe
 end
 
@@ -571,7 +579,7 @@ Add a new PPE entry from a deepcopy of the source variable PPE.
 NOTE: Copies the solver data.
 """
 addPPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol=:default) =
-    addPPE!(dfg, sourceVariable.label, deepcopy(getPPE(sourceVariable, ppekey)), ppekey)
+    addPPE!(dfg, sourceVariable.label, getSofttype(sourceVariable), deepcopy(getPPE(sourceVariable, ppekey)))
 
 """
     $(SIGNATURES)
@@ -582,7 +590,7 @@ function addPPE!(dfg::AbstractDFG,
                  softType::ST,
                  ppe::P)::AbstractPointParametricEst where
                  {P <: AbstractPointParametricEst, ST <: InferenceVariable}
-     return addPPE!(dfg, variablekey, ppe, ppe.solverKey)
+    return addPPE!(dfg, variablekey, ppe, ppe.solverKey)
 end
 
 """
@@ -590,13 +598,20 @@ end
 Update PPE data if it exists, otherwise add it -- one call per `key::Symbol=:default`.
 """
 function updatePPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default)::P where P <: AbstractPointParametricEst
+    return updatePPE!(dfg, variablekey, ppe)
+end
 
+"""
+    $(SIGNATURES)
+Update PPE data if it exists, otherwise add it -- one call per `key::Symbol=:default`.
+"""
+function updatePPE!(dfg::AbstractDFG, variablekey::Symbol, softType::ST, ppe::P)::P where {P <: AbstractPointParametricEst, ST <: InferenceVariable}
     var = getVariable(dfg, variablekey)
-    if !haskey(var.ppeDict, ppekey)
-        @warn "PPE '$(ppekey)' does not exist, adding"
+    if !haskey(var.ppeDict, ppe.solverKey)
+        @warn "PPE '$(ppe.solverKey)' does not exist, adding"
     end
     #for InMemoryDFGTypes, cloud would update here
-    var.ppeDict[ppekey] = ppe
+    var.ppeDict[ppe.solverKey] = ppe
     return ppe
 end
 
@@ -606,7 +621,7 @@ Update PPE data if it exists, otherwise add it.
 NOTE: Copies the PPE data.
 """
 updatePPE!(dfg::AbstractDFG, sourceVariable::VariableDataLevel1, ppekey::Symbol=:default) =
-    updatePPE!(dfg, sourceVariable.label, deepcopy(getPPE(sourceVariable, ppekey)), ppekey)
+    updatePPE!(dfg, sourceVariable.label, getSofttype(sourceVariable), deepcopy(getPPE(sourceVariable, ppekey)))
 
 """
     $(SIGNATURES)
@@ -615,7 +630,7 @@ Update PPE data if it exists, otherwise add it.
 function updatePPE!(dfg::AbstractDFG, sourceVariables::Vector{<:VariableDataLevel1}, ppekey::Symbol=:default)
     #I think cloud would do this in bulk for speed
     for var in sourceVariables
-        updatePPE!(dfg, var.label, getPPE(dfg, var, ppekey), ppekey)
+        updatePPE!(dfg, var.label, getPPE(dfg, var, ppekey))
     end
 end
 
@@ -629,7 +644,7 @@ function updatePPE!(
         softType::ST,
         ppe::P)::P where
         {P <: AbstractPointParametricEst, ST <: InferenceVariable}
-    return updatePPE!(dfg, variablekey, ppe, ppe.solverKey)
+    return updatePPE!(dfg, variablekey, ppe)
 end
 
 """
