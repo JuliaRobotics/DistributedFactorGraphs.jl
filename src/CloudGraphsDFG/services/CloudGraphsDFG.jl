@@ -546,7 +546,7 @@ function _generateAdditionalProperties(softType::ST, ppe::P)::Dict{String, Strin
     for field in DistributedFactorGraphs.getEstimateFields(ppe)
         est = getfield(ppe, field)
         cart = Main.projectCartesian(softType, est) # Assuming we've imported the variables into Main
-        addProps["$(field)_cart3"] = "point({x:$(cart[1]),y:$(cart[2]),y:$(cart[3])})" # Need to look at 3D too soon.
+        addProps["$(field)_cart3"] = "point({x:$(cart[1]),y:$(cart[2]),z:$(cart[3])})" # Need to look at 3D too soon.
     end
     return addProps
 end
