@@ -286,8 +286,7 @@ include("services/CustomPrinting.jl")
 include("Common.jl")
 
 # Data Blob extensions
-# TODO rename in seprerate PR
-include("BigData/BigData.jl")
+include("DataBlobs/DataBlobs.jl")
 
 function __init__()
     @require GraphPlot = "a2cc645c-3eea-5389-862e-a155d0052231" begin
