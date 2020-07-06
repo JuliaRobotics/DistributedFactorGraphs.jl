@@ -230,7 +230,7 @@ DANGER: Clears the whole session from the database.
 """
 function clearSession!!(dfg::CloudGraphsDFG)::Nothing
     # Perform detach+deletion
-    _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId)) detach delete node ")
+    _queryNeo4j(dfg.neo4jInstance, "match (node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId)) detach delete node ")
 
     # Clearing history
     dfg.addHistory = Symbol[]
@@ -243,7 +243,7 @@ DANGER: Clears the whole robot + sessions from the database.
 """
 function clearRobot!!(dfg::CloudGraphsDFG)::Nothing
     # Perform detach+deletion
-    _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId):$(dfg.robotId)) detach delete node ")
+    _queryNeo4j(dfg.neo4jInstance, "match (node:$(dfg.userId):$(dfg.robotId)) detach delete node ")
 
     # Clearing history
     dfg.addHistory = Symbol[]
@@ -256,7 +256,7 @@ DANGER: Clears the whole user + robot + sessions from the database.
 """
 function clearUser!!(dfg::CloudGraphsDFG)::Nothing
     # Perform detach+deletion
-    _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:$(dfg.userId)) detach delete node ")
+    _queryNeo4j(dfg.neo4jInstance, "match (node:$(dfg.userId)) detach delete node ")
 
     # Clearing history
     dfg.addHistory = Symbol[]
