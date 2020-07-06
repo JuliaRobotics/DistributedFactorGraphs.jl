@@ -41,6 +41,7 @@ end
 # Original getSofttype(getVariable(dfg,lbl), solvekey)
 getSofttype(v::DFGVariable) = typeof(v).parameters[1]()
 
+# Optimized in CGDFG
 getSofttype(dfg::AbstractDFG, lbl::Symbol) = getSofttype(getVariable(dfg,lbl))
 
 """

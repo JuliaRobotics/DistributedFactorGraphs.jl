@@ -20,6 +20,7 @@ import ...DistributedFactorGraphs:  setSolverParams!,
                                     exists,
                                     isVariable,
                                     isFactor,
+                                    getSofttype,
                                     getDescription,
                                     updateVariable!,
                                     updateFactor!,
@@ -74,7 +75,8 @@ import ...DistributedFactorGraphs:  setSolverParams!,
                                     setSolvable!,
                                     getEstimateFields,
                                     _getname,
-                                    _getmodule
+                                    _getmodule,
+                                    getTypeFromSerializationModule
 
 using Neo4j
 using Base64

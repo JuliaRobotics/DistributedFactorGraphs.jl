@@ -152,7 +152,12 @@ isFactor(dfg::CloudGraphsDFG, sym::Symbol)::Bool =
     _getNodeCount(dfg.neo4jInstance, ["FACTOR", dfg.userId, dfg.robotId, dfg.sessionId, String(sym)]) == 1
 
 #Optimization
-getSofttype(dfg::CloudGraphsDFG, lbl::Symbol) = getSofttype(getVariable(dfg,lbl))
+function getSofttype(dfg::CloudGraphsDFG, lbl::Symbol)
+    st = _getNodeProperty(dfg.neo4jInstance, union(_getLabelsForType(dfg, DFGVariable), [String(lbl)]), "softtype")
+    @debug "Trying to find softtype: $st"
+    softType = getTypeFromSerializationModule(dfg, Symbol(st))
+    return softType()
+end
 
 function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariable
     if exists(dfg, variable)
