@@ -268,7 +268,7 @@ DFGVariable(label::Symbol, softtype::T;
 
 DFGVariable(label::Symbol,
             solverData::VariableNodeData{T};
-            timestamp::DateTime,
+            timestamp::DateTime=now(UTC),
             nstime::Nanosecond = Nanosecond(0),
             tags::Set{Symbol}=Set{Symbol}(),
             estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
