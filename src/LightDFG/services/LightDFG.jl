@@ -204,7 +204,7 @@ end
 function listFactors(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol}
     # factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGFactor, vertices(dfg.g)))
     if length(tags) > 0
-        return map(v -> v.label, getFactor(dfg, regexFilter, tags=tags, solvable=solvable))
+        return map(v -> v.label, getFactors(dfg, regexFilter, tags=tags, solvable=solvable))
     end
     factors = collect(keys(dfg.g.factors))
     if regexFilter != nothing
