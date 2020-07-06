@@ -123,11 +123,11 @@ end
 ## Variables
 ##==============================================================================
 #
-# |                     | label | tags | timestamp | ppe | softtypename | solvable | solverData | smallData | bigData |
-# |---------------------|:-----:|:----:|:---------:|:---:|:------------:|:--------:|:----------:|:---------:|:-------:|
-# | SkeletonDFGVariable |   X   |   X  |           |     |              |          |            |           |         |
-# | DFGVariableSummary  |   X   |   X  |     X     |  X  |       X      |          |            |           |    X    |
-# | DFGVariable         |   X   |   X  |     x     |  X  |              |     X    |      X     |     X     |    X    |
+# |                     | label | tags | timestamp | ppe | softtypename | solvable | solverData | smallData | dataEntries |
+# |---------------------|:-----:|:----:|:---------:|:---:|:------------:|:--------:|:----------:|:---------:|:-----------:|
+# | SkeletonDFGVariable |   X   |   X  |           |     |              |          |            |           |             |
+# | DFGVariableSummary  |   X   |   X  |     X     |  X  |       X      |          |            |           |       X     |
+# | DFGVariable         |   X   |   X  |     x     |  X  |              |     X    |      X     |     X     |       X     |
 #
 ##------------------------------------------------------------------------------
 
@@ -166,14 +166,14 @@ function setTimestamp(v::DFGVariable, ts::DateTime; verbose::Bool=true)
     if verbose
         @warn "verbose=true: setTimestamp(::DFGVariable,...) creates a returns a new immutable DFGVariable object (and didn't change a distributed factor graph object), make sure you are using the right pointers: getVariable(...).  See setTimestamp!(...) and note suggested use is at addVariable!(..., [timestamp=...]).  See DFG #315 for explanation."
     end
-    return DFGVariable(v.label, ts, v.nstime, v.tags, v.ppeDict, v.solverDataDict, v.smallData, v.bigData, Ref(v.solvable))
+    return DFGVariable(v.label, ts, v.nstime, v.tags, v.ppeDict, v.solverDataDict, v.smallData, v.dataDict, Ref(v.solvable))
 end
 
 function setTimestamp(v::DFGVariableSummary, ts::DateTime; verbose::Bool=true)
     if verbose
         @warn "verbose=true: setTimestamp(::DFGVariableSummary,...) creates and returns a new immutable DFGVariable object (and didn't change a distributed factor graph object), make sure you are using the right pointers: getVariable(...).  See setTimestamp!(...) and note suggested use is at addVariable!(..., [timestamp=...]).  See DFG #315 for explanation."
     end
-    return DFGVariableSummary(v.label, ts, v.tags, v.ppeDict, v.softtypename, v.bigData)
+    return DFGVariableSummary(v.label, ts, v.tags, v.ppeDict, v.softtypename, v.dataDict)
 end
 
 
@@ -281,10 +281,10 @@ function setSmallData!(v::DFGVariable, smallData::Dict{String, String})::Dict{St
 end
 
 ##------------------------------------------------------------------------------
-## bigData
+## Data Entries and Blobs
 ##------------------------------------------------------------------------------
 
-## see Bigdata Folder
+## see DataEntryBlob Folder
 
 ##------------------------------------------------------------------------------
 ## softtypename
@@ -441,7 +441,7 @@ function deepcopySolvekeys!(dfg::AbstractDFG,
                                        dest, true, Symbol[], verbose ),
           labels)
 end
-const deepcopySupersolve! = deepcopySolvekeys! 
+const deepcopySupersolve! = deepcopySolvekeys!
 
 """
     $(SIGNATURES)

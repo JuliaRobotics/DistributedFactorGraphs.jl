@@ -121,7 +121,7 @@ function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverP
 
     # Test the validation of the robot, session, and user IDs.
     notAllowedList = ["!notValid", "1notValid", "_notValid", "USER", "ROBOT", "SESSION",
-                      "VARIABLE", "FACTOR", "ENVIRONMENT", "PPE", "BIGDATA", "FACTORGRAPH"]
+                      "VARIABLE", "FACTOR", "ENVIRONMENT", "PPE", "DATA_ENTRY", "FACTORGRAPH"]
 
     for s in notAllowedList
         @test_throws ErrorException T(solverParams=solparams, sessionId=s)
@@ -284,7 +284,7 @@ function DFGVariableSCA()
     @test setSmallData!(v1, small) == small
     @test getSmallData(v1) == small
 
-    #no accessors on BigData, only CRUD
+    #no accessors on dataDict, only CRUD
 
     #deprecated
     # @test @test_deprecated solverData(v1, :default) === v1.solverDataDict[:default]
@@ -759,61 +759,60 @@ function  VSDTestBlock!(fg, v1)
 
 end
 
-function  BigDataEntriesTestBlock!(fg, v2)
-    # "BigData Entries"
+function  DataEntriesTestBlock!(fg, v2)
+    # "Data Entries"
 
-    # getBigDataEntry
-    # addBigDataEntry
-    # updateBigDataEntry
-    # deleteBigDataEntry
-    # getBigDataEntries
-    # getBigDataKeys
-    # listBigDataEntries
-    # emptyBigDataEntries
-    # mergeBigDataEntries
+    # getDataEntry
+    # addDataEntry
+    # updateDataEntry
+    # deleteDataEntry
+    # getDataEntries
+    # listDataEntries
+    # emptyDataEntries
+    # mergeDataEntries
 
     oid = zeros(UInt8,12); oid[12] = 0x01
-    de1 = MongodbBigDataEntry(:key1, NTuple{12,UInt8}(oid))
+    de1 = MongodbDataEntry(:key1, NTuple{12,UInt8}(oid))
 
     oid = zeros(UInt8,12); oid[12] = 0x02
-    de2 = MongodbBigDataEntry(:key2, NTuple{12,UInt8}(oid))
+    de2 = MongodbDataEntry(:key2, NTuple{12,UInt8}(oid))
 
     oid = zeros(UInt8,12); oid[12] = 0x03
-    de2_update = MongodbBigDataEntry(:key2, NTuple{12,UInt8}(oid))
+    de2_update = MongodbDataEntry(:key2, NTuple{12,UInt8}(oid))
 
     #add
     v1 = getVariable(fg, :a)
-    @test addBigDataEntry!(v1, de1) == de1
-    @test addBigDataEntry!(fg, :a, de2) == de2
-    @test_throws ErrorException addBigDataEntry!(v1, de1)
-    @test de2 in getBigDataEntries(v1)
+    @test addDataEntry!(v1, de1) == de1
+    @test addDataEntry!(fg, :a, de2) == de2
+    @test_throws ErrorException addDataEntry!(v1, de1)
+    @test de2 in getDataEntries(v1)
 
     #get
-    @test deepcopy(de1) == getBigDataEntry(v1, :key1)
-    @test deepcopy(de2) == getBigDataEntry(fg, :a, :key2)
-    @test_throws ErrorException getBigDataEntry(v2, :key1)
-    @test_throws ErrorException getBigDataEntry(fg, :b, :key1)
+    @test deepcopy(de1) == getDataEntry(v1, :key1)
+    @test deepcopy(de2) == getDataEntry(fg, :a, :key2)
+    @test_throws ErrorException getDataEntry(v2, :key1)
+    @test_throws ErrorException getDataEntry(fg, :b, :key1)
 
     #update
-    @test updateBigDataEntry!(fg, :a, de2_update) == de2_update
-    @test deepcopy(de2_update) == getBigDataEntry(fg, :a, :key2)
-    @test @test_logs (:warn, r"does not exist") updateBigDataEntry!(fg, :b, de2_update) == de2_update
+    @test updateDataEntry!(fg, :a, de2_update) == de2_update
+    @test deepcopy(de2_update) == getDataEntry(fg, :a, :key2)
+    @test @test_logs (:warn, r"does not exist") updateDataEntry!(fg, :b, de2_update) == de2_update
 
     #list
-    entries = getBigDataEntries(fg, :a)
+    entries = getDataEntries(fg, :a)
     @test length(entries) == 2
     @test issetequal(map(e->e.key, entries), [:key1, :key2])
-    @test length(getBigDataEntries(fg, :b)) == 1
+    @test length(getDataEntries(fg, :b)) == 1
 
-    @test issetequal(getBigDataKeys(fg, :a), [:key1, :key2])
-    @test getBigDataKeys(fg, :b) == Symbol[:key2]
+    @test issetequal(listDataEntries(fg, :a), [:key1, :key2])
+    @test listDataEntries(fg, :b) == Symbol[:key2]
 
     #delete
-    @test deleteBigDataEntry!(v1, :key1) == v1
-    @test getBigDataKeys(v1) == Symbol[:key2]
+    @test deleteDataEntry!(v1, :key1) == v1
+    @test listDataEntries(v1) == Symbol[:key2]
     #delete from dfg
-    @test deleteBigDataEntry!(fg, :a, :key2) == v1
-    @test getBigDataKeys(v1) == Symbol[]
+    @test deleteDataEntry!(fg, :a, :key2) == v1
+    @test listDataEntries(v1) == Symbol[]
 end
 
 

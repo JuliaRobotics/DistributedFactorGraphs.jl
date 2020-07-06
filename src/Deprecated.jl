@@ -44,3 +44,33 @@ function buildSubgraphFromLabels!(dfg::AbstractDFG,
         """)
 
 end
+
+
+##==============================================================================
+## Remove in 0.10
+##==============================================================================
+
+# I don't know how to deprecate this, any suggestions?
+const AbstractBigDataEntry = AbstractDataEntry
+
+@deprecate GeneralBigDataEntry(args...; kwargs...) GeneralDataEntry(args...; kwargs...)
+@deprecate MongodbBigDataEntry(args...)  MongodbDataEntry(args...)
+@deprecate FileBigDataEntry(args...)  FileDataEntry(args...)
+
+# TODO entities/DFGVariable.jl DFGVariableSummary.bigData getproperty and setproperty!
+# TODO entities/DFGVariable.jl DFGVariable.bigData getproperty and setproperty!
+@deprecate getBigData(args...) getDataBlob(args...)
+@deprecate addBigData!(args...) addDataBlob!(args...)
+@deprecate updateBigData!(args...) updateDataBlob!(args...)
+@deprecate deleteBigData!(args...) deleteDataBlob!(args...)
+@deprecate listStoreEntries(args...) listDataBlobs(args...)
+@deprecate hasBigDataEntry(args...) hasDataEntry(args...)
+
+
+@deprecate getBigDataEntry(args...) getDataEntry(args...)
+@deprecate addBigDataEntry!(args...)  addDataEntry!(args...)
+@deprecate updateBigDataEntry!(args...) updateDataEntry!(args...)
+@deprecate deleteBigDataEntry!(args...) deleteDataEntry!(args...)
+@deprecate getBigDataKeys(args...) listDataEntries(args...)
+@deprecate getBigDataEntries(args...) getDataEntries(args...)
+@deprecate getDataEntryElement(args...) getDataEntryBlob(args...)

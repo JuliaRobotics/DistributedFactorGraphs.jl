@@ -44,4 +44,4 @@ end
 $(TYPEDEF)
 Abstract parent struct for big data entry.
 """
-abstract type AbstractBigDataEntry end
+abstract type AbstractDataEntry end

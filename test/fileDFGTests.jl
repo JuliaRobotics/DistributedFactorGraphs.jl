@@ -26,9 +26,9 @@ using Test
         updateVariable!(dfg, verts[4])
 
         setSolvedCount!(verts[1], 5)
-        # Add some bigData to x1, x2
-        addBigDataEntry!(verts[1], GeneralBigDataEntry(:testing, :testing; mimeType="application/nuthin!"))
-        addBigDataEntry!(verts[2], FileBigDataEntry(:testing2, "/dev/null"))
+        # Add some data entries to x1, x2
+        addDataEntry!(verts[1], GeneralDataEntry(:testing, :testing; mimeType="application/nuthin!"))
+        addDataEntry!(verts[2], FileDataEntry(:testing2, "/dev/null"))
         #call update to set it on cloud
         updateVariable!(dfg, verts[1])
         updateVariable!(dfg, verts[2])
@@ -63,9 +63,9 @@ using Test
             @test getFactor(dfg, fact) == getFactor(retDFG, fact)
         end
 
-        @test length(getBigDataEntries(getVariable(retDFG, :x1))) == 1
-        @test typeof(getBigDataEntry(getVariable(retDFG, :x1),:testing)) == GeneralBigDataEntry
-        @test length(getBigDataEntries(getVariable(retDFG, :x2))) == 1
-        @test typeof(getBigDataEntry(getVariable(retDFG, :x2),:testing2)) == FileBigDataEntry
+        @test length(getDataEntries(getVariable(retDFG, :x1))) == 1
+        @test typeof(getDataEntry(getVariable(retDFG, :x1),:testing)) == GeneralDataEntry
+        @test length(getDataEntries(getVariable(retDFG, :x2))) == 1
+        @test typeof(getDataEntry(getVariable(retDFG, :x2),:testing2)) == FileDataEntry
     end
 end

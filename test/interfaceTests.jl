@@ -50,7 +50,7 @@ end
     @test printFactor(fac1) == nothing
 
     @test printVariable(iobuf, var1, skipfields=[:timestamp, :solver, :ppe, :nstime]) == nothing
-    @test String(take!(iobuf)) == "DFGVariable{TestSofttype1}\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict(\"small\"=>\"data\")\nbigData:\nDict{Symbol,AbstractBigDataEntry}()\nsolvable:\n0\n"
+    @test String(take!(iobuf)) == "DFGVariable{TestSofttype1}\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict(\"small\"=>\"data\")\ndataDict:\nDict{Symbol,AbstractDataEntry}()\nsolvable:\n0\n"
 
     @test printVariable(iobuf, var1, short=true) == nothing
     @test String(take!(iobuf)) == "DFGVariable{TestSofttype1}\nlabel: a\ntags: Set([:VARIABLE, :POSE])\nsize marginal samples: (1, 1)\nkde bandwidths: [0.0]\nNo PPEs\n"
@@ -102,11 +102,11 @@ end
     VSDTestBlock!(fg1, var1)
 end
 
-@testset "BigData Entries" begin
+@testset "Data Entries and Blobs" begin
     if typeof(fg1) <: InMemoryDFGTypes
-        BigDataEntriesTestBlock!(fg1, var2)
+        DataEntriesTestBlock!(fg1, var2)
     else
-        @test_skip BigDataEntriesTestBlock!(fg1, var2)
+        @test_skip DataEntriesTestBlock!(fg1, var2)
     end
 end
 
