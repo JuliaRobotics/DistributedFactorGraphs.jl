@@ -898,6 +898,9 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test ls(fg, tags=[:POSE]) == []
         @test issetequal(ls(fg, tags=[:POSE, :LANDMARK]), ls(fg, tags=[:VARIABLE]))
 
+        @test lsf(fg, tags=[:NONE]) == []
+        @test lsf(fg, tags=[:PRIOR]) == [:af1] 
+
         # Regexes
         @test ls(fg, r"a") == [v1.label]
         @test lsf(fg, r"abf*") == [f1.label]
