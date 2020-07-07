@@ -1,12 +1,10 @@
 include("entities/AbstractDataStore.jl")
-#TODO Rename to AbstractDataEntries
-include("entities/AbstractBigDataEntries.jl")
+include("entities/AbstractDataEntries.jl")
 include("entities/InMemoryDataStore.jl")
 include("entities/FileDataStore.jl")
 
 include("services/AbstractDataStore.jl")
-#TODO Rename to AbstractDataEntries
-include("services/AbstractBigDataEntries.jl")
+include("services/AbstractDataEntries.jl")
 include("services/InMemoryDataStore.jl")
 include("services/FileDataStore.jl")
 
