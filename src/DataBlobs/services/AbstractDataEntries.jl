@@ -1,7 +1,14 @@
+##
+
+getHash(entry::AbstractDataEntry) = hex2bytes(entry.hash)
+
+
+##
+
 import Base: ==
 
 function ==(a::GeneralDataEntry, b::GeneralDataEntry)
-    return a.key == b.key &&
+    return a.label == b.label &&
         a.storeKey == b.storeKey &&
         a.mimeType == b.mimeType &&
         Dates.value(a.createdTimestamp - b.createdTimestamp) < 1000 &&
@@ -9,11 +16,11 @@ function ==(a::GeneralDataEntry, b::GeneralDataEntry)
 end
 
 function ==(a::MongodbDataEntry, b::MongodbDataEntry)
-    return a.key == b.key && a.oid == b.oid
+    return a.label == b.label && a.oid == b.oid
 end
 
 function ==(a::FileDataEntry, b::FileDataEntry)
-    return a.key == b.key && a.filename == b.filename
+    return a.label == b.label && a.filename == b.filename
 end
 
 """
@@ -21,8 +28,8 @@ end
 Add Big Data Entry to a DFG variable
 """
 function addDataEntry!(var::AbstractDFGVariable, bde::AbstractDataEntry)
-    haskey(var.dataDict, bde.key) && error("Data entry $(bde.key) already exists in variable")
-    var.dataDict[bde.key] = bde
+    haskey(var.dataDict, bde.label) && error("Data entry $(bde.label) already exists in variable")
+    var.dataDict[bde.label] = bde
     return bde
 end
 
@@ -79,7 +86,7 @@ hasDataEntry(var::DFGVariable, key::Symbol) = haskey(var.dataDict, key)
 Get big data entry
 """
 function getDataEntry(var::AbstractDFGVariable, key::Symbol)
-    !hasDataEntry(var, key) && (error("Data entry $(key) does not exist in variable"); return nothing)
+    !hasDataEntry(var, key) && error("Data entry $(key) does not exist in variable")
     return var.dataDict[key]
 end
 
@@ -152,8 +159,8 @@ DevNote
 - DF, unclear if `update` verb is applicable in this case, see #404
 """
 function updateDataEntry!(var::AbstractDFGVariable,  bde::AbstractDataEntry)
-    !haskey(var.dataDict, bde.key) && (@warn "$(bde.key) does not exist in variable, adding")
-    var.dataDict[bde.key] = bde
+    !haskey(var.dataDict, bde.label) && (@warn "$(bde.label) does not exist in variable, adding")
+    var.dataDict[bde.label] = bde
     return bde
 end
 function updateDataEntry!(dfg::AbstractDFG, label::Symbol,  bde::AbstractDataEntry)
@@ -170,20 +177,17 @@ Notes:
 - users responsibility to delete big data in db before deleting entry
 """
 function deleteDataEntry!(var::AbstractDFGVariable, key::Symbol)
-    bde = getDataEntry(var, key)
-    bde == nothing && return nothing
-    delete!(var.dataDict, key)
-    return var
+    return pop!(var.dataDict, key)
 end
 function deleteDataEntry!(dfg::AbstractDFG, label::Symbol, key::Symbol)
     #users responsibility to delete big data in db before deleting entry
-    !isVariable(dfg, label) && return nothing
+    # !isVariable(dfg, label) && return nothing
     return deleteDataEntry!(getVariable(dfg, label), key)
 end
 
 function deleteDataEntry!(var::AbstractDFGVariable, entry::AbstractDataEntry)
     #users responsibility to delete big data in db before deleting entry
-    return deleteDataEntry!(var, entry.key)
+    return deleteDataEntry!(var, entry.label)
 end
 
 """
@@ -195,7 +199,7 @@ function getDataEntries(var::AbstractDFGVariable)
     collect(values(var.dataDict))
 end
 function getDataEntries(dfg::AbstractDFG, label::Symbol)
-    !isVariable(dfg, label) && return nothing
+    # !isVariable(dfg, label) && return nothing
     #or should we return the iterator, Base.ValueIterator{Dict{Symbol,AbstractDataEntry}}?
     getDataEntries(getVariable(dfg, label))
 end
@@ -210,6 +214,6 @@ function listDataEntries(var::AbstractDFGVariable)
 end
 
 function listDataEntries(dfg::AbstractDFG, label::Symbol)
-    !isVariable(dfg, label) && return nothing
+    # !isVariable(dfg, label) && return nothing
     listDataEntries(getVariable(dfg, label))
 end

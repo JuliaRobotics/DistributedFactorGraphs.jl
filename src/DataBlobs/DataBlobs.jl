@@ -1,3 +1,8 @@
+# using DataFrames
+# using CSV
+using JSON
+using SHA
+
 include("entities/AbstractDataStore.jl")
 include("entities/AbstractDataEntries.jl")
 include("entities/InMemoryDataStore.jl")
@@ -7,6 +12,8 @@ include("services/AbstractDataStore.jl")
 include("services/AbstractDataEntries.jl")
 include("services/InMemoryDataStore.jl")
 include("services/FileDataStore.jl")
+
+include("services/FileDataEntryBlob.jl")
 
 export AbstractDataStore
 

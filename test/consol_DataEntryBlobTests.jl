@@ -127,3 +127,28 @@ entries = getDataEntries(fg, :a)
 #delete from dfg
 @test deleteDataEntry!(fg, :a, :key2) == v1
 @test listDataEntries(v1) == Symbol[]
+
+
+
+
+
+##
+
+fg = testDFGAPI{NoSolverParams}()
+var1, var2, var3, vorphan, v1_tags = DFGVariableSCA()
+fac0, fac1, fac2 = DFGFactorSCA()
+
+addVariable!(fg, var1)
+addVariable!(fg, var2)
+addFactor!(fg, fac1)
+
+
+addData!(fg, :a, :fd1, "/tmp/dfgFilestore/test", rand(UInt8, 100))
+
+de,db = getData(fg, :a, :fd1)
+
+
+de, db = deleteData!(fg, :a, :fd1)
+
+
+updateData!(fg, :a, de, rand(UInt8, 100))
