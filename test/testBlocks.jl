@@ -568,7 +568,7 @@ function  PPETestBlock!(fg, v1)
 
     @test_throws ErrorException getPPE(fg, :a, :default)
     # Update add it
-    @test @test_logs (:warn, r"does not exist") updatePPE!(fg, :a, ppe) == ppe
+    @test @test_logs (:warn, Regex("'$(ppe.solverKey)' does not exist")) match_mode=:any updatePPE!(fg, :a, ppe) == ppe
     # Update update it
     @test updatePPE!(fg, :a, ppe) == ppe
     @test deletePPE!(fg, :a, :default) == ppe

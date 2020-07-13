@@ -165,15 +165,14 @@ function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)
     end
 
     ret = updateVariable!(dfg, variable, skipAddError=true)
-    # Track insertion
-    push!(dfg.addHistory, variable.label)
 
     # Do a variable update
     return ret
 end
 
 function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable; skipAddError::Bool=false)
-    !skipAddError && !exists(dfg, variable) && @warn "Variable label '$(variable.label)' does not exist in the factor graph, adding"
+    exist = exists(dfg, variable)
+    !skipAddError && !exist && @warn "Variable label '$(variable.label)' does not exist in the factor graph, adding"
 
     # Create/update the base variable
     # NOTE: We are no merging the variable.tags into the labels anymore. We can index by that but not
@@ -205,6 +204,11 @@ function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable; skipAddErro
         @warn "Rolling back transaction because of error: $(string(ex))"
         rollback(tx)
         throw(ex)
+    end
+
+    if !exist
+        # Track insertion
+        push!(dfg.addHistory, variable.label)
     end
 
     return variable
@@ -251,7 +255,7 @@ function mergeVariableData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable; cu
         error("Source variable '$(sourceVariable.label)' doesn't exist in the graph.")
     end
     for (k,v) in sourceVariable.ppeDict
-        updatePPE!(dfg, getLabel(sourceVariable), getSofttype(sourceVariable), v, currentTransaction=currentTransaction)
+        updatePPE!(dfg, getLabel(sourceVariable), v, currentTransaction=currentTransaction)
     end
     for (k,v) in sourceVariable.solverDataDict
         updateVariableSolverData!(dfg, getLabel(sourceVariable), v, currentTransaction=currentTransaction)
@@ -365,10 +369,9 @@ function deleteFactor!(dfg::CloudGraphsDFG, label::Symbol)::DFGFactor
     if factor == nothing
         error("Unable to retrieve the ID for factor '$label'. Please check your connection to the database and that the factor exists.")
     end
-
     # Perform detach+deletion
     query = """
-    MATCH (node:$(join(_getLabelsForType(dfg, DFGVariable, parentKey=label),':')))
+    MATCH (node:$(join(_getLabelsForType(dfg, DFGFactor, parentKey=label),':')))
     DETACH DELETE node
     """
     _queryNeo4j(dfg.neo4jInstance, query)
@@ -555,6 +558,18 @@ end
 
 function _generateAdditionalProperties(softType::ST, ppe::P)::Dict{String, String} where {P <: AbstractPointParametricEst, ST <: InferenceVariable}
     addProps = Dict{String, String}()
+    # Try get the projectCartesian function for this softType
+    projectCartesianFunc = nothing
+    if isdefined(Main, :projectCartesian)
+        # Try find a signature that matches
+        if applicable(Main.projectCartesian, softType, Vector{Float64}())
+            projectCartesianFunc = Main.projectCartesian
+        end
+    end
+    if projectCartesianFunc == nothing
+        @warn "There is no cartesianProjection function for $(typeof(softType)), so no cartesian entries will be added. Please add a projectCartesian function for this softtype."
+        return addProps
+    end
     for field in DistributedFactorGraphs.getEstimateFields(ppe)
         est = getfield(ppe, field)
         cart = Main.projectCartesian(softType, est) # Assuming we've imported the variables into Main
@@ -591,7 +606,7 @@ function updatePPE!(
         currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::P where
         {P <: AbstractPointParametricEst}
     if !(ppe.solverKey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction))
-        @warn "PPE '$(ppekey)' does not exist, adding"
+        @warn "PPE '$(ppe.solverKey)' does not exist, adding"
     end
     softType = getSofttype(dfg, variablekey)
     # Add additional properties for the PPE
@@ -609,7 +624,7 @@ end
 function updatePPE!(dfg::CloudGraphsDFG, sourceVariables::Vector{<:DFGVariable}, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
     tx = currentTransaction == nothing ? transaction(dfg.neo4jInstance.connection) : currentTransaction
     for var in sourceVariables
-        updatePPE!(dfg, var.label, getSofttype(var), getPPE(var, ppekey), currentTransaction=tx)
+        updatePPE!(dfg, var.label, getPPE(var, ppekey), currentTransaction=tx)
     end
     if currentTransaction == nothing
         result = commit(tx)

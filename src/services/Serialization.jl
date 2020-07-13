@@ -155,6 +155,10 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G
         tags = JSON2.read(packedProps["tags"], Vector{Symbol})
     else
         tags = Symbol.(packedProps["tags"])
+        # If tags is empty we need to make sure it's a Vector{Symbol}
+        if length(tags) == 0
+            tags = Vector{Symbol}()
+        end
     end
     data = packedProps["data"]
     datatype = packedProps["fnctype"]
