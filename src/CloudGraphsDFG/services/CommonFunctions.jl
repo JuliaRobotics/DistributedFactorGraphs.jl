@@ -156,7 +156,8 @@ function _structToNeo4jProps(inst::Union{User, Robot, Session, PVND, N, APPE, AB
             fieldname == :ppeDict && continue
             fieldname == :bigData && continue
             if fieldname == :smallData
-                val = "\"$(JSON2.write(field))\""
+                packedJson = JSON2.write(field)
+                val = "\"$(replace(packedJson, "\"" => "\\\""))\""
             end
             if fieldname == :solvable
                 val = field.x

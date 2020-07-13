@@ -165,14 +165,14 @@ Since the `timestamp` field is not mutable `setTimestamp` returns a new variable
 Use [`updateVariable!`](@ref) on the returened variable to update it in the factor graph if needed. Alternatively use [`setTimestamp!`](@ref).
 See issue #315.
 """
-function setTimestamp(v::DFGVariable, ts::ZonedDateTime; verbose::Bool=true)
+function setTimestamp(v::DFGVariable, ts::DateTime; verbose::Bool=true)
     if verbose
         @warn "verbose=true: setTimestamp(::DFGVariable,...) creates a returns a new immutable DFGVariable object (and didn't change a distributed factor graph object), make sure you are using the right pointers: getVariable(...).  See setTimestamp!(...) and note suggested use is at addVariable!(..., [timestamp=...]).  See DFG #315 for explanation."
     end
     return DFGVariable(v.label, ts, v.nstime, v.tags, v.ppeDict, v.solverDataDict, v.smallData, v.bigData, Ref(v.solvable))
 end
 
-function setTimestamp(v::DFGVariableSummary, ts::ZonedDateTime; verbose::Bool=true)
+function setTimestamp(v::DFGVariableSummary, ts::DateTime; verbose::Bool=true)
     if verbose
         @warn "verbose=true: setTimestamp(::DFGVariableSummary,...) creates and returns a new immutable DFGVariable object (and didn't change a distributed factor graph object), make sure you are using the right pointers: getVariable(...).  See setTimestamp!(...) and note suggested use is at addVariable!(..., [timestamp=...]).  See DFG #315 for explanation."
     end
@@ -352,12 +352,11 @@ end
 Add variable solver data, errors if it already exists.
 """
 function addVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData)::VariableNodeData
-    vnd.solverKey != solverKey && error("The solverKey in the VariableNodeData $(vnd.solverKey) does not match the solverKey provided $solverKey. The two need to match until this function is refactored.")
     var = getVariable(dfg, variablekey)
     if haskey(var.solverDataDict, vnd.solverKey)
         error("VariableNodeData '$(vnd.solverKey)' already exists")
     end
-    var.solverDataDict[solverKey] = vnd
+    var.solverDataDict[vnd.solverKey] = vnd
     return vnd
 end
 
@@ -558,6 +557,7 @@ getPPE(dfg::AbstractDFG, sourceVariable::VariableDataLevel1, ppekey::Symbol=defa
 Add variable PPE, errors if it already exists.
 """
 function addPPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default)::AbstractPointParametricEst where P <: AbstractPointParametricEst
+    @warn("This function is deprecated, please call addPPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P)")
     return addPPE!(dfg, variablekey, ppe)
 end
 
@@ -565,7 +565,7 @@ end
     $(SIGNATURES)
 Add variable PPE, errors if it already exists.
 """
-function addPPE!(dfg::AbstractDFG, variablekey::Symbol, softType::ST, ppe::P)::AbstractPointParametricEst where {P <: AbstractPointParametricEst, ST <: InferenceVariable}
+function addPPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P)::AbstractPointParametricEst where {P <: AbstractPointParametricEst}
     var = getVariable(dfg, variablekey)
     if haskey(var.ppeDict, ppe.solverKey)
         error("PPE '$(ppe.solverKey)' already exists")
@@ -577,28 +577,17 @@ end
 """
     $(SIGNATURES)
 Add a new PPE entry from a deepcopy of the source variable PPE.
-NOTE: Copies the solver data.
+NOTE: Copies the PPE.
 """
 addPPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol=:default) =
-    addPPE!(dfg, sourceVariable.label, getSofttype(sourceVariable), deepcopy(getPPE(sourceVariable, ppekey)))
-
-"""
-    $(SIGNATURES)
-Add variable PPE, used by CGDFG to determine what to persist.
-"""
-function addPPE!(dfg::AbstractDFG,
-                 variablekey::Symbol,
-                 softType::ST,
-                 ppe::P)::AbstractPointParametricEst where
-                 {P <: AbstractPointParametricEst, ST <: InferenceVariable}
-    return addPPE!(dfg, variablekey, ppe, ppe.solverKey)
-end
+    addPPE!(dfg, sourceVariable.label, deepcopy(getPPE(sourceVariable, ppekey)))
 
 """
     $(SIGNATURES)
 Update PPE data if it exists, otherwise add it -- one call per `key::Symbol=:default`.
 """
 function updatePPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default)::P where P <: AbstractPointParametricEst
+    @warn("This function is deprecated, please call updatePPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P)")
     return updatePPE!(dfg, variablekey, ppe)
 end
 
@@ -606,7 +595,7 @@ end
     $(SIGNATURES)
 Update PPE data if it exists, otherwise add it -- one call per `key::Symbol=:default`.
 """
-function updatePPE!(dfg::AbstractDFG, variablekey::Symbol, softType::ST, ppe::P)::P where {P <: AbstractPointParametricEst, ST <: InferenceVariable}
+function updatePPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P)::P where {P <: AbstractPointParametricEst}
     var = getVariable(dfg, variablekey)
     if !haskey(var.ppeDict, ppe.solverKey)
         @warn "PPE '$(ppe.solverKey)' does not exist, adding"
@@ -622,7 +611,7 @@ Update PPE data if it exists, otherwise add it.
 NOTE: Copies the PPE data.
 """
 updatePPE!(dfg::AbstractDFG, sourceVariable::VariableDataLevel1, ppekey::Symbol=:default) =
-    updatePPE!(dfg, sourceVariable.label, getSofttype(sourceVariable), deepcopy(getPPE(sourceVariable, ppekey)))
+    updatePPE!(dfg, sourceVariable.label, deepcopy(getPPE(sourceVariable, ppekey)))
 
 """
     $(SIGNATURES)
@@ -633,19 +622,6 @@ function updatePPE!(dfg::AbstractDFG, sourceVariables::Vector{<:VariableDataLeve
     for var in sourceVariables
         updatePPE!(dfg, var.label, getPPE(dfg, var, ppekey))
     end
-end
-
-"""
-    $(SIGNATURES)
-Update variable PPE, used by CGDFG to determine what to persist.
-"""
-function updatePPE!(
-        dfg::AbstractDFG,
-        variablekey::Symbol,
-        softType::ST,
-        ppe::P)::P where
-        {P <: AbstractPointParametricEst, ST <: InferenceVariable}
-    return updatePPE!(dfg, variablekey, ppe)
 end
 
 """

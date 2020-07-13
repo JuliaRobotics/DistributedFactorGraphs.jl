@@ -159,16 +159,20 @@ function getSofttype(dfg::CloudGraphsDFG, lbl::Symbol)
     return softType()
 end
 
-function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)::DFGVariable
+function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)
     if exists(dfg, variable)
         error("Variable '$(variable.label)' already exists in the factor graph")
     end
 
+    ret = updateVariable!(dfg, variable, skipAddError=true)
+    # Track insertion
+    push!(dfg.addHistory, variable.label)
+
     # Do a variable update
-    return updateVariable!(dfg, variable, skipAddError=true)
+    return ret
 end
 
-function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable; skipAddError::Bool=false)::DFGVariable
+function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable; skipAddError::Bool=false)
     !skipAddError && !exists(dfg, variable) && @warn "Variable label '$(variable.label)' does not exist in the factor graph, adding"
 
     # Create/update the base variable
@@ -188,10 +192,10 @@ function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable; skipAddErro
     # Start the transaction
     tx = transaction(dfg.neo4jInstance.connection)
     try
-        result = tx(query, submit=true)
-        length(result.errors) > 0 && error(string(result.errors))
-        length(result.results[1]["data"]) != 1 && error("Cannot update or add variable '$(getLabel(variable))'")
-        length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot update or add variable '$(getLabel(variable))'")
+        result = _queryNeo4j(dfg.neo4jInstance, query, currentTransaction=tx)
+        # On merge we may not get data back.
+        # length(result.results[1]["data"]) != 1 && error("Cannot update or add variable '$(getLabel(variable))'")
+        # length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot update or add variable '$(getLabel(variable))'")
 
         # Merge the PPE's, SolverData, and BigData
         mergeVariableData!(dfg, variable; currentTransaction=tx)
@@ -203,13 +207,10 @@ function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable; skipAddErro
         throw(ex)
     end
 
-    # Track insertion
-    push!(dfg.addHistory, variable.label)
-
     return variable
 end
 
-function addFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor
+function addFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)
     # TODO: Refactor
     if exists(dfg, factor)
         error("Factor '$(factor.label)' already exists in the factor graph")
@@ -219,7 +220,7 @@ function addFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor
     return updateFactor!(dfg, factor, skipAddError=true)
 end
 
-function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGVariable
+function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String})
     query = "MATCH (node:$(join(_getLabelsForType(dfg, DFGVariable, parentKey=label), ":"))) return properties(node)"
     result = _queryNeo4j(dfg.neo4jInstance, query)
     length(result.results[1]["data"]) != 1 && error("Cannot get variable '$label'")
@@ -245,7 +246,7 @@ function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGVari
     return variable
 end
 
-function mergeVariableData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::DFGVariable
+function mergeVariableData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
     if !exists(dfg, sourceVariable, currentTransaction=currentTransaction)
         error("Source variable '$(sourceVariable.label)' doesn't exist in the graph.")
     end
@@ -258,7 +259,7 @@ function mergeVariableData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable; cu
     return sourceVariable
 end
 
-function getFactor(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGFactor
+function getFactor(dfg::CloudGraphsDFG, label::Union{Symbol, String})
     query = "MATCH (node:$(join(_getLabelsForType(dfg, DFGFactor, parentKey=label), ":"))) return properties(node)"
     result = _queryNeo4j(dfg.neo4jInstance, query)
     length(result.results[1]["data"]) != 1 && error("Cannot get factor '$label'")
@@ -273,7 +274,7 @@ function getFactor(dfg::CloudGraphsDFG, label::Union{Symbol, String})::DFGFactor
     return rebuildFactorMetadata!(dfg, unpackFactor(dfg, props))
 end
 
-function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor; skipAddError::Bool=false)::DFGFactor
+function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor; skipAddError::Bool=false)
     exist = exists(dfg, factor)
     !skipAddError && !exist && @warn "Factor label '$(factor.label)' does not exist in the factor graph, adding"
 
@@ -283,6 +284,11 @@ function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor; skipAddError::Boo
             _getNodeProperty(dfg.neo4jInstance, _getLabelsForInst(dfg, factor), "_variableOrderSymbols"))
         # Confirm that we're not updating the neighbors
         neighborsList != factor._variableOrderSymbols && error("Cannot update the factor, the neighbors are not the same.")
+    end
+
+    # Check that all variables exist
+    for vlabel in factor._variableOrderSymbols
+        !exists(dfg, vlabel) && (@error "Variable '$(vlabel)' not found in graph when creating Factor '$(factor.label)'"; return false) #TODO debug error or exception?
     end
 
     props = packFactor(dfg, factor)
@@ -305,8 +311,9 @@ function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor; skipAddError::Boo
     tx = transaction(dfg.neo4jInstance.connection)
     try
         result = _queryNeo4j(dfg.neo4jInstance, query, currentTransaction=tx)
-        length(result.results[1]["data"]) != 1 && error("Cannot update or add factor '$(getLabel(factor))'")
-        length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot update or add facator '$(getLabel(factor))'")
+        # On return we may not get data if it already exists.
+        # length(result.results[1]["data"]) != 1 && error("Cannot update or add factor '$(getLabel(factor))'")
+        # length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot update or add facator '$(getLabel(factor))'")
 
         # Create the relationships to the variables
         query = """
@@ -558,13 +565,13 @@ end
 
 function addPPE!(dfg::CloudGraphsDFG,
                  variablekey::Symbol,
-                 softType::ST,
                  ppe::P;
                  currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::AbstractPointParametricEst where
-                 {P <: AbstractPointParametricEst, ST <: InferenceVariable}
+                 {P <: AbstractPointParametricEst}
     if ppe.solverKey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction)
         error("PPE '$(ppe.solverKey)' already exists")
     end
+    softType = getSofttype(dfg, variablekey)
     # Add additional properties for the PPE
     addProps = _generateAdditionalProperties(softType, ppe)
     return _unpackPPE(dfg, _matchmergeVariableSubnode!(
@@ -580,13 +587,13 @@ end
 function updatePPE!(
         dfg::CloudGraphsDFG,
         variablekey::Symbol,
-        softType::ST,
         ppe::P;
         currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::P where
-        {P <: AbstractPointParametricEst, ST <: InferenceVariable}
+        {P <: AbstractPointParametricEst}
     if !(ppe.solverKey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction))
         @warn "PPE '$(ppekey)' does not exist, adding"
     end
+    softType = getSofttype(dfg, variablekey)
     # Add additional properties for the PPE
     addProps = _generateAdditionalProperties(softType, ppe)
     return _unpackPPE(dfg, _matchmergeVariableSubnode!(
