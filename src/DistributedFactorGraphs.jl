@@ -253,7 +253,7 @@ include("entities/AbstractDFGSummary.jl")
 include("services/AbstractDFG.jl")
 
 # In Memory Types
-# include("GraphsDFG/GraphsDFG.jl")
+# include("../attic/GraphsDFG/GraphsDFG.jl")
 # @reexport using .GraphsDFGs
 include("LightDFG/LightDFG.jl")
 @reexport using .LightDFGs
