@@ -2,10 +2,8 @@
 ## Abstract Types
 ##==============================================================================
 
-abstract type InferenceType end
-abstract type PackedInferenceType end
-
 abstract type FunctorInferenceType <: Function end
+abstract type PackedInferenceType end
 
 # NOTE DF, Convolution is IIF idea, but DFG should know about "FactorOperationalMemory"
 # DF, IIF.CommonConvWrapper <: FactorOperationalMemory #
@@ -30,9 +28,9 @@ Notes
 
 Designing (WIP)
 - T <: Union{FactorOperationalMemory, PackedInferenceType}
-- in IIF.CCW{T <: DFG.InferenceType}
-- in IIF.FunctorPairwiseMinimize <: InferenceType # DFG whatever, something, we'll figure it out
-- in Main/User, SomeFactor <: FunctorPairwiseMinimize
+- in IIF.CCW{T <: DFG.FunctorInferenceType}
+- in DFG.AbstractRelativeFactorMinimize <: FunctorInferenceType
+- in Main.SomeFactor <: AbstractRelativeFactorMinimize
 """
 mutable struct GenericFunctionNodeData{T<:Union{PackedInferenceType, FunctorInferenceType, FactorOperationalMemory}}
     eliminated::Bool
