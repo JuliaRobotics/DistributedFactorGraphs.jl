@@ -182,6 +182,8 @@ export addData!, fetchData, fetchDataEntryBlob
 # Factor Data
 export GenericFunctionNodeData, PackedFunctionNodeData, FunctionNodeData
 export InferenceType, PackedInferenceType, FunctorInferenceType, FactorOperationalMemory
+export AbstractPrior, AbstractRelativeFactor, AbstractRelativeFactorMinimize
+#Deprecated
 export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
 
 # accessors
@@ -236,8 +238,6 @@ export
 
 
 ## Deprecated exports should be listed in Deprecated.jl if possible, otherwise here
-#TODO remove export in DFG v0.8.0
-# export ConvolutionObject
 
 ## CustomPrinting.jl
 export printFactor, printVariable, printNode

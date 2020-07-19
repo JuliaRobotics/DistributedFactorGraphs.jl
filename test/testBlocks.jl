@@ -22,9 +22,9 @@ end
 struct TestFunctorInferenceType1 <: FunctorInferenceType end
 struct TestFunctorInferenceType2 <: FunctorInferenceType end
 
-struct TestFunctorSingleton <: FunctorSingleton end
-struct TestFunctorPairwise <: FunctorPairwise end
-struct TestFunctorPairwiseMinimize <: FunctorPairwiseMinimize end
+struct TestAbstractPrior <: AbstractPrior end
+struct TestAbstractRelativeFactor <: AbstractRelativeFactor end
+struct TestAbstractRelativeFactorMinimize <: AbstractRelativeFactorMinimize end
 
 struct PackedTestFunctorInferenceType1 <: PackedInferenceType
     s::String
@@ -41,19 +41,19 @@ function Base.convert(::Type{TestFunctorInferenceType1}, d::PackedTestFunctorInf
     TestFunctorInferenceType1()
 end
 
-struct PackedTestFunctorSingleton <: PackedInferenceType
+struct PackedTestAbstractPrior <: PackedInferenceType
     s::String
 end
-PackedTestFunctorSingleton() = PackedTestFunctorSingleton("")
+PackedTestAbstractPrior() = PackedTestAbstractPrior("")
 
-function Base.convert(::Type{PackedTestFunctorSingleton}, d::TestFunctorSingleton)
-    # @info "convert(::Type{PackedTestFunctorSingleton}, d::TestFunctorSingleton)"
-    PackedTestFunctorSingleton()
+function Base.convert(::Type{PackedTestAbstractPrior}, d::TestAbstractPrior)
+    # @info "convert(::Type{PackedTestAbstractPrior}, d::TestAbstractPrior)"
+    PackedTestAbstractPrior()
 end
 
-function Base.convert(::Type{TestFunctorSingleton}, d::PackedTestFunctorSingleton)
-    # @info "onvert(::Type{TestFunctorSingleton}, d::PackedTestFunctorSingleton)"
-    TestFunctorSingleton()
+function Base.convert(::Type{TestAbstractPrior}, d::PackedTestAbstractPrior)
+    # @info "onvert(::Type{TestAbstractPrior}, d::PackedTestAbstractPrior)"
+    TestAbstractPrior()
 end
 
 struct TestCCW{T} <: FactorOperationalMemory where {T<:FunctorInferenceType}
@@ -315,7 +315,7 @@ function  DFGFactorSCA()
     f1_tags = Set([:FACTOR])
     testTimestamp = now()
 
-    gfnd_prior = GenericFunctionNodeData(false, false, Int[], TestCCW(TestFunctorSingleton()))
+    gfnd_prior = GenericFunctionNodeData(false, false, Int[], TestCCW(TestAbstractPrior()))
 
     gfnd = GenericFunctionNodeData(false, false, Int[], TestCCW(TestFunctorInferenceType1()))
 
@@ -513,7 +513,7 @@ end
 
 # simple broadcast test
 if f0 isa DFGFactor
-    @test issetequal(getFactorType.(fg, lsf(fg)),  [TestFunctorInferenceType1(), TestFunctorSingleton()])
+    @test issetequal(getFactorType.(fg, lsf(fg)),  [TestFunctorInferenceType1(), TestAbstractPrior()])
 end
 @test getVariable.(fg, [:a]) == [getVariable(fg, :a)]
 end
@@ -836,15 +836,15 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test isPrior(fg, :af1) # if f1 is prior
         @test lsfPriors(fg) == [:af1]
 
-        @test issetequal([:TestFunctorInferenceType1, :TestFunctorSingleton], lsfTypes(fg))
+        @test issetequal([:TestFunctorInferenceType1, :TestAbstractPrior], lsfTypes(fg))
 
         facTypesDict = lsfTypesDict(fg)
         @test issetequal(collect(keys(facTypesDict)), lsfTypes(fg))
         @test issetequal(facTypesDict[:TestFunctorInferenceType1], [:abf1])
-        @test issetequal(facTypesDict[:TestFunctorSingleton], [:af1])
+        @test issetequal(facTypesDict[:TestAbstractPrior], [:af1])
 
         @test ls(fg, TestFunctorInferenceType1) == [:abf1]
-        @test lsf(fg, TestFunctorSingleton) == [:af1]
+        @test lsf(fg, TestAbstractPrior) == [:af1]
         @test lsfWho(fg, :TestFunctorInferenceType1) == [:abf1]
 
         @test getSofttype(v1) == TestSofttype1()
@@ -899,7 +899,7 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test issetequal(ls(fg, tags=[:POSE, :LANDMARK]), ls(fg, tags=[:VARIABLE]))
 
         @test lsf(fg, tags=[:NONE]) == []
-        @test lsf(fg, tags=[:PRIOR]) == [:af1] 
+        @test lsf(fg, tags=[:PRIOR]) == [:af1]
 
         # Regexes
         @test ls(fg, r"a") == [v1.label]

@@ -45,6 +45,10 @@ function buildSubgraphFromLabels!(dfg::AbstractDFG,
 
 end
 
+# These will become AbstractPrior, AbstractRelativeFactor, and AbstractRelativeFactorMinimize in 0.9.
+abstract type FunctorSingleton <: FunctorInferenceType end
+abstract type FunctorPairwise <: FunctorInferenceType end
+abstract type FunctorPairwiseMinimize <: FunctorInferenceType end
 
 ##==============================================================================
 ## Remove in 0.10

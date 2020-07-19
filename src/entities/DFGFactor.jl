@@ -14,9 +14,9 @@ abstract type FactorOperationalMemory <: Function end
 # we can add to IIF or have IIF.CommonConvWrapper <: FactorOperationalMemory directly
 # abstract type ConvolutionObject <: FactorOperationalMemory end
 
-abstract type FunctorSingleton <: FunctorInferenceType end
-abstract type FunctorPairwise <: FunctorInferenceType end
-abstract type FunctorPairwiseMinimize <: FunctorInferenceType end
+abstract type AbstractPrior <: FunctorInferenceType end
+abstract type AbstractRelativeFactor <: FunctorInferenceType end
+abstract type AbstractRelativeFactorMinimize <: FunctorInferenceType end
 
 ##==============================================================================
 ## GenericFunctionNodeData
