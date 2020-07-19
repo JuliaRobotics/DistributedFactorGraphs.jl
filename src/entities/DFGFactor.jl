@@ -58,12 +58,12 @@ GenericFunctionNodeData{T}() where T =
 function GenericFunctionNodeData(eliminated::Bool,
                                  potentialused::Bool,
                                  edgeIDs::Vector{Int},
-                                 fnc,
+                                 fnc::T,
                                  multihypo::Vector{<:Real}=Float64[],
                                  certainhypo::Vector{Int}=Int[],
                                  nullhypo::Real=0,
-                                 solveInP::Int=0)
-    return GenericFunctionNodeData(eliminated, potentialused, edgeIDs, fnc, multihypo, certainhypo, nullhypo, solveInP)
+                                 solveInP::Int=0) where T
+    return GenericFunctionNodeData{T}(eliminated, potentialused, edgeIDs, fnc, multihypo, certainhypo, nullhypo, solveInP)
 end
 
 
