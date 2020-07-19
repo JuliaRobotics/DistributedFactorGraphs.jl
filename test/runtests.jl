@@ -76,8 +76,8 @@ end
 if get(ENV, "IIF_TEST", "") == "true"
 
     # Switch to our upstream test branch.
-    # Pkg.add(PackageSpec(name="IncrementalInference", rev="upstream/dfg_integration_test"))
-    Pkg.add(PackageSpec(name="IncrementalInference", rev="develop"))
+    Pkg.add(PackageSpec(name="IncrementalInference", rev="upstream/dfg_integration_test"))
+    # Pkg.add(PackageSpec(name="IncrementalInference", rev="develop"))
     @info "------------------------------------------------------------------------"
     @info "These tests are using IncrementalInference to do additional driver tests"
     @info "------------------------------------------------------------------------"
