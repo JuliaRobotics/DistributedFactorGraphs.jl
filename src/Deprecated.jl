@@ -7,6 +7,10 @@
 ## Remove in 0.10
 ##==============================================================================
 
+export listSolvekeys
+
+@deprecate listSolvekeys(x...) listSolveKeys(x...)
+
 export InferenceType
 export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
 

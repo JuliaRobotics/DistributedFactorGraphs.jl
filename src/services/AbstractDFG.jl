@@ -494,7 +494,7 @@ Related
 
 listSupersolves, getSolverDataDict, listVariables
 """
-function listSolvekeys(dfg::AbstractDFG)
+function listSolveKeys(dfg::AbstractDFG)
   skeys = Set{Symbol}()
   for vs in listVariables(dfg), ky in keys(getSolverDataDict(getVariable(dfg, vs)))
     push!(skeys, ky)

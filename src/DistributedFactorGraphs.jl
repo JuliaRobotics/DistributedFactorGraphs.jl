@@ -63,7 +63,7 @@ export exists,
        updateVariable!, updateFactor!,
        deleteVariable!, deleteFactor!,
        listVariables, listFactors,
-       listSolvekeys, listSupersolves,
+       listSolveKeys, listSupersolves,
        getVariables, getFactors,
        isVariable, isFactor
 
