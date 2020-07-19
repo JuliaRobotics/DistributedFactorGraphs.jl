@@ -181,7 +181,7 @@ export addData!, fetchData, fetchDataEntryBlob
 ##------------------------------------------------------------------------------
 # Factor Data
 export GenericFunctionNodeData, PackedFunctionNodeData, FunctionNodeData
-export InferenceType, PackedInferenceType
+export FunctorInferenceType, PackedInferenceType
 export AbstractPrior, AbstractRelativeFactor, AbstractRelativeFactorMinimize
 export FactorOperationalMemory
 
