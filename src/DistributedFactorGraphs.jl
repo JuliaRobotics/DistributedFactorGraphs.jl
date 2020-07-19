@@ -55,11 +55,6 @@ export emptyUserData!, emptyRobotData!, emptySessionData!
 
 # Graph Types: exported from modules or @reexport
 export InMemoryDFGTypes, DefaultDFG
-# LightDFG
-# GraphsDFG
-
-# CloudGraphsDFG
-# FileDFG
 
 # AbstractDFG Interface
 export exists,
@@ -68,7 +63,7 @@ export exists,
        updateVariable!, updateFactor!,
        deleteVariable!, deleteFactor!,
        listVariables, listFactors,
-       listSolvekeys, listSupersolves,
+       listSolveKeys, listSupersolves,
        getVariables, getFactors,
        isVariable, isFactor
 
@@ -181,10 +176,9 @@ export addData!, fetchData, fetchDataEntryBlob
 ##------------------------------------------------------------------------------
 # Factor Data
 export GenericFunctionNodeData, PackedFunctionNodeData, FunctionNodeData
-export InferenceType, PackedInferenceType, FunctorInferenceType, FactorOperationalMemory
+export FunctorInferenceType, PackedInferenceType
 export AbstractPrior, AbstractRelativeFactor, AbstractRelativeFactorMinimize
-#Deprecated
-export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
+export FactorOperationalMemory
 
 # accessors
 export getVariableOrder
@@ -259,7 +253,7 @@ include("entities/AbstractDFGSummary.jl")
 include("services/AbstractDFG.jl")
 
 # In Memory Types
-# include("GraphsDFG/GraphsDFG.jl")
+# include("../attic/GraphsDFG/GraphsDFG.jl")
 # @reexport using .GraphsDFGs
 include("LightDFG/LightDFG.jl")
 @reexport using .LightDFGs

@@ -360,7 +360,7 @@ function  DFGFactorSCA()
 
     #TODO Should throw method error
     # @test_throws MethodError setTimestamp!(f1, testTimestamp)
-    @test_throws ErrorException setTimestamp!(f1, testTimestamp)
+    # @test_throws ErrorException setTimestamp!(f1, testTimestamp)
     #/TODO
 
     @test setSolvable!(f1, 1) == 1
