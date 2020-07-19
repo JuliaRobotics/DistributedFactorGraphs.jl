@@ -39,23 +39,30 @@ mutable struct GenericFunctionNodeData{T<:Union{PackedInferenceType, FunctorInfe
     potentialused::Bool
     edgeIDs::Vector{Int}
     fnc::T
-    multihypo::Vector{Float64} # FIXME likely to moved when GenericWrapParam is refactored #477
+    multihypo::Vector{Float64} # TODO re-evaluate after refactoring w #477
     certainhypo::Vector{Int}
+    nullhypo::Float64
     solveInProgress::Int
+
+    # TODO deprecate all these inner constructors at end of DFG v0.9.x (was added for GFND.nullhypo::Float64 breaking change)
+    GenericFunctionNodeData{T}() where T = new{T}()
+    GenericFunctionNodeData{T}(el,po,ed,fn,mu::Vector{<:Real},ce::Vector{Int},so::Int) where T = new{T}(el,po,ed,fn,mu,ce,0.0,so)
+    GenericFunctionNodeData{T}(el,po,ed,fn,mu::Vector{<:Real},ce::Vector{Int},nu::Real,so::Int) where T = new{T}(el,po,ed,fn,mu,ce,nu,so)
 end
 
 ## Constructors
 
 GenericFunctionNodeData{T}() where T =
-    GenericFunctionNodeData{T}(false, false, Int[], T(), Float64[], Int[], 0)
+    GenericFunctionNodeData{T}(false, false, Int[], T(), Float64[], Int[], 0, 0)
 
-function GenericFunctionNodeData(eliminated,
-                                 potentialused,
-                                 edgeIDs,
+function GenericFunctionNodeData(eliminated::Bool,
+                                 potentialused::Bool,
+                                 edgeIDs::Vector{Int},
                                  fnc,
-                                 multihypo=Float64[],
-                                 certainhypo=Int[])
-    return GenericFunctionNodeData(eliminated, potentialused, edgeIDs, fnc, multihypo, certainhypo, 0)
+                                 multihypo::Vector{<:Real}=Float64[],
+                                 certainhypo::Vector{Int}=Int[],
+                                 nullhypo::Real=0)
+    return GenericFunctionNodeData(eliminated, potentialused, edgeIDs, fnc, multihypo, certainhypo, nullhypo, 0)
 end
 
 

@@ -899,7 +899,7 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test issetequal(ls(fg, tags=[:POSE, :LANDMARK]), ls(fg, tags=[:VARIABLE]))
 
         @test lsf(fg, tags=[:NONE]) == []
-        @test lsf(fg, tags=[:PRIOR]) == [:af1] 
+        @test lsf(fg, tags=[:PRIOR]) == [:af1]
 
         # Regexes
         @test ls(fg, r"a") == [v1.label]
@@ -1050,7 +1050,7 @@ function connectivityTestGraph(::Type{T}; VARTYPE=DFGVariable, FACTYPE=DFGFactor
         setSolvable!(dfg, :x8, 0)
         setSolvable!(dfg, :x9, 0)
 
-        gfnd = GenericFunctionNodeData(true, true, Int[], TestCCW(TestFunctorInferenceType1()), Float64[], Int[], 1)
+        gfnd = GenericFunctionNodeData(true, true, Int[], TestCCW(TestFunctorInferenceType1()), Float64[], Int[], 0, 1)
         f_tags = Set([:FACTOR])
         # f1 = DFGFactor(f1_lbl, [:a,:b], gfnd, tags = f_tags)
 
