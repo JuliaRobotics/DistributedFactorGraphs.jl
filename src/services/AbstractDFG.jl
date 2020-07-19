@@ -501,7 +501,7 @@ function listSolveKeys(dfg::AbstractDFG)
   end
   return skeys
 end
-const listSupersolves = listSolvekeys
+const listSupersolves = listSolveKeys
 
 
 ##------------------------------------------------------------------------------
