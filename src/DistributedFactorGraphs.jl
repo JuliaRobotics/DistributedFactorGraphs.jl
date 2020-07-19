@@ -55,11 +55,6 @@ export emptyUserData!, emptyRobotData!, emptySessionData!
 
 # Graph Types: exported from modules or @reexport
 export InMemoryDFGTypes, DefaultDFG
-# LightDFG
-# GraphsDFG
-
-# CloudGraphsDFG
-# FileDFG
 
 # AbstractDFG Interface
 export exists,
