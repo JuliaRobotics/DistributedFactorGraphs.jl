@@ -3,10 +3,10 @@
 # FACTYPE = DFGFactorSummary
 
 dfg = LightDFG{NoSolverParams, VARTYPE, FACTYPE}()
-DistributedFactorGraphs.DFGVariableSummary(label::Symbol) = DFGVariableSummary(label, DistributedFactorGraphs.now(), Set{Symbol}(), Dict{Symbol, MeanMaxPPE}(), :Pose2, Dict{Symbol,AbstractDataEntry}())
-DistributedFactorGraphs.DFGFactorSummary(label::Symbol) = DFGFactorSummary(label, DistributedFactorGraphs.now(), Set{Symbol}(), Symbol[])
+DistributedFactorGraphs.DFGVariableSummary(label::Symbol) = DFGVariableSummary(label, DistributedFactorGraphs.now(localzone()), Set{Symbol}(), Dict{Symbol, MeanMaxPPE}(), :Pose2, Dict{Symbol,AbstractDataEntry}())
+DistributedFactorGraphs.DFGFactorSummary(label::Symbol) = DFGFactorSummary(label, DistributedFactorGraphs.now(localzone()), Set{Symbol}(), Symbol[])
 
-DistributedFactorGraphs.DFGVariableSummary(label::Symbol, ::VariableNodeData{T}) where T = DFGVariableSummary(label, DistributedFactorGraphs.now(), Set{Symbol}(), Dict{Symbol, MeanMaxPPE}(), Symbol(T), Dict{Symbol,AbstractDataEntry}())
+DistributedFactorGraphs.DFGVariableSummary(label::Symbol, ::VariableNodeData{T}) where T = DFGVariableSummary(label, DistributedFactorGraphs.now(localzone()), Set{Symbol}(), Dict{Symbol, MeanMaxPPE}(), Symbol(T), Dict{Symbol,AbstractDataEntry}())
 DistributedFactorGraphs.SkeletonDFGVariable(label::Symbol, args...) = SkeletonDFGVariable(label)
 
 

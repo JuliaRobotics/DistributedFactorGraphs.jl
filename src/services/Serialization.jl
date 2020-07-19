@@ -25,7 +25,7 @@ end
 
 function unpackVariable(dfg::G, packedProps::Dict{String, Any})::DFGVariable where G <: AbstractDFG
     label = Symbol(packedProps["label"])
-    timestamp = DateTime(packedProps["timestamp"])
+    timestamp = ZonedDateTime(packedProps["timestamp"])
     nstime = Nanosecond(get(packedProps, "nstime", 0))
     tags =  JSON2.read(packedProps["tags"], Vector{Symbol})
     #TODO this will work for some time, but unpacking in an <: AbstractPointParametricEst would be lekker.
@@ -151,7 +151,7 @@ end
 
 function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G <: AbstractDFG
     label = packedProps["label"]
-    timestamp = DateTime(packedProps["timestamp"])
+    timestamp = ZonedDateTime(packedProps["timestamp"])
     nstime = Nanosecond(get(packedProps, "nstime", 0))
     tags = JSON2.read(packedProps["tags"], Vector{Symbol})
 

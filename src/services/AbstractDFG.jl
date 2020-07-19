@@ -766,14 +766,15 @@ end
 ##==============================================================================
 ## Finding
 ##==============================================================================
-
+# function findClosestTimestamp(setA::Vector{Tuple{DateTime,T}},
+                              # setB::Vector{Tuple{DateTime,S}}) where {S,T}
 """
     $SIGNATURES
 
 Find and return the closest timestamp from two sets of Tuples.  Also return the minimum delta-time (`::Millisecond`) and how many elements match from the two sets are separated by the minimum delta-time.
 """
-function findClosestTimestamp(setA::Vector{Tuple{DateTime,T}},
-                              setB::Vector{Tuple{DateTime,S}}) where {S,T}
+function findClosestTimestamp(setA::Vector{Tuple{ZonedDateTime,T}},
+                              setB::Vector{Tuple{ZonedDateTime,S}}) where {S,T}
   #
   # build matrix of delta times, ranges on rows x vars on columns
   DT = Array{Millisecond, 2}(undef, length(setA), length(setB))
@@ -813,7 +814,7 @@ Related
 ls, listVariables, findClosestTimestamp
 """
 function findVariableNearTimestamp(dfg::AbstractDFG,
-                                   timest::DateTime,
+                                   timest::ZonedDateTime,
                                    regexFilter::Union{Nothing, Regex}=nothing;
                                    tags::Vector{Symbol}=Symbol[],
                                    solvable::Int=0,
@@ -852,6 +853,10 @@ function findVariableNearTimestamp(dfg::AbstractDFG,
 
   return RET
 end
+
+findVariableNearTimestamp(dfg::AbstractDFG, timest::DateTime, regexFilter::Union{Nothing, Regex}=nothing;
+                          timezone=localzone(), kwargs...) =
+    findVariableNearTimestamp(dfg, ZonedDateTime(timest, timezone), regexFilter; kwargs...)
 
 ##==============================================================================
 ## Copy Functions

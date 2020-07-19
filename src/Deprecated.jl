@@ -7,6 +7,13 @@
 ## Remove in 0.10
 ##==============================================================================
 
+# temporary promote with warning
+Base.promote_rule(::Type{DateTime}, ::Type{ZonedDateTime}) = DateTime
+function Base.convert(::Type{DateTime}, ts::ZonedDateTime)
+    @warn "DFG now uses ZonedDateTime, temporary promoting and converting to DateTime local time"
+    return DateTime(ts, Local)
+end
+
 export listSolvekeys
 
 @deprecate listSolvekeys(x...) listSolveKeys(x...)

@@ -184,7 +184,7 @@ struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
     label::Symbol
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref), [`setTimestamp`](@ref)"""
-    timestamp::DateTime
+    timestamp::ZonedDateTime
     """Nano second time, for more resolution on timestamp (only subsecond information)"""
     nstime::Nanosecond
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
@@ -215,7 +215,7 @@ end
 The default DFGVariable constructor.
 """
 DFGVariable(label::Symbol, softtype::T;
-            timestamp::DateTime=now(),
+            timestamp::Union{DateTime,ZonedDateTime}=now(localzone()),
             nstime::Nanosecond = Nanosecond(0),
             tags::Set{Symbol}=Set{Symbol}(),
             estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
@@ -228,7 +228,7 @@ DFGVariable(label::Symbol, softtype::T;
 
 DFGVariable(label::Symbol,
             solverData::VariableNodeData{T};
-            timestamp::DateTime=now(),
+            timestamp::Union{DateTime,ZonedDateTime}=now(localzone()),
             nstime::Nanosecond = Nanosecond(0),
             tags::Set{Symbol}=Set{Symbol}(),
             estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
@@ -244,6 +244,10 @@ Base.getproperty(x::DFGVariable,f::Symbol) = begin
     elseif f == :bigData
         Base.depwarn("DFGVariable field bigData is deprecated, use `dataDict` instead",:getproperty)
         getfield(x,:dataDict)
+    # elseif f == :timestamp
+    #     #TODO Deprecation - Remove in v0.10
+    #     Base.depwarn("DFGVariable timestamp field is now a ZonedTimestamp, use accessors to prevent breaking changes",:getproperty)
+    #     getfield(x,:timestamp)
     else
         getfield(x,f)
     end
@@ -254,8 +258,12 @@ Base.setproperty!(x::DFGVariable,f::Symbol, val) = begin
         getfield(x,f)[] = val
     elseif f == :bigData
         #TODO Deprecation - Remove in v0.10
-        Base.depwarn("DFGVariable field bigData is deprecated, use `dataDict` instead",:setproperty!)
-        setfield(x, :dataDict)
+        Base.depwarn("DFGVariable field bigData is deprecated, use `dataDict` instead", :setproperty!)
+        setfield(x, :dataDict, val)
+    elseif f == :timestamp && val isa DateTime
+    #     #TODO Deprecation - Remove in v0.10
+        Base.depwarn("DFGVariable timestamp field is now a ZonedTimestamp", :setproperty!)
+        setfield!(x,:timestamp, ZonedDateTime(val,  localzone()))
     else
         setfield!(x,f,val)
     end
@@ -288,7 +296,7 @@ struct DFGVariableSummary <: AbstractDFGVariable
     label::Symbol
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref), [`setTimestamp`](@ref)"""
-    timestamp::DateTime
+    timestamp::ZonedDateTime
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
     Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
     tags::Set{Symbol}

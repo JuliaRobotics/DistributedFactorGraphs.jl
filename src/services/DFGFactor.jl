@@ -67,12 +67,13 @@ end
 ## COMMON
 # getTimestamp
 
+setTimestamp(f::AbstractDFGFactor, ts::DateTime, timezone=localzone()) = setTimestamp(f, ZonedDateTime(ts,  timezone))
 
-function setTimestamp(f::DFGFactor, ts::DateTime)
+function setTimestamp(f::DFGFactor, ts::ZonedDateTime)
     return DFGFactor(f.label, ts, f.nstime, f.tags, f.solverData, f.solvable, getfield(f,:_variableOrderSymbols))
 end
 
-function setTimestamp(f::DFGFactorSummary, ts::DateTime)
+function setTimestamp(f::DFGFactorSummary, ts::ZonedDateTime)
     return DFGFactorSummary(f.label, ts, f.tags, f._variableOrderSymbols)
 end
 
