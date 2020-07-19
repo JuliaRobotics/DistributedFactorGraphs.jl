@@ -217,6 +217,10 @@ function compare(a::GenericFunctionNodeData{T1},b::GenericFunctionNodeData{T2}) 
   TP = TP && a.potentialused == b.potentialused
   TP = TP && a.edgeIDs == b.edgeIDs
   # TP = TP && typeof(a.fnc) == typeof(b.fnc)
+  TP = TP && (a.multihypo - b.multihypo |> norm < 1e-10)
+  TP = TP && a.certainhypo == b.certainhypo
+  TP = TP && a.nullhypo == b.nullhypo
+  TP = TP && a.solveInProgress == b.solveInProgress
   return TP
 end
 

@@ -1050,7 +1050,7 @@ function connectivityTestGraph(::Type{T}; VARTYPE=DFGVariable, FACTYPE=DFGFactor
         setSolvable!(dfg, :x8, 0)
         setSolvable!(dfg, :x9, 0)
 
-        gfnd = GenericFunctionNodeData(true, true, Int[], TestCCW(TestFunctorInferenceType1()), Float64[], Int[], 1)
+        gfnd = GenericFunctionNodeData(true, true, Int[], TestCCW(TestFunctorInferenceType1()), Float64[], Int[], 0, 1)
         f_tags = Set([:FACTOR])
         # f1 = DFGFactor(f1_lbl, [:a,:b], gfnd, tags = f_tags)
 
