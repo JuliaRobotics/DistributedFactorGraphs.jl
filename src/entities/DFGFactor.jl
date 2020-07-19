@@ -61,8 +61,9 @@ function GenericFunctionNodeData(eliminated::Bool,
                                  fnc,
                                  multihypo::Vector{<:Real}=Float64[],
                                  certainhypo::Vector{Int}=Int[],
-                                 nullhypo::Real=0)
-    return GenericFunctionNodeData(eliminated, potentialused, edgeIDs, fnc, multihypo, certainhypo, nullhypo, 0)
+                                 nullhypo::Real=0,
+                                 solveInP::Int=0)
+    return GenericFunctionNodeData(eliminated, potentialused, edgeIDs, fnc, multihypo, certainhypo, nullhypo, solveInP)
 end
 
 
