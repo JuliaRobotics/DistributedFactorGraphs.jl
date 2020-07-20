@@ -214,7 +214,7 @@ end
     $SIGNATURES
 The default DFGVariable constructor.
 """
-DFGVariable(label::Symbol, softtype::T;
+function DFGVariable(label::Symbol, softtype::T;
             timestamp::Union{DateTime,ZonedDateTime}=now(localzone()),
             nstime::Nanosecond = Nanosecond(0),
             tags::Set{Symbol}=Set{Symbol}(),
@@ -222,11 +222,16 @@ DFGVariable(label::Symbol, softtype::T;
             solverDataDict::Dict{Symbol, VariableNodeData{T}}=Dict{Symbol, VariableNodeData{T}}(),
             smallData::Dict{String, String}=Dict{String, String}(),
             dataDict::Dict{Symbol, AbstractDataEntry}=Dict{Symbol,AbstractDataEntry}(),
-            solvable::Int=1) where {T <: InferenceVariable} =
-    DFGVariable{T}(label, timestamp, nstime, tags, estimateDict, solverDataDict, smallData, dataDict, Ref(solvable))
+            solvable::Int=1) where {T <: InferenceVariable}
 
+    if timestamp isa DateTime
+        DFGVariable{T}(label, ZonedDateTime(timestamp, localzone()), nstime, tags, estimateDict, solverDataDict, smallData, dataDict, Ref(solvable))
+    else
+        DFGVariable{T}(label, timestamp, nstime, tags, estimateDict, solverDataDict, smallData, dataDict, Ref(solvable))
+    end
+end
 
-DFGVariable(label::Symbol,
+function DFGVariable(label::Symbol,
             solverData::VariableNodeData{T};
             timestamp::Union{DateTime,ZonedDateTime}=now(localzone()),
             nstime::Nanosecond = Nanosecond(0),
@@ -234,8 +239,13 @@ DFGVariable(label::Symbol,
             estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
             smallData::Dict{String, String}=Dict{String, String}(),
             dataDict::Dict{Symbol, AbstractDataEntry}=Dict{Symbol,AbstractDataEntry}(),
-            solvable::Int=1) where {T <: InferenceVariable} =
-    DFGVariable{T}(label, timestamp, nstime, tags, estimateDict, Dict{Symbol, VariableNodeData{T}}(:default=>solverData), smallData, dataDict, Ref(solvable))
+            solvable::Int=1) where {T <: InferenceVariable}
+    if timestamp isa DateTime
+        DFGVariable{T}(label, ZonedDateTime(timestamp, localzone()), nstime, tags, estimateDict, Dict{Symbol, VariableNodeData{T}}(:default=>solverData), smallData, dataDict, Ref(solvable))
+    else
+        DFGVariable{T}(label, timestamp, nstime, tags, estimateDict, Dict{Symbol, VariableNodeData{T}}(:default=>solverData), smallData, dataDict, Ref(solvable))
+    end
+end
 
 Base.getproperty(x::DFGVariable,f::Symbol) = begin
     if f == :solvable
