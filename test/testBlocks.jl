@@ -237,7 +237,7 @@ function DFGVariableSCA()
     v1_lbl = :a
     v1_tags = Set([:VARIABLE, :POSE])
     small = Dict("small"=>"data")
-    testTimestamp = now()
+    testTimestamp = now(localzone())
     # Constructors
     v1 = DFGVariable(v1_lbl, TestSofttype1(), tags=v1_tags, solvable=0, solverDataDict=Dict(:default=>VariableNodeData{TestSofttype1}()))
     v2 = DFGVariable(:b, VariableNodeData{TestSofttype2}(), tags=Set([:VARIABLE, :LANDMARK]))
@@ -313,7 +313,7 @@ function  DFGFactorSCA()
     #DFGVariable solvable default to 1, but Factor to 0, is that correct
     f1_lbl = :abf1
     f1_tags = Set([:FACTOR])
-    testTimestamp = now()
+    testTimestamp = now(localzone())
 
     gfnd_prior = GenericFunctionNodeData(false, false, Int[], TestCCW(TestAbstractPrior()))
 
@@ -423,7 +423,7 @@ end
 
 # Extra timestamp functions https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/315
 if !(v1 isa SkeletonDFGVariable)
-    newtimestamp = now()
+    newtimestamp = now(localzone())
     @test !(setTimestamp!(fg, :c, newtimestamp) === v3)
     @test getVariable(fg, :c) |> getTimestamp == newtimestamp
 

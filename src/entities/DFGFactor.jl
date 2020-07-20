@@ -43,7 +43,6 @@ mutable struct GenericFunctionNodeData{T<:Union{PackedInferenceType, FunctorInfe
     solveInProgress::Int
 
     # TODO deprecate all these inner constructors at end of DFG v0.9.x (was added for GFND.nullhypo::Float64 breaking change)
-    GenericFunctionNodeData{T}() where T = new{T}()
     GenericFunctionNodeData{T}(el,po,ed,fn,mu::Vector{<:Real},ce::Vector{Int},so::Int) where T = new{T}(el,po,ed,fn,mu,ce,0.0,so)
     GenericFunctionNodeData{T}(el,po,ed,fn,mu::Vector{<:Real},ce::Vector{Int},nu::Real,so::Int) where T = new{T}(el,po,ed,fn,mu,ce,nu,so)
 end
@@ -106,7 +105,7 @@ struct DFGFactor{T, N} <: AbstractDFGFactor
     label::Symbol
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref), [`setTimestamp`](@ref)"""
-    timestamp::DateTime
+    timestamp::ZonedDateTime
     """Nano second time, for more resolution on timestamp (only subsecond information)"""
     nstime::Nanosecond
     """Factor tags, e.g [:FACTOR].
@@ -122,14 +121,21 @@ struct DFGFactor{T, N} <: AbstractDFGFactor
     Accessors: [`getVariableOrder`](@ref)"""
     _variableOrderSymbols::NTuple{N,Symbol}
     # Inner constructor
-    DFGFactor{T}(label::Symbol,
-                 timestamp::DateTime,
+    function DFGFactor{T}(label::Symbol,
+                 timestamp::Union{DateTime,ZonedDateTime},
                  nstime::Nanosecond,
                  tags::Set{Symbol},
                  solverData::GenericFunctionNodeData{T},
                  solvable::Int,
-                 _variableOrderSymbols::NTuple{N,Symbol}) where {T,N} =
-                 new{T,N}(label, timestamp, nstime, tags, Ref(solverData), Ref(solvable), _variableOrderSymbols)
+                 _variableOrderSymbols::NTuple{N,Symbol}) where {T,N}
+
+        #TODO Deprecate remove in v0.10.
+        if timestamp isa DateTime
+            Base.depwarn("DFGFactor timestamp field is now a ZonedTimestamp", :DFGFactor)
+            return new{T,N}(label, ZonedDateTime(timestamp, localzone()), nstime, tags, Ref(solverData), Ref(solvable), _variableOrderSymbols)
+        end
+        return new{T,N}(label, timestamp, nstime, tags, Ref(solverData), Ref(solvable), _variableOrderSymbols)
+    end
 
 end
 
@@ -142,7 +148,7 @@ $(SIGNATURES)
 Construct a DFG factor given a label.
 """
 DFGFactor(label::Symbol,
-          timestamp::DateTime,
+          timestamp::Union{DateTime,ZonedDateTime},
           nstime::Nanosecond,
           tags::Set{Symbol},
           solverData::GenericFunctionNodeData{T},
@@ -151,7 +157,7 @@ DFGFactor(label::Symbol,
           DFGFactor{T}(label, timestamp, nstime, tags, solverData, solvable, _variableOrderSymbols)
 
 
-DFGFactor{T}(label::Symbol, variableOrderSymbols::Vector{Symbol}, timestamp::DateTime=now(), data::GenericFunctionNodeData{T} = GenericFunctionNodeData{T}()) where {T} =
+DFGFactor{T}(label::Symbol, variableOrderSymbols::Vector{Symbol}, timestamp::Union{DateTime,ZonedDateTime}=now(localzone()), data::GenericFunctionNodeData{T} = GenericFunctionNodeData{T}()) where {T} =
                 DFGFactor(label, timestamp, Nanosecond(0), Set{Symbol}(), data, 1, Tuple(variableOrderSymbols))
 
 
@@ -159,7 +165,7 @@ DFGFactor(label::Symbol,
           variableOrderSymbols::Vector{Symbol},
           data::GenericFunctionNodeData{T};
           tags::Set{Symbol}=Set{Symbol}(),
-          timestamp::DateTime=now(),
+          timestamp::Union{DateTime,ZonedDateTime}=now(localzone()),
           solvable::Int=1,
           nstime::Nanosecond = Nanosecond(0)) where {T} =
                 DFGFactor{T}(label, timestamp, nstime, tags, data, solvable, Tuple(variableOrderSymbols))
@@ -179,6 +185,10 @@ end
 Base.setproperty!(x::DFGFactor,f::Symbol, val) = begin
     if f == :solvable || f == :solverData
         getfield(x,f)[] = val
+    elseif f == :timestamp && val isa DateTime
+    #     #TODO Deprecation - Remove in v0.10
+        Base.depwarn("DFGFactor timestamp field is now a ZonedTimestamp", :setproperty!)
+        setfield!(x,:timestamp, ZonedDateTime(val,  localzone()))
     else
         setfield!(x,f,val)
     end
@@ -201,7 +211,7 @@ struct DFGFactorSummary <: AbstractDFGFactor
     label::Symbol
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref)"""
-    timestamp::DateTime
+    timestamp::ZonedDateTime
     """Factor tags, e.g [:FACTOR].
     Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
     tags::Set{Symbol}
