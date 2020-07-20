@@ -8,7 +8,7 @@ const TYPEKEY = "_type"
 function packVariable(dfg::G, v::DFGVariable)::Dict{String, Any} where G <: AbstractDFG
     props = Dict{String, Any}()
     props["label"] = string(v.label)
-    props["timestamp"] = string(v.timestamp)
+    props["timestamp"] = Dates.format(v.timestamp, "yyyy-mm-ddTHH:MM:SS.ssszzz")#string(v.timestamp)
     props["nstime"] = string(v.nstime.value)
     props["tags"] = JSON2.write(v.tags)
     props["ppeDict"] = JSON2.write(v.ppeDict)
@@ -114,7 +114,7 @@ function packFactor(dfg::G, f::DFGFactor)::Dict{String, Any} where G <: Abstract
     # Construct the properties to save
     props = Dict{String, Any}()
     props["label"] = string(f.label)
-    props["timestamp"] = string(f.timestamp)
+    props["timestamp"] = Dates.format(f.timestamp, "yyyy-mm-ddTHH:MM:SS.ssszzz")#string(f.timestamp)
     props["nstime"] = string(f.nstime.value)
     props["tags"] = JSON2.write(f.tags)
     # Pack the node data
