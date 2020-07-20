@@ -51,8 +51,6 @@ using Test
         @test_throws AssertionError loadDFG!(copyDf2,"badfilename")
 
         retDFG = loadDFG!(copyDfg, filename)
-        # TODO REMOVE test deprecation
-        retDFG_ = loadDFG(filename, Main, copyDf2) #, loaddir="/tmp")
 
         @test issetequal(ls(dfg), ls(retDFG))
         @test issetequal(lsf(dfg), lsf(retDFG))
