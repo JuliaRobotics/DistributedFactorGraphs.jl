@@ -221,8 +221,6 @@ end
     @test getRobotData(dfg) == smallRobotData
     @test getSessionData(dfg) == smallSessionData
 
-    # deprecated
-    @test_throws ErrorException getInternalId(v1)
 end
 
 @testset "Data Entries" begin
