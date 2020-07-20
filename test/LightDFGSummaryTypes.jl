@@ -46,7 +46,7 @@ end
         @test getSofttypename(v1) == :Pose2
 
         # FACTYPE == DFGFactorSummary
-        testTimestamp = now()
+        testTimestamp = now(localzone())
         v1ts = setTimestamp(v1, testTimestamp)
         @test getTimestamp(v1ts) == testTimestamp
         #follow with updateVariable!(fg, v1ts)
