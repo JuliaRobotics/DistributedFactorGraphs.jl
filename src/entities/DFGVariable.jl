@@ -244,10 +244,6 @@ Base.getproperty(x::DFGVariable,f::Symbol) = begin
     elseif f == :bigData
         Base.depwarn("DFGVariable field bigData is deprecated, use `dataDict` instead",:getproperty)
         getfield(x,:dataDict)
-    # elseif f == :timestamp
-    #     #TODO Deprecation - Remove in v0.10
-    #     Base.depwarn("DFGVariable timestamp field is now a ZonedTimestamp, use accessors to prevent breaking changes",:getproperty)
-    #     getfield(x,:timestamp)
     else
         getfield(x,f)
     end
