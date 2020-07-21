@@ -67,12 +67,13 @@ end
 ## COMMON
 # getTimestamp
 
+setTimestamp(f::AbstractDFGFactor, ts::DateTime, timezone=localzone()) = setTimestamp(f, ZonedDateTime(ts,  timezone))
 
-function setTimestamp(f::DFGFactor, ts::DateTime)
+function setTimestamp(f::DFGFactor, ts::ZonedDateTime)
     return DFGFactor(f.label, ts, f.nstime, f.tags, f.solverData, f.solvable, getfield(f,:_variableOrderSymbols))
 end
 
-function setTimestamp(f::DFGFactorSummary, ts::DateTime)
+function setTimestamp(f::DFGFactorSummary, ts::ZonedDateTime)
     return DFGFactorSummary(f.label, ts, f.tags, f._variableOrderSymbols)
 end
 
@@ -135,7 +136,7 @@ Return `::Bool` on whether given factor `fc::Symbol` is a prior in factor graph 
 """
 function isPrior(dfg::G, fc::Symbol)::Bool where G <: AbstractDFG
   fco = getFactor(dfg, fc)
-  getFactorType(fco) isa FunctorSingleton
+  getFactorType(fco) isa AbstractPrior || getFactorType(fco) isa FunctorSingleton
 end
 
 

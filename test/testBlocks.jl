@@ -22,9 +22,9 @@ end
 struct TestFunctorInferenceType1 <: FunctorInferenceType end
 struct TestFunctorInferenceType2 <: FunctorInferenceType end
 
-struct TestFunctorSingleton <: FunctorSingleton end
-struct TestFunctorPairwise <: FunctorPairwise end
-struct TestFunctorPairwiseMinimize <: FunctorPairwiseMinimize end
+struct TestAbstractPrior <: AbstractPrior end
+struct TestAbstractRelativeFactor <: AbstractRelativeFactor end
+struct TestAbstractRelativeFactorMinimize <: AbstractRelativeFactorMinimize end
 
 struct PackedTestFunctorInferenceType1 <: PackedInferenceType
     s::String
@@ -41,19 +41,19 @@ function Base.convert(::Type{TestFunctorInferenceType1}, d::PackedTestFunctorInf
     TestFunctorInferenceType1()
 end
 
-struct PackedTestFunctorSingleton <: PackedInferenceType
+struct PackedTestAbstractPrior <: PackedInferenceType
     s::String
 end
-PackedTestFunctorSingleton() = PackedTestFunctorSingleton("")
+PackedTestAbstractPrior() = PackedTestAbstractPrior("")
 
-function Base.convert(::Type{PackedTestFunctorSingleton}, d::TestFunctorSingleton)
-    # @info "convert(::Type{PackedTestFunctorSingleton}, d::TestFunctorSingleton)"
-    PackedTestFunctorSingleton()
+function Base.convert(::Type{PackedTestAbstractPrior}, d::TestAbstractPrior)
+    # @info "convert(::Type{PackedTestAbstractPrior}, d::TestAbstractPrior)"
+    PackedTestAbstractPrior()
 end
 
-function Base.convert(::Type{TestFunctorSingleton}, d::PackedTestFunctorSingleton)
-    # @info "onvert(::Type{TestFunctorSingleton}, d::PackedTestFunctorSingleton)"
-    TestFunctorSingleton()
+function Base.convert(::Type{TestAbstractPrior}, d::PackedTestAbstractPrior)
+    # @info "onvert(::Type{TestAbstractPrior}, d::PackedTestAbstractPrior)"
+    TestAbstractPrior()
 end
 
 struct TestCCW{T} <: FactorOperationalMemory where {T<:FunctorInferenceType}
@@ -237,7 +237,7 @@ function DFGVariableSCA()
     v1_lbl = :a
     v1_tags = Set([:VARIABLE, :POSE])
     small = Dict("small"=>"data")
-    testTimestamp = now()
+    testTimestamp = now(localzone())
     # Constructors
     v1 = DFGVariable(v1_lbl, TestSofttype1(), tags=v1_tags, solvable=0, solverDataDict=Dict(:default=>VariableNodeData{TestSofttype1}()))
     v2 = DFGVariable(:b, VariableNodeData{TestSofttype2}(), tags=Set([:VARIABLE, :LANDMARK]))
@@ -313,9 +313,9 @@ function  DFGFactorSCA()
     #DFGVariable solvable default to 1, but Factor to 0, is that correct
     f1_lbl = :abf1
     f1_tags = Set([:FACTOR])
-    testTimestamp = now()
+    testTimestamp = now(localzone())
 
-    gfnd_prior = GenericFunctionNodeData(false, false, Int[], TestCCW(TestFunctorSingleton()))
+    gfnd_prior = GenericFunctionNodeData(false, false, Int[], TestCCW(TestAbstractPrior()))
 
     gfnd = GenericFunctionNodeData(false, false, Int[], TestCCW(TestFunctorInferenceType1()))
 
@@ -360,7 +360,7 @@ function  DFGFactorSCA()
 
     #TODO Should throw method error
     # @test_throws MethodError setTimestamp!(f1, testTimestamp)
-    @test_throws ErrorException setTimestamp!(f1, testTimestamp)
+    # @test_throws ErrorException setTimestamp!(f1, testTimestamp)
     #/TODO
 
     @test setSolvable!(f1, 1) == 1
@@ -423,7 +423,7 @@ end
 
 # Extra timestamp functions https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/315
 if !(v1 isa SkeletonDFGVariable)
-    newtimestamp = now()
+    newtimestamp = now(localzone())
     @test !(setTimestamp!(fg, :c, newtimestamp) === v3)
     @test getVariable(fg, :c) |> getTimestamp == newtimestamp
 
@@ -513,7 +513,7 @@ end
 
 # simple broadcast test
 if f0 isa DFGFactor
-    @test issetequal(getFactorType.(fg, lsf(fg)),  [TestFunctorInferenceType1(), TestFunctorSingleton()])
+    @test issetequal(getFactorType.(fg, lsf(fg)),  [TestFunctorInferenceType1(), TestAbstractPrior()])
 end
 @test getVariable.(fg, [:a]) == [getVariable(fg, :a)]
 end
@@ -836,15 +836,15 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test isPrior(fg, :af1) # if f1 is prior
         @test lsfPriors(fg) == [:af1]
 
-        @test issetequal([:TestFunctorInferenceType1, :TestFunctorSingleton], lsfTypes(fg))
+        @test issetequal([:TestFunctorInferenceType1, :TestAbstractPrior], lsfTypes(fg))
 
         facTypesDict = lsfTypesDict(fg)
         @test issetequal(collect(keys(facTypesDict)), lsfTypes(fg))
         @test issetequal(facTypesDict[:TestFunctorInferenceType1], [:abf1])
-        @test issetequal(facTypesDict[:TestFunctorSingleton], [:af1])
+        @test issetequal(facTypesDict[:TestAbstractPrior], [:af1])
 
         @test ls(fg, TestFunctorInferenceType1) == [:abf1]
-        @test lsf(fg, TestFunctorSingleton) == [:af1]
+        @test lsf(fg, TestAbstractPrior) == [:af1]
         @test lsfWho(fg, :TestFunctorInferenceType1) == [:abf1]
 
         @test getSofttype(v1) == TestSofttype1()
@@ -899,7 +899,7 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test issetequal(ls(fg, tags=[:POSE, :LANDMARK]), ls(fg, tags=[:VARIABLE]))
 
         @test lsf(fg, tags=[:NONE]) == []
-        @test lsf(fg, tags=[:PRIOR]) == [:af1] 
+        @test lsf(fg, tags=[:PRIOR]) == [:af1]
 
         # Regexes
         @test ls(fg, r"a") == [v1.label]
@@ -1050,7 +1050,7 @@ function connectivityTestGraph(::Type{T}; VARTYPE=DFGVariable, FACTYPE=DFGFactor
         setSolvable!(dfg, :x8, 0)
         setSolvable!(dfg, :x9, 0)
 
-        gfnd = GenericFunctionNodeData(true, true, Int[], TestCCW(TestFunctorInferenceType1()), Float64[], Int[], 1)
+        gfnd = GenericFunctionNodeData(true, true, Int[], TestCCW(TestFunctorInferenceType1()), Float64[], Int[], 0, 1)
         f_tags = Set([:FACTOR])
         # f1 = DFGFactor(f1_lbl, [:a,:b], gfnd, tags = f_tags)
 

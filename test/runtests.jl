@@ -5,6 +5,7 @@ push!(ENV,"DFG_USE_CGDFG"=>"true")
 using DistributedFactorGraphs
 using Pkg
 using Dates
+using TimeZones
 
 ## To run the IIF tests, you need a local Neo4j with user/pass neo4j:test
 # To run a Docker image
@@ -76,8 +77,8 @@ end
 if get(ENV, "IIF_TEST", "") == "true"
 
     # Switch to our upstream test branch.
-    # Pkg.add(PackageSpec(name="IncrementalInference", rev="upstream/dfg_integration_test"))
-    Pkg.add(PackageSpec(name="IncrementalInference", rev="develop"))
+    Pkg.add(PackageSpec(name="IncrementalInference", rev="upstream/dfg_integration_test"))
+    # Pkg.add(PackageSpec(name="IncrementalInference", rev="develop"))
     @info "------------------------------------------------------------------------"
     @info "These tests are using IncrementalInference to do additional driver tests"
     @info "------------------------------------------------------------------------"

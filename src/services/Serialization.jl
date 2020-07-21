@@ -8,7 +8,7 @@ const TYPEKEY = "_type"
 function packVariable(dfg::G, v::DFGVariable)::Dict{String, Any} where G <: AbstractDFG
     props = Dict{String, Any}()
     props["label"] = string(v.label)
-    props["timestamp"] = string(v.timestamp)
+    props["timestamp"] = Dates.format(v.timestamp, "yyyy-mm-ddTHH:MM:SS.ssszzz")#string(v.timestamp)
     props["nstime"] = string(v.nstime.value)
     props["tags"] = JSON2.write(v.tags)
     props["ppeDict"] = JSON2.write(v.ppeDict)
@@ -25,7 +25,7 @@ end
 
 function unpackVariable(dfg::G, packedProps::Dict{String, Any})::DFGVariable where G <: AbstractDFG
     label = Symbol(packedProps["label"])
-    timestamp = DateTime(packedProps["timestamp"])
+    timestamp = ZonedDateTime(packedProps["timestamp"])
     nstime = Nanosecond(get(packedProps, "nstime", 0))
     tags =  JSON2.read(packedProps["tags"], Vector{Symbol})
     #TODO this will work for some time, but unpacking in an <: AbstractPointParametricEst would be lekker.
@@ -114,7 +114,7 @@ function packFactor(dfg::G, f::DFGFactor)::Dict{String, Any} where G <: Abstract
     # Construct the properties to save
     props = Dict{String, Any}()
     props["label"] = string(f.label)
-    props["timestamp"] = string(f.timestamp)
+    props["timestamp"] = Dates.format(f.timestamp, "yyyy-mm-ddTHH:MM:SS.ssszzz")#string(f.timestamp)
     props["nstime"] = string(f.nstime.value)
     props["tags"] = JSON2.write(f.tags)
     # Pack the node data
@@ -151,7 +151,7 @@ end
 
 function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G <: AbstractDFG
     label = packedProps["label"]
-    timestamp = DateTime(packedProps["timestamp"])
+    timestamp = ZonedDateTime(packedProps["timestamp"])
     nstime = Nanosecond(get(packedProps, "nstime", 0))
     tags = JSON2.read(packedProps["tags"], Vector{Symbol})
 

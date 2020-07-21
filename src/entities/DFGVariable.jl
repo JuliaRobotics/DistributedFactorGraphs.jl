@@ -184,7 +184,7 @@ struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
     label::Symbol
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref), [`setTimestamp`](@ref)"""
-    timestamp::DateTime
+    timestamp::ZonedDateTime
     """Nano second time, for more resolution on timestamp (only subsecond information)"""
     nstime::Nanosecond
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
@@ -214,28 +214,38 @@ end
     $SIGNATURES
 The default DFGVariable constructor.
 """
-DFGVariable(label::Symbol, softtype::T;
-            timestamp::DateTime=now(),
+function DFGVariable(label::Symbol, softtype::T;
+            timestamp::Union{DateTime,ZonedDateTime}=now(localzone()),
             nstime::Nanosecond = Nanosecond(0),
             tags::Set{Symbol}=Set{Symbol}(),
             estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
             solverDataDict::Dict{Symbol, VariableNodeData{T}}=Dict{Symbol, VariableNodeData{T}}(),
             smallData::Dict{String, String}=Dict{String, String}(),
             dataDict::Dict{Symbol, AbstractDataEntry}=Dict{Symbol,AbstractDataEntry}(),
-            solvable::Int=1) where {T <: InferenceVariable} =
-    DFGVariable{T}(label, timestamp, nstime, tags, estimateDict, solverDataDict, smallData, dataDict, Ref(solvable))
+            solvable::Int=1) where {T <: InferenceVariable}
 
+    if timestamp isa DateTime
+        DFGVariable{T}(label, ZonedDateTime(timestamp, localzone()), nstime, tags, estimateDict, solverDataDict, smallData, dataDict, Ref(solvable))
+    else
+        DFGVariable{T}(label, timestamp, nstime, tags, estimateDict, solverDataDict, smallData, dataDict, Ref(solvable))
+    end
+end
 
-DFGVariable(label::Symbol,
+function DFGVariable(label::Symbol,
             solverData::VariableNodeData{T};
-            timestamp::DateTime=now(),
+            timestamp::Union{DateTime,ZonedDateTime}=now(localzone()),
             nstime::Nanosecond = Nanosecond(0),
             tags::Set{Symbol}=Set{Symbol}(),
             estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
             smallData::Dict{String, String}=Dict{String, String}(),
             dataDict::Dict{Symbol, AbstractDataEntry}=Dict{Symbol,AbstractDataEntry}(),
-            solvable::Int=1) where {T <: InferenceVariable} =
-    DFGVariable{T}(label, timestamp, nstime, tags, estimateDict, Dict{Symbol, VariableNodeData{T}}(:default=>solverData), smallData, dataDict, Ref(solvable))
+            solvable::Int=1) where {T <: InferenceVariable}
+    if timestamp isa DateTime
+        DFGVariable{T}(label, ZonedDateTime(timestamp, localzone()), nstime, tags, estimateDict, Dict{Symbol, VariableNodeData{T}}(:default=>solverData), smallData, dataDict, Ref(solvable))
+    else
+        DFGVariable{T}(label, timestamp, nstime, tags, estimateDict, Dict{Symbol, VariableNodeData{T}}(:default=>solverData), smallData, dataDict, Ref(solvable))
+    end
+end
 
 Base.getproperty(x::DFGVariable,f::Symbol) = begin
     if f == :solvable
@@ -254,8 +264,12 @@ Base.setproperty!(x::DFGVariable,f::Symbol, val) = begin
         getfield(x,f)[] = val
     elseif f == :bigData
         #TODO Deprecation - Remove in v0.10
-        Base.depwarn("DFGVariable field bigData is deprecated, use `dataDict` instead",:setproperty!)
-        setfield(x, :dataDict)
+        Base.depwarn("DFGVariable field bigData is deprecated, use `dataDict` instead", :setproperty!)
+        setfield(x, :dataDict, val)
+    elseif f == :timestamp && val isa DateTime
+    #     #TODO Deprecation - Remove in v0.10
+        Base.depwarn("DFGVariable timestamp field is now a ZonedTimestamp", :setproperty!)
+        setfield!(x,:timestamp, ZonedDateTime(val,  localzone()))
     else
         setfield!(x,f,val)
     end
@@ -288,7 +302,7 @@ struct DFGVariableSummary <: AbstractDFGVariable
     label::Symbol
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref), [`setTimestamp`](@ref)"""
-    timestamp::DateTime
+    timestamp::ZonedDateTime
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
     Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
     tags::Set{Symbol}
