@@ -5,9 +5,9 @@ reproducible key using userId_robotId_sessionId_variableId_key.
 """
 mutable struct GeneralDataEntry <: AbstractDataEntry
     label::Symbol
-    id::UUID # Could swap this to string, but using it as an index later, so better as a symbol I believe.
-    createdTimestamp::DateTime
-    lastUpdatedTimestamp::DateTime
+    id::UUID
+    createdTimestamp::ZonedDateTime
+    lastUpdatedTimestamp::ZonedDateTime
     mimeType::String
 end
 
@@ -54,7 +54,7 @@ GeneralDataEntry(key::Symbol, storeKey::Symbol; mimeType::String="") = error("st
 
 GeneralDataEntry(label::Symbol, id::UUID;
                     mimeType::String="application/octet-stream") =
-                    GeneralDataEntry(label, uuid4(), now(UTC), now(UTC), mimeType)
+                    GeneralDataEntry(label, uuid4(), now(localzone()), now(localzone()), mimeType)
 
 function GeneralDataEntry(dfg::AbstractDFG, var::AbstractDFGVariable, key::Symbol;
                              mimeType::String="application/octet-stream")
@@ -64,58 +64,17 @@ end
 
 """
     $(TYPEDEF)
-Genaral Data Store Entry.
-"""
-struct DataStoreEntry <: AbstractDataEntry
-    label::Symbol
-    id::UUID
-    datastorekey::Symbol #TODO
-    hash::String # Probably https://docs.julialang.org/en/v1/stdlib/SHA
-    source::String # E.g. user|robot|session|varlabel
-    description::String
-    mimeType::String
-    createdTimestamp::DateTime
-    # lastUpdatedTimestamp::DateTime # don't think this makes sense?
-end
-
-"""
-    $(TYPEDEF)
 Data Entry in MongoDB.
 """
 struct MongodbDataEntry <: AbstractDataEntry
     label::Symbol
     id::UUID
-    oid::NTuple{12, UInt8} #mongodb object id
+    oid::NTuple{12, UInt8} #mongodb object id - TODO Not needed with id::UUID unique, but perhaps usefull
     hash::String
-
+    createdTimestamp::ZonedDateTime
     # mongodb
-    # client::String
-    # database::String
-    # collection::String
-
+    # mongoConfig::MongoConfig
     #maybe other fields such as:
     #flags::Bool ready, valid, locked, permissions
     #MIMEType::String
-end
-
-
-"""
-    $(TYPEDEF)
-Data Entry in a file.
-"""
-struct FileDataEntry <: AbstractDataEntry
-    label::Symbol
-    id::UUID
-    folder::String
-    hash::String #using bytes2hex or perhaps Vector{Uint8}?
-    timestamp::DateTime
-
-    function FileDataEntry(label, id, folder, hash, timestamp)
-        if !isdir(folder)
-            @warn "Folder '$folder' doesn't exist - creating."
-            # create new folder
-            mkpath(folder)
-        end
-        return new(label, id, folder, hash, timestamp)
-      end
 end

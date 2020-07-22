@@ -15,13 +15,13 @@ function ==(a::GeneralDataEntry, b::GeneralDataEntry)
         Dates.value(a.lastUpdatedTimestamp - b.lastUpdatedTimestamp) < 1000 #1 second
 end
 
-function ==(a::MongodbDataEntry, b::MongodbDataEntry)
-    return a.label == b.label && a.oid == b.oid
-end
-
-function ==(a::FileDataEntry, b::FileDataEntry)
-    return a.label == b.label && a.filename == b.filename
-end
+# function ==(a::MongodbDataEntry, b::MongodbDataEntry)
+#     return a.label == b.label && a.oid == b.oid
+# end
+#
+# function ==(a::FileDataEntry, b::FileDataEntry)
+#     return a.label == b.label && a.filename == b.filename
+# end
 
 """
     $(SIGNATURES)

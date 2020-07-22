@@ -2,7 +2,7 @@
     $(SIGNATURES)
 Get the data for the specified entry, returns the data or Nothing.
 """
-function getDataBlob(store::D, entry::E)::Union{Nothing, T} where {T, D <: AbstractDataStore{T}, E <: AbstractDataEntry}
+function getDataBlob(store::AbstractDataStore, entry::AbstractDataEntry)
     error("$(typeof(store)) doesn't override 'getDataBlob'.")
 end
 
@@ -11,7 +11,7 @@ end
 Adds the data to the store with the given entry. The function will warn if the entry already
 exists and will overwrite it.
 """
-function addDataBlob!(store::D, entry::E, data::T)::Union{Nothing, T} where {T, D <: AbstractDataStore{T}, E <: AbstractDataEntry}
+function addDataBlob!(store::AbstractDataStore{T}, entry::AbstractDataEntry, data::T) where T
     error("$(typeof(store)) doesn't override 'addDataBlob!'.")
 end
 
@@ -20,7 +20,7 @@ end
 Update the data in the store. The function will error and return nothing if
 the entry does not exist.
 """
-function updateDataBlob!(store::D, entry::E, data::T)::Union{Nothing, T} where {T, D <: AbstractDataStore{T}, E <: AbstractDataEntry}
+function updateDataBlob!(store::AbstractDataStore{T}, entry::AbstractDataEntry, data::T) where T
     error("$(typeof(store)) doesn't override 'updateDataBlob!'.")
 end
 
@@ -29,7 +29,7 @@ end
 Delete the data in the store for the given entry. The function will error and return nothing if
 the entry does not exist.
 """
-function deleteDataBlob!(store::D, entry::E)::Union{Nothing, T} where {T, D <: AbstractDataStore{T}, E <: AbstractDataEntry}
+function deleteDataBlob!(store::AbstractDataStore{T}, entry::AbstractDataEntry) where T
     error("$(typeof(store)) doesn't override 'deleteDataBlob!'.")
 end
 
@@ -37,7 +37,7 @@ end
     $(SIGNATURES)
 List all entries in the data store.
 """
-function listDataBlobs(store::D) where D <: AbstractDataStore
+function listDataBlobs(store::AbstractDataStore)
     error("$(typeof(store)) doesn't override 'listDataBlobs'.")
 end
 

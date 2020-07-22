@@ -13,7 +13,10 @@ include("services/AbstractDataEntries.jl")
 include("services/InMemoryDataStore.jl")
 include("services/FileDataStore.jl")
 
-include("services/FileDataEntryBlob.jl")
+include("FileDataEntryBlob.jl")
+include("InMemoryDataEntryBlob.jl")
+include("DataBlobStores.jl")
+include("DataEntryBlob.jl")
 
 export AbstractDataStore
 
