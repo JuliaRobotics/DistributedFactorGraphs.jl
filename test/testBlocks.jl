@@ -772,13 +772,13 @@ function  DataEntriesTestBlock!(fg, v2)
     # mergeDataEntries
 
     oid = zeros(UInt8,12); oid[12] = 0x01
-    de1 = MongodbDataEntry(:key1, NTuple{12,UInt8}(oid))
+    de1 = MongodbDataEntry(:key1, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
 
     oid = zeros(UInt8,12); oid[12] = 0x02
-    de2 = MongodbDataEntry(:key2, NTuple{12,UInt8}(oid))
+    de2 = MongodbDataEntry(:key2, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
 
     oid = zeros(UInt8,12); oid[12] = 0x03
-    de2_update = MongodbDataEntry(:key2, NTuple{12,UInt8}(oid))
+    de2_update = MongodbDataEntry(:key2, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
 
     #add
     v1 = getVariable(fg, :a)
@@ -801,17 +801,17 @@ function  DataEntriesTestBlock!(fg, v2)
     #list
     entries = getDataEntries(fg, :a)
     @test length(entries) == 2
-    @test issetequal(map(e->e.key, entries), [:key1, :key2])
+    @test issetequal(map(e->e.label, entries), [:key1, :key2])
     @test length(getDataEntries(fg, :b)) == 1
 
     @test issetequal(listDataEntries(fg, :a), [:key1, :key2])
     @test listDataEntries(fg, :b) == Symbol[:key2]
 
     #delete
-    @test deleteDataEntry!(v1, :key1) == v1
+    @test deleteDataEntry!(v1, :key1) == de1
     @test listDataEntries(v1) == Symbol[:key2]
     #delete from dfg
-    @test deleteDataEntry!(fg, :a, :key2) == v1
+    @test deleteDataEntry!(fg, :a, :key2) == de2_update
     @test listDataEntries(v1) == Symbol[]
 end
 

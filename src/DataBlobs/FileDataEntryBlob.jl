@@ -22,6 +22,11 @@ struct FileDataEntry <: AbstractDataEntry
         return new(label, id, folder, hash, timestamp)
       end
 end
+
+@generated function ==(x::FileDataEntry, y::FileDataEntry)
+    mapreduce(n -> :(x.$n == y.$n), (a,b)->:($a && $b), fieldnames(x))
+end
+
 #
 # getHash(entry::AbstractDataEntry) = hex2bytes(entry.hash)
 
