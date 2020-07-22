@@ -64,7 +64,7 @@ function printFactor(io::IO, vert::DFGFactor;
         println(ioc, "  solvable: ", vert.solvable)
         println(ioc, "  VariableOrder: ", vert._variableOrderSymbols)
         println(ioc, "  multihypo: ", getSolverData(vert).multihypo) # FIXME #477
-        println(ioc, "  nullhypo: ", "see DFG #477")
+        println(ioc, "  nullhypo: ", getSolverData(vert).nullhypo)
         println(ioc, "  timestamp: ", vert.timestamp)
         println(ioc, "  nstime: ",vert.nstime)
         println(ioc, "  tags: ", vert.tags)
