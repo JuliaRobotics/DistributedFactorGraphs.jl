@@ -39,6 +39,7 @@ export DFG
 ##------------------------------------------------------------------------------
 export AbstractDFG
 export AbstractParams, NoSolverParams
+export AbstractBlobStore
 
 # accessors & crud
 export getUserId, getRobotId, getSessionId
@@ -49,6 +50,11 @@ export getDescription, setDescription!,
        getRobotData, setRobotData!,
        getSessionData, setSessionData!,
        getAddHistory
+export getBlobStore,
+       addBlobStore!,
+       updateBlobStore!,
+       deleteBlobStore!,
+       emptyBlobStore!
 
 # TODO Not sure these are needed or should work everywhere, implement in cloud?
 export updateUserData!, updateRobotData!, updateSessionData!, deleteUserData!, deleteRobotData!, deleteSessionData!

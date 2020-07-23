@@ -18,6 +18,7 @@ mutable struct LightDFG{T <: AbstractParams, V <: AbstractDFGVariable, F <:Abstr
     sessionData::Dict{Symbol, String}
     addHistory::Vector{Symbol} #TODO: Discuss more - is this an audit trail?
     solverParams::T # Solver parameters
+    blobStores::Dict{Symbol, AbstractBlobStore}
 end
 
 """
@@ -36,12 +37,13 @@ function LightDFG{T,V,F}(g::FactorGraph{Int,V,F}=FactorGraph{Int,V,F}();
                            userData::Dict{Symbol, String} = Dict{Symbol, String}(),
                            robotData::Dict{Symbol, String} = Dict{Symbol, String}(),
                            sessionData::Dict{Symbol, String} = Dict{Symbol, String}(),
-                           solverParams::T=T()) where {T <: AbstractParams, V <:AbstractDFGVariable, F<:AbstractDFGFactor}
+                           solverParams::T=T(),
+                           blobstores=Dict{Symbol, AbstractBlobStore}()) where {T <: AbstractParams, V <:AbstractDFGVariable, F<:AbstractDFGFactor}
    # Validate the userId, robotId, and sessionId
    !isValidLabel(userId) && error("'$userId' is not a valid User ID")
    !isValidLabel(robotId) && error("'$robotId' is not a valid Robot ID")
    !isValidLabel(sessionId) && error("'$sessionId' is not a valid Session ID")
-   return LightDFG{T,V,F}(g, description, userId, robotId, sessionId, userData, robotData, sessionData, Symbol[], solverParams)
+   return LightDFG{T,V,F}(g, description, userId, robotId, sessionId, userData, robotData, sessionData, Symbol[], solverParams, blobstores)
 end
 
 # LightDFG{T}(; kwargs...) where T <: AbstractParams = LightDFG{T,DFGVariable,DFGFactor}(;kwargs...)
@@ -84,8 +86,9 @@ LightDFG(description::String,
          userData::Dict{Symbol, String},
          robotData::Dict{Symbol, String},
          sessionData::Dict{Symbol, String},
-         solverParams::AbstractParams) =
-         LightDFG(FactorGraph{Int,DFGVariable,DFGFactor}(), description, userId, robotId, sessionId, userData, robotData, sessionData, Symbol[], solverParams)
+         solverParams::AbstractParams,
+         blobstores=Dict{Symbol, AbstractBlobStore}()) =
+         LightDFG(FactorGraph{Int,DFGVariable,DFGFactor}(), description, userId, robotId, sessionId, userData, robotData, sessionData, Symbol[], solverParams, blobstores)
 
 
 LightDFG{T,V,F}(description::String,
@@ -95,5 +98,6 @@ LightDFG{T,V,F}(description::String,
                 userData::Dict{Symbol, String},
                 robotData::Dict{Symbol, String},
                 sessionData::Dict{Symbol, String},
-                solverParams::T) where {T <: AbstractParams, V <:AbstractDFGVariable, F<:AbstractDFGFactor} =
-                LightDFG(FactorGraph{Int,V,F}(), description, userId, robotId, sessionId, userData, robotData, sessionData, Symbol[], solverParams)
+                solverParams::T,
+                blobstores=Dict{Symbol, AbstractBlobStore}()) where {T <: AbstractParams, V <:AbstractDFGVariable, F<:AbstractDFGFactor} =
+                LightDFG(FactorGraph{Int,V,F}(), description, userId, robotId, sessionId, userData, robotData, sessionData, Symbol[], solverParams, blobstores)

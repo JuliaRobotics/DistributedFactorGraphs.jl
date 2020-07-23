@@ -1418,7 +1418,7 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
         # Save and load the graph to test.
         saveDFG(dfg, filename)
 
-        retDFG = testDFGAPI()
+        retDFG = testDFGAPI(userId="testUserId")
         @info "Going to load $filename"
 
         @test_throws AssertionError loadDFG!(retDFG,"badfilename")

@@ -51,14 +51,26 @@ dde,ddb = deleteData!(dfg, :x1, :random)
 ## FolderStore
 ##==============================================================================
 
-# Create a data store and a dataset
+# Create a data store and add it to DFG
 ds = FolderStore{Vector{UInt8}}(:filestore, "/tmp/dfgFilestore")
+addBlobStore!(dfg, ds)
 
-entry1 = BlobStoreEntry(:random, uuid4(), :filestore, bytes2hex(sha256(dataset1)), "","","", now(localzone()))
-
-ade,adb = addData!(dfg, ds, :x1, entry1, dataset1)
-gde,gdb = getData(dfg, ds, :x1, :random)
-dde,ddb = deleteData!(dfg, ds, :x1, :random)
+ade,adb = addData!(dfg, :filestore, :x1, :random, dataset1)
+gde,gdb = getData(dfg, :x1, :random)
+dde,ddb = deleteData!(dfg, :x1, :random)
 
 @test ade == gde == dde
 @test adb == gdb == ddb
+
+##==============================================================================
+## Unimplemented store
+##==============================================================================
+struct TestStore{T} <: DFG.AbstractBlobStore{T} end
+
+store = TestStore{Int}()
+
+@test_throws ErrorException getDataBlob(store, ade)
+@test_throws ErrorException addDataBlob!(store, ade, 1)
+@test_throws ErrorException updateDataBlob!(store,  ade, 1)
+@test_throws ErrorException deleteDataBlob!(store, ade)
+@test_throws ErrorException listDataBlobs(store)

@@ -1,4 +1,5 @@
 export BlobStoreEntry
+
 """
     $(TYPEDEF)
 Genaral Data Store Entry.
@@ -14,29 +15,34 @@ struct BlobStoreEntry <: AbstractDataEntry
     createdTimestamp::ZonedDateTime # of when the entry was created
 end
 
-abstract type AbstractBlobStore{T} end
-
-# AbstractBlobStore should have key or overwrite getKey
-getKey(store::AbstractBlobStore) = store.key
-
-#TODO consider adding this to dfg
-const BlobStores = Dict{Symbol, AbstractBlobStore}
-
 
 ##==============================================================================
 ## AbstractBlobStore CRUD Interface
 ##==============================================================================
+
+getDataBlob(dfg::AbstractDFG, entry::BlobStoreEntry) =
+        getDataBlob(getBlobStore(dfg, entry.blobstore), entry)
+
 function getDataBlob(store::AbstractBlobStore, entry::BlobStoreEntry)
     error("$(typeof(store)) doesn't override 'getDataBlob'.")
 end
+
+addDataBlob!(dfg::AbstractDFG, entry::BlobStoreEntry, data::T) where T =
+        addDataBlob!(getBlobStore(dfg, entry.blobstore), entry, data)
 
 function addDataBlob!(store::AbstractBlobStore{T}, entry::BlobStoreEntry, data::T) where T
     error("$(typeof(store)) doesn't override 'addDataBlob!'.")
 end
 
+updateDataBlob!(dfg::AbstractDFG, entry::BlobStoreEntry, data::T) where T =
+        updateDataBlob!(getBlobStore(dfg, entry.blobstore), entry, data)
+
 function updateDataBlob!(store::AbstractBlobStore{T},  entry::BlobStoreEntry, data::T) where T
     error("$(typeof(store)) doesn't override 'updateDataBlob!'.")
 end
+
+deleteDataBlob!(dfg::AbstractDFG, entry::BlobStoreEntry) =
+        deleteDataBlob!(getBlobStore(dfg, entry.blobstore), entry)
 
 function deleteDataBlob!(store::AbstractBlobStore, entry::BlobStoreEntry)
     error("$(typeof(store)) doesn't override 'deleteDataBlob!'.")
@@ -80,13 +86,23 @@ function deleteData!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symb
     return de=>db
 end
 
+##==============================================================================
+
+addData!(dfg::AbstractDFG, blobstorekey::Symbol, label::Symbol, key::Symbol, blob::Vector{UInt8},
+         timestamp=now(localzone()); kwargs...) = addData!(dfg,
+                                                           getBlobStore(dfg, blobstorekey),
+                                                           label,
+                                                           key,
+                                                           blob,
+                                                           timestamp;
+                                                           kwargs...)
 
 function addData!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol, key::Symbol,
                   blob::Vector{UInt8}, timestamp=now(localzone()); description="", mimeType = "", id::UUID = uuid4(), hashfunction = sha256)
 
 
     entry = BlobStoreEntry(key, id, blobstore.key, bytes2hex(hashfunction(blob)),
-                           "$(dfg.userId)|$(dfg.robotId)|$(dfg.sessionId)|$(dfg.label)",
+                           "$(dfg.userId)|$(dfg.robotId)|$(dfg.sessionId)|$(label)",
                            description, mimeType, timestamp)
 
     addData!(dfg, blobstore, label, entry, blob; hashfunction = hashfunction)

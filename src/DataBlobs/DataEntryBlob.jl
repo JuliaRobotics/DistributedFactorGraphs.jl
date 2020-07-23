@@ -17,23 +17,23 @@ end
 # deleteDataBlob!(dfg::AbstractDFG,  entry::AbstractDataEntry)
 
 function getDataBlob(dfg::AbstractDFG, entry::AbstractDataEntry)
-    error("$(typeof(store)) doesn't override 'getDataBlob'.")
+    error("$(typeof(dfg)) doesn't override 'getDataBlob'.")
 end
 
-function addDataBlob!(dfg::AbstractDFG, entry::BlobStoreEntry, data::T) where T
-    error("$(typeof(store)) doesn't override 'addDataBlob!'.")
+function addDataBlob!(dfg::AbstractDFG, entry::AbstractDataEntry, data::T) where T
+    error("$(typeof(dfg)) doesn't override 'addDataBlob!'.")
 end
 
-function updateDataBlob!(dfg::AbstractDFG,  entry::BlobStoreEntry, data::T) where T
-    error("$(typeof(store)) doesn't override 'updateDataBlob!'.")
+function updateDataBlob!(dfg::AbstractDFG,  entry::AbstractDataEntry, data::T) where T
+    error("$(typeof(dfg)) doesn't override 'updateDataBlob!'.")
 end
 
-function deleteDataBlob!(dfg::AbstractDFG, entry::BlobStoreEntry)
-    error("$(typeof(store)) doesn't override 'deleteDataBlob!'.")
+function deleteDataBlob!(dfg::AbstractDFG, entry::AbstractDataEntry)
+    error("$(typeof(dfg)) doesn't override 'deleteDataBlob!'.")
 end
 
 function listDataBlobs(dfg::AbstractDFG)
-    error("$(typeof(store)) doesn't override 'listDataBlobs'.")
+    error("$(typeof(dfg)) doesn't override 'listDataBlobs'.")
 end
 
 ##==============================================================================
@@ -55,7 +55,7 @@ function addData!(dfg::AbstractDFG, label::Symbol, entry::AbstractDataEntry, blo
     return de=>db
 end
 
-function updateData!(dfg::AbstractDFG, label::Symbol,  entry::AbstractDataEntry,  blob::Vector{UInt8})
+function updateData!(dfg::AbstractDFG, label::Symbol,  entry::AbstractDataEntry,  blob::Vector{UInt8}; hashfunction = sha256)
     assertHash(entry, blob, hashfunction=hashfunction)
     de = updateDataEntry!(dfg, label, entry)
     db = updateDataBlob!(dfg, de, blob)

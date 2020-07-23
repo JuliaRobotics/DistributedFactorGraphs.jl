@@ -21,6 +21,7 @@ Base.Broadcast.broadcastable(dfg::AbstractDFG) = Ref(dfg)
 # - `sessionData::Dict{Symbol, String}`
 # - `solverParams::T<:AbstractParams`
 # - `addHistory::Vector{Symbol}`
+# - `blobStores::Dict{Symbol, AbstractBlobStore}`
 # AbstractDFG Accessors
 
 ##------------------------------------------------------------------------------
@@ -184,7 +185,18 @@ emptySessionData!(dfg::AbstractDFG) = empty!(dfg.sessionData)
 
 #TODO add__Data!?
 
+##==============================================================================
+## AbstractBlobStore  CRUD
+##==============================================================================
+abstract type AbstractBlobStore{T} end
+# AbstractBlobStore should have key or overwrite getKey
+getKey(store::AbstractBlobStore) = store.key
 
+getBlobStore(dfg::AbstractDFG, key::Symbol) = dfg.blobStores[key]
+addBlobStore!(dfg::AbstractDFG, bs::AbstractBlobStore) = push!(dfg.blobStores, getKey(bs)=>bs)
+updateBlobStore!(dfg::AbstractDFG, bs::AbstractBlobStore) = push!(dfg.blobStores, getKey(bs)=>bs)
+deleteBlobStore!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.blobStores, key)
+emptyBlobStore!(dfg::AbstractDFG) = empty!(dfg.blobStores)
 
 ##==============================================================================
 ## CRUD Interfaces
