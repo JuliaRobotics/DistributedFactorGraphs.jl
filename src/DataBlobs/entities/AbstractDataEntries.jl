@@ -52,9 +52,9 @@ _uniqueKey(dfg::AbstractDFG, v::AbstractDFGVariable, key::Symbol)::Symbol =
 
 GeneralDataEntry(key::Symbol, storeKey::Symbol; mimeType::String="") = error("storeKey Deprecated, use UUID")
 
-GeneralDataEntry(label::Symbol, id::UUID;
+GeneralDataEntry(label::Symbol, id::UUID=uuid4();
                     mimeType::String="application/octet-stream") =
-                    GeneralDataEntry(label, uuid4(), now(localzone()), now(localzone()), mimeType)
+                    GeneralDataEntry(label, id, now(localzone()), now(localzone()), mimeType)
 
 function GeneralDataEntry(dfg::AbstractDFG, var::AbstractDFGVariable, key::Symbol;
                              mimeType::String="application/octet-stream")

@@ -207,6 +207,8 @@ end
         @test getFactor(dfg, fac.label) == getFactor(copyDfg, fac.label)
         # @test getFactor(dfg, fac.label) == fac
     end
+
+    FileDFGTestBlock(testDFGAPI)
 end
 #=
 fg = fg1

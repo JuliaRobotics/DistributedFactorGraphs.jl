@@ -76,6 +76,7 @@ function Base.convert(::Type{DFG.FunctionNodeData{TestCCW{F}}},
                                 TestCCW(convert(F, d.fnc)),
                                 d.multihypo,
                                 d.certainhypo,
+                                d.nullhypo,
                                 d.solveInProgress)
 end
 
@@ -87,6 +88,7 @@ function Base.convert(::Type{DFG.PackedFunctionNodeData{P}}, d::DFG.FunctionNode
                                     convert(P, d.fnc.usrfnc!),
                                     d.multihypo,
                                     d.certainhypo,
+                                    d.nullhypo,
                                     d.solveInProgress)
 end
 
@@ -1368,5 +1370,74 @@ function CopyFunctionsTest(testDFGAPI; kwargs...)
 
     # GraphsDFG(dfg::AbstractDFG) = convert(GraphsDFG,dfg)
     # GraphsDFG(dfg)
+
+end
+
+function FileDFGTestBlock(testDFGAPI; kwargs...)
+
+    # testDFGAPI = LightDFG
+    # kwargs = ()
+    # filename = "/tmp/fileDFG"
+    dfg, verts, facs = connectivityTestGraph(testDFGAPI; kwargs...)
+
+    for filename in ["/tmp/fileDFG", "/tmp/FileDFGExtension.tar.gz"]
+
+        v4 = getVariable(dfg, :x4)
+        vnd = getSolverData(v4)
+        # set everything
+        vnd.BayesNetVertID = :outid
+        push!(vnd.BayesNetOutVertIDs, :id)
+        vnd.bw[1] = 1.0
+        push!(vnd.dimIDs, 1)
+        vnd.dims = 1
+        vnd.dontmargin = true
+        vnd.eliminated = true
+        vnd.inferdim = 1.5
+        vnd.initialized = true
+        vnd.ismargin = true
+        push!(vnd.separator, :sep)
+        vnd.solveInProgress = 1
+        vnd.solvedCount = 2
+        vnd.val .= 2.0
+        #update
+        updateVariable!(dfg, v4)
+
+        f45 = getFactor(dfg, :x4x5f1)
+        fsd = f45.solverData
+        # set some factor solver data
+        push!(fsd.certainhypo, 2)
+        push!(fsd.edgeIDs, 3)
+        fsd.eliminated = true
+        push!(fsd.multihypo, 4.0)
+        fsd.nullhypo = 5.0
+        fsd.potentialused = true
+        fsd.solveInProgress = true
+        #update factor
+        updateFactor!(dfg, f45)
+
+        # Save and load the graph to test.
+        saveDFG(dfg, filename)
+
+        retDFG = testDFGAPI()
+        @info "Going to load $filename"
+
+        @test_throws AssertionError loadDFG!(retDFG,"badfilename")
+
+        loadDFG!(retDFG, filename)
+
+        @test issetequal(ls(dfg), ls(retDFG))
+        @test issetequal(lsf(dfg), lsf(retDFG))
+        for var in ls(dfg)
+            @test getVariable(dfg, var) == getVariable(retDFG, var)
+        end
+        for fact in lsf(dfg)
+            @test getFactor(dfg, fact) == getFactor(retDFG, fact)
+        end
+
+        # @test length(getDataEntries(getVariable(retDFG, :x1))) == 1
+        # @test typeof(getDataEntry(getVariable(retDFG, :x1),:testing)) == GeneralDataEntry
+        # @test length(getDataEntries(getVariable(retDFG, :x2))) == 1
+        # @test typeof(getDataEntry(getVariable(retDFG, :x2),:testing2)) == FileDataEntry
+    end
 
 end

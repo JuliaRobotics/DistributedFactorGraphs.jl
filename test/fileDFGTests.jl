@@ -27,8 +27,8 @@ using Test
 
         setSolvedCount!(verts[1], 5)
         # Add some data entries to x1, x2
-        addDataEntry!(verts[1], GeneralDataEntry(:testing, :testing; mimeType="application/nuthin!"))
-        addDataEntry!(verts[2], FileDataEntry(:testing2, "/dev/null"))
+        addDataEntry!(verts[1], GeneralDataEntry(:testing; mimeType="application/nuthin!"))
+        addDataEntry!(verts[2], GeneralDataEntry(:testing2))
         #call update to set it on cloud
         updateVariable!(dfg, verts[1])
         updateVariable!(dfg, verts[2])
@@ -64,6 +64,6 @@ using Test
         @test length(getDataEntries(getVariable(retDFG, :x1))) == 1
         @test typeof(getDataEntry(getVariable(retDFG, :x1),:testing)) == GeneralDataEntry
         @test length(getDataEntries(getVariable(retDFG, :x2))) == 1
-        @test typeof(getDataEntry(getVariable(retDFG, :x2),:testing2)) == FileDataEntry
+        @test typeof(getDataEntry(getVariable(retDFG, :x2),:testing2)) == GeneralDataEntry
     end
 end
