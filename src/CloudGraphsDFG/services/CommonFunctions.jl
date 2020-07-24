@@ -55,9 +55,9 @@ end
 $(SIGNATURES)
 Get a node property - returns nothing if not found
 """
-function _getNodeProperty(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String}, property::String)
+function _getNodeProperty(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String}, property::String; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
     query = "match (n:$(join(nodeLabels, ":"))) return n.$property"
-    result = _queryNeo4j(neo4jInstance, query)
+    result = _queryNeo4j(neo4jInstance, query, currentTransaction=currentTransaction)
     length(result.results[1]["data"]) != 1 && error("No data returned from the query.")
     length(result.results[1]["data"][1]["row"]) != 1 && error("No data returned from the query.")
     return result.results[1]["data"][1]["row"][1]

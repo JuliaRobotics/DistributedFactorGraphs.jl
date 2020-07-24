@@ -152,8 +152,8 @@ isFactor(dfg::CloudGraphsDFG, sym::Symbol)::Bool =
     _getNodeCount(dfg.neo4jInstance, ["FACTOR", dfg.userId, dfg.robotId, dfg.sessionId, String(sym)]) == 1
 
 #Optimization
-function getSofttype(dfg::CloudGraphsDFG, lbl::Symbol)
-    st = _getNodeProperty(dfg.neo4jInstance, union(_getLabelsForType(dfg, DFGVariable), [String(lbl)]), "softtype")
+function getSofttype(dfg::CloudGraphsDFG, lbl::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+    st = _getNodeProperty(dfg.neo4jInstance, union(_getLabelsForType(dfg, DFGVariable), [String(lbl)]), "softtype", currentTransaction=currentTransaction)
     @debug "Trying to find softtype: $st"
     softType = getTypeFromSerializationModule(dfg, Symbol(st))
     return softType()
@@ -605,10 +605,10 @@ function updatePPE!(
         ppe::P;
         currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::P where
         {P <: AbstractPointParametricEst}
-    if !(ppe.solverKey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction))
-        @warn "PPE '$(ppe.solverKey)' does not exist, adding"
-    end
-    softType = getSofttype(dfg, variablekey)
+    # if !(ppe.solverKey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction))
+    #     @warn "PPE '$(ppe.solverKey)' does not exist, adding"
+    # end
+    softType = getSofttype(dfg, variablekey, currentTransaction=currentTransaction)
     # Add additional properties for the PPE
     addProps = _generateAdditionalProperties(softType, ppe)
     return _unpackPPE(dfg, _matchmergeVariableSubnode!(
@@ -686,9 +686,9 @@ function updateVariableSolverData!(dfg::CloudGraphsDFG,
                                 useCopy::Bool=true,
                                 fields::Vector{Symbol}=Symbol[];
                                 currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::VariableNodeData
-    if !(vnd.solverKey in listVariableSolverData(dfg, variablekey, currentTransaction=currentTransaction))
-        @warn "Solver data '$(vnd.solverKey)' does not exist, adding"
-    end
+    # if !(vnd.solverKey in listVariableSolverData(dfg, variablekey, currentTransaction=currentTransaction))
+    #     @warn "Solver data '$(vnd.solverKey)' does not exist, adding rather than updating."
+    # end
     # TODO: Update this to use the selective parameters from fields.
     retPacked = _matchmergeVariableSubnode!(
         dfg,
