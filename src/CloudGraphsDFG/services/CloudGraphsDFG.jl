@@ -186,7 +186,6 @@ function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable; skipAddErro
     MERGE (node)<-[:SESSIONDATA]-(session)
     RETURN node
     """
-    @debug "[Query] updateVariable! query:\r\n$query"
 
     # Start the transaction
     tx = transaction(dfg.neo4jInstance.connection)
@@ -197,7 +196,7 @@ function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable; skipAddErro
         # length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot update or add variable '$(getLabel(variable))'")
 
         # Merge the PPE's, SolverData, and BigData
-        mergeVariableData!(dfg, variable; currentTransaction=tx)
+        mergeVariableData!(dfg, variable; currentTransaction=tx, skipExistenceCheck=true)
 
         commit(tx)
     catch ex
@@ -250,8 +249,8 @@ function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String})
     return variable
 end
 
-function mergeVariableData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
-    if !exists(dfg, sourceVariable, currentTransaction=currentTransaction)
+function mergeVariableData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing, skipExistenceCheck::Bool=false)
+    if !skipExistenceCheck & !exists(dfg, sourceVariable, currentTransaction=currentTransaction)
         error("Source variable '$(sourceVariable.label)' doesn't exist in the graph.")
     end
     for (k,v) in sourceVariable.ppeDict
@@ -397,7 +396,7 @@ end
 
 function listVariables(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol}
     # Optimized for DB call
-    tagsFilter = length(tags) > 0 ? " and "*join("node:".*String.(tags), " or ") : ""
+    tagsFilter = length(tags) > 0 ? " and ("*join("\"".*String.(tags).*"\" in node.tags", " or ")*") " : ""
     if regexFilter == nothing
         return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(join(_getLabelsForType(dfg, DFGVariable),':'))) where node.solvable >= $solvable $tagsFilter")
     else
@@ -413,11 +412,11 @@ end
 
 function listFactors(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol}
     # Optimized for DB call
-    length(tags) > 0 && (@error "Filter on tags not implemented for CloudGraphsDFG")
+    tagsFilter = length(tags) > 0 ? " and ("*join("\"".*String.(tags).*".\" in node.tags", " or ")*") " : ""
     if regexFilter == nothing
         return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(join(_getLabelsForType(dfg, DFGFactor),':'))) where node.solvable >= $solvable")
     else
-        return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(join(_getLabelsForType(dfg, DFGFactor),':'))) where node.label =~ '$(regexFilter.pattern)' and node.solvable >= $solvable")
+        return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(join(_getLabelsForType(dfg, DFGFactor),':'))) where node.label =~ '$(regexFilter.pattern)' and node.solvable >= $solvable $tagsFilter")
     end
 end
 
