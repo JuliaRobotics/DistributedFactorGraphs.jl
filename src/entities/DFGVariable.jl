@@ -224,7 +224,7 @@ struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
     label::Symbol
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref), [`setTimestamp`](@ref)"""
-    timestamp::DateTime
+    timestamp::ZonedDateTime
     """Nano second time, for more resolution on timestamp (only subsecond information)"""
     nstime::Nanosecond
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
@@ -240,8 +240,8 @@ struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
     Accessors: [`getSmallData`](@ref), [`setSmallData!`](@ref)"""
     smallData::Dict{String, String}#Ref{Dict{String, String}} #why was Ref here?
     """Dictionary of large data associated with this variable.
-    Accessors: [`addBigDataEntry!`](@ref), [`getBigDataEntry`](@ref), [`updateBigDataEntry!`](@ref), and [`deleteBigDataEntry!`](@ref)"""
-    bigData::Dict{Symbol, AbstractBigDataEntry}
+    Accessors: [`addDataEntry!`](@ref), [`getDataEntry`](@ref), [`updateDataEntry!`](@ref), and [`deleteDataEntry!`](@ref)"""
+    dataDict::Dict{Symbol, AbstractDataEntry}
     """Solvable flag for the variable.
     Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)"""
     solvable::Base.RefValue{Int}
@@ -254,32 +254,46 @@ end
     $SIGNATURES
 The default DFGVariable constructor.
 """
-DFGVariable(label::Symbol, softtype::T;
-            timestamp::DateTime=now(UTC),
+function DFGVariable(label::Symbol, softtype::T;
+            timestamp::Union{DateTime,ZonedDateTime}=now(localzone()),
             nstime::Nanosecond = Nanosecond(0),
             tags::Set{Symbol}=Set{Symbol}(),
             estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
             solverDataDict::Dict{Symbol, VariableNodeData{T}}=Dict{Symbol, VariableNodeData{T}}(),
             smallData::Dict{String, String}=Dict{String, String}(),
-            bigData::Dict{Symbol, AbstractBigDataEntry}=Dict{Symbol,AbstractBigDataEntry}(),
-            solvable::Int=1) where {T <: InferenceVariable} =
-    DFGVariable{T}(label, timestamp, nstime, tags, estimateDict, solverDataDict, smallData, bigData, Ref(solvable))
+            dataDict::Dict{Symbol, AbstractDataEntry}=Dict{Symbol,AbstractDataEntry}(),
+            solvable::Int=1) where {T <: InferenceVariable}
 
+    if timestamp isa DateTime
+        DFGVariable{T}(label, ZonedDateTime(timestamp, localzone()), nstime, tags, estimateDict, solverDataDict, smallData, dataDict, Ref(solvable))
+    else
+        DFGVariable{T}(label, timestamp, nstime, tags, estimateDict, solverDataDict, smallData, dataDict, Ref(solvable))
+    end
+end
 
-DFGVariable(label::Symbol,
+function DFGVariable(label::Symbol,
             solverData::VariableNodeData{T};
-            timestamp::DateTime=now(UTC),
+            timestamp::Union{DateTime,ZonedDateTime}=now(localzone()),
             nstime::Nanosecond = Nanosecond(0),
             tags::Set{Symbol}=Set{Symbol}(),
             estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
             smallData::Dict{String, String}=Dict{String, String}(),
-            bigData::Dict{Symbol, AbstractBigDataEntry}=Dict{Symbol,AbstractBigDataEntry}(),
-            solvable::Int=1) where {T <: InferenceVariable} =
-    DFGVariable{T}(label, timestamp, nstime, tags, estimateDict, Dict{Symbol, VariableNodeData{T}}(:default=>solverData), smallData, bigData, Ref(solvable))
+            dataDict::Dict{Symbol, AbstractDataEntry}=Dict{Symbol,AbstractDataEntry}(),
+            solvable::Int=1) where {T <: InferenceVariable}
+    if timestamp isa DateTime
+        DFGVariable{T}(label, ZonedDateTime(timestamp, localzone()), nstime, tags, estimateDict, Dict{Symbol, VariableNodeData{T}}(:default=>solverData), smallData, dataDict, Ref(solvable))
+    else
+        DFGVariable{T}(label, timestamp, nstime, tags, estimateDict, Dict{Symbol, VariableNodeData{T}}(:default=>solverData), smallData, dataDict, Ref(solvable))
+    end
+end
 
 Base.getproperty(x::DFGVariable,f::Symbol) = begin
     if f == :solvable
         getfield(x,f)[]
+    #TODO Deprecation - Remove in v0.10
+    elseif f == :bigData
+        Base.depwarn("DFGVariable field bigData is deprecated, use `dataDict` instead",:getproperty)
+        getfield(x,:dataDict)
     else
         getfield(x,f)
     end
@@ -288,6 +302,14 @@ end
 Base.setproperty!(x::DFGVariable,f::Symbol, val) = begin
     if f == :solvable
         getfield(x,f)[] = val
+    elseif f == :bigData
+        #TODO Deprecation - Remove in v0.10
+        Base.depwarn("DFGVariable field bigData is deprecated, use `dataDict` instead", :setproperty!)
+        setfield(x, :dataDict, val)
+    elseif f == :timestamp && val isa DateTime
+    #     #TODO Deprecation - Remove in v0.10
+        Base.depwarn("DFGVariable timestamp field is now a ZonedTimestamp", :setproperty!)
+        setfield!(x,:timestamp, ZonedDateTime(val,  localzone()))
     else
         setfield!(x,f,val)
     end
@@ -299,7 +321,7 @@ end
 # function Base.copy(o::DFGVariable)::DFGVariable
 #     return DFGVariable(o.label, getSofttype(o)(), tags=copy(o.tags), estimateDict=copy(o.estimateDict),
 #                         solverDataDict=copy(o.solverDataDict), smallData=copy(o.smallData),
-#                         bigData=copy(o.bigData), solvable=getSolvable(o))
+#                         dataDict=copy(o.dataDict), solvable=getSolvable(o))
 # end
 
 ##------------------------------------------------------------------------------
@@ -320,7 +342,7 @@ struct DFGVariableSummary <: AbstractDFGVariable
     label::Symbol
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref), [`setTimestamp`](@ref)"""
-    timestamp::DateTime
+    timestamp::ZonedDateTime
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
     Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
     tags::Set{Symbol}
@@ -331,10 +353,29 @@ struct DFGVariableSummary <: AbstractDFGVariable
     Accessor: [`getSofttype`](@ref)"""
     softtypename::Symbol
     """Dictionary of large data associated with this variable.
-    Accessors: [`addBigDataEntry!`](@ref), [`getBigDataEntry`](@ref), [`updateBigDataEntry!`](@ref), and [`deleteBigDataEntry!`](@ref)"""
-    bigData::Dict{Symbol, AbstractBigDataEntry}
+    Accessors: [`addDataEntry!`](@ref), [`getDataEntry`](@ref), [`updateDataEntry!`](@ref), and [`deleteDataEntry!`](@ref)"""
+    dataDict::Dict{Symbol, AbstractDataEntry}
 end
 
+#TODO Deprecation - Remove in v0.10
+Base.getproperty(x::DFGVariableSummary,f::Symbol) = begin
+    if f == :bigData
+        Base.depwarn("DFGVariableSummary field bigData is deprecated, use `dataDict` instead",:getproperty)
+        getfield(x,:dataDict)
+    else
+        getfield(x,f)
+    end
+end
+
+#TODO Deprecation - Remove in v0.10
+Base.setproperty!(x::DFGVariableSummary,f::Symbol, val) = begin
+    if f == :bigData
+        Base.depwarn("DFGVariableSummary field bigData is deprecated, use `dataDict` instead",:setproperty!)
+        setfield(x, :dataDict)
+    else
+        setfield!(x,f,val)
+    end
+end
 ##------------------------------------------------------------------------------
 ## SkeletonDFGVariable.jl
 ##------------------------------------------------------------------------------
@@ -371,7 +412,7 @@ const VariableDataLevel2 = Union{DFGVariable}
 ##==============================================================================
 
 DFGVariableSummary(v::DFGVariable) =
-        DFGVariableSummary(v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.ppeDict), Symbol(typeof(getSofttype(v))), v.bigData)
+        DFGVariableSummary(v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.ppeDict), Symbol(typeof(getSofttype(v))), v.dataDict)
 
 SkeletonDFGVariable(v::VariableDataLevel1) =
             SkeletonDFGVariable(v.label, deepcopy(v.tags))

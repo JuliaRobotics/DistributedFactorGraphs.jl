@@ -18,7 +18,7 @@ using IncrementalInference, RoME
 
 # Make a variable and a factor:
 # Make a simple graph
-dfg = GraphsDFG{SolverParams}(params=SolverParams())
+dfg = LightDFG{SolverParams}(params=SolverParams())
 # Add the first pose :x0
 x0 = addVariable!(dfg, :x0, Pose2)
 # Add at a fixed location PriorPose2 to pin :x0 to a starting location (10,10, pi/4)
@@ -44,7 +44,7 @@ using IncrementalInference, RoME
 
 # Make a variable and a factor:
 # Make a simple graph
-dfg = GraphsDFG{SolverParams}(params=SolverParams())
+dfg = LightDFG{SolverParams}(params=SolverParams())
 # Add the first pose :x0
 x0 = addVariable!(dfg, :x0, Pose2)
 # Add at a fixed location PriorPose2 to pin :x0 to a starting location (10,10, pi/4)

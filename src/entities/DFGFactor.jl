@@ -2,10 +2,8 @@
 ## Abstract Types
 ##==============================================================================
 
-abstract type InferenceType end
-abstract type PackedInferenceType end
-
 abstract type FunctorInferenceType <: Function end
+abstract type PackedInferenceType end
 
 # NOTE DF, Convolution is IIF idea, but DFG should know about "FactorOperationalMemory"
 # DF, IIF.CommonConvWrapper <: FactorOperationalMemory #
@@ -14,9 +12,9 @@ abstract type FactorOperationalMemory <: Function end
 # we can add to IIF or have IIF.CommonConvWrapper <: FactorOperationalMemory directly
 # abstract type ConvolutionObject <: FactorOperationalMemory end
 
-abstract type FunctorSingleton <: FunctorInferenceType end
-abstract type FunctorPairwise <: FunctorInferenceType end
-abstract type FunctorPairwiseMinimize <: FunctorInferenceType end
+abstract type AbstractPrior <: FunctorInferenceType end
+abstract type AbstractRelativeFactor <: FunctorInferenceType end
+abstract type AbstractRelativeFactorMinimize <: FunctorInferenceType end
 
 ##==============================================================================
 ## GenericFunctionNodeData
@@ -30,32 +28,39 @@ Notes
 
 Designing (WIP)
 - T <: Union{FactorOperationalMemory, PackedInferenceType}
-- in IIF.CCW{T <: DFG.InferenceType}
-- in IIF.FunctorPairwiseMinimize <: InferenceType # DFG whatever, something, we'll figure it out
-- in Main/User, SomeFactor <: FunctorPairwiseMinimize
+- in IIF.CCW{T <: DFG.FunctorInferenceType}
+- in DFG.AbstractRelativeFactorMinimize <: FunctorInferenceType
+- in Main.SomeFactor <: AbstractRelativeFactorMinimize
 """
 mutable struct GenericFunctionNodeData{T<:Union{PackedInferenceType, FunctorInferenceType, FactorOperationalMemory}}
     eliminated::Bool
     potentialused::Bool
     edgeIDs::Vector{Int}
     fnc::T
-    multihypo::Vector{Float64} # FIXME likely to moved when GenericWrapParam is refactored #477
+    multihypo::Vector{Float64} # TODO re-evaluate after refactoring w #477
     certainhypo::Vector{Int}
+    nullhypo::Float64
     solveInProgress::Int
+
+    # TODO deprecate all these inner constructors at end of DFG v0.9.x (was added for GFND.nullhypo::Float64 breaking change)
+    GenericFunctionNodeData{T}(el,po,ed,fn,mu::Vector{<:Real},ce::Vector{Int},so::Int) where T = new{T}(el,po,ed,fn,mu,ce,0.0,so)
+    GenericFunctionNodeData{T}(el,po,ed,fn,mu::Vector{<:Real},ce::Vector{Int},nu::Real,so::Int) where T = new{T}(el,po,ed,fn,mu,ce,nu,so)
 end
 
 ## Constructors
 
 GenericFunctionNodeData{T}() where T =
-    GenericFunctionNodeData{T}(false, false, Int[], T(), Float64[], Int[], 0)
+    GenericFunctionNodeData{T}(false, false, Int[], T(), Float64[], Int[], 0, 0)
 
-function GenericFunctionNodeData(eliminated,
-                                 potentialused,
-                                 edgeIDs,
-                                 fnc,
-                                 multihypo=Float64[],
-                                 certainhypo=Int[])
-    return GenericFunctionNodeData(eliminated, potentialused, edgeIDs, fnc, multihypo, certainhypo, 0)
+function GenericFunctionNodeData(eliminated::Bool,
+                                 potentialused::Bool,
+                                 edgeIDs::Vector{Int},
+                                 fnc::T,
+                                 multihypo::Vector{<:Real}=Float64[],
+                                 certainhypo::Vector{Int}=Int[],
+                                 nullhypo::Real=0,
+                                 solveInP::Int=0) where T
+    return GenericFunctionNodeData{T}(eliminated, potentialused, edgeIDs, fnc, multihypo, certainhypo, nullhypo, solveInP)
 end
 
 
@@ -100,7 +105,7 @@ struct DFGFactor{T, N} <: AbstractDFGFactor
     label::Symbol
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref), [`setTimestamp`](@ref)"""
-    timestamp::DateTime
+    timestamp::ZonedDateTime
     """Nano second time, for more resolution on timestamp (only subsecond information)"""
     nstime::Nanosecond
     """Factor tags, e.g [:FACTOR].
@@ -116,14 +121,21 @@ struct DFGFactor{T, N} <: AbstractDFGFactor
     Accessors: [`getVariableOrder`](@ref)"""
     _variableOrderSymbols::NTuple{N,Symbol}
     # Inner constructor
-    DFGFactor{T}(label::Symbol,
-                 timestamp::DateTime,
+    function DFGFactor{T}(label::Symbol,
+                 timestamp::Union{DateTime,ZonedDateTime},
                  nstime::Nanosecond,
                  tags::Set{Symbol},
                  solverData::GenericFunctionNodeData{T},
                  solvable::Int,
-                 _variableOrderSymbols::NTuple{N,Symbol}) where {T,N} =
-                 new{T,N}(label, timestamp, nstime, tags, Ref(solverData), Ref(solvable), _variableOrderSymbols)
+                 _variableOrderSymbols::NTuple{N,Symbol}) where {T,N}
+
+        #TODO Deprecate remove in v0.10.
+        if timestamp isa DateTime
+            Base.depwarn("DFGFactor timestamp field is now a ZonedTimestamp", :DFGFactor)
+            return new{T,N}(label, ZonedDateTime(timestamp, localzone()), nstime, tags, Ref(solverData), Ref(solvable), _variableOrderSymbols)
+        end
+        return new{T,N}(label, timestamp, nstime, tags, Ref(solverData), Ref(solvable), _variableOrderSymbols)
+    end
 
 end
 
@@ -136,7 +148,7 @@ $(SIGNATURES)
 Construct a DFG factor given a label.
 """
 DFGFactor(label::Symbol,
-          timestamp::DateTime,
+          timestamp::Union{DateTime,ZonedDateTime},
           nstime::Nanosecond,
           tags::Set{Symbol},
           solverData::GenericFunctionNodeData{T},
@@ -145,7 +157,7 @@ DFGFactor(label::Symbol,
           DFGFactor{T}(label, timestamp, nstime, tags, solverData, solvable, _variableOrderSymbols)
 
 
-DFGFactor{T}(label::Symbol, variableOrderSymbols::Vector{Symbol}, timestamp::DateTime=now(UTC), data::GenericFunctionNodeData{T} = GenericFunctionNodeData{T}()) where {T} =
+DFGFactor{T}(label::Symbol, variableOrderSymbols::Vector{Symbol}, timestamp::Union{DateTime,ZonedDateTime}=now(localzone()), data::GenericFunctionNodeData{T} = GenericFunctionNodeData{T}()) where {T} =
                 DFGFactor(label, timestamp, Nanosecond(0), Set{Symbol}(), data, 1, Tuple(variableOrderSymbols))
 
 
@@ -153,7 +165,7 @@ DFGFactor(label::Symbol,
           variableOrderSymbols::Vector{Symbol},
           data::GenericFunctionNodeData{T};
           tags::Set{Symbol}=Set{Symbol}(),
-          timestamp::DateTime=now(UTC),
+          timestamp::Union{DateTime,ZonedDateTime}=now(localzone()),
           solvable::Int=1,
           nstime::Nanosecond = Nanosecond(0)) where {T} =
                 DFGFactor{T}(label, timestamp, nstime, tags, data, solvable, Tuple(variableOrderSymbols))
@@ -173,6 +185,10 @@ end
 Base.setproperty!(x::DFGFactor,f::Symbol, val) = begin
     if f == :solvable || f == :solverData
         getfield(x,f)[] = val
+    elseif f == :timestamp && val isa DateTime
+    #     #TODO Deprecation - Remove in v0.10
+        Base.depwarn("DFGFactor timestamp field is now a ZonedTimestamp", :setproperty!)
+        setfield!(x,:timestamp, ZonedDateTime(val,  localzone()))
     else
         setfield!(x,f,val)
     end
@@ -195,7 +211,7 @@ struct DFGFactorSummary <: AbstractDFGFactor
     label::Symbol
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref)"""
-    timestamp::DateTime
+    timestamp::ZonedDateTime
     """Factor tags, e.g [:FACTOR].
     Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
     tags::Set{Symbol}

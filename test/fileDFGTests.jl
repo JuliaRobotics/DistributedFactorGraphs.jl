@@ -28,9 +28,9 @@ using Test
         updateVariable!(dfg, verts[4])
 
         setSolvedCount!(verts[1], 5)
-        # Add some bigData to x1, x2
-        addBigDataEntry!(verts[1], GeneralBigDataEntry(:testing, :testing; mimeType="application/nuthin!"))
-        addBigDataEntry!(verts[2], FileBigDataEntry(:testing2, "/dev/null"))
+        # Add some data entries to x1, x2
+        addDataEntry!(verts[1], GeneralDataEntry(:testing, :testing; mimeType="application/nuthin!"))
+        addDataEntry!(verts[2], FileDataEntry(:testing2, "/dev/null"))
         #call update to set it on cloud
         updateVariable!(dfg, verts[1])
         updateVariable!(dfg, verts[2])
@@ -53,8 +53,6 @@ using Test
         @test_throws AssertionError loadDFG!(copyDf2,"badfilename")
 
         retDFG = loadDFG!(copyDfg, filename)
-        # TODO REMOVE test deprecation
-        retDFG_ = loadDFG(filename, Main, copyDf2) #, loaddir="/tmp")
 
         @test issetequal(ls(dfg), ls(retDFG))
         @test issetequal(lsf(dfg), lsf(retDFG))
@@ -68,10 +66,10 @@ using Test
         if typeof(dfg) <: CloudGraphsDFG
             @warn "TODO: BigData still is being setup in CloudGraphs. Fix here!"
         else
-            @test length(getBigDataEntries(getVariable(retDFG, :x1))) == 1
-            @test typeof(getBigDataEntry(getVariable(retDFG, :x1),:testing)) == GeneralBigDataEntry
-            @test length(getBigDataEntries(getVariable(retDFG, :x2))) == 1
-            @test typeof(getBigDataEntry(getVariable(retDFG, :x2),:testing2)) == FileBigDataEntry
-        end
+            @test length(getDataEntries(getVariable(retDFG, :x1))) == 1
+            @test typeof(getDataEntry(getVariable(retDFG, :x1),:testing)) == GeneralDataEntry
+            @test length(getDataEntries(getVariable(retDFG, :x2))) == 1
+            @test typeof(getDataEntry(getVariable(retDFG, :x2),:testing2)) == FileDataEntry
+    end
     end
 end

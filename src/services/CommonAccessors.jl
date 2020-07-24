@@ -62,13 +62,15 @@ Note:
 Since `timestamp` is not mutable `setTimestamp!` calls `updateVariable!` internally.
 See also [`setTimestamp`](@ref)
 """
-function setTimestamp!(dfg::AbstractDFG, lbl::Symbol, ts::DateTime)
+function setTimestamp!(dfg::AbstractDFG, lbl::Symbol, ts::ZonedDateTime)
     if isVariable(dfg, lbl)
-        return updateVariable!(dfg, setTimestamp(getVariable(dfg,lbl), ts))
+        return updateVariable!(dfg, setTimestamp(getVariable(dfg,lbl), ts; verbose=false))
     else
         return updateFactor!(dfg, setTimestamp(getFactor(dfg,lbl), ts))
     end
 end
+
+setTimestamp!(dfg::AbstractDFG, lbl::Symbol, ts::DateTime, timezone=localzone()) = setTimestamp!(dfg, lbl, ZonedDateTime(ts,  timezone))
 
 
 

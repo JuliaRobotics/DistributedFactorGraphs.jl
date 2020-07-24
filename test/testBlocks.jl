@@ -22,9 +22,9 @@ end
 struct TestFunctorInferenceType1 <: FunctorInferenceType end
 struct TestFunctorInferenceType2 <: FunctorInferenceType end
 
-struct TestFunctorSingleton <: FunctorSingleton end
-struct TestFunctorPairwise <: FunctorPairwise end
-struct TestFunctorPairwiseMinimize <: FunctorPairwiseMinimize end
+struct TestAbstractPrior <: AbstractPrior end
+struct TestAbstractRelativeFactor <: AbstractRelativeFactor end
+struct TestAbstractRelativeFactorMinimize <: AbstractRelativeFactorMinimize end
 
 struct PackedTestFunctorInferenceType1 <: PackedInferenceType
     s::String
@@ -41,19 +41,19 @@ function Base.convert(::Type{TestFunctorInferenceType1}, d::PackedTestFunctorInf
     TestFunctorInferenceType1()
 end
 
-struct PackedTestFunctorSingleton <: PackedInferenceType
+struct PackedTestAbstractPrior <: PackedInferenceType
     s::String
 end
-PackedTestFunctorSingleton() = PackedTestFunctorSingleton("")
+PackedTestAbstractPrior() = PackedTestAbstractPrior("")
 
-function Base.convert(::Type{PackedTestFunctorSingleton}, d::TestFunctorSingleton)
-    # @info "convert(::Type{PackedTestFunctorSingleton}, d::TestFunctorSingleton)"
-    PackedTestFunctorSingleton()
+function Base.convert(::Type{PackedTestAbstractPrior}, d::TestAbstractPrior)
+    # @info "convert(::Type{PackedTestAbstractPrior}, d::TestAbstractPrior)"
+    PackedTestAbstractPrior()
 end
 
-function Base.convert(::Type{TestFunctorSingleton}, d::PackedTestFunctorSingleton)
-    # @info "onvert(::Type{TestFunctorSingleton}, d::PackedTestFunctorSingleton)"
-    TestFunctorSingleton()
+function Base.convert(::Type{TestAbstractPrior}, d::PackedTestAbstractPrior)
+    # @info "onvert(::Type{TestAbstractPrior}, d::PackedTestAbstractPrior)"
+    TestAbstractPrior()
 end
 
 struct TestCCW{T} <: FactorOperationalMemory where {T<:FunctorInferenceType}
@@ -121,7 +121,7 @@ function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverP
 
     # Test the validation of the robot, session, and user IDs.
     notAllowedList = ["!notValid", "1notValid", "_notValid", "USER", "ROBOT", "SESSION",
-                      "VARIABLE", "FACTOR", "ENVIRONMENT", "PPE", "BIGDATA", "FACTORGRAPH"]
+                      "VARIABLE", "FACTOR", "ENVIRONMENT", "PPE", "DATA_ENTRY", "FACTORGRAPH"]
 
     for s in notAllowedList
         @test_throws ErrorException T(solverParams=solparams, sessionId=s)
@@ -237,7 +237,7 @@ function DFGVariableSCA()
     v1_lbl = :a
     v1_tags = Set([:VARIABLE, :POSE])
     small = Dict("small"=>"data")
-    testTimestamp = now()
+    testTimestamp = now(localzone())
     # Constructors
     v1 = DFGVariable(v1_lbl, TestSofttype1(), tags=v1_tags, solvable=0, solverDataDict=Dict(:default=>VariableNodeData{TestSofttype1}()))
     v2 = DFGVariable(:b, VariableNodeData{TestSofttype2}(), tags=Set([:VARIABLE, :LANDMARK]))
@@ -284,7 +284,7 @@ function DFGVariableSCA()
     @test setSmallData!(v1, small) == small
     @test getSmallData(v1) == small
 
-    #no accessors on BigData, only CRUD
+    #no accessors on dataDict, only CRUD
 
     #deprecated
     # @test @test_deprecated solverData(v1, :default) === v1.solverDataDict[:default]
@@ -313,9 +313,9 @@ function  DFGFactorSCA()
     #DFGVariable solvable default to 1, but Factor to 0, is that correct
     f1_lbl = :abf1
     f1_tags = Set([:FACTOR])
-    testTimestamp = now()
+    testTimestamp = now(localzone())
 
-    gfnd_prior = GenericFunctionNodeData(false, false, Int[], TestCCW(TestFunctorSingleton()))
+    gfnd_prior = GenericFunctionNodeData(false, false, Int[], TestCCW(TestAbstractPrior()))
 
     gfnd = GenericFunctionNodeData(false, false, Int[], TestCCW(TestFunctorInferenceType1()))
 
@@ -360,7 +360,7 @@ function  DFGFactorSCA()
 
     #TODO Should throw method error
     # @test_throws MethodError setTimestamp!(f1, testTimestamp)
-    @test_throws ErrorException setTimestamp!(f1, testTimestamp)
+    # @test_throws ErrorException setTimestamp!(f1, testTimestamp)
     #/TODO
 
     @test setSolvable!(f1, 1) == 1
@@ -423,7 +423,7 @@ end
 
 # Extra timestamp functions https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/315
 if !(v1 isa SkeletonDFGVariable)
-    newtimestamp = now()
+    newtimestamp = now(localzone())
     @test !(setTimestamp!(fg, :c, newtimestamp) === v3)
     @test getVariable(fg, :c) |> getTimestamp == newtimestamp
 
@@ -513,7 +513,7 @@ end
 
 # simple broadcast test
 if f0 isa DFGFactor
-    @test issetequal(getFactorType.(fg, lsf(fg)),  [TestFunctorInferenceType1(), TestFunctorSingleton()])
+    @test issetequal(getFactorType.(fg, lsf(fg)),  [TestFunctorInferenceType1(), TestAbstractPrior()])
 end
 @test getVariable.(fg, [:a]) == [getVariable(fg, :a)]
 end
@@ -765,61 +765,60 @@ function  VSDTestBlock!(fg, v1)
 
 end
 
-function  BigDataEntriesTestBlock!(fg, v2)
-    # "BigData Entries"
+function  DataEntriesTestBlock!(fg, v2)
+    # "Data Entries"
 
-    # getBigDataEntry
-    # addBigDataEntry
-    # updateBigDataEntry
-    # deleteBigDataEntry
-    # getBigDataEntries
-    # getBigDataKeys
-    # listBigDataEntries
-    # emptyBigDataEntries
-    # mergeBigDataEntries
+    # getDataEntry
+    # addDataEntry
+    # updateDataEntry
+    # deleteDataEntry
+    # getDataEntries
+    # listDataEntries
+    # emptyDataEntries
+    # mergeDataEntries
 
     oid = zeros(UInt8,12); oid[12] = 0x01
-    de1 = MongodbBigDataEntry(:key1, NTuple{12,UInt8}(oid))
+    de1 = MongodbDataEntry(:key1, NTuple{12,UInt8}(oid))
 
     oid = zeros(UInt8,12); oid[12] = 0x02
-    de2 = MongodbBigDataEntry(:key2, NTuple{12,UInt8}(oid))
+    de2 = MongodbDataEntry(:key2, NTuple{12,UInt8}(oid))
 
     oid = zeros(UInt8,12); oid[12] = 0x03
-    de2_update = MongodbBigDataEntry(:key2, NTuple{12,UInt8}(oid))
+    de2_update = MongodbDataEntry(:key2, NTuple{12,UInt8}(oid))
 
     #add
     v1 = getVariable(fg, :a)
-    @test addBigDataEntry!(v1, de1) == de1
-    @test addBigDataEntry!(fg, :a, de2) == de2
-    @test_throws ErrorException addBigDataEntry!(v1, de1)
-    @test de2 in getBigDataEntries(v1)
+    @test addDataEntry!(v1, de1) == de1
+    @test addDataEntry!(fg, :a, de2) == de2
+    @test_throws ErrorException addDataEntry!(v1, de1)
+    @test de2 in getDataEntries(v1)
 
     #get
-    @test deepcopy(de1) == getBigDataEntry(v1, :key1)
-    @test deepcopy(de2) == getBigDataEntry(fg, :a, :key2)
-    @test_throws ErrorException getBigDataEntry(v2, :key1)
-    @test_throws ErrorException getBigDataEntry(fg, :b, :key1)
+    @test deepcopy(de1) == getDataEntry(v1, :key1)
+    @test deepcopy(de2) == getDataEntry(fg, :a, :key2)
+    @test_throws ErrorException getDataEntry(v2, :key1)
+    @test_throws ErrorException getDataEntry(fg, :b, :key1)
 
     #update
-    @test updateBigDataEntry!(fg, :a, de2_update) == de2_update
-    @test deepcopy(de2_update) == getBigDataEntry(fg, :a, :key2)
-    @test @test_logs (:warn, r"does not exist") updateBigDataEntry!(fg, :b, de2_update) == de2_update
+    @test updateDataEntry!(fg, :a, de2_update) == de2_update
+    @test deepcopy(de2_update) == getDataEntry(fg, :a, :key2)
+    @test @test_logs (:warn, r"does not exist") updateDataEntry!(fg, :b, de2_update) == de2_update
 
     #list
-    entries = getBigDataEntries(fg, :a)
+    entries = getDataEntries(fg, :a)
     @test length(entries) == 2
     @test issetequal(map(e->e.key, entries), [:key1, :key2])
-    @test length(getBigDataEntries(fg, :b)) == 1
+    @test length(getDataEntries(fg, :b)) == 1
 
-    @test issetequal(getBigDataKeys(fg, :a), [:key1, :key2])
-    @test getBigDataKeys(fg, :b) == Symbol[:key2]
+    @test issetequal(listDataEntries(fg, :a), [:key1, :key2])
+    @test listDataEntries(fg, :b) == Symbol[:key2]
 
     #delete
-    @test deleteBigDataEntry!(v1, :key1) == v1
-    @test getBigDataKeys(v1) == Symbol[:key2]
+    @test deleteDataEntry!(v1, :key1) == v1
+    @test listDataEntries(v1) == Symbol[:key2]
     #delete from dfg
-    @test deleteBigDataEntry!(fg, :a, :key2) == v1
-    @test getBigDataKeys(v1) == Symbol[]
+    @test deleteDataEntry!(fg, :a, :key2) == v1
+    @test listDataEntries(v1) == Symbol[]
 end
 
 
@@ -843,15 +842,15 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test isPrior(fg, :af1) # if f1 is prior
         @test lsfPriors(fg) == [:af1]
 
-        @test issetequal([:TestFunctorInferenceType1, :TestFunctorSingleton], lsfTypes(fg))
+        @test issetequal([:TestFunctorInferenceType1, :TestAbstractPrior], lsfTypes(fg))
 
         facTypesDict = lsfTypesDict(fg)
         @test issetequal(collect(keys(facTypesDict)), lsfTypes(fg))
         @test issetequal(facTypesDict[:TestFunctorInferenceType1], [:abf1])
-        @test issetequal(facTypesDict[:TestFunctorSingleton], [:af1])
+        @test issetequal(facTypesDict[:TestAbstractPrior], [:af1])
 
         @test ls(fg, TestFunctorInferenceType1) == [:abf1]
-        @test lsf(fg, TestFunctorSingleton) == [:af1]
+        @test lsf(fg, TestAbstractPrior) == [:af1]
         @test lsfWho(fg, :TestFunctorInferenceType1) == [:abf1]
 
         @test getSofttype(v1) == TestSofttype1()
@@ -904,6 +903,9 @@ function testGroup!(fg, v1, v2, f0, f1)
         # Tags
         @test ls(fg, tags=[:POSE]) == []
         @test issetequal(ls(fg, tags=[:POSE, :LANDMARK]), ls(fg, tags=[:VARIABLE]))
+
+        @test lsf(fg, tags=[:NONE]) == []
+        @test lsf(fg, tags=[:PRIOR]) == [:af1]
 
         # Regexes
         @test ls(fg, r"a") == [v1.label]
@@ -1054,7 +1056,7 @@ function connectivityTestGraph(::Type{T}; VARTYPE=DFGVariable, FACTYPE=DFGFactor
         setSolvable!(dfg, :x8, 0)
         setSolvable!(dfg, :x9, 0)
 
-        gfnd = GenericFunctionNodeData(true, true, Int[], TestCCW(TestFunctorInferenceType1()), Float64[], Int[], 1)
+        gfnd = GenericFunctionNodeData(true, true, Int[], TestCCW(TestFunctorInferenceType1()), Float64[], Int[], 0, 1)
         f_tags = Set([:FACTOR])
         # f1 = DFGFactor(f1_lbl, [:a,:b], gfnd, tags = f_tags)
 

@@ -17,7 +17,8 @@ module DistributedFactorGraphs
 using Base
 using DocStringExtensions
 using Requires
-using Dates, TimeZones
+using Dates
+using TimeZones
 using Distributions
 using Reexport
 using JSON
@@ -55,11 +56,6 @@ export emptyUserData!, emptyRobotData!, emptySessionData!
 
 # Graph Types: exported from modules or @reexport
 export InMemoryDFGTypes, DefaultDFG
-# LightDFG
-# GraphsDFG
-
-# CloudGraphsDFG
-# FileDFG
 
 # AbstractDFG Interface
 export exists,
@@ -68,7 +64,7 @@ export exists,
        updateVariable!, updateFactor!,
        deleteVariable!, deleteFactor!,
        listVariables, listFactors,
-       listSolvekeys, listSupersolves,
+       listSolveKeys, listSupersolves,
        getVariables, getFactors,
        isVariable, isFactor
 
@@ -169,11 +165,11 @@ export findFactorsBetweenNaive
 export copyGraph!, deepcopyGraph, deepcopyGraph!, buildSubgraph, mergeGraph!
 # Big Data
 ##------------------------------------------------------------------------------
-export addBigDataEntry!, getBigDataEntry, updateBigDataEntry!, deleteBigDataEntry!, getBigDataEntries, getBigDataKeys, hasDataEntry, hasBigDataEntry
+export addDataEntry!, getDataEntry, updateDataEntry!, deleteDataEntry!, getDataEntries, listDataEntries, hasDataEntry, hasDataEntry
 # convenience wrappers
-export addDataEntry!, getDataEntryElement
+export addDataEntry!, getDataEntryBlob
 # aliases
-export addData!, fetchData, fetchDataEntryElement
+export addData!, fetchData, fetchDataEntryBlob
 
 
 ##------------------------------------------------------------------------------
@@ -181,8 +177,9 @@ export addData!, fetchData, fetchDataEntryElement
 ##------------------------------------------------------------------------------
 # Factor Data
 export GenericFunctionNodeData, PackedFunctionNodeData, FunctionNodeData
-export InferenceType, PackedInferenceType, FunctorInferenceType, FactorOperationalMemory
-export FunctorSingleton, FunctorPairwise, FunctorPairwiseMinimize
+export FunctorInferenceType, PackedInferenceType
+export AbstractPrior, AbstractRelativeFactor, AbstractRelativeFactorMinimize
+export FactorOperationalMemory
 
 # accessors
 export getVariableOrder
@@ -236,8 +233,6 @@ export
 
 
 ## Deprecated exports should be listed in Deprecated.jl if possible, otherwise here
-#TODO remove export in DFG v0.8.0
-# export ConvolutionObject
 
 ## CustomPrinting.jl
 export printFactor, printVariable, printNode
@@ -259,7 +254,7 @@ include("entities/AbstractDFGSummary.jl")
 include("services/AbstractDFG.jl")
 
 # In Memory Types
-# include("GraphsDFG/GraphsDFG.jl")
+# include("../attic/GraphsDFG/GraphsDFG.jl")
 # @reexport using .GraphsDFGs
 include("LightDFG/LightDFG.jl")
 @reexport using .LightDFGs
@@ -285,8 +280,8 @@ include("services/CustomPrinting.jl")
 # To be moved as necessary.
 include("Common.jl")
 
-# Big data extensions
-include("BigData/BigData.jl")
+# Data Blob extensions
+include("DataBlobs/DataBlobs.jl")
 
 function __init__()
     @require GraphPlot = "a2cc645c-3eea-5389-862e-a155d0052231" begin

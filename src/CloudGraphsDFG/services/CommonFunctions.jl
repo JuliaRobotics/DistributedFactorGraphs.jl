@@ -225,7 +225,7 @@ function _getLabelsForType(dfg::CloudGraphsDFG,
         (labels = [dfg.userId, dfg.robotId, dfg.sessionId, "PPE"])
     type <: VariableNodeData &&
         (labels = [dfg.userId, dfg.robotId, dfg.sessionId, "SOLVERDATA"])
-    type <: AbstractBigDataEntry &&
+    type <: AbstractDataEntry &&
         (labels = [dfg.userId, dfg.robotId, dfg.sessionId, "DATA"])
     # Some are children of nodes, so add that in if it's set.
     parentKey != nothing && push!(labels, String(parentKey))
@@ -240,13 +240,13 @@ Get the Neo4j labels for any node instance.
 function _getLabelsForInst(dfg::CloudGraphsDFG,
                             inst::Union{User, Robot, Session, VariableNodeData, N, APPE, ABDE};
                             parentKey::Union{Nothing, Symbol}=nothing)::Vector{String} where
-                            {N <: DFGNode, APPE <: AbstractPointParametricEst, ABDE <: AbstractBigDataEntry}
+                            {N <: DFGNode, APPE <: AbstractPointParametricEst, ABDE <: AbstractDataEntry}
     labels = _getLabelsForType(dfg, typeof(inst), parentKey=parentKey)
     typeof(inst) <: DFGVariable && push!(labels, String(getLabel(inst)))
     typeof(inst) <: DFGFactor && push!(labels, String(getLabel(inst)))
     typeof(inst) <: AbstractPointParametricEst && push!(labels, String(inst.solverKey))
     typeof(inst) <: VariableNodeData && push!(labels, String(inst.solverKey))
-    typeof(inst) <: AbstractBigDataEntry && push!(labels, String(inst.key))
+    typeof(inst) <: AbstractDataEntry && push!(labels, String(inst.key))
     return labels
 end
 
