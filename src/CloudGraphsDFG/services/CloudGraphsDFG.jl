@@ -230,11 +230,6 @@ function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String})
     length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot get variable '$label'")
     props = result.results[1]["data"][1]["row"][1]
 
-    # This is to handle the ZonedDateTime that we receive from Neo4j.
-    # It looks like it's always UTC, so we can safely strip off the Z without switching to ZoneDateTimes for everything.
-    if props["timestamp"][end] == 'Z'
-        props["timestamp"] = props["timestamp"][1:end-1]
-    end
     variable = unpackVariable(dfg, props, unpackPPEs=false, unpackSolverData=false, unpackBigData=false)
 
     # TODO - make this get PPE's and solverdata in batch
@@ -269,11 +264,6 @@ function getFactor(dfg::CloudGraphsDFG, label::Union{Symbol, String})
     length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot get factor '$label'")
     props = result.results[1]["data"][1]["row"][1]
 
-    # This is to handle the ZonedDateTime that we receive from Neo4j.
-    # It looks like it's always UTC, so we can safely strip off the Z without switching to ZoneDateTimes for everything.
-    if props["timestamp"][end] == 'Z'
-        props["timestamp"] = props["timestamp"][1:end-1]
-    end
     return rebuildFactorMetadata!(dfg, unpackFactor(dfg, props))
 end
 

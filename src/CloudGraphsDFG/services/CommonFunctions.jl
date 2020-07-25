@@ -146,8 +146,6 @@ function _structToNeo4jProps(inst::Union{User, Robot, Session, PVND, N, APPE, AB
         # Neo4j type conversion if possible - keep timestamps timestamps, etc.
         if field isa ZonedDateTime
             val = "datetime(\"$(string(field))\")"
-        else
-            val = JSON2.write(field)
         end
         # TODO: Switch this to decorator pattern
         if typeof(inst) <: DFGNode
@@ -186,6 +184,10 @@ function _structToNeo4jProps(inst::Union{User, Robot, Session, PVND, N, APPE, AB
                     error(msg)
                 end
             end
+        end
+        # Fallback, default to JSON2
+        if val == nothing
+            val = JSON2.write(field)
         end
         write(io, "$cypherNodeName.$fieldname=$val,")
     end
