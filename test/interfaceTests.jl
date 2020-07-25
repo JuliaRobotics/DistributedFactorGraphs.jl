@@ -12,6 +12,11 @@ include("testBlocks.jl")
 
 testDFGAPI = CloudGraphsDFG
 testDFGAPI = LightDFG
+
+# Enable debug logging
+using Logging
+logger = SimpleLogger(stdout, Logging.Debug)
+global_logger(logger)
 end
 
 # DFG Accessors

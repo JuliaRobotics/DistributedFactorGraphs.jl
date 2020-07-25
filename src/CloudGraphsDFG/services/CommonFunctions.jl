@@ -137,15 +137,15 @@ properties will be added in verbatim when serializing.
 function _structToNeo4jProps(inst::Union{User, Robot, Session, PVND, N, APPE, ABDE},
                              addProps::Dict{String, String}=Dict{String, String}();
                              cypherNodeName::String="subnode")::String where
-        {N <: DFGNode, APPE <: AbstractPointParametricEst, ABDE <: AbstractBigDataEntry, PVND <: PackedVariableNodeData}
+        {N <: DFGNode, APPE <: AbstractPointParametricEst, ABDE <: AbstractDataEntry, PVND <: PackedVariableNodeData}
     props = Dict{String, String}()
     io = IOBuffer()
     for fieldname in fieldnames(typeof(inst))
         field = getfield(inst, fieldname)
         val = nothing
         # Neo4j type conversion if possible - keep timestamps timestamps, etc.
-        if field isa DateTime
-            val = "datetime(\"$(string(ZonedDateTime(field, tz"UTC")))\")"
+        if field isa ZonedDateTime
+            val = "datetime(\"$(string(field))\")"
         else
             val = JSON2.write(field)
         end
@@ -154,7 +154,7 @@ function _structToNeo4jProps(inst::Union{User, Robot, Session, PVND, N, APPE, AB
             # Variables
             fieldname == :solverDataDict && continue
             fieldname == :ppeDict && continue
-            fieldname == :bigData && continue
+            fieldname == :dataDict && continue
             if fieldname == :smallData
                 packedJson = JSON2.write(field)
                 val = "\"$(replace(packedJson, "\"" => "\\\""))\""
@@ -207,7 +207,7 @@ Get the Neo4j labels for any node type.
 """
 function _getLabelsForType(dfg::CloudGraphsDFG,
         type::Type;
-        parentKey::Union{Nothing, Symbol}=nothing)::Vector{String}
+        parentKey::Union{Nothing, Symbol}=nothing)
     # Simple validation
     isempty(dfg.userId) && error("The DFG object's userID is empty, please specify a user ID.")
     isempty(dfg.robotId) && error("The DFG object's robotID is empty, please specify a robot ID.")
@@ -252,7 +252,7 @@ end
 
 ## Common CRUD calls for subnode types (PPEs, VariableSolverData, BigData)
 
-function _listVarSubnodesForType(dfg::CloudGraphsDFG, variablekey::Symbol, dfgType::Type, keyToReturn::String; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Vector{Symbol}
+function _listVarSubnodesForType(dfg::CloudGraphsDFG, variablekey::Symbol, dfgType::Type, keyToReturn::String; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
     query = "match (subnode:$(join(_getLabelsForType(dfg, dfgType, parentKey=variablekey),':'))) return subnode.$keyToReturn"
     @debug "[Query] _listVarSubnodesForType query:\r\n$query"
     result = nothing
@@ -293,7 +293,7 @@ function _matchmergeVariableSubnode!(
         relationshipKey::Symbol;
         addProps::Dict{String, String}=Dict{String, String}(),
         currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing) where
-        {N <: DFGNode, APPE <: AbstractPointParametricEst, ABDE <: AbstractBigDataEntry, PVND <: PackedVariableNodeData}
+        {N <: DFGNode, APPE <: AbstractPointParametricEst, ABDE <: AbstractDataEntry, PVND <: PackedVariableNodeData}
 
     query = """
                 MATCH (var:$variablekey:$(join(_getLabelsForType(dfg, DFGVariable, parentKey=variablekey),':')))

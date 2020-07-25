@@ -291,7 +291,7 @@ function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor; skipAddError::Boo
 
     # Check that all variables exist
     for vlabel in factor._variableOrderSymbols
-        !exists(dfg, vlabel) && (@error "Variable '$(vlabel)' not found in graph when creating Factor '$(factor.label)'"; return false) #TODO debug error or exception?
+        !exists(dfg, vlabel) && error("Variable '$(vlabel)' not found in graph when creating Factor '$(factor.label)'")
     end
 
     props = packFactor(dfg, factor)
@@ -604,9 +604,9 @@ function updatePPE!(
         ppe::P;
         currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::P where
         {P <: AbstractPointParametricEst}
-    # if !(ppe.solverKey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction))
-    #     @warn "PPE '$(ppe.solverKey)' does not exist, adding"
-    # end
+    if !(ppe.solverKey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction))
+        @warn "PPE '$(ppe.solverKey)' does not exist, adding"
+    end
     softType = getSofttype(dfg, variablekey, currentTransaction=currentTransaction)
     # Add additional properties for the PPE
     addProps = _generateAdditionalProperties(softType, ppe)
@@ -685,9 +685,9 @@ function updateVariableSolverData!(dfg::CloudGraphsDFG,
                                 useCopy::Bool=true,
                                 fields::Vector{Symbol}=Symbol[];
                                 currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::VariableNodeData
-    # if !(vnd.solverKey in listVariableSolverData(dfg, variablekey, currentTransaction=currentTransaction))
-    #     @warn "Solver data '$(vnd.solverKey)' does not exist, adding rather than updating."
-    # end
+    if !(vnd.solverKey in listVariableSolverData(dfg, variablekey, currentTransaction=currentTransaction))
+        @warn "Solver data '$(vnd.solverKey)' does not exist, adding rather than updating."
+    end
     # TODO: Update this to use the selective parameters from fields.
     retPacked = _matchmergeVariableSubnode!(
         dfg,
