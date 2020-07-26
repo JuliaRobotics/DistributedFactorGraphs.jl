@@ -23,45 +23,59 @@ function packVariable(dfg::G, v::DFGVariable)::Dict{String, Any} where G <: Abst
     return props
 end
 
-function unpackVariable(dfg::G, packedProps::Dict{String, Any})::DFGVariable where G <: AbstractDFG
+function unpackVariable(dfg::G,
+        packedProps::Dict{String, Any};
+        unpackPPEs::Bool=true,
+        unpackSolverData::Bool=true,
+        unpackBigData::Bool=true)::DFGVariable where G <: AbstractDFG
+    @debug "Unpacking variable:\r\n$packedProps"
     label = Symbol(packedProps["label"])
     timestamp = ZonedDateTime(packedProps["timestamp"])
     nstime = Nanosecond(get(packedProps, "nstime", 0))
-    tags =  JSON2.read(packedProps["tags"], Vector{Symbol})
-    #TODO this will work for some time, but unpacking in an <: AbstractPointParametricEst would be lekker.
-    ppeDict = JSON2.read(packedProps["ppeDict"], Dict{Symbol, MeanMaxPPE})
+    # Supporting string serialization using packVariable and CGDFG serialization (Vector{String})
+    if packedProps["tags"] isa String
+        tags = JSON2.read(packedProps["tags"], Vector{Symbol})
+    else
+        tags = Symbol.(packedProps["tags"])
+    end
+    ppeDict = unpackPPEs ? JSON2.read(packedProps["ppeDict"], Dict{Symbol, MeanMaxPPE}) : Dict{Symbol, MeanMaxPPE}()
     smallData = JSON2.read(packedProps["smallData"], Dict{String, String})
-
-    #TODO Deprecate - for backward compatibility between v0.8 and v0.9, remove in v0.10
-    if haskey(packedProps, "bigDataElemType")
-        @warn "`bigDataElemType` is deprecate, please save data again with new version that uses `dataEntryType`"
-        dataElemTypes = JSON2.read(packedProps["bigDataElemType"], Dict{Symbol, Symbol})
-    else
-        dataElemTypes = JSON2.read(packedProps["dataEntryType"], Dict{Symbol, Symbol})
-    end
-
-    #TODO Deprecate - for backward compatibility between v0.8 and v0.9, remove in v0.10
-    if haskey(packedProps, "bigData")
-        @warn "`bigData` is deprecate, please save data again with new version"
-        dataIntermed = JSON2.read(packedProps["bigData"], Dict{Symbol, String})
-    else
-        dataIntermed = JSON2.read(packedProps["dataEntry"], Dict{Symbol, String})
-    end
 
     softtypeString = packedProps["softtype"]
     softtype = getTypeFromSerializationModule(dfg, Symbol(softtypeString))
     softtype == nothing && error("Cannot deserialize softtype '$softtypeString' in variable '$label'")
 
-    packed = JSON2.read(packedProps["solverDataDict"], Dict{String, PackedVariableNodeData})
-    solverData = Dict(Symbol.(keys(packed)) .=> map(p -> unpackVariableNodeData(dfg, p), values(packed)))
-
+    if unpackSolverData
+        packed = JSON2.read(packedProps["solverDataDict"], Dict{String, PackedVariableNodeData})
+        solverData = Dict(Symbol.(keys(packed)) .=> map(p -> unpackVariableNodeData(dfg, p), values(packed)))
+    else
+        solverData = Dict{Symbol, VariableNodeData}()
+    end
     # Rebuild DFGVariable using the first solver softtype in solverData
     variable = DFGVariable{softtype}(Symbol(packedProps["label"]), timestamp, nstime, Set(tags), ppeDict, solverData,  smallData, Dict{Symbol,AbstractDataEntry}(), Ref(packedProps["solvable"]))
 
     # Now rehydrate complete DataEntry type.
-    for (k,bdeInter) in dataIntermed
-        fullVal = JSON2.read(bdeInter, getfield(DistributedFactorGraphs, dataElemTypes[k]))
-        variable.dataDict[k] = fullVal
+    if unpackBigData
+        #TODO Deprecate - for backward compatibility between v0.8 and v0.9, remove in v0.10
+        if haskey(packedProps, "bigDataElemType")
+            @warn "`bigDataElemType` is deprecate, please save data again with new version that uses `dataEntryType`"
+            dataElemTypes = JSON2.read(packedProps["bigDataElemType"], Dict{Symbol, Symbol})
+        else
+            dataElemTypes = JSON2.read(packedProps["dataEntryType"], Dict{Symbol, Symbol})
+        end
+
+        #TODO Deprecate - for backward compatibility between v0.8 and v0.9, remove in v0.10
+        if haskey(packedProps, "bigData")
+            @warn "`bigData` is deprecate, please save data again with new version"
+            dataIntermed = JSON2.read(packedProps["bigData"], Dict{Symbol, String})
+        else
+            dataIntermed = JSON2.read(packedProps["dataEntry"], Dict{Symbol, String})
+        end
+
+        for (k,bdeInter) in dataIntermed
+            fullVal = JSON2.read(bdeInter, getfield(DistributedFactorGraphs, dataElemTypes[k]))
+            variable.dataDict[k] = fullVal
+    end
     end
 
     return variable
@@ -80,7 +94,8 @@ function packVariableNodeData(dfg::G, d::VariableNodeData)::PackedVariableNodeDa
                                 d.ismargin,
                                 d.dontmargin,
                                 d.solveInProgress,
-                                d.solvedCount)
+                                d.solvedCount,
+                                d.solverKey)
 end
 
 function unpackVariableNodeData(dfg::G, d::PackedVariableNodeData)::VariableNodeData where G <: AbstractDFG
@@ -103,7 +118,7 @@ function unpackVariableNodeData(dfg::G, d::PackedVariableNodeData)::VariableNode
 
   return VariableNodeData{st}(M3,M4, d.BayesNetOutVertIDs,
     d.dimIDs, d.dims, d.eliminated, d.BayesNetVertID, d.separator,
-    st(), d.initialized, d.inferdim, d.ismargin, d.dontmargin, d.solveInProgress, d.solvedCount)
+    st(), d.initialized, d.inferdim, d.ismargin, d.dontmargin, d.solveInProgress, d.solvedCount, d.solverKey)
 end
 
 ##==============================================================================
@@ -153,8 +168,15 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G
     label = packedProps["label"]
     timestamp = ZonedDateTime(packedProps["timestamp"])
     nstime = Nanosecond(get(packedProps, "nstime", 0))
-    tags = JSON2.read(packedProps["tags"], Vector{Symbol})
-
+    if packedProps["tags"] isa String
+        tags = JSON2.read(packedProps["tags"], Vector{Symbol})
+    else
+        tags = Symbol.(packedProps["tags"])
+        # If tags is empty we need to make sure it's a Vector{Symbol}
+        if length(tags) == 0
+            tags = Vector{Symbol}()
+        end
+    end
     data = packedProps["data"]
     datatype = packedProps["fnctype"]
     @debug "DECODING Softtype = '$(datatype)' for factor '$label'"
@@ -175,7 +197,11 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G
     end
 
     # Include the type
-    _variableOrderSymbols = JSON2.read(packedProps["_variableOrderSymbols"], Vector{Symbol})
+    if packedProps["tags"] isa String
+        _variableOrderSymbols = JSON2.read(packedProps["_variableOrderSymbols"], Vector{Symbol})
+    else
+        _variableOrderSymbols = Symbol.(packedProps["_variableOrderSymbols"])
+    end
     solvable = packedProps["solvable"]
 
     # Rebuild DFGFactor
@@ -207,35 +233,11 @@ function getTypeFromSerializationModule(dfg::G, moduleType::Symbol) where G <: A
     try
         st = getfield(Main, Symbol(moduleType))
     catch ex
-        @error "Unable to deserialize soft type $(d.softtype)"
+        @error "Unable to deserialize soft type $(moduleType)"
         io = IOBuffer()
         showerror(io, ex, catch_backtrace())
         err = String(take!(io))
-        @error err
+        @error(err)
     end
     return st
-end
-
-"""
-$(SIGNATURES)
-Pack a PPE into a Dict{String, Any}.
-"""
-function packPPE(dfg::G, ppe::P)::Dict{String, Any} where {G <: AbstractDFG, P <: AbstractPointParametricEst}
-    packedPPE = JSON.parse(JSON.json(ppe)) #TODO: Maybe better way to serialize as dictionary?
-    packedPPE[TYPEKEY] = string(typeof(ppe)) # Append the type
-    return packedPPE
-end
-
-"""
-$(SIGNATURES)
-Unpack a Dict{String, Any} into a PPE.
-"""
-function unpackPPE(dfg::G, packedPPE::Dict{String, Any})::AbstractPointParametricEst where G <: AbstractDFG
-    !haskey(packedPPE, TYPEKEY) && error("Cannot find type key '$TYPEKEY' in packed PPE data")
-    type = pop!(packedPPE, TYPEKEY)
-    (type == nothing || type == "") && error("Cannot deserialize PPE, type key is empty")
-    ppe = Unmarshal.unmarshal(
-            DistributedFactorGraphs.getTypeFromSerializationModule(dfg, Symbol(type)),
-            packedPPE)
-    return ppe
 end

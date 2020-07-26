@@ -37,9 +37,11 @@ function getSofttype(vnd::VariableNodeData)
   return vnd.softtype
 end
 
-getSofttype(v::DFGVariable, solvekey::Symbol=:default) = getSofttype(getSolverData(v, solvekey))
+# TODO: Confirm that we can switch this out, instead of retrieving the complete variable.
+getSofttype(v::DFGVariable{T}) where T <: InferenceVariable = T()
 
-getSofttype(dfg::AbstractDFG, lbl::Symbol, solvekey::Symbol=:default) = getSofttype(getVariable(dfg,lbl), solvekey)
+# Optimized in CGDFG
+getSofttype(dfg::AbstractDFG, lbl::Symbol) = getSofttype(getVariable(dfg,lbl))
 
 """
     getVariableType
@@ -339,14 +341,23 @@ end
 
 """
     $(SIGNATURES)
+Deprecated: Add variable solver data, errors if it already exists.
+"""
+function addVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData, solverKey::Symbol=:default)::VariableNodeData
+    @warn "This function is deprecated and will be removed in the next version, please use addVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData)"
+    return addVariableSolverData!(dfg, variablekey, vnd)
+end
+
+"""
+    $(SIGNATURES)
 Add variable solver data, errors if it already exists.
 """
-function addVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData, solvekey::Symbol=:default)::VariableNodeData
+function addVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData)::VariableNodeData
     var = getVariable(dfg, variablekey)
-    if haskey(var.solverDataDict, solvekey)
-        error("VariableNodeData '$(solvekey)' already exists")
+    if haskey(var.solverDataDict, vnd.solverKey)
+        error("VariableNodeData '$(vnd.solverKey)' already exists")
     end
-    var.solverDataDict[solvekey] = vnd
+    var.solverDataDict[vnd.solverKey] = vnd
     return vnd
 end
 
@@ -355,9 +366,8 @@ end
 Add a new solver data  entry from a deepcopy of the source variable solver data.
 NOTE: Copies the solver data.
 """
-addVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable, solvekey::Symbol=:default) =
-    addVariableSolverData!(dfg, sourceVariable.label, deepcopy(getSolverData(sourceVariable, solvekey)), solvekey)
-
+addVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable, solverKey::Symbol=:default) =
+    addVariableSolverData!(dfg, sourceVariable.label, deepcopy(getSolverData(sourceVariable, solverKey)))
 
 """
     $(SIGNATURES)
@@ -374,62 +384,83 @@ mergeVariableSolverData!
 function updateVariableSolverData!(dfg::AbstractDFG,
                                    variablekey::Symbol,
                                    vnd::VariableNodeData,
-                                   solvekey::Symbol=:default,
+                                   solverKey::Symbol=:default,
                                    useCopy::Bool=true,
                                    fields::Vector{Symbol}=Symbol[],
                                    verbose::Bool=true  )
-    #
+    @warn "This function is deprecated, please use updateVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData, solverKey::Symbol=:default, useCopy::Bool=true, fields::Vector{Symbol}=Symbol, verbose::Bool=true)"
+    return updateVariableSolverData!(dfg, variablekey, vnd, useCopy, fields, verbose)
+end
+
+"""
+    $(SIGNATURES)
+Update variable solver data if it exists, otherwise add it.
+
+Notes:
+- `useCopy=true` to copy solver data and keep separate memory.
+- Use `fields` to updated only a few VND.fields while adhering to `useCopy`.
+
+Related
+
+mergeVariableSolverData!
+"""
+function updateVariableSolverData!(dfg::AbstractDFG,
+                                   variablekey::Symbol,
+                                   vnd::VariableNodeData,
+                                   useCopy::Bool=true,
+                                   fields::Vector{Symbol}=Symbol[],
+                                   verbose::Bool=true  )
     #This is basically just setSolverData
     var = getVariable(dfg, variablekey)
-    if verbose && !haskey(var.solverDataDict, solvekey)
-        @warn "VariableNodeData '$(solvekey)' does not exist, adding"
+    if verbose && !haskey(var.solverDataDict, vnd.solverKey)
+        @warn "VariableNodeData '$(vnd.solverKey)' does not exist, adding"
     end
 
     # for InMemoryDFGTypes do memory copy or repointing, for cloud this would be an different kind of update.
     usevnd = useCopy ? deepcopy(vnd) : vnd
     # should just one, or many pointers be updated?
-    if haskey(var.solverDataDict, solvekey) && isa(var.solverDataDict[solvekey], VariableNodeData) && length(fields) != 0
+    if haskey(var.solverDataDict, vnd.solverKey) && isa(var.solverDataDict[vnd.solverKey], VariableNodeData) && length(fields) != 0
       # change multiple pointers inside the VND var.solverDataDict[solvekey]
       for field in fields
-        destField = getfield(var.solverDataDict[solvekey], field)
+        destField = getfield(var.solverDataDict[vnd.solverKey], field)
         srcField = getfield(usevnd, field)
         if isa(destField, Array) && size(destField) == size(srcField)
           # use broadcast (in-place operation)
           destField .= srcField
         else
           # change pointer of destination VND object member
-          setfield!(var.solverDataDict[solvekey], field, srcField)
+          setfield!(var.solverDataDict[vnd.solverKey], field, srcField)
         end
       end
     else
       # change a single pointer in var.solverDataDict
-      var.solverDataDict[solvekey] = usevnd
+      var.solverDataDict[vnd.solverKey] = usevnd
     end
 
-    return var.solverDataDict[solvekey]
+    return var.solverDataDict[vnd.solverKey]
 end
 
 updateVariableSolverData!(dfg::AbstractDFG,
                           sourceVariable::DFGVariable,
-                          solvekey::Symbol=:default,
+                          solverKey::Symbol=:default,
                           useCopy::Bool=true,
                           fields::Vector{Symbol}=Symbol[] ) =
-    updateVariableSolverData!(dfg, sourceVariable.label, getSolverData(sourceVariable, solvekey), solvekey, useCopy, fields)
+    updateVariableSolverData!(dfg, sourceVariable.label, getSolverData(sourceVariable, solverKey), useCopy, fields)
 
 function updateVariableSolverData!(dfg::AbstractDFG,
                                    sourceVariables::Vector{<:DFGVariable},
-                                   solvekey::Symbol=:default,
+                                   solverKey::Symbol=:default,
                                    useCopy::Bool=true,
                                    fields::Vector{Symbol}=Symbol[]  )
     #I think cloud would do this in bulk for speed
     for var in sourceVariables
-        updateVariableSolverData!(dfg, var.label, getSolverData(var, solvekey), solvekey, useCopy, fields)
+        updateVariableSolverData!(dfg, var.label, getSolverData(var, solverKey), useCopy, fields)
     end
 end
 
 """
     $SIGNATURES
-Duplicate a supersolve (solvekey).
+Duplicate a supersolve (solverKey).
 """
 function deepcopySolvekeys!(dfg::AbstractDFG,
                             dest::Symbol,
@@ -438,10 +469,11 @@ function deepcopySolvekeys!(dfg::AbstractDFG,
                             labels=ls(dfg, solvable=solvable),
                             verbose::Bool=false  )
   #
-  foreach(x->updateVariableSolverData!(dfg, x,
-                                       getSolverData(getVariable(dfg,x), src),
-                                       dest, true, Symbol[], verbose ),
-          labels)
+  for x in labels
+      sd = deepcopy(getSolverData(getVariable(dfg,x), src))
+      sd.solverKey = dest
+      updateVariableSolverData!(dfg, x, true, Symbol[], verbose )
+  end
 end
 const deepcopySupersolve! = deepcopySolvekeys!
 
@@ -449,13 +481,13 @@ const deepcopySupersolve! = deepcopySolvekeys!
     $(SIGNATURES)
 Delete variable solver data, returns the deleted element.
 """
-function deleteVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, solvekey::Symbol=:default)::VariableNodeData
+function deleteVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, solverKey::Symbol=:default)::VariableNodeData
     var = getVariable(dfg, variablekey)
 
-    if !haskey(var.solverDataDict, solvekey)
-        error("VariableNodeData '$(solvekey)' does not exist")
+    if !haskey(var.solverDataDict, solverKey)
+        error("VariableNodeData '$(solverKey)' does not exist")
     end
-    vnd = pop!(var.solverDataDict, solvekey)
+    vnd = pop!(var.solverDataDict, solverKey)
     return vnd
 end
 
@@ -463,8 +495,8 @@ end
     $(SIGNATURES)
 Delete variable solver data, returns the deleted element.
 """
-deleteVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable, solvekey::Symbol=:default) =
-    deleteVariableSolverData!(dfg, sourceVariable.label, solvekey)
+deleteVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable, solverKey::Symbol=:default) =
+    deleteVariableSolverData!(dfg, sourceVariable.label, solverKey)
 
 ##------------------------------------------------------------------------------
 ## SET: list, merge
@@ -507,7 +539,7 @@ mergeVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable) =     me
 Get the parametric point estimate (PPE) for a variable in the factor graph for a given solve key.
 
 Notes
-- Defaults on keywords `solveKey` and `method`
+- Defaults on keywords `solverKey` and `method`
 
 Related
 getMeanPPE, getMaxPPE, getKDEMean, getKDEFit, getPPEs, getVariablePPEs
@@ -526,35 +558,51 @@ getPPE(dfg::AbstractDFG, sourceVariable::VariableDataLevel1, ppekey::Symbol=defa
 Add variable PPE, errors if it already exists.
 """
 function addPPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default)::AbstractPointParametricEst where P <: AbstractPointParametricEst
+    @warn("This function is deprecated, please call addPPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P)")
+    return addPPE!(dfg, variablekey, ppe)
+end
+
+"""
+    $(SIGNATURES)
+Add variable PPE, errors if it already exists.
+"""
+function addPPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P)::AbstractPointParametricEst where {P <: AbstractPointParametricEst}
     var = getVariable(dfg, variablekey)
-    if haskey(var.ppeDict, ppekey)
-        error("PPE '$(ppekey)' already exists")
+    if haskey(var.ppeDict, ppe.solverKey)
+        error("PPE '$(ppe.solverKey)' already exists")
     end
-    var.ppeDict[ppekey] = ppe
+    var.ppeDict[ppe.solverKey] = ppe
     return ppe
 end
 
 """
     $(SIGNATURES)
 Add a new PPE entry from a deepcopy of the source variable PPE.
-NOTE: Copies the solver data.
+NOTE: Copies the PPE.
 """
 addPPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol=:default) =
-    addPPE!(dfg, sourceVariable.label, deepcopy(getPPE(sourceVariable, ppekey)), ppekey)
-
+    addPPE!(dfg, sourceVariable.label, deepcopy(getPPE(sourceVariable, ppekey)))
 
 """
     $(SIGNATURES)
 Update PPE data if it exists, otherwise add it -- one call per `key::Symbol=:default`.
 """
 function updatePPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default)::P where P <: AbstractPointParametricEst
+    @warn("This function is deprecated, please call updatePPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P)")
+    return updatePPE!(dfg, variablekey, ppe)
+end
 
+"""
+    $(SIGNATURES)
+Update PPE data if it exists, otherwise add it -- one call per `key::Symbol=:default`.
+"""
+function updatePPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P)::P where {P <: AbstractPointParametricEst}
     var = getVariable(dfg, variablekey)
-    if !haskey(var.ppeDict, ppekey)
-        @warn "PPE '$(ppekey)' does not exist, adding"
+    if !haskey(var.ppeDict, ppe.solverKey)
+        @warn "PPE '$(ppe.solverKey)' does not exist, adding"
     end
     #for InMemoryDFGTypes, cloud would update here
-    var.ppeDict[ppekey] = ppe
+    var.ppeDict[ppe.solverKey] = ppe
     return ppe
 end
 
@@ -564,7 +612,7 @@ Update PPE data if it exists, otherwise add it.
 NOTE: Copies the PPE data.
 """
 updatePPE!(dfg::AbstractDFG, sourceVariable::VariableDataLevel1, ppekey::Symbol=:default) =
-    updatePPE!(dfg, sourceVariable.label, deepcopy(getPPE(sourceVariable, ppekey)), ppekey)
+    updatePPE!(dfg, sourceVariable.label, deepcopy(getPPE(sourceVariable, ppekey)))
 
 """
     $(SIGNATURES)
@@ -573,7 +621,7 @@ Update PPE data if it exists, otherwise add it.
 function updatePPE!(dfg::AbstractDFG, sourceVariables::Vector{<:VariableDataLevel1}, ppekey::Symbol=:default)
     #I think cloud would do this in bulk for speed
     for var in sourceVariables
-        updatePPE!(dfg, var.label, getPPE(dfg, var, ppekey), ppekey)
+        updatePPE!(dfg, var.label, getPPE(dfg, var, ppekey))
     end
 end
 
