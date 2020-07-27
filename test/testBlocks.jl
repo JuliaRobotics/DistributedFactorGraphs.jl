@@ -779,10 +779,10 @@ function  DataEntriesTestBlock!(fg, v2)
     # emptyDataEntries
     # mergeDataEntries
     storeEntry = BlobStoreEntry(:a,uuid4(), :b, "","","","",now(localzone()))
-    getLabel(storeEntry) = storeEntry.label
-    getId(storeEntry) = storeEntry.id
-    getHash(storeEntry) = hex2bytes(storeEntry.hash)
-    getCreatedTimestamp(storeEntry) = storeEntry.createdTimestamp
+    @test getLabel(storeEntry) == storeEntry.label
+    @test getId(storeEntry) == storeEntry.id
+    @test getHash(storeEntry) == hex2bytes(storeEntry.hash)
+    @test getCreatedTimestamp(storeEntry) == storeEntry.createdTimestamp
 
     oid = zeros(UInt8,12); oid[12] = 0x01
     de1 = MongodbDataEntry(:key1, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))

@@ -20,3 +20,5 @@ export InMemoryDataStore, FileDataStore
 export getData, addData!, updateData!, deleteData!, listStoreEntries
 export getDataBlob, addDataBlob!, updateDataBlob!, deleteDataBlob!, listDataBlobs
 export copyStore
+
+export getId, getHash, getCreatedTimestamp
