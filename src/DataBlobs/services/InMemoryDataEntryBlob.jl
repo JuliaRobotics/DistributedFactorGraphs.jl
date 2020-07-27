@@ -29,14 +29,14 @@ getDataBlob(dfg::AbstractDFG, entry::InMemoryDataEntry) = entry.data
 # updateDataBlob!(dfg::AbstractDFG, entry::InMemoryDataEntry, blob) = error("Not suported")#entry.blob
 deleteDataBlob!(dfg::AbstractDFG, entry::InMemoryDataEntry) = entry.data
 
-function addData!(dfg::AbstractDFG, label::Symbol, entry::AbstractDataEntry; hashfunction = sha256)
+function addData!(dfg::AbstractDFG, label::Symbol, entry::InMemoryDataEntry; hashfunction = sha256)
     # assertHash(entry, entry.data, hashfunction=hashfunction)
     de = addDataEntry!(dfg, label, entry)
     db = getDataBlob(dfg, entry)
     return de=>db
 end
 
-function updateData!(dfg::AbstractDFG, label::Symbol,  entry::AbstractDataEntry)
+function updateData!(dfg::AbstractDFG, label::Symbol, entry::InMemoryDataEntry)
     # assertHash(entry, entry.data, hashfunction=hashfunction)
     de = updateDataEntry!(dfg, label, entry)
     db = getDataBlob(dfg, entry)

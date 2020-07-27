@@ -37,6 +37,16 @@ dde,ddb = deleteData!(dfg, :x1, :random)
 @test ade == gde == dde
 @test adb == gdb == ddb
 
+# @test_throws ErrorException addData!(dfg, :x2, deepcopy(ade), dataset2)
+ade2,adb2 = addData!(dfg, :x2, deepcopy(ade))
+
+ade3,adb3 = updateData!(dfg, :x2, deepcopy(ade))
+
+@test ade == ade2 == ade3
+@test adb == adb2 == adb3
+
+deleteData!(dfg, :x2, :random)
+
 ##==============================================================================
 ## FileDataEntry
 ##==============================================================================
@@ -46,6 +56,17 @@ dde,ddb = deleteData!(dfg, :x1, :random)
 
 @test ade == gde == dde
 @test adb == gdb == ddb
+
+
+@test_throws ErrorException addData!(dfg, :x2, deepcopy(ade), dataset2)
+
+ade2,adb2 = addData!(dfg, :x2, deepcopy(ade), dataset1)
+ade3,adb3  = updateData!(dfg, :x2, deepcopy(ade), dataset1)
+
+@test ade == ade2 == ade3
+@test adb == adb2 == adb3
+
+deleteData!(dfg, :x2, :random)
 
 ##==============================================================================
 ## FolderStore
@@ -62,6 +83,13 @@ dde,ddb = deleteData!(dfg, :x1, :random)
 @test ade == gde == dde
 @test adb == gdb == ddb
 
+ade2,adb2 = addData!(dfg, :x2, deepcopy(ade), dataset1)
+# ade3,adb3 = updateData!(dfg, :x2, deepcopy(ade), dataset1)
+
+@test ade == ade2# == ade3
+@test adb == adb2# == adb3
+
+deleteData!(dfg, :x2, :random)
 ##==============================================================================
 ## Unimplemented store
 ##==============================================================================
@@ -74,3 +102,17 @@ store = TestStore{Int}()
 @test_throws ErrorException updateDataBlob!(store,  ade, 1)
 @test_throws ErrorException deleteDataBlob!(store, ade)
 @test_throws ErrorException listDataBlobs(store)
+
+
+##==============================================================================
+## Unimplemented Entry Blob Crud
+##==============================================================================
+struct NotImplementedDE <: AbstractDataEntry end
+
+nde = NotImplementedDE()
+
+@test_throws ErrorException getDataBlob(dfg, nde)
+@test_throws ErrorException addDataBlob!(dfg, nde, 1)
+@test_throws ErrorException updateDataBlob!(dfg,  nde, 1)
+@test_throws ErrorException deleteDataBlob!(dfg, nde)
+@test_throws ErrorException listDataBlobs(dfg)

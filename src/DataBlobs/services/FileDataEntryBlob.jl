@@ -72,12 +72,12 @@ end
 function updateDataBlob!(dfg::AbstractDFG, entry::FileDataEntry, data::Vector{UInt8})
     if !isfile(blobfilename(entry))
         @warn "Entry '$(entry.id)' does not exist, adding."
-        return addDataBlob!(entry, data)
+        return addDataBlob!(dfg, entry, data)
     else
         # perhaps add an explicit force update flag and error otherwise
         @warn "Key '$(entry.id)' already exists, data will be overwritten."
-        deleteDataBlob!(entry::AbstractDataEntry)
-        return addDataBlob!(entry, data)
+        deleteDataBlob!(dfg, entry)
+        return addDataBlob!(dfg, entry, data)
     end
 end
 

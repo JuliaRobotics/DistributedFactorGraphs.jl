@@ -778,6 +778,11 @@ function  DataEntriesTestBlock!(fg, v2)
     # listDataEntries
     # emptyDataEntries
     # mergeDataEntries
+    storeEntry = BlobStoreEntry(:a,uuid4(), :b, "","","","",now(localzone()))
+    getLabel(storeEntry) = storeEntry.label
+    getId(storeEntry) = storeEntry.id
+    getHash(storeEntry) = hex2bytes(storeEntry.hash)
+    getCreatedTimestamp(storeEntry) = storeEntry.createdTimestamp
 
     oid = zeros(UInt8,12); oid[12] = 0x01
     de1 = MongodbDataEntry(:key1, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
@@ -816,7 +821,7 @@ function  DataEntriesTestBlock!(fg, v2)
     @test listDataEntries(fg, :b) == Symbol[:key2]
 
     #delete
-    @test deleteDataEntry!(v1, :key1) == de1
+    @test deleteDataEntry!(v1, de1) == de1
     @test listDataEntries(v1) == Symbol[:key2]
     #delete from dfg
     @test deleteDataEntry!(fg, :a, :key2) == de2_update
