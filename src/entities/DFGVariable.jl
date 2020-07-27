@@ -32,9 +32,10 @@ mutable struct VariableNodeData{T<:InferenceVariable}
     dontmargin::Bool
     solveInProgress::Int
     solvedCount::Int
+    solverKey::Symbol
     events::Dict{Symbol,Threads.Condition}
-    VariableNodeData{T}() where {T <:InferenceVariable} =
-    new{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], T(), false, 0.0, false, false, 0, 0, Dict{Symbol,Threads.Condition}())
+    VariableNodeData{T}(; solverKey::Symbol=:default) where {T <:InferenceVariable} =
+    new{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], T(), false, 0.0, false, false, 0, 0, solverKey, Dict{Symbol,Threads.Condition}())
     VariableNodeData{T}(val::Array{Float64,2},
                         bw::Array{Float64,2},
                         BayesNetOutVertIDs::Array{Symbol,1},
@@ -49,11 +50,12 @@ mutable struct VariableNodeData{T<:InferenceVariable}
                         dontmargin::Bool,
                         solveInProgress::Int=0,
                         solvedCount::Int=0,
+                        solverKey::Symbol=:default,
                         events::Dict{Symbol,Threads.Condition}=Dict{Symbol,Threads.Condition}()) where T <: InferenceVariable =
                             new{T}(val,bw,BayesNetOutVertIDs,dimIDs,dims,
                                    eliminated,BayesNetVertID,separator,
                                    softtype::T,initialized,inferdim,ismargin,
-                                   dontmargin, solveInProgress, solvedCount, events)
+                                   dontmargin, solveInProgress, solvedCount, solverKey, events)
 end
 
 ##------------------------------------------------------------------------------
@@ -72,15 +74,18 @@ VariableNodeData(val::Array{Float64,2},
                  ismargin::Bool,
                  dontmargin::Bool,
                  solveInProgress::Int=0,
-                 solvedCount::Int=0) where T <: InferenceVariable =
+                 solvedCount::Int=0,
+                 solverKey::Symbol=:default
+                 ) where T <: InferenceVariable =
                    VariableNodeData{T}(val,bw,BayesNetOutVertIDs,dimIDs,dims,
                                        eliminated,BayesNetVertID,separator,
                                        softtype::T,initialized,inferdim,ismargin,
-                                       dontmargin, solveInProgress, solvedCount)
+                                       dontmargin, solveInProgress, solvedCount,
+                                       solverKey)
 
 
-VariableNodeData(softtype::T) where T <: InferenceVariable =
-    VariableNodeData{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], softtype, false, 0.0, false, false, 0, 0)
+VariableNodeData(softtype::T; solverKey::Symbol=:default) where T <: InferenceVariable =
+    VariableNodeData{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], softtype, false, 0.0, false, false, 0, 0, solverKey)
 
 ##==============================================================================
 ## PackedVariableNodeData.jl
@@ -112,6 +117,7 @@ mutable struct PackedVariableNodeData
     dontmargin::Bool
     solveInProgress::Int
     solvedCount::Int
+    solverKey::Symbol
     PackedVariableNodeData() = new()
     PackedVariableNodeData(x1::Vector{Float64},
                          x2::Int,
@@ -129,7 +135,32 @@ mutable struct PackedVariableNodeData
                          x14::Bool,
                          x15::Bool,
                          x16::Int,
-                         solvedCount::Int) = new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16, solvedCount)
+                         solvedCount::Int,
+                         solverKey::Symbol) = new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16, solvedCount, solverKey)
+     # More permissive constructor needed for unmarshalling
+     PackedVariableNodeData(x1::Vector,
+                          x2::Int,
+                          x3::Vector,
+                          x4::Int,
+                          x5::Vector, # Int
+                          x6::Vector,
+                          x7::Int,
+                          x8::Bool,
+                          x9::Symbol, # Int
+                          x10::Vector, # Int
+                          x11::String,
+                          x12::Bool,
+                          x13::Float64,
+                          x14::Bool,
+                          x15::Bool,
+                          x16::Int,
+                          solvedCount::Int,
+                          solverKey::Symbol) = new(
+                                convert(Vector{Float64},x1),x2,
+                                convert(Vector{Float64},x3),x4,
+                                convert(Vector{Symbol},x5),
+                                convert(Vector{Int},x6),x7,x8,x9,
+                                convert(Vector{Symbol},x10),x11,x12,x13,x14,x15,x16, solvedCount, solverKey)
 end
 
 ##==============================================================================
@@ -157,11 +188,20 @@ struct MeanMaxPPE <: AbstractPointParametricEst
     mean::Vector{Float64}
     lastUpdatedTimestamp::DateTime
 end
+
 ##------------------------------------------------------------------------------
 ## Constructors
 
-MeanMaxPPE(solverKey::Symbol, suggested::Vector{Float64}, max::Vector{Float64},mean::Vector{Float64}) = MeanMaxPPE(solverKey, suggested, max, mean, now())
+MeanMaxPPE(solverKey::Symbol, suggested::Vector{Float64}, max::Vector{Float64}, mean::Vector{Float64}) = MeanMaxPPE(solverKey, suggested, max, mean, now(UTC))
 
+## Metadata
+"""
+    $SIGNATURES
+Return the fields of MeanMaxPPE that are estimates.
+NOTE: This is needed for each AbstractPointParametricEst.
+Closest we can get to a decorator pattern.
+"""
+getEstimateFields(::MeanMaxPPE) = [:suggested, :max, :mean]
 
 ##==============================================================================
 ## DFG Variables

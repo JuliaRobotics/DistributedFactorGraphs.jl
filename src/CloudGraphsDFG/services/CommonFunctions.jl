@@ -5,14 +5,17 @@ $(SIGNATURES)
 Returns the transaction for a given query.
 NOTE: Must commit(transaction) after you're done.
 """
-function _queryNeo4j(neo4jInstance::Neo4jInstance, query::String)
-    loadtx = transaction(neo4jInstance.connection)
-    result = loadtx(query; submit=true)
-    if length(result.errors) > 0
-        error(string(result.errors))
+function _queryNeo4j(neo4jInstance::Neo4jInstance, query::String; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+    @debug "[Query] $(currentTransaction != nothing ? "[TRANSACTION]" : "") $query"
+    if currentTransaction == nothing
+        loadtx = transaction(neo4jInstance.connection)
+        loadtx(query)
+        # Have to finish the transaction
+        result = commit(loadtx)
+    else
+        result = currentTransaction(query; submit=true)
     end
-    # Have to finish the transaction
-    commit(loadtx)
+    length(result.errors) > 0 && error(string(result.errors))
     return result
 end
 
@@ -42,7 +45,6 @@ So can make orderProperty = label or id.
 """
 function _getLabelsFromCyphonQuery(neo4jInstance::Neo4jInstance, matchCondition::String, orderProperty::String="")::Vector{Symbol}
     query = "match $matchCondition return distinct(node.label) $(orderProperty != "" ? "order by node.$orderProperty" : "")";
-    @debug "[Query] $query"
     result = _queryNeo4j(neo4jInstance, query)
     nodeIds = map(node -> node["row"][1], result.results[1]["data"])
     return Symbol.(nodeIds)
@@ -53,10 +55,9 @@ end
 $(SIGNATURES)
 Get a node property - returns nothing if not found
 """
-function _getNodeProperty(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String}, property::String)
+function _getNodeProperty(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String}, property::String; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
     query = "match (n:$(join(nodeLabels, ":"))) return n.$property"
-    @debug "[Query] $query"
-    result = _queryNeo4j(neo4jInstance, query)
+    result = _queryNeo4j(neo4jInstance, query, currentTransaction=currentTransaction)
     length(result.results[1]["data"]) != 1 && error("No data returned from the query.")
     length(result.results[1]["data"][1]["row"]) != 1 && error("No data returned from the query.")
     return result.results[1]["data"][1]["row"][1]
@@ -92,13 +93,14 @@ function _getNodeTags(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String}):
     return result.results[1]["data"][1]["row"][1]
 end
 
-function _getNodeCount(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String})::Int
+function _getNodeCount(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String}; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Int
     query = "match (n:$(join(nodeLabels, ":"))) return count(n)"
-    result = _queryNeo4j(neo4jInstance, query)
+    result = _queryNeo4j(neo4jInstance, query, currentTransaction=currentTransaction)
     length(result.results[1]["data"]) != 1 && return 0
     length(result.results[1]["data"][1]["row"]) != 1 && return 0
     return result.results[1]["data"][1]["row"][1]
 end
+
 
 """
 $(SIGNATURES)
@@ -110,86 +112,94 @@ Will return all sessions because of 'node:Session'.
 If orderProperty is not ==, then 'order by n.{orderProperty} will be appended to the query'.
 So can make orderProperty = label or id.
 """
-function _getNeoNodesFromCyphonQuery(neo4jInstance::Neo4jInstance, matchCondition::String, orderProperty::String="")::Vector{Neo4j.Node}
+function _getNeoNodesFromCyphonQuery(neo4jInstance::Neo4jInstance, matchCondition::String, orderProperty::String=""; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Vector{Neo4j.Node}
+    # TODO: Burn this function to the ground.
     # 2. Perform the transaction
-    loadtx = transaction(neo4jInstance.connection)
     query = "match $matchCondition return id(node) $(orderProperty != "" ? "order by node.$orderProperty" : "")";
-    nodes = loadtx(query; submit=true)
-    if length(nodes.errors) > 0
+    result = _queryNeo4j(neo4jInstance, query, currentTransaction=currentTransaction)
+    if length(result.errors) > 0
         error(string(nodes.errors))
     end
     # 3. Format the result
-    nodes = map(node -> getnode(neo4jInstance.graph, node["row"][1]), nodes.results[1]["data"])
-    # Have to finish the transaction
-    commit(loadtx)
-    return nodes
-end
-
-
-"""
-$(SIGNATURES)
-Utility function to get a Neo4j node sessions for a robot.
-"""
-function _getSessionNeoNodesForRobot(neo4jInstance::Neo4jInstance, userId::String, robotId::String)::Vector{Neo4j.Node}
-    # 2. Perform the transaction
-    nodes = _getNeoNodesFromCyphonQuery(neo4jInstance, "(u:USER:$userId)-[:ROBOT]->(r:ROBOT:$robotId)-[:SESSION]->(node:SESSION)", "id")
+    # TODO: Fix, this is awful.
+    nodes = map(node -> getnode(neo4jInstance.graph, node["row"][1]), result.results[1]["data"])
     return nodes
 end
 
 """
 $(SIGNATURES)
-Bind the SESSION node to the inital variable.
-Checks for existence.
-"""
-function _bindSessionNodeToInitialVariable(neo4jInstance::Neo4jInstance, userId::String, robotId::String, sessionId::String, initialVariableLabel::String)::Nothing
-    # 2. Perform the transaction
-    loadtx = transaction(neo4jInstance.connection)
-    query = """
-    match (session:SESSION:$userId:$robotId:$sessionId),
-    (var:VARIABLE:$userId:$robotId:$sessionId
-    {label: '$initialVariableLabel'})
-    WHERE NOT (session)-[:VARIABLE]->()
-    CREATE (session)-[:VARIABLE]->(var) return id(var)
-    """;
-    loadtx(query; submit=true)
-    commit(loadtx)
-    return nothing
-end
 
+Build a Cypher-compliant set of properies from a subnode type.
+Note: Individual values are serialized if they are not already.
+If the additional properties is provided, the additional
+properties will be added in verbatim when serializing.
 """
-$(SIGNATURES)
-Try get a Neo4j node ID from a node label.
-"""
-function _tryGetNeoNodeIdFromNodeLabel(neo4jInstance::Neo4jInstance, userId::String, robotId::String, sessionId::String, nodeLabel::Symbol; nodeType::Union{Nothing, String}=nothing)::Union{Nothing, Int}
-    @debug "Looking up symbolic node ID where n.label = '$nodeLabel'..."
-    if nodeType == nothing
-        nodes = _getNeoNodesFromCyphonQuery(neo4jInstance, "(node:$userId:$robotId:$sessionId) where exists(node.label) and node.label = \"$(string(nodeLabel))\"")
-    else
-        nodes = _getNeoNodesFromCyphonQuery(neo4jInstance, "(node:$nodeType:$userId:$robotId:$sessionId) where exists(node.label) and node.label = \"$(string(nodeLabel))\"")
+function _structToNeo4jProps(inst::Union{User, Robot, Session, PVND, N, APPE, ABDE},
+                             addProps::Dict{String, String}=Dict{String, String}();
+                             cypherNodeName::String="subnode")::String where
+        {N <: DFGNode, APPE <: AbstractPointParametricEst, ABDE <: AbstractDataEntry, PVND <: PackedVariableNodeData}
+    props = Dict{String, String}()
+    io = IOBuffer()
+    for fieldname in fieldnames(typeof(inst))
+        field = getfield(inst, fieldname)
+        val = nothing
+        # Neo4j type conversion if possible - keep timestamps timestamps, etc.
+        if field isa ZonedDateTime
+            val = "datetime(\"$(string(field))\")"
+        end
+        # TODO: Switch this to decorator pattern
+        if typeof(inst) <: DFGNode
+            # Variables
+            fieldname == :solverDataDict && continue
+            fieldname == :ppeDict && continue
+            fieldname == :dataDict && continue
+            if fieldname == :smallData
+                packedJson = JSON2.write(field)
+                val = "\"$(replace(packedJson, "\"" => "\\\""))\""
+            end
+            if fieldname == :solvable
+                val = field.x
+            end
+            if fieldname == :nstime
+                val = field.value
+            end
+            if fieldname == :softtype
+                val = string(typeof(getSofttype(inst)))
+            end
+            # Factors
+            # TODO: Consolidate with packFactor in Serialization.jl - https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/525
+            if fieldname == :solverData
+                fnctype = getSolverData(inst).fnc.usrfnc!
+                try
+                    packtype = getfield(_getmodule(fnctype), Symbol("Packed$(_getname(fnctype))"))
+                    packed = convert(PackedFunctionNodeData{packtype}, getSolverData(inst))
+                    packedJson = JSON2.write(packed)
+                    val = "\"$(replace(packedJson, "\"" => "\\\""))\"" # Escape slashes too
+                    fieldname = :data #Keeping with FileDFG format
+                catch ex
+                    io = IOBuffer()
+                    showerror(io, ex, catch_backtrace())
+                    err = String(take!(io))
+                    msg = "Error while packing '$(inst.label)' as '$fnctype', please check the unpacking/packing converters for this factor - \r\n$err"
+                    error(msg)
+                end
+            end
+        end
+        # Fallback, default to JSON2
+        if val == nothing
+            val = JSON2.write(field)
+        end
+        write(io, "$cypherNodeName.$fieldname=$val,")
     end
-
-    if length(nodes) != 1
-        return nothing
+    # The additional properties
+    for (k, v) in addProps
+        write(io, "$cypherNodeName.$k= $v,")
     end
-    nodeId = nodes[1].id
-    @debug "Found NeoNode ID = $nodeId..."
-    return nodeId
-end
-
-"""
-$(SIGNATURES)
-Gets the searchable labels for any CGDFG type.
-"""
-
-"""
-$(SIGNATURES)
-
-Build a Cypher-compliant set of properies from a JSON dictionary.
-Note individual values are serialized if they are not already.
-"""
-function _dictToNeo4jProps(dict::Dict{String, Any})::String
-    # TODO: Use an IO buffer/stream for this
-    return "{" * join(map((k) -> "$k: $(JSON.json(dict[k]))", collect(keys(dict))), ", ")*"}"
+    # The node type
+    write(io, "$cypherNodeName._type=\"$(typeof(inst))\"")
+    # Ref String(): "When possible, the memory of v will be used without copying when the String object is created.
+    # This is guaranteed to be the case for byte vectors returned by take!" # Apparent replacement for takebuf_string()
+    return String(take!(io))
 end
 
 """
@@ -197,7 +207,9 @@ $(SIGNATURES)
 
 Get the Neo4j labels for any node type.
 """
-function _getLabelsForType(dfg::CloudGraphsDFG, type::Type; parentKey::Union{Nothing, Symbol}=nothing)::Vector{String}
+function _getLabelsForType(dfg::CloudGraphsDFG,
+        type::Type;
+        parentKey::Union{Nothing, Symbol}=nothing)
     # Simple validation
     isempty(dfg.userId) && error("The DFG object's userID is empty, please specify a user ID.")
     isempty(dfg.robotId) && error("The DFG object's robotID is empty, please specify a robot ID.")
@@ -213,6 +225,8 @@ function _getLabelsForType(dfg::CloudGraphsDFG, type::Type; parentKey::Union{Not
         (labels = [dfg.userId, dfg.robotId, dfg.sessionId, "FACTOR"])
     type <: AbstractPointParametricEst &&
         (labels = [dfg.userId, dfg.robotId, dfg.sessionId, "PPE"])
+    type <: VariableNodeData &&
+        (labels = [dfg.userId, dfg.robotId, dfg.sessionId, "SOLVERDATA"])
     type <: AbstractDataEntry &&
         (labels = [dfg.userId, dfg.robotId, dfg.sessionId, "DATA"])
     # Some are children of nodes, so add that in if it's set.
@@ -226,13 +240,108 @@ $(SIGNATURES)
 Get the Neo4j labels for any node instance.
 """
 function _getLabelsForInst(dfg::CloudGraphsDFG,
-                            inst::Union{User, Robot, Session, N, APPE, ABDE}; parentKey::Union{Nothing, Symbol}=nothing)::Vector{String} where
+                            inst::Union{User, Robot, Session, VariableNodeData, N, APPE, ABDE};
+                            parentKey::Union{Nothing, Symbol}=nothing)::Vector{String} where
                             {N <: DFGNode, APPE <: AbstractPointParametricEst, ABDE <: AbstractDataEntry}
     labels = _getLabelsForType(dfg, typeof(inst), parentKey=parentKey)
     typeof(inst) <: DFGVariable && push!(labels, String(getLabel(inst)))
     typeof(inst) <: DFGFactor && push!(labels, String(getLabel(inst)))
     typeof(inst) <: AbstractPointParametricEst && push!(labels, String(inst.solverKey))
+    typeof(inst) <: VariableNodeData && push!(labels, String(inst.solverKey))
     typeof(inst) <: AbstractDataEntry && push!(labels, String(inst.key))
-    # Some are children of nodes, so add that in if it's set.
     return labels
+end
+
+## Common CRUD calls for subnode types (PPEs, VariableSolverData, BigData)
+
+function _listVarSubnodesForType(dfg::CloudGraphsDFG, variablekey::Symbol, dfgType::Type, keyToReturn::String; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+    query = "match (subnode:$(join(_getLabelsForType(dfg, dfgType, parentKey=variablekey),':'))) return subnode.$keyToReturn"
+    @debug "[Query] _listVarSubnodesForType query:\r\n$query"
+    result = nothing
+    if currentTransaction != nothing
+        result = currentTransaction(query; submit=true)
+    else
+        tx = transaction(dfg.neo4jInstance.connection)
+        tx(query)
+        result = commit(tx)
+    end
+    length(result.errors) > 0 && error(string(result.errors))
+    vals = map(d -> d["row"][1], result.results[1]["data"])
+    return Symbol.(vals)
+end
+
+function _getVarSubnodeProperties(dfg::CloudGraphsDFG, variablekey::Symbol, dfgType::Type, nodeKey::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+    query = "match (subnode:$(join(_getLabelsForType(dfg, dfgType, parentKey=variablekey),':')):$nodeKey) return properties(subnode)"
+    @debug "[Query] _getVarSubnodeProperties query:\r\n$query"
+    result = nothing
+    if currentTransaction != nothing
+        result = currentTransaction(query; submit=true)
+    else
+        tx = transaction(dfg.neo4jInstance.connection)
+        tx(query)
+        result = commit(tx)
+    end
+    length(result.errors) > 0 && error(string(result.errors))
+    length(result.results[1]["data"]) != 1 && error("Cannot find subnode '$nodeKey' for variable '$variablekey'")
+    length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot find subnode '$nodeKey' for variable '$variablekey'")
+    return result.results[1]["data"][1]["row"][1]
+end
+
+function _matchmergeVariableSubnode!(
+        dfg::CloudGraphsDFG,
+        variablekey::Symbol,
+        nodeLabels::Vector{String},
+        subnode::Union{APPE, ABDE, PVND},
+        relationshipKey::Symbol;
+        addProps::Dict{String, String}=Dict{String, String}(),
+        currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing) where
+        {N <: DFGNode, APPE <: AbstractPointParametricEst, ABDE <: AbstractDataEntry, PVND <: PackedVariableNodeData}
+
+    query = """
+                MATCH (var:$variablekey:$(join(_getLabelsForType(dfg, DFGVariable, parentKey=variablekey),':')))
+                MERGE (var)-[:$relationshipKey]->(subnode:$(join(nodeLabels,':')))
+                ON CREATE SET $(_structToNeo4jProps(subnode, addProps))
+                ON MATCH SET $(_structToNeo4jProps(subnode, addProps))
+                RETURN properties(subnode)"""
+    @debug "[Query] _matchmergeVariableSubnode! query:\r\n$query"
+    result = nothing
+    if currentTransaction != nothing
+        result = currentTransaction(query; submit=true) # TODO: Maybe we should submit (; submit = true) for the results to fail early?
+    else
+        tx = transaction(dfg.neo4jInstance.connection)
+        tx(query)
+        result = commit(tx)
+    end
+    length(result.errors) > 0 && error(string(result.errors))
+    length(result.results[1]["data"]) != 1 && error("Cannot find subnode '$(ppe.solverKey)' for variable '$variablekey'")
+    length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot find subnode '$(ppe.solverKey)' for variable '$variablekey'")
+    return result.results[1]["data"][1]["row"][1]
+end
+
+function _deleteVarSubnode!(
+        dfg::CloudGraphsDFG,
+        variablekey::Symbol,
+        relationshipKey::Symbol,
+        nodeLabels::Vector{String},
+        nodekey::Symbol=:default;
+        currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+    query = """
+    MATCH (node:$nodekey:$(join(nodeLabels,':')))
+    WITH node, properties(node) as props
+    DETACH DELETE node
+    RETURN props
+    """
+    @debug "[Query] _deleteVarSubnode delete query:\r\n$query"
+    result = nothing
+    if currentTransaction != nothing
+        result = currentTransaction(query; submit=true) # TODO: Maybe we should submit (; submit = true) for the results to fail early?
+    else
+        tx = transaction(dfg.neo4jInstance.connection)
+        tx(query)
+        result = commit(tx)
+    end
+    length(result.errors) > 0 && error(string(result.errors))
+    length(result.results[1]["data"]) != 1 && error("Cannot find subnode '$nodekey' for variable '$variablekey'")
+    length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot find subnode '$nodekey' for variable '$variablekey'")
+    return result.results[1]["data"][1]["row"][1]
 end

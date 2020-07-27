@@ -297,7 +297,7 @@ function __init__()
     end
 
     if get(ENV, "DFG_USE_CGDFG", "") == "true"
-        @info "Including CloudGraphsDFG"
+        @info "Detected ENV[\"DFG_USE_CGDFG\"]: Including optional CloudGraphsDFG (LGPL) Driver"
         Base.include(DistributedFactorGraphs, joinpath(@__DIR__, "CloudGraphsDFG/CloudGraphsDFG.jl"))
         @eval DistributedFactorGraphs @reexport using .CloudGraphsDFGs
     end

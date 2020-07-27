@@ -20,6 +20,7 @@ import ...DistributedFactorGraphs:  setSolverParams!,
                                     exists,
                                     isVariable,
                                     isFactor,
+                                    getSofttype,
                                     getDescription,
                                     updateVariable!,
                                     updateFactor!,
@@ -59,6 +60,7 @@ import ...DistributedFactorGraphs:  setSolverParams!,
                                     mergeTags!,
                                     removeTags!,
                                     emptyTags!,
+                                    listVariableSolverData,
                                     addVariableSolverData!,
                                     updateVariableSolverData!,
                                     deleteVariableSolverData!,
@@ -69,17 +71,19 @@ import ...DistributedFactorGraphs:  setSolverParams!,
                                     listPPEs,
                                     deletePPE!,
                                     updatePPE!,
-                                    packPPE,
-                                    unpackPPE,
                                     getSolvable,
-                                    setSolvable!
+                                    setSolvable!,
+                                    getEstimateFields,
+                                    _getname,
+                                    _getmodule,
+                                    getTypeFromSerializationModule
 
 using Neo4j
 using Base64
 
 using DocStringExtensions
 using Requires
-using Dates
+using Dates, TimeZones
 using Distributions
 using Reexport
 using JSON

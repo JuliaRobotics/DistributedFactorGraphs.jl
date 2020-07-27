@@ -401,11 +401,11 @@ function  VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
 @test addFactor!(fg, [v1, v2], f1) == f1
 @test_throws ErrorException addFactor!(fg, [v1, v2], f1)
 
-@test @test_logs (:warn, r"does not exist") updateVariable!(fg, v3) == v3
+@test @test_logs (:warn, Regex("'$(v3.label)' does not exist")) match_mode=:any updateVariable!(fg, v3) == v3
 @test updateVariable!(fg, v3) == v3
 @test_throws ErrorException addVariable!(fg, v3)
 
-@test @test_logs (:warn, r"does not exist") updateFactor!(fg, f2) === f2
+@test @test_logs (:warn, Regex("'$(f2.label)' does not exist")) match_mode=:any updateFactor!(fg, f2) === f2
 @test updateFactor!(fg, f2) === f2
 @test_throws ErrorException addFactor!(fg, [:b, :c], f2)
 #TODO Graphs.jl, but look at refactoring absract @test_throws ErrorException addFactor!(fg, f2)
@@ -561,7 +561,6 @@ function  PPETestBlock!(fg, v1)
     @test addPPE!(fg, :a, ppe) == ppe
     @test_throws ErrorException addPPE!(fg, :a, ppe)
 
-
     @test listPPEs(fg, :a) == [:default]
     # Get the data back - note that this is a reference to above.
     @test getPPE(fg, :a, :default) == ppe
@@ -571,15 +570,22 @@ function  PPETestBlock!(fg, v1)
 
     @test_throws ErrorException getPPE(fg, :a, :default)
     # Update add it
-    @test @test_logs (:warn, r"does not exist") updatePPE!(fg, :a, ppe, :default) == ppe
+    @test @test_logs (:warn, Regex("'$(ppe.solverKey)' does not exist")) match_mode=:any updatePPE!(fg, :a, ppe) == ppe
     # Update update it
-    @test updatePPE!(fg, :a, ppe, :default) == ppe
+    @test updatePPE!(fg, :a, ppe) == ppe
     @test deletePPE!(fg, :a, :default) == ppe
 
     # manually add ppe to v1 for tests
     v1.ppeDict[:default] = deepcopy(ppe)
     # Bulk copy PPE's for :x1
     @test updatePPE!(fg, [v1], :default) == nothing
+    # Delete it
+    @test deletePPE!(fg, :a, :default) == ppe
+
+    # New interface
+    @test addPPE!(fg, :a, ppe) == ppe
+    # Update update it
+    @test updatePPE!(fg, :a, ppe) == ppe
     # Delete it
     @test deletePPE!(fg, :a, :default) == ppe
 
@@ -675,10 +681,10 @@ function  VSDTestBlock!(fg, v1)
     # **VariableNodeData**
     #  - `getSolveInProgress`
 
-    vnd = VariableNodeData{TestSofttype1}()
-    @test addVariableSolverData!(fg, :a, vnd, :parametric) == vnd
+    vnd = VariableNodeData{TestSofttype1}(solverKey=:parametric)
+    @test addVariableSolverData!(fg, :a, vnd) == vnd
 
-    @test_throws ErrorException addVariableSolverData!(fg, :a, vnd, :parametric)
+    @test_throws ErrorException addVariableSolverData!(fg, :a, vnd)
 
     @test issetequal(listVariableSolverData(fg, :a), [:default, :parametric])
 
@@ -690,23 +696,23 @@ function  VSDTestBlock!(fg, v1)
     # Delete it
     @test deleteVariableSolverData!(fg, :a, :parametric) == vndBack
     # Update add it
-    @test @test_logs (:warn, r"does not exist") updateVariableSolverData!(fg, :a, vnd, :parametric) == vnd
+    @test @test_logs (:warn, r"does not exist") updateVariableSolverData!(fg, :a, vnd) == vnd
 
     # Update update it
-    @test updateVariableSolverData!(fg, :a, vnd, :parametric) == vnd
+    @test updateVariableSolverData!(fg, :a, vnd) == vnd
     # test without deepcopy
-    @test updateVariableSolverData!(fg, :a, vnd, :parametric, false) == vnd
+    @test updateVariableSolverData!(fg, :a, vnd, false) == vnd
     # Bulk copy update x0
     @test updateVariableSolverData!(fg, [v1], :default) == nothing
 
     altVnd = vnd |> deepcopy
     keepVnd = getSolverData(getVariable(fg, :a), :parametric) |> deepcopy
     altVnd.inferdim = -99.0
-    retVnd = updateVariableSolverData!(fg, :a, altVnd, :parametric, false, [:inferdim;])
+    retVnd = updateVariableSolverData!(fg, :a, altVnd, false, [:inferdim;])
     @test retVnd == altVnd
 
     fill!(altVnd.bw, -1.0)
-    retVnd = updateVariableSolverData!(fg, :a, altVnd, :parametric, false, [:bw;])
+    retVnd = updateVariableSolverData!(fg, :a, altVnd, false, [:bw;])
     @test retVnd == altVnd
 
     altVnd.inferdim = -98.0
@@ -714,7 +720,7 @@ function  VSDTestBlock!(fg, v1)
 
     # restore without copy
     # @show vnd.inferdim
-    @test updateVariableSolverData!(fg, :a, keepVnd, :parametric, false, [:inferdim;:bw]) == vnd
+    @test updateVariableSolverData!(fg, :a, keepVnd, false, [:inferdim;:bw]) == vnd
     @test getSolverData(getVariable(fg, :a), :parametric).inferdim !=  altVnd.inferdim
     @test getSolverData(getVariable(fg, :a), :parametric).bw !=  altVnd.bw
 
@@ -729,8 +735,8 @@ function  VSDTestBlock!(fg, v1)
     # Add new VND of type ContinuousScalar to :x0
     # Could also do VariableNodeData(ContinuousScalar())
 
-    vnd = VariableNodeData{TestSofttype1}()
-    addVariableSolverData!(fg, :a, vnd, :parametric)
+    vnd = VariableNodeData{TestSofttype1}(solverKey=:parametric)
+    addVariableSolverData!(fg, :a, vnd)
     @test setdiff(listVariableSolverData(fg, :a), [:default, :parametric]) == []
     # Get the data back - note that this is a reference to above.
     vndBack = getVariableSolverData(fg, :a, :parametric)
@@ -738,9 +744,9 @@ function  VSDTestBlock!(fg, v1)
     # Delete it
     @test deleteVariableSolverData!(fg, :a, :parametric) == vndBack
     # Update add it
-    updateVariableSolverData!(fg, :a, vnd, :parametric)
+    updateVariableSolverData!(fg, :a, vnd)
     # Update update it
-    updateVariableSolverData!(fg, :a, vnd, :parametric)
+    updateVariableSolverData!(fg, :a, vnd)
     # Bulk copy update x0
     updateVariableSolverData!(fg, [v1], :default)
     # Delete parametric from v1
