@@ -1,21 +1,3 @@
-export BlobStoreEntry
-
-"""
-    $(TYPEDEF)
-Genaral Data Store Entry.
-"""
-struct BlobStoreEntry <: AbstractDataEntry
-    label::Symbol
-    id::UUID
-    blobstore::Symbol
-    hash::String # Probably https://docs.julialang.org/en/v1/stdlib/SHA
-    origin::String # E.g. user|robot|session|varlabel
-    description::String
-    mimeType::String
-    createdTimestamp::ZonedDateTime # of when the entry was created
-end
-
-
 ##==============================================================================
 ## AbstractBlobStore CRUD Interface
 ##==============================================================================
@@ -27,12 +9,14 @@ function getDataBlob(store::AbstractBlobStore, entry::BlobStoreEntry)
     error("$(typeof(store)) doesn't override 'getDataBlob'.")
 end
 
+
 addDataBlob!(dfg::AbstractDFG, entry::BlobStoreEntry, data::T) where T =
         addDataBlob!(getBlobStore(dfg, entry.blobstore), entry, data)
 
 function addDataBlob!(store::AbstractBlobStore{T}, entry::BlobStoreEntry, data::T) where T
     error("$(typeof(store)) doesn't override 'addDataBlob!'.")
 end
+
 
 updateDataBlob!(dfg::AbstractDFG, entry::BlobStoreEntry, data::T) where T =
         updateDataBlob!(getBlobStore(dfg, entry.blobstore), entry, data)
@@ -41,6 +25,7 @@ function updateDataBlob!(store::AbstractBlobStore{T},  entry::BlobStoreEntry, da
     error("$(typeof(store)) doesn't override 'updateDataBlob!'.")
 end
 
+
 deleteDataBlob!(dfg::AbstractDFG, entry::BlobStoreEntry) =
         deleteDataBlob!(getBlobStore(dfg, entry.blobstore), entry)
 
@@ -48,9 +33,31 @@ function deleteDataBlob!(store::AbstractBlobStore, entry::BlobStoreEntry)
     error("$(typeof(store)) doesn't override 'deleteDataBlob!'.")
 end
 
+
 function listDataBlobs(store::AbstractBlobStore)
     error("$(typeof(store)) doesn't override 'listDataBlobs'.")
 end
+
+
+#TODO
+# """
+#     $(SIGNATURES)
+# Copies all the entries from the source into the destination.
+# Can specify which entries to copy with the `sourceEntries` parameter.
+# Returns the list of copied entries.
+# """
+# function copyBlobStore(sourceStore::D1, destStore::D2; sourceEntries=listEntries(sourceStore))::Vector{E} where {T, D1 <: AbstractDataStore{T}, D2 <: AbstractDataStore{T}, E <: AbstractDataEntry}
+#     # Quick check
+#     destEntries = listDataBlobs(destStore)
+#     typeof(sourceEntries) != typeof(destEntries) && error("Can't copy stores, source has entries of type $(typeof(sourceEntries)), destination has entries of type $(typeof(destEntries)).")
+#     # Same source/destination check
+#     sourceStore == destStore && error("Can't specify same store for source and destination.")
+#     # Otherwise, continue
+#     for sourceEntry in sourceEntries
+#         addDataBlob!(destStore, deepcopy(sourceEntry), getDataBlob(sourceStore, sourceEntry))
+#     end
+#     return sourceEntries
+# end
 
 ##==============================================================================
 ## Store and Entry Data CRUD
@@ -119,8 +126,8 @@ struct FolderStore{T} <: AbstractBlobStore{T}
     folder::String
 end
 
-blobfilename(store::FolderStore, entry::FileDataEntry) = joinpath(store.folder,"$(entry.id).dat")
-entryfilename(store::FolderStore, entry::FileDataEntry) = joinpath(store.folder,"$(entry.id).json")
+blobfilename(store::FolderStore, entry::BlobStoreEntry) = joinpath(store.folder,"$(entry.id).dat")
+entryfilename(store::FolderStore, entry::BlobStoreEntry) = joinpath(store.folder,"$(entry.id).json")
 
 function getDataBlob(store::FolderStore{T}, entry::BlobStoreEntry) where T
     blobfilename = joinpath(store.folder,"$(entry.id).dat")

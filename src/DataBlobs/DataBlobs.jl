@@ -3,22 +3,16 @@
 using JSON
 using SHA
 
-include("entities/AbstractDataStore.jl")
 include("entities/AbstractDataEntries.jl")
-include("entities/InMemoryDataStore.jl")
-include("entities/FileDataStore.jl")
+# include("entities/BlobStores.jl")
 
-include("services/AbstractDataStore.jl")
 include("services/AbstractDataEntries.jl")
-include("services/InMemoryDataStore.jl")
-include("services/FileDataStore.jl")
+include("services/DataEntryBlob.jl")
+include("services/BlobStores.jl")
 
-include("FileDataEntryBlob.jl")
-include("InMemoryDataEntryBlob.jl")
-include("DataBlobStores.jl")
-include("DataEntryBlob.jl")
+include("services/FileDataEntryBlob.jl")
+include("services/InMemoryDataEntryBlob.jl")
 
-export AbstractDataStore
 
 export AbstractDataEntry, GeneralDataEntry, MongodbDataEntry, FileDataEntry
 export InMemoryDataStore, FileDataStore

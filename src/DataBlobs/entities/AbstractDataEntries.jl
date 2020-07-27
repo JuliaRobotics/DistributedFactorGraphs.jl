@@ -1,67 +1,37 @@
+##==============================================================================
+## AbstractDataEntry - Defined in src/entities/AbstractDFG.jl
+##==============================================================================
+# Fields to be implemented
+# label
+# id
+
+getLabel(entry::AbstractDataEntry) = entry.label
+getId(entry::AbstractDataEntry) = entry.id
+getHash(entry::AbstractDataEntry) = hex2bytes(entry.hash)
+getCreatedTimestamp(entry::AbstractDataEntry) = entry.createdTimestamp
+
+
+##==============================================================================
+## BlobStoreEntry
+##==============================================================================
+export BlobStoreEntry
+
 """
     $(TYPEDEF)
-GeneralDataEntry is a generic multipurpose data entry that creates a unique
-reproducible key using userId_robotId_sessionId_variableId_key.
+Genaral Data Store Entry.
 """
-mutable struct GeneralDataEntry <: AbstractDataEntry
+struct BlobStoreEntry <: AbstractDataEntry
     label::Symbol
     id::UUID
-    createdTimestamp::ZonedDateTime
-    lastUpdatedTimestamp::ZonedDateTime
+    blobstore::Symbol
+    hash::String # Probably https://docs.julialang.org/en/v1/stdlib/SHA
+    origin::String # E.g. user|robot|session|varlabel
+    description::String
     mimeType::String
+    createdTimestamp::ZonedDateTime # of when the entry was created
 end
 
-#TODO Deprecation - Remove in v0.10
-Base.getproperty(x::GeneralDataEntry,f::Symbol) = begin
-    if f == :key
-        Base.depwarn("GeneralDataEntry field key is deprecated, use `label` instead", :getproperty)
-        getfield(x,:label)
-    elseif f == :storeKey
-        Base.depwarn("GeneralDataEntry field storeKey is deprecated, use `id` instead", :getproperty)
-        getfield(x,:id)
-    else
-        getfield(x,f)
-    end
-end
-
-#TODO Deprecation - Remove in v0.10
-Base.setproperty!(x::GeneralDataEntry, f::Symbol, val) = begin
-    if f == :key
-        Base.depwarn("GeneralDataEntry field `key` is deprecated, use `label` instead", :setproperty!)
-        setfield(x, :label)
-    elseif f == :storeKey
-        Base.depwarn("GeneralDataEntry field `storeKey` is deprecated, use `id` instead", :setproperty!)
-        setfield(x, :id)
-    else
-        setfield!(x,f,val)
-    end
-end
-
-
-"""
-    $(SIGNATURES)
-Function to generate source string - userId|robotId|sessionId|varLabel
-"""
-buildSourceString(dfg::AbstractDFG, label::Symbol) =
-    "$(dfg.userId)|$(dfg.robotId)|$(dfg.sessionId)|$label"
-
-
-_uniqueKey(dfg::AbstractDFG, v::AbstractDFGVariable, key::Symbol)::Symbol =
-    error("_uniqueKey is deprecated")
-
-
-GeneralDataEntry(key::Symbol, storeKey::Symbol; mimeType::String="") = error("storeKey Deprecated, use UUID")
-
-GeneralDataEntry(label::Symbol, id::UUID=uuid4();
-                    mimeType::String="application/octet-stream") =
-                    GeneralDataEntry(label, id, now(localzone()), now(localzone()), mimeType)
-
-function GeneralDataEntry(dfg::AbstractDFG, var::AbstractDFGVariable, key::Symbol;
-                             mimeType::String="application/octet-stream")
-    return GeneralDataEntry(key, uuid4(), mimeType=mimeType)
-end
-
-
+# TODO
 """
     $(TYPEDEF)
 Data Entry in MongoDB.

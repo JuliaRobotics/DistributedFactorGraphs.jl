@@ -27,8 +27,9 @@ using Test
 
         setSolvedCount!(verts[1], 5)
         # Add some data entries to x1, x2
-        addDataEntry!(verts[1], GeneralDataEntry(:testing; mimeType="application/nuthin!"))
-        addDataEntry!(verts[2], GeneralDataEntry(:testing2))
+
+        addDataEntry!(verts[1], BlobStoreEntry(:testing, uuid4(), :store, "", "", "", "", now(localzone())))
+        addDataEntry!(verts[2], BlobStoreEntry(:testing2, uuid4(), :store, "", "", "", "", now(localzone())))
         #call update to set it on cloud
         updateVariable!(dfg, verts[1])
         updateVariable!(dfg, verts[2])
@@ -62,8 +63,8 @@ using Test
         end
 
         @test length(getDataEntries(getVariable(retDFG, :x1))) == 1
-        @test typeof(getDataEntry(getVariable(retDFG, :x1),:testing)) == GeneralDataEntry
+        @test typeof(getDataEntry(getVariable(retDFG, :x1),:testing)) == BlobStoreEntry
         @test length(getDataEntries(getVariable(retDFG, :x2))) == 1
-        @test typeof(getDataEntry(getVariable(retDFG, :x2),:testing2)) == GeneralDataEntry
+        @test typeof(getDataEntry(getVariable(retDFG, :x2),:testing2)) == BlobStoreEntry
     end
 end

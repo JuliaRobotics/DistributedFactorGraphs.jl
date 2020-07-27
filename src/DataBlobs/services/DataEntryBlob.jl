@@ -11,10 +11,41 @@ end
 ## DFG DataBlob CRUD
 ##==============================================================================
 
+"""
+    $(SIGNATURES)
+Get the data blob for the specified blobstore or dfg.
+"""
+function getDataBlob end
+
+"""
+    $(SIGNATURES)
+Adds a blob to the blob store or dfg with the given entry.
+"""
+function addDataBlob! end
+
+"""
+    $(SIGNATURES)
+Update a blob to the blob store or dfg with the given entry.
+"""
+function updateDataBlob! end
+
+"""
+    $(SIGNATURES)
+Delete a blob to the blob store or dfg with the given entry.
+"""
+function deleteDataBlob! end
+
+"""
+    $(SIGNATURES)
+List all ids in the blob store.
+"""
+function listDataBlobs end
+
 #
 # addDataBlob!(dfg::AbstractDFG,  entry::AbstractDataEntry, blob)
 # updateDataBlob!(dfg::AbstractDFG,  entry::AbstractDataEntry, blob)
 # deleteDataBlob!(dfg::AbstractDFG,  entry::AbstractDataEntry)
+
 
 function getDataBlob(dfg::AbstractDFG, entry::AbstractDataEntry)
     error("$(typeof(dfg)) doesn't override 'getDataBlob'.")

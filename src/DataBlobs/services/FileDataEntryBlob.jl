@@ -23,9 +23,9 @@ struct FileDataEntry <: AbstractDataEntry
       end
 end
 
-@generated function ==(x::FileDataEntry, y::FileDataEntry)
-    mapreduce(n -> :(x.$n == y.$n), (a,b)->:($a && $b), fieldnames(x))
-end
+# @generated function ==(x::FileDataEntry, y::FileDataEntry)
+#     mapreduce(n -> :(x.$n == y.$n), (a,b)->:($a && $b), fieldnames(x))
+# end
 
 #
 # getHash(entry::AbstractDataEntry) = hex2bytes(entry.hash)
