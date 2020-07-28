@@ -76,6 +76,7 @@ function Base.convert(::Type{DFG.FunctionNodeData{TestCCW{F}}},
                                 TestCCW(convert(F, d.fnc)),
                                 d.multihypo,
                                 d.certainhypo,
+                                d.nullhypo,
                                 d.solveInProgress)
 end
 
@@ -87,6 +88,7 @@ function Base.convert(::Type{DFG.PackedFunctionNodeData{P}}, d::DFG.FunctionNode
                                     convert(P, d.fnc.usrfnc!),
                                     d.multihypo,
                                     d.certainhypo,
+                                    d.nullhypo,
                                     d.solveInProgress)
 end
 
@@ -776,15 +778,20 @@ function  DataEntriesTestBlock!(fg, v2)
     # listDataEntries
     # emptyDataEntries
     # mergeDataEntries
+    storeEntry = BlobStoreEntry(:a,uuid4(), :b, "","","","",now(localzone()))
+    @test getLabel(storeEntry) == storeEntry.label
+    @test getId(storeEntry) == storeEntry.id
+    @test getHash(storeEntry) == hex2bytes(storeEntry.hash)
+    @test getCreatedTimestamp(storeEntry) == storeEntry.createdTimestamp
 
     oid = zeros(UInt8,12); oid[12] = 0x01
-    de1 = MongodbDataEntry(:key1, NTuple{12,UInt8}(oid))
+    de1 = MongodbDataEntry(:key1, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
 
     oid = zeros(UInt8,12); oid[12] = 0x02
-    de2 = MongodbDataEntry(:key2, NTuple{12,UInt8}(oid))
+    de2 = MongodbDataEntry(:key2, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
 
     oid = zeros(UInt8,12); oid[12] = 0x03
-    de2_update = MongodbDataEntry(:key2, NTuple{12,UInt8}(oid))
+    de2_update = MongodbDataEntry(:key2, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
 
     #add
     v1 = getVariable(fg, :a)
@@ -807,17 +814,17 @@ function  DataEntriesTestBlock!(fg, v2)
     #list
     entries = getDataEntries(fg, :a)
     @test length(entries) == 2
-    @test issetequal(map(e->e.key, entries), [:key1, :key2])
+    @test issetequal(map(e->e.label, entries), [:key1, :key2])
     @test length(getDataEntries(fg, :b)) == 1
 
     @test issetequal(listDataEntries(fg, :a), [:key1, :key2])
     @test listDataEntries(fg, :b) == Symbol[:key2]
 
     #delete
-    @test deleteDataEntry!(v1, :key1) == v1
+    @test deleteDataEntry!(v1, de1) == de1
     @test listDataEntries(v1) == Symbol[:key2]
     #delete from dfg
-    @test deleteDataEntry!(fg, :a, :key2) == v1
+    @test deleteDataEntry!(fg, :a, :key2) == de2_update
     @test listDataEntries(v1) == Symbol[]
 end
 
@@ -1374,5 +1381,74 @@ function CopyFunctionsTest(testDFGAPI; kwargs...)
 
     # GraphsDFG(dfg::AbstractDFG) = convert(GraphsDFG,dfg)
     # GraphsDFG(dfg)
+
+end
+
+function FileDFGTestBlock(testDFGAPI; kwargs...)
+
+    # testDFGAPI = LightDFG
+    # kwargs = ()
+    # filename = "/tmp/fileDFG"
+    dfg, verts, facs = connectivityTestGraph(testDFGAPI; kwargs...)
+
+    for filename in ["/tmp/fileDFG", "/tmp/FileDFGExtension.tar.gz"]
+
+        v4 = getVariable(dfg, :x4)
+        vnd = getSolverData(v4)
+        # set everything
+        vnd.BayesNetVertID = :outid
+        push!(vnd.BayesNetOutVertIDs, :id)
+        vnd.bw[1] = 1.0
+        push!(vnd.dimIDs, 1)
+        vnd.dims = 1
+        vnd.dontmargin = true
+        vnd.eliminated = true
+        vnd.inferdim = 1.5
+        vnd.initialized = true
+        vnd.ismargin = true
+        push!(vnd.separator, :sep)
+        vnd.solveInProgress = 1
+        vnd.solvedCount = 2
+        vnd.val .= 2.0
+        #update
+        updateVariable!(dfg, v4)
+
+        f45 = getFactor(dfg, :x4x5f1)
+        fsd = f45.solverData
+        # set some factor solver data
+        push!(fsd.certainhypo, 2)
+        push!(fsd.edgeIDs, 3)
+        fsd.eliminated = true
+        push!(fsd.multihypo, 4.0)
+        fsd.nullhypo = 5.0
+        fsd.potentialused = true
+        fsd.solveInProgress = true
+        #update factor
+        updateFactor!(dfg, f45)
+
+        # Save and load the graph to test.
+        saveDFG(dfg, filename)
+
+        retDFG = testDFGAPI(userId="testUserId")
+        @info "Going to load $filename"
+
+        @test_throws AssertionError loadDFG!(retDFG,"badfilename")
+
+        loadDFG!(retDFG, filename)
+
+        @test issetequal(ls(dfg), ls(retDFG))
+        @test issetequal(lsf(dfg), lsf(retDFG))
+        for var in ls(dfg)
+            @test getVariable(dfg, var) == getVariable(retDFG, var)
+        end
+        for fact in lsf(dfg)
+            @test getFactor(dfg, fact) == getFactor(retDFG, fact)
+        end
+
+        # @test length(getDataEntries(getVariable(retDFG, :x1))) == 1
+        # @test typeof(getDataEntry(getVariable(retDFG, :x1),:testing)) == GeneralDataEntry
+        # @test length(getDataEntries(getVariable(retDFG, :x2))) == 1
+        # @test typeof(getDataEntry(getVariable(retDFG, :x2),:testing2)) == FileDataEntry
+    end
 
 end

@@ -197,24 +197,10 @@ end
 
 @testset "File Save Functions" begin
     rand(7)
-    filename = "/tmp/fileDFG"
-
-    dfg, vars, facs = connectivityTestGraph(testDFGAPI)
-
-    saveDFG(dfg, filename)
-
-    copyDfg = DistributedFactorGraphs._getDuplicatedEmptyDFG(dfg)
-
-    @info "Going to load $filename"
-
-    loadDFG!(copyDfg, filename)
-
-    for var in vars
-        @test getVariable(dfg, var.label) == getVariable(copyDfg, var.label)
-    end
-    for fac in facs
-        @test getFactor(dfg, fac.label) == getFactor(copyDfg, fac.label)
-        # @test getFactor(dfg, fac.label) == fac
+    if testDFGAPI <: InMemoryDFGTypes
+        FileDFGTestBlock(testDFGAPI)
+    else
+        @test_skip FileDFGTestBlock(testDFGAPI)
     end
 end
 #=

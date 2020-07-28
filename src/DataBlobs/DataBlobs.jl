@@ -1,14 +1,18 @@
-include("entities/AbstractDataStore.jl")
+# using DataFrames
+# using CSV
+using JSON
+using SHA
+
 include("entities/AbstractDataEntries.jl")
-include("entities/InMemoryDataStore.jl")
-include("entities/FileDataStore.jl")
+# include("entities/BlobStores.jl")
 
-include("services/AbstractDataStore.jl")
 include("services/AbstractDataEntries.jl")
-include("services/InMemoryDataStore.jl")
-include("services/FileDataStore.jl")
+include("services/DataEntryBlob.jl")
+include("services/BlobStores.jl")
 
-export AbstractDataStore
+include("services/FileDataEntryBlob.jl")
+include("services/InMemoryDataEntryBlob.jl")
+
 
 export AbstractDataEntry, GeneralDataEntry, MongodbDataEntry, FileDataEntry
 export InMemoryDataStore, FileDataStore
@@ -16,3 +20,5 @@ export InMemoryDataStore, FileDataStore
 export getData, addData!, updateData!, deleteData!, listStoreEntries
 export getDataBlob, addDataBlob!, updateDataBlob!, deleteDataBlob!, listDataBlobs
 export copyStore
+
+export getId, getHash, getCreatedTimestamp

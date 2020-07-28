@@ -75,7 +75,7 @@ function unpackVariable(dfg::G,
         for (k,bdeInter) in dataIntermed
             fullVal = JSON2.read(bdeInter, getfield(DistributedFactorGraphs, dataElemTypes[k]))
             variable.dataDict[k] = fullVal
-    end
+        end
     end
 
     return variable

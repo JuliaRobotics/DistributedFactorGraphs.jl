@@ -6,6 +6,7 @@ using DistributedFactorGraphs
 using Pkg
 using Dates
 using TimeZones
+using SHA
 
 ## To run the IIF tests, you need a local Neo4j with user/pass neo4j:test
 # To run a Docker image
@@ -58,7 +59,7 @@ end
 end
 
 @testset "Data Store Tests" begin
-    include("DataStoreTests.jl")
+    #include("DataStoreTests.jl")
     include("consol_DataEntryBlobTests.jl")
 end
 
