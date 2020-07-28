@@ -341,15 +341,6 @@ end
 
 """
     $(SIGNATURES)
-Deprecated: Add variable solver data, errors if it already exists.
-"""
-function addVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData, solverKey::Symbol=:default)::VariableNodeData
-    @warn "This function is deprecated and will be removed in the next version, please use addVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData)"
-    return addVariableSolverData!(dfg, variablekey, vnd)
-end
-
-"""
-    $(SIGNATURES)
 Add variable solver data, errors if it already exists.
 """
 function addVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData)::VariableNodeData
@@ -369,28 +360,6 @@ NOTE: Copies the solver data.
 addVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable, solverKey::Symbol=:default) =
     addVariableSolverData!(dfg, sourceVariable.label, deepcopy(getSolverData(sourceVariable, solverKey)))
 
-"""
-    $(SIGNATURES)
-Update variable solver data if it exists, otherwise add it.
-
-Notes:
-- `useCopy=true` to copy solver data and keep separate memory.
-- Use `fields` to updated only a few VND.fields while adhering to `useCopy`.
-
-Related
-
-mergeVariableSolverData!
-"""
-function updateVariableSolverData!(dfg::AbstractDFG,
-                                   variablekey::Symbol,
-                                   vnd::VariableNodeData,
-                                   solverKey::Symbol=:default,
-                                   useCopy::Bool=true,
-                                   fields::Vector{Symbol}=Symbol[],
-                                   verbose::Bool=true  )
-    @warn "This function is deprecated, please use updateVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData, solverKey::Symbol=:default, useCopy::Bool=true, fields::Vector{Symbol}=Symbol, verbose::Bool=true)"
-    return updateVariableSolverData!(dfg, variablekey, vnd, useCopy, fields, verbose)
-end
 
 """
     $(SIGNATURES)
@@ -557,15 +526,6 @@ getPPE(dfg::AbstractDFG, sourceVariable::VariableDataLevel1, ppekey::Symbol=defa
     $(SIGNATURES)
 Add variable PPE, errors if it already exists.
 """
-function addPPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default)::AbstractPointParametricEst where P <: AbstractPointParametricEst
-    @warn("This function is deprecated, please call addPPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P)")
-    return addPPE!(dfg, variablekey, ppe)
-end
-
-"""
-    $(SIGNATURES)
-Add variable PPE, errors if it already exists.
-"""
 function addPPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P)::AbstractPointParametricEst where {P <: AbstractPointParametricEst}
     var = getVariable(dfg, variablekey)
     if haskey(var.ppeDict, ppe.solverKey)
@@ -583,14 +543,6 @@ NOTE: Copies the PPE.
 addPPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol=:default) =
     addPPE!(dfg, sourceVariable.label, deepcopy(getPPE(sourceVariable, ppekey)))
 
-"""
-    $(SIGNATURES)
-Update PPE data if it exists, otherwise add it -- one call per `key::Symbol=:default`.
-"""
-function updatePPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P, ppekey::Symbol=:default)::P where P <: AbstractPointParametricEst
-    @warn("This function is deprecated, please call updatePPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P)")
-    return updatePPE!(dfg, variablekey, ppe)
-end
 
 """
     $(SIGNATURES)
