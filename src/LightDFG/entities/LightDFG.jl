@@ -57,24 +57,12 @@ Create an in-memory LightDFG with the following parameters:
 - F: Factor type
 """
 function LightDFG{T}(g::FactorGraph{Int,DFGVariable,DFGFactor}=FactorGraph{Int,DFGVariable,DFGFactor}();
-                     params=nothing,
                      kwargs...) where T <: AbstractParams
-
-    #TODO remove params deprecation error in v0.9
-    if params != nothing
-        @warn "keyword `params` is deprecated, please use solverParams"
-        return LightDFG{T,DFGVariable,DFGFactor}(g; solverParams = params, kwargs...)
-    end
     return LightDFG{T,DFGVariable,DFGFactor}(g; kwargs...)
 end
 
 function LightDFG(g::FactorGraph{Int,DFGVariable,DFGFactor}=FactorGraph{Int,DFGVariable,DFGFactor}();
-                  solverParams::T=NoSolverParams(), params=nothing, kwargs...) where T
-    #TODO remove params deprecation error in v0.9
-    if params != nothing
-        @warn "keyword `params` is deprecated, please use solverParams"
-        return LightDFG{typeof(params),DFGVariable,DFGFactor}(g; solverParams=params, kwargs...)
-    end
+                  solverParams::T=NoSolverParams(), kwargs...) where T
     return LightDFG{T,DFGVariable,DFGFactor}(g; solverParams=solverParams, kwargs...)
 end
 
