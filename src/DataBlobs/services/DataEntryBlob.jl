@@ -41,6 +41,42 @@ List all ids in the blob store.
 """
 function listDataBlobs end
 
+##==============================================================================
+## Data CRUD interface
+##==============================================================================
+
+"""
+$(SIGNATURES)
+Get the data entry and blob for the specified blobstore or dfg retured as a tuple.
+Related
+[`getDataEntry`](@ref)
+"""
+function getData end
+
+"""
+$(SIGNATURES)
+Add a data Entry and Blob to a distributed factor graph or BlobStore.
+Related
+[`addDataEntry!`](@ref)
+"""
+function addData! end
+
+"""
+    $(SIGNATURES)
+Update a data entry or blob to the blob store or dfg.
+Related
+[`updateDataEntry`](@ref)
+"""
+function updateData! end
+
+"""
+    $(SIGNATURES)
+Delete a data entry and blob from the blob store or dfg.
+Related
+[`deleteDataEntry`](@ref)
+"""
+function deleteData! end
+
 #
 # addDataBlob!(dfg::AbstractDFG,  entry::AbstractDataEntry, blob)
 # updateDataBlob!(dfg::AbstractDFG,  entry::AbstractDataEntry, blob)
