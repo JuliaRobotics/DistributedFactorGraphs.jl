@@ -409,6 +409,27 @@ function updateVariableSolverData!(dfg::AbstractDFG,
     return var.solverDataDict[vnd.solverKey]
 end
 
+
+function updateVariableSolverData!(dfg::AbstractDFG,
+                                   variablekey::Symbol,
+                                   vnd::VariableNodeData,
+                                   solverKey::Symbol,
+                                   useCopy::Bool=true,
+                                   fields::Vector{Symbol}=Symbol[],
+                                   verbose::Bool=true)
+
+    # TODO not very clean
+    if vnd.solverKey != solverKey
+        @warn "TODO It looks like solverKey as parameter is deprecated, set it in vnd, or keep this function?"
+        usevnd = useCopy ? deepcopy(vnd) : vnd
+        usevnd.solverKey = solverKey
+        return updateVariableSolverData!(dfg, variablekey, usevnd, useCopy, fields, verbose)
+    else
+        return updateVariableSolverData!(dfg, variablekey, vnd, useCopy, fields, verbose)
+    end
+end
+
+
 updateVariableSolverData!(dfg::AbstractDFG,
                           sourceVariable::DFGVariable,
                           solverKey::Symbol=:default,
@@ -441,7 +462,7 @@ function deepcopySolvekeys!(dfg::AbstractDFG,
   for x in labels
       sd = deepcopy(getSolverData(getVariable(dfg,x), src))
       sd.solverKey = dest
-      updateVariableSolverData!(dfg, x, true, Symbol[], verbose )
+      updateVariableSolverData!(dfg, x, sd, true, Symbol[], verbose )
   end
 end
 const deepcopySupersolve! = deepcopySolvekeys!
