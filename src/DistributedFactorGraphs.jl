@@ -289,17 +289,17 @@ include("Common.jl")
 # Data Blob extensions
 include("DataBlobs/DataBlobs.jl")
 
+if get(ENV, "DFG_USE_CGDFG", "") == "true"
+    @info "Detected ENV[\"DFG_USE_CGDFG\"]: Including optional CloudGraphsDFG (LGPL) Driver"
+    include("CloudGraphsDFG/CloudGraphsDFG.jl")
+    @reexport using .CloudGraphsDFGs
+end
+
 function __init__()
     @require GraphPlot = "a2cc645c-3eea-5389-862e-a155d0052231" begin
         @info "Including Plots"
         include("DFGPlots/DFGPlots.jl")
         @reexport using .DFGPlots
-    end
-
-    if get(ENV, "DFG_USE_CGDFG", "") == "true"
-        @info "Detected ENV[\"DFG_USE_CGDFG\"]: Including optional CloudGraphsDFG (LGPL) Driver"
-        Base.include(DistributedFactorGraphs, joinpath(@__DIR__, "CloudGraphsDFG/CloudGraphsDFG.jl"))
-        @eval DistributedFactorGraphs @reexport using .CloudGraphsDFGs
     end
 end
 
