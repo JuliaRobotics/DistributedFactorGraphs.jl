@@ -301,19 +301,6 @@ function __init__()
         include("DFGPlots/DFGPlots.jl")
         @reexport using .DFGPlots
     end
-    # if get(ENV, "DFG_USE_CGDFG", "") == "true"
-    #     @require DistributedFactorGraphs = "b5cc3c7e-6572-11e9-2517-99fb8daf2f04" begin
-    #         @info "Detected ENV[\"DFG_USE_CGDFG\"]: Including optional CloudGraphsDFG (LGPL) Driver"
-    #         include("CloudGraphsDFG/CloudGraphsDFG.jl")
-    #         @reexport using .CloudGraphsDFGs
-    #     end
-    # end
-    # && !Requires.isprecompiling()
-    # if get(ENV, "DFG_USE_CGDFG", "") == "true"
-    #     @info "Detected ENV[\"DFG_USE_CGDFG\"]: Including optional CloudGraphsDFG (LGPL) Driver"
-    #     Base.include(DistributedFactorGraphs, joinpath(@__DIR__, "CloudGraphsDFG/CloudGraphsDFG.jl"))
-    #     @eval DistributedFactorGraphs @reexport using .CloudGraphsDFGs
-    # end
 end
 
 
