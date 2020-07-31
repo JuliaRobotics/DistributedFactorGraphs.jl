@@ -38,7 +38,8 @@ function getSofttype(vnd::VariableNodeData)
 end
 
 # TODO: Confirm that we can switch this out, instead of retrieving the complete variable.
-getSofttype(v::DFGVariable{T}) where T <: InferenceVariable = T()
+# getSofttype(v::DFGVariable{T}) where T <: InferenceVariable = T()
+getSofttype(v::DFGVariable) = getSofttype(getSolverData(v))
 
 # Optimized in CGDFG
 getSofttype(dfg::AbstractDFG, lbl::Symbol) = getSofttype(getVariable(dfg,lbl))
