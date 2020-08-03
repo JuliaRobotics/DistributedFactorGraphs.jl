@@ -10,7 +10,7 @@ For now abstract `InferenceVariable`s are considered equal if they are the same 
 If your implentation has aditional properties such as `DynPose2` with `ut::Int64` (microsecond time) or support different manifolds
 implement compare if needed.
 =#
-==(a::InferenceVariable,b::InferenceVariable) = typeof(a) == typeof(b) && a.dims == b.dims && a.manifolds == b.manifolds
+# ==(a::InferenceVariable,b::InferenceVariable) = typeof(a) == typeof(b) && a.dims == b.dims && a.manifolds == b.manifolds
 
 ==(a::FactorOperationalMemory, b::FactorOperationalMemory) = typeof(a) == typeof(b)
 
