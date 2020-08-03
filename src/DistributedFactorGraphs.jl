@@ -109,6 +109,9 @@ export listTags, mergeTags!, removeTags!, emptyTags!
 #this isn't acttually implemented. TODO remove or implement
 export addTags!
 
+import Base: copy
+export copy
+
 ##------------------------------------------------------------------------------
 # Variable
 ##------------------------------------------------------------------------------
