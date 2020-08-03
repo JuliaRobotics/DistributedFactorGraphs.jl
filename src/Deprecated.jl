@@ -174,3 +174,15 @@ const fetchDataEntryElement = getDataEntryBlob
 const fetchData = getDataEntryBlob
 
 #
+
+## softtype deprections
+function Base.getproperty(x::InferenceVariable, f::Symbol)
+  if f==:dims
+      Base.depwarn("Softtype $(typeof(x)), field dims is deprecated, extend and use `getDims` instead",:getproperty)
+  elseif f==:manifolds
+      Base.depwarn("Softtype $(typeof(x)), field manifolds is deprecated, extend and use `getManifolds` instead",:getproperty)
+  else
+      Base.depwarn("Softtype $(typeof(x)), will be required to be a singleton type in the future and can no longer have fields. *.$f called",:getproperty)
+  end
+  return getfield(x,f)
+end
