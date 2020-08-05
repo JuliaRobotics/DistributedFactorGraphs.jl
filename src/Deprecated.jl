@@ -182,7 +182,10 @@ function Base.getproperty(x::InferenceVariable, f::Symbol)
   elseif f==:manifolds
       Base.depwarn("Softtype $(typeof(x)), field manifolds is deprecated, extend and use `getManifolds` instead",:getproperty)
   else
-      Base.depwarn("Softtype $(typeof(x)), will be required to be a singleton type in the future and can no longer have fields. *.$f called",:getproperty)
+    if !(@isdefined softtypeFieldsWarnOnce)
+      Base.depwarn("Softtype $(typeof(x)), will be required to be a singleton type in the future and can no longer have fields. *.$f called. Further warnings are suppressed",:getproperty)
+      global softtypeFieldsWarnOnce = true
+    end
   end
   return getfield(x,f)
 end
