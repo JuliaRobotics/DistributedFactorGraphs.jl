@@ -273,14 +273,14 @@ setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v
     $(SIGNATURES)
 Get the small data for a variable.
 """
-getSmallData(v::DFGVariable)::Dict{String, SmallDataType} = v.smallData
+getSmallData(v::DFGVariable)::Dict{Symbol, SmallDataTypes} = v.smallData
 
 """
     $(SIGNATURES)
 Set the small data for a variable.
 This will overwrite old smallData.
 """
-function setSmallData!(v::DFGVariable, smallData::Dict{String, SmallDataType})
+function setSmallData!(v::DFGVariable, smallData::Dict{Symbol, SmallDataTypes})
     empty!(v.smallData)
     merge!(v.smallData, smallData)
 end

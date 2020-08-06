@@ -238,7 +238,7 @@ function DFGVariableSCA()
 
     v1_lbl = :a
     v1_tags = Set([:VARIABLE, :POSE])
-    small = Dict("small"=>"data")
+    small = Dict{Symbol, SmallDataTypes}(:small=>"data")
     testTimestamp = now(localzone())
     # Constructors
     v1 = DFGVariable(v1_lbl, TestSofttype1(), tags=v1_tags, solvable=0, solverDataDict=Dict(:default=>VariableNodeData{TestSofttype1}()))
@@ -262,7 +262,7 @@ function DFGVariableSCA()
 
     @test getPPEDict(v1) == v1.ppeDict
 
-    @test getSmallData(v1) == Dict{String,String}()
+    @test getSmallData(v1) == Dict{Symbol,SmallDataTypes}()
 
     @test getSofttype(v1) == TestSofttype1()
 

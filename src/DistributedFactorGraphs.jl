@@ -123,6 +123,8 @@ export getSolverData
 
 export getVariableType
 
+# Small Data CRUD
+export SmallDataTypes, getSmallData, addSmallData!, updateSmallData!, deleteSmallData!, clearSmallData!
 export getSmallData, setSmallData!
 
 
