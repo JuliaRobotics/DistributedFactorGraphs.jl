@@ -262,7 +262,7 @@ function DFGVariableSCA()
 
     @test getPPEDict(v1) == v1.ppeDict
 
-    @test getSmallData(v1) == Dict{String,String}()
+    @test getSmallData(v1) == Dict{Symbol,SmallDataType}()
 
     @test getSofttype(v1) == TestSofttype1()
 

@@ -4,16 +4,6 @@
 
 abstract type InferenceVariable end
 
-"""
-    $SIGNATURES
-Interface function to return the softtype dimention of an InferenceVariable, extend this function for all Types<:InferenceVariable.
-"""
-function getDimension end
-"""
-    $SIGNATURES
-Interface function to return the softtype manifolds of an InferenceVariable, extend this function for all Types<:InferenceVariable.
-"""
-function getManifolds end
 ##==============================================================================
 ## VariableNodeData
 ##==============================================================================
@@ -96,6 +86,28 @@ VariableNodeData(val::Array{Float64,2},
 
 VariableNodeData(softtype::T; solverKey::Symbol=:default) where T <: InferenceVariable =
     VariableNodeData{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], softtype, false, 0.0, false, false, 0, 0, solverKey)
+
+## Copying
+function copy(vnd::VariableNodeData; solverKey::Union{Nothing,Symbol}=nothing)
+    return VariableNodeData(
+        deepcopy(vnd.val),
+        deepcopy(vnd.bw),
+        deepcopy(vnd.BayesNetOutVertIDs),
+        deepcopy(vnd.dimIDs),
+        vnd.dims,
+        vnd.eliminated,
+        vnd.BayesNetVertID,
+        deepcopy(vnd.separator),
+        vnd.softtype,
+        vnd.initialized,
+        vnd.inferdim,
+        vnd.ismargin,
+        vnd.dontmargin,
+        vnd.solveInProgress,
+        vnd.solvedCount,
+        solverKey == nothing ? vnd.solverKey : solverKey)
+end
+
 
 ##==============================================================================
 ## PackedVariableNodeData.jl
@@ -204,6 +216,15 @@ end
 
 MeanMaxPPE(solverKey::Symbol, suggested::Vector{Float64}, max::Vector{Float64}, mean::Vector{Float64}) = MeanMaxPPE(solverKey, suggested, max, mean, now(UTC))
 
+## Copying
+function copy(ppe::MeanMaxPPE; solverKey::Union{Nothing,Symbol}=nothing)
+    return MeanMaxPPE(solverKey == nothing ? ppe.solverKey : solverKey,
+    ppe.suggested,
+    ppe.max,
+    ppe.mean,
+    ppe.lastUpdatedTimestamp)
+end
+
 ## Metadata
 """
     $SIGNATURES
@@ -250,7 +271,7 @@ struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
     solverDataDict::Dict{Symbol, VariableNodeData{T}}
     """Dictionary of small data associated with this variable.
     Accessors: [`getSmallData`](@ref), [`setSmallData!`](@ref)"""
-    smallData::Dict{String, SmallDataType}
+    smallData::Dict{Symbol, SmallDataType}
     """Dictionary of large data associated with this variable.
     Accessors: [`addDataEntry!`](@ref), [`getDataEntry`](@ref), [`updateDataEntry!`](@ref), and [`deleteDataEntry!`](@ref)"""
     dataDict::Dict{Symbol, AbstractDataEntry}
@@ -326,15 +347,6 @@ Base.setproperty!(x::DFGVariable,f::Symbol, val) = begin
         setfield!(x,f,val)
     end
 end
-
-
-##------------------------------------------------------------------------------
-# TODO: can't see the reason to overwrite copy, leaving it here for now
-# function Base.copy(o::DFGVariable)::DFGVariable
-#     return DFGVariable(o.label, getSofttype(o)(), tags=copy(o.tags), estimateDict=copy(o.estimateDict),
-#                         solverDataDict=copy(o.solverDataDict), smallData=copy(o.smallData),
-#                         dataDict=copy(o.dataDict), solvable=getSolvable(o))
-# end
 
 ##------------------------------------------------------------------------------
 ## DFGVariableSummary lv1

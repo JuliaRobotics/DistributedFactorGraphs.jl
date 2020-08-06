@@ -39,7 +39,7 @@ function unpackVariable(dfg::G,
         tags = Symbol.(packedProps["tags"])
     end
     ppeDict = unpackPPEs ? JSON2.read(packedProps["ppeDict"], Dict{Symbol, MeanMaxPPE}) : Dict{Symbol, MeanMaxPPE}()
-    smallData = JSON2.read(packedProps["smallData"], Dict{String, SmallDataType})
+    smallData = JSON2.read(packedProps["smallData"], Dict{Symbol, SmallDataType})
 
     softtypeString = packedProps["softtype"]
     softtype = getTypeFromSerializationModule(dfg, Symbol(softtypeString))
