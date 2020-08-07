@@ -85,7 +85,6 @@ listDataBlobs(store::AbstractDataStore) = error("AbstractDataStore $(typeof(stor
 
 
 
-
 """
 $(SIGNATURES)
 Add Big Data Entry to distributed factor graph.
@@ -189,3 +188,19 @@ function Base.getproperty(x::InferenceVariable, f::Symbol)
   end
   return getfield(x,f)
 end
+
+
+
+# SmallData is now a Symbol Dict
+function createSymbolDict(d::Dict{String, String})
+  newsmalld = Dict{Symbol,SmallDataTypes}() 
+  for p in pairs(d)
+    push!(newsmalld, Symbol(p.first) => p.second)
+  end
+  return newsmalld
+end
+
+@deprecate setSmallData!(v::DFGVariable, smallData::Dict{String, String}) setSmallData!(v, createSymbolDict(smallData)) 
+
+
+

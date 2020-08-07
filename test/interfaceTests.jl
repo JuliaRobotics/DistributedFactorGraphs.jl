@@ -108,6 +108,10 @@ end
     VSDTestBlock!(fg1, var1)
 end
 
+@testset "SmallData CRUD" begin
+    smallDataTestBlock!(fg1)
+end
+
 @testset "Data Entries and Blobs" begin
     if typeof(fg1) <: InMemoryDFGTypes
         DataEntriesTestBlock!(fg1, var2)

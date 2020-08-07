@@ -166,7 +166,6 @@ end
 ##==============================================================================
 
 #NOTE with API standardization this should become something like:
-# JT, I however do not feel we should force it, as I prever dot notation
 getUserData(dfg::AbstractDFG, key::Symbol)::String = dfg.userData[key]
 getRobotData(dfg::AbstractDFG, key::Symbol)::String = dfg.robotData[key]
 getSessionData(dfg::AbstractDFG, key::Symbol)::String = dfg.sessionData[key]
