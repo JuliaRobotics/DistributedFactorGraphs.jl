@@ -272,18 +272,87 @@ setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v
 """
     $(SIGNATURES)
 Get the small data for a variable.
+Note: Rather use SmallData CRUD
 """
-getSmallData(v::DFGVariable)::Dict{String, String} = v.smallData
+getSmallData(v::DFGVariable) = v.smallData
 
 """
     $(SIGNATURES)
 Set the small data for a variable.
 This will overwrite old smallData.
+Note: Rather use SmallData CRUD
 """
-function setSmallData!(v::DFGVariable, smallData::Dict{String, String})::Dict{String, String}
+function setSmallData!(v::DFGVariable, smallData::Dict{Symbol, SmallDataTypes})
     empty!(v.smallData)
     merge!(v.smallData, smallData)
 end
+
+# Generic SmallData CRUD
+# TODO optimize for difference in in-memory by extending in other drivers. 
+
+"""
+    $(SIGNATURES)
+Get the small data entry at `key` for variable `label` in `dfg`
+"""
+function getSmallData(dfg::AbstractDFG, label::Symbol, key::Symbol) 
+    getVariable(dfg, label).smallData[key]
+end
+
+"""
+    $(SIGNATURES)
+Add a small data pair `key=>value` for variable `label` in `dfg`
+"""
+function addSmallData!(dfg::AbstractDFG, label::Symbol, pair::Pair{Symbol, <:SmallDataTypes})
+    v = getVariable(dfg, label)
+    haskey(v.smallData, pair.first) && error("$(pair.first) already exists.")
+    push!(v.smallData, pair)
+    updateVariable!(dfg, v)
+    return v.smallData #or pair TODO
+end
+
+"""
+    $(SIGNATURES)
+Update a small data pair `key=>value` for variable `label` in `dfg`
+"""
+function updateSmallData!(dfg::AbstractDFG, label::Symbol, pair::Pair{Symbol, <:SmallDataTypes})
+    v = getVariable(dfg, label)
+    !haskey(v.smallData, pair.first) && @warn("$(pair.first) does not exist, adding.")
+    push!(v.smallData, pair)
+    updateVariable!(dfg, v)
+    return v.smallData #or pair TODO
+end
+
+"""
+    $(SIGNATURES)
+Delete a small data entry at `key` for variable `label` in `dfg`
+"""
+function deleteSmallData!(dfg::AbstractDFG, label::Symbol, key::Symbol)
+    v = getVariable(dfg, label)
+    rval = pop!(v.smallData, key)
+    updateVariable!(dfg, v)
+    return rval
+end
+
+"""
+    $(SIGNATURES)
+List all small data keys for a variable `label` in `dfg`
+"""
+function listSmallData(dfg::AbstractDFG, label::Symbol)
+    v = getVariable(dfg, label)
+    return collect(keys(v.smallData)) #or pair TODO
+end
+
+"""
+    $(SIGNATURES)
+Empty all small data from variable `label` in `dfg`
+"""
+function emptySmallData!(dfg::AbstractDFG, label::Symbol)
+    v = getVariable(dfg, label)
+    empty!(v.smallData)
+    updateVariable!(dfg, v)
+    return v.smallData #or pair TODO
+end
+
 
 ##------------------------------------------------------------------------------
 ## Data Entries and Blobs

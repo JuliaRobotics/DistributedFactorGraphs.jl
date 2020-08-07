@@ -217,6 +217,8 @@ getEstimateFields(::MeanMaxPPE) = [:suggested, :max, :mean]
 ## DFG Variables
 ##==============================================================================
 
+const SmallDataTypes = Union{Int, Float64, String, Bool, Vector{Int}, Vector{Float64}, Vector{String}, Vector{Bool}}
+
 ##------------------------------------------------------------------------------
 ## DFGVariable lv2
 ##------------------------------------------------------------------------------
@@ -248,7 +250,7 @@ struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
     solverDataDict::Dict{Symbol, VariableNodeData{T}}
     """Dictionary of small data associated with this variable.
     Accessors: [`getSmallData`](@ref), [`setSmallData!`](@ref)"""
-    smallData::Dict{String, String}#Ref{Dict{String, String}} #why was Ref here?
+    smallData::Dict{Symbol, SmallDataTypes}
     """Dictionary of large data associated with this variable.
     Accessors: [`addDataEntry!`](@ref), [`getDataEntry`](@ref), [`updateDataEntry!`](@ref), and [`deleteDataEntry!`](@ref)"""
     dataDict::Dict{Symbol, AbstractDataEntry}
@@ -270,7 +272,7 @@ function DFGVariable(label::Symbol, softtype::T;
             tags::Set{Symbol}=Set{Symbol}(),
             estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
             solverDataDict::Dict{Symbol, VariableNodeData{T}}=Dict{Symbol, VariableNodeData{T}}(),
-            smallData::Dict{String, String}=Dict{String, String}(),
+            smallData::Dict{Symbol, SmallDataTypes}=Dict{Symbol, SmallDataTypes}(),
             dataDict::Dict{Symbol, AbstractDataEntry}=Dict{Symbol,AbstractDataEntry}(),
             solvable::Int=1) where {T <: InferenceVariable}
 
@@ -287,7 +289,7 @@ function DFGVariable(label::Symbol,
             nstime::Nanosecond = Nanosecond(0),
             tags::Set{Symbol}=Set{Symbol}(),
             estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
-            smallData::Dict{String, String}=Dict{String, String}(),
+            smallData::Dict{Symbol, SmallDataTypes}=Dict{Symbol, SmallDataTypes}(),
             dataDict::Dict{Symbol, AbstractDataEntry}=Dict{Symbol,AbstractDataEntry}(),
             solvable::Int=1) where {T <: InferenceVariable}
     if timestamp isa DateTime

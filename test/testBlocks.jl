@@ -238,7 +238,7 @@ function DFGVariableSCA()
 
     v1_lbl = :a
     v1_tags = Set([:VARIABLE, :POSE])
-    small = Dict("small"=>"data")
+    small = Dict{Symbol, SmallDataTypes}(:small=>"data")
     testTimestamp = now(localzone())
     # Constructors
     v1 = DFGVariable(v1_lbl, TestSofttype1(), tags=v1_tags, solvable=0, solverDataDict=Dict(:default=>VariableNodeData{TestSofttype1}()))
@@ -262,7 +262,7 @@ function DFGVariableSCA()
 
     @test getPPEDict(v1) == v1.ppeDict
 
-    @test getSmallData(v1) == Dict{String,String}()
+    @test getSmallData(v1) == Dict{Symbol,SmallDataTypes}()
 
     @test getSofttype(v1) == TestSofttype1()
 
@@ -766,6 +766,42 @@ function  VSDTestBlock!(fg, v1)
     # mergeGraphVariableData!
 
 end
+
+function smallDataTestBlock!(fg)
+
+    @test listSmallData(fg, :a) == Symbol[:small]
+    @test listSmallData(fg, :b) == Symbol[]
+    @test small = getSmallData(fg, :a, :small) == "data"
+
+    @test addSmallData!(fg, :a, :a=>5) == getVariable(fg, :a).smallData
+    @test addSmallData!(fg, :a, :b=>10.0) == getVariable(fg, :a).smallData
+    @test addSmallData!(fg, :a, :c=>true) == getVariable(fg, :a).smallData
+    @test addSmallData!(fg, :a, :d=>"yes") == getVariable(fg, :a).smallData
+    @test addSmallData!(fg, :a, :e=>[1, 2, 3])  == getVariable(fg, :a).smallData
+    @test addSmallData!(fg, :a, :f=>[1.4, 2.5, 3.6]) == getVariable(fg, :a).smallData
+    @test addSmallData!(fg, :a, :g=>["yes", "maybe"]) == getVariable(fg, :a).smallData
+    @test addSmallData!(fg, :a, :h=>[true, false]) == getVariable(fg, :a).smallData
+
+    @test_throws ErrorException addSmallData!(fg, :a, :a=>3)
+    @test updateSmallData!(fg, :a, :a=>3) == getVariable(fg, :a).smallData
+    
+    @test_throws MethodError addSmallData!(fg, :a, :no=>0x01)
+    @test_throws MethodError addSmallData!(fg, :a, :no=>1f0)
+    @test_throws MethodError addSmallData!(fg, :a, :no=>Nanosecond(3))
+    @test_throws MethodError addSmallData!(fg, :a, :no=>[0x01])
+    @test_throws MethodError addSmallData!(fg, :a, :no=>[1f0])
+    @test_throws MethodError addSmallData!(fg, :a, :no=>[Nanosecond(3)])
+    
+    @test deleteSmallData!(fg, :a, :a) == 3
+    @test updateSmallData!(fg, :a, :a=>3) == getVariable(fg, :a).smallData
+    @test length(listSmallData(fg, :a)) == 9
+    emptySmallData!(fg, :a)
+    @test length(listSmallData(fg, :a)) == 0
+
+end
+
+
+
 
 function  DataEntriesTestBlock!(fg, v2)
     # "Data Entries"
