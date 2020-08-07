@@ -272,7 +272,7 @@ function DFGVariable(label::Symbol, softtype::T;
             tags::Set{Symbol}=Set{Symbol}(),
             estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
             solverDataDict::Dict{Symbol, VariableNodeData{T}}=Dict{Symbol, VariableNodeData{T}}(),
-            smallData::Dict{String, SmallDataTypes}=Dict{String, SmallDataTypes}(),
+            smallData::Dict{Symbol, SmallDataTypes}=Dict{Symbol, SmallDataTypes}(),
             dataDict::Dict{Symbol, AbstractDataEntry}=Dict{Symbol,AbstractDataEntry}(),
             solvable::Int=1) where {T <: InferenceVariable}
 
@@ -289,7 +289,7 @@ function DFGVariable(label::Symbol,
             nstime::Nanosecond = Nanosecond(0),
             tags::Set{Symbol}=Set{Symbol}(),
             estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
-            smallData::Dict{String, SmallDataTypes}=Dict{String, SmallDataTypes}(),
+            smallData::Dict{Symbol, SmallDataTypes}=Dict{Symbol, SmallDataTypes}(),
             dataDict::Dict{Symbol, AbstractDataEntry}=Dict{Symbol,AbstractDataEntry}(),
             solvable::Int=1) where {T <: InferenceVariable}
     if timestamp isa DateTime
