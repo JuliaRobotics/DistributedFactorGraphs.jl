@@ -50,7 +50,7 @@ deleteData!(dfg, :x2, :random)
 ##==============================================================================
 ## FileDataEntry
 ##==============================================================================
-ade,adb = addData!(FileDataEntry, dfg, :x1, :random, "/tmp/dfgFilestore", dataset1)
+ade,adb = addData!(FileDataEntry, dfg, :x1, :random, "/tmp/dfgFileEntryBlob", dataset1)
 gde,gdb = getData(dfg, :x1, :random)
 dde,ddb = deleteData!(dfg, :x1, :random)
 
@@ -73,7 +73,7 @@ deleteData!(dfg, :x2, :random)
 ##==============================================================================
 
 # Create a data store and add it to DFG
-ds = FolderStore{Vector{UInt8}}(:filestore, "/tmp/dfgFilestore")
+ds = FolderStore{Vector{UInt8}}(:filestore, "/tmp/dfgFolderStore")
 addBlobStore!(dfg, ds)
 
 ade,adb = addData!(dfg, :filestore, :x1, :random, dataset1)
