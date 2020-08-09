@@ -51,6 +51,37 @@ Alias for [`getSofttype`](@ref).
 """
 getVariableType(args...) = getSofttype(args...)
 
+
+##------------------------------------------------------------------------------
+## InferenceVariable
+##------------------------------------------------------------------------------
+"""
+    $SIGNATURES
+Interface function to return the softtype dimention of an InferenceVariable, extend this function for all Types<:InferenceVariable.
+"""
+function getDimension end
+"""
+    $SIGNATURES
+Interface function to return the softtype manifolds of an InferenceVariable, extend this function for all Types<:InferenceVariable.
+"""
+function getManifolds end
+
+"""
+   @defVariable StructName dimension manifolds
+A macro to create a new variable with name `StructName`, dimension and manifolds.
+Example:
+```
+DFG.@defVariable Pose2 3 (:Euclid, :Euclid, :Circular)
+```
+"""
+macro defVariable(structname, dimension::Int, manifolds)#::Vararg{Symbol})#NTuple{dimension, Symbol})
+    # :(struct $structname <: InferenceVariable end)
+    return esc(quote
+        struct $structname <: InferenceVariable end
+        DistributedFactorGraphs.getDimension(::$structname) = $dimension
+        DistributedFactorGraphs.getManifolds(::$structname) = $manifolds
+    end)
+end
 ##------------------------------------------------------------------------------
 ## solvedCount
 ##------------------------------------------------------------------------------

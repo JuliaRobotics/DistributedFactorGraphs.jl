@@ -6,11 +6,13 @@ using UUIDs
 import Base: convert
 
 # Test InferenceVariable Types
-struct TestSofttype1 <: InferenceVariable
-    dims::Int
-    manifolds::Tuple{Symbol}
-    TestSofttype1() = new(1,(:Euclid,))
-end
+# struct TestSofttype1 <: InferenceVariable
+#     dims::Int
+#     manifolds::Tuple{Symbol}
+#     TestSofttype1() = new(1,(:Euclid,))
+# end
+
+DFG.@defVariable TestSofttype1 1 (:Euclid,)
 
 struct TestSofttype2 <: InferenceVariable
     dims::Int
