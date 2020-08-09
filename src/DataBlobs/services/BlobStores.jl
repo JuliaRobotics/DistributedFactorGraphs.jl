@@ -124,7 +124,17 @@ export FolderStore
 struct FolderStore{T} <: AbstractBlobStore{T}
     key::Symbol
     folder::String
+    function FolderStore{T}(key, folder) where T
+        if !isdir(folder)
+            @info "Folder '$folder' doesn't exist - creating."
+            # create new folder
+            mkpath(folder)
+        end
+        return new(key, folder)
+    end
 end
+
+FolderStore(foldername::String) = FolderStore{Vector{UInt8}}(:default_folder_store, foldername)
 
 blobfilename(store::FolderStore, entry::BlobStoreEntry) = joinpath(store.folder,"$(entry.id).dat")
 entryfilename(store::FolderStore, entry::BlobStoreEntry) = joinpath(store.folder,"$(entry.id).json")

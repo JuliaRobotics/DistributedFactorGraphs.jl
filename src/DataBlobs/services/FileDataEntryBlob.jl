@@ -15,12 +15,12 @@ struct FileDataEntry <: AbstractDataEntry
 
     function FileDataEntry(label, id, folder, hash, timestamp)
         if !isdir(folder)
-            @warn "Folder '$folder' doesn't exist - creating."
+            @info "Folder '$folder' doesn't exist - creating."
             # create new folder
             mkpath(folder)
         end
         return new(label, id, folder, hash, timestamp)
-      end
+    end
 end
 
 # @generated function ==(x::FileDataEntry, y::FileDataEntry)
