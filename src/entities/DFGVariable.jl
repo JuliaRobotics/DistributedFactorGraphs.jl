@@ -4,16 +4,6 @@
 
 abstract type InferenceVariable end
 
-"""
-    $SIGNATURES
-Interface function to return the softtype dimention of an InferenceVariable, extend this function for all Types<:InferenceVariable.
-"""
-function getDimension end
-"""
-    $SIGNATURES
-Interface function to return the softtype manifolds of an InferenceVariable, extend this function for all Types<:InferenceVariable.
-"""
-function getManifolds end
 ##==============================================================================
 ## VariableNodeData
 ##==============================================================================

@@ -6,11 +6,13 @@ using UUIDs
 import Base: convert
 
 # Test InferenceVariable Types
-struct TestSofttype1 <: InferenceVariable
-    dims::Int
-    manifolds::Tuple{Symbol}
-    TestSofttype1() = new(1,(:Euclid,))
-end
+# struct TestSofttype1 <: InferenceVariable
+#     dims::Int
+#     manifolds::Tuple{Symbol}
+#     TestSofttype1() = new(1,(:Euclid,))
+# end
+
+DFG.@defVariable TestSofttype1 1 (:Euclid,)
 
 struct TestSofttype2 <: InferenceVariable
     dims::Int
@@ -288,9 +290,10 @@ function DFGVariableSCA()
 
     #no accessors on dataDict, only CRUD
 
-    #deprecated
-    # @test @test_deprecated solverData(v1, :default) === v1.solverDataDict[:default]
-
+    #softtype functions
+    testvar = TestSofttype1()
+    @test getDimension(testvar) == 1
+    @test getManifolds(testvar) == (:Euclid,)
 
     # #TODO sort out
     # getPPEs
