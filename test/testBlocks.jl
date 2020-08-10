@@ -290,9 +290,10 @@ function DFGVariableSCA()
 
     #no accessors on dataDict, only CRUD
 
-    #deprecated
-    # @test @test_deprecated solverData(v1, :default) === v1.solverDataDict[:default]
-
+    #softtype functions
+    testvar = TestSofttype1()
+    @test getDimension(testvar) == 1
+    @test getManifolds(testvar) == (:Euclid,)
 
     # #TODO sort out
     # getPPEs

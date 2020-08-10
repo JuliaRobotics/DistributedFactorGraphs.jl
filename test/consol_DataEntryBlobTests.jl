@@ -90,6 +90,13 @@ ade2,adb2 = addData!(dfg, :x2, deepcopy(ade), dataset1)
 @test adb == adb2# == adb3
 
 deleteData!(dfg, :x2, :random)
+
+#test default folder store
+dfs = FolderStore("/tmp/defaultfolderstore")
+@test dfs.folder == "/tmp/defaultfolderstore"
+@test dfs.key == :default_folder_store
+@test dfs isa FolderStore{Vector{UInt8}}
+
 ##==============================================================================
 ## Unimplemented store
 ##==============================================================================
