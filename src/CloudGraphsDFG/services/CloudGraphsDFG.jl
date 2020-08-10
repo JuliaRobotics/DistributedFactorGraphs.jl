@@ -175,7 +175,7 @@ function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable; skipAddErro
     !skipAddError && !exist && @warn "Variable label '$(variable.label)' does not exist in the factor graph, adding"
 
     # Create/update the base variable
-    # NOTE: We are no merging the variable.tags into the labels anymore. We can index by that but not
+    # NOTE: We are not merging the variable.tags into the labels anymore. We can index by that but not
     # going to pollute the graph with unnecessary (and potentially dangerous) labels.
     addProps = Dict("softtype" => "\"$(string(typeof(getSofttype(variable))))\"")
     query = """
@@ -239,6 +239,10 @@ function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String})
     for solverKey in listVariableSolverData(dfg, label)
         variable.solverDataDict[solverKey] = getVariableSolverData(dfg, label, solverKey)
     end
+    dataDict = getDataEntries(dfg, label)
+    for (k,v) in dataDict
+        variable.dataDict[k] = v
+    end
     # TODO - data entries
 
     return variable
@@ -253,6 +257,9 @@ function mergeVariableData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable; cu
     end
     for (k,v) in sourceVariable.solverDataDict
         updateVariableSolverData!(dfg, getLabel(sourceVariable), v, currentTransaction=currentTransaction)
+    end
+    for (k,v) in sourceVariable.dataDict
+        updateDatEntry!(dfg, getLabel(sourceVariable), v, currentTransaction=currentTransaction)
     end
     return sourceVariable
 end
@@ -630,6 +637,83 @@ function deletePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppekey::Symbol=:de
         ppekey,
         currentTransaction=currentTransaction)
     return _unpackPPE(dfg, props)
+end
+
+## DataEntry CRUD
+
+function getDataEntries(dfg::CloudGraphsDFG, label::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+    entries = Dict{Symbol, BlobStoreEntry}()
+    # TODO: Optimize if necessary.
+    for key in listDataEntries(dfg, label, currentTransaction=currentTransaction)
+        entry = getDataEntry(dfg, label, key, currentTransaction=currentTransaction)
+        entries[entry.label] = entry
+    end
+    return entries
+end
+
+function listDataEntries(dfg::CloudGraphsDFG, label::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+    return _listVarSubnodesForType(
+        dfg, 
+        label, 
+        BlobStoreEntry, 
+        "label"; 
+        currentTransaction=currentTransaction)
+end
+
+function getDataEntry(dfg::CloudGraphsDFG, label::Symbol, key::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+    properties = _getVarSubnodeProperties(
+        dfg, label, 
+        BlobStoreEntry, 
+        key; 
+        currentTransaction=currentTransaction)
+    return Unmarshal.unmarshal(
+        BlobStoreEntry,
+        properties)
+end
+
+function addDataEntry!(dfg::CloudGraphsDFG, label::Symbol, bde::AbstractDataEntry; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+    if bde.label in listDataEntries(dfg, label, currentTransaction=currentTransaction)
+        error("Data label '$(bde.label)' already exists")
+    end
+    packed = _matchmergeVariableSubnode!(
+        dfg,
+        label,
+        _getLabelsForInst(dfg, bde, parentKey=label),
+        bde,
+        :DATA,
+        currentTransaction=currentTransaction)
+    return Unmarshal.unmarshal(
+            BlobStoreEntry,
+            packed)
+end
+
+function updateDataEntry!(dfg::CloudGraphsDFG, label::Symbol,  bde::AbstractDataEntry; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+    if !(bde.label in listDataEntries(dfg, label, currentTransaction=currentTransaction))
+        @warn "Data label '$(bde.label)' does not exist, adding"
+    end
+    packed = _matchmergeVariableSubnode!(
+        dfg,
+        label,
+        _getLabelsForInst(dfg, bde, parentKey=label),
+        bde,
+        :DATA,
+        currentTransaction=currentTransaction)
+    return Unmarshal.unmarshal(
+            BlobStoreEntry,
+            packed)
+end
+
+function deleteDataEntry!(dfg::CloudGraphsDFG, label::Symbol, key::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+    props = _deleteVarSubnode!(
+        dfg,
+        label,
+        :DATA,
+        _getLabelsForType(dfg, BlobStoreEntry, parentKey=label),
+        key,
+        currentTransaction=currentTransaction)
+    return Unmarshal.unmarshal(
+        BlobStoreEntry,
+        props)
 end
 
 ## VariableSolverData CRUD

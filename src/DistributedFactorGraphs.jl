@@ -54,7 +54,8 @@ export getBlobStore,
        addBlobStore!,
        updateBlobStore!,
        deleteBlobStore!,
-       emptyBlobStore!
+       emptyBlobStore!,
+       listBlobStores
 
 # TODO Not sure these are needed or should work everywhere, implement in cloud?
 export updateUserData!, updateRobotData!, updateSessionData!, deleteUserData!, deleteRobotData!, deleteSessionData!

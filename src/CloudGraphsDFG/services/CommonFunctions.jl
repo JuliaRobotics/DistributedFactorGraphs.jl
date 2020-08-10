@@ -147,6 +147,9 @@ function _structToNeo4jProps(inst::Union{User, Robot, Session, PVND, N, APPE, AB
         if field isa ZonedDateTime
             val = "datetime(\"$(string(field))\")"
         end
+        if field isa UUID
+            val = "\"$(string(field))\""
+        end
         # TODO: Switch this to decorator pattern
         if typeof(inst) <: DFGNode
             # Variables
@@ -248,7 +251,7 @@ function _getLabelsForInst(dfg::CloudGraphsDFG,
     typeof(inst) <: DFGFactor && push!(labels, String(getLabel(inst)))
     typeof(inst) <: AbstractPointParametricEst && push!(labels, String(inst.solverKey))
     typeof(inst) <: VariableNodeData && push!(labels, String(inst.solverKey))
-    typeof(inst) <: AbstractDataEntry && push!(labels, String(inst.key))
+    typeof(inst) <: AbstractDataEntry && push!(labels, String(inst.label))
     return labels
 end
 

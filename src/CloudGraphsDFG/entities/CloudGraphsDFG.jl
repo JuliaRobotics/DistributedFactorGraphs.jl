@@ -13,6 +13,7 @@ mutable struct CloudGraphsDFG{T <: AbstractParams} <: AbstractDFG{T}
     description::String #TODO Maybe remove description
     addHistory::Vector{Symbol}
     solverParams::T # Solver parameters
+    blobStores::Dict{Symbol, AbstractBlobStore}
 
     # inner constructor for all constructors in common
     function CloudGraphsDFG{T}(neo4jInstance::Neo4jInstance,
@@ -25,7 +26,8 @@ mutable struct CloudGraphsDFG{T <: AbstractParams} <: AbstractDFG{T}
                                createSessionNodes::Bool=true,
                                userData::Dict{Symbol, String} = Dict{Symbol, String}(),
                                robotData::Dict{Symbol, String} = Dict{Symbol, String}(),
-                               sessionData::Dict{Symbol, String} = Dict{Symbol, String}()) where T <: AbstractParams
+                               sessionData::Dict{Symbol, String} = Dict{Symbol, String}(),
+                               blobStores::Dict{Symbol, AbstractBlobStore} = Dict{Symbol, AbstractBlobStore}()) where T <: AbstractParams
         # Validate the userId, robotId, and sessionId
         !isValidLabel(userId) && error("'$userId' is not a valid User ID")
         !isValidLabel(robotId) && error("'$robotId' is not a valid Robot ID")
@@ -35,7 +37,7 @@ mutable struct CloudGraphsDFG{T <: AbstractParams} <: AbstractDFG{T}
         # graph = Neo4j.getgraph(neo4jConnection)
         # neo4jInstance = Neo4jInstance(neo4jConnection, graph)
 
-        dfg = new{T}(neo4jInstance, userId, robotId, sessionId, description, addHistory, solverParams)
+        dfg = new{T}(neo4jInstance, userId, robotId, sessionId, description, addHistory, solverParams, blobStores)
         # Create the session if it doesn't already exist
         if createSessionNodes
             createDfgSessionIfNotExist(dfg)
@@ -93,7 +95,6 @@ function CloudGraphsDFG(; hostname="localhost",
                           solverParams::T=NoSolverParams(),
                           kwargs...) where T <: AbstractParams
 
-    @info "Creating $sessionId"
     return CloudGraphsDFG{T}(hostname,
                              port,
                              username,
@@ -140,4 +141,5 @@ function show(io::IO, ::MIME"text/plain", c::CloudGraphsDFG)
     println(io, " - Neo4J instance: $(c.neo4jInstance.connection.host)")
     println(io, " - Session: $(c.userId):$(c.robotId):$(c.sessionId)")
     println(io, " - Description: ", c.description)
+    println(io, " - Blob Stores: ", listBlobStores(c))
 end

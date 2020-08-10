@@ -76,7 +76,17 @@ import ...DistributedFactorGraphs:  setSolverParams!,
                                     getEstimateFields,
                                     _getname,
                                     _getmodule,
-                                    getTypeFromSerializationModule
+                                    getTypeFromSerializationModule,
+                                    listBlobStores,
+                                    BlobStoreEntry,
+                                    AbstractDataEntry,
+                                    MongodbDataEntry,
+                                    getDataEntries,
+                                    listDataEntries,
+                                    getDataEntry,
+                                    addDataEntry!,
+                                    updateDataEntry!,
+                                    deleteDataEntry!
 
 using Neo4j
 using Base64
