@@ -32,6 +32,40 @@ function packVariable(dfg::G, v::DFGVariable)::Dict{String, Any} where G <: Abst
     return props
 end
 
+# Corrects any `::ZonedDateTime` fields of T in corresponding `interm::Dict` as `dateformat"yyyy-mm-ddTHH:MM:SS.ssszzz"`
+function standardizeZDTString!(T, interm::Dict)
+    @debug "About to look through types of" T
+    for (name, typ) in zip(fieldnames(T), T.types)
+        # @debug "name=$name" 
+        # @debug "typ=$typ"
+        if typ <: ZonedDateTime
+            # Make sure that the timestamp is correctly formatted with subseconds
+            namestr = string(name)
+            @debug "must ensure SS.ssszzz on $name :: $typ -- $(interm[namestr])"
+                # # FIXME copy #588, but doesnt work: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/582#issuecomment-671884668
+                # #   E.g.: interm[namestr] = replace(interm[namestr], r":(\d)(\d)(Z|z|\+|-)" => s":\1\2.000\3") = "2020-08-11T04:05:59.82-04:00"
+                # @show interm[namestr] = replace(interm[namestr], r":(\d)(\d)(Z|z|\+|-)" => s":\1\2.000\3")
+                # @debug "after SS.ssszzz -- $(interm[namestr])"
+            ## DROP piece below once this cleaner copy #588 is working
+            supersec, subsec = split(interm[namestr], '.')
+            sss, zzz = split(subsec, '-')
+            # @debug "split time elements are $sss-$zzz"
+            # make sure milliseconds portion is precisely 3 characters long
+            if length(sss) < 3
+                # pad with zeros at the end
+                while length(sss) < 3
+                    sss *= "0"
+                end
+                newtimessszzz = supersec*"."*sss*"-"*zzz
+                @debug "new time string: $newtimessszzz"
+                # reassembled ZonedDateTime is put back in the dict
+                interm[namestr] = newtimessszzz
+            end
+        end
+    end
+    nothing
+end
+
 function unpackVariable(dfg::G,
         packedProps::Dict{String, Any};
         unpackPPEs::Bool=true,
@@ -85,10 +119,12 @@ function unpackVariable(dfg::G,
         end
 
         for (k,bdeInter) in dataIntermed
-            @show label
-            @show bdeInter
+            # @debug "label=$label" 
+            # @debug "bdeInter=$bdeInter"
             interm = JSON.parse(bdeInter)
-            Unmarshal.unmarshal(getfield(DistributedFactorGraphs, dataElemTypes[k]), interm)
+            objType = getfield(DistributedFactorGraphs, dataElemTypes[k])
+            standardizeZDTString!(objType, interm)
+            fullVal = Unmarshal.unmarshal(objType, interm)
             variable.dataDict[k] = fullVal
         end
     end
