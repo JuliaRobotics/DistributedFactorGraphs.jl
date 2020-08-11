@@ -2,6 +2,14 @@
 # For all types that pack their type into their own structure (e.g. PPE)
 const TYPEKEY = "_type"
 
+# Custom serialization
+using JSON
+import JSON.show_json
+import JSON.Writer: StructuralContext, JSONContext, show_json
+import JSON.Serializations: CommonSerialization, StandardSerialization
+JSON.show_json(io::JSONContext, serialization::CommonSerialization, uuid::UUID) = print(io.io, "\"$uuid\"")
+
+
 ##==============================================================================
 ## Variable Packing and unpacking
 ##==============================================================================
@@ -18,9 +26,44 @@ function packVariable(dfg::G, v::DFGVariable)::Dict{String, Any} where G <: Abst
     props["softtype"] = string(typeof(getSofttype(v)))
     # props["bigData"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> JSON2.write(bde), values(v.dataDict))))
     # props["bigDataElemType"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> typeof(bde), values(v.dataDict))))
-    props["dataEntry"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> JSON2.write(bde), values(v.dataDict))))
+    props["dataEntry"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> JSON.json(bde), values(v.dataDict))))
+    
     props["dataEntryType"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> typeof(bde), values(v.dataDict))))
     return props
+end
+
+# Corrects any `::ZonedDateTime` fields of T in corresponding `interm::Dict` as `dateformat"yyyy-mm-ddTHH:MM:SS.ssszzz"`
+function standardizeZDTString!(T, interm::Dict)
+    @debug "About to look through types of" T
+    for (name, typ) in zip(fieldnames(T), T.types)
+        # @debug "name=$name" 
+        # @debug "typ=$typ"
+        if typ <: ZonedDateTime
+            # Make sure that the timestamp is correctly formatted with subseconds
+            namestr = string(name)
+            @debug "must ensure SS.ssszzz on $name :: $typ -- $(interm[namestr])"
+                # # FIXME copy #588, but doesnt work: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/582#issuecomment-671884668
+                # #   E.g.: interm[namestr] = replace(interm[namestr], r":(\d)(\d)(Z|z|\+|-)" => s":\1\2.000\3") = "2020-08-11T04:05:59.82-04:00"
+                # @show interm[namestr] = replace(interm[namestr], r":(\d)(\d)(Z|z|\+|-)" => s":\1\2.000\3")
+                # @debug "after SS.ssszzz -- $(interm[namestr])"
+            ## DROP piece below once this cleaner copy #588 is working
+            supersec, subsec = split(interm[namestr], '.')
+            sss, zzz = split(subsec, '-')
+            # @debug "split time elements are $sss-$zzz"
+            # make sure milliseconds portion is precisely 3 characters long
+            if length(sss) < 3
+                # pad with zeros at the end
+                while length(sss) < 3
+                    sss *= "0"
+                end
+                newtimessszzz = supersec*"."*sss*"-"*zzz
+                @debug "new time string: $newtimessszzz"
+                # reassembled ZonedDateTime is put back in the dict
+                interm[namestr] = newtimessszzz
+            end
+        end
+    end
+    nothing
 end
 
 function unpackVariable(dfg::G,
@@ -76,7 +119,12 @@ function unpackVariable(dfg::G,
         end
 
         for (k,bdeInter) in dataIntermed
-            fullVal = JSON2.read(bdeInter, getfield(DistributedFactorGraphs, dataElemTypes[k]))
+            # @debug "label=$label" 
+            # @debug "bdeInter=$bdeInter"
+            interm = JSON.parse(bdeInter)
+            objType = getfield(DistributedFactorGraphs, dataElemTypes[k])
+            standardizeZDTString!(objType, interm)
+            fullVal = Unmarshal.unmarshal(objType, interm)
             variable.dataDict[k] = fullVal
         end
     end
