@@ -2,6 +2,17 @@
 # For all types that pack their type into their own structure (e.g. PPE)
 const TYPEKEY = "_type"
 
+function _packDataEntry(bde::D) where D <: AbstractBigDataEntry
+    JSON2.write(bde)
+
+# Custom serialization
+using JSON
+import JSON.show_json
+import JSON.Writer: StructuralContext, JSONContext, show_json
+import JSON.Serializations: CommonSerialization, StandardSerialization
+JSON.show_json(io::JSONContext, serialization::CommonSerialization, uuid::UUID) = print(io.io, "\"$uuid\"")
+
+
 ##==============================================================================
 ## Variable Packing and unpacking
 ##==============================================================================
@@ -18,7 +29,8 @@ function packVariable(dfg::G, v::DFGVariable)::Dict{String, Any} where G <: Abst
     props["softtype"] = string(typeof(getSofttype(v)))
     # props["bigData"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> JSON2.write(bde), values(v.dataDict))))
     # props["bigDataElemType"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> typeof(bde), values(v.dataDict))))
-    props["dataEntry"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> JSON2.write(bde), values(v.dataDict))))
+    props["dataEntry"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> JSON.json(bde), values(v.dataDict))))
+    
     props["dataEntryType"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> typeof(bde), values(v.dataDict))))
     return props
 end
@@ -76,7 +88,10 @@ function unpackVariable(dfg::G,
         end
 
         for (k,bdeInter) in dataIntermed
-            fullVal = JSON2.read(bdeInter, getfield(DistributedFactorGraphs, dataElemTypes[k]))
+            @show label
+            @show bdeInter
+            interm = JSON.parse(bdeInter)
+            Unmarshal.unmarshal(getfield(DistributedFactorGraphs, dataElemTypes[k]), interm)
             variable.dataDict[k] = fullVal
         end
     end
