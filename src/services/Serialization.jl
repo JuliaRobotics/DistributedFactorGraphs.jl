@@ -2,9 +2,6 @@
 # For all types that pack their type into their own structure (e.g. PPE)
 const TYPEKEY = "_type"
 
-function _packDataEntry(bde::D) where D <: AbstractBigDataEntry
-    JSON2.write(bde)
-
 # Custom serialization
 using JSON
 import JSON.show_json
