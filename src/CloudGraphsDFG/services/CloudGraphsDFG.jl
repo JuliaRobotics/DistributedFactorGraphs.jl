@@ -243,7 +243,6 @@ function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String})
     for (k,v) in dataDict
         variable.dataDict[k] = v
     end
-    # TODO - data entries
 
     return variable
 end
