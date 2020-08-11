@@ -30,6 +30,9 @@ function unpackVariable(dfg::G,
         unpackBigData::Bool=true)::DFGVariable where G <: AbstractDFG
     @debug "Unpacking variable:\r\n$packedProps"
     label = Symbol(packedProps["label"])
+    # Make sure that the timestamp is correctly formatted with subseconds
+    packedProps["timestamp"] = replace(packedProps["timestamp"], r":(\d)(\d)(Z|z|\+|-)" => s":\1\2.000\3")
+    # Parse it
     timestamp = ZonedDateTime(packedProps["timestamp"])
     nstime = Nanosecond(get(packedProps, "nstime", 0))
     # Supporting string serialization using packVariable and CGDFG serialization (Vector{String})
@@ -166,6 +169,8 @@ end
 
 function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G <: AbstractDFG
     label = packedProps["label"]
+    # Make sure that the timestamp is correctly formatted with subseconds
+    packedProps["timestamp"] = replace(packedProps["timestamp"], r":(\d)(\d)(Z|z|\+|-)" => s":\1\2.000\3")
     timestamp = ZonedDateTime(packedProps["timestamp"])
     nstime = Nanosecond(get(packedProps, "nstime", 0))
     if packedProps["tags"] isa String

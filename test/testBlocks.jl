@@ -243,7 +243,7 @@ function DFGVariableSCA()
     # Constructors
     v1 = DFGVariable(v1_lbl, TestSofttype1(), tags=v1_tags, solvable=0, solverDataDict=Dict(:default=>VariableNodeData{TestSofttype1}()))
     v2 = DFGVariable(:b, VariableNodeData{TestSofttype2}(), tags=Set([:VARIABLE, :LANDMARK]))
-    v3 = DFGVariable(:c, VariableNodeData{TestSofttype2}())
+    v3 = DFGVariable(:c, VariableNodeData{TestSofttype2}(), timestamp=ZonedDateTime("2020-08-11T00:12:03.000-05:00"))
 
     vorphan = DFGVariable(:orphan, TestSofttype1(), tags=v1_tags, solvable=0, solverDataDict=Dict(:default=>VariableNodeData{TestSofttype1}()))
 
@@ -324,7 +324,7 @@ function  DFGFactorSCA()
     f1 = DFGFactor{TestCCW{TestFunctorInferenceType1}}(f1_lbl, [:a,:b])
     f1 = DFGFactor(f1_lbl, [:a,:b], gfnd, tags = f1_tags, solvable=0)
 
-    f2 = DFGFactor{TestCCW{TestFunctorInferenceType1}}(:bcf1, [:b, :c])
+    f2 = DFGFactor{TestCCW{TestFunctorInferenceType1}}(:bcf1, [:b, :c], timestamp=ZonedDateTime("2020-08-11T00:12:03.000-05:00"))
     #TODO add tests for mutating vos in updateFactor and orphan related checks.
     # we should perhaps prevent an empty vos
 
