@@ -178,9 +178,9 @@ function updateDataBlob!(store::FolderStore{T},  entry::BlobStoreEntry, data::T)
     blobfilename = joinpath(store.folder,"$(entry.id).dat")
     entryfilename = joinpath(store.folder,"$(entry.id).json")
     if !isfile(blobfilename)
-        error("Key '$(id)' doesn't exist.")
+        warn("Key '$(id)' doesn't exist.")
     elseif !isfile(entryfilename)
-        error("Key '$(id)' doesn't exist.")
+        warn("Key '$(id)' doesn't exist.")
     else
         open(blobfilename, "w") do f
             write(f, data)
