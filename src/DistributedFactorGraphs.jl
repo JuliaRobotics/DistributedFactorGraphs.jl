@@ -277,11 +277,14 @@ const DefaultDFG = LightDFG
 
 # Common includes
 include("services/CommonAccessors.jl")
-include("services/Serialization.jl")
 include("services/DFGVariable.jl")
 include("services/DFGFactor.jl")
 include("Deprecated.jl")
 include("services/CompareUtils.jl")
+include("Common.jl")
+include("DataBlobs/DataBlobs.jl")
+
+include("services/Serialization.jl")
 
 # Include the FilesDFG API.
 include("FileDFG/FileDFG.jl")
@@ -289,11 +292,7 @@ include("FileDFG/FileDFG.jl")
 # Custom show and printing for variable factor etc.
 include("services/CustomPrinting.jl")
 
-# To be moved as necessary.
-include("Common.jl")
 
-# Data Blob extensions
-include("DataBlobs/DataBlobs.jl")
 
 if get(ENV, "DFG_USE_CGDFG", "") == "true"
     @info "Detected ENV[\"DFG_USE_CGDFG\"]: Including optional CloudGraphsDFG (LGPL) Driver"
