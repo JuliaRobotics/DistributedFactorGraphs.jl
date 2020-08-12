@@ -160,9 +160,9 @@ function addDataBlob!(store::FolderStore{T}, entry::BlobStoreEntry, data::T) whe
     blobfilename = joinpath(store.folder,"$(entry.id).dat")
     entryfilename = joinpath(store.folder,"$(entry.id).json")
     if isfile(blobfilename)
-        error("Key '$(id)' blob already exists.")
+        error("Key '$(entry.id)' blob already exists.")
     elseif isfile(entryfilename)
-        error("Key '$(id)' entry already exists, but no blob.")
+        error("Key '$(entry.id)' entry already exists, but no blob.")
     else
         open(blobfilename, "w") do f
             write(f, data)
@@ -178,9 +178,9 @@ function updateDataBlob!(store::FolderStore{T},  entry::BlobStoreEntry, data::T)
     blobfilename = joinpath(store.folder,"$(entry.id).dat")
     entryfilename = joinpath(store.folder,"$(entry.id).json")
     if !isfile(blobfilename)
-        warn("Key '$(id)' doesn't exist.")
+        @warn "Key '$(entry.id)' doesn't exist."
     elseif !isfile(entryfilename)
-        warn("Key '$(id)' doesn't exist.")
+        @warn "Key '$(entry.id)' doesn't exist."
     else
         open(blobfilename, "w") do f
             write(f, data)

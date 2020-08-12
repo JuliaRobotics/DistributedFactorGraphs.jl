@@ -670,7 +670,7 @@ function getDataEntry(dfg::CloudGraphsDFG, label::Symbol, key::Symbol; currentTr
         properties)
 end
 
-function addDataEntry!(dfg::CloudGraphsDFG, label::Symbol, bde::AbstractDataEntry; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+function addDataEntry!(dfg::CloudGraphsDFG, label::Symbol, bde::BlobStoreEntry; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
     if bde.label in listDataEntries(dfg, label, currentTransaction=currentTransaction)
         error("Data label '$(bde.label)' already exists")
     end
@@ -686,7 +686,7 @@ function addDataEntry!(dfg::CloudGraphsDFG, label::Symbol, bde::AbstractDataEntr
             packed)
 end
 
-function updateDataEntry!(dfg::CloudGraphsDFG, label::Symbol,  bde::AbstractDataEntry; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+function updateDataEntry!(dfg::CloudGraphsDFG, label::Symbol,  bde::BlobStoreEntry; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
     if !(bde.label in listDataEntries(dfg, label, currentTransaction=currentTransaction))
         @warn "Data label '$(bde.label)' does not exist, adding"
     end
