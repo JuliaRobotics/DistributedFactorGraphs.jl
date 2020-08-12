@@ -292,10 +292,6 @@ end
 Base.getproperty(x::DFGVariable,f::Symbol) = begin
     if f == :solvable
         getfield(x,f)[]
-    #TODO Deprecation - Remove in v0.10
-    elseif f == :bigData
-        Base.depwarn("DFGVariable field bigData is deprecated, use `dataDict` instead",:getproperty)
-        getfield(x,:dataDict)
     else
         getfield(x,f)
     end
@@ -304,14 +300,6 @@ end
 Base.setproperty!(x::DFGVariable,f::Symbol, val) = begin
     if f == :solvable
         getfield(x,f)[] = val
-    elseif f == :bigData
-        #TODO Deprecation - Remove in v0.10
-        Base.depwarn("DFGVariable field bigData is deprecated, use `dataDict` instead", :setproperty!)
-        setfield(x, :dataDict, val)
-    elseif f == :timestamp && val isa DateTime
-    #     #TODO Deprecation - Remove in v0.10
-        Base.depwarn("DFGVariable timestamp field is now a ZonedTimestamp", :setproperty!)
-        setfield!(x,:timestamp, ZonedDateTime(val,  localzone()))
     else
         setfield!(x,f,val)
     end
@@ -359,25 +347,6 @@ struct DFGVariableSummary <: AbstractDFGVariable
     dataDict::Dict{Symbol, AbstractDataEntry}
 end
 
-#TODO Deprecation - Remove in v0.10
-Base.getproperty(x::DFGVariableSummary,f::Symbol) = begin
-    if f == :bigData
-        Base.depwarn("DFGVariableSummary field bigData is deprecated, use `dataDict` instead",:getproperty)
-        getfield(x,:dataDict)
-    else
-        getfield(x,f)
-    end
-end
-
-#TODO Deprecation - Remove in v0.10
-Base.setproperty!(x::DFGVariableSummary,f::Symbol, val) = begin
-    if f == :bigData
-        Base.depwarn("DFGVariableSummary field bigData is deprecated, use `dataDict` instead",:setproperty!)
-        setfield(x, :dataDict)
-    else
-        setfield!(x,f,val)
-    end
-end
 ##------------------------------------------------------------------------------
 ## SkeletonDFGVariable.jl
 ##------------------------------------------------------------------------------
