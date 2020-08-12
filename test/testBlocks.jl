@@ -865,46 +865,94 @@ function  DataEntriesTestBlock!(fg, v2)
     #delete from dfg
     @test deleteDataEntry!(fg, :a, :key2) == de2_update
     @test listDataEntries(v1) == Symbol[]
+    deleteDataEntry!(fg, :b, :key2)
 end
 
-function blobsTestBlock!(fg, v1)
-    @testset "Data blob tests" begin
-        # Blobstore functions
-        fs = FolderStore("/tmp/$(string(uuid4())[1:8])")
-        # Adding
-        addBlobStore!(fg, fs)
-        # Listing
-        @test listBlobStores(fg) == [fs.key]
-        # Getting
-        @test getBlobStore(fg, fs.key) == fs
-        # Deleting
-        @test deleteBlobStore!(fg, fs.key) == fs
-        # Updating
-        updateBlobStore!(fg, fs)
-        @test listBlobStores(fg) == [fs.key]
-        # Emptying
-        emptyBlobStore!(fg)
-        @test listBlobStores(fg) == []
-        # Add it back
-        addBlobStore!(fg, fs)
+function blobsStoresTestBlock!(fg, v1)
 
-        # Data functions
-        testData = rand(UInt8, 50)
-        # Adding 
-        newData = addData!(fg, fs.key, getLabel(v1), :testing, testData)
-        # Listing
-        @test :testing in listDataEntries(fg, getLabel(v1))
-        # Getting
-        data = getData(fg, fs, getLabel(v1), :testing)
-        @test data[1].hash == newData[1].hash
-        @test data[2] == newData[2]
-        # Updating
-        updateData = updateData!(fg, fs, getLabel(v1), newData[1], rand(UInt8, 50))
-        @test updateData[1].hash != data[1].hash
-        @test updateData[2] != data[2]
-        # Deleting
-        retData = deleteData!(fg, getLabel(v1), :testing)
-    end
+    de1 = BlobStoreEntry(:label1,uuid4(), :store1, "AAAA","origin1","description1","mimetype1",now(localzone()))
+    # TODO put this one in. It breaks current serialization.
+    @warn "FIXME ZonedDateTime tests for: 2020-08-12T12:00:00.000+00:00)"
+    @test_skip false 
+    #de2 = BlobStoreEntry(:label2,uuid4(), :store2, "FFFF","origin2","description2","mimetype2",ZonedDateTime("2020-08-12T12:00:00.000+00:00"))
+    de2 = BlobStoreEntry(:label2,uuid4(), :store2, "FFFF","origin2","description2","mimetype2",ZonedDateTime("2020-08-12T12:00:00.001+00:00"))
+    # de2_update = BlobStoreEntry(:label2,uuid4(), :store2, "0123","origin2","description2","mimetype2",ZonedDateTime("2020-08-12T12:00:01.000+00:00"))
+    de2_update = BlobStoreEntry(:label2,uuid4(), :store2, "0123","origin2","description2","mimetype2",ZonedDateTime("2020-08-12T12:00:01.001+00:00"))
+    @test getLabel(de1) == de1.label
+    @test getId(de1) == de1.id
+    @test getHash(de1) == hex2bytes(de1.hash)
+    @test getCreatedTimestamp(de1) == de1.createdTimestamp
+
+    #add
+    var1 = getVariable(fg, :a)
+    @test addDataEntry!(var1, de1) == de1
+    @test addDataEntry!(fg, :a, de2) == de2
+    @test_throws ErrorException addDataEntry!(var1, de1)
+    @test de2 in getDataEntries(var1)
+
+    #get
+    @test deepcopy(de1) == getDataEntry(var1, :label1)
+    @test deepcopy(de2) == getDataEntry(fg, :a, :label2)
+    @test_throws ErrorException getDataEntry(v2, :label1)
+    @test_throws ErrorException getDataEntry(fg, :b, :label1)
+
+    #update
+    @test updateDataEntry!(fg, :a, de2_update) == de2_update
+    @test deepcopy(de2_update) == getDataEntry(fg, :a, :label2)
+    @test @test_logs (:warn, r"does not exist") updateDataEntry!(fg, :b, de2_update) == de2_update
+
+    #list
+    entries = getDataEntries(fg, :a)
+    @test length(entries) == 2
+    @test issetequal(map(e->e.label, entries), [:label1, :label2])
+    @test length(getDataEntries(fg, :b)) == 1
+
+    @test issetequal(listDataEntries(fg, :a), [:label1, :label2])
+    @test listDataEntries(fg, :b) == Symbol[:label2]
+
+    #delete
+    @test deleteDataEntry!(var1, de1) == de1
+    @test listDataEntries(var1) == Symbol[:label2]
+    #delete from dfg
+    @test deleteDataEntry!(fg, :a, :label2) == de2_update
+    @test listDataEntries(var1) == Symbol[]
+
+    # Blobstore functions
+    fs = FolderStore("/tmp/$(string(uuid4())[1:8])")
+    # Adding
+    addBlobStore!(fg, fs)
+    # Listing
+    @test listBlobStores(fg) == [fs.key]
+    # Getting
+    @test getBlobStore(fg, fs.key) == fs
+    # Deleting
+    @test deleteBlobStore!(fg, fs.key) == fs
+    # Updating
+    updateBlobStore!(fg, fs)
+    @test listBlobStores(fg) == [fs.key]
+    # Emptying
+    emptyBlobStore!(fg)
+    @test listBlobStores(fg) == []
+    # Add it back
+    addBlobStore!(fg, fs)
+
+    # Data functions
+    testData = rand(UInt8, 50)
+    # Adding 
+    newData = addData!(fg, fs.key, getLabel(v1), :testing, testData)
+    # Listing
+    @test :testing in listDataEntries(fg, getLabel(v1))
+    # Getting
+    data = getData(fg, fs, getLabel(v1), :testing)
+    @test data[1].hash == newData[1].hash
+    @test data[2] == newData[2]
+    # Updating
+    updateData = updateData!(fg, fs, getLabel(v1), newData[1], rand(UInt8, 50))
+    @test updateData[1].hash != data[1].hash
+    @test updateData[2] != data[2]
+    # Deleting
+    retData = deleteData!(fg, getLabel(v1), :testing)
+
 end
 
 
