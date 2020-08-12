@@ -108,6 +108,9 @@ function unpackVariable(dfg::G,
             dataElemTypes = JSON2.read(packedProps["bigDataElemType"], Dict{Symbol, Symbol})
         else
             dataElemTypes = JSON2.read(packedProps["dataEntryType"], Dict{Symbol, Symbol})
+            for (k,name) in dataElemTypes 
+                dataElemTypes[k] = Symbol(split(string(name), '.')[end])
+            end
         end
 
         #TODO Deprecate - for backward compatibility between v0.8 and v0.9, remove in v0.10
