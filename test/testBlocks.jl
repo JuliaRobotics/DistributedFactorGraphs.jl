@@ -512,7 +512,7 @@ end
 @test lsf(fg) == listFactors(fg)
 
 if getVariable(fg, ls(fg)[1]) isa DFGVariable
-  @test :default in listSolvekeys(fg)
+  @test :default in listSolveKeys(fg)
   @test :default in listSupersolves(fg)
 end
 
