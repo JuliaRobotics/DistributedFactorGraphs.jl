@@ -867,6 +867,46 @@ function  DataEntriesTestBlock!(fg, v2)
     @test listDataEntries(v1) == Symbol[]
 end
 
+function blobsTestBlock!(fg, v1)
+    @testset "Data blob tests" begin
+        # Blobstore functions
+        fs = FolderStore("/tmp/$(string(uuid4())[1:8])")
+        # Adding
+        addBlobStore!(fg, fs)
+        # Listing
+        @test listBlobStores(fg) == [fs.key]
+        # Getting
+        @test getBlobStore(fg, fs.key) == fs
+        # Deleting
+        @test deleteBlobStore!(fg, fs.key) == fs
+        # Updating
+        updateBlobStore!(fg, fs)
+        @test listBlobStores(fg) == [fs.key]
+        # Emptying
+        emptyBlobStore!(fg)
+        @test listBlobStores(fg) == []
+        # Add it back
+        addBlobStore!(fg, fs)
+
+        # Data functions
+        testData = rand(UInt8, 50)
+        # Adding 
+        newData = addData!(fg, fs.key, getLabel(v1), :testing, testData)
+        # Listing
+        @test :testing in listDataEntries(fg, getLabel(v1))
+        # Getting
+        data = getData(fg, fs, getLabel(v1), :testing)
+        @test data[1].hash == newData[1].hash
+        @test data[2] == newData[2]
+        # Updating
+        updateData = updateData!(fg, fs, getLabel(v1), newData[1], rand(UInt8, 50))
+        @test updateData[1].hash != data[1].hash
+        @test updateData[2] != data[2]
+        # Deleting
+        retData = deleteData!(fg, getLabel(v1), :testing)
+    end
+end
+
 
 function testGroup!(fg, v1, v2, f0, f1)
     # "TODO Sorteer groep"

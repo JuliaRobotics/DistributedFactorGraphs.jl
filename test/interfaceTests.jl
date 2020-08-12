@@ -118,6 +118,9 @@ end
     else
         @test_skip DataEntriesTestBlock!(fg1, var2)
     end
+
+    # New data blob API
+    blobsTestBlock!(fg1, var2)
 end
 
 @testset "TODO Sorteer groep" begin

@@ -77,9 +77,13 @@ function addData!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol,
     return de=>db
 end
 
-function updateData!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol,  entry::AbstractDataEntry, blob::Vector{UInt8})
-    assertHash(entry, blob, hashfunction=hashfunction)
-    de = updateDataEntry!(dfg, label, entry)
+function updateData!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol,  entry::AbstractDataEntry, blob::Vector{UInt8}; hashfunction = sha256)
+    # Recalculate the hash - NOTE Assuming that this is going to be a BlobStoreEntry. TBD.
+    newEntry = BlobStoreEntry(entry.label, entry.id, blobstore.key, bytes2hex(hashfunction(blob)),
+        "$(dfg.userId)|$(dfg.robotId)|$(dfg.sessionId)|$(label)",
+        entry.description, entry.mimeType, entry.createdTimestamp)
+
+    de = updateDataEntry!(dfg, label, newEntry)
     db = updateDataBlob!(blobstore, de, blob)
     return de=>db
 end
@@ -156,9 +160,9 @@ function addDataBlob!(store::FolderStore{T}, entry::BlobStoreEntry, data::T) whe
     blobfilename = joinpath(store.folder,"$(entry.id).dat")
     entryfilename = joinpath(store.folder,"$(entry.id).json")
     if isfile(blobfilename)
-        error("Key '$(id)' blob already exists.")
+        error("Key '$(entry.id)' blob already exists.")
     elseif isfile(entryfilename)
-        error("Key '$(id)' entry already exists, but no blob.")
+        error("Key '$(entry.id)' entry already exists, but no blob.")
     else
         open(blobfilename, "w") do f
             write(f, data)
@@ -169,6 +173,25 @@ function addDataBlob!(store::FolderStore{T}, entry::BlobStoreEntry, data::T) whe
         return data
     end
 end
+
+function updateDataBlob!(store::FolderStore{T},  entry::BlobStoreEntry, data::T) where T
+    blobfilename = joinpath(store.folder,"$(entry.id).dat")
+    entryfilename = joinpath(store.folder,"$(entry.id).json")
+    if !isfile(blobfilename)
+        @warn "Key '$(entry.id)' doesn't exist."
+    elseif !isfile(entryfilename)
+        @warn "Key '$(entry.id)' doesn't exist."
+    else
+        open(blobfilename, "w") do f
+            write(f, data)
+        end
+        open(entryfilename, "w") do f
+            JSON.print(f, entry)
+        end
+        return data
+    end
+end
+
 
 function deleteDataBlob!(store::FolderStore{T}, entry::BlobStoreEntry) where T
     blobfilename = joinpath(store.folder,"$(entry.id).dat")

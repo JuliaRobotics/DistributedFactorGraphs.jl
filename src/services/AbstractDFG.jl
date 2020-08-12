@@ -196,6 +196,7 @@ addBlobStore!(dfg::AbstractDFG, bs::AbstractBlobStore) = push!(dfg.blobStores, g
 updateBlobStore!(dfg::AbstractDFG, bs::AbstractBlobStore) = push!(dfg.blobStores, getKey(bs)=>bs)
 deleteBlobStore!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.blobStores, key)
 emptyBlobStore!(dfg::AbstractDFG) = empty!(dfg.blobStores)
+listBlobStores(dfg::AbstractDFG) = collect(keys(dfg.blobStores))
 
 ##==============================================================================
 ## CRUD Interfaces

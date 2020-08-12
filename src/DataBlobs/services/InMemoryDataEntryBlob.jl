@@ -5,7 +5,7 @@ export InMemoryDataEntry
 """
     $(TYPEDEF)
 Store data temporary in memory.
-NOTE: Neigher Entry nor Blob will be persisted.
+NOTE: Neither Entry nor Blob will be persisted.
 """
 struct InMemoryDataEntry{T} <: AbstractDataEntry
     label::Symbol
