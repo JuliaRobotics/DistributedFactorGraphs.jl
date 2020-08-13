@@ -79,7 +79,7 @@ using DistributedFactorGraphs, IncrementalInference
 # Create a DFG - can make one directly, e.g. LightDFG{NoSolverParams}() or use IIF:
 dfg = initfg()
 # Load the graph
-loadDFG("/tmp/savedgraph.tar.gz", IncrementalInference, dfg)
+loadDFG!(dfg, "/tmp/savedgraph.tar.gz")
 # Use the DFG as you do normally.
 ls(dfg)
 ```
