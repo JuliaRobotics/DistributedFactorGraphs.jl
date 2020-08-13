@@ -113,7 +113,7 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString)
         @show sfolder = split(dstname, '.')
         Base.mkpath(loaddir)
         folder = joinpath(loaddir, filename) #splitpath(string(sfolder[end-2]))[end]
-        @info "loadDFG detected a gzip $dstname -- unpacking via $loaddir now..."
+        @info "loadDFG! detected a gzip $dstname -- unpacking via $loaddir now..."
         Base.rm(folder, recursive=true, force=true)
         # unzip the tar file
         run(`tar -zxf $dstname -C $loaddir`)
@@ -160,10 +160,13 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString)
 
     # remove the temporary unzipped file
     if unzip
-      @info "DFG.loadDFG is deleting a temp folder created during unzip, $loaddir"
+      @info "DFG.loadDFG! is deleting a temp folder created during unzip, $loaddir"
       # need this because the number of files created in /tmp/caesar/random is becoming redonkulous.
       Base.rm(loaddir, recursive=true, force=true)
     end
 
     return dfgLoadInto
 end
+
+# to be extended by users with particular choices in dispatch.
+function loadDFG end
