@@ -2,13 +2,28 @@
 # For all types that pack their type into their own structure (e.g. PPE)
 const TYPEKEY = "_type"
 
-# Custom serialization
+## Custom serialization
 using JSON
 import JSON.show_json
 import JSON.Writer: StructuralContext, JSONContext, show_json
 import JSON.Serializations: CommonSerialization, StandardSerialization
 JSON.show_json(io::JSONContext, serialization::CommonSerialization, uuid::UUID) = print(io.io, "\"$uuid\"")
 
+## Version checking
+function _getDFGVersion()
+    # Looks like this is deprecated but there's no replacement function yet.
+    return string(Pkg.installed()["DistributedFactorGraphs"])
+end
+
+function _versionCheck(props::Dict{String, Any})
+    if haskey(props, "_version")
+        if props["_version"] != _getDFGVersion()
+            @warn "This data was serialized using DFG $(props["_version"]) but you have $(_getDFGVersion()) installed, there may be deserialization issues."
+        end
+    else
+        @warn "There isn't a version tag in this data so it older than v0.10, there may be deserialization issues."
+    end
+end
 
 ##==============================================================================
 ## Variable Packing and unpacking
@@ -29,6 +44,7 @@ function packVariable(dfg::G, v::DFGVariable)::Dict{String, Any} where G <: Abst
     props["dataEntry"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> JSON.json(bde), values(v.dataDict))))
     
     props["dataEntryType"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> typeof(bde), values(v.dataDict))))
+    props["_version"] = _getDFGVersion()
     return props
 end
 
@@ -72,6 +88,8 @@ function unpackVariable(dfg::G,
         unpackSolverData::Bool=true,
         unpackBigData::Bool=true)::DFGVariable where G <: AbstractDFG
     @debug "Unpacking variable:\r\n$packedProps"
+    # Version checking.
+    _versionCheck(packedProps)
     label = Symbol(packedProps["label"])
     # Make sure that the timestamp is correctly formatted with subseconds
     packedProps["timestamp"] = replace(packedProps["timestamp"], r":(\d)(\d)(Z|z|\+|-)" => s":\1\2.000\3")
@@ -203,7 +221,7 @@ function packFactor(dfg::G, f::DFGFactor)::Dict{String, Any} where G <: Abstract
     props["fnctype"] = String(_getname(fnctype))
     props["_variableOrderSymbols"] = JSON2.write(f._variableOrderSymbols)
     props["solvable"] = getSolvable(f)
-
+    props["_version"] = _getDFGVersion()
     return props
 end
 
@@ -219,6 +237,9 @@ end
 
 
 function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G <: AbstractDFG
+    # Version checking.
+    _versionCheck(packedProps)
+
     label = packedProps["label"]
     # Make sure that the timestamp is correctly formatted with subseconds
     packedProps["timestamp"] = replace(packedProps["timestamp"], r":(\d)(\d)(Z|z|\+|-)" => s":\1\2.000\3")

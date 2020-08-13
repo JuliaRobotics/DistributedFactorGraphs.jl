@@ -177,7 +177,9 @@ function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable; skipAddErro
     # Create/update the base variable
     # NOTE: We are not merging the variable.tags into the labels anymore. We can index by that but not
     # going to pollute the graph with unnecessary (and potentially dangerous) labels.
-    addProps = Dict("softtype" => "\"$(string(typeof(getSofttype(variable))))\"")
+    addProps = Dict(
+        "softtype" => "\"$(string(typeof(getSofttype(variable))))\"",
+        "_version" => "\"$(_getDFGVersion())\"")
     query = """
     MATCH (session:$(join(_getLabelsForType(dfg, Session), ":")))
     MERGE (node:$(join(_getLabelsForInst(dfg, variable), ":")))
@@ -296,7 +298,9 @@ function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor; skipAddError::Boo
     # NOTE: We are no merging the factor tags into the labels anymore. We can index by that but not
     # going to pollute the graph with unnecessary (and potentially dangerous) labels.
     fnctype = getSolverData(factor).fnc.usrfnc!
-    addProps = Dict("fnctype" => "\"$(String(_getname(fnctype)))\"")
+    addProps = Dict(
+        "fnctype" => "\"$(String(_getname(fnctype)))\"",
+        "_version" => "\"$(_getDFGVersion())\"")
     query = """
     MATCH (session:$(join(_getLabelsForType(dfg, Session), ":")))
     MERGE (node:$(join(_getLabelsForInst(dfg, factor), ":")))
