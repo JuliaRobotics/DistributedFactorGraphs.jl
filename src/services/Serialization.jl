@@ -21,9 +21,12 @@ function _fixSubseconds(a)
 end
 
 function getStandardZDTString(stringTimestamp::String)
+    # Additional check+fix for the ultraweird "2020-08-12T12:00Z"
+    ts = replace(stringTimestamp, r"T(\d\d):(\d\d)(Z|z|\+|-)" => s"T\1:\2:00.000\3")
+
     # This is finding :59Z or :59.82-05:00 and fixing it to always have 3 subsecond digits.
     # Temporary fix until TimeZones.jl gets an upstream fix.
-    return replace(stringTimestamp, r":\d\d(\.\d+)?(Z|z|\+|-)" => _fixSubseconds)
+    return replace(ts, r":\d\d(\.\d+)?(Z|z|\+|-)" => _fixSubseconds)
 end
 
 # Corrects any `::ZonedDateTime` fields of T in corresponding `interm::Dict` as `dateformat"yyyy-mm-ddTHH:MM:SS.ssszzz"`
