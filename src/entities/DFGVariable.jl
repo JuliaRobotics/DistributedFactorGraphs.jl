@@ -32,10 +32,10 @@ mutable struct VariableNodeData{T<:InferenceVariable}
     dontmargin::Bool
     solveInProgress::Int
     solvedCount::Int
-    solverKey::Symbol
+    solveKey::Symbol
     events::Dict{Symbol,Threads.Condition}
-    VariableNodeData{T}(; solverKey::Symbol=:default) where {T <:InferenceVariable} =
-    new{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], T(), false, 0.0, false, false, 0, 0, solverKey, Dict{Symbol,Threads.Condition}())
+    VariableNodeData{T}(; solveKey::Symbol=:default) where {T <:InferenceVariable} =
+    new{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], T(), false, 0.0, false, false, 0, 0, solveKey, Dict{Symbol,Threads.Condition}())
     VariableNodeData{T}(val::Array{Float64,2},
                         bw::Array{Float64,2},
                         BayesNetOutVertIDs::Array{Symbol,1},
@@ -50,12 +50,12 @@ mutable struct VariableNodeData{T<:InferenceVariable}
                         dontmargin::Bool,
                         solveInProgress::Int=0,
                         solvedCount::Int=0,
-                        solverKey::Symbol=:default,
+                        solveKey::Symbol=:default,
                         events::Dict{Symbol,Threads.Condition}=Dict{Symbol,Threads.Condition}()) where T <: InferenceVariable =
                             new{T}(val,bw,BayesNetOutVertIDs,dimIDs,dims,
                                    eliminated,BayesNetVertID,separator,
                                    softtype::T,initialized,inferdim,ismargin,
-                                   dontmargin, solveInProgress, solvedCount, solverKey, events)
+                                   dontmargin, solveInProgress, solvedCount, solveKey, events)
 end
 
 ##------------------------------------------------------------------------------
@@ -75,17 +75,17 @@ VariableNodeData(val::Array{Float64,2},
                  dontmargin::Bool,
                  solveInProgress::Int=0,
                  solvedCount::Int=0,
-                 solverKey::Symbol=:default
+                 solveKey::Symbol=:default
                  ) where T <: InferenceVariable =
                    VariableNodeData{T}(val,bw,BayesNetOutVertIDs,dimIDs,dims,
                                        eliminated,BayesNetVertID,separator,
                                        softtype::T,initialized,inferdim,ismargin,
                                        dontmargin, solveInProgress, solvedCount,
-                                       solverKey)
+                                       solveKey)
 
 
-VariableNodeData(softtype::T; solverKey::Symbol=:default) where T <: InferenceVariable =
-    VariableNodeData{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], softtype, false, 0.0, false, false, 0, 0, solverKey)
+VariableNodeData(softtype::T; solveKey::Symbol=:default) where T <: InferenceVariable =
+    VariableNodeData{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], softtype, false, 0.0, false, false, 0, 0, solveKey)
 
 ##==============================================================================
 ## PackedVariableNodeData.jl
@@ -117,7 +117,7 @@ mutable struct PackedVariableNodeData
     dontmargin::Bool
     solveInProgress::Int
     solvedCount::Int
-    solverKey::Symbol
+    solveKey::Symbol
     PackedVariableNodeData() = new()
     PackedVariableNodeData(x1::Vector{Float64},
                          x2::Int,
@@ -136,7 +136,7 @@ mutable struct PackedVariableNodeData
                          x15::Bool,
                          x16::Int,
                          solvedCount::Int,
-                         solverKey::Symbol) = new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16, solvedCount, solverKey)
+                         solveKey::Symbol) = new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16, solvedCount, solveKey)
      # More permissive constructor needed for unmarshalling
      PackedVariableNodeData(x1::Vector,
                           x2::Int,
@@ -155,12 +155,12 @@ mutable struct PackedVariableNodeData
                           x15::Bool,
                           x16::Int,
                           solvedCount::Int,
-                          solverKey::Symbol) = new(
+                          solveKey::Symbol) = new(
                                 convert(Vector{Float64},x1),x2,
                                 convert(Vector{Float64},x3),x4,
                                 convert(Vector{Symbol},x5),
                                 convert(Vector{Int},x6),x7,x8,x9,
-                                convert(Vector{Symbol},x10),x11,x12,x13,x14,x15,x16, solvedCount, solverKey)
+                                convert(Vector{Symbol},x10),x11,x12,x13,x14,x15,x16, solvedCount, solveKey)
 end
 
 ##==============================================================================
@@ -182,7 +182,7 @@ abstract type AbstractPointParametricEst end
 Data container to store Parameteric Point Estimate (PPE) for mean and max.
 """
 struct MeanMaxPPE <: AbstractPointParametricEst
-    solverKey::Symbol #repeated because of Sam's request
+    solveKey::Symbol #repeated because of Sam's request
     suggested::Vector{Float64}
     max::Vector{Float64}
     mean::Vector{Float64}
@@ -192,7 +192,7 @@ end
 ##------------------------------------------------------------------------------
 ## Constructors
 
-MeanMaxPPE(solverKey::Symbol, suggested::Vector{Float64}, max::Vector{Float64}, mean::Vector{Float64}) = MeanMaxPPE(solverKey, suggested, max, mean, now(UTC))
+MeanMaxPPE(solveKey::Symbol, suggested::Vector{Float64}, max::Vector{Float64}, mean::Vector{Float64}) = MeanMaxPPE(solveKey, suggested, max, mean, now(UTC))
 
 ## Metadata
 """
