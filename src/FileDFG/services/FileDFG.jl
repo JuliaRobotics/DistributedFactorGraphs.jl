@@ -17,9 +17,9 @@ v1 = addVariable!(dfg, :a, ContinuousScalar, labels = [:POSE], solvable=0)
 saveDFG(dfg, "/tmp/saveDFG.tar.gz")
 ```
 """
-function saveDFG( dfg::AbstractDFG, folder::AbstractString )
+function saveDFG(folder::AbstractString, dfg::AbstractDFG)
 
-    # TODO: Deprecate the folder functionality in v0.6.1
+    # TODO: Deprecate the folder functionality
 
     # Clean up save path if a file is specified
     savepath = folder[end] == '/' ? folder[1:end-1] : folder
@@ -65,6 +65,8 @@ function saveDFG( dfg::AbstractDFG, folder::AbstractString )
     end
     Base.rm(joinpath(savedir,savename), recursive=true)
 end
+# support both argument orders, #581
+saveDFG(dfg::AbstractDFG, folder::AbstractString) = saveDFG(folder, dfg)
 
 """
     $(SIGNATURES)
