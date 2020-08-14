@@ -12,6 +12,7 @@ services:
 
 julia:
     - 1.5
+    - nightly
 
 env:
     - IIF_TEST=false
@@ -24,15 +25,16 @@ branches:
 
 jobs:
   include:
-    - env:
+    - julia: 1.4
+      env:
         - IIF_TEST=true
-      if: NOT branch =~ ^release.*$
-    - julia: nightly
       if: NOT branch =~ ^release.*$
     - arch: arm64
       env: SKIP_CGDFG_TESTS=true
       before_script:
     - stage: "Documentation"
+      julia: 1.4
+      os: linux
       script:
         - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
         - julia --project=docs/ docs/make.jl
