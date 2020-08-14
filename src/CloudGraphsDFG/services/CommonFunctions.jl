@@ -146,6 +146,7 @@ function _structToNeo4jProps(inst::Union{User, Robot, Session, PVND, N, APPE, AB
         # Neo4j type conversion if possible - keep timestamps timestamps, etc.
         if field isa ZonedDateTime
             val = "datetime(\"$(string(field))\")"
+            # val = "datetime(\"$(Dates.format(field, "yyyy-mm-ddTHH:MM:SS.ssszzz"))\")"
         end
         if field isa UUID
             val = "\"$(string(field))\""
@@ -167,7 +168,7 @@ function _structToNeo4jProps(inst::Union{User, Robot, Session, PVND, N, APPE, AB
                 val = field.value
             end
             if fieldname == :softtype
-                val = string(typeof(getSofttype(inst)))
+                val = DistributedFactorGraphs.typeModuleName(getSofttype(inst))
             end
             # Factors
             # TODO: Consolidate with packFactor in Serialization.jl - https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/525
