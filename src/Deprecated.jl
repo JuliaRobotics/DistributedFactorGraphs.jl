@@ -6,8 +6,6 @@
 ## Remove in 0.11
 ##==============================================================================
 
-export listSolvekeys
-
 @deprecate listSolvekeys(x...; kwargs...) listSolveKeys(x...;kwargs...)
 
 @deprecate addVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData, solveKey::Symbol) addVariableSolverData!(dfg, variablekey, vnd)
