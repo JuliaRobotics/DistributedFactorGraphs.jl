@@ -10,10 +10,6 @@ arch:
 services:
     - neo4j
 
-julia:
-    - 1.5
-    - nightly
-
 env:
     - IIF_TEST=false
 
@@ -25,16 +21,17 @@ branches:
 
 jobs:
   include:
-    - julia: 1.4
+    - name: "Julia 1.5, with IIF_TEST"
       env:
         - IIF_TEST=true
       if: NOT branch =~ ^release.*$
-    - arch: arm64
+    - julia: nightly
+      if: NOT branch =~ ^release.*$
+    - name: "Julia 1.5, ARM64"
+      arch: arm64
       env: SKIP_CGDFG_TESTS=true
       before_script:
     - stage: "Documentation"
-      julia: 1.4
-      os: linux
       script:
         - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
         - julia --project=docs/ docs/make.jl
