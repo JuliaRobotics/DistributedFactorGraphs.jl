@@ -5,7 +5,7 @@
 ##==============================================================================
 ## Remove in 0.11
 ##==============================================================================
-@deprecate addVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData, solverKey::Symbol) addVariableSolverData!(dfg, variablekey, vnd)
+@deprecate addVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData, solveKey::Symbol) addVariableSolverData!(dfg, variablekey, vnd)
 
 @deprecate updatePPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::AbstractPointParametricEst, ppekey::Symbol) updatePPE!(dfg, variablekey, ppe)
 

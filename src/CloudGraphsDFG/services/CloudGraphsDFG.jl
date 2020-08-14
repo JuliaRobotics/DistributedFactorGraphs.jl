@@ -236,8 +236,8 @@ function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String})
     for ppe in listPPEs(dfg, label)
         variable.ppeDict[ppe] = getPPE(dfg, label, ppe)
     end
-    for solverKey in listVariableSolverData(dfg, label)
-        variable.solverDataDict[solverKey] = getVariableSolverData(dfg, label, solverKey)
+    for solveKey in listVariableSolverData(dfg, label)
+        variable.solverDataDict[solveKey] = getVariableSolverData(dfg, label, solveKey)
     end
     dataDict = getDataEntries(dfg, label)
     for (k,v) in dataDict
@@ -543,7 +543,7 @@ function _unpackPPE(dfg::G, packedPPE::Dict{String, Any})::AbstractPointParametr
 end
 
 function listPPEs(dfg::CloudGraphsDFG, variablekey::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Vector{Symbol}
-    return _listVarSubnodesForType(dfg, variablekey, MeanMaxPPE, "solverKey"; currentTransaction=currentTransaction)
+    return _listVarSubnodesForType(dfg, variablekey, MeanMaxPPE, "solveKey"; currentTransaction=currentTransaction)
 end
 
 function getPPE(dfg::CloudGraphsDFG, variablekey::Symbol, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::AbstractPointParametricEst
@@ -578,8 +578,8 @@ function addPPE!(dfg::CloudGraphsDFG,
                  ppe::P;
                  currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::AbstractPointParametricEst where
                  {P <: AbstractPointParametricEst}
-    if ppe.solverKey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction)
-        error("PPE '$(ppe.solverKey)' already exists")
+    if ppe.solveKey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction)
+        error("PPE '$(ppe.solveKey)' already exists")
     end
     softType = getSofttype(dfg, variablekey)
     # Add additional properties for the PPE
@@ -600,8 +600,8 @@ function updatePPE!(
         ppe::P;
         currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::P where
         {P <: AbstractPointParametricEst}
-    if !(ppe.solverKey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction))
-        @warn "PPE '$(ppe.solverKey)' does not exist, adding"
+    if !(ppe.solveKey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction))
+        @warn "PPE '$(ppe.solveKey)' does not exist, adding"
     end
     softType = getSofttype(dfg, variablekey, currentTransaction=currentTransaction)
     # Add additional properties for the PPE
@@ -727,11 +727,11 @@ function _unpackVariableNodeData(dfg::G, packedDict::Dict{String, Any})::Variabl
 end
 
 function listVariableSolverData(dfg::CloudGraphsDFG, variablekey::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Vector{Symbol}
-    return _listVarSubnodesForType(dfg, variablekey, VariableNodeData, "solverKey"; currentTransaction=currentTransaction)
+    return _listVarSubnodesForType(dfg, variablekey, VariableNodeData, "solveKey"; currentTransaction=currentTransaction)
 end
 
-function getVariableSolverData(dfg::CloudGraphsDFG, variablekey::Symbol, solverKey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::VariableNodeData
-    properties = _getVarSubnodeProperties(dfg, variablekey, VariableNodeData, solverKey; currentTransaction=currentTransaction)
+function getVariableSolverData(dfg::CloudGraphsDFG, variablekey::Symbol, solveKey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::VariableNodeData
+    properties = _getVarSubnodeProperties(dfg, variablekey, VariableNodeData, solveKey; currentTransaction=currentTransaction)
     return _unpackVariableNodeData(dfg, properties)
 end
 
@@ -739,8 +739,8 @@ function addVariableSolverData!(dfg::CloudGraphsDFG,
                                 variablekey::Symbol,
                                 vnd::VariableNodeData;
                                 currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::VariableNodeData
-    if vnd.solverKey in listVariableSolverData(dfg, variablekey, currentTransaction=currentTransaction)
-        error("Solver data '$(vnd.solverKey)' already exists")
+    if vnd.solveKey in listVariableSolverData(dfg, variablekey, currentTransaction=currentTransaction)
+        error("Solver data '$(vnd.solveKey)' already exists")
     end
     retPacked = _matchmergeVariableSubnode!(
         dfg,
@@ -758,8 +758,8 @@ function updateVariableSolverData!(dfg::CloudGraphsDFG,
                                 useCopy::Bool=true,
                                 fields::Vector{Symbol}=Symbol[];
                                 currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::VariableNodeData
-    if !(vnd.solverKey in listVariableSolverData(dfg, variablekey, currentTransaction=currentTransaction))
-        @warn "Solver data '$(vnd.solverKey)' does not exist, adding rather than updating."
+    if !(vnd.solveKey in listVariableSolverData(dfg, variablekey, currentTransaction=currentTransaction))
+        @warn "Solver data '$(vnd.solveKey)' does not exist, adding rather than updating."
     end
     # TODO: Update this to use the selective parameters from fields.
     retPacked = _matchmergeVariableSubnode!(
@@ -772,13 +772,13 @@ function updateVariableSolverData!(dfg::CloudGraphsDFG,
     return _unpackVariableNodeData(dfg, retPacked)
 end
 
-function deleteVariableSolverData!(dfg::CloudGraphsDFG, variablekey::Symbol, solverKey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::VariableNodeData
+function deleteVariableSolverData!(dfg::CloudGraphsDFG, variablekey::Symbol, solveKey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::VariableNodeData
     retPacked = _deleteVarSubnode!(
         dfg,
         variablekey,
         :SOLVERDATA,
         _getLabelsForType(dfg, VariableNodeData, parentKey=variablekey),
-        solverKey,
+        solveKey,
         currentTransaction=currentTransaction)
     return _unpackVariableNodeData(dfg, retPacked)
 end
@@ -839,12 +839,12 @@ function updateVariableSolverData!(dfg::CloudGraphsDFG,
 end
 
 function mergeVariableSolverData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable)
-    for solverKey in listVariableSolverData(dfg, sourceVariable.label)
+    for solveKey in listVariableSolverData(dfg, sourceVariable.label)
         updateVariableSolverData!(
             dfg,
             sourceVariable.label,
-            getVariableSolverData(dfg, sourceVariable, solverKey),
-            solverKey)
+            getVariableSolverData(dfg, sourceVariable, solveKey),
+            solveKey)
     end
 end
 
