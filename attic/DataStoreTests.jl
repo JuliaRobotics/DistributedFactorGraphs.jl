@@ -79,7 +79,3 @@ sleep(0.1)
 #TODO
     #listStoreEntries(ds)
 end
-
-1320*4
-
-3600+2200

@@ -133,18 +133,16 @@ Modules = [CloudGraphsDFGs]
 
 
 
-## Big Data
+## Data Entries and Blobs
 
 ```@autodocs
 Modules = [DistributedFactorGraphs]
 
-Pages = ["entities/AbstractBigDataEntries.jl",
-        "entities/AbstractDataStore.jl",
-        "entities/FileDataStore.jl",
-        "entities/InMemoryDataStore.jl",
-        "services/AbstractBigDataEntries.jl",
-        "services/AbstractDataStore.jl",
-        "services/FileDataStore.jl",
-        "services/InMemoryDataStore.jl"]
+Pages = ["entities/AbstractDataEntries.jl",
+        "services/AbstractDataEntries.jl",
+        "services/BlobStores.jl",
+        "services/DataEntryBlob.jl",
+        "services/FileDataEntryBlob.jl",
+        "services/InMemoryDataEntryBlob.jl"]
 
 ```

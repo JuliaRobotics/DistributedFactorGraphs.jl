@@ -59,7 +59,6 @@ end
 end
 
 @testset "Data Store Tests" begin
-    #include("DataStoreTests.jl")
     include("consol_DataEntryBlobTests.jl")
 end
 
