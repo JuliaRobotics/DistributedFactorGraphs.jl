@@ -26,7 +26,7 @@ buildSourceString(dfg::AbstractDFG, label::Symbol) =
 
 """
     $(SIGNATURES)
-Get big data entry
+Get data entry
 """
 function getDataEntry(var::AbstractDFGVariable, key::Symbol)
     !hasDataEntry(var, key) && error("Data entry $(key) does not exist in variable")
@@ -39,7 +39,7 @@ end
 
 """
     $(SIGNATURES)
-Add Big Data Entry to a DFG variable
+Add Data Entry to a DFG variable
 """
 function addDataEntry!(var::AbstractDFGVariable, bde::AbstractDataEntry)
     haskey(var.dataDict, bde.label) && error("Data entry $(bde.label) already exists in variable")
@@ -50,7 +50,7 @@ end
 
 """
     $(SIGNATURES)
-Add Big Data Entry to distributed factor graph.
+Add Data Entry to distributed factor graph.
 Should be extended if DFG variable is not returned by reference.
 """
 function addDataEntry!(dfg::AbstractDFG, label::Symbol, bde::AbstractDataEntry)
@@ -60,7 +60,7 @@ end
 
 """
     $(SIGNATURES)
-Update big data entry
+Update data entry
 
 DevNote
 - DF, unclear if `update` verb is applicable in this case, see #404
@@ -77,23 +77,23 @@ end
 
 """
     $(SIGNATURES)
-Delete big data entry from the factor graph.
+Delete data entry from the factor graph.
 Note this doesn't remove it from any data stores.
 
 Notes:
-- users responsibility to delete big data in db before deleting entry
+- users responsibility to delete data in db before deleting entry
 """
 function deleteDataEntry!(var::AbstractDFGVariable, key::Symbol)
     return pop!(var.dataDict, key)
 end
 function deleteDataEntry!(dfg::AbstractDFG, label::Symbol, key::Symbol)
-    #users responsibility to delete big data in db before deleting entry
+    #users responsibility to delete data in db before deleting entry
     # !isVariable(dfg, label) && return nothing
     return deleteDataEntry!(getVariable(dfg, label), key)
 end
 
 function deleteDataEntry!(var::AbstractDFGVariable, entry::AbstractDataEntry)
-    #users responsibility to delete big data in db before deleting entry
+    #users responsibility to delete data in db before deleting entry
     return deleteDataEntry!(var, entry.label)
 end
 
@@ -111,7 +111,7 @@ hasDataEntry(var::DFGVariable, key::Symbol) = haskey(var.dataDict, key)
 
 """
     $(SIGNATURES)
-Get big data entries, Vector{AbstractDataEntry}
+Get data entries, Vector{AbstractDataEntry}
 """
 function getDataEntries(var::AbstractDFGVariable)
     #or should we return the iterator, Base.ValueIterator{Dict{Symbol,AbstractDataEntry}}?

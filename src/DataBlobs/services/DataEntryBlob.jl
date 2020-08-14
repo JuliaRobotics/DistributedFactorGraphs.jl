@@ -65,7 +65,7 @@ function addData! end
     $(SIGNATURES)
 Update a data entry or blob to the blob store or dfg.
 Related
-[`updateDataEntry`](@ref)
+[`updateDataEntry!`](@ref)
 """
 function updateData! end
 
@@ -73,7 +73,7 @@ function updateData! end
     $(SIGNATURES)
 Delete a data entry and blob from the blob store or dfg.
 Related
-[`deleteDataEntry`](@ref)
+[`deleteDataEntry!`](@ref)
 """
 function deleteData! end
 

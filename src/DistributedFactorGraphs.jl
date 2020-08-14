@@ -179,10 +179,9 @@ export copyGraph!, deepcopyGraph, deepcopyGraph!, buildSubgraph, mergeGraph!
 ##------------------------------------------------------------------------------
 export addDataEntry!, getDataEntry, updateDataEntry!, deleteDataEntry!, getDataEntries, listDataEntries, hasDataEntry, hasDataEntry
 # convenience wrappers
-export addDataEntry!, getDataEntryBlob
+export addDataEntry!
 # aliases
-export addData!, fetchData, fetchDataEntryBlob
-
+export addData!
 
 ##------------------------------------------------------------------------------
 # Factors
