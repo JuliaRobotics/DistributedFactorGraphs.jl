@@ -506,9 +506,14 @@ Related
 
 listSupersolves, getSolverDataDict, listVariables
 """
-function listSolveKeys(dfg::AbstractDFG)
+function listSolveKeys(dfg::AbstractDFG, 
+                       fltr::Union{Type{<:InferenceVariable},Regex}; 
+                       tags::Vector{Symbol}=Symbol[], 
+                       solvable::Int=0 )
+                       #
   skeys = Set{Symbol}()
-  for vs in listVariables(dfg), ky in keys(getSolverDataDict(getVariable(dfg, vs)))
+  varList = listVariables(dfg, fltr, tags=tags, solvable=solvable)
+  for vs in varList, ky in keys(getSolverDataDict(getVariable(dfg, vs)))
     push!(skeys, ky)
   end
   return skeys
