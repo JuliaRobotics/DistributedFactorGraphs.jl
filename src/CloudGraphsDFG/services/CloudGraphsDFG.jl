@@ -644,7 +644,7 @@ function getDataEntries(dfg::CloudGraphsDFG, label::Symbol; currentTransaction::
     entries = Dict{Symbol, BlobStoreEntry}()
     # TODO: Optimize if necessary.
     delist = listDataEntries(dfg, label, currentTransaction=currentTransaction)
-    return getDataEntry.(dfg, label, delist; currentTransaction)
+    return getDataEntry.(dfg, label, delist; currentTransaction=currentTransaction)
 
 end
 
