@@ -484,9 +484,23 @@ listVariables(dfg, r"l", tags=[:APRILTAG;])
 Related:
 - ls
 """
-function listVariables(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0) where G <: AbstractDFG
+function listVariables(dfg::AbstractDFG, 
+                       regexFilter::Union{Nothing, Regex}=nothing; 
+                       tags::Vector{Symbol}=Symbol[], 
+                       solvable::Int=0 )
+  #
   vars = getVariables(dfg, regexFilter, tags=tags, solvable=solvable)
-  return map(v -> v.label, vars)
+  return map(v -> v.label, vars)::Vector{Symbol}
+end
+
+# to be consolidated, see #612
+function listVariables(dfg::AbstractDFG, 
+                       typeFilter::Type{<:InferenceVariable}; 
+                       tags::Vector{Symbol}=Symbol[], 
+                       solvable::Int=0 )
+  #
+  retlist::Vector{Symbol} = ls(dfg, typeFilter)
+  0 < length(tags) || solvable != 0 ? intersect(retlist, ls(dfg, tags=tags, solvable=solvable)) : retlist
 end
 
 """
@@ -495,7 +509,7 @@ Get a list of the IDs (labels) of the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
 function listFactors(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
-    return map(f -> f.label, getFactors(dfg, regexFilter, tags=tags, solvable=solvable))
+  return map(f -> f.label, getFactors(dfg, regexFilter, tags=tags, solvable=solvable))
 end
 
 """
@@ -507,7 +521,7 @@ Related
 listSupersolves, getSolverDataDict, listVariables
 """
 function listSolveKeys(dfg::AbstractDFG, 
-                       fltr::Union{Type{<:InferenceVariable},Regex}; 
+                       fltr::Union{Type{<:InferenceVariable},Regex, Nothing}=nothing; 
                        tags::Vector{Symbol}=Symbol[], 
                        solvable::Int=0 )
                        #
