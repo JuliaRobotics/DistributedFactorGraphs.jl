@@ -21,14 +21,12 @@ branches:
 
 jobs:
   include:
-    - name: "Julia 1.5, with IIF_TEST"
-      env:
+    - env:
         - IIF_TEST=true
       if: NOT branch =~ ^release.*$
     - julia: nightly
       if: NOT branch =~ ^release.*$
-    - name: "Julia 1.5, ARM64"
-      arch: arm64
+    - arch: arm64
       env: SKIP_CGDFG_TESTS=true
       before_script:
     - stage: "Documentation"
