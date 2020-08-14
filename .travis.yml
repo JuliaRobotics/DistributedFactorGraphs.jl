@@ -25,7 +25,7 @@ branches:
 
 jobs:
   include:
-    - julia: 1.4
+    - julia: 1.5
       env:
         - IIF_TEST=true
       if: NOT branch =~ ^release.*$
