@@ -521,7 +521,7 @@ function updateVariableSolverData!(dfg::AbstractDFG,
 
     # TODO not very clean
     if vnd.solveKey != solveKey
-        @warn "TODO It looks like solveKey as parameter is deprecated, set it in vnd, or keep this function?"
+        @warn "updateVariableSolverData with solveKey parameter might change in the future, see DFG #565"
         usevnd = useCopy ? deepcopy(vnd) : vnd
         usevnd.solveKey = solveKey
         return updateVariableSolverData!(dfg, variablekey, usevnd, useCopy, fields, verbose)
