@@ -155,7 +155,7 @@ isFactor(dfg::CloudGraphsDFG, sym::Symbol)::Bool =
 function getSofttype(dfg::CloudGraphsDFG, lbl::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
     st = _getNodeProperty(dfg.neo4jInstance, union(_getLabelsForType(dfg, DFGVariable), [String(lbl)]), "softtype", currentTransaction=currentTransaction)
     @debug "Trying to find softtype: $st"
-    softType = getTypeFromSerializationModule(dfg, Symbol(st))
+    softType = getTypeFromSerializationModule(st)
     return softType()
 end
 
@@ -177,7 +177,7 @@ function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable; skipAddErro
     # Create/update the base variable
     # NOTE: We are not merging the variable.tags into the labels anymore. We can index by that but not
     # going to pollute the graph with unnecessary (and potentially dangerous) labels.
-    addProps = Dict("softtype" => "\"$(string(typeof(getSofttype(variable))))\"")
+    addProps = Dict("softtype" => "\"$(DistributedFactorGraphs.typeModuleName(getSofttype(variable)))\"")
     query = """
     MATCH (session:$(join(_getLabelsForType(dfg, Session), ":")))
     MERGE (node:$(join(_getLabelsForInst(dfg, variable), ":")))
