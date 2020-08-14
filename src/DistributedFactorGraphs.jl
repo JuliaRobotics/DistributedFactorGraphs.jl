@@ -223,9 +223,10 @@ export findClosestTimestamp, findVariableNearTimestamp
 # Serialization
 export packVariable, unpackVariable, packFactor, unpackFactor
 export rebuildFactorMetadata!
+export @defVariable
 
 # File import and export
-export saveDFG, loadDFG!
+export saveDFG, loadDFG!, loadDFG
 export toDot, toDotFile
 
 # Comparisons

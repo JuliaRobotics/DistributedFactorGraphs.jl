@@ -185,10 +185,6 @@ end
 Base.setproperty!(x::DFGFactor,f::Symbol, val) = begin
     if f == :solvable || f == :solverData
         getfield(x,f)[] = val
-    elseif f == :timestamp && val isa DateTime
-    #     #TODO Deprecation - Remove in v0.10
-        Base.depwarn("DFGFactor timestamp field is now a ZonedTimestamp", :setproperty!)
-        setfield!(x,:timestamp, ZonedDateTime(val,  localzone()))
     else
         setfield!(x,f,val)
     end

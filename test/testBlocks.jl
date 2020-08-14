@@ -512,7 +512,7 @@ end
 @test lsf(fg) == listFactors(fg)
 
 if getVariable(fg, ls(fg)[1]) isa DFGVariable
-  @test :default in listSolvekeys(fg)
+  @test :default in listSolveKeys(fg)
   @test :default in listSupersolves(fg)
 end
 
@@ -573,7 +573,7 @@ function  PPETestBlock!(fg, v1)
 
     @test_throws ErrorException getPPE(fg, :a, :default)
     # Update add it
-    @test @test_logs (:warn, Regex("'$(ppe.solverKey)' does not exist")) match_mode=:any updatePPE!(fg, :a, ppe) == ppe
+    @test @test_logs (:warn, Regex("'$(ppe.solveKey)' does not exist")) match_mode=:any updatePPE!(fg, :a, ppe) == ppe
     # Update update it
     @test updatePPE!(fg, :a, ppe) == ppe
     @test deletePPE!(fg, :a, :default) == ppe
@@ -684,7 +684,7 @@ function  VSDTestBlock!(fg, v1)
     # **VariableNodeData**
     #  - `getSolveInProgress`
 
-    vnd = VariableNodeData{TestSofttype1}(solverKey=:parametric)
+    vnd = VariableNodeData{TestSofttype1}(solveKey=:parametric)
     @test addVariableSolverData!(fg, :a, vnd) == vnd
 
     @test_throws ErrorException addVariableSolverData!(fg, :a, vnd)
@@ -738,7 +738,7 @@ function  VSDTestBlock!(fg, v1)
     # Add new VND of type ContinuousScalar to :x0
     # Could also do VariableNodeData(ContinuousScalar())
 
-    vnd = VariableNodeData{TestSofttype1}(solverKey=:parametric)
+    vnd = VariableNodeData{TestSofttype1}(solveKey=:parametric)
     addVariableSolverData!(fg, :a, vnd)
     @test setdiff(listVariableSolverData(fg, :a), [:default, :parametric]) == []
     # Get the data back - note that this is a reference to above.

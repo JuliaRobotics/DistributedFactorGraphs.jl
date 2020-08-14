@@ -47,7 +47,7 @@ using Test
         # facts[4].solverData.potentialused = true
         # updateFactor!(dfg, facts[4])
         # Save and load the graph to test.
-        saveDFG(dfg, filename)
+        saveDFG(filename, dfg)
 
         copyDfg = DistributedFactorGraphs._getDuplicatedEmptyDFG(dfg)
         copyDf2 = DistributedFactorGraphs._getDuplicatedEmptyDFG(dfg)
@@ -75,5 +75,7 @@ using Test
             @test_broken typeof(getDataEntry(getVariable(retDFG, :x2),:testing2)) == BlobStoreEntry
         end
 
+        # test the duplicate order #581
+        saveDFG(dfg, filename)
     end
 end

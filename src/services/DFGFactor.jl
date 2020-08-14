@@ -136,7 +136,7 @@ Return `::Bool` on whether given factor `fc::Symbol` is a prior in factor graph 
 """
 function isPrior(dfg::G, fc::Symbol)::Bool where G <: AbstractDFG
   fco = getFactor(dfg, fc)
-  getFactorType(fco) isa AbstractPrior || getFactorType(fco) isa FunctorSingleton
+  getFactorType(fco) isa AbstractPrior
 end
 
 

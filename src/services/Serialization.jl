@@ -10,13 +10,43 @@ import JSON.Serializations: CommonSerialization, StandardSerialization
 JSON.show_json(io::JSONContext, serialization::CommonSerialization, uuid::UUID) = print(io.io, "\"$uuid\"")
 
 
+## Utility functions for ZonedDateTime
+
+# Regex parser that converts clauses like ":59.82-" to well formatted ":59.820-"
+function _fixSubseconds(a)
+    length(a) == 4 && return a[1:3]*".000"*a[4]
+    frac = a[5:length(a)-1]
+    frac = length(frac) > 3 ? frac[1:3] : frac*'0'^(3-length(frac))
+    return a[1:4]*frac*a[length(a)]
+end
+
+function getStandardZDTString(stringTimestamp::String)
+    # Additional check+fix for the ultraweird "2020-08-12T12:00Z"
+    ts = replace(stringTimestamp, r"T(\d\d):(\d\d)(Z|z|\+|-)" => s"T\1:\2:00.000\3")
+
+    # This is finding :59Z or :59.82-05:00 and fixing it to always have 3 subsecond digits.
+    # Temporary fix until TimeZones.jl gets an upstream fix.
+    return replace(ts, r":\d\d(\.\d+)?(Z|z|\+|-)" => _fixSubseconds)
+end
+
+# Corrects any `::ZonedDateTime` fields of T in corresponding `interm::Dict` as `dateformat"yyyy-mm-ddTHH:MM:SS.ssszzz"`
+function standardizeZDTStrings!(T, interm::Dict)
+    for (name, typ) in zip(fieldnames(T), T.types)
+        if typ <: ZonedDateTime
+            namestr = string(name)
+            interm[namestr] = getStandardZDTString(interm[namestr])
+        end
+    end
+    nothing
+end
+
 ##==============================================================================
 ## Variable Packing and unpacking
 ##==============================================================================
 function packVariable(dfg::G, v::DFGVariable)::Dict{String, Any} where G <: AbstractDFG
     props = Dict{String, Any}()
     props["label"] = string(v.label)
-    props["timestamp"] = Dates.format(v.timestamp, "yyyy-mm-ddTHH:MM:SS.ssszzz")#string(v.timestamp)
+    props["timestamp"] = Dates.format(v.timestamp, "yyyy-mm-ddTHH:MM:SS.ssszzz")
     props["nstime"] = string(v.nstime.value)
     props["tags"] = JSON2.write(v.tags)
     props["ppeDict"] = JSON2.write(v.ppeDict)
@@ -24,46 +54,10 @@ function packVariable(dfg::G, v::DFGVariable)::Dict{String, Any} where G <: Abst
     props["smallData"] = JSON2.write(v.smallData)
     props["solvable"] = v.solvable
     props["softtype"] = string(typeof(getSofttype(v)))
-    # props["bigData"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> JSON2.write(bde), values(v.dataDict))))
-    # props["bigDataElemType"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> typeof(bde), values(v.dataDict))))
     props["dataEntry"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> JSON.json(bde), values(v.dataDict))))
     
     props["dataEntryType"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> typeof(bde), values(v.dataDict))))
     return props
-end
-
-# Corrects any `::ZonedDateTime` fields of T in corresponding `interm::Dict` as `dateformat"yyyy-mm-ddTHH:MM:SS.ssszzz"`
-function standardizeZDTString!(T, interm::Dict)
-    @debug "About to look through types of" T
-    for (name, typ) in zip(fieldnames(T), T.types)
-        # @debug "name=$name" 
-        # @debug "typ=$typ"
-        if typ <: ZonedDateTime
-            # Make sure that the timestamp is correctly formatted with subseconds
-            namestr = string(name)
-            @debug "must ensure SS.ssszzz on $name :: $typ -- $(interm[namestr])"
-                # # FIXME copy #588, but doesnt work: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/582#issuecomment-671884668
-                # #   E.g.: interm[namestr] = replace(interm[namestr], r":(\d)(\d)(Z|z|\+|-)" => s":\1\2.000\3") = "2020-08-11T04:05:59.82-04:00"
-                # @show interm[namestr] = replace(interm[namestr], r":(\d)(\d)(Z|z|\+|-)" => s":\1\2.000\3")
-                # @debug "after SS.ssszzz -- $(interm[namestr])"
-            ## DROP piece below once this cleaner copy #588 is working
-            supersec, subsec = split(interm[namestr], '.')
-            sss, zzz = split(subsec, '-')
-            # @debug "split time elements are $sss-$zzz"
-            # make sure milliseconds portion is precisely 3 characters long
-            if length(sss) < 3
-                # pad with zeros at the end
-                while length(sss) < 3
-                    sss *= "0"
-                end
-                newtimessszzz = supersec*"."*sss*"-"*zzz
-                @debug "new time string: $newtimessszzz"
-                # reassembled ZonedDateTime is put back in the dict
-                interm[namestr] = newtimessszzz
-            end
-        end
-    end
-    nothing
 end
 
 function unpackVariable(dfg::G,
@@ -74,7 +68,7 @@ function unpackVariable(dfg::G,
     @debug "Unpacking variable:\r\n$packedProps"
     label = Symbol(packedProps["label"])
     # Make sure that the timestamp is correctly formatted with subseconds
-    packedProps["timestamp"] = replace(packedProps["timestamp"], r":(\d)(\d)(Z|z|\+|-)" => s":\1\2.000\3")
+    packedProps["timestamp"] = getStandardZDTString(packedProps["timestamp"])
     # Parse it
     timestamp = ZonedDateTime(packedProps["timestamp"])
     nstime = Nanosecond(get(packedProps, "nstime", 0))
@@ -108,6 +102,9 @@ function unpackVariable(dfg::G,
             dataElemTypes = JSON2.read(packedProps["bigDataElemType"], Dict{Symbol, Symbol})
         else
             dataElemTypes = JSON2.read(packedProps["dataEntryType"], Dict{Symbol, Symbol})
+            for (k,name) in dataElemTypes 
+                dataElemTypes[k] = Symbol(split(string(name), '.')[end])
+            end
         end
 
         #TODO Deprecate - for backward compatibility between v0.8 and v0.9, remove in v0.10
@@ -119,11 +116,9 @@ function unpackVariable(dfg::G,
         end
 
         for (k,bdeInter) in dataIntermed
-            # @debug "label=$label" 
-            # @debug "bdeInter=$bdeInter"
             interm = JSON.parse(bdeInter)
             objType = getfield(DistributedFactorGraphs, dataElemTypes[k])
-            standardizeZDTString!(objType, interm)
+            standardizeZDTStrings!(objType, interm)
             fullVal = Unmarshal.unmarshal(objType, interm)
             variable.dataDict[k] = fullVal
         end
@@ -146,7 +141,7 @@ function packVariableNodeData(dfg::G, d::VariableNodeData)::PackedVariableNodeDa
                                 d.dontmargin,
                                 d.solveInProgress,
                                 d.solvedCount,
-                                d.solverKey)
+                                d.solveKey)
 end
 
 function unpackVariableNodeData(dfg::G, d::PackedVariableNodeData)::VariableNodeData where G <: AbstractDFG
@@ -169,7 +164,7 @@ function unpackVariableNodeData(dfg::G, d::PackedVariableNodeData)::VariableNode
 
   return VariableNodeData{st}(M3,M4, d.BayesNetOutVertIDs,
     d.dimIDs, d.dims, d.eliminated, d.BayesNetVertID, d.separator,
-    st(), d.initialized, d.inferdim, d.ismargin, d.dontmargin, d.solveInProgress, d.solvedCount, d.solverKey)
+    st(), d.initialized, d.inferdim, d.ismargin, d.dontmargin, d.solveInProgress, d.solvedCount, d.solveKey)
 end
 
 ##==============================================================================
@@ -180,7 +175,7 @@ function packFactor(dfg::G, f::DFGFactor)::Dict{String, Any} where G <: Abstract
     # Construct the properties to save
     props = Dict{String, Any}()
     props["label"] = string(f.label)
-    props["timestamp"] = Dates.format(f.timestamp, "yyyy-mm-ddTHH:MM:SS.ssszzz")#string(f.timestamp)
+    props["timestamp"] = Dates.format(f.timestamp, "yyyy-mm-ddTHH:MM:SS.ssszzz")
     props["nstime"] = string(f.nstime.value)
     props["tags"] = JSON2.write(f.tags)
     # Pack the node data
@@ -218,7 +213,7 @@ end
 function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G <: AbstractDFG
     label = packedProps["label"]
     # Make sure that the timestamp is correctly formatted with subseconds
-    packedProps["timestamp"] = replace(packedProps["timestamp"], r":(\d)(\d)(Z|z|\+|-)" => s":\1\2.000\3")
+    packedProps["timestamp"] = getStandardZDTString(packedProps["timestamp"])
     # Parse it
     timestamp = ZonedDateTime(packedProps["timestamp"])
     nstime = Nanosecond(get(packedProps, "nstime", 0))
