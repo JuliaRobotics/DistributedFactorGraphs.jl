@@ -87,9 +87,9 @@ if get(ENV, "IIF_TEST", "") == "true"
     using IncrementalInference
 
     apis = [LightDFG(solverParams=SolverParams(), userId="testUserId")]
-    ENV["SKIP_CGDFG_TESTS"] != "true" ? push!(apis, CloudGraphsDFG(solverParams=SolverParams(), userId="testUserId") ) : nothing
+    haskey(ENV, "SKIP_CGDFG_TESTS") && ENV["SKIP_CGDFG_TESTS"] != "true" ? push!(apis, CloudGraphsDFG(solverParams=SolverParams(), userId="testUserId") ) : nothing
     # GraphsDFG{SolverParams}()
-    
+
     for api in apis
         @testset "Testing Driver: $(typeof(api))" begin
             @info "Testing Driver: $(api)"
