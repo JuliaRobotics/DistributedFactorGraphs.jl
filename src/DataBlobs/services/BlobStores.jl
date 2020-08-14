@@ -109,7 +109,7 @@ addData!(dfg::AbstractDFG, blobstorekey::Symbol, label::Symbol, key::Symbol, blo
                                                            kwargs...)
 
 function addData!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol, key::Symbol,
-                  blob::Vector{UInt8}, timestamp=now(localzone()); description="", mimeType = "", id::UUID = uuid4(), hashfunction = sha256)
+                  blob::Vector{UInt8}, timestamp=now(localzone()); description="", mimeType = "application/octet-stream", id::UUID = uuid4(), hashfunction = sha256)
 
 
     entry = BlobStoreEntry(key, id, blobstore.key, bytes2hex(hashfunction(blob)),
@@ -196,9 +196,43 @@ end
 function deleteDataBlob!(store::FolderStore{T}, entry::BlobStoreEntry) where T
     blobfilename = joinpath(store.folder,"$(entry.id).dat")
     entryfilename = joinpath(store.folder,"$(entry.id).json")
-
+    
     data = getDataBlob(store, entry)
     rm(blobfilename)
     rm(entryfilename)
     return data
+end
+
+##==============================================================================
+## InMemoryBlobStore
+##==============================================================================
+export InMemoryBlobStore
+struct InMemoryBlobStore{T} <: AbstractBlobStore{T}
+    key::Symbol
+    blobs::Dict{UUID, T}
+end
+
+InMemoryBlobStore{T}(storeKey::Symbol) where T = InMemoryBlobStore{Vector{UInt8}}(storeKey, Dict{UUID, T}())
+InMemoryBlobStore(storeKey::Symbol=:default_inmemory_store) = InMemoryBlobStore{Vector{UInt8}}(storeKey)
+
+function getDataBlob(store::InMemoryBlobStore{T}, entry::BlobStoreEntry) where T
+    return store.blobs[entry.id]
+end
+
+function addDataBlob!(store::InMemoryBlobStore{T}, entry::BlobStoreEntry, data::T) where T
+    if haskey(store.blobs, entry.id)
+        error("Key '$(entry.id)' blob already exists.")
+    end
+    return store.blobs[entry.id] = data
+end
+
+function updateDataBlob!(store::InMemoryBlobStore{T},  entry::BlobStoreEntry, data::T) where T
+    if haskey(store.blobs, entry.id)
+        @warn "Key '$(entry.id)' doesn't exist."
+    end
+    return store.blobs[entry.id] = data
+end
+
+function deleteDataBlob!(store::InMemoryBlobStore{T}, entry::BlobStoreEntry) where T
+    return pop!(store.blobs, entry.id)
 end
