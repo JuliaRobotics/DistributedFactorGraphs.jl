@@ -239,9 +239,9 @@ function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String})
     for solveKey in listVariableSolverData(dfg, label)
         variable.solverDataDict[solveKey] = getVariableSolverData(dfg, label, solveKey)
     end
-    dataDict = getDataEntries(dfg, label)
-    for (k,v) in dataDict
-        variable.dataDict[k] = v
+    dataSet = getDataEntries(dfg, label)
+    for v in dataSet
+        variable.dataDict[v.label] = v
     end
 
     return variable
@@ -258,7 +258,7 @@ function mergeVariableData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable; cu
         updateVariableSolverData!(dfg, getLabel(sourceVariable), v, currentTransaction=currentTransaction)
     end
     for (k,v) in sourceVariable.dataDict
-        updateDatEntry!(dfg, getLabel(sourceVariable), v, currentTransaction=currentTransaction)
+        updateDataEntry!(dfg, getLabel(sourceVariable), v, currentTransaction=currentTransaction)
     end
     return sourceVariable
 end
@@ -643,11 +643,9 @@ end
 function getDataEntries(dfg::CloudGraphsDFG, label::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
     entries = Dict{Symbol, BlobStoreEntry}()
     # TODO: Optimize if necessary.
-    for key in listDataEntries(dfg, label, currentTransaction=currentTransaction)
-        entry = getDataEntry(dfg, label, key, currentTransaction=currentTransaction)
-        entries[entry.label] = entry
-    end
-    return entries
+    delist = listDataEntries(dfg, label, currentTransaction=currentTransaction)
+    return getDataEntry.(dfg, label, delist; currentTransaction)
+
 end
 
 function listDataEntries(dfg::CloudGraphsDFG, label::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
@@ -665,6 +663,10 @@ function getDataEntry(dfg::CloudGraphsDFG, label::Symbol, key::Symbol; currentTr
         BlobStoreEntry, 
         key; 
         currentTransaction=currentTransaction)
+    
+    #FIXME
+    properties["createdTimestamp"] = DistributedFactorGraphs.getStandardZDTString(properties["createdTimestamp"])
+    
     return Unmarshal.unmarshal(
         BlobStoreEntry,
         properties)
@@ -681,6 +683,10 @@ function addDataEntry!(dfg::CloudGraphsDFG, label::Symbol, bde::BlobStoreEntry; 
         bde,
         :DATA,
         currentTransaction=currentTransaction)
+    
+    #FIXME
+    packed["createdTimestamp"] = DistributedFactorGraphs.getStandardZDTString(packed["createdTimestamp"])
+
     return Unmarshal.unmarshal(
             BlobStoreEntry,
             packed)
@@ -697,6 +703,10 @@ function updateDataEntry!(dfg::CloudGraphsDFG, label::Symbol,  bde::BlobStoreEnt
         bde,
         :DATA,
         currentTransaction=currentTransaction)
+
+    #FIXME
+    packed["createdTimestamp"] = DistributedFactorGraphs.getStandardZDTString(packed["createdTimestamp"])
+
     return Unmarshal.unmarshal(
             BlobStoreEntry,
             packed)
@@ -710,6 +720,10 @@ function deleteDataEntry!(dfg::CloudGraphsDFG, label::Symbol, key::Symbol; curre
         _getLabelsForType(dfg, BlobStoreEntry, parentKey=label),
         key,
         currentTransaction=currentTransaction)
+    
+    #FIXME
+    props["createdTimestamp"] = DistributedFactorGraphs.getStandardZDTString(props["createdTimestamp"])
+
     return Unmarshal.unmarshal(
         BlobStoreEntry,
         props)

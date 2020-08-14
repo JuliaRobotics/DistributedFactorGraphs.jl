@@ -868,16 +868,11 @@ function  DataEntriesTestBlock!(fg, v2)
     deleteDataEntry!(fg, :b, :key2)
 end
 
-function blobsStoresTestBlock!(fg, v1)
+function blobsStoresTestBlock!(fg)
 
     de1 = BlobStoreEntry(:label1,uuid4(), :store1, "AAAA","origin1","description1","mimetype1",now(localzone()))
-    # TODO put this one in. It breaks current serialization.
-    @warn "FIXME ZonedDateTime tests for: 2020-08-12T12:00:00.000+00:00)"
-    @test_skip false 
-    #de2 = BlobStoreEntry(:label2,uuid4(), :store2, "FFFF","origin2","description2","mimetype2",ZonedDateTime("2020-08-12T12:00:00.000+00:00"))
-    de2 = BlobStoreEntry(:label2,uuid4(), :store2, "FFFF","origin2","description2","mimetype2",ZonedDateTime("2020-08-12T12:00:00.001+00:00"))
-    # de2_update = BlobStoreEntry(:label2,uuid4(), :store2, "0123","origin2","description2","mimetype2",ZonedDateTime("2020-08-12T12:00:01.000+00:00"))
-    de2_update = BlobStoreEntry(:label2,uuid4(), :store2, "0123","origin2","description2","mimetype2",ZonedDateTime("2020-08-12T12:00:01.001+00:00"))
+    de2 = BlobStoreEntry(:label2,uuid4(), :store2, "FFFF","origin2","description2","mimetype2",ZonedDateTime("2020-08-12T12:00:00.000+00:00"))
+    de2_update = BlobStoreEntry(:label2,uuid4(), :store2, "0123","origin2","description2","mimetype2",ZonedDateTime("2020-08-12T12:00:01.000+00:00"))
     @test getLabel(de1) == de1.label
     @test getId(de1) == de1.id
     @test getHash(de1) == hex2bytes(de1.hash)
@@ -886,9 +881,10 @@ function blobsStoresTestBlock!(fg, v1)
     #add
     var1 = getVariable(fg, :a)
     @test addDataEntry!(var1, de1) == de1
+    updateVariable!(fg, var1)
     @test addDataEntry!(fg, :a, de2) == de2
     @test_throws ErrorException addDataEntry!(var1, de1)
-    @test de2 in getDataEntries(var1)
+    @test de2 in getDataEntries(fg, var1.label)
 
     #get
     @test deepcopy(de1) == getDataEntry(var1, :label1)
@@ -911,10 +907,11 @@ function blobsStoresTestBlock!(fg, v1)
     @test listDataEntries(fg, :b) == Symbol[:label2]
 
     #delete
-    @test deleteDataEntry!(var1, de1) == de1
-    @test listDataEntries(var1) == Symbol[:label2]
+    @test deleteDataEntry!(fg, var1.label, de1.label) == de1
+    @test listDataEntries(fg, var1.label) == Symbol[:label2]
     #delete from dfg
     @test deleteDataEntry!(fg, :a, :label2) == de2_update
+    var1 = getVariable(fg, :a)
     @test listDataEntries(var1) == Symbol[]
 
     # Blobstore functions
@@ -939,19 +936,19 @@ function blobsStoresTestBlock!(fg, v1)
     # Data functions
     testData = rand(UInt8, 50)
     # Adding 
-    newData = addData!(fg, fs.key, getLabel(v1), :testing, testData)
+    newData = addData!(fg, fs.key, :a, :testing, testData)
     # Listing
-    @test :testing in listDataEntries(fg, getLabel(v1))
+    @test :testing in listDataEntries(fg, :a)
     # Getting
-    data = getData(fg, fs, getLabel(v1), :testing)
+    data = getData(fg, fs, :a, :testing)
     @test data[1].hash == newData[1].hash
     @test data[2] == newData[2]
     # Updating
-    updateData = updateData!(fg, fs, getLabel(v1), newData[1], rand(UInt8, 50))
+    updateData = updateData!(fg, fs, :a, newData[1], rand(UInt8, 50))
     @test updateData[1].hash != data[1].hash
     @test updateData[2] != data[2]
     # Deleting
-    retData = deleteData!(fg, getLabel(v1), :testing)
+    retData = deleteData!(fg, :a, :testing)
 
 end
 

@@ -117,7 +117,7 @@ end
         DataEntriesTestBlock!(fg1, var2)
     end
     @testset "Data blob tests" begin
-        blobsStoresTestBlock!(fg1, var2)
+        blobsStoresTestBlock!(fg1)
     end
 end
 
