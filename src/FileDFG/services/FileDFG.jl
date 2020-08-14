@@ -86,10 +86,9 @@ ls(dfg)
 """
 function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString)
 
-
     #
     # loaddir gets deleted so needs to be unique
-    loaddir=joinpath("/","tmp","caesar","random", string(uuid1()))
+    loaddir=split(joinpath("/","tmp","caesar","random", string(uuid1())), '-')[1]
     # Check if zipped destination (dst) by first doing fuzzy search from user supplied dst
     folder = dst  # working directory for fileDFG variable and factor operations
     dstname = dst # path name could either be legacy FileDFG dir or .tar.gz file of FileDFG files.
