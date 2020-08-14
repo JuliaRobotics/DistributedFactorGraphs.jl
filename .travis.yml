@@ -10,6 +10,9 @@ arch:
 services:
     - neo4j
 
+julia:
+    - 1.5
+
 env:
     - IIF_TEST=false
 
