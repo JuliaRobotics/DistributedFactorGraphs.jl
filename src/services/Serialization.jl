@@ -190,7 +190,9 @@ function unpackVariableNodeData(dfg::G, d::PackedVariableNodeData)::VariableNode
 
   @debug "Dispatching conversion packed variable -> variable for type $(string(d.softtype))"
   # Figuring out the softtype
-  st =  getTypeFromSerializationModule(d.softtype)
+  # TODO deprecated remove in v0.11 - for backward compatibility for saved softtypes. 
+  ststring = string(split(d.softtype, "(")[1])
+  st =  getTypeFromSerializationModule(ststring)
   isnothing(st) && error("The variable doesn't seem to have a softtype. It needs to set up with an InferenceVariable from IIF. This will happen if you use DFG to add serialized variables directly and try use them. Please use IncrementalInference.addVariable().")
 
   return VariableNodeData{st}(M3,M4, d.BayesNetOutVertIDs,
