@@ -1,12 +1,21 @@
 ##==============================================================================
 # deprecation staging area
 ##==============================================================================
+##==============================================================================
+## Deprecated in v0.9 Remove in the v0.10 cycle
+##==============================================================================
+
+Base.promote_rule(::Type{DateTime}, ::Type{ZonedDateTime}) = DateTime
+function Base.convert(::Type{DateTime}, ts::ZonedDateTime)
+    @warn "DFG now uses ZonedDateTime, temporary promoting and converting to DateTime local time"
+    return DateTime(ts, Local)
+end
+
+@deprecate listSolvekeys(x...) listSolveKeys(x...)
 
 ##==============================================================================
-## Remove in 0.11
+## Deprecated in v0.10 Remove in 0.11
 ##==============================================================================
-
-@deprecate listSolvekeys(x...; kwargs...) listSolveKeys(x...;kwargs...)
 
 @deprecate addVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData, solveKey::Symbol) addVariableSolverData!(dfg, variablekey, vnd)
 
