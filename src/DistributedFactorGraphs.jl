@@ -27,6 +27,7 @@ using JSON2 # JSON2 requires all properties to be in correct sequence, can't gua
 using LinearAlgebra
 using SparseArrays
 using UUIDs
+using Pkg
 
 
 ##==============================================================================

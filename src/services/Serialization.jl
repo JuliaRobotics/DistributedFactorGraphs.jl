@@ -2,12 +2,32 @@
 # For all types that pack their type into their own structure (e.g. PPE)
 const TYPEKEY = "_type"
 
-# Custom serialization
+## Custom serialization
 using JSON
 import JSON.show_json
 import JSON.Writer: StructuralContext, JSONContext, show_json
 import JSON.Serializations: CommonSerialization, StandardSerialization
 JSON.show_json(io::JSONContext, serialization::CommonSerialization, uuid::UUID) = print(io.io, "\"$uuid\"")
+
+## Version checking
+function _getDFGVersion()
+    if haskey(Pkg.dependencies(), Base.UUID("b5cc3c7e-6572-11e9-2517-99fb8daf2f04"))
+        return string(Pkg.dependencies()[Base.UUID("b5cc3c7e-6572-11e9-2517-99fb8daf2f04")].version)
+    else
+        # This is arguably slower, but needed for Travis.
+        return Pkg.TOML.parse(read(joinpath(dirname(pathof(@__MODULE__)), "..", "Project.toml"), String))["version"]
+    end
+end
+
+function _versionCheck(props::Dict{String, Any})
+    if haskey(props, "_version")
+        if props["_version"] != _getDFGVersion()
+            @warn "This data was serialized using DFG $(props["_version"]) but you have $(_getDFGVersion()) installed, there may be deserialization issues."
+        end
+    else
+        @warn "There isn't a version tag in this data so it's older than v0.10, there may be deserialization issues."
+    end
+end
 
 ## Utility functions for ZonedDateTime
 
@@ -92,6 +112,7 @@ function packVariable(dfg::G, v::DFGVariable)::Dict{String, Any} where G <: Abst
     props["softtype"] = typeModuleName(getSofttype(v))
     props["dataEntry"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> JSON.json(bde), values(v.dataDict))))
     props["dataEntryType"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> typeof(bde), values(v.dataDict))))
+    props["_version"] = _getDFGVersion()
     return props
 end
 
@@ -101,6 +122,8 @@ function unpackVariable(dfg::G,
         unpackSolverData::Bool=true,
         unpackBigData::Bool=true)::DFGVariable where G <: AbstractDFG
     @debug "Unpacking variable:\r\n$packedProps"
+    # Version checking.
+    _versionCheck(packedProps)
     label = Symbol(packedProps["label"])
     # Make sure that the timestamp is correctly formatted with subseconds
     packedProps["timestamp"] = getStandardZDTString(packedProps["timestamp"])
@@ -228,7 +251,7 @@ function packFactor(dfg::G, f::DFGFactor)::Dict{String, Any} where G <: Abstract
     props["fnctype"] = String(_getname(fnctype))
     props["_variableOrderSymbols"] = JSON2.write(f._variableOrderSymbols)
     props["solvable"] = getSolvable(f)
-
+    props["_version"] = _getDFGVersion()
     return props
 end
 
@@ -244,6 +267,9 @@ end
 
 
 function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G <: AbstractDFG
+    # Version checking.
+    _versionCheck(packedProps)
+
     label = packedProps["label"]
     # Make sure that the timestamp is correctly formatted with subseconds
     packedProps["timestamp"] = getStandardZDTString(packedProps["timestamp"])
