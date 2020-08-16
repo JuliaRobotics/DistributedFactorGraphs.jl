@@ -11,9 +11,12 @@ JSON.show_json(io::JSONContext, serialization::CommonSerialization, uuid::UUID) 
 
 ## Version checking
 function _getDFGVersion()
-    Pkg.status()
-    # Looks like this is deprecated but there's no replacement function yet.
-    return string(Pkg.dependencies()[Base.UUID("b5cc3c7e-6572-11e9-2517-99fb8daf2f04")].version)
+    if haskey(Pkg.dependencies(), Base.UUID("b5cc3c7e-6572-11e9-2517-99fb8daf2f04"))
+        return string(Pkg.dependencies()[Base.UUID("b5cc3c7e-6572-11e9-2517-99fb8daf2f04")].version)
+    else
+        # This is arguably slower, but needed for Travis.
+        return Pkg.TOML.parse(read(joinpath(dirname(pathof(@__MODULE__)), "..", "Project.toml"), String))["version"]
+    end
 end
 
 function _versionCheck(props::Dict{String, Any})
