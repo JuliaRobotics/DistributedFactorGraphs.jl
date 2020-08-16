@@ -177,12 +177,7 @@ function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable; skipAddErro
     # Create/update the base variable
     # NOTE: We are not merging the variable.tags into the labels anymore. We can index by that but not
     # going to pollute the graph with unnecessary (and potentially dangerous) labels.
-<<<<<<< HEAD
-    addProps = Dict(
-        "softtype" => "\"$(string(typeof(getSofttype(variable))))\"")
-=======
     addProps = Dict("softtype" => "\"$(DistributedFactorGraphs.typeModuleName(getSofttype(variable)))\"")
->>>>>>> ff56034195104ff1cd5cdee9b10f7d271eb1d5f8
     query = """
     MATCH (session:$(join(_getLabelsForType(dfg, Session), ":")))
     MERGE (node:$(join(_getLabelsForInst(dfg, variable), ":")))
