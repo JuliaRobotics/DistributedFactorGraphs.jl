@@ -11,6 +11,7 @@ JSON.show_json(io::JSONContext, serialization::CommonSerialization, uuid::UUID) 
 
 ## Version checking
 function _getDFGVersion()
+    Pkg.status()
     # Looks like this is deprecated but there's no replacement function yet.
     return string(Pkg.dependencies()[Base.UUID("b5cc3c7e-6572-11e9-2517-99fb8daf2f04")].version)
 end
