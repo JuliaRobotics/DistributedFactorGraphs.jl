@@ -17,9 +17,9 @@ v1 = addVariable!(dfg, :a, ContinuousScalar, labels = [:POSE], solvable=0)
 saveDFG(dfg, "/tmp/saveDFG.tar.gz")
 ```
 """
-function saveDFG( dfg::AbstractDFG, folder::AbstractString )
+function saveDFG(folder::AbstractString, dfg::AbstractDFG)
 
-    # TODO: Deprecate the folder functionality in v0.6.1
+    # TODO: Deprecate the folder functionality
 
     # Clean up save path if a file is specified
     savepath = folder[end] == '/' ? folder[1:end-1] : folder
@@ -65,6 +65,8 @@ function saveDFG( dfg::AbstractDFG, folder::AbstractString )
     end
     Base.rm(joinpath(savedir,savename), recursive=true)
 end
+# support both argument orders, #581
+saveDFG(dfg::AbstractDFG, folder::AbstractString) = saveDFG(folder, dfg)
 
 """
     $(SIGNATURES)
@@ -77,17 +79,16 @@ using DistributedFactorGraphs, IncrementalInference
 # Create a DFG - can make one directly, e.g. LightDFG{NoSolverParams}() or use IIF:
 dfg = initfg()
 # Load the graph
-loadDFG("/tmp/savedgraph.tar.gz", IncrementalInference, dfg)
+loadDFG!(dfg, "/tmp/savedgraph.tar.gz")
 # Use the DFG as you do normally.
 ls(dfg)
 ```
 """
 function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString)
 
-
     #
     # loaddir gets deleted so needs to be unique
-    loaddir=joinpath("/","tmp","caesar","random", string(uuid1()))
+    loaddir=split(joinpath("/","tmp","caesar","random", string(uuid1())), '-')[1]
     # Check if zipped destination (dst) by first doing fuzzy search from user supplied dst
     folder = dst  # working directory for fileDFG variable and factor operations
     dstname = dst # path name could either be legacy FileDFG dir or .tar.gz file of FileDFG files.
@@ -111,7 +112,7 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString)
         @show sfolder = split(dstname, '.')
         Base.mkpath(loaddir)
         folder = joinpath(loaddir, filename) #splitpath(string(sfolder[end-2]))[end]
-        @info "loadDFG detected a gzip $dstname -- unpacking via $loaddir now..."
+        @info "loadDFG! detected a gzip $dstname -- unpacking via $loaddir now..."
         Base.rm(folder, recursive=true, force=true)
         # unzip the tar file
         run(`tar -zxf $dstname -C $loaddir`)
@@ -158,10 +159,13 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString)
 
     # remove the temporary unzipped file
     if unzip
-      @info "DFG.loadDFG is deleting a temp folder created during unzip, $loaddir"
+      @info "DFG.loadDFG! is deleting a temp folder created during unzip, $loaddir"
       # need this because the number of files created in /tmp/caesar/random is becoming redonkulous.
       Base.rm(loaddir, recursive=true, force=true)
     end
 
     return dfgLoadInto
 end
+
+# to be extended by users with particular choices in dispatch.
+function loadDFG end

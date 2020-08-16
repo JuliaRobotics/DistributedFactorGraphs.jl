@@ -21,8 +21,75 @@ function _versionCheck(props::Dict{String, Any})
             @warn "This data was serialized using DFG $(props["_version"]) but you have $(_getDFGVersion()) installed, there may be deserialization issues."
         end
     else
-        @warn "There isn't a version tag in this data so it older than v0.10, there may be deserialization issues."
+        @warn "There isn't a version tag in this data so it's older than v0.10, there may be deserialization issues."
     end
+end
+
+## Utility functions for ZonedDateTime
+
+# Regex parser that converts clauses like ":59.82-" to well formatted ":59.820-"
+function _fixSubseconds(a)
+    length(a) == 4 && return a[1:3]*".000"*a[4]
+    frac = a[5:length(a)-1]
+    frac = length(frac) > 3 ? frac[1:3] : frac*'0'^(3-length(frac))
+    return a[1:4]*frac*a[length(a)]
+end
+
+function getStandardZDTString(stringTimestamp::String)
+    # Additional check+fix for the ultraweird "2020-08-12T12:00Z"
+    ts = replace(stringTimestamp, r"T(\d\d):(\d\d)(Z|z|\+|-)" => s"T\1:\2:00.000\3")
+
+    # This is finding :59Z or :59.82-05:00 and fixing it to always have 3 subsecond digits.
+    # Temporary fix until TimeZones.jl gets an upstream fix.
+    return replace(ts, r":\d\d(\.\d+)?(Z|z|\+|-)" => _fixSubseconds)
+end
+
+# Corrects any `::ZonedDateTime` fields of T in corresponding `interm::Dict` as `dateformat"yyyy-mm-ddTHH:MM:SS.ssszzz"`
+function standardizeZDTStrings!(T, interm::Dict)
+    for (name, typ) in zip(fieldnames(T), T.types)
+        if typ <: ZonedDateTime
+            namestr = string(name)
+            interm[namestr] = getStandardZDTString(interm[namestr])
+        end
+    end
+    nothing
+end
+
+function string2ZonedDateTime(stringTimestamp) 
+    #   ss = split(stringTimestamp, r"(T[0-9.:]*?\K(?=[-+Zz]))|[\[\]]")
+  ss = split(stringTimestamp, r"T[\d.:]{5,12}?\K(?=[-+Zz])")
+  length(ss) != 2 && error("Misformed zoned timestamp string $stringTimestamp")
+  ZonedDateTime(DateTime(ss[1]), TimeZone(ss[2]))
+end
+
+# Softtype module.type string functions
+function typeModuleName(softtype::InferenceVariable)
+    io = IOBuffer()
+    ioc = IOContext(io, :module=>DistributedFactorGraphs)
+    show(ioc, typeof(softtype))
+    return String(take!(io))
+end
+
+function getTypeFromSerializationModule(softtypeString::String)
+    try
+        # split the type at last `.`
+        split_st = split(softtypeString, r"\.(?!.*\.)")
+        #if module is specified look for the module in main, otherwise use Main        
+        if length(split_st) == 2
+            m = getfield(Main, Symbol(split_st[1]))
+        else
+            m = Main
+        end
+        return getfield(m, Symbol(split_st[end]))        
+
+    catch ex
+        @error "Unable to deserialize soft type $(softtypeString)"
+        io = IOBuffer()
+        showerror(io, ex, catch_backtrace())
+        err = String(take!(io))
+        @error(err)
+    end
+    nothing
 end
 
 ##==============================================================================
@@ -31,55 +98,18 @@ end
 function packVariable(dfg::G, v::DFGVariable)::Dict{String, Any} where G <: AbstractDFG
     props = Dict{String, Any}()
     props["label"] = string(v.label)
-    props["timestamp"] = Dates.format(v.timestamp, "yyyy-mm-ddTHH:MM:SS.ssszzz")#string(v.timestamp)
+    props["timestamp"] = Dates.format(v.timestamp, "yyyy-mm-ddTHH:MM:SS.ssszzz")
     props["nstime"] = string(v.nstime.value)
     props["tags"] = JSON2.write(v.tags)
     props["ppeDict"] = JSON2.write(v.ppeDict)
     props["solverDataDict"] = JSON2.write(Dict(keys(v.solverDataDict) .=> map(vnd -> packVariableNodeData(dfg, vnd), values(v.solverDataDict))))
     props["smallData"] = JSON2.write(v.smallData)
     props["solvable"] = v.solvable
-    props["softtype"] = string(typeof(getSofttype(v)))
-    # props["bigData"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> JSON2.write(bde), values(v.dataDict))))
-    # props["bigDataElemType"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> typeof(bde), values(v.dataDict))))
+    props["softtype"] = typeModuleName(getSofttype(v))
     props["dataEntry"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> JSON.json(bde), values(v.dataDict))))
-    
     props["dataEntryType"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> typeof(bde), values(v.dataDict))))
     props["_version"] = _getDFGVersion()
     return props
-end
-
-# Corrects any `::ZonedDateTime` fields of T in corresponding `interm::Dict` as `dateformat"yyyy-mm-ddTHH:MM:SS.ssszzz"`
-function standardizeZDTString!(T, interm::Dict)
-    @debug "About to look through types of" T
-    for (name, typ) in zip(fieldnames(T), T.types)
-        # @debug "name=$name" 
-        # @debug "typ=$typ"
-        if typ <: ZonedDateTime
-            # Make sure that the timestamp is correctly formatted with subseconds
-            namestr = string(name)
-            @debug "must ensure SS.ssszzz on $name :: $typ -- $(interm[namestr])"
-                # # FIXME copy #588, but doesnt work: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/582#issuecomment-671884668
-                # #   E.g.: interm[namestr] = replace(interm[namestr], r":(\d)(\d)(Z|z|\+|-)" => s":\1\2.000\3") = "2020-08-11T04:05:59.82-04:00"
-                # @show interm[namestr] = replace(interm[namestr], r":(\d)(\d)(Z|z|\+|-)" => s":\1\2.000\3")
-                # @debug "after SS.ssszzz -- $(interm[namestr])"
-            ## DROP piece below once this cleaner copy #588 is working
-            supersec, subsec = split(interm[namestr], '.')
-            sss, zzz = split(subsec, '-')
-            # @debug "split time elements are $sss-$zzz"
-            # make sure milliseconds portion is precisely 3 characters long
-            if length(sss) < 3
-                # pad with zeros at the end
-                while length(sss) < 3
-                    sss *= "0"
-                end
-                newtimessszzz = supersec*"."*sss*"-"*zzz
-                @debug "new time string: $newtimessszzz"
-                # reassembled ZonedDateTime is put back in the dict
-                interm[namestr] = newtimessszzz
-            end
-        end
-    end
-    nothing
 end
 
 function unpackVariable(dfg::G,
@@ -92,7 +122,7 @@ function unpackVariable(dfg::G,
     _versionCheck(packedProps)
     label = Symbol(packedProps["label"])
     # Make sure that the timestamp is correctly formatted with subseconds
-    packedProps["timestamp"] = replace(packedProps["timestamp"], r":(\d)(\d)(Z|z|\+|-)" => s":\1\2.000\3")
+    packedProps["timestamp"] = getStandardZDTString(packedProps["timestamp"])
     # Parse it
     timestamp = ZonedDateTime(packedProps["timestamp"])
     nstime = Nanosecond(get(packedProps, "nstime", 0))
@@ -106,8 +136,8 @@ function unpackVariable(dfg::G,
     smallData = JSON2.read(packedProps["smallData"], Dict{Symbol, SmallDataTypes})
 
     softtypeString = packedProps["softtype"]
-    softtype = getTypeFromSerializationModule(dfg, Symbol(softtypeString))
-    softtype == nothing && error("Cannot deserialize softtype '$softtypeString' in variable '$label'")
+    softtype = getTypeFromSerializationModule(softtypeString)
+    isnothing(softtype) && error("Cannot deserialize softtype '$softtypeString' in variable '$label'")
 
     if unpackSolverData
         packed = JSON2.read(packedProps["solverDataDict"], Dict{String, PackedVariableNodeData})
@@ -140,11 +170,9 @@ function unpackVariable(dfg::G,
         end
 
         for (k,bdeInter) in dataIntermed
-            # @debug "label=$label" 
-            # @debug "bdeInter=$bdeInter"
             interm = JSON.parse(bdeInter)
             objType = getfield(DistributedFactorGraphs, dataElemTypes[k])
-            standardizeZDTString!(objType, interm)
+            standardizeZDTStrings!(objType, interm)
             fullVal = Unmarshal.unmarshal(objType, interm)
             variable.dataDict[k] = fullVal
         end
@@ -160,14 +188,14 @@ function packVariableNodeData(dfg::G, d::VariableNodeData)::PackedVariableNodeDa
                                 d.BayesNetOutVertIDs,
                                 d.dimIDs, d.dims, d.eliminated,
                                 d.BayesNetVertID, d.separator,
-                                d.softtype != nothing ? string(d.softtype) : nothing,
+                                typeModuleName(d.softtype),
                                 d.initialized,
                                 d.inferdim,
                                 d.ismargin,
                                 d.dontmargin,
                                 d.solveInProgress,
                                 d.solvedCount,
-                                d.solverKey)
+                                d.solveKey)
 end
 
 function unpackVariableNodeData(dfg::G, d::PackedVariableNodeData)::VariableNodeData where G <: AbstractDFG
@@ -179,18 +207,16 @@ function unpackVariableNodeData(dfg::G, d::PackedVariableNodeData)::VariableNode
   c4 = r4 > 0 ? floor(Int,length(d.vecbw)/r4) : 0
   M4 = reshape(d.vecbw,r4,c4)
 
-  # TODO -- allow out of module type allocation (future feature, not currently in use)
   @debug "Dispatching conversion packed variable -> variable for type $(string(d.softtype))"
   # Figuring out the softtype
-  unpackedTypeName = split(d.softtype, "(")[1]
-  unpackedTypeName = split(unpackedTypeName, '.')[end]
-  @debug "DECODING Softtype = $unpackedTypeName"
-  st = getTypeFromSerializationModule(dfg, Symbol(unpackedTypeName))
-  st == nothing && error("The variable doesn't seem to have a softtype. It needs to set up with an InferenceVariable from IIF. This will happen if you use DFG to add serialized variables directly and try use them. Please use IncrementalInference.addVariable().")
+  # TODO deprecated remove in v0.11 - for backward compatibility for saved softtypes. 
+  ststring = string(split(d.softtype, "(")[1])
+  st =  getTypeFromSerializationModule(ststring)
+  isnothing(st) && error("The variable doesn't seem to have a softtype. It needs to set up with an InferenceVariable from IIF. This will happen if you use DFG to add serialized variables directly and try use them. Please use IncrementalInference.addVariable().")
 
   return VariableNodeData{st}(M3,M4, d.BayesNetOutVertIDs,
     d.dimIDs, d.dims, d.eliminated, d.BayesNetVertID, d.separator,
-    st(), d.initialized, d.inferdim, d.ismargin, d.dontmargin, d.solveInProgress, d.solvedCount, d.solverKey)
+    st(), d.initialized, d.inferdim, d.ismargin, d.dontmargin, d.solveInProgress, d.solvedCount, d.solveKey)
 end
 
 ##==============================================================================
@@ -201,7 +227,7 @@ function packFactor(dfg::G, f::DFGFactor)::Dict{String, Any} where G <: Abstract
     # Construct the properties to save
     props = Dict{String, Any}()
     props["label"] = string(f.label)
-    props["timestamp"] = Dates.format(f.timestamp, "yyyy-mm-ddTHH:MM:SS.ssszzz")#string(f.timestamp)
+    props["timestamp"] = Dates.format(f.timestamp, "yyyy-mm-ddTHH:MM:SS.ssszzz")
     props["nstime"] = string(f.nstime.value)
     props["tags"] = JSON2.write(f.tags)
     # Pack the node data
@@ -242,7 +268,7 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G
 
     label = packedProps["label"]
     # Make sure that the timestamp is correctly formatted with subseconds
-    packedProps["timestamp"] = replace(packedProps["timestamp"], r":(\d)(\d)(Z|z|\+|-)" => s":\1\2.000\3")
+    packedProps["timestamp"] = getStandardZDTString(packedProps["timestamp"])
     # Parse it
     timestamp = ZonedDateTime(packedProps["timestamp"])
     nstime = Nanosecond(get(packedProps, "nstime", 0))

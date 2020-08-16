@@ -146,6 +146,7 @@ function _structToNeo4jProps(inst::Union{User, Robot, Session, PVND, N, APPE, AB
         # Neo4j type conversion if possible - keep timestamps timestamps, etc.
         if field isa ZonedDateTime
             val = "datetime(\"$(string(field))\")"
+            # val = "datetime(\"$(Dates.format(field, "yyyy-mm-ddTHH:MM:SS.ssszzz"))\")"
         end
         if field isa UUID
             val = "\"$(string(field))\""
@@ -167,7 +168,7 @@ function _structToNeo4jProps(inst::Union{User, Robot, Session, PVND, N, APPE, AB
                 val = field.value
             end
             if fieldname == :softtype
-                val = string(typeof(getSofttype(inst)))
+                val = DistributedFactorGraphs.typeModuleName(getSofttype(inst))
             end
             # Factors
             # TODO: Consolidate with packFactor in Serialization.jl - https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/525
@@ -250,8 +251,8 @@ function _getLabelsForInst(dfg::CloudGraphsDFG,
     labels = _getLabelsForType(dfg, typeof(inst), parentKey=parentKey)
     typeof(inst) <: DFGVariable && push!(labels, String(getLabel(inst)))
     typeof(inst) <: DFGFactor && push!(labels, String(getLabel(inst)))
-    typeof(inst) <: AbstractPointParametricEst && push!(labels, String(inst.solverKey))
-    typeof(inst) <: VariableNodeData && push!(labels, String(inst.solverKey))
+    typeof(inst) <: AbstractPointParametricEst && push!(labels, String(inst.solveKey))
+    typeof(inst) <: VariableNodeData && push!(labels, String(inst.solveKey))
     typeof(inst) <: AbstractDataEntry && push!(labels, String(inst.label))
     return labels
 end
@@ -317,8 +318,8 @@ function _matchmergeVariableSubnode!(
         result = commit(tx)
     end
     length(result.errors) > 0 && error(string(result.errors))
-    length(result.results[1]["data"]) != 1 && error("Cannot find subnode '$(ppe.solverKey)' for variable '$variablekey'")
-    length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot find subnode '$(ppe.solverKey)' for variable '$variablekey'")
+    length(result.results[1]["data"]) != 1 && error("Cannot find subnode '$(ppe.solveKey)' for variable '$variablekey'")
+    length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot find subnode '$(ppe.solveKey)' for variable '$variablekey'")
     return result.results[1]["data"][1]["row"][1]
 end
 

@@ -115,12 +115,10 @@ end
 @testset "Data Entries and Blobs" begin
     if typeof(fg1) <: InMemoryDFGTypes
         DataEntriesTestBlock!(fg1, var2)
-    else
-        @test_skip DataEntriesTestBlock!(fg1, var2)
     end
-
-    # New data blob API
-    blobsTestBlock!(fg1, var2)
+    @testset "Data blob tests" begin
+        blobsStoresTestBlock!(fg1)
+    end
 end
 
 @testset "TODO Sorteer groep" begin

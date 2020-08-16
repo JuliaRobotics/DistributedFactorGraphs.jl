@@ -180,10 +180,9 @@ export copyGraph!, deepcopyGraph, deepcopyGraph!, buildSubgraph, mergeGraph!
 ##------------------------------------------------------------------------------
 export addDataEntry!, getDataEntry, updateDataEntry!, deleteDataEntry!, getDataEntries, listDataEntries, hasDataEntry, hasDataEntry
 # convenience wrappers
-export addDataEntry!, getDataEntryBlob
+export addDataEntry!
 # aliases
-export addData!, fetchData, fetchDataEntryBlob
-
+export addData!
 
 ##------------------------------------------------------------------------------
 # Factors
@@ -224,9 +223,10 @@ export findClosestTimestamp, findVariableNearTimestamp
 # Serialization
 export packVariable, unpackVariable, packFactor, unpackFactor
 export rebuildFactorMetadata!
+export @defVariable
 
 # File import and export
-export saveDFG, loadDFG!
+export saveDFG, loadDFG!, loadDFG
 export toDot, toDotFile
 
 # Comparisons

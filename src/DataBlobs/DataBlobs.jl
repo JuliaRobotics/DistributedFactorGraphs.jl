@@ -15,7 +15,6 @@ include("services/InMemoryDataEntryBlob.jl")
 
 
 export AbstractDataEntry, GeneralDataEntry, MongodbDataEntry, FileDataEntry
-export InMemoryDataStore, FileDataStore
 
 export getData, addData!, updateData!, deleteData!, listStoreEntries
 export getDataBlob, addDataBlob!, updateDataBlob!, deleteDataBlob!, listDataBlobs

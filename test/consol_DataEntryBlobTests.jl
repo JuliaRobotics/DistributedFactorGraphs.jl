@@ -98,6 +98,29 @@ dfs = FolderStore("/tmp/defaultfolderstore")
 @test dfs isa FolderStore{Vector{UInt8}}
 
 ##==============================================================================
+## InMemoryBlobStore
+##==============================================================================
+
+# Create a data store and add it to DFG
+ds = InMemoryBlobStore()
+addBlobStore!(dfg, ds)
+
+ade,adb = addData!(dfg, :default_inmemory_store, :x1, :random, dataset1)
+gde,gdb = getData(dfg, :x1, :random)
+dde,ddb = deleteData!(dfg, :x1, :random)
+
+@test ade == gde == dde
+@test adb == gdb == ddb
+
+ade2,adb2 = addData!(dfg, :x2, deepcopy(ade), dataset1)
+# ade3,adb3 = updateData!(dfg, :x2, deepcopy(ade), dataset1)
+
+@test ade == ade2# == ade3
+@test adb == adb2# == adb3
+
+deleteData!(dfg, :x2, :random)
+
+##==============================================================================
 ## Unimplemented store
 ##==============================================================================
 struct TestStore{T} <: DFG.AbstractBlobStore{T} end
