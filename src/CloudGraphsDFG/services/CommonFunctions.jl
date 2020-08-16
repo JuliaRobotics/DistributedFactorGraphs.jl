@@ -198,7 +198,8 @@ function _structToNeo4jProps(inst::Union{User, Robot, Session, PVND, N, APPE, AB
     for (k, v) in addProps
         write(io, "$cypherNodeName.$k= $v,")
     end
-    # The node type
+    # Write in the version and node type
+    write(io, "$cypherNodeName._version=\"$(_getDFGVersion())\",")
     write(io, "$cypherNodeName._type=\"$(typeof(inst))\"")
     # Ref String(): "When possible, the memory of v will be used without copying when the String object is created.
     # This is guaranteed to be the case for byte vectors returned by take!" # Apparent replacement for takebuf_string()

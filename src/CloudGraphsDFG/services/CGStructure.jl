@@ -10,6 +10,7 @@ function _convertNodeToDict(abstractNode::N)::Dict{String, Any} where N <: Abstr
     data = length(cp.data) != 0 ? JSON2.write(cp.data) : "{}"
     ser = JSON2.read(JSON2.write(abstractNode), Dict{String, Any})
     ser["data"] = base64encode(data)
+    ser["_version"] = _getDFGVersion()
     return ser
 end
 
