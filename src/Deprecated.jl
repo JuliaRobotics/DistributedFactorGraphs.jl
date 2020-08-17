@@ -79,7 +79,7 @@ const fetchData = getDataEntryBlob
 ## softtype deprections
 function Base.getproperty(x::InferenceVariable, f::Symbol)
   if f==:dims
-      Base.depwarn("Softtype $(typeof(x)), field dims is deprecated, extend and use `getDims` instead",:getproperty)
+      Base.depwarn("Softtype $(typeof(x)), field dims is deprecated, extend and use `getDimension` instead",:getproperty)
   elseif f==:manifolds
       Base.depwarn("Softtype $(typeof(x)), field manifolds is deprecated, extend and use `getManifolds` instead",:getproperty)
   else
