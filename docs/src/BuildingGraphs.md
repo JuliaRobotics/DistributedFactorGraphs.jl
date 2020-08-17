@@ -63,9 +63,9 @@ In addition, the following optional parameters are provided:
 Three variables are added:
 
 ```@example buildingGraphs; continued = true
-v1 = addVariable!(dfg, :x0, ContinuousScalar, labels = [:POSE], solvable=1)
-v2 = addVariable!(dfg, :x1, ContinuousScalar, labels = [:POSE], solvable=1)
-v3 = addVariable!(dfg, :l0, ContinuousScalar, labels = [:LANDMARK], solvable=1)
+v1 = addVariable!(dfg, :x0, ContinuousScalar, tags = [:POSE], solvable=1)
+v2 = addVariable!(dfg, :x1, ContinuousScalar, tags = [:POSE], solvable=1)
+v3 = addVariable!(dfg, :l0, ContinuousScalar, tags = [:LANDMARK], solvable=1)
 ```
 
 ### Creating Factors with IIF

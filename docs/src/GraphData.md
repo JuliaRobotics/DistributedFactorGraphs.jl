@@ -26,8 +26,8 @@ using IncrementalInference
 # Create a DFG with default solver parameters using the LightGraphs.jl driver.
 dfg = LightDFG{SolverParams}(params=SolverParams())
 
-x0 = addVariable!(dfg, :x0, ContinuousScalar, labels = [:POSE], solvable=1)
-x1 = addVariable!(dfg, :x1, ContinuousScalar, labels = [:POSE], solvable=1)
+x0 = addVariable!(dfg, :x0, ContinuousScalar, tags = [:POSE], solvable=1)
+x1 = addVariable!(dfg, :x1, ContinuousScalar, tags = [:POSE], solvable=1)
 f1 = addFactor!(dfg, [:x0; :x1], LinearConditional(Normal(50.0,2.0)), solvable=1)
 ```
 
