@@ -78,16 +78,15 @@ if get(ENV, "IIF_TEST", "") == "true"
 
     # Switch to our upstream test branch.
     Pkg.add(PackageSpec(name="IncrementalInference", rev="upstream/dfg_integration_test"))
-    # Pkg.add(PackageSpec(name="IncrementalInference", rev="develop"))
     @info "------------------------------------------------------------------------"
     @info "These tests are using IncrementalInference to do additional driver tests"
     @info "------------------------------------------------------------------------"
 
     using IncrementalInference
 
-    apis = [LightDFG(solverParams=SolverParams(), userId="testUserId")]
-    haskey(ENV, "SKIP_CGDFG_TESTS") && ENV["SKIP_CGDFG_TESTS"] != "true" ? push!(apis, CloudGraphsDFG(solverParams=SolverParams(), userId="testUserId") ) : nothing
-    # GraphsDFG{SolverParams}()
+    apis = Vector{AbstractDFG}()
+    push!(apis, LightDFG(solverParams=SolverParams(), userId="testUserId"))
+    get(ENV, "SKIP_CGDFG_TESTS", "false") != "true" && push!(apis, CloudGraphsDFG(solverParams=SolverParams(), userId="testUserId")) 
 
     for api in apis
         @testset "Testing Driver: $(typeof(api))" begin
