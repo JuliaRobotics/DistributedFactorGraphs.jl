@@ -22,6 +22,7 @@ branches:
   - master
   - develop
   - /^release.*$/
+  - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
 
 jobs:
   include:
