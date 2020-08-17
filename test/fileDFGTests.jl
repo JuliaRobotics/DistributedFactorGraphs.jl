@@ -18,7 +18,7 @@ using Test
         numNodes = 5
 
         # Arranging some random data
-        verts = map(n -> addVariable!(dfg, Symbol("x$n"), ContinuousScalar, labels = [:POSE]), 1:numNodes)
+        verts = map(n -> addVariable!(dfg, Symbol("x$n"), ContinuousScalar, tags = [:POSE]), 1:numNodes)
         map(v -> setSolvable!(v, Int(round(rand()))), verts)
         map(v -> getSolverData(verts[4]).solveInProgress=Int(round(rand())), verts)
         map(v -> setSolvedCount!(v, Int(round(10*rand()))), verts)

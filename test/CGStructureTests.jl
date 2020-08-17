@@ -55,9 +55,9 @@ setSessionData!(dfg, session.data)
 @test getSessionData(dfg) == session.data
 
 # Add some nodes.
-v1 = addVariable!(dfg, :a, ContinuousScalar, labels = [:POSE])
-v2 = addVariable!(dfg, :b, ContinuousScalar, labels = [:POSE])
-v3 = addVariable!(dfg, :c, ContinuousScalar, labels = [:LANDMARK])
+v1 = addVariable!(dfg, :a, ContinuousScalar, tags = [:POSE])
+v2 = addVariable!(dfg, :b, ContinuousScalar, tags = [:POSE])
+v3 = addVariable!(dfg, :c, ContinuousScalar, tags = [:LANDMARK])
 addFactor!(dfg, [:a], Prior(Normal(0,1)))
 f1 = addFactor!(dfg, [:a; :b], LinearConditional(Normal(50.0,2.0)) )
 f2 = addFactor!(dfg, [:b; :c], LinearConditional(Normal(50.0,2.0)) )
