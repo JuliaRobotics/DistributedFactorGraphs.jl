@@ -12,7 +12,7 @@ using DistributedFactorGraphs, IncrementalInference
 # Create a DFG - can make one directly, e.g. LightDFG{NoSolverParams}() or use IIF:
 dfg = initfg()
 # ... Add stuff to graph using either IIF or DFG:
-v1 = addVariable!(dfg, :a, ContinuousScalar, labels = [:POSE], solvable=0)
+v1 = addVariable!(dfg, :a, ContinuousScalar, tags = [:POSE], solvable=0)
 # Now save it:
 saveDFG(dfg, "/tmp/saveDFG.tar.gz")
 ```

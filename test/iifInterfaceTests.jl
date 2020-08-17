@@ -10,8 +10,8 @@ end
 @testset "Building a simple Graph" begin
     global dfg,v1,v2,f1
     # Use IIF to add the variables and factors
-    v1 = addVariable!(dfg, :a, ContinuousScalar, labels = [:POSE], solvable=0)
-    v2 = addVariable!(dfg, :b, ContinuousScalar, labels = [:LANDMARK], solvable=1)
+    v1 = addVariable!(dfg, :a, ContinuousScalar, tags = [:POSE], solvable=0)
+    v2 = addVariable!(dfg, :b, ContinuousScalar, tags = [:LANDMARK], solvable=1)
     f1 = addFactor!(dfg, [:a; :b], LinearConditional(Normal(50.0,2.0)), solvable=0)
 
     @show dfg
@@ -323,10 +323,10 @@ end
         @test isConnected(dfg) == true
         # @test @test_deprecated isFullyConnected(dfg) == true
         # @test @test_deprecated hasOrphans(dfg) == false
-        addVariable!(dfg, :orphan, ContinuousScalar, labels = [:POSE], solvable=0)
+        addVariable!(dfg, :orphan, ContinuousScalar, tags = [:POSE], solvable=0)
         @test isConnected(dfg) == false
     else
-        addVariable!(dfg, :orphan, ContinuousScalar, labels = [:POSE], solvable=0)
+        addVariable!(dfg, :orphan, ContinuousScalar, tags = [:POSE], solvable=0)
         @warn "CloudGraphsDFG is currently failing with the connectivity test."
     end
 end
@@ -387,7 +387,7 @@ numNodes = 10
 # end
 
 #change solvable and solveInProgress for x7,x8 for improved tests on x7x8f1
-verts = map(n -> addVariable!(dfg, Symbol("x$n"), ContinuousScalar, labels = [:POSE]), 1:numNodes)
+verts = map(n -> addVariable!(dfg, Symbol("x$n"), ContinuousScalar, tags = [:POSE]), 1:numNodes)
 #TODO fix this to use accessors
 setSolvable!(verts[7], 1)
 setSolvable!(verts[8], 0)
