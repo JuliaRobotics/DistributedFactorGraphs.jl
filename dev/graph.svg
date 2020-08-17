@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     version="1.2"
+     width="100mm" height="100mm" viewBox="0 0 100 100"
+     stroke="none"
+     fill="#000000"
+     stroke-width="0.3"
+     font-size="3.88"
+>
+<defs>
+  <marker id="arrow" markerWidth="15" markerHeight="7" refX="5" refY="3.5" orient="auto" markerUnits="strokeWidth">
+    <path d="M0,0 L15,3.5 L0,7 z" stroke="context-stroke" fill="context-stroke"/>
+  </marker>
+</defs>
+<g stroke-width="1" fill="#000000" fill-opacity="0.000" stroke="#D3D3D3" id="img-feb2da86-1">
+  <g transform="translate(17.27,58.02)">
+    <path fill="none" d="M8.08,5.64 L -8.08 -5.64" class="primitive"/>
+  </g>
+  <g transform="translate(41.64,59.52)">
+    <path fill="none" d="M-10.28,4.68 L 10.28 -4.68" class="primitive"/>
+  </g>
+  <g transform="translate(34.78,77.44)">
+    <path fill="none" d="M-4.88,-8.77 L 4.88 8.77" class="primitive"/>
+  </g>
+  <g transform="translate(65.69,52.82)">
+    <path fill="none" d="M11.79,-1.46 L -11.79 1.46" class="primitive"/>
+  </g>
+  <g transform="translate(82.56,64.08)">
+    <path fill="none" d="M-1.2,-9.7 L 1.2 9.7" class="primitive"/>
+  </g>
+  <g transform="translate(86.81,38.22)">
+    <path fill="none" d="M-4.42,9.56 L 4.42 -9.56" class="primitive"/>
+  </g>
+  <g transform="translate(51.87,89.18)">
+    <path fill="none" d="M10.68,1.88 L -10.68 -1.88" class="primitive"/>
+  </g>
+  <g transform="translate(75.81,82.41)">
+    <path fill="none" d="M-7.32,6.88 L 7.32 -6.88" class="primitive"/>
+  </g>
+  <g transform="translate(90.48,19.23)">
+    <path fill="none" d="M-1.04,-7.46 L 1.04 7.46" class="primitive"/>
+  </g>
+</g>
+<g stroke-width="1" stroke="#D3D3D3" id="img-feb2da86-2">
+</g>
+<g font-size="4" stroke="#000000" stroke-opacity="0.000" fill="#000000" id="img-feb2da86-3">
+</g>
+<g stroke-width="0" stroke="#000000" stroke-opacity="0.000" id="img-feb2da86-4">
+  <g transform="translate(28.2,65.64)" fill="#2E8B57">
+    <circle cx="0" cy="0" r="3.33" class="primitive"/>
+  </g>
+  <g transform="translate(80.93,50.93)" fill="#2E8B57">
+    <circle cx="0" cy="0" r="3.33" class="primitive"/>
+  </g>
+  <g transform="translate(65.96,91.67)" fill="#2E8B57">
+    <circle cx="0" cy="0" r="3.33" class="primitive"/>
+  </g>
+  <g transform="translate(8.33,51.78)" fill="#00CDCD">
+    <circle cx="0" cy="0" r="1" class="primitive"/>
+  </g>
+  <g transform="translate(52.87,54.41)" fill="#00CDCD">
+    <circle cx="0" cy="0" r="1" class="primitive"/>
+  </g>
+  <g transform="translate(40.17,87.12)" fill="#00CDCD">
+    <circle cx="0" cy="0" r="1" class="primitive"/>
+  </g>
+  <g transform="translate(83.89,74.81)" fill="#00CDCD">
+    <circle cx="0" cy="0" r="1" class="primitive"/>
+  </g>
+  <g transform="translate(88.97,8.33)" fill="#2E8B57">
+    <circle cx="0" cy="0" r="3.33" class="primitive"/>
+  </g>
+  <g transform="translate(91.67,27.72)" fill="#00CDCD">
+    <circle cx="0" cy="0" r="1" class="primitive"/>
+  </g>
+</g>
+<g font-size="4" stroke="#000000" stroke-opacity="0.000" fill="#000000" id="img-feb2da86-5">
+  <g transform="translate(28.2,65.64)">
+    <g class="primitive">
+      <text text-anchor="middle" dy="0.35em">x0</text>
+    </g>
+  </g>
+  <g transform="translate(80.93,50.93)">
+    <g class="primitive">
+      <text text-anchor="middle" dy="0.35em">x1</text>
+    </g>
+  </g>
+  <g transform="translate(65.96,91.67)">
+    <g class="primitive">
+      <text text-anchor="middle" dy="0.35em">l0</text>
+    </g>
+  </g>
+  <g transform="translate(8.33,51.78)">
+    <g class="primitive">
+      <text text-anchor="middle" dy="0.35em"></text>
+    </g>
+  </g>
+  <g transform="translate(52.87,54.41)">
+    <g class="primitive">
+      <text text-anchor="middle" dy="0.35em"></text>
+    </g>
+  </g>
+  <g transform="translate(40.17,87.12)">
+    <g class="primitive">
+      <text text-anchor="middle" dy="0.35em"></text>
+    </g>
+  </g>
+  <g transform="translate(83.89,74.81)">
+    <g class="primitive">
+      <text text-anchor="middle" dy="0.35em"></text>
+    </g>
+  </g>
+  <g transform="translate(88.97,8.33)">
+    <g class="primitive">
+      <text text-anchor="middle" dy="0.35em">x2</text>
+    </g>
+  </g>
+  <g transform="translate(91.67,27.72)">
+    <g class="primitive">
+      <text text-anchor="middle" dy="0.35em"></text>
+    </g>
+  </g>
+</g>
+</svg>
