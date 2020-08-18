@@ -1,8 +1,8 @@
 # DistributedFactorGraphs.jl
 
-Release v0.8 | Release v0.9 | Dev | Coverage | DFG Docs | Caesar Docs |
+Release v0.9 | Release v0.10 | Dev | Coverage | DFG Docs | Caesar Docs |
 ---------|---------|-----|----------|------|------------
-[![Build Status](https://api.travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl.svg?branch=release/v0.8)](https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl) | [![Build Status](https://api.travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl.svg?branch=release/v0.9)](https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl) |  [![Build Status](https://api.travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl.svg?branch=master)](https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl) | [![Codecov Status](https://codecov.io/gh/JuliaRobotics/DistributedFactorGraphs.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaRobotics/DistributedFactorGraphs.jl) | [![docs](https://img.shields.io/badge/docs-latest-blue.svg)](http://juliarobotics.github.io/DistributedFactorGraphs.jl/latest/) | [![docs](https://img.shields.io/badge/docs-latest-blue.svg)](http://juliarobotics.github.io/Caesar.jl/latest/)
+[![Build Status](https://api.travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl.svg?branch=release/v0.9)](https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl) | [![Build Status](https://api.travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl.svg?branch=release/v0.10)](https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl) |  [![Build Status](https://api.travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl.svg?branch=master)](https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl) | [![Codecov Status](https://codecov.io/gh/JuliaRobotics/DistributedFactorGraphs.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaRobotics/DistributedFactorGraphs.jl) | [![docs](https://img.shields.io/badge/docs-latest-blue.svg)](http://juliarobotics.github.io/DistributedFactorGraphs.jl/latest/) | [![docs](https://img.shields.io/badge/docs-latest-blue.svg)](http://juliarobotics.github.io/Caesar.jl/latest/)
 
 DistributedFactorGraphs.jl provides a flexible factor graph API for use in the [Caesar.jl](https://github.com/JuliaRobotics/Caesar.jl) ecosystem. The package supplies:
 * A standardized API for interacting with factor graphs
@@ -24,17 +24,22 @@ add DistributedFactorGraphs
 
 The in-memory implementation is the default, using LightGraphs.jl.
 
+It is recommended to use `IncrementalInference` to create factor graphs as they will be solvable. 
 ```julia
 using DistributedFactorGraphs
+using IncrementalInference
 ```
 
 Both drivers support the same functions, so choose which you want to use when creating your initial DFG. For example:
 
 ```julia
 # In-memory DFG
-dfg = LightDFG{NoSolverParams}()
-addVariable!(dfg, DFGVariable(:a))
-addVariable!(dfg, DFGVariable(:b))
-addFactor!(dfg, [v1, v2], DFGFactor{Int, :Symbol}(:f1)) # Rather use a RoME-type factor here (e.g. Pose2Pose2) rather than an Int, this is just for demonstrative purposes.
+# Initialize the default in-memory factor graph with default solver parameters.
+dfg = initfg()
+# add 2 ContinuousScalar variable types to the new factor graph
+addVariable!(dfg, :a, ContinuousScalar)
+addVariable!(dfg, :b, ContinuousScalar)
+# add a LinearConditional factor
+addFactor!(dfg, [:a, :b], LinearConditional(Normal(10.0,1.0)))
 ```
 
