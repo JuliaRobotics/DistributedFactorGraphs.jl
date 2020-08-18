@@ -22,14 +22,14 @@ branches:
   - master
   - develop
   - /^release.*$/
-  - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
+  - /^v\d+\.\d+(\.\d+)?([-+]\S*)?$/
 
 jobs:
   include:
     - julia: 1.4
       env:
         - IIF_TEST=true
-      if: NOT branch =~ ^release.*$
+      if: NOT branch =~ /^(v\d+\.\d+(\.\d+)?([-+]\S*)?)|(release.*)$/
     - arch: arm64
       env: SKIP_CGDFG_TESTS=true
       before_script:
