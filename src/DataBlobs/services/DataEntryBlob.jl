@@ -46,34 +46,38 @@ function listDataBlobs end
 ##==============================================================================
 
 """
-$(SIGNATURES)
 Get the data entry and blob for the specified blobstore or dfg retured as a tuple.
 Related
 [`getDataEntry`](@ref)
+
+$(METHODLIST)
 """
 function getData end
 
 """
-$(SIGNATURES)
 Add a data Entry and Blob to a distributed factor graph or BlobStore.
 Related
 [`addDataEntry!`](@ref)
+
+$(METHODLIST)
 """
 function addData! end
 
 """
-    $(SIGNATURES)
 Update a data entry or blob to the blob store or dfg.
 Related
 [`updateDataEntry!`](@ref)
+
+$(METHODLIST)
 """
 function updateData! end
 
 """
-    $(SIGNATURES)
 Delete a data entry and blob from the blob store or dfg.
 Related
 [`deleteDataEntry!`](@ref)
+
+$(METHODLIST)
 """
 function deleteData! end
 
