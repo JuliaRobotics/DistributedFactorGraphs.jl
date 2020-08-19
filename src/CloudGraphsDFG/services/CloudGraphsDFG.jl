@@ -418,24 +418,25 @@ function listFactors(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=not
 end
 
 function isConnected(dfg::CloudGraphsDFG)::Bool
-    # If the total number of nodes == total number of distinct connected nodes, then it is fully connected
-    # Total nodes
-    varIds = listVariables(dfg)
-    factIds = listFactors(dfg)
-    length(varIds) + length(factIds) == 0 && return false
+    # # If the total number of nodes == total number of distinct connected nodes, then it is fully connected
+    # # Total nodes
+    # varIds = listVariables(dfg)
+    # factIds = listFactors(dfg)
+    # length(varIds) + length(factIds) == 0 && return false
 
-    # Total distinct connected nodes - thank you Neo4j for 0..* awesomeness!!
-    # TODO: Deprecated matching technique and it's technically an expensive call - optimize.
-    query = """
-        match (n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(varIds[1]))-[FACTORGRAPH*]-(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId))
-        WHERE (n:VARIABLE OR n:FACTOR OR node:VARIABLE OR node:FACTOR) and not (node:SESSION or n:SESSION) and not (n:PPE) and not (node:PPE)
-        WITH collect(n)+collect(node) as nodelist
-        unwind nodelist as nodes
-        return count(distinct nodes)"""
-    @debug "[Query] $query"
-    result = _queryNeo4j(dfg.neo4jInstance, query)
-    # Neo4j.jl data structure sometimes feels brittle... like below
-    return result.results[1]["data"][1]["row"][1] == length(varIds) + length(factIds)
+    # # Total distinct connected nodes - thank you Neo4j for 0..* awesomeness!!
+    # # TODO: Deprecated matching technique and it's technically an expensive call - optimize.
+    # query = """
+    #     match (n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(varIds[1]))-[FACTORGRAPH*]-(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId))
+    #     WHERE (n:VARIABLE OR n:FACTOR OR node:VARIABLE OR node:FACTOR) and not (node:SESSION or n:SESSION) and not (n:PPE) and not (node:PPE)
+    #     WITH collect(n)+collect(node) as nodelist
+    #     unwind nodelist as nodes
+    #     return count(distinct nodes)"""
+    # @debug "[Query] $query"
+    # result = _queryNeo4j(dfg.neo4jInstance, query)
+    # # Neo4j.jl data structure sometimes feels brittle... like below
+    # return result.results[1]["data"][1]["row"][1] == length(varIds) + length(factIds)
+   return isConnected(SkeletonDFG(dfg))
 end
 
 function getNeighbors(dfg::CloudGraphsDFG, node::T; solvable::Int=0)::Vector{Symbol}  where T <: DFGNode
@@ -942,4 +943,29 @@ function emptyTags!(dfg::CloudGraphsDFG, sym::Symbol)
 
     return getTags(getNode(dfg, sym))
 
+end
+
+
+##==============================================================================
+## Skeleton DFG Constructor
+##==============================================================================
+# TODO tags
+function _getSkeletonFactors(dfg::CloudGraphsDFG)
+    neo4jInstance = dfg.neo4jInstance
+    query = "match (node:$(join(_getLabelsForType(dfg, DFGFactor),':'))) return distinct(node.label),node._variableOrderSymbols"
+    result = _queryNeo4j(neo4jInstance, query)
+    facs = map(node -> SkeletonDFGFactor(Symbol(node["row"][1]),Symbol.(node["row"][2])), result.results[1]["data"])
+    return facs
+end
+# TODO tags
+function _getSkeletonVariables(dfg::CloudGraphsDFG)
+    return SkeletonDFGVariable.(ls(dfg))
+end
+
+export SkeletonDFG
+function SkeletonDFG(cfg::CloudGraphsDFG)
+    sfg = LightDFG{NoSolverParams, SkeletonDFGVariable, SkeletonDFGFactor}()
+    addVariable!.(sfg, _getSkeletonVariables(cfg))
+    addFactor!.(sfg, _getSkeletonFactors(cfg))
+    return sfg
 end
