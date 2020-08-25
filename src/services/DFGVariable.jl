@@ -77,7 +77,7 @@ DFG.@defVariable Pose2 3 (:Euclid, :Euclid, :Circular)
 macro defVariable(structname, dimension::Int, manifolds)#::Vararg{Symbol})#NTuple{dimension, Symbol})
     # :(struct $structname <: InferenceVariable end)
     return esc(quote
-        struct $structname <: InferenceVariable end
+        Base.@__doc__ struct $structname <: InferenceVariable end
         DistributedFactorGraphs.getDimension(::$structname) = $dimension
         DistributedFactorGraphs.getManifolds(::$structname) = $manifolds
     end)
@@ -521,7 +521,7 @@ function updateVariableSolverData!(dfg::AbstractDFG,
 
     # TODO not very clean
     if vnd.solveKey != solveKey
-        @warn "updateVariableSolverData with solveKey parameter might change in the future, see DFG #565"
+        @warn("updateVariableSolverData with solveKey parameter might change in the future, see DFG #565. Future warnings are suppressed", maxlog=1) 
         usevnd = useCopy ? deepcopy(vnd) : vnd
         usevnd.solveKey = solveKey
         return updateVariableSolverData!(dfg, variablekey, usevnd, useCopy, fields, verbose)
