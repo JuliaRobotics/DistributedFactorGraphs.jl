@@ -17,6 +17,13 @@ testDFGAPI = LightDFG
 using Logging
 logger = SimpleLogger(stdout, Logging.Debug)
 global_logger(logger)
+
+# or
+logger = ConsoleLogger(stdout, Logging.Debug)
+global_logger(logger)
+# or
+ENV["JULIA_DEBUG"] = :CloudGraphsDFGs #module name or file name
+
 end
 
 # DFG Accessors
