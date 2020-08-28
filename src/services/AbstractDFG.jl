@@ -521,16 +521,21 @@ Related
 listSupersolves, getSolverDataDict, listVariables
 """
 function listSolveKeys(dfg::AbstractDFG, 
-                       fltr::Union{Type{<:InferenceVariable},Regex, Nothing}=nothing; 
+                       filterVariables::Union{Type{<:InferenceVariable},Regex, Nothing}=nothing;
+                       filterSolveKeys::Union{Regex,Nothing}=nothing,
                        tags::Vector{Symbol}=Symbol[], 
                        solvable::Int=0 )
                        #
-  skeys = Set{Symbol}()
-  varList = listVariables(dfg, fltr, tags=tags, solvable=solvable)
-  for vs in varList, ky in keys(getSolverDataDict(getVariable(dfg, vs)))
-    push!(skeys, ky)
-  end
-  return skeys
+    skeys = Set{Symbol}()
+    varList = listVariables(dfg, filterVariables, tags=tags, solvable=solvable)
+    for vs in varList, ky in keys(getSolverDataDict(getVariable(dfg, vs)))
+        push!(skeys, ky)
+    end
+
+    #filter the solveKey set with filterSolveKeys regex
+    !isnothing(filterSolveKeys) && return filter!(k -> occursin(filterSolveKeys, string(k)), skeys)
+
+    return skeys
 end
 const listSupersolves = listSolveKeys
 
