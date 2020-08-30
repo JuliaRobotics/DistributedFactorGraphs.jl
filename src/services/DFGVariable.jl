@@ -345,9 +345,9 @@ end
     $(SIGNATURES)
 Update a small data pair `key=>value` for variable `label` in `dfg`
 """
-function updateSmallData!(dfg::AbstractDFG, label::Symbol, pair::Pair{Symbol, <:SmallDataTypes})
+function updateSmallData!(dfg::AbstractDFG, label::Symbol, pair::Pair{Symbol, <:SmallDataTypes}; warn_if_absent::Bool=true)
     v = getVariable(dfg, label)
-    !haskey(v.smallData, pair.first) && @warn("$(pair.first) does not exist, adding.")
+    warn_if_absent && !haskey(v.smallData, pair.first) && @warn("$(pair.first) does not exist, adding.")
     push!(v.smallData, pair)
     updateVariable!(dfg, v)
     return v.smallData #or pair TODO
@@ -478,13 +478,12 @@ function updateVariableSolverData!(dfg::AbstractDFG,
                                    variablekey::Symbol,
                                    vnd::VariableNodeData,
                                    useCopy::Bool=true,
-                                   fields::Vector{Symbol}=Symbol[],
-                                   verbose::Bool=true  )
+                                   fields::Vector{Symbol}=Symbol[]; 
+                                   warn_if_absent::Bool=true)
     #This is basically just setSolverData
     var = getVariable(dfg, variablekey)
-    if verbose && !haskey(var.solverDataDict, vnd.solveKey)
-        @warn "VariableNodeData '$(vnd.solveKey)' does not exist, adding"
-    end
+
+    warn_if_absent && !haskey(var.solverDataDict, vnd.solveKey) && @warn "VariableNodeData '$(vnd.solveKey)' does not exist, adding"
 
     # for InMemoryDFGTypes do memory copy or repointing, for cloud this would be an different kind of update.
     usevnd = useCopy ? deepcopy(vnd) : vnd
@@ -510,23 +509,22 @@ function updateVariableSolverData!(dfg::AbstractDFG,
     return var.solverDataDict[vnd.solveKey]
 end
 
-
 function updateVariableSolverData!(dfg::AbstractDFG,
                                    variablekey::Symbol,
                                    vnd::VariableNodeData,
                                    solveKey::Symbol,
                                    useCopy::Bool=true,
-                                   fields::Vector{Symbol}=Symbol[],
-                                   verbose::Bool=true)
+                                   fields::Vector{Symbol}=Symbol[];
+                                   warn_if_absent::Bool=true)
 
     # TODO not very clean
     if vnd.solveKey != solveKey
         @warn("updateVariableSolverData with solveKey parameter might change in the future, see DFG #565. Future warnings are suppressed", maxlog=1) 
         usevnd = useCopy ? deepcopy(vnd) : vnd
         usevnd.solveKey = solveKey
-        return updateVariableSolverData!(dfg, variablekey, usevnd, useCopy, fields, verbose)
+        return updateVariableSolverData!(dfg, variablekey, usevnd, useCopy, fields; warn_if_absent=warn_if_absent)
     else
-        return updateVariableSolverData!(dfg, variablekey, vnd, useCopy, fields, verbose)
+        return updateVariableSolverData!(dfg, variablekey, vnd, useCopy, fields; warn_if_absent=warn_if_absent)
     end
 end
 
@@ -542,10 +540,11 @@ function updateVariableSolverData!(dfg::AbstractDFG,
                                    sourceVariables::Vector{<:DFGVariable},
                                    solveKey::Symbol=:default,
                                    useCopy::Bool=true,
-                                   fields::Vector{Symbol}=Symbol[]  )
+                                   fields::Vector{Symbol}=Symbol[];
+                                   warn_if_absent::Bool=true)
     #I think cloud would do this in bulk for speed
     for var in sourceVariables
-        updateVariableSolverData!(dfg, var.label, getSolverData(var, solveKey), useCopy, fields)
+        updateVariableSolverData!(dfg, var.label, getSolverData(var, solveKey), useCopy, fields; warn_if_absent=warn_if_absent)
     end
 end
 
@@ -563,7 +562,7 @@ function deepcopySolvekeys!(dfg::AbstractDFG,
   for x in labels
       sd = deepcopy(getSolverData(getVariable(dfg,x), src))
       sd.solveKey = dest
-      updateVariableSolverData!(dfg, x, sd, true, Symbol[], verbose )
+      updateVariableSolverData!(dfg, x, sd, true, Symbol[]; warn_if_absent=verbose )
   end
 end
 const deepcopySupersolve! = deepcopySolvekeys!
@@ -670,9 +669,9 @@ addPPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol=:default) 
     $(SIGNATURES)
 Update PPE data if it exists, otherwise add it -- one call per `key::Symbol=:default`.
 """
-function updatePPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P)::P where {P <: AbstractPointParametricEst}
+function updatePPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::AbstractPointParametricEst; warn_if_absent::Bool=true)
     var = getVariable(dfg, variablekey)
-    if !haskey(var.ppeDict, ppe.solveKey)
+    if warn_if_absent && !haskey(var.ppeDict, ppe.solveKey)
         @warn "PPE '$(ppe.solveKey)' does not exist, adding"
     end
     #for InMemoryDFGTypes, cloud would update here
@@ -692,10 +691,10 @@ updatePPE!(dfg::AbstractDFG, sourceVariable::VariableDataLevel1, ppekey::Symbol=
     $(SIGNATURES)
 Update PPE data if it exists, otherwise add it.
 """
-function updatePPE!(dfg::AbstractDFG, sourceVariables::Vector{<:VariableDataLevel1}, ppekey::Symbol=:default)
+function updatePPE!(dfg::AbstractDFG, sourceVariables::Vector{<:VariableDataLevel1}, ppekey::Symbol=:default; warn_if_absent::Bool=true)
     #I think cloud would do this in bulk for speed
     for var in sourceVariables
-        updatePPE!(dfg, var.label, getPPE(dfg, var, ppekey))
+        updatePPE!(dfg, var.label, getPPE(dfg, var, ppekey); warn_if_absent=warn_if_absent)
     end
 end
 
