@@ -90,11 +90,11 @@ function addFactor!(dfg::LightDFG{<:AbstractParams, <:AbstractDFGVariable, F}, f
 end
 
 function addFactor!(dfg::LightDFG{<:AbstractParams, <:AbstractDFGVariable, F},
-                      factor::AbstractDFGFactor)::F where F <: AbstractDFGFactor
+                      factor::AbstractDFGFactor) where F <: AbstractDFGFactor
     return addFactor!(dfg, F(factor))
 end
 
-function getVariable(dfg::LightDFG, label::Symbol)::AbstractDFGVariable
+function getVariable(dfg::LightDFG, label::Symbol)
     if !haskey(dfg.g.variables, label)
         error("Variable label '$(label)' does not exist in the factor graph")
     end
@@ -102,25 +102,25 @@ function getVariable(dfg::LightDFG, label::Symbol)::AbstractDFGVariable
     return dfg.g.variables[label]
 end
 
-function getFactor(dfg::LightDFG, label::Symbol)::AbstractDFGFactor
+function getFactor(dfg::LightDFG, label::Symbol)
     if !haskey(dfg.g.factors, label)
         error("Factor label '$(label)' does not exist in the factor graph")
     end
     return dfg.g.factors[label]
 end
 
-function updateVariable!(dfg::LightDFG, variable::V)::V where V <: AbstractDFGVariable
+function updateVariable!(dfg::LightDFG, variable::AbstractDFGVariable; warn_if_absent::Bool=true)
     if !haskey(dfg.g.variables, variable.label)
-        @warn "Variable label '$(variable.label)' does not exist in the factor graph, adding"
+        warn_if_absent && @warn "Variable label '$(variable.label)' does not exist in the factor graph, adding"
         return addVariable!(dfg, variable)
     end
     dfg.g.variables[variable.label] = variable
     return variable
 end
 
-function updateFactor!(dfg::LightDFG, factor::F)::F where F <: AbstractDFGFactor
+function updateFactor!(dfg::LightDFG, factor::AbstractDFGFactor; warn_if_absent::Bool=true)
     if !haskey(dfg.g.factors, factor.label)
-        @warn "Factor label '$(factor.label)' does not exist in the factor graph, adding"
+        warn_if_absent && @warn "Factor label '$(factor.label)' does not exist in the factor graph, adding"
         return addFactor!(dfg, factor)
     end
 

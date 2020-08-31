@@ -104,5 +104,24 @@ end
 
 @deprecate setSmallData!(v::DFGVariable, smallData::Dict{String, String}) setSmallData!(v, createSymbolDict(smallData)) 
 
+#update deprecation with warn_if_absent
+function updateVariableSolverData!(dfg::AbstractDFG,
+                                   variablekey::Symbol,
+                                   vnd::VariableNodeData,
+                                   useCopy::Bool,
+                                   fields::Vector{Symbol},
+                                   verbose::Bool)
+  Base.depwarn("updateVariableSolverData! argument verbose is deprecated in favor of keyword argument `warn_if_absent`, see #643", :updateVariableSolverData!)
+  updateVariableSolverData!(dfg, variablekey, vnd, useCopy, fields; warn_if_absent = verbose)
+end
 
-
+function updateVariableSolverData!(dfg::AbstractDFG,
+                                   variablekey::Symbol,
+                                   vnd::VariableNodeData,
+                                   solveKey::Symbol,
+                                   useCopy::Bool,
+                                   fields::Vector{Symbol},
+                                   verbose::Bool)
+  Base.depwarn("updateVariableSolverData! argument verbose is deprecated in favor of keyword argument `warn_if_absent`, see #643", :updateVariableSolverData!)
+  updateVariableSolverData!(dfg, variablekey, vnd, solveKey, useCopy, fields; warn_if_absent = verbose)
+end
