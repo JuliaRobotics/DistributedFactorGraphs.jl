@@ -39,11 +39,13 @@ using Test
 
         facts = map(n -> addFactor!(dfg, [verts[n], verts[n+1]], LinearConditional(Normal(50.0,2.0))), 1:(numNodes-1))
         map(f -> setSolvable!(f, Int(round(rand()))), facts)
-        map(f -> f.solverData.multihypo = [1, 0.1, 0.9], facts)
         map(f -> f.solverData.eliminated = rand() > 0.5, facts)
         map(f -> f.solverData.potentialused = rand() > 0.5, facts)
         updateFactor!.(dfg, facts)
         
+        #test multihypo
+        addFactor!(dfg, [:x1, :x2, :x3], LinearConditional(Normal(50.0,2.0)), multihypo = [1, 0.3, 0.7])
+
         # Save and load the graph to test.
         saveDFG(filename, dfg)
 
@@ -61,11 +63,10 @@ using Test
         for fact in lsf(dfg)
             @test compareFactor(getFactor(dfg, fact), 
                 getFactor(retDFG, fact),
-                skip=[
-                    :hypotheses, :certainhypo, :multihypo, # Multihypo
-                    :eliminated, 
-                    :timezone, :zone, # Timezones
-                    :potentialused])
+                skip=[:timezone, :zone]) # Timezones
+                    # :hypotheses, :certainhypo, :multihypo, # Multihypo
+                    # :eliminated, 
+                    # :potentialused])
         end
         
         # Check data entries

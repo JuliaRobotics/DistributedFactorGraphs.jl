@@ -164,15 +164,15 @@ function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)
         error("Variable '$(variable.label)' already exists in the factor graph")
     end
 
-    ret = updateVariable!(dfg, variable, skipAddError=true)
+    ret = updateVariable!(dfg, variable, warn_if_absent=false)
 
     # Do a variable update
     return ret
 end
 
-function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable; skipAddError::Bool=false)
+function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable; warn_if_absent::Bool=true)
     exist = exists(dfg, variable)
-    !skipAddError && !exist && @warn "Variable label '$(variable.label)' does not exist in the factor graph, adding"
+    warn_if_absent && !exist && @warn "Variable label '$(variable.label)' does not exist in the factor graph, adding"
 
     # Create/update the base variable
     # NOTE: We are not merging the variable.tags into the labels anymore. We can index by that but not
@@ -196,7 +196,7 @@ function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable; skipAddErro
         # length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot update or add variable '$(getLabel(variable))'")
 
         # Merge the PPE's, SolverData, and BigData
-        mergeVariableData!(dfg, variable; currentTransaction=tx, skipExistenceCheck=true)
+        mergeVariableData!(dfg, variable; currentTransaction=tx, warn_if_absent=false)
 
         commit(tx)
     catch ex
@@ -220,7 +220,7 @@ function addFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)
     end
 
     # Do a variable update
-    return updateFactor!(dfg, factor, skipAddError=true)
+    return updateFactor!(dfg, factor, warn_if_absent=false)
 end
 
 function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String})
@@ -247,8 +247,8 @@ function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String})
     return variable
 end
 
-function mergeVariableData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing, skipExistenceCheck::Bool=false)
-    if !skipExistenceCheck & !exists(dfg, sourceVariable, currentTransaction=currentTransaction)
+function mergeVariableData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing, warn_if_absent::Bool=true)
+    if warn_if_absent && !exists(dfg, sourceVariable, currentTransaction=currentTransaction)
         error("Source variable '$(sourceVariable.label)' doesn't exist in the graph.")
     end
     for (k,v) in sourceVariable.ppeDict
@@ -273,9 +273,9 @@ function getFactor(dfg::CloudGraphsDFG, label::Union{Symbol, String})
     return rebuildFactorMetadata!(dfg, unpackFactor(dfg, props))
 end
 
-function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor; skipAddError::Bool=false)
+function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor; warn_if_absent::Bool=true)
     exist = exists(dfg, factor)
-    !skipAddError && !exist && @warn "Factor label '$(factor.label)' does not exist in the factor graph, adding"
+    warn_if_absent && !exist && @warn "Factor label '$(factor.label)' does not exist in the factor graph, adding"
 
     if exist
         # Check that the neighbors are the same
@@ -599,10 +599,11 @@ end
 function updatePPE!(
         dfg::CloudGraphsDFG,
         variablekey::Symbol,
-        ppe::P;
-        currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::P where
-        {P <: AbstractPointParametricEst}
-    if !(ppe.solveKey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction))
+        ppe::AbstractPointParametricEst;
+        currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing,
+        warn_if_absent::Bool=true)
+
+    if warn_if_absent && !(ppe.solveKey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction))
         @warn "PPE '$(ppe.solveKey)' does not exist, adding"
     end
     softType = getSofttype(dfg, variablekey, currentTransaction=currentTransaction)
@@ -618,10 +619,13 @@ function updatePPE!(
         currentTransaction=currentTransaction))
 end
 
-function updatePPE!(dfg::CloudGraphsDFG, sourceVariables::Vector{<:DFGVariable}, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+function updatePPE!(dfg::CloudGraphsDFG, sourceVariables::Vector{<:DFGVariable}, ppekey::Symbol=:default; 
+                    currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing,
+                    warn_if_absent::Bool=true)
+    
     tx = currentTransaction == nothing ? transaction(dfg.neo4jInstance.connection) : currentTransaction
     for var in sourceVariables
-        updatePPE!(dfg, var.label, getPPE(var, ppekey), currentTransaction=tx)
+        updatePPE!(dfg, var.label, getPPE(var, ppekey), currentTransaction=tx, warn_if_absent=warn_if_absent)
     end
     if currentTransaction == nothing
         result = commit(tx)
@@ -694,8 +698,10 @@ function addDataEntry!(dfg::CloudGraphsDFG, label::Symbol, bde::BlobStoreEntry; 
             packed)
 end
 
-function updateDataEntry!(dfg::CloudGraphsDFG, label::Symbol,  bde::BlobStoreEntry; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
-    if !(bde.label in listDataEntries(dfg, label, currentTransaction=currentTransaction))
+function updateDataEntry!(dfg::CloudGraphsDFG, label::Symbol,  bde::BlobStoreEntry;
+                          currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing,
+                          warn_if_absent::Bool=true)
+    if warn_if_absent && !(bde.label in listDataEntries(dfg, label, currentTransaction=currentTransaction))
         @warn "Data label '$(bde.label)' does not exist, adding"
     end
     packed = _matchmergeVariableSubnode!(
@@ -773,8 +779,9 @@ function updateVariableSolverData!(dfg::CloudGraphsDFG,
                                 vnd::VariableNodeData,
                                 useCopy::Bool=true,
                                 fields::Vector{Symbol}=Symbol[];
+                                warn_if_absent::Bool=true,
                                 currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::VariableNodeData
-    if !(vnd.solveKey in listVariableSolverData(dfg, variablekey, currentTransaction=currentTransaction))
+    if warn_if_absent && !(vnd.solveKey in listVariableSolverData(dfg, variablekey, currentTransaction=currentTransaction))
         @warn "Solver data '$(vnd.solveKey)' does not exist, adding rather than updating."
     end
     # TODO: Update this to use the selective parameters from fields.
@@ -847,10 +854,11 @@ function updateVariableSolverData!(dfg::CloudGraphsDFG,
                                    sourceVariables::Vector{<:DFGVariable},
                                    solvekey::Symbol=:default,
                                    useCopy::Bool=true,
-                                   fields::Vector{Symbol}=Symbol[] )
+                                   fields::Vector{Symbol}=Symbol[];
+                                   warn_if_absent::Bool=true )
     #TODO: Do in bulk for speed.
     for var in sourceVariables
-        updateVariableSolverData!(dfg, var.label, getSolverData(var, solvekey), solvekey, useCopy, fields)
+        updateVariableSolverData!(dfg, var.label, getSolverData(var, solvekey), solvekey, useCopy, fields; warn_if_absent=warn_if_absent)
     end
 end
 
