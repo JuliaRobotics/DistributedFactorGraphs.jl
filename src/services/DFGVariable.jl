@@ -533,8 +533,9 @@ updateVariableSolverData!(dfg::AbstractDFG,
                           sourceVariable::DFGVariable,
                           solveKey::Symbol=:default,
                           useCopy::Bool=true,
-                          fields::Vector{Symbol}=Symbol[] ) =
-    updateVariableSolverData!(dfg, sourceVariable.label, getSolverData(sourceVariable, solveKey), useCopy, fields)
+                          fields::Vector{Symbol}=Symbol[];
+                          warn_if_absent::Bool=true ) =
+    updateVariableSolverData!(dfg, sourceVariable.label, getSolverData(sourceVariable, solveKey), useCopy, fields; warn_if_absent=warn_if_absent)
 
 function updateVariableSolverData!(dfg::AbstractDFG,
                                    sourceVariables::Vector{<:DFGVariable},
@@ -684,8 +685,8 @@ end
 Update PPE data if it exists, otherwise add it.
 NOTE: Copies the PPE data.
 """
-updatePPE!(dfg::AbstractDFG, sourceVariable::VariableDataLevel1, ppekey::Symbol=:default) =
-    updatePPE!(dfg, sourceVariable.label, deepcopy(getPPE(sourceVariable, ppekey)))
+updatePPE!(dfg::AbstractDFG, sourceVariable::VariableDataLevel1, ppekey::Symbol=:default; warn_if_absent::Bool=true) =
+    updatePPE!(dfg, sourceVariable.label, deepcopy(getPPE(sourceVariable, ppekey)); warn_if_absent=warn_if_absent)
 
 """
     $(SIGNATURES)
