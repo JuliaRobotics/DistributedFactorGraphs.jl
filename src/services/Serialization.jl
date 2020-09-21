@@ -305,7 +305,7 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G
     end
 
     # Include the type
-    if packedProps["tags"] isa String
+    if packedProps["_variableOrderSymbols"] isa String
         _variableOrderSymbols = JSON2.read(packedProps["_variableOrderSymbols"], Vector{Symbol})
     else
         _variableOrderSymbols = Symbol.(packedProps["_variableOrderSymbols"])
