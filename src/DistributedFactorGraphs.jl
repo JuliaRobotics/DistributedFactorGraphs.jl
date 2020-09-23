@@ -200,6 +200,9 @@ export getFactorType, getFactorFunction
 # Node Data
 export mergeVariableData!, mergeGraphVariableData!
 
+# Serialization type conversion
+export convertPackedType, convertStructType
+
 ##------------------------------------------------------------------------------
 ## Other utility functions
 ##------------------------------------------------------------------------------
