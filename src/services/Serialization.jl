@@ -227,6 +227,7 @@ end
 ## Factor Packing and unpacking
 ##==============================================================================
 
+
 function packFactor(dfg::G, f::DFGFactor)::Dict{String, Any} where G <: AbstractDFG
     # Construct the properties to save
     props = Dict{String, Any}()
@@ -237,7 +238,7 @@ function packFactor(dfg::G, f::DFGFactor)::Dict{String, Any} where G <: Abstract
     # Pack the node data
     fnctype = getSolverData(f).fnc.usrfnc!
     try
-        packtype = getfield(_getmodule(fnctype), Symbol("Packed$(_getname(fnctype))"))
+        packtype = convert(PackedInferenceType, fnctype)
         packed = convert(PackedFunctionNodeData{packtype}, getSolverData(f))
         props["data"] = JSON2.write(packed)
     catch ex
@@ -255,11 +256,10 @@ function packFactor(dfg::G, f::DFGFactor)::Dict{String, Any} where G <: Abstract
     return props
 end
 
-
 function decodePackedType(::Type{T}, packeddata::GenericFunctionNodeData{PT}) where {T<:FactorOperationalMemory, PT}
   # usrtyp = convert(FunctorInferenceType, packeddata.fnc)
   # Also look at parentmodule
-  usrtyp = getfield(PT.name.module, Symbol(string(PT.name.name)[7:end]))
+  usrtyp = convert(FunctorInferenceType, PT)
   fulltype = DFG.FunctionNodeData{T{usrtyp}}
   factordata = convert(fulltype, packeddata)
   return factordata

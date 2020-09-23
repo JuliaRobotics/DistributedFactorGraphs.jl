@@ -133,6 +133,10 @@ Build a Cypher-compliant set of properies from a subnode type.
 Note: Individual values are serialized if they are not already.
 If the additional properties is provided, the additional
 properties will be added in verbatim when serializing.
+
+Related
+
+_Neo4jTo???
 """
 function _structToNeo4jProps(inst::Union{User, Robot, Session, PVND, N, APPE, ABDE},
                              addProps::Dict{String, String}=Dict{String, String}();
@@ -175,7 +179,7 @@ function _structToNeo4jProps(inst::Union{User, Robot, Session, PVND, N, APPE, AB
             if fieldname == :solverData
                 fnctype = getSolverData(inst).fnc.usrfnc!
                 try
-                    packtype = getfield(_getmodule(fnctype), Symbol("Packed$(_getname(fnctype))"))
+                    packtype = convert(PackedInferenceType, fnctype)
                     packed = convert(PackedFunctionNodeData{packtype}, getSolverData(inst))
                     packedJson = JSON2.write(packed)
                     val = "\"$(replace(packedJson, "\"" => "\\\""))\"" # Escape slashes too
