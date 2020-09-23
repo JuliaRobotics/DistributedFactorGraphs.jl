@@ -179,7 +179,7 @@ function _structToNeo4jProps(inst::Union{User, Robot, Session, PVND, N, APPE, AB
             if fieldname == :solverData
                 fnctype = getSolverData(inst).fnc.usrfnc!
                 try
-                    packtype = convert(PackedInferenceType, fnctype)
+                    packtype = convertPackedType(fnctype)
                     packed = convert(PackedFunctionNodeData{packtype}, getSolverData(inst))
                     packedJson = JSON2.write(packed)
                     val = "\"$(replace(packedJson, "\"" => "\\\""))\"" # Escape slashes too

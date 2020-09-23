@@ -238,7 +238,7 @@ function packFactor(dfg::G, f::DFGFactor)::Dict{String, Any} where G <: Abstract
     # Pack the node data
     fnctype = getSolverData(f).fnc.usrfnc!
     try
-        packtype = convert(PackedInferenceType, fnctype)
+        packtype = convertPackedType(fnctype)
         packed = convert(PackedFunctionNodeData{packtype}, getSolverData(f))
         props["data"] = JSON2.write(packed)
     catch ex
@@ -259,7 +259,7 @@ end
 function decodePackedType(::Type{T}, packeddata::GenericFunctionNodeData{PT}) where {T<:FactorOperationalMemory, PT}
   # usrtyp = convert(FunctorInferenceType, packeddata.fnc)
   # Also look at parentmodule
-  usrtyp = convert(FunctorInferenceType, PT)
+  usrtyp = convertStructType(PT)
   fulltype = DFG.FunctionNodeData{T{usrtyp}}
   factordata = convert(fulltype, packeddata)
   return factordata

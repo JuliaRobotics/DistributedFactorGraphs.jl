@@ -4,8 +4,8 @@ _getmodule(t::T) where T = T.name.module
 _getname(t::T) where T = T.name.name
 
 
-Base.convert(::Type{<:PackedInferenceType}, t::Union{T, Type{T}}) where {T <: FunctorInferenceType} = getfield(_getmodule(t), Symbol("Packed$(_getname(t))"))
-Base.convert(::Type{<:FunctorInferenceType}, ::Type{PT}) where {PT <: PackedInferenceType} = getfield(PT.name.module, Symbol(string(PT.name.name)[7:end]))
+convertPackedType(t::Union{T, Type{T}}) where {T <: FunctorInferenceType} = getfield(_getmodule(t), Symbol("Packed$(_getname(t))"))
+convertStructType(::Type{PT}) where {PT <: PackedInferenceType} = getfield(PT.name.module, Symbol(string(PT.name.name)[7:end]))
 
 
 ##==============================================================================
