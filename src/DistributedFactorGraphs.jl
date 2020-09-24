@@ -190,7 +190,7 @@ export addData!
 # Factor Data
 export GenericFunctionNodeData, PackedFunctionNodeData, FunctionNodeData
 export FunctorInferenceType, PackedInferenceType
-export AbstractPrior, AbstractRelativeFactor, AbstractRelativeFactorMinimize
+export AbstractPrior, AbstractRelative, AbstractRelativeRoots, AbstractRelativeMinimize
 export FactorOperationalMemory
 
 # accessors
@@ -306,6 +306,9 @@ if get(ENV, "DFG_USE_CGDFG", "") == "true"
 end
 
 function __init__()
+    @warn("BREAKING CHANGE v0.12: deprecating AbstractRelativeFactor, use AbstractRelativeRoots instead")
+    @warn("BREAKING CHANGE v0.12: deprecating AbstractRelativeFactorMinimize, use AbstractRelativeMinimize instead")
+
     @require GraphPlot = "a2cc645c-3eea-5389-862e-a155d0052231" begin
         @info "Including Plots"
         include("DFGPlots/DFGPlots.jl")

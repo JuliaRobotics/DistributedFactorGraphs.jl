@@ -13,8 +13,9 @@ abstract type FactorOperationalMemory <: Function end
 # abstract type ConvolutionObject <: FactorOperationalMemory end
 
 abstract type AbstractPrior <: FunctorInferenceType end
-abstract type AbstractRelativeFactor <: FunctorInferenceType end
-abstract type AbstractRelativeFactorMinimize <: FunctorInferenceType end
+abstract type AbstractRelative <: FunctorInferenceType end
+abstract type AbstractRelativeRoots <: AbstractRelative end
+abstract type AbstractRelativeMinimize <: AbstractRelative end
 
 ##==============================================================================
 ## GenericFunctionNodeData
