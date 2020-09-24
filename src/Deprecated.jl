@@ -133,9 +133,6 @@ end
 
 export AbstractRelativeFactor, AbstractRelativeFactorMinimize
 
-@warn("BREAKING CHANGE v0.12: deprecating AbstractRelativeFactor, use AbstractRelativeRoots instead")
-@warn("BREAKING CHANGE v0.12: deprecating AbstractRelativeFactorMinimize, use AbstractRelativeMinimize instead")
-
 const AbstractRelativeFactor = AbstractRelativeRoots
 const AbstractRelativeFactorMinimize = AbstractRelativeMinimize
 
