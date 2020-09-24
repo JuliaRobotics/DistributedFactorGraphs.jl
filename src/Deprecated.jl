@@ -125,3 +125,18 @@ function updateVariableSolverData!(dfg::AbstractDFG,
   Base.depwarn("updateVariableSolverData! argument verbose is deprecated in favor of keyword argument `warn_if_absent`, see #643", :updateVariableSolverData!)
   updateVariableSolverData!(dfg, variablekey, vnd, solveKey, useCopy, fields; warn_if_absent = verbose)
 end
+
+
+##==============================================================================
+## Deprecated in v0.11 Remove in the v0.12 cycle
+##==============================================================================
+
+export AbstractRelativeFactor, AbstractRelativeFactorMinimize
+
+@warn("BREAKING CHANGE v0.12: deprecating AbstractRelativeFactor, use AbstractRelativeRoots instead")
+@warn("BREAKING CHANGE v0.12: deprecating AbstractRelativeFactorMinimize, use AbstractRelativeMinimize instead")
+
+const AbstractRelativeFactor = AbstractRelativeRoots
+const AbstractRelativeFactorMinimize = AbstractRelativeMinimize
+
+

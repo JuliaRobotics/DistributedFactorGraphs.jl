@@ -190,7 +190,7 @@ export addData!
 # Factor Data
 export GenericFunctionNodeData, PackedFunctionNodeData, FunctionNodeData
 export FunctorInferenceType, PackedInferenceType
-export AbstractPrior, AbstractRelativeFactor, AbstractRelativeFactorMinimize
+export AbstractPrior, AbstractRelative, AbstractRelativeRoots, AbstractRelativeMinimize
 export FactorOperationalMemory
 
 # accessors
