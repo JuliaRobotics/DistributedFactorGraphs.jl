@@ -5,8 +5,13 @@ _getname(t::T) where T = T.name.name
 
 
 convertPackedType(t::Union{T, Type{T}}) where {T <: FunctorInferenceType} = getfield(_getmodule(t), Symbol("Packed$(_getname(t))"))
-convertStructType(::Type{PT}) where {PT <: PackedInferenceType} = getfield(PT.name.module, Symbol(string(PT.name.name)[7:end]))
-
+function convertStructType(::Type{PT}) where {PT <: PackedInferenceType}
+    # see #668 for expanded reasoning.  PT may be ::UnionAll if the type is of template type.
+    ptt = PT isa DataType ? PT.name.name : PT
+    moduleName = PT isa DataType ? PT.name.module : Main
+    symbolName = Symbol(string(ptt)[7:end])
+    getfield(moduleName, symbolName)
+end
 
 ##==============================================================================
 ## Sorting
