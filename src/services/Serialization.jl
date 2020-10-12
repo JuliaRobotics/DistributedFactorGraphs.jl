@@ -84,7 +84,16 @@ function getTypeFromSerializationModule(softtypeString::String)
         else
             m = Main
         end
-        return getfield(m, Symbol(split_st[end]))        
+        noparams = split(split_st[end], r"{") 
+        ret = if 1 < length(noparams)
+            # fix #671, but does not work with specific module yet
+            bidx = findfirst(r"{", split_st[end])[1]
+            eval(Base.Meta.parse("Main.$(noparams[1])$(split_st[end][bidx:end])"))
+        else
+            getfield(m, Symbol(split_st[end]))
+        end
+
+        return ret 
 
     catch ex
         @error "Unable to deserialize soft type $(softtypeString)"
