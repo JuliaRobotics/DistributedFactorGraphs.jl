@@ -134,11 +134,18 @@ setSolverData!(f::DFGFactor, data::GenericFunctionNodeData) = f.solverData = dat
 
 Return `::Bool` on whether given factor `fc::Symbol` is a prior in factor graph `dfg`.
 """
-function isPrior(dfg::G, fc::Symbol)::Bool where G <: AbstractDFG
+function isPrior(dfg::AbstractDFG, fc::Symbol)
   fco = getFactor(dfg, fc)
-  getFactorType(fco) isa AbstractPrior
+  isPrior(getFactorType(fco))
 end
 
+function isPrior(::AbstractPrior)
+  return true
+end
+
+function isPrior(::AbstractRelative)
+  return false
+end
 
 ##==============================================================================
 ## Layer 2 CRUD (none) and Sets
