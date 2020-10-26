@@ -6,17 +6,17 @@
 ##==============================================================================
 "$(SIGNATURES)"
 getPPEMax(est::AbstractPointParametricEst) = est.max
-getPPEMax(fg::AbstractDFG, varlabel::Symbol, solveKey::Symbol=:Default) =
+getPPEMax(fg::AbstractDFG, varlabel::Symbol, solveKey::Symbol=:default) =
                 getPPE(fg, varlabel, solveKey) |> getPPEMax
 
 "$(SIGNATURES)"
 getPPEMean(est::AbstractPointParametricEst) = est.mean
-getPPEMean(fg::AbstractDFG, varlabel::Symbol, solveKey::Symbol=:Default) =
+getPPEMean(fg::AbstractDFG, varlabel::Symbol, solveKey::Symbol=:default) =
                 getPPE(fg, varlabel, solveKey) |> getPPEMean
                 
 "$(SIGNATURES)"
 getPPESuggested(est::AbstractPointParametricEst) = est.suggested
-getPPESuggested(fg::AbstractDFG, varlabel::Symbol, solveKey::Symbol=:Default) =
+getPPESuggested(fg::AbstractDFG, varlabel::Symbol, solveKey::Symbol=:default) =
                 getPPE(fg, varlabel, solveKey) |> getPPESuggested
 
 "$(SIGNATURES)"
