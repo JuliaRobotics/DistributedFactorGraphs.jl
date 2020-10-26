@@ -149,7 +149,7 @@ export getVariableSolverData,
 # PPE TYPES
 export AbstractPointParametricEst
 export MeanMaxPPE
-export getMaxPPE, getMeanPPE, getSuggestedPPE, getLastUpdatedTimestamp
+export getPPEMax, getPPEMean, getPPESuggested, getLastUpdatedTimestamp
 
 # accessors
 
