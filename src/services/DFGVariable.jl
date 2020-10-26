@@ -5,11 +5,20 @@
 ## PointParametricEst
 ##==============================================================================
 "$(SIGNATURES)"
-getMaxPPE(est::AbstractPointParametricEst) = est.max
+getPPEMax(est::AbstractPointParametricEst) = est.max
+getPPEMax(fg::AbstractDFG, varlabel::Symbol, solveKey::Symbol=:Default) =
+                getPPE(fg, varlabel, solveKey) |> getPPEMax
+
 "$(SIGNATURES)"
-getMeanPPE(est::AbstractPointParametricEst) = est.mean
+getPPEMean(est::AbstractPointParametricEst) = est.mean
+getPPEMean(fg::AbstractDFG, varlabel::Symbol, solveKey::Symbol=:Default) =
+                getPPE(fg, varlabel, solveKey) |> getPPEMean
+                
 "$(SIGNATURES)"
-getSuggestedPPE(est::AbstractPointParametricEst) = est.suggested
+getPPESuggested(est::AbstractPointParametricEst) = est.suggested
+getPPESuggested(fg::AbstractDFG, varlabel::Symbol, solveKey::Symbol=:Default) =
+                getPPE(fg, varlabel, solveKey) |> getPPESuggested
+
 "$(SIGNATURES)"
 getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimestamp
 
@@ -635,7 +644,7 @@ Notes
 Related
 getMeanPPE, getMaxPPE, getKDEMean, getKDEFit, getPPEs, getVariablePPEs
 """
-function getPPE(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol=:default)::AbstractPointParametricEst
+function getPPE(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol=:default)
     v = getVariable(dfg, variablekey)
     !haskey(v.ppeDict, ppekey) && error("PPE key '$ppekey' not found in variable '$variablekey'")
     return v.ppeDict[ppekey]
