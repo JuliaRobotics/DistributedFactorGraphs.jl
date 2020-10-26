@@ -557,9 +557,9 @@ function  PPETestBlock!(fg, v1)
     # Add a new PPE of type MeanMaxPPE to :x0
     ppe = MeanMaxPPE(:default, [0.0], [0.0], [0.0])
 
-    @test getMaxPPE(ppe) === ppe.max
-    @test getMeanPPE(ppe) === ppe.mean
-    @test getSuggestedPPE(ppe) === ppe.suggested
+    @test getPPEMax(ppe) === ppe.max
+    @test getPPEMean(ppe) === ppe.mean
+    @test getPPESuggested(ppe) === ppe.suggested
     @test getLastUpdatedTimestamp(ppe) === ppe.lastUpdatedTimestamp
 
     @test addPPE!(fg, :a, ppe) == ppe
@@ -568,6 +568,11 @@ function  PPETestBlock!(fg, v1)
     @test listPPEs(fg, :a) == [:default]
     # Get the data back - note that this is a reference to above.
     @test getPPE(fg, :a, :default) == ppe
+
+    @test getPPE(fg, :a, :default) == ppe
+    @test getPPEMean(fg, :a, :default) == ppe.mean
+    @test getPPEMax(fg, :a, :default) == ppe.max
+    @test getPPESuggested(fg, :a, :default) == ppe.suggested
 
     # Delete it
     @test deletePPE!(fg, :a, :default) == ppe
