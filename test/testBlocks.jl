@@ -21,8 +21,8 @@ struct TestSofttype2 <: InferenceVariable
 end
 
 
-struct TestFunctorInferenceType1 <: FunctorInferenceType end
-struct TestFunctorInferenceType2 <: FunctorInferenceType end
+struct TestFunctorInferenceType1 <: AbstractRelative end
+struct TestFunctorInferenceType2 <: AbstractRelative end
 
 struct TestAbstractPrior <: AbstractPrior end
 struct TestAbstractRelativeFactor <: AbstractRelativeFactor end
