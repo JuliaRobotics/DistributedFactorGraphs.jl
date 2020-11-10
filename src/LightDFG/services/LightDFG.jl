@@ -359,3 +359,55 @@ function toDot(dfg::LightDFG)::String
     close(m)
     return String(data)
 end
+
+
+"""
+    $SIGNATURES
+
+Speciallized function available to only LightDFG at this time.
+
+Example
+```julia
+using IncrementalInference
+
+# canonical example graph as example
+fg = generateCanonicalFG_Kaess()
+
+@show path = findShortestPathDijkstra(fg, :x1, :x3)
+@show isVariable.(path)
+@show isFactor.(path)
+```
+
+DevNotes
+- # TODO expand to other AbstractDFG entities.
+
+Related
+
+[findFactorsBetweenNaive](@ref), `LightGraphs.dijkstra_shortest_paths`
+"""
+function findShortestPathDijkstra(  dfg::LightDFG, 
+                                    from::Symbol,
+                                    to::Symbol  )
+  #
+  # LightDFG internally uses Integers 
+  frI = dfg.g.labels[from]
+  toI = dfg.g.labels[to]
+  
+  path = LightGraphs.dijkstra_shortest_paths(dfg.g.graph, [toI;])
+  
+  # assemble into the list
+  dijkpath = Symbol[]
+  # test for connectivity
+  if path.dists[frI] < Inf
+    cursor = frI
+    push!(dijkpath, dfg.g.labels[cursor])
+    # walk the path
+    while cursor != toI
+      cursor = path.parents[cursor]
+      push!(dijkpath, dfg.g.labels[cursor])
+    end
+  end
+
+  # return the list of symbols
+  return dijkpath
+end

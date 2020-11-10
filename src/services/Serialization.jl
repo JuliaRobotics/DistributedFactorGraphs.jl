@@ -88,7 +88,8 @@ function getTypeFromSerializationModule(softtypeString::String)
         ret = if 1 < length(noparams)
             # fix #671, but does not work with specific module yet
             bidx = findfirst(r"{", split_st[end])[1]
-            eval(Base.Meta.parse("Main.$(noparams[1])$(split_st[end][bidx:end])"))
+            Core.eval(m, Base.Meta.parse("$(noparams[1])$(split_st[end][bidx:end])"))
+            # eval(Base.Meta.parse("Main.$(noparams[1])$(split_st[end][bidx:end])"))
         else
             getfield(m, Symbol(split_st[end]))
         end

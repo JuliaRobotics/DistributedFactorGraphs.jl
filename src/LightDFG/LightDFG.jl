@@ -45,7 +45,8 @@ import ...DistributedFactorGraphs:  setSolverParams!,
                                     getBiadjacencyMatrix,
                                     _getDuplicatedEmptyDFG,
                                     toDot,
-                                    toDotFile
+                                    toDotFile,
+                                    findShortestPathDijkstra
 
 include("FactorGraphs/FactorGraphs.jl")
 using .FactorGraphs
