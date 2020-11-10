@@ -1021,6 +1021,9 @@ end
 ## Automated Graph Searching
 ##==============================================================================
 
+
+function findShortestPathDijkstra end
+
 """
     $SIGNATURES
 
@@ -1029,7 +1032,11 @@ Relatively naive function counting linearly from-to
 DevNotes
 - Convert to using LightGraphs shortest path methods instead.
 """
-function findFactorsBetweenNaive(dfg::AbstractDFG, from::Symbol, to::Symbol, assertSingles::Bool=false)
+function findFactorsBetweenNaive(   dfg::AbstractDFG, 
+                                    from::Symbol,
+                                    to::Symbol, 
+                                    assertSingles::Bool=false)
+  #
   @info "findFactorsBetweenNaive is naive linear number method -- improvements welcome"
   SRT = getVariableLabelNumber(from)
   STP = getVariableLabelNumber(to)

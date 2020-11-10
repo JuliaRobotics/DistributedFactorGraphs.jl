@@ -232,6 +232,9 @@ export @defVariable
 export saveDFG, loadDFG!, loadDFG
 export toDot, toDotFile
 
+# shortest path
+export findShortestPathDijkstra
+
 # Comparisons
 export
     compare,
