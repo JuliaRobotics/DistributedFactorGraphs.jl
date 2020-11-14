@@ -505,10 +505,10 @@ function listVariables(dfg::AbstractDFG,
 end
 
 # to be consolidated, see #612
-function listVariables(dfg::AbstractDFG, 
-                       typeFilter::Type{<:InferenceVariable}; 
-                       tags::Vector{Symbol}=Symbol[], 
-                       solvable::Int=0 )
+function listVariables( dfg::AbstractDFG, 
+                        typeFilter::Type{<:InferenceVariable}; 
+                        tags::Vector{Symbol}=Symbol[], 
+                        solvable::Int=0 )
   #
   retlist::Vector{Symbol} = ls(dfg, typeFilter)
   0 < length(tags) || solvable != 0 ? intersect(retlist, ls(dfg, tags=tags, solvable=solvable)) : retlist
@@ -520,31 +520,50 @@ Get a list of the IDs (labels) of the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
 function listFactors(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
-  return map(f -> f.label, getFactors(dfg, regexFilter, tags=tags, solvable=solvable))
+    return map(f -> f.label, getFactors(dfg, regexFilter, tags=tags, solvable=solvable))
 end
 
 """
-    $SIGNATURES
+    $TYPEDSIGNATURES
 List all the solvekeys used amongst all variables in the distributed factor graph object.
 
 Related
 
-listSupersolves, getSolverDataDict, listVariables
+[`listSupersolves`](@ref), [`getSolverDataDict`](@ref), [`listVariables`](@ref)
 """
-function listSolveKeys(dfg::AbstractDFG, 
-                       filterVariables::Union{Type{<:InferenceVariable},Regex, Nothing}=nothing;
-                       filterSolveKeys::Union{Regex,Nothing}=nothing,
-                       tags::Vector{Symbol}=Symbol[], 
-                       solvable::Int=0 )
-                       #
-    skeys = Set{Symbol}()
-    varList = listVariables(dfg, filterVariables, tags=tags, solvable=solvable)
-    for vs in varList, ky in keys(getSolverDataDict(getVariable(dfg, vs)))
+function listSolveKeys( variable::DFGVariable,
+                        filterSolveKeys::Union{Regex,Nothing}=nothing,
+                        skeys = Set{Symbol}() )
+    #
+    for ky in keys(getSolverDataDict(variable))
         push!(skeys, ky)
     end
 
     #filter the solveKey set with filterSolveKeys regex
     !isnothing(filterSolveKeys) && return filter!(k -> occursin(filterSolveKeys, string(k)), skeys)
+    return skeys
+end
+
+listSolveKeys(  dfg::AbstractDFG, lbl::Symbol,
+                filterSolveKeys::Union{Regex,Nothing}=nothing,
+                skeys = Set{Symbol}() ) = listSolveKeys(getVariable(dfg, lbl), filterSolveKeys, skeys)
+#
+
+function listSolveKeys( dfg::AbstractDFG, 
+                        filterVariables::Union{Type{<:InferenceVariable},Regex, Nothing}=nothing;
+                        filterSolveKeys::Union{Regex,Nothing}=nothing,
+                        tags::Vector{Symbol}=Symbol[], 
+                        solvable::Int=0  )
+    #
+    skeys = Set{Symbol}()
+    varList = listVariables(dfg, filterVariables, tags=tags, solvable=solvable)
+    for vs in varList  #, ky in keys(getSolverDataDict(getVariable(dfg, vs)))
+        listSolveKeys(dfg, vs, filterSolveKeys, skeys)
+    end
+
+    # done inside the loop
+    # #filter the solveKey set with filterSolveKeys regex
+    # !isnothing(filterSolveKeys) && return filter!(k -> occursin(filterSolveKeys, string(k)), skeys)
 
     return skeys
 end
