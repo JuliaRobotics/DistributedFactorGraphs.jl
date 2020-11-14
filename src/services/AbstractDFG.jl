@@ -495,13 +495,13 @@ listVariables(dfg, r"l", tags=[:APRILTAG;])
 Related:
 - ls
 """
-function listVariables(dfg::AbstractDFG, 
-                       regexFilter::Union{Nothing, Regex}=nothing; 
-                       tags::Vector{Symbol}=Symbol[], 
-                       solvable::Int=0 )
-  #
-  vars = getVariables(dfg, regexFilter, tags=tags, solvable=solvable)
-  return map(v -> v.label, vars)::Vector{Symbol}
+function listVariables( dfg::AbstractDFG, 
+                        regexFilter::Union{Nothing, Regex}=nothing; 
+                        tags::Vector{Symbol}=Symbol[], 
+                        solvable::Int=0 )
+    #
+    vars = getVariables(dfg, regexFilter, tags=tags, solvable=solvable)
+    return map(v -> v.label, vars)::Vector{Symbol}
 end
 
 # to be consolidated, see #612
@@ -509,9 +509,9 @@ function listVariables( dfg::AbstractDFG,
                         typeFilter::Type{<:InferenceVariable}; 
                         tags::Vector{Symbol}=Symbol[], 
                         solvable::Int=0 )
-  #
-  retlist::Vector{Symbol} = ls(dfg, typeFilter)
-  0 < length(tags) || solvable != 0 ? intersect(retlist, ls(dfg, tags=tags, solvable=solvable)) : retlist
+    #
+    retlist::Vector{Symbol} = ls(dfg, typeFilter)
+    0 < length(tags) || solvable != 0 ? intersect(retlist, ls(dfg, tags=tags, solvable=solvable)) : retlist
 end
 
 """
