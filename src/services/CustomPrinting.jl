@@ -23,13 +23,15 @@ function printVariable( io::IO, vert::DFGVariable;
         println(ioc, "  timestamp: ", vert.timestamp)
         println(ioc, "  label: ", vert.label)
         println(ioc, "  solvable: ", getSolvable(vert))
-        println(ioc, "  tags:", getTags(vert))
+        println(ioc, "  tags: ", getTags(vert))
         try
             println(ioc, "  manifold: ", getManifolds(vert))
         catch e
         end
-        solk = listSolveKeys(vert) |> collect |> sortDFG
-        println(ioc, "  Nr SolveKeys=$(length(solk)): ", solk[1:minimum([4,length(solk)])])
+        solk = listSolveKeys(vert) |> collect
+        lsolk = length(solk)
+        smsk = (rand(1:lsolk,100) |> unique)[1:minimum([4,lsolk])]
+        println(ioc, "  Nr SolveKeys=$(lsolk): ", solk[smsk], 4<lsolk ? "..." : "")
         printstyled(ioc, "    :default", "\n", bold=true)
         println(ioc, "      size marginal samples: ", size(vnd.val))
         println(ioc, "      kde bandwidths: ", round.((vnd.bw)[:,1], digits=4))
