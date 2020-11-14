@@ -24,7 +24,10 @@ function printVariable( io::IO, vert::DFGVariable;
         println(ioc, "  label: ", vert.label)
         println(ioc, "  solvable: ", getSolvable(vert))
         println(ioc, "  tags:", getTags(vert))
-        println(ioc, "  manifold: ", getManifolds(vert))
+        try
+            println(ioc, "  manifold: ", getManifolds(vert))
+        catch e
+        end
         solk = listSolveKeys(vert) |> collect |> sortDFG
         println(ioc, "  Nr SolveKeys=$(length(solk)): ", solk[1:minimum([4,length(solk)])])
         printstyled(ioc, "    :default", "\n", bold=true)
