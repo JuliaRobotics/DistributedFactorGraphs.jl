@@ -59,22 +59,27 @@ end
 
     iobuf = IOBuffer()
     # for now just test the interface and a bit of output
-    @test printVariable(var1) == nothing
-    @test printFactor(fac1) == nothing
+    @test printVariable(var1) === nothing
+    @test printFactor(fac1) === nothing
 
-    @test printVariable(iobuf, var1, skipfields=[:timestamp, :solver, :ppe, :nstime]) == nothing
+    @test printVariable(iobuf, var1, skipfields=[:timestamp, :solver, :ppe, :nstime]) === nothing
     @test String(take!(iobuf)) == "DFGVariable{TestSofttype1}\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol,Union{Bool, Float64, Int64, Array{Bool,1}, Array{Float64,1}, Array{Int64,1}, Array{String,1}, String}}(:small=>\"data\")\ndataDict:\nDict{Symbol,AbstractDataEntry}()\nsolvable:\n0\n"
 
-    @test printVariable(iobuf, var1, short=true) == nothing
-    @test String(take!(iobuf)) == "DFGVariable{TestSofttype1}\nlabel: a\ntags: Set([:VARIABLE, :POSE])\nsize marginal samples: (1, 1)\nkde bandwidths: [0.0]\nNo PPEs\n"
+    @test printVariable(iobuf, var1, short=true) === nothing
+    varstr = String(take!(iobuf))
+    @test occursin(r"DFGVariable", varstr)
+    @test occursin(r"timestamp", varstr)
+    @test occursin(r"label", varstr)
+    @test occursin(r"bandwidths", varstr)
+    #  == "DFGVariable{TestSofttype1}\nlabel: a\ntags: Set([:VARIABLE, :POSE])\nsize marginal samples: (1, 1)\nkde bandwidths: [0.0]\nNo PPEs\n"
 
 
-    @test printFactor(iobuf, fac1, skipfields=[:timestamp, :solver, :nstime]) == nothing
+    @test printFactor(iobuf, fac1, skipfields=[:timestamp, :solver, :nstime]) === nothing
     @test occursin(r"DFGFactor.*\nlabel:\n:abf1", String(take!(iobuf)))
 
     String(take!(iobuf)) == "DFGFactor{TestCCW{TestFunctorInferenceType1}}\nlabel:\n:abf1\ntags:\nSet([:tag1, :tag2])\nsolvable:\n0\nsolvable:\n1\n_variableOrderSymbols:\n[:a, :b]\n"
 
-    @test printFactor(iobuf, fac1, short=true) == nothing
+    @test printFactor(iobuf, fac1, short=true) === nothing
     @show teststr = String(take!(iobuf))
     @test occursin(r"DFGFactor", teststr)
     @test occursin(r"label", teststr)
@@ -84,19 +89,19 @@ end
 
     # s = String(take!(iobuf))
 
-    @test show(var1) == nothing
-    @test show(fac1) == nothing
+    @test show(var1) === nothing
+    @test show(fac1) === nothing
 
-    @test show(iobuf, MIME("text/plain"), var1) == nothing
+    @test show(iobuf, MIME("text/plain"), var1) === nothing
     isapprox(length(take!(iobuf)), 452, atol=10)
-    @test show(iobuf, MIME("text/plain"), fac1) == nothing
+    @test show(iobuf, MIME("text/plain"), fac1) === nothing
     isapprox(length(take!(iobuf)), 301, atol=10)
 
-    @test printVariable(fg1, :a) == nothing
-    @test printFactor(fg1, :abf1) == nothing
+    @test printVariable(fg1, :a) === nothing
+    @test printFactor(fg1, :abf1) === nothing
 
-    @test printNode(fg1, :a) == nothing
-    @test printNode(fg1, :abf1) == nothing
+    @test printNode(fg1, :a) === nothing
+    @test printNode(fg1, :abf1) === nothing
 
     show(stdout, MIME("application/prs.juno.inline"), var1) == var1
     show(stdout, MIME("application/prs.juno.inline"), fac1) == fac1

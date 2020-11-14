@@ -2,9 +2,9 @@ module DFGPlots
 
 using Colors
 using LightGraphs
-using GraphPlot
+using ..GraphPlot
 using DocStringExtensions
-import GraphPlot: gplot
+import ..GraphPlot: gplot
 
 using ...DistributedFactorGraphs
 
