@@ -247,6 +247,17 @@ Get a DFGFactor from a DFG using its label.
 function getFactor(dfg::G, label::Union{Symbol, String}) where G <: AbstractDFG
     error("getFactor not implemented for $(typeof(dfg))")
 end
+
+function Base.getindex(dfg::AbstractDFG, lbl::Union{Symbol, String})
+    if isVariable(dfg, lbl)
+        getVariable(dfg, lbl)
+    elseif isFactor(dfg, lbl)
+        getFactor(dfg, lbl)
+    else
+        error("Cannot find $lbl in this $(typeof(dfg))")
+    end
+end
+
 """
     $(SIGNATURES)
 Update a complete DFGVariable in the DFG.

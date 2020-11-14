@@ -29,6 +29,8 @@ using SparseArrays
 using UUIDs
 using Pkg
 
+import Base: getindex
+
 
 ##==============================================================================
 # Exports
@@ -75,6 +77,8 @@ export exists,
        listSolveKeys, listSupersolves,
        getVariables, getFactors,
        isVariable, isFactor
+
+export getindex
 
 export isConnected
 

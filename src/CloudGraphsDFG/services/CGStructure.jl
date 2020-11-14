@@ -1,6 +1,6 @@
 function isValidLabel(abstractNode::N)::Bool where N <: AbstractCGNode
     id = String(abstractNode.id)
-    return all(t -> t != uppercase(id), _invalidIds) && match(_validLabelRegex, id) != nothing
+    return all(t -> t != uppercase(id), _invalidIds) && match(_validLabelRegex, id) !== nothing
 end
 
 # Fastest way I can think to convert the data into a dict
