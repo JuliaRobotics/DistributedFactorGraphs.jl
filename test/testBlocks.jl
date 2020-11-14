@@ -397,12 +397,17 @@ function  VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
 @test addVariable!(fg, v1) == v1
 @test addVariable!(fg, v2) == v2
 
+# test getindex
+@test getLabel(fg[getLabel(v1)]) == getLabel(v1)
+
 #TODO standardize this error and res also for that matter
 @test_throws Exception addFactor!(fg, [:a, :nope], f1)
 @test_throws Exception addFactor!(fg, [v1, v2, v3], f1)
 
 @test addFactor!(fg, [v1, v2], f1) == f1
 @test_throws ErrorException addFactor!(fg, [v1, v2], f1)
+
+@test getLabel(fg[getLabel(f1)]) == getLabel(f1)
 
 @test @test_logs (:warn, Regex("'$(v3.label)' does not exist")) match_mode=:any updateVariable!(fg, v3) == v3
 @test updateVariable!(fg, v3) == v3
