@@ -394,6 +394,7 @@ function findShortestPathDijkstra(  dfg::LightDFG,
   toI = dfg.g.labels[to]
   
   path = LightGraphs.dijkstra_shortest_paths(dfg.g.graph, [toI;])
+  # path = LightGraphs.enumerate_paths(path_state, toI)
   
   # assemble into the list
   dijkpath = Symbol[]
