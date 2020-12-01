@@ -6,18 +6,18 @@ using UUIDs
 import Base: convert
 
 # Test InferenceVariable Types
-# struct TestSofttype1 <: InferenceVariable
+# struct TestVariableType1 <: InferenceVariable
 #     dims::Int
 #     manifolds::Tuple{Symbol}
-#     TestSofttype1() = new(1,(:Euclid,))
+#     TestVariableType1() = new(1,(:Euclid,))
 # end
 
-DFG.@defVariable TestSofttype1 1 (:Euclid,)
+DFG.@defVariable TestVariableType1 1 (:Euclid,)
 
-struct TestSofttype2 <: InferenceVariable
+struct TestVariableType2 <: InferenceVariable
     dims::Int
     manifolds::Tuple{Symbol, Symbol}
-    TestSofttype2() = new(2,(:Euclid,:Circular,))
+    TestVariableType2() = new(2,(:Euclid,:Circular,))
 end
 
 
@@ -243,11 +243,11 @@ function DFGVariableSCA()
     small = Dict{Symbol, SmallDataTypes}(:small=>"data")
     testTimestamp = now(localzone())
     # Constructors
-    v1 = DFGVariable(v1_lbl, TestSofttype1(), tags=v1_tags, solvable=0, solverDataDict=Dict(:default=>VariableNodeData{TestSofttype1}()))
-    v2 = DFGVariable(:b, VariableNodeData{TestSofttype2}(), tags=Set([:VARIABLE, :LANDMARK]))
-    v3 = DFGVariable(:c, VariableNodeData{TestSofttype2}(), timestamp=ZonedDateTime("2020-08-11T00:12:03.000-05:00"))
+    v1 = DFGVariable(v1_lbl, TestVariableType1(), tags=v1_tags, solvable=0, solverDataDict=Dict(:default=>VariableNodeData{TestVariableType1}()))
+    v2 = DFGVariable(:b, VariableNodeData{TestVariableType2}(), tags=Set([:VARIABLE, :LANDMARK]))
+    v3 = DFGVariable(:c, VariableNodeData{TestVariableType2}(), timestamp=ZonedDateTime("2020-08-11T00:12:03.000-05:00"))
 
-    vorphan = DFGVariable(:orphan, TestSofttype1(), tags=v1_tags, solvable=0, solverDataDict=Dict(:default=>VariableNodeData{TestSofttype1}()))
+    vorphan = DFGVariable(:orphan, TestVariableType1(), tags=v1_tags, solvable=0, solverDataDict=Dict(:default=>VariableNodeData{TestVariableType1}()))
 
     getSolverData(v1).solveInProgress = 1
 
@@ -266,7 +266,7 @@ function DFGVariableSCA()
 
     @test getSmallData(v1) == Dict{Symbol,SmallDataTypes}()
 
-    @test getSofttype(v1) == TestSofttype1()
+    @test getVariableType(v1) == TestVariableType1()
 
 
     #TODO here for now, don't reccomend usage.
@@ -290,8 +290,8 @@ function DFGVariableSCA()
 
     #no accessors on dataDict, only CRUD
 
-    #softtype functions
-    testvar = TestSofttype1()
+    #variableType functions
+    testvar = TestVariableType1()
     @test getDimension(testvar) == 1
     @test getManifolds(testvar) == (:Euclid,)
 
@@ -695,7 +695,7 @@ function  VSDTestBlock!(fg, v1)
     # **VariableNodeData**
     #  - `getSolveInProgress`
 
-    vnd = VariableNodeData{TestSofttype1}(solveKey=:parametric)
+    vnd = VariableNodeData{TestVariableType1}(solveKey=:parametric)
     @test addVariableSolverData!(fg, :a, vnd) == vnd
 
     @test_throws ErrorException addVariableSolverData!(fg, :a, vnd)
@@ -749,7 +749,7 @@ function  VSDTestBlock!(fg, v1)
     # Add new VND of type ContinuousScalar to :x0
     # Could also do VariableNodeData(ContinuousScalar())
 
-    vnd = VariableNodeData{TestSofttype1}(solveKey=:parametric)
+    vnd = VariableNodeData{TestVariableType1}(solveKey=:parametric)
     addVariableSolverData!(fg, :a, vnd)
     @test setdiff(listVariableSolverData(fg, :a), [:default, :parametric]) == []
     # Get the data back - note that this is a reference to above.
@@ -995,24 +995,24 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test lsf(fg, TestAbstractPrior) == [:af1]
         @test lsfWho(fg, :TestFunctorInferenceType1) == [:abf1]
 
-        @test getSofttype(v1) == TestSofttype1()
-        @test getSofttype(fg,:a) == TestSofttype1()
+        @test getVariableType(v1) == TestVariableType1()
+        @test getVariableType(fg,:a) == TestVariableType1()
 
-        @test getVariableType(v1) == TestSofttype1()
-        @test getVariableType(fg,:a) == TestSofttype1()
+        @test getVariableType(v1) == TestVariableType1()
+        @test getVariableType(fg,:a) == TestVariableType1()
 
         @test ls2(fg, :a) == [:b]
 
-        @test issetequal([:TestSofttype1, :TestSofttype2], lsTypes(fg))
+        @test issetequal([:TestVariableType1, :TestVariableType2], lsTypes(fg))
 
         varTypesDict = lsTypesDict(fg)
         @test issetequal(collect(keys(varTypesDict)), lsTypes(fg))
-        @test issetequal(varTypesDict[:TestSofttype1], [:a])
-        @test issetequal(varTypesDict[:TestSofttype2], [:b])
+        @test issetequal(varTypesDict[:TestVariableType1], [:a])
+        @test issetequal(varTypesDict[:TestVariableType2], [:b])
 
-        @test ls(fg, TestSofttype1) == [:a]
+        @test ls(fg, TestVariableType1) == [:a]
 
-        @test lsWho(fg, :TestSofttype1) == [:a]
+        @test lsWho(fg, :TestVariableType1) == [:a]
 
         # FIXME return: Symbol[:b, :b] == Symbol[:b]
         varNearTs = findVariableNearTimestamp(fg, now())
@@ -1137,10 +1137,10 @@ end
 
 # Feed with graph a b solvable orphan not factor on a b
 # fg = testDFGAPI()
-# addVariable!(fg, DFGVariable(:a, TestSofttype1()))
-# addVariable!(fg, DFGVariable(:b, TestSofttype1()))
+# addVariable!(fg, DFGVariable(:a, TestVariableType1()))
+# addVariable!(fg, DFGVariable(:b, TestVariableType1()))
 # addFactor!(fg, DFGFactor(:abf1, [:a,:b], GenericFunctionNodeData{TestFunctorInferenceType1, Symbol}()))
-# addVariable!(fg, DFGVariable(:orphan, TestSofttype1(), solvable = 0))
+# addVariable!(fg, DFGVariable(:orphan, TestVariableType1(), solvable = 0))
 function AdjacencyMatricesTestBlock(fg)
     # Normal
     #deprecated
@@ -1186,8 +1186,8 @@ function connectivityTestGraph(::Type{T}; VARTYPE=DFGVariable, FACTYPE=DFGFactor
 
     dfg = T(userId="testUserId")
 
-    vars = vcat(map(n -> VARTYPE(Symbol("x$n"), VariableNodeData{TestSofttype1}()), 1:numNodesType1),
-                map(n -> VARTYPE(Symbol("x$(numNodesType1+n)"), VariableNodeData{TestSofttype2}()), 1:numNodesType2))
+    vars = vcat(map(n -> VARTYPE(Symbol("x$n"), VariableNodeData{TestVariableType1}()), 1:numNodesType1),
+                map(n -> VARTYPE(Symbol("x$(numNodesType1+n)"), VariableNodeData{TestVariableType2}()), 1:numNodesType2))
 
     foreach(v -> addVariable!(dfg, v), vars)
 
@@ -1368,12 +1368,12 @@ function  Summaries(testDFGAPI)
     # Check all fields are equal for all variables
     for v in ls(summaryGraph)
         for field in variableFields
-            if field != :softtypename
+            if field != :variableTypeName
                 @test getproperty(getVariable(dfg, v), field) == getproperty(getVariable(summaryGraph, v), field)
             else
-                # Special case to check the symbol softtype is equal to the full softtype.
-                @test Symbol(typeof(getSofttype(getVariable(dfg, v)))) == getSofttypename(getVariable(summaryGraph, v))
-                @test getSofttype(getVariable(dfg, v)) == getSofttype(getVariable(summaryGraph, v))
+                # Special case to check the symbol variableType is equal to the full variableType.
+                @test Symbol(typeof(getVariableType(getVariable(dfg, v)))) == getVariableTypeName(getVariable(summaryGraph, v))
+                @test getVariableType(getVariable(dfg, v)) == getVariableType(getVariable(summaryGraph, v))
             end
         end
     end
@@ -1395,10 +1395,10 @@ function ProducingDotFiles(testDFGAPI,
     dotdfg = testDFGAPI(userId="testUserId")
 
     if v1 == nothing
-        v1 = VARTYPE(:a, VariableNodeData{TestSofttype1}())
+        v1 = VARTYPE(:a, VariableNodeData{TestVariableType1}())
     end
     if v2 == nothing
-        v2 = VARTYPE(:b, VariableNodeData{TestSofttype1}())
+        v2 = VARTYPE(:b, VariableNodeData{TestVariableType1}())
     end
     if f1 == nothing
         f1 = (FACTYPE==DFGFactor) ? DFGFactor{TestFunctorInferenceType1}(:abf1, [:a, :b]) : FACTYPE(:abf1)

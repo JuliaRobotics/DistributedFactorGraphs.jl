@@ -123,13 +123,13 @@ export InferenceVariable
 
 # accessors
 export getSolverDataDict, setSolverData!
-export getSofttype, getSofttypename
+export getVariableType, getVariableTypeName
 
 export getSolverData
 
 export getVariableType
 
-# Softtype functions
+# VariableType functions
 export getDimension, getManifolds
 
 # Small Data CRUD

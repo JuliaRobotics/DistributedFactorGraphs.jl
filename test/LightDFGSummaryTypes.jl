@@ -43,7 +43,7 @@ end
         @test getTimestamp(v1) == v1.timestamp
         @test getVariablePPEDict(v1) == v1.ppeDict
         @test_throws KeyError getVariablePPE(v1, :notfound)
-        @test getSofttypename(v1) == :Pose2
+        @test getVariableTypeName(v1) == :Pose2
 
         # FACTYPE == DFGFactorSummary
         testTimestamp = now(localzone())

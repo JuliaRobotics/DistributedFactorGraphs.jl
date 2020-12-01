@@ -140,4 +140,59 @@ export AbstractRelativeFactor, AbstractRelativeFactorMinimize
 const AbstractRelativeFactor = AbstractRelativeRoots
 const AbstractRelativeFactorMinimize = AbstractRelativeMinimize
 
+##-------------------------------------------------------------------------------
+## softtype -> variableType deprecation
+##-------------------------------------------------------------------------------
 
+function Base.getproperty(x::VariableNodeData,f::Symbol)
+  if f == :softtype
+    Base.depwarn("`VariableNodeData` field `softtype` is deprecated, use `variableType`", :getproperty)
+    f = :variableType
+  end
+  getfield(x,f)
+end
+
+function Base.setproperty!(x::VariableNodeData, f::Symbol, val)
+  if f == :softtype
+      Base.depwarn("`VariableNodeData` field `softtype` is deprecated, use `variableType`", :getproperty)
+    f = :variableType
+  end
+  return setfield!(x, f, convert(fieldtype(typeof(x), f), val))
+end
+
+
+function Base.getproperty(x::PackedVariableNodeData,f::Symbol)
+  if f == :softtype
+    Base.depwarn("`PackedVariableNodeData` field `softtype` is deprecated, use `variableType`", :getproperty)
+    f = :variableType
+  end
+  getfield(x,f)
+end
+
+function Base.setproperty!(x::PackedVariableNodeData, f::Symbol, val)
+  if f == :softtype
+      Base.depwarn("`PackedVariableNodeData` field `softtype` is deprecated, use `variableType`", :getproperty)
+  f = :variableType
+  end
+  return setfield!(x, f, convert(fieldtype(typeof(x), f), val))
+end
+
+
+function Base.getproperty(x::DFGVariableSummary,f::Symbol)
+  if f == :softtypename
+    Base.depwarn("`DFGVariableSummary` field `softtypename` is deprecated, use `variableTypeName`", :getproperty)
+    f = :variableTypeName
+  end
+  getfield(x,f)
+end
+
+function Base.setproperty!(x::DFGVariableSummary, f::Symbol, val)
+  if f == :softtypename
+      Base.depwarn("`DFGVariableSummary` field `softtypename` is deprecated, use `variableTypeName`", :getproperty)
+  f = :variableTypeName
+  end
+  return setfield!(x, f, convert(fieldtype(typeof(x), f), val))
+end
+
+@deprecate getSofttype(args...) getVariableType(args...)
+@deprecate getSofttypename(args...) getVariableTypeName(args...)

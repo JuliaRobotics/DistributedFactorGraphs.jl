@@ -171,8 +171,8 @@ function _structToNeo4jProps(inst::Union{User, Robot, Session, PVND, N, APPE, AB
             if fieldname == :nstime
                 val = field.value
             end
-            if fieldname == :softtype
-                val = DistributedFactorGraphs.typeModuleName(getSofttype(inst))
+            if fieldname == :variableType
+                val = DistributedFactorGraphs.typeModuleName(getVariableType(inst))
             end
             # Factors
             # TODO: Consolidate with packFactor in Serialization.jl - https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/525

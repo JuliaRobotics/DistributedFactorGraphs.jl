@@ -163,7 +163,7 @@ function compare(a::VariableNodeData, b::VariableNodeData)
     a.ismargin != b.ismargin && @debug("ismargin is not equal")==nothing && return false
     a.dontmargin != b.dontmargin && @debug("dontmargin is not equal")==nothing && return false
     a.solveInProgress != b.solveInProgress && @debug("solveInProgress is not equal")==nothing && return false
-    typeof(a.softtype) != typeof(b.softtype) && @debug("softtype is not equal")==nothing && return false
+    typeof(a.variableType) != typeof(b.variableType) && @debug("variableType is not equal")==nothing && return false
     return true
 end
 
@@ -181,19 +181,19 @@ function compareVariable(A::DFGVariable,
   skiplist = union([:attributes;:solverDataDict;:createdTimestamp;:lastUpdatedTimestamp],skip)
   TP = compareAll(A, B, skip=skiplist, show=show)
   varskiplist = skipsamples ? [:val; :bw] : Symbol[]
-  skiplist = union([:softtype;],varskiplist)
+  skiplist = union([:variableType;],varskiplist)
   union!(skiplist, skip)
   TP = TP && compareAll(A.solverDataDict, B.solverDataDict, skip=skiplist, show=show)
 
   Ad = getSolverData(A)
   Bd = getSolverData(B)
 
-  # TP = TP && compareAll(A.attributes, B.attributes, skip=[:softtype;], show=show)
-  varskiplist = union(varskiplist, [:softtype])
+  # TP = TP && compareAll(A.attributes, B.attributes, skip=[:variableType;], show=show)
+  varskiplist = union(varskiplist, [:variableType])
   union!(varskiplist, skip)
   TP = TP && compareAll(Ad, Bd, skip=varskiplist, show=show)
-  TP = TP && typeof(Ad.softtype) == typeof(Bd.softtype)
-  TP = TP && compareAll(Ad.softtype, Bd.softtype, show=show, skip=skip)
+  TP = TP && typeof(Ad.variableType) == typeof(Bd.variableType)
+  TP = TP && compareAll(Ad.variableType, Bd.variableType, show=show, skip=skip)
   return TP
 end
 

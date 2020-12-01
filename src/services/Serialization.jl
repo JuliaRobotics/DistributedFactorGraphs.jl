@@ -66,18 +66,18 @@ function string2ZonedDateTime(stringTimestamp)
   ZonedDateTime(DateTime(ss[1]), TimeZone(ss[2]))
 end
 
-# Softtype module.type string functions
-function typeModuleName(softtype::InferenceVariable)
+# variableType module.type string functions
+function typeModuleName(variableType::InferenceVariable)
     io = IOBuffer()
     ioc = IOContext(io, :module=>DistributedFactorGraphs)
-    show(ioc, typeof(softtype))
+    show(ioc, typeof(variableType))
     return String(take!(io))
 end
 
-function getTypeFromSerializationModule(softtypeString::String)
+function getTypeFromSerializationModule(variableTypeString::String)
     try
         # split the type at last `.`
-        split_st = split(softtypeString, r"\.(?!.*\.)")
+        split_st = split(variableTypeString, r"\.(?!.*\.)")
         #if module is specified look for the module in main, otherwise use Main        
         if length(split_st) == 2
             m = getfield(Main, Symbol(split_st[1]))
@@ -97,7 +97,7 @@ function getTypeFromSerializationModule(softtypeString::String)
         return ret 
 
     catch ex
-        @error "Unable to deserialize soft type $(softtypeString)"
+        @error "Unable to deserialize soft type $(variableTypeString)"
         io = IOBuffer()
         showerror(io, ex, catch_backtrace())
         err = String(take!(io))
@@ -119,7 +119,7 @@ function packVariable(dfg::G, v::DFGVariable)::Dict{String, Any} where G <: Abst
     props["solverDataDict"] = JSON2.write(Dict(keys(v.solverDataDict) .=> map(vnd -> packVariableNodeData(dfg, vnd), values(v.solverDataDict))))
     props["smallData"] = JSON2.write(v.smallData)
     props["solvable"] = v.solvable
-    props["softtype"] = typeModuleName(getSofttype(v))
+    props["variableType"] = typeModuleName(getVariableType(v))
     props["dataEntry"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> JSON.json(bde), values(v.dataDict))))
     props["dataEntryType"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> typeof(bde), values(v.dataDict))))
     props["_version"] = _getDFGVersion()
@@ -149,9 +149,16 @@ function unpackVariable(dfg::G,
     ppeDict = unpackPPEs ? JSON2.read(packedProps["ppeDict"], Dict{Symbol, MeanMaxPPE}) : Dict{Symbol, MeanMaxPPE}()
     smallData = JSON2.read(packedProps["smallData"], Dict{Symbol, SmallDataTypes})
 
-    softtypeString = packedProps["softtype"]
-    softtype = getTypeFromSerializationModule(softtypeString)
-    isnothing(softtype) && error("Cannot deserialize softtype '$softtypeString' in variable '$label'")
+    if haskey(packedProps, "softtype")
+        # TODO Deprecate, remove in v0.12
+        @warn "Packed field `softtype` is deprecated and replaced with `variableType`"
+        variableTypeString = packedProps["softtype"]
+    else
+        variableTypeString = packedProps["variableType"]
+    end
+
+    variableType = getTypeFromSerializationModule(variableTypeString)
+    isnothing(variableType) && error("Cannot deserialize variableType '$variableTypeString' in variable '$label'")
 
     if unpackSolverData
         packed = JSON2.read(packedProps["solverDataDict"], Dict{String, PackedVariableNodeData})
@@ -159,8 +166,8 @@ function unpackVariable(dfg::G,
     else
         solverData = Dict{Symbol, VariableNodeData}()
     end
-    # Rebuild DFGVariable using the first solver softtype in solverData
-    variable = DFGVariable{softtype}(Symbol(packedProps["label"]), timestamp, nstime, Set(tags), ppeDict, solverData,  smallData, Dict{Symbol,AbstractDataEntry}(), Ref(packedProps["solvable"]))
+    # Rebuild DFGVariable using the first solver variableType in solverData
+    variable = DFGVariable{variableType}(Symbol(packedProps["label"]), timestamp, nstime, Set(tags), ppeDict, solverData,  smallData, Dict{Symbol,AbstractDataEntry}(), Ref(packedProps["solvable"]))
 
     # Now rehydrate complete DataEntry type.
     if unpackBigData
@@ -196,13 +203,13 @@ function unpackVariable(dfg::G,
 end
 
 function packVariableNodeData(dfg::G, d::VariableNodeData)::PackedVariableNodeData where G <: AbstractDFG
-  @debug "Dispatching conversion variable -> packed variable for type $(string(d.softtype))"
+  @debug "Dispatching conversion variable -> packed variable for type $(string(d.variableType))"
   return PackedVariableNodeData(d.val[:],size(d.val,1),
                                 d.bw[:], size(d.bw,1),
                                 d.BayesNetOutVertIDs,
                                 d.dimIDs, d.dims, d.eliminated,
                                 d.BayesNetVertID, d.separator,
-                                typeModuleName(d.softtype),
+                                typeModuleName(d.variableType),
                                 d.initialized,
                                 d.inferdim,
                                 d.ismargin,
@@ -221,12 +228,12 @@ function unpackVariableNodeData(dfg::G, d::PackedVariableNodeData)::VariableNode
   c4 = r4 > 0 ? floor(Int,length(d.vecbw)/r4) : 0
   M4 = reshape(d.vecbw,r4,c4)
 
-  @debug "Dispatching conversion packed variable -> variable for type $(string(d.softtype))"
-  # Figuring out the softtype
-  # TODO deprecated remove in v0.11 - for backward compatibility for saved softtypes. 
-  ststring = string(split(d.softtype, "(")[1])
+  @debug "Dispatching conversion packed variable -> variable for type $(string(d.variableType))"
+  # Figuring out the variableType
+  # TODO deprecated remove in v0.11 - for backward compatibility for saved variableTypes. 
+  ststring = string(split(d.variableType, "(")[1])
   st =  getTypeFromSerializationModule(ststring)
-  isnothing(st) && error("The variable doesn't seem to have a softtype. It needs to set up with an InferenceVariable from IIF. This will happen if you use DFG to add serialized variables directly and try use them. Please use IncrementalInference.addVariable().")
+  isnothing(st) && error("The variable doesn't seem to have a variableType. It needs to set up with an InferenceVariable from IIF. This will happen if you use DFG to add serialized variables directly and try use them. Please use IncrementalInference.addVariable().")
 
   return VariableNodeData{st}(M3,M4, d.BayesNetOutVertIDs,
     d.dimIDs, d.dims, d.eliminated, d.BayesNetVertID, d.separator,
@@ -297,7 +304,7 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G
     end
     data = packedProps["data"]
     datatype = packedProps["fnctype"]
-    @debug "DECODING Softtype = '$(datatype)' for factor '$label'"
+    @debug "DECODING factor type = '$(datatype)' for factor '$label'"
     packtype = getTypeFromSerializationModule(dfg, Symbol("Packed"*datatype))
 
     packed = nothing

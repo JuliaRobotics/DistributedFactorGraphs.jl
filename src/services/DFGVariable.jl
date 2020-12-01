@@ -31,34 +31,28 @@ getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimest
 # isSolveInProgress
 
 ##------------------------------------------------------------------------------
-## softtype
+## variableType
 ##------------------------------------------------------------------------------
 """
    $(SIGNATURES)
 
-Variable nodes softtype information holding a variety of meta data associated with the type of variable stored in that node of the factor graph.
+Variable nodes `variableType` information holding a variety of meta data associated with the type of variable stored in that node of the factor graph.
 
 Related
 
 getVariableType
 """
-function getSofttype(vnd::VariableNodeData)
-  return vnd.softtype
+function getVariableType(vnd::VariableNodeData)
+  return vnd.variableType
 end
 
+
 # TODO: Confirm that we can switch this out, instead of retrieving the complete variable.
-# getSofttype(v::DFGVariable{T}) where T <: InferenceVariable = T()
-getSofttype(v::DFGVariable) = getSofttype(getSolverData(v))
+# getVariableType(v::DFGVariable{T}) where T <: InferenceVariable = T()
+getVariableType(v::DFGVariable) = getVariableType(getSolverData(v))
 
 # Optimized in CGDFG
-getSofttype(dfg::AbstractDFG, lbl::Symbol) = getSofttype(getVariable(dfg,lbl))
-
-"""
-    getVariableType
-
-Alias for [`getSofttype`](@ref).
-"""
-getVariableType(args...) = getSofttype(args...)
+getVariableType(dfg::AbstractDFG, lbl::Symbol) = getVariableType(getVariable(dfg,lbl))
 
 
 ##------------------------------------------------------------------------------
@@ -66,12 +60,12 @@ getVariableType(args...) = getSofttype(args...)
 ##------------------------------------------------------------------------------
 """
     $SIGNATURES
-Interface function to return the softtype dimention of an InferenceVariable, extend this function for all Types<:InferenceVariable.
+Interface function to return the `variableType` dimension of an InferenceVariable, extend this function for all Types<:InferenceVariable.
 """
 function getDimension end
 """
     $SIGNATURES
-Interface function to return the softtype manifolds of an InferenceVariable, extend this function for all Types<:InferenceVariable.
+Interface function to return the `variableType` manifolds of an InferenceVariable, extend this function for all Types<:InferenceVariable.
 """
 function getManifolds end
 
@@ -166,11 +160,11 @@ end
 ## Variables
 ##==============================================================================
 #
-# |                     | label | tags | timestamp | ppe | softtypename | solvable | solverData | smallData | dataEntries |
-# |---------------------|:-----:|:----:|:---------:|:---:|:------------:|:--------:|:----------:|:---------:|:-----------:|
-# | SkeletonDFGVariable |   X   |   X  |           |     |              |          |            |           |             |
-# | DFGVariableSummary  |   X   |   X  |     X     |  X  |       X      |          |            |           |       X     |
-# | DFGVariable         |   X   |   X  |     x     |  X  |              |     X    |      X     |     X     |       X     |
+# |                     | label | tags | timestamp | ppe | variableTypeName | solvable | solverData | smallData | dataEntries |
+# |---------------------|:-----:|:----:|:---------:|:---:|:----------------:|:--------:|:----------:|:---------:|:-----------:|
+# | SkeletonDFGVariable |   X   |   X  |           |     |                  |          |            |           |             |
+# | DFGVariableSummary  |   X   |   X  |     X     |  X  |         X        |          |            |           |       X     |
+# | DFGVariable         |   X   |   X  |     x     |  X  |                  |     X    |      X     |     X     |       X     |
 #
 ##------------------------------------------------------------------------------
 
@@ -218,7 +212,7 @@ function setTimestamp(v::DFGVariableSummary, ts::ZonedDateTime; verbose::Bool=tr
     if verbose
         @warn "verbose=true: setTimestamp(::DFGVariableSummary,...) creates and returns a new immutable DFGVariable object (and didn't change a distributed factor graph object), make sure you are using the right pointers: getVariable(...).  See setTimestamp!(...) and note suggested use is at addVariable!(..., [timestamp=...]).  See DFG #315 for explanation."
     end
-    return DFGVariableSummary(v.label, ts, v.tags, v.ppeDict, v.softtypename, v.dataDict)
+    return DFGVariableSummary(v.label, ts, v.tags, v.ppeDict, v.variableTypeName, v.dataDict)
 end
 
 
@@ -401,26 +395,26 @@ end
 ## see DataEntryBlob Folder
 
 ##------------------------------------------------------------------------------
-## softtypename
+## variableTypeName
 ##------------------------------------------------------------------------------
 ## getter in DFGVariableSummary only
 ## can be utility function for others
-## TODO this should return the softtype object, or try to. it should be getSofttypename for the accessor
-## TODO Consider parameter N in softtype for dims, and storing constructor in softtypename
+## TODO this should return the variableType object, or try to. it should be getVariableTypeName for the accessor
+## TODO Consider parameter N in variableType for dims, and storing constructor in variableTypeName
 ## TODO or just not having this function at all
-# getSofttype(v::DFGVariableSummary) = v.softypename()
+# getVariableType(v::DFGVariableSummary) = v.softypename()
 ##------------------------------------------------------------------------------
 
 """
     $SIGNATURES
 Retrieve the soft type name symbol for a DFGVariableSummary. ie :Point2, Pose2, etc.
 """
-getSofttypename(v::DFGVariableSummary)::Symbol = v.softtypename
+getVariableTypeName(v::DFGVariableSummary)::Symbol = v.variableTypeName
 
 
-function getSofttype(v::DFGVariableSummary)::InferenceVariable
-    @warn "Looking for type in `Main`. Only use if softtype has only one implementation,ie. Pose2. Otherwise use the full variable."
-    return getfield(Main, v.softtypename)()
+function getVariableType(v::DFGVariableSummary)::InferenceVariable
+    @warn "Looking for type in `Main`. Only use if `variableType` has only one implementation, ie. Pose2. Otherwise use the full variable."
+    return getfield(Main, v.variableTypeName)()
 end
 
 ##==============================================================================

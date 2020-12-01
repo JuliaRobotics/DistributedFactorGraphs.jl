@@ -71,11 +71,11 @@ The solvable flag indicates whether the solver should make use of the variable o
 
 ### Variables
 
-#### Soft Type
+#### Variable Type
 
-The soft type is the underlying inference variable type, such as a Pose2.
+The `variableType` is the underlying inference variable type, such as a Pose2.
 
-- [`getSofttype`](@ref)
+- [`getVariableType`](@ref)
 
 
 #### Packed Parametric Estimates

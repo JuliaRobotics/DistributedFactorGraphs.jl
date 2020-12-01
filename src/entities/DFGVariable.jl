@@ -25,7 +25,7 @@ mutable struct VariableNodeData{T<:InferenceVariable}
     eliminated::Bool
     BayesNetVertID::Symbol #  Union{Nothing, }
     separator::Array{Symbol,1}
-    softtype::T
+    variableType::T
     initialized::Bool
     inferdim::Float64
     ismargin::Bool
@@ -43,7 +43,7 @@ mutable struct VariableNodeData{T<:InferenceVariable}
                         dims::Int,eliminated::Bool,
                         BayesNetVertID::Symbol,
                         separator::Array{Symbol,1},
-                        softtype::T,
+                        variableType::T,
                         initialized::Bool,
                         inferdim::Float64,
                         ismargin::Bool,
@@ -54,7 +54,7 @@ mutable struct VariableNodeData{T<:InferenceVariable}
                         events::Dict{Symbol,Threads.Condition}=Dict{Symbol,Threads.Condition}()) where T <: InferenceVariable =
                             new{T}(val,bw,BayesNetOutVertIDs,dimIDs,dims,
                                    eliminated,BayesNetVertID,separator,
-                                   softtype::T,initialized,inferdim,ismargin,
+                                   variableType::T,initialized,inferdim,ismargin,
                                    dontmargin, solveInProgress, solvedCount, solveKey, events)
 end
 
@@ -68,7 +68,7 @@ VariableNodeData(val::Array{Float64,2},
                  dims::Int,eliminated::Bool,
                  BayesNetVertID::Symbol,
                  separator::Array{Symbol,1},
-                 softtype::T,
+                 variableType::T,
                  initialized::Bool,
                  inferdim::Float64,
                  ismargin::Bool,
@@ -79,13 +79,13 @@ VariableNodeData(val::Array{Float64,2},
                  ) where T <: InferenceVariable =
                    VariableNodeData{T}(val,bw,BayesNetOutVertIDs,dimIDs,dims,
                                        eliminated,BayesNetVertID,separator,
-                                       softtype::T,initialized,inferdim,ismargin,
+                                       variableType::T,initialized,inferdim,ismargin,
                                        dontmargin, solveInProgress, solvedCount,
                                        solveKey)
 
 
-VariableNodeData(softtype::T; solveKey::Symbol=:default) where T <: InferenceVariable =
-    VariableNodeData{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], softtype, false, 0.0, false, false, 0, 0, solveKey)
+VariableNodeData(variableType::T; solveKey::Symbol=:default) where T <: InferenceVariable =
+    VariableNodeData{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], variableType, false, 0.0, false, false, 0, 0, solveKey)
 
 ##==============================================================================
 ## PackedVariableNodeData.jl
@@ -110,7 +110,7 @@ mutable struct PackedVariableNodeData
     eliminated::Bool
     BayesNetVertID::Symbol # Int
     separator::Array{Symbol,1} # Int
-    softtype::String
+    variableType::String
     initialized::Bool
     inferdim::Float64
     ismargin::Bool
@@ -256,7 +256,7 @@ end
     $SIGNATURES
 The default DFGVariable constructor.
 """
-function DFGVariable(label::Symbol, softtype::T;
+function DFGVariable(label::Symbol, variableType::T;
             timestamp::Union{DateTime,ZonedDateTime}=now(localzone()),
             nstime::Nanosecond = Nanosecond(0),
             tags::Set{Symbol}=Set{Symbol}(),
@@ -309,7 +309,7 @@ end
 ##------------------------------------------------------------------------------
 # TODO: can't see the reason to overwrite copy, leaving it here for now
 # function Base.copy(o::DFGVariable)::DFGVariable
-#     return DFGVariable(o.label, getSofttype(o)(), tags=copy(o.tags), estimateDict=copy(o.estimateDict),
+#     return DFGVariable(o.label, getVariableType(o)(), tags=copy(o.tags), estimateDict=copy(o.estimateDict),
 #                         solverDataDict=copy(o.solverDataDict), smallData=copy(o.smallData),
 #                         dataDict=copy(o.dataDict), solvable=getSolvable(o))
 # end
@@ -339,9 +339,9 @@ struct DFGVariableSummary <: AbstractDFGVariable
     """Dictionary of parametric point estimates keyed by solverDataDict keys
     Accessors: [`addPPE!`](@ref), [`updatePPE!`](@ref), and [`deletePPE!`](@ref)"""
     ppeDict::Dict{Symbol, <:AbstractPointParametricEst}
-    """Symbol for the softtype for the underlying variable.
-    Accessor: [`getSofttype`](@ref)"""
-    softtypename::Symbol
+    """Symbol for the variableType for the underlying variable.
+    Accessor: [`getVariableType`](@ref)"""
+    variableTypeName::Symbol
     """Dictionary of large data associated with this variable.
     Accessors: [`addDataEntry!`](@ref), [`getDataEntry`](@ref), [`updateDataEntry!`](@ref), and [`deleteDataEntry!`](@ref)"""
     dataDict::Dict{Symbol, AbstractDataEntry}
@@ -383,7 +383,7 @@ const VariableDataLevel2 = Union{DFGVariable}
 ##==============================================================================
 
 DFGVariableSummary(v::DFGVariable) =
-        DFGVariableSummary(v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.ppeDict), Symbol(typeof(getSofttype(v))), v.dataDict)
+        DFGVariableSummary(v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.ppeDict), Symbol(typeof(getVariableType(v))), v.dataDict)
 
 SkeletonDFGVariable(v::VariableDataLevel1) =
             SkeletonDFGVariable(v.label, deepcopy(v.tags))
