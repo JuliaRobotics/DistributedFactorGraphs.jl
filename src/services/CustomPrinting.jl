@@ -14,8 +14,8 @@ function printVariable( io::IO, vert::DFGVariable;
     ioc = IOContext(io, :limit=>limit, :compact=>compact)
 
     if short
-        # opmemt = (getSofttype(vert) |> typeof ).name
-        vari = getSofttype(vert) |> typeof
+        # opmemt = (getVariableType(vert) |> typeof ).name
+        vari = getVariableType(vert) |> typeof
         printstyled(ioc, typeof(vert).name, "{",vari.name,"...}","\n", bold=true)
         # printstyled(ioc, summary(vert),"\n", bold=true)
 

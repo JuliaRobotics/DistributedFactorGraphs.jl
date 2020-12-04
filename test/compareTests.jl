@@ -8,9 +8,9 @@ using Dates
 
 ## Generated compare functions
 # VariableNodeData
-vnd1 = VariableNodeData(TestSofttype1())
+vnd1 = VariableNodeData(TestVariableType1())
 vnd2 = deepcopy(vnd1)
-vnd3 = VariableNodeData(TestSofttype2())
+vnd3 = VariableNodeData(TestVariableType2())
 
 @test vnd1 == vnd2
 vnd2.val = zeros(1,1)
@@ -31,15 +31,15 @@ ppe2.max[1] = 0.1
 
 
 # DFGVariable
-v1 = DFGVariable(:x1, TestSofttype1())
+v1 = DFGVariable(:x1, TestVariableType1())
 v2 = deepcopy(v1)
-v3 = DFGVariable(:x2, TestSofttype2())
+v3 = DFGVariable(:x2, TestVariableType2())
 
 @test v1 == v2
 v2.solvable = 0
 @test !(v1 == v2)
 @test !(v1 == v3)
-@test !(DFGVariable(:x1, TestSofttype1()) == DFGVariable(:x1, TestSofttype2()))
+@test !(DFGVariable(:x1, TestVariableType1()) == DFGVariable(:x1, TestVariableType2()))
 
 # GenericFunctionNodeData
 gfnd1 = GenericFunctionNodeData(true, true, [1,2], TestFunctorInferenceType1())
@@ -59,9 +59,9 @@ f3 = DFGFactor(:f1, [:b, :a], gfnd1)
 
 
 ## Compare functions
-vnd1 = VariableNodeData(TestSofttype1())
+vnd1 = VariableNodeData(TestVariableType1())
 vnd2 = deepcopy(vnd1)
-vnd3 = VariableNodeData(TestSofttype2())
+vnd3 = VariableNodeData(TestVariableType2())
 @test compare(vnd1, vnd2)
 @test !compare(vnd1, vnd3)
 

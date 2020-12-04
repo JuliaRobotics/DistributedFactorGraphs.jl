@@ -1492,7 +1492,7 @@
      </table:table-cell>
      <table:table-cell table:style-name="ce28"/>
      <table:table-cell table:style-name="ce52" office:value-type="string" calcext:value-type="string">
-      <text:p>softtypename</text:p>
+      <text:p>variableTypeName</text:p>
      </table:table-cell>
      <table:table-cell table:style-name="ce47"/>
      <table:table-cell table:style-name="ce74"/>

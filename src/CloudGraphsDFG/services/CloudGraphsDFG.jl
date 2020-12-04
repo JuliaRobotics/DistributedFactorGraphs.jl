@@ -152,11 +152,11 @@ isFactor(dfg::CloudGraphsDFG, sym::Symbol)::Bool =
     _getNodeCount(dfg.neo4jInstance, ["FACTOR", dfg.userId, dfg.robotId, dfg.sessionId, String(sym)]) == 1
 
 #Optimization
-function getSofttype(dfg::CloudGraphsDFG, lbl::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
-    st = _getNodeProperty(dfg.neo4jInstance, union(_getLabelsForType(dfg, DFGVariable), [String(lbl)]), "softtype", currentTransaction=currentTransaction)
-    @debug "Trying to find softtype: $st"
-    softType = getTypeFromSerializationModule(st)
-    return softType()
+function getVariableType(dfg::CloudGraphsDFG, lbl::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+    st = _getNodeProperty(dfg.neo4jInstance, union(_getLabelsForType(dfg, DFGVariable), [String(lbl)]), "variableType", currentTransaction=currentTransaction)
+    @debug "Trying to find variableType: $st"
+    variableType = getTypeFromSerializationModule(st)
+    return variableType()
 end
 
 function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)
@@ -177,7 +177,7 @@ function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable; warn_if_abs
     # Create/update the base variable
     # NOTE: We are not merging the variable.tags into the labels anymore. We can index by that but not
     # going to pollute the graph with unnecessary (and potentially dangerous) labels.
-    addProps = Dict("softtype" => "\"$(DistributedFactorGraphs.typeModuleName(getSofttype(variable)))\"")
+    addProps = Dict("variableType" => "\"$(DistributedFactorGraphs.typeModuleName(getVariableType(variable)))\"")
     query = """
     MATCH (session:$(join(_getLabelsForType(dfg, Session), ":")))
     MERGE (node:$(join(_getLabelsForInst(dfg, variable), ":")))
@@ -553,23 +553,23 @@ function getPPE(dfg::CloudGraphsDFG, variablekey::Symbol, ppekey::Symbol=:defaul
     return _unpackPPE(dfg, properties)
 end
 
-function _generateAdditionalProperties(softType::ST, ppe::P)::Dict{String, String} where {P <: AbstractPointParametricEst, ST <: InferenceVariable}
+function _generateAdditionalProperties(variableType::ST, ppe::P)::Dict{String, String} where {P <: AbstractPointParametricEst, ST <: InferenceVariable}
     addProps = Dict{String, String}()
-    # Try get the projectCartesian function for this softType
+    # Try get the projectCartesian function for this variableType
     projectCartesianFunc = nothing
     if isdefined(Main, :projectCartesian)
         # Try find a signature that matches
-        if applicable(Main.projectCartesian, softType, Vector{Float64}())
+        if applicable(Main.projectCartesian, variableType, Vector{Float64}())
             projectCartesianFunc = Main.projectCartesian
         end
     end
-    if projectCartesianFunc == nothing
-        @warn "There is no cartesianProjection function for $(typeof(softType)), so no cartesian entries will be added. Please add a projectCartesian function for this softtype."
+    if projectCartesianFunc === nothing
+        @warn "There is no cartesianProjection function for $(typeof(variableType)), so no cartesian entries will be added. Please add a projectCartesian function for this variableType."
         return addProps
     end
     for field in DistributedFactorGraphs.getEstimateFields(ppe)
         est = getfield(ppe, field)
-        cart = Main.projectCartesian(softType, est) # Assuming we've imported the variables into Main
+        cart = Main.projectCartesian(variableType, est) # Assuming we've imported the variables into Main
         addProps["$(field)_cart3"] = "point({x:$(cart[1]),y:$(cart[2]),z:$(cart[3])})" # Need to look at 3D too soon.
     end
     return addProps
@@ -583,9 +583,9 @@ function addPPE!(dfg::CloudGraphsDFG,
     if ppe.solveKey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction)
         error("PPE '$(ppe.solveKey)' already exists")
     end
-    softType = getSofttype(dfg, variablekey)
+    variableType = getVariableType(dfg, variablekey)
     # Add additional properties for the PPE
-    addProps = _generateAdditionalProperties(softType, ppe)
+    addProps = _generateAdditionalProperties(variableType, ppe)
     return _unpackPPE(dfg, _matchmergeVariableSubnode!(
         dfg,
         variablekey,
@@ -606,9 +606,9 @@ function updatePPE!(
     if warn_if_absent && !(ppe.solveKey in listPPEs(dfg, variablekey, currentTransaction=currentTransaction))
         @warn "PPE '$(ppe.solveKey)' does not exist, adding"
     end
-    softType = getSofttype(dfg, variablekey, currentTransaction=currentTransaction)
+    variableType = getVariableType(dfg, variablekey, currentTransaction=currentTransaction)
     # Add additional properties for the PPE
-    addProps = _generateAdditionalProperties(softType, ppe)
+    addProps = _generateAdditionalProperties(variableType, ppe)
     return _unpackPPE(dfg, _matchmergeVariableSubnode!(
         dfg,
         variablekey,
@@ -623,11 +623,11 @@ function updatePPE!(dfg::CloudGraphsDFG, sourceVariables::Vector{<:DFGVariable},
                     currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing,
                     warn_if_absent::Bool=true)
     
-    tx = currentTransaction == nothing ? transaction(dfg.neo4jInstance.connection) : currentTransaction
+    tx = currentTransaction === nothing ? transaction(dfg.neo4jInstance.connection) : currentTransaction
     for var in sourceVariables
         updatePPE!(dfg, var.label, getPPE(var, ppekey), currentTransaction=tx, warn_if_absent=warn_if_absent)
     end
-    if currentTransaction == nothing
+    if currentTransaction === nothing
         result = commit(tx)
     end
     return nothing

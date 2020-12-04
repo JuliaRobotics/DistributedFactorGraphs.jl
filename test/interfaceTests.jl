@@ -63,7 +63,7 @@ end
     @test printFactor(fac1) === nothing
 
     @test printVariable(iobuf, var1, skipfields=[:timestamp, :solver, :ppe, :nstime]) === nothing
-    @test String(take!(iobuf)) == "DFGVariable{TestSofttype1}\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol,Union{Bool, Float64, Int64, Array{Bool,1}, Array{Float64,1}, Array{Int64,1}, Array{String,1}, String}}(:small=>\"data\")\ndataDict:\nDict{Symbol,AbstractDataEntry}()\nsolvable:\n0\n"
+    @test String(take!(iobuf)) == "DFGVariable{TestVariableType1}\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol,Union{Bool, Float64, Int64, Array{Bool,1}, Array{Float64,1}, Array{Int64,1}, Array{String,1}, String}}(:small=>\"data\")\ndataDict:\nDict{Symbol,AbstractDataEntry}()\nsolvable:\n0\n"
 
     @test printVariable(iobuf, var1, short=true) === nothing
     varstr = String(take!(iobuf))
@@ -71,7 +71,7 @@ end
     @test occursin(r"timestamp", varstr)
     @test occursin(r"label", varstr)
     @test occursin(r"bandwidths", varstr)
-    #  == "DFGVariable{TestSofttype1}\nlabel: a\ntags: Set([:VARIABLE, :POSE])\nsize marginal samples: (1, 1)\nkde bandwidths: [0.0]\nNo PPEs\n"
+    #  == "DFGVariable{TestVariableType1}\nlabel: a\ntags: Set([:VARIABLE, :POSE])\nsize marginal samples: (1, 1)\nkde bandwidths: [0.0]\nNo PPEs\n"
 
 
     @test printFactor(iobuf, fac1, skipfields=[:timestamp, :solver, :nstime]) === nothing

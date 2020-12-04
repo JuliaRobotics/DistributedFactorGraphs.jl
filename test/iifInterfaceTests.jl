@@ -192,9 +192,9 @@ end
     @test getVariablePPEDict(v1) == v1.ppeDict # changed to .ppeDict -- delete by DFG v0.7
 
 
-    @test typeof(getSofttype(v1)) == ContinuousScalar
-    @test typeof(getSofttype(v2)) == ContinuousScalar
-    @test typeof(getSofttype(v1)) == ContinuousScalar
+    @test typeof(getVariableType(v1)) == ContinuousScalar
+    @test typeof(getVariableType(v2)) == ContinuousScalar
+    @test typeof(getVariableType(v1)) == ContinuousScalar
 
     @test getLabel(f1) == f1.label
     @test getTags(f1) == f1.tags
@@ -475,11 +475,11 @@ end
     # Check all fields are equal for all variables
     for v in ls(summaryGraph)
         for field in variableFields
-            if field != :softtypename
+            if field != :variableTypeName
                 @test getproperty(getVariable(dfg, v), field) == getfield(getVariable(summaryGraph, v), field)
             else
-                # Special case to check the symbol softtype is equal to the full softtype.
-                @test Symbol(typeof(getSofttype(getVariable(dfg, v)))) == getSofttypename(getVariable(summaryGraph, v))
+                # Special case to check the symbol variableType is equal to the full variableType.
+                @test Symbol(typeof(getVariableType(getVariable(dfg, v)))) == getVariableTypeName(getVariable(summaryGraph, v))
             end
         end
     end

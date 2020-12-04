@@ -31,7 +31,7 @@ function saveDFG(folder::AbstractString, dfg::AbstractDFG)
     factorFolder = "$savepath/factors"
     # Folder preparations
     if !isdir(savepath)
-        @info "Folder '$savepath' doesn't exist, creating..."
+        @debug "Folder '$savepath' doesn't exist, creating..."
         mkpath(savepath)
     end
     !isdir(varFolder) && mkpath(varFolder)
