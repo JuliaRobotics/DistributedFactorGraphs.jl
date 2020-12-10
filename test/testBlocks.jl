@@ -1,7 +1,6 @@
 using DistributedFactorGraphs
 using Test
 using Dates
-using UUIDs
 
 import Base: convert
 

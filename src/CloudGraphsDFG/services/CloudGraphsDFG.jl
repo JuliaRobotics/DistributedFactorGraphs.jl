@@ -535,9 +535,9 @@ function _unpackPPE(dfg::G, packedPPE::Dict{String, Any})::AbstractPointParametr
         packedPPE["lastUpdatedTimestamp"] = packedPPE["lastUpdatedTimestamp"][1:end-1]
     end
 
-    !haskey(packedPPE, "_type") && error("Cannot find type key '$TYPEKEY' in packed PPE data")
+    !haskey(packedPPE, "_type") && error("Cannot find type key '_type' in packed PPE data")
     type = pop!(packedPPE, "_type")
-    (type == nothing || type == "") && error("Cannot deserialize PPE, type key is empty")
+    (type === nothing || type == "") && error("Cannot deserialize PPE, type key is empty")
     ppe = Unmarshal.unmarshal(
             DistributedFactorGraphs.getTypeFromSerializationModule(dfg, Symbol(type)),
             packedPPE)
@@ -555,6 +555,9 @@ end
 
 function _generateAdditionalProperties(variableType::ST, ppe::P)::Dict{String, String} where {P <: AbstractPointParametricEst, ST <: InferenceVariable}
     addProps = Dict{String, String}()
+    # Save in the type for PPEs
+    addProps["_type"]="\"$(typeof(ppe))\""
+
     # Try get the projectCartesian function for this variableType
     projectCartesianFunc = nothing
     if isdefined(Main, :projectCartesian)

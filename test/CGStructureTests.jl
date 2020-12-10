@@ -59,8 +59,8 @@ v1 = addVariable!(dfg, :a, ContinuousScalar, tags = [:POSE])
 v2 = addVariable!(dfg, :b, ContinuousScalar, tags = [:POSE])
 v3 = addVariable!(dfg, :c, ContinuousScalar, tags = [:LANDMARK])
 addFactor!(dfg, [:a], Prior(Normal(0,1)))
-f1 = addFactor!(dfg, [:a; :b], LinearConditional(Normal(50.0,2.0)) )
-f2 = addFactor!(dfg, [:b; :c], LinearConditional(Normal(50.0,2.0)) )
+f1 = addFactor!(dfg, [:a; :b], LinearRelative(Normal(50.0,2.0)) )
+f2 = addFactor!(dfg, [:b; :c], LinearRelative(Normal(50.0,2.0)) )
 
 sessions = lsSessions(dfg)
 @test map(s -> s.id, sessions) == [session.id]
