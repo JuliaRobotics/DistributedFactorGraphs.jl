@@ -37,14 +37,14 @@ using Test
         updateVariable!.(dfg, verts)
 
 
-        facts = map(n -> addFactor!(dfg, [verts[n], verts[n+1]], LinearConditional(Normal(50.0,2.0))), 1:(numNodes-1))
+        facts = map(n -> addFactor!(dfg, [verts[n], verts[n+1]], LinearRelative(Normal(50.0,2.0))), 1:(numNodes-1))
         map(f -> setSolvable!(f, Int(round(rand()))), facts)
         map(f -> f.solverData.eliminated = rand() > 0.5, facts)
         map(f -> f.solverData.potentialused = rand() > 0.5, facts)
         updateFactor!.(dfg, facts)
         
         #test multihypo
-        addFactor!(dfg, [:x1, :x2, :x3], LinearConditional(Normal(50.0,2.0)), multihypo = [1, 0.3, 0.7])
+        addFactor!(dfg, [:x1, :x2, :x3], LinearRelative(Normal(50.0,2.0)), multihypo = [1, 0.3, 0.7])
 
         # Save and load the graph to test.
         saveDFG(filename, dfg)
@@ -85,7 +85,7 @@ end
 
 @testset "FileDFG Regression Tests" begin
     @info "If any of these tests fail, we have breaking changes"
-    for file in readdir(joinpath(@__DIR__, "data"))
+    for file in filter(f -> endswith(f, ".tar.gz"), readdir(joinpath(@__DIR__, "data")))
         loadFile = joinpath(@__DIR__, "data", file)
         global dfg
         dfgCopy = DistributedFactorGraphs._getDuplicatedEmptyDFG(dfg)
