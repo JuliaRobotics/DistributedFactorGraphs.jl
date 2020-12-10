@@ -56,7 +56,7 @@ using Test
     # fg2 has been solved, so it should fail on the estimate dictionary
     @test !compareSimilarVariables(fg, fg2, skipsamples=true, skip=Symbol[:initialized;:inferdim])
 
-    tree = solveGraph!(fg2)
+    tree = resetBuildTree!(fg2)
 
     @test compareSimilarFactors(fg, fg2, skipsamples=true, skipcompute=true)
 
