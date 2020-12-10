@@ -12,7 +12,7 @@ end
     # Use IIF to add the variables and factors
     v1 = addVariable!(dfg, :a, ContinuousScalar, tags = [:POSE], solvable=0)
     v2 = addVariable!(dfg, :b, ContinuousScalar, tags = [:LANDMARK], solvable=1)
-    f1 = addFactor!(dfg, [:a; :b], LinearConditional(Normal(50.0,2.0)), solvable=0)
+    f1 = addFactor!(dfg, [:a; :b], LinearRelative(Normal(50.0,2.0)), solvable=0)
 
     @show dfg
     @show f1
@@ -50,8 +50,8 @@ end
     v1 = deepcopy(addVariable!(iiffg, :a, ContinuousScalar))
     v2 = deepcopy(addVariable!(iiffg, :b, ContinuousScalar))
     v3 = deepcopy(addVariable!(iiffg, :c, ContinuousScalar))
-    f1 = deepcopy(addFactor!(iiffg, [:a; :b], LinearConditional(Normal(50.0,2.0)) ))
-    f2 = deepcopy(addFactor!(iiffg, [:b; :c], LinearConditional(Normal(10.0,1.0)) ))
+    f1 = deepcopy(addFactor!(iiffg, [:a; :b], LinearRelative(Normal(50.0,2.0)) ))
+    f2 = deepcopy(addFactor!(iiffg, [:b; :c], LinearRelative(Normal(10.0,1.0)) ))
 
     # Add it to the new graph.
     @test addVariable!(dfg2, v1) == v1
@@ -141,9 +141,9 @@ end
     #FIXME don't know what it is supposed to do
     @test_broken lsfTypes(dfg)
 
-    @test ls(dfg, LinearConditional) == [:abf1]
-    @test lsf(dfg, LinearConditional) == [:abf1]
-    @test lsfWho(dfg, :LinearConditional) == [:abf1]
+    @test ls(dfg, LinearRelative) == [:abf1]
+    @test lsf(dfg, LinearRelative) == [:abf1]
+    @test lsfWho(dfg, :LinearRelative) == [:abf1]
 
     @test getVariableType(v1) isa ContinuousScalar
     @test getVariableType(dfg,:a) isa ContinuousScalar
@@ -397,7 +397,7 @@ updateVariable!(dfg, verts[7])
 updateVariable!(dfg, verts[8])
 
 facts = map(n ->
-    addFactor!(dfg, [verts[n], verts[n+1]], LinearConditional(Normal(50.0,2.0)),solvable=0), 1:(numNodes-1))
+    addFactor!(dfg, [verts[n], verts[n+1]], LinearRelative(Normal(50.0,2.0)),solvable=0), 1:(numNodes-1))
 
 @testset "Getting Neighbors" begin
     global dfg,verts

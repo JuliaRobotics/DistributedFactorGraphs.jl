@@ -15,7 +15,7 @@ using Test
     @test compareFactor(f1,f1)
 
     v2 = addVariable!(fg, :x1, ContinuousScalar)
-    f2 = addFactor!(fg, [:x0;:x1], LinearConditional(Normal(2.0, 0.1)))
+    f2 = addFactor!(fg, [:x0;:x1], LinearRelative(Normal(2.0, 0.1)))
 
     fg2 = deepcopy(fg)
 
@@ -56,7 +56,7 @@ using Test
     # fg2 has been solved, so it should fail on the estimate dictionary
     @test !compareSimilarVariables(fg, fg2, skipsamples=true, skip=Symbol[:initialized;:inferdim])
 
-    tree = wipeBuildNewTree!(fg2)
+    tree = solveGraph!(fg2)
 
     @test compareSimilarFactors(fg, fg2, skipsamples=true, skipcompute=true)
 
@@ -77,13 +77,13 @@ end
     addFactor!(fg, [:x0;], Prior(Normal()))
 
     addVariable!(fg, :x1, ContinuousScalar)
-    addFactor!(fg, [:x0;:x1], LinearConditional(Normal(2.0, 0.1)))
+    addFactor!(fg, [:x0;:x1], LinearRelative(Normal(2.0, 0.1)))
 
     addVariable!(fg, :x2, ContinuousScalar)
-    addFactor!(fg, [:x1;:x2], LinearConditional(Normal(4.0, 0.1)))
+    addFactor!(fg, [:x1;:x2], LinearRelative(Normal(4.0, 0.1)))
 
     addVariable!(fg, :l1, ContinuousScalar)
-    addFactor!(fg, [:x1;:l1], LinearConditional(Rayleigh()))
+    addFactor!(fg, [:x1;:l1], LinearRelative(Rayleigh()))
 
     sfg = buildSubgraph(LightDFG, fg, [:x0;:x1])
 
