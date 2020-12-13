@@ -238,6 +238,7 @@ export toDot, toDotFile
 
 # shortest path
 export findShortestPathDijkstra
+export isPathFactorsHomogeneous
 
 # Comparisons
 export
