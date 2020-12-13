@@ -1085,6 +1085,20 @@ function findFactorsBetweenNaive(   dfg::AbstractDFG,
   return fctlist
 end
 
+"""
+    $SIGNATURES
+Return (::Bool,::Vector{TypeName}) of types between two nodes in the factor graph 
+
+Related
+
+[`LightDFG.findShortestPathDijkstra`](@ref)
+"""
+function isPathFactorsHomogeneous(dfg::AbstractDFG, from::Symbol, to::Symbol)
+    pth = intersect(findShortestPathDijkstra(dfg, from, to), lsf(dfg))
+    types = getFactorType.(dfg, pth) .|> typeof .|> x->(x).name
+    utyp = unique(types)
+    (length(utyp) == 1), utyp
+end
 
 
 ##==============================================================================
