@@ -366,6 +366,9 @@ end
 
 Speciallized function available to only LightDFG at this time.
 
+Notes
+- Has option for various types of filters (increases memory usage)
+
 Example
 ```julia
 using IncrementalInference
@@ -379,7 +382,8 @@ fg = generateCanonicalFG_Kaess()
 ```
 
 DevNotes
-- # TODO expand to other AbstractDFG entities.
+- TODO expand to other AbstractDFG entities.
+- TODO use of filter resource consumption can be improved.
 
 Related
 
@@ -387,16 +391,54 @@ Related
 """
 function findShortestPathDijkstra(  dfg::LightDFG, 
                                     from::Symbol,
-                                    to::Symbol  )
+                                    to::Symbol;
+                                    regexVariables::Union{Nothing, Regex}=nothing,
+                                    regexFactors::Union{Nothing, Regex}=nothing,
+                                    tagsVariables::Vector{Symbol}=Symbol[],
+                                    tagsFactors::Vector{Symbol}=Symbol[],
+                                    typeVariables::Union{Nothing, <:AbstractVector}=nothing,
+                                    typeFactors::Union{Nothing, <:AbstractVector}=nothing,
+                                    solvable::Int=0  )
     #
+    # helper function to filter on vector of types
+    function _filterTypeList(thelist::Vector{Symbol}, typeList, listfnc=x->ls(dfg, x) )
+        thelist_ = Symbol[]
+        for type_ in typeList
+            union!(thelist_, listfnc(type_))
+        end
+        @show thelist_
+        intersect( thelist, thelist_ )
+    end
+
+    #
+    duplicate = regexVariables !== nothing ||
+                regexFactors !== nothing   ||
+                0 < length(tagsVariables)  ||
+                0 < length(tagsFactors)    ||
+                typeVariables !== nothing  ||
+                typeFactors !== nothing    ||
+                solvable != 0
+    #
+    dfg_ = if duplicate
+        # use copy if filter is being applied
+        varList = ls(dfg, regexVariables, tags=tagsVariables, solvable=solvable)
+        fctList = lsf(dfg, regexFactors, tags=tagsFactors, solvable=solvable)
+        varList = typeVariables !== nothing ? _filterTypeList(varList, typeVariables) : varList
+        fctList = typeFactors !== nothing ? _filterTypeList(fctList, typeFactors, x->lsf(dfg, x)) : fctList
+        deepcopyGraph(typeof(dfg), dfg, varList, fctList)
+    else
+        # no filter can be used directly
+        dfg
+    end
+
     # LightDFG internally uses Integers 
-    frI = dfg.g.labels[from]
-    toI = dfg.g.labels[to]
+    frI = dfg_.g.labels[from]
+    toI = dfg_.g.labels[to]
 
     # get shortest path from graph provider
-    path_state = LightGraphs.dijkstra_shortest_paths(dfg.g.graph, [frI;])
-    path = LightGraphs.enumerate_paths(path_state, toI)
-    dijkpath = map(x->dfg.g.labels[x], path)
+    path_state = LightGraphs.dijkstra_shortest_paths( dfg_.g.graph, [frI;] )
+    path = LightGraphs.enumerate_paths( path_state, toI )
+    dijkpath = map( x->dfg_.g.labels[x], path )
 
     # return the list of symbols
     return dijkpath
