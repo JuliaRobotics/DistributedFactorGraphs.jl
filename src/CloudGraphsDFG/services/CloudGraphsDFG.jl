@@ -397,7 +397,8 @@ function listVariables(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=n
     if regexFilter == nothing
         return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(join(_getLabelsForType(dfg, DFGVariable),':'))) where node.solvable >= $solvable $tagsFilter")
     else
-        return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(join(_getLabelsForType(dfg, DFGVariable),':'))) where node.label =~ '$(regexFilter.pattern)' and node.solvable >= $solvable $tagsFilter")
+        # Not happy about this but need to double escape the strings.
+        return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(join(_getLabelsForType(dfg, DFGVariable),':'))) where node.label =~ '$(replace(regexFilter.pattern, "\\" => "\\\\"))' and node.solvable >= $solvable $tagsFilter")
     end
 end
 
@@ -413,7 +414,7 @@ function listFactors(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=not
     if regexFilter == nothing
         return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(join(_getLabelsForType(dfg, DFGFactor),':'))) where node.solvable >= $solvable")
     else
-        return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(join(_getLabelsForType(dfg, DFGFactor),':'))) where node.label =~ '$(regexFilter.pattern)' and node.solvable >= $solvable $tagsFilter")
+        return _getLabelsFromCyphonQuery(dfg.neo4jInstance, "(node:$(join(_getLabelsForType(dfg, DFGFactor),':'))) where node.label =~ '$(replace(regexFilter.pattern, "\\" => "\\\\"))' and node.solvable >= $solvable $tagsFilter")
     end
 end
 
