@@ -398,7 +398,8 @@ function findShortestPathDijkstra(  dfg::LightDFG,
                                     tagsFactors::Vector{Symbol}=Symbol[],
                                     typeVariables::Union{Nothing, <:AbstractVector}=nothing,
                                     typeFactors::Union{Nothing, <:AbstractVector}=nothing,
-                                    solvable::Int=0  )
+                                    solvable::Int=0,
+                                    initialized::Union{Nothing,Bool}=nothing  )
     #
     # helper function to filter on vector of types
     function _filterTypeList(thelist::Vector{Symbol}, typeList, listfnc=x->ls(dfg, x) )
@@ -417,6 +418,7 @@ function findShortestPathDijkstra(  dfg::LightDFG,
                 0 < length(tagsFactors)    ||
                 typeVariables !== nothing  ||
                 typeFactors !== nothing    ||
+                initialized !== nothing    ||
                 solvable != 0
     #
     dfg_ = if duplicate
@@ -425,6 +427,10 @@ function findShortestPathDijkstra(  dfg::LightDFG,
         fctList = lsf(dfg, regexFactors, tags=tagsFactors, solvable=solvable)
         varList = typeVariables !== nothing ? _filterTypeList(varList, typeVariables) : varList
         fctList = typeFactors !== nothing ? _filterTypeList(fctList, typeFactors, x->lsf(dfg, x)) : fctList
+        varList = if initialized !== nothing
+            initmask = isInitialized.(dfg, varList) .== initialized
+            varList[initmask]
+        end
         deepcopyGraph(typeof(dfg), dfg, varList, fctList)
     else
         # no filter can be used directly
@@ -432,6 +438,10 @@ function findShortestPathDijkstra(  dfg::LightDFG,
     end
 
     # LightDFG internally uses Integers 
+    if !haskey(dfg_.g.labels, from) || !haskey(dfg_.g.labels, from)
+        # assume filters excluded either `to` or `from` and hence no shortest path
+        return Symbol[]
+    end
     frI = dfg_.g.labels[from]
     toI = dfg_.g.labels[to]
 

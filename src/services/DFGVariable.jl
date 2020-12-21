@@ -136,23 +136,24 @@ isSolved(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = isSolved(ge
 """
     $SIGNATURES
 
-Returns state of vertex data `.initialized` flag.
+Returns state of variable data `.initialized` flag.
 
 Notes:
 - used by both factor graph variable and Bayes tree clique logic.
 """
-function isInitialized(var::DFGVariable, key::Symbol=:default)::Bool
-      data = getSolverData(var, key)
-      if data == nothing
-          #TODO we still have a mixture of 2 error behaviours
-        return false
-      else
-          return data.initialized
-    end
+function isInitialized(var::DFGVariable, key::Symbol=:default)
+  data = getSolverData(var, key)
+  if data === nothing
+    #TODO we still have a mixture of 2 error behaviours
+      # DF, not sure I follow the error here?
+  return false
+  else
+    return data.initialized
+  end
 end
 
-function isInitialized(dfg::AbstractDFG, label::Symbol, key::Symbol=:default)::Bool
-  return isInitialized(getVariable(dfg, label), key)
+function isInitialized(dfg::AbstractDFG, label::Symbol, key::Symbol=:default)
+  return isInitialized(getVariable(dfg, label), key)::Bool
 end
 
 
