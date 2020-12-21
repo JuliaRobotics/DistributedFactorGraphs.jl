@@ -407,7 +407,6 @@ function findShortestPathDijkstra(  dfg::LightDFG,
         for type_ in typeList
             union!(thelist_, listfnc(type_))
         end
-        @show thelist_
         intersect( thelist, thelist_ )
     end
 
