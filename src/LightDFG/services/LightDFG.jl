@@ -430,6 +430,8 @@ function findShortestPathDijkstra(  dfg::LightDFG,
         varList = if initialized !== nothing
             initmask = isInitialized.(dfg, varList) .== initialized
             varList[initmask]
+        else
+            varList
         end
         deepcopyGraph(typeof(dfg), dfg, varList, fctList)
     else
