@@ -1027,12 +1027,12 @@ Related:
 - [`getNeighborhood`](@ref)
 - [`mergeGraph!`](@ref)
 """
-function deepcopyGraph(::Type{T},
-                       sourceDFG::AbstractDFG,
-                       variableLabels::Vector{Symbol} = ls(sourceDFG),
-                       factorLabels::Vector{Symbol} = lsf(sourceDFG);
-                       sessionId::String = "",
-                       kwargs...) where T <: AbstractDFG
+function deepcopyGraph( ::Type{T},
+                        sourceDFG::AbstractDFG,
+                        variableLabels::Vector{Symbol} = ls(sourceDFG),
+                        factorLabels::Vector{Symbol} = lsf(sourceDFG);
+                        sessionId::String = "",
+                        kwargs...) where T <: AbstractDFG
 
     ginfo = [getDFGInfo(sourceDFG)...]
     if sessionId == ""
@@ -1085,7 +1085,28 @@ function findFactorsBetweenNaive(   dfg::AbstractDFG,
   return fctlist
 end
 
+"""
+    $SIGNATURES
+Return (::Bool,::Vector{TypeName}) of types between two nodes in the factor graph 
 
+DevNotes
+- Only works on LigthDFG at the moment.
+
+Related
+
+[`LightDFG.findShortestPathDijkstra`](@ref)
+"""
+function isPathFactorsHomogeneous(dfg::AbstractDFG, from::Symbol, to::Symbol)
+    # FIXME, must consider all paths, not just shortest...
+    pth = intersect(findShortestPathDijkstra(dfg, from, to), lsf(dfg))
+    types = getFactorType.(dfg, pth) .|> typeof .|> x->(x).name
+    utyp = unique(types)
+    (length(utyp) == 1), utyp
+end
+
+function existsPathOfFactorsType(dfg::AbstractDFG, from::Symbol, to::Symbol, ftype::FunctorInferenceType)
+  error("WIP")
+end
 
 ##==============================================================================
 ## Subgraphs and Neighborhoods

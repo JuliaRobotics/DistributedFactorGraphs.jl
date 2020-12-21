@@ -2,8 +2,14 @@
 ## Abstract Types
 ##==============================================================================
 
+# TODO consider changing this to AbstractFactor
 abstract type FunctorInferenceType <: Function end
 abstract type PackedInferenceType end
+
+abstract type AbstractPrior <: FunctorInferenceType end
+abstract type AbstractRelative <: FunctorInferenceType end
+abstract type AbstractRelativeRoots <: AbstractRelative end
+abstract type AbstractRelativeMinimize <: AbstractRelative end
 
 # NOTE DF, Convolution is IIF idea, but DFG should know about "FactorOperationalMemory"
 # DF, IIF.CommonConvWrapper <: FactorOperationalMemory #
@@ -11,11 +17,6 @@ abstract type FactorOperationalMemory <: Function end
 # TODO to be removed from DFG,
 # we can add to IIF or have IIF.CommonConvWrapper <: FactorOperationalMemory directly
 # abstract type ConvolutionObject <: FactorOperationalMemory end
-
-abstract type AbstractPrior <: FunctorInferenceType end
-abstract type AbstractRelative <: FunctorInferenceType end
-abstract type AbstractRelativeRoots <: AbstractRelative end
-abstract type AbstractRelativeMinimize <: AbstractRelative end
 
 ##==============================================================================
 ## GenericFunctionNodeData
