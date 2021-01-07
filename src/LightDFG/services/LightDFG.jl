@@ -336,7 +336,7 @@ function savedot_attributes(io::IO, dfg::LightDFG)
         write(io, "$vl [color=red, shape=ellipse];\n")
     end
     for fl in listFactors(dfg)
-        write(io, "$fl [color=blue, shape=box];\n")
+        write(io, "$fl [color=blue, shape=box, fontsize=8, fixedsize=false, height=0.1, width=0.1];\n")
     end
 
     for e in edges(dfg.g)
