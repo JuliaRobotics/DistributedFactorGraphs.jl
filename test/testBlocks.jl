@@ -24,8 +24,8 @@ struct TestFunctorInferenceType1 <: AbstractRelative end
 struct TestFunctorInferenceType2 <: AbstractRelative end
 
 struct TestAbstractPrior <: AbstractPrior end
-struct TestAbstractRelativeFactor <: AbstractRelativeFactor end
-struct TestAbstractRelativeFactorMinimize <: AbstractRelativeFactorMinimize end
+struct TestAbstractRelativeFactor <: AbstractRelativeRoots end
+struct TestAbstractRelativeFactorMinimize <: AbstractRelativeMinimize end
 
 struct PackedTestFunctorInferenceType1 <: PackedInferenceType
     s::String

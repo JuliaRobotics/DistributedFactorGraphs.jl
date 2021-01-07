@@ -31,8 +31,8 @@ Notes
 Designing (WIP)
 - T <: Union{FactorOperationalMemory, PackedInferenceType}
 - in IIF.CCW{T <: DFG.FunctorInferenceType}
-- in DFG.AbstractRelativeFactorMinimize <: FunctorInferenceType
-- in Main.SomeFactor <: AbstractRelativeFactorMinimize
+- in DFG.AbstractRelativeMinimize <: FunctorInferenceType
+- in Main.SomeFactor <: AbstractRelativeMinimize
 """
 mutable struct GenericFunctionNodeData{T<:Union{PackedInferenceType, FunctorInferenceType, FactorOperationalMemory}}
     eliminated::Bool
