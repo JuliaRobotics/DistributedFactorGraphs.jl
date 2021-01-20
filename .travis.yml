@@ -11,8 +11,7 @@ services:
     - neo4j
 
 julia:
-    - 1.5
-    - nightly
+    - 1.6
 
 env:
     - IIF_TEST=false
@@ -26,13 +25,6 @@ branches:
 
 jobs:
   include:
-    - julia: 1.4
-      env:
-        - IIF_TEST=true
-      if: NOT branch =~ /(^v\d+\.\d+(\.\d+)?([-+]\S*)?$)|(^release.*$)/
-    - arch: arm64
-      env: SKIP_CGDFG_TESTS=true
-      before_script:
     - stage: "Documentation"
       julia: 1.4
       os: linux
