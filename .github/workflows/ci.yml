@@ -1,0 +1,156 @@
+name: CI
+on:
+  push:
+    branch:
+      - master
+      - develop
+      - release**
+    tags:
+      - v**
+
+jobs:
+  test:
+    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - '1.5'
+          - 'nightly'
+        os:
+          - ubuntu-latest
+        arch:
+          - x64
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup julia
+        uses: julia-actions/setup-julia@v1
+        with:
+          version: ${{ matrix.version }}
+          arch: ${{ matrix.arch }}
+      
+      - name: Cache Artifacts
+        uses: actions/cache@v1
+        env:
+          cache-name: cache-artifacts
+        with:
+          path: ~/.julia/artifacts
+          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-test-${{ env.cache-name }}-
+            ${{ runner.os }}-test-
+            ${{ runner.os }}-
+
+      - name: Julia Build Pkg
+        uses: julia-actions/julia-buildpkg@latest
+      
+      - name: Git Test Credentials
+        run: |
+          git config --global user.name Tester
+          git config --global user.email te@st.er
+      
+      - name: Run tests
+        uses: julia-actions/julia-runtest@latest
+        env:
+          IIF_TEST: false
+          SKIP_CGDFG_TESTS: true
+        continue-on-error: ${{ matrix.version == 'nightly' }}
+      
+      - name: Process Coverage
+        uses: julia-actions/julia-processcoverage@v1
+        
+      - name: Code Coverage
+        uses: codecov/codecov-action@v1
+        with:
+          file: lcov.info
+        # run: |
+        #   julia -e 'using Pkg; cd(Pkg.dir("DistributedFactorGraphs")); Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
+
+  test-cfg:
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/release**'
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+          - name: Checkout
+            uses: actions/checkout@v2
+
+          - name: Setup julia
+            uses: julia-actions/setup-julia@v1
+            with:
+              version: 1.4
+              arch: x64
+
+          - name: Install neo4j
+            run: |
+              sudo add-apt-repository -y ppa:openjdk-r/ppa
+              sudo apt-get update
+              wget -O - https://debian.neo4j.com/neotechnology.gpg.key | sudo apt-key add -
+              echo 'deb https://debian.neo4j.com stable 3.5' | sudo tee /etc/apt/sources.list.d/neo4j.list
+              sudo apt-get update
+              apt list -a neo4j
+              sudo apt-get install neo4j
+              sudo service neo4j start
+              sleep 10
+              curl -v POST http://neo4j:neo4j@localhost:7474/user/neo4j/password -d"password=test"
+            # sudo neo4j-admin set-initial-password test
+              curl -I http://localhost:7474/
+
+          - name: Cache Artifacts
+            uses: actions/cache@v1
+            env:
+              cache-name: cache-artifacts
+            with:
+              path: ~/.julia/artifacts
+              key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
+              restore-keys: |
+                ${{ runner.os }}-test-${{ env.cache-name }}-
+                ${{ runner.os }}-test-
+                ${{ runner.os }}-
+
+          - name: Julia Build Pkg
+            uses: julia-actions/julia-buildpkg@latest
+          
+          - name: Git Test Credentials
+            run: |
+              git config --global user.name Tester
+              git config --global user.email te@st.er
+          
+          - name: Run tests
+            uses: julia-actions/julia-runtest@latest
+            env:
+              IIF_TEST: true
+              SKIP_CGDFG_TESTS: false
+          
+          - name: Process Coverage
+            uses: julia-actions/julia-processcoverage@v1
+            
+          - name: Code Coverage
+            uses: codecov/codecov-action@v1
+            with:
+              file: lcov.info
+            # run: |
+            #   julia -e 'using Pkg; cd(Pkg.dir("DistributedFactorGraphs")); Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
+
+  docs:
+    needs: test
+    name: Documentation
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout
+          uses: actions/checkout@v2
+
+      - name: Setup julia
+        uses: julia-actions/setup-julia@v1
+        with:
+          version: 1.4
+          arch: x64
+
+      - name: Documentation
+          run: |
+            julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+            julia --project=docs/ docs/make.jl
+        
