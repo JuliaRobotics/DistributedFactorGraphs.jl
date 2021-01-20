@@ -16,13 +16,6 @@ julia:
 env:
     - IIF_TEST=false
 
-branches:
-  only:
-  - master
-  - develop
-  - /^release.*$/
-  - /^v\d+\.\d+(\.\d+)?([-+]\S*)?$/
-
 jobs:
   include:
     - stage: "Documentation"
