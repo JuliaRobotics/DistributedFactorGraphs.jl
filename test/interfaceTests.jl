@@ -63,7 +63,14 @@ end
     @test printFactor(fac1) === nothing
 
     @test printVariable(iobuf, var1, skipfields=[:timestamp, :solver, :ppe, :nstime]) === nothing
-    @test String(take!(iobuf)) == "DFGVariable{TestVariableType1}\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol,Union{Bool, Float64, Int64, Array{Bool,1}, Array{Float64,1}, Array{Int64,1}, Array{String,1}, String}}(:small=>\"data\")\ndataDict:\nDict{Symbol,AbstractDataEntry}()\nsolvable:\n0\n"
+    
+    if VERSION < v"1.6.0-beta1"
+        # for julia < v1.6
+        @test String(take!(iobuf)) == "DFGVariable{TestVariableType1}\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol,Union{Bool, Float64, Int64, Array{Bool,1}, Array{Float64,1}, Array{Int64,1}, Array{String,1}, String}}(:small=>\"data\")\ndataDict:\nDict{Symbol,AbstractDataEntry}()\nsolvable:\n0\n"
+    else
+        # for julia v1.6
+        @test String(take!(iobuf)) == "DFGVariable{TestVariableType1}\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol, Union{Bool, Float64, Int64, Vector{Bool}, Vector{Float64}, Vector{Int64}, Vector{String}, String}}(:small=>\"data\")\ndataDict:\nDict{Symbol, AbstractDataEntry}()\nsolvable:\n0\n"   
+    end
 
     @test printVariable(iobuf, var1, short=true) === nothing
     varstr = String(take!(iobuf))
