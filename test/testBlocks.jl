@@ -24,8 +24,8 @@ struct TestFunctorInferenceType1 <: AbstractRelative end
 struct TestFunctorInferenceType2 <: AbstractRelative end
 
 struct TestAbstractPrior <: AbstractPrior end
-struct TestAbstractRelativeFactor <: AbstractRelativeFactor end
-struct TestAbstractRelativeFactorMinimize <: AbstractRelativeFactorMinimize end
+struct TestAbstractRelativeFactor <: AbstractRelativeRoots end
+struct TestAbstractRelativeFactorMinimize <: AbstractRelativeMinimize end
 
 struct PackedTestFunctorInferenceType1 <: PackedInferenceType
     s::String
@@ -1409,8 +1409,8 @@ function ProducingDotFiles(testDFGAPI,
     #NOTE hardcoded toDot will have different results so test LightGraphs seperately
     if testDFGAPI <: LightDFG || testDFGAPI <: CloudGraphsDFG
         todotstr = toDot(dotdfg)
-        todota = todotstr == "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box];\na -- abf1\nb -- abf1\n}\n"
-        todotb = todotstr == "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box];\nb -- abf1\na -- abf1\n}\n"
+        todota = todotstr == "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box, fontsize=8, fixedsize=false, height=0.1, width=0.1];\na -- abf1\nb -- abf1\n}\n"
+        todotb = todotstr == "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box, fontsize=8, fixedsize=false, height=0.1, width=0.1];\nb -- abf1\na -- abf1\n}\n"
         @test (todota || todotb)
     else
         @test toDot(dotdfg) == "graph graphname {\n2 [\"label\"=\"b\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n2 -- 3\n3 [\"label\"=\"abf1\",\"shape\"=\"box\",\"fillcolor\"=\"blue\",\"color\"=\"blue\"]\n1 [\"label\"=\"a\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n1 -- 3\n}\n"

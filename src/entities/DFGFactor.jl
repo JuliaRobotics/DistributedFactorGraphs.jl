@@ -3,16 +3,19 @@
 ##==============================================================================
 
 # TODO consider changing this to AbstractFactor
-abstract type FunctorInferenceType <: Function end
-abstract type PackedInferenceType end
+abstract type AbstractFactor end
+const FunctorInferenceType = AbstractFactor
+abstract type AbstractPackedFactor end
+const PackedInferenceType = AbstractPackedFactor
 
-abstract type AbstractPrior <: FunctorInferenceType end
-abstract type AbstractRelative <: FunctorInferenceType end
+abstract type AbstractPrior <: AbstractFactor end
+abstract type AbstractRelative <: AbstractFactor end
 abstract type AbstractRelativeRoots <: AbstractRelative end
 abstract type AbstractRelativeMinimize <: AbstractRelative end
 
 # NOTE DF, Convolution is IIF idea, but DFG should know about "FactorOperationalMemory"
 # DF, IIF.CommonConvWrapper <: FactorOperationalMemory #
+# TODO resolve whether `<: Function` is really needed here
 abstract type FactorOperationalMemory <: Function end
 # TODO to be removed from DFG,
 # we can add to IIF or have IIF.CommonConvWrapper <: FactorOperationalMemory directly
@@ -31,8 +34,8 @@ Notes
 Designing (WIP)
 - T <: Union{FactorOperationalMemory, PackedInferenceType}
 - in IIF.CCW{T <: DFG.FunctorInferenceType}
-- in DFG.AbstractRelativeFactorMinimize <: FunctorInferenceType
-- in Main.SomeFactor <: AbstractRelativeFactorMinimize
+- in DFG.AbstractRelativeMinimize <: FunctorInferenceType
+- in Main.SomeFactor <: AbstractRelativeMinimize
 """
 mutable struct GenericFunctionNodeData{T<:Union{PackedInferenceType, FunctorInferenceType, FactorOperationalMemory}}
     eliminated::Bool
