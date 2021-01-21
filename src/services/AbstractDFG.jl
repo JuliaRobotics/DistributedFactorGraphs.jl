@@ -1099,7 +1099,7 @@ Related
 function isPathFactorsHomogeneous(dfg::AbstractDFG, from::Symbol, to::Symbol)
     # FIXME, must consider all paths, not just shortest...
     pth = intersect(findShortestPathDijkstra(dfg, from, to), lsf(dfg))
-    types = getFactorType.(dfg, pth) .|> typeof .|> nameof
+    types = getFactorType.(dfg, pth) .|> typeof .|> x->(x).name #TODO this might not be correct in julia 1.6
     utyp = unique(types)
     (length(utyp) == 1), utyp
 end
