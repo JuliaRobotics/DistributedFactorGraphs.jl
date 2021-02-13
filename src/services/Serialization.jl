@@ -307,6 +307,7 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G
     @debug "DECODING factor type = '$(datatype)' for factor '$label'"
     packtype = getTypeFromSerializationModule(dfg, Symbol("Packed"*datatype))
 
+    # FIXME type instability from nothing to T
     packed = nothing
     fullFactorData = nothing
     try

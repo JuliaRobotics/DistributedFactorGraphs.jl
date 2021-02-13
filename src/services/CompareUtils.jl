@@ -130,7 +130,7 @@ function compareAll(Al::T,
   return true
 end
 
-function compareAll(Al::T, Bl::T; show::Bool=true, skip::Vector{Symbol}=Symbol[])::Bool where T
+function compareAll(Al::T, Bl::T; show::Bool=true, skip::Vector{Symbol}=Symbol[]) where T
   @debug "Comparing types $T:"
   # @debug "  Al = $Al"
   # @debug "  Bl = $Bl"
