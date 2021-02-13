@@ -18,9 +18,7 @@ Return reference to the user factor in `<:AbstractDFG` identified by `::Symbol`.
 """
 getFactorFunction(fcd::GenericFunctionNodeData) = fcd.fnc.usrfnc!
 getFactorFunction(fc::DFGFactor) = getFactorFunction(getSolverData(fc))
-function getFactorFunction(dfg::G, fsym::Symbol) where G <: AbstractDFG
-  getFactorFunction(getFactor(dfg, fsym))
-end
+getFactorFunction(dfg::AbstractDFG, fsym::Symbol) = getFactorFunction(getFactor(dfg, fsym))
 
 """
     $SIGNATURES
@@ -32,9 +30,8 @@ Notes
 """
 getFactorType(data::GenericFunctionNodeData) = data.fnc.usrfnc!
 getFactorType(fct::DFGFactor) = getFactorType(getSolverData(fct))
-function getFactorType(dfg::G, lbl::Symbol) where G <: AbstractDFG
-  getFactorType(getFactor(dfg, lbl))
-end
+getFactorType(dfg::AbstractDFG, lbl::Symbol) = getFactorType(getFactor(dfg, lbl))
+
 
 ##==============================================================================
 ## Factors
@@ -68,14 +65,8 @@ end
 # getTimestamp
 
 setTimestamp(f::AbstractDFGFactor, ts::DateTime, timezone=localzone()) = setTimestamp(f, ZonedDateTime(ts,  timezone))
-
-function setTimestamp(f::DFGFactor, ts::ZonedDateTime)
-    return DFGFactor(f.label, ts, f.nstime, f.tags, f.solverData, f.solvable, getfield(f,:_variableOrderSymbols))
-end
-
-function setTimestamp(f::DFGFactorSummary, ts::ZonedDateTime)
-    return DFGFactorSummary(f.label, ts, f.tags, f._variableOrderSymbols)
-end
+setTimestamp(f::DFGFactor, ts::ZonedDateTime) = DFGFactor(f.label, ts, f.nstime, f.tags, f.solverData, f.solvable, getfield(f,:_variableOrderSymbols))
+setTimestamp(f::DFGFactorSummary, ts::ZonedDateTime) = DFGFactorSummary(f.label, ts, f.tags, f._variableOrderSymbols)
 
 
 ##------------------------------------------------------------------------------
@@ -105,7 +96,7 @@ $SIGNATURES
 Get the variable ordering for this factor.
 Should be equivalent to getNeighbors unless something was deleted in the graph.
 """
-getVariableOrder(fct::DFGFactor)::Vector{Symbol} = fct._variableOrderSymbols
+getVariableOrder(fct::DFGFactor) = fct._variableOrderSymbols::Vector{Symbol}
 getVariableOrder(dfg::AbstractDFG, fct::Symbol) = getVariableOrder(getFactor(dfg, fct))
 
 ##------------------------------------------------------------------------------

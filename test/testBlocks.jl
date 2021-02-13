@@ -57,7 +57,7 @@ function Base.convert(::Type{TestAbstractPrior}, d::PackedTestAbstractPrior)
     TestAbstractPrior()
 end
 
-struct TestCCW{T} <: FactorOperationalMemory where {T<:FunctorInferenceType}
+struct TestCCW{T <: AbstractFactor} <: FactorOperationalMemory
     usrfnc!::T
 end
 
@@ -69,7 +69,7 @@ DFG.getFactorOperationalMemoryType(par::NoSolverParams) = TestCCW
 DFG.rebuildFactorMetadata!(dfg::AbstractDFG{NoSolverParams}, fac::DFGFactor) = fac
 
 function Base.convert(::Type{DFG.FunctionNodeData{TestCCW{F}}},
-                     d::DFG.PackedFunctionNodeData{<:PackedInferenceType}) where F<:FunctorInferenceType
+                     d::DFG.PackedFunctionNodeData{<:AbstractPackedFactor}) where {F <: DFG.AbstractFactor}
 
     return DFG.FunctionNodeData(d.eliminated,
                                 d.potentialused,
@@ -78,11 +78,11 @@ function Base.convert(::Type{DFG.FunctionNodeData{TestCCW{F}}},
                                 d.multihypo,
                                 d.certainhypo,
                                 d.nullhypo,
-                                d.solveInProgress)
+                                d.solveInProgress,
+                                d.inflation)
 end
 
-function Base.convert(::Type{DFG.PackedFunctionNodeData{P}}, d::DFG.FunctionNodeData{<:FactorOperationalMemory}) where P <: PackedInferenceType
-  # mhstr = packmultihypo(d.fnc)  # this is where certainhypo error occurs
+function Base.convert(::Type{DFG.PackedFunctionNodeData{P}}, d::DFG.FunctionNodeData{<:FactorOperationalMemory}) where P <: AbstractPackedFactor
   return DFG.PackedFunctionNodeData(d.eliminated,
                                     d.potentialused,
                                     d.edgeIDs,
@@ -90,7 +90,8 @@ function Base.convert(::Type{DFG.PackedFunctionNodeData{P}}, d::DFG.FunctionNode
                                     d.multihypo,
                                     d.certainhypo,
                                     d.nullhypo,
-                                    d.solveInProgress)
+                                    d.solveInProgress,
+                                    d.inflation)
 end
 
 

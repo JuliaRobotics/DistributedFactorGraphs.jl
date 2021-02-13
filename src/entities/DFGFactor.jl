@@ -4,9 +4,10 @@
 
 # TODO consider changing this to AbstractFactor
 abstract type AbstractFactor end
-const FunctorInferenceType = AbstractFactor
 abstract type AbstractPackedFactor end
-const PackedInferenceType = AbstractPackedFactor
+
+const FunctorInferenceType = AbstractFactor       # will eventually deprecate
+const PackedInferenceType = AbstractPackedFactor  # will eventually deprecate
 
 abstract type AbstractPrior <: AbstractFactor end
 abstract type AbstractRelative <: AbstractFactor end
@@ -15,8 +16,8 @@ abstract type AbstractRelativeMinimize <: AbstractRelative end
 
 # NOTE DF, Convolution is IIF idea, but DFG should know about "FactorOperationalMemory"
 # DF, IIF.CommonConvWrapper <: FactorOperationalMemory #
-# TODO resolve whether `<: Function` is really needed here
-abstract type FactorOperationalMemory <: Function end
+# NOTE was `<: Function` as unnecessary
+abstract type FactorOperationalMemory end   # <: Function
 # TODO to be removed from DFG,
 # we can add to IIF or have IIF.CommonConvWrapper <: FactorOperationalMemory directly
 # abstract type ConvolutionObject <: FactorOperationalMemory end
@@ -46,36 +47,40 @@ mutable struct GenericFunctionNodeData{T<:Union{PackedInferenceType, FunctorInfe
     certainhypo::Vector{Int}
     nullhypo::Float64
     solveInProgress::Int
-
+    inflation::Float64
+    # inner constructor needed for dual use
+    # GenericFunctionNodeData{T}(x1::Bool,x2::Bool,x3,x4::T,args...) where T = new{T}(x1,x2,x3,x4,args...)
     # TODO deprecate all these inner constructors at end of DFG v0.9.x (was added for GFND.nullhypo::Float64 breaking change)
-    GenericFunctionNodeData{T}(el,po,ed,fn,mu::Vector{<:Real},ce::Vector{Int},so::Int) where T = new{T}(el,po,ed,fn,mu,ce,0.0,so)
-    GenericFunctionNodeData{T}(el,po,ed,fn,mu::Vector{<:Real},ce::Vector{Int},nu::Real,so::Int) where T = new{T}(el,po,ed,fn,mu,ce,nu,so)
+    # GenericFunctionNodeData{T}(el,po,ed,fn,mu::Vector{<:Real},ce::Vector{Int},so::Int) where T = 
+    #                            new{T}(el,po,ed,fn,mu,ce,0.0,so)
+    # GenericFunctionNodeData{T}(el,po,ed,fn,mu::Vector{<:Real},ce::Vector{Int},nu::Real,so::Int,infl::Real) where T = new{T}(el,po,ed,fn,mu,ce,nu,so,infl)
 end
 
 ## Constructors
 
 GenericFunctionNodeData{T}() where T =
-    GenericFunctionNodeData{T}(false, false, Int[], T(), Float64[], Int[], 0, 0)
+    GenericFunctionNodeData(false, false, Int[], T())
 
-function GenericFunctionNodeData(eliminated::Bool,
-                                 potentialused::Bool,
-                                 edgeIDs::Vector{Int},
-                                 fnc::T,
-                                 multihypo::Vector{<:Real}=Float64[],
-                                 certainhypo::Vector{Int}=Int[],
-                                 nullhypo::Real=0,
-                                 solveInP::Int=0) where T
-    return GenericFunctionNodeData{T}(eliminated, potentialused, edgeIDs, fnc, multihypo, certainhypo, nullhypo, solveInP)
+function GenericFunctionNodeData(   eliminated::Bool,
+                                    potentialused::Bool,
+                                    edgeIDs::Vector{Int},
+                                    fnc::T,
+                                    multihypo::Vector{<:Real}=Float64[],
+                                    certainhypo::Vector{Int}=Int[],
+                                    nullhypo::Real=0,
+                                    solveInP::Int=0,
+                                    inflation::Real=0.0 ) where T
+    return GenericFunctionNodeData{T}(eliminated, potentialused, edgeIDs, fnc, multihypo, certainhypo, nullhypo, solveInP, inflation)
 end
 
 
 ##------------------------------------------------------------------------------
 ## PackedFunctionNodeData and FunctionNodeData
 
-const PackedFunctionNodeData{T} = GenericFunctionNodeData{T} where T <: PackedInferenceType
+const PackedFunctionNodeData{T} = GenericFunctionNodeData{T} where T <: AbstractPackedFactor
 PackedFunctionNodeData(args...) = PackedFunctionNodeData{typeof(args[4])}(args...)
 
-const FunctionNodeData{T} = GenericFunctionNodeData{T} where T <: Union{FunctorInferenceType, FactorOperationalMemory}
+const FunctionNodeData{T} = GenericFunctionNodeData{T} where T <: Union{AbstractFactor, FactorOperationalMemory}
 FunctionNodeData(args...) = FunctionNodeData{typeof(args[4])}(args...)
 
 
