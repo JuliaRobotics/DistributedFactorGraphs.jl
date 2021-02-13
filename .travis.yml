@@ -16,7 +16,6 @@ julia:
 
 env:
   - IIF_TEST=false
-  - DO_CGDFG_TESTS=true
 
 branches:
   only:
