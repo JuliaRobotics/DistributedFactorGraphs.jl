@@ -2,20 +2,21 @@ language: julia
 sudo: required
 
 os:
-    - linux
+  - linux
 
 arch:
-    - amd64
+  - amd64
 
 services:
-    - neo4j
+  - neo4j
 
 julia:
-    - 1.5
-    - nightly
+  - 1.5
+  - nightly
 
 env:
-    - IIF_TEST=false
+  - IIF_TEST=false
+  - DO_CGDFG_TESTS=true
 
 branches:
   only:
@@ -29,9 +30,10 @@ jobs:
     - julia: 1.4
       env:
         - IIF_TEST=true
+        - DO_CGDFG_TESTS=true
       if: NOT branch =~ /(^v\d+\.\d+(\.\d+)?([-+]\S*)?$)|(^release.*$)/
     - arch: arm64
-      env: SKIP_CGDFG_TESTS=true
+      env: DO_CGDFG_TESTS=false
       before_script:
     - stage: "Documentation"
       julia: 1.4
