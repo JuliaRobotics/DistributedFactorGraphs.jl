@@ -58,13 +58,13 @@ end
 
 ## Constructors
 
-# GenericFunctionNodeData{T}() where T =
-#     GenericFunctionNodeData{T}(false, false, Int[], T(), Float64[], Int[], 0, 0)
+GenericFunctionNodeData{T}() where T =
+    GenericFunctionNodeData(false, false, Int[], T())
 
-function GenericFunctionNodeData(   eliminated::Bool=false,
-                                    potentialused::Bool=false,
-                                    edgeIDs::Vector{Int}=Int[],
-                                    fnc::T=T(),
+function GenericFunctionNodeData(   eliminated::Bool,
+                                    potentialused::Bool,
+                                    edgeIDs::Vector{Int},
+                                    fnc::T,
                                     multihypo::Vector{<:Real}=Float64[],
                                     certainhypo::Vector{Int}=Int[],
                                     nullhypo::Real=0,
