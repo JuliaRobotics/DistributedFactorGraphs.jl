@@ -69,7 +69,7 @@ DFG.getFactorOperationalMemoryType(par::NoSolverParams) = TestCCW
 DFG.rebuildFactorMetadata!(dfg::AbstractDFG{NoSolverParams}, fac::DFGFactor) = fac
 
 function Base.convert(::Type{DFG.FunctionNodeData{TestCCW{F}}},
-                     d::DFG.PackedFunctionNodeData{<:PackedAbstractFactor}) where {F <: AbstractFactor}
+                     d::DFG.PackedFunctionNodeData{<:AbstractPackedFactor}) where {F <: DFG.AbstractFactor}
 
     return DFG.FunctionNodeData(d.eliminated,
                                 d.potentialused,
@@ -82,7 +82,7 @@ function Base.convert(::Type{DFG.FunctionNodeData{TestCCW{F}}},
                                 d.inflation)
 end
 
-function Base.convert(::Type{DFG.PackedFunctionNodeData{P}}, d::DFG.FunctionNodeData{<:FactorOperationalMemory}) where P <: PackedAbstractFactor
+function Base.convert(::Type{DFG.PackedFunctionNodeData{P}}, d::DFG.FunctionNodeData{<:FactorOperationalMemory}) where P <: AbstractPackedFactor
   return DFG.PackedFunctionNodeData(d.eliminated,
                                     d.potentialused,
                                     d.edgeIDs,
