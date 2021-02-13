@@ -70,7 +70,7 @@ function GenericFunctionNodeData(   eliminated::Bool,
                                     nullhypo::Real=0,
                                     solveInP::Int=0,
                                     inflation::Real=0.0 ) where T
-    return GenericFunctionNodeData(eliminated, potentialused, edgeIDs, fnc, multihypo, certainhypo, nullhypo, solveInP, inflation)
+    return GenericFunctionNodeData{T}(eliminated, potentialused, edgeIDs, fnc, multihypo, certainhypo, nullhypo, solveInP, inflation)
 end
 
 
