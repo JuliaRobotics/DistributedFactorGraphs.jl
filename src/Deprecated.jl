@@ -135,8 +135,9 @@ end
 ## Deprecated in v0.11 Remove in the v0.12 cycle
 ##==============================================================================
 
-export AbstractRelativeFactor, AbstractRelativeFactorMinimize
-
+# @warn("BREAKING CHANGE coming to DistributedFactorGraphs v0.12: deprecating AbstractRelativeFactor, use AbstractRelativeRoots instead")
+# @warn("BREAKING CHANGE coming to DistributedFactorGraphs v0.12: deprecating AbstractRelativeFactorMinimize, use AbstractRelativeMinimize instead")
+# export AbstractRelativeFactor, AbstractRelativeFactorMinimize
 const AbstractRelativeFactor = AbstractRelativeRoots
 const AbstractRelativeFactorMinimize = AbstractRelativeMinimize
 

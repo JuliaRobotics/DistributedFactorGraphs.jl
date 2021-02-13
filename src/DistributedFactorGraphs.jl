@@ -315,9 +315,6 @@ if get(ENV, "DFG_USE_CGDFG", "") == "true"
 end
 
 function __init__()
-    @warn("BREAKING CHANGE coming to DistributedFactorGraphs v0.12: deprecating AbstractRelativeFactor, use AbstractRelativeRoots instead")
-    @warn("BREAKING CHANGE coming to DistributedFactorGraphs v0.12: deprecating AbstractRelativeFactorMinimize, use AbstractRelativeMinimize instead")
-
     @require GraphPlot = "a2cc645c-3eea-5389-862e-a155d0052231" begin
         @info "DistributedFactorGraphs.jl is adding tools using GraphPlot.jl"
         include("DFGPlots/DFGPlots.jl")
