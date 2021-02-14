@@ -32,7 +32,7 @@ end
 end
 
 
-if get(ENV, "SKIP_CGDFG_TESTS", "") != "true"
+if get(ENV, "DO_CGDFG_TESTS", "") == "true"
     apis = [
         LightDFG,
         CloudGraphsDFG,
@@ -87,7 +87,7 @@ if get(ENV, "IIF_TEST", "") == "true"
 
     apis = Vector{AbstractDFG}()
     push!(apis, LightDFG(solverParams=SolverParams(), userId="testUserId"))
-    get(ENV, "SKIP_CGDFG_TESTS", "false") != "true" && push!(apis, CloudGraphsDFG(solverParams=SolverParams(), userId="testUserId")) 
+    get(ENV, "DO_CGDFG_TESTS", "false") == "true" && push!(apis, CloudGraphsDFG(solverParams=SolverParams(), userId="testUserId")) 
 
     for api in apis
         @testset "Testing Driver: $(typeof(api))" begin
