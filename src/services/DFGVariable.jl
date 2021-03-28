@@ -65,22 +65,37 @@ Interface function to return the `variableType` dimension of an InferenceVariabl
 function getDimension end
 """
     $SIGNATURES
+Interface function to return the `<:ManifoldsBase.Manifold` object of `variableType<:InferenceVariable`, extend this function for all `Types<:InferenceVariable`.
+"""
+function getManifold end
+
+"""
+    $SIGNATURES
 Interface function to return the `variableType` manifolds of an InferenceVariable, extend this function for all Types<:InferenceVariable.
 """
 function getManifolds end
 
 """
-   @defVariable StructName dimension manifolds
-A macro to create a new variable with name `StructName`, dimension and manifolds.
+    @defVariable StructName manifolds<:ManifoldsBase.Manifold
+
+A macro to create a new variable with name `StructName` and manifolds.  Note that 
+the `manifolds` is an object and *must* be a subtype of `ManifoldsBase.Manifold`.
+See documentation in [Manifolds.jl on making your own](https://juliamanifolds.github.io/Manifolds.jl/stable/examples/manifold.html). 
+
 Example:
 ```
-DFG.@defVariable Pose2 3 (:Euclid, :Euclid, :Circular)
+DFG.@defVariable Pose2 SpecialEuclidean(2)
 ```
 """
-macro defVariable(structname, manifold) #::Vararg{Symbol})#NTuple{dimension, Symbol})
-    # :(struct $structname <: InferenceVariable end)
+macro defVariable(structname, manifold)
     return esc(quote
         Base.@__doc__ struct $structname <: InferenceVariable end
+
+        @assert ($manifold isa Manifold) "@defVariable of "*string($structname)*" requires that the "*string($manifold)*" be a subtype of `ManifoldsBase.Manifold`"
+
+        # user manifold must be a <:Manifold
+        Base.convert(::Type{<:Manifold}, ::Union{<:T, Type{<:T}}) where {T <: $structname} = $manifold 
+
         getManifold(::Type{M}) where {M <: $structname} = $manifold
         getManifold(::M) where {M <: $structname} = getManifold(M)
         

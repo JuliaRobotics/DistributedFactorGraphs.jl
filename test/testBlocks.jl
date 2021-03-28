@@ -16,8 +16,8 @@ import Base: convert
 Base.convert(::Type{<:Tuple}, ::typeof(Euclidean(1))) = (:Euclid,)
 Base.convert(::Type{<:Tuple}, ::typeof(Euclidean(2))) = (:Euclid, :Euclid)
 
-DFG.@defVariable TestVariableType1 Euclidean(1) # 1 (:Euclid,)
-DFG.@defVariable TestVariableType2 Euclidean(2) # 1 (:Euclid,)
+@defVariable TestVariableType1 Euclidean(1)
+@defVariable TestVariableType2 Euclidean(2)
 
 # struct TestVariableType2 <: InferenceVariable
 #     dims::Int
