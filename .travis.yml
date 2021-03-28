@@ -30,6 +30,7 @@ jobs:
       env:
         - IIF_TEST=true
         - DO_CGDFG_TESTS=true
+        - DFG_USE_CGDFG=true
       if: NOT branch =~ /(^v\d+\.\d+(\.\d+)?([-+]\S*)?$)|(^release.*$)/
     - arch: arm64
       env: DO_CGDFG_TESTS=false
