@@ -29,6 +29,7 @@ end
     todotc = todotstr == "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box];\na -- abf1\nb -- abf1\n}\n"
     todotd = todotstr == "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box];\nb -- abf1\na -- abf1\n}\n"
     todote = todotstr == "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box, fontsize=8, fixedsize=false, height=0.1, width=0.1];\na -- abf1\nb -- abf1\n}\n"
+    @show todota, todotb, todotc, todotd, todote
     @test (todota || todotb || todotc || todotd || todote)
     @test toDotFile(dfg, "something.dot") === nothing
     Base.rm("something.dot")
