@@ -1,6 +1,9 @@
 using DistributedFactorGraphs
 using IncrementalInference
 using Test
+using TimeZones
+
+##
 
 @testset "FileDFG Tests" begin
     for filename in ["/tmp/fileDFG", "/tmp/FileDFGExtension.tar.gz"]
@@ -83,6 +86,8 @@ using Test
     end
 end
 
+##
+
 @testset "FileDFG Regression Tests" begin
     @info "If any of these tests fail, we have breaking changes"
     for file in filter(f -> endswith(f, ".tar.gz"), readdir(joinpath(@__DIR__, "data")))
@@ -96,3 +101,5 @@ end
         @test issetequal(lsf(retDFG), [:x3x4f1, :x4x5f1, :x1x2f1, :x2x3f1])
     end
 end
+
+##
