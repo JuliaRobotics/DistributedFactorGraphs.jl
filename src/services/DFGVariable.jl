@@ -75,6 +75,9 @@ Interface function to return the `variableType` manifolds of an InferenceVariabl
 """
 function getManifolds end
 
+getManifolds(::Type{<:T}) where {T <: ManifoldsBase.Manifold} = convert(Tuple, T)
+getManifolds(::T) where {T <: ManifoldsBase.Manifold} = convert(Tuple, T)
+
 """
     @defVariable StructName manifolds<:ManifoldsBase.Manifold
 
@@ -96,14 +99,15 @@ macro defVariable(structname, manifold)
         # user manifold must be a <:Manifold
         Base.convert(::Type{<:Manifold}, ::Union{<:T, Type{<:T}}) where {T <: $structname} = $manifold 
 
-        getManifold(::Type{M}) where {M <: $structname} = $manifold
-        getManifold(::M) where {M <: $structname} = getManifold(M)
+        DFG.getManifold(::Type{M}) where {M <: $structname} = $manifold
+        DFG.getManifold(::M) where {M <: $structname} = getManifold(M)
         
-        getDimension(::Type{M}) where {M <: $structname} = manifold_dimension(getManifold(M))
-        getDimension(::M) where {M <: $structname} = manifold_dimension(getManifold(M))
-        # FIXME legacy API to be deprecated
-        getManifolds(::Type{M}) where {M <: $structname} = convert(Tuple, $manifold)
-        getManifolds(::M) where {M <: $structname} = convert(Tuple, $manifold)
+        DFG.getDimension(::Type{M}) where {M <: $structname} = manifold_dimension(getManifold(M))
+        DFG.getDimension(::M) where {M <: $structname} = manifold_dimension(getManifold(M))
+
+        # # FIXME legacy API to be deprecated
+        DFG.getManifolds(::Type{M}) where {M <: $structname} = convert(Tuple, $manifold)
+        DFG.getManifolds(::M) where {M <: $structname} = convert(Tuple, $manifold)
     end)
 end
 

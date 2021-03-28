@@ -135,7 +135,7 @@ export getSolverData
 export getVariableType
 
 # VariableType functions
-export getDimension, getManifolds
+export getDimension, getManifolds, getManifold
 
 # Small Data CRUD
 export SmallDataTypes, getSmallData, addSmallData!, updateSmallData!, deleteSmallData!, listSmallData, emptySmallData!
