@@ -29,6 +29,11 @@ using SparseArrays
 using UUIDs
 using Pkg
 
+# used for @defVariable
+import ManifoldsBase
+import ManifoldsBase: Manifold, manifold_dimension
+export Manifold, manifold_dimension
+
 import Base: getindex
 
 
@@ -130,7 +135,7 @@ export getSolverData
 export getVariableType
 
 # VariableType functions
-export getDimension, getManifolds
+export getDimension, getManifolds, getManifold
 
 # Small Data CRUD
 export SmallDataTypes, getSmallData, addSmallData!, updateSmallData!, deleteSmallData!, listSmallData, emptySmallData!
