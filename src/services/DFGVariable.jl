@@ -77,14 +77,21 @@ Example:
 DFG.@defVariable Pose2 3 (:Euclid, :Euclid, :Circular)
 ```
 """
-macro defVariable(structname, dimension::Int, manifolds)#::Vararg{Symbol})#NTuple{dimension, Symbol})
+macro defVariable(structname, manifold) #::Vararg{Symbol})#NTuple{dimension, Symbol})
     # :(struct $structname <: InferenceVariable end)
     return esc(quote
         Base.@__doc__ struct $structname <: InferenceVariable end
-        DistributedFactorGraphs.getDimension(::$structname) = $dimension
-        DistributedFactorGraphs.getManifolds(::$structname) = $manifolds
+        getManifold(::Type{M}) where {M <: $structname} = $manifold
+        getManifold(::M) where {M <: $structname} = getManifold(M)
+        
+        getDimension(::Type{M}) where {M <: $structname} = manifold_dimension(getManifold(M))
+        getDimension(::M) where {M <: $structname} = manifold_dimension(getManifold(M))
+        # FIXME legacy API to be deprecated
+        getManifolds(::Type{M}) where {M <: $structname} = convert(Tuple, $manifold)
+        getManifolds(::M) where {M <: $structname} = convert(Tuple, $manifold)
     end)
 end
+
 ##------------------------------------------------------------------------------
 ## solvedCount
 ##------------------------------------------------------------------------------

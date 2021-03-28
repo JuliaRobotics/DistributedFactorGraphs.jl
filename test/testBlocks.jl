@@ -1,6 +1,7 @@
 using DistributedFactorGraphs
 using Test
 using Dates
+using Manifolds
 
 import Base: convert
 
@@ -11,13 +12,18 @@ import Base: convert
 #     TestVariableType1() = new(1,(:Euclid,))
 # end
 
-DFG.@defVariable TestVariableType1 1 (:Euclid,)
 
-struct TestVariableType2 <: InferenceVariable
-    dims::Int
-    manifolds::Tuple{Symbol, Symbol}
-    TestVariableType2() = new(2,(:Euclid,:Circular,))
-end
+Base.convert(::Type{<:Tuple}, ::typeof(Euclidean(1))) = (:Euclid,)
+Base.convert(::Type{<:Tuple}, ::typeof(Euclidean(2))) = (:Euclid, :Euclid)
+
+DFG.@defVariable TestVariableType1 Euclidean(1) # 1 (:Euclid,)
+DFG.@defVariable TestVariableType2 Euclidean(2) # 1 (:Euclid,)
+
+# struct TestVariableType2 <: InferenceVariable
+#     dims::Int
+#     manifolds::Tuple{Symbol, Symbol}
+#     TestVariableType2() = new(2,(:Euclid,:Circular,))
+# end
 
 
 struct TestFunctorInferenceType1 <: AbstractRelative end

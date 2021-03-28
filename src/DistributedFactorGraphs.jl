@@ -29,6 +29,11 @@ using SparseArrays
 using UUIDs
 using Pkg
 
+# used for @defVariable
+import ManifoldsBase
+import ManifoldsBase: Manifold, manifold_dimension
+export Manifold, manifold_dimension
+
 import Base: getindex
 
 
