@@ -76,7 +76,9 @@ Interface function to return the `variableType` manifolds of an InferenceVariabl
 function getManifolds end
 
 getManifolds(::Type{<:T}) where {T <: ManifoldsBase.Manifold} = convert(Tuple, T)
-getManifolds(::T) where {T <: ManifoldsBase.Manifold} = convert(Tuple, T)
+getManifolds(::T) where {T <: ManifoldsBase.Manifold} = getManifolds(T)
+
+getDimension(t_::T) where {T <: ManifoldsBase.Manifold} = manifold_dimension(t_)
 
 """
     @defVariable StructName manifolds<:ManifoldsBase.Manifold
