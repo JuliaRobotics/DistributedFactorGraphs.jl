@@ -20,9 +20,10 @@ function printVariable( io::IO, vert::DFGVariable;
         # printstyled(ioc, summary(vert),"\n", bold=true)
 
         vnd = getSolverData(vert)
-        println(ioc, "  timestamp: ", vert.timestamp)
-        println(ioc, "  label: ", vert.label)
-        println(ioc, "  solvable: ", getSolvable(vert))
+        println(ioc, "  timestamp:  ", vert.timestamp)
+        println(ioc, "  label:      ", vert.label)
+        println(ioc, "  solvable:   ", getSolvable(vert))
+        println(ioc, "  initilized: ", isInitialized(vert))
         println(ioc, "  tags: ", getTags(vert))
         try
             println(ioc, "  manifold: ", getManifolds(vert))
