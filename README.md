@@ -2,12 +2,12 @@
 
 Click on badges to follow links:
 
-Release v0.11 | Release v0.12 | Dev | Coverage | Documentation |
+Release v0.12 | Release v0.13 | Dev | Coverage | Documentation |
 ---------|---------|-----|------------|------------|
-[![Build Status][dfg-build-v0.11]][dfg-build-url] | [![Build Status][dfg-build-v0.12]][dfg-build-url] | [![Build Status][dfg-build-img]][dfg-build-url] <br> [![Average time to resolve an issue](https://isitmaintained.com/badge/resolution/JuliaRobotics/DistributedFactorGraphs.jl.svg)](https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues) | [![codecov.io][dfg-cov-img]][dfg-cov-url] <br> [![Percentage of issues still open](https://isitmaintained.com/badge/open/JuliaRobotics/DistributedFactorGraphs.jl.svg)](https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues) | [![docs](https://img.shields.io/badge/DFGDocs-latest-blue.svg)](http://juliarobotics.github.io/DistributedFactorGraphs.jl/latest/) <br> [![docs](https://img.shields.io/badge/CaesarDocs-latest-blue.svg)](http://juliarobotics.github.io/Caesar.jl/latest/)
+[![Build Status][dfg-build-v0.12]][dfg-build-url] | [![Build Status][dfg-build-v0.13]][dfg-build-url] | [![Build Status][dfg-build-img]][dfg-build-url] <br> [![Average time to resolve an issue](https://isitmaintained.com/badge/resolution/JuliaRobotics/DistributedFactorGraphs.jl.svg)](https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues) | [![codecov.io][dfg-cov-img]][dfg-cov-url] <br> [![Percentage of issues still open](https://isitmaintained.com/badge/open/JuliaRobotics/DistributedFactorGraphs.jl.svg)](https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues) | [![docs](https://img.shields.io/badge/DFGDocs-latest-blue.svg)](http://juliarobotics.github.io/DistributedFactorGraphs.jl/latest/) <br> [![docs](https://img.shields.io/badge/CaesarDocs-latest-blue.svg)](http://juliarobotics.github.io/Caesar.jl/latest/)
 
 
-[dfg-build-v0.11]: https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl.svg?branch=release/v0.11
+[dfg-build-v0.13]: https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl.svg?branch=release/v0.13
 [dfg-build-v0.12]: https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl.svg?branch=release/v0.12
 
 [dfg-cov-img]: https://codecov.io/github/JuliaRobotics/DistributedFactorGraphs.jl/coverage.svg?branch=master
