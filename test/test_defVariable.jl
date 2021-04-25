@@ -61,9 +61,9 @@ end
 @test getManifold( TestVariableType2) == Euclidean(2)
 
 # legacy
-@test getManifolds(TestVariableType1) == (:Euclid,)
+# @test getManifolds(TestVariableType1) == (:Euclid,)
 @test getDimension(TestVariableType1) === 1
-@test getManifolds(TestVariableType2) == (:Euclid,:Euclid)
+# @test getManifolds(TestVariableType2) == (:Euclid,:Euclid)
 @test getDimension(TestVariableType2) === 2
 
 ##
@@ -73,9 +73,9 @@ end
 @test getManifold( TestVariableType2()) == Euclidean(2)
 
 # legacy
-@test getManifolds(TestVariableType1()) == (:Euclid,)
+# @test getManifolds(TestVariableType1()) == (:Euclid,)
 @test getDimension(TestVariableType1()) === 1
-@test getManifolds(TestVariableType2()) == (:Euclid,:Euclid)
+# @test getManifolds(TestVariableType2()) == (:Euclid,:Euclid)
 @test getDimension(TestVariableType2()) === 2
 
 
