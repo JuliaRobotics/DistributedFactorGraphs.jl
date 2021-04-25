@@ -38,18 +38,23 @@ getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimest
 
 Variable nodes `variableType` information holding a variety of meta data associated with the type of variable stored in that node of the factor graph.
 
+DevWork
+- TODO, see IncrementalInference.jl 1228
+
 Related
 
 getVariableType
 """
+getVariableType(v::DFGVariable{T}) where T <: InferenceVariable = T()
+
 function getVariableType(vnd::VariableNodeData)
+#   @warn "getVariableType(::VariableNodeData) is being deprecated, use getVariableType(::DFGVariable) instead."
   return vnd.variableType
 end
 
 
 # TODO: Confirm that we can switch this out, instead of retrieving the complete variable.
-# getVariableType(v::DFGVariable{T}) where T <: InferenceVariable = T()
-getVariableType(v::DFGVariable) = getVariableType(getSolverData(v))
+# getVariableType(v::DFGVariable) = getVariableType(getSolverData(v))
 
 # Optimized in CGDFG
 getVariableType(dfg::AbstractDFG, lbl::Symbol) = getVariableType(getVariable(dfg,lbl))
@@ -326,7 +331,10 @@ end
     $SIGNATURES
 Set solver data structure stored in a variable.
 """
-setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v.solverDataDict[key] = data
+function setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default)
+    @assert key == data.solveKey "VariableNodeData.solveKey=:$(data.solveKey) does not match requested :$(key)"
+    v.solverDataDict[key] = data
+end
 
 ##------------------------------------------------------------------------------
 ## smallData
@@ -520,7 +528,9 @@ function updateVariableSolverData!(dfg::AbstractDFG,
     # for InMemoryDFGTypes do memory copy or repointing, for cloud this would be an different kind of update.
     usevnd = useCopy ? deepcopy(vnd) : vnd
     # should just one, or many pointers be updated?
-    if haskey(var.solverDataDict, vnd.solveKey) && isa(var.solverDataDict[vnd.solveKey], VariableNodeData) && length(fields) != 0
+    useExisting = haskey(var.solverDataDict, vnd.solveKey) && isa(var.solverDataDict[vnd.solveKey], VariableNodeData) && length(fields) != 0
+    # @error useExisting vnd.solveKey
+    if useExisting
       # change multiple pointers inside the VND var.solverDataDict[solvekey]
       for field in fields
         destField = getfield(var.solverDataDict[vnd.solveKey], field)
@@ -561,13 +571,20 @@ function updateVariableSolverData!(dfg::AbstractDFG,
 end
 
 
-updateVariableSolverData!(dfg::AbstractDFG,
-                          sourceVariable::DFGVariable,
-                          solveKey::Symbol=:default,
-                          useCopy::Bool=true,
-                          fields::Vector{Symbol}=Symbol[];
-                          warn_if_absent::Bool=true ) =
-    updateVariableSolverData!(dfg, sourceVariable.label, getSolverData(sourceVariable, solveKey), useCopy, fields; warn_if_absent=warn_if_absent)
+function updateVariableSolverData!( dfg::AbstractDFG,
+                                    sourceVariable::DFGVariable,
+                                    solveKey::Symbol=:default,
+                                    useCopy::Bool=true,
+                                    fields::Vector{Symbol}=Symbol[];
+                                    warn_if_absent::Bool=true )
+    #
+    vnd = getSolverData(sourceVariable, solveKey)
+    # toshow = listSolveKeys(sourceVariable) |> collect
+    # @info "update DFGVar solveKey" solveKey vnd.solveKey 
+    # @show toshow
+    @assert solveKey == vnd.solveKey "VariableNodeData's solveKey=:$(vnd.solveKey) does not match requested :$solveKey"
+    updateVariableSolverData!(dfg, sourceVariable.label, vnd, useCopy, fields; warn_if_absent=warn_if_absent)
+end
 
 function updateVariableSolverData!(dfg::AbstractDFG,
                                    sourceVariables::Vector{<:DFGVariable},
@@ -674,13 +691,13 @@ function getPPE(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol=:default)
 end
 
 # Not the most efficient call but it at least reuses above (in memory it's probably ok)
-getPPE(dfg::AbstractDFG, sourceVariable::VariableDataLevel1, ppekey::Symbol=default)::AbstractPointParametricEst = getPPE(dfg, sourceVariable.label, ppekey)
+getPPE(dfg::AbstractDFG, sourceVariable::VariableDataLevel1, ppekey::Symbol=:default) = getPPE(dfg, sourceVariable.label, ppekey)
 
 """
     $(SIGNATURES)
 Add variable PPE, errors if it already exists.
 """
-function addPPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P)::AbstractPointParametricEst where {P <: AbstractPointParametricEst}
+function addPPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P) where {P <: AbstractPointParametricEst}
     var = getVariable(dfg, variablekey)
     if haskey(var.ppeDict, ppe.solveKey)
         error("PPE '$(ppe.solveKey)' already exists")
