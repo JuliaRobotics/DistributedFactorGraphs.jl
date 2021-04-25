@@ -74,14 +74,14 @@ Interface function to return the `<:ManifoldsBase.Manifold` object of `variableT
 """
 function getManifold end
 
-"""
-    $SIGNATURES
-Interface function to return the `variableType` manifolds of an InferenceVariable, extend this function for all Types<:InferenceVariable.
-"""
-function getManifolds end
+# """
+#     $SIGNATURES
+# Interface function to return the `variableType` manifolds of an InferenceVariable, extend this function for all Types<:InferenceVariable.
+# """
+# function getManifolds end
 
-getManifolds(::Type{<:T}) where {T <: ManifoldsBase.Manifold} = convert(Tuple, T)
-getManifolds(::T) where {T <: ManifoldsBase.Manifold} = getManifolds(T)
+# getManifolds(::Type{<:T}) where {T <: ManifoldsBase.Manifold} = convert(Tuple, T)
+# getManifolds(::T) where {T <: ManifoldsBase.Manifold} = getManifolds(T)
 
 getDimension(t_::T) where {T <: ManifoldsBase.Manifold} = manifold_dimension(t_)
 
@@ -106,15 +106,15 @@ macro defVariable(structname, manifold)
         # user manifold must be a <:Manifold
         Base.convert(::Type{<:Manifold}, ::Union{<:T, Type{<:T}}) where {T <: $structname} = $manifold 
 
-        DFG.getManifold(::Type{M}) where {M <: $structname} = $manifold
-        DFG.getManifold(::M) where {M <: $structname} = getManifold(M)
+        getManifold(::Type{M}) where {M <: $structname} = $manifold
+        getManifold(::M) where {M <: $structname} = getManifold(M)
         
         DFG.getDimension(::Type{M}) where {M <: $structname} = manifold_dimension(getManifold(M))
         DFG.getDimension(::M) where {M <: $structname} = manifold_dimension(getManifold(M))
 
-        # # FIXME legacy API to be deprecated
-        DFG.getManifolds(::Type{M}) where {M <: $structname} = convert(Tuple, $manifold)
-        DFG.getManifolds(::M) where {M <: $structname} = convert(Tuple, $manifold)
+        # # # FIXME legacy API to be deprecated
+        # DFG.getManifolds(::Type{M}) where {M <: $structname} = convert(Tuple, $manifold)
+        # DFG.getManifolds(::M) where {M <: $structname} = convert(Tuple, $manifold)
     end)
 end
 
