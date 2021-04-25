@@ -11,6 +11,7 @@ Base.convert(::Type{<:Tuple}, ::typeof(Euclidean(2))) = (:Euclid, :Euclid)
 
 ##
 
+## WARNING, THIS IS A DUPLICATE OF THE MACRO IN DFGVariable.jl TO MAKE SURE OVERLOADS ARE WORKING RIGHT
 macro defVariable(structname, manifold)
   return esc(quote
       Base.@__doc__ struct $structname <: InferenceVariable end
@@ -26,8 +27,8 @@ macro defVariable(structname, manifold)
       getDimension(::Type{M}) where {M <: $structname} = manifold_dimension(getManifold(M))
       getDimension(::M) where {M <: $structname} = manifold_dimension(getManifold(M))
       # FIXME legacy API to be deprecated
-      getManifolds(::Type{M}) where {M <: $structname} = convert(Tuple, $manifold)
-      getManifolds(::M) where {M <: $structname} = convert(Tuple, $manifold)
+      # getManifolds(::Type{M}) where {M <: $structname} = convert(Tuple, $manifold)
+      # getManifolds(::M) where {M <: $structname} = convert(Tuple, $manifold)
   end)
 end
 
@@ -60,9 +61,9 @@ end
 @test getManifold( TestVariableType2) == Euclidean(2)
 
 # legacy
-@test getManifolds(TestVariableType1) == (:Euclid,)
+# @test getManifolds(TestVariableType1) == (:Euclid,)
 @test getDimension(TestVariableType1) === 1
-@test getManifolds(TestVariableType2) == (:Euclid,:Euclid)
+# @test getManifolds(TestVariableType2) == (:Euclid,:Euclid)
 @test getDimension(TestVariableType2) === 2
 
 ##
@@ -72,9 +73,9 @@ end
 @test getManifold( TestVariableType2()) == Euclidean(2)
 
 # legacy
-@test getManifolds(TestVariableType1()) == (:Euclid,)
+# @test getManifolds(TestVariableType1()) == (:Euclid,)
 @test getDimension(TestVariableType1()) === 1
-@test getManifolds(TestVariableType2()) == (:Euclid,:Euclid)
+# @test getManifolds(TestVariableType2()) == (:Euclid,:Euclid)
 @test getDimension(TestVariableType2()) === 2
 
 
