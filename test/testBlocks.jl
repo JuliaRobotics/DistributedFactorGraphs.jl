@@ -299,7 +299,7 @@ function DFGVariableSCA()
     #variableType functions
     testvar = TestVariableType1()
     @test getDimension(testvar) == 1
-    @test getManifolds(testvar) == (:Euclid,)
+    @test getManifold(testvar) == Euclidean(1)
 
     # #TODO sort out
     # getPPEs
