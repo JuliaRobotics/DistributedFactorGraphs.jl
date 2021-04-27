@@ -26,7 +26,9 @@ function printVariable( io::IO, vert::DFGVariable;
         println(ioc, "  initilized: ", isInitialized(vert))
         println(ioc, "  tags: ", getTags(vert))
         try
-            println(ioc, "  manifold: ", getManifolds(vert))
+            print(ioc, "  manifold: ")
+            show(ioc, getManifold(vert))
+            println(ioc, "")
         catch e
         end
         solk = listSolveKeys(vert) |> collect
