@@ -358,7 +358,7 @@ function  DFGFactorSCA()
     @test typeof(getFactorFunction(f1)) == TestFunctorInferenceType1
 
 
-    #TODO here for now, don't reccomend usage.
+    #TODO here for now, don't recommend usage.
     testTags = [:tag1, :tag2]
     @test setTags!(f1, testTags) == Set(testTags)
     @test setTags!(f1, Set(testTags)) == Set(testTags)
