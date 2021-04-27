@@ -72,7 +72,7 @@ function getDimension end
     $SIGNATURES
 Interface function to return the `<:ManifoldsBase.Manifold` object of `variableType<:InferenceVariable`, extend this function for all `Types<:InferenceVariable`.
 """
-function getManifold end
+getManifold(vari::DFGVariable) = getVariableType(vari) |> getManifold
 
 # """
 #     $SIGNATURES
