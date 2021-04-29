@@ -32,6 +32,23 @@ getFactorType(data::GenericFunctionNodeData) = data.fnc.usrfnc!
 getFactorType(fct::DFGFactor) = getFactorType(getSolverData(fct))
 getFactorType(dfg::AbstractDFG, lbl::Symbol) = getFactorType(getFactor(dfg, lbl))
 
+"""
+    $SIGNATURES
+
+If you know a variable is `::Type{<:Pose2}` but want to find its default prior `::Type{<:PriorPose2}`.
+
+Assumptions
+- The prior type will be defined in the same module as the variable type.
+- Not exported per default, but can be used with knowledge of the caveats.
+
+Example
+```julia
+using RoME
+@assert RoME.PriorPose2 == DFG._getPriorType(Pose2)
+```
+"""
+_getPriorType(_type::Type{<:InferenceVariable}) = getfield(_type.name.module, Symbol(:Prior, _type.name.name))
+
 
 ##==============================================================================
 ## Factors
