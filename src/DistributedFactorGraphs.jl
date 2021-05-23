@@ -31,8 +31,8 @@ using Pkg
 
 # used for @defVariable
 import ManifoldsBase
-import ManifoldsBase: Manifold, manifold_dimension
-export Manifold, manifold_dimension
+import ManifoldsBase: AbstractManifold, manifold_dimension
+export AbstractManifold, manifold_dimension
 
 import Base: getindex
 
