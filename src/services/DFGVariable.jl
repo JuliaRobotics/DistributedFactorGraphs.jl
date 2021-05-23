@@ -101,7 +101,7 @@ macro defVariable(structname, manifold)
     return esc(quote
         Base.@__doc__ struct $structname <: InferenceVariable end
 
-        @assert ($manifold isa ManifoldsBase.AbstractManifold) "@defVariable of "*string($structname)*" requires that the "*string($manifold)*" be a subtype of `ManifoldsBase.AbstractManifold`"
+        @assert ($manifold isa AbstractManifold) "@defVariable of "*string($structname)*" requires that the "*string($manifold)*" be a subtype of `ManifoldsBase.AbstractManifold`"
 
         # user manifold must be a <:Manifold
         Base.convert(::Type{<:ManifoldsBase.AbstractManifold}, ::Union{<:T, Type{<:T}}) where {T <: $structname} = $manifold 
