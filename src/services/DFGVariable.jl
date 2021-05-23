@@ -70,7 +70,7 @@ Interface function to return the `variableType` dimension of an InferenceVariabl
 function getDimension end
 """
     $SIGNATURES
-Interface function to return the `<:ManifoldsBase.Manifold` object of `variableType<:InferenceVariable`, extend this function for all `Types<:InferenceVariable`.
+Interface function to return the `<:ManifoldsBase.AbstractManifold` object of `variableType<:InferenceVariable`, extend this function for all `Types<:InferenceVariable`.
 """
 getManifold(vari::DFGVariable) = getVariableType(vari) |> getManifold
 
@@ -80,16 +80,16 @@ getManifold(vari::DFGVariable) = getVariableType(vari) |> getManifold
 # """
 # function getManifolds end
 
-# getManifolds(::Type{<:T}) where {T <: ManifoldsBase.Manifold} = convert(Tuple, T)
-# getManifolds(::T) where {T <: ManifoldsBase.Manifold} = getManifolds(T)
+# getManifolds(::Type{<:T}) where {T <: ManifoldsBase.AbstractManifold} = convert(Tuple, T)
+# getManifolds(::T) where {T <: ManifoldsBase.AbstractManifold} = getManifolds(T)
 
-getDimension(t_::T) where {T <: ManifoldsBase.Manifold} = manifold_dimension(t_)
+getDimension(t_::T) where {T <: ManifoldsBase.AbstractManifold} = manifold_dimension(t_)
 
 """
-    @defVariable StructName manifolds<:ManifoldsBase.Manifold
+    @defVariable StructName manifolds<:ManifoldsBase.AbstractManifold
 
 A macro to create a new variable with name `StructName` and manifolds.  Note that 
-the `manifolds` is an object and *must* be a subtype of `ManifoldsBase.Manifold`.
+the `manifolds` is an object and *must* be a subtype of `ManifoldsBase.AbstractManifold`.
 See documentation in [Manifolds.jl on making your own](https://juliamanifolds.github.io/Manifolds.jl/stable/examples/manifold.html). 
 
 Example:
@@ -101,10 +101,10 @@ macro defVariable(structname, manifold)
     return esc(quote
         Base.@__doc__ struct $structname <: InferenceVariable end
 
-        @assert ($manifold isa Manifold) "@defVariable of "*string($structname)*" requires that the "*string($manifold)*" be a subtype of `ManifoldsBase.Manifold`"
+        @assert ($manifold isa AbstractManifold) "@defVariable of "*string($structname)*" requires that the "*string($manifold)*" be a subtype of `ManifoldsBase.AbstractManifold`"
 
         # user manifold must be a <:Manifold
-        Base.convert(::Type{<:Manifold}, ::Union{<:T, Type{<:T}}) where {T <: $structname} = $manifold 
+        Base.convert(::Type{<:AbstractManifold}, ::Union{<:T, Type{<:T}}) where {T <: $structname} = $manifold 
 
         getManifold(::Type{M}) where {M <: $structname} = $manifold
         getManifold(::M) where {M <: $structname} = getManifold(M)
