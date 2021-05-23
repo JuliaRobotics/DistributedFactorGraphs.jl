@@ -104,7 +104,7 @@ macro defVariable(structname, manifold)
         @assert ($manifold isa AbstractManifold) "@defVariable of "*string($structname)*" requires that the "*string($manifold)*" be a subtype of `ManifoldsBase.AbstractManifold`"
 
         # user manifold must be a <:Manifold
-        Base.convert(::Type{<:ManifoldsBase.AbstractManifold}, ::Union{<:T, Type{<:T}}) where {T <: $structname} = $manifold 
+        Base.convert(::Type{<:AbstractManifold}, ::Union{<:T, Type{<:T}}) where {T <: $structname} = $manifold 
 
         getManifold(::Type{M}) where {M <: $structname} = $manifold
         getManifold(::M) where {M <: $structname} = getManifold(M)
