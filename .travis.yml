@@ -10,13 +10,6 @@ arch:
 services:
   - neo4j
 
-julia:
-  - 1.6
-  - nightly
-
-env:
-  - IIF_TEST=false
-
 branches:
   only:
   - master
@@ -28,6 +21,18 @@ jobs:
   include:
     - julia: 1.6
       env:
+        - IIF_TEST=false
+        - DO_CGDFG_TESTS=false
+        - DFG_USE_CGDFG=false
+        - JULIA_PKG_SERVER=""
+    - julia: nightly
+      env:
+        - IIF_TEST=false
+        - DO_CGDFG_TESTS=false
+        - DFG_USE_CGDFG=false
+        - JULIA_PKG_SERVER=""
+    - julia: 1.6
+      env:
         - IIF_TEST=true
         - DO_CGDFG_TESTS=true
         - DFG_USE_CGDFG=true
@@ -35,7 +40,9 @@ jobs:
       if: NOT branch =~ /(^v\d+\.\d+(\.\d+)?([-+]\S*)?$)|(^release.*$)/
     - arch: arm64
       env: 
+        - IIF_TEST=false
         - DO_CGDFG_TESTS=false
+        - DFG_USE_CGDFG=false
         - JULIA_PKG_SERVER=""
       before_script:
     - stage: "Documentation"
