@@ -16,7 +16,6 @@ julia:
 
 env:
   - IIF_TEST=false
-  - JULIA_PKG_SERVER=""
 
 branches:
   only:
@@ -32,13 +31,18 @@ jobs:
         - IIF_TEST=true
         - DO_CGDFG_TESTS=true
         - DFG_USE_CGDFG=true
+        - JULIA_PKG_SERVER=""
       if: NOT branch =~ /(^v\d+\.\d+(\.\d+)?([-+]\S*)?$)|(^release.*$)/
     - arch: arm64
-      env: DO_CGDFG_TESTS=false
+      env: 
+        - DO_CGDFG_TESTS=false
+        - JULIA_PKG_SERVER=""
       before_script:
     - stage: "Documentation"
       julia: 1.6
       os: linux
+      env:
+        - JULIA_PKG_SERVER=""
       script:
         - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
         - julia --project=docs/ docs/make.jl
