@@ -10,13 +10,6 @@ arch:
 services:
   - neo4j
 
-julia:
-  - 1.6
-  - nightly
-
-env:
-  - IIF_TEST=false
-
 branches:
   only:
   - master
@@ -28,16 +21,35 @@ jobs:
   include:
     - julia: 1.6
       env:
+        - IIF_TEST=false
+        - DO_CGDFG_TESTS=false
+        - DFG_USE_CGDFG=false
+        - JULIA_PKG_SERVER=""
+    - julia: nightly
+      env:
+        - IIF_TEST=false
+        - DO_CGDFG_TESTS=false
+        - DFG_USE_CGDFG=false
+        - JULIA_PKG_SERVER=""
+    - julia: 1.6
+      env:
         - IIF_TEST=true
         - DO_CGDFG_TESTS=true
         - DFG_USE_CGDFG=true
+        - JULIA_PKG_SERVER=""
       if: NOT branch =~ /(^v\d+\.\d+(\.\d+)?([-+]\S*)?$)|(^release.*$)/
     - arch: arm64
-      env: DO_CGDFG_TESTS=false
+      env: 
+        - IIF_TEST=false
+        - DO_CGDFG_TESTS=false
+        - DFG_USE_CGDFG=false
+        - JULIA_PKG_SERVER=""
       before_script:
     - stage: "Documentation"
       julia: 1.6
       os: linux
+      env:
+        - JULIA_PKG_SERVER=""
       script:
         - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
         - julia --project=docs/ docs/make.jl
