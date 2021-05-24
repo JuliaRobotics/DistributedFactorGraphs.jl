@@ -16,6 +16,7 @@ julia:
 
 env:
   - IIF_TEST=false
+  - JULIA_PKG_SERVER=""
 
 branches:
   only:
