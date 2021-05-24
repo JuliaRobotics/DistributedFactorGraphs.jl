@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Drawing Graphs · DistributedFactorGraphs.jl</title><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link href="../assets/documenter.css" rel="stylesheet" type="text/css"/></head><body><nav class="toc"><h1>DistributedFactorGraphs.jl</h1><select id="version-selector" onChange="window.location.href=this.value" style="visibility: hidden"></select><form class="search" id="search-form" action="../search/"><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li><a class="toctext" href="../">Home</a></li><li><span class="toctext">Getting Started</span><ul><li><a class="toctext" href="../DataStructure/">DFG Data Structures</a></li><li><a class="toctext" href="../BuildingGraphs/">Building Graphs</a></li><li><a class="toctext" href="../GraphData/">Using Graph Elements</a></li><li class="current"><a class="toctext" href>Drawing Graphs</a><ul class="internal"><li><a class="toctext" href="#GraphPlot-1">GraphPlot</a></li><li><a class="toctext" href="#Dot-Files-1">Dot Files</a></li></ul></li><li><a class="toctext" href="../ref_api/">Quick API Reference</a></li></ul></li><li><a class="toctext" href="../func_ref/">Function Reference</a></li></ul></nav><article id="docs"><header><nav><ul><li>Getting Started</li><li><a href>Drawing Graphs</a></li></ul><a class="edit-page" href="https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/blob/master/docs/src/DrawingGraphs.md"><span class="fa"></span> Edit on GitHub</a></nav><hr/><div id="topbar"><span>Drawing Graphs</span><a class="fa fa-bars" href="#"></a></div></header><h1><a class="nav-anchor" id="Drawing-Graphs-1" href="#Drawing-Graphs-1">Drawing Graphs</a></h1><p>Graphs can be visualized by using either <code>GraphPlot</code> or rendering to .dot files (which can be viewed using xdot).</p><h2><a class="nav-anchor" id="GraphPlot-1" href="#GraphPlot-1">GraphPlot</a></h2><p><code>GraphPlot</code> plotting is available if <code>GraphPlot</code> is imported before DFG is imported. Install <code>GraphPlot</code> using the following command:</p><pre><code class="language-julia">using Pkg
+Pkg.add(&quot;GraphPlot&quot;)</code></pre><p>Then bring <code>GraphPlot</code> in before DFG:</p><pre><code class="language-julia">using GraphPlot
+using DistributedFactorGraphs</code></pre><p>Any factor graph can then be drawn by calling <a href="../func_ref/#DistributedFactorGraphs.DFGPlots.dfgplot"><code>dfgplot</code></a>:</p><pre><code class="language-">using Cairo # hide
+# Construct graph using IIF
+using IncrementalInference
+# Create graph
+dfg = LightDFG{SolverParams}(solverParams=SolverParams())
+v1 = addVariable!(dfg, :x0, ContinuousScalar, tags = [:POSE], solvable=1)
+v2 = addVariable!(dfg, :x1, ContinuousScalar, tags = [:POSE], solvable=1)
+v3 = addVariable!(dfg, :l0, ContinuousScalar, tags = [:LANDMARK], solvable=1)
+prior = addFactor!(dfg, [:x0], Prior(Normal(0,1)))
+f1 = addFactor!(dfg, [:x0; :x1], LinearConditional(Normal(50.0,2.0)), solvable=1)
+f1 = addFactor!(dfg, [:l0; :x0], LinearConditional(Normal(40.0,5.0)), solvable=1)
+f1 = addFactor!(dfg, [:l0; :x1], LinearConditional(Normal(-10.0,5.0)), solvable=1)
+
+# Plot graph
+dfgplot(dfg)</code></pre><h3><a class="nav-anchor" id="Rendering-GraphPlot-to-PDF-1" href="#Rendering-GraphPlot-to-PDF-1">Rendering GraphPlot to PDF</a></h3><p>The graph can be rendered to PDF, SVG or JPG in the following way by including compose:</p><pre><code class="language-">using Compose
+# lets add another variable and factor and plot it
+dfg.solverParams.graphinit = false # hide
+addVariable!(dfg, :x2, ContinuousScalar);
+addFactor!(dfg, [:x1; :x2], LinearConditional(Normal(50.0,2.0)));
+# Save to SVG
+draw(SVG(&quot;graph.svg&quot;, 10cm, 10cm), dfgplot(dfg));
+nothing # hide</code></pre><p><img src="graph.svg" alt/></p><h3><a class="nav-anchor" id="More-Information-1" href="#More-Information-1">More Information</a></h3><p>More information at <a href="https://github.com/JuliaGraphs/GraphPlot.jl">GraphPlot.jl</a></p><h2><a class="nav-anchor" id="Dot-Files-1" href="#Dot-Files-1">Dot Files</a></h2><p>Dot files are a standard format for visualizing graphs and applications such as xdot are available to view the files. Dot plotting does not require <code>GraphPlot</code> and can be drawn by either:</p><ul><li>Calling <a href="../func_ref/#DistributedFactorGraphs.toDot-Tuple{AbstractDFG}"><code>toDot</code></a> on any graph to produce a string of the graph</li><li>Calling <a href="../func_ref/#DistributedFactorGraphs.toDotFile"><code>toDotFile</code></a> on any graph to save it directly to a dotfile</li></ul><pre><code class="language-">using DistributedFactorGraphs
+# Construct graph using IIF
+using IncrementalInference
+# Create graph
+dfg = LightDFG{SolverParams}(solverParams=SolverParams())
+v1 = addVariable!(dfg, :x0, ContinuousScalar, tags = [:POSE], solvable=1)
+v2 = addVariable!(dfg, :x1, ContinuousScalar, tags = [:POSE], solvable=1)
+v3 = addVariable!(dfg, :l0, ContinuousScalar, tags = [:LANDMARK], solvable=1)
+prior = addFactor!(dfg, [:x0], Prior(Normal(0,1)))
+f1 = addFactor!(dfg, [:x0; :x1], LinearConditional(Normal(50.0,2.0)), solvable=1)
+f1 = addFactor!(dfg, [:l0; :x0], LinearConditional(Normal(40.0,5.0)), solvable=1)
+f1 = addFactor!(dfg, [:l0; :x1], LinearConditional(Normal(-10.0,5.0)), solvable=1)
+# Save to dot file
+toDotFile(dfg, &quot;/tmp/test.dot&quot;)
+# Open with xdot
+# run(`xdot /tmp/test.dot`)
+# nothing # hide</code></pre><footer><hr/><a class="previous" href="../GraphData/"><span class="direction">Previous</span><span class="title">Using Graph Elements</span></a><a class="next" href="../ref_api/"><span class="direction">Next</span><span class="title">Quick API Reference</span></a></footer></article></body></html>
