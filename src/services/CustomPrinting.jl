@@ -34,14 +34,20 @@ function printVariable( io::IO, vert::DFGVariable;
         solk = listSolveKeys(vert) |> collect
         lsolk = length(solk)
         smsk = (rand(1:lsolk,100) |> unique)[1:minimum([4,lsolk])]
-        println(ioc, "  Nr SolveKeys=$(lsolk): ", solk[smsk], 4<lsolk ? "..." : "")
-        printstyled(ioc, "    :default", "\n", bold=true)
+        println(ioc, "  Nr solveKeys=$(lsolk): ", solk[smsk], 4<lsolk ? "..." : "")
+        printstyled(ioc, "    :default <-- VariableNodeData", "\n", bold=true)
         println(ioc, "      size marginal samples: ", size(vnd.val))
         println(ioc, "      kde bandwidths: ", round.((vnd.bw)[:,1], digits=4))
-        if 0 < length(getPPEDict(vert))
-            println(ioc, "      PPE.suggested: ", round.(getPPE(vert).suggested,digits=4) )
-        else
-            println(ioc, "      No PPEs yet")
+        if haskey(getPPEDict(vert), :default)
+            printstyled(ioc, "    :default ", bold=true)
+            println(ioc, "<-- PPE.suggested: ", round.(ppe.suggested,digits=4) )
+        end
+        maxkeys = 3
+        for (key, ppe) in getPPEDict(vert)
+            maxkeys -= 1
+            maxkeys == 0 && break
+            printstyled(ioc, "    :$key ", bold=true)
+            println(ioc, "<-- PPE.suggested: ", round.(ppe.suggested,digits=4) )
         end
         printstyled(ioc, "  TYPE: ", bold=true, color=:blue)
         println(ioc, vari)
