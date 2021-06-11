@@ -50,7 +50,7 @@ dfg = initfg()
 # add 2 ContinuousScalar variable types to the new factor graph
 addVariable!(dfg, :a, ContinuousScalar)
 addVariable!(dfg, :b, ContinuousScalar)
-# add a LinearConditional factor
-addFactor!(dfg, [:a, :b], LinearConditional(Normal(10.0,1.0)))
+# add a LinearRelative factor
+addFactor!(dfg, [:a, :b], LinearRelative(Normal(10.0,1.0)))
 ```
 
