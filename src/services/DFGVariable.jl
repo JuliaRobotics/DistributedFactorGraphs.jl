@@ -190,6 +190,29 @@ function isInitialized(dfg::AbstractDFG, label::Symbol, key::Symbol=:default)
 end
 
 
+"""
+    $SIGNATURES
+
+Return `::Bool` on whether this variable has been marginalized.
+
+Notes:
+- VariableNodeData default `solveKey=:default`
+"""
+isMarginalized(vert::DFGVariable, solveKey::Symbol=:default) = getSolverData(vert, solveKey).ismargin
+isMarginalized(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = isMarginalized(DFG.getVariable(dfg, sym), solveKey)
+
+"""
+    $SIGNATURES
+
+Mark a variable as marginalized `true` or `false`.
+"""
+function setMarginalized!(vnd::VariableNodeData, val::Bool)
+  vnd.ismargin = val
+end
+setMarginalized!(vari::DFGVariable, val::Bool, solveKey::Symbol=:default) = setMarginalized!(getSolverData(vari, solveKey), val)
+setMarginalized!(dfg::AbstractDFG, sym::Symbol, val::Bool, solveKey::Symbol=:default) = setMarginalized!(getVariable(dfg, sym), val, solveKey)
+
+
 ##==============================================================================
 ## Variables
 ##==============================================================================
