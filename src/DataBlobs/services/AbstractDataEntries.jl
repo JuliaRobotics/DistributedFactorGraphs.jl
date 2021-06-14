@@ -29,7 +29,7 @@ buildSourceString(dfg::AbstractDFG, label::Symbol) =
 Get data entry
 """
 function getDataEntry(var::AbstractDFGVariable, key::Symbol)
-    !hasDataEntry(var, key) && error("Data entry $(key) does not exist in variable")
+    !hasDataEntry(var, key) && error("Data entry $(key) does not exist in variable $(getLabel(var))")
     return var.dataDict[key]
 end
 
@@ -42,7 +42,7 @@ end
 Add Data Entry to a DFG variable
 """
 function addDataEntry!(var::AbstractDFGVariable, bde::AbstractDataEntry)
-    haskey(var.dataDict, bde.label) && error("Data entry $(bde.label) already exists in variable")
+    haskey(var.dataDict, bde.label) && error("Data entry $(bde.label) already exists in variable $(getLabel(var))")
     var.dataDict[bde.label] = bde
     return bde
 end
@@ -66,7 +66,7 @@ DevNote
 - DF, unclear if `update` verb is applicable in this case, see #404
 """
 function updateDataEntry!(var::AbstractDFGVariable,  bde::AbstractDataEntry)
-    !haskey(var.dataDict, bde.label) && (@warn "$(bde.label) does not exist in variable, adding")
+    !haskey(var.dataDict, bde.label) && (@warn "$(bde.label) does not exist in variable $(getLabel(var)), adding")
     var.dataDict[bde.label] = bde
     return bde
 end
