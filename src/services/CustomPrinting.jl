@@ -16,46 +16,65 @@ function printVariable( io::IO, vert::DFGVariable;
     if short
         # opmemt = (getVariableType(vert) |> typeof ).name
         vari = getVariableType(vert) |> typeof
-        printstyled(ioc, typeof(vert).name, "{",vari.name,"...}","\n", bold=true)
+        printstyled(ioc, typeof(vert).name.name, "{",bold=true)
+        printstyled(ioc, vari.name.name, bold=true, color=:blue)
+        printstyled(ioc,"...}", bold=true)
+        println(ioc, "")
         # printstyled(ioc, summary(vert),"\n", bold=true)
 
-        vnd = getSolverData(vert)
-        println(ioc, "  timestamp:  ", vert.timestamp)
-        println(ioc, "  label:      ", vert.label)
-        println(ioc, "  solvable:   ", getSolvable(vert))
-        println(ioc, "  initilized: ", isInitialized(vert))
-        println(ioc, "  tags: ", getTags(vert))
         try
-            print(ioc, "  manifold: ")
+            print(ioc, "  manifold:   ")
             show(ioc, getManifold(vert))
             println(ioc, "")
         catch e
         end
+        vnd = getSolverData(vert, :default)
+        println(ioc, "  timestamp:  ", vert.timestamp)
+        println(ioc, "  label:      ", vert.label)
+        println(ioc, "  solvable:   ", getSolvable(vert))
+        println(ioc, "  tags:       ", getTags(vert))
         solk = listSolveKeys(vert) |> collect
         lsolk = length(solk)
         smsk = (rand(1:lsolk,100) |> unique)[1:minimum([4,lsolk])]
-        println(ioc, "  Nr solveKeys=$(lsolk): ", solk[smsk], 4<lsolk ? "..." : "")
-        printstyled(ioc, "    :default <-- VariableNodeData", "\n", bold=true)
-        println(ioc, "      size marginal samples: ", size(vnd.val))
-        println(ioc, "      kde bandwidths: ", round.((vnd.bw)[:,1], digits=4))
+        # list the marginalization status
+        ismarg = solk .|> x->isMarginalized(vert, x)
+        isinit = solk .|> x->isInitialized(vert, x)
+        printstyled(ioc, "  # VND solveKeys=    ($(lsolk))", bold=true)
+        println(ioc, "")
+        printstyled(ioc, "  # initialized:      ", bold=true)
+        println(ioc, "(true=", sum(isinit), ",false=", length(isinit) - sum(isinit), ")" )
+        printstyled(ioc, "  # marginalized:     ", bold=true)
+        println(ioc, "(true=", sum(ismarg), ",false=", length(ismarg) - sum(ismarg), ")" )
+        
+        println(ioc, "    :default <-- VariableNodeData")
+        println(ioc, "      initilized:        ", isInitialized(vert, :default))
+        println(ioc, "      marginalized:      ", isMarginalized(vert, :default))
+        println(ioc, "      size bel. samples: ", size(vnd.val))
+        println(ioc, "      kde bandwidths:    ", round.((vnd.bw)[:,1], digits=4))
+        printstyled(ioc, "     VNDs: ",bold=true)
+        println(ioc, solk[smsk], 4<lsolk ? "..." : "")
+        printstyled(ioc, "  # PPE solveKeys=    ($(length(getPPEDict(vert))))", bold=true)
+        println(ioc, "")
         if haskey(getPPEDict(vert), :default)
-            printstyled(ioc, "    :default ", bold=true)
-            println(ioc, "<-- PPE.suggested: ", round.(ppe.suggested,digits=4) )
+            print(ioc, "    :default ")
+            println(ioc, "<-- .suggested:    ", round.(getPPE(vert, :default).suggested,digits=4) )
         end
-        maxkeys = 3
+        maxkeys = 4
         for (key, ppe) in getPPEDict(vert)
+            key == :default && continue # skip as default is done separately
             maxkeys -= 1
             maxkeys == 0 && break
-            printstyled(ioc, "    :$key ", bold=true)
-            println(ioc, "<-- PPE.suggested: ", round.(ppe.suggested,digits=4) )
+            print(ioc, "    :$key ")
+            println(ioc, "<-- .suggested:  ", round.(ppe.suggested,digits=4) )
         end
-        printstyled(ioc, "  TYPE: ", bold=true, color=:blue)
+        printstyled(ioc, "  VariableType: ", color=:blue, bold=true)
         println(ioc, vari)
         # println(ioc, "kde max: $(round.(getKDEMax(getKDE(vnd)),digits=4))")
         # println(ioc, "kde max: $(round.(getKDEMax(getKDE(vnd)),digits=4))")
     else
 
-        printstyled(ioc, summary(vert),"\n", bold=true, color=:blue)
+        printstyled(ioc, summary(vert), bold=true, color=:blue)
+        println(ioc, "")
 
         :solver in skipfields && push!(skipfields, :solverDataDict)
         :ppe in skipfields && push!(skipfields, :ppeDict)
@@ -65,7 +84,8 @@ function printVariable( io::IO, vert::DFGVariable;
         nf = nfields(vert)
 
         for f in fields
-            printstyled(ioc, f,":\n", color=:blue)
+            printstyled(ioc, f,":", color=:blue)
+            println(ioc, "")
             show(ioc, getproperty(vert, f))
             println(ioc)
         end

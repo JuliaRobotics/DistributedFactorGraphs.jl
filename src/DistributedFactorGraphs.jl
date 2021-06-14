@@ -180,7 +180,7 @@ export VariableNodeData, PackedVariableNodeData
 
 export packVariableNodeData, unpackVariableNodeData
 
-export getSolvedCount, isSolved, setSolvedCount!, isInitialized
+export getSolvedCount, isSolved, setSolvedCount!, isInitialized, isMarginalized
 
 export getNeighborhood, getNeighbors, _getDuplicatedEmptyDFG
 export findFactorsBetweenNaive
