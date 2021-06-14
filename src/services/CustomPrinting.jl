@@ -30,7 +30,10 @@ function printVariable( io::IO, vert::DFGVariable;
         end
         vnd = getSolverData(vert, :default)
         println(ioc, "  timestamp:  ", vert.timestamp)
-        println(ioc, "  label:      ", vert.label)
+        println(ioc, "   nstime:    ", vert.nstime)
+        print(ioc,   "  label:      ")
+        printstyled(ioc, vert.label, bold=true)
+        println(ioc)
         println(ioc, "  solvable:   ", getSolvable(vert))
         println(ioc, "  tags:       ", getTags(vert))
         solk = listSolveKeys(vert) |> collect
@@ -105,20 +108,22 @@ function printFactor(   io::IO, vert::DFGFactor;
         opmemt = (getSolverData(vert).fnc |> typeof).name
         fct = getFactorType(vert)
         fctt = fct |> typeof
-        printstyled(ioc, typeof(vert).name, "{",opmemt,"{",fctt.name,"...}}","\n", bold=true)
-        println(ioc, "  timestamp: ", vert.timestamp)
-        println(ioc, "  nstime: ",vert.nstime)
-        println(ioc, "  label: ", vert.label)
-        println(ioc, "  solvable: ", vert.solvable)
+        printstyled(ioc, typeof(vert).name.name, "{",opmemt,"{",fctt.name.name,"...}}","\n", bold=true)
+        println(ioc, "  timestamp:     ", vert.timestamp)
+        println(ioc, "   nstime:       ", vert.nstime)
+        print(ioc,   "  label:         ")
+        printstyled(ioc, vert.label, bold=true)
+        println(ioc)
+        println(ioc, "  solvable:      ", vert.solvable)
         println(ioc, "  VariableOrder: ", vert._variableOrderSymbols)
-        println(ioc, "  multihypo: ", getSolverData(vert).multihypo) # FIXME #477
-        println(ioc, "  nullhypo: ", getSolverData(vert).nullhypo)
-        println(ioc, "  tags: ", vert.tags)
-        printstyled(ioc, "  TYPE: ", bold=true, color=:blue)
+        println(ioc, "  multihypo:     ", getSolverData(vert).multihypo) # FIXME #477
+        println(ioc, "  nullhypo:      ", getSolverData(vert).nullhypo)
+        println(ioc, "  tags:          ", vert.tags)
+        printstyled(ioc, "  FactorType: ", bold=true, color=:blue)
         println(ioc, fctt)
         # show(ioc, fctt)
         for f in setdiff(fieldnames(fctt), skipfields)
-            printstyled(ioc, f,":\n", color=:blue)
+            printstyled(ioc, f,":\n", color=:magenta)
             show(ioc, getproperty(fct, f))
             println(ioc)
         end
