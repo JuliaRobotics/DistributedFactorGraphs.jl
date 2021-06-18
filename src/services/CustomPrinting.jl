@@ -105,10 +105,13 @@ function printFactor(   io::IO, vert::DFGFactor;
     ioc = IOContext(io, :limit=>limit, :compact=>compact)
 
     if short
-        opmemt = (getSolverData(vert).fnc |> typeof).name
+        opmemt = (getSolverData(vert).fnc |> typeof).name.name
         fct = getFactorType(vert)
         fctt = fct |> typeof
-        printstyled(ioc, typeof(vert).name.name, "{",opmemt,"{",fctt.name.name,"...}}","\n", bold=true)
+        printstyled(ioc, typeof(vert).name.name, "{",opmemt,"{",bold=true)
+        printstyled(ioc, fctt.name.name,bold=true, color=:blue)
+        printstyled(ioc, "...}}", bold=true)
+        println(ioc)
         println(ioc, "  timestamp:     ", vert.timestamp)
         println(ioc, "   nstime:       ", vert.nstime)
         print(ioc,   "  label:         ")
@@ -123,13 +126,15 @@ function printFactor(   io::IO, vert::DFGFactor;
         println(ioc, fctt)
         # show(ioc, fctt)
         for f in setdiff(fieldnames(fctt), skipfields)
-            printstyled(ioc, f,":\n", color=:magenta)
+            printstyled(ioc, f,":", color=:magenta)
+            println(ioc)
             show(ioc, getproperty(fct, f))
             println(ioc)
         end
     else
 
-        printstyled(ioc, summary(vert),"\n", bold=true, color=:blue)
+        printstyled(ioc, summary(vert), bold=true, color=:blue)
+        println(ioc)
 
         :solver in skipfields && push!(skipfields, :solverData)
 
@@ -138,7 +143,8 @@ function printFactor(   io::IO, vert::DFGFactor;
         nf = nfields(vert)
 
         for f in fields
-            printstyled(ioc, f,":\n", color=:blue)
+            printstyled(ioc, f,":", color=:blue)
+            println(ioc)
             show(ioc, getproperty(vert, f))
             println(ioc)
         end
