@@ -83,7 +83,7 @@ See documentation in [Manifolds.jl on making your own](https://juliamanifolds.gi
 
 Example:
 ```
-DFG.@defVariable Pose2 SpecialEuclidean(2)
+DFG.@defVariable Pose2 SpecialEuclidean(2) ProductRepr{Tuple{Vector{Float64}, Matrix{Float64}}}
 ```
 """
 macro defVariable(structname, manifold, point_type)
