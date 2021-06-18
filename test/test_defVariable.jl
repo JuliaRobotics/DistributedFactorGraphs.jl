@@ -1,82 +1,39 @@
-
-using ManifoldsBase, Manifolds
+using Manifolds
 using Test
 
-# abstract type InferenceVariable end
-
-##
-
-Base.convert(::Type{<:Tuple}, ::typeof(Euclidean(1))) = (:Euclid,)
-Base.convert(::Type{<:Tuple}, ::typeof(Euclidean(2))) = (:Euclid, :Euclid)
-
-##
-
-## WARNING, THIS IS A DUPLICATE OF THE MACRO IN DFGVariable.jl TO MAKE SURE OVERLOADS ARE WORKING RIGHT
-macro defVariable(structname, manifold)
-  return esc(quote
-      Base.@__doc__ struct $structname <: InferenceVariable end
-
-      @assert ($manifold isa AbstractManifold) "@defVariable of "*string($structname)*" requires that the "*string($manifold)*" be a subtype of `ManifoldsBase.AbstractManifold`"
-
-      # manifold must be is a <:Manifold
-      Base.convert(::Type{<:AbstractManifold}, ::Union{<:T, Type{<:T}}) where {T <: $structname} = $manifold 
-
-      getManifold(::Type{M}) where {M <: $structname} = $manifold
-      getManifold(::M) where {M <: $structname} = getManifold(M)
-      
-      getDimension(::Type{M}) where {M <: $structname} = manifold_dimension(getManifold(M))
-      getDimension(::M) where {M <: $structname} = manifold_dimension(getManifold(M))
-      # FIXME legacy API to be deprecated
-      # getManifolds(::Type{M}) where {M <: $structname} = convert(Tuple, $manifold)
-      # getManifolds(::M) where {M <: $structname} = convert(Tuple, $manifold)
-  end)
-end
-
-
-##
-
-
-ex = macroexpand(Main, :(@defVariable(TestVariableType1, Euclidean(1))) )
-
-
+@testset "Testing @defVariable" begin
 ##
 
 struct NotAManifold end
 
-try
-  @defVariable(MyVar, NotAManifold())
-catch AssertionError
-  @test true
+@test_throws AssertionError  @defVariable(MyVar, NotAManifold(), Matrix{3})
+
+##
+
+@defVariable(TestVarType1, Euclidean(3), Vector{Float64})
+@defVariable(TestVarType2, SpecialEuclidean(3), ProductRepr{Tuple{Vector{Float64}, Matrix{Float64}}})
+
+
+##
+
+@test getManifold( TestVarType1) == Euclidean(3)
+@test getManifold( TestVarType2) == SpecialEuclidean(3)
+
+@test getDimension(TestVarType1) === 3
+@test getDimension(TestVarType2) === 6
+
+@test getPointType(TestVarType1) == Vector{Float64}
+@test getPointType(TestVarType2) == ProductRepr{Tuple{Vector{Float64}, Matrix{Float64}}}
+##
+
+
+@test getManifold( TestVarType1()) == Euclidean(3)
+@test getManifold( TestVarType2()) == SpecialEuclidean(3)
+
+@test getDimension(TestVarType1()) === 3
+@test getDimension(TestVarType2()) === 6
+
+@test getPointType(TestVarType1()) == Vector{Float64}
+@test getPointType(TestVarType2()) == ProductRepr{Tuple{Vector{Float64}, Matrix{Float64}}}
+
 end
-
-##
-
-@defVariable(TestVariableType1, Euclidean(1))
-@defVariable(TestVariableType2, Euclidean(2))
-
-
-##
-
-@test getManifold( TestVariableType1) == Euclidean(1)
-@test getManifold( TestVariableType2) == Euclidean(2)
-
-# legacy
-# @test getManifolds(TestVariableType1) == (:Euclid,)
-@test getDimension(TestVariableType1) === 1
-# @test getManifolds(TestVariableType2) == (:Euclid,:Euclid)
-@test getDimension(TestVariableType2) === 2
-
-##
-
-
-@test getManifold( TestVariableType1()) == Euclidean(1)
-@test getManifold( TestVariableType2()) == Euclidean(2)
-
-# legacy
-# @test getManifolds(TestVariableType1()) == (:Euclid,)
-@test getDimension(TestVariableType1()) === 1
-# @test getManifolds(TestVariableType2()) == (:Euclid,:Euclid)
-@test getDimension(TestVariableType2()) === 2
-
-
-##
