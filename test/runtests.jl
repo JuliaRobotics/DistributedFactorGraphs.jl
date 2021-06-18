@@ -21,9 +21,7 @@ using UUIDs
 # logger = SimpleLogger(stdout, Logging.Debug)
 # global_logger(logger)
 
-# @testset "Check @defVariable design" begin
-#     include("test_defVariable.jl")
-# end
+include("test_defVariable.jl")
 
 include("testBlocks.jl")
 

@@ -86,7 +86,7 @@ Example:
 DFG.@defVariable Pose2 SpecialEuclidean(2)
 ```
 """
-macro defVariable(structname, manifold)
+macro defVariable(structname, manifold, point_type)
     return esc(quote
         Base.@__doc__ struct $structname <: InferenceVariable end
 
@@ -94,6 +94,8 @@ macro defVariable(structname, manifold)
         @assert ($manifold isa AbstractManifold) "@defVariable of "*string($structname)*" requires that the "*string($manifold)*" be a subtype of `ManifoldsBase.AbstractManifold`"
 
         DFG.getManifold(::Type{$structname}) = $manifold
+
+        DFG.getPointType(::Type{$structname}) = $point_type
 
     end)
 end
@@ -119,6 +121,13 @@ getDimension(::T) where {T <: InferenceVariable} = manifold_dimension(getManifol
 getDimension(M::ManifoldsBase.AbstractManifold) = manifold_dimension(M)
 getDimension(var::DFGVariable) = getDimension(getVariableType(var))
 
+
+"""
+    $SIGNATURES
+Interface function to return the manifold point type of an InferenceVariable, extend this function for all Types<:InferenceVariable.
+"""
+function getPointType end
+getPointType(::T) where {T <: InferenceVariable} = getPointType(T)
 
 ##------------------------------------------------------------------------------
 ## solvedCount
