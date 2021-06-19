@@ -741,7 +741,7 @@ function  VSDTestBlock!(fg, v1)
     retVnd = updateVariableSolverData!(fg, :a, altVnd, false, [:inferdim;])
     @test retVnd == altVnd
 
-    push!(altVnd.bw, [-1.0;])
+    altVnd.bw = -ones(1,1)
     retVnd = updateVariableSolverData!(fg, :a, altVnd, false, [:bw;])
     @test retVnd == altVnd
 

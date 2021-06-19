@@ -14,7 +14,6 @@ vnd3 = VariableNodeData(TestVariableType2())
 
 @test vnd1 == vnd2
 push!(vnd1.val, [1.0;])
-# vnd2.val = Vector{Vector{Float64}}(undef,1)
 push!(vnd2.val, [1.0;])
 @test vnd1 == vnd2
 vnd2.val[1] = [0.1;]

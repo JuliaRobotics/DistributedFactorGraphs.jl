@@ -216,15 +216,15 @@ function packVariableNodeData(::G, d::VariableNodeData{T}) where {G <: AbstractD
     zeros(1,0)
   end
   _val = castval[:]
-  castbw = if 0 < length(d.bw)
-    @cast castbw[i,j] := d.bw[j][i]
-    castbw
-  else
-    zeros(1,0)
-  end
-  _bw = castbw[:]
+#   castbw = if 0 < length(d.bw)
+#     @cast castbw[i,j] := d.bw[j][i]
+#     castbw
+#   else
+#     zeros(1,0)
+#   end
+#   _bw = castbw[:]
   return PackedVariableNodeData(_val, size(castval,1),
-                                _bw, size(castbw,1),
+                                d.bw[:], size(d.bw,1),
                                 d.BayesNetOutVertIDs,
                                 d.dimIDs, d.dims, d.eliminated,
                                 d.BayesNetVertID, d.separator,
@@ -258,14 +258,10 @@ function unpackVariableNodeData(dfg::G, d::PackedVariableNodeData) where G <: Ab
     
     r4 = d.dimbw
     c4 = r4 > 0 ? floor(Int,length(d.vecbw)/r4) : 0
-    M4 = reshape(d.vecbw,r4,c4)
-    bw = Vector{Vector{Float64}}(undef,size(M4,2))
-    for j in 1:size(M4,2)
-      bw[j] = collect(M4[:,j])
-    end
+    BW = reshape(d.vecbw,r4,c4)
 
     # 
-    return VariableNodeData{T, getPointType(T)}(vals, bw, d.BayesNetOutVertIDs,
+    return VariableNodeData{T, getPointType(T)}(vals, BW, d.BayesNetOutVertIDs,
         d.dimIDs, d.dims, d.eliminated, d.BayesNetVertID, d.separator,
         T(), d.initialized, d.inferdim, d.ismargin, d.dontmargin, 
         d.solveInProgress, d.solvedCount, d.solveKey,

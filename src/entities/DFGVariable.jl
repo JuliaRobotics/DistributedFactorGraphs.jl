@@ -18,7 +18,7 @@ $(TYPEDFIELDS)
 """
 mutable struct VariableNodeData{T<:InferenceVariable, P}
     val::Vector{P}
-    bw::Vector{Vector{Float64}}
+    bw::Matrix{Float64}
     BayesNetOutVertIDs::Vector{Symbol}
     dimIDs::Vector{Int} # Likely deprecate
 
@@ -43,7 +43,7 @@ mutable struct VariableNodeData{T<:InferenceVariable, P}
     VariableNodeData{T,P}(w...)  where {T <:InferenceVariable, P} = new{T,P}(w...)
     VariableNodeData{T,P}(;solveKey::Symbol=:default ) where {T <:InferenceVariable, P} = new{T,P}(
             Vector{P}(), 
-            Vector{Vector{Float64}}(), 
+            zeros(0,0), 
             Symbol[], 
             Int[], 
             0, 
@@ -68,7 +68,7 @@ end
 VariableNodeData{T}(;solveKey::Symbol=:default ) where T <: InferenceVariable = VariableNodeData{T, getPointType(T)}(solveKey=solveKey)
 
 VariableNodeData(   val::Vector{P},
-                    bw::Vector{Vector{Float64}},
+                    bw::Matrix{<:Real},
                     BayesNetOutVertIDs::AbstractVector{Symbol},
                     dimIDs::AbstractVector{Int},
                     dims::Int,
@@ -95,7 +95,7 @@ VariableNodeData(   val::Vector{P},
 #
 
 VariableNodeData(val::Vector{P},
-                 bw::Vector{Vector{Float64}},
+                 bw::Matrix{<:Real},
                  BayesNetOutVertIDs::AbstractVector{Symbol},
                  dimIDs::AbstractVector{Int},
                  dims::Int,
@@ -123,7 +123,7 @@ function VariableNodeData(variableType::T; solveKey::Symbol=:default) where T <:
     # p0 = getPointIdentity(T)
     P0 = Vector{getPointType(T)}()
     # P0[1] = p0
-    BW = Vector{Vector{Float64}}()
+    BW = zeros(0,0)
     # BW[1] = zeros(getDimension(T))
     VariableNodeData(   P0, BW, Symbol[], Int[], 
                         0, false, :NOTHING, Symbol[], 
