@@ -203,12 +203,6 @@ function unpackVariable(dfg::G,
     return variable
 end
 
-## FIXME need method to serialize coordinates for the variable `vnd.val::Vector{P}` and `.bw.Vector{B}`
-
-function _packVNDVal(T::Type, val::Vector{P}) where P
-  
-end
-
 
 # returns a PackedVariableNodeData
 function packVariableNodeData(::G, d::VariableNodeData{T}) where {G <: AbstractDFG, T <: InferenceVariable}
