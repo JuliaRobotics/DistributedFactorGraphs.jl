@@ -13,9 +13,9 @@ vnd2 = deepcopy(vnd1)
 vnd3 = VariableNodeData(TestVariableType2())
 
 @test vnd1 == vnd2
-vnd1.val[1] = [1.0;]
-vnd2.val = Vector{Vector{Float64}}(undef,1)
-vnd2.val[1] = [1.0;]
+push!(vnd1.val, [1.0;])
+# vnd2.val = Vector{Vector{Float64}}(undef,1)
+push!(vnd2.val, [1.0;])
 @test vnd1 == vnd2
 vnd2.val[1] = [0.1;]
 @test !(vnd1 == vnd2)
@@ -68,8 +68,8 @@ vnd3 = VariableNodeData(TestVariableType2())
 @test !compare(vnd1, vnd3)
 
 @test compare(vnd1, vnd2)
-vnd1.val[1][1] = 1.0
-vnd2.val[1][1] = 1.0
+push!(vnd1.val, [1.0;])
+push!(vnd2.val, [1.0;])
 @test compare(vnd1, vnd2)
 vnd2.val[1][1] = 0.1
 @test !compare(vnd1, vnd2)
