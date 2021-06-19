@@ -28,6 +28,7 @@ using LinearAlgebra
 using SparseArrays
 using UUIDs
 using Pkg
+using TensorCast
 
 # used for @defVariable
 import ManifoldsBase
@@ -135,7 +136,10 @@ export getSolverData
 export getVariableType
 
 # VariableType functions
-export getDimension, getManifolds, getManifold, getPointType
+export getDimension, getManifold, getPointType
+export getPointIdentity, getPoint, getCoordinates
+
+export getManifolds # TODO Deprecate?
 
 # Small Data CRUD
 export SmallDataTypes, getSmallData, addSmallData!, updateSmallData!, deleteSmallData!, listSmallData, emptySmallData!
