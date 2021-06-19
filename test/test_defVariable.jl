@@ -1,17 +1,18 @@
 using Manifolds
 using Test
+using LinearAlgebra
 
 @testset "Testing @defVariable" begin
 ##
 
 struct NotAManifold end
 
-@test_throws AssertionError  @defVariable(MyVar, NotAManifold(), Matrix{3})
+@test_throws AssertionError  @defVariable(MyVar, NotAManifold(), zeros(3,3))
 
 ##
 
-@defVariable(TestVarType1, Euclidean(3), Vector{Float64})
-@defVariable(TestVarType2, SpecialEuclidean(3), ProductRepr{Tuple{Vector{Float64}, Matrix{Float64}}})
+@defVariable(TestVarType1, Euclidean(3), zeros(3))
+@defVariable(TestVarType2, SpecialEuclidean(3), ProductRepr(zeros(3), diagm(ones(3))))
 
 
 ##
