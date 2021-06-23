@@ -239,10 +239,19 @@ function compareFactor(A::DFGFactor,
   TP =  compareAll(A, B, skip=union([:attributes;:solverData;:_variableOrderSymbols],skip), show=show)
   # TP = TP & compareAll(A.attributes, B.attributes, skip=[:data;], show=show)
   TP = TP & compareAllSpecial(getSolverData(A), getSolverData(B), skip=union([:fnc], skip), show=show)
+  if :fnc in skip
+    return TP
+  end
   TP = TP & compareAllSpecial(getSolverData(A).fnc, getSolverData(B).fnc, skip=union([:cpt;:measurement;:params;:varidx;:threadmodel], skip), show=show)
+  if !(:measurement in skip)
   TP = TP & (skipsamples || compareAll(getSolverData(A).fnc.measurement, getSolverData(B).fnc.measurement, show=show, skip=skip))
-  TP = TP & (skipcompute || compareAll(getSolverData(A).fnc.params, getSolverData(B).fnc.params, show=show, skip=skip))
-  TP = TP & (skipcompute || compareAll(getSolverData(A).fnc.varidx, getSolverData(B).fnc.varidx, show=show, skip=skip))
+  end
+  if !(:params in skip)
+    TP = TP & (skipcompute || compareAll(getSolverData(A).fnc.params, getSolverData(B).fnc.params, show=show, skip=skip))
+  end
+  if !(:varidx in skip)
+    TP = TP & (skipcompute || compareAll(getSolverData(A).fnc.varidx, getSolverData(B).fnc.varidx, show=show, skip=skip))
+  end
 
   return TP
 end
@@ -339,11 +348,12 @@ Related:
 
 `compareFactorGraphs`, `compareSimilarVariables`, `compareAllVariables`, `ls`.
 """
-function compareSimilarFactors(fgA::G1,
-                               fgB::G2;
-                               skipsamples::Bool=true,
-                               skipcompute::Bool=true,
-                               show::Bool=true  )::Bool where {G1 <: AbstractDFG, G2 <: AbstractDFG}
+function compareSimilarFactors( fgA::G1,
+                                fgB::G2;
+                                skipsamples::Bool=true,
+                                skipcompute::Bool=true,
+                                skip::AbstractVector{Symbol}=Symbol[],
+                                show::Bool=true  ) where {G1 <: AbstractDFG, G2 <: AbstractDFG}
   #
   xlA = listFactors(fgA)
   xlB = listFactors(fgB)
@@ -354,7 +364,8 @@ function compareSimilarFactors(fgA::G1,
 
   # compare the common set
   for var in xlAB
-    TP = TP && compareFactor(getFactor(fgA, var), getFactor(fgB, var), skipsamples=skipsamples, skipcompute=skipcompute, show=show)
+    TP = TP && compareFactor( getFactor(fgA, var), getFactor(fgB, var), 
+                              skipsamples=skipsamples, skipcompute=skipcompute, skip=skip, show=show)
   end
 
   # return comparison result
@@ -376,12 +387,12 @@ Related:
 
 `compareSimilarVariables`, `compareSimilarFactors`, `compareAllVariables`, `ls`.
 """
-function compareFactorGraphs(fgA::G1,
-                             fgB::G2;
-                             skipsamples::Bool=true,
-                             skipcompute::Bool=true,
-                             skip::Vector{Symbol}=Symbol[],
-                             show::Bool=true  )::Bool where {G1 <: AbstractDFG, G2 <: AbstractDFG}
+function compareFactorGraphs( fgA::G1,
+                              fgB::G2;
+                              skipsamples::Bool=true,
+                              skipcompute::Bool=true,
+                              skip::Vector{Symbol}=Symbol[],
+                              show::Bool=true  ) where {G1 <: AbstractDFG, G2 <: AbstractDFG}
   #
   skiplist = Symbol[:g;:bn;:IDs;:fIDs;:id;:nodeIDs;:factorIDs;:fifo;:solverParams; :factorOperationalMemoryType]
   skiplist = union(skiplist, skip)

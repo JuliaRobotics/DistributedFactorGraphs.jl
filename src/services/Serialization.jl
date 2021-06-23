@@ -252,7 +252,7 @@ function unpackVariableNodeData(dfg::G, d::PackedVariableNodeData) where G <: Ab
     @cast val_[j][i] := M3[i,j]
     vals = Vector{getPointType(T)}(undef, length(val_))
     # vals = getPoint.(T, val_)
-    for v in val_
+    for (i,v) in enumerate(val_)
       vals[i] = getPoint(T, v)
     end
     

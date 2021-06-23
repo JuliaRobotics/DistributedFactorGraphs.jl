@@ -38,6 +38,9 @@ getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimest
 
 Variable nodes `variableType` information holding a variety of meta data associated with the type of variable stored in that node of the factor graph.
 
+Notes
+- API Quirk in that this function returns and instance of `::T` not a `::Type{<:InferenceVariable}`.
+
 DevWork
 - TODO, see IncrementalInference.jl 1228
 
@@ -134,6 +137,9 @@ getPointType(::T) where {T <: InferenceVariable} = getPointType(T)
 """
     $SIGNATURES
 Interface function to return the user provided identity point for this InferenceVariable manifold, extend this function for all Types<:InferenceVariable.
+
+Notes
+- Used in transition period for Serialization.  This function will likely be changed or deprecated entirely.
 """
 function getPointIdentity end
 getPointIdentity(::T) where {T <: InferenceVariable} = getPointIdentity(T)
@@ -145,6 +151,10 @@ getPointIdentity(::T) where {T <: InferenceVariable} = getPointIdentity(T)
 Default escalzation from coordinates to a group representation point.  Override if defaults are not correct.
 E.g. coords -> se(2) -> SE(2).
 
+DevNotes
+- TODO Likely remove as part of serialization updates, see #590
+- Used in transition period for Serialization.  This function will likely be changed or deprecated entirely.
+
 Related
 
 [`getCoordinates`](@ref)
@@ -152,14 +162,18 @@ Related
 function getPoint(::Type{T}, v::AbstractVector) where {T <: InferenceVariable}
     M = getManifold(T)
     p0 = getPointIdentity(T)
-    X = get_vector(M, p0, v, DefaultOrthonormalBasis())
-    exp(M, p0, X)
+    X = ManifoldsBase.get_vector(M, p0, v, ManifoldsBase.DefaultOrthonormalBasis())
+    ManifoldsBase.exp(M, p0, X)
 end
 
 """
     $SIGNATURES
 
 Default reduction of a variable point value (a group element) into coordinates as `Vector`.  Override if defaults are not correct.
+
+DevNotes
+- TODO Likely remove as part of serialization updates, see #590
+- Used in transition period for Serialization.  This function will likely be changed or deprecated entirely.
 
 Related
 
@@ -168,8 +182,8 @@ Related
 function getCoordinates(::Type{T}, p) where {T <: InferenceVariable}
     M = getManifold(T)
     p0 = getPointIdentity(T)
-    X = log(M, p0, p)
-    get_coordinates(M, p0, X, DefaultOrthonormalBasis())
+    X = ManifoldsBase.log(M, p0, p)
+    ManifoldsBase.get_coordinates(M, p0, X, ManifoldsBase.DefaultOrthonormalBasis())
 end
 
 
