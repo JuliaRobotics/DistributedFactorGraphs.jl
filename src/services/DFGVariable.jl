@@ -34,9 +34,12 @@ getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimest
 ## variableType
 ##------------------------------------------------------------------------------
 """
-   $(SIGNATURES)
+    $(SIGNATURES)
 
 Variable nodes `variableType` information holding a variety of meta data associated with the type of variable stored in that node of the factor graph.
+
+Notes
+- API Quirk in that this function returns and instance of `::T` not a `::Type{<:InferenceVariable}`.
 
 DevWork
 - TODO, see IncrementalInference.jl 1228
@@ -48,8 +51,8 @@ getVariableType
 getVariableType(v::DFGVariable{T}) where T <: InferenceVariable = T()
 
 function getVariableType(vnd::VariableNodeData)
-#   @warn "getVariableType(::VariableNodeData) is being deprecated, use getVariableType(::DFGVariable) instead."
-  return vnd.variableType
+    # @warn "getVariableType(::VariableNodeData) is being deprecated, use getVariableType(::DFGVariable) instead."
+    return vnd.variableType
 end
 
 
@@ -83,10 +86,10 @@ See documentation in [Manifolds.jl on making your own](https://juliamanifolds.gi
 
 Example:
 ```
-DFG.@defVariable Pose2 SpecialEuclidean(2) ProductRepr{Tuple{Vector{Float64}, Matrix{Float64}}}
+DFG.@defVariable Pose2 SpecialEuclidean(2) ProductRepr([0;0.0],[1 0; 0 1.0])
 ```
 """
-macro defVariable(structname, manifold, point_type)
+macro defVariable(structname, manifold, point_identity)
     return esc(quote
         Base.@__doc__ struct $structname <: InferenceVariable end
 
@@ -95,7 +98,9 @@ macro defVariable(structname, manifold, point_type)
 
         DFG.getManifold(::Type{$structname}) = $manifold
 
-        DFG.getPointType(::Type{$structname}) = $point_type
+        DFG.getPointType(::Type{$structname}) = typeof($point_identity)
+
+        DFG.getPointIdentity(::Type{$structname}) = $point_identity
 
     end)
 end
@@ -128,6 +133,59 @@ Interface function to return the manifold point type of an InferenceVariable, ex
 """
 function getPointType end
 getPointType(::T) where {T <: InferenceVariable} = getPointType(T)
+
+"""
+    $SIGNATURES
+Interface function to return the user provided identity point for this InferenceVariable manifold, extend this function for all Types<:InferenceVariable.
+
+Notes
+- Used in transition period for Serialization.  This function will likely be changed or deprecated entirely.
+"""
+function getPointIdentity end
+getPointIdentity(::T) where {T <: InferenceVariable} = getPointIdentity(T)
+
+
+"""
+    $SIGNATURES
+
+Default escalzation from coordinates to a group representation point.  Override if defaults are not correct.
+E.g. coords -> se(2) -> SE(2).
+
+DevNotes
+- TODO Likely remove as part of serialization updates, see #590
+- Used in transition period for Serialization.  This function will likely be changed or deprecated entirely.
+
+Related
+
+[`getCoordinates`](@ref)
+"""
+function getPoint(::Type{T}, v::AbstractVector) where {T <: InferenceVariable}
+    M = getManifold(T)
+    p0 = getPointIdentity(T)
+    X = ManifoldsBase.get_vector(M, p0, v, ManifoldsBase.DefaultOrthonormalBasis())
+    ManifoldsBase.exp(M, p0, X)
+end
+
+"""
+    $SIGNATURES
+
+Default reduction of a variable point value (a group element) into coordinates as `Vector`.  Override if defaults are not correct.
+
+DevNotes
+- TODO Likely remove as part of serialization updates, see #590
+- Used in transition period for Serialization.  This function will likely be changed or deprecated entirely.
+
+Related
+
+[`getPoint`](@ref)
+"""
+function getCoordinates(::Type{T}, p) where {T <: InferenceVariable}
+    M = getManifold(T)
+    p0 = getPointIdentity(T)
+    X = ManifoldsBase.log(M, p0, p)
+    ManifoldsBase.get_coordinates(M, p0, X, ManifoldsBase.DefaultOrthonormalBasis())
+end
+
 
 ##------------------------------------------------------------------------------
 ## solvedCount
@@ -480,7 +538,7 @@ end
     $SIGNATURES
 Retrieve the soft type name symbol for a DFGVariableSummary. ie :Point2, Pose2, etc.
 """
-getVariableTypeName(v::DFGVariableSummary)::Symbol = v.variableTypeName
+getVariableTypeName(v::DFGVariableSummary) = v.variableTypeName::Symbol
 
 
 function getVariableType(v::DFGVariableSummary)::InferenceVariable
@@ -507,7 +565,7 @@ end
     $(SIGNATURES)
 Get variable solverdata for a given solve key.
 """
-function getVariableSolverData(dfg::AbstractDFG, variablekey::Symbol, solvekey::Symbol=:default)::VariableNodeData
+function getVariableSolverData(dfg::AbstractDFG, variablekey::Symbol, solvekey::Symbol=:default)
     v = getVariable(dfg, variablekey)
     !haskey(v.solverDataDict, solvekey) && error("Solve key '$solvekey' not found in variable '$variablekey'")
     return v.solverDataDict[solvekey]
@@ -518,7 +576,7 @@ end
     $(SIGNATURES)
 Add variable solver data, errors if it already exists.
 """
-function addVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData)::VariableNodeData
+function addVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData)
     var = getVariable(dfg, variablekey)
     if haskey(var.solverDataDict, vnd.solveKey)
         error("VariableNodeData '$(vnd.solveKey)' already exists")
@@ -655,7 +713,7 @@ const deepcopySupersolve! = deepcopySolvekeys!
     $(SIGNATURES)
 Delete variable solver data, returns the deleted element.
 """
-function deleteVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, solveKey::Symbol=:default)::VariableNodeData
+function deleteVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, solveKey::Symbol=:default)
     var = getVariable(dfg, variablekey)
 
     if !haskey(var.solverDataDict, solveKey)
@@ -691,7 +749,7 @@ Merges and updates solver and estimate data for a variable (variable can be from
 If the same key is present in another collection, the value for that key will be the value it has in the last collection listed (updated).
 Note: Makes a copy of the estimates and solver data so that there is no coupling between graphs.
 """
-function mergeVariableSolverData!(destVariable::DFGVariable, sourceVariable::DFGVariable)::DFGVariable
+function mergeVariableSolverData!(destVariable::DFGVariable, sourceVariable::DFGVariable)
     # We don't know which graph this came from, must be copied!
     merge!(destVariable.solverDataDict, deepcopy(sourceVariable.solverDataDict))
     return destVariable
@@ -786,7 +844,7 @@ end
     $(SIGNATURES)
 Delete PPE data, returns the deleted element.
 """
-function deletePPE!(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol=:default)::AbstractPointParametricEst
+function deletePPE!(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol=:default)
     var = getVariable(dfg, variablekey)
 
     if !haskey(var.ppeDict, ppekey)
@@ -811,9 +869,9 @@ deletePPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol=:defaul
     $(SIGNATURES)
 List all the PPE data keys in the variable.
 """
-function listPPEs(dfg::AbstractDFG, variablekey::Symbol)::Vector{Symbol}
+function listPPEs(dfg::AbstractDFG, variablekey::Symbol)
     v = getVariable(dfg, variablekey)
-    return collect(keys(v.ppeDict))
+    return collect(keys(v.ppeDict))::Vector{Symbol}
 end
 
 #TODO API and only correct level
@@ -822,7 +880,7 @@ end
 Merges and updates solver and estimate data for a variable (variable can be from another graph).
 Note: Makes a copy of the estimates and solver data so that there is no coupling between graphs.
 """
-function mergePPEs!(destVariable::AbstractDFGVariable, sourceVariable::AbstractDFGVariable)::AbstractDFGVariable
+function mergePPEs!(destVariable::AbstractDFGVariable, sourceVariable::AbstractDFGVariable)
     # We don't know which graph this came from, must be copied!
     merge!(destVariable.ppeDict, deepcopy(sourceVariable.ppeDict))
     return destVariable

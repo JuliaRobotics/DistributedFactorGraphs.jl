@@ -16,8 +16,8 @@ import Base: convert
 Base.convert(::Type{<:Tuple}, ::typeof(Euclidean(1))) = (:Euclid,)
 Base.convert(::Type{<:Tuple}, ::typeof(Euclidean(2))) = (:Euclid, :Euclid)
 
-@defVariable TestVariableType1 Euclidean(1) Vector{Float64}
-@defVariable TestVariableType2 Euclidean(2) Vector{Float64}
+@defVariable TestVariableType1 Euclidean(1) [0.0;]
+@defVariable TestVariableType2 Euclidean(2) [0;0.0]
 
 # struct TestVariableType2 <: InferenceVariable
 #     dims::Int
@@ -254,6 +254,14 @@ function DFGVariableSCA()
     v3 = DFGVariable(:c, VariableNodeData{TestVariableType2}(), timestamp=ZonedDateTime("2020-08-11T00:12:03.000-05:00"))
 
     vorphan = DFGVariable(:orphan, TestVariableType1(), tags=v1_tags, solvable=0, solverDataDict=Dict(:default=>VariableNodeData{TestVariableType1}()))
+
+    # v1.solverDataDict[:default].val[1] = [0.0;]
+    # v1.solverDataDict[:default].bw[1] = [1.0;]
+    # v2.solverDataDict[:default].val[1] = [0.0;0.0]
+    # v2.solverDataDict[:default].bw[1] = [1.0;1.0]
+    # v3.solverDataDict[:default].val[1] = [0.0;0.0]
+    # v3.solverDataDict[:default].bw[1] = [1.0;1.0]
+
 
     getSolverData(v1).solveInProgress = 1
 
@@ -702,6 +710,8 @@ function  VSDTestBlock!(fg, v1)
     #  - `getSolveInProgress`
 
     vnd = VariableNodeData{TestVariableType1}(solveKey=:parametric)
+    # vnd.val[1] = [0.0;]
+    # vnd.bw[1] = [1.0;]
     @test addVariableSolverData!(fg, :a, vnd) == vnd
 
     @test_throws ErrorException addVariableSolverData!(fg, :a, vnd)
@@ -731,7 +741,7 @@ function  VSDTestBlock!(fg, v1)
     retVnd = updateVariableSolverData!(fg, :a, altVnd, false, [:inferdim;])
     @test retVnd == altVnd
 
-    fill!(altVnd.bw, -1.0)
+    altVnd.bw = -ones(1,1)
     retVnd = updateVariableSolverData!(fg, :a, altVnd, false, [:bw;])
     @test retVnd == altVnd
 
@@ -756,6 +766,9 @@ function  VSDTestBlock!(fg, v1)
     # Could also do VariableNodeData(ContinuousScalar())
 
     vnd = VariableNodeData{TestVariableType1}(solveKey=:parametric)
+    # vnd.val[1] = [0.0;]
+    # vnd.bw[1] = [1.0;]
+    
     addVariableSolverData!(fg, :a, vnd)
     @test setdiff(listVariableSolverData(fg, :a), [:default, :parametric]) == []
     # Get the data back - note that this is a reference to above.
@@ -1539,7 +1552,7 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
         # set everything
         vnd.BayesNetVertID = :outid
         push!(vnd.BayesNetOutVertIDs, :id)
-        vnd.bw[1] = 1.0
+        # vnd.bw[1] = [1.0;]
         push!(vnd.dimIDs, 1)
         vnd.dims = 1
         vnd.dontmargin = true
@@ -1550,7 +1563,7 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
         push!(vnd.separator, :sep)
         vnd.solveInProgress = 1
         vnd.solvedCount = 2
-        vnd.val .= 2.0
+        # vnd.val[1] = [2.0;]
         #update
         updateVariable!(dfg, v4)
 

@@ -109,7 +109,7 @@ end
 ##==============================================================================
 ## Variable Packing and unpacking
 ##==============================================================================
-function packVariable(dfg::G, v::DFGVariable)::Dict{String, Any} where G <: AbstractDFG
+function packVariable(dfg::AbstractDFG, v::DFGVariable) 
     props = Dict{String, Any}()
     props["label"] = string(v.label)
     props["timestamp"] = Dates.format(v.timestamp, "yyyy-mm-ddTHH:MM:SS.ssszzz")
@@ -123,14 +123,15 @@ function packVariable(dfg::G, v::DFGVariable)::Dict{String, Any} where G <: Abst
     props["dataEntry"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> JSON.json(bde), values(v.dataDict))))
     props["dataEntryType"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> typeof(bde), values(v.dataDict))))
     props["_version"] = _getDFGVersion()
-    return props
+    return props::Dict{String, Any}
 end
 
+# returns a DFGVariable
 function unpackVariable(dfg::G,
-        packedProps::Dict{String, Any};
-        unpackPPEs::Bool=true,
-        unpackSolverData::Bool=true,
-        unpackBigData::Bool=true)::DFGVariable where G <: AbstractDFG
+                        packedProps::Dict{String, Any};
+                        unpackPPEs::Bool=true,
+                        unpackSolverData::Bool=true,
+                        unpackBigData::Bool=true) where G <: AbstractDFG
     @debug "Unpacking variable:\r\n$packedProps"
     # Version checking.
     _versionCheck(packedProps)
@@ -202,9 +203,27 @@ function unpackVariable(dfg::G,
     return variable
 end
 
-function packVariableNodeData(dfg::G, d::VariableNodeData)::PackedVariableNodeData where G <: AbstractDFG
+
+# returns a PackedVariableNodeData
+function packVariableNodeData(::G, d::VariableNodeData{T}) where {G <: AbstractDFG, T <: InferenceVariable}
   @debug "Dispatching conversion variable -> packed variable for type $(string(d.variableType))"
-  return PackedVariableNodeData(d.val[:],size(d.val,1),
+#   @show d.val
+  castval = if 0 < length(d.val)
+    precast = getCoordinates.(T, d.val)
+    @cast castval[i,j] := precast[j][i]
+    castval
+  else
+    zeros(1,0)
+  end
+  _val = castval[:]
+#   castbw = if 0 < length(d.bw)
+#     @cast castbw[i,j] := d.bw[j][i]
+#     castbw
+#   else
+#     zeros(1,0)
+#   end
+#   _bw = castbw[:]
+  return PackedVariableNodeData(_val, size(castval,1),
                                 d.bw[:], size(d.bw,1),
                                 d.BayesNetOutVertIDs,
                                 d.dimIDs, d.dims, d.eliminated,
@@ -219,25 +238,34 @@ function packVariableNodeData(dfg::G, d::VariableNodeData)::PackedVariableNodeDa
                                 d.solveKey)
 end
 
-function unpackVariableNodeData(dfg::G, d::PackedVariableNodeData)::VariableNodeData where G <: AbstractDFG
-  r3 = d.dimval
-  c3 = r3 > 0 ? floor(Int,length(d.vecval)/r3) : 0
-  M3 = reshape(d.vecval,r3,c3)
+function unpackVariableNodeData(dfg::G, d::PackedVariableNodeData) where G <: AbstractDFG
+    @debug "Dispatching conversion packed variable -> variable for type $(string(d.variableType))"
+    # Figuring out the variableType
+    # TODO deprecated remove in v0.11 - for backward compatibility for saved variableTypes. 
+    ststring = string(split(d.variableType, "(")[1])
+    T = getTypeFromSerializationModule(ststring)
+    isnothing(T) && error("The variable doesn't seem to have a variableType. It needs to set up with an InferenceVariable from IIF. This will happen if you use DFG to add serialized variables directly and try use them. Please use IncrementalInference.addVariable().")
+    
+    r3 = d.dimval
+    c3 = r3 > 0 ? floor(Int,length(d.vecval)/r3) : 0
+    M3 = reshape(d.vecval,r3,c3)
+    @cast val_[j][i] := M3[i,j]
+    vals = Vector{getPointType(T)}(undef, length(val_))
+    # vals = getPoint.(T, val_)
+    for (i,v) in enumerate(val_)
+      vals[i] = getPoint(T, v)
+    end
+    
+    r4 = d.dimbw
+    c4 = r4 > 0 ? floor(Int,length(d.vecbw)/r4) : 0
+    BW = reshape(d.vecbw,r4,c4)
 
-  r4 = d.dimbw
-  c4 = r4 > 0 ? floor(Int,length(d.vecbw)/r4) : 0
-  M4 = reshape(d.vecbw,r4,c4)
-
-  @debug "Dispatching conversion packed variable -> variable for type $(string(d.variableType))"
-  # Figuring out the variableType
-  # TODO deprecated remove in v0.11 - for backward compatibility for saved variableTypes. 
-  ststring = string(split(d.variableType, "(")[1])
-  st =  getTypeFromSerializationModule(ststring)
-  isnothing(st) && error("The variable doesn't seem to have a variableType. It needs to set up with an InferenceVariable from IIF. This will happen if you use DFG to add serialized variables directly and try use them. Please use IncrementalInference.addVariable().")
-
-  return VariableNodeData{st}(M3,M4, d.BayesNetOutVertIDs,
-    d.dimIDs, d.dims, d.eliminated, d.BayesNetVertID, d.separator,
-    st(), d.initialized, d.inferdim, d.ismargin, d.dontmargin, d.solveInProgress, d.solvedCount, d.solveKey)
+    # 
+    return VariableNodeData{T, getPointType(T)}(vals, BW, d.BayesNetOutVertIDs,
+        d.dimIDs, d.dims, d.eliminated, d.BayesNetVertID, d.separator,
+        T(), d.initialized, d.inferdim, d.ismargin, d.dontmargin, 
+        d.solveInProgress, d.solvedCount, d.solveKey,
+        Dict{Symbol,Threads.Condition}() )
 end
 
 ##==============================================================================

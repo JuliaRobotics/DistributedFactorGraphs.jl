@@ -53,7 +53,8 @@ function printVariable( io::IO, vert::DFGVariable;
         println(ioc, "      initilized:        ", isInitialized(vert, :default))
         println(ioc, "      marginalized:      ", isMarginalized(vert, :default))
         println(ioc, "      size bel. samples: ", size(vnd.val))
-        println(ioc, "      kde bandwidths:    ", round.((vnd.bw)[:,1], digits=4))
+        print(ioc, "      kde bandwidths:    ")
+        0 < length(vnd.bw) ? println(ioc, round.(vnd.bw[1], digits=4)) : nothing
         printstyled(ioc, "     VNDs: ",bold=true)
         println(ioc, solk[smsk], 4<lsolk ? "..." : "")
         printstyled(ioc, "  # PPE solveKeys=    ($(length(getPPEDict(vert))))", bold=true)
