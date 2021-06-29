@@ -1,5 +1,6 @@
 name: CI
 on:
+  pull_request:
   push:
     branch:
       - master
@@ -12,22 +13,21 @@ jobs:
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
+    env:
+      JULIA_PKG_SERVER: ""
     strategy:
       fail-fast: false
       matrix:
         version:
-          - '1.5'
+          - '1.6'
           - 'nightly'
         os:
           - ubuntu-latest
         arch:
           - x64
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Setup julia
-        uses: julia-actions/setup-julia@v1
+      - uses: actions/checkout@v2
+      - uses: julia-actions/setup-julia@v1
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
@@ -53,10 +53,11 @@ jobs:
           git config --global user.email te@st.er
       
       - name: Run tests
-        uses: julia-actions/julia-runtest@latest
         env:
           IIF_TEST: false
-          SKIP_CGDFG_TESTS: true
+          DO_CGDFG_TESTS: false
+          DFG_USE_CGDFG: false
+        uses: julia-actions/julia-runtest@latest
         continue-on-error: ${{ matrix.version == 'nightly' }}
       
       - name: Process Coverage
@@ -80,7 +81,7 @@ jobs:
           - name: Setup julia
             uses: julia-actions/setup-julia@v1
             with:
-              version: 1.4
+              version: 1.6
               arch: x64
 
           - name: Install neo4j
@@ -119,10 +120,11 @@ jobs:
               git config --global user.email te@st.er
           
           - name: Run tests
-            uses: julia-actions/julia-runtest@latest
             env:
               IIF_TEST: true
-              SKIP_CGDFG_TESTS: false
+              DO_CGDFG_TESTS: true
+              DFG_USE_CGDFG: true
+            uses: julia-actions/julia-runtest@latest
           
           - name: Process Coverage
             uses: julia-actions/julia-processcoverage@v1
@@ -146,10 +148,13 @@ jobs:
       - name: Setup julia
         uses: julia-actions/setup-julia@v1
         with:
-          version: 1.4
+          version: 1.6
           arch: x64
 
       - name: Documentation
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
           run: |
             julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
             julia --project=docs/ docs/make.jl
