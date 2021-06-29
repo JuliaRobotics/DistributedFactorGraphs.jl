@@ -26,8 +26,11 @@ jobs:
         arch:
           - x64
     steps:
-      - uses: actions/checkout@v2
-      - uses: julia-actions/setup-julia@v1
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Julia
+        uses: julia-actions/setup-julia@v1
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
@@ -67,18 +70,16 @@ jobs:
         uses: codecov/codecov-action@v1
         with:
           file: lcov.info
-        # run: |
-        #   julia -e 'using Pkg; cd(Pkg.dir("DistributedFactorGraphs")); Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
 
   test-cfg:
     if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/release**'
-    name: Documentation
+    name: CGDFG, Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
     runs-on: ubuntu-latest
     steps:
           - name: Checkout
             uses: actions/checkout@v2
 
-          - name: Setup julia
+          - name: Setup Julia
             uses: julia-actions/setup-julia@v1
             with:
               version: 1.6
@@ -151,7 +152,7 @@ jobs:
           version: 1.6
           arch: x64
 
-      - name: Documentation
+      - name: Build Docs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
