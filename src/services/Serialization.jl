@@ -160,15 +160,28 @@ function unpackVariable(dfg::G,
 
     variableType = getTypeFromSerializationModule(variableTypeString)
     isnothing(variableType) && error("Cannot deserialize variableType '$variableTypeString' in variable '$label'")
+    pointType = getPointType(variableType)
 
     if unpackSolverData
         packed = JSON2.read(packedProps["solverDataDict"], Dict{String, PackedVariableNodeData})
-        solverData = Dict(Symbol.(keys(packed)) .=> map(p -> unpackVariableNodeData(dfg, p), values(packed)))
+        solverData = Dict{Symbol, VariableNodeData{variableType, pointType}}(Symbol.(keys(packed)) .=> map(p -> unpackVariableNodeData(dfg, p), values(packed)))
     else
-        solverData = Dict{Symbol, VariableNodeData}()
+        solverData = Dict{Symbol, VariableNodeData{variableType, pointType}}()
     end
     # Rebuild DFGVariable using the first solver variableType in solverData
-    variable = DFGVariable{variableType}(Symbol(packedProps["label"]), timestamp, nstime, Set(tags), ppeDict, solverData,  smallData, Dict{Symbol,AbstractDataEntry}(), Ref(packedProps["solvable"]))
+    # @info "dbg Serialization 171" variableType Symbol(packedProps["label"]) timestamp nstime ppeDict solverData smallData Dict{Symbol,AbstractDataEntry}() Ref(packedProps["solvable"])
+    # variable = DFGVariable{variableType}(Symbol(packedProps["label"]), timestamp, nstime, Set(tags), ppeDict, solverData,  smallData, Dict{Symbol,AbstractDataEntry}(), Ref(packedProps["solvable"]))
+    variable = DFGVariable( Symbol(packedProps["label"]), 
+                            variableType, 
+                            timestamp=timestamp, 
+                            nstime=nstime, 
+                            tags=Set{Symbol}(tags), 
+                            estimateDict=ppeDict, 
+                            solverDataDict=solverData,  
+                            smallData=smallData, 
+                            dataDict=Dict{Symbol,AbstractDataEntry}(), 
+                            solvable=packedProps["solvable"] )
+    #
 
     # Now rehydrate complete DataEntry type.
     if unpackBigData

@@ -11,7 +11,7 @@ using TimeZones
         dfg = DistributedFactorGraphs._getDuplicatedEmptyDFG(dfg)
 
         if typeof(dfg) <: CloudGraphsDFG
-            @warn "TEST: Nuking all data for user '$(dfg.userId)', robot '$(dfg.robotId)'!"
+            @warn "TEST: Removing all data for user '$(dfg.userId)', robot '$(dfg.robotId)'!"
             clearRobot!!(dfg)
             # Need to recreate this, otherwise there is going to be an issue when creating the nodes.
             createDfgSessionIfNotExist(dfg)

@@ -94,6 +94,7 @@ function printVariable( io::IO, vert::DFGVariable;
             println(ioc)
         end
     end
+    nothing
 end
 
 printFactor(vert::DFGFactor; kwargs...) = printFactor(stdout::IO, vert; kwargs...)
@@ -150,6 +151,7 @@ function printFactor(   io::IO, vert::DFGFactor;
             println(ioc)
         end
     end
+    nothing
 end
 
 

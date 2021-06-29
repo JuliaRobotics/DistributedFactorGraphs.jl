@@ -1,7 +1,7 @@
 global dfg,v1,v2,f1
 
 if typeof(dfg) <: CloudGraphsDFG
-    @warn "TEST: Nuking all data for user '$(dfg.userId)'!"
+    @warn "TEST: Removing all data for user '$(dfg.userId)'!"
     clearUser!!(dfg)
     createDfgSessionIfNotExist(dfg)
 end

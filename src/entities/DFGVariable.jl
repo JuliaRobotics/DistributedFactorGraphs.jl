@@ -300,7 +300,7 @@ end
     $SIGNATURES
 The default DFGVariable constructor.
 """
-function DFGVariable(label::Symbol, variableType::T;
+function DFGVariable(label::Symbol, variableType::Type{T};
             timestamp::Union{DateTime,ZonedDateTime}=now(localzone()),
             nstime::Nanosecond = Nanosecond(0),
             tags::Set{Symbol}=Set{Symbol}(),
@@ -309,13 +309,19 @@ function DFGVariable(label::Symbol, variableType::T;
             smallData::Dict{Symbol, SmallDataTypes}=Dict{Symbol, SmallDataTypes}(),
             dataDict::Dict{Symbol, AbstractDataEntry}=Dict{Symbol,AbstractDataEntry}(),
             solvable::Int=1) where {T <: InferenceVariable, P}
-
+    #
     if timestamp isa DateTime
         DFGVariable{T}(label, ZonedDateTime(timestamp, localzone()), nstime, tags, estimateDict, solverDataDict, smallData, dataDict, Ref(solvable))
     else
         DFGVariable{T}(label, timestamp, nstime, tags, estimateDict, solverDataDict, smallData, dataDict, Ref(solvable))
     end
 end
+
+DFGVariable(label::Symbol, 
+            variableType::T; 
+            solverDataDict::Dict{Symbol, VariableNodeData{T,P}}=Dict{Symbol, VariableNodeData{T,getPointType(T)}}(),
+            kw...) where {T <: InferenceVariable, P} = DFGVariable(label, T; solverDataDict=solverDataDict, kw...)
+#
 
 function DFGVariable(label::Symbol,
             solverData::VariableNodeData{T};
