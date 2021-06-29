@@ -75,6 +75,18 @@ jobs:
     if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/release**'
     name: CGDFG, Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
     runs-on: ubuntu-latest
+        runs-on: ${{ matrix.os }}
+    env:
+      JULIA_PKG_SERVER: ""
+    strategy:
+      fail-fast: true
+      matrix:
+        version:
+          - '1.6'
+        os:
+          - ubuntu-latest
+        arch:
+          - x64
     steps:
           - name: Checkout
             uses: actions/checkout@v2
@@ -82,8 +94,8 @@ jobs:
           - name: Setup Julia
             uses: julia-actions/setup-julia@v1
             with:
-              version: 1.6
-              arch: x64
+              version: ${{ matrix.version }}
+              arch: ${{ matrix.arch }}
 
           - name: Install neo4j
             run: |
@@ -134,8 +146,6 @@ jobs:
             uses: codecov/codecov-action@v1
             with:
               file: lcov.info
-            # run: |
-            #   julia -e 'using Pkg; cd(Pkg.dir("DistributedFactorGraphs")); Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
 
   docs:
     needs: test
