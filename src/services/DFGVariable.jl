@@ -34,22 +34,30 @@ getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimest
 ## variableType
 ##------------------------------------------------------------------------------
 """
-   $(SIGNATURES)
+    $(SIGNATURES)
 
 Variable nodes `variableType` information holding a variety of meta data associated with the type of variable stored in that node of the factor graph.
+
+Notes
+- API Quirk in that this function returns and instance of `::T` not a `::Type{<:InferenceVariable}`.
+
+DevWork
+- TODO, see IncrementalInference.jl 1228
 
 Related
 
 getVariableType
 """
+getVariableType(v::DFGVariable{T}) where T <: InferenceVariable = T()
+
 function getVariableType(vnd::VariableNodeData)
-  return vnd.variableType
+    # @warn "getVariableType(::VariableNodeData) is being deprecated, use getVariableType(::DFGVariable) instead."
+    return vnd.variableType
 end
 
 
 # TODO: Confirm that we can switch this out, instead of retrieving the complete variable.
-# getVariableType(v::DFGVariable{T}) where T <: InferenceVariable = T()
-getVariableType(v::DFGVariable) = getVariableType(getSolverData(v))
+# getVariableType(v::DFGVariable) = getVariableType(getSolverData(v))
 
 # Optimized in CGDFG
 getVariableType(dfg::AbstractDFG, lbl::Symbol) = getVariableType(getVariable(dfg,lbl))
@@ -58,33 +66,127 @@ getVariableType(dfg::AbstractDFG, lbl::Symbol) = getVariableType(getVariable(dfg
 ##------------------------------------------------------------------------------
 ## InferenceVariable
 ##------------------------------------------------------------------------------
+
+# """
+#     $SIGNATURES
+# Interface function to return the `variableType` manifolds of an InferenceVariable, extend this function for all Types<:InferenceVariable.
+# """
+# function getManifolds end
+
+# getManifolds(::Type{<:T}) where {T <: ManifoldsBase.AbstractManifold} = convert(Tuple, T)
+# getManifolds(::T) where {T <: ManifoldsBase.AbstractManifold} = getManifolds(T)
+
+
+"""
+    @defVariable StructName manifolds<:ManifoldsBase.AbstractManifold
+
+A macro to create a new variable with name `StructName` and manifolds.  Note that 
+the `manifolds` is an object and *must* be a subtype of `ManifoldsBase.AbstractManifold`.
+See documentation in [Manifolds.jl on making your own](https://juliamanifolds.github.io/Manifolds.jl/stable/examples/manifold.html). 
+
+Example:
+```
+DFG.@defVariable Pose2 SpecialEuclidean(2) ProductRepr([0;0.0],[1 0; 0 1.0])
+```
+"""
+macro defVariable(structname, manifold, point_identity)
+    return esc(quote
+        Base.@__doc__ struct $structname <: InferenceVariable end
+
+        # user manifold must be a <:Manifold
+        @assert ($manifold isa AbstractManifold) "@defVariable of "*string($structname)*" requires that the "*string($manifold)*" be a subtype of `ManifoldsBase.AbstractManifold`"
+
+        DFG.getManifold(::Type{$structname}) = $manifold
+
+        DFG.getPointType(::Type{$structname}) = typeof($point_identity)
+
+        DFG.getPointIdentity(::Type{$structname}) = $point_identity
+
+    end)
+end
+
+Base.convert(::Type{<:AbstractManifold}, ::Union{<:T, Type{<:T}}) where {T <: InferenceVariable} = getManifold(T)
+
+"""
+    $SIGNATURES
+Interface function to return the `<:ManifoldsBase.AbstractManifold` object of `variableType<:InferenceVariable`.
+"""
+getManifold(vari::DFGVariable) = getVariableType(vari) |> getManifold
+getManifold(::T) where {T <: InferenceVariable} = getManifold(T)
+
+
 """
     $SIGNATURES
 Interface function to return the `variableType` dimension of an InferenceVariable, extend this function for all Types<:InferenceVariable.
 """
 function getDimension end
-"""
-    $SIGNATURES
-Interface function to return the `variableType` manifolds of an InferenceVariable, extend this function for all Types<:InferenceVariable.
-"""
-function getManifolds end
+
+getDimension(::Type{T}) where {T <: InferenceVariable} = manifold_dimension(getManifold(T))
+getDimension(::T) where {T <: InferenceVariable} = manifold_dimension(getManifold(T))
+getDimension(M::ManifoldsBase.AbstractManifold) = manifold_dimension(M)
+getDimension(var::DFGVariable) = getDimension(getVariableType(var))
+
 
 """
-   @defVariable StructName dimension manifolds
-A macro to create a new variable with name `StructName`, dimension and manifolds.
-Example:
-```
-DFG.@defVariable Pose2 3 (:Euclid, :Euclid, :Circular)
-```
+    $SIGNATURES
+Interface function to return the manifold point type of an InferenceVariable, extend this function for all Types<:InferenceVariable.
 """
-macro defVariable(structname, dimension::Int, manifolds)#::Vararg{Symbol})#NTuple{dimension, Symbol})
-    # :(struct $structname <: InferenceVariable end)
-    return esc(quote
-        Base.@__doc__ struct $structname <: InferenceVariable end
-        DistributedFactorGraphs.getDimension(::$structname) = $dimension
-        DistributedFactorGraphs.getManifolds(::$structname) = $manifolds
-    end)
+function getPointType end
+getPointType(::T) where {T <: InferenceVariable} = getPointType(T)
+
+"""
+    $SIGNATURES
+Interface function to return the user provided identity point for this InferenceVariable manifold, extend this function for all Types<:InferenceVariable.
+
+Notes
+- Used in transition period for Serialization.  This function will likely be changed or deprecated entirely.
+"""
+function getPointIdentity end
+getPointIdentity(::T) where {T <: InferenceVariable} = getPointIdentity(T)
+
+
+"""
+    $SIGNATURES
+
+Default escalzation from coordinates to a group representation point.  Override if defaults are not correct.
+E.g. coords -> se(2) -> SE(2).
+
+DevNotes
+- TODO Likely remove as part of serialization updates, see #590
+- Used in transition period for Serialization.  This function will likely be changed or deprecated entirely.
+
+Related
+
+[`getCoordinates`](@ref)
+"""
+function getPoint(::Type{T}, v::AbstractVector) where {T <: InferenceVariable}
+    M = getManifold(T)
+    p0 = getPointIdentity(T)
+    X = ManifoldsBase.get_vector(M, p0, v, ManifoldsBase.DefaultOrthonormalBasis())
+    ManifoldsBase.exp(M, p0, X)
 end
+
+"""
+    $SIGNATURES
+
+Default reduction of a variable point value (a group element) into coordinates as `Vector`.  Override if defaults are not correct.
+
+DevNotes
+- TODO Likely remove as part of serialization updates, see #590
+- Used in transition period for Serialization.  This function will likely be changed or deprecated entirely.
+
+Related
+
+[`getPoint`](@ref)
+"""
+function getCoordinates(::Type{T}, p) where {T <: InferenceVariable}
+    M = getManifold(T)
+    p0 = getPointIdentity(T)
+    X = ManifoldsBase.log(M, p0, p)
+    ManifoldsBase.get_coordinates(M, p0, X, ManifoldsBase.DefaultOrthonormalBasis())
+end
+
+
 ##------------------------------------------------------------------------------
 ## solvedCount
 ##------------------------------------------------------------------------------
@@ -155,6 +257,29 @@ end
 function isInitialized(dfg::AbstractDFG, label::Symbol, key::Symbol=:default)
   return isInitialized(getVariable(dfg, label), key)::Bool
 end
+
+
+"""
+    $SIGNATURES
+
+Return `::Bool` on whether this variable has been marginalized.
+
+Notes:
+- VariableNodeData default `solveKey=:default`
+"""
+isMarginalized(vert::DFGVariable, solveKey::Symbol=:default) = getSolverData(vert, solveKey).ismargin
+isMarginalized(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = isMarginalized(DFG.getVariable(dfg, sym), solveKey)
+
+"""
+    $SIGNATURES
+
+Mark a variable as marginalized `true` or `false`.
+"""
+function setMarginalized!(vnd::VariableNodeData, val::Bool)
+  vnd.ismargin = val
+end
+setMarginalized!(vari::DFGVariable, val::Bool, solveKey::Symbol=:default) = setMarginalized!(getSolverData(vari, solveKey), val)
+setMarginalized!(dfg::AbstractDFG, sym::Symbol, val::Bool, solveKey::Symbol=:default) = setMarginalized!(getVariable(dfg, sym), val, solveKey)
 
 
 ##==============================================================================
@@ -298,7 +423,10 @@ end
     $SIGNATURES
 Set solver data structure stored in a variable.
 """
-setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default) = v.solverDataDict[key] = data
+function setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default)
+    @assert key == data.solveKey "VariableNodeData.solveKey=:$(data.solveKey) does not match requested :$(key)"
+    v.solverDataDict[key] = data
+end
 
 ##------------------------------------------------------------------------------
 ## smallData
@@ -410,7 +538,7 @@ end
     $SIGNATURES
 Retrieve the soft type name symbol for a DFGVariableSummary. ie :Point2, Pose2, etc.
 """
-getVariableTypeName(v::DFGVariableSummary)::Symbol = v.variableTypeName
+getVariableTypeName(v::DFGVariableSummary) = v.variableTypeName::Symbol
 
 
 function getVariableType(v::DFGVariableSummary)::InferenceVariable
@@ -437,7 +565,7 @@ end
     $(SIGNATURES)
 Get variable solverdata for a given solve key.
 """
-function getVariableSolverData(dfg::AbstractDFG, variablekey::Symbol, solvekey::Symbol=:default)::VariableNodeData
+function getVariableSolverData(dfg::AbstractDFG, variablekey::Symbol, solvekey::Symbol=:default)
     v = getVariable(dfg, variablekey)
     !haskey(v.solverDataDict, solvekey) && error("Solve key '$solvekey' not found in variable '$variablekey'")
     return v.solverDataDict[solvekey]
@@ -448,7 +576,7 @@ end
     $(SIGNATURES)
 Add variable solver data, errors if it already exists.
 """
-function addVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData)::VariableNodeData
+function addVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData)
     var = getVariable(dfg, variablekey)
     if haskey(var.solverDataDict, vnd.solveKey)
         error("VariableNodeData '$(vnd.solveKey)' already exists")
@@ -492,7 +620,9 @@ function updateVariableSolverData!(dfg::AbstractDFG,
     # for InMemoryDFGTypes do memory copy or repointing, for cloud this would be an different kind of update.
     usevnd = useCopy ? deepcopy(vnd) : vnd
     # should just one, or many pointers be updated?
-    if haskey(var.solverDataDict, vnd.solveKey) && isa(var.solverDataDict[vnd.solveKey], VariableNodeData) && length(fields) != 0
+    useExisting = haskey(var.solverDataDict, vnd.solveKey) && isa(var.solverDataDict[vnd.solveKey], VariableNodeData) && length(fields) != 0
+    # @error useExisting vnd.solveKey
+    if useExisting
       # change multiple pointers inside the VND var.solverDataDict[solvekey]
       for field in fields
         destField = getfield(var.solverDataDict[vnd.solveKey], field)
@@ -533,13 +663,20 @@ function updateVariableSolverData!(dfg::AbstractDFG,
 end
 
 
-updateVariableSolverData!(dfg::AbstractDFG,
-                          sourceVariable::DFGVariable,
-                          solveKey::Symbol=:default,
-                          useCopy::Bool=true,
-                          fields::Vector{Symbol}=Symbol[];
-                          warn_if_absent::Bool=true ) =
-    updateVariableSolverData!(dfg, sourceVariable.label, getSolverData(sourceVariable, solveKey), useCopy, fields; warn_if_absent=warn_if_absent)
+function updateVariableSolverData!( dfg::AbstractDFG,
+                                    sourceVariable::DFGVariable,
+                                    solveKey::Symbol=:default,
+                                    useCopy::Bool=true,
+                                    fields::Vector{Symbol}=Symbol[];
+                                    warn_if_absent::Bool=true )
+    #
+    vnd = getSolverData(sourceVariable, solveKey)
+    # toshow = listSolveKeys(sourceVariable) |> collect
+    # @info "update DFGVar solveKey" solveKey vnd.solveKey 
+    # @show toshow
+    @assert solveKey == vnd.solveKey "VariableNodeData's solveKey=:$(vnd.solveKey) does not match requested :$solveKey"
+    updateVariableSolverData!(dfg, sourceVariable.label, vnd, useCopy, fields; warn_if_absent=warn_if_absent)
+end
 
 function updateVariableSolverData!(dfg::AbstractDFG,
                                    sourceVariables::Vector{<:DFGVariable},
@@ -576,7 +713,7 @@ const deepcopySupersolve! = deepcopySolvekeys!
     $(SIGNATURES)
 Delete variable solver data, returns the deleted element.
 """
-function deleteVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, solveKey::Symbol=:default)::VariableNodeData
+function deleteVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, solveKey::Symbol=:default)
     var = getVariable(dfg, variablekey)
 
     if !haskey(var.solverDataDict, solveKey)
@@ -612,7 +749,7 @@ Merges and updates solver and estimate data for a variable (variable can be from
 If the same key is present in another collection, the value for that key will be the value it has in the last collection listed (updated).
 Note: Makes a copy of the estimates and solver data so that there is no coupling between graphs.
 """
-function mergeVariableSolverData!(destVariable::DFGVariable, sourceVariable::DFGVariable)::DFGVariable
+function mergeVariableSolverData!(destVariable::DFGVariable, sourceVariable::DFGVariable)
     # We don't know which graph this came from, must be copied!
     merge!(destVariable.solverDataDict, deepcopy(sourceVariable.solverDataDict))
     return destVariable
@@ -646,13 +783,13 @@ function getPPE(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol=:default)
 end
 
 # Not the most efficient call but it at least reuses above (in memory it's probably ok)
-getPPE(dfg::AbstractDFG, sourceVariable::VariableDataLevel1, ppekey::Symbol=default)::AbstractPointParametricEst = getPPE(dfg, sourceVariable.label, ppekey)
+getPPE(dfg::AbstractDFG, sourceVariable::VariableDataLevel1, ppekey::Symbol=:default) = getPPE(dfg, sourceVariable.label, ppekey)
 
 """
     $(SIGNATURES)
 Add variable PPE, errors if it already exists.
 """
-function addPPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P)::AbstractPointParametricEst where {P <: AbstractPointParametricEst}
+function addPPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P) where {P <: AbstractPointParametricEst}
     var = getVariable(dfg, variablekey)
     if haskey(var.ppeDict, ppe.solveKey)
         error("PPE '$(ppe.solveKey)' already exists")
@@ -707,7 +844,7 @@ end
     $(SIGNATURES)
 Delete PPE data, returns the deleted element.
 """
-function deletePPE!(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol=:default)::AbstractPointParametricEst
+function deletePPE!(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol=:default)
     var = getVariable(dfg, variablekey)
 
     if !haskey(var.ppeDict, ppekey)
@@ -732,9 +869,9 @@ deletePPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol=:defaul
     $(SIGNATURES)
 List all the PPE data keys in the variable.
 """
-function listPPEs(dfg::AbstractDFG, variablekey::Symbol)::Vector{Symbol}
+function listPPEs(dfg::AbstractDFG, variablekey::Symbol)
     v = getVariable(dfg, variablekey)
-    return collect(keys(v.ppeDict))
+    return collect(keys(v.ppeDict))::Vector{Symbol}
 end
 
 #TODO API and only correct level
@@ -743,7 +880,7 @@ end
 Merges and updates solver and estimate data for a variable (variable can be from another graph).
 Note: Makes a copy of the estimates and solver data so that there is no coupling between graphs.
 """
-function mergePPEs!(destVariable::AbstractDFGVariable, sourceVariable::AbstractDFGVariable)::AbstractDFGVariable
+function mergePPEs!(destVariable::AbstractDFGVariable, sourceVariable::AbstractDFGVariable)
     # We don't know which graph this came from, must be copied!
     merge!(destVariable.ppeDict, deepcopy(sourceVariable.ppeDict))
     return destVariable

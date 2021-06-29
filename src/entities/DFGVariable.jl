@@ -16,58 +16,92 @@ Data container for solver-specific data.
 Fields:
 $(TYPEDFIELDS)
 """
-mutable struct VariableNodeData{T<:InferenceVariable}
-    val::Array{Float64,2}
-    bw::Array{Float64,2}
-    BayesNetOutVertIDs::Array{Symbol,1}
-    dimIDs::Array{Int,1} # Likely deprecate
+mutable struct VariableNodeData{T<:InferenceVariable, P}
+    val::Vector{P}
+    bw::Matrix{Float64}
+    BayesNetOutVertIDs::Vector{Symbol}
+    dimIDs::Vector{Int} # Likely deprecate
+
     dims::Int
     eliminated::Bool
     BayesNetVertID::Symbol #  Union{Nothing, }
-    separator::Array{Symbol,1}
+    separator::Vector{Symbol}
+
     variableType::T
     initialized::Bool
     inferdim::Float64
     ismargin::Bool
+
     dontmargin::Bool
     solveInProgress::Int
     solvedCount::Int
     solveKey::Symbol
+
     events::Dict{Symbol,Threads.Condition}
-    VariableNodeData{T}(; solveKey::Symbol=:default) where {T <:InferenceVariable} =
-    new{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], T(), false, 0.0, false, false, 0, 0, solveKey, Dict{Symbol,Threads.Condition}())
-    VariableNodeData{T}(val::Array{Float64,2},
-                        bw::Array{Float64,2},
-                        BayesNetOutVertIDs::Array{Symbol,1},
-                        dimIDs::Array{Int,1},
-                        dims::Int,eliminated::Bool,
-                        BayesNetVertID::Symbol,
-                        separator::Array{Symbol,1},
-                        variableType::T,
-                        initialized::Bool,
-                        inferdim::Float64,
-                        ismargin::Bool,
-                        dontmargin::Bool,
-                        solveInProgress::Int=0,
-                        solvedCount::Int=0,
-                        solveKey::Symbol=:default,
-                        events::Dict{Symbol,Threads.Condition}=Dict{Symbol,Threads.Condition}()) where T <: InferenceVariable =
-                            new{T}(val,bw,BayesNetOutVertIDs,dimIDs,dims,
-                                   eliminated,BayesNetVertID,separator,
-                                   variableType::T,initialized,inferdim,ismargin,
-                                   dontmargin, solveInProgress, solvedCount, solveKey, events)
+
+    # VariableNodeData{T,P}() = new{T,P}()
+    VariableNodeData{T,P}(w...)  where {T <:InferenceVariable, P} = new{T,P}(w...)
+    VariableNodeData{T,P}(;solveKey::Symbol=:default ) where {T <:InferenceVariable, P} = new{T,P}(
+            Vector{P}(), 
+            zeros(0,0), 
+            Symbol[], 
+            Int[], 
+            0, 
+            false, 
+            :NOTHING, 
+            Symbol[], 
+            T(), 
+            false, 
+            0.0, 
+            false, 
+            false, 
+            0, 
+            0, 
+            solveKey, 
+            Dict{Symbol,Threads.Condition}() )
+    #
 end
 
 ##------------------------------------------------------------------------------
 ## Constructors
 
-VariableNodeData(val::Array{Float64,2},
-                 bw::Array{Float64,2},
-                 BayesNetOutVertIDs::Array{Symbol,1},
-                 dimIDs::Array{Int,1},
-                 dims::Int,eliminated::Bool,
+VariableNodeData{T}(;solveKey::Symbol=:default ) where T <: InferenceVariable = VariableNodeData{T, getPointType(T)}(solveKey=solveKey)
+
+VariableNodeData(   val::Vector{P},
+                    bw::Matrix{<:Real},
+                    BayesNetOutVertIDs::AbstractVector{Symbol},
+                    dimIDs::AbstractVector{Int},
+                    dims::Int,
+                    eliminated::Bool,
+                    BayesNetVertID::Symbol,
+                    separator::Array{Symbol,1},
+                    variableType::T,
+                    initialized::Bool,
+                    inferdim::Float64,
+                    ismargin::Bool,
+                    dontmargin::Bool,
+                    solveInProgress::Int=0,
+                    solvedCount::Int=0,
+                    solveKey::Symbol=:default,
+                    events::Dict{Symbol,Threads.Condition}=Dict{Symbol,Threads.Condition}()
+                ) where {T <: InferenceVariable, P} = VariableNodeData{T,P}( 
+                                        val,bw,BayesNetOutVertIDs,dimIDs,dims,
+                                        eliminated,BayesNetVertID,separator,
+                                        variableType,initialized,inferdim,ismargin,
+                                        dontmargin, solveInProgress, solvedCount, solveKey, events  )
+#
+
+
+#
+
+VariableNodeData(val::Vector{P},
+                 bw::Matrix{<:Real},
+                 BayesNetOutVertIDs::AbstractVector{Symbol},
+                 dimIDs::AbstractVector{Int},
+                 dims::Int,
+                 eliminated::Bool,
                  BayesNetVertID::Symbol,
-                 separator::Array{Symbol,1},
+                 separator::AbstractVector{Symbol},
                  variableType::T,
                  initialized::Bool,
                  inferdim::Float64,
@@ -76,16 +110,26 @@ VariableNodeData(val::Array{Float64,2},
                  solveInProgress::Int=0,
                  solvedCount::Int=0,
                  solveKey::Symbol=:default
-                 ) where T <: InferenceVariable =
-                   VariableNodeData{T}(val,bw,BayesNetOutVertIDs,dimIDs,dims,
-                                       eliminated,BayesNetVertID,separator,
-                                       variableType::T,initialized,inferdim,ismargin,
-                                       dontmargin, solveInProgress, solvedCount,
-                                       solveKey)
+                 ) where {T <: InferenceVariable, P} =
+                   VariableNodeData{T,P}(   val,bw,BayesNetOutVertIDs,dimIDs,dims,
+                                            eliminated,BayesNetVertID,separator,
+                                            variableType,initialized,inferdim,ismargin,
+                                            dontmargin, solveInProgress, solvedCount,
+                                            solveKey  )
+#
 
-
-VariableNodeData(variableType::T; solveKey::Symbol=:default) where T <: InferenceVariable =
-    VariableNodeData{T}(zeros(1,1), zeros(1,1), Symbol[], Int[], 0, false, :NOTHING, Symbol[], variableType, false, 0.0, false, false, 0, 0, solveKey)
+function VariableNodeData(variableType::T; solveKey::Symbol=:default) where T <: InferenceVariable
+    #
+    # p0 = getPointIdentity(T)
+    P0 = Vector{getPointType(T)}()
+    # P0[1] = p0
+    BW = zeros(0,0)
+    # BW[1] = zeros(getDimension(T))
+    VariableNodeData(   P0, BW, Symbol[], Int[], 
+                        0, false, :NOTHING, Symbol[], 
+                        variableType, false, 0.0, false, 
+                        false, 0, 0, solveKey  )
+end
 
 ##==============================================================================
 ## PackedVariableNodeData.jl
@@ -237,7 +281,7 @@ struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
     ppeDict::Dict{Symbol, <: AbstractPointParametricEst}
     """Dictionary of solver data. May be a subset of all solutions if a solver key was specified in the get call.
     Accessors: [`addVariableSolverData!`](@ref), [`updateVariableSolverData!`](@ref), and [`deleteVariableSolverData!`](@ref)"""
-    solverDataDict::Dict{Symbol, VariableNodeData{T}}
+    solverDataDict::Dict{Symbol, <: VariableNodeData{T}}
     """Dictionary of small data associated with this variable.
     Accessors: [`getSmallData`](@ref), [`setSmallData!`](@ref)"""
     smallData::Dict{Symbol, SmallDataTypes}
@@ -261,10 +305,10 @@ function DFGVariable(label::Symbol, variableType::T;
             nstime::Nanosecond = Nanosecond(0),
             tags::Set{Symbol}=Set{Symbol}(),
             estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
-            solverDataDict::Dict{Symbol, VariableNodeData{T}}=Dict{Symbol, VariableNodeData{T}}(),
+            solverDataDict::Dict{Symbol, VariableNodeData{T,P}}=Dict{Symbol, VariableNodeData{T,getPointType(T)}}(),
             smallData::Dict{Symbol, SmallDataTypes}=Dict{Symbol, SmallDataTypes}(),
             dataDict::Dict{Symbol, AbstractDataEntry}=Dict{Symbol,AbstractDataEntry}(),
-            solvable::Int=1) where {T <: InferenceVariable}
+            solvable::Int=1) where {T <: InferenceVariable, P}
 
     if timestamp isa DateTime
         DFGVariable{T}(label, ZonedDateTime(timestamp, localzone()), nstime, tags, estimateDict, solverDataDict, smallData, dataDict, Ref(solvable))
@@ -280,12 +324,13 @@ function DFGVariable(label::Symbol,
             tags::Set{Symbol}=Set{Symbol}(),
             estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
             smallData::Dict{Symbol, SmallDataTypes}=Dict{Symbol, SmallDataTypes}(),
-            dataDict::Dict{Symbol, AbstractDataEntry}=Dict{Symbol,AbstractDataEntry}(),
+            dataDict::Dict{Symbol, <: AbstractDataEntry}=Dict{Symbol,AbstractDataEntry}(),
             solvable::Int=1) where {T <: InferenceVariable}
+    #
     if timestamp isa DateTime
-        DFGVariable{T}(label, ZonedDateTime(timestamp, localzone()), nstime, tags, estimateDict, Dict{Symbol, VariableNodeData{T}}(:default=>solverData), smallData, dataDict, Ref(solvable))
+        DFGVariable{T}(label, ZonedDateTime(timestamp, localzone()), nstime, tags, estimateDict, Dict{Symbol, VariableNodeData{T, getPointType(T)}}(:default=>solverData), smallData, dataDict, Ref(solvable))
     else
-        DFGVariable{T}(label, timestamp, nstime, tags, estimateDict, Dict{Symbol, VariableNodeData{T}}(:default=>solverData), smallData, dataDict, Ref(solvable))
+        DFGVariable{T}(label, timestamp, nstime, tags, estimateDict, Dict{Symbol, VariableNodeData{T, getPointType(T)}}(:default=>solverData), smallData, dataDict, Ref(solvable))
     end
 end
 

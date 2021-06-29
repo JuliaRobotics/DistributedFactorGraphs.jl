@@ -2,10 +2,18 @@
 
 Click on badges to follow links:
 
-Release v0.9 | Release v0.10 | Dev | Coverage | Documentation |
+Release v0.13 | Release v0.14 | Dev | Coverage | Documentation |
 ---------|---------|-----|------------|------------|
-[![Build Status](https://api.travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl.svg?branch=release/v0.9)](https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl) | [![Build Status](https://api.travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl.svg?branch=release/v0.10)](https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl) |  [![Build Status](https://api.travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl.svg?branch=master)](https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl) <br> [![Average time to resolve an issue](https://isitmaintained.com/badge/resolution/JuliaRobotics/DistributedFactorGraphs.jl.svg)](https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues) | [![Codecov Status](https://codecov.io/gh/JuliaRobotics/DistributedFactorGraphs.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaRobotics/DistributedFactorGraphs.jl) <br> [![Percentage of issues still open](https://isitmaintained.com/badge/open/JuliaRobotics/DistributedFactorGraphs.jl.svg)](https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues) | [![docs](https://img.shields.io/badge/DFGDocs-latest-blue.svg)](http://juliarobotics.github.io/DistributedFactorGraphs.jl/latest/) <br> [![docs](https://img.shields.io/badge/CaesarDocs-latest-blue.svg)](http://juliarobotics.github.io/Caesar.jl/latest/)
+[![Build Status][dfg-build-v0.13]][dfg-build-url] | [![Build Status][dfg-build-v0.14]][dfg-build-url] | [![Build Status][dfg-build-img]][dfg-build-url] <br> [![Average time to resolve an issue](https://isitmaintained.com/badge/resolution/JuliaRobotics/DistributedFactorGraphs.jl.svg)](https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues) | [![codecov.io][dfg-cov-img]][dfg-cov-url] <br> [![Percentage of issues still open](https://isitmaintained.com/badge/open/JuliaRobotics/DistributedFactorGraphs.jl.svg)](https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues) | [![docs](https://img.shields.io/badge/DFGDocs-latest-blue.svg)](http://juliarobotics.github.io/DistributedFactorGraphs.jl/latest/) <br> [![docs](https://img.shields.io/badge/CaesarDocs-latest-blue.svg)](http://juliarobotics.github.io/Caesar.jl/latest/)
 
+
+[dfg-build-v0.13]: https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl.svg?branch=release/v0.13
+[dfg-build-v0.14]: https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl.svg?branch=release/v0.14
+
+[dfg-cov-img]: https://codecov.io/github/JuliaRobotics/DistributedFactorGraphs.jl/coverage.svg?branch=master
+[dfg-cov-url]: https://codecov.io/github/JuliaRobotics/DistributedFactorGraphs.jl?branch=master
+[dfg-build-img]: https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl.svg?branch=master
+[dfg-build-url]: https://travis-ci.org/JuliaRobotics/DistributedFactorGraphs.jl
 
 DistributedFactorGraphs.jl provides a flexible factor graph API for use in the [Caesar.jl](https://github.com/JuliaRobotics/Caesar.jl) ecosystem. The package supplies:
 * A standardized API for interacting with factor graphs
@@ -42,7 +50,7 @@ dfg = initfg()
 # add 2 ContinuousScalar variable types to the new factor graph
 addVariable!(dfg, :a, ContinuousScalar)
 addVariable!(dfg, :b, ContinuousScalar)
-# add a LinearConditional factor
-addFactor!(dfg, [:a, :b], LinearConditional(Normal(10.0,1.0)))
+# add a LinearRelative factor
+addFactor!(dfg, [:a, :b], LinearRelative(Normal(10.0,1.0)))
 ```
 

@@ -632,7 +632,7 @@ end
 
 function ls(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: FunctorInferenceType}
   xx = getFactors(dfg)
-  names = getfield.(typeof.(getFactorType.(xx)), :name) .|> Symbol
+  names = typeof.(getFactorType.(xx)) .|> nameof
   vxx = view(xx, names .== Symbol(T))
   map(x->x.label, vxx)
 end
@@ -694,7 +694,7 @@ function lsWho(dfg::AbstractDFG, type::Symbol)
     vars = getVariables(dfg)
     labels = Symbol[]
     for v in vars
-        varType = typeof(getVariableType(v)).name |> Symbol
+        varType = typeof(getVariableType(v)) |> nameof
         varType == type && push!(labels, v.label)
     end
     return labels
@@ -721,7 +721,7 @@ function lsfWho(dfg::AbstractDFG, type::Symbol)
     facs = getFactors(dfg)
     labels = Symbol[]
     for f in facs
-        facType = typeof(getFactorType(f)).name |> Symbol
+        facType = typeof(getFactorType(f)) |> nameof
         facType == type && push!(labels, f.label)
     end
     return labels
@@ -740,7 +740,7 @@ function lsTypes(dfg::AbstractDFG)
     vars = getVariables(dfg)
     alltypes = Set{Symbol}()
     for v in vars
-        varType = typeof(getVariableType(v)).name |> Symbol
+        varType = typeof(getVariableType(v)) |> nameof
         push!(alltypes, varType)
     end
     return collect(alltypes)
@@ -756,7 +756,7 @@ function lsTypesDict(dfg::AbstractDFG)
     vars = getVariables(dfg)
     alltypes = Dict{Symbol,Vector{Symbol}}()
     for v in vars
-        varType = typeof(getVariableType(v)).name |> Symbol
+        varType = typeof(getVariableType(v)) |> nameof
         d = get!(alltypes, varType, Symbol[])
         push!(d, v.label)
     end
@@ -772,7 +772,7 @@ function lsfTypes(dfg::AbstractDFG)
     facs = getFactors(dfg)
     alltypes = Set{Symbol}()
     for f in facs
-        facType = typeof(getFactorType(f)).name |> Symbol
+        facType = typeof(getFactorType(f)) |> nameof
         push!(alltypes, facType)
     end
     return collect(alltypes)
@@ -787,7 +787,7 @@ function lsfTypesDict(dfg::AbstractDFG)
     facs = getFactors(dfg)
     alltypes = Dict{Symbol,Vector{Symbol}}()
     for f in facs
-        facType = typeof(getFactorType(f)).name |> Symbol
+        facType = typeof(getFactorType(f)) |> nameof
         d = get!(alltypes, facType, Symbol[])
         push!(d, f.label)
     end
@@ -1099,7 +1099,7 @@ Related
 function isPathFactorsHomogeneous(dfg::AbstractDFG, from::Symbol, to::Symbol)
     # FIXME, must consider all paths, not just shortest...
     pth = intersect(findShortestPathDijkstra(dfg, from, to), lsf(dfg))
-    types = getFactorType.(dfg, pth) .|> typeof .|> x->(x).name
+    types = getFactorType.(dfg, pth) .|> typeof .|> x->(x).name #TODO this might not be correct in julia 1.6
     utyp = unique(types)
     (length(utyp) == 1), utyp
 end

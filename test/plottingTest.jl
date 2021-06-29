@@ -2,8 +2,10 @@ using GraphPlot
 using DistributedFactorGraphs
 # using DistributedFactorGraphs.DFGPlots
 using Test
+using Manifolds
 
-struct TestInferenceVariable1 <: InferenceVariable end
+# struct TestInferenceVariable1 <: InferenceVariable end
+@defVariable TestInferenceVariable1 Euclidean(1) [0.0;]
 
 # Now make a complex graph for connectivity tests
 numNodes = 10

@@ -1,4 +1,4 @@
-Copyright (c) 2017-2020 NavAbility
+Copyright (c) 2017-2021 NavAbility
 
 NOTICE: this license will be relaxed to be much more permissive soon.
 
@@ -18,13 +18,10 @@ Other general use or modification of the software beyond that of
 webservices or clouds (private or public) is permitted 
 according to terms defined by Apache 2.0 or other library specifc licenses.
 
-   Copyright 2017-2020 NavAbility
+   Copyright 2017-2021 NavAbility
 
-   Licensed under the Apache License, Version 2.0 (the "License");
+   Licensed under a Market Limited version of the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
 
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,

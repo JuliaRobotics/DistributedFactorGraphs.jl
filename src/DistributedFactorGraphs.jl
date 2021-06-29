@@ -28,6 +28,12 @@ using LinearAlgebra
 using SparseArrays
 using UUIDs
 using Pkg
+using TensorCast
+
+# used for @defVariable
+import ManifoldsBase
+import ManifoldsBase: AbstractManifold, manifold_dimension
+export AbstractManifold, manifold_dimension
 
 import Base: getindex
 
@@ -130,7 +136,10 @@ export getSolverData
 export getVariableType
 
 # VariableType functions
-export getDimension, getManifolds
+export getDimension, getManifold, getPointType
+export getPointIdentity, getPoint, getCoordinates
+
+export getManifolds # TODO Deprecate?
 
 # Small Data CRUD
 export SmallDataTypes, getSmallData, addSmallData!, updateSmallData!, deleteSmallData!, listSmallData, emptySmallData!
@@ -175,7 +184,7 @@ export VariableNodeData, PackedVariableNodeData
 
 export packVariableNodeData, unpackVariableNodeData
 
-export getSolvedCount, isSolved, setSolvedCount!, isInitialized
+export getSolvedCount, isSolved, setSolvedCount!, isInitialized, isMarginalized, setMarginalized!
 
 export getNeighborhood, getNeighbors, _getDuplicatedEmptyDFG
 export findFactorsBetweenNaive
@@ -315,9 +324,6 @@ if get(ENV, "DFG_USE_CGDFG", "") == "true"
 end
 
 function __init__()
-    @warn("BREAKING CHANGE coming to DistributedFactorGraphs v0.12: deprecating AbstractRelativeFactor, use AbstractRelativeRoots instead")
-    @warn("BREAKING CHANGE coming to DistributedFactorGraphs v0.12: deprecating AbstractRelativeFactorMinimize, use AbstractRelativeMinimize instead")
-
     @require GraphPlot = "a2cc645c-3eea-5389-862e-a155d0052231" begin
         @info "DistributedFactorGraphs.jl is adding tools using GraphPlot.jl"
         include("DFGPlots/DFGPlots.jl")

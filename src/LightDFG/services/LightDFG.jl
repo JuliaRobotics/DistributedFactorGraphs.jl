@@ -438,11 +438,11 @@ function findShortestPathDijkstra(  dfg::LightDFG,
         dfg
     end
 
-    # LightDFG internally uses Integers 
-    if !haskey(dfg_.g.labels, from) || !haskey(dfg_.g.labels, from)
+    if !exists(dfg_, from) || !exists(dfg_, to)
         # assume filters excluded either `to` or `from` and hence no shortest path
         return Symbol[]
     end
+    # LightDFG internally uses Integers 
     frI = dfg_.g.labels[from]
     toI = dfg_.g.labels[to]
 

@@ -18,9 +18,7 @@ Return reference to the user factor in `<:AbstractDFG` identified by `::Symbol`.
 """
 getFactorFunction(fcd::GenericFunctionNodeData) = fcd.fnc.usrfnc!
 getFactorFunction(fc::DFGFactor) = getFactorFunction(getSolverData(fc))
-function getFactorFunction(dfg::G, fsym::Symbol) where G <: AbstractDFG
-  getFactorFunction(getFactor(dfg, fsym))
-end
+getFactorFunction(dfg::AbstractDFG, fsym::Symbol) = getFactorFunction(getFactor(dfg, fsym))
 
 """
     $SIGNATURES
@@ -32,9 +30,25 @@ Notes
 """
 getFactorType(data::GenericFunctionNodeData) = data.fnc.usrfnc!
 getFactorType(fct::DFGFactor) = getFactorType(getSolverData(fct))
-function getFactorType(dfg::G, lbl::Symbol) where G <: AbstractDFG
-  getFactorType(getFactor(dfg, lbl))
-end
+getFactorType(dfg::AbstractDFG, lbl::Symbol) = getFactorType(getFactor(dfg, lbl))
+
+"""
+    $SIGNATURES
+
+If you know a variable is `::Type{<:Pose2}` but want to find its default prior `::Type{<:PriorPose2}`.
+
+Assumptions
+- The prior type will be defined in the same module as the variable type.
+- Not exported per default, but can be used with knowledge of the caveats.
+
+Example
+```julia
+using RoME
+@assert RoME.PriorPose2 == DFG._getPriorType(Pose2)
+```
+"""
+_getPriorType(_type::Type{<:InferenceVariable}) = getfield(_type.name.module, Symbol(:Prior, _type.name.name))
+
 
 ##==============================================================================
 ## Factors
@@ -68,14 +82,8 @@ end
 # getTimestamp
 
 setTimestamp(f::AbstractDFGFactor, ts::DateTime, timezone=localzone()) = setTimestamp(f, ZonedDateTime(ts,  timezone))
-
-function setTimestamp(f::DFGFactor, ts::ZonedDateTime)
-    return DFGFactor(f.label, ts, f.nstime, f.tags, f.solverData, f.solvable, getfield(f,:_variableOrderSymbols))
-end
-
-function setTimestamp(f::DFGFactorSummary, ts::ZonedDateTime)
-    return DFGFactorSummary(f.label, ts, f.tags, f._variableOrderSymbols)
-end
+setTimestamp(f::DFGFactor, ts::ZonedDateTime) = DFGFactor(f.label, ts, f.nstime, f.tags, f.solverData, f.solvable, getfield(f,:_variableOrderSymbols))
+setTimestamp(f::DFGFactorSummary, ts::ZonedDateTime) = DFGFactorSummary(f.label, ts, f.tags, f._variableOrderSymbols)
 
 
 ##------------------------------------------------------------------------------
@@ -105,7 +113,7 @@ $SIGNATURES
 Get the variable ordering for this factor.
 Should be equivalent to getNeighbors unless something was deleted in the graph.
 """
-getVariableOrder(fct::DFGFactor)::Vector{Symbol} = fct._variableOrderSymbols
+getVariableOrder(fct::DFGFactor) = fct._variableOrderSymbols::Vector{Symbol}
 getVariableOrder(dfg::AbstractDFG, fct::Symbol) = getVariableOrder(getFactor(dfg, fct))
 
 ##------------------------------------------------------------------------------
