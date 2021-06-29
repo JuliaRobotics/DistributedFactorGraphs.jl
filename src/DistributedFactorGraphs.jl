@@ -28,6 +28,12 @@ using LinearAlgebra
 using SparseArrays
 using UUIDs
 using Pkg
+using TensorCast
+
+# used for @defVariable
+import ManifoldsBase
+import ManifoldsBase: AbstractManifold, manifold_dimension
+export AbstractManifold, manifold_dimension
 
 import Base: getindex
 
@@ -130,7 +136,10 @@ export getSolverData
 export getVariableType
 
 # VariableType functions
-export getDimension, getManifolds
+export getDimension, getManifold, getPointType
+export getPointIdentity, getPoint, getCoordinates
+
+export getManifolds # TODO Deprecate?
 
 # Small Data CRUD
 export SmallDataTypes, getSmallData, addSmallData!, updateSmallData!, deleteSmallData!, listSmallData, emptySmallData!
@@ -175,7 +184,7 @@ export VariableNodeData, PackedVariableNodeData
 
 export packVariableNodeData, unpackVariableNodeData
 
-export getSolvedCount, isSolved, setSolvedCount!, isInitialized
+export getSolvedCount, isSolved, setSolvedCount!, isInitialized, isMarginalized, setMarginalized!
 
 export getNeighborhood, getNeighbors, _getDuplicatedEmptyDFG
 export findFactorsBetweenNaive

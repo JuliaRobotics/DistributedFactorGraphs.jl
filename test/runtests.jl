@@ -21,6 +21,8 @@ using UUIDs
 # logger = SimpleLogger(stdout, Logging.Debug)
 # global_logger(logger)
 
+include("test_defVariable.jl")
+
 include("testBlocks.jl")
 
 @testset "Test generated ==" begin
@@ -37,7 +39,7 @@ if get(ENV, "DO_CGDFG_TESTS", "") == "true"
         LightDFG,
         CloudGraphsDFG,
         ]
-    @warn "TEST: Nuking all data for user 'testUserId'!"
+    @warn "TEST: Removing all data for user 'testUserId'!"
     clearUser!!(CloudGraphsDFG(userId="testUserId"))
 
 else
