@@ -400,7 +400,7 @@ function getTypeFromSerializationModule(dfg::G, moduleType::Symbol) where G <: A
     try
         st = getfield(Main, Symbol(moduleType))
     catch ex
-        @error "Unable to deserialize soft type $(moduleType)"
+        @error "Unable to deserialize type $(moduleType)"
         io = IOBuffer()
         showerror(io, ex, catch_backtrace())
         err = String(take!(io))

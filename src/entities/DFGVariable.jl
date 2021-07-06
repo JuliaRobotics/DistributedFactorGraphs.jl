@@ -225,18 +225,19 @@ abstract type AbstractPointParametricEst end
 
 Data container to store Parameteric Point Estimate (PPE) for mean and max.
 """
-struct MeanMaxPPE{P} <: AbstractPointParametricEst
-    solveKey::Symbol #repeated because of Sam's request
+struct MeanMaxPPE{T <: InferenceVariable, P} <: AbstractPointParametricEst
+    solveKey::Symbol
     suggested::P
     max::P
     mean::P
+    variableType::Type{T}
     lastUpdatedTimestamp::DateTime
 end
 
 ##------------------------------------------------------------------------------
 ## Constructors
 
-MeanMaxPPE(solveKey::Symbol, suggested::P, max::P, mean::P) where P = MeanMaxPPE{P}(solveKey, suggested, max, mean, now(UTC))
+MeanMaxPPE(solveKey::Symbol, suggested::P, max::P, mean::P, varType::Type{T}, timestamp=now(UTC)) where {T<:InferenceVariable, P} = MeanMaxPPE{T,P}(solveKey, suggested, max, mean, varType, timestamp)
 
 ## Metadata
 """

@@ -31,8 +31,8 @@ using TimeZones
         map(v -> addDataEntry!(v, BlobStoreEntry(:testing2, uuid4(), :store, "", "", "", "", ZonedDateTime(2014, 5, 30, 21, tz"UTC-4"))), verts)
 
         # Add some PPEs
-        ppe1 = MeanMaxPPE(:default, [1.0], [0.2], [3.456])
-        ppe2 = MeanMaxPPE(:other, [1.0], [0.2], [3.456], ZonedDateTime(2014, 5, 30, 21, tz"UTC-4"))
+        ppe1 = MeanMaxPPE(:default, [1.0], [0.2], [3.456], ContinuousSCalar)
+        ppe2 = MeanMaxPPE(:other, [1.0], [0.2], [3.456], ContinuousScalar, ZonedDateTime(2014, 5, 30, 21, tz"UTC-4"))
         map(v -> addPPE!(dfg, getLabel(v), deepcopy(ppe1)), verts)
         map(v -> addPPE!(dfg, getLabel(v), deepcopy(ppe2)), verts)
 

@@ -104,7 +104,7 @@ Example of PPE operations:
 
 ```julia
 # Add a new PPE of type MeanMaxPPE to :x0
-ppe = MeanMaxPPE(:default, [0.0], [0.0], [0.0])
+ppe = MeanMaxPPE(:default, [0.0], [0.0], [0.0], Point2)
 addPPE!(dfg, :x0, ppe)
 @show listPPEs(dfg, :x0)
 # Get the data back - note that this is a reference to above.

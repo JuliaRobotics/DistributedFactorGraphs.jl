@@ -120,7 +120,7 @@ end
 function compareAll(Al::T,
                     Bl::T;
                     show::Bool=true,
-                    skip::Vector{Symbol}=Symbol[]  )::Bool where {T <: Dict}
+                    skip::Vector{Symbol}=Symbol[]  ) where {T <: Dict}
   #
   (length(Al) != length(Bl)) && return false
   for (id, val) in Al
@@ -144,6 +144,7 @@ function compareAll(Al::T, Bl::T; show::Bool=true, skip::Vector{Symbol}=Symbol[]
     Ad = eval(:($Al.$field))
     Bd = eval(:($Bl.$field))
     !compareAll(Ad, Bd, show=show, skip=skip) && return false
+    @debug("   =true")
   end
   return true
 end
@@ -202,9 +203,13 @@ function compareAllSpecial(A::T1,
                            skip=Symbol[],
                            show::Bool=true) where {T1 <: GenericFunctionNodeData, T2 <: GenericFunctionNodeData}
   if T1 != T2
+    @warn("Not equal, $T1 and $T2")
     return false
   else
-    return compareAll(A, B, skip=skip, show=show)
+    TP = compareAll(A, B, skip=skip, show=show)
+    @debug("compareAllSpecial returning=$TP")
+    TP ? nothing :  @warn("Not true!, $T1 and $T2")
+    return TP
   end
 end
 
@@ -242,6 +247,7 @@ function compareFactor(A::DFGFactor,
   if :fnc in skip
     return TP
   end
+  @debug "compareFactor midway: $TP ================================================================="
   TP = TP & compareAllSpecial(getSolverData(A).fnc, getSolverData(B).fnc, skip=union([:cpt;:measurement;:params;:varidx;:threadmodel], skip), show=show)
   if !(:measurement in skip)
   TP = TP & (skipsamples || compareAll(getSolverData(A).fnc.measurement, getSolverData(B).fnc.measurement, show=show, skip=skip))

@@ -574,7 +574,7 @@ function  PPETestBlock!(fg, v1)
     # > - `mergePPE!`
 
     # Add a new PPE of type MeanMaxPPE to :x0
-    ppe = MeanMaxPPE(:default, [0.0], [0.0], [0.0])
+    ppe = MeanMaxPPE(:default, [0.0], [0.0], [0.0], TestVariableType1)
 
     @test getPPEMax(ppe) === ppe.max
     @test getPPEMean(ppe) === ppe.mean
@@ -624,7 +624,7 @@ function  PPETestBlock!(fg, v1)
     # @test_deprecated getVariablePPE(v1)
 
     # Add a new PPE of type MeanMaxPPE to :x0
-    ppe = MeanMaxPPE(:default, [0.0], [0.0], [0.0])
+    ppe = MeanMaxPPE(:default, [0.0], [0.0], [0.0], TestVariableType1)
     addPPE!(fg, :a, ppe)
     @test listPPEs(fg, :a) == [:default]
     # Get the data back - note that this is a reference to above.
