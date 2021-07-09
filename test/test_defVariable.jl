@@ -25,6 +25,10 @@ struct NotAManifold end
 
 @test getPointType(TestVarType1) == Vector{Float64}
 @test getPointType(TestVarType2) == ProductRepr{Tuple{Vector{Float64}, Matrix{Float64}}}
+
+@test getPointIdentity(TestVarType1) == zeros(3)
+@test getPointIdentity(TestVarType2) == ProductRepr(zeros(3), diagm(ones(3)))
+
 ##
 
 
@@ -36,5 +40,9 @@ struct NotAManifold end
 
 @test getPointType(TestVarType1()) == Vector{Float64}
 @test getPointType(TestVarType2()) == ProductRepr{Tuple{Vector{Float64}, Matrix{Float64}}}
+
+@test getPointIdentity(TestVarType1()) == zeros(3)
+@test getPointIdentity(TestVarType2()) == ProductRepr(zeros(3), diagm(ones(3)))
+
 
 end
