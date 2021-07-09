@@ -315,12 +315,12 @@ function packFactor(dfg::G, f::DFGFactor)::Dict{String, Any} where G <: Abstract
 end
 
 function decodePackedType(::Type{T}, packeddata::GenericFunctionNodeData{PT}) where {T<:FactorOperationalMemory, PT}
-  # usrtyp = convert(FunctorInferenceType, packeddata.fnc)
-  # Also look at parentmodule
-  usrtyp = convertStructType(PT)
-  fulltype = DFG.FunctionNodeData{T{usrtyp}}
-  factordata = convert(fulltype, packeddata)
-  return factordata
+    # usrtyp = convert(FunctorInferenceType, packeddata.fnc)
+    # Also look at parentmodule
+    usrtyp = convertStructType(PT)
+    fulltype = DFG.FunctionNodeData{T{usrtyp}}
+    factordata = convert(fulltype, packeddata)
+    return factordata
 end
 
 
