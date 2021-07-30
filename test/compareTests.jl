@@ -21,9 +21,9 @@ vnd2.val[1] = [0.1;]
 @test !(vnd1 == vnd3)
 
 # MeanMaxPPE
-ppe1 = MeanMaxPPE(:default, [1.], [2.], [3.])
+ppe1 = MeanMaxPPE(:default, [1.], [2.], [3.], TestVariableType1)
 ppe2 = deepcopy(ppe1)
-ppe3 = MeanMaxPPE(:default, [2.], [3.], [4.])
+ppe3 = MeanMaxPPE(:default, [2.], [3.], [4.], TestVariableType1)
 
 @test ppe1 == ppe2
 ppe2.max[1] = 0.1

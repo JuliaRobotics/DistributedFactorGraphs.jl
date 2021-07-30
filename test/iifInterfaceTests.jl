@@ -283,7 +283,7 @@ end
     var1 = getVariable(dfg, :a)
     #make a copy and simulate external changes
     newvar = deepcopy(var1)
-    getVariablePPEDict(newvar)[:default] = MeanMaxPPE(:default, [150.0], [100.0], [50.0])
+    getVariablePPEDict(newvar)[:default] = MeanMaxPPE(:default, [150.0], [100.0], [50.0], ContinuousScalar)
     mergeVariableData!(dfg, newvar)
 
     #Check if variable is updated
@@ -291,7 +291,7 @@ end
     @test getVariablePPEDict(newvar) == getVariablePPEDict(var1)
 
     # Add a new estimate.
-    getVariablePPEDict(newvar)[:second] = MeanMaxPPE(:second, [15.0], [10.0], [5.0])
+    getVariablePPEDict(newvar)[:second] = MeanMaxPPE(:second, [15.0], [10.0], [5.0], ContinuousScalar)
 
     # Confirm they're different
     @test getVariablePPEDict(newvar) != getVariablePPEDict(var1)
