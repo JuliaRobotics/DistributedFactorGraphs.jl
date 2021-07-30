@@ -159,10 +159,10 @@ Related
 
 [`getCoordinates`](@ref)
 """
-function getPoint(::Type{T}, v::AbstractVector) where {T <: InferenceVariable}
+function getPoint(::Type{T}, v::AbstractVector, basis=ManifoldsBase.DefaultOrthogonalBasis()) where {T <: InferenceVariable}
     M = getManifold(T)
     p0 = getPointIdentity(T)
-    X = ManifoldsBase.get_vector(M, p0, v, ManifoldsBase.DefaultOrthonormalBasis())
+    X = ManifoldsBase.get_vector(M, p0, v, basis)
     ManifoldsBase.exp(M, p0, X)
 end
 
@@ -179,11 +179,11 @@ Related
 
 [`getPoint`](@ref)
 """
-function getCoordinates(::Type{T}, p) where {T <: InferenceVariable}
+function getCoordinates(::Type{T}, p, basis=ManifoldsBase.DefaultOrthogonalBasis()) where {T <: InferenceVariable}
     M = getManifold(T)
     p0 = getPointIdentity(T)
     X = ManifoldsBase.log(M, p0, p)
-    ManifoldsBase.get_coordinates(M, p0, X, ManifoldsBase.DefaultOrthonormalBasis())
+    ManifoldsBase.get_coordinates(M, p0, X, basis)
 end
 
 
