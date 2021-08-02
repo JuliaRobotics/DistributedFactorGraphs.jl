@@ -236,13 +236,14 @@ function compareFactor(A::DFGFactor,
                        skipsamples::Bool=true,
                        skipcompute::Bool=true  )
   #
-  TP =  compareAll(A, B, skip=union([:attributes;:solverData;:_variableOrderSymbols],skip), show=show)
+  skip_ = 
+  TP =  compareAll(A, B, skip=union([:attributes;:solverData;:_variableOrderSymbols;:_gradients],skip), show=show)
   # TP = TP & compareAll(A.attributes, B.attributes, skip=[:data;], show=show)
-  TP = TP & compareAllSpecial(getSolverData(A), getSolverData(B), skip=union([:fnc], skip), show=show)
+  TP = TP & compareAllSpecial(getSolverData(A), getSolverData(B), skip=union([:fnc;:_gradients], skip), show=show)
   if :fnc in skip
     return TP
   end
-  TP = TP & compareAllSpecial(getSolverData(A).fnc, getSolverData(B).fnc, skip=union([:cpt;:measurement;:params;:varidx;:threadmodel], skip), show=show)
+  TP = TP & compareAllSpecial(getSolverData(A).fnc, getSolverData(B).fnc, skip=union([:cpt;:measurement;:params;:varidx;:threadmodel;:_gradients], skip), show=show)
   if !(:measurement in skip)
   TP = TP & (skipsamples || compareAll(getSolverData(A).fnc.measurement, getSolverData(B).fnc.measurement, show=show, skip=skip))
   end

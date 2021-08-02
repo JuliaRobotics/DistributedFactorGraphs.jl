@@ -150,12 +150,12 @@ function unpackVariable(dfg::G,
     ppeDict = unpackPPEs ? JSON2.read(packedProps["ppeDict"], Dict{Symbol, MeanMaxPPE}) : Dict{Symbol, MeanMaxPPE}()
     smallData = JSON2.read(packedProps["smallData"], Dict{Symbol, SmallDataTypes})
 
-    if haskey(packedProps, "softtype")
+    variableTypeString = if haskey(packedProps, "softtype")
         # TODO Deprecate, remove in v0.12
         @warn "Packed field `softtype` is deprecated and replaced with `variableType`"
-        variableTypeString = packedProps["softtype"]
+        packedProps["softtype"]
     else
-        variableTypeString = packedProps["variableType"]
+        packedProps["variableType"]
     end
 
     variableType = getTypeFromSerializationModule(variableTypeString)
@@ -220,7 +220,7 @@ end
 # returns a PackedVariableNodeData
 function packVariableNodeData(::G, d::VariableNodeData{T}) where {G <: AbstractDFG, T <: InferenceVariable}
   @debug "Dispatching conversion variable -> packed variable for type $(string(d.variableType))"
-#   @show d.val
+  # TODO change to Vector{Vector{Float64}} which can be directly packed by JSON
   castval = if 0 < length(d.val)
     precast = getCoordinates.(T, d.val)
     @cast castval[i,j] := precast[j][i]
@@ -315,12 +315,12 @@ function packFactor(dfg::G, f::DFGFactor)::Dict{String, Any} where G <: Abstract
 end
 
 function decodePackedType(::Type{T}, packeddata::GenericFunctionNodeData{PT}) where {T<:FactorOperationalMemory, PT}
-  # usrtyp = convert(FunctorInferenceType, packeddata.fnc)
-  # Also look at parentmodule
-  usrtyp = convertStructType(PT)
-  fulltype = DFG.FunctionNodeData{T{usrtyp}}
-  factordata = convert(fulltype, packeddata)
-  return factordata
+    # usrtyp = convert(FunctorInferenceType, packeddata.fnc)
+    # Also look at parentmodule
+    usrtyp = convertStructType(PT)
+    fulltype = DFG.FunctionNodeData{T{usrtyp}}
+    factordata = convert(fulltype, packeddata)
+    return factordata
 end
 
 
