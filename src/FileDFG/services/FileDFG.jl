@@ -152,6 +152,7 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString)
     map(f->addFactor!(dfgLoadInto, f), factors)
 
     # Finally, rebuild the CCW's for the factors to completely reinflate them
+    # NOTE CREATES A NEW DFGFactor IF  CCW TYPE CHANGES
     @info "Rebuilding CCW's for the factors..."
     for factor in factors
         rebuildFactorMetadata!(dfgLoadInto, factor)

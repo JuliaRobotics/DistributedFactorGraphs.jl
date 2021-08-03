@@ -76,7 +76,7 @@ getFactorOperationalMemoryType(dfg::AbstractDFG) = getFactorOperationalMemoryTyp
 
 Method must be overloaded by the user for Serialization to work.
 """
-rebuildFactorMetadata!(dfg::AbstractDFG{<:AbstractParams}, factor::AbstractDFGFactor) = error("rebuildFactorMetadata! is not implemented for $(typeof(dfg))")
+rebuildFactorMetadata!(dfg::AbstractDFG{<:AbstractParams}, factor::AbstractDFGFactor, neighbors=[]) = error("rebuildFactorMetadata! is not implemented for $(typeof(dfg))")
 
 ##------------------------------------------------------------------------------
 ## Setters
