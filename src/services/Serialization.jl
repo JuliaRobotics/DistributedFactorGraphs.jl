@@ -373,14 +373,14 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G
 
     # Rebuild DFGFactor
     #TODO use constuctor to create factor
-    factor = DFGFactor(Symbol(label),
-                       timestamp,
-                       nstime,
-                       Set(tags),
-                       fullFactorData,
-                       solvable,
-                       Tuple(_variableOrderSymbols))
-
+    factor = DFGFactor( Symbol(label),
+                        timestamp,
+                        nstime,
+                        Set(tags),
+                        fullFactorData,
+                        solvable,
+                        Tuple(_variableOrderSymbols))
+    #
 
     # Note, once inserted, you still need to call rebuildFactorMetadata!
     return factor

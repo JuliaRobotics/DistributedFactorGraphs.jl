@@ -38,7 +38,7 @@ Designing (WIP)
 - in DFG.AbstractRelativeMinimize <: FunctorInferenceType
 - in Main.SomeFactor <: AbstractRelativeMinimize
 """
-mutable struct GenericFunctionNodeData{T<:Union{PackedInferenceType, FunctorInferenceType, FactorOperationalMemory}}
+mutable struct GenericFunctionNodeData{T<:Union{<:PackedInferenceType, <:AbstractFactor, <:FactorOperationalMemory}}
     eliminated::Bool
     potentialused::Bool
     edgeIDs::Vector{Int}
@@ -80,7 +80,7 @@ end
 const PackedFunctionNodeData{T} = GenericFunctionNodeData{T} where T <: AbstractPackedFactor
 PackedFunctionNodeData(args...) = PackedFunctionNodeData{typeof(args[4])}(args...)
 
-const FunctionNodeData{T} = GenericFunctionNodeData{T} where T <: Union{AbstractFactor, FactorOperationalMemory}
+const FunctionNodeData{T} = GenericFunctionNodeData{T} where T <: Union{<:AbstractFactor, <:FactorOperationalMemory}
 FunctionNodeData(args...) = FunctionNodeData{typeof(args[4])}(args...)
 
 

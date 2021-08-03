@@ -79,13 +79,13 @@ end
 # end
 
 
-function addFactor!(dfg::LightDFG{<:AbstractParams, <:AbstractDFGVariable, F}, factor::F)::F where F <: AbstractDFGFactor
+function addFactor!(dfg::LightDFG{<:AbstractParams, <:AbstractDFGVariable, F}, factor::F) where F <: AbstractDFGFactor
     if haskey(dfg.g.factors, factor.label)
         error("Factor '$(factor.label)' already exists in the factor graph")
     end
     # TODO
     # @assert FactorGraphs.addFactor!(dfg.g, getVariableOrder(factor), factor)
-    @assert FactorGraphs.addFactor!(dfg.g, factor._variableOrderSymbols, factor)
+    @assert FactorGraphs.addFactor!(dfg.g, Symbol[factor._variableOrderSymbols...], factor)
     return factor
 end
 
