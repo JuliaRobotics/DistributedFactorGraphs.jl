@@ -43,27 +43,29 @@ end
 """
     $(SIGNATURES)
 
-Compare the all fields of T that are not in `skip` for objects `Al` and `Bl`.
+Compare the all fields of T that are not in `skip` for objects `Al` and `Bl` and returns `::Bool`.
 
 TODO > add to func_ref.md
 """
-function compareFields(Al::T,
-                       Bl::T;
-                       show::Bool=true,
-                       skip::Vector{Symbol}=Symbol[]  )::Bool where {T}
-  for field in fieldnames(T)
+function compareFields( Al::T1,
+                        Bl::T2;
+                        show::Bool=true,
+                        skip::Vector{Symbol}=Symbol[]  ) where {T1,T2}
+  #
+  T1 == T2 ? nothing : @warn("different types in compareFields", T1, T2)
+  for field in fieldnames(T1)
     (field in skip) && continue
     tp = compareField(Al, Bl, field)
-    show && @debug("  $tp : $field")==nothing
+    show && @debug("  $tp : $field") === nothing
     !tp && return false
   end
   return true
 end
 
-function compareFields(Al::T,
-                       Bl::T;
-                       show::Bool=true,
-                       skip::Vector{Symbol}=Symbol[]  )::Bool where {T <: Union{Number, AbstractString}}
+function compareFields( Al::T,
+                        Bl::T;
+                        show::Bool=true,
+                        skip::Vector{Symbol}=Symbol[]  )::Bool where {T <: Union{Number, AbstractString}}
   #
   return Al == Bl
 end
@@ -130,12 +132,15 @@ function compareAll(Al::T,
   return true
 end
 
-function compareAll(Al::T, Bl::T; show::Bool=true, skip::Vector{Symbol}=Symbol[]) where T
-  @debug "Comparing types $T:"
+function compareAll(Al::T1, Bl::T2; show::Bool=true, skip::Vector{Symbol}=Symbol[]) where {T1,T2}
+  @debug "Comparing types $T1, $T2"
+  if T1 != T2
+    @warn "Types are different" T1 T2
+  end
   # @debug "  Al = $Al"
   # @debug "  Bl = $Bl"
   !compareFields(Al, Bl, show=show, skip=skip) && return false
-  for field in fieldnames(T)
+  for field in fieldnames(T1)
     field in skip && continue
     @debug("  Checking field: $field")
     (!isdefined(Al, field) && !isdefined(Al, field)) && return true
@@ -202,10 +207,11 @@ function compareAllSpecial(A::T1,
                            skip=Symbol[],
                            show::Bool=true) where {T1 <: GenericFunctionNodeData, T2 <: GenericFunctionNodeData}
   if T1 != T2
-    return false
-  else
-    return compareAll(A, B, skip=skip, show=show)
+    @warn "compareAllSpecial is comparing different types" T1 T2
+    # return false
+  # else
   end
+  return compareAll(A, B, skip=skip, show=show)
 end
 
 
@@ -236,17 +242,20 @@ function compareFactor(A::DFGFactor,
                        skipsamples::Bool=true,
                        skipcompute::Bool=true  )
   #
-  skip_ = 
-  TP =  compareAll(A, B, skip=union([:attributes;:solverData;:_variableOrderSymbols;:_gradients],skip), show=show)
-  # TP = TP & compareAll(A.attributes, B.attributes, skip=[:data;], show=show)
+  skip_ = union([:attributes;:solverData;:_variableOrderSymbols;:_gradients],skip)
+  TP =  compareAll(A, B, skip=skip_, show=show)
+  @debug "compareFactor 1/5" TP
   TP = TP & compareAllSpecial(getSolverData(A), getSolverData(B), skip=union([:fnc;:_gradients], skip), show=show)
-  if :fnc in skip
+  @debug "compareFactor 2/5" TP
+  if !TP || :fnc in skip
     return TP
   end
   TP = TP & compareAllSpecial(getSolverData(A).fnc, getSolverData(B).fnc, skip=union([:cpt;:measurement;:params;:varidx;:threadmodel;:_gradients], skip), show=show)
+  @debug "compareFactor 3/5" TP
   if !(:measurement in skip)
-  TP = TP & (skipsamples || compareAll(getSolverData(A).fnc.measurement, getSolverData(B).fnc.measurement, show=show, skip=skip))
+    TP = TP & (skipsamples || compareAll(getSolverData(A).fnc.measurement, getSolverData(B).fnc.measurement, show=show, skip=skip))
   end
+  @debug "compareFactor 4/5" TP
   if !(:params in skip)
     TP = TP & (skipcompute || compareAll(getSolverData(A).fnc.params, getSolverData(B).fnc.params, show=show, skip=skip))
   end
