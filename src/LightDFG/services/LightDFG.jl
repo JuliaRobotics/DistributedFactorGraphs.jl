@@ -155,11 +155,11 @@ function deleteFactor!(dfg::LightDFG, label::Symbol)::AbstractDFGFactor
     return factor
 end
 
-function getVariables(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{AbstractDFGVariable}
+function getVariables(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)
 
     # variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGVariable, vertices(dfg.g)))
     variables = collect(values(dfg.g.variables))
-    if regexFilter != nothing
+    if regexFilter !== nothing
         variables = filter(v -> occursin(regexFilter, String(v.label)), variables)
     end
     if solvable != 0
@@ -172,20 +172,20 @@ function getVariables(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing;
     return variables
 end
 
-function listVariables(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol}
+function listVariables(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)
 
     # variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGVariable, vertices(dfg.g)))
     if length(tags) > 0
         return map(v -> v.label, getVariables(dfg, regexFilter, tags=tags, solvable=solvable))
     else
         variables = collect(keys(dfg.g.variables))
-        regexFilter != nothing && (variables = filter(v -> occursin(regexFilter, String(v)), variables))
+        regexFilter !== nothing && (variables = filter(v -> occursin(regexFilter, String(v)), variables))
         solvable != 0 && (variables = filter(vId -> _isSolvable(dfg, vId, solvable), variables))
-        return variables
+        return variables::Vector{Symbol}
     end
 end
 
-function getFactors(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{AbstractDFGFactor}
+function getFactors(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)
     # factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGFactor, vertices(dfg.g)))
     factors = collect(values(dfg.g.factors))
     if regexFilter != nothing
@@ -201,7 +201,7 @@ function getFactors(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; t
     return factors
 end
 
-function listFactors(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol}
+function listFactors(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)
     # factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGFactor, vertices(dfg.g)))
     if length(tags) > 0
         return map(v -> v.label, getFactors(dfg, regexFilter, tags=tags, solvable=solvable))
@@ -213,7 +213,7 @@ function listFactors(dfg::LightDFG, regexFilter::Union{Nothing, Regex}=nothing; 
     if solvable != 0
         factors = filter(fId -> _isSolvable(dfg, fId, solvable), factors)
     end
-    return factors
+    return factors::Vector{Symbol}
 end
 
 function isConnected(dfg::LightDFG)::Bool
@@ -231,7 +231,7 @@ function _isSolvable(dfg::LightDFG, label::Symbol, ready::Int)::Bool
     return false
 end
 
-function getNeighbors(dfg::LightDFG, node::DFGNode; solvable::Int=0)::Vector{Symbol}
+function getNeighbors(dfg::LightDFG, node::DFGNode; solvable::Int=0)
     label = node.label
     if !exists(dfg, label)
         error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
@@ -248,7 +248,7 @@ function getNeighbors(dfg::LightDFG, node::DFGNode; solvable::Int=0)::Vector{Sym
         return order
     end
 
-    return neighbors_ll
+    return neighbors_ll::Vector{Symbol}
 end
 
 
