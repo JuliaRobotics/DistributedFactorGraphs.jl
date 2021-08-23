@@ -226,7 +226,8 @@ abstract type AbstractPointParametricEst end
 Data container to store Parameteric Point Estimate (PPE) for mean and max.
 """
 struct MeanMaxPPE <: AbstractPointParametricEst
-    solveKey::Symbol #repeated because of Sam's request
+    # repeat key value internally (from a design request by Sam)
+    solveKey::Symbol
     suggested::Vector{Float64}
     max::Vector{Float64}
     mean::Vector{Float64}
