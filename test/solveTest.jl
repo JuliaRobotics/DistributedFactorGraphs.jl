@@ -8,4 +8,4 @@ f1 = addFactor!(dfg, [:a; :b], LinearRelative(Normal(50.0,2.0)) )
 f2 = addFactor!(dfg, [:b; :c], LinearRelative(Normal(50.0,2.0)) )
 
 # Solve it
-tree, smtasks = solveTree!(dfg)
+tree = solveTree!(dfg)

@@ -22,4 +22,4 @@ dfgLocal = LightDFG{SolverParams}(solverParams=SolverParams())
 DistributedFactorGraphs.getSubgraph(dfg, union(ls(dfg), lsf(dfg)), true, dfgLocal)
 
 # Solve it
-tree, smtasks = solveTree!(dfgLocal)
+tree = solveTree!(dfgLocal)

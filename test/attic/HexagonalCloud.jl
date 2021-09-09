@@ -43,7 +43,7 @@ localFgCopy = deepcopy(localFg)
 # Show it
 toDotFile(localFg, "/tmp/localfg.dot")
 
-tree, smtasks = solveTree!(localFg)
+tree = solveTree!(localFg)
 
 # solveTree!(cloudFg)
 

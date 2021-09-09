@@ -37,7 +37,7 @@ using Test
     @test compareFactorGraphs(fg, fg)
     @test compareFactorGraphs(fg, fg2)
 
-    tree, smt, hist = solveTree!(fg)
+    tree = solveTree!(fg)
 
     x1a = getVariable(fg, :x0)
     x1b = getVariable(fg2, :x0)
