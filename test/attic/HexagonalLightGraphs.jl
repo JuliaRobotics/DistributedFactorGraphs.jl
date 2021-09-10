@@ -22,4 +22,4 @@ end
 # Alrighty! At this point, we should be able to solve locally...
 # perform inference, and remember first runs are slower owing to Julia's just-in-time compiling
 # Can do with graph too!
-tree, smt, hist = solveTree!(fg)
+tree = solveTree!(fg)

@@ -69,7 +69,7 @@ addFactor!(fg,[:x7], mlc )
 
 dfgplot(fg)
 
-tree, smt, hist = solveTree!(fg)
+tree = solveTree!(fg)
 
 
 end
