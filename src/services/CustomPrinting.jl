@@ -183,7 +183,7 @@ Base.show(io::IO, ::MIME"text/plain", v::DFGVariable) = printVariable(io, v, sho
 
 Base.show(io::IO, ::MIME"text/plain", f::DFGFactor) = printFactor(io, f, short=true, limit=false)
 
-function Base.show(io::IO, ::MIME"text/plain", dfg::AbstractDFG)
+function Base.show(io::IO, dfg::AbstractDFG)
     summary(io, dfg)
     println(io, "\n  UserId: ", dfg.userId)
     println(io, "  RobotId: ", dfg.robotId)
@@ -196,6 +196,7 @@ function Base.show(io::IO, ::MIME"text/plain", dfg::AbstractDFG)
     println(io, "  Session Data: ", keys(dfg.sessionData))
 end
 
+Base.show(io::IO, ::MIME"text/plain", dfg::AbstractDFG) = show(io, dfg)
 
 #default for Atom/Juno
-Base.show(io::IO, ::MIME"application/prs.juno.inline", x::Union{AbstractDFG, DFGVariable, DFGFactor}) = x
+Base.show(io::IO, ::MIME"application/prs.juno.inline", x::Union{AbstractDFG, DFGVariable, DFGFactor}) = show(io, x)
