@@ -243,7 +243,7 @@ function packVariableNodeData(::G, d::VariableNodeData{T}) where {G <: AbstractD
                                 d.BayesNetVertID, d.separator,
                                 typeModuleName(d.variableType),
                                 d.initialized,
-                                d.inferdim,
+                                d.infoPerCoord,
                                 d.ismargin,
                                 d.dontmargin,
                                 d.solveInProgress,
@@ -276,7 +276,7 @@ function unpackVariableNodeData(dfg::G, d::PackedVariableNodeData) where G <: Ab
     # 
     return VariableNodeData{T, getPointType(T)}(vals, BW, d.BayesNetOutVertIDs,
         d.dimIDs, d.dims, d.eliminated, d.BayesNetVertID, d.separator,
-        T(), d.initialized, d.inferdim, d.ismargin, d.dontmargin, 
+        T(), d.initialized, d.infoPerCoord, d.ismargin, d.dontmargin, 
         d.solveInProgress, d.solvedCount, d.solveKey,
         Dict{Symbol,Threads.Condition}() )
 end
