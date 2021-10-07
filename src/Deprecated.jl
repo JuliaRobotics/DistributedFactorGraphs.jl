@@ -135,65 +135,141 @@ end
 ## Deprecated in v0.11 Remove in the v0.12 cycle
 ##==============================================================================
 
-# @warn("BREAKING CHANGE coming to DistributedFactorGraphs v0.12: deprecating AbstractRelativeFactor, use AbstractRelativeRoots instead")
-# @warn("BREAKING CHANGE coming to DistributedFactorGraphs v0.12: deprecating AbstractRelativeFactorMinimize, use AbstractRelativeMinimize instead")
-# export AbstractRelativeFactor, AbstractRelativeFactorMinimize
-const AbstractRelativeFactor = AbstractRelativeRoots
-const AbstractRelativeFactorMinimize = AbstractRelativeMinimize
+# # @warn("BREAKING CHANGE coming to DistributedFactorGraphs v0.12: deprecating AbstractRelativeFactor, use AbstractRelativeRoots instead")
+# # @warn("BREAKING CHANGE coming to DistributedFactorGraphs v0.12: deprecating AbstractRelativeFactorMinimize, use AbstractRelativeMinimize instead")
+# # export AbstractRelativeFactor, AbstractRelativeFactorMinimize
+# const AbstractRelativeFactor = AbstractRelativeRoots
+# const AbstractRelativeFactorMinimize = AbstractRelativeMinimize
 
-##-------------------------------------------------------------------------------
-## softtype -> variableType deprecation
-##-------------------------------------------------------------------------------
+# ##-------------------------------------------------------------------------------
+# ## softtype -> variableType deprecation
+# ##-------------------------------------------------------------------------------
 
-function Base.getproperty(x::VariableNodeData,f::Symbol)
-  if f == :softtype
-    Base.depwarn("`VariableNodeData` field `softtype` is deprecated, use `variableType`", :getproperty)
-    f = :variableType
+# function Base.getproperty(x::VariableNodeData,f::Symbol)
+#   if f == :softtype
+#     Base.depwarn("`VariableNodeData` field `softtype` is deprecated, use `variableType`", :getproperty)
+#     f = :variableType
+#   end
+#   getfield(x,f)
+# end
+
+# function Base.setproperty!(x::VariableNodeData, f::Symbol, val)
+#   if f == :softtype
+#       Base.depwarn("`VariableNodeData` field `softtype` is deprecated, use `variableType`", :getproperty)
+#     f = :variableType
+#   end
+#   return setfield!(x, f, convert(fieldtype(typeof(x), f), val))
+# end
+
+
+# function Base.getproperty(x::PackedVariableNodeData,f::Symbol)
+#   if f == :softtype
+#     Base.depwarn("`PackedVariableNodeData` field `softtype` is deprecated, use `variableType`", :getproperty)
+#     f = :variableType
+#   end
+#   getfield(x,f)
+# end
+
+# function Base.setproperty!(x::PackedVariableNodeData, f::Symbol, val)
+#   if f == :softtype
+#       Base.depwarn("`PackedVariableNodeData` field `softtype` is deprecated, use `variableType`", :getproperty)
+#   f = :variableType
+#   end
+#   return setfield!(x, f, convert(fieldtype(typeof(x), f), val))
+# end
+
+
+# function Base.getproperty(x::DFGVariableSummary,f::Symbol)
+#   if f == :softtypename
+#     Base.depwarn("`DFGVariableSummary` field `softtypename` is deprecated, use `variableTypeName`", :getproperty)
+#     f = :variableTypeName
+#   end
+#   getfield(x,f)
+# end
+
+# function Base.setproperty!(x::DFGVariableSummary, f::Symbol, val)
+#   if f == :softtypename
+#       Base.depwarn("`DFGVariableSummary` field `softtypename` is deprecated, use `variableTypeName`", :getproperty)
+#   f = :variableTypeName
+#   end
+#   return setfield!(x, f, convert(fieldtype(typeof(x), f), val))
+# end
+
+# @deprecate getSofttype(args...) getVariableType(args...)
+# @deprecate getSofttypename(args...) getVariableTypeName(args...)
+
+
+## ================================================================================
+## Deprecate before v0.17
+##=================================================================================
+
+
+Base.propertynames(x::VariableNodeData, private::Bool=false) = private ? (:inferdim, :infoPerCoord) : (:infoPerCoord,)
+
+Base.getproperty(x::VariableNodeData,f::Symbol) = begin
+  if f == :inferdim
+    Base.depwarn("vnd.inferdim::Float64 is deprecated, use vnd.infoPerCoord::Vector{Float64} instead", :getproperty)
+    # @warn "vnd.inferdim is deprecated, use .infoPerCoord instead"
+    getfield(x, :infoPerCoord)
+  else
+    getfield(x,f)
   end
-  getfield(x,f)
 end
 
-function Base.setproperty!(x::VariableNodeData, f::Symbol, val)
-  if f == :softtype
-      Base.depwarn("`VariableNodeData` field `softtype` is deprecated, use `variableType`", :getproperty)
-    f = :variableType
+function Base.setproperty!(x::VariableNodeData, f::Symbol, val::Real)
+  _val = if f == :inferdim
+    Base.depwarn("vnd.inferdim::Float64 is deprecated, use vnd.infoPerCoord::Vector{Float64} instead", :setproperty!)
+    f = :infoPerCoord
+    Float64[val;]
+  else
+    val
   end
-  return setfield!(x, f, convert(fieldtype(typeof(x), f), val))
+  return setfield!(x, f, _val)
+end
+
+function Base.setproperty!(x::VariableNodeData, f::Symbol, val::AbstractVector{<:Real})
+  if f == :inferdim
+    Base.depwarn("vnd.inferdim::Float64 is deprecated, use vnd.infoPerCoord::Vector{Float64} instead", :setproperty!)
+    f = :infoPerCoord
+  end
+  return setfield!(x, f, val)
+end
+
+#
+
+Base.propertynames(x::PackedVariableNodeData, private::Bool=false) = private ? (:inferdim, :infoPerCoord) : (:infoPerCoord,)
+
+Base.getproperty(x::PackedVariableNodeData,f::Symbol) = begin
+  if f == :inferdim
+    Base.depwarn("pvnd.inferdim::Float64 is deprecated, use vnd.infoPerCoord::Vector{Float64} instead", :getproperty)
+    getfield(x, :infoPerCoord)
+  else
+    getfield(x,f)
+  end
+end
+
+function Base.setproperty!(x::PackedVariableNodeData, f::Symbol, val::Real)
+  _val = if f == :inferdim
+    Base.depwarn("pvnd.inferdim::Float64 is deprecated, use vnd.infoPerCoord::Vector{Float64} instead", :setproperty!)
+    f = :infoPerCoord
+    Float64[val;]
+  else
+    val
+  end
+  return setfield!(x, f, _val)
+end
+
+function Base.setproperty!(x::PackedVariableNodeData, f::Symbol, val::AbstractVector{<:Real})
+  if f == :inferdim
+    Base.depwarn("pvnd.inferdim::Float64 is deprecated, use vnd.infoPerCoord::Vector{Float64} instead", :setproperty!)
+    f = :infoPerCoord
+  end
+  return setfield!(x, f, val)
 end
 
 
-function Base.getproperty(x::PackedVariableNodeData,f::Symbol)
-  if f == :softtype
-    Base.depwarn("`PackedVariableNodeData` field `softtype` is deprecated, use `variableType`", :getproperty)
-    f = :variableType
-  end
-  getfield(x,f)
-end
-
-function Base.setproperty!(x::PackedVariableNodeData, f::Symbol, val)
-  if f == :softtype
-      Base.depwarn("`PackedVariableNodeData` field `softtype` is deprecated, use `variableType`", :getproperty)
-  f = :variableType
-  end
-  return setfield!(x, f, convert(fieldtype(typeof(x), f), val))
-end
+@deprecate VariableNodeData(val::Vector,bw::AbstractMatrix{<:Real},BayesNetOutVertIDs::AbstractVector{Symbol},dimIDs::AbstractVector{Int},dims::Int,eliminated::Bool,BayesNetVertID::Symbol,separator::AbstractVector{Symbol},variableType,initialized::Bool,inferdim::Real,w...;kw...) VariableNodeData(val,bw,BayesNetOutVertIDs,dimIDs,dims,eliminated,BayesNetVertID,separator,variableType,initialized,Float64[inferdim;],w...;kw...)
 
 
-function Base.getproperty(x::DFGVariableSummary,f::Symbol)
-  if f == :softtypename
-    Base.depwarn("`DFGVariableSummary` field `softtypename` is deprecated, use `variableTypeName`", :getproperty)
-    f = :variableTypeName
-  end
-  getfield(x,f)
-end
 
-function Base.setproperty!(x::DFGVariableSummary, f::Symbol, val)
-  if f == :softtypename
-      Base.depwarn("`DFGVariableSummary` field `softtypename` is deprecated, use `variableTypeName`", :getproperty)
-  f = :variableTypeName
-  end
-  return setfield!(x, f, convert(fieldtype(typeof(x), f), val))
-end
-
-@deprecate getSofttype(args...) getVariableType(args...)
-@deprecate getSofttypename(args...) getVariableTypeName(args...)
+#

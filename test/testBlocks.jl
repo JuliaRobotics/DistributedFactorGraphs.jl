@@ -737,21 +737,20 @@ function  VSDTestBlock!(fg, v1)
 
     altVnd = vnd |> deepcopy
     keepVnd = getSolverData(getVariable(fg, :a), :parametric) |> deepcopy
-    altVnd.inferdim = -99.0
-    retVnd = updateVariableSolverData!(fg, :a, altVnd, false, [:inferdim;])
+    altVnd.infoPerCoord = [-99.0;]
+    retVnd = updateVariableSolverData!(fg, :a, altVnd, false, [:infoPerCoord;])
     @test retVnd == altVnd
 
     altVnd.bw = -ones(1,1)
     retVnd = updateVariableSolverData!(fg, :a, altVnd, false, [:bw;])
     @test retVnd == altVnd
 
-    altVnd.inferdim = -98.0
+    altVnd.infoPerCoord[1] = -98.0
     @test retVnd != altVnd
 
     # restore without copy
-    # @show vnd.inferdim
-    @test updateVariableSolverData!(fg, :a, keepVnd, false, [:inferdim;:bw]) == vnd
-    @test getSolverData(getVariable(fg, :a), :parametric).inferdim !=  altVnd.inferdim
+    @test updateVariableSolverData!(fg, :a, keepVnd, false, [:infoPerCoord;:bw]) == vnd
+    @test getSolverData(getVariable(fg, :a), :parametric).infoPerCoord[1] !=  altVnd.infoPerCoord[1]
     @test getSolverData(getVariable(fg, :a), :parametric).bw !=  altVnd.bw
 
     # Delete parametric from v1
@@ -1557,7 +1556,7 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
         vnd.dims = 1
         vnd.dontmargin = true
         vnd.eliminated = true
-        vnd.inferdim = 1.5
+        vnd.infoPerCoord = Float64[1.5;]
         vnd.initialized = true
         vnd.ismargin = true
         push!(vnd.separator, :sep)

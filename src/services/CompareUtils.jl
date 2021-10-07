@@ -164,7 +164,7 @@ function compare(a::VariableNodeData, b::VariableNodeData)
     a.BayesNetVertID != b.BayesNetVertID && @debug("BayesNetVertID is not equal")==nothing && return false
     a.separator != b.separator && @debug("separator is not equal")==nothing && return false
     a.initialized != b.initialized && @debug("initialized is not equal")==nothing && return false
-    abs(a.inferdim - b.inferdim) > 1e-14 && @debug("inferdim is not equal")==nothing && return false
+    !isapprox(a.infoPerCoord, b.infoPerCoord, atol=1e-13) && @debug("infoPerCoord is not equal")==nothing && return false
     a.ismargin != b.ismargin && @debug("ismargin is not equal")==nothing && return false
     a.dontmargin != b.dontmargin && @debug("dontmargin is not equal")==nothing && return false
     a.solveInProgress != b.solveInProgress && @debug("solveInProgress is not equal")==nothing && return false

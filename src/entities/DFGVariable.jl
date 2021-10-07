@@ -29,7 +29,12 @@ mutable struct VariableNodeData{T<:InferenceVariable, P}
 
     variableType::T
     initialized::Bool
-    inferdim::Float64
+    """
+    Replacing previous `inferdim::Float64`, new `.infoPerCoord::Vector{Float64}` will in 
+    future stores the amount information (per measurement dimension) captured in each 
+    coordinate dimension.
+    """
+    infoPerCoord::Vector{Float64}
     ismargin::Bool
 
     dontmargin::Bool
@@ -52,7 +57,7 @@ mutable struct VariableNodeData{T<:InferenceVariable, P}
             Symbol[], 
             T(), 
             false, 
-            0.0, 
+            Float64[0.0;], 
             false, 
             false, 
             0, 
@@ -67,55 +72,57 @@ end
 
 VariableNodeData{T}(;solveKey::Symbol=:default ) where T <: InferenceVariable = VariableNodeData{T, getPointType(T)}(solveKey=solveKey)
 
+# VariableNodeData(   val::Vector{P},
+#                     bw::Matrix{<:Real},
+#                     BayesNetOutVertIDs::AbstractVector{Symbol},
+#                     dimIDs::AbstractVector{Int},
+#                     dims::Int,
+#                     eliminated::Bool,
+#                     BayesNetVertID::Symbol,
+#                     separator::Array{Symbol,1},
+#                     variableType::T,
+#                     initialized::Bool,
+#                     inferdim::Float64,
+#                     ismargin::Bool,
+#                     dontmargin::Bool,
+#                     solveInProgress::Int=0,
+#                     solvedCount::Int=0,
+#                     solveKey::Symbol=:default,
+#                     events::Dict{Symbol,Threads.Condition}=Dict{Symbol,Threads.Condition}()
+#                 ) where {T <: InferenceVariable, P} = 
+#                     VariableNodeData{T,P}(  val,bw,BayesNetOutVertIDs,dimIDs,dims,
+#                                             eliminated,BayesNetVertID,separator,
+#                                             variableType,initialized,inferdim,ismargin,
+#                                             dontmargin, solveInProgress, solvedCount, 
+#                                             solveKey, events  )
+#
+
+
+#
+
 VariableNodeData(   val::Vector{P},
-                    bw::Matrix{<:Real},
+                    bw::AbstractMatrix{<:Real},
                     BayesNetOutVertIDs::AbstractVector{Symbol},
                     dimIDs::AbstractVector{Int},
                     dims::Int,
                     eliminated::Bool,
                     BayesNetVertID::Symbol,
-                    separator::Array{Symbol,1},
+                    separator::AbstractVector{Symbol},
                     variableType::T,
                     initialized::Bool,
-                    inferdim::Float64,
+                    ipc::AbstractVector{<:Real},
                     ismargin::Bool,
                     dontmargin::Bool,
                     solveInProgress::Int=0,
                     solvedCount::Int=0,
                     solveKey::Symbol=:default,
                     events::Dict{Symbol,Threads.Condition}=Dict{Symbol,Threads.Condition}()
-                ) where {T <: InferenceVariable, P} = VariableNodeData{T,P}( 
-                                        val,bw,BayesNetOutVertIDs,dimIDs,dims,
-                                        eliminated,BayesNetVertID,separator,
-                                        variableType,initialized,inferdim,ismargin,
-                                        dontmargin, solveInProgress, solvedCount, solveKey, events  )
-#
-
-
-#
-
-VariableNodeData(val::Vector{P},
-                 bw::Matrix{<:Real},
-                 BayesNetOutVertIDs::AbstractVector{Symbol},
-                 dimIDs::AbstractVector{Int},
-                 dims::Int,
-                 eliminated::Bool,
-                 BayesNetVertID::Symbol,
-                 separator::AbstractVector{Symbol},
-                 variableType::T,
-                 initialized::Bool,
-                 inferdim::Float64,
-                 ismargin::Bool,
-                 dontmargin::Bool,
-                 solveInProgress::Int=0,
-                 solvedCount::Int=0,
-                 solveKey::Symbol=:default
-                 ) where {T <: InferenceVariable, P} =
-                   VariableNodeData{T,P}(   val,bw,BayesNetOutVertIDs,dimIDs,dims,
+                ) where {T <: InferenceVariable, P} =
+                    VariableNodeData{T,P}(  val,bw,BayesNetOutVertIDs,dimIDs,dims,
                                             eliminated,BayesNetVertID,separator,
-                                            variableType,initialized,inferdim,ismargin,
+                                            variableType,initialized,ipc,ismargin,
                                             dontmargin, solveInProgress, solvedCount,
-                                            solveKey  )
+                                            solveKey, events  )
 #
 
 function VariableNodeData(variableType::T; solveKey::Symbol=:default) where T <: InferenceVariable
@@ -130,6 +137,8 @@ function VariableNodeData(variableType::T; solveKey::Symbol=:default) where T <:
                         variableType, false, 0.0, false, 
                         false, 0, 0, solveKey  )
 end
+
+
 
 ##==============================================================================
 ## PackedVariableNodeData.jl
@@ -156,7 +165,7 @@ mutable struct PackedVariableNodeData
     separator::Array{Symbol,1} # Int
     variableType::String
     initialized::Bool
-    inferdim::Float64
+    infoPerCoord::Vector{Float64}
     ismargin::Bool
     dontmargin::Bool
     solveInProgress::Int
@@ -175,7 +184,7 @@ mutable struct PackedVariableNodeData
                          x10::Vector{Symbol}, # Int
                          x11::String,
                          x12::Bool,
-                         x13::Float64,
+                         x13::AbstractVector{<:Real},
                          x14::Bool,
                          x15::Bool,
                          x16::Int,
@@ -194,7 +203,7 @@ mutable struct PackedVariableNodeData
                           x10::Vector, # Int
                           x11::String,
                           x12::Bool,
-                          x13::Float64,
+                          x13::AbstractVector{<:Real},
                           x14::Bool,
                           x15::Bool,
                           x16::Int,
@@ -204,7 +213,8 @@ mutable struct PackedVariableNodeData
                                 convert(Vector{Float64},x3),x4,
                                 convert(Vector{Symbol},x5),
                                 convert(Vector{Int},x6),x7,x8,x9,
-                                convert(Vector{Symbol},x10),x11,x12,x13,x14,x15,x16, solvedCount, solveKey)
+                                convert(Vector{Symbol},x10),x11,x12,
+                                x13,x14,x15,x16, solvedCount, solveKey )
 end
 
 ##==============================================================================
