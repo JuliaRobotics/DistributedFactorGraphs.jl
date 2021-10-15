@@ -102,6 +102,8 @@ macro defVariable(structname, manifold, point_identity)
 
         DFG.getPointIdentity(::Type{$structname}) = $point_identity
 
+        DFG.getVariableType(::typeof($manifold)) = $structname
+
     end)
 end
 
