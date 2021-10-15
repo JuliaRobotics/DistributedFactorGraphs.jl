@@ -74,6 +74,8 @@ function typeModuleName(variableType::InferenceVariable)
     return String(take!(io))
 end
 
+typeModuleName(varT::Type{<:InferenceVariable}) = typeModuleName(varT())
+
 function getTypeFromSerializationModule(variableTypeString::String)
     try
         # split the type at last `.`
