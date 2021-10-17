@@ -379,7 +379,7 @@ function deleteFactor!(dfg::CloudGraphsDFG, label::Symbol; suppressGetFactor::Bo
 end
 
 # Alias
-deleteFactor!(dfg::CloudGraphsDFG, factor::DFGFactor; suppressGetFactor::Bool=false)::Union{Nothing, DFGFactor} = deleteFactor!(dfg, factor.label, suppressGetFactor=suppressGetFactor)
+deleteFactor!(dfg::CloudGraphsDFG, factor::DFGFactor; suppressGetFactor::Bool=false) = deleteFactor!(dfg, factor.label, suppressGetFactor=suppressGetFactor)
 
 function getVariables(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{DFGVariable}
     variableIds = listVariables(dfg, regexFilter, tags=tags, solvable=solvable)
