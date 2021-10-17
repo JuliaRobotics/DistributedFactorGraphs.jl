@@ -285,7 +285,7 @@ end
     $(SIGNATURES)
 Delete a DFGFactor from the DFG using its label.
 """
-function deleteFactor!(dfg::G, label::Symbol) where G <: AbstractDFG
+function deleteFactor!(dfg::G, label::Symbol; suppressGetFactor::Bool=false) where G <: AbstractDFG
     error("deleteFactors not implemented for $(typeof(dfg))")
 end
 
@@ -449,8 +449,8 @@ end
     $(SIGNATURES)
 Delete the referened DFGFactor from the DFG.
 """
-function deleteFactor!(dfg::G, factor::F) where {G <: AbstractDFG, F <: AbstractDFGFactor}
-    return deleteFactor!(dfg, factor.label)
+function deleteFactor!(dfg::G, factor::F; suppressGetFactor::Bool=false) where {G <: AbstractDFG, F <: AbstractDFGFactor}
+    return deleteFactor!(dfg, factor.label, suppressGetFactor=suppressGetFactor)
 end
 
 # Alias - bit ridiculous but know it'll come up at some point. Does existential and type check.
