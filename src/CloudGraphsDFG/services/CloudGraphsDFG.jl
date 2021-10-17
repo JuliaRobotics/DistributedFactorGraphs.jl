@@ -360,9 +360,9 @@ end
 #Alias
 deleteVariable!(dfg::CloudGraphsDFG, variable::DFGVariable) = deleteVariable!(dfg, variable.label)
 
-function deleteFactor!(dfg::CloudGraphsDFG, label::Symbol)::DFGFactor
-    factor = getFactor(dfg, label)
-    if factor == nothing
+function deleteFactor!(dfg::CloudGraphsDFG, label::Symbol; suppressGetFactor::Bool=false)::Union{Nothing, DFGFactor}
+    factor = suppressGetFactor ? nothing : getFactor(dfg, label)
+    if factor === nothing && !suppressGetFactor
         error("Unable to retrieve the ID for factor '$label'. Please check your connection to the database and that the factor exists.")
     end
     # Perform detach+deletion
@@ -378,7 +378,7 @@ function deleteFactor!(dfg::CloudGraphsDFG, label::Symbol)::DFGFactor
 end
 
 # Alias
-deleteFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)::DFGFactor = deleteFactor!(dfg, factor.label)
+deleteFactor!(dfg::CloudGraphsDFG, factor::DFGFactor; suppressGetFactor::Bool=false)::Union{Nothing, DFGFactor} = deleteFactor!(dfg, factor.label, suppressGetFactor=suppressGetFactor)
 
 function getVariables(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{DFGVariable}
     variableIds = listVariables(dfg, regexFilter, tags=tags, solvable=solvable)
