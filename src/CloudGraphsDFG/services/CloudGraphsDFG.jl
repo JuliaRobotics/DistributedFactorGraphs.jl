@@ -360,7 +360,7 @@ end
 #Alias
 deleteVariable!(dfg::CloudGraphsDFG, variable::DFGVariable) = deleteVariable!(dfg, variable.label)
 
-function deleteFactor!(dfg::CloudGraphsDFG, label::Symbol; suppressGetFactor::Bool=false)::Union{Nothing, DFGFactor}
+function deleteFactor!(dfg::CloudGraphsDFG, label::Symbol; suppressGetFactor::Bool=false)
     factor = suppressGetFactor ? nothing : getFactor(dfg, label)
     if factor === nothing && !suppressGetFactor
         error("Unable to retrieve the ID for factor '$label'. Please check your connection to the database and that the factor exists.")
