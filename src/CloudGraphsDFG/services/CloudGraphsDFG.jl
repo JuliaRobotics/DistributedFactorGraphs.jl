@@ -360,6 +360,7 @@ end
 #Alias
 deleteVariable!(dfg::CloudGraphsDFG, variable::DFGVariable) = deleteVariable!(dfg, variable.label)
 
+# return ::DFGFactor, or workaround ::Nothing, #809
 function deleteFactor!(dfg::CloudGraphsDFG, label::Symbol; suppressGetFactor::Bool=false)
     factor = suppressGetFactor ? nothing : getFactor(dfg, label)
     if factor === nothing && !suppressGetFactor
