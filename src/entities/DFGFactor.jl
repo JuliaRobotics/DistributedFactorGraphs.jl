@@ -13,6 +13,7 @@ abstract type AbstractPrior <: AbstractFactor end
 abstract type AbstractRelative <: AbstractFactor end
 abstract type AbstractRelativeRoots <: AbstractRelative end
 abstract type AbstractRelativeMinimize <: AbstractRelative end
+abstract type AbstractManifoldMinimize <: AbstractRelative end # FIXME move here from IIF
 
 # NOTE DF, Convolution is IIF idea, but DFG should know about "FactorOperationalMemory"
 # DF, IIF.CommonConvWrapper <: FactorOperationalMemory #
