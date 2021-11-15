@@ -57,8 +57,11 @@ for api in apis
 end
 
 # Test special cases
-@testset "Plotting Tests" begin
+@error("Disabled plottingTest.jl")
+if false
+  @testset "Plotting Tests" begin
     include("plottingTest.jl")
+  end
 end
 
 @testset "Data Store Tests" begin
