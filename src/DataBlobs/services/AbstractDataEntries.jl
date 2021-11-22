@@ -125,7 +125,7 @@ end
 
 """
     $(SIGNATURES)
-listDataEntries
+List the data entries associated with a particular variable.
 """
 function listDataEntries(var::AbstractDFGVariable)
     collect(keys(var.dataDict))
@@ -134,4 +134,34 @@ end
 function listDataEntries(dfg::AbstractDFG, label::Symbol)
     # !isVariable(dfg, label) && return nothing
     listDataEntries(getVariable(dfg, label))
+end
+
+"""
+    $SIGNATURES
+List a collection of data entries per variable that match a particular `pattern::Regex`.
+
+Notes
+- Optional sort function argument, default is unsorted.
+  - Likely use of `sortDFG` for basic Symbol sorting.
+
+Example
+```julia
+listDataEntrySequence(fg, :x0, r"IMG_CENTER", sortDFG)
+15-element Vector{Symbol}:
+ :IMG_CENTER_21676
+ :IMG_CENTER_21677
+ :IMG_CENTER_21678
+ :IMG_CENTER_21679
+...
+```
+"""
+function listDataEntrySequence( dfg::AbstractDFG,
+                                lb::Symbol,
+                                pattern::Regex,
+                                _sort::Function=(x)->x)
+    #
+    ents_ = listDataEntries(dfg, lb)
+    entReg = map(l->match(pattern, string(l)), ents_)
+    entMsk = entReg .!== nothing
+    ents_[findall(entMsk)] |> _sort
 end
