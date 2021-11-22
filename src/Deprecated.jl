@@ -83,12 +83,12 @@ const fetchData = getDataEntryBlob
 ## softtype deprections
 function Base.getproperty(x::InferenceVariable, f::Symbol)
   if f==:dims
-      Base.depwarn("Softtype $(typeof(x)), field dims is deprecated, extend and use `getDimension` instead",:getproperty)
+      Base.depwarn("varType $(typeof(x)), field dims is deprecated, extend and use `getDimension` instead",:getproperty)
   elseif f==:manifolds
-      Base.depwarn("Softtype $(typeof(x)), field manifolds is deprecated, extend and use `getManifolds` instead",:getproperty)
+      Base.depwarn("varType $(typeof(x)), field manifolds is deprecated, extend and use `getManifold` instead",:getproperty)
   else
     if !(@isdefined softtypeFieldsWarnOnce)
-      Base.depwarn("Softtype $(typeof(x)), will be required to be a singleton type in the future and can no longer have fields. *.$f called. Further warnings are suppressed",:getproperty)
+      Base.depwarn("varType $(typeof(x)), will be required to be a singleton type in the future and can no longer have fields. *.$f called. Further warnings are suppressed",:getproperty)
       global softtypeFieldsWarnOnce = true
     end
   end
