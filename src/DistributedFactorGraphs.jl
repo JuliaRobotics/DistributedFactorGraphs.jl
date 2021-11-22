@@ -192,6 +192,7 @@ export copyGraph!, deepcopyGraph, deepcopyGraph!, buildSubgraph, mergeGraph!
 # Big Data
 ##------------------------------------------------------------------------------
 export addDataEntry!, getDataEntry, updateDataEntry!, deleteDataEntry!, getDataEntries, listDataEntries, hasDataEntry, hasDataEntry
+export listDataEntrySequence
 # convenience wrappers
 export addDataEntry!
 # aliases
