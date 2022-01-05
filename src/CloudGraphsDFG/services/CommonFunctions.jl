@@ -181,18 +181,6 @@ function _structToNeo4jProps(inst::Union{<:User, <:Robot, <:Session, PVND, N, AP
             if fieldname == :solverData
                 fnctype = getSolverData(inst).fnc.usrfnc!
                 val = _packSolverData( inst, fnctype; replaceBackslashes=true )
-                # try
-                #     packtype = convertPackedType(fnctype)
-                #     packed = convert(PackedFunctionNodeData{packtype}, getSolverData(inst))
-                #     packedJson = JSON2.write(packed)
-                #     val = "\"$(replace(packedJson, "\"" => "\\\""))\"" # Escape slashes too
-                # catch ex
-                #     io = IOBuffer()
-                #     showerror(io, ex, catch_backtrace())
-                #     err = String(take!(io))
-                #     msg = "Error while packing '$(inst.label)' as '$fnctype', please check the unpacking/packing converters for this factor - \r\n$err"
-                #     error(msg)
-                # end
                 fieldname = :data #Keeping with FileDFG format
             end
         end
