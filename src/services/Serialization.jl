@@ -1,4 +1,7 @@
 
+# TODO dev and debugging, used by some of the DFG drivers
+export _packSolverData
+
 # For all types that pack their type into their own structure (e.g. PPE)
 const TYPEKEY = "_type"
 
@@ -288,7 +291,30 @@ end
 ##==============================================================================
 
 
-function packFactor(dfg::G, f::DFGFactor)::Dict{String, Any} where G <: AbstractDFG
+function _packSolverData(
+        f::DFGFactor, 
+        fnctype::AbstractFactor; 
+        replaceBackslashes::Bool=false )
+    #
+    packtype = convertPackedType(fnctype)
+    try
+        packed = convert( PackedFunctionNodeData{packtype}, getSolverData(f) )
+        packedJson = JSON2.write(packed)
+        if replaceBackslashes
+            return "\"$(replace(packedJson, "\"" => "\\\""))\"" # Escape slashes too
+        end
+        return packedJson
+    catch ex
+        io = IOBuffer()
+        showerror(io, ex, catch_backtrace())
+        err = String(take!(io))
+        msg = "Error while packing '$(f.label)' as '$fnctype', please check the unpacking/packing converters for this factor - \r\n$err"
+        error(msg)
+    end
+end
+
+# returns ::Dict{String, <:Any}
+function packFactor(dfg::AbstractDFG, f::DFGFactor)
     # Construct the properties to save
     props = Dict{String, Any}()
     props["label"] = string(f.label)
@@ -297,17 +323,7 @@ function packFactor(dfg::G, f::DFGFactor)::Dict{String, Any} where G <: Abstract
     props["tags"] = JSON2.write(f.tags)
     # Pack the node data
     fnctype = getSolverData(f).fnc.usrfnc!
-    try
-        packtype = convertPackedType(fnctype)
-        packed = convert(PackedFunctionNodeData{packtype}, getSolverData(f))
-        props["data"] = JSON2.write(packed)
-    catch ex
-        io = IOBuffer()
-        showerror(io, ex, catch_backtrace())
-        err = String(take!(io))
-        msg = "Error while packing '$(f.label)' as '$fnctype', please check the unpacking/packing converters for this factor - \r\n$err"
-        error(msg)
-    end
+    props["data"] = _packSolverData(f, fnctype)
     # Include the type
     props["fnctype"] = String(_getname(fnctype))
     props["_variableOrderSymbols"] = JSON2.write(f._variableOrderSymbols)
