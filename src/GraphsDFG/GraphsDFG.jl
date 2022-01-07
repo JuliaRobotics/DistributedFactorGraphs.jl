@@ -6,6 +6,8 @@ using UUIDs
 
 using ...DistributedFactorGraphs
 
+# import ...DistributedFactorGraphs: AbstractDFG, DFGNode, AbstractDFGVariable, AbstractDFGFactor, DFGSummary, AbstractParams, NoSolverParams, DFGVariable, DFGFactor
+
 # import DFG functions to extend
 import ...DistributedFactorGraphs:  setSolverParams!,
                                     getFactor,
@@ -43,13 +45,19 @@ import ...DistributedFactorGraphs:  setSolverParams!,
                                     getBiadjacencyMatrix,
                                     _getDuplicatedEmptyDFG,
                                     toDot,
-                                    toDotFile
+                                    toDotFile,
+                                    findShortestPathDijkstra
 
+include("FactorGraphs/FactorGraphs.jl")
+using .FactorGraphs
+
+# export SymbolEdge, is_directed, has_edge
 # Imports
 include("entities/GraphsDFG.jl")
 include("services/GraphsDFG.jl")
 
 # Exports
 export GraphsDFG
+
 
 end

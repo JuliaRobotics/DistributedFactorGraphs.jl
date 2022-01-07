@@ -36,6 +36,7 @@ end
 
 if get(ENV, "DO_CGDFG_TESTS", "") == "true"
     apis = [
+        GraphsDFG,
         LightDFG,
         CloudGraphsDFG,
         ]
@@ -44,6 +45,7 @@ if get(ENV, "DO_CGDFG_TESTS", "") == "true"
 
 else
     apis = [
+        GraphsDFG,
         LightDFG,
         ]
 end
