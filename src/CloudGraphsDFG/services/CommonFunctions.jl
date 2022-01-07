@@ -134,13 +134,15 @@ Note: Individual values are serialized if they are not already.
 If the additional properties is provided, the additional
 properties will be added in verbatim when serializing.
 
+Returns: `::String`
+
 Related
 
 _Neo4jTo???
 """
-function _structToNeo4jProps(inst::Union{User, Robot, Session, PVND, N, APPE, ABDE},
-                             addProps::Dict{String, String}=Dict{String, String}();
-                             cypherNodeName::String="subnode")::String where
+function _structToNeo4jProps(inst::Union{<:User, <:Robot, <:Session, PVND, N, APPE, ABDE},
+                            addProps::Dict{<:AbstractString, <:AbstractString}=Dict{String, String}();
+                            cypherNodeName::String="subnode") where
         {N <: DFGNode, APPE <: AbstractPointParametricEst, ABDE <: AbstractDataEntry, PVND <: PackedVariableNodeData}
     props = Dict{String, String}()
     io = IOBuffer()
@@ -156,7 +158,7 @@ function _structToNeo4jProps(inst::Union{User, Robot, Session, PVND, N, APPE, AB
             val = "\"$(string(field))\""
         end
         # TODO: Switch this to decorator pattern
-        if typeof(inst) <: DFGNode
+        if inst isa DFGNode # typeof(inst) <: DFGNode
             # Variables
             fieldname == :solverDataDict && continue
             fieldname == :ppeDict && continue
@@ -178,23 +180,12 @@ function _structToNeo4jProps(inst::Union{User, Robot, Session, PVND, N, APPE, AB
             # TODO: Consolidate with packFactor in Serialization.jl - https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/525
             if fieldname == :solverData
                 fnctype = getSolverData(inst).fnc.usrfnc!
-                try
-                    packtype = convertPackedType(fnctype)
-                    packed = convert(PackedFunctionNodeData{packtype}, getSolverData(inst))
-                    packedJson = JSON2.write(packed)
-                    val = "\"$(replace(packedJson, "\"" => "\\\""))\"" # Escape slashes too
-                    fieldname = :data #Keeping with FileDFG format
-                catch ex
-                    io = IOBuffer()
-                    showerror(io, ex, catch_backtrace())
-                    err = String(take!(io))
-                    msg = "Error while packing '$(inst.label)' as '$fnctype', please check the unpacking/packing converters for this factor - \r\n$err"
-                    error(msg)
-                end
+                val = _packSolverData( inst, fnctype; replaceBackslashes=true )
+                fieldname = :data #Keeping with FileDFG format
             end
         end
         # Fallback, default to JSON2
-        if val == nothing
+        if val === nothing
             val = JSON2.write(field)
         end
         write(io, "$cypherNodeName.$fieldname=$val,")
