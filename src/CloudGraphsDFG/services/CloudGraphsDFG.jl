@@ -977,7 +977,7 @@ end
 
 export SkeletonDFG
 function SkeletonDFG(cfg::CloudGraphsDFG)
-    sfg = LightDFG{NoSolverParams, SkeletonDFGVariable, SkeletonDFGFactor}()
+    sfg = DefaultDFG{NoSolverParams, SkeletonDFGVariable, SkeletonDFGFactor}()
     addVariable!.(sfg, _getSkeletonVariables(cfg))
     addFactor!.(sfg, _getSkeletonFactors(cfg))
     return sfg
