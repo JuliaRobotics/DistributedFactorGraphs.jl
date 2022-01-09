@@ -301,6 +301,7 @@ function _packSolverData(
         packed = convert( PackedFunctionNodeData{packtype}, getSolverData(f) )
         packedJson = JSON2.write(packed)
         if base64Encode
+            # 833
             packedJson = base64encode(packedJson)
         end
         return packedJson

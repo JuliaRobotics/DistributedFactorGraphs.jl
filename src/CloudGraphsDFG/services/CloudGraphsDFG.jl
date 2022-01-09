@@ -270,7 +270,7 @@ function getFactor(dfg::CloudGraphsDFG, label::Union{Symbol, String})
     length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot get factor '$label'")
     props = result.results[1]["data"][1]["row"][1]
 
-    # NOTE: Until we address #590, base64 decode the data to ensure robustness
+    # NOTE: Until we address #590, base64 decode the data to ensure robustness, #833
     props["data"] = String(base64decode(props["data"]))
 
     return rebuildFactorMetadata!(dfg, unpackFactor(dfg, props))
