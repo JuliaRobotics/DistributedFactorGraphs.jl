@@ -180,7 +180,9 @@ function _structToNeo4jProps(inst::Union{<:User, <:Robot, <:Session, PVND, N, AP
             # TODO: Consolidate with packFactor in Serialization.jl - https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/525
             if fieldname == :solverData
                 fnctype = getSolverData(inst).fnc.usrfnc!
-                val = _packSolverData( inst, fnctype; replaceBackslashes=true )
+                # NOTE: Until we resolve #590, make this robust by base64 encoding this so that
+                # generic JSON-packed factors do not have issues. 
+                val = "\"$(_packSolverData( inst, fnctype; base64Encode=true ))\""
                 fieldname = :data #Keeping with FileDFG format
             end
         end
