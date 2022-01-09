@@ -332,8 +332,11 @@ function packFactor(dfg::AbstractDFG, f::DFGFactor)
     return props
 end
 
-function decodePackedType(::Type{T}, packeddata::GenericFunctionNodeData{PT}) where {T<:FactorOperationalMemory, PT}
-    # usrtyp = convert(FunctorInferenceType, packeddata.fnc)
+function decodePackedType(dfg::AbstractDFG, varOrder::AbstractVector{Symbol}, ::Type{T}, packeddata::GenericFunctionNodeData{PT}) where {T<:FactorOperationalMemory, PT}
+    #
+    # TODO, to solve IIF 1424
+    # variables = map(lb->getVariable(dfg, lb), varOrder)
+
     # Also look at parentmodule
     usrtyp = convertStructType(PT)
     fulltype = DFG.FunctionNodeData{T{usrtyp}}
@@ -341,8 +344,8 @@ function decodePackedType(::Type{T}, packeddata::GenericFunctionNodeData{PT}) wh
     return factordata
 end
 
-
-function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G <: AbstractDFG
+# Returns `::DFGFactor`
+function unpackFactor(dfg::G, packedProps::Dict{String, Any}) where G <: AbstractDFG
     # Version checking.
     _versionCheck(packedProps)
 
@@ -369,10 +372,18 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G
     # FIXME type instability from nothing to T
     packed = nothing
     fullFactorData = nothing
+    
+    # Get the stored variable order
+    _variableOrderSymbols = if packedProps["_variableOrderSymbols"] isa String
+        JSON2.read(packedProps["_variableOrderSymbols"], Vector{Symbol})
+    else
+        Symbol.(packedProps["_variableOrderSymbols"])
+    end
+    
     try
         packed = JSON2.read(data, GenericFunctionNodeData{packtype})
         decodeType = getFactorOperationalMemoryType(dfg)
-        fullFactorData = decodePackedType(decodeType, packed)
+        fullFactorData = decodePackedType(dfg, _variableOrderSymbols, decodeType, packed)
     catch ex
         io = IOBuffer()
         showerror(io, ex, catch_backtrace())
@@ -381,12 +392,6 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any})::DFGFactor where G
         error(msg)
     end
 
-    # Include the type
-    if packedProps["_variableOrderSymbols"] isa String
-        _variableOrderSymbols = JSON2.read(packedProps["_variableOrderSymbols"], Vector{Symbol})
-    else
-        _variableOrderSymbols = Symbol.(packedProps["_variableOrderSymbols"])
-    end
     solvable = packedProps["solvable"]
 
     # Rebuild DFGFactor
