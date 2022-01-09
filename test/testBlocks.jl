@@ -97,13 +97,6 @@ function reconstFactorData(dfg::AbstractDFG,
                                 d.inflation)
 end
 
-function convert(   T::Type{DFG.FunctionNodeData{TestCCW{F}}},
-                    d::DFG.PackedFunctionNodeData{<:AbstractPackedFactor} ) where {F <: DFG.AbstractFactor}
-    #
-    @error("DEPRECATING $T")
-    reconstFactorData(T, d, "")
-end
-
 function Base.convert(::Type{DFG.PackedFunctionNodeData{P}}, d::DFG.FunctionNodeData{<:FactorOperationalMemory}) where P <: AbstractPackedFactor
   return DFG.PackedFunctionNodeData(d.eliminated,
                                     d.potentialused,
