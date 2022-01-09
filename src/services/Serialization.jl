@@ -332,6 +332,8 @@ function packFactor(dfg::AbstractDFG, f::DFGFactor)
     return props
 end
 
+function reconstFactorData() end
+
 function decodePackedType(dfg::AbstractDFG, varOrder::AbstractVector{Symbol}, ::Type{T}, packeddata::GenericFunctionNodeData{PT}) where {T<:FactorOperationalMemory, PT}
     #
     # TODO, to solve IIF 1424
@@ -340,7 +342,7 @@ function decodePackedType(dfg::AbstractDFG, varOrder::AbstractVector{Symbol}, ::
     # Also look at parentmodule
     usrtyp = convertStructType(PT)
     fulltype = DFG.FunctionNodeData{T{usrtyp}}
-    factordata = convert(fulltype, packeddata)
+    factordata = reconstFactorData(dfg, varOrder, fulltype, packeddata)
     return factordata
 end
 
