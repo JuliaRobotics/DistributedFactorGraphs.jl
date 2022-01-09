@@ -270,6 +270,9 @@ function getFactor(dfg::CloudGraphsDFG, label::Union{Symbol, String})
     length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot get factor '$label'")
     props = result.results[1]["data"][1]["row"][1]
 
+    # NOTE: Until we address #590, base64 decode the data to ensure robustness
+    props["data"] = String(base64decode(props["data"]))
+
     return rebuildFactorMetadata!(dfg, unpackFactor(dfg, props))
 end
 
@@ -289,8 +292,6 @@ function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor; warn_if_absent::B
     for vlabel in factor._variableOrderSymbols
         !exists(dfg, vlabel) && error("Variable '$(vlabel)' not found in graph when creating Factor '$(factor.label)'")
     end
-
-    props = packFactor(dfg, factor)
 
     # Create/update the factor
     # NOTE: We are no merging the factor tags into the labels anymore. We can index by that but not

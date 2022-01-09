@@ -294,14 +294,14 @@ end
 function _packSolverData(
         f::DFGFactor, 
         fnctype::AbstractFactor; 
-        replaceBackslashes::Bool=false )
+        base64Encode::Bool=false )
     #
     packtype = convertPackedType(fnctype)
     try
         packed = convert( PackedFunctionNodeData{packtype}, getSolverData(f) )
         packedJson = JSON2.write(packed)
-        if replaceBackslashes
-            return "\"$(replace(packedJson, "\"" => "\\\""))\"" # Escape slashes too
+        if base64Encode
+            packedJson = base64encode(packedJson)
         end
         return packedJson
     catch ex

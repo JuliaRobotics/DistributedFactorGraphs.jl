@@ -15,6 +15,7 @@ module DistributedFactorGraphs
 ##==============================================================================
 
 using Base
+using Base64
 using DocStringExtensions
 using Requires
 using Dates
