@@ -4,6 +4,7 @@ using Dates
 using Manifolds
 
 import Base: convert
+import DistributedFactorGraphs: reconstFactorData
 
 # Test InferenceVariable Types
 # struct TestVariableType1 <: InferenceVariable
@@ -43,10 +44,16 @@ function Base.convert(::Type{PackedTestFunctorInferenceType1}, d::TestFunctorInf
     PackedTestFunctorInferenceType1()
 end
 
-function Base.convert(::Type{TestFunctorInferenceType1}, d::PackedTestFunctorInferenceType1)
+function reconstFactorData(dfg::AbstractDFG, vo::AbstractVector, ::Type{TestFunctorInferenceType1}, d::PackedTestFunctorInferenceType1, ::String)
+    TestFunctorInferenceType1()
+end
+
+# overly simplified test requires both reconstitute and convert
+function Base.convert(::Type{TestFunctorInferenceType1}, d::PackedTestFunctorInferenceType1 )
     # @info "convert(::Type{TestFunctorInferenceType1}, d::PackedTestFunctorInferenceType1)"
     TestFunctorInferenceType1()
 end
+
 
 struct PackedTestAbstractPrior <: PackedInferenceType
     s::String
@@ -74,13 +81,15 @@ Base.:(==)(a::TestCCW, b::TestCCW) = a.usrfnc! == b.usrfnc!
 DFG.getFactorOperationalMemoryType(par::NoSolverParams) = TestCCW
 DFG.rebuildFactorMetadata!(dfg::AbstractDFG{NoSolverParams}, fac::DFGFactor) = fac
 
-function Base.convert(::Type{DFG.FunctionNodeData{TestCCW{F}}},
-                     d::DFG.PackedFunctionNodeData{<:AbstractPackedFactor}) where {F <: DFG.AbstractFactor}
-
+function reconstFactorData(dfg::AbstractDFG,
+                                vo::AbstractVector,
+                                ::Type{<:DFG.FunctionNodeData{TestCCW{F}}},
+                                d::DFG.PackedFunctionNodeData{<:AbstractPackedFactor} ) where {F <: DFG.AbstractFactor}
+    nF = convert(F, d.fnc)
     return DFG.FunctionNodeData(d.eliminated,
                                 d.potentialused,
                                 d.edgeIDs,
-                                TestCCW(convert(F, d.fnc)),
+                                TestCCW(nF),
                                 d.multihypo,
                                 d.certainhypo,
                                 d.nullhypo,

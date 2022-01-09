@@ -218,6 +218,8 @@ export mergeVariableData!, mergeGraphVariableData!
 # Serialization type conversion
 export convertPackedType, convertStructType
 
+export reconstFactorData
+
 ##------------------------------------------------------------------------------
 ## Other utility functions
 ##------------------------------------------------------------------------------
