@@ -6,8 +6,8 @@ Returns the transaction for a given query.
 NOTE: Must commit(transaction) after you're done.
 """
 function _queryNeo4j(neo4jInstance::Neo4jInstance, query::String; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
-    @debug "[Query] $(currentTransaction != nothing ? "[TRANSACTION]" : "") $query"
-    if currentTransaction == nothing
+    @debug "[Query] $(currentTransaction !== nothing ? "[TRANSACTION]" : "") $query"
+    if currentTransaction === nothing
         loadtx = transaction(neo4jInstance.connection)
         loadtx(query)
         # Have to finish the transaction

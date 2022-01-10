@@ -24,19 +24,11 @@ user = User(Symbol(dfg.userId), "Bob Zack", "Description", Dict{Symbol, String}(
 robot = Robot(Symbol(dfg.robotId), user.id, "Test robot", "Description", Dict{Symbol, String}())
 session = Session(Symbol(dfg.sessionId), robot.id, user.id, "Test Session", "Description", Dict{Symbol, String}())
 
-@test createUser(dfg, user) == user
-@test createRobot(dfg, robot) == robot
-@test createSession(dfg, session) == session
-@test map(s -> s.id, lsSessions(dfg)) == [Symbol(dfg.sessionId)]
-@test map(s -> s.id, lsRobots(dfg)) == [Symbol(dfg.robotId)]
-@test Symbol(dfg.userId) in map(u -> u.id, lsUsers(dfg))
-
 # Test errors
 dfgError = deepcopy(dfg)
 # User/robot/session ID's can't start with numbers and can't have spaces.
 dfgError.userId = "1testNope"
-user = User(Symbol(dfgError.userId), "Bob Zack", "Description", Dict{Symbol, String}())
-@test_throws Exception createUser(dfgError, user)
+@test_throws Exception createDfgSessionIfNotExist(dfg)
 
 @test getUserData(dfg) == Dict{Symbol, String}()
 @test getRobotData(dfg) == Dict{Symbol, String}()
