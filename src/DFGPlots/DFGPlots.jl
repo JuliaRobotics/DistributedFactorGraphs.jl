@@ -48,7 +48,7 @@ draw(PDF("/tmp/graph.pdf", 16cm, 16cm), dfgplot(fg))
 
 More information at [GraphPlot.jl](https://github.com/JuliaGraphs/GraphPlot.jl)
 """
-function dfgplot(dfg::LightDFG, p::DFGPlotProps = DFGPlotProps())
+function dfgplot(dfg::GraphsDFG, p::DFGPlotProps = DFGPlotProps())
 
     nodetypes = [haskey(dfg.g.variables, s) for s in dfg.g.labels]
 
@@ -68,15 +68,14 @@ end
 
 function dfgplot(dfg::AbstractDFG, p::DFGPlotProps = DFGPlotProps())
     # TODO implement convert functions
-    ldfg = LightDFG{NoSolverParams}()
+    ldfg = GraphsDFG{NoSolverParams}()
     copyGraph!(ldfg, dfg, listVariables(dfg), listFactors(dfg), copyGraphMetadata=false)
     dfgplot(ldfg, p)
 end
 
-function gplot(dfg::LightDFG; keyargs...)
+function gplot(dfg::GraphsDFG; keyargs...)
     gplot(dfg.g; keyargs...)
 end
-
 
 #TODO decide if we want to overload show for display in juno, It's a bit annoying with development
 # function Base.show(io::IO, ::MIME"application/prs.juno.plotpane+html", dfg::AbstractDFG)
