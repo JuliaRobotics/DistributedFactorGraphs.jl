@@ -58,7 +58,7 @@ addFactor!(fg,[:x5;:x6], LinearConditional( Normal(40.0,1.20)) )
 addVariable!(fg,:x7,ContinuousScalar, N=N)
 addFactor!(fg,[:x6;:x7], LinearConditional( Normal(60.0,2.0)) )
 
-# ensureAllInitialized!(fg)
+# initAll!(fg)
 
 mlc = MixturePrior(Normal.(doors[1,:], bws[1]), 0.25*ones(4))
 

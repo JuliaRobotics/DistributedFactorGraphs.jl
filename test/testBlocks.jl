@@ -34,7 +34,7 @@ struct TestAbstractPrior <: AbstractPrior end
 struct TestAbstractRelativeFactor <: AbstractRelativeRoots end
 struct TestAbstractRelativeFactorMinimize <: AbstractRelativeMinimize end
 
-struct PackedTestFunctorInferenceType1 <: PackedInferenceType
+struct PackedTestFunctorInferenceType1 <: AbstractPackedFactor
     s::String
 end
 PackedTestFunctorInferenceType1() = PackedTestFunctorInferenceType1("")
@@ -55,7 +55,7 @@ function Base.convert(::Type{TestFunctorInferenceType1}, d::PackedTestFunctorInf
 end
 
 
-struct PackedTestAbstractPrior <: PackedInferenceType
+struct PackedTestAbstractPrior <: AbstractPackedFactor
     s::String
 end
 PackedTestAbstractPrior() = PackedTestAbstractPrior("")
@@ -119,7 +119,7 @@ end
 #test Specific definitions
 # struct TestInferenceVariable1 <: InferenceVariable end
 # struct TestInferenceVariable2 <: InferenceVariable end
-# struct TestFunctorInferenceType1 <: FunctorInferenceType end
+# struct TestFunctorInferenceType1 <: AbstractFactor end
 
 # NOTE see note in AbstractDFG.jl setSolverParams!
 struct GeenSolverParams <: AbstractParams

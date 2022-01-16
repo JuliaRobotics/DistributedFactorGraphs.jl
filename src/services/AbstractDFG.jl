@@ -630,7 +630,7 @@ function ls(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: InferenceVariable}
 end
 
 
-function ls(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: FunctorInferenceType}
+function ls(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: AbstractFactor}
   xx = getFactors(dfg)
   names = typeof.(getFactorType.(xx)) .|> nameof
   vxx = view(xx, names .== Symbol(T))
@@ -638,7 +638,7 @@ function ls(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: FunctorInferenceTyp
 end
 
 
-function lsf(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: FunctorInferenceType}
+function lsf(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: AbstractFactor}
     ls(dfg, T)
 end
 
@@ -1104,7 +1104,7 @@ function isPathFactorsHomogeneous(dfg::AbstractDFG, from::Symbol, to::Symbol)
     (length(utyp) == 1), utyp
 end
 
-function existsPathOfFactorsType(dfg::AbstractDFG, from::Symbol, to::Symbol, ftype::FunctorInferenceType)
+function existsPathOfFactorsType(dfg::AbstractDFG, from::Symbol, to::Symbol, ftype::AbstractFactor)
   error("WIP")
 end
 

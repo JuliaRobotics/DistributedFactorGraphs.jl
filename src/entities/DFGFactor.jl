@@ -6,9 +6,6 @@
 abstract type AbstractFactor end
 abstract type AbstractPackedFactor end
 
-const FunctorInferenceType = AbstractFactor       # will eventually deprecate
-const PackedInferenceType = AbstractPackedFactor  # will eventually deprecate
-
 abstract type AbstractPrior <: AbstractFactor end
 abstract type AbstractRelative <: AbstractFactor end
 abstract type AbstractRelativeRoots <: AbstractRelative end
@@ -18,7 +15,7 @@ abstract type AbstractManifoldMinimize <: AbstractRelative end # FIXME move here
 # NOTE DF, Convolution is IIF idea, but DFG should know about "FactorOperationalMemory"
 # DF, IIF.CommonConvWrapper <: FactorOperationalMemory #
 # NOTE was `<: Function` as unnecessary
-abstract type FactorOperationalMemory end   # <: Function
+abstract type FactorOperationalMemory end
 # TODO to be removed from DFG,
 # we can add to IIF or have IIF.CommonConvWrapper <: FactorOperationalMemory directly
 # abstract type ConvolutionObject <: FactorOperationalMemory end
@@ -34,12 +31,12 @@ Notes
 - S::Symbol
 
 Designing (WIP)
-- T <: Union{FactorOperationalMemory, PackedInferenceType}
-- in IIF.CCW{T <: DFG.FunctorInferenceType}
-- in DFG.AbstractRelativeMinimize <: FunctorInferenceType
+- T <: Union{FactorOperationalMemory, AbstractPackedFactor}
+- in IIF.CCW{T <: DFG.AbstractFactor}
+- in DFG.AbstractRelativeMinimize <: AbstractFactor
 - in Main.SomeFactor <: AbstractRelativeMinimize
 """
-mutable struct GenericFunctionNodeData{T<:Union{<:PackedInferenceType, <:AbstractFactor, <:FactorOperationalMemory}}
+mutable struct GenericFunctionNodeData{T<:Union{<:AbstractPackedFactor, <:AbstractFactor, <:FactorOperationalMemory}}
     eliminated::Bool
     potentialused::Bool
     edgeIDs::Vector{Int}
@@ -85,9 +82,9 @@ const FunctionNodeData{T} = GenericFunctionNodeData{T} where T <: Union{<:Abstra
 FunctionNodeData(args...) = FunctionNodeData{typeof(args[4])}(args...)
 
 
-# PackedFunctionNodeData(x2, x3, x4, x6::T, multihypo::Vector{Float64}=[], certainhypo::Vector{Int}=Int[], x9::Int=0) where T <: PackedInferenceType =
+# PackedFunctionNodeData(x2, x3, x4, x6::T, multihypo::Vector{Float64}=[], certainhypo::Vector{Int}=Int[], x9::Int=0) where T <: AbstractPackedFactor =
 #     GenericFunctionNodeData{T}(x2, x3, x4, x6, multihypo, certainhypo, x9)
-# FunctionNodeData(x2, x3, x4, x6::T, multihypo::Vector{Float64}=[], certainhypo::Vector{Int}=Int[], x9::Int=0) where T <: Union{FunctorInferenceType, FactorOperationalMemory} =
+# FunctionNodeData(x2, x3, x4, x6::T, multihypo::Vector{Float64}=[], certainhypo::Vector{Int}=Int[], x9::Int=0) where T <: Union{AbstractFactor, FactorOperationalMemory} =
 #     GenericFunctionNodeData{T}(x2, x3, x4, x6, multihypo, certainhypo, x9)
 
 ##==============================================================================
