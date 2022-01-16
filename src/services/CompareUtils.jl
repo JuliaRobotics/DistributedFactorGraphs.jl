@@ -14,7 +14,7 @@ implement compare if needed.
 
 ==(a::FactorOperationalMemory, b::FactorOperationalMemory) = typeof(a) == typeof(b)
 
-==(a::FunctorInferenceType, b::FunctorInferenceType) = typeof(a) == typeof(b)
+==(a::AbstractFactor, b::AbstractFactor) = typeof(a) == typeof(b)
 
 
 # Generate compares automatically for all in this union
