@@ -85,6 +85,10 @@ end
 ## Deprecate before v0.19
 ##=================================================================================
 
+@deprecate dfgplot(w...;kw...) plotDFG(w...;kw...)
+
+export FunctorInferenceType, PackedInferenceType
+
 const FunctorInferenceType = AbstractFactor       # will eventually deprecate
 const PackedInferenceType = AbstractPackedFactor  # will eventually deprecate
 

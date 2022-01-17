@@ -205,7 +205,6 @@ export addData!
 # Factor Data
 export GenericFunctionNodeData, PackedFunctionNodeData, FunctionNodeData
 export AbstractFactor, AbstractPackedFactor
-export FunctorInferenceType, PackedInferenceType # NOTE might be deprecated in the future (const aliases)
 export AbstractPrior, AbstractRelative, AbstractRelativeRoots, AbstractRelativeMinimize, AbstractManifoldMinimize
 export FactorOperationalMemory
 
