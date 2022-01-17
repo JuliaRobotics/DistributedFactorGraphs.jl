@@ -38,10 +38,10 @@ if get(ENV, "DO_CGDFG_TESTS", "") == "true"
     apis = [
         GraphsDFG,
         LightDFG,
-        CloudGraphsDFG,
+        Neo4jDFG,
         ]
     @warn "TEST: Removing all data for user 'testUserId'!"
-    clearUser!!(CloudGraphsDFG(userId="testUserId"))
+    clearUser!!(Neo4jDFG(userId="testUserId"))
 
 else
     apis = [
@@ -91,7 +91,7 @@ if get(ENV, "IIF_TEST", "") == "true"
 
     apis = Vector{AbstractDFG}()
     push!(apis, LightDFG(solverParams=SolverParams(), userId="testUserId"))
-    get(ENV, "DO_CGDFG_TESTS", "false") == "true" && push!(apis, CloudGraphsDFG(solverParams=SolverParams(), userId="testUserId")) 
+    get(ENV, "DO_CGDFG_TESTS", "false") == "true" && push!(apis, Neo4jDFG(solverParams=SolverParams(), userId="testUserId")) 
 
     for api in apis
         @testset "Testing Driver: $(typeof(api))" begin
@@ -123,7 +123,7 @@ if get(ENV, "IIF_TEST", "") == "true"
         apis = [
             # GraphsDFG{SolverParams}(),
             LightDFG(solverParams=SolverParams(), userId="testUserId"),
-            CloudGraphsDFG(solverParams=SolverParams(), userId="testUserId")
+            Neo4jDFG(solverParams=SolverParams(), userId="testUserId")
             ]
         for api in apis
             @info "Running simple solver test: $(typeof(api))"

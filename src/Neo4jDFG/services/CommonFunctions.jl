@@ -209,7 +209,7 @@ $(SIGNATURES)
 
 Get the Neo4j labels for any node type.
 """
-function _getLabelsForType(dfg::CloudGraphsDFG,
+function _getLabelsForType(dfg::Neo4jDFG,
         type::Type;
         parentKey::Union{Nothing, Symbol}=nothing)
     # Simple validation
@@ -241,7 +241,7 @@ $(SIGNATURES)
 
 Get the Neo4j labels for any node instance.
 """
-function _getLabelsForInst(dfg::CloudGraphsDFG,
+function _getLabelsForInst(dfg::Neo4jDFG,
                             inst::Union{User, Robot, Session, VariableNodeData, N, APPE, ABDE};
                             parentKey::Union{Nothing, Symbol}=nothing)::Vector{String} where
                             {N <: DFGNode, APPE <: AbstractPointParametricEst, ABDE <: AbstractDataEntry}
@@ -256,7 +256,7 @@ end
 
 ## Common CRUD calls for subnode types (PPEs, VariableSolverData, BigData)
 
-function _listVarSubnodesForType(dfg::CloudGraphsDFG, variablekey::Symbol, dfgType::Type, keyToReturn::String; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+function _listVarSubnodesForType(dfg::Neo4jDFG, variablekey::Symbol, dfgType::Type, keyToReturn::String; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
     query = "match (subnode:$(join(_getLabelsForType(dfg, dfgType, parentKey=variablekey),':'))) return subnode.$keyToReturn"
     @debug "[Query] _listVarSubnodesForType query:\r\n$query"
     result = nothing
@@ -272,7 +272,7 @@ function _listVarSubnodesForType(dfg::CloudGraphsDFG, variablekey::Symbol, dfgTy
     return Symbol.(vals)
 end
 
-function _getVarSubnodeProperties(dfg::CloudGraphsDFG, variablekey::Symbol, dfgType::Type, nodeKey::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+function _getVarSubnodeProperties(dfg::Neo4jDFG, variablekey::Symbol, dfgType::Type, nodeKey::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
     query = "match (subnode:$(join(_getLabelsForType(dfg, dfgType, parentKey=variablekey),':')):$nodeKey) return properties(subnode)"
     @debug "[Query] _getVarSubnodeProperties query:\r\n$query"
     result = nothing
@@ -290,7 +290,7 @@ function _getVarSubnodeProperties(dfg::CloudGraphsDFG, variablekey::Symbol, dfgT
 end
 
 function _matchmergeVariableSubnode!(
-        dfg::CloudGraphsDFG,
+        dfg::Neo4jDFG,
         variablekey::Symbol,
         nodeLabels::Vector{String},
         subnode::Union{APPE, ABDE, PVND},
@@ -321,7 +321,7 @@ function _matchmergeVariableSubnode!(
 end
 
 function _deleteVarSubnode!(
-        dfg::CloudGraphsDFG,
+        dfg::Neo4jDFG,
         variablekey::Symbol,
         relationshipKey::Symbol,
         nodeLabels::Vector{String},

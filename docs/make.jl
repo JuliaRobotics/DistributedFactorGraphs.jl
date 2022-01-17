@@ -18,7 +18,7 @@ makedocs(
         ],
         # "DistributedFactorGraph API's" => [
         #     "LightDFGs" => "apis/LightGraphs.md",
-        #     "CloudGraphsDFGs" => "apis/CloudGraphs.md",
+        #     "Neo4jDFGs" => "apis/CloudGraphs.md",
         # ],
         "Function Reference" => "func_ref.md"
     ]

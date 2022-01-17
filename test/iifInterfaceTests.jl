@@ -1,6 +1,6 @@
 global dfg,v1,v2,f1
 
-if typeof(dfg) <: CloudGraphsDFG
+if typeof(dfg) <: Neo4jDFG
     @warn "TEST: Removing all data for user '$(dfg.userId)'!"
     clearUser!!(dfg)
     createDfgSessionIfNotExist(dfg)
@@ -44,9 +44,9 @@ end
     # dfg to copy to
     # creating a whole new graph with the same labels
     T = typeof(dfg)
-    if dfg isa CloudGraphsDFG
+    if dfg isa Neo4jDFG
         #TODO
-        dfg2 = CloudGraphsDFG(solverParams=SolverParams(), userId="testUserId")
+        dfg2 = Neo4jDFG(solverParams=SolverParams(), userId="testUserId")
     else
         dfg2 = T(solverParams=SolverParams(), userId="testUserId")
     end
@@ -231,7 +231,7 @@ end
 
 @testset "Data Entries" begin
     # NOTE: Neo4jDFG isnt supporting this yet.
-    if !(typeof(dfg) <: CloudGraphsDFG)
+    if !(typeof(dfg) <: Neo4jDFG)
         oid = zeros(UInt8,12); oid[12] = 0x01
         de1 = MongodbDataEntry(:key1, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
 
@@ -325,7 +325,7 @@ end
 # Connectivity test
 @testset "Connectivity Test" begin
     global dfg,v1,v2,f1
-    if !(typeof(dfg) <: CloudGraphsDFG)
+    if !(typeof(dfg) <: Neo4jDFG)
         @test isConnected(dfg) == true
         # @test @test_deprecated isFullyConnected(dfg) == true
         # @test @test_deprecated hasOrphans(dfg) == false
@@ -333,7 +333,7 @@ end
         @test isConnected(dfg) == false
     else
         addVariable!(dfg, :orphan, ContinuousScalar, tags = [:POSE], solvable=0)
-        @warn "CloudGraphsDFG is currently failing with the connectivity test."
+        @warn "Neo4jDFG is currently failing with the connectivity test."
     end
 end
 
@@ -388,7 +388,7 @@ end
 numNodes = 10
 #the deletions in last test should have cleared out the dfg
 # dfg = DistributedFactorGraphs._getDuplicatedEmptyDFG(dfg)
-# if typeof(dfg) <: CloudGraphsDFG
+# if typeof(dfg) <: Neo4jDFG
 #     clearSession!!(dfg)
 # end
 

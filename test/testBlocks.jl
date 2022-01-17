@@ -112,7 +112,7 @@ end
 
 
 ##
-# global testDFGAPI = CloudGraphsDFG
+# global testDFGAPI = Neo4jDFG
 # global testDFGAPI = LightDFG
 # T = testDFGAPI
 
@@ -1435,7 +1435,7 @@ function ProducingDotFiles(testDFGAPI,
     addVariable!(dotdfg, v2)
     addFactor!(dotdfg, [v1, v2], f1)
     #NOTE hardcoded toDot will have different results so test LightGraphs seperately
-    if testDFGAPI <: LightDFG || testDFGAPI <: GraphsDFG || testDFGAPI <: CloudGraphsDFG
+    if testDFGAPI <: LightDFG || testDFGAPI <: GraphsDFG || testDFGAPI <: Neo4jDFG
         todotstr = toDot(dotdfg)
         todota = todotstr == "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box, fontsize=8, fixedsize=false, height=0.1, width=0.1];\na -- abf1\nb -- abf1\n}\n"
         todotb = todotstr == "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box, fontsize=8, fixedsize=false, height=0.1, width=0.1];\nb -- abf1\na -- abf1\n}\n"

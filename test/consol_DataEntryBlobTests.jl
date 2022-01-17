@@ -11,12 +11,12 @@ using SHA
 
 include("testBlocks.jl")
 
-testDFGAPI = CloudGraphsDFG
-testDFGAPI = LightDFG
+testDFGAPI = Neo4jDFG
+testDFGAPI = GraphsDFG
 end
 # Build a basic graph.
 
-testDFGAPI = LightDFG
+testDFGAPI = GraphsDFG
 
 ##==============================================================================
 ## DataEntry Blobs
