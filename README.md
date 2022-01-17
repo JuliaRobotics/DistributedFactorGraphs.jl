@@ -2,14 +2,14 @@
 
 Click on badges to follow links:
 
-| Release v0.16 | Dev | Coverage | Documentation |
+| Release v0.17 | Dev | Coverage | Documentation |
 |---------------|-----|----------|---------------|
 | [![Build Status][dfg-ci-stb-img]][dfg-ci-stb-url] | [![CI][dfg-ci-dev-img]][dfg-ci-dev-url] <br> [![Average time to resolve an issue](https://isitmaintained.com/badge/resolution/JuliaRobotics/DistributedFactorGraphs.jl.svg)](https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues) | [![codecov.io][dfg-cov-img]][dfg-cov-url] <br> [![Percentage of issues still open](https://isitmaintained.com/badge/open/JuliaRobotics/DistributedFactorGraphs.jl.svg)](https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues) | [![docs](https://img.shields.io/badge/DFGDocs-latest-blue.svg)](http://juliarobotics.github.io/DistributedFactorGraphs.jl/latest/) <br> [![docs](https://img.shields.io/badge/CaesarDocs-latest-blue.svg)](http://juliarobotics.github.io/Caesar.jl/latest/)
 
 
 [dfg-ci-dev-img]: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/actions/workflows/ci.yml/badge.svg
 [dfg-ci-dev-url]: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/actions/workflows/ci.yml
-[dfg-ci-stb-img]: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/actions/workflows/ci.yml/badge.svg?branch=release%2Fv0.16
+[dfg-ci-stb-img]: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/actions/workflows/ci.yml/badge.svg?branch=release%2Fv0.17
 [dfg-ci-stb-url]: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/actions/workflows/ci.yml
 [dfg-cov-img]: https://codecov.io/github/JuliaRobotics/DistributedFactorGraphs.jl/coverage.svg?branch=master
 [dfg-cov-url]: https://codecov.io/github/JuliaRobotics/DistributedFactorGraphs.jl?branch=master
