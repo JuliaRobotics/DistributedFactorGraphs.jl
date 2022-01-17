@@ -9,15 +9,15 @@ using GraphPlot
 using DistributedFactorGraphs, DistributedFactorGraphs.DFGPlots
 # ... Make graph...
 # Using GraphViz plotting
-dfgplot(fg)
+plotDFG(fg)
 # Save to PDFG
 using Compose
-draw(PDF("/tmp/graph.pdf", 16cm, 16cm), dfgplot(fg))
+draw(PDF("/tmp/graph.pdf", 16cm, 16cm), plotDFG(fg))
 ```
 
 More information at [GraphPlot.jl](https://github.com/JuliaGraphs/GraphPlot.jl)
 """
-function dfgplot(dfg::DistributedFactorGraphs.MetaGraphsDFG, p::DFGPlotProps = DFGPlotProps())
+function plotDFG(dfg::DistributedFactorGraphs.MetaGraphsDFG, p::DFGPlotProps = DFGPlotProps())
     @info "Deprecated, please use GraphsDFG or LightDFG."
     nodesize = [has_prop(dfg.g,i,:factor) ?  p.nodesize.fac : p.nodesize.var for i=vertices(dfg.g)]
     if p.drawlabels

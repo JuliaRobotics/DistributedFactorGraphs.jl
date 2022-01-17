@@ -1497,7 +1497,7 @@ function CopyFunctionsTest(testDFGAPI; kwargs...)
     @test issetequal(ls(dcdfg_part), vlbls)
     @test issetequal(lsf(dcdfg_part), flbls)
     @test !isConnected(dcdfg_part)
-    # dfgplot(dcdfg_part)
+    # plotDFG(dcdfg_part)
 
 
     vlbls = [:x2, :x3]
