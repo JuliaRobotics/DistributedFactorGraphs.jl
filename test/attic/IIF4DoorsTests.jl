@@ -67,7 +67,7 @@ mlc = MixturePrior(Normal.(doors[1,:], bws[1]), 0.25*ones(4))
 addFactor!(fg,[:x7], mlc )
 
 
-dfgplot(fg)
+plotDFG(fg)
 
 tree = solveTree!(fg)
 

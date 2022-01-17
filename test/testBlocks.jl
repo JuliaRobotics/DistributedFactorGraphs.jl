@@ -642,9 +642,9 @@ function  PPETestBlock!(fg, v1)
     # Delete it
     @test deletePPE!(fg, :a, :default) == ppe
     # Update add it
-    updatePPE!(fg, :a, ppe, :default)
+    updatePPE!(fg, :a, ppe) #, :default)
     # Update update it
-    updatePPE!(fg, :a, ppe, :default)
+    updatePPE!(fg, :a, ppe) #, :default)
 
     v1.ppeDict[:default] = deepcopy(ppe)
     # Bulk copy PPE's for x0 and x1
@@ -1497,7 +1497,7 @@ function CopyFunctionsTest(testDFGAPI; kwargs...)
     @test issetequal(ls(dcdfg_part), vlbls)
     @test issetequal(lsf(dcdfg_part), flbls)
     @test !isConnected(dcdfg_part)
-    # dfgplot(dcdfg_part)
+    # plotDFG(dcdfg_part)
 
 
     vlbls = [:x2, :x3]

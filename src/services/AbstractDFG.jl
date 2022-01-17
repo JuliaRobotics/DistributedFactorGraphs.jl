@@ -1198,7 +1198,7 @@ function buildSubgraph(dfg::AbstractDFG,
                        variableFactorLabels::Vector{Symbol},
                        distance::Int=0;
                        kwargs...)
-    return buildSubgraph(DefaultDFG, dfg, variableFactorLabels, distance; kwargs...)
+    return buildSubgraph(LocalDFG, dfg, variableFactorLabels, distance; kwargs...)
 end
 
 """

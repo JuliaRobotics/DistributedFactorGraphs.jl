@@ -72,7 +72,7 @@ export updateUserData!, updateRobotData!, updateSessionData!, deleteUserData!, d
 export emptyUserData!, emptyRobotData!, emptySessionData!
 
 # Graph Types: exported from modules or @reexport
-export InMemoryDFGTypes, DefaultDFG
+export InMemoryDFGTypes, LocalDFG
 
 # AbstractDFG Interface
 export exists,
@@ -205,7 +205,6 @@ export addData!
 # Factor Data
 export GenericFunctionNodeData, PackedFunctionNodeData, FunctionNodeData
 export AbstractFactor, AbstractPackedFactor
-export FunctorInferenceType, PackedInferenceType # NOTE might be deprecated in the future (const aliases)
 export AbstractPrior, AbstractRelative, AbstractRelativeRoots, AbstractRelativeMinimize, AbstractManifoldMinimize
 export FactorOperationalMemory
 
@@ -297,9 +296,10 @@ include("GraphsDFG/GraphsDFG.jl")
 
 include("LightDFG/LightDFG.jl")
 @reexport using .LightDFGs
+
 #supported in Memory fg types
 const InMemoryDFGTypes = Union{GraphsDFG, LightDFG}
-const DefaultDFG = LightDFG
+const LocalDFG = GraphsDFG
 
 # Common includes
 include("services/CommonAccessors.jl")

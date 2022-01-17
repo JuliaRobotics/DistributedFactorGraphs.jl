@@ -6,6 +6,9 @@ Listing news on any major breaking changes in DFG.  For regular changes, see int
 - Switch to GraphsDFG, deprecating archived LightGraphs.jl (#826).
 - Workaround: packed factor data `.fnc` encoded as base64 to avoid escape character problems (#834).
 - Towards distributions serialized via JSON, getting away from custom strings.
+- `LocalDFG` replaces `DefaultDFG` (#844).
+- Optimized creation of CGDFG / `createDfgSessionIfNotExist` (#839, #815).
+- `plotDFG` replaces `dfgplot` (#841, #844).
 
 # v0.16.0
 
