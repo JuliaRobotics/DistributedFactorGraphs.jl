@@ -35,11 +35,11 @@ To continue the example, run one of the following to create a DFG driver:
 dfg = LightDFG{SolverParams}(solverParams=SolverParams())
 ```
 
-### Creating a CloudGraphsDFG Graph
+### Creating a Neo4jDFG Graph
 
 ```julia
 # Create a DFG with no solver parameters (just to demonstrate the difference) using the CloudGraphs driver, and connect it to a local Neo4j instance.
-cfg = CloudGraphsDFG{NoSolverParams}("localhost", 7474, "neo4j", "test",
+cfg = Neo4jDFG{NoSolverParams}("localhost", 7474, "neo4j", "test",
                                      "testUser", "testRobot", "testSession")
 ```
 

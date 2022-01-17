@@ -9,7 +9,7 @@ using UUIDs
 
 include("testBlocks.jl")
 
-testDFGAPI = CloudGraphsDFG
+testDFGAPI = Neo4jDFG
 end
 # Build a basic graph.
 

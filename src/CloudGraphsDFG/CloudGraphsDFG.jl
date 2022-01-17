@@ -114,7 +114,7 @@ include("services/CGStructure.jl")
 include("services/CloudGraphsDFG.jl")
 
 # Exports
-export Neo4jInstance, CloudGraphsDFG
+export Neo4jInstance, Neo4jDFG
 
 # Additional exports for CGStructure
 export copySession!

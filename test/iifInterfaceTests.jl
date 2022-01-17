@@ -216,7 +216,7 @@ end
     @test !isInitialized(v2, :second)
 
     # Session, robot, and user small data tests
-    # NOTE: CloudGraphDFG isnt supporting this yet.
+    # NOTE: Neo4jDFG isnt supporting this yet.
     smallUserData = Dict{Symbol, String}(:a => "42", :b => "Hello")
     smallRobotData = Dict{Symbol, String}(:a => "43", :b => "Hello")
     smallSessionData = Dict{Symbol, String}(:a => "44", :b => "Hello")
@@ -230,7 +230,7 @@ end
 end
 
 @testset "Data Entries" begin
-    # NOTE: CloudGraphDFG isnt supporting this yet.
+    # NOTE: Neo4jDFG isnt supporting this yet.
     if !(typeof(dfg) <: CloudGraphsDFG)
         oid = zeros(UInt8,12); oid[12] = 0x01
         de1 = MongodbDataEntry(:key1, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
