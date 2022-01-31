@@ -298,10 +298,10 @@ function _packSolverData(
     #
     packtype = convertPackedType(fnctype)
     try
-        packedJson = convert( PackedFunctionNodeData{packtype}, getSolverData(f) )
-        # packedJson = JSON2.write(packed) # NOTE SINGLE TOP LEVEL JSON.write ONLY
+        packed = convert( PackedFunctionNodeData{packtype}, getSolverData(f) )
+        packedJson = packed # JSON2.write(packed) # NOTE SINGLE TOP LEVEL JSON.write ONLY
         if base64Encode
-            # 833
+            # 833, 848, Neo4jDFG still using base64(JSON2.write(solverdata))...
             packedJson = JSON2.write(packed)
             packedJson = base64encode(packedJson)
         end
@@ -354,7 +354,6 @@ function Base.convert(::Type{PF}, nt::NamedTuple) where {PF <: AbstractPackedFac
 end
 
 function Base.convert(::Type{GenericFunctionNodeData{P}}, nt::NamedTuple) where P
-    @show P
     GenericFunctionNodeData{P}(
         nt.eliminated,
         nt.potentialused,
@@ -389,6 +388,14 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any}) where G <: Abstrac
             tags = Vector{Symbol}()
         end
     end
+    
+    # Get the stored variable order
+    _variableOrderSymbols = if packedProps["_variableOrderSymbols"] isa String
+        JSON2.read(packedProps["_variableOrderSymbols"], Vector{Symbol})
+    else
+        Symbol.(packedProps["_variableOrderSymbols"])
+    end
+
     data = packedProps["data"]
     datatype = packedProps["fnctype"]
     @debug "DECODING factor type = '$(datatype)' for factor '$label'"
@@ -397,13 +404,6 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any}) where G <: Abstrac
     # FIXME type instability from nothing to T
     packed = nothing
     fullFactorData = nothing
-    
-    # Get the stored variable order
-    _variableOrderSymbols = if packedProps["_variableOrderSymbols"] isa String
-        JSON2.read(packedProps["_variableOrderSymbols"], Vector{Symbol})
-    else
-        Symbol.(packedProps["_variableOrderSymbols"])
-    end
     
     # @show packtype
     # @show data

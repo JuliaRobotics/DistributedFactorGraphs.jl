@@ -56,7 +56,7 @@ end
 
 
 Base.@kwdef struct PackedTestAbstractPrior <: AbstractPackedFactor
-    s::String
+    s::String = ""
 end
 # PackedTestAbstractPrior() = PackedTestAbstractPrior("")
 

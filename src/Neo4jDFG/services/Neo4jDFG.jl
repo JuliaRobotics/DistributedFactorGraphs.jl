@@ -271,7 +271,9 @@ function getFactor(dfg::Neo4jDFG, label::Union{Symbol, String})
     props = result.results[1]["data"][1]["row"][1]
 
     # NOTE: Until we address #590, base64 decode the data to ensure robustness, #833
-    props["data"] = String(base64decode(props["data"]))
+    # TODO: consolidate with top level only JSON, #848
+    packedData = String(base64decode(props["data"]))
+    props["data"] = JSON2.read(packedData)
 
     return rebuildFactorMetadata!(dfg, unpackFactor(dfg, props))
 end
