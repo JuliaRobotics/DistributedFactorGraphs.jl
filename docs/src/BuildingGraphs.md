@@ -83,9 +83,9 @@ Four factors are added: a prior, a linear conditional relationship with a normal
 
 ```@example buildingGraphs; continued = true
 prior = addFactor!(dfg, [:x0], Prior(Normal(0,1)))
-f1 = addFactor!(dfg, [:x0; :x1], LinearConditional(Normal(50.0,2.0)), solvable=1)
-f1 = addFactor!(dfg, [:l0; :x0], LinearConditional(Normal(40.0,5.0)), solvable=1)
-f1 = addFactor!(dfg, [:l0; :x1], LinearConditional(Normal(-10.0,5.0)), solvable=1)
+f1 = addFactor!(dfg, [:x0; :x1], LinearRelative(Normal(50.0,2.0)), solvable=1)
+f1 = addFactor!(dfg, [:l0; :x0], LinearRelative(Normal(40.0,5.0)), solvable=1)
+f1 = addFactor!(dfg, [:l0; :x1], LinearRelative(Normal(-10.0,5.0)), solvable=1)
 ```
 
 The produced factor graph is:
