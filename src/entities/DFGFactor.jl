@@ -46,12 +46,6 @@ mutable struct GenericFunctionNodeData{T<:Union{<:AbstractPackedFactor, <:Abstra
     nullhypo::Float64
     solveInProgress::Int
     inflation::Float64
-    # inner constructor needed for dual use
-    # GenericFunctionNodeData{T}(x1::Bool,x2::Bool,x3,x4::T,args...) where T = new{T}(x1,x2,x3,x4,args...)
-    # TODO deprecate all these inner constructors at end of DFG v0.9.x (was added for GFND.nullhypo::Float64 breaking change)
-    # GenericFunctionNodeData{T}(el,po,ed,fn,mu::Vector{<:Real},ce::Vector{Int},so::Int) where T = 
-    #                            new{T}(el,po,ed,fn,mu,ce,0.0,so)
-    # GenericFunctionNodeData{T}(el,po,ed,fn,mu::Vector{<:Real},ce::Vector{Int},nu::Real,so::Int,infl::Real) where T = new{T}(el,po,ed,fn,mu,ce,nu,so,infl)
 end
 
 ## Constructors
