@@ -299,9 +299,10 @@ function _packSolverData(
     packtype = convertPackedType(fnctype)
     try
         packed = convert( PackedFunctionNodeData{packtype}, getSolverData(f) )
-        packedJson = JSON2.write(packed)
+        packedJson = packed # JSON2.write(packed) # NOTE SINGLE TOP LEVEL JSON.write ONLY
         if base64Encode
-            # 833
+            # 833, 848, Neo4jDFG still using base64(JSON2.write(solverdata))...
+            packedJson = JSON2.write(packed)
             packedJson = base64encode(packedJson)
         end
         return packedJson
@@ -321,13 +322,13 @@ function packFactor(dfg::AbstractDFG, f::DFGFactor)
     props["label"] = string(f.label)
     props["timestamp"] = Dates.format(f.timestamp, "yyyy-mm-ddTHH:MM:SS.ssszzz")
     props["nstime"] = string(f.nstime.value)
-    props["tags"] = JSON2.write(f.tags)
+    props["tags"] = String.(f.tags) # JSON2.write(f.tags)
     # Pack the node data
     fnctype = getSolverData(f).fnc.usrfnc!
     props["data"] = _packSolverData(f, fnctype)
     # Include the type
     props["fnctype"] = String(_getname(fnctype))
-    props["_variableOrderSymbols"] = JSON2.write(f._variableOrderSymbols)
+    props["_variableOrderSymbols"] = String.(f._variableOrderSymbols) # JSON2.write(f._variableOrderSymbols)
     props["solvable"] = getSolvable(f)
     props["_version"] = _getDFGVersion()
     return props
@@ -346,6 +347,26 @@ function decodePackedType(dfg::AbstractDFG, varOrder::AbstractVector{Symbol}, ::
     factordata = reconstFactorData(dfg, varOrder, fulltype, packeddata)
     return factordata
 end
+
+function Base.convert(::Type{PF}, nt::NamedTuple) where {PF <: AbstractPackedFactor}
+    # Here we define a convention, must provide PackedType(;kw...) constructor, easiest is just use Base.@kwdef
+    PF(;nt...)
+end
+
+function Base.convert(::Type{GenericFunctionNodeData{P}}, nt::NamedTuple) where P
+    GenericFunctionNodeData{P}(
+        nt.eliminated,
+        nt.potentialused,
+        nt.edgeIDs,
+        convert(P,nt.fnc),
+        nt.multihypo,
+        nt.certainhypo,
+        nt.nullhypo,
+        nt.solveInProgress,
+        nt.inflation,
+    )
+end
+
 
 # Returns `::DFGFactor`
 function unpackFactor(dfg::G, packedProps::Dict{String, Any}) where G <: AbstractDFG
@@ -367,6 +388,14 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any}) where G <: Abstrac
             tags = Vector{Symbol}()
         end
     end
+    
+    # Get the stored variable order
+    _variableOrderSymbols = if packedProps["_variableOrderSymbols"] isa String
+        JSON2.read(packedProps["_variableOrderSymbols"], Vector{Symbol})
+    else
+        Symbol.(packedProps["_variableOrderSymbols"])
+    end
+
     data = packedProps["data"]
     datatype = packedProps["fnctype"]
     @debug "DECODING factor type = '$(datatype)' for factor '$label'"
@@ -376,15 +405,10 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any}) where G <: Abstrac
     packed = nothing
     fullFactorData = nothing
     
-    # Get the stored variable order
-    _variableOrderSymbols = if packedProps["_variableOrderSymbols"] isa String
-        JSON2.read(packedProps["_variableOrderSymbols"], Vector{Symbol})
-    else
-        Symbol.(packedProps["_variableOrderSymbols"])
-    end
-    
+    # @show packtype
+    # @show data
     try
-        packed = JSON2.read(data, GenericFunctionNodeData{packtype})
+        packed = convert(GenericFunctionNodeData{packtype}, data) # JSON2.read(data, GenericFunctionNodeData{packtype})
         decodeType = getFactorOperationalMemoryType(dfg)
         fullFactorData = decodePackedType(dfg, _variableOrderSymbols, decodeType, packed)
     catch ex

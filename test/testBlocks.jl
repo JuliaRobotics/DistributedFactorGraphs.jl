@@ -34,10 +34,10 @@ struct TestAbstractPrior <: AbstractPrior end
 struct TestAbstractRelativeFactor <: AbstractRelativeRoots end
 struct TestAbstractRelativeFactorMinimize <: AbstractRelativeMinimize end
 
-struct PackedTestFunctorInferenceType1 <: AbstractPackedFactor
-    s::String
+Base.@kwdef struct PackedTestFunctorInferenceType1 <: AbstractPackedFactor
+    s::String = ""
 end
-PackedTestFunctorInferenceType1() = PackedTestFunctorInferenceType1("")
+# PackedTestFunctorInferenceType1() = PackedTestFunctorInferenceType1("")
 
 function Base.convert(::Type{PackedTestFunctorInferenceType1}, d::TestFunctorInferenceType1)
     # @info "convert(::Type{PackedTestFunctorInferenceType1}, d::TestFunctorInferenceType1)"
@@ -55,10 +55,10 @@ function Base.convert(::Type{TestFunctorInferenceType1}, d::PackedTestFunctorInf
 end
 
 
-struct PackedTestAbstractPrior <: AbstractPackedFactor
-    s::String
+Base.@kwdef struct PackedTestAbstractPrior <: AbstractPackedFactor
+    s::String = ""
 end
-PackedTestAbstractPrior() = PackedTestAbstractPrior("")
+# PackedTestAbstractPrior() = PackedTestAbstractPrior("")
 
 function Base.convert(::Type{PackedTestAbstractPrior}, d::TestAbstractPrior)
     # @info "convert(::Type{PackedTestAbstractPrior}, d::TestAbstractPrior)"
