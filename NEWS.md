@@ -9,6 +9,7 @@ Listing news on any major breaking changes in DFG.  For regular changes, see int
 - `LocalDFG` replaces `DefaultDFG` (#844).
 - Optimized creation of CGDFG / `createDfgSessionIfNotExist` (#839, #815).
 - `plotDFG` replaces `dfgplot` (#841, #844).
+- `Neo4jDFG` replaces `CloudGraphsDFG` (#836).
 
 # v0.16.0
 

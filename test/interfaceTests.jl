@@ -10,7 +10,7 @@ using TimeZones
 
 include("testBlocks.jl")
 
-testDFGAPI = CloudGraphsDFG
+testDFGAPI = Neo4jDFG
 testDFGAPI = LightDFG
 
 # Enable debug logging
@@ -22,7 +22,7 @@ global_logger(logger)
 logger = ConsoleLogger(stdout, Logging.Debug)
 global_logger(logger)
 # or
-ENV["JULIA_DEBUG"] = :CloudGraphsDFGs #module name or file name
+ENV["JULIA_DEBUG"] = :Neo4jDFGs #module name or file name
 
 end
 

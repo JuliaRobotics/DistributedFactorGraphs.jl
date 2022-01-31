@@ -364,9 +364,9 @@ end
 #TODO use copy functions currently in attic
 """
     $(SIGNATURES)
-Gets an empty and unique CloudGraphsDFG derived from an existing DFG.
+Gets an empty and unique Neo4jDFG derived from an existing DFG.
 """
-function _getDuplicatedEmptyDFG(dfg::G) where G <: AbstractDFG
+function _getDuplicatedEmptyDFG(dfg::AbstractDFG)
     error("_getDuplicatedEmptyDFG not implemented for $(typeof(dfg))")
 end
 

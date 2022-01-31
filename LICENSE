@@ -3,9 +3,9 @@ Copyright (c) 2017-2021 NavAbility
 NOTICE: this license will be relaxed to be much more permissive soon.
 
 The source code in this repository is separated into two parts 
-that are licensed separately.  The CloudGraphDFG library/driver
+that are licensed separately.  The Neo4jDFG library/driver
 is licensed separately.  For more details see: 
-https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/blob/develop/src/CloudGraphsDFG/LICENSE
+https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/blob/develop/src/Neo4jDFG/LICENSE
 
 DistributedFactorGraphs.jl, is not licensed for hosted, webservice or cloud 
 solutions (public or private).  Please contact NavAbility via email at 

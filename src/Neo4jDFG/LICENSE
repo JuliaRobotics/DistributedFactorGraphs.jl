@@ -7,19 +7,19 @@ NavAbility reserves all rights regarding, and to deny use of the software
 for hosted webservice or cloud offerings or deployments; over and above 
 any conflicts that may arise with the LGPLv3 license copied hereafter.
 
-Other general use or modification of the CloudGraphDFG library/driver 
+Other general use or modification of the Neo4jDFG library/driver 
 beyond that of webservices or clouds (private or public) is permitted 
 according to terms defined by LGPLv3.
 
-The CloudGraphDFG library/driver is an optional library of the 
+The Neo4jDFG library/driver is an optional library of the 
 DistributedFactorGraph.jl/Caesar.jl related ecosystem, 
 but is NOT required for related computations and other features offered 
 by the Caesar.jl system.  Please visit JuliaRobotics/Caesar.jl for 
-more details on use of the software without the CloudGraphsDFG library.
+more details on use of the software without the Neo4jDFG library.
 
-A standalone CloudGraphsDFG driver can be obtained by simply copying
-the folder src/CloudGraphsDFG, and a library "header" definition 
-(i.e. a "Julia Module") can be found in the file CloudGraphsDFG.jl.
+A standalone Neo4jDFG driver can be obtained by simply copying
+the folder src/Neo4jDFG, and a library "header" definition 
+(i.e. a "Julia Module") can be found in the file Neo4jDFG.jl.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,

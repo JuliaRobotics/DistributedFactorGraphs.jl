@@ -5,12 +5,12 @@ using IncrementalInference
 
 @testset "test fourdoor early example" begin
 
-DistributedFactorGraphs.CloudGraphsDFG{SolverParams}() = CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
+DistributedFactorGraphs.Neo4jDFG{SolverParams}() = Neo4jDFG{SolverParams}("localhost", 7474, "neo4j", "test",
                                                                     "testUser", "testRobot", "testSession",
                                                                     solverParams=SolverParams())
 
 N=100
-# fg = initfg(CloudGraphsDFG{SolverParams}())
+# fg = initfg(Neo4jDFG{SolverParams}())
 fg = initfg(LightDFG{SolverParams})
 
 doors = reshape(Float64[-100.0;0.0;100.0;300.0],1,4)

@@ -1,4 +1,4 @@
-dfg = CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
+dfg = Neo4jDFG{SolverParams}("localhost", 7474, "neo4j", "test",
                             "testUser", "testRobot", "testSession",
                             "Description of test session",
                             solverParams=SolverParams())
