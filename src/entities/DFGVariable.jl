@@ -134,7 +134,7 @@ function VariableNodeData(variableType::T; solveKey::Symbol=:default) where T <:
     # BW[1] = zeros(getDimension(T))
     VariableNodeData(   P0, BW, Symbol[], Int[], 
                         0, false, :NOTHING, Symbol[], 
-                        variableType, false, 0.0, false, 
+                        variableType, false, [0.0], false, 
                         false, 0, 0, solveKey  )
 end
 
