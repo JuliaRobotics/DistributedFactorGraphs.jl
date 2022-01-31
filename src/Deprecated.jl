@@ -25,7 +25,7 @@ function Base.setproperty!(x::VariableNodeData, f::Symbol, val)
   if f == :inferdim
     error("vnd.inferdim::Float64 was deprecated and is now obsolete, use vnd.infoPerCoord::Vector{Float64} instead")
   end
-  return setfield!(x, f, val)
+  return setfield!(x, f, convert(fieldtype(typeof(x), f), val))
 end
 
 Base.getproperty(x::PackedVariableNodeData,f::Symbol) = begin
@@ -40,7 +40,7 @@ function Base.setproperty!(x::PackedVariableNodeData, f::Symbol, val)
   if f == :inferdim
     error("pvnd.inferdim::Float64 was deprecated and is now obsolete, use vnd.infoPerCoord::Vector{Float64} instead")
   end
-  return setfield!(x, f, val)
+  return setfield!(x, f, convert(fieldtype(typeof(x), f), val))
 end
 
 
