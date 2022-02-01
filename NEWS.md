@@ -2,10 +2,10 @@ Listing news on any major breaking changes in DFG.  For regular changes, see int
 
 # v0.18.0
 
-- Unpack of GenericFactorNodeData now get `dfg::AbstractDFG` and `varOrder::Vector{Symbol}`, deprecating previous use of `convert` without the graph context (#832).
+- Unpack of GenericFactorNodeData with `reconstrFactorData` now gets `dfg::AbstractDFG` and `varOrder::Vector{Symbol}`, deprecating previous use of `convert` without the graph context (#832).
 - Switch to GraphsDFG, deprecating archived LightGraphs.jl (#826).
 - Workaround: packed factor data `.fnc` encoded as base64 to avoid escape character problems (#834).
-- Towards distributions serialized via JSON, getting away from custom strings.
+- Towards distributions serialized via JSON, getting away from custom strings (#848).
 - `LocalDFG` replaces `DefaultDFG` (#844).
 - Optimized creation of CGDFG / `createDfgSessionIfNotExist` (#839, #815).
 - `plotDFG` replaces `dfgplot` (#841, #844).
