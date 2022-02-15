@@ -315,7 +315,7 @@ function _matchmergeVariableSubnode!(
         result = commit(tx)
     end
     length(result.errors) > 0 && error(string(result.errors))
-    length(result.results[1]["data"]) != 1 && error("Cannot find subnode '$(subnode)' for variable '$variablekey'")
+    length(result.results[1]["data"]) != 1 && error("Cannot find desired subnode::'$(typeof(subnode))' for variable '$variablekey'")
     length(result.results[1]["data"][1]["row"]) != 1 && error("Cannot find subnode '$(subnode)' for variable '$variablekey'")
     return result.results[1]["data"][1]["row"][1]
 end
