@@ -56,7 +56,7 @@ for variable in getVariables(localFg)
     # variable.ppeDict[:default] = Dict{Symbol, VariableEstimate}(:Mean => VariableEstimate(:default, :Mean, means, now()))
 end
 
-bel = getKDE(getVariable(localFg, :x0))
+bel = getBelief(getVariable(localFg, :x0))
 bel
 
 # Push updates back to cloud.

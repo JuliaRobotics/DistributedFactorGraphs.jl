@@ -379,22 +379,33 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any}) where G <: Abstrac
     # Parse it
     timestamp = ZonedDateTime(packedProps["timestamp"])
     nstime = Nanosecond(get(packedProps, "nstime", 0))
-    if packedProps["tags"] isa String
-        tags = JSON2.read(packedProps["tags"], Vector{Symbol})
-    else
-        tags = Symbol.(packedProps["tags"])
-        # If tags is empty we need to make sure it's a Vector{Symbol}
-        if length(tags) == 0
-            tags = Vector{Symbol}()
-        end
-    end
-    
-    # Get the stored variable order
-    _variableOrderSymbols = if packedProps["_variableOrderSymbols"] isa String
-        JSON2.read(packedProps["_variableOrderSymbols"], Vector{Symbol})
-    else
-        Symbol.(packedProps["_variableOrderSymbols"])
-    end
+
+    _vecSymbol(vecstr) = Symbol[map(x->Symbol(x),vecstr)...]
+
+    # Get the stored tags and variable order
+    @assert !(packedProps["tags"] isa String) "unpackFactor expecting JSON only data, packed `tags` should be a vector of strings (not a single string of elements)."
+    @assert !(packedProps["_variableOrderSymbols"] isa String) "unpackFactor expecting JSON only data, packed `_variableOrderSymbols` should be a vector of strings (not a single string of elements)."
+    tags = _vecSymbol(packedProps["tags"])
+    _variableOrderSymbols = _vecSymbol(packedProps["_variableOrderSymbols"])
+        # if packedProps["tags"] isa String
+        #     # TODO, legacy and should be removed
+        #     tags = JSON2.read(packedProps["tags"], Vector{Symbol})
+        # else
+        #     # the preferred (and should be only) solution
+        #     tags = Symbol.(packedProps["tags"])
+        #     # If tags is empty we need to make sure it's a Vector{Symbol}
+        #     if length(tags) == 0
+        #         tags = Vector{Symbol}()
+        #     end
+        # end
+        # # Get the stored variable order
+        # _variableOrderSymbols = if packedProps["_variableOrderSymbols"] isa String
+        #     # TODO, legacy and should be removed
+        #     JSON2.read(packedProps["_variableOrderSymbols"], Vector{Symbol})
+        # else
+        #     # the preferred (and should be only) solution
+        #     Symbol.(packedProps["_variableOrderSymbols"])
+        # end
 
     data = packedProps["data"]
     datatype = packedProps["fnctype"]
