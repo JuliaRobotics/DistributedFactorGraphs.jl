@@ -262,7 +262,7 @@ getEstimateFields(::MeanMaxPPE) = [:suggested, :max, :mean]
 ## DFG Variables
 ##==============================================================================
 
-const SmallDataTypes = Union{Int, Float64, String, Bool, Vector{Int}, Vector{Float64}, Vector{String}, Vector{Bool}}
+const SmallDataTypes = Union{<:Int, <:Float64, <:AbstractString, <:Bool, <:Vector{Int}, <:Vector{Float64}, <:Vector{String}, <:Vector{Bool}}
 
 ##------------------------------------------------------------------------------
 ## DFGVariable lv2
@@ -295,10 +295,10 @@ struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
     solverDataDict::Dict{Symbol, <: VariableNodeData{T}}
     """Dictionary of small data associated with this variable.
     Accessors: [`getSmallData`](@ref), [`setSmallData!`](@ref)"""
-    smallData::Dict{Symbol, SmallDataTypes}
+    smallData::Dict{Symbol, <:SmallDataTypes}
     """Dictionary of large data associated with this variable.
     Accessors: [`addDataEntry!`](@ref), [`getDataEntry`](@ref), [`updateDataEntry!`](@ref), and [`deleteDataEntry!`](@ref)"""
-    dataDict::Dict{Symbol, AbstractDataEntry}
+    dataDict::Dict{Symbol, <:AbstractDataEntry}
     """Solvable flag for the variable.
     Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)"""
     solvable::Base.RefValue{Int}
