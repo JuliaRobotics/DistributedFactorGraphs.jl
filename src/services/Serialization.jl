@@ -119,14 +119,14 @@ function packVariable(dfg::AbstractDFG, v::DFGVariable)
     props["label"] = string(v.label)
     props["timestamp"] = Dates.format(v.timestamp, "yyyy-mm-ddTHH:MM:SS.ssszzz")
     props["nstime"] = string(v.nstime.value)
-    props["tags"] = JSON2.write(v.tags)
-    props["ppeDict"] = JSON2.write(v.ppeDict)
-    props["solverDataDict"] = JSON2.write(Dict(keys(v.solverDataDict) .=> map(vnd -> packVariableNodeData(dfg, vnd), values(v.solverDataDict))))
-    props["smallData"] = JSON2.write(v.smallData)
+    props["tags"] = String.(v.tags)
+    props["ppeDict"] = v.ppeDict
+    props["solverDataDict"] = Dict(keys(v.solverDataDict) .=> map(vnd -> packVariableNodeData(dfg, vnd), values(v.solverDataDict)))
+    props["smallData"] = v.smallData
     props["solvable"] = v.solvable
     props["variableType"] = typeModuleName(getVariableType(v))
-    props["dataEntry"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> JSON.json(bde), values(v.dataDict))))
-    props["dataEntryType"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> typeof(bde), values(v.dataDict))))
+    props["dataEntry"] = Dict(keys(v.dataDict) .=> map(bde -> JSON.json(bde), values(v.dataDict)))
+    props["dataEntryType"] = Dict(keys(v.dataDict) .=> map(bde -> typeof(bde), values(v.dataDict)))
     props["_version"] = _getDFGVersion()
     return props::Dict{String, Any}
 end
@@ -152,13 +152,21 @@ function unpackVariable(dfg::G,
     else
         tags = Symbol.(packedProps["tags"])
     end
-    ppeDict = unpackPPEs ? JSON2.read(packedProps["ppeDict"], Dict{Symbol, MeanMaxPPE}) : Dict{Symbol, MeanMaxPPE}()
-    smallData = JSON2.read(packedProps["smallData"], Dict{Symbol, SmallDataTypes})
+    ppeDict = Dict{Symbol, MeanMaxPPE}()
+    ppeDict = unpackPPEs
+    @info "HERE" label
+    for (key,val) in packedProps["ppeDict"]
+        _ppe = (; (Symbol(k) => v for (k,v) in val)...)
+        ppe = MeanMaxPPE(;val...)
+        ppeDict[Symbol(key)] = ppe
+    end
+    
+    smallData = packedProps["smallData"] # JSON2.read(packedProps["smallData"], Dict{Symbol, SmallDataTypes})
 
     variableTypeString = if haskey(packedProps, "softtype")
         # TODO Deprecate, remove in v0.12
-        @warn "Packed field `softtype` is deprecated and replaced with `variableType`"
-        packedProps["softtype"]
+        error("Packed field `softtype` is deprecated and replaced with `variableType`")
+        # packedProps["softtype"]
     else
         packedProps["variableType"]
     end
