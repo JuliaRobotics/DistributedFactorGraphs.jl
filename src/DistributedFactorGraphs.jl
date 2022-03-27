@@ -153,7 +153,8 @@ export getVariableSolverData,
        updateVariableSolverData!,
        deleteVariableSolverData!,
        listVariableSolverData,
-       mergeVariableSolverData!
+       mergeVariableSolverData!,
+       cloneSolveKey!
 
 
 # PPE
