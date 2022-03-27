@@ -680,12 +680,12 @@ function updateVariableSolverData!( dfg::AbstractDFG,
     updateVariableSolverData!(dfg, sourceVariable.label, vnd, useCopy, fields; warn_if_absent=warn_if_absent)
 end
 
-function updateVariableSolverData!(dfg::AbstractDFG,
-                                   sourceVariables::Vector{<:DFGVariable},
-                                   solveKey::Symbol=:default,
-                                   useCopy::Bool=true,
-                                   fields::Vector{Symbol}=Symbol[];
-                                   warn_if_absent::Bool=true)
+function updateVariableSolverData!( dfg::AbstractDFG,
+                                    sourceVariables::Vector{<:DFGVariable},
+                                    solveKey::Symbol=:default,
+                                    useCopy::Bool=true,
+                                    fields::Vector{Symbol}=Symbol[];
+                                    warn_if_absent::Bool=true)
     #I think cloud would do this in bulk for speed
     for var in sourceVariables
         updateVariableSolverData!(dfg, var.label, getSolverData(var, solveKey), useCopy, fields; warn_if_absent=warn_if_absent)
@@ -694,22 +694,38 @@ end
 
 """
     $SIGNATURES
-Duplicate a supersolve (solveKey).
+Duplicate a `solveKey`` into a destination from a source.
+
+Notes
+- Can copy between graphs, or to different solveKeys within one graph.
 """
-function deepcopySolvekeys!(dfg::AbstractDFG,
-                            dest::Symbol,
-                            src::Symbol;
-                            solvable::Int=0,
-                            labels=ls(dfg, solvable=solvable),
-                            verbose::Bool=false  )
-  #
-  for x in labels
-      sd = deepcopy(getSolverData(getVariable(dfg,x), src))
-      sd.solveKey = dest
-      updateVariableSolverData!(dfg, x, sd, true, Symbol[]; warn_if_absent=verbose )
-  end
+function cloneSolveKey!(dest_dfg::AbstractDFG,
+                        dest::Symbol,
+                        src_dfg::AbstractDFG,
+                        src::Symbol;
+                        solvable::Int=0,
+                        labels=intersect(ls(dest_dfg, solvable=solvable), ls(src_dfg, solvable=solvable)),
+                        verbose::Bool=false  )
+    #
+    for x in labels
+        sd = deepcopy(getSolverData(getVariable(src_dfg, x), src))
+        sd.solveKey = dest
+        updateVariableSolverData!(dest_dfg, x, sd, true, Symbol[]; warn_if_absent=verbose )
+    end
+    
+    nothing
 end
-const deepcopySupersolve! = deepcopySolvekeys!
+
+function cloneSolveKey!( dfg::AbstractDFG,
+                dest::Symbol,
+                src::Symbol;
+                kw...  )
+    #
+    @assert dest != src "Must copy to a different solveKey within the same graph, $dest."
+    cloneSolveKey!(dfg, dest, dfg, src; kw...)
+end
+
+#
 
 """
     $(SIGNATURES)
