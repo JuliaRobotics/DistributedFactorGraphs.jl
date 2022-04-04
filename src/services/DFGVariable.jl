@@ -113,9 +113,10 @@ Base.convert(::Type{<:AbstractManifold}, ::Union{<:T, Type{<:T}}) where {T <: In
     $SIGNATURES
 Interface function to return the `<:ManifoldsBase.AbstractManifold` object of `variableType<:InferenceVariable`.
 """
-getManifold(vari::DFGVariable) = getVariableType(vari) |> getManifold
 getManifold(::T) where {T <: InferenceVariable} = getManifold(T)
-
+getManifold(vari::DFGVariable) = getVariableType(vari) |> getManifold
+# covers both <:InferenceVariable and <:AbstractFactor
+getManifold(dfg::AbstractDFG, lbl::Symbol) = getManifold(dfg[lbl])
 
 """
     $SIGNATURES
