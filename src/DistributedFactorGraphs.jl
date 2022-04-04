@@ -154,8 +154,7 @@ export getVariableSolverData,
        deleteVariableSolverData!,
        listVariableSolverData,
        mergeVariableSolverData!,
-       deepcopySolvekeys!,
-       deepcopySupersolve!
+       cloneSolveKey!
 
 
 # PPE

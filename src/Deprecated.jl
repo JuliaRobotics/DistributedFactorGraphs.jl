@@ -66,6 +66,13 @@ end
 ## Deprecate before v0.19
 ##=================================================================================
 
+# FIXME, change this to a deprecation in v0.19
+export deepcopySupersolve!, deepcopySolvekeys!
+const deepcopySupersolve! = cloneSolveKey!
+# @deprecate deepcopySupersolve!(w...;kw...) cloneSolveKey!(w...;kw...)
+const deepcopySolvekeys! = cloneSolveKey!
+# @deprecate deepcopySolvekeys!(w...;kw...) cloneSolveKey!(w...;kw...)
+
 @deprecate dfgplot(w...;kw...) plotDFG(w...;kw...)
 
 export FunctorInferenceType, PackedInferenceType
@@ -80,5 +87,15 @@ const PackedInferenceType = AbstractPackedFactor  # will eventually deprecate
 export DefaultDFG
 
 const DefaultDFG = LightDFG
+
+
+## ================================================================================
+## Deprecate before v0.20
+##=================================================================================
+
+# FIXME uncomment before start of v0.19
+# @deprecate deepcopySupersolve!(w...;kw...) cloneSolveKey!(w...;kw...)
+# @deprecate deepcopySolvekeys!(w...;kw...) cloneSolveKey!(w...;kw...)
+
 
 #
