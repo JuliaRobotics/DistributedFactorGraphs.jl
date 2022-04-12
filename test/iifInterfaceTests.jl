@@ -46,9 +46,9 @@ end
     T = typeof(dfg)
     if dfg isa Neo4jDFG
         #TODO
-        dfg2 = Neo4jDFG(solverParams=SolverParams(), userId="testUserId")
+        dfg2 = Neo4jDFG(solverParams=SolverParams(), userId="test@navability.io")
     else
-        dfg2 = T(solverParams=SolverParams(), userId="testUserId")
+        dfg2 = T(solverParams=SolverParams(), userId="test@navability.io")
     end
 
     # Build a new in-memory IIF graph to transfer into the new graph.
