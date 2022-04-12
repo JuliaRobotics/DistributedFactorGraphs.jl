@@ -1,13 +1,11 @@
-alphaOnlyMatchRegex = r"^[a-zA-Z0-9_]*$"
-
 """
 $(SIGNATURES)
 Returns the transaction for a given query.
 NOTE: Must commit(transaction) after you're done.
 """
 function _queryNeo4j(neo4jInstance::Neo4jInstance, query::String; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
-    @debug "[Query] $(currentTransaction != nothing ? "[TRANSACTION]" : "") $query"
-    if currentTransaction == nothing
+    @debug "[Query] $(currentTransaction !== nothing ? "[TRANSACTION]" : "") $query"
+    if currentTransaction === nothing
         loadtx = transaction(neo4jInstance.connection)
         loadtx(query)
         # Have to finish the transaction
@@ -27,7 +25,7 @@ Note: Using symbols so that the labels obey Neo4j requirements
 function _createNode(neo4jInstance::Neo4jInstance, labels::Vector{String}, properties::Dict{String, Any}, parentNode::Union{Nothing, Neo4j.Node}, relationshipLabel::Symbol=:NOTHING)::Neo4j.Node
     createdNode = Neo4j.createnode(neo4jInstance.graph, properties)
     addnodelabels(createdNode, labels)
-    parentNode == nothing && return createdNode
+    parentNode === nothing && return createdNode
     # Otherwise create the relationship
     createrel(parentNode, createdNode, String(relationshipLabel))
     return createdNode
@@ -56,6 +54,8 @@ $(SIGNATURES)
 Get a node property - returns nothing if not found
 """
 function _getNodeProperty(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String}, property::String; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+    # Note that properties should already by backticked, but double checking becase this is used in many places
+    nodeLabels = [!startswith(a, "`") && !endswith(a, "`") ? "`$(a)`" : a for a in nodeLabels]
     query = "match (n:$(join(nodeLabels, ":"))) return n.$property"
     result = _queryNeo4j(neo4jInstance, query, currentTransaction=currentTransaction)
     length(result.results[1]["data"]) != 1 && error("No data returned from the query.")
@@ -71,6 +71,9 @@ function _setNodeProperty(neo4jInstance::Neo4jInstance, nodeLabels::Vector{Strin
     if value isa String
         value = "\""*replace(value, "\"" => "\\\"")*"\"" # Escape strings
     end
+    # Defensively wrap the node labels.
+    nodeLabels = [!startswith(n, "`") && !endswith(n, "`") ? "`$(n)`" : n for n in nodeLabels]    
+
     query = """
     match (n:$(join(nodeLabels, ":")))
     set n.$property = $value
@@ -87,14 +90,14 @@ $(SIGNATURES)
 Get a node's tags
 """
 function _getNodeTags(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String})::Union{Nothing, Vector{String}}
-    query = "match (n:$(join(nodeLabels, ":"))) return labels(n)"
+    query = "match (n:$(join("`".*nodeLabels*"`", ":"))) return labels(n)"
     result = _queryNeo4j(neo4jInstance, query)
     length(result.results[1]["data"]) != 1 && return nothing
     return result.results[1]["data"][1]["row"][1]
 end
 
 function _getNodeCount(neo4jInstance::Neo4jInstance, nodeLabels::Vector{String}; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Int
-    query = "match (n:$(join(nodeLabels, ":"))) return count(n)"
+    query = "match (n:$(join("`".*nodeLabels.*"`", ":"))) return count(n)"
     result = _queryNeo4j(neo4jInstance, query, currentTransaction=currentTransaction)
     length(result.results[1]["data"]) != 1 && return 0
     length(result.results[1]["data"][1]["row"]) != 1 && return 0
@@ -218,21 +221,21 @@ function _getLabelsForType(dfg::Neo4jDFG,
     isempty(dfg.sessionId) && error("The DFG object's sessionId is empty, please specify a session ID.")
 
     labels = []
-    type == User && (labels = [dfg.userId, "USER"])
-    type == Robot && (labels = [dfg.userId, dfg.robotId, "ROBOT"])
-    type == Session && (labels = [dfg.userId, dfg.robotId, dfg.sessionId, "SESSION"])
+    type == User && (labels = ["`$(dfg.userId)`", "USER"])
+    type == Robot && (labels = ["`$(dfg.userId)`", "`$(dfg.robotId)`", "ROBOT"])
+    type == Session && (labels = ["`$(dfg.userId)`", "`$(dfg.robotId)`", "`$(dfg.sessionId)`", "SESSION"])
     type <: DFGVariable &&
-        (labels = [dfg.userId, dfg.robotId, dfg.sessionId, "VARIABLE"])
+        (labels = ["`$(dfg.userId)`", "`$(dfg.robotId)`", "`$(dfg.sessionId)`", "VARIABLE"])
     type <: DFGFactor &&
-        (labels = [dfg.userId, dfg.robotId, dfg.sessionId, "FACTOR"])
+        (labels = ["`$(dfg.userId)`", "`$(dfg.robotId)`", "`$(dfg.sessionId)`", "FACTOR"])
     type <: AbstractPointParametricEst &&
-        (labels = [dfg.userId, dfg.robotId, dfg.sessionId, "PPE"])
+        (labels = ["`$(dfg.userId)`", "`$(dfg.robotId)`", "`$(dfg.sessionId)`", "PPE"])
     type <: VariableNodeData &&
-        (labels = [dfg.userId, dfg.robotId, dfg.sessionId, "SOLVERDATA"])
+        (labels = ["`$(dfg.userId)`", "`$(dfg.robotId)`", "`$(dfg.sessionId)`", "SOLVERDATA"])
     type <: AbstractDataEntry &&
-        (labels = [dfg.userId, dfg.robotId, dfg.sessionId, "DATA"])
+        (labels = ["`$(dfg.userId)`", "`$(dfg.robotId)`", "`$(dfg.sessionId)`", "DATA"])
     # Some are children of nodes, so add that in if it's set.
-    parentKey != nothing && push!(labels, String(parentKey))
+    parentKey !== nothing && push!(labels, String(parentKey))
     return labels
 end
 
@@ -260,7 +263,7 @@ function _listVarSubnodesForType(dfg::Neo4jDFG, variablekey::Symbol, dfgType::Ty
     query = "match (subnode:$(join(_getLabelsForType(dfg, dfgType, parentKey=variablekey),':'))) return subnode.$keyToReturn"
     @debug "[Query] _listVarSubnodesForType query:\r\n$query"
     result = nothing
-    if currentTransaction != nothing
+    if currentTransaction !== nothing
         result = currentTransaction(query; submit=true)
     else
         tx = transaction(dfg.neo4jInstance.connection)
@@ -276,7 +279,7 @@ function _getVarSubnodeProperties(dfg::Neo4jDFG, variablekey::Symbol, dfgType::T
     query = "match (subnode:$(join(_getLabelsForType(dfg, dfgType, parentKey=variablekey),':')):$nodeKey) return properties(subnode)"
     @debug "[Query] _getVarSubnodeProperties query:\r\n$query"
     result = nothing
-    if currentTransaction != nothing
+    if currentTransaction !== nothing
         result = currentTransaction(query; submit=true)
     else
         tx = transaction(dfg.neo4jInstance.connection)
@@ -298,7 +301,9 @@ function _matchmergeVariableSubnode!(
         addProps::Dict{String, String}=Dict{String, String}(),
         currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing) where
         {N <: DFGNode, APPE <: AbstractPointParametricEst, ABDE <: AbstractDataEntry, PVND <: PackedVariableNodeData}
-
+    
+    # Defensively wrap the node labels.
+    nodeLabels = [!startswith(n, "`") && !endswith(n, "`") ? "`$(n)`" : n for n in nodeLabels]    
     query = """
                 MATCH (var:$variablekey:$(join(_getLabelsForType(dfg, DFGVariable, parentKey=variablekey),':')))
                 MERGE (var)-[:$relationshipKey]->(subnode:$(join(nodeLabels,':')))
@@ -307,7 +312,7 @@ function _matchmergeVariableSubnode!(
                 RETURN properties(subnode)"""
     @debug "[Query] _matchmergeVariableSubnode! query:\r\n$query"
     result = nothing
-    if currentTransaction != nothing
+    if currentTransaction !== nothing
         result = currentTransaction(query; submit=true) # TODO: Maybe we should submit (; submit = true) for the results to fail early?
     else
         tx = transaction(dfg.neo4jInstance.connection)
@@ -327,6 +332,9 @@ function _deleteVarSubnode!(
         nodeLabels::Vector{String},
         nodekey::Symbol=:default;
         currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+    # Defensively wrap the node labels.
+    nodeLabels = [!startswith(n, "`") && !endswith(n, "`") ? "`$(n)`" : n for n in nodeLabels]    
+
     query = """
     MATCH (node:$nodekey:$(join(nodeLabels,':')))
     WITH node, properties(node) as props
@@ -335,7 +343,7 @@ function _deleteVarSubnode!(
     """
     @debug "[Query] _deleteVarSubnode delete query:\r\n$query"
     result = nothing
-    if currentTransaction != nothing
+    if currentTransaction !== nothing
         result = currentTransaction(query; submit=true) # TODO: Maybe we should submit (; submit = true) for the results to fail early?
     else
         tx = transaction(dfg.neo4jInstance.connection)

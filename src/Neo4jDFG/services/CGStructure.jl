@@ -77,12 +77,12 @@ function createRobot(dfg::Neo4jDFG, robot::Robot)
     !isValidLabel(robot) && error("Node cannot have an ID '$(robot.id)'.")
 
     # Find the parent
-    parents = _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:USER:$(dfg.userId))")
+    parents = _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:USER:`$(dfg.userId)`)")
     length(parents) == 0 && error("Cannot find user '$(dfg.userId)'")
     length(parents) > 1 && error("Found multiple users '$(dfg.userId)'")
 
     # Already exists?
-    length(_getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:ROBOT:$(dfg.userId):$(robot.id))")) != 0 &&
+    length(_getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:ROBOT:`$(dfg.userId)`:`$(robot.id)`)")) != 0 &&
         error("Robot '$(robot.id)' already exists for user '$(robot.userId)'")
 
     props = _convertNodeToDict(robot)
@@ -98,12 +98,12 @@ function createSession(dfg::Neo4jDFG, session::Session)
     !isValidLabel(session) && error("Node cannot have an ID '$(session.id)'.")
 
     # Find the parent
-    parents = _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:ROBOT:$(dfg.robotId):$(dfg.userId))")
+    parents = _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:ROBOT:`$(dfg.robotId)`:`$(dfg.userId)`)")
     length(parents) == 0 && error("Cannot find robot '$(dfg.robotId)' for user '$(dfg.userId)'")
     length(parents) > 1 && error("Found multiple robots '$(dfg.robotId)' for user '$(dfg.userId)'")
 
     # Already exists?
-    length(_getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:SESSION:$(session.userId):$(session.robotId):$(session.id))")) != 0 &&
+    length(_getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:SESSION:`$(session.userId)`:`$(session.robotId)`:`$(session.id)`)")) != 0 &&
         error("Session '$(session.id)' already exists for robot '$(session.robotId)' and user '$(session.userId)'")
 
     props = _convertNodeToDict(session)
@@ -145,7 +145,7 @@ Notes
 - Returns `Vector{Session}`
 """
 function lsSessions(dfg::Neo4jDFG)
-    sessionNodes = _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:SESSION:$(dfg.robotId):$(dfg.userId))")
+    sessionNodes = _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:SESSION:`$(dfg.robotId)`:`$(dfg.userId)`)")
     return map(s -> _convertDictToSession(Neo4j.getnodeproperties(s)), sessionNodes)
 end
 
@@ -158,7 +158,7 @@ Notes
 - Returns `::Vector{Robot}`
 """
 function lsRobots(dfg::Neo4jDFG)
-    robotNodes = _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:ROBOT:$(dfg.userId))")
+    robotNodes = _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:ROBOT:`$(dfg.userId)`)")
     return map(s -> _convertDictToRobot(Neo4j.getnodeproperties(s)), robotNodes)
 end
 
@@ -187,7 +187,7 @@ function getSession(dfg::Neo4jDFG, userId::Symbol, robotId::Symbol, sessionId::S
     !isValidLabel(userId) && error("Can't retrieve session with user ID '$(userId)'.")
     !isValidLabel(robotId) && error("Can't retrieve session with robot ID '$(robotId)'.")
     !isValidLabel(sessionId) && error("Can't retrieve session with session ID '$(sessionId)'.")
-    sessionNode = _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:SESSION:$(sessionId):$(robotId):$(userId))")
+    sessionNode = _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:SESSION:`$(sessionId)`:`$(robotId)`:`$(userId)`)")
     length(sessionNode) == 0 && return nothing
     length(sessionNode) > 1 && error("There look to be $(length(sessionNode)) sessions identified for $(sessionId):$(robotId):$(userId)")
     return _convertDictToSession(Neo4j.getnodeproperties(sessionNode[1]))
@@ -216,7 +216,7 @@ Notes
 function getRobot(dfg::Neo4jDFG, userId::Symbol, robotId::Symbol)
     !isValidLabel(userId) && error("Can't retrieve robot with user ID '$(userId)'.")
     !isValidLabel(robotId) && error("Can't retrieve robot with robot ID '$(robotId)'.")
-    robotNode = _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:ROBOT:$(robotId):$(userId))")
+    robotNode = _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:ROBOT:`$(robotId)`:`$(userId)`)")
     length(robotNode) == 0 && return nothing
     length(robotNode) > 1 && error("There look to be $(length(robotNode)) robots identified for $(robotId):$(userId)")
     return _convertDictToRobot(Neo4j.getnodeproperties(robotNode[1]))
@@ -244,7 +244,7 @@ Notes
 """
 function getUser(dfg::Neo4jDFG, userId::Symbol)
     !isValidLabel(userId) && error("Can't retrieve user with user ID '$(userId)'.")
-    userNode = _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:USER:$(userId))")
+    userNode = _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:USER:`$(userId)`)")
     length(userNode) == 0 && return nothing
     length(userNode) > 1 && error("There look to be $(length(userNode)) robots identified for $(userId)")
     return _convertDictToUser(Neo4j.getnodeproperties(userNode[1]))
@@ -272,7 +272,7 @@ Notes
 """
 function clearSession!!(dfg::Neo4jDFG)
     # Perform detach+deletion
-    _queryNeo4j(dfg.neo4jInstance, "match (node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId)) detach delete node ")
+    _queryNeo4j(dfg.neo4jInstance, "match (node:`$(dfg.userId)`:`$(dfg.robotId)`:`$(dfg.sessionId)`) detach delete node ")
 
     # Clearing history
     dfg.addHistory = Symbol[]
@@ -288,7 +288,7 @@ Notes
 """
 function clearRobot!!(dfg::Neo4jDFG)
     # Perform detach+deletion
-    _queryNeo4j(dfg.neo4jInstance, "match (node:$(dfg.userId):$(dfg.robotId)) detach delete node ")
+    _queryNeo4j(dfg.neo4jInstance, "match (node:`$(dfg.userId)`:`$(dfg.robotId)`) detach delete node ")
 
     # Clearing history
     dfg.addHistory = Symbol[]
@@ -304,7 +304,7 @@ Notes
 """
 function clearUser!!(dfg::Neo4jDFG)
     # Perform detach+deletion
-    _queryNeo4j(dfg.neo4jInstance, "match (node:$(dfg.userId)) detach delete node ")
+    _queryNeo4j(dfg.neo4jInstance, "match (node:`$(dfg.userId)`) detach delete node ")
 
     # Clearing history
     dfg.addHistory = Symbol[]
