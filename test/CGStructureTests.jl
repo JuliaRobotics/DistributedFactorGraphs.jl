@@ -1,5 +1,5 @@
 dfg = Neo4jDFG{SolverParams}("localhost", 7474, "neo4j", "test",
-                            "testUser", "testRobot", "testSession",
+                            "test@navability.io", "testRobot", "testSession",
                             "Description of test session",
                             solverParams=SolverParams())
 
