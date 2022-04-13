@@ -445,7 +445,7 @@ function isConnected(dfg::Neo4jDFG)::Bool
 end
 
 function getNeighbors(dfg::Neo4jDFG, node::T; solvable::Int=0)::Vector{Symbol}  where T <: DFGNode
-    query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(node.label))-[r:FACTORGRAPH]-(node) where (node:VARIABLE or node:FACTOR) and node.solvable >= $solvable"
+    query = "(n:`$(dfg.userId)`:`$(dfg.robotId)`:`$(dfg.sessionId)`:$(node.label))-[r:FACTORGRAPH]-(node) where (node:VARIABLE or node:FACTOR) and node.solvable >= $solvable"
     @debug "[Query] $query"
     neighbors = _getLabelsFromCyphonQuery(dfg.neo4jInstance, query)
     # If factor, need to do variable ordering TODO, Do we? does it matter if we always use _variableOrderSymbols in calculations?
@@ -456,7 +456,7 @@ function getNeighbors(dfg::Neo4jDFG, node::T; solvable::Int=0)::Vector{Symbol}  
 end
 
 function getNeighbors(dfg::Neo4jDFG, label::Symbol; solvable::Int=0)::Vector{Symbol}
-    query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(label))-[r:FACTORGRAPH]-(node) where (node:VARIABLE or node:FACTOR) and node.solvable >= $solvable"
+    query = "(n:`$(dfg.userId)`:`$(dfg.robotId)`:`$(dfg.sessionId)`:$(label))-[r:FACTORGRAPH]-(node) where (node:VARIABLE or node:FACTOR) and node.solvable >= $solvable"
     neighbors = _getLabelsFromCyphonQuery(dfg.neo4jInstance, query)
     # If factor, need to do variable ordering TODO, Do we? does it matter if we always use _variableOrderSymbols in calculations?
     if isFactor(dfg, label)
@@ -473,10 +473,10 @@ function getSubgraphAroundNode(dfg::Neo4jDFG, node::DFGNode, distance::Int64=1, 
     # Thank you Neo4j for 0..* awesomeness!!
     neighborList = _getLabelsFromCyphonQuery(dfg.neo4jInstance,
         """
-        (n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(node.label))-[FACTORGRAPH*0..$distance]-(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId))
+        (n:`$(dfg.userId)`:`$(dfg.robotId)`:`$(dfg.sessionId)`:$(node.label))-[FACTORGRAPH*0..$distance]-(node:`$(dfg.userId)`:`$(dfg.robotId)`:`$(dfg.sessionId)`)
         WHERE (n:VARIABLE OR n:FACTOR OR node:VARIABLE OR node:FACTOR)
         and not (node:SESSION)
-        and (node.solvable >= $solvable or node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(node.label))""" # Always return the root node
+        and (node.solvable >= $solvable or node:`$(dfg.userId)`:`$(dfg.robotId)`:`$(dfg.sessionId)`:$(node.label))""" # Always return the root node
         )
 
     # Copy the section of graph we want

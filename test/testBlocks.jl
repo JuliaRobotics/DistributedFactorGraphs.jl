@@ -131,10 +131,10 @@ function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverP
     # "DFG Structure and Accessors"
     # Constructors
     # Constructors to be implemented
-    fg = T(solverParams=solparams, userId="testUserId")
+    fg = T(solverParams=solparams, userId="test@navability.io")
     #TODO test something better
     @test isa(fg, T)
-    @test getUserId(fg)=="testUserId"
+    @test getUserId(fg)=="test@navability.io"
     @test getRobotId(fg)=="DefaultRobot"
     @test getSessionId(fg)[1:8] == "Session_"
 
@@ -151,12 +151,12 @@ function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverP
 
     #NOTE I don't like, so not exporting, and not recommended to use
     #     Technically if you set Ids its a new object
-    @test DistributedFactorGraphs.setUserId!(fg, "testUserId") == "testUserId"
+    @test DistributedFactorGraphs.setUserId!(fg, "test@navability.io") == "test@navability.io"
     @test DistributedFactorGraphs.setRobotId!(fg, "testRobotId") == "testRobotId"
     @test DistributedFactorGraphs.setSessionId!(fg, "testSessionId") == "testSessionId"
 
     des = "description for runtest"
-    uId = "testUserId"
+    uId = "test@navability.io"
     rId = "testRobotId"
     sId = "testSessionId"
     ud = :ud=>"udEntry"
@@ -1211,7 +1211,7 @@ function connectivityTestGraph(::Type{T}; VARTYPE=DFGVariable, FACTYPE=DFGFactor
     numNodesType1 = 5
     numNodesType2 = 5
 
-    dfg = T(userId="testUserId")
+    dfg = T(userId="test@navability.io")
 
     vars = vcat(map(n -> VARTYPE(Symbol("x$n"), VariableNodeData{TestVariableType1}()), 1:numNodesType1),
                 map(n -> VARTYPE(Symbol("x$(numNodesType1+n)"), VariableNodeData{TestVariableType2}()), 1:numNodesType2))
@@ -1419,7 +1419,7 @@ function ProducingDotFiles(testDFGAPI,
                            FACTYPE=DFGFactor)
     # "Producing Dot Files"
     # create a simpler graph for dot testing
-    dotdfg = testDFGAPI(userId="testUserId")
+    dotdfg = testDFGAPI(userId="test@navability.io")
 
     if v1 == nothing
         v1 = VARTYPE(:a, VariableNodeData{TestVariableType1}())
@@ -1524,7 +1524,7 @@ function CopyFunctionsTest(testDFGAPI; kwargs...)
     dcdfg_part1 = deepcopyGraph(LightDFG, dfg, vlbls1)
     dcdfg_part2 = deepcopyGraph(LightDFG, dfg, vlbls2)
 
-    mergedGraph = testDFGAPI(userId="testUserId")
+    mergedGraph = testDFGAPI(userId="test@navability.io")
     mergeGraph!(mergedGraph, dcdfg_part1)
     mergeGraph!(mergedGraph, dcdfg_part2)
 
@@ -1591,7 +1591,7 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
         # Save and load the graph to test.
         saveDFG(dfg, filename)
 
-        retDFG = testDFGAPI(userId="testUserId")
+        retDFG = testDFGAPI(userId="test@navability.io")
         @info "Going to load $filename"
 
         @test_throws AssertionError loadDFG!(retDFG,"badfilename")
