@@ -374,7 +374,7 @@ Example
 using IncrementalInference
 
 # canonical example graph as example
-fg = generateCanonicalFG_Kaess()
+fg = generateGraph_Kaess()
 
 @show path = findShortestPathDijkstra(fg, :x1, :x3)
 @show isVariable.(fg, path)
