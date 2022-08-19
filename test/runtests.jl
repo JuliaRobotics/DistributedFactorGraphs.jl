@@ -90,7 +90,7 @@ if get(ENV, "IIF_TEST", "") == "true"
     using IncrementalInference
 
     apis = Vector{AbstractDFG}()
-    push!(apis, LightDFG(solverParams=SolverParams(), userId="test@navability.io"))
+    push!(apis, GraphsDFG(solverParams=SolverParams(), userId="test@navability.io"))
     get(ENV, "DO_CGDFG_TESTS", "false") == "true" && push!(apis, Neo4jDFG(solverParams=SolverParams(), userId="test@navability.io")) 
 
     for api in apis
