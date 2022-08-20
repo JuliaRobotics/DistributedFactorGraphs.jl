@@ -87,7 +87,9 @@ import ...DistributedFactorGraphs:  setSolverParams!,
                                     addDataEntry!,
                                     updateDataEntry!,
                                     deleteDataEntry!,
-                                    _getDFGVersion
+                                    _getDFGVersion,
+                                    _unpackPPE,
+                                    _unpackVariableNodeData
 
 using Neo4j
 using Base64
