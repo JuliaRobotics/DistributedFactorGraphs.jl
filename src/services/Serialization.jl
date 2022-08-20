@@ -79,10 +79,11 @@ end
 
 typeModuleName(varT::Type{<:InferenceVariable}) = typeModuleName(varT())
 
-function getTypeFromSerializationModule(variableTypeString::String)
+function getTypeFromSerializationModule(_typeString::AbstractString)
+    @debug "DFG converting type string to Julia type" _typeString
     try
         # split the type at last `.`
-        split_st = split(variableTypeString, r"\.(?!.*\.)")
+        split_st = split(_typeString, r"\.(?!.*\.)")
         #if module is specified look for the module in main, otherwise use Main        
         if length(split_st) == 2
             m = getfield(Main, Symbol(split_st[1]))
@@ -102,7 +103,7 @@ function getTypeFromSerializationModule(variableTypeString::String)
         return ret 
 
     catch ex
-        @error "Unable to deserialize soft type $(variableTypeString)"
+        @error "Unable to deserialize type $(_typeString)"
         io = IOBuffer()
         showerror(io, ex, catch_backtrace())
         err = String(take!(io))
@@ -152,11 +153,12 @@ end
 
 """
 $(SIGNATURES)
-Unpack a Dict{String, Any} into a PPE.
+
+Common unpack a Dict{String, Any} into a PPE.
 """
 function _unpackPPE(
         packedPPE::Dict{String, Any};
-        _type = pop!(packedPPE, "_type")
+        _type = pop!(packedPPE, "_type") # required for generic use
     )
     #
     # Cleanup Zoned timestamp, which is always UTC
@@ -165,18 +167,32 @@ function _unpackPPE(
     end
 
     # !haskey(packedPPE, "_type") && error("Cannot find type key '_type' in packed PPE data")
-    (_type === nothing || _type == "") && error("Cannot deserialize PPE, type key is empty")
+    if (_type === nothing || _type == "")
+        @warn "Cannot deserialize PPE, unknown type key, trying DistributedFactorGraphs.MeanMaxPPE" _type
+        _type = "DistributedFactorGraphs.MeanMaxPPE"
+    end
+    ppeType = DistributedFactorGraphs.getTypeFromSerializationModule(_type)
+    
     ppe = Unmarshal.unmarshal(
-            DistributedFactorGraphs.getTypeFromSerializationModule(_type),
-            packedPPE
-        )
+        ppeType,
+        packedPPE
+    )
+    # _pk = Symbol(packedPPE["solveKey"])
+    # ppe = MeanMaxPPE(;
+    #             solveKey=_pk,
+    #             suggested=float.(pd["suggested"]),
+    #             max=float.(pd["max"]),
+    #             mean=float.(pd["mean"]),
+    #             lastUpdatedTimestamp=DateTime(string(pd["lastUpdatedTimestamp"]))
+    #         )
+
     return ppe
 end
 
 # returns a DFGVariable
 function unpackVariable(dfg::G,
                         packedProps::Dict{String, Any};
-                        unpackPPEs::Bool=haskey(packedProps,"ppeDict"),
+                        unpackPPEs::Bool=true,
                         unpackSolverData::Bool=true,
                         unpackBigData::Bool=true) where G <: AbstractDFG
     @debug "Unpacking variable:\r\n$packedProps"
@@ -188,32 +204,31 @@ function unpackVariable(dfg::G,
     # Parse it
     timestamp = ZonedDateTime(packedProps["timestamp"])
     nstime = Nanosecond(get(packedProps, "nstime", 0))
-    # Supporting string serialization using packVariable and CGDFG serialization (Vector{String})
-    if packedProps["tags"] isa String
-        tags = JSON2.read(packedProps["tags"], Vector{Symbol})
+
+    # FIXME, drop nested packing, see DFG #867
+    #   string serialization using packVariable and CGDFG serialization (Vector{String})
+    tags = if packedProps["tags"] isa String
+        JSON2.read(packedProps["tags"], Vector{Symbol})
     else
-        tags = Symbol.(packedProps["tags"])
+        Symbol.(packedProps["tags"])
     end
-    ppeDict = if unpackPPEs
+
+    ppeDict = if haskey(packedProps,"ppesDict")
+        # FIXME, drop nested packing, see DFG #867
         JSON2.read(packedProps["ppeDict"], Dict{Symbol, MeanMaxPPE})
     elseif haskey(packedProps,"ppes") && packedProps["ppes"] isa AbstractVector
+        # these different cases are not well covered in tests, but first fix #867
+        # TODO dont hardcode the ppeType (which is already discovered for each entry in _updatePPE)
         ppedict = Dict{Symbol, MeanMaxPPE}()
         for pd in packedProps["ppes"]
-            # FIXME unmarshalling, consolidate with _unpackPPE
-            pk = pd["solveKey"]
-            _pk = Symbol(pk)
-            ppedict[_pk] = MeanMaxPPE(;
-                                solveKey=_pk,
-                                suggested=float.(pd["suggested"]),
-                                max=float.(pd["max"]),
-                                mean=float.(pd["mean"]),
-                                lastUpdatedTimestamp=DateTime(string(pd["lastUpdatedTimestamp"]))
-                            )
+            _type = haskey(pd, "_type") ? pd["_type"] : "DistributedFactorGraphs.MeanMaxPPE"
+            ppedict[Symbol(pd["solveKey"])] = _unpackPPE(pd; _type)
         end
         ppedict
     else
         Dict{Symbol, MeanMaxPPE}()
     end
+
     smallData = JSON2.read(packedProps["smallData"], Dict{Symbol, SmallDataTypes})
 
     variableTypeString = if haskey(packedProps, "softtype")
