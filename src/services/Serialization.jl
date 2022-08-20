@@ -207,11 +207,12 @@ function _unpackVariableNodeData(
 end
 
 # returns a DFGVariable
-function unpackVariable(dfg::G,
+function unpackVariable(dfg::AbstractDFG,
                         packedProps::Dict{String, Any};
                         unpackPPEs::Bool=true,
                         unpackSolverData::Bool=true,
-                        unpackBigData::Bool=true) where G <: AbstractDFG
+                        unpackBigData::Bool = haskey(packedProps,"dataEntryType") && haskey(packedProps, "dataEntry")
+    )
     #
     @debug "Unpacking variable:\r\n$packedProps"
     # Version checking.
