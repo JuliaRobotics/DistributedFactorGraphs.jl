@@ -27,8 +27,8 @@ struct NotAManifold end
 # @test getPointType(TestVarType2) == ProductRepr{Tuple{Vector{Float64}, Matrix{Float64}}}
 
 @test getPointIdentity(TestVarType1) == zeros(3)
-@test getPointIdentity(TestVarType2)[1] == ArrayPartition(zeros(3), diagm(ones(3)))[1]
-@test getPointIdentity(TestVarType2)[2] == ArrayPartition(zeros(3), diagm(ones(3)))[2]
+@test getPointIdentity(TestVarType2).x[1] == ArrayPartition(zeros(3), diagm(ones(3))).x[1]
+@test getPointIdentity(TestVarType2).x[2] == ArrayPartition(zeros(3), diagm(ones(3))).x[2]
 
 ##
 
@@ -43,7 +43,7 @@ struct NotAManifold end
 # @test getPointType(TestVarType2()) == ProductRepr{Tuple{Vector{Float64}, Matrix{Float64}}}
 
 @test getPointIdentity(TestVarType1()) == zeros(3)
-@test getPointIdentity(TestVarType2())[1] == ArrayPartition(zeros(3), diagm(ones(3)))[1]
-@test getPointIdentity(TestVarType2())[2] == ArrayPartition(zeros(3), diagm(ones(3)))[2]
+@test getPointIdentity(TestVarType2()).x[1] == ArrayPartition(zeros(3), diagm(ones(3))).x[1]
+@test getPointIdentity(TestVarType2()).x[2] == ArrayPartition(zeros(3), diagm(ones(3))).x[2]
 
 end
