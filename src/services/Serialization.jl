@@ -111,6 +111,25 @@ function getTypeFromSerializationModule(variableTypeString::String)
     nothing
 end
 
+"""
+  $(SIGNATURES)
+Get a type from the serialization module inside DFG.
+"""
+function getTypeFromSerializationModule(dfg::G, moduleType::Symbol) where G <: AbstractDFG
+    @warn "Deprecating getTypeFromSerializationModule(dfg,symbol), use getTypeFromSerializationModule(string) instead." maxlog=10
+    st = nothing
+    try
+        st = getfield(Main, Symbol(moduleType))
+    catch ex
+        @error "Unable to deserialize packed variableType $(moduleType)"
+        io = IOBuffer()
+        showerror(io, ex, catch_backtrace())
+        err = String(take!(io))
+        @error(err)
+    end
+    return st
+end
+
 ##==============================================================================
 ## Variable Packing and unpacking
 ##==============================================================================
@@ -129,6 +148,29 @@ function packVariable(dfg::AbstractDFG, v::DFGVariable)
     props["dataEntryType"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> typeof(bde), values(v.dataDict))))
     props["_version"] = _getDFGVersion()
     return props::Dict{String, Any}
+end
+
+"""
+$(SIGNATURES)
+Unpack a Dict{String, Any} into a PPE.
+"""
+function _unpackPPE(
+        packedPPE::Dict{String, Any};
+        _type = pop!(packedPPE, "_type")
+    )
+    #
+    # Cleanup Zoned timestamp, which is always UTC
+    if packedPPE["lastUpdatedTimestamp"][end] == 'Z'
+        packedPPE["lastUpdatedTimestamp"] = packedPPE["lastUpdatedTimestamp"][1:end-1]
+    end
+
+    # !haskey(packedPPE, "_type") && error("Cannot find type key '_type' in packed PPE data")
+    (_type === nothing || _type == "") && error("Cannot deserialize PPE, type key is empty")
+    ppe = Unmarshal.unmarshal(
+            DistributedFactorGraphs.getTypeFromSerializationModule(_type),
+            packedPPE
+        )
+    return ppe
 end
 
 # returns a DFGVariable
@@ -157,6 +199,7 @@ function unpackVariable(dfg::G,
     elseif haskey(packedProps,"ppes") && packedProps["ppes"] isa AbstractVector
         ppedict = Dict{Symbol, MeanMaxPPE}()
         for pd in packedProps["ppes"]
+            # FIXME unmarshalling, consolidate with _unpackPPE
             pk = pd["solveKey"]
             _pk = Symbol(pk)
             ppedict[_pk] = MeanMaxPPE(;
@@ -470,20 +513,4 @@ end
 ## Serialization
 ##==============================================================================
 
-"""
-  $(SIGNATURES)
-Get a type from the serialization module inside DFG.
-"""
-function getTypeFromSerializationModule(dfg::G, moduleType::Symbol) where G <: AbstractDFG
-    st = nothing
-    try
-        st = getfield(Main, Symbol(moduleType))
-    catch ex
-        @error "Unable to deserialize packed variableType $(moduleType)"
-        io = IOBuffer()
-        showerror(io, ex, catch_backtrace())
-        err = String(take!(io))
-        @error(err)
-    end
-    return st
-end
+
