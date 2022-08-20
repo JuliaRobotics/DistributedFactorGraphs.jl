@@ -231,8 +231,8 @@ function unpackVariable(dfg::G,
         Symbol.(packedProps["tags"])
     end
 
+    # FIXME, drop nested packing, see DFG #867
     ppeDict = if unpackPPEs && haskey(packedProps,"ppesDict")
-        # FIXME, drop nested packing, see DFG #867
         JSON2.read(packedProps["ppeDict"], Dict{Symbol, MeanMaxPPE})
     elseif unpackPPEs && haskey(packedProps,"ppes") && packedProps["ppes"] isa AbstractVector
         # these different cases are not well covered in tests, but first fix #867
@@ -255,13 +255,13 @@ function unpackVariable(dfg::G,
     isnothing(variableType) && error("Cannot deserialize variableType '$variableTypeString' in variable '$label'")
     pointType = getPointType(variableType)
 
+    # FIXME, drop nested packing, see DFG #867
     solverData = if unpackSolverData && haskey(packedProps, "solverDataDict")
         packed = JSON2.read(packedProps["solverDataDict"], Dict{String, PackedVariableNodeData})
         Dict{Symbol, VariableNodeData{variableType, pointType}}(Symbol.(keys(packed)) .=> map(p -> unpackVariableNodeData(dfg, p), values(packed)))
     elseif unpackPPEs && haskey(packedProps,"solverData") && packedProps["solverData"] isa AbstractVector
         solverdict = Dict{Symbol, VariableNodeData{variableType, pointType}}()
         for sd in packedProps["solverData"]
-            # _type = haskey(sd, "_type") ? sd["_type"] : "DistributedFactorGraphs.PackedVariableNodeData"
             solverdict[Symbol(sd["solveKey"])] = _unpackVariableNodeData(dfg, sd)
         end
         solverdict
