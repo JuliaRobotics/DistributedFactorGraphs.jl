@@ -240,7 +240,7 @@ function unpackVariable(dfg::AbstractDFG,
         # TODO dont hardcode the ppeType (which is already discovered for each entry in _updatePPE)
         ppedict = Dict{Symbol, MeanMaxPPE}()
         for pd in packedProps["ppes"]
-            _type = haskey(pd, "_type") ? pd["_type"] : "DistributedFactorGraphs.MeanMaxPPE"
+            _type = get(pd, "_type", "DistributedFactorGraphs.MeanMaxPPE")
             ppedict[Symbol(pd["solveKey"])] = _unpackPPE(pd; _type)
         end
         ppedict
