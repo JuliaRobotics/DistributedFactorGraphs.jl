@@ -189,12 +189,30 @@ function _unpackPPE(
     return ppe
 end
 
+"""
+$(SIGNATURES)
+
+Unpack a Dict{String, Any} into a PPE.
+
+Notes:
+- returns `::VariableNodeData`
+"""
+function _unpackVariableNodeData(
+        dfg::AbstractDFG, 
+        packedDict::Dict{String, Any}
+    )
+    #
+    packedVND = Unmarshal.unmarshal(PackedVariableNodeData, packedDict)
+    return unpackVariableNodeData(dfg, packedVND)
+end
+
 # returns a DFGVariable
 function unpackVariable(dfg::G,
                         packedProps::Dict{String, Any};
                         unpackPPEs::Bool=true,
                         unpackSolverData::Bool=true,
                         unpackBigData::Bool=true) where G <: AbstractDFG
+    #
     @debug "Unpacking variable:\r\n$packedProps"
     # Version checking.
     _versionCheck(packedProps)
@@ -213,10 +231,10 @@ function unpackVariable(dfg::G,
         Symbol.(packedProps["tags"])
     end
 
-    ppeDict = if haskey(packedProps,"ppesDict")
+    ppeDict = if unpackPPEs && haskey(packedProps,"ppesDict")
         # FIXME, drop nested packing, see DFG #867
         JSON2.read(packedProps["ppeDict"], Dict{Symbol, MeanMaxPPE})
-    elseif haskey(packedProps,"ppes") && packedProps["ppes"] isa AbstractVector
+    elseif unpackPPEs && haskey(packedProps,"ppes") && packedProps["ppes"] isa AbstractVector
         # these different cases are not well covered in tests, but first fix #867
         # TODO dont hardcode the ppeType (which is already discovered for each entry in _updatePPE)
         ppedict = Dict{Symbol, MeanMaxPPE}()
@@ -237,11 +255,18 @@ function unpackVariable(dfg::G,
     isnothing(variableType) && error("Cannot deserialize variableType '$variableTypeString' in variable '$label'")
     pointType = getPointType(variableType)
 
-    if unpackSolverData
+    solverData = if unpackSolverData && haskey(packedProps, "solverDataDict")
         packed = JSON2.read(packedProps["solverDataDict"], Dict{String, PackedVariableNodeData})
-        solverData = Dict{Symbol, VariableNodeData{variableType, pointType}}(Symbol.(keys(packed)) .=> map(p -> unpackVariableNodeData(dfg, p), values(packed)))
+        Dict{Symbol, VariableNodeData{variableType, pointType}}(Symbol.(keys(packed)) .=> map(p -> unpackVariableNodeData(dfg, p), values(packed)))
+    elseif unpackPPEs && haskey(packedProps,"solverData") && packedProps["solverData"] isa AbstractVector
+        solverdict = Dict{Symbol, VariableNodeData{variableType, pointType}}()
+        for sd in packedProps["solverData"]
+            # _type = haskey(sd, "_type") ? sd["_type"] : "DistributedFactorGraphs.PackedVariableNodeData"
+            solverdict[Symbol(sd["solveKey"])] = _unpackVariableNodeData(dfg, sd)
+        end
+        solverdict
     else
-        solverData = Dict{Symbol, VariableNodeData{variableType, pointType}}()
+        Dict{Symbol, VariableNodeData{variableType, pointType}}()
     end
     # Rebuild DFGVariable using the first solver variableType in solverData
     # @info "dbg Serialization 171" variableType Symbol(packedProps["label"]) timestamp nstime ppeDict solverData smallData Dict{Symbol,AbstractDataEntry}() Ref(packedProps["solvable"])

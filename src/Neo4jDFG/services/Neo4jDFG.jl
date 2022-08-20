@@ -728,15 +728,6 @@ end
 
 ## VariableSolverData CRUD
 
-"""
-$(SIGNATURES)
-Unpack a Dict{String, Any} into a PPE.
-"""
-function _unpackVariableNodeData(dfg::G, packedDict::Dict{String, Any})::VariableNodeData where G <: AbstractDFG
-    packedVND = Unmarshal.unmarshal(PackedVariableNodeData, packedDict)
-    return unpackVariableNodeData(dfg, packedVND)
-end
-
 function listVariableSolverData(dfg::Neo4jDFG, variablekey::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Vector{Symbol}
     return _listVarSubnodesForType(dfg, variablekey, VariableNodeData, "solveKey"; currentTransaction=currentTransaction)
 end
