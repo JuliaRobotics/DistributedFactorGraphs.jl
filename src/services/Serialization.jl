@@ -231,13 +231,7 @@ function unpackVariable(dfg::G,
 
     smallData = JSON2.read(packedProps["smallData"], Dict{Symbol, SmallDataTypes})
 
-    variableTypeString = if haskey(packedProps, "softtype")
-        # TODO Deprecate, remove in v0.12
-        @warn "Packed field `softtype` is deprecated and replaced with `variableType`"
-        packedProps["softtype"]
-    else
-        packedProps["variableType"]
-    end
+    variableTypeString = packedProps["variableType"]
 
     variableType = getTypeFromSerializationModule(variableTypeString)
     isnothing(variableType) && error("Cannot deserialize variableType '$variableTypeString' in variable '$label'")
@@ -267,23 +261,12 @@ function unpackVariable(dfg::G,
     # Now rehydrate complete DataEntry type.
     if unpackBigData
         #TODO Deprecate - for backward compatibility between v0.8 and v0.9, remove in v0.10
-        if haskey(packedProps, "bigDataElemType")
-            @warn "`bigDataElemType` is deprecate, please save data again with new version that uses `dataEntryType`"
-            dataElemTypes = JSON2.read(packedProps["bigDataElemType"], Dict{Symbol, Symbol})
-        else
-            dataElemTypes = JSON2.read(packedProps["dataEntryType"], Dict{Symbol, Symbol})
-            for (k,name) in dataElemTypes 
-                dataElemTypes[k] = Symbol(split(string(name), '.')[end])
-            end
+        dataElemTypes = JSON2.read(packedProps["dataEntryType"], Dict{Symbol, Symbol})
+        for (k,name) in dataElemTypes 
+            dataElemTypes[k] = Symbol(split(string(name), '.')[end])
         end
 
-        #TODO Deprecate - for backward compatibility between v0.8 and v0.9, remove in v0.10
-        if haskey(packedProps, "bigData")
-            @warn "`bigData` is deprecate, please save data again with new version"
-            dataIntermed = JSON2.read(packedProps["bigData"], Dict{Symbol, String})
-        else
-            dataIntermed = JSON2.read(packedProps["dataEntry"], Dict{Symbol, String})
-        end
+        dataIntermed = JSON2.read(packedProps["dataEntry"], Dict{Symbol, String})
 
         for (k,bdeInter) in dataIntermed
             interm = JSON.parse(bdeInter)
