@@ -235,13 +235,13 @@ abstract type AbstractPointParametricEst end
 
 Data container to store Parameteric Point Estimate (PPE) for mean and max.
 """
-struct MeanMaxPPE <: AbstractPointParametricEst
+Base.@kwdef struct MeanMaxPPE <: AbstractPointParametricEst
     # repeat key value internally (from a design request by Sam)
     solveKey::Symbol
     suggested::Vector{Float64}
     max::Vector{Float64}
     mean::Vector{Float64}
-    lastUpdatedTimestamp::DateTime
+    lastUpdatedTimestamp::DateTime = now(Dates.UTC)
 end
 
 ##------------------------------------------------------------------------------

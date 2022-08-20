@@ -134,7 +134,7 @@ end
 # returns a DFGVariable
 function unpackVariable(dfg::G,
                         packedProps::Dict{String, Any};
-                        unpackPPEs::Bool=true,
+                        unpackPPEs::Bool=haskey(packedProps,"ppeDict"),
                         unpackSolverData::Bool=true,
                         unpackBigData::Bool=true) where G <: AbstractDFG
     @debug "Unpacking variable:\r\n$packedProps"
@@ -152,7 +152,25 @@ function unpackVariable(dfg::G,
     else
         tags = Symbol.(packedProps["tags"])
     end
-    ppeDict = unpackPPEs ? JSON2.read(packedProps["ppeDict"], Dict{Symbol, MeanMaxPPE}) : Dict{Symbol, MeanMaxPPE}()
+    ppeDict = if unpackPPEs
+        JSON2.read(packedProps["ppeDict"], Dict{Symbol, MeanMaxPPE})
+    elseif haskey(packedProps,"ppes") && packedProps["ppes"] isa AbstractVector
+        ppedict = Dict{Symbol, MeanMaxPPE}()
+        for pd in packedProps["ppes"]
+            pk = pd["solveKey"]
+            _pk = Symbol(pk)
+            ppedict[_pk] = MeanMaxPPE(;
+                                solveKey=_pk,
+                                suggested=float.(pd["suggested"]),
+                                max=float.(pd["max"]),
+                                mean=float.(pd["mean"]),
+                                lastUpdatedTimestamp=DateTime(string(pd["lastUpdatedTimestamp"]))
+                            )
+        end
+        ppedict
+    else
+        Dict{Symbol, MeanMaxPPE}()
+    end
     smallData = JSON2.read(packedProps["smallData"], Dict{Symbol, SmallDataTypes})
 
     variableTypeString = if haskey(packedProps, "softtype")
