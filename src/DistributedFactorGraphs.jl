@@ -36,6 +36,9 @@ import ManifoldsBase
 import ManifoldsBase: AbstractManifold, manifold_dimension
 export AbstractManifold, manifold_dimension
 
+import RecursiveArrayTools: ArrayPartition
+export ArrayPartition
+
 import Base: getindex
 
 
