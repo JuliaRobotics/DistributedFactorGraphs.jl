@@ -209,7 +209,7 @@ Complete variable structure for a DistributedFactorGraph variable.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
+Base.@kwdef struct DFGVariable{T<:InferenceVariable, P} <: AbstractDFGVariable
     """The ID for the variable"""
     id::Union{UUID, Nothing}
     """Variable label, e.g. :x1.
@@ -228,7 +228,7 @@ Base.@kwdef struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
     ppeDict::Dict{Symbol, <: AbstractPointParametricEst}
     """Dictionary of solver data. May be a subset of all solutions if a solver key was specified in the get call.
     Accessors: [`addVariableSolverData!`](@ref), [`updateVariableSolverData!`](@ref), and [`deleteVariableSolverData!`](@ref)"""
-    solverDataDict::Dict{Symbol, <: VariableNodeData{T}}
+    solverDataDict::Dict{Symbol, VariableNodeData{T,P}}
     """Dictionary of small data associated with this variable.
     Accessors: [`getSmallData`](@ref), [`setSmallData!`](@ref)"""
     smallData::Dict{Symbol, SmallDataTypes}
@@ -258,7 +258,7 @@ function DFGVariable(label::Symbol, variableType::Type{T};
             dataDict::Dict{Symbol, BlobEntry}=Dict{Symbol,BlobEntry}(),
             solvable::Int=1) where {T <: InferenceVariable, P}
     #
-    DFGVariable{T}(id, label, timestamp, nstime, tags, estimateDict, solverDataDict, smallData, dataDict, Ref(solvable))
+    DFGVariable{T,P}(id, label, timestamp, nstime, tags, estimateDict, solverDataDict, smallData, dataDict, Ref(solvable))
 end
 
 DFGVariable(label::Symbol, 
