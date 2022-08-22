@@ -171,7 +171,7 @@ function _unpackPPE(
         @warn "Cannot deserialize PPE, unknown type key, trying DistributedFactorGraphs.MeanMaxPPE" _type
         _type = "DistributedFactorGraphs.MeanMaxPPE"
     end
-    ppeType = DistributedFactorGraphs.getTypeFromSerializationModule(_type)
+    ppeType = getTypeFromSerializationModule(_type)
     
     ppe = Unmarshal.unmarshal(
         ppeType,
