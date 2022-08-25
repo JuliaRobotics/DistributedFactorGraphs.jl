@@ -79,10 +79,11 @@ end
 
 typeModuleName(varT::Type{<:InferenceVariable}) = typeModuleName(varT())
 
-function getTypeFromSerializationModule(variableTypeString::String)
+function getTypeFromSerializationModule(_typeString::AbstractString)
+    @debug "DFG converting type string to Julia type" _typeString
     try
         # split the type at last `.`
-        split_st = split(variableTypeString, r"\.(?!.*\.)")
+        split_st = split(_typeString, r"\.(?!.*\.)")
         #if module is specified look for the module in main, otherwise use Main        
         if length(split_st) == 2
             m = getfield(Main, Symbol(split_st[1]))
@@ -102,13 +103,32 @@ function getTypeFromSerializationModule(variableTypeString::String)
         return ret 
 
     catch ex
-        @error "Unable to deserialize soft type $(variableTypeString)"
+        @error "Unable to deserialize type $(_typeString)"
         io = IOBuffer()
         showerror(io, ex, catch_backtrace())
         err = String(take!(io))
         @error(err)
     end
     nothing
+end
+
+"""
+  $(SIGNATURES)
+Get a type from the serialization module inside DFG.
+"""
+function getTypeFromSerializationModule(dfg::G, moduleType::Symbol) where G <: AbstractDFG
+    @warn "Deprecating getTypeFromSerializationModule(dfg,symbol), use getTypeFromSerializationModule(string) instead." maxlog=10
+    st = nothing
+    try
+        st = getfield(Main, Symbol(moduleType))
+    catch ex
+        @error "Unable to deserialize packed variableType $(moduleType)"
+        io = IOBuffer()
+        showerror(io, ex, catch_backtrace())
+        err = String(take!(io))
+        @error(err)
+    end
+    return st
 end
 
 ##==============================================================================
@@ -131,12 +151,69 @@ function packVariable(dfg::AbstractDFG, v::DFGVariable)
     return props::Dict{String, Any}
 end
 
+"""
+$(SIGNATURES)
+
+Common unpack a Dict{String, Any} into a PPE.
+"""
+function _unpackPPE(
+        packedPPE::Dict{String, Any};
+        _type = pop!(packedPPE, "_type") # required for generic use
+    )
+    #
+    # Cleanup Zoned timestamp, which is always UTC
+    if packedPPE["lastUpdatedTimestamp"][end] == 'Z'
+        packedPPE["lastUpdatedTimestamp"] = packedPPE["lastUpdatedTimestamp"][1:end-1]
+    end
+
+    # !haskey(packedPPE, "_type") && error("Cannot find type key '_type' in packed PPE data")
+    if (_type === nothing || _type == "")
+        @warn "Cannot deserialize PPE, unknown type key, trying DistributedFactorGraphs.MeanMaxPPE" _type
+        _type = "DistributedFactorGraphs.MeanMaxPPE"
+    end
+    ppeType = getTypeFromSerializationModule(_type)
+    
+    ppe = Unmarshal.unmarshal(
+        ppeType,
+        packedPPE
+    )
+    # _pk = Symbol(packedPPE["solveKey"])
+    # ppe = MeanMaxPPE(;
+    #             solveKey=_pk,
+    #             suggested=float.(pd["suggested"]),
+    #             max=float.(pd["max"]),
+    #             mean=float.(pd["mean"]),
+    #             lastUpdatedTimestamp=DateTime(string(pd["lastUpdatedTimestamp"]))
+    #         )
+
+    return ppe
+end
+
+"""
+$(SIGNATURES)
+
+Unpack a Dict{String, Any} into a PPE.
+
+Notes:
+- returns `::VariableNodeData`
+"""
+function _unpackVariableNodeData(
+        dfg::AbstractDFG, 
+        packedDict::Dict{String, Any}
+    )
+    #
+    packedVND = Unmarshal.unmarshal(PackedVariableNodeData, packedDict)
+    return unpackVariableNodeData(dfg, packedVND)
+end
+
 # returns a DFGVariable
-function unpackVariable(dfg::G,
+function unpackVariable(dfg::AbstractDFG,
                         packedProps::Dict{String, Any};
                         unpackPPEs::Bool=true,
                         unpackSolverData::Bool=true,
-                        unpackBigData::Bool=true) where G <: AbstractDFG
+                        unpackBigData::Bool = haskey(packedProps,"dataEntryType") && haskey(packedProps, "dataEntry")
+    )
+    #
     @debug "Unpacking variable:\r\n$packedProps"
     # Version checking.
     _versionCheck(packedProps)
@@ -146,32 +223,51 @@ function unpackVariable(dfg::G,
     # Parse it
     timestamp = ZonedDateTime(packedProps["timestamp"])
     nstime = Nanosecond(get(packedProps, "nstime", 0))
-    # Supporting string serialization using packVariable and CGDFG serialization (Vector{String})
-    if packedProps["tags"] isa String
-        tags = JSON2.read(packedProps["tags"], Vector{Symbol})
+
+    # FIXME, drop nested packing, see DFG #867
+    #   string serialization using packVariable and CGDFG serialization (Vector{String})
+    tags = if packedProps["tags"] isa String
+        JSON2.read(packedProps["tags"], Vector{Symbol})
     else
-        tags = Symbol.(packedProps["tags"])
+        Symbol.(packedProps["tags"])
     end
-    ppeDict = unpackPPEs ? JSON2.read(packedProps["ppeDict"], Dict{Symbol, MeanMaxPPE}) : Dict{Symbol, MeanMaxPPE}()
+
+    # FIXME, drop nested packing, see DFG #867
+    ppeDict = if unpackPPEs && haskey(packedProps,"ppesDict")
+        JSON2.read(packedProps["ppeDict"], Dict{Symbol, MeanMaxPPE})
+    elseif unpackPPEs && haskey(packedProps,"ppes") && packedProps["ppes"] isa AbstractVector
+        # these different cases are not well covered in tests, but first fix #867
+        # TODO dont hardcode the ppeType (which is already discovered for each entry in _updatePPE)
+        ppedict = Dict{Symbol, MeanMaxPPE}()
+        for pd in packedProps["ppes"]
+            _type = get(pd, "_type", "DistributedFactorGraphs.MeanMaxPPE")
+            ppedict[Symbol(pd["solveKey"])] = _unpackPPE(pd; _type)
+        end
+        ppedict
+    else
+        Dict{Symbol, MeanMaxPPE}()
+    end
+
     smallData = JSON2.read(packedProps["smallData"], Dict{Symbol, SmallDataTypes})
 
-    variableTypeString = if haskey(packedProps, "softtype")
-        # TODO Deprecate, remove in v0.12
-        @warn "Packed field `softtype` is deprecated and replaced with `variableType`"
-        packedProps["softtype"]
-    else
-        packedProps["variableType"]
-    end
+    variableTypeString = packedProps["variableType"]
 
     variableType = getTypeFromSerializationModule(variableTypeString)
     isnothing(variableType) && error("Cannot deserialize variableType '$variableTypeString' in variable '$label'")
     pointType = getPointType(variableType)
 
-    if unpackSolverData
+    # FIXME, drop nested packing, see DFG #867
+    solverData = if unpackSolverData && haskey(packedProps, "solverDataDict")
         packed = JSON2.read(packedProps["solverDataDict"], Dict{String, PackedVariableNodeData})
-        solverData = Dict{Symbol, VariableNodeData{variableType, pointType}}(Symbol.(keys(packed)) .=> map(p -> unpackVariableNodeData(dfg, p), values(packed)))
+        Dict{Symbol, VariableNodeData{variableType, pointType}}(Symbol.(keys(packed)) .=> map(p -> unpackVariableNodeData(dfg, p), values(packed)))
+    elseif unpackPPEs && haskey(packedProps,"solverData") && packedProps["solverData"] isa AbstractVector
+        solverdict = Dict{Symbol, VariableNodeData{variableType, pointType}}()
+        for sd in packedProps["solverData"]
+            solverdict[Symbol(sd["solveKey"])] = _unpackVariableNodeData(dfg, sd)
+        end
+        solverdict
     else
-        solverData = Dict{Symbol, VariableNodeData{variableType, pointType}}()
+        Dict{Symbol, VariableNodeData{variableType, pointType}}()
     end
     # Rebuild DFGVariable using the first solver variableType in solverData
     # @info "dbg Serialization 171" variableType Symbol(packedProps["label"]) timestamp nstime ppeDict solverData smallData Dict{Symbol,AbstractDataEntry}() Ref(packedProps["solvable"])
@@ -191,23 +287,12 @@ function unpackVariable(dfg::G,
     # Now rehydrate complete DataEntry type.
     if unpackBigData
         #TODO Deprecate - for backward compatibility between v0.8 and v0.9, remove in v0.10
-        if haskey(packedProps, "bigDataElemType")
-            @warn "`bigDataElemType` is deprecate, please save data again with new version that uses `dataEntryType`"
-            dataElemTypes = JSON2.read(packedProps["bigDataElemType"], Dict{Symbol, Symbol})
-        else
-            dataElemTypes = JSON2.read(packedProps["dataEntryType"], Dict{Symbol, Symbol})
-            for (k,name) in dataElemTypes 
-                dataElemTypes[k] = Symbol(split(string(name), '.')[end])
-            end
+        dataElemTypes = JSON2.read(packedProps["dataEntryType"], Dict{Symbol, Symbol})
+        for (k,name) in dataElemTypes 
+            dataElemTypes[k] = Symbol(split(string(name), '.')[end])
         end
 
-        #TODO Deprecate - for backward compatibility between v0.8 and v0.9, remove in v0.10
-        if haskey(packedProps, "bigData")
-            @warn "`bigData` is deprecate, please save data again with new version"
-            dataIntermed = JSON2.read(packedProps["bigData"], Dict{Symbol, String})
-        else
-            dataIntermed = JSON2.read(packedProps["dataEntry"], Dict{Symbol, String})
-        end
+        dataIntermed = JSON2.read(packedProps["dataEntry"], Dict{Symbol, String})
 
         for (k,bdeInter) in dataIntermed
             interm = JSON.parse(bdeInter)
@@ -452,20 +537,4 @@ end
 ## Serialization
 ##==============================================================================
 
-"""
-  $(SIGNATURES)
-Get a type from the serialization module inside DFG.
-"""
-function getTypeFromSerializationModule(dfg::G, moduleType::Symbol) where G <: AbstractDFG
-    st = nothing
-    try
-        st = getfield(Main, Symbol(moduleType))
-    catch ex
-        @error "Unable to deserialize packed variableType $(moduleType)"
-        io = IOBuffer()
-        showerror(io, ex, catch_backtrace())
-        err = String(take!(io))
-        @error(err)
-    end
-    return st
-end
+
