@@ -12,7 +12,7 @@ struct NotAManifold end
 ##
 
 @defVariable(TestVarType1, Euclidean(3), zeros(3))
-@defVariable(TestVarType2, SpecialEuclidean(3), ProductRepr(zeros(3), diagm(ones(3))))
+@defVariable(TestVarType2, SpecialEuclidean(3), ArrayPartition(zeros(3), diagm(ones(3))))
 
 
 ##
@@ -24,11 +24,11 @@ struct NotAManifold end
 @test getDimension(TestVarType2) === 6
 
 @test getPointType(TestVarType1) == Vector{Float64}
-@test getPointType(TestVarType2) == ProductRepr{Tuple{Vector{Float64}, Matrix{Float64}}}
+@test getPointType(TestVarType2) == ArrayPartition{Float64, Tuple{Vector{Float64}, Matrix{Float64}}}
 
 @test getPointIdentity(TestVarType1) == zeros(3)
-@test getPointIdentity(TestVarType2).parts[1] == ProductRepr(zeros(3), diagm(ones(3))).parts[1]
-@test getPointIdentity(TestVarType2).parts[2] == ProductRepr(zeros(3), diagm(ones(3))).parts[2]
+@test getPointIdentity(TestVarType2).x[1] == ArrayPartition(zeros(3), diagm(ones(3))).x[1]
+@test getPointIdentity(TestVarType2).x[2] == ArrayPartition(zeros(3), diagm(ones(3))).x[2]
 
 ##
 
@@ -40,10 +40,10 @@ struct NotAManifold end
 @test getDimension(TestVarType2()) === 6
 
 @test getPointType(TestVarType1()) == Vector{Float64}
-@test getPointType(TestVarType2()) == ProductRepr{Tuple{Vector{Float64}, Matrix{Float64}}}
+@test getPointType(TestVarType2()) == ArrayPartition{Float64, Tuple{Vector{Float64}, Matrix{Float64}}}
 
 @test getPointIdentity(TestVarType1()) == zeros(3)
-@test getPointIdentity(TestVarType2()).parts[1] == ProductRepr(zeros(3), diagm(ones(3))).parts[1]
-@test getPointIdentity(TestVarType2()).parts[2] == ProductRepr(zeros(3), diagm(ones(3))).parts[2]
+@test getPointIdentity(TestVarType2()).x[1] == ArrayPartition(zeros(3), diagm(ones(3))).x[1]
+@test getPointIdentity(TestVarType2()).x[2] == ArrayPartition(zeros(3), diagm(ones(3))).x[2]
 
 end

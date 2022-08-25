@@ -10,6 +10,25 @@ function Base.convert(::Type{DateTime}, ts::ZonedDateTime)
 end
 
 ## ================================================================================
+## Deprecate before v0.20 - Kept longer with error
+##=================================================================================
+
+function getTypeFromSerializationModule(dfg::G, moduleType::Symbol) where G <: AbstractDFG
+  error("Deprecating getTypeFromSerializationModule(dfg,symbol), use getTypeFromSerializationModule(string) instead.")
+  st = nothing
+  try
+      st = getfield(Main, Symbol(moduleType))
+  catch ex
+      @error "Unable to deserialize packed variableType $(moduleType)"
+      io = IOBuffer()
+      showerror(io, ex, catch_backtrace())
+      err = String(take!(io))
+      @error(err)
+  end
+  return st
+end
+
+## ================================================================================
 ## Deprecate before v0.19 - Kept longer with error
 ##=================================================================================
 

@@ -1,8 +1,9 @@
-Copyright (c) 2017-2020 NavAbility
+Copyright (c) 2017-2022 NavAbility
 
-DistributedFactorGraphs.jl is not licensed for hosted, webservice or cloud 
-solutions (public or private).  Please contact NavAbility via email at 
-<info@navability.io> for clarification or additional licensing options.
+DistributedFactorGraphs' Neo4jDFG driver is not licensed for hosted, 
+webservice or cloud solutions (public or private) -- i.e. dual-licensed.  
+Please contact NavAbility via email at <info@navability.io> for 
+clarification or additional licensing options.
 NavAbility reserves all rights regarding, and to deny use of the software 
 for hosted webservice or cloud offerings or deployments; over and above 
 any conflicts that may arise with the LGPLv3 license copied hereafter.
@@ -42,7 +43,7 @@ SOFTWARE.
 the terms and conditions of version 3 of the GNU General Public
 License, supplemented by the additional permissions listed below.
 
-  0. Additional Definitions.
+  1. Additional Definitions.
 
   As used herein, "this License" refers to version 3 of the GNU Lesser
 General Public License, and the "GNU GPL" refers to version 3 of the GNU

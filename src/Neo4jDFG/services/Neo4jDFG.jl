@@ -530,32 +530,13 @@ end
 
 ### PPE CRUD
 
-"""
-$(SIGNATURES)
-Unpack a Dict{String, Any} into a PPE.
-"""
-function _unpackPPE(dfg::G, packedPPE::Dict{String, Any})::AbstractPointParametricEst where G <: AbstractDFG
-    # Cleanup Zoned timestamp, which is always UTC
-    if packedPPE["lastUpdatedTimestamp"][end] == 'Z'
-        packedPPE["lastUpdatedTimestamp"] = packedPPE["lastUpdatedTimestamp"][1:end-1]
-    end
-
-    !haskey(packedPPE, "_type") && error("Cannot find type key '_type' in packed PPE data")
-    type = pop!(packedPPE, "_type")
-    (type === nothing || type == "") && error("Cannot deserialize PPE, type key is empty")
-    ppe = Unmarshal.unmarshal(
-            DistributedFactorGraphs.getTypeFromSerializationModule(dfg, Symbol(type)),
-            packedPPE)
-    return ppe
-end
-
 function listPPEs(dfg::Neo4jDFG, variablekey::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Vector{Symbol}
     return _listVarSubnodesForType(dfg, variablekey, MeanMaxPPE, "solveKey"; currentTransaction=currentTransaction)
 end
 
 function getPPE(dfg::Neo4jDFG, variablekey::Symbol, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::AbstractPointParametricEst
     properties = _getVarSubnodeProperties(dfg, variablekey, MeanMaxPPE, ppekey; currentTransaction=currentTransaction)
-    return _unpackPPE(dfg, properties)
+    return _unpackPPE(properties)
 end
 
 function _generateAdditionalProperties(variableType::ST, ppe::P)::Dict{String, String} where {P <: AbstractPointParametricEst, ST <: InferenceVariable}
@@ -594,7 +575,7 @@ function addPPE!(dfg::Neo4jDFG,
     variableType = getVariableType(dfg, variablekey)
     # Add additional properties for the PPE
     addProps = _generateAdditionalProperties(variableType, ppe)
-    return _unpackPPE(dfg, _matchmergeVariableSubnode!(
+    return _unpackPPE(_matchmergeVariableSubnode!(
         dfg,
         variablekey,
         _getLabelsForInst(dfg, ppe, parentKey=variablekey),
@@ -617,7 +598,7 @@ function updatePPE!(
     variableType = getVariableType(dfg, variablekey, currentTransaction=currentTransaction)
     # Add additional properties for the PPE
     addProps = _generateAdditionalProperties(variableType, ppe)
-    return _unpackPPE(dfg, _matchmergeVariableSubnode!(
+    return _unpackPPE(_matchmergeVariableSubnode!(
         dfg,
         variablekey,
         _getLabelsForInst(dfg, ppe, parentKey=variablekey),
@@ -649,7 +630,7 @@ function deletePPE!(dfg::Neo4jDFG, variablekey::Symbol, ppekey::Symbol=:default;
         _getLabelsForType(dfg, MeanMaxPPE, parentKey=variablekey),
         ppekey,
         currentTransaction=currentTransaction)
-    return _unpackPPE(dfg, props)
+    return _unpackPPE(props)
 end
 
 ## DataEntry CRUD
@@ -746,15 +727,6 @@ function deleteDataEntry!(dfg::Neo4jDFG, label::Symbol, key::Symbol; currentTran
 end
 
 ## VariableSolverData CRUD
-
-"""
-$(SIGNATURES)
-Unpack a Dict{String, Any} into a PPE.
-"""
-function _unpackVariableNodeData(dfg::G, packedDict::Dict{String, Any})::VariableNodeData where G <: AbstractDFG
-    packedVND = Unmarshal.unmarshal(PackedVariableNodeData, packedDict)
-    return unpackVariableNodeData(dfg, packedVND)
-end
 
 function listVariableSolverData(dfg::Neo4jDFG, variablekey::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Vector{Symbol}
     return _listVarSubnodesForType(dfg, variablekey, VariableNodeData, "solveKey"; currentTransaction=currentTransaction)

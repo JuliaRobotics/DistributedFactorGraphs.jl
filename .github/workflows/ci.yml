@@ -7,7 +7,7 @@ on:
       - release/*
     tags:
       - v**
-
+  workflow_dispatch:
 jobs:
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
@@ -19,7 +19,7 @@ jobs:
       matrix:
         version:
           - '1.6'
-          - '1.7'
+          - '1.8'
           - 'nightly'
         os:
           - ubuntu-latest
@@ -82,7 +82,7 @@ jobs:
       matrix:
         version:
           - '1.6'
-          - '1.7'
+          - '1.8'
         os:
           - ubuntu-latest
         arch:
@@ -125,6 +125,8 @@ jobs:
             ${{ runner.os }}-
 
       - name: Julia Build Pkg
+        env:
+          DFG_USE_CGDFG: true
         uses: julia-actions/julia-buildpkg@latest
       
       - name: Git Test Credentials
@@ -159,7 +161,7 @@ jobs:
       - name: Setup julia
         uses: julia-actions/setup-julia@v1
         with:
-          version: 1.7
+          version: 1.8
           arch: x64
 
       - name: Build Docs
