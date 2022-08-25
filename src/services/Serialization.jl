@@ -79,6 +79,10 @@ end
 
 typeModuleName(varT::Type{<:InferenceVariable}) = typeModuleName(varT())
 
+"""
+  $(SIGNATURES)
+Get a type from the serialization module.
+"""
 function getTypeFromSerializationModule(_typeString::AbstractString)
     @debug "DFG converting type string to Julia type" _typeString
     try
@@ -112,24 +116,6 @@ function getTypeFromSerializationModule(_typeString::AbstractString)
     nothing
 end
 
-"""
-  $(SIGNATURES)
-Get a type from the serialization module inside DFG.
-"""
-function getTypeFromSerializationModule(dfg::G, moduleType::Symbol) where G <: AbstractDFG
-    @warn "Deprecating getTypeFromSerializationModule(dfg,symbol), use getTypeFromSerializationModule(string) instead." maxlog=10
-    st = nothing
-    try
-        st = getfield(Main, Symbol(moduleType))
-    catch ex
-        @error "Unable to deserialize packed variableType $(moduleType)"
-        io = IOBuffer()
-        showerror(io, ex, catch_backtrace())
-        err = String(take!(io))
-        @error(err)
-    end
-    return st
-end
 
 ##==============================================================================
 ## Variable Packing and unpacking
@@ -495,7 +481,7 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any}) where G <: Abstrac
     data = packedProps["data"]
     datatype = packedProps["fnctype"]
     @debug "DECODING factor type = '$(datatype)' for factor '$label'"
-    packtype = getTypeFromSerializationModule(dfg, Symbol("Packed"*datatype))
+    packtype = getTypeFromSerializationModule("Packed"*datatype)
 
     # FIXME type instability from nothing to T
     packed = nothing
