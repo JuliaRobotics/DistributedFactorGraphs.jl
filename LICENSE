@@ -1,4 +1,4 @@
-Copyright (c) 2017-2021 NavAbility
+Copyright (c) 2017-2022 NavAbility
 
 The source code in this repository is separated into two parts 
 that are licensed separately.  The Neo4jDFG library/driver
@@ -16,7 +16,7 @@ Other general use or modification of the software beyond that of
 webservices or clouds (private or public) is permitted 
 according to terms defined by Apache 2.0 or other library specifc licenses.
 
-   Copyright 2017-2021 NavAbility
+   Copyright 2017-2022 NavAbility
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
