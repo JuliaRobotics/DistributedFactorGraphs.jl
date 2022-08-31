@@ -323,11 +323,11 @@ include("Common.jl")
 # Data Blob extensions
 include("DataBlobs/DataBlobs.jl")
 
-if get(ENV, "DFG_USE_CGDFG", "") == "true"
+# if get(ENV, "DFG_USE_CGDFG", "") == "true"
     @info "Detected ENV[\"DFG_USE_CGDFG\"]: Including optional Neo4jDFG (LGPL) Driver"
     include("Neo4jDFG/Neo4jDFG.jl")
     @reexport using .Neo4jDFGs
-end
+# end
 
 function __init__()
     @require GraphPlot = "a2cc645c-3eea-5389-862e-a155d0052231" begin

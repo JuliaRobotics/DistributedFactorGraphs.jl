@@ -58,7 +58,7 @@ end
 $(SIGNATURES)
 Efficient shortcut method to create the user, robot, and session if it doesn't already exist.
 """
-function createDfgSessionIfNotExist(dfg::CloudGraphsDFG)
+function createDfgSessionIfNotExist(dfg::Neo4jDFG)
     strip(dfg.userId) == "" && error("User ID is not populated in DFG.")
     strip(dfg.robotId) == "" && error("Robot ID is not populated in DFG.")
     strip(dfg.sessionId) == "" && error("Session ID is not populated in DFG.")
@@ -91,7 +91,7 @@ Returns nothing if it isn't found.
 Notes
 - Returns `Vector{Session}`
 """
-function lsSessions(dfg::CloudGraphsDFG)
+function lsSessions(dfg::Neo4jDFG)
     sessionNodes = _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:SESSION:`$(dfg.robotId)`:`$(dfg.userId)`)")
     return map(s -> _convertDictToSession(Neo4j.getnodeproperties(s)), sessionNodes)
 end
@@ -104,7 +104,7 @@ Returns nothing if it isn't found.
 Notes
 - Returns `::Vector{Robot}`
 """
-function lsRobots(dfg::CloudGraphsDFG)
+function lsRobots(dfg::Neo4jDFG)
     robotNodes = _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:ROBOT:`$(dfg.userId)`)")
     return map(s -> _convertDictToRobot(Neo4j.getnodeproperties(s)), robotNodes)
 end
@@ -117,7 +117,7 @@ Returns nothing if it isn't found.
 Notes
 - Returns `::Vector{User}`
 """
-function lsUsers(dfg::CloudGraphsDFG)
+function lsUsers(dfg::Neo4jDFG)
     userNodes = _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:USER)")
     return map(s -> _convertDictToUser(Neo4j.getnodeproperties(s)), userNodes)
 end
@@ -130,7 +130,7 @@ Returns nothing if it isn't found.
 Notes
 - Returns either `::Union{Session, Nothing}`
 """
-function getSession(dfg::CloudGraphsDFG, userId::Symbol, robotId::Symbol, sessionId::Symbol)
+function getSession(dfg::Neo4jDFG, userId::Symbol, robotId::Symbol, sessionId::Symbol)
     !isValidLabel(userId) && error("Can't retrieve session with user ID '$(userId)'.")
     !isValidLabel(robotId) && error("Can't retrieve session with robot ID '$(robotId)'.")
     !isValidLabel(sessionId) && error("Can't retrieve session with session ID '$(sessionId)'.")
@@ -148,8 +148,7 @@ Returns nothing if it isn't found.
 Notes
 - Returns either `::Union{Nothing, Session}`
 """
-<<<<<<< HEAD:src/CloudGraphsDFG/services/CGStructure.jl
-function getSession(dfg::CloudGraphsDFG)
+function getSession(dfg::Neo4jDFG)
     return getSession(dfg, Symbol(dfg.userId), Symbol(dfg.robotId), Symbol(dfg.sessionId))
 end
 
@@ -161,7 +160,7 @@ Returns nothing if it isn't found.
 Notes
 - Returns either `::Union{Robot, Nothing}`
 """
-function getRobot(dfg::CloudGraphsDFG, userId::Symbol, robotId::Symbol)
+function getRobot(dfg::Neo4jDFG, userId::Symbol, robotId::Symbol)
     !isValidLabel(userId) && error("Can't retrieve robot with user ID '$(userId)'.")
     !isValidLabel(robotId) && error("Can't retrieve robot with robot ID '$(robotId)'.")
     robotNode = _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:ROBOT:`$(robotId)`:`$(userId)`)")
@@ -178,7 +177,7 @@ Returns nothing if it isn't found.
 Notes
 - Returns either `::Union{Nothing, Robot}`
 """
-function getRobot(dfg::CloudGraphsDFG)
+function getRobot(dfg::Neo4jDFG)
     return getRobot(dfg, Symbol(dfg.userId), Symbol(dfg.robotId))
 end
 
@@ -190,7 +189,7 @@ Returns nothing if it isn't found.
 Notes
 - Returns either `::Union{User, Nothing}`
 """
-function getUser(dfg::CloudGraphsDFG, userId::Symbol)
+function getUser(dfg::Neo4jDFG, userId::Symbol)
     !isValidLabel(userId) && error("Can't retrieve user with user ID '$(userId)'.")
     userNode = _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:USER:`$(userId)`)")
     length(userNode) == 0 && return nothing
@@ -206,7 +205,7 @@ Returns nothing if it isn't found.
 Notes
 - Returns either `::Union{Nothing, User}`
 """
-function getUser(dfg::CloudGraphsDFG)
+function getUser(dfg::Neo4jDFG)
     return getUser(dfg, Symbol(dfg.userId))
 end
 
@@ -218,7 +217,7 @@ DANGER: Clears the whole session from the database.
 Notes
 - Returns `::Nothing`
 """
-function clearSession!!(dfg::CloudGraphsDFG)
+function clearSession!!(dfg::Neo4jDFG)
     # Perform detach+deletion
     _queryNeo4j(dfg.neo4jInstance, "match (node:`$(dfg.userId)`:`$(dfg.robotId)`:`$(dfg.sessionId)`) detach delete node ")
 
@@ -234,7 +233,7 @@ DANGER: Clears the whole robot + sessions from the database.
 Notes
 - Returns `::Nothing`
 """
-function clearRobot!!(dfg::CloudGraphsDFG)
+function clearRobot!!(dfg::Neo4jDFG)
     # Perform detach+deletion
     _queryNeo4j(dfg.neo4jInstance, "match (node:`$(dfg.userId)`:`$(dfg.robotId)`) detach delete node ")
 
@@ -250,7 +249,7 @@ DANGER: Clears the whole user + robot + sessions from the database.
 Notes
 - Returns `::Nothing`
 """
-function clearUser!!(dfg::CloudGraphsDFG)
+function clearUser!!(dfg::Neo4jDFG)
     # Perform detach+deletion
     _queryNeo4j(dfg.neo4jInstance, "match (node:`$(dfg.userId)`) detach delete node ")
 
@@ -265,9 +264,9 @@ DANGER: Copies and overwrites the destination session.
 If no destination specified then it creates a unique one.
 
 Notes
-- Returns `::CloudGraphsDFG `
+- Returns `::Neo4jDFG `
 """
-function copySession!(sourceDFG::CloudGraphsDFG, destDFG::Union{Nothing, <:Neo4jDFG})
+function copySession!(sourceDFG::Neo4jDFG, destDFG::Union{Nothing, <:Neo4jDFG})
     if destDFG === nothing
         destDFG = _getDuplicatedEmptyDFG(sourceDFG)
     end
@@ -279,6 +278,6 @@ end
 DANGER: Copies the source to a new unique destination.
 
 Notes
-- Returns `::CloudGraphsDFG`
+- Returns `::Neo4jDFG`
 """
-copySession!(sourceDFG::CloudGraphsDFG) = copySession!(sourceDFG, nothing)
+copySession!(sourceDFG::Neo4jDFG) = copySession!(sourceDFG, nothing)
