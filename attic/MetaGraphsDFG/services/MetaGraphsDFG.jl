@@ -566,7 +566,7 @@ end
 
 """
     $(SIGNATURES)
-Gets an empty and unique CloudGraphsDFG derived from an existing DFG.
+Gets an empty and unique Neo4jDFG derived from an existing DFG.
 """
 function _getDuplicatedEmptyDFG(dfg::MetaGraphsDFG{P})::MetaGraphsDFG where {P <: AbstractParams}
     newDfg = MetaGraphsDFG{P}(;

@@ -5,7 +5,7 @@ using DistributedFactorGraphs
 using Test, Dates
 # start with an empty factor graph object
 # fg = initfg()
-cloudFg = CloudGraphsDFG{SolverParams}("localhost", 7474, "neo4j", "test",
+cloudFg = Neo4jDFG{SolverParams}("localhost", 7474, "neo4j", "test",
     "testUser", "testRobot", "testSession",
     nothing,
     nothing,
@@ -56,7 +56,7 @@ for variable in getVariables(localFg)
     # variable.ppeDict[:default] = Dict{Symbol, VariableEstimate}(:Mean => VariableEstimate(:default, :Mean, means, now()))
 end
 
-bel = getKDE(getVariable(localFg, :x0))
+bel = getBelief(getVariable(localFg, :x0))
 bel
 
 # Push updates back to cloud.

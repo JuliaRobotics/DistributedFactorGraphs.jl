@@ -1,9 +1,9 @@
 
 """
     $(SIGNATURES)
-Gets an empty and unique CloudGraphsDFG derived from an existing DFG.
+Gets an empty and unique Neo4jDFG derived from an existing DFG.
 """
-function _getDuplicatedEmptyDFG(dfg::CloudGraphsDFG)::CloudGraphsDFG
+function _getDuplicatedEmptyDFG(dfg::Neo4jDFG)::Neo4jDFG
     count = 0
     sessionId = dfg.sessionId*"_$count"
     while true #do..while loop
@@ -12,7 +12,7 @@ function _getDuplicatedEmptyDFG(dfg::CloudGraphsDFG)::CloudGraphsDFG
         _getNodeCount(dfg.neo4jInstance, [dfg.userId, dfg.robotId, sessionId]) == 0 && break
     end
     @debug "Unique+empty copy session name: $sessionId"
-    return CloudGraphsDFG{typeof(dfg.solverParams)}(
+    return Neo4jDFG{typeof(dfg.solverParams)}(
         dfg.neo4jInstance.connection,
         dfg.userId,
         dfg.robotId,
@@ -22,13 +22,13 @@ function _getDuplicatedEmptyDFG(dfg::CloudGraphsDFG)::CloudGraphsDFG
 end
 
 # Accessors
-function getDescription(dfg::CloudGraphsDFG)
+function getDescription(dfg::Neo4jDFG)
     return _getNodeProperty(
         dfg.neo4jInstance,
         [dfg.sessionId, dfg.robotId, dfg.userId, "SESSION"],
         "description")
 end
-function setDescription!(dfg::CloudGraphsDFG, description::String)
+function setDescription!(dfg::Neo4jDFG, description::String)
     count = _setNodeProperty(dfg.neo4jInstance,
                             [dfg.sessionId, dfg.robotId, dfg.userId, "SESSION"],
                             "description",
@@ -43,90 +43,90 @@ end
 ##==============================================================================
 
 
-function getUserData(dfg::CloudGraphsDFG)::Dict{Symbol, String}
+function getUserData(dfg::Neo4jDFG)::Dict{Symbol, String}
     propVal = _getNodeProperty(dfg.neo4jInstance, _getLabelsForType(dfg, User), "data")
     return JSON2.read(String(base64decode(propVal)), Dict{Symbol, String})
 end
-function setUserData!(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Dict{Symbol, String}
+function setUserData!(dfg::Neo4jDFG, data::Dict{Symbol, String})::Dict{Symbol, String}
     count = _setNodeProperty(dfg.neo4jInstance, [dfg.userId, "USER"], "data", base64encode(JSON2.write(data)))
     @assert(count == 1)
     return  getUserData(dfg)
 end
 
-function getRobotData(dfg::CloudGraphsDFG)::Dict{Symbol, String}
+function getRobotData(dfg::Neo4jDFG)::Dict{Symbol, String}
     propVal = _getNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, "ROBOT"], "data")
     return JSON2.read(String(base64decode(propVal)), Dict{Symbol, String})
 end
-function setRobotData!(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Dict{Symbol, String}
+function setRobotData!(dfg::Neo4jDFG, data::Dict{Symbol, String})::Dict{Symbol, String}
     count = _setNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, "ROBOT"], "data", base64encode(JSON2.write(data)))
     @assert(count == 1)
     return  getRobotData(dfg)
 end
 
-function getSessionData(dfg::CloudGraphsDFG)::Dict{Symbol, String}
+function getSessionData(dfg::Neo4jDFG)::Dict{Symbol, String}
     propVal = _getNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, "SESSION"], "data")
     return JSON2.read(String(base64decode(propVal)), Dict{Symbol, String})
 end
-function setSessionData!(dfg::CloudGraphsDFG, data::Dict{Symbol, String})::Dict{Symbol, String}
+function setSessionData!(dfg::Neo4jDFG, data::Dict{Symbol, String})::Dict{Symbol, String}
     count = _setNodeProperty(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, "SESSION"], "data", base64encode(JSON2.write(data)))
     @assert(count == 1)
     return  getSessionData(dfg)
 end
 
 # New API
-getUserData(dfg::CloudGraphsDFG, key::Symbol) = getUserData(dfg::CloudGraphsDFG)[key]
-getRobotData(dfg::CloudGraphsDFG, key::Symbol)::String = getRobotData(dfg::CloudGraphsDFG)[key]
-getSessionData(dfg::CloudGraphsDFG, key::Symbol)::String = getSessionData(dfg::CloudGraphsDFG)[key]
+getUserData(dfg::Neo4jDFG, key::Symbol) = getUserData(dfg::Neo4jDFG)[key]
+getRobotData(dfg::Neo4jDFG, key::Symbol)::String = getRobotData(dfg::Neo4jDFG)[key]
+getSessionData(dfg::Neo4jDFG, key::Symbol)::String = getSessionData(dfg::Neo4jDFG)[key]
 
-function updateUserData!(dfg::CloudGraphsDFG, pair::Pair{Symbol,String})
-    data = getUserData(dfg::CloudGraphsDFG)
+function updateUserData!(dfg::Neo4jDFG, pair::Pair{Symbol,String})
+    data = getUserData(dfg::Neo4jDFG)
     push!(data, pair)
     setUserData!(dfg, data)
 end
 
-function updateRobotData!(dfg::CloudGraphsDFG, pair::Pair{Symbol,String})
-    data = getRobotData(dfg::CloudGraphsDFG)
+function updateRobotData!(dfg::Neo4jDFG, pair::Pair{Symbol,String})
+    data = getRobotData(dfg::Neo4jDFG)
     push!(data, pair)
     setRobotData!(dfg, data)
 end
 
-function updateSessionData!(dfg::CloudGraphsDFG, pair::Pair{Symbol,String})
-    data = getSessionData(dfg::CloudGraphsDFG)
+function updateSessionData!(dfg::Neo4jDFG, pair::Pair{Symbol,String})
+    data = getSessionData(dfg::Neo4jDFG)
     push!(data, pair)
     setSessionData!(dfg, data)
 end
 
-function deleteUserData!(dfg::CloudGraphsDFG, key::Symbol)
-    data = getUserData(dfg::CloudGraphsDFG)
+function deleteUserData!(dfg::Neo4jDFG, key::Symbol)
+    data = getUserData(dfg::Neo4jDFG)
     delval = pop!(data, key)
     setUserData!(dfg, data)
     return delval
 end
 
-function deleteRobotData!(dfg::CloudGraphsDFG, key::Symbol)
-    data = getRobotData(dfg::CloudGraphsDFG)
+function deleteRobotData!(dfg::Neo4jDFG, key::Symbol)
+    data = getRobotData(dfg::Neo4jDFG)
     delval = pop!(data, key)
     setRobotData!(dfg, data)
     return delval
 end
 
-function deleteSessionData!(dfg::CloudGraphsDFG, key::Symbol)
-    data = getSessionData(dfg::CloudGraphsDFG)
+function deleteSessionData!(dfg::Neo4jDFG, key::Symbol)
+    data = getSessionData(dfg::Neo4jDFG)
     delval = pop!(data, key)
     setSessionData!(dfg, data)
     return delval
 end
 
 
-function emptyUserData!(dfg::CloudGraphsDFG)
+function emptyUserData!(dfg::Neo4jDFG)
     return setUserData!(dfg, Dict{Symbol, String}())
 end
 
-function emptyRobotData!(dfg::CloudGraphsDFG)
+function emptyRobotData!(dfg::Neo4jDFG)
     return setRobotData!(dfg, Dict{Symbol, String}())
 end
 
-function emptySessionData!(dfg::CloudGraphsDFG)
+function emptySessionData!(dfg::Neo4jDFG)
     return setSessionData!(dfg, Dict{Symbol, String}())
 end
 
@@ -138,28 +138,28 @@ end
 ## Variable And Factor CRUD
 ##------------------------------------------------------------------------------
 
-function exists(dfg::CloudGraphsDFG, label::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+function exists(dfg::Neo4jDFG, label::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
     return _getNodeCount(dfg.neo4jInstance, String.([dfg.userId, dfg.robotId, dfg.sessionId, label]), currentTransaction=currentTransaction) > 0
 end
-function exists(dfg::CloudGraphsDFG, node::N; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing) where N <: DFGNode
+function exists(dfg::Neo4jDFG, node::N; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing) where N <: DFGNode
     return exists(dfg, node.label, currentTransaction=currentTransaction)
 end
 
-isVariable(dfg::CloudGraphsDFG, sym::Symbol)::Bool =
+isVariable(dfg::Neo4jDFG, sym::Symbol)::Bool =
     _getNodeCount(dfg.neo4jInstance, ["VARIABLE", dfg.userId, dfg.robotId, dfg.sessionId, String(sym)]) == 1
 
-isFactor(dfg::CloudGraphsDFG, sym::Symbol)::Bool =
+isFactor(dfg::Neo4jDFG, sym::Symbol)::Bool =
     _getNodeCount(dfg.neo4jInstance, ["FACTOR", dfg.userId, dfg.robotId, dfg.sessionId, String(sym)]) == 1
 
 #Optimization
-function getVariableType(dfg::CloudGraphsDFG, lbl::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+function getVariableType(dfg::Neo4jDFG, lbl::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
     st = _getNodeProperty(dfg.neo4jInstance, union(_getLabelsForType(dfg, DFGVariable), [String(lbl)]), "variableType", currentTransaction=currentTransaction)
     @debug "Trying to find variableType: $st"
     variableType = getTypeFromSerializationModule(st)
     return variableType()
 end
 
-function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)
+function addVariable!(dfg::Neo4jDFG, variable::DFGVariable)
     if exists(dfg, variable)
         error("Variable '$(variable.label)' already exists in the factor graph")
     end
@@ -170,7 +170,7 @@ function addVariable!(dfg::CloudGraphsDFG, variable::DFGVariable)
     return ret
 end
 
-function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable; warn_if_absent::Bool=true)
+function updateVariable!(dfg::Neo4jDFG, variable::DFGVariable; warn_if_absent::Bool=true)
     exist = exists(dfg, variable)
     warn_if_absent && !exist && @warn "Variable label '$(variable.label)' does not exist in the factor graph, adding"
 
@@ -213,7 +213,7 @@ function updateVariable!(dfg::CloudGraphsDFG, variable::DFGVariable; warn_if_abs
     return variable
 end
 
-function addFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)
+function addFactor!(dfg::Neo4jDFG, factor::DFGFactor)
     # TODO: Refactor
     if exists(dfg, factor)
         error("Factor '$(factor.label)' already exists in the factor graph")
@@ -223,7 +223,7 @@ function addFactor!(dfg::CloudGraphsDFG, factor::DFGFactor)
     return updateFactor!(dfg, factor, warn_if_absent=false)
 end
 
-function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String})
+function getVariable(dfg::Neo4jDFG, label::Union{Symbol, String})
     query = "MATCH (node:$(join(_getLabelsForType(dfg, DFGVariable, parentKey=label), ":"))) return properties(node)"
     result = _queryNeo4j(dfg.neo4jInstance, query)
     length(result.results[1]["data"]) != 1 && error("Cannot get variable '$label'")
@@ -247,7 +247,7 @@ function getVariable(dfg::CloudGraphsDFG, label::Union{Symbol, String})
     return variable
 end
 
-function mergeVariableData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing, warn_if_absent::Bool=true)
+function mergeVariableData!(dfg::Neo4jDFG, sourceVariable::DFGVariable; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing, warn_if_absent::Bool=true)
     if warn_if_absent && !exists(dfg, sourceVariable, currentTransaction=currentTransaction)
         error("Source variable '$(sourceVariable.label)' doesn't exist in the graph.")
     end
@@ -263,7 +263,7 @@ function mergeVariableData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable; cu
     return sourceVariable
 end
 
-function getFactor(dfg::CloudGraphsDFG, label::Union{Symbol, String})
+function getFactor(dfg::Neo4jDFG, label::Union{Symbol, String})
     query = "MATCH (node:$(join(_getLabelsForType(dfg, DFGFactor, parentKey=label), ":"))) return properties(node)"
     result = _queryNeo4j(dfg.neo4jInstance, query)
     length(result.results[1]["data"]) != 1 && error("Cannot get factor '$label'")
@@ -271,12 +271,14 @@ function getFactor(dfg::CloudGraphsDFG, label::Union{Symbol, String})
     props = result.results[1]["data"][1]["row"][1]
 
     # NOTE: Until we address #590, base64 decode the data to ensure robustness, #833
-    props["data"] = String(base64decode(props["data"]))
+    # TODO: consolidate with top level only JSON, #848
+    packedData = String(base64decode(props["data"]))
+    props["data"] = JSON2.read(packedData)
 
     return rebuildFactorMetadata!(dfg, unpackFactor(dfg, props))
 end
 
-function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor; warn_if_absent::Bool=true)
+function updateFactor!(dfg::Neo4jDFG, factor::DFGFactor; warn_if_absent::Bool=true)
     exist = exists(dfg, factor)
     warn_if_absent && !exist && @warn "Factor label '$(factor.label)' does not exist in the factor graph, adding"
 
@@ -336,7 +338,7 @@ function updateFactor!(dfg::CloudGraphsDFG, factor::DFGFactor; warn_if_absent::B
     return factor
 end
 
-function deleteVariable!(dfg::CloudGraphsDFG, label::Symbol)#::Tuple{AbstractDFGVariable, Vector{<:AbstractDFGFactor}}
+function deleteVariable!(dfg::Neo4jDFG, label::Symbol)#::Tuple{AbstractDFGVariable, Vector{<:AbstractDFGFactor}}
     variable = getVariable(dfg, label)
     if variable == nothing
         error("Unable to retrieve the ID for variable '$label'. Please check your connection to the database and that the variable exists.")
@@ -359,10 +361,10 @@ function deleteVariable!(dfg::CloudGraphsDFG, label::Symbol)#::Tuple{AbstractDFG
 end
 
 #Alias
-deleteVariable!(dfg::CloudGraphsDFG, variable::DFGVariable) = deleteVariable!(dfg, variable.label)
+deleteVariable!(dfg::Neo4jDFG, variable::DFGVariable) = deleteVariable!(dfg, variable.label)
 
 # return ::DFGFactor, or workaround ::Nothing, #809
-function deleteFactor!(dfg::CloudGraphsDFG, label::Symbol; suppressGetFactor::Bool=false)
+function deleteFactor!(dfg::Neo4jDFG, label::Symbol; suppressGetFactor::Bool=false)
     factor = suppressGetFactor ? nothing : getFactor(dfg, label)
     if factor === nothing && !suppressGetFactor
         error("Unable to retrieve the ID for factor '$label'. Please check your connection to the database and that the factor exists.")
@@ -380,9 +382,9 @@ function deleteFactor!(dfg::CloudGraphsDFG, label::Symbol; suppressGetFactor::Bo
 end
 
 # Alias
-deleteFactor!(dfg::CloudGraphsDFG, factor::DFGFactor; suppressGetFactor::Bool=false) = deleteFactor!(dfg, factor.label, suppressGetFactor=suppressGetFactor)
+deleteFactor!(dfg::Neo4jDFG, factor::DFGFactor; suppressGetFactor::Bool=false) = deleteFactor!(dfg, factor.label, suppressGetFactor=suppressGetFactor)
 
-function getVariables(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{DFGVariable}
+function getVariables(dfg::Neo4jDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{DFGVariable}
     variableIds = listVariables(dfg, regexFilter, tags=tags, solvable=solvable)
     # TODO: Optimize to use tags in query here!
     variables = map(vId->getVariable(dfg, vId), variableIds)
@@ -393,7 +395,7 @@ function getVariables(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=no
     return variables
 end
 
-function listVariables(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol}
+function listVariables(dfg::Neo4jDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol}
     # Optimized for DB call
     tagsFilter = length(tags) > 0 ? " and ("*join("\"".*String.(tags).*"\" in node.tags", " or ")*") " : ""
     if regexFilter == nothing
@@ -404,13 +406,13 @@ function listVariables(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=n
     end
 end
 
-function getFactors(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{DFGFactor}
+function getFactors(dfg::Neo4jDFG, regexFilter::Union{Nothing, Regex}=nothing; solvable::Int=0)::Vector{DFGFactor}
     # TODO: Use optimized cypher query.
     factorIds = listFactors(dfg, regexFilter, solvable=solvable)
     return map(vId->getFactor(dfg, vId), factorIds)
 end
 
-function listFactors(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol}
+function listFactors(dfg::Neo4jDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol}
     # Optimized for DB call
     tagsFilter = length(tags) > 0 ? " and ("*join("\"".*String.(tags).*".\" in node.tags", " or ")*") " : ""
     if regexFilter == nothing
@@ -420,7 +422,7 @@ function listFactors(dfg::CloudGraphsDFG, regexFilter::Union{Nothing, Regex}=not
     end
 end
 
-function isConnected(dfg::CloudGraphsDFG)::Bool
+function isConnected(dfg::Neo4jDFG)::Bool
     # # If the total number of nodes == total number of distinct connected nodes, then it is fully connected
     # # Total nodes
     # varIds = listVariables(dfg)
@@ -442,8 +444,8 @@ function isConnected(dfg::CloudGraphsDFG)::Bool
    return isConnected(SkeletonDFG(dfg))
 end
 
-function getNeighbors(dfg::CloudGraphsDFG, node::T; solvable::Int=0)::Vector{Symbol}  where T <: DFGNode
-    query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(node.label))-[r:FACTORGRAPH]-(node) where (node:VARIABLE or node:FACTOR) and node.solvable >= $solvable"
+function getNeighbors(dfg::Neo4jDFG, node::T; solvable::Int=0)::Vector{Symbol}  where T <: DFGNode
+    query = "(n:`$(dfg.userId)`:`$(dfg.robotId)`:`$(dfg.sessionId)`:$(node.label))-[r:FACTORGRAPH]-(node) where (node:VARIABLE or node:FACTOR) and node.solvable >= $solvable"
     @debug "[Query] $query"
     neighbors = _getLabelsFromCyphonQuery(dfg.neo4jInstance, query)
     # If factor, need to do variable ordering TODO, Do we? does it matter if we always use _variableOrderSymbols in calculations?
@@ -453,8 +455,8 @@ function getNeighbors(dfg::CloudGraphsDFG, node::T; solvable::Int=0)::Vector{Sym
     return neighbors
 end
 
-function getNeighbors(dfg::CloudGraphsDFG, label::Symbol; solvable::Int=0)::Vector{Symbol}
-    query = "(n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(label))-[r:FACTORGRAPH]-(node) where (node:VARIABLE or node:FACTOR) and node.solvable >= $solvable"
+function getNeighbors(dfg::Neo4jDFG, label::Symbol; solvable::Int=0)::Vector{Symbol}
+    query = "(n:`$(dfg.userId)`:`$(dfg.robotId)`:`$(dfg.sessionId)`:$(label))-[r:FACTORGRAPH]-(node) where (node:VARIABLE or node:FACTOR) and node.solvable >= $solvable"
     neighbors = _getLabelsFromCyphonQuery(dfg.neo4jInstance, query)
     # If factor, need to do variable ordering TODO, Do we? does it matter if we always use _variableOrderSymbols in calculations?
     if isFactor(dfg, label)
@@ -465,16 +467,16 @@ function getNeighbors(dfg::CloudGraphsDFG, label::Symbol; solvable::Int=0)::Vect
     return neighbors
 end
 
-function getSubgraphAroundNode(dfg::CloudGraphsDFG, node::DFGNode, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::AbstractDFG=_getDuplicatedEmptyDFG(dfg); solvable::Int=0)::AbstractDFG
+function getSubgraphAroundNode(dfg::Neo4jDFG, node::DFGNode, distance::Int64=1, includeOrphanFactors::Bool=false, addToDFG::AbstractDFG=_getDuplicatedEmptyDFG(dfg); solvable::Int=0)::AbstractDFG
     distance < 1 && error("getSubgraphAroundNode() only works for distance > 0")
 
     # Thank you Neo4j for 0..* awesomeness!!
     neighborList = _getLabelsFromCyphonQuery(dfg.neo4jInstance,
         """
-        (n:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(node.label))-[FACTORGRAPH*0..$distance]-(node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId))
+        (n:`$(dfg.userId)`:`$(dfg.robotId)`:`$(dfg.sessionId)`:$(node.label))-[FACTORGRAPH*0..$distance]-(node:`$(dfg.userId)`:`$(dfg.robotId)`:`$(dfg.sessionId)`)
         WHERE (n:VARIABLE OR n:FACTOR OR node:VARIABLE OR node:FACTOR)
         and not (node:SESSION)
-        and (node.solvable >= $solvable or node:$(dfg.userId):$(dfg.robotId):$(dfg.sessionId):$(node.label))""" # Always return the root node
+        and (node.solvable >= $solvable or node:`$(dfg.userId)`:`$(dfg.robotId)`:`$(dfg.sessionId)`:$(node.label))""" # Always return the root node
         )
 
     # Copy the section of graph we want
@@ -483,7 +485,7 @@ function getSubgraphAroundNode(dfg::CloudGraphsDFG, node::DFGNode, distance::Int
 end
 
 
-function getSubgraph(dfg::CloudGraphsDFG,
+function getSubgraph(dfg::Neo4jDFG,
                      variableFactorLabels::Vector{Symbol},
                      includeOrphanFactors::Bool=false,
                      addToDFG::G=_getDuplicatedEmptyDFG(dfg) )::G where {G <: AbstractDFG}
@@ -494,7 +496,7 @@ function getSubgraph(dfg::CloudGraphsDFG,
     return addToDFG
 end
 
-function getBiadjacencyMatrix(dfg::CloudGraphsDFG; solvable::Int=0)::NamedTuple{(:B, :varLabels, :facLabels),Tuple{SparseMatrixCSC,Vector{Symbol}, Vector{Symbol}}}
+function getBiadjacencyMatrix(dfg::Neo4jDFG; solvable::Int=0)::NamedTuple{(:B, :varLabels, :facLabels),Tuple{SparseMatrixCSC,Vector{Symbol}, Vector{Symbol}}}
     varLabels = listVariables(dfg, solvable=solvable)
     factLabels = listFactors(dfg, solvable=solvable)
     vDict = Dict(varLabels .=> [1:length(varLabels)...])
@@ -528,32 +530,13 @@ end
 
 ### PPE CRUD
 
-"""
-$(SIGNATURES)
-Unpack a Dict{String, Any} into a PPE.
-"""
-function _unpackPPE(dfg::G, packedPPE::Dict{String, Any})::AbstractPointParametricEst where G <: AbstractDFG
-    # Cleanup Zoned timestamp, which is always UTC
-    if packedPPE["lastUpdatedTimestamp"][end] == 'Z'
-        packedPPE["lastUpdatedTimestamp"] = packedPPE["lastUpdatedTimestamp"][1:end-1]
-    end
-
-    !haskey(packedPPE, "_type") && error("Cannot find type key '_type' in packed PPE data")
-    type = pop!(packedPPE, "_type")
-    (type === nothing || type == "") && error("Cannot deserialize PPE, type key is empty")
-    ppe = Unmarshal.unmarshal(
-            DistributedFactorGraphs.getTypeFromSerializationModule(dfg, Symbol(type)),
-            packedPPE)
-    return ppe
-end
-
-function listPPEs(dfg::CloudGraphsDFG, variablekey::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Vector{Symbol}
+function listPPEs(dfg::Neo4jDFG, variablekey::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Vector{Symbol}
     return _listVarSubnodesForType(dfg, variablekey, MeanMaxPPE, "solveKey"; currentTransaction=currentTransaction)
 end
 
-function getPPE(dfg::CloudGraphsDFG, variablekey::Symbol, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::AbstractPointParametricEst
+function getPPE(dfg::Neo4jDFG, variablekey::Symbol, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::AbstractPointParametricEst
     properties = _getVarSubnodeProperties(dfg, variablekey, MeanMaxPPE, ppekey; currentTransaction=currentTransaction)
-    return _unpackPPE(dfg, properties)
+    return _unpackPPE(properties)
 end
 
 function _generateAdditionalProperties(variableType::ST, ppe::P)::Dict{String, String} where {P <: AbstractPointParametricEst, ST <: InferenceVariable}
@@ -581,7 +564,7 @@ function _generateAdditionalProperties(variableType::ST, ppe::P)::Dict{String, S
     return addProps
 end
 
-function addPPE!(dfg::CloudGraphsDFG,
+function addPPE!(dfg::Neo4jDFG,
                  variablekey::Symbol,
                  ppe::P;
                  currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::AbstractPointParametricEst where
@@ -592,7 +575,7 @@ function addPPE!(dfg::CloudGraphsDFG,
     variableType = getVariableType(dfg, variablekey)
     # Add additional properties for the PPE
     addProps = _generateAdditionalProperties(variableType, ppe)
-    return _unpackPPE(dfg, _matchmergeVariableSubnode!(
+    return _unpackPPE(_matchmergeVariableSubnode!(
         dfg,
         variablekey,
         _getLabelsForInst(dfg, ppe, parentKey=variablekey),
@@ -603,7 +586,7 @@ function addPPE!(dfg::CloudGraphsDFG,
 end
 
 function updatePPE!(
-        dfg::CloudGraphsDFG,
+        dfg::Neo4jDFG,
         variablekey::Symbol,
         ppe::AbstractPointParametricEst;
         currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing,
@@ -615,7 +598,7 @@ function updatePPE!(
     variableType = getVariableType(dfg, variablekey, currentTransaction=currentTransaction)
     # Add additional properties for the PPE
     addProps = _generateAdditionalProperties(variableType, ppe)
-    return _unpackPPE(dfg, _matchmergeVariableSubnode!(
+    return _unpackPPE(_matchmergeVariableSubnode!(
         dfg,
         variablekey,
         _getLabelsForInst(dfg, ppe, parentKey=variablekey),
@@ -625,7 +608,7 @@ function updatePPE!(
         currentTransaction=currentTransaction))
 end
 
-function updatePPE!(dfg::CloudGraphsDFG, sourceVariables::Vector{<:DFGVariable}, ppekey::Symbol=:default; 
+function updatePPE!(dfg::Neo4jDFG, sourceVariables::Vector{<:DFGVariable}, ppekey::Symbol=:default; 
                     currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing,
                     warn_if_absent::Bool=true)
     
@@ -639,7 +622,7 @@ function updatePPE!(dfg::CloudGraphsDFG, sourceVariables::Vector{<:DFGVariable},
     return nothing
 end
 
-function deletePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::AbstractPointParametricEst
+function deletePPE!(dfg::Neo4jDFG, variablekey::Symbol, ppekey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::AbstractPointParametricEst
     props = _deleteVarSubnode!(
         dfg,
         variablekey,
@@ -647,12 +630,12 @@ function deletePPE!(dfg::CloudGraphsDFG, variablekey::Symbol, ppekey::Symbol=:de
         _getLabelsForType(dfg, MeanMaxPPE, parentKey=variablekey),
         ppekey,
         currentTransaction=currentTransaction)
-    return _unpackPPE(dfg, props)
+    return _unpackPPE(props)
 end
 
 ## DataEntry CRUD
 
-function getDataEntries(dfg::CloudGraphsDFG, label::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+function getDataEntries(dfg::Neo4jDFG, label::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
     entries = Dict{Symbol, BlobStoreEntry}()
     # TODO: Optimize if necessary.
     delist = listDataEntries(dfg, label, currentTransaction=currentTransaction)
@@ -660,7 +643,7 @@ function getDataEntries(dfg::CloudGraphsDFG, label::Symbol; currentTransaction::
 
 end
 
-function listDataEntries(dfg::CloudGraphsDFG, label::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+function listDataEntries(dfg::Neo4jDFG, label::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
     return _listVarSubnodesForType(
         dfg, 
         label, 
@@ -669,7 +652,7 @@ function listDataEntries(dfg::CloudGraphsDFG, label::Symbol; currentTransaction:
         currentTransaction=currentTransaction)
 end
 
-function getDataEntry(dfg::CloudGraphsDFG, label::Symbol, key::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+function getDataEntry(dfg::Neo4jDFG, label::Symbol, key::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
     properties = _getVarSubnodeProperties(
         dfg, label, 
         BlobStoreEntry, 
@@ -684,7 +667,7 @@ function getDataEntry(dfg::CloudGraphsDFG, label::Symbol, key::Symbol; currentTr
         properties)
 end
 
-function addDataEntry!(dfg::CloudGraphsDFG, label::Symbol, bde::BlobStoreEntry; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+function addDataEntry!(dfg::Neo4jDFG, label::Symbol, bde::BlobStoreEntry; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
     if bde.label in listDataEntries(dfg, label, currentTransaction=currentTransaction)
         error("Data label '$(bde.label)' already exists")
     end
@@ -704,7 +687,7 @@ function addDataEntry!(dfg::CloudGraphsDFG, label::Symbol, bde::BlobStoreEntry; 
             packed)
 end
 
-function updateDataEntry!(dfg::CloudGraphsDFG, label::Symbol,  bde::BlobStoreEntry;
+function updateDataEntry!(dfg::Neo4jDFG, label::Symbol,  bde::BlobStoreEntry;
                           currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing,
                           warn_if_absent::Bool=true)
     if warn_if_absent && !(bde.label in listDataEntries(dfg, label, currentTransaction=currentTransaction))
@@ -726,7 +709,7 @@ function updateDataEntry!(dfg::CloudGraphsDFG, label::Symbol,  bde::BlobStoreEnt
             packed)
 end
 
-function deleteDataEntry!(dfg::CloudGraphsDFG, label::Symbol, key::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
+function deleteDataEntry!(dfg::Neo4jDFG, label::Symbol, key::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)
     props = _deleteVarSubnode!(
         dfg,
         label,
@@ -745,25 +728,16 @@ end
 
 ## VariableSolverData CRUD
 
-"""
-$(SIGNATURES)
-Unpack a Dict{String, Any} into a PPE.
-"""
-function _unpackVariableNodeData(dfg::G, packedDict::Dict{String, Any})::VariableNodeData where G <: AbstractDFG
-    packedVND = Unmarshal.unmarshal(PackedVariableNodeData, packedDict)
-    return unpackVariableNodeData(dfg, packedVND)
-end
-
-function listVariableSolverData(dfg::CloudGraphsDFG, variablekey::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Vector{Symbol}
+function listVariableSolverData(dfg::Neo4jDFG, variablekey::Symbol; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::Vector{Symbol}
     return _listVarSubnodesForType(dfg, variablekey, VariableNodeData, "solveKey"; currentTransaction=currentTransaction)
 end
 
-function getVariableSolverData(dfg::CloudGraphsDFG, variablekey::Symbol, solveKey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::VariableNodeData
+function getVariableSolverData(dfg::Neo4jDFG, variablekey::Symbol, solveKey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::VariableNodeData
     properties = _getVarSubnodeProperties(dfg, variablekey, VariableNodeData, solveKey; currentTransaction=currentTransaction)
     return _unpackVariableNodeData(dfg, properties)
 end
 
-function addVariableSolverData!(dfg::CloudGraphsDFG,
+function addVariableSolverData!(dfg::Neo4jDFG,
                                 variablekey::Symbol,
                                 vnd::VariableNodeData;
                                 currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::VariableNodeData
@@ -780,7 +754,7 @@ function addVariableSolverData!(dfg::CloudGraphsDFG,
     return _unpackVariableNodeData(dfg, retPacked)
 end
 
-function updateVariableSolverData!(dfg::CloudGraphsDFG,
+function updateVariableSolverData!(dfg::Neo4jDFG,
                                 variablekey::Symbol,
                                 vnd::VariableNodeData,
                                 useCopy::Bool=true,
@@ -801,7 +775,7 @@ function updateVariableSolverData!(dfg::CloudGraphsDFG,
     return _unpackVariableNodeData(dfg, retPacked)
 end
 
-function deleteVariableSolverData!(dfg::CloudGraphsDFG, variablekey::Symbol, solveKey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::VariableNodeData
+function deleteVariableSolverData!(dfg::Neo4jDFG, variablekey::Symbol, solveKey::Symbol=:default; currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing)::VariableNodeData
     retPacked = _deleteVarSubnode!(
         dfg,
         variablekey,
@@ -813,7 +787,7 @@ function deleteVariableSolverData!(dfg::CloudGraphsDFG, variablekey::Symbol, sol
 end
 
 # TODO: Do we need the useCopy,
-# function updateVariableSolverData!(dfg::CloudGraphsDFG,
+# function updateVariableSolverData!(dfg::Neo4jDFG,
 #                                    variablekey::Symbol,
 #                                    vnd::VariableNodeData,
 #                                    solvekey::Symbol=:default,
@@ -856,7 +830,7 @@ end
 #     return var.solverDataDict[solvekey]
 # end
 
-function updateVariableSolverData!(dfg::CloudGraphsDFG,
+function updateVariableSolverData!(dfg::Neo4jDFG,
                                    sourceVariables::Vector{<:DFGVariable},
                                    solvekey::Symbol=:default,
                                    useCopy::Bool=true,
@@ -868,7 +842,7 @@ function updateVariableSolverData!(dfg::CloudGraphsDFG,
     end
 end
 
-function mergeVariableSolverData!(dfg::CloudGraphsDFG, sourceVariable::DFGVariable)
+function mergeVariableSolverData!(dfg::Neo4jDFG, sourceVariable::DFGVariable)
     for solveKey in listVariableSolverData(dfg, sourceVariable.label)
         updateVariableSolverData!(
             dfg,
@@ -880,7 +854,7 @@ end
 
 ## Solvable
 
-function getSolvable(dfg::CloudGraphsDFG, sym::Symbol)
+function getSolvable(dfg::Neo4jDFG, sym::Symbol)
     prop = _getNodeProperty(
         dfg.neo4jInstance,
         union(_getLabelsForType(dfg, isVariable(dfg, sym) ? DFGVariable : DFGFactor),[String(sym)]),
@@ -888,7 +862,7 @@ function getSolvable(dfg::CloudGraphsDFG, sym::Symbol)
     return prop
 end
 
-function setSolvable!(dfg::CloudGraphsDFG, sym::Symbol, solvable::Int)::Int
+function setSolvable!(dfg::Neo4jDFG, sym::Symbol, solvable::Int)::Int
     prop = _setNodeProperty(
         dfg.neo4jInstance,
         union(_getLabelsForType(dfg, isVariable(dfg, sym) ? DFGVariable : DFGFactor),[String(sym)]),
@@ -900,9 +874,9 @@ end
 
 ##==============================================================================
 ## TAGS as a set, list, merge, remove, empty
-## CloudGraphsDFG functions
+## Neo4jDFG functions
 ##==============================================================================
-function mergeTags!(dfg::CloudGraphsDFG, sym::Symbol, tags::Vector{Symbol})
+function mergeTags!(dfg::Neo4jDFG, sym::Symbol, tags::Vector{Symbol})
 
     if isVariable(dfg,sym)
         getNode = getVariable
@@ -921,7 +895,7 @@ function mergeTags!(dfg::CloudGraphsDFG, sym::Symbol, tags::Vector{Symbol})
 
 end
 
-function removeTags!(dfg::CloudGraphsDFG, sym::Symbol, tags::Vector{Symbol})
+function removeTags!(dfg::Neo4jDFG, sym::Symbol, tags::Vector{Symbol})
 
     if isVariable(dfg,sym)
         getNode = getVariable
@@ -940,7 +914,7 @@ function removeTags!(dfg::CloudGraphsDFG, sym::Symbol, tags::Vector{Symbol})
 
 end
 
-function emptyTags!(dfg::CloudGraphsDFG, sym::Symbol)
+function emptyTags!(dfg::Neo4jDFG, sym::Symbol)
 
     if isVariable(dfg,sym)
         getNode = getVariable
@@ -964,7 +938,7 @@ end
 ## Skeleton DFG Constructor
 ##==============================================================================
 # TODO tags
-function _getSkeletonFactors(dfg::CloudGraphsDFG)
+function _getSkeletonFactors(dfg::Neo4jDFG)
     neo4jInstance = dfg.neo4jInstance
     query = "match (node:$(join(_getLabelsForType(dfg, DFGFactor),':'))) return distinct(node.label),node._variableOrderSymbols"
     result = _queryNeo4j(neo4jInstance, query)
@@ -972,13 +946,13 @@ function _getSkeletonFactors(dfg::CloudGraphsDFG)
     return facs
 end
 # TODO tags
-function _getSkeletonVariables(dfg::CloudGraphsDFG)
+function _getSkeletonVariables(dfg::Neo4jDFG)
     return SkeletonDFGVariable.(ls(dfg))
 end
 
 export SkeletonDFG
-function SkeletonDFG(cfg::CloudGraphsDFG)
-    sfg = DefaultDFG{NoSolverParams, SkeletonDFGVariable, SkeletonDFGFactor}()
+function SkeletonDFG(cfg::Neo4jDFG)
+    sfg = LocalDFG{NoSolverParams, SkeletonDFGVariable, SkeletonDFGFactor}()
     addVariable!.(sfg, _getSkeletonVariables(cfg))
     addFactor!.(sfg, _getSkeletonFactors(cfg))
     return sfg

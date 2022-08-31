@@ -29,6 +29,7 @@ Create an in-memory LightDFG with the following parameters:
 - V: Variable type
 - F: Factor type
 """
+function LightDFG end
 function LightDFG{T,V,F}(g::FactorGraph{Int,V,F}=FactorGraph{Int,V,F}();
                            description::String="LightGraphs.jl implementation",
                            userId::String="DefaultUser",
@@ -48,14 +49,6 @@ end
 
 # LightDFG{T}(; kwargs...) where T <: AbstractParams = LightDFG{T,DFGVariable,DFGFactor}(;kwargs...)
 
-"""
-    $(SIGNATURES)
-
-Create an in-memory LightDFG with the following parameters:
-- T: Solver parameters (defaults to `NoSolverParams()`)
-- V: Variable type
-- F: Factor type
-"""
 function LightDFG{T}(g::FactorGraph{Int,DFGVariable,DFGFactor}=FactorGraph{Int,DFGVariable,DFGFactor}();
                      kwargs...) where T <: AbstractParams
     return LightDFG{T,DFGVariable,DFGFactor}(g; kwargs...)

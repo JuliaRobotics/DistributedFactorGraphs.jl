@@ -38,10 +38,10 @@ if get(ENV, "DO_CGDFG_TESTS", "") == "true"
     apis = [
         GraphsDFG,
         LightDFG,
-        CloudGraphsDFG,
+        Neo4jDFG,
         ]
-    @warn "TEST: Removing all data for user 'testUserId'!"
-    clearUser!!(CloudGraphsDFG(userId="testUserId"))
+    @warn "TEST: Removing all data for user 'test@navability.io'!"
+    clearUser!!(Neo4jDFG(userId="test@navability.io"))
 
 else
     apis = [
@@ -59,11 +59,8 @@ for api in apis
 end
 
 # Test special cases
-@error("Disabled plottingTest.jl")
-if false
-  @testset "Plotting Tests" begin
+ @testset "Plotting Tests" begin
     include("plottingTest.jl")
-  end
 end
 
 @testset "Data Store Tests" begin
@@ -93,8 +90,8 @@ if get(ENV, "IIF_TEST", "") == "true"
     using IncrementalInference
 
     apis = Vector{AbstractDFG}()
-    push!(apis, LightDFG(solverParams=SolverParams(), userId="testUserId"))
-    get(ENV, "DO_CGDFG_TESTS", "false") == "true" && push!(apis, CloudGraphsDFG(solverParams=SolverParams(), userId="testUserId")) 
+    push!(apis, GraphsDFG(solverParams=SolverParams(), userId="test@navability.io"))
+    get(ENV, "DO_CGDFG_TESTS", "false") == "true" && push!(apis, Neo4jDFG(solverParams=SolverParams(), userId="test@navability.io")) 
 
     for api in apis
         @testset "Testing Driver: $(typeof(api))" begin
@@ -125,8 +122,8 @@ if get(ENV, "IIF_TEST", "") == "true"
         # This is just to validate we're not going to blow up downstream.
         apis = [
             # GraphsDFG{SolverParams}(),
-            LightDFG(solverParams=SolverParams(), userId="testUserId"),
-            CloudGraphsDFG(solverParams=SolverParams(), userId="testUserId")
+            LightDFG(solverParams=SolverParams(), userId="test@navability.io"),
+            Neo4jDFG(solverParams=SolverParams(), userId="test@navability.io")
             ]
         for api in apis
             @info "Running simple solver test: $(typeof(api))"

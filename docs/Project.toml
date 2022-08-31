@@ -7,4 +7,4 @@ IncrementalInference = "904591bb-b899-562f-9e6f-b8df64c7d480"
 LightGraphs = "093fc24a-ae57-5d10-9952-331d41423f4d"
 
 [compat]
-Documenter = "0.23"
+Documenter = "0.27"

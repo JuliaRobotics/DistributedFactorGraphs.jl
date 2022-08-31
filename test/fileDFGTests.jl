@@ -10,7 +10,7 @@ using TimeZones
         global dfg
         dfg = DistributedFactorGraphs._getDuplicatedEmptyDFG(dfg)
 
-        if typeof(dfg) <: CloudGraphsDFG
+        if typeof(dfg) <: Neo4jDFG
             @warn "TEST: Removing all data for user '$(dfg.userId)', robot '$(dfg.robotId)'!"
             clearRobot!!(dfg)
             # Need to recreate this, otherwise there is going to be an issue when creating the nodes.

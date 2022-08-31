@@ -1,6 +1,8 @@
 module FactorGraphs
 using Graphs
 
+using OrderedCollections
+
 import Base:
     eltype, show, ==, Pair,
     Tuple, copy, length, size,
@@ -42,8 +44,8 @@ include("BiMaps.jl")
 struct FactorGraph{T <: Integer,V <: AbstractVariableType, F <: AbstractFactorType} <: AbstractGraph{T}
     graph::SimpleGraph{T}
     labels::BiDictMap{T}
-    variables::Dict{Symbol,V}
-    factors::Dict{Symbol,F}
+    variables::OrderedDict{Symbol,V}
+    factors::OrderedDict{Symbol,F}
 end
 
 function FactorGraph{T, V, F}(nv::Int=100, nf::Int=100) where {T <: Integer, V <: AbstractVariableType, F <: AbstractFactorType}
@@ -51,9 +53,9 @@ function FactorGraph{T, V, F}(nv::Int=100, nf::Int=100) where {T <: Integer, V <
         sizehint!(fadjlist, nv + nf)
     g = SimpleGraph{T}(0, fadjlist)
     labels = BiDictMap{T}(sizehint=nv+nf)
-    variables = Dict{Symbol,V}()
+    variables = OrderedDict{Symbol,V}()
         sizehint!(variables, nv)
-    factors = Dict{Symbol,F}()
+    factors = OrderedDict{Symbol,F}()
         sizehint!(factors, nf)
     return FactorGraph{T, V, F}(g, labels, variables, factors)
 end

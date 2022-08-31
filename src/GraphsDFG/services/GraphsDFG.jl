@@ -374,7 +374,7 @@ Example
 using IncrementalInference
 
 # canonical example graph as example
-fg = generateCanonicalFG_Kaess()
+fg = generateGraph_Kaess()
 
 @show path = findShortestPathDijkstra(fg, :x1, :x3)
 @show isVariable.(fg, path)
@@ -453,5 +453,30 @@ function findShortestPathDijkstra(  dfg::GraphsDFG,
 
     # return the list of symbols
     return dijkpath
+end
+
+export bfs_tree
+export dfs_tree
+export traverseGraphTopologicalSort
+
+function Graphs.bfs_tree(fg::GraphsDFG, s::Symbol)
+    return bfs_tree(fg.g, fg.g.labels[s])
+end
+
+function Graphs.dfs_tree(fg::GraphsDFG, s::Symbol)
+    return dfs_tree(fg.g, fg.g.labels[s])
+end
+
+"""
+    $SIGNATURES
+
+Return a topological sort of a factor graph as a vector of vertex labels in topological order.
+Starting from s::Symbol  
+"""
+function traverseGraphTopologicalSort(fg::GraphsDFG, s::Symbol, fs_tree=bfs_tree)
+    tree = fs_tree(fg, s)
+    list = topological_sort_by_dfs(tree)
+    symlist = map(s->fg.g.labels[s], list)
+    return symlist
 end
 

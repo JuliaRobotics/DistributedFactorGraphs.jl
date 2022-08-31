@@ -125,10 +125,10 @@ Modules = [DistributedFactorGraphs]
 Pages = ["FileDFG.jl"]
 ```
 
-### CloudGraphsDFGs
+### Neo4jDFGs
 
 ```@autodocs
-Modules = [CloudGraphsDFGs]
+Modules = [Neo4jDFGs]
 ```
 
 

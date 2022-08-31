@@ -4,8 +4,8 @@ _getmodule(t::T) where T = T.name.module
 _getname(t::T) where T = T.name.name
 
 
-convertPackedType(t::Union{T, Type{T}}) where {T <: FunctorInferenceType} = getfield(_getmodule(t), Symbol("Packed$(_getname(t))"))
-function convertStructType(::Type{PT}) where {PT <: PackedInferenceType}
+convertPackedType(t::Union{T, Type{T}}) where {T <: AbstractFactor} = getfield(_getmodule(t), Symbol("Packed$(_getname(t))"))
+function convertStructType(::Type{PT}) where {PT <: AbstractPackedFactor}
     # see #668 for expanded reasoning.  PT may be ::UnionAll if the type is of template type.
     ptt = PT isa DataType ? PT.name.name : PT
     moduleName = PT isa DataType ? PT.name.module : Main
@@ -67,9 +67,12 @@ sortDFG(vars::Vector{Symbol}; lt=natural_lt, kwargs...) = sort(vars; lt=lt, kwar
 ##==============================================================================
 ## Validation of session, robot, and user IDs.
 ##==============================================================================
-global _invalidIds = ["USER", "ROBOT", "SESSION", "VARIABLE", "FACTOR", "ENVIRONMENT", "PPE", "DATA_ENTRY", "FACTORGRAPH"]
+global _invalidIds = [
+    "USER", "ROBOT", "SESSION", 
+    "VARIABLE", "FACTOR", "ENVIRONMENT", 
+    "PPE", "DATA_ENTRY", "FACTORGRAPH"]
 
-global _validLabelRegex = r"^[a-zA-Z]\w*$"
+global _validLabelRegex = r"^[a-zA-Z][\w\.\@]*$"
 
 """
 $(SIGNATURES)
@@ -80,7 +83,7 @@ function isValidLabel(id::Union{Symbol, String})::Bool
     if typeof(id) == Symbol
         id = String(id)
     end
-    return all(t -> t != uppercase(id), _invalidIds) && match(_validLabelRegex, id) != nothing
+    return all(t -> t != uppercase(id), _invalidIds) && match(_validLabelRegex, id) !== nothing
 end
 
 

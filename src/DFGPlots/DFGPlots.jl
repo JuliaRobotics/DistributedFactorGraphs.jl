@@ -9,7 +9,7 @@ import ..GraphPlot: gplot
 using ...DistributedFactorGraphs
 
 export
-    dfgplot,
+    plotDFG,
     DFGPlotProps
 
 struct DFGPlotProps
@@ -40,15 +40,15 @@ using GraphPlot
 using DistributedFactorGraphs, DistributedFactorGraphs.DFGPlots
 # ... Make graph...
 # Using GraphViz plotting
-dfgplot(fg)
+plotDFG(fg)
 # Save to PDF
 using Compose
-draw(PDF("/tmp/graph.pdf", 16cm, 16cm), dfgplot(fg))
+draw(PDF("/tmp/graph.pdf", 16cm, 16cm), plotDFG(fg))
 ```
 
 More information at [GraphPlot.jl](https://github.com/JuliaGraphs/GraphPlot.jl)
 """
-function dfgplot(dfg::LightDFG, p::DFGPlotProps = DFGPlotProps())
+function plotDFG(dfg::GraphsDFG, p::DFGPlotProps = DFGPlotProps())
 
     nodetypes = [haskey(dfg.g.variables, s) for s in dfg.g.labels]
 
@@ -66,28 +66,27 @@ function dfgplot(dfg::LightDFG, p::DFGPlotProps = DFGPlotProps())
 
 end
 
-function dfgplot(dfg::AbstractDFG, p::DFGPlotProps = DFGPlotProps())
+function plotDFG(dfg::AbstractDFG, p::DFGPlotProps = DFGPlotProps())
     # TODO implement convert functions
-    ldfg = LightDFG{NoSolverParams}()
+    ldfg = GraphsDFG{NoSolverParams}()
     copyGraph!(ldfg, dfg, listVariables(dfg), listFactors(dfg), copyGraphMetadata=false)
-    dfgplot(ldfg, p)
+    plotDFG(ldfg, p)
 end
 
-function gplot(dfg::LightDFG; keyargs...)
+function gplot(dfg::GraphsDFG; keyargs...)
     gplot(dfg.g; keyargs...)
 end
 
-
 #TODO decide if we want to overload show for display in juno, It's a bit annoying with development
 # function Base.show(io::IO, ::MIME"application/prs.juno.plotpane+html", dfg::AbstractDFG)
-function dfgplot(io::IO, ::MIME"application/prs.juno.plotpane+html", dfg::AbstractDFG)
+function plotDFG(io::IO, ::MIME"application/prs.juno.plotpane+html", dfg::AbstractDFG)
 
     if length(ls(dfg)) != 0
         size = get(io, :juno_plotsize, [100, 100])
 
         plot_output = IOBuffer()
         GraphPlot.draw(GraphPlot.SVGJS(plot_output, GraphPlot.Compose.default_graphic_width,
-                   GraphPlot.Compose.default_graphic_width, false), dfgplot(dfg))
+                   GraphPlot.Compose.default_graphic_width, false), plotDFG(dfg))
         plotsvg = String(take!(plot_output))
 
         print(io,

@@ -10,7 +10,7 @@ using TimeZones
 
 include("testBlocks.jl")
 
-testDFGAPI = CloudGraphsDFG
+testDFGAPI = Neo4jDFG
 testDFGAPI = LightDFG
 
 # Enable debug logging
@@ -22,7 +22,7 @@ global_logger(logger)
 logger = ConsoleLogger(stdout, Logging.Debug)
 global_logger(logger)
 # or
-ENV["JULIA_DEBUG"] = :CloudGraphsDFGs #module name or file name
+ENV["JULIA_DEBUG"] = :Neo4jDFGs #module name or file name
 
 end
 
@@ -152,7 +152,7 @@ end
 ##
 @testset "Adjacency Matrices" begin
 
-    fg = testDFGAPI(userId="testUserId")
+    fg = testDFGAPI(userId="test@navability.io")
     addVariable!(fg, var1)
     setSolvable!(fg, :a, 1)
     addVariable!(fg, var2)
@@ -196,7 +196,7 @@ end
 
 @testset "Copy Functions" begin
     rand(6)
-    fg = testDFGAPI(userId="testUserId")
+    fg = testDFGAPI(userId="test@navability.io")
     addVariable!(fg, var1)
     addVariable!(fg, var2)
     addVariable!(fg, var3)
@@ -207,7 +207,7 @@ end
     # @test getVariableOrder(fg,:f1) == getVariableOrder(fgcopy,:f1)
 
     #test copyGraph, deepcopyGraph[!]
-    fgcopy = testDFGAPI(userId="testUserId")
+    fgcopy = testDFGAPI(userId="test@navability.io")
     DFG.deepcopyGraph!(fgcopy, fg)
     @test getVariableOrder(fg,:abf1) == getVariableOrder(fgcopy,:abf1)
 

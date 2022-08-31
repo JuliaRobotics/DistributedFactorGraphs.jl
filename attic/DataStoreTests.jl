@@ -9,7 +9,7 @@ using UUIDs
 
 include("testBlocks.jl")
 
-testDFGAPI = CloudGraphsDFG
+testDFGAPI = Neo4jDFG
 end
 # Build a basic graph.
 
@@ -19,7 +19,7 @@ dfg = testDFGAPI{NoSolverParams}()
 # struct TestInferenceVariable1 <: InferenceVariable end
 # v1 = DFGVariable(:a, TestInferenceVariable1())
 # v2 = DFGVariable(:b, TestInferenceVariable1())
-# f1 = DFGFactor{TestFunctorInferenceType1}(:f1, [:a,:b]);
+# f1 = DFGFactor{TestAbstractFactor1}(:f1, [:a,:b]);
 # #add tags for filters
 # union!(v1.tags, [:VARIABLE, :POSE])
 # union!(v2.tags, [:VARIABLE, :LANDMARK])

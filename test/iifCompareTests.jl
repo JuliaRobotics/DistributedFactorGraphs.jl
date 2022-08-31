@@ -50,7 +50,7 @@ using Test
     @test compareFactorGraphs(fg, fg)
     @test !compareFactorGraphs(fg, fg2, skipsamples=false)
 
-    ensureAllInitialized!(fg2)
+    initAll!(fg2)
 
     @test compareSimilarVariables(fg, fg2, skipsamples=true, skip=Symbol[:initialized;:inferdim;:ppeDict;:solvedCount])
     # fg2 has been solved, so it should fail on the estimate dictionary

@@ -6,9 +6,6 @@
 abstract type AbstractFactor end
 abstract type AbstractPackedFactor end
 
-const FunctorInferenceType = AbstractFactor       # will eventually deprecate
-const PackedInferenceType = AbstractPackedFactor  # will eventually deprecate
-
 abstract type AbstractPrior <: AbstractFactor end
 abstract type AbstractRelative <: AbstractFactor end
 abstract type AbstractRelativeRoots <: AbstractRelative end
@@ -18,7 +15,7 @@ abstract type AbstractManifoldMinimize <: AbstractRelative end # FIXME move here
 # NOTE DF, Convolution is IIF idea, but DFG should know about "FactorOperationalMemory"
 # DF, IIF.CommonConvWrapper <: FactorOperationalMemory #
 # NOTE was `<: Function` as unnecessary
-abstract type FactorOperationalMemory end   # <: Function
+abstract type FactorOperationalMemory end
 # TODO to be removed from DFG,
 # we can add to IIF or have IIF.CommonConvWrapper <: FactorOperationalMemory directly
 # abstract type ConvolutionObject <: FactorOperationalMemory end
@@ -34,12 +31,12 @@ Notes
 - S::Symbol
 
 Designing (WIP)
-- T <: Union{FactorOperationalMemory, PackedInferenceType}
-- in IIF.CCW{T <: DFG.FunctorInferenceType}
-- in DFG.AbstractRelativeMinimize <: FunctorInferenceType
+- T <: Union{FactorOperationalMemory, AbstractPackedFactor}
+- in IIF.CCW{T <: DFG.AbstractFactor}
+- in DFG.AbstractRelativeMinimize <: AbstractFactor
 - in Main.SomeFactor <: AbstractRelativeMinimize
 """
-mutable struct GenericFunctionNodeData{T<:Union{<:PackedInferenceType, <:AbstractFactor, <:FactorOperationalMemory}}
+mutable struct GenericFunctionNodeData{T<:Union{<:AbstractPackedFactor, <:AbstractFactor, <:FactorOperationalMemory}}
     eliminated::Bool
     potentialused::Bool
     edgeIDs::Vector{Int}
@@ -49,12 +46,6 @@ mutable struct GenericFunctionNodeData{T<:Union{<:PackedInferenceType, <:Abstrac
     nullhypo::Float64
     solveInProgress::Int
     inflation::Float64
-    # inner constructor needed for dual use
-    # GenericFunctionNodeData{T}(x1::Bool,x2::Bool,x3,x4::T,args...) where T = new{T}(x1,x2,x3,x4,args...)
-    # TODO deprecate all these inner constructors at end of DFG v0.9.x (was added for GFND.nullhypo::Float64 breaking change)
-    # GenericFunctionNodeData{T}(el,po,ed,fn,mu::Vector{<:Real},ce::Vector{Int},so::Int) where T = 
-    #                            new{T}(el,po,ed,fn,mu,ce,0.0,so)
-    # GenericFunctionNodeData{T}(el,po,ed,fn,mu::Vector{<:Real},ce::Vector{Int},nu::Real,so::Int,infl::Real) where T = new{T}(el,po,ed,fn,mu,ce,nu,so,infl)
 end
 
 ## Constructors
@@ -85,9 +76,9 @@ const FunctionNodeData{T} = GenericFunctionNodeData{T} where T <: Union{<:Abstra
 FunctionNodeData(args...) = FunctionNodeData{typeof(args[4])}(args...)
 
 
-# PackedFunctionNodeData(x2, x3, x4, x6::T, multihypo::Vector{Float64}=[], certainhypo::Vector{Int}=Int[], x9::Int=0) where T <: PackedInferenceType =
+# PackedFunctionNodeData(x2, x3, x4, x6::T, multihypo::Vector{Float64}=[], certainhypo::Vector{Int}=Int[], x9::Int=0) where T <: AbstractPackedFactor =
 #     GenericFunctionNodeData{T}(x2, x3, x4, x6, multihypo, certainhypo, x9)
-# FunctionNodeData(x2, x3, x4, x6::T, multihypo::Vector{Float64}=[], certainhypo::Vector{Int}=Int[], x9::Int=0) where T <: Union{FunctorInferenceType, FactorOperationalMemory} =
+# FunctionNodeData(x2, x3, x4, x6::T, multihypo::Vector{Float64}=[], certainhypo::Vector{Int}=Int[], x9::Int=0) where T <: Union{AbstractFactor, FactorOperationalMemory} =
 #     GenericFunctionNodeData{T}(x2, x3, x4, x6, multihypo, certainhypo, x9)
 
 ##==============================================================================

@@ -1,9 +1,7 @@
-##==============================================================================
-# deprecation staging area
-##==============================================================================
-##==============================================================================
-## Deprecated in v0.9 Remove in the v0.10 cycle
-##==============================================================================
+## ================================================================================
+## LEGACY ON TIMESTAMPS, TODO DEPRECATE
+##=================================================================================
+
 
 Base.promote_rule(::Type{DateTime}, ::Type{ZonedDateTime}) = DateTime
 function Base.convert(::Type{DateTime}, ts::ZonedDateTime)
@@ -11,265 +9,112 @@ function Base.convert(::Type{DateTime}, ts::ZonedDateTime)
     return DateTime(ts, Local)
 end
 
-@deprecate listSolvekeys(x...) listSolveKeys(x...)
-
-##==============================================================================
-## Deprecated in v0.10 Remove in 0.11
-##==============================================================================
-
-@deprecate getMaxPPE(est::AbstractPointParametricEst) getPPEMax(est)
-@deprecate getMeanPPE(est::AbstractPointParametricEst) getPPEMean(est)
-@deprecate getSuggestedPPE(est::AbstractPointParametricEst) getPPESuggested(est)
-
-@deprecate addVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData, solveKey::Symbol) addVariableSolverData!(dfg, variablekey, vnd)
-
-@deprecate updatePPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::AbstractPointParametricEst, ppekey::Symbol) updatePPE!(dfg, variablekey, ppe)
-
-@deprecate addPPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::AbstractPointParametricEst, ppekey::Symbol) addPPE!(dfg, variablekey, ppe)
-
-
-export AbstractDataStore
-abstract type AbstractDataStore end
-struct GeneralDataEntry <: AbstractDataEntry end
-GeneralDataEntry(args...; kwargs...) = error("`GeneralDataEntry` is deprecated, use `BlobStoreEntry`")
-
-export InMemoryDataStore, FileDataStore
-
-struct FileDataStore <: AbstractDataStore end
-FileDataStore(args...; kwargs...) = error("`FileDataStore` is deprecated, use `FolderStore`")
-
-struct InMemoryDataStore <: AbstractDataStore end
-InMemoryDataStore(args...; kwargs...) = error("`InMemoryDataStore` is deprecated, use TBD")#TODO
-
-_uniqueKey(dfg::AbstractDFG, v::AbstractDFGVariable, key::Symbol)::Symbol = error("_uniqueKey is deprecated")
-
-getDataBlob(store::AbstractDataStore, entry::AbstractDataEntry) = error("AbstractDataStore $(typeof(store)) is deprecated.")
-addDataBlob!(store::AbstractDataStore, entry::AbstractDataEntry, data) = error("AbstractDataStore $(typeof(store)) is deprecated.")
-updateDataBlob!(store::AbstractDataStore, entry::AbstractDataEntry, data)  = error("AbstractDataStore $(typeof(store)) is deprecated.")
-deleteDataBlob!(store::AbstractDataStore, entry::AbstractDataEntry) = error("AbstractDataStore $(typeof(store)) is deprecated.")
-listDataBlobs(store::AbstractDataStore) = error("AbstractDataStore $(typeof(store)) is deprecated.")
-
-
-addData!(dfg::AbstractDFG,
-         lbl::Symbol,
-         datastore::Union{FileDataStore, InMemoryDataStore},
-         descr::Symbol,
-         mimeType::AbstractString,
-         data::Vector{UInt8} ) = error("This API, FileDataStore and in MemoryDataStore is deprecated use new api parameter order and FolderStore")
-
-export addDataElement!
-addDataElement!(dfg::AbstractDFG,
-                lbl::Symbol,
-                datastore::Union{FileDataStore, InMemoryDataStore},
-                descr::Symbol,
-                mimeType::AbstractString,
-                data::Vector{UInt8} ) = error("This API, FileDataStore and in MemoryDataStore is deprecated use addData! and FolderStore")
-
-
-
-export getDataEntryBlob
-getDataEntryBlob(dfg::AbstractDFG,
-                 dfglabel::Symbol,
-                 datastore::Union{FileDataStore, InMemoryDataStore},
-                 datalabel::Symbol) = error("This API, FileDataStore and in MemoryDataStore is deprecated use getData and FolderStore")
-
-export fetchDataEntryElement
-const fetchDataEntryElement = getDataEntryBlob
-export fetchData
-const fetchData = getDataEntryBlob
-
-#
-
-## softtype deprections
-function Base.getproperty(x::InferenceVariable, f::Symbol)
-  if f==:dims
-      Base.depwarn("varType $(typeof(x)), field dims is deprecated, extend and use `getDimension` instead",:getproperty)
-  elseif f==:manifolds
-      Base.depwarn("varType $(typeof(x)), field manifolds is deprecated, extend and use `getManifold` instead",:getproperty)
-  else
-    if !(@isdefined softtypeFieldsWarnOnce)
-      Base.depwarn("varType $(typeof(x)), will be required to be a singleton type in the future and can no longer have fields. *.$f called. Further warnings are suppressed",:getproperty)
-      global softtypeFieldsWarnOnce = true
-    end
-  end
-  return getfield(x,f)
-end
-
-
-
-# SmallData is now a Symbol Dict
-function createSymbolDict(d::Dict{String, String})
-  newsmalld = Dict{Symbol,SmallDataTypes}() 
-  for p in pairs(d)
-    push!(newsmalld, Symbol(p.first) => p.second)
-  end
-  return newsmalld
-end
-
-@deprecate setSmallData!(v::DFGVariable, smallData::Dict{String, String}) setSmallData!(v, createSymbolDict(smallData)) 
-
-#update deprecation with warn_if_absent
-function updateVariableSolverData!(dfg::AbstractDFG,
-                                   variablekey::Symbol,
-                                   vnd::VariableNodeData,
-                                   useCopy::Bool,
-                                   fields::Vector{Symbol},
-                                   verbose::Bool)
-  Base.depwarn("updateVariableSolverData! argument verbose is deprecated in favor of keyword argument `warn_if_absent`, see #643", :updateVariableSolverData!)
-  updateVariableSolverData!(dfg, variablekey, vnd, useCopy, fields; warn_if_absent = verbose)
-end
-
-function updateVariableSolverData!(dfg::AbstractDFG,
-                                   variablekey::Symbol,
-                                   vnd::VariableNodeData,
-                                   solveKey::Symbol,
-                                   useCopy::Bool,
-                                   fields::Vector{Symbol},
-                                   verbose::Bool)
-  Base.depwarn("updateVariableSolverData! argument verbose is deprecated in favor of keyword argument `warn_if_absent`, see #643", :updateVariableSolverData!)
-  updateVariableSolverData!(dfg, variablekey, vnd, solveKey, useCopy, fields; warn_if_absent = verbose)
-end
-
-
-##==============================================================================
-## Deprecated in v0.11 Remove in the v0.12 cycle
-##==============================================================================
-
-# # @warn("BREAKING CHANGE coming to DistributedFactorGraphs v0.12: deprecating AbstractRelativeFactor, use AbstractRelativeRoots instead")
-# # @warn("BREAKING CHANGE coming to DistributedFactorGraphs v0.12: deprecating AbstractRelativeFactorMinimize, use AbstractRelativeMinimize instead")
-# # export AbstractRelativeFactor, AbstractRelativeFactorMinimize
-# const AbstractRelativeFactor = AbstractRelativeRoots
-# const AbstractRelativeFactorMinimize = AbstractRelativeMinimize
-
-# ##-------------------------------------------------------------------------------
-# ## softtype -> variableType deprecation
-# ##-------------------------------------------------------------------------------
-
-# function Base.getproperty(x::VariableNodeData,f::Symbol)
-#   if f == :softtype
-#     Base.depwarn("`VariableNodeData` field `softtype` is deprecated, use `variableType`", :getproperty)
-#     f = :variableType
-#   end
-#   getfield(x,f)
-# end
-
-# function Base.setproperty!(x::VariableNodeData, f::Symbol, val)
-#   if f == :softtype
-#       Base.depwarn("`VariableNodeData` field `softtype` is deprecated, use `variableType`", :getproperty)
-#     f = :variableType
-#   end
-#   return setfield!(x, f, convert(fieldtype(typeof(x), f), val))
-# end
-
-
-# function Base.getproperty(x::PackedVariableNodeData,f::Symbol)
-#   if f == :softtype
-#     Base.depwarn("`PackedVariableNodeData` field `softtype` is deprecated, use `variableType`", :getproperty)
-#     f = :variableType
-#   end
-#   getfield(x,f)
-# end
-
-# function Base.setproperty!(x::PackedVariableNodeData, f::Symbol, val)
-#   if f == :softtype
-#       Base.depwarn("`PackedVariableNodeData` field `softtype` is deprecated, use `variableType`", :getproperty)
-#   f = :variableType
-#   end
-#   return setfield!(x, f, convert(fieldtype(typeof(x), f), val))
-# end
-
-
-# function Base.getproperty(x::DFGVariableSummary,f::Symbol)
-#   if f == :softtypename
-#     Base.depwarn("`DFGVariableSummary` field `softtypename` is deprecated, use `variableTypeName`", :getproperty)
-#     f = :variableTypeName
-#   end
-#   getfield(x,f)
-# end
-
-# function Base.setproperty!(x::DFGVariableSummary, f::Symbol, val)
-#   if f == :softtypename
-#       Base.depwarn("`DFGVariableSummary` field `softtypename` is deprecated, use `variableTypeName`", :getproperty)
-#   f = :variableTypeName
-#   end
-#   return setfield!(x, f, convert(fieldtype(typeof(x), f), val))
-# end
-
-# @deprecate getSofttype(args...) getVariableType(args...)
-# @deprecate getSofttypename(args...) getVariableTypeName(args...)
-
-
 ## ================================================================================
-## Deprecate before v0.17
+## Deprecate before v0.20 - Kept longer with error
 ##=================================================================================
 
+function getTypeFromSerializationModule(dfg::G, moduleType::Symbol) where G <: AbstractDFG
+  error("Deprecating getTypeFromSerializationModule(dfg,symbol), use getTypeFromSerializationModule(string) instead.")
+  st = nothing
+  try
+      st = getfield(Main, Symbol(moduleType))
+  catch ex
+      @error "Unable to deserialize packed variableType $(moduleType)"
+      io = IOBuffer()
+      showerror(io, ex, catch_backtrace())
+      err = String(take!(io))
+      @error(err)
+  end
+  return st
+end
 
-Base.propertynames(x::VariableNodeData, private::Bool=false) = private ? (:inferdim, :infoPerCoord) : (:infoPerCoord,)
+## ================================================================================
+## Deprecate before v0.19 - Kept longer with error
+##=================================================================================
 
 Base.getproperty(x::VariableNodeData,f::Symbol) = begin
   if f == :inferdim
-    Base.depwarn("vnd.inferdim::Float64 is deprecated, use vnd.infoPerCoord::Vector{Float64} instead", :getproperty)
-    # @warn "vnd.inferdim is deprecated, use .infoPerCoord instead"
-    getfield(x, :infoPerCoord)
+    error("vnd.inferdim::Float64 was deprecated and is now obsolete, use vnd.infoPerCoord::Vector{Float64} instead")
   else
     getfield(x,f)
   end
 end
 
-function Base.setproperty!(x::VariableNodeData, f::Symbol, val::Real)
-  _val = if f == :inferdim
-    Base.depwarn("vnd.inferdim::Float64 is deprecated, use vnd.infoPerCoord::Vector{Float64} instead", :setproperty!)
-    f = :infoPerCoord
-    Float64[val;]
-  else
-    val
-  end
-  return setfield!(x, f, _val)
-end
-
-function Base.setproperty!(x::VariableNodeData, f::Symbol, val::AbstractVector{<:Real})
+function Base.setproperty!(x::VariableNodeData, f::Symbol, val)
   if f == :inferdim
-    Base.depwarn("vnd.inferdim::Float64 is deprecated, use vnd.infoPerCoord::Vector{Float64} instead", :setproperty!)
-    f = :infoPerCoord
+    error("vnd.inferdim::Float64 was deprecated and is now obsolete, use vnd.infoPerCoord::Vector{Float64} instead")
   end
-  return setfield!(x, f, val)
+  return setfield!(x, f, convert(fieldtype(typeof(x), f), val))
 end
-
-#
-
-Base.propertynames(x::PackedVariableNodeData, private::Bool=false) = private ? (:inferdim, :infoPerCoord) : (:infoPerCoord,)
 
 Base.getproperty(x::PackedVariableNodeData,f::Symbol) = begin
   if f == :inferdim
-    Base.depwarn("pvnd.inferdim::Float64 is deprecated, use vnd.infoPerCoord::Vector{Float64} instead", :getproperty)
-    getfield(x, :infoPerCoord)
+    error("pvnd.inferdim::Float64 was deprecated and is now obsolete, use vnd.infoPerCoord::Vector{Float64} instead")
   else
     getfield(x,f)
   end
 end
 
-function Base.setproperty!(x::PackedVariableNodeData, f::Symbol, val::Real)
-  _val = if f == :inferdim
-    Base.depwarn("pvnd.inferdim::Float64 is deprecated, use vnd.infoPerCoord::Vector{Float64} instead", :setproperty!)
-    f = :infoPerCoord
-    Float64[val;]
-  else
-    val
-  end
-  return setfield!(x, f, _val)
-end
-
-function Base.setproperty!(x::PackedVariableNodeData, f::Symbol, val::AbstractVector{<:Real})
+function Base.setproperty!(x::PackedVariableNodeData, f::Symbol, val)
   if f == :inferdim
-    Base.depwarn("pvnd.inferdim::Float64 is deprecated, use vnd.infoPerCoord::Vector{Float64} instead", :setproperty!)
-    f = :infoPerCoord
+    error("pvnd.inferdim::Float64 was deprecated and is now obsolete, use vnd.infoPerCoord::Vector{Float64} instead")
   end
-  return setfield!(x, f, val)
+  return setfield!(x, f, convert(fieldtype(typeof(x), f), val))
 end
 
 
-@deprecate VariableNodeData(val::Vector,bw::AbstractMatrix{<:Real},BayesNetOutVertIDs::AbstractVector{Symbol},dimIDs::AbstractVector{Int},dims::Int,eliminated::Bool,BayesNetVertID::Symbol,separator::AbstractVector{Symbol},variableType,initialized::Bool,inferdim::Real,w...;kw...) VariableNodeData(val,bw,BayesNetOutVertIDs,dimIDs,dims,eliminated,BayesNetVertID,separator,variableType,initialized,Float64[inferdim;],w...;kw...)
 
+function VariableNodeData(val::Vector,
+                          bw::AbstractMatrix{<:Real},
+                          BayesNetOutVertIDs::AbstractVector{Symbol},
+                          dimIDs::AbstractVector{Int},
+                          dims::Int,
+                          eliminated::Bool,
+                          BayesNetVertID::Symbol,
+                          separator::AbstractVector{Symbol},
+                          variableType,
+                          initialized::Bool,
+                          inferdim::Real,
+                          w...; kw...)
+  error("VariableNodeData field inferdim was deprecated and is now obsolete, use infoPerCoord instead")
+end
+
+
+
+## ================================================================================
+## Deprecate before v0.19
+##=================================================================================
+
+# FIXME, change this to a deprecation in v0.19
+export deepcopySupersolve!, deepcopySolvekeys!
+const deepcopySupersolve! = cloneSolveKey!
+# @deprecate deepcopySupersolve!(w...;kw...) cloneSolveKey!(w...;kw...)
+const deepcopySolvekeys! = cloneSolveKey!
+# @deprecate deepcopySolvekeys!(w...;kw...) cloneSolveKey!(w...;kw...)
+
+@deprecate dfgplot(w...;kw...) plotDFG(w...;kw...)
+
+export FunctorInferenceType, PackedInferenceType
+
+const FunctorInferenceType = AbstractFactor       # will eventually deprecate
+const PackedInferenceType = AbstractPackedFactor  # will eventually deprecate
+
+## ================================================================================
+## Deprecate before v0.20
+##=================================================================================
+
+export DefaultDFG
+
+const DefaultDFG = LightDFG
+
+
+## ================================================================================
+## Deprecate before v0.20
+##=================================================================================
+
+# FIXME uncomment before start of v0.19
+# @deprecate deepcopySupersolve!(w...;kw...) cloneSolveKey!(w...;kw...)
+# @deprecate deepcopySolvekeys!(w...;kw...) cloneSolveKey!(w...;kw...)
 
 
 #

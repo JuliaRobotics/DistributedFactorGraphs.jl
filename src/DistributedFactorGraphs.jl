@@ -36,6 +36,9 @@ import ManifoldsBase
 import ManifoldsBase: AbstractManifold, manifold_dimension
 export AbstractManifold, manifold_dimension
 
+import RecursiveArrayTools: ArrayPartition
+export ArrayPartition
+
 import Base: getindex
 
 
@@ -72,7 +75,7 @@ export updateUserData!, updateRobotData!, updateSessionData!, deleteUserData!, d
 export emptyUserData!, emptyRobotData!, emptySessionData!
 
 # Graph Types: exported from modules or @reexport
-export InMemoryDFGTypes, DefaultDFG
+export InMemoryDFGTypes, LocalDFG
 
 # AbstractDFG Interface
 export exists,
@@ -154,8 +157,7 @@ export getVariableSolverData,
        deleteVariableSolverData!,
        listVariableSolverData,
        mergeVariableSolverData!,
-       deepcopySolvekeys!,
-       deepcopySupersolve!
+       cloneSolveKey!
 
 
 # PPE
@@ -205,7 +207,6 @@ export addData!
 # Factor Data
 export GenericFunctionNodeData, PackedFunctionNodeData, FunctionNodeData
 export AbstractFactor, AbstractPackedFactor
-export FunctorInferenceType, PackedInferenceType # NOTE might be deprecated in the future (const aliases)
 export AbstractPrior, AbstractRelative, AbstractRelativeRoots, AbstractRelativeMinimize, AbstractManifoldMinimize
 export FactorOperationalMemory
 
@@ -297,9 +298,10 @@ include("GraphsDFG/GraphsDFG.jl")
 
 include("LightDFG/LightDFG.jl")
 @reexport using .LightDFGs
+
 #supported in Memory fg types
 const InMemoryDFGTypes = Union{GraphsDFG, LightDFG}
-const DefaultDFG = LightDFG
+const LocalDFG = GraphsDFG
 
 # Common includes
 include("services/CommonAccessors.jl")
@@ -322,9 +324,9 @@ include("Common.jl")
 include("DataBlobs/DataBlobs.jl")
 
 if get(ENV, "DFG_USE_CGDFG", "") == "true"
-    @info "Detected ENV[\"DFG_USE_CGDFG\"]: Including optional CloudGraphsDFG (LGPL) Driver"
-    include("CloudGraphsDFG/CloudGraphsDFG.jl")
-    @reexport using .CloudGraphsDFGs
+    @info "Detected ENV[\"DFG_USE_CGDFG\"]: Including optional Neo4jDFG (LGPL) Driver"
+    include("Neo4jDFG/Neo4jDFG.jl")
+    @reexport using .Neo4jDFGs
 end
 
 function __init__()

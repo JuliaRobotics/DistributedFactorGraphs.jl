@@ -18,7 +18,7 @@ using GraphPlot
 using DistributedFactorGraphs
 ```
 
-Any factor graph can then be drawn by calling [`dfgplot`](@ref):
+Any factor graph can then be drawn by calling [`plotDFG`](@ref):
 
 ```@example plots
 using Cairo # hide
@@ -30,12 +30,12 @@ v1 = addVariable!(dfg, :x0, ContinuousScalar, tags = [:POSE], solvable=1)
 v2 = addVariable!(dfg, :x1, ContinuousScalar, tags = [:POSE], solvable=1)
 v3 = addVariable!(dfg, :l0, ContinuousScalar, tags = [:LANDMARK], solvable=1)
 prior = addFactor!(dfg, [:x0], Prior(Normal(0,1)))
-f1 = addFactor!(dfg, [:x0; :x1], LinearConditional(Normal(50.0,2.0)), solvable=1)
-f1 = addFactor!(dfg, [:l0; :x0], LinearConditional(Normal(40.0,5.0)), solvable=1)
-f1 = addFactor!(dfg, [:l0; :x1], LinearConditional(Normal(-10.0,5.0)), solvable=1)
+f1 = addFactor!(dfg, [:x0; :x1], LinearRelative(Normal(50.0,2.0)), solvable=1)
+f1 = addFactor!(dfg, [:l0; :x0], LinearRelative(Normal(40.0,5.0)), solvable=1)
+f1 = addFactor!(dfg, [:l0; :x1], LinearRelative(Normal(-10.0,5.0)), solvable=1)
 
 # Plot graph
-dfgplot(dfg)
+plotDFG(dfg)
 ```
 
 ### Rendering GraphPlot to PDF
@@ -47,9 +47,9 @@ using Compose
 # lets add another variable and factor and plot it
 dfg.solverParams.graphinit = false # hide
 addVariable!(dfg, :x2, ContinuousScalar);
-addFactor!(dfg, [:x1; :x2], LinearConditional(Normal(50.0,2.0)));
+addFactor!(dfg, [:x1; :x2], LinearRelative(Normal(50.0,2.0)));
 # Save to SVG
-draw(SVG("graph.svg", 10cm, 10cm), dfgplot(dfg));
+draw(SVG("graph.svg", 10cm, 10cm), plotDFG(dfg));
 nothing # hide
 ```
 ![](graph.svg)
@@ -77,9 +77,9 @@ v1 = addVariable!(dfg, :x0, ContinuousScalar, tags = [:POSE], solvable=1)
 v2 = addVariable!(dfg, :x1, ContinuousScalar, tags = [:POSE], solvable=1)
 v3 = addVariable!(dfg, :l0, ContinuousScalar, tags = [:LANDMARK], solvable=1)
 prior = addFactor!(dfg, [:x0], Prior(Normal(0,1)))
-f1 = addFactor!(dfg, [:x0; :x1], LinearConditional(Normal(50.0,2.0)), solvable=1)
-f1 = addFactor!(dfg, [:l0; :x0], LinearConditional(Normal(40.0,5.0)), solvable=1)
-f1 = addFactor!(dfg, [:l0; :x1], LinearConditional(Normal(-10.0,5.0)), solvable=1)
+f1 = addFactor!(dfg, [:x0; :x1], LinearRelative(Normal(50.0,2.0)), solvable=1)
+f1 = addFactor!(dfg, [:l0; :x0], LinearRelative(Normal(40.0,5.0)), solvable=1)
+f1 = addFactor!(dfg, [:l0; :x1], LinearRelative(Normal(-10.0,5.0)), solvable=1)
 # Save to dot file
 toDotFile(dfg, "/tmp/test.dot")
 # Open with xdot

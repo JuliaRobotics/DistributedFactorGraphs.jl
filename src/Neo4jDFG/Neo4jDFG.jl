@@ -1,4 +1,4 @@
-module CloudGraphsDFGs
+module Neo4jDFGs
 
 using ...DistributedFactorGraphs
 
@@ -87,7 +87,9 @@ import ...DistributedFactorGraphs:  setSolverParams!,
                                     addDataEntry!,
                                     updateDataEntry!,
                                     deleteDataEntry!,
-                                    _getDFGVersion
+                                    _getDFGVersion,
+                                    _unpackPPE,
+                                    _unpackVariableNodeData
 
 using Neo4j
 using Base64
@@ -105,16 +107,16 @@ using SparseArrays
 using UUIDs
 
 # Entities
-include("entities/CloudGraphsDFG.jl")
+include("entities/Neo4jDFG.jl")
 include("entities/CGStructure.jl")
 
 # Services
 include("services/CommonFunctions.jl")
 include("services/CGStructure.jl")
-include("services/CloudGraphsDFG.jl")
+include("services/Neo4jDFG.jl")
 
 # Exports
-export Neo4jInstance, CloudGraphsDFG
+export Neo4jInstance, Neo4jDFG
 
 # Additional exports for CGStructure
 export copySession!
@@ -126,5 +128,8 @@ export existsSession, existsRobot, existsUser
 export getSession, getRobot, getUser
 export updateSession, updateRobot, updateUser
 export lsSessions, lsRobots, lsUsers
+
+const CloudGraphsDFG = Neo4jDFG
+# const CloudGraphsDFG{T} = Neo4jDFG{T}
 
 end

@@ -35,11 +35,11 @@ To continue the example, run one of the following to create a DFG driver:
 dfg = LightDFG{SolverParams}(solverParams=SolverParams())
 ```
 
-### Creating a CloudGraphsDFG Graph
+### Creating a Neo4jDFG Graph
 
 ```julia
 # Create a DFG with no solver parameters (just to demonstrate the difference) using the CloudGraphs driver, and connect it to a local Neo4j instance.
-cfg = CloudGraphsDFG{NoSolverParams}("localhost", 7474, "neo4j", "test",
+cfg = Neo4jDFG{NoSolverParams}("localhost", 7474, "neo4j", "test",
                                      "testUser", "testRobot", "testSession")
 ```
 
@@ -83,9 +83,9 @@ Four factors are added: a prior, a linear conditional relationship with a normal
 
 ```@example buildingGraphs; continued = true
 prior = addFactor!(dfg, [:x0], Prior(Normal(0,1)))
-f1 = addFactor!(dfg, [:x0; :x1], LinearConditional(Normal(50.0,2.0)), solvable=1)
-f1 = addFactor!(dfg, [:l0; :x0], LinearConditional(Normal(40.0,5.0)), solvable=1)
-f1 = addFactor!(dfg, [:l0; :x1], LinearConditional(Normal(-10.0,5.0)), solvable=1)
+f1 = addFactor!(dfg, [:x0; :x1], LinearRelative(Normal(50.0,2.0)), solvable=1)
+f1 = addFactor!(dfg, [:l0; :x0], LinearRelative(Normal(40.0,5.0)), solvable=1)
+f1 = addFactor!(dfg, [:l0; :x1], LinearRelative(Normal(-10.0,5.0)), solvable=1)
 ```
 
 The produced factor graph is:

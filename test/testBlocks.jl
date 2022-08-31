@@ -34,10 +34,10 @@ struct TestAbstractPrior <: AbstractPrior end
 struct TestAbstractRelativeFactor <: AbstractRelativeRoots end
 struct TestAbstractRelativeFactorMinimize <: AbstractRelativeMinimize end
 
-struct PackedTestFunctorInferenceType1 <: PackedInferenceType
-    s::String
+Base.@kwdef struct PackedTestFunctorInferenceType1 <: AbstractPackedFactor
+    s::String = ""
 end
-PackedTestFunctorInferenceType1() = PackedTestFunctorInferenceType1("")
+# PackedTestFunctorInferenceType1() = PackedTestFunctorInferenceType1("")
 
 function Base.convert(::Type{PackedTestFunctorInferenceType1}, d::TestFunctorInferenceType1)
     # @info "convert(::Type{PackedTestFunctorInferenceType1}, d::TestFunctorInferenceType1)"
@@ -55,10 +55,10 @@ function Base.convert(::Type{TestFunctorInferenceType1}, d::PackedTestFunctorInf
 end
 
 
-struct PackedTestAbstractPrior <: PackedInferenceType
-    s::String
+Base.@kwdef struct PackedTestAbstractPrior <: AbstractPackedFactor
+    s::String = ""
 end
-PackedTestAbstractPrior() = PackedTestAbstractPrior("")
+# PackedTestAbstractPrior() = PackedTestAbstractPrior("")
 
 function Base.convert(::Type{PackedTestAbstractPrior}, d::TestAbstractPrior)
     # @info "convert(::Type{PackedTestAbstractPrior}, d::TestAbstractPrior)"
@@ -112,14 +112,14 @@ end
 
 
 ##
-# global testDFGAPI = CloudGraphsDFG
+# global testDFGAPI = Neo4jDFG
 # global testDFGAPI = LightDFG
 # T = testDFGAPI
 
 #test Specific definitions
 # struct TestInferenceVariable1 <: InferenceVariable end
 # struct TestInferenceVariable2 <: InferenceVariable end
-# struct TestFunctorInferenceType1 <: FunctorInferenceType end
+# struct TestFunctorInferenceType1 <: AbstractFactor end
 
 # NOTE see note in AbstractDFG.jl setSolverParams!
 struct GeenSolverParams <: AbstractParams
@@ -131,10 +131,10 @@ function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverP
     # "DFG Structure and Accessors"
     # Constructors
     # Constructors to be implemented
-    fg = T(solverParams=solparams, userId="testUserId")
+    fg = T(solverParams=solparams, userId="test@navability.io")
     #TODO test something better
     @test isa(fg, T)
-    @test getUserId(fg)=="testUserId"
+    @test getUserId(fg)=="test@navability.io"
     @test getRobotId(fg)=="DefaultRobot"
     @test getSessionId(fg)[1:8] == "Session_"
 
@@ -151,12 +151,12 @@ function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverP
 
     #NOTE I don't like, so not exporting, and not recommended to use
     #     Technically if you set Ids its a new object
-    @test DistributedFactorGraphs.setUserId!(fg, "testUserId") == "testUserId"
+    @test DistributedFactorGraphs.setUserId!(fg, "test@navability.io") == "test@navability.io"
     @test DistributedFactorGraphs.setRobotId!(fg, "testRobotId") == "testRobotId"
     @test DistributedFactorGraphs.setSessionId!(fg, "testSessionId") == "testSessionId"
 
     des = "description for runtest"
-    uId = "testUserId"
+    uId = "test@navability.io"
     rId = "testRobotId"
     sId = "testSessionId"
     ud = :ud=>"udEntry"
@@ -642,9 +642,9 @@ function  PPETestBlock!(fg, v1)
     # Delete it
     @test deletePPE!(fg, :a, :default) == ppe
     # Update add it
-    updatePPE!(fg, :a, ppe, :default)
+    updatePPE!(fg, :a, ppe) #, :default)
     # Update update it
-    updatePPE!(fg, :a, ppe, :default)
+    updatePPE!(fg, :a, ppe) #, :default)
 
     v1.ppeDict[:default] = deepcopy(ppe)
     # Bulk copy PPE's for x0 and x1
@@ -1211,7 +1211,7 @@ function connectivityTestGraph(::Type{T}; VARTYPE=DFGVariable, FACTYPE=DFGFactor
     numNodesType1 = 5
     numNodesType2 = 5
 
-    dfg = T(userId="testUserId")
+    dfg = T(userId="test@navability.io")
 
     vars = vcat(map(n -> VARTYPE(Symbol("x$n"), VariableNodeData{TestVariableType1}()), 1:numNodesType1),
                 map(n -> VARTYPE(Symbol("x$(numNodesType1+n)"), VariableNodeData{TestVariableType2}()), 1:numNodesType2))
@@ -1419,7 +1419,7 @@ function ProducingDotFiles(testDFGAPI,
                            FACTYPE=DFGFactor)
     # "Producing Dot Files"
     # create a simpler graph for dot testing
-    dotdfg = testDFGAPI(userId="testUserId")
+    dotdfg = testDFGAPI(userId="test@navability.io")
 
     if v1 == nothing
         v1 = VARTYPE(:a, VariableNodeData{TestVariableType1}())
@@ -1435,7 +1435,7 @@ function ProducingDotFiles(testDFGAPI,
     addVariable!(dotdfg, v2)
     addFactor!(dotdfg, [v1, v2], f1)
     #NOTE hardcoded toDot will have different results so test LightGraphs seperately
-    if testDFGAPI <: LightDFG || testDFGAPI <: GraphsDFG || testDFGAPI <: CloudGraphsDFG
+    if testDFGAPI <: LightDFG || testDFGAPI <: GraphsDFG || testDFGAPI <: Neo4jDFG
         todotstr = toDot(dotdfg)
         todota = todotstr == "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box, fontsize=8, fixedsize=false, height=0.1, width=0.1];\na -- abf1\nb -- abf1\n}\n"
         todotb = todotstr == "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box, fontsize=8, fixedsize=false, height=0.1, width=0.1];\nb -- abf1\na -- abf1\n}\n"
@@ -1497,7 +1497,7 @@ function CopyFunctionsTest(testDFGAPI; kwargs...)
     @test issetequal(ls(dcdfg_part), vlbls)
     @test issetequal(lsf(dcdfg_part), flbls)
     @test !isConnected(dcdfg_part)
-    # dfgplot(dcdfg_part)
+    # plotDFG(dcdfg_part)
 
 
     vlbls = [:x2, :x3]
@@ -1524,7 +1524,7 @@ function CopyFunctionsTest(testDFGAPI; kwargs...)
     dcdfg_part1 = deepcopyGraph(LightDFG, dfg, vlbls1)
     dcdfg_part2 = deepcopyGraph(LightDFG, dfg, vlbls2)
 
-    mergedGraph = testDFGAPI(userId="testUserId")
+    mergedGraph = testDFGAPI(userId="test@navability.io")
     mergeGraph!(mergedGraph, dcdfg_part1)
     mergeGraph!(mergedGraph, dcdfg_part2)
 
@@ -1591,7 +1591,7 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
         # Save and load the graph to test.
         saveDFG(dfg, filename)
 
-        retDFG = testDFGAPI(userId="testUserId")
+        retDFG = testDFGAPI(userId="test@navability.io")
         @info "Going to load $filename"
 
         @test_throws AssertionError loadDFG!(retDFG,"badfilename")

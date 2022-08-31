@@ -5,7 +5,7 @@ mutable struct Neo4jInstance
   graph::Neo4j.Graph
 end
 
-mutable struct CloudGraphsDFG{T <: AbstractParams} <: AbstractDFG{T}
+mutable struct Neo4jDFG{T <: AbstractParams} <: AbstractDFG{T}
     neo4jInstance::Neo4jInstance
     userId::String
     robotId::String
@@ -16,7 +16,7 @@ mutable struct CloudGraphsDFG{T <: AbstractParams} <: AbstractDFG{T}
     blobStores::Dict{Symbol, AbstractBlobStore}
 
     # inner constructor for all constructors in common
-    function CloudGraphsDFG{T}(neo4jInstance::Neo4jInstance,
+    function Neo4jDFG{T}(neo4jInstance::Neo4jInstance,
                                userId::String,
                                robotId::String,
                                sessionId::String,
@@ -47,7 +47,7 @@ end
     $(SIGNATURES)
 Create a new CloudGraphs-based DFG factor graph using a Neo4j.Connection or by specifying the Neo4j connection information
 """
-function CloudGraphsDFG{T}(neo4jConnection::Neo4j.Connection,
+function Neo4jDFG{T}(neo4jConnection::Neo4j.Connection,
                            userId::String,
                            robotId::String,
                            sessionId::String,
@@ -58,11 +58,11 @@ function CloudGraphsDFG{T}(neo4jConnection::Neo4j.Connection,
     graph = Neo4j.getgraph(neo4jConnection)
     neo4jInstance = Neo4jInstance(neo4jConnection, graph)
 
-    return CloudGraphsDFG{T}(neo4jInstance, userId, robotId, sessionId, description, Symbol[], solverParams; kwargs...)
+    return Neo4jDFG{T}(neo4jInstance, userId, robotId, sessionId, description, Symbol[], solverParams; kwargs...)
 
 end
 
-function CloudGraphsDFG{T}(host::String,
+function Neo4jDFG{T}(host::String,
                            port::Int,
                            dbUser::String,
                            dbPassword::String,
@@ -72,22 +72,22 @@ function CloudGraphsDFG{T}(host::String,
                            description::String;
                            kwargs...) where T <: AbstractParams
     neo4jConnection = Neo4j.Connection(host, port=port, user=dbUser, password=dbPassword)
-    return CloudGraphsDFG{T}(neo4jConnection, userId, robotId, sessionId, description; kwargs...)
+    return Neo4jDFG{T}(neo4jConnection, userId, robotId, sessionId, description; kwargs...)
 end
 
 # construct using the default settings for localhost
-function CloudGraphsDFG(; hostname="localhost",
+function Neo4jDFG(; hostname="localhost",
                           port=7474,
                           username="neo4j",
                           password="test",
                           userId::String="DefaultUser",
                           robotId::String="DefaultRobot",
                           sessionId::String="Session_$(string(uuid4())[1:6])", #TODO randstring(['a':'z';'A':'Z'],1) ipv Session
-                          description::String="CloudGraphsDFG implementation",
+                          description::String="Neo4jDFG implementation",
                           solverParams::T=NoSolverParams(),
                           kwargs...) where T <: AbstractParams
 
-    return CloudGraphsDFG{T}(hostname,
+    return Neo4jDFG{T}(hostname,
                              port,
                              username,
                              password,
@@ -99,7 +99,7 @@ function CloudGraphsDFG(; hostname="localhost",
                              kwargs...)
 end
 
-function CloudGraphsDFG(description::String,
+function Neo4jDFG(description::String,
                         userId::String,
                         robotId::String,
                         sessionId::String,
@@ -112,7 +112,7 @@ function CloudGraphsDFG(description::String,
                         dbUser::String = "neo4j",
                         dbPassword::String = "test")
 
-    return CloudGraphsDFG{typeof(solverParams)}(host,
+    return Neo4jDFG{typeof(solverParams)}(host,
                                                 port,
                                                 dbUser,
                                                 dbPassword,
@@ -128,8 +128,8 @@ function CloudGraphsDFG(description::String,
 
 end
 
-function show(io::IO, ::MIME"text/plain", c::CloudGraphsDFG)
-    println(io, "CloudGraphsDFG:")
+function show(io::IO, ::MIME"text/plain", c::Neo4jDFG)
+    println(io, "Neo4jDFG:")
     println(io, " - Neo4J instance: $(c.neo4jInstance.connection.host)")
     println(io, " - Session: $(c.userId):$(c.robotId):$(c.sessionId)")
     println(io, " - Description: ", c.description)
