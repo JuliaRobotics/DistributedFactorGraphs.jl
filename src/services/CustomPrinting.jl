@@ -191,9 +191,9 @@ function Base.show(io::IO, dfg::AbstractDFG)
     println(io, "  Description: ", dfg.description)
     println(io, "  Nr variables: ", length(ls(dfg)))
     println(io, "  Nr factors: ",length(lsf(dfg)))
-    println(io, "  User Data: ", keys(dfg.userData))
-    println(io, "  Robot Data: ", keys(dfg.robotData))
-    println(io, "  Session Data: ", keys(dfg.sessionData))
+    println(io, "  User Data: ", keys(getUserData(dfg)))
+    println(io, "  Robot Data: ", keys(getRobotData(dfg)))
+    println(io, "  Session Data: ", keys(getSessionData(dfg)))
 end
 
 Base.show(io::IO, ::MIME"text/plain", dfg::AbstractDFG) = show(io, dfg)

@@ -116,7 +116,7 @@ end
 
     # Accessors
     @test getAddHistory(dfg) == [:a, :b] #, :abf1
-    @test getDescription(dfg) != nothing
+    @test getDescription(dfg) !== nothing
     #TODO Deprecate
     # @test_throws ErrorException getLabelDict(dfg)
     # Existence
@@ -206,7 +206,7 @@ end
     @test getTags(f1) == f1.tags
     @test getSolverData(f1) == f1.solverData
 
-    @test getSolverParams(dfg) != nothing
+    @test getSolverParams(dfg) !== nothing
     @test setSolverParams!(dfg, getSolverParams(dfg)) == getSolverParams(dfg)
 
     #solver data is initialized
