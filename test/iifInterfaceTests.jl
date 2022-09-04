@@ -10,13 +10,9 @@ end
 @testset "Building a simple Graph" begin
     global dfg,v1,v2,f1
     # Use IIF to add the variables and factors
-    v1 = addVariable!(dfg, :a, ContinuousScalar, tags = [:POSE], solvable=0)
-    v2 = addVariable!(dfg, :b, ContinuousScalar, tags = [:LANDMARK], solvable=1)
+    v1 = addVariable!(dfg, :a, Position{1}, tags = [:POSE], solvable=0)
+    v2 = addVariable!(dfg, :b, Position{1}, tags = [:LANDMARK], solvable=1)
     f1 = addFactor!(dfg, [:a; :b], LinearRelative(Normal(50.0,2.0)), solvable=0)
-
-    @show dfg
-    @show f1
-    @show v1
 end
 
 println()
@@ -25,7 +21,7 @@ println()
 #test before anything changes
 @testset "Producing Dot Files" begin
     global dfg
-    @show todotstr = toDot(dfg)
+    todotstr = toDot(dfg)
     #TODO consider using a regex, but for now test all orders
     todota = cmp(todotstr, "graph graphname {\n2 [\"label\"=\"a\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n2 -- 3\n3 [\"label\"=\"abf1\",\"shape\"=\"box\",\"fillcolor\"=\"blue\",\"color\"=\"blue\"]\n1 [\"label\"=\"b\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n1 -- 3\n}\n") |> abs
     todotb = cmp(todotstr, "graph graphname {\n2 [\"label\"=\"b\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n2 -- 3\n3 [\"label\"=\"abf1\",\"shape\"=\"box\",\"fillcolor\"=\"blue\",\"color\"=\"blue\"]\n1 [\"label\"=\"a\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n1 -- 3\n}\n") |> abs
@@ -33,7 +29,7 @@ println()
     todotd = cmp(todotstr, "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box];\nb -- abf1\na -- abf1\n}\n") |> abs
     todote = cmp(todotstr, "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box, fontsize=8, fixedsize=false, height=0.1, width=0.1];\na -- abf1\nb -- abf1\n}\n") |> abs
     todotf = cmp(todotstr, "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box, fontsize=8, fixedsize=false, height=0.1, width=0.1];\nb -- abf1\na -- abf1\n}\n") |> abs
-    @show todota, todotb, todotc, todotd, todote, todotf
+    # @show todota, todotb, todotc, todotd, todote, todotf
     @test (todota < 1 || todotb < 1 || todotc < 1 || todotd < 1 || todote < 1 || todotf < 1)
     @test toDotFile(dfg, "something.dot") === nothing
     Base.rm("something.dot")
@@ -53,9 +49,9 @@ end
 
     # Build a new in-memory IIF graph to transfer into the new graph.
     iiffg = initfg()
-    v1 = deepcopy(addVariable!(iiffg, :a, ContinuousScalar))
-    v2 = deepcopy(addVariable!(iiffg, :b, ContinuousScalar))
-    v3 = deepcopy(addVariable!(iiffg, :c, ContinuousScalar))
+    v1 = deepcopy(addVariable!(iiffg, :a, Position{1}))
+    v2 = deepcopy(addVariable!(iiffg, :b, Position{1}))
+    v3 = deepcopy(addVariable!(iiffg, :c, Position{1}))
     f1 = deepcopy(addFactor!(iiffg, [:a; :b], LinearRelative(Normal(50.0,2.0)) ))
     f2 = deepcopy(addFactor!(iiffg, [:b; :c], LinearRelative(Normal(10.0,1.0)) ))
 
@@ -116,7 +112,7 @@ end
 
     # Accessors
     @test getAddHistory(dfg) == [:a, :b] #, :abf1
-    @test getDescription(dfg) != nothing
+    @test getDescription(dfg) !== nothing
     #TODO Deprecate
     # @test_throws ErrorException getLabelDict(dfg)
     # Existence
@@ -151,15 +147,14 @@ end
     @test lsf(dfg, LinearRelative) == [:abf1]
     @test lsfWho(dfg, :LinearRelative) == [:abf1]
 
-    @test getVariableType(v1) isa ContinuousScalar
-    @test getVariableType(dfg,:a) isa ContinuousScalar
+    @test getVariableType(v1) isa Position{1}
+    @test getVariableType(dfg,:a) isa Position{1}
 
     #TODO what is lsTypes supposed to return?
     @test_broken lsTypes(dfg)
 
-    @test issetequal(ls(dfg, ContinuousScalar), [:a, :b])
-
-    @test issetequal(lsWho(dfg, :ContinuousScalar),[:a, :b])
+    @test issetequal(ls(dfg, Position{1}), [:a, :b])
+    @test issetequal(lsWho(dfg, :Position),[:a, :b])
 
     varNearTs = findVariableNearTimestamp(dfg, now())
     @test_skip varNearTs[1][1]  == [:b]
@@ -198,15 +193,15 @@ end
     @test getVariablePPEDict(v1) == v1.ppeDict # changed to .ppeDict -- delete by DFG v0.7
 
 
-    @test typeof(getVariableType(v1)) == ContinuousScalar
-    @test typeof(getVariableType(v2)) == ContinuousScalar
-    @test typeof(getVariableType(v1)) == ContinuousScalar
+    @test typeof(getVariableType(v1)) == Position{1}
+    @test typeof(getVariableType(v2)) == Position{1}
+    @test typeof(getVariableType(v1)) == Position{1}
 
     @test getLabel(f1) == f1.label
     @test getTags(f1) == f1.tags
     @test getSolverData(f1) == f1.solverData
 
-    @test getSolverParams(dfg) != nothing
+    @test getSolverParams(dfg) !== nothing
     @test setSolverParams!(dfg, getSolverParams(dfg)) == getSolverParams(dfg)
 
     #solver data is initialized
@@ -329,10 +324,10 @@ end
         @test isConnected(dfg) == true
         # @test @test_deprecated isFullyConnected(dfg) == true
         # @test @test_deprecated hasOrphans(dfg) == false
-        addVariable!(dfg, :orphan, ContinuousScalar, tags = [:POSE], solvable=0)
+        addVariable!(dfg, :orphan, Position{1}, tags = [:POSE], solvable=0)
         @test isConnected(dfg) == false
     else
-        addVariable!(dfg, :orphan, ContinuousScalar, tags = [:POSE], solvable=0)
+        addVariable!(dfg, :orphan, Position{1}, tags = [:POSE], solvable=0)
         @warn "Neo4jDFG is currently failing with the connectivity test."
     end
 end
@@ -393,7 +388,7 @@ numNodes = 10
 # end
 
 #change solvable and solveInProgress for x7,x8 for improved tests on x7x8f1
-verts = map(n -> addVariable!(dfg, Symbol("x$n"), ContinuousScalar, tags = [:POSE]), 1:numNodes)
+verts = map(n -> addVariable!(dfg, Symbol("x$n"), Position{1}, tags = [:POSE]), 1:numNodes)
 #TODO fix this to use accessors
 setSolvable!(verts[7], 1)
 setSolvable!(verts[8], 0)

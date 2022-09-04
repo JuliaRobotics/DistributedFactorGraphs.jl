@@ -6,7 +6,6 @@ end
 
 # Fastest way I can think to convert the data into a dict
 #TODO: Probably should be made more efficient...definitely should be made more efficient
-#  return ::Dict{String, Any}
 function _convertNodeToDict(abstractNode::N) where N <: AbstractCGNode
     cp = deepcopy(abstractNode)
     data = length(cp.data) != 0 ? JSON2.write(cp.data) : "{}"
@@ -16,8 +15,6 @@ function _convertNodeToDict(abstractNode::N) where N <: AbstractCGNode
     return ser
 end
 
-#TODO: Refactor, #HACK :D (but it works!)
-# return ::Session
 function _convertDictToSession(dict::Dict{String, Any})
     data = JSON2.read(String(base64decode(dict["data"])), Dict{Symbol, String})
     session = Session(
@@ -31,8 +28,7 @@ function _convertDictToSession(dict::Dict{String, Any})
         dict["lastUpdatedTimestamp"])
     return session
 end
-#TODO: Refactor, #HACK :D (but it works!)
-# returns ::Robot
+
 function _convertDictToRobot(dict::Dict{String, Any})
     data = JSON2.read(String(base64decode(dict["data"])), Dict{Symbol, String})
     robot = Robot(
@@ -45,8 +41,7 @@ function _convertDictToRobot(dict::Dict{String, Any})
         dict["lastUpdatedTimestamp"])
     return robot
 end
-#TODO: Refactor, #HACK :D (but it works!)
-# returns ::User
+
 function _convertDictToUser(dict::Dict{String, Any})
     data = JSON2.read(String(base64decode(dict["data"])), Dict{Symbol, String})
     user = User(
@@ -59,81 +54,33 @@ function _convertDictToUser(dict::Dict{String, Any})
     return user
 end
 
-# returns ::User
-function createUser(dfg::Neo4jDFG, user::User)
-    Symbol(dfg.userId) != user.id && error("DFG user ID must match user's ID")
-    !isValidLabel(user) && error("Node cannot have an ID '$(user.id)'.")
-
-    props = _convertNodeToDict(user)
-    # TODO: Switch to _queryNeo4j
-    retNode = _createNode(dfg.neo4jInstance, ["USER", String(user.id)], props, nothing)
-    return user
-end
-
-# returns ::Robot
-function createRobot(dfg::Neo4jDFG, robot::Robot)
-    Symbol(dfg.robotId) != robot.id && error("DFG robot ID must match robot's ID")
-    Symbol(dfg.userId) != robot.userId && error("DFG user ID must match robot's user ID")
-    !isValidLabel(robot) && error("Node cannot have an ID '$(robot.id)'.")
-
-    # Find the parent
-    parents = _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:USER:`$(dfg.userId)`)")
-    length(parents) == 0 && error("Cannot find user '$(dfg.userId)'")
-    length(parents) > 1 && error("Found multiple users '$(dfg.userId)'")
-
-    # Already exists?
-    length(_getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:ROBOT:`$(dfg.userId)`:`$(robot.id)`)")) != 0 &&
-        error("Robot '$(robot.id)' already exists for user '$(robot.userId)'")
-
-    props = _convertNodeToDict(robot)
-    # TODO: Switch to _queryNeo4j
-    retNode = _createNode(dfg.neo4jInstance, ["ROBOT", String(robot.userId), String(robot.id)], props, parents[1], :ROBOT)
-    return robot
-end
-
-# returns ::Session
-function createSession(dfg::Neo4jDFG, session::Session)
-    Symbol(dfg.robotId) != session.robotId && error("DFG robot ID must match session's robot ID")
-    Symbol(dfg.userId) != session.userId && error("DFG user ID must match session's->robot's->user ID")
-    !isValidLabel(session) && error("Node cannot have an ID '$(session.id)'.")
-
-    # Find the parent
-    parents = _getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:ROBOT:`$(dfg.robotId)`:`$(dfg.userId)`)")
-    length(parents) == 0 && error("Cannot find robot '$(dfg.robotId)' for user '$(dfg.userId)'")
-    length(parents) > 1 && error("Found multiple robots '$(dfg.robotId)' for user '$(dfg.userId)'")
-
-    # Already exists?
-    length(_getNeoNodesFromCyphonQuery(dfg.neo4jInstance, "(node:SESSION:`$(session.userId)`:`$(session.robotId)`:`$(session.id)`)")) != 0 &&
-        error("Session '$(session.id)' already exists for robot '$(session.robotId)' and user '$(session.userId)'")
-
-    props = _convertNodeToDict(session)
-    # TODO: Switch to _queryNeo4j
-    retNode = _createNode(dfg.neo4jInstance, ["SESSION", String(session.userId), String(session.robotId), String(session.id)], props, parents[1], :SESSION)
-    return session
-end
-
 """
 $(SIGNATURES)
-Shortcut method to create the user, robot, and session if it doesn't already exist.
-
-Notes
-- return `::Session`
+Efficient shortcut method to create the user, robot, and session if it doesn't already exist.
 """
 function createDfgSessionIfNotExist(dfg::Neo4jDFG)
     strip(dfg.userId) == "" && error("User ID is not populated in DFG.")
     strip(dfg.robotId) == "" && error("Robot ID is not populated in DFG.")
     strip(dfg.sessionId) == "" && error("Session ID is not populated in DFG.")
+    !isValidLabel(dfg.userId) && error("Node cannot have an ID '$(dfg.userId)'.")
+    !isValidLabel(dfg.robotId) && error("Node cannot have an ID '$(dfg.robotId)'.")
+    !isValidLabel(dfg.sessionId) && error("Node cannot have an ID '$(dfg.sessionId)'.")
+
     user = User(Symbol(dfg.userId), dfg.userId, "Description for $(dfg.userId)", Dict{Symbol, String}())
     robot = Robot(Symbol(dfg.robotId), Symbol(dfg.userId), dfg.robotId, "Description for $(dfg.userId):$(dfg.robotId)", Dict{Symbol, String}())
     session = Session(Symbol(dfg.sessionId), Symbol(dfg.robotId), Symbol(dfg.userId), dfg.sessionId, dfg.description, Dict{Symbol, String}())
 
-    _getNodeCount(dfg.neo4jInstance, [dfg.userId, "USER"]) == 0 && createUser(dfg, user)
-    _getNodeCount(dfg.neo4jInstance, [dfg.userId, dfg.robotId, "ROBOT"]) == 0 && createRobot(dfg, robot)
-    if _getNodeCount(dfg.neo4jInstance, [dfg.userId, dfg.robotId, dfg.sessionId, "SESSION"]) == 0
-        return createSession(dfg, session)
-    else
-        return getSession(dfg)
-    end
+    # NOTE that this doesn't get updated then, you need to use the set* (e.g. setSessionData) functions yourself.
+    query = """
+    MERGE (u:USER:`$(String(user.id))`) ON CREATE SET $(join(["u.$k = '$(v)'" for (k,v) in _convertNodeToDict(user)], ", "))\r\n
+    MERGE (r:ROBOT:`$(String(user.id))`:`$(String(robot.id))`) ON CREATE SET $(join(["r.$k = '$(v)'" for (k,v) in _convertNodeToDict(robot)], ", "))\r\n
+    MERGE (s:SESSION:`$(String(user.id))`:`$(String(robot.id))`:`$(String(session.id))`) ON CREATE SET $(join(["s.$k = '$(v)'" for (k,v) in _convertNodeToDict(session)], ", "))
+    MERGE (u)-[:ROBOT]->(r) 
+    MERGE (r)-[:SESSION]->(s) 
+    """
+
+    _queryNeo4j(dfg.neo4jInstance, query)
+    return nothing
 end
 
 """
@@ -320,7 +267,7 @@ Notes
 - Returns `::Neo4jDFG `
 """
 function copySession!(sourceDFG::Neo4jDFG, destDFG::Union{Nothing, <:Neo4jDFG})
-    if destDFG == nothing
+    if destDFG === nothing
         destDFG = _getDuplicatedEmptyDFG(sourceDFG)
     end
     _copyIntoGraph!(sourceDFG, destDFG, union(listVariables(sourceDFG), listFactors(sourceDFG)), true)

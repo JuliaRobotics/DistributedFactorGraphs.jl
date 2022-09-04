@@ -172,6 +172,10 @@ function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverP
     @test getSessionId(fg) == sId
     @test getAddHistory(fg) === fg.addHistory
 
+    # Need to set this for Neo4jDFG
+    @test setUserData!(fg, Dict(ud)) == Dict(ud)
+    @test setRobotData!(fg, Dict(rd)) == Dict(rd)
+    @test setSessionData!(fg, Dict(sd)) == Dict(sd)
     @test getUserData(fg) == Dict(ud)
     @test getRobotData(fg) == Dict(rd)
     @test getSessionData(fg) == Dict(sd)
