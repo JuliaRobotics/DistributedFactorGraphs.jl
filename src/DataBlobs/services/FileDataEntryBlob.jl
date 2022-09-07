@@ -1,27 +1,4 @@
-##==============================================================================
-## FileDataEntryBlob Types
-##==============================================================================
-export FileDataEntry
-"""
-    $(TYPEDEF)
-Data Entry in a file.
-"""
-struct FileDataEntry <: AbstractDataEntry
-    label::Symbol
-    id::UUID
-    folder::String
-    hash::String #using bytes2hex or perhaps Vector{Uint8}?
-    createdTimestamp::ZonedDateTime
 
-    function FileDataEntry(label, id, folder, hash, timestamp)
-        if !isdir(folder)
-            @info "Folder '$folder' doesn't exist - creating."
-            # create new folder
-            mkpath(folder)
-        end
-        return new(label, id, folder, hash, timestamp)
-    end
-end
 
 # @generated function ==(x::FileDataEntry, y::FileDataEntry)
 #     mapreduce(n -> :(x.$n == y.$n), (a,b)->:($a && $b), fieldnames(x))
