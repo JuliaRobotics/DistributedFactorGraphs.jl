@@ -1,22 +1,3 @@
-##==============================================================================
-## InMemoryDataEntry Types
-##==============================================================================
-export InMemoryDataEntry
-"""
-    $(TYPEDEF)
-Store data temporary in memory.
-NOTE: Neither Entry nor Blob will be persisted.
-"""
-struct InMemoryDataEntry{T} <: AbstractDataEntry
-    label::Symbol
-    id::UUID
-    #hash::String #Is this needed?
-    createdTimestamp::ZonedDateTime
-    data::T
-end
-
-# getHash(::InMemoryDataEntry) = UInt8[]
-assertHash(de::InMemoryDataEntry, db; hashfunction = sha256) = true
 
 
 ##==============================================================================
