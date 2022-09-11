@@ -33,18 +33,10 @@ mutable struct Neo4jDFG{T <: AbstractParams} <: AbstractDFG{T}
         !isValidLabel(robotId) && error("'$robotId' is not a valid Robot ID")
         !isValidLabel(sessionId) && error("'$sessionId' is not a valid Session ID")
 
-        # neo4jConnection = Neo4j.Connection(host, port=port, user=dbUser, password=dbPassword);
-        # graph = Neo4j.getgraph(neo4jConnection)
-        # neo4jInstance = Neo4jInstance(neo4jConnection, graph)
-
         dfg = new{T}(neo4jInstance, userId, robotId, sessionId, description, addHistory, solverParams, blobStores)
         # Create the session if it doesn't already exist
         if createSessionNodes
             createDfgSessionIfNotExist(dfg)
-            setUserData!(dfg, userData)
-            setRobotData!(dfg, robotData)
-            setSessionData!(dfg, sessionData)
-            setDescription!(dfg, description)
         end
 
         return dfg

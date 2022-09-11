@@ -48,3 +48,50 @@ struct MongodbDataEntry <: AbstractDataEntry
     #flags::Bool ready, valid, locked, permissions
     #MIMEType::String
 end
+
+
+##==============================================================================
+## FileDataEntryBlob Types
+##==============================================================================
+export FileDataEntry
+"""
+    $(TYPEDEF)
+Data Entry in a file.
+"""
+struct FileDataEntry <: AbstractDataEntry
+    label::Symbol
+    id::UUID
+    folder::String
+    hash::String #using bytes2hex or perhaps Vector{Uint8}?
+    createdTimestamp::ZonedDateTime
+
+    function FileDataEntry(label, id, folder, hash, timestamp)
+        if !isdir(folder)
+            @info "Folder '$folder' doesn't exist - creating."
+            # create new folder
+            mkpath(folder)
+        end
+        return new(label, id, folder, hash, timestamp)
+    end
+end
+
+
+##==============================================================================
+## InMemoryDataEntry Types
+##==============================================================================
+export InMemoryDataEntry
+"""
+    $(TYPEDEF)
+Store data temporary in memory.
+NOTE: Neither Entry nor Blob will be persisted.
+"""
+struct InMemoryDataEntry{T} <: AbstractDataEntry
+    label::Symbol
+    id::UUID
+    #hash::String #Is this needed?
+    createdTimestamp::ZonedDateTime
+    data::T
+end
+
+# getHash(::InMemoryDataEntry) = UInt8[]
+assertHash(de::InMemoryDataEntry, db; hashfunction = sha256) = true
