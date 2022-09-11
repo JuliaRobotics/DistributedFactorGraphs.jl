@@ -29,13 +29,21 @@ buildSourceString(dfg::AbstractDFG, label::Symbol) =
 Get data entry
 """
 function getDataEntry(var::AbstractDFGVariable, key::Symbol)
-    !hasDataEntry(var, key) && error("Data entry $(key) does not exist in variable $(getLabel(var))")
+    !hasDataEntry(var, key) && error("No dataEntry label $(key) found in variable $(getLabel(var))")
     return var.dataDict[key]
 end
 
-function getDataEntry(dfg::AbstractDFG, label::Symbol, key::Symbol)
-    return getDataEntry(getVariable(dfg, label), key)
+function getDataEntry(var::AbstractDFGVariable, blobId::UUID)
+    for (k,v) in var.dataDict
+        if v.id == blobId
+            return v
+        end
+    end
+    error("No dataEntry with blobId $(blobId) found in variable $(getLabel(var))")
 end
+
+getDataEntry(dfg::AbstractDFG, label::Symbol, key::Union{Symbol,UUID}) = getDataEntry(getVariable(dfg, label), key)
+
 
 """
     $(SIGNATURES)

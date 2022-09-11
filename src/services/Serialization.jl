@@ -458,25 +458,6 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any}) where G <: Abstrac
     @assert !(packedProps["_variableOrderSymbols"] isa String) "unpackFactor expecting JSON only data, packed `_variableOrderSymbols` should be a vector of strings (not a single string of elements)."
     tags = _vecSymbol(packedProps["tags"])
     _variableOrderSymbols = _vecSymbol(packedProps["_variableOrderSymbols"])
-        # if packedProps["tags"] isa String
-        #     # TODO, legacy and should be removed
-        #     tags = JSON2.read(packedProps["tags"], Vector{Symbol})
-        # else
-        #     # the preferred (and should be only) solution
-        #     tags = Symbol.(packedProps["tags"])
-        #     # If tags is empty we need to make sure it's a Vector{Symbol}
-        #     if length(tags) == 0
-        #         tags = Vector{Symbol}()
-        #     end
-        # end
-        # # Get the stored variable order
-        # _variableOrderSymbols = if packedProps["_variableOrderSymbols"] isa String
-        #     # TODO, legacy and should be removed
-        #     JSON2.read(packedProps["_variableOrderSymbols"], Vector{Symbol})
-        # else
-        #     # the preferred (and should be only) solution
-        #     Symbol.(packedProps["_variableOrderSymbols"])
-        # end
 
     data = packedProps["data"]
     datatype = packedProps["fnctype"]
@@ -487,10 +468,8 @@ function unpackFactor(dfg::G, packedProps::Dict{String, Any}) where G <: Abstrac
     packed = nothing
     fullFactorData = nothing
     
-    # @show packtype
-    # @show data
     try
-        packed = convert(GenericFunctionNodeData{packtype}, data) # JSON2.read(data, GenericFunctionNodeData{packtype})
+        packed = convert(GenericFunctionNodeData{packtype}, data) 
         decodeType = getFactorOperationalMemoryType(dfg)
         fullFactorData = decodePackedType(dfg, _variableOrderSymbols, decodeType, packed)
     catch ex

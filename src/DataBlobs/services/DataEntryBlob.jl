@@ -111,8 +111,13 @@ end
 ## DFG Data CRUD
 ##==============================================================================
 
-function getData(dfg::AbstractDFG, label::Symbol, key::Symbol; hashfunction = sha256)
-    de = getDataEntry(dfg, label, key)
+function getData(
+    dfg::AbstractDFG, 
+    vlabel::Symbol, 
+    key::Union{Symbol,UUID}; 
+    hashfunction = sha256
+)
+    de = getDataEntry(dfg, vlabel, key)
     db = getDataBlob(dfg, de)
 
     assertHash(de, db, hashfunction=hashfunction)
