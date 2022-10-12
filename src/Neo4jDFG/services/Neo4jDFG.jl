@@ -384,7 +384,7 @@ end
 # Alias
 deleteFactor!(dfg::Neo4jDFG, factor::DFGFactor; suppressGetFactor::Bool=false) = deleteFactor!(dfg, factor.label, suppressGetFactor=suppressGetFactor)
 
-function getVariables(dfg::Neo4jDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{DFGVariable}
+function getVariables(dfg::Neo4jDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0, detail=nothing)::Vector{DFGVariable}
     variableIds = listVariables(dfg, regexFilter, tags=tags, solvable=solvable)
     # TODO: Optimize to use tags in query here!
     variables = map(vId->getVariable(dfg, vId), variableIds)

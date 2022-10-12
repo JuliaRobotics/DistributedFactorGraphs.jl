@@ -295,7 +295,7 @@ List the DFGVariables in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the variables.
 Tags is a list of any tags that a node must have (at least one match).
 """
-function getVariables(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0) where G <: AbstractDFG
+function getVariables(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0, detail=nothing) where G <: AbstractDFG
     error("getVariables not implemented for $(typeof(dfg))")
 end
 
