@@ -27,6 +27,8 @@ buildSourceString(dfg::AbstractDFG, label::Symbol) =
 """
     $(SIGNATURES)
 Get data entry
+
+Also see: [`addDataEntry`](@ref), [`getDataBlob`](@ref), [`listDataEntries`](@ref)
 """
 function getDataEntry(var::AbstractDFGVariable, key::Symbol)
     !hasDataEntry(var, key) && error("No dataEntry label $(key) found in variable $(getLabel(var))")
@@ -48,6 +50,9 @@ getDataEntry(dfg::AbstractDFG, label::Symbol, key::Union{Symbol,UUID}) = getData
 """
     $(SIGNATURES)
 Add Data Entry to a DFG variable
+Should be extended if DFG variable is not returned by reference.
+
+Also see: [`getDataEntry`](@ref), [`addDataBlob`](@ref), [`copyDataEntry!`](@ref)
 """
 function addDataEntry!(var::AbstractDFGVariable, bde::AbstractDataEntry)
     haskey(var.dataDict, bde.label) && error("Data entry $(bde.label) already exists in variable $(getLabel(var))")
@@ -55,12 +60,6 @@ function addDataEntry!(var::AbstractDFGVariable, bde::AbstractDataEntry)
     return bde
 end
 
-
-"""
-    $(SIGNATURES)
-Add Data Entry to distributed factor graph.
-Should be extended if DFG variable is not returned by reference.
-"""
 function addDataEntry!(dfg::AbstractDFG, label::Symbol, bde::AbstractDataEntry)
     return addDataEntry!(getVariable(dfg, label), bde)
 end
@@ -172,4 +171,24 @@ function listDataEntrySequence( dfg::AbstractDFG,
     entReg = map(l->match(pattern, string(l)), ents_)
     entMsk = entReg .!== nothing
     ents_[findall(entMsk)] |> _sort
+end
+
+"""
+    $SIGNATURES
+
+Add a data entry into the destination variable which already exists 
+in a source variable.
+
+See also: [`addDataEntry!`](@ref), [`getDataEntry`](@ref), [`listDataEntries`](@ref), [`getDataBlob`](@ref)
+"""
+function copyDataEntry!(
+    dst::AbstractDFG, 
+    dlbl::Symbol, 
+    src::AbstractDFG, 
+    slbl::Symbol, 
+    bllb::Union{Symbol, UUID, <:AbstractString, Regex}
+)
+    #
+    de = getDataEntry(src, slbl, bllb)
+    addDataEntry!(dst, dlbl, de)
 end
