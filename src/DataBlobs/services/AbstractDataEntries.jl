@@ -44,7 +44,8 @@ function getDataEntry(var::AbstractDFGVariable, blobId::UUID)
     error("No dataEntry with blobId $(blobId) found in variable $(getLabel(var))")
 end
 
-getDataEntry(dfg::AbstractDFG, label::Symbol, key::Union{Symbol,UUID}) = getDataEntry(getVariable(dfg, label), key)
+getDataEntry(dfg::AbstractDFG, label::Symbol, key::UUID) = getDataEntry(getVariable(dfg, label), key)
+getDataEntry(dfg::AbstractDFG, label::Symbol, key::Symbol) = getDataEntry(getVariable(dfg, label), key)
 
 
 """
@@ -52,7 +53,7 @@ getDataEntry(dfg::AbstractDFG, label::Symbol, key::Union{Symbol,UUID}) = getData
 Add Data Entry to a DFG variable
 Should be extended if DFG variable is not returned by reference.
 
-Also see: [`getDataEntry`](@ref), [`addDataBlob`](@ref), [`copyDataEntry!`](@ref)
+Also see: [`getDataEntry`](@ref), [`addDataBlob`](@ref), [`mergeDataEntries!`](@ref)
 """
 function addDataEntry!(var::AbstractDFGVariable, bde::AbstractDataEntry)
     haskey(var.dataDict, bde.label) && error("Data entry $(bde.label) already exists in variable $(getLabel(var))")
@@ -181,7 +182,7 @@ in a source variable.
 
 See also: [`addDataEntry!`](@ref), [`getDataEntry`](@ref), [`listDataEntries`](@ref), [`getDataBlob`](@ref)
 """
-function copyDataEntry!(
+function mergeDataEntries!(
     dst::AbstractDFG, 
     dlbl::Symbol, 
     src::AbstractDFG, 
@@ -189,6 +190,26 @@ function copyDataEntry!(
     bllb::Union{Symbol, UUID, <:AbstractString, Regex}
 )
     #
-    de = getDataEntry(src, slbl, bllb)
-    addDataEntry!(dst, dlbl, de)
+    des = getDataEntry(src, slbl, bllb)
+    # don't add data entries that already exist 
+    dde = listDataEntries(dst, dlbl)
+    uids = (s->s.id).(dde)
+    filter!(s -> !(s.id in uids), des)
+    # add any data entries not already in the destination variable, by uuid
+    addDataEntry!.(dst, dlbl, des)
+end
+
+function mergeDataEntries!(
+    dst::AbstractDFG, 
+    dlbl::Symbol, 
+    src::AbstractDFG, 
+    slbl::Symbol, 
+    ::Colon=:
+)
+    des = listDataEntries(src, slbl)
+    # don't add data entries that already exist 
+    dde = listDataEntries(dst, dlbl)
+    uids = (s->s.id).(dde)
+    filter!(s -> !(s.id in uids), des)
+    union(((s->mergeDataEntries!(dst, dlbl, src, slbl, s.id)).(des))...)
 end
