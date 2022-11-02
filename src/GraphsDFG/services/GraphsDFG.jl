@@ -155,7 +155,7 @@ function deleteFactor!(dfg::GraphsDFG, label::Symbol; suppressGetFactor::Bool=fa
     return factor
 end
 
-function getVariables(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)
+function getVariables(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0, detail=nothing)
 
     # variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGVariable, vertices(dfg.g)))
     variables = collect(values(dfg.g.variables))
