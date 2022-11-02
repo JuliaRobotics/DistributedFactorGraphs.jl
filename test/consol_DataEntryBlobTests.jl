@@ -45,7 +45,22 @@ ade3,adb3 = updateData!(dfg, :x2, deepcopy(ade))
 @test ade == ade2 == ade3
 @test adb == adb2 == adb3
 
+
+@test :random in listDataEntries(dfg, :x2)
+@test length(listDataEntries(dfg, :x1)) === 0
+@test length(listDataEntries(dfg, :x2)) === 1
+
+mergeDataEntries!(dfg, :x1, dfg, :x2, :random)
+
+@test length(listDataEntries(dfg, :x1)) === 1
+@test :random in listDataEntries(dfg, :x1)
+@test length(listDataEntries(dfg, :x2)) === 1
+
+deleteData!(dfg, :x1, :random)
 deleteData!(dfg, :x2, :random)
+
+@test length(listDataEntries(dfg, :x1)) === 0
+@test length(listDataEntries(dfg, :x2)) === 0
 
 ##==============================================================================
 ## FileDataEntry
