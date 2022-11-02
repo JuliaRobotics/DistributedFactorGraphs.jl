@@ -214,5 +214,7 @@ function mergeDataEntries!(
     dde = listDataEntries(dst, dlbl)
     uids = (s->s.id).(dde)
     filter!(s -> !(s.id in uids), des)
-    union(((s->mergeDataEntries!(dst, dlbl, src, slbl, s.id)).(des))...)
+    if 0  < length(des)
+        union(((s->mergeDataEntries!(dst, dlbl, src, slbl, s.id)).(des))...)
+    end
 end
