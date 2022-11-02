@@ -190,7 +190,10 @@ function mergeDataEntries!(
     bllb::Union{Symbol, UUID, <:AbstractString, Regex}
 )
     #
-    des = getDataEntry(src, slbl, bllb)
+    _makevec(s) = [s;]
+    _makevec(s::AbstractVector) = s
+    des_ = getDataEntry(src, slbl, bllb)
+    des = _makevec(des_)
     # don't add data entries that already exist 
     dde = listDataEntries(dst, dlbl)
     uids = (s->s.id).(dde)
