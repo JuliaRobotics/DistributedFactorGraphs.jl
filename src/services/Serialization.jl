@@ -193,16 +193,18 @@ function _unpackVariableNodeData(
 end
 
 # returns a DFGVariable
-function unpackVariable(dfg::AbstractDFG,
-                        packedProps::Dict{String, Any};
-                        unpackPPEs::Bool=true,
-                        unpackSolverData::Bool=true,
-                        unpackBigData::Bool = haskey(packedProps,"dataEntryType") && haskey(packedProps, "dataEntry")
-    )
+function unpackVariable(
+    dfg::AbstractDFG,
+    packedProps::Dict{String, Any};
+    unpackPPEs::Bool=true,
+    unpackSolverData::Bool=true,
+    unpackBigData::Bool = haskey(packedProps,"dataEntryType") && haskey(packedProps, "dataEntry"),
+    skipVersionCheck::Bool=false,
+)
     #
     @debug "Unpacking variable:\r\n$packedProps"
     # Version checking.
-    _versionCheck(packedProps)
+    !skipVersionCheck && _versionCheck(packedProps)
     label = Symbol(packedProps["label"])
     # Make sure that the timestamp is correctly formatted with subseconds
     packedProps["timestamp"] = getStandardZDTString(packedProps["timestamp"])
