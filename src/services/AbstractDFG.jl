@@ -191,6 +191,7 @@ abstract type AbstractBlobStore{T} end
 # AbstractBlobStore should have key or overwrite getKey
 getKey(store::AbstractBlobStore) = store.key
 
+getBlobStores(dfg::AbstractDFG) = dfg.blobStores
 getBlobStore(dfg::AbstractDFG, key::Symbol) = dfg.blobStores[key]
 addBlobStore!(dfg::AbstractDFG, bs::AbstractBlobStore) = push!(dfg.blobStores, getKey(bs)=>bs)
 updateBlobStore!(dfg::AbstractDFG, bs::AbstractBlobStore) = push!(dfg.blobStores, getKey(bs)=>bs)

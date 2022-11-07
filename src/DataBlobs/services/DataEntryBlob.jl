@@ -115,30 +115,52 @@ function getData(
     dfg::AbstractDFG, 
     vlabel::Symbol, 
     key::Union{Symbol,UUID}; 
-    hashfunction = sha256
+    hashfunction = sha256,
+    checkhash::Bool=true
 )
-    de = getDataEntry(dfg, vlabel, key)
+    de_ = getDataEntry(dfg, vlabel, key)
+    _first(s) = s
+    _first(s::AbstractVector) = s[1]
+    de = _first(de_)
     db = getDataBlob(dfg, de)
 
-    assertHash(de, db, hashfunction=hashfunction)
+    checkhash && assertHash(de, db, hashfunction=hashfunction)
     return de=>db
 end
 
-function addData!(dfg::AbstractDFG, label::Symbol, entry::AbstractDataEntry, blob::Vector{UInt8}; hashfunction = sha256)
-    assertHash(entry, blob, hashfunction=hashfunction)
+function addData!(
+    dfg::AbstractDFG, 
+    label::Symbol, 
+    entry::AbstractDataEntry, 
+    blob::Vector{UInt8}; 
+    hashfunction = sha256,
+    checkhash::Bool=true
+)
+    checkhash && assertHash(entry, blob, hashfunction=hashfunction)
     de = addDataEntry!(dfg, label, entry)
     db = addDataBlob!(dfg, de, blob)
     return de=>db
 end
 
-function updateData!(dfg::AbstractDFG, label::Symbol,  entry::AbstractDataEntry,  blob::Vector{UInt8}; hashfunction = sha256)
-    assertHash(entry, blob, hashfunction=hashfunction)
+function updateData!(
+    dfg::AbstractDFG, 
+    label::Symbol, 
+    entry::AbstractDataEntry, 
+    blob::Vector{UInt8};
+    hashfunction = sha256,
+    checkhash::Bool=true
+)
+    checkhash && assertHash(entry, blob, hashfunction=hashfunction)
     de = updateDataEntry!(dfg, label, entry)
     db = updateDataBlob!(dfg, de, blob)
     return de=>db
 end
 
-function deleteData!(dfg::AbstractDFG, label::Symbol, key::Symbol)
+function deleteData!(
+    dfg::AbstractDFG, 
+    label::Symbol, 
+    key::Symbol
+)
     de = deleteDataEntry!(dfg, label, key)
     db = deleteDataBlob!(dfg, de)
     return de=>db
