@@ -25,7 +25,7 @@ function getDataBlob(dfg::AbstractDFG, entry::FileDataEntry)
             return read(f)
         end
     else
-        error("Could not find file '$(blobfilename(entry))'.")
+        throw(KeyError("Could not find file '$(blobfilename(entry))'."))
         # return nothing
     end
 end

@@ -300,7 +300,7 @@ function _matchmergeVariableSubnode!(
         relationshipKey::Symbol;
         addProps::Dict{String, String}=Dict{String, String}(),
         currentTransaction::Union{Nothing, Neo4j.Transaction}=nothing) where
-        {N <: DFGNode, APPE <: AbstractPointParametricEst, ABDE <: AbstractDataEntry, PVND <: PackedVariableNodeData}
+        {APPE <: AbstractPointParametricEst, ABDE <: AbstractDataEntry, PVND <: PackedVariableNodeData}
     
     # Defensively wrap the node labels.
     nodeLabels = [!startswith(n, "`") && !endswith(n, "`") ? "`$(n)`" : n for n in nodeLabels]    
