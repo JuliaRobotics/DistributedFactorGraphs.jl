@@ -2,8 +2,26 @@
 ## AbstractBlobStore CRUD Interface
 ##==============================================================================
 
-getDataBlob(dfg::AbstractDFG, entry::BlobStoreEntry) =
-        getDataBlob(getBlobStore(dfg, entry.blobstore), entry)
+function getDataBlob(dfg::AbstractDFG, entry::BlobStoreEntry)
+    # cannot use entry.blobstore because the blob can be in any one of the blobstores
+    stores = getBlobStores(dfg)
+    blob = UInt8[]
+    for (k,store) in stores
+        try
+            blob = getDataBlob(store, entry)
+            return blob
+        catch err
+            if !(err isa KeyError)
+                throw(err)
+            end
+        end
+    end
+    throw(
+        KeyError(
+            "could not find $(entry.label), uuid $(entry.id)) in any of the listed blobstores:\n $((s->getKey(s)).(stores))"
+        )
+    )
+end
 
 function getDataBlob(store::AbstractBlobStore, entry::BlobStoreEntry)
     error("$(typeof(store)) doesn't override 'getDataBlob'.")
@@ -68,16 +86,17 @@ function getData(
     blobstore::AbstractBlobStore, 
     label::Symbol, 
     key::Union{Symbol,UUID}; 
-    hashfunction = sha256
+    hashfunction = sha256,
+    checkhash::Bool=true
 )
     de = getDataEntry(dfg, label, key)
     db = getDataBlob(blobstore, de)
-    assertHash(de, db, hashfunction=hashfunction)
+    checkhash && assertHash(de, db; hashfunction)
     return de=>db
 end
 
 function addData!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol, entry::AbstractDataEntry, blob::Vector{UInt8}; hashfunction = sha256)
-    assertHash(entry, blob, hashfunction=hashfunction)
+    assertHash(entry, blob; hashfunction)
     de = addDataEntry!(dfg, label, entry)
     db = addDataBlob!(blobstore, de, blob)
     return de=>db
@@ -122,7 +141,7 @@ function addData!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol,
                            "$(dfg.userId)|$(dfg.robotId)|$(dfg.sessionId)|$(label)",
                            description, mimeType, timestamp)
 
-    addData!(dfg, blobstore, label, entry, blob; hashfunction = hashfunction)
+    addData!(dfg, blobstore, label, entry, blob; hashfunction)
 end
 
 
@@ -157,7 +176,7 @@ function getDataBlob(store::FolderStore{T}, entry::BlobStoreEntry) where T
             return read(f)
         end
     else
-        error("Could not find file '$(blobfilename)'.")
+        throw(KeyError("Could not find file '$(blobfilename)'."))
         # return nothing
     end
 end
