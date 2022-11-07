@@ -1117,7 +1117,7 @@ function testGroup!(fg, v1, v2, f0, f1)
         #solver data is initialized
         @test !isInitialized(fg, :a)
         @test !isInitialized(v2)
-        @test @test_logs (:error, r"Variable does not have solver data") !isInitialized(v2, :second)
+        @test @test_logs (:error, r"does not have solver data") !isInitialized(v2, :second)
 
         # solvables
         @test getSolvable(v1) == 0
