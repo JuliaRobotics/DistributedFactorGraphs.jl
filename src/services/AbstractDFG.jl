@@ -950,7 +950,7 @@ function copyGraph!(destDFG::AbstractDFG,
                     copyGraphMetadata::Bool=false,
                     overwriteDest::Bool=false,
                     deepcopyNodes::Bool=false,
-                    verbose::Bool = true)
+                    verbose::Bool = false)
     # Split into variables and factors
     sourceVariables = map(vId->getVariable(sourceDFG, vId), variableLabels)
     sourceFactors = map(fId->getFactor(sourceDFG, fId), factorLabels)
