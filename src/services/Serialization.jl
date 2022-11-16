@@ -25,7 +25,7 @@ end
 function _versionCheck(props::Dict{String, Any})
     if haskey(props, "_version")
         if props["_version"] != _getDFGVersion()
-            @warn "This data was serialized using DFG $(props["_version"]) but you have $(_getDFGVersion()) installed, there may be deserialization issues."
+            @warn "This data was serialized using DFG $(props["_version"]) but you have $(_getDFGVersion()) installed, there may be deserialization issues." maxlog=10
         end
     else
         @warn "There isn't a version tag in this data so it's older than v0.10, there may be deserialization issues."
@@ -442,9 +442,13 @@ end
 
 
 # Returns `::DFGFactor`
-function unpackFactor(dfg::G, packedProps::Dict{String, Any}) where G <: AbstractDFG
+function unpackFactor(
+    dfg::G, 
+    packedProps::Dict{String, Any};
+    skipVerionCheck::Bool=false
+) where G <: AbstractDFG
     # Version checking.
-    _versionCheck(packedProps)
+    !skipVersionCheck && _versionCheck(packedProps)
 
     label = packedProps["label"]
     # Make sure that the timestamp is correctly formatted with subseconds
