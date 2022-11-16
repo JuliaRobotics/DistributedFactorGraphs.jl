@@ -445,7 +445,7 @@ end
 function unpackFactor(
     dfg::G, 
     packedProps::Dict{String, Any};
-    skipVerionCheck::Bool=false
+    skipVersionCheck::Bool=false
 ) where G <: AbstractDFG
     # Version checking.
     !skipVersionCheck && _versionCheck(packedProps)
