@@ -5,7 +5,6 @@
 function getDataBlob(dfg::AbstractDFG, entry::BlobStoreEntry)
     # cannot use entry.blobstore because the blob can be in any one of the blobstores
     stores = getBlobStores(dfg)
-    blob = UInt8[]
     for (k,store) in stores
         try
             blob = getDataBlob(store, entry)
