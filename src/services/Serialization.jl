@@ -296,7 +296,8 @@ end
 
 
 # returns a PackedVariableNodeData
-function packVariableNodeData(::G, d::VariableNodeData{T}) where {G <: AbstractDFG, T <: InferenceVariable}
+# FIXME, remove ::G
+function packVariableNodeData(d::VariableNodeData{T}) where {T <: InferenceVariable}
   @debug "Dispatching conversion variable -> packed variable for type $(string(d.variableType))"
   # TODO change to Vector{Vector{Float64}} which can be directly packed by JSON
   castval = if 0 < length(d.val)
@@ -328,6 +329,9 @@ function packVariableNodeData(::G, d::VariableNodeData{T}) where {G <: AbstractD
                                 d.solvedCount,
                                 d.solveKey)
 end
+
+# @deprecate 
+packVariableNodeData(::G, d::VariableNodeData{T}) where {G <: AbstractDFG, T <: InferenceVariable} = packVariableNodeData(d)
 
 function unpackVariableNodeData(dfg::G, d::PackedVariableNodeData) where G <: AbstractDFG
     @debug "Dispatching conversion packed variable -> variable for type $(string(d.variableType))"
