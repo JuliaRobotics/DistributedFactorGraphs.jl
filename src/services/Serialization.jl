@@ -120,14 +120,14 @@ end
 ##==============================================================================
 ## Variable Packing and unpacking
 ##==============================================================================
-function packVariable(dfg::AbstractDFG, v::DFGVariable) 
+function packVariable(v::DFGVariable) 
     props = Dict{String, Any}()
     props["label"] = string(v.label)
     props["timestamp"] = Dates.format(v.timestamp, "yyyy-mm-ddTHH:MM:SS.ssszzz")
     props["nstime"] = string(v.nstime.value)
     props["tags"] = JSON2.write(v.tags)
     props["ppeDict"] = JSON2.write(v.ppeDict)
-    props["solverDataDict"] = JSON2.write(Dict(keys(v.solverDataDict) .=> map(vnd -> packVariableNodeData(dfg, vnd), values(v.solverDataDict))))
+    props["solverDataDict"] = JSON2.write(Dict(keys(v.solverDataDict) .=> map(vnd -> packVariableNodeData(vnd), values(v.solverDataDict))))
     props["smallData"] = JSON2.write(v.smallData)
     props["solvable"] = v.solvable
     props["variableType"] = typeModuleName(getVariableType(v))
@@ -136,6 +136,7 @@ function packVariable(dfg::AbstractDFG, v::DFGVariable)
     props["_version"] = _getDFGVersion()
     return props::Dict{String, Any}
 end
+
 
 """
 $(SIGNATURES)
