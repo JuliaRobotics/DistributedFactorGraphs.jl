@@ -192,12 +192,14 @@ export getSolvedCount, isSolved, setSolvedCount!, isInitialized, isMarginalized,
 export getNeighborhood, getNeighbors, _getDuplicatedEmptyDFG
 export findFactorsBetweenNaive
 export copyGraph!, deepcopyGraph, deepcopyGraph!, buildSubgraph, mergeGraph!
-# Big Data
+
+# Entry Blob Data
 ##------------------------------------------------------------------------------
 export addDataEntry!, getDataEntry, updateDataEntry!, deleteDataEntry!, getDataEntries, listDataEntries, hasDataEntry, hasDataEntry
 export listDataEntrySequence
 # convenience wrappers
 export addDataEntry!, mergeDataEntries!
+export incrDataLabelSuffix
 # aliases
 export addData!
 
