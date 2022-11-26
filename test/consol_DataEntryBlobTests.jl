@@ -95,8 +95,9 @@ ade,adb = addData!(dfg, :filestore, :x1, :random, dataset1)
 ade,adb = addData!(dfg, :filestore, :x1, :another_1, dataset1)
 gde,gdb = getData(dfg, :x1, :random)
 
-@test incrBlobLabelSuffix(dfg,:x2,:random) == :random_1
-@test incrBlobLabelSuffix(dfg,:x2,:another) == :another_2
+@test incrDataLabelSuffix(dfg,:x1,:random) == :random_1
+@test incrDataLabelSuffix(dfg,:x1,:another) == :another_2
+# @test incrDataLabelSuffix(dfg,:x1,"random") == "random_1" # TODO expand support for label::String
 
 dde,ddb = deleteData!(dfg, :x1, :random)
 

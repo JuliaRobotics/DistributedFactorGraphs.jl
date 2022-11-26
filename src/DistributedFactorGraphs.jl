@@ -199,7 +199,7 @@ export addDataEntry!, getDataEntry, updateDataEntry!, deleteDataEntry!, getDataE
 export listDataEntrySequence
 # convenience wrappers
 export addDataEntry!, mergeDataEntries!
-export incrBlobLabelSuffix
+export incrDataLabelSuffix
 # aliases
 export addData!
 

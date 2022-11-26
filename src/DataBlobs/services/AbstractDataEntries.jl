@@ -225,12 +225,12 @@ end
 If the blob label `datalabel` already exists, then this function will return the name `datalabel_1`.
 If the blob label `datalabel_1` already exists, then this function will return the name `datalabel_2`.
 """
-function incrBlobLabelSuffix(
+function incrDataLabelSuffix(
     dfg::AbstractDFG,
     vla,
-    bllb; 
+    bllb::S; 
     datalabel=Ref("")
-)
+) where {S <: Union{Symbol, <:AbstractString}}
     count = 1
     hasund = false
     try
@@ -253,5 +253,6 @@ function incrBlobLabelSuffix(
     end
     bllb *= !hasund || bllb[end] != '_' ? "_" : ""
     bllb *= string(count)
-    bllb
+
+    S(bllb)
 end
