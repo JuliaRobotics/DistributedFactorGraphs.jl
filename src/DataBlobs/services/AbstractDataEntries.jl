@@ -218,3 +218,40 @@ function mergeDataEntries!(
         union(((s->mergeDataEntries!(dst, dlbl, src, slbl, s.id)).(des))...)
     end
 end
+
+"""
+    $SIGNATURES
+
+If the blob label `datalabel` already exists, then this function will return the name `datalabel_1`.
+If the blob label `datalabel_1` already exists, then this function will return the name `datalabel_2`.
+"""
+function incrBlobLabelSuffix(
+    dfg::AbstractDFG,
+    vla,
+    bllb; 
+    datalabel=Ref("")
+)
+    count = 1
+    hasund = false
+    try
+        de,_ = getData(dfg, Symbol(vla), bllb)
+        bllb = string(bllb)
+        # bllb *= bllb[end] != '_' ? "_" : ""
+        datalabel[] = string(de.label)
+        dlb = match(r"\d*", reverse(datalabel[]))
+        # slightly complicated search if blob name already has an underscore number suffix, e.g. `_4`
+        count, hasund = if occursin(Regex(dlb.match*"_"), reverse(datalabel[]))
+        parse(Int, dlb.match |> reverse)+1, true
+        else
+        1, datalabel[][end] == '_'
+        end
+    catch err
+        # append latest count
+        if !(err isa KeyError)
+        throw(err)
+        end
+    end
+    bllb *= !hasund || bllb[end] != '_' ? "_" : ""
+    bllb *= string(count)
+    bllb
+end

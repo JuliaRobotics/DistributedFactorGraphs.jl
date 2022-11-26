@@ -92,7 +92,12 @@ ds = FolderStore{Vector{UInt8}}(:filestore, "/tmp/dfgFolderStore")
 addBlobStore!(dfg, ds)
 
 ade,adb = addData!(dfg, :filestore, :x1, :random, dataset1)
+ade,adb = addData!(dfg, :filestore, :x1, :another_1, dataset1)
 gde,gdb = getData(dfg, :x1, :random)
+
+@test incrBlobLabelSuffix(dfg,:x2,:random) == :random_1
+@test incrBlobLabelSuffix(dfg,:x2,:another) == :another_2
+
 dde,ddb = deleteData!(dfg, :x1, :random)
 
 @test ade == gde == dde
