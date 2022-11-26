@@ -96,10 +96,12 @@ ade,adb = addData!(dfg, :filestore, :x1, :another_1, dataset1)
 gde,gdb = getData(dfg, :x1, :random)
 
 @test incrDataLabelSuffix(dfg,:x1,:random) == :random_1
-@test incrDataLabelSuffix(dfg,:x1,:another) == :another_2
+@test incrDataLabelSuffix(dfg,:x1,:another_1) == :another_2
+# @test incrDataLabelSuffix(dfg,:x1,:another) == :another_2 # TODO exand support for Regex likely search on labels
 # @test incrDataLabelSuffix(dfg,:x1,"random") == "random_1" # TODO expand support for label::String
 
 dde,ddb = deleteData!(dfg, :x1, :random)
+dde,ddb = deleteData!(dfg, :x1, :another_1)
 
 @test ade == gde == dde
 @test adb == gdb == ddb

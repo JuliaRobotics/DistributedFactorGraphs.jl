@@ -233,6 +233,7 @@ function incrDataLabelSuffix(
 ) where {S <: Union{Symbol, <:AbstractString}}
     count = 1
     hasund = false
+    len = 0
     try
         de,_ = getData(dfg, Symbol(vla), bllb)
         bllb = string(bllb)
@@ -240,10 +241,10 @@ function incrDataLabelSuffix(
         datalabel[] = string(de.label)
         dlb = match(r"\d*", reverse(datalabel[]))
         # slightly complicated search if blob name already has an underscore number suffix, e.g. `_4`
-        count, hasund = if occursin(Regex(dlb.match*"_"), reverse(datalabel[]))
-        parse(Int, dlb.match |> reverse)+1, true
+        count, hasund, len = if occursin(Regex(dlb.match*"_"), reverse(datalabel[]))
+            parse(Int, dlb.match |> reverse)+1, true, length(dlb.match)
         else
-        1, datalabel[][end] == '_'
+            1, datalabel[][end] == '_', 0
         end
     catch err
         # append latest count
@@ -251,7 +252,11 @@ function incrDataLabelSuffix(
         throw(err)
         end
     end
-    bllb *= !hasund || bllb[end] != '_' ? "_" : ""
+    # the piece from old label without the suffix count number
+    bllb = datalabel[][1:(end-len)]
+    if !hasund || bllb[end] != '_'
+        bllb *= "_"
+    end
     bllb *= string(count)
 
     S(bllb)
