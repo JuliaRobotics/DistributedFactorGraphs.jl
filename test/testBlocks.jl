@@ -112,7 +112,6 @@ end
 
 
 ##
-# global testDFGAPI = Neo4jDFG
 # global testDFGAPI = LightDFG
 # T = testDFGAPI
 
@@ -172,7 +171,6 @@ function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverP
     @test getSessionId(fg) == sId
     @test getAddHistory(fg) === fg.addHistory
 
-    # Need to set this for Neo4jDFG
     @test setUserData!(fg, Dict(ud)) == Dict(ud)
     @test setRobotData!(fg, Dict(rd)) == Dict(rd)
     @test setSessionData!(fg, Dict(sd)) == Dict(sd)
@@ -1443,7 +1441,7 @@ function ProducingDotFiles(testDFGAPI,
     # └ @ Main ~/.julia/dev/DistributedFactorGraphs/test/testBlocks.jl:1440
     addFactor!(dotdfg, [v1, v2], f1)
     #NOTE hardcoded toDot will have different results so test LightGraphs seperately
-    if testDFGAPI <: LightDFG || testDFGAPI <: GraphsDFG || testDFGAPI <: Neo4jDFG
+    if testDFGAPI <: LightDFG || testDFGAPI <: GraphsDFG
         todotstr = toDot(dotdfg)
         todota = todotstr == "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box, fontsize=8, fixedsize=false, height=0.1, width=0.1];\na -- abf1\nb -- abf1\n}\n"
         todotb = todotstr == "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box, fontsize=8, fixedsize=false, height=0.1, width=0.1];\nb -- abf1\na -- abf1\n}\n"

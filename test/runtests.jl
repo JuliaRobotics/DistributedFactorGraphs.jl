@@ -1,7 +1,5 @@
 using Test
 using GraphPlot # For plotting tests
-using Neo4j
-push!(ENV,"DFG_USE_CGDFG"=>"true")
 using DistributedFactorGraphs
 using Pkg
 using Dates
@@ -34,21 +32,10 @@ end
 end
 
 
-if get(ENV, "DO_CGDFG_TESTS", "") == "true"
-    apis = [
-        GraphsDFG,
-        LightDFG,
-        Neo4jDFG,
-        ]
-    @warn "TEST: Removing all data for user 'test@navability.io'!"
-    clearUser!!(Neo4jDFG(userId="test@navability.io"))
-
-else
-    apis = [
-        GraphsDFG,
-        LightDFG,
-        ]
-end
+apis = [
+    GraphsDFG,
+    LightDFG,
+    ]
 
 for api in apis
     @testset "Testing Driver: $(api)" begin
@@ -91,7 +78,6 @@ if get(ENV, "IIF_TEST", "") == "true"
 
     apis = Vector{AbstractDFG}()
     push!(apis, GraphsDFG(solverParams=SolverParams(), userId="test@navability.io"))
-    get(ENV, "DO_CGDFG_TESTS", "false") == "true" && push!(apis, Neo4jDFG(solverParams=SolverParams(), userId="test@navability.io")) 
 
     for api in apis
         @testset "Testing Driver: $(typeof(api))" begin
@@ -112,18 +98,12 @@ if get(ENV, "IIF_TEST", "") == "true"
         include("iifCompareTests.jl")
     end
 
-    @testset "CGStructure Tests for CGDFG" begin
-        # Run the CGStructure tests
-        include("CGStructureTests.jl")
-    end
-
     # Simple graph solving test
     @testset "Simple graph solving test" begin
         # This is just to validate we're not going to blow up downstream.
         apis = [
             # GraphsDFG{SolverParams}(),
             LightDFG(solverParams=SolverParams(), userId="test@navability.io"),
-            Neo4jDFG(solverParams=SolverParams(), userId="test@navability.io")
             ]
         for api in apis
             @info "Running simple solver test: $(typeof(api))"
