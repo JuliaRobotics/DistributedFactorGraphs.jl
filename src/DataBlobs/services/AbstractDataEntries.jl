@@ -225,6 +225,18 @@ function mergeDataEntries!(
     end
 end
 
+function mergeDataEntries!(
+    dest::AbstractDFG,
+    src::AbstractDFG,
+    w...;
+    varList::AbstractVector = listVariables(dest) |> sortDFG
+)
+    @showprogress 1 "merging data entries" for vl in varList
+        mergeDataEntries!(dest, vl, src, vl, w...)
+    end
+    varList
+end
+
 """
     $SIGNATURES
 
