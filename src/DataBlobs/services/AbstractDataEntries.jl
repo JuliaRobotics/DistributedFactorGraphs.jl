@@ -41,11 +41,25 @@ function getDataEntry(var::AbstractDFGVariable, blobId::UUID)
             return v
         end
     end
-    error("No dataEntry with blobId $(blobId) found in variable $(getLabel(var))")
+    throw(
+        KeyError("No dataEntry with blobId $(blobId) found in variable $(getLabel(var))")
+    )
 end
+function getDataEntry(var::AbstractDFGVariable, key::Regex)
+    for (k,v) in var.dataDict
+        if occursin(key, string(v.label))
+            return v
+        end
+    end
+    throw(
+        KeyError("No dataEntry with label matching regex $(key) found in variable $(getLabel(var))")
+    )
+end
+getDataEntry(var::AbstractDFGVariable, key::AbstractString) = getDataEntry(var,Regex(key))
 
-getDataEntry(dfg::AbstractDFG, label::Symbol, key::UUID) = getDataEntry(getVariable(dfg, label), key)
-getDataEntry(dfg::AbstractDFG, label::Symbol, key::Symbol) = getDataEntry(getVariable(dfg, label), key)
+
+getDataEntry(dfg::AbstractDFG, label::Symbol, key::Union{Symbol, UUID, <:AbstractString, Regex}) = getDataEntry(getVariable(dfg, label), key)
+# getDataEntry(dfg::AbstractDFG, label::Symbol, key::Symbol) = getDataEntry(getVariable(dfg, label), key)
 
 
 """
