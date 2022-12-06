@@ -30,6 +30,7 @@ using SparseArrays
 using UUIDs
 using Pkg
 using TensorCast
+using ProgressMeter
 
 # used for @defVariable
 import ManifoldsBase
