@@ -196,8 +196,11 @@ function mergeDataEntries!(
     des = _makevec(des_)
     # don't add data entries that already exist 
     dde = listDataEntries(dst, dlbl)
-    uids = (s->s.id).(dde)
-    filter!(s -> !(s.id in uids), des)
+        # HACK, verb list should just return vector of Symbol. NCE36
+        _getid(s) = s
+        _getid(s::AbstractDataEntry) = s.id
+    uids = _getid.(dde) # (s->s.id).(dde)
+    filter!(s -> !(_getid(s) in uids), des)
     # add any data entries not already in the destination variable, by uuid
     addDataEntry!.(dst, dlbl, des)
 end
@@ -212,8 +215,11 @@ function mergeDataEntries!(
     des = listDataEntries(src, slbl)
     # don't add data entries that already exist 
     dde = listDataEntries(dst, dlbl)
-    uids = (s->s.id).(dde)
-    filter!(s -> !(s.id in uids), des)
+        # HACK, verb list should just return vector of Symbol. NCE36
+        _getid(s) = s
+        _getid(s::AbstractDataEntry) = s.id    
+    uids = _getid.(dde) # (s->s.id).(dde)
+    filter!(s -> !(_getid(s) in uids), des)
     if 0  < length(des)
         union(((s->mergeDataEntries!(dst, dlbl, src, slbl, s.id)).(des))...)
     end
