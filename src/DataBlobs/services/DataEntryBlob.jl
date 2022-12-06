@@ -114,7 +114,7 @@ end
 function getData(
     dfg::AbstractDFG, 
     vlabel::Symbol, 
-    key::Union{Symbol,UUID}; 
+    key::Union{Symbol,UUID, <:AbstractString, Regex}; 
     hashfunction = sha256,
     checkhash::Bool=true
 )

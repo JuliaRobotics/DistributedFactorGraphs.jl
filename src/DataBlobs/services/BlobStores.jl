@@ -5,7 +5,6 @@
 function getDataBlob(dfg::AbstractDFG, entry::BlobStoreEntry)
     # cannot use entry.blobstore because the blob can be in any one of the blobstores
     stores = getBlobStores(dfg)
-    blob = UInt8[]
     for (k,store) in stores
         try
             blob = getDataBlob(store, entry)
@@ -18,7 +17,7 @@ function getDataBlob(dfg::AbstractDFG, entry::BlobStoreEntry)
     end
     throw(
         KeyError(
-            "could not find $(entry.label), uuid $(entry.id)) in any of the listed blobstores:\n $((s->getKey(s)).(stores))"
+            "could not find $(entry.label), uuid $(entry.id)) in any of the listed blobstores:\n $([s->getKey(s) for (s,v) in stores]))"
         )
     )
 end
@@ -85,7 +84,7 @@ function getData(
     dfg::AbstractDFG, 
     blobstore::AbstractBlobStore, 
     label::Symbol, 
-    key::Union{Symbol,UUID}; 
+    key::Union{Symbol,UUID, <:AbstractString, Regex}; 
     hashfunction = sha256,
     checkhash::Bool=true
 )
