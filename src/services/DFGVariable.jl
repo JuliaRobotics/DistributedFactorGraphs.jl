@@ -16,8 +16,8 @@ getPPEMean(fg::AbstractDFG, varlabel::Symbol, solveKey::Symbol=:default) =
                 
 "$(SIGNATURES)"
 getPPESuggested(est::AbstractPointParametricEst) = est.suggested
-getPPESuggested(fg::AbstractDFG, varlabel::Symbol, solveKey::Symbol=:default) =
-                getPPE(fg, varlabel, solveKey) |> getPPESuggested
+getPPESuggested(var::DFGVariable, solveKey::Symbol=:default) = getPPE(var, solveKey) |> getPPESuggested
+getPPESuggested(dfg::AbstractDFG, varlabel::Symbol, solveKey::Symbol=:default) = getPPE(getVariable(dfg, varlabel), solveKey)
 
 "$(SIGNATURES)"
 getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimestamp
@@ -793,14 +793,13 @@ Notes
 - Defaults on keywords `solveKey` and `method`
 
 Related
-getMeanPPE, getMaxPPE, getKDEMean, getKDEFit, getPPEs, getVariablePPEs
+[`getMeanPPE`](@ref), [`getMaxPPE`](@ref), [`updatePPE!`](@ref), getKDEMean, getKDEFit, getPPEs, getVariablePPEs
 """
-function getPPE(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol=:default)
-    v = getVariable(dfg, variablekey)
-    !haskey(v.ppeDict, ppekey) && error("PPE key '$ppekey' not found in variable '$variablekey'")
+function getPPE(v::DFGVariable, ppekey::Symbol=:default)
+    !haskey(v.ppeDict, ppekey) && error("PPE key '$ppekey' not found in variable '$(getLabel(v))'")
     return v.ppeDict[ppekey]
 end
-
+getPPE(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol=:default) = getPPE(getVariable(dfg, variablekey), ppekey)
 # Not the most efficient call but it at least reuses above (in memory it's probably ok)
 getPPE(dfg::AbstractDFG, sourceVariable::VariableDataLevel1, ppekey::Symbol=:default) = getPPE(dfg, sourceVariable.label, ppekey)
 

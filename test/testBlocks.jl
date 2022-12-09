@@ -598,9 +598,9 @@ function  PPETestBlock!(fg, v1)
     @test_throws ErrorException addPPE!(fg, :a, ppe)
 
     @test listPPEs(fg, :a) == [:default]
-    # Get the data back - note that this is a reference to above.
-    @test getPPE(fg, :a, :default) == ppe
 
+    # Get the data back - note that this is a reference to above.
+    @test getPPE(getVariable(fg, :a), :default) == ppe
     @test getPPE(fg, :a, :default) == ppe
     @test getPPEMean(fg, :a, :default) == ppe.mean
     @test getPPEMax(fg, :a, :default) == ppe.max
