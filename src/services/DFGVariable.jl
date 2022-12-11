@@ -17,7 +17,7 @@ getPPEMean(fg::AbstractDFG, varlabel::Symbol, solveKey::Symbol=:default) =
 "$(SIGNATURES)"
 getPPESuggested(est::AbstractPointParametricEst) = est.suggested
 getPPESuggested(var::DFGVariable, solveKey::Symbol=:default) = getPPE(var, solveKey) |> getPPESuggested
-getPPESuggested(dfg::AbstractDFG, varlabel::Symbol, solveKey::Symbol=:default) = getPPE(getVariable(dfg, varlabel), solveKey)
+getPPESuggested(dfg::AbstractDFG, varlabel::Symbol, solveKey::Symbol=:default) = getPPE(getVariable(dfg, varlabel), solveKey) |> getPPESuggested
 
 "$(SIGNATURES)"
 getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimestamp
