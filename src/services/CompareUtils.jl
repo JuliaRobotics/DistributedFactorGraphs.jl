@@ -250,7 +250,7 @@ function compareFactor(A::DFGFactor,
   if !TP || :fnc in skip
     return TP
   end
-  TP = TP & compareAllSpecial(getSolverData(A).fnc, getSolverData(B).fnc, skip=union([:cpt;:measurement;:params;:varidx;:threadmodel;:_gradients], skip), show=show)
+  TP = TP & compareAllSpecial(getSolverData(A).fnc, getSolverData(B).fnc, skip=union([:cpt;:measurement;:params;:varValsAll;:varidx;:threadmodel;:_gradients], skip), show=show)
   @debug "compareFactor 3/5" TP
   if !(:measurement in skip)
     TP = TP & (skipsamples || compareAll(getSolverData(A).fnc.measurement, getSolverData(B).fnc.measurement, show=show, skip=skip))
