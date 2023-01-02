@@ -8,7 +8,7 @@ abstract type AbstractPackedFactor end
 
 abstract type AbstractPrior <: AbstractFactor end
 abstract type AbstractRelative <: AbstractFactor end
-abstract type AbstractRelativeRoots <: AbstractRelative end
+abstract type AbstractRelativeRoots <: AbstractRelative end    # NOTE Cannot be used for partials
 abstract type AbstractRelativeMinimize <: AbstractRelative end
 abstract type AbstractManifoldMinimize <: AbstractRelative end # FIXME move here from IIF
 
