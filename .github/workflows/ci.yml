@@ -20,6 +20,7 @@ jobs:
         version:
           - '1.6'
           - '1.8'
+          - '~1.9.0-0'
           - 'nightly'
         os:
           - ubuntu-latest
@@ -81,7 +82,6 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.6'
           - '1.8'
         os:
           - ubuntu-latest
