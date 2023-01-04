@@ -131,7 +131,7 @@ function packVariable(dfg::AbstractDFG, v::DFGVariable)
     props["smallData"] = v.smallData # JSON2.write(v.smallData)
     props["solvable"] = v.solvable
     props["variableType"] = typeModuleName(getVariableType(v))
-    props["dataEntry"] = (Dict(keys(v.dataDict) .=> map(bde -> JSON.json(bde), values(v.dataDict))))  #JSON2.write
+    props["dataEntry"] = (Dict(keys(v.dataDict) .=> values(v.dataDict))) # map(bde -> JSON.json(bde), values(v.dataDict))))  #JSON2.write
     props["dataEntryType"] = (Dict(keys(v.dataDict) .=> map(bde -> typeof(bde), values(v.dataDict)))) #JSON2.write
     props["_version"] = _getDFGVersion()
     return props #::Dict{String, Any}
@@ -301,7 +301,8 @@ function unpackVariable(
         dataElemTypes = if packedProps["dataEntryType"] isa String
             JSON2.read(packedProps["dataEntryType"], Dict{Symbol, Symbol})
         else
-            packedProps["dataEntryType"]
+            # packedProps["dataEntryType"]
+            Dict{Symbol, String}( Symbol.(keys(packedProps["dataEntryType"])) .=> values(packedProps["dataEntryType"]) )
         end
         for (k,name) in dataElemTypes 
             dataElemTypes[k] = Symbol(split(string(name), '.')[end])
@@ -310,7 +311,8 @@ function unpackVariable(
         dataIntermed = if packedProps["dataEntry"] isa String
             JSON2.read(packedProps["dataEntry"], Dict{Symbol, String})
         else
-            packedProps["dataEntry"]
+            # packedProps["dataEntry"]
+            Dict{Symbol, String}( Symbol.(keys(packedProps["dataEntry"])) .=> values(packedProps["dataEntry"]) )
         end
 
         for (k,bdeInter) in dataIntermed
