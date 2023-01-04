@@ -127,8 +127,8 @@ function getDimension end
 getDimension(::Type{T}) where {T <: InferenceVariable} = manifold_dimension(getManifold(T))
 getDimension(::T) where {T <: InferenceVariable} = manifold_dimension(getManifold(T))
 getDimension(M::ManifoldsBase.AbstractManifold) = manifold_dimension(M)
+getDimension(p::Distributions.Distribution) = length(p)
 getDimension(var::DFGVariable) = getDimension(getVariableType(var))
-
 
 """
     $SIGNATURES

@@ -93,6 +93,8 @@ addBlobStore!(dfg, ds)
 
 ade,adb = addData!(dfg, :filestore, :x1, :random, dataset1)
 _,_     = addData!(dfg, :filestore, :x1, :another_1, dataset1)
+_,_ = getData(dfg, :x1, "random")
+_,_ = getData(dfg, :x1, r"rando")
 gde,gdb = getData(dfg, :x1, :random)
 
 @test incrDataLabelSuffix(dfg,:x1,:random) == :random_1

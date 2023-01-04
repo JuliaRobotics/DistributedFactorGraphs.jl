@@ -41,11 +41,25 @@ function getDataEntry(var::AbstractDFGVariable, blobId::UUID)
             return v
         end
     end
-    error("No dataEntry with blobId $(blobId) found in variable $(getLabel(var))")
+    throw(
+        KeyError("No dataEntry with blobId $(blobId) found in variable $(getLabel(var))")
+    )
 end
+function getDataEntry(var::AbstractDFGVariable, key::Regex)
+    for (k,v) in var.dataDict
+        if occursin(key, string(v.label))
+            return v
+        end
+    end
+    throw(
+        KeyError("No dataEntry with label matching regex $(key) found in variable $(getLabel(var))")
+    )
+end
+getDataEntry(var::AbstractDFGVariable, key::AbstractString) = getDataEntry(var,Regex(key))
 
-getDataEntry(dfg::AbstractDFG, label::Symbol, key::UUID) = getDataEntry(getVariable(dfg, label), key)
-getDataEntry(dfg::AbstractDFG, label::Symbol, key::Symbol) = getDataEntry(getVariable(dfg, label), key)
+
+getDataEntry(dfg::AbstractDFG, label::Symbol, key::Union{Symbol, UUID, <:AbstractString, Regex}) = getDataEntry(getVariable(dfg, label), key)
+# getDataEntry(dfg::AbstractDFG, label::Symbol, key::Symbol) = getDataEntry(getVariable(dfg, label), key)
 
 
 """
@@ -196,8 +210,11 @@ function mergeDataEntries!(
     des = _makevec(des_)
     # don't add data entries that already exist 
     dde = listDataEntries(dst, dlbl)
-    uids = (s->s.id).(dde)
-    filter!(s -> !(s.id in uids), des)
+        # HACK, verb list should just return vector of Symbol. NCE36
+        _getid(s) = s
+        _getid(s::AbstractDataEntry) = s.id
+    uids = _getid.(dde) # (s->s.id).(dde)
+    filter!(s -> !(_getid(s) in uids), des)
     # add any data entries not already in the destination variable, by uuid
     addDataEntry!.(dst, dlbl, des)
 end
@@ -212,11 +229,26 @@ function mergeDataEntries!(
     des = listDataEntries(src, slbl)
     # don't add data entries that already exist 
     dde = listDataEntries(dst, dlbl)
-    uids = (s->s.id).(dde)
-    filter!(s -> !(s.id in uids), des)
+        # HACK, verb list should just return vector of Symbol. NCE36
+        _getid(s) = s
+        _getid(s::AbstractDataEntry) = s.id    
+    uids = _getid.(dde) # (s->s.id).(dde)
+    filter!(s -> !(_getid(s) in uids), des)
     if 0  < length(des)
         union(((s->mergeDataEntries!(dst, dlbl, src, slbl, s.id)).(des))...)
     end
+end
+
+function mergeDataEntries!(
+    dest::AbstractDFG,
+    src::AbstractDFG,
+    w...;
+    varList::AbstractVector = listVariables(dest) |> sortDFG
+)
+    @showprogress 1 "merging data entries" for vl in varList
+        mergeDataEntries!(dest, vl, src, vl, w...)
+    end
+    varList
 end
 
 """
