@@ -53,6 +53,7 @@ end
 
 # Corrects any `::ZonedDateTime` fields of T in corresponding `interm::Dict` as `dateformat"yyyy-mm-ddTHH:MM:SS.ssszzz"`
 function standardizeZDTStrings!(T, interm::Dict)
+    
     for (name, typ) in zip(fieldnames(T), T.types)
         if typ <: ZonedDateTime
             namestr = string(name)
@@ -305,19 +306,34 @@ function unpackVariable(
             Dict{Symbol, String}( Symbol.(keys(packedProps["dataEntryType"])) .=> values(packedProps["dataEntryType"]) )
         end
         for (k,name) in dataElemTypes 
-            dataElemTypes[k] = Symbol(split(string(name), '.')[end])
+            val = split(string(name), '.')[end]
+            # @show sval = Symbol(val)
+            dataElemTypes[k] = val
         end
-
+        
         dataIntermed = if packedProps["dataEntry"] isa String
             JSON2.read(packedProps["dataEntry"], Dict{Symbol, String})
+        elseif packedProps["dataEntry"] isa NamedTuple
+            # case where JSON2 did unpacking of all fields as hard types (no longer String)
+            # Dict{Symbol, String}( Symbol.(keys(packedProps["dataEntry"])) .=> values(packedProps["dataEntry"]) )
+            for i in 1:length(packedProps["dataEntry"])
+                k = keys(packedProps["dataEntry"])[i]
+                bdeInter = values(packedProps["dataEntry"])[i]
+                @show typeof(bdeInter)
+                @show objType = getfield(DistributedFactorGraphs, Symbol(dataElemTypes[k]))
+                # standardizeZDTStrings!(objType, bdeInter)
+                # fullVal = Unmarshal.unmarshal(objType, bdeInter)
+                variable.dataDict[k] = objType(;bdeInter...)
+            end
+            # forcefully skip, since variabe.dataDict already populated here
+            Dict{Symbol,String}()
         else
-            # packedProps["dataEntry"]
-            Dict{Symbol, String}( Symbol.(keys(packedProps["dataEntry"])) .=> values(packedProps["dataEntry"]) )
+            Dict( Symbol.(keys(packedProps["dataEntry"])) .=> values(packedProps["dataEntry"]) )
         end
 
         for (k,bdeInter) in dataIntermed
-            interm = JSON.parse(bdeInter)
-            objType = getfield(DistributedFactorGraphs, dataElemTypes[k])
+            interm = bdeInter # JSON.parse(bdeInter)
+            objType = getfield(DistributedFactorGraphs, Symbol(dataElemTypes[k]))
             standardizeZDTStrings!(objType, interm)
             fullVal = Unmarshal.unmarshal(objType, interm)
             variable.dataDict[k] = fullVal
@@ -404,6 +420,11 @@ function unpackVariableNodeData(dfg::G, d::Union{<:PackedVariableNodeData,<:Name
         Symbol(d.solveKey),
         Dict{Symbol,Threads.Condition}() )
 end
+
+unpackVariableNodeData(
+    dfg::AbstractDFG, 
+    d::Dict) = unpackVariableNodeData(dfg, Unmarshal.unmarshal(PackedVariableNodeData, d))
+
 
 ##==============================================================================
 ## Factor Packing and unpacking

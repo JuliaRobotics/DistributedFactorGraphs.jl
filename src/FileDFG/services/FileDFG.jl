@@ -43,14 +43,14 @@ function saveDFG(folder::AbstractString, dfg::AbstractDFG)
     for v in variables
         vPacked = packVariable(dfg, v)
         io = open("$varFolder/$(v.label).json", "w")
-        JSON2.write(io, vPacked)
+        println(io,JSON.json(vPacked))
         close(io)
     end
     # Factors
     for f in factors
         fPacked = packFactor(dfg, f)
         io = open("$factorFolder/$(f.label).json", "w")
-        JSON2.write(io, fPacked)
+        println(io,JSON.json(fPacked))
         close(io)
     end
 
@@ -130,10 +130,11 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString)
     varFiles = readdir(varFolder)
     factorFiles = readdir(factorFolder)
     for varFile in varFiles
-        open("$varFolder/$varFile") do io
-            packedData = JSON2.read(io, Dict{String, Any})
+        packedData = JSON.parsefile("$varFolder/$varFile"; dicttype=Dict{String, Any})
+        # open("$varFolder/$varFile") do io
+        #     packedData = JSON.parse(io; dicttype=Dict{String, Any})
             push!(variables, unpackVariable(dfgLoadInto, packedData))
-        end
+        # end
     end
     @info "Loaded $(length(variables)) variables - $(map(v->v.label, variables))"
     @info "Inserting variables into graph..."
