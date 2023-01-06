@@ -307,7 +307,6 @@ function unpackVariable(
         end
         for (k,name) in dataElemTypes 
             val = split(string(name), '.')[end]
-            # @show sval = Symbol(val)
             dataElemTypes[k] = val
         end
         
@@ -319,8 +318,7 @@ function unpackVariable(
             for i in 1:length(packedProps["dataEntry"])
                 k = keys(packedProps["dataEntry"])[i]
                 bdeInter = values(packedProps["dataEntry"])[i]
-                @show typeof(bdeInter)
-                @show objType = getfield(DistributedFactorGraphs, Symbol(dataElemTypes[k]))
+                objType = getfield(DistributedFactorGraphs, Symbol(dataElemTypes[k]))
                 # standardizeZDTStrings!(objType, bdeInter)
                 # fullVal = Unmarshal.unmarshal(objType, bdeInter)
                 variable.dataDict[k] = objType(;bdeInter...)
