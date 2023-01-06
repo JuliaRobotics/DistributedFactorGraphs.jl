@@ -300,7 +300,7 @@ function unpackVariable(
     if unpackBigData
         #TODO Deprecate - for backward compatibility between v0.8 and v0.9, remove in v0.10
         dataElemTypes = if packedProps["dataEntryType"] isa String
-            JSON2.read(packedProps["dataEntryType"], Dict{Symbol, Symbol})
+            JSON2.read(packedProps["dataEntryType"], Dict{Symbol, String})
         else
             # packedProps["dataEntryType"]
             Dict{Symbol, String}( Symbol.(keys(packedProps["dataEntryType"])) .=> values(packedProps["dataEntryType"]) )
@@ -331,8 +331,11 @@ function unpackVariable(
             Dict( Symbol.(keys(packedProps["dataEntry"])) .=> values(packedProps["dataEntry"]) )
         end
 
+        _doparse(s) = s
+        _doparse(s::String) = JSON.parse(s)
+
         for (k,bdeInter) in dataIntermed
-            interm = bdeInter # JSON.parse(bdeInter)
+            interm = _doparse(bdeInter) # JSON.parse(bdeInter) # bdeInter
             objType = getfield(DistributedFactorGraphs, Symbol(dataElemTypes[k]))
             standardizeZDTStrings!(objType, interm)
             fullVal = Unmarshal.unmarshal(objType, interm)
