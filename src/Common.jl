@@ -105,3 +105,11 @@ DevNotes
 
 """
 getVariableLabelNumber(vs::Symbol, prefix=string(vs)[1]) = parse(Int, string(vs)[(length(prefix)+1):end])
+                               
+                                
+## =================================
+## Additional Downstream dispatches
+## =================================
+
+function solveGraph! end
+function solveGraphParametric! end
