@@ -214,11 +214,7 @@ function unpackVariable(
 
     # FIXME, drop nested packing, see DFG #867
     #   string serialization using packVariable and CGDFG serialization (Vector{String})
-    tags = if packedProps["tags"] isa String
-        JSON2.read(packedProps["tags"], Vector{Symbol})
-    else
-        Symbol.(packedProps["tags"])
-    end
+    tags = Symbol.(packedProps["tags"])
 
     # FIXME, drop nested packing, see DFG #867
     ppeDict = if unpackPPEs && haskey(packedProps,"ppesDict")
