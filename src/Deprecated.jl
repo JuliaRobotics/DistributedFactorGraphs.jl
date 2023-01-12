@@ -105,7 +105,10 @@ const PackedInferenceType = AbstractPackedFactor  # will eventually deprecate
 
 export DefaultDFG
 
-const DefaultDFG = LightDFG
+const DefaultDFG = GraphsDFG
+
+export LightDFG
+LightDFG(args...; kwargs...) = error("LightDFG is deprecated and replaced with GraphsDFG")
 
 
 ## ================================================================================

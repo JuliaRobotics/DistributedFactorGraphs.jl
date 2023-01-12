@@ -1,10 +1,10 @@
 using Test
 using DistributedFactorGraphs
 
-using DistributedFactorGraphs.LightDFGs.FactorGraphs
+using DistributedFactorGraphs.GraphsDFGs.FactorGraphs
 
 
-@testset "LightDFGs.FactorGraphs BiMaps" begin
+@testset "GraphsDFGs.FactorGraphs BiMaps" begin
 
     @test isa(FactorGraphs.BiDictMap(), FactorGraphs.BiDictMap{Int64})
     bi = FactorGraphs.BiDictMap{Int}()
@@ -40,7 +40,7 @@ using DistributedFactorGraphs.LightDFGs.FactorGraphs
 
 end
 
-@testset "LightDFGs.FactorGraphs" begin
+@testset "GraphsDFGs.FactorGraphs" begin
 
 
     @test isa(FactorGraphs.FactorGraph(), FactorGraph{Int64,AbstractDFGVariable,AbstractDFGFactor})

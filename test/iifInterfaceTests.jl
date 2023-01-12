@@ -35,7 +35,7 @@ println()
     Base.rm("something.dot")
 end
 
-@testset "Testing CRUD, return and Failures from a LightDFG" begin
+@testset "Testing CRUD, return and Failures from a GraphsDFG" begin
     global dfg
     # dfg to copy to
     # creating a whole new graph with the same labels
