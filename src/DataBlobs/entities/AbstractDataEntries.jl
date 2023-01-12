@@ -31,6 +31,33 @@ struct BlobStoreEntry <: AbstractDataEntry
     createdTimestamp::ZonedDateTime # of when the entry was created
 end
 
+_fixtimezone(cts::NamedTuple) = ZonedDateTime(cts.utc_datetime*"+00")
+
+# needed for deserialization from JSON during DFG v0.19 transition, see #867
+function BlobStoreEntry(;
+    label,
+    id,
+    blobstore,
+    hash,
+    origin,
+    description,
+    mimeType,
+    createdTimestamp,
+    kwargs... # drop excessive fields
+)
+    #
+    BlobStoreEntry(
+        Symbol(label),
+        UUID(id),
+        Symbol(blobstore),
+        hash,
+        origin,
+        description,
+        mimeType,
+        _fixtimezone(createdTimestamp),
+    )
+end
+
 # TODO
 """
     $(TYPEDEF)

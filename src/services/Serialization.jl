@@ -53,6 +53,7 @@ end
 
 # Corrects any `::ZonedDateTime` fields of T in corresponding `interm::Dict` as `dateformat"yyyy-mm-ddTHH:MM:SS.ssszzz"`
 function standardizeZDTStrings!(T, interm::Dict)
+    
     for (name, typ) in zip(fieldnames(T), T.types)
         if typ <: ZonedDateTime
             namestr = string(name)
@@ -125,16 +126,16 @@ function packVariable(dfg::AbstractDFG, v::DFGVariable)
     props["label"] = string(v.label)
     props["timestamp"] = Dates.format(v.timestamp, "yyyy-mm-ddTHH:MM:SS.ssszzz")
     props["nstime"] = string(v.nstime.value)
-    props["tags"] = JSON2.write(v.tags)
-    props["ppeDict"] = JSON2.write(v.ppeDict)
-    props["solverDataDict"] = JSON2.write(Dict(keys(v.solverDataDict) .=> map(vnd -> packVariableNodeData(dfg, vnd), values(v.solverDataDict))))
-    props["smallData"] = JSON2.write(v.smallData)
+    props["tags"] = v.tags # JSON2.write(v.tags)
+    props["ppeDict"] = v.ppeDict # JSON2.write(v.ppeDict)
+    props["solverDataDict"] = (Dict(keys(v.solverDataDict) .=> map(vnd -> packVariableNodeData(dfg, vnd), values(v.solverDataDict)))) # JSON2.write
+    props["smallData"] = v.smallData # JSON2.write(v.smallData)
     props["solvable"] = v.solvable
     props["variableType"] = typeModuleName(getVariableType(v))
-    props["dataEntry"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> JSON.json(bde), values(v.dataDict))))
-    props["dataEntryType"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> typeof(bde), values(v.dataDict))))
+    props["dataEntry"] = (Dict(keys(v.dataDict) .=> values(v.dataDict))) # map(bde -> JSON.json(bde), values(v.dataDict))))  #JSON2.write
+    props["dataEntryType"] = (Dict(keys(v.dataDict) .=> map(bde -> typeof(bde), values(v.dataDict)))) #JSON2.write
     props["_version"] = _getDFGVersion()
-    return props::Dict{String, Any}
+    return props #::Dict{String, Any}
 end
 
 """
@@ -192,7 +193,14 @@ function _unpackVariableNodeData(
     return unpackVariableNodeData(dfg, packedVND)
 end
 
-# returns a DFGVariable
+"""
+    $SIGNATURES
+Returns a DFGVariable.
+
+DevNotes
+- v0.19 packVariable fixed nested JSON bug on these fields, see #867:
+  - `tags`, `ppeDict`, `solverDataDict`, `smallData`, `dataEntry`, `dataEntryType`
+"""
 function unpackVariable(
     dfg::AbstractDFG,
     packedProps::Dict{String, Any};
@@ -236,7 +244,19 @@ function unpackVariable(
         Dict{Symbol, MeanMaxPPE}()
     end
 
-    smallData = JSON2.read(packedProps["smallData"], Dict{Symbol, SmallDataTypes})
+    smallData = if haskey(packedProps, "smallData")
+        if packedProps["smallData"] isa String 
+            JSON2.read(packedProps["smallData"], Dict{Symbol, SmallDataTypes})
+        elseif packedProps["smallData"] isa Dict
+            Dict{Symbol, SmallDataTypes}( Symbol.(keys(packedProps["smallData"])) .=> values(packedProps["smallData"]) )
+            # packedProps["smallData"]
+        else
+            @warn "unknown smallData deserialization on $label, type $(typeof(packedProps["smallData"]))" maxlog=10
+            Dict{Symbol, SmallDataTypes}()
+        end
+    else
+        Dict{Symbol, SmallDataTypes}()
+    end
 
     variableTypeString = packedProps["variableType"]
 
@@ -246,7 +266,11 @@ function unpackVariable(
 
     # FIXME, drop nested packing, see DFG #867
     solverData = if unpackSolverData && haskey(packedProps, "solverDataDict")
-        packed = JSON2.read(packedProps["solverDataDict"], Dict{String, PackedVariableNodeData})
+        packed = if packedProps["solverDataDict"] isa String
+            JSON2.read(packedProps["solverDataDict"], Dict{String, PackedVariableNodeData})
+        else
+            packedProps["solverDataDict"]
+        end
         Dict{Symbol, VariableNodeData{variableType, pointType}}(Symbol.(keys(packed)) .=> map(p -> unpackVariableNodeData(dfg, p), values(packed)))
     elseif unpackPPEs && haskey(packedProps,"solverData") && packedProps["solverData"] isa AbstractVector
         solverdict = Dict{Symbol, VariableNodeData{variableType, pointType}}()
@@ -275,16 +299,42 @@ function unpackVariable(
     # Now rehydrate complete DataEntry type.
     if unpackBigData
         #TODO Deprecate - for backward compatibility between v0.8 and v0.9, remove in v0.10
-        dataElemTypes = JSON2.read(packedProps["dataEntryType"], Dict{Symbol, Symbol})
+        dataElemTypes = if packedProps["dataEntryType"] isa String
+            JSON2.read(packedProps["dataEntryType"], Dict{Symbol, String})
+        else
+            # packedProps["dataEntryType"]
+            Dict{Symbol, String}( Symbol.(keys(packedProps["dataEntryType"])) .=> values(packedProps["dataEntryType"]) )
+        end
         for (k,name) in dataElemTypes 
-            dataElemTypes[k] = Symbol(split(string(name), '.')[end])
+            val = split(string(name), '.')[end]
+            dataElemTypes[k] = val
+        end
+        
+        dataIntermed = if packedProps["dataEntry"] isa String
+            JSON2.read(packedProps["dataEntry"], Dict{Symbol, String})
+        elseif packedProps["dataEntry"] isa NamedTuple
+            # case where JSON2 did unpacking of all fields as hard types (no longer String)
+            # Dict{Symbol, String}( Symbol.(keys(packedProps["dataEntry"])) .=> values(packedProps["dataEntry"]) )
+            for i in 1:length(packedProps["dataEntry"])
+                k = keys(packedProps["dataEntry"])[i]
+                bdeInter = values(packedProps["dataEntry"])[i]
+                objType = getfield(DistributedFactorGraphs, Symbol(dataElemTypes[k]))
+                # standardizeZDTStrings!(objType, bdeInter)
+                # fullVal = Unmarshal.unmarshal(objType, bdeInter)
+                variable.dataDict[k] = objType(;bdeInter...)
+            end
+            # forcefully skip, since variabe.dataDict already populated here
+            Dict{Symbol,String}()
+        else
+            Dict( Symbol.(keys(packedProps["dataEntry"])) .=> values(packedProps["dataEntry"]) )
         end
 
-        dataIntermed = JSON2.read(packedProps["dataEntry"], Dict{Symbol, String})
+        _doparse(s) = s
+        _doparse(s::String) = JSON.parse(s)
 
         for (k,bdeInter) in dataIntermed
-            interm = JSON.parse(bdeInter)
-            objType = getfield(DistributedFactorGraphs, dataElemTypes[k])
+            interm = _doparse(bdeInter) # JSON.parse(bdeInter) # bdeInter
+            objType = getfield(DistributedFactorGraphs, Symbol(dataElemTypes[k]))
             standardizeZDTStrings!(objType, interm)
             fullVal = Unmarshal.unmarshal(objType, interm)
             variable.dataDict[k] = fullVal
@@ -329,7 +379,7 @@ function packVariableNodeData(::G, d::VariableNodeData{T}) where {G <: AbstractD
                                 d.solveKey)
 end
 
-function unpackVariableNodeData(dfg::G, d::PackedVariableNodeData) where G <: AbstractDFG
+function unpackVariableNodeData(dfg::G, d::Union{<:PackedVariableNodeData,<:NamedTuple}) where G <: AbstractDFG
     @debug "Dispatching conversion packed variable -> variable for type $(string(d.variableType))"
     # Figuring out the variableType
     # TODO deprecated remove in v0.11 - for backward compatibility for saved variableTypes. 
@@ -352,12 +402,30 @@ function unpackVariableNodeData(dfg::G, d::PackedVariableNodeData) where G <: Ab
     BW = reshape(d.vecbw,r4,c4)
 
     # 
-    return VariableNodeData{T, getPointType(T)}(vals, BW, d.BayesNetOutVertIDs,
-        d.dimIDs, d.dims, d.eliminated, d.BayesNetVertID, d.separator,
-        T(), d.initialized, d.infoPerCoord, d.ismargin, d.dontmargin, 
-        d.solveInProgress, d.solvedCount, d.solveKey,
+    return VariableNodeData{T, getPointType(T)}(
+        vals, 
+        BW, 
+        Symbol.(d.BayesNetOutVertIDs),
+        d.dimIDs, 
+        d.dims, 
+        d.eliminated, 
+        Symbol(d.BayesNetVertID), 
+        Symbol.(d.separator),
+        T(), 
+        d.initialized, 
+        d.infoPerCoord, 
+        d.ismargin, 
+        d.dontmargin, 
+        d.solveInProgress, 
+        d.solvedCount, 
+        Symbol(d.solveKey),
         Dict{Symbol,Threads.Condition}() )
 end
+
+unpackVariableNodeData(
+    dfg::AbstractDFG, 
+    d::Dict) = unpackVariableNodeData(dfg, Unmarshal.unmarshal(PackedVariableNodeData, d))
+
 
 ##==============================================================================
 ## Factor Packing and unpacking
