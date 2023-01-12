@@ -234,6 +234,9 @@ end
     $SIGNATURES
 
 Compare that all fields are the same in a `::FactorGraph` factor.
+
+DevNotes
+- TODO `getSolverData(A).fnc.varValsAll / varidx` are only defined downstream, so should should this function not be in IIF?
 """
 function compareFactor(A::DFGFactor,
                        B::DFGFactor;
@@ -250,17 +253,18 @@ function compareFactor(A::DFGFactor,
   if !TP || :fnc in skip
     return TP
   end
-  TP = TP & compareAllSpecial(getSolverData(A).fnc, getSolverData(B).fnc, skip=union([:cpt;:measurement;:params;:varidx;:threadmodel;:_gradients], skip), show=show)
+  TP = TP & compareAllSpecial(getSolverData(A).fnc, getSolverData(B).fnc, skip=union([:cpt;:measurement;:params;:varValsAll;:varidx;:threadmodel;:_gradients], skip), show=show)
   @debug "compareFactor 3/5" TP
   if !(:measurement in skip)
     TP = TP & (skipsamples || compareAll(getSolverData(A).fnc.measurement, getSolverData(B).fnc.measurement, show=show, skip=skip))
   end
   @debug "compareFactor 4/5" TP
-  if !(:params in skip)
-    TP = TP & (skipcompute || compareAll(getSolverData(A).fnc.params, getSolverData(B).fnc.params, show=show, skip=skip))
+  if !(:varValsAll in skip) && hasfield(typeof(getSolverData(A).fnc), :varValsAll)
+    TP = TP & (skipcompute || compareAll(getSolverData(A).fnc.varValsAll, getSolverData(B).fnc.varValsAll, show=show, skip=skip))
   end
-  if !(:varidx in skip)
-    TP = TP & (skipcompute || compareAll(getSolverData(A).fnc.varidx, getSolverData(B).fnc.varidx, show=show, skip=skip))
+  @debug "compareFactor 5/5" TP
+  if !(:varidx in skip) && hasfield(typeof(getSolverData(A).fnc), :varidx) && getSolverData(A).fnc.varidx isa Base.RefValue
+    TP = TP & (skipcompute || compareAll(getSolverData(A).fnc.varidx[], getSolverData(B).fnc.varidx[], show=show, skip=skip))
   end
 
   return TP

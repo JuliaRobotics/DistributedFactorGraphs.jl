@@ -41,11 +41,25 @@ function getDataEntry(var::AbstractDFGVariable, blobId::UUID)
             return v
         end
     end
-    error("No dataEntry with blobId $(blobId) found in variable $(getLabel(var))")
+    throw(
+        KeyError("No dataEntry with blobId $(blobId) found in variable $(getLabel(var))")
+    )
 end
+function getDataEntry(var::AbstractDFGVariable, key::Regex)
+    for (k,v) in var.dataDict
+        if occursin(key, string(v.label))
+            return v
+        end
+    end
+    throw(
+        KeyError("No dataEntry with label matching regex $(key) found in variable $(getLabel(var))")
+    )
+end
+getDataEntry(var::AbstractDFGVariable, key::AbstractString) = getDataEntry(var,Regex(key))
 
-getDataEntry(dfg::AbstractDFG, label::Symbol, key::UUID) = getDataEntry(getVariable(dfg, label), key)
-getDataEntry(dfg::AbstractDFG, label::Symbol, key::Symbol) = getDataEntry(getVariable(dfg, label), key)
+
+getDataEntry(dfg::AbstractDFG, label::Symbol, key::Union{Symbol, UUID, <:AbstractString, Regex}) = getDataEntry(getVariable(dfg, label), key)
+# getDataEntry(dfg::AbstractDFG, label::Symbol, key::Symbol) = getDataEntry(getVariable(dfg, label), key)
 
 
 """
@@ -196,8 +210,11 @@ function mergeDataEntries!(
     des = _makevec(des_)
     # don't add data entries that already exist 
     dde = listDataEntries(dst, dlbl)
-    uids = (s->s.id).(dde)
-    filter!(s -> !(s.id in uids), des)
+        # HACK, verb list should just return vector of Symbol. NCE36
+        _getid(s) = s
+        _getid(s::AbstractDataEntry) = s.id
+    uids = _getid.(dde) # (s->s.id).(dde)
+    filter!(s -> !(_getid(s) in uids), des)
     # add any data entries not already in the destination variable, by uuid
     addDataEntry!.(dst, dlbl, des)
 end
@@ -212,9 +229,67 @@ function mergeDataEntries!(
     des = listDataEntries(src, slbl)
     # don't add data entries that already exist 
     dde = listDataEntries(dst, dlbl)
-    uids = (s->s.id).(dde)
-    filter!(s -> !(s.id in uids), des)
+        # HACK, verb list should just return vector of Symbol. NCE36
+        _getid(s) = s
+        _getid(s::AbstractDataEntry) = s.id    
+    uids = _getid.(dde) # (s->s.id).(dde)
+    filter!(s -> !(_getid(s) in uids), des)
     if 0  < length(des)
         union(((s->mergeDataEntries!(dst, dlbl, src, slbl, s.id)).(des))...)
     end
+end
+
+function mergeDataEntries!(
+    dest::AbstractDFG,
+    src::AbstractDFG,
+    w...;
+    varList::AbstractVector = listVariables(dest) |> sortDFG
+)
+    @showprogress 1 "merging data entries" for vl in varList
+        mergeDataEntries!(dest, vl, src, vl, w...)
+    end
+    varList
+end
+
+"""
+    $SIGNATURES
+
+If the blob label `datalabel` already exists, then this function will return the name `datalabel_1`.
+If the blob label `datalabel_1` already exists, then this function will return the name `datalabel_2`.
+"""
+function incrDataLabelSuffix(
+    dfg::AbstractDFG,
+    vla,
+    bllb::S; 
+    datalabel=Ref("")
+) where {S <: Union{Symbol, <:AbstractString}}
+    count = 1
+    hasund = false
+    len = 0
+    try
+        de,_ = getData(dfg, Symbol(vla), bllb)
+        bllb = string(bllb)
+        # bllb *= bllb[end] != '_' ? "_" : ""
+        datalabel[] = string(de.label)
+        dlb = match(r"\d*", reverse(datalabel[]))
+        # slightly complicated search if blob name already has an underscore number suffix, e.g. `_4`
+        count, hasund, len = if occursin(Regex(dlb.match*"_"), reverse(datalabel[]))
+            parse(Int, dlb.match |> reverse)+1, true, length(dlb.match)
+        else
+            1, datalabel[][end] == '_', 0
+        end
+    catch err
+        # append latest count
+        if !(err isa KeyError)
+        throw(err)
+        end
+    end
+    # the piece from old label without the suffix count number
+    bllb = datalabel[][1:(end-len)]
+    if !hasund || bllb[end] != '_'
+        bllb *= "_"
+    end
+    bllb *= string(count)
+
+    S(bllb)
 end

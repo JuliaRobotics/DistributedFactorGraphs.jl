@@ -1437,6 +1437,10 @@ function ProducingDotFiles(testDFGAPI,
 
     addVariable!(dotdfg, v1)
     addVariable!(dotdfg, v2)
+    # FIXME, fix deprecation
+    # ┌ Warning: addFactor!(dfg, variables, factor) is deprecated, use addFactor!(dfg, factor)
+    # │   caller = ProducingDotFiles(testDFGAPI::Type{GraphsDFG}, v1::Nothing, v2::Nothing, f1::Nothing; VARTYPE::Type{DFGVariable}, FACTYPE::Type{DFGFactor}) at testBlocks.jl:1440
+    # └ @ Main ~/.julia/dev/DistributedFactorGraphs/test/testBlocks.jl:1440
     addFactor!(dotdfg, [v1, v2], f1)
     #NOTE hardcoded toDot will have different results so test LightGraphs seperately
     if testDFGAPI <: LightDFG || testDFGAPI <: GraphsDFG || testDFGAPI <: Neo4jDFG
@@ -1490,7 +1494,8 @@ function CopyFunctionsTest(testDFGAPI; kwargs...)
     @test issetequal(lsf(dcdfg_part), flbls)
 
     # deepcopy subgraph ignoring orphans
-    @test_logs (:warn, r"orphan") dcdfg_part = deepcopyGraph(LightDFG, dfg, vlbls, union(flbls, [:x1x2f1]))
+    # @test_logs (:warn, r"orphan") # orphan warning has been suppressed given overwhelming printouts
+    dcdfg_part = deepcopyGraph(LightDFG, dfg, vlbls, union(flbls, [:x1x2f1]))
     @test issetequal(ls(dcdfg_part), vlbls)
     @test issetequal(lsf(dcdfg_part), flbls)
 
