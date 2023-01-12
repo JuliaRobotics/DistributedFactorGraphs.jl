@@ -121,7 +121,7 @@ end
 ##==============================================================================
 ## Variable Packing and unpacking
 ##==============================================================================
-function packVariable(dfg::AbstractDFG, v::DFGVariable) 
+function packVariable(v::DFGVariable) 
     props = Dict{String, Any}()
     props["label"] = string(v.label)
     props["timestamp"] = Dates.format(v.timestamp, "yyyy-mm-ddTHH:MM:SS.ssszzz")
@@ -137,6 +137,7 @@ function packVariable(dfg::AbstractDFG, v::DFGVariable)
     props["_version"] = _getDFGVersion()
     return props #::Dict{String, Any}
 end
+
 
 """
 $(SIGNATURES)
@@ -346,7 +347,8 @@ end
 
 
 # returns a PackedVariableNodeData
-function packVariableNodeData(::G, d::VariableNodeData{T}) where {G <: AbstractDFG, T <: InferenceVariable}
+# FIXME, remove ::G
+function packVariableNodeData(d::VariableNodeData{T}) where {T <: InferenceVariable}
   @debug "Dispatching conversion variable -> packed variable for type $(string(d.variableType))"
   # TODO change to Vector{Vector{Float64}} which can be directly packed by JSON
   castval = if 0 < length(d.val)
@@ -379,7 +381,11 @@ function packVariableNodeData(::G, d::VariableNodeData{T}) where {G <: AbstractD
                                 d.solveKey)
 end
 
-function unpackVariableNodeData(dfg::G, d::Union{<:PackedVariableNodeData,<:NamedTuple}) where G <: AbstractDFG
+
+# @deprecate 
+packVariableNodeData(::G, d::VariableNodeData{T}) where {G <: AbstractDFG, T <: InferenceVariable} = packVariableNodeData(d)
+
+function unpackVariableNodeData(dfg::G, d::PackedVariableNodeData) where G <: AbstractDFG
     @debug "Dispatching conversion packed variable -> variable for type $(string(d.variableType))"
     # Figuring out the variableType
     # TODO deprecated remove in v0.11 - for backward compatibility for saved variableTypes. 
