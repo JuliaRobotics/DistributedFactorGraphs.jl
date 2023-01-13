@@ -226,7 +226,7 @@ function packVariable(v::DFGVariable)
     props["nstime"] = string(v.nstime.value)
     props["tags"] = v.tags # JSON2.write(v.tags)
     props["ppeDict"] = v.ppeDict # JSON2.write(v.ppeDict)
-    props["solverDataDict"] = (Dict(keys(v.solverDataDict) .=> map(vnd -> packVariableNodeData(dfg, vnd), values(v.solverDataDict)))) # JSON2.write
+    props["solverDataDict"] = (Dict(keys(v.solverDataDict) .=> map(vnd -> packVariableNodeData(vnd), values(v.solverDataDict)))) # JSON2.write
     props["smallData"] = v.smallData # JSON2.write(v.smallData)
     props["solvable"] = v.solvable
     props["variableType"] = typeModuleName(getVariableType(v))
