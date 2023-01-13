@@ -117,6 +117,106 @@ function getTypeFromSerializationModule(_typeString::AbstractString)
     nothing
 end
 
+## =============================================================================
+## Transcoding / Unmarshal types helper
+## =============================================================================
+
+"""
+    $SIGNATURES
+Should be a highly reusable function for any transcoding of intermediate type (or dict) to a desired output type.
+
+examples
+```julia
+Base.@kwdef struct HardType
+    name::String
+    time::DateTime = now(UTC)
+    val::Float64 = 0.0
+end
+
+# slight human overhead for each type to ignore extraneous field construction
+# TODO, devnote drop this requirement with filter of _names in transcodeType
+HardType(;
+    name::String,
+    time::DateTime = now(UTC),
+    val::Float64 = 0.0,
+    ignorekws...
+) = HardType(name,time,val)
+
+# somehow one gets an intermediate type
+imt = IntermediateType(
+    v"1.0",
+    "NotUsedYet",
+    "test",
+    now(UTC),
+    1.0
+)
+# or dict (testing string keys)
+imd = Dict(
+    "_version" => v"1.0",
+    "_type" => "NotUsedYet",
+    "name" => "test",
+    "time" => now(UTC),
+    "val" => 1.0
+)
+# ordered dict (testing symbol keys)
+iod = OrderedDict(
+    :_version => v"1.0",
+    :_type => "NotUsedYet",
+    :name => "test",
+    :time => now(UTC),
+    # :val => 1.0
+)
+
+# do the transcoding to a slighly different hard type
+T1 = transcodeType(HardType, imt)
+T2 = transcodeType(HardType, imd)
+T3 = transcodeType(HardType, iod)
+```
+"""
+function transcodeType(
+    ::Type{T},
+    inObj
+) where T
+    #
+    # specializations as inner functions (don't have to be inners)
+    # these few special cases came up with examples below, note recursions
+    _instance(S::Type, x) = S(x)
+    _instance(_::Type{S}, x::S) where S = x # if ambiguous, delete and do alternative `_instance(S::Type, x) = S===Any ? x : S(x)`
+    _instance(S::Type{I}, x::AbstractString) where I <: Number = Base.parse(I, x)
+    _instance(S::Type{E}, x::AbstractVector) where E <: AbstractVector = _instance.(eltype(E),x)
+    _instance(S::Type{<:AbstractDict{K,V}}, x::AbstractDict) where {K,V} = (tup=(Symbol.(keys(x)) .=> _instance.(V,values(x)) ) ; S(tup...) )
+
+    # what the struct wants
+    _types = fieldtypes(T)
+    _names = fieldnames(T)
+    # (closure) resolve random ordering problem
+    _getIdx(s::Symbol) = findfirst(x->x==s, _names)
+    # (closure) create an instance of a field
+    makething(k::Symbol, v) = begin 
+        idx = _getIdx(k)
+        if !isnothing(idx)
+            # this field is in the output type and should be included
+            k => _instance(_types[_getIdx(k)], v)
+        else
+            # this field should be ignored in the output type
+            Symbol(:VOID_,rand(1:1000000)) => nothing
+        end
+    end
+    # zip together keys/fields and values for either dict or intermediate type
+    _srckeys(s::AbstractDict) = keys(s)
+    _srckeys(s) = fieldnames(typeof(s))
+    _srcvals(s::AbstractDict) = values(s)
+    _srcvals(s) = map(k->getproperty(s,k), _srckeys(s))  
+    # NOTE, improvement, filter extraneous fields not in _names
+    arr = [makething(Symbol(k),v) for (k,v) in zip(_srckeys(inObj),_srcvals(inObj))]
+    filter!(s->s[1] in _names, arr)
+    # create dict provided fields into a NamedTuple as a type stable "pre-struct"
+    nt = (;arr...)
+    # use keyword constructors provided by Base.@kwdef to resolve random ordering, incomplete dicts, and defaults
+    T(;nt...)
+end
+
+
 
 ##==============================================================================
 ## Variable Packing and unpacking
@@ -128,7 +228,7 @@ function packVariable(v::DFGVariable)
     props["nstime"] = string(v.nstime.value)
     props["tags"] = v.tags # JSON2.write(v.tags)
     props["ppeDict"] = v.ppeDict # JSON2.write(v.ppeDict)
-    props["solverDataDict"] = (Dict(keys(v.solverDataDict) .=> map(vnd -> packVariableNodeData(dfg, vnd), values(v.solverDataDict)))) # JSON2.write
+    props["solverDataDict"] = (Dict(keys(v.solverDataDict) .=> map(vnd -> packVariableNodeData(vnd), values(v.solverDataDict)))) # JSON2.write
     props["smallData"] = v.smallData # JSON2.write(v.smallData)
     props["solvable"] = v.solvable
     props["variableType"] = typeModuleName(getVariableType(v))
