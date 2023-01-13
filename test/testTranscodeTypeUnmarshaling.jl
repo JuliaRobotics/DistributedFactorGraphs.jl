@@ -59,7 +59,7 @@ T3 = DistributedFactorGraphs.transcodeType(HardType, iod)
 
 end
 
-Base.@kwdef struct MyType{T <: Real} <: AbstractMarshalingType
+Base.@kwdef struct MyType{T <: Real}
   tags::Vector{Symbol} = Symbol[]
   count::Int
   funfun::Complex{T} = 1 + 5im
