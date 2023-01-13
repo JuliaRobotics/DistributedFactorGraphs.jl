@@ -58,3 +58,43 @@ T2 = DistributedFactorGraphs.transcodeType(HardType, imd)
 T3 = DistributedFactorGraphs.transcodeType(HardType, iod)
 
 end
+
+Base.@kwdef struct MyType{T <: Real} <: AbstractMarshalingType
+  tags::Vector{Symbol} = Symbol[]
+  count::Int
+  funfun::Complex{T} = 1 + 5im
+  somedata::Dict{Symbol,Any} = Dict{Symbol, Any}()
+  data::Vector{Float64} = zeros(0)
+  binary::Vector{UInt8} = Vector{UInt8}()
+end
+
+@testset "More super unmarshaling tests of various test dicts" begin
+
+  d = Dict("count" => 3)
+  DistributedFactorGraphs.transcodeType(MyType, d)
+
+  d2 = Dict("count" => 3, "tags" => Any["hi", "okay"])
+  DistributedFactorGraphs.transcodeType(MyType, d2)
+
+  d3 = Dict("count" => "3", "tags" => String["hi", "okay"])
+  DistributedFactorGraphs.transcodeType(MyType, d3)
+
+  d4 = Dict("count" => 3.0, "funfun" => "8 - 3im", "tags" => Any["hi", "okay"])
+  DistributedFactorGraphs.transcodeType(MyType{Float32}, d4)
+
+  d5 = Dict("count" => 3, "somedata" => Dict{String,Any}("calibration"=>[1.1;2.2], "description"=>"this is a test"))
+  DistributedFactorGraphs.transcodeType(MyType{Float64}, d5)
+
+  d6 = Dict("count" => 3.0, "data" => Any[10, 60])
+  DistributedFactorGraphs.transcodeType(MyType, d6)
+
+  d7 = Dict("count" => 3.0, "data" => String["10", "60"])
+  DistributedFactorGraphs.transcodeType(MyType, d7)
+
+  d8 = Dict("count" => 4, "binary" => take!(IOBuffer("hello world")))
+  DistributedFactorGraphs.transcodeType(MyType, d8)
+
+  d9 = Dict("count" => 4, "somedata" => Dict{Symbol,Any}(:test => "no ambiguity"))
+  DistributedFactorGraphs.transcodeType(MyType, d9)
+
+end
