@@ -4,7 +4,7 @@
 
 using Test
 using DistributedFactorGraphs
-using DataStructures
+using DataStructures: OrderedDict
 using Dates
 
 ##
