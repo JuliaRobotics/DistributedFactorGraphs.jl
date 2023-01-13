@@ -15,15 +15,14 @@ Base.@kwdef struct HardType
     time::DateTime = now(UTC)
     val::Float64 = 0.0
 end
-
-# slight human overhead for each type to ignore extraneous field construction
-# TODO, devnote drop this requirement with filter of _names in transcodeType
-HardType(;
-    name::String,
-    time::DateTime = now(UTC),
-    val::Float64 = 0.0,
-    ignorekws...
-) = HardType(name,time,val)
+  # # slight human overhead for each type to ignore extraneous field construction
+  # # TODO, devnote drop this requirement with filter of _names in transcodeType
+  # HardType(;
+  #     name::String,
+  #     time::DateTime = now(UTC),
+  #     val::Float64 = 0.0,
+  #     ignorekws...
+  # ) = HardType(name,time,val)
 
 @testset "Test transcoding of Intermediate, Dict, OrderedDict to a HardType" begin
 

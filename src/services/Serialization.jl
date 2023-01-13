@@ -207,10 +207,12 @@ function transcodeType(
     _srckeys(s) = fieldnames(typeof(s))
     _srcvals(s::AbstractDict) = values(s)
     _srcvals(s) = map(k->getproperty(s,k), _srckeys(s))  
+    # NOTE, improvement, filter extraneous fields not in _names
+    arr = [makething(Symbol(k),v) for (k,v) in zip(_srckeys(inObj),_srcvals(inObj))]
+    filter!(s->s[1] in _names, arr)
     # create dict provided fields into a NamedTuple as a type stable "pre-struct"
-    nt = (;(makething(Symbol(k),v) for (k,v) in zip(_srckeys(inObj),_srcvals(inObj)))...)
+    nt = (;arr...)
     # use keyword constructors provided by Base.@kwdef to resolve random ordering, incomplete dicts, and defaults
-    # TODO, improvement, filter extraneous fields not in _names
     T(;nt...)
 end
 
