@@ -1061,7 +1061,7 @@ function findShortestPathDijkstra end
 Relatively naive function counting linearly from-to
 
 DevNotes
-- Convert to using LightGraphs shortest path methods instead.
+- Convert to using Graphs shortest path methods instead.
 """
 function findFactorsBetweenNaive(   dfg::AbstractDFG, 
                                     from::Symbol,

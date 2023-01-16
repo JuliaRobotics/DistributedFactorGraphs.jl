@@ -1440,7 +1440,7 @@ function ProducingDotFiles(testDFGAPI,
     # │   caller = ProducingDotFiles(testDFGAPI::Type{GraphsDFG}, v1::Nothing, v2::Nothing, f1::Nothing; VARTYPE::Type{DFGVariable}, FACTYPE::Type{DFGFactor}) at testBlocks.jl:1440
     # └ @ Main ~/.julia/dev/DistributedFactorGraphs/test/testBlocks.jl:1440
     addFactor!(dotdfg, [v1, v2], f1)
-    #NOTE hardcoded toDot will have different results so test LightGraphs seperately
+    #NOTE hardcoded toDot will have different results so test Graphs seperately
     if testDFGAPI <: GraphsDFG || testDFGAPI <: GraphsDFG
         todotstr = toDot(dotdfg)
         todota = todotstr == "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box, fontsize=8, fixedsize=false, height=0.1, width=0.1];\na -- abf1\nb -- abf1\n}\n"

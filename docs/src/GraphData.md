@@ -23,7 +23,7 @@ The following examples make use of this data:
 
 ```julia
 using IncrementalInference
-# Create a DFG with default solver parameters using the LightGraphs.jl driver.
+# Create a DFG with default solver parameters using the Graphs.jl driver.
 dfg = GraphsDFG{SolverParams}(params=SolverParams())
 
 x0 = addVariable!(dfg, :x0, ContinuousScalar, tags = [:POSE], solvable=1)

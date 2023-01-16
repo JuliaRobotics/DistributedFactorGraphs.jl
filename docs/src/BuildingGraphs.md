@@ -21,7 +21,7 @@ using IncrementalInference
 ## Initializing a Graph
 
 DFG graphs can be built using various drivers (different representations of the underlying graph). At the moment DFG supports 2 drivers:
-- GraphsDFG: An in-memory graph that uses LightGraphs.jl for representing the graph.
+- GraphsDFG: An in-memory graph that uses Graphs.jl for representing the graph.
 - CloudGraphs: A database-driven graph that uses Neo4j.jl for interacting with the graph.
 
 In general the in-memory drivers are used for building and solving graphs, and CloudGraphs is used for persisting in-memory graphs into a database.
@@ -31,7 +31,7 @@ To continue the example, run one of the following to create a DFG driver:
 ### Creating a GraphsDFG Graph
 
 ```@example buildingGraphs; continued = true
-# Create a DFG with default solver parameters using the LightGraphs.jl driver.
+# Create a DFG with default solver parameters using the Graphs.jl driver.
 dfg = GraphsDFG{SolverParams}(solverParams=SolverParams())
 ```
 

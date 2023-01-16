@@ -63,15 +63,15 @@ end
 
     @test eltype(fg) == Int
 
-    @test FactorGraphs.edgetype(fg) == FactorGraphs.LightGraphs.SimpleGraphs.SimpleEdge{Int64}
+    @test FactorGraphs.edgetype(fg) == FactorGraphs.Graphs.SimpleGraphs.SimpleEdge{Int64}
 
     @test FactorGraphs.has_vertex(fg, 1)
     @test !FactorGraphs.has_vertex(fg, 4)
 
-    @test FactorGraphs.has_edge(fg, FactorGraphs.LightGraphs.SimpleGraphs.SimpleEdge(1,3))
+    @test FactorGraphs.has_edge(fg, FactorGraphs.Graphs.SimpleGraphs.SimpleEdge(1,3))
 
-    @test FactorGraphs.rem_edge!(fg, FactorGraphs.LightGraphs.SimpleGraphs.SimpleEdge(2,3))
-    @test !FactorGraphs.has_edge(fg, FactorGraphs.LightGraphs.SimpleGraphs.SimpleEdge(2,3))
+    @test FactorGraphs.rem_edge!(fg, FactorGraphs.Graphs.SimpleGraphs.SimpleEdge(2,3))
+    @test !FactorGraphs.has_edge(fg, FactorGraphs.Graphs.SimpleGraphs.SimpleEdge(2,3))
 
 
 end

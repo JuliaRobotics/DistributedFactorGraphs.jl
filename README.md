@@ -34,7 +34,7 @@ add DistributedFactorGraphs
 
 # Usage
 
-The in-memory implementation is the default, using LightGraphs.jl.
+The in-memory implementation is the default, using Graphs.jl.
 
 It is recommended to use `IncrementalInference` to create factor graphs as they will be solvable. 
 ```julia

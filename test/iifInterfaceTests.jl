@@ -371,7 +371,7 @@ end
     @test listFactors(dfg) == []
     deleteVariable!(dfg, :b)
     @test symdiff([:a, :orphan], listVariables(dfg)) == []
-    #delete last also for the LightGraphs implementation coverage
+    #delete last also for the Graphs implementation coverage
     deleteVariable!(dfg, :orphan)
     @test symdiff([:a], listVariables(dfg)) == []
     deleteVariable!(dfg, :a)
