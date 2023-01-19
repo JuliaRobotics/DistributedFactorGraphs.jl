@@ -19,6 +19,7 @@ using UUIDs
 # logger = SimpleLogger(stdout, Logging.Debug)
 # global_logger(logger)
 
+include("testTranscodeTypeUnmarshaling.jl")
 include("test_defVariable.jl")
 
 include("testBlocks.jl")

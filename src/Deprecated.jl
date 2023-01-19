@@ -9,6 +9,17 @@ function Base.convert(::Type{DateTime}, ts::ZonedDateTime)
     return DateTime(ts, Local)
 end
 
+
+## ================================================================================
+## Add @deprecate in v0.19, remove after v0.20
+##=================================================================================
+
+
+# TODO ADD DEPRECATION
+packVariable(::AbstractDFG, v::DFGVariable) = packVariable(v) 
+
+
+
 ## ================================================================================
 ## Deprecate before v0.20 - Kept longer with error
 ##=================================================================================

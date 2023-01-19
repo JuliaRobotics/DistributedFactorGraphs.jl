@@ -53,6 +53,7 @@ end
 
 # Corrects any `::ZonedDateTime` fields of T in corresponding `interm::Dict` as `dateformat"yyyy-mm-ddTHH:MM:SS.ssszzz"`
 function standardizeZDTStrings!(T, interm::Dict)
+    
     for (name, typ) in zip(fieldnames(T), T.types)
         if typ <: ZonedDateTime
             namestr = string(name)
@@ -116,26 +117,127 @@ function getTypeFromSerializationModule(_typeString::AbstractString)
     nothing
 end
 
+## =============================================================================
+## Transcoding / Unmarshal types helper
+## =============================================================================
+
+"""
+    $SIGNATURES
+Should be a highly reusable function for any transcoding of intermediate type (or dict) to a desired output type.
+
+examples
+```julia
+Base.@kwdef struct HardType
+    name::String
+    time::DateTime = now(UTC)
+    val::Float64 = 0.0
+end
+
+# slight human overhead for each type to ignore extraneous field construction
+# TODO, devnote drop this requirement with filter of _names in transcodeType
+HardType(;
+    name::String,
+    time::DateTime = now(UTC),
+    val::Float64 = 0.0,
+    ignorekws...
+) = HardType(name,time,val)
+
+# somehow one gets an intermediate type
+imt = IntermediateType(
+    v"1.0",
+    "NotUsedYet",
+    "test",
+    now(UTC),
+    1.0
+)
+# or dict (testing string keys)
+imd = Dict(
+    "_version" => v"1.0",
+    "_type" => "NotUsedYet",
+    "name" => "test",
+    "time" => now(UTC),
+    "val" => 1.0
+)
+# ordered dict (testing symbol keys)
+iod = OrderedDict(
+    :_version => v"1.0",
+    :_type => "NotUsedYet",
+    :name => "test",
+    :time => now(UTC),
+    # :val => 1.0
+)
+
+# do the transcoding to a slighly different hard type
+T1 = transcodeType(HardType, imt)
+T2 = transcodeType(HardType, imd)
+T3 = transcodeType(HardType, iod)
+```
+"""
+function transcodeType(
+    ::Type{T},
+    inObj
+) where T
+    #
+    # specializations as inner functions (don't have to be inners)
+    # these few special cases came up with examples below, note recursions
+    _instance(S::Type, x) = S(x)
+    _instance(_::Type{S}, x::S) where S = x # if ambiguous, delete and do alternative `_instance(S::Type, x) = S===Any ? x : S(x)`
+    _instance(S::Type{I}, x::AbstractString) where I <: Number = Base.parse(I, x)
+    _instance(S::Type{E}, x::AbstractVector) where E <: AbstractVector = _instance.(eltype(E),x)
+    _instance(S::Type{<:AbstractDict{K,V}}, x::AbstractDict) where {K,V} = (tup=(Symbol.(keys(x)) .=> _instance.(V,values(x)) ) ; S(tup...) )
+
+    # what the struct wants
+    _types = fieldtypes(T)
+    _names = fieldnames(T)
+    # (closure) resolve random ordering problem
+    _getIdx(s::Symbol) = findfirst(x->x==s, _names)
+    # (closure) create an instance of a field
+    makething(k::Symbol, v) = begin 
+        idx = _getIdx(k)
+        if !isnothing(idx)
+            # this field is in the output type and should be included
+            k => _instance(_types[_getIdx(k)], v)
+        else
+            # this field should be ignored in the output type
+            Symbol(:VOID_,rand(1:1000000)) => nothing
+        end
+    end
+    # zip together keys/fields and values for either dict or intermediate type
+    _srckeys(s::AbstractDict) = keys(s)
+    _srckeys(s) = fieldnames(typeof(s))
+    _srcvals(s::AbstractDict) = values(s)
+    _srcvals(s) = map(k->getproperty(s,k), _srckeys(s))  
+    # NOTE, improvement, filter extraneous fields not in _names
+    arr = [makething(Symbol(k),v) for (k,v) in zip(_srckeys(inObj),_srcvals(inObj))]
+    filter!(s->s[1] in _names, arr)
+    # create dict provided fields into a NamedTuple as a type stable "pre-struct"
+    nt = (;arr...)
+    # use keyword constructors provided by Base.@kwdef to resolve random ordering, incomplete dicts, and defaults
+    T(;nt...)
+end
+
+
 
 ##==============================================================================
 ## Variable Packing and unpacking
 ##==============================================================================
-function packVariable(dfg::AbstractDFG, v::DFGVariable) 
+function packVariable(v::DFGVariable) 
     props = Dict{String, Any}()
     props["label"] = string(v.label)
     props["timestamp"] = Dates.format(v.timestamp, "yyyy-mm-ddTHH:MM:SS.ssszzz")
     props["nstime"] = string(v.nstime.value)
-    props["tags"] = JSON2.write(v.tags)
-    props["ppeDict"] = JSON2.write(v.ppeDict)
-    props["solverDataDict"] = JSON2.write(Dict(keys(v.solverDataDict) .=> map(vnd -> packVariableNodeData(dfg, vnd), values(v.solverDataDict))))
-    props["smallData"] = JSON2.write(v.smallData)
+    props["tags"] = v.tags # JSON2.write(v.tags)
+    props["ppeDict"] = v.ppeDict # JSON2.write(v.ppeDict)
+    props["solverDataDict"] = (Dict(keys(v.solverDataDict) .=> map(vnd -> packVariableNodeData(vnd), values(v.solverDataDict)))) # JSON2.write
+    props["smallData"] = v.smallData # JSON2.write(v.smallData)
     props["solvable"] = v.solvable
     props["variableType"] = typeModuleName(getVariableType(v))
-    props["dataEntry"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> JSON.json(bde), values(v.dataDict))))
-    props["dataEntryType"] = JSON2.write(Dict(keys(v.dataDict) .=> map(bde -> typeof(bde), values(v.dataDict))))
+    props["dataEntry"] = (Dict(keys(v.dataDict) .=> values(v.dataDict))) # map(bde -> JSON.json(bde), values(v.dataDict))))  #JSON2.write
+    props["dataEntryType"] = (Dict(keys(v.dataDict) .=> map(bde -> typeof(bde), values(v.dataDict)))) #JSON2.write
     props["_version"] = _getDFGVersion()
-    return props::Dict{String, Any}
+    return props #::Dict{String, Any}
 end
+
 
 """
 $(SIGNATURES)
@@ -192,7 +294,14 @@ function _unpackVariableNodeData(
     return unpackVariableNodeData(dfg, packedVND)
 end
 
-# returns a DFGVariable
+"""
+    $SIGNATURES
+Returns a DFGVariable.
+
+DevNotes
+- v0.19 packVariable fixed nested JSON bug on these fields, see #867:
+  - `tags`, `ppeDict`, `solverDataDict`, `smallData`, `dataEntry`, `dataEntryType`
+"""
 function unpackVariable(
     dfg::AbstractDFG,
     packedProps::Dict{String, Any};
@@ -232,15 +341,20 @@ function unpackVariable(
         Dict{Symbol, MeanMaxPPE}()
     end
 
-    # Smalldata refactor to metadata
-    if (haskey(packedProps, "metadata"))
-        smallData = JSON2.read(packedProps["metadata"], Dict{Symbol, SmallDataTypes})
-    elseif(haskey(packedProps, "smallData"))
-        smallData = JSON2.read(packedProps["smallData"], Dict{Symbol, SmallDataTypes})
+    smallData = if haskey(packedProps, "metadata")
+        if packedProps["metadata"] isa String 
+            JSON2.read(packedProps["metadata"], Dict{Symbol, SmallDataTypes})
+        elseif packedProps["metadata"] isa Dict
+            Dict{Symbol, SmallDataTypes}( Symbol.(keys(packedProps["metadata"])) .=> values(packedProps["metadata"]) )
+            # packedProps["metadata"]
+        else
+            @warn "unknown metadata deserialization on $label, type $(typeof(packedProps["metadata"]))" maxlog=10
+            Dict{Symbol, SmallDataTypes}()
+        end
     else
-        error("metadata (or smalData) keys do not exist in the raw packed data")
+        Dict{Symbol, SmallDataTypes}()
     end
-    
+
     variableTypeString = packedProps["variableType"]
 
     variableType = getTypeFromSerializationModule(variableTypeString)
@@ -249,7 +363,11 @@ function unpackVariable(
 
     # FIXME, drop nested packing, see DFG #867
     solverData = if unpackSolverData && haskey(packedProps, "solverDataDict")
-        packed = JSON2.read(packedProps["solverDataDict"], Dict{String, PackedVariableNodeData})
+        packed = if packedProps["solverDataDict"] isa String
+            JSON2.read(packedProps["solverDataDict"], Dict{String, PackedVariableNodeData})
+        else
+            packedProps["solverDataDict"]
+        end
         Dict{Symbol, VariableNodeData{variableType, pointType}}(Symbol.(keys(packed)) .=> map(p -> unpackVariableNodeData(dfg, p), values(packed)))
     elseif unpackPPEs && haskey(packedProps,"solverData") && packedProps["solverData"] isa AbstractVector
         solverdict = Dict{Symbol, VariableNodeData{variableType, pointType}}()
@@ -278,16 +396,42 @@ function unpackVariable(
     # Now rehydrate complete DataEntry type.
     if unpackBigData
         #TODO Deprecate - for backward compatibility between v0.8 and v0.9, remove in v0.10
-        dataElemTypes = JSON2.read(packedProps["dataEntryType"], Dict{Symbol, Symbol})
+        dataElemTypes = if packedProps["dataEntryType"] isa String
+            JSON2.read(packedProps["dataEntryType"], Dict{Symbol, String})
+        else
+            # packedProps["dataEntryType"]
+            Dict{Symbol, String}( Symbol.(keys(packedProps["dataEntryType"])) .=> values(packedProps["dataEntryType"]) )
+        end
         for (k,name) in dataElemTypes 
-            dataElemTypes[k] = Symbol(split(string(name), '.')[end])
+            val = split(string(name), '.')[end]
+            dataElemTypes[k] = val
+        end
+        
+        dataIntermed = if packedProps["dataEntry"] isa String
+            JSON2.read(packedProps["dataEntry"], Dict{Symbol, String})
+        elseif packedProps["dataEntry"] isa NamedTuple
+            # case where JSON2 did unpacking of all fields as hard types (no longer String)
+            # Dict{Symbol, String}( Symbol.(keys(packedProps["dataEntry"])) .=> values(packedProps["dataEntry"]) )
+            for i in 1:length(packedProps["dataEntry"])
+                k = keys(packedProps["dataEntry"])[i]
+                bdeInter = values(packedProps["dataEntry"])[i]
+                objType = getfield(DistributedFactorGraphs, Symbol(dataElemTypes[k]))
+                # standardizeZDTStrings!(objType, bdeInter)
+                # fullVal = Unmarshal.unmarshal(objType, bdeInter)
+                variable.dataDict[k] = objType(;bdeInter...)
+            end
+            # forcefully skip, since variabe.dataDict already populated here
+            Dict{Symbol,String}()
+        else
+            Dict( Symbol.(keys(packedProps["dataEntry"])) .=> values(packedProps["dataEntry"]) )
         end
 
-        dataIntermed = JSON2.read(packedProps["dataEntry"], Dict{Symbol, String})
+        _doparse(s) = s
+        _doparse(s::String) = JSON.parse(s)
 
         for (k,bdeInter) in dataIntermed
-            interm = JSON.parse(bdeInter)
-            objType = getfield(DistributedFactorGraphs, dataElemTypes[k])
+            interm = _doparse(bdeInter) # JSON.parse(bdeInter) # bdeInter
+            objType = getfield(DistributedFactorGraphs, Symbol(dataElemTypes[k]))
             standardizeZDTStrings!(objType, interm)
             fullVal = Unmarshal.unmarshal(objType, interm)
             variable.dataDict[k] = fullVal
@@ -299,7 +443,8 @@ end
 
 
 # returns a PackedVariableNodeData
-function packVariableNodeData(::G, d::VariableNodeData{T}) where {G <: AbstractDFG, T <: InferenceVariable}
+# FIXME, remove ::G
+function packVariableNodeData(d::VariableNodeData{T}) where {T <: InferenceVariable}
   @debug "Dispatching conversion variable -> packed variable for type $(string(d.variableType))"
   # TODO change to Vector{Vector{Float64}} which can be directly packed by JSON
   castval = if 0 < length(d.val)
@@ -332,6 +477,10 @@ function packVariableNodeData(::G, d::VariableNodeData{T}) where {G <: AbstractD
                                 d.solveKey)
 end
 
+
+# @deprecate 
+packVariableNodeData(::G, d::VariableNodeData{T}) where {G <: AbstractDFG, T <: InferenceVariable} = packVariableNodeData(d)
+
 function unpackVariableNodeData(dfg::G, d::PackedVariableNodeData) where G <: AbstractDFG
     @debug "Dispatching conversion packed variable -> variable for type $(string(d.variableType))"
     # Figuring out the variableType
@@ -355,12 +504,30 @@ function unpackVariableNodeData(dfg::G, d::PackedVariableNodeData) where G <: Ab
     BW = reshape(d.vecbw,r4,c4)
 
     # 
-    return VariableNodeData{T, getPointType(T)}(vals, BW, d.BayesNetOutVertIDs,
-        d.dimIDs, d.dims, d.eliminated, d.BayesNetVertID, d.separator,
-        T(), d.initialized, d.infoPerCoord, d.ismargin, d.dontmargin, 
-        d.solveInProgress, d.solvedCount, d.solveKey,
+    return VariableNodeData{T, getPointType(T)}(
+        vals, 
+        BW, 
+        Symbol.(d.BayesNetOutVertIDs),
+        d.dimIDs, 
+        d.dims, 
+        d.eliminated, 
+        Symbol(d.BayesNetVertID), 
+        Symbol.(d.separator),
+        T(), 
+        d.initialized, 
+        d.infoPerCoord, 
+        d.ismargin, 
+        d.dontmargin, 
+        d.solveInProgress, 
+        d.solvedCount, 
+        Symbol(d.solveKey),
         Dict{Symbol,Threads.Condition}() )
 end
+
+unpackVariableNodeData(
+    dfg::AbstractDFG, 
+    d::Dict) = unpackVariableNodeData(dfg, Unmarshal.unmarshal(PackedVariableNodeData, d))
+
 
 ##==============================================================================
 ## Factor Packing and unpacking
