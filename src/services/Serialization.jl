@@ -232,8 +232,15 @@ function unpackVariable(
         Dict{Symbol, MeanMaxPPE}()
     end
 
-    smallData = JSON2.read(packedProps["smallData"], Dict{Symbol, SmallDataTypes})
-
+    # Smalldata refactor to metadata
+    if (haskey(packedProps, "metadata"))
+        smallData = JSON2.read(packedProps["metadata"], Dict{Symbol, SmallDataTypes})
+    elseif(haskey(packedProps, "smallData"))
+        smallData = JSON2.read(packedProps["smallData"], Dict{Symbol, SmallDataTypes})
+    else
+        error("metadata (or smalData) keys do not exist in the raw packed data")
+    end
+    
     variableTypeString = packedProps["variableType"]
 
     variableType = getTypeFromSerializationModule(variableTypeString)

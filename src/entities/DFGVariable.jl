@@ -16,7 +16,7 @@ Data container for solver-specific data.
 Fields:
 $(TYPEDFIELDS)
 """
-mutable struct VariableNodeData{T<:InferenceVariable, P}
+Base.@kwdef mutable struct VariableNodeData{T<:InferenceVariable, P}
     val::Vector{P}
     bw::Matrix{Float64}
     BayesNetOutVertIDs::Vector{Symbol}
@@ -152,7 +152,7 @@ Packed VariabeNodeData structure for serializing DFGVariables.
 Fields:
 $(TYPEDFIELDS)
 """
-mutable struct PackedVariableNodeData
+Base.@kwdef mutable struct PackedVariableNodeData
     vecval::Array{Float64,1}
     dimval::Int
     vecbw::Array{Float64,1}
@@ -236,18 +236,22 @@ abstract type AbstractPointParametricEst end
 Data container to store Parameteric Point Estimate (PPE) for mean and max.
 """
 Base.@kwdef struct MeanMaxPPE <: AbstractPointParametricEst
+    id::Union{UUID, Nothing} = nothing # If it's blank it doesn't exist in the DB.
     # repeat key value internally (from a design request by Sam)
     solveKey::Symbol
     suggested::Vector{Float64}
     max::Vector{Float64}
     mean::Vector{Float64}
-    lastUpdatedTimestamp::DateTime = now(Dates.UTC)
+    _type::String = "MeanMaxPPE"
+    _version::String = "0.19.0"
+    createdTimestamp::Union{ZonedDateTime, Nothing} = nothing
+    lastUpdatedTimestamp::Union{ZonedDateTime, Nothing} = nothing
 end
 
 ##------------------------------------------------------------------------------
 ## Constructors
 
-MeanMaxPPE(solveKey::Symbol, suggested::Vector{Float64}, max::Vector{Float64}, mean::Vector{Float64}) = MeanMaxPPE(solveKey, suggested, max, mean, now(UTC))
+MeanMaxPPE(solveKey::Symbol, suggested::Vector{Float64}, max::Vector{Float64}, mean::Vector{Float64}) = MeanMaxPPE(nothing, solveKey, suggested, max, mean, "MeanMaxPPE", "0.19.0", now(tz"UTC"), now(tz"UTC"))
 
 ## Metadata
 """
@@ -275,7 +279,9 @@ Complete variable structure for a DistributedFactorGraph variable.
 Fields:
 $(TYPEDFIELDS)
 """
-struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
+Base.@kwdef struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
+    """The ID for the variable"""
+    id::Union{UUID, Nothing}
     """Variable label, e.g. :x1.
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
@@ -312,6 +318,7 @@ end
 The default DFGVariable constructor.
 """
 function DFGVariable(label::Symbol, variableType::Type{T};
+            id::Union{UUID,Nothing}=nothing,
             timestamp::Union{DateTime,ZonedDateTime}=now(localzone()),
             nstime::Nanosecond = Nanosecond(0),
             tags::Set{Symbol}=Set{Symbol}(),
@@ -322,9 +329,9 @@ function DFGVariable(label::Symbol, variableType::Type{T};
             solvable::Int=1) where {T <: InferenceVariable, P}
     #
     if timestamp isa DateTime
-        DFGVariable{T}(label, ZonedDateTime(timestamp, localzone()), nstime, tags, estimateDict, solverDataDict, smallData, dataDict, Ref(solvable))
+        DFGVariable{T}(id, label, ZonedDateTime(timestamp, localzone()), nstime, tags, estimateDict, solverDataDict, smallData, dataDict, Ref(solvable))
     else
-        DFGVariable{T}(label, timestamp, nstime, tags, estimateDict, solverDataDict, smallData, dataDict, Ref(solvable))
+        DFGVariable{T}(id, label, timestamp, nstime, tags, estimateDict, solverDataDict, smallData, dataDict, Ref(solvable))
     end
 end
 
@@ -388,7 +395,9 @@ Summary variable structure for a DistributedFactorGraph variable.
 Fields:
 $(TYPEDFIELDS)
 """
-struct DFGVariableSummary <: AbstractDFGVariable
+Base.@kwdef struct DFGVariableSummary <: AbstractDFGVariable
+    """The ID for the variable"""
+    id::Union{UUID, Nothing}
     """Variable label, e.g. :x1.
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
@@ -421,7 +430,9 @@ Skeleton variable structure for a DistributedFactorGraph variable.
 Fields:
 $(TYPEDFIELDS)
 """
-struct SkeletonDFGVariable <: AbstractDFGVariable
+Base.@kwdef struct SkeletonDFGVariable <: AbstractDFGVariable
+    """The ID for the variable"""
+    id::Union{UUID, Nothing}
     """Variable label, e.g. :x1.
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
@@ -430,7 +441,7 @@ struct SkeletonDFGVariable <: AbstractDFGVariable
     tags::Set{Symbol}
 end
 
-SkeletonDFGVariable(label::Symbol) = SkeletonDFGVariable(label, Set{Symbol}())
+SkeletonDFGVariable(label::Symbol) = SkeletonDFGVariable(nothing, label, Set{Symbol}())
 
 
 ##==============================================================================
@@ -445,7 +456,7 @@ const VariableDataLevel2 = Union{DFGVariable}
 ##==============================================================================
 
 DFGVariableSummary(v::DFGVariable) =
-        DFGVariableSummary(v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.ppeDict), Symbol(typeof(getVariableType(v))), v.dataDict)
+        DFGVariableSummary(v.id, v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.ppeDict), Symbol(typeof(getVariableType(v))), v.dataDict)
 
 SkeletonDFGVariable(v::VariableDataLevel1) =
-            SkeletonDFGVariable(v.label, deepcopy(v.tags))
+            SkeletonDFGVariable(v.id, v.label, deepcopy(v.tags))

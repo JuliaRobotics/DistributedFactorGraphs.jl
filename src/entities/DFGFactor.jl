@@ -36,7 +36,7 @@ Designing (WIP)
 - in DFG.AbstractRelativeMinimize <: AbstractFactor
 - in Main.SomeFactor <: AbstractRelativeMinimize
 """
-mutable struct GenericFunctionNodeData{T<:Union{<:AbstractPackedFactor, <:AbstractFactor, <:FactorOperationalMemory}}
+Base.@kwdef mutable struct GenericFunctionNodeData{T<:Union{<:AbstractPackedFactor, <:AbstractFactor, <:FactorOperationalMemory}}
     eliminated::Bool
     potentialused::Bool
     edgeIDs::Vector{Int}
@@ -101,7 +101,7 @@ Complete factor structure for a DistributedFactorGraph factor.
 Fields:
 $(TYPEDFIELDS)
 """
-struct DFGFactor{T, N} <: AbstractDFGFactor
+Base.@kwdef struct DFGFactor{T, N} <: AbstractDFGFactor
     """Factor label, e.g. :x1f1.
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
@@ -203,7 +203,7 @@ Read-only summary factor structure for a DistributedFactorGraph factor.
 Fields:
 $(TYPEDFIELDS)
 """
-struct DFGFactorSummary <: AbstractDFGFactor
+Base.@kwdef struct DFGFactorSummary <: AbstractDFGFactor
     """Factor label, e.g. :x1f1.
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
@@ -230,7 +230,7 @@ Skeleton factor structure for a DistributedFactorGraph factor.
 Fields:
 $(TYPEDFIELDS)
 """
-struct SkeletonDFGFactor <: AbstractDFGFactor
+Base.@kwdef struct SkeletonDFGFactor <: AbstractDFGFactor
     """Factor label, e.g. :x1f1.
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
