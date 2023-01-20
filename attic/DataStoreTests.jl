@@ -13,7 +13,7 @@ testDFGAPI = Neo4jDFG
 end
 # Build a basic graph.
 
-testDFGAPI = LightDFG
+testDFGAPI = GraphsDFG
 dfg = testDFGAPI{NoSolverParams}()
 #add types for softtypes
 # struct TestInferenceVariable1 <: InferenceVariable end

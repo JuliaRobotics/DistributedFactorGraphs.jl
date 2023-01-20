@@ -299,11 +299,8 @@ include("services/AbstractDFG.jl")
 include("GraphsDFG/GraphsDFG.jl")
 @reexport using .GraphsDFGs
 
-include("LightDFG/LightDFG.jl")
-@reexport using .LightDFGs
-
 #supported in Memory fg types
-const InMemoryDFGTypes = Union{GraphsDFG, LightDFG}
+const InMemoryDFGTypes = Union{GraphsDFG}
 const LocalDFG = GraphsDFG
 
 # Common includes
