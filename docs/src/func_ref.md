@@ -112,10 +112,10 @@ Modules = [DFGPlots]
 
 ## Drivers
 
-### LightDFGs
+### GraphsDFGs
 
 ```@autodocs
-Modules = [LightDFGs]
+Modules = [GraphsDFGs]
 ```
 
 ### FileDFG

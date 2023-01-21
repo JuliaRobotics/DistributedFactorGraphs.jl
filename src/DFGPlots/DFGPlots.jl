@@ -1,7 +1,7 @@
 module DFGPlots
 
 using Colors
-using LightGraphs
+using Graphs
 using ..GraphPlot
 using DocStringExtensions
 import ..GraphPlot: gplot

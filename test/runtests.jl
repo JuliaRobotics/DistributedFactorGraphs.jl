@@ -28,14 +28,13 @@ include("testBlocks.jl")
     include("compareTests.jl")
 end
 
-@testset "Testing LightDFG.FactorGraphs functions" begin
+@testset "Testing GraphsDFG.FactorGraphs functions" begin
     include("LightFactorGraphsTests.jl")
 end
 
 
 apis = [
     GraphsDFG,
-    LightDFG,
     ]
 
 for api in apis
@@ -55,13 +54,13 @@ end
     include("consol_DataEntryBlobTests.jl")
 end
 
-@testset "LightDFG subtype tests" begin
+@testset "GraphsDFG subtype tests" begin
     for type in [(var=DFGVariableSummary, fac=DFGFactorSummary), (var=SkeletonDFGVariable,fac=SkeletonDFGFactor)]
         @testset "$(type.var) and $(type.fac) tests" begin
             @info "Testing $(type.var) and $(type.fac)"
             global VARTYPE = type.var
             global FACTYPE = type.fac
-            include("LightDFGSummaryTypes.jl")
+            include("GraphsDFGSummaryTypes.jl")
         end
     end
 end
@@ -104,7 +103,7 @@ if get(ENV, "IIF_TEST", "") == "true"
         # This is just to validate we're not going to blow up downstream.
         apis = [
             # GraphsDFG{SolverParams}(),
-            LightDFG(solverParams=SolverParams(), userId="test@navability.io"),
+            GraphsDFG(solverParams=SolverParams(), userId="test@navability.io"),
             ]
         for api in apis
             @info "Running simple solver test: $(typeof(api))"

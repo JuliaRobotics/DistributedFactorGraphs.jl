@@ -11,7 +11,7 @@ using TimeZones
 include("testBlocks.jl")
 
 testDFGAPI = Neo4jDFG
-testDFGAPI = LightDFG
+testDFGAPI = GraphsDFG
 
 # Enable debug logging
 using Logging
