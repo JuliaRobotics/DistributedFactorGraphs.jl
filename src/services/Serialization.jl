@@ -12,6 +12,25 @@ import JSON.Writer: StructuralContext, JSONContext, show_json
 import JSON.Serializations: CommonSerialization, StandardSerialization
 JSON.show_json(io::JSONContext, serialization::CommonSerialization, uuid::UUID) = print(io.io, "\"$uuid\"")
 
+# Need to implement this to allow Unmarshal to deserialize Nullable UUIDs and ZonedDateTimes
+# TODO: Move to JSON3.
+import Unmarshal: unmarshal
+
+function unmarshal(::Type{Union{UUID, Nothing}}, x, verbose :: Bool = false, verboseLvl :: Int = 0)
+    if x !== nothing 
+        return UUID(x)
+    else 
+        return nothing
+    end
+end
+function unmarshal(::Type{Union{ZonedDateTime, Nothing}}, x, verbose :: Bool = false, verboseLvl :: Int = 0) 
+    if x !== nothing 
+        return ZonedDateTime(x)
+    else 
+        return nothing
+    end
+end
+
 ## Version checking
 function _getDFGVersion()
     if haskey(Pkg.dependencies(), Base.UUID("b5cc3c7e-6572-11e9-2517-99fb8daf2f04"))
@@ -61,13 +80,6 @@ function standardizeZDTStrings!(T, interm::Dict)
         end
     end
     nothing
-end
-
-function string2ZonedDateTime(stringTimestamp) 
-    #   ss = split(stringTimestamp, r"(T[0-9.:]*?\K(?=[-+Zz]))|[\[\]]")
-  ss = split(stringTimestamp, r"T[\d.:]{5,12}?\K(?=[-+Zz])")
-  length(ss) != 2 && error("Misformed zoned timestamp string $stringTimestamp")
-  ZonedDateTime(DateTime(ss[1]), TimeZone(ss[2]))
 end
 
 # variableType module.type string functions
@@ -224,16 +236,16 @@ end
 function packVariable(v::DFGVariable) 
     props = Dict{String, Any}()
     props["label"] = string(v.label)
-    props["timestamp"] = Dates.format(v.timestamp, "yyyy-mm-ddTHH:MM:SS.ssszzz")
-    props["nstime"] = string(v.nstime.value)
-    props["tags"] = v.tags # JSON2.write(v.tags)
-    props["ppeDict"] = v.ppeDict # JSON2.write(v.ppeDict)
-    props["solverDataDict"] = (Dict(keys(v.solverDataDict) .=> map(vnd -> packVariableNodeData(vnd), values(v.solverDataDict)))) # JSON2.write
-    props["smallData"] = v.smallData # JSON2.write(v.smallData)
+    props["timestamp"] = v.timestamp 
+    props["nstime"] = v.nstime.value
+    props["tags"] = v.tags 
+    props["ppeDict"] = v.ppeDict 
+    props["solverDataDict"] = (Dict(keys(v.solverDataDict) .=> map(vnd -> packVariableNodeData(vnd), values(v.solverDataDict)))) 
+    props["metadata"] = v.smallData 
     props["solvable"] = v.solvable
     props["variableType"] = typeModuleName(getVariableType(v))
-    props["dataEntry"] = (Dict(keys(v.dataDict) .=> values(v.dataDict))) # map(bde -> JSON.json(bde), values(v.dataDict))))  #JSON2.write
-    props["dataEntryType"] = (Dict(keys(v.dataDict) .=> map(bde -> typeof(bde), values(v.dataDict)))) #JSON2.write
+    props["dataEntry"] = (Dict(keys(v.dataDict) .=> values(v.dataDict))) # map(bde -> JSON.json(bde), values(v.dataDict))))  
+    props["dataEntryType"] = (Dict(keys(v.dataDict) .=> map(bde -> typeof(bde), values(v.dataDict)))) 
     props["_version"] = _getDFGVersion()
     return props #::Dict{String, Any}
 end
@@ -248,12 +260,6 @@ function _unpackPPE(
         packedPPE::Dict{String, Any};
         _type = pop!(packedPPE, "_type") # required for generic use
     )
-    #
-    # Cleanup Zoned timestamp, which is always UTC
-    if packedPPE["lastUpdatedTimestamp"][end] == 'Z'
-        packedPPE["lastUpdatedTimestamp"] = packedPPE["lastUpdatedTimestamp"][1:end-1]
-    end
-
     # !haskey(packedPPE, "_type") && error("Cannot find type key '_type' in packed PPE data")
     if (_type === nothing || _type == "")
         @warn "Cannot deserialize PPE, unknown type key, trying DistributedFactorGraphs.MeanMaxPPE" _type
@@ -265,33 +271,8 @@ function _unpackPPE(
         ppeType,
         packedPPE
     )
-    # _pk = Symbol(packedPPE["solveKey"])
-    # ppe = MeanMaxPPE(;
-    #             solveKey=_pk,
-    #             suggested=float.(pd["suggested"]),
-    #             max=float.(pd["max"]),
-    #             mean=float.(pd["mean"]),
-    #             lastUpdatedTimestamp=DateTime(string(pd["lastUpdatedTimestamp"]))
-    #         )
 
     return ppe
-end
-
-"""
-$(SIGNATURES)
-
-Unpack a Dict{String, Any} into a PPE.
-
-Notes:
-- returns `::VariableNodeData`
-"""
-function _unpackVariableNodeData(
-        dfg::AbstractDFG, 
-        packedDict::Dict{String, Any}
-    )
-    #
-    packedVND = Unmarshal.unmarshal(PackedVariableNodeData, packedDict)
-    return unpackVariableNodeData(dfg, packedVND)
 end
 
 """
@@ -314,6 +295,8 @@ function unpackVariable(
     @debug "Unpacking variable:\r\n$packedProps"
     # Version checking.
     !skipVersionCheck && _versionCheck(packedProps)
+    id = if haskey(packedProps, "id") 
+        UUID(packedProps["id"]) else nothing end
     label = Symbol(packedProps["label"])
     # Make sure that the timestamp is correctly formatted with subseconds
     packedProps["timestamp"] = getStandardZDTString(packedProps["timestamp"])
@@ -369,7 +352,7 @@ function unpackVariable(
             packedProps["solverDataDict"]
         end
         Dict{Symbol, VariableNodeData{variableType, pointType}}(Symbol.(keys(packed)) .=> map(p -> unpackVariableNodeData(dfg, p), values(packed)))
-    elseif unpackPPEs && haskey(packedProps,"solverData") && packedProps["solverData"] isa AbstractVector
+    elseif unpackSolverData && haskey(packedProps,"solverData") && packedProps["solverData"] isa AbstractVector
         solverdict = Dict{Symbol, VariableNodeData{variableType, pointType}}()
         for sd in packedProps["solverData"]
             solverdict[Symbol(sd["solveKey"])] = _unpackVariableNodeData(dfg, sd)
@@ -381,7 +364,8 @@ function unpackVariable(
     # Rebuild DFGVariable using the first solver variableType in solverData
     # @info "dbg Serialization 171" variableType Symbol(packedProps["label"]) timestamp nstime ppeDict solverData smallData Dict{Symbol,AbstractDataEntry}() Ref(packedProps["solvable"])
     # variable = DFGVariable{variableType}(Symbol(packedProps["label"]), timestamp, nstime, Set(tags), ppeDict, solverData,  smallData, Dict{Symbol,AbstractDataEntry}(), Ref(packedProps["solvable"]))
-    variable = DFGVariable( Symbol(packedProps["label"]), 
+    variable = DFGVariable( id = id,
+                            Symbol(packedProps["label"]), 
                             variableType, 
                             timestamp=timestamp, 
                             nstime=nstime, 
@@ -443,10 +427,8 @@ end
 
 
 # returns a PackedVariableNodeData
-# FIXME, remove ::G
 function packVariableNodeData(d::VariableNodeData{T}) where {T <: InferenceVariable}
   @debug "Dispatching conversion variable -> packed variable for type $(string(d.variableType))"
-  # TODO change to Vector{Vector{Float64}} which can be directly packed by JSON
   castval = if 0 < length(d.val)
     precast = getCoordinates.(T, d.val)
     @cast castval[i,j] := precast[j][i]
@@ -455,14 +437,7 @@ function packVariableNodeData(d::VariableNodeData{T}) where {T <: InferenceVaria
     zeros(1,0)
   end
   _val = castval[:]
-#   castbw = if 0 < length(d.bw)
-#     @cast castbw[i,j] := d.bw[j][i]
-#     castbw
-#   else
-#     zeros(1,0)
-#   end
-#   _bw = castbw[:]
-  return PackedVariableNodeData(_val, size(castval,1),
+  return PackedVariableNodeData(d.id, _val, size(castval,1),
                                 d.bw[:], size(d.bw,1),
                                 d.BayesNetOutVertIDs,
                                 d.dimIDs, d.dims, d.eliminated,
@@ -474,14 +449,11 @@ function packVariableNodeData(d::VariableNodeData{T}) where {T <: InferenceVaria
                                 d.dontmargin,
                                 d.solveInProgress,
                                 d.solvedCount,
-                                d.solveKey)
+                                d.solveKey,
+                                _getDFGVersion())
 end
 
-
-# @deprecate 
-packVariableNodeData(::G, d::VariableNodeData{T}) where {G <: AbstractDFG, T <: InferenceVariable} = packVariableNodeData(d)
-
-function unpackVariableNodeData(dfg::G, d::PackedVariableNodeData) where G <: AbstractDFG
+function unpackVariableNodeData(d::PackedVariableNodeData)
     @debug "Dispatching conversion packed variable -> variable for type $(string(d.variableType))"
     # Figuring out the variableType
     # TODO deprecated remove in v0.11 - for backward compatibility for saved variableTypes. 
@@ -505,6 +477,7 @@ function unpackVariableNodeData(dfg::G, d::PackedVariableNodeData) where G <: Ab
 
     # 
     return VariableNodeData{T, getPointType(T)}(
+        d.id,
         vals, 
         BW, 
         Symbol.(d.BayesNetOutVertIDs),
@@ -524,11 +497,6 @@ function unpackVariableNodeData(dfg::G, d::PackedVariableNodeData) where G <: Ab
         Dict{Symbol,Threads.Condition}() )
 end
 
-unpackVariableNodeData(
-    dfg::AbstractDFG, 
-    d::Dict) = unpackVariableNodeData(dfg, Unmarshal.unmarshal(PackedVariableNodeData, d))
-
-
 ##==============================================================================
 ## Factor Packing and unpacking
 ##==============================================================================
@@ -536,18 +504,12 @@ unpackVariableNodeData(
 
 function _packSolverData(
         f::DFGFactor, 
-        fnctype::AbstractFactor; 
-        base64Encode::Bool=false )
+        fnctype::AbstractFactor)
     #
     packtype = convertPackedType(fnctype)
     try
         packed = convert( PackedFunctionNodeData{packtype}, getSolverData(f) )
-        packedJson = packed # JSON2.write(packed) # NOTE SINGLE TOP LEVEL JSON.write ONLY
-        if base64Encode
-            # 833, 848, Neo4jDFG still using base64(JSON2.write(solverdata))...
-            packedJson = JSON2.write(packed)
-            packedJson = base64encode(packedJson)
-        end
+        packedJson = packed
         return packedJson
     catch ex
         io = IOBuffer()

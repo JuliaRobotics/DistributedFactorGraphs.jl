@@ -17,6 +17,7 @@ Fields:
 $(TYPEDFIELDS)
 """
 Base.@kwdef mutable struct VariableNodeData{T<:InferenceVariable, P}
+    id::Union{UUID, Nothing} # If it's blank it doesn't exist in the DB.
     val::Vector{P}
     bw::Matrix{Float64}
     BayesNetOutVertIDs::Vector{Symbol}
@@ -44,9 +45,9 @@ Base.@kwdef mutable struct VariableNodeData{T<:InferenceVariable, P}
 
     events::Dict{Symbol,Threads.Condition}
 
-    # VariableNodeData{T,P}() = new{T,P}()
     VariableNodeData{T,P}(w...)  where {T <:InferenceVariable, P} = new{T,P}(w...)
     VariableNodeData{T,P}(;solveKey::Symbol=:default ) where {T <:InferenceVariable, P} = new{T,P}(
+            nothing,
             Vector{P}(), 
             zeros(0,0), 
             Symbol[], 
@@ -72,34 +73,6 @@ end
 
 VariableNodeData{T}(;solveKey::Symbol=:default ) where T <: InferenceVariable = VariableNodeData{T, getPointType(T)}(solveKey=solveKey)
 
-# VariableNodeData(   val::Vector{P},
-#                     bw::Matrix{<:Real},
-#                     BayesNetOutVertIDs::AbstractVector{Symbol},
-#                     dimIDs::AbstractVector{Int},
-#                     dims::Int,
-#                     eliminated::Bool,
-#                     BayesNetVertID::Symbol,
-#                     separator::Array{Symbol,1},
-#                     variableType::T,
-#                     initialized::Bool,
-#                     inferdim::Float64,
-#                     ismargin::Bool,
-#                     dontmargin::Bool,
-#                     solveInProgress::Int=0,
-#                     solvedCount::Int=0,
-#                     solveKey::Symbol=:default,
-#                     events::Dict{Symbol,Threads.Condition}=Dict{Symbol,Threads.Condition}()
-#                 ) where {T <: InferenceVariable, P} = 
-#                     VariableNodeData{T,P}(  val,bw,BayesNetOutVertIDs,dimIDs,dims,
-#                                             eliminated,BayesNetVertID,separator,
-#                                             variableType,initialized,inferdim,ismargin,
-#                                             dontmargin, solveInProgress, solvedCount, 
-#                                             solveKey, events  )
-#
-
-
-#
-
 VariableNodeData(   val::Vector{P},
                     bw::AbstractMatrix{<:Real},
                     BayesNetOutVertIDs::AbstractVector{Symbol},
@@ -116,9 +89,10 @@ VariableNodeData(   val::Vector{P},
                     solveInProgress::Int=0,
                     solvedCount::Int=0,
                     solveKey::Symbol=:default,
-                    events::Dict{Symbol,Threads.Condition}=Dict{Symbol,Threads.Condition}()
+                    events::Dict{Symbol,Threads.Condition}=Dict{Symbol,Threads.Condition}();
+                    id::Union{UUID, Nothing}=nothing
                 ) where {T <: InferenceVariable, P} =
-                    VariableNodeData{T,P}(  val,bw,BayesNetOutVertIDs,dimIDs,dims,
+                    VariableNodeData{T,P}(  id, val,bw,BayesNetOutVertIDs,dimIDs,dims,
                                             eliminated,BayesNetVertID,separator,
                                             variableType,initialized,ipc,ismargin,
                                             dontmargin, solveInProgress, solvedCount,
@@ -153,16 +127,17 @@ Fields:
 $(TYPEDFIELDS)
 """
 Base.@kwdef mutable struct PackedVariableNodeData
-    vecval::Array{Float64,1}
+    id::Union{UUID, Nothing} # If it's blank it doesn't exist in the DB.
+    vecval::Vector{Float64}
     dimval::Int
-    vecbw::Array{Float64,1}
+    vecbw::Vector{Float64}
     dimbw::Int
-    BayesNetOutVertIDs::Array{Symbol,1} # Int
-    dimIDs::Array{Int,1}
+    BayesNetOutVertIDs::Vector{Symbol} # Int
+    dimIDs::Vector{Int}
     dims::Int
     eliminated::Bool
     BayesNetVertID::Symbol # Int
-    separator::Array{Symbol,1} # Int
+    separator::Vector{Symbol} # Int
     variableType::String
     initialized::Bool
     infoPerCoord::Vector{Float64}
@@ -171,50 +146,7 @@ Base.@kwdef mutable struct PackedVariableNodeData
     solveInProgress::Int
     solvedCount::Int
     solveKey::Symbol
-    PackedVariableNodeData() = new()
-    PackedVariableNodeData(x1::Vector{Float64},
-                         x2::Int,
-                         x3::Vector{Float64},
-                         x4::Int,
-                         x5::Vector{Symbol}, # Int
-                         x6::Vector{Int},
-                         x7::Int,
-                         x8::Bool,
-                         x9::Symbol, # Int
-                         x10::Vector{Symbol}, # Int
-                         x11::String,
-                         x12::Bool,
-                         x13::AbstractVector{<:Real},
-                         x14::Bool,
-                         x15::Bool,
-                         x16::Int,
-                         solvedCount::Int,
-                         solveKey::Symbol) = new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16, solvedCount, solveKey)
-     # More permissive constructor needed for unmarshalling
-     PackedVariableNodeData(x1::Vector,
-                          x2::Int,
-                          x3::Vector,
-                          x4::Int,
-                          x5::Vector, # Int
-                          x6::Vector,
-                          x7::Int,
-                          x8::Bool,
-                          x9::Symbol, # Int
-                          x10::Vector, # Int
-                          x11::String,
-                          x12::Bool,
-                          x13::AbstractVector{<:Real},
-                          x14::Bool,
-                          x15::Bool,
-                          x16::Int,
-                          solvedCount::Int,
-                          solveKey::Symbol) = new(
-                                convert(Vector{Float64},x1),x2,
-                                convert(Vector{Float64},x3),x4,
-                                convert(Vector{Symbol},x5),
-                                convert(Vector{Int},x6),x7,x8,x9,
-                                convert(Vector{Symbol},x10),x11,x12,
-                                x13,x14,x15,x16, solvedCount, solveKey )
+    _version::String = _getDFGVersion()
 end
 
 ##==============================================================================
@@ -243,7 +175,7 @@ Base.@kwdef struct MeanMaxPPE <: AbstractPointParametricEst
     max::Vector{Float64}
     mean::Vector{Float64}
     _type::String = "MeanMaxPPE"
-    _version::String = "0.19.0"
+    _version::String = _getDFGVersion()
     createdTimestamp::Union{ZonedDateTime, Nothing} = nothing
     lastUpdatedTimestamp::Union{ZonedDateTime, Nothing} = nothing
 end
@@ -251,7 +183,7 @@ end
 ##------------------------------------------------------------------------------
 ## Constructors
 
-MeanMaxPPE(solveKey::Symbol, suggested::Vector{Float64}, max::Vector{Float64}, mean::Vector{Float64}) = MeanMaxPPE(nothing, solveKey, suggested, max, mean, "MeanMaxPPE", "0.19.0", now(tz"UTC"), now(tz"UTC"))
+MeanMaxPPE(solveKey::Symbol, suggested::Vector{Float64}, max::Vector{Float64}, mean::Vector{Float64}) = MeanMaxPPE(nothing, solveKey, suggested, max, mean, "MeanMaxPPE", _getDFGVersion(), now(tz"UTC"), now(tz"UTC"))
 
 ## Metadata
 """
