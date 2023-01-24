@@ -524,16 +524,18 @@ end
 function packFactor(dfg::AbstractDFG, f::DFGFactor)
     # Construct the properties to save
     props = Dict{String, Any}()
+    props["id"] = f.id !== nothing ? string(f.id) : nothing
     props["label"] = string(f.label)
-    props["timestamp"] = Dates.format(f.timestamp, "yyyy-mm-ddTHH:MM:SS.ssszzz")
-    props["nstime"] = string(f.nstime.value)
-    props["tags"] = String.(f.tags) # JSON2.write(f.tags)
+    props["timestamp"] = string(f.timestamp)
+    props["nstime"] = f.nstime.value
+    props["tags"] = f.tags
+    props["metadata"] = f.smallData 
     # Pack the node data
     fnctype = getSolverData(f).fnc.usrfnc!
     props["data"] = _packSolverData(f, fnctype)
     # Include the type
     props["fnctype"] = String(_getname(fnctype))
-    props["_variableOrderSymbols"] = String.(f._variableOrderSymbols) # JSON2.write(f._variableOrderSymbols)
+    props["_variableOrderSymbols"] = f._variableOrderSymbols # JSON2.write(f._variableOrderSymbols)
     props["solvable"] = getSolvable(f)
     props["_version"] = _getDFGVersion()
     return props
@@ -553,25 +555,45 @@ function decodePackedType(dfg::AbstractDFG, varOrder::AbstractVector{Symbol}, ::
     return factordata
 end
 
-function Base.convert(::Type{PF}, nt::NamedTuple) where {PF <: AbstractPackedFactor}
-    # Here we define a convention, must provide PackedType(;kw...) constructor, easiest is just use Base.@kwdef
-    PF(;nt...)
-end
+# function Base.convert(::Type{PF}, nt::NamedTuple) where {PF <: AbstractPackedFactor}
+#     # Here we define a convention, must provide PackedType(;kw...) constructor, easiest is just use Base.@kwdef
+#     PF(;nt...)
+# end
 
-function Base.convert(::Type{GenericFunctionNodeData{P}}, nt::NamedTuple) where P
-    GenericFunctionNodeData{P}(
-        nt.eliminated,
-        nt.potentialused,
-        nt.edgeIDs,
-        convert(P,nt.fnc),
-        nt.multihypo,
-        nt.certainhypo,
-        nt.nullhypo,
-        nt.solveInProgress,
-        nt.inflation,
+# function Base.convert(::Type{GenericFunctionNodeData{P}}, nt::NamedTuple) where P
+#     GenericFunctionNodeData{P}(
+#         nt.eliminated,
+#         nt.potentialused,
+#         nt.edgeIDs,
+#         convert(P,nt.fnc),
+#         nt.multihypo,
+#         nt.certainhypo,
+#         nt.nullhypo,
+#         nt.solveInProgress,
+#         nt.inflation,
+#     )
+# end
+
+# TODO: REFACTOR THIS AS A JSON3 STRUCT DESERIALIZER.
+function fncStringToData(fncType::String, data::Union{String, NamedTuple})
+    packtype = DFG.getTypeFromSerializationModule("Packed"*fncType)
+    # Convert string to Named Tuples for kwargs
+    fncData = data isa AbstractString ? JSON2.read(data) : data
+
+    packed = GenericFunctionNodeData{packtype}(
+        fncData.eliminated,
+        fncData.potentialused,
+        fncData.edgeIDs,
+        # NamedTuple args become kwargs with the splat
+        packtype(;fncData.fnc...),
+        fncData.multihypo,
+        fncData.certainhypo,
+        fncData.nullhypo,
+        fncData.solveInProgress,
+        fncData.inflation,
     )
+    return packed
 end
-
 
 # Returns `::DFGFactor`
 function unpackFactor(
@@ -582,32 +604,33 @@ function unpackFactor(
     # Version checking.
     !skipVersionCheck && _versionCheck(packedProps)
 
+    id = if haskey(packedProps, "id") && packedProps["id"] !== nothing 
+        UUID(packedProps["id"]) else nothing end
     label = packedProps["label"]
-    # Make sure that the timestamp is correctly formatted with subseconds
-    packedProps["timestamp"] = getStandardZDTString(packedProps["timestamp"])
-    # Parse it
+
     timestamp = ZonedDateTime(packedProps["timestamp"])
     nstime = Nanosecond(get(packedProps, "nstime", 0))
-
-    _vecSymbol(vecstr) = Symbol[map(x->Symbol(x),vecstr)...]
 
     # Get the stored tags and variable order
     @assert !(packedProps["tags"] isa String) "unpackFactor expecting JSON only data, packed `tags` should be a vector of strings (not a single string of elements)."
     @assert !(packedProps["_variableOrderSymbols"] isa String) "unpackFactor expecting JSON only data, packed `_variableOrderSymbols` should be a vector of strings (not a single string of elements)."
-    tags = _vecSymbol(packedProps["tags"])
-    _variableOrderSymbols = _vecSymbol(packedProps["_variableOrderSymbols"])
+    tags = Symbol.(packedProps["tags"])
+    _variableOrderSymbols = Symbol.(packedProps["_variableOrderSymbols"])
 
     data = packedProps["data"]
+    if(data isa AbstractString)
+        data = JSON2.read(data)
+    end
     datatype = packedProps["fnctype"]
     @debug "DECODING factor type = '$(datatype)' for factor '$label'"
-    packtype = getTypeFromSerializationModule("Packed"*datatype)
+    # packtype = getTypeFromSerializationModule("Packed"*datatype)
 
     # FIXME type instability from nothing to T
     packed = nothing
     fullFactorData = nothing
     
     try
-        packed = convert(GenericFunctionNodeData{packtype}, data) 
+        packed = fncStringToData(datatype, data) #convert(GenericFunctionNodeData{packtype}, data) 
         decodeType = getFactorOperationalMemoryType(dfg)
         fullFactorData = decodePackedType(dfg, _variableOrderSymbols, decodeType, packed)
     catch ex
@@ -620,6 +643,8 @@ function unpackFactor(
 
     solvable = packedProps["solvable"]
 
+    smallData = Dict{Symbol, SmallDataTypes}( Symbol.(keys(packedProps["metadata"])) .=> values(packedProps["metadata"]) )
+
     # Rebuild DFGFactor
     #TODO use constuctor to create factor
     factor = DFGFactor( Symbol(label),
@@ -628,7 +653,9 @@ function unpackFactor(
                         Set(tags),
                         fullFactorData,
                         solvable,
-                        Tuple(_variableOrderSymbols))
+                        Tuple(_variableOrderSymbols),
+                        id = id,
+                        smallData = smallData)
     #
 
     # Note, once inserted, you still need to call rebuildFactorMetadata!

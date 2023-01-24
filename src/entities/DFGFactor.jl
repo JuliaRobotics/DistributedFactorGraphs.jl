@@ -102,26 +102,31 @@ Fields:
 $(TYPEDFIELDS)
 """
 Base.@kwdef struct DFGFactor{T, N} <: AbstractDFGFactor
+    """The ID for the factor"""
+    id::Union{UUID, Nothing}
     """Factor label, e.g. :x1f1.
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
+    """Factor tags, e.g [:FACTOR].
+    Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
+    tags::Set{Symbol}
+    """Internal cache of the ordering of the neighbor variables. Rather use getVariableOrder to get the list as this is an internal value.
+    Accessors: [`getVariableOrder`](@ref)"""
+    _variableOrderSymbols::NTuple{N,Symbol}
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref), [`setTimestamp`](@ref)"""
     timestamp::ZonedDateTime
     """Nano second time, for more resolution on timestamp (only subsecond information)"""
     nstime::Nanosecond
-    """Factor tags, e.g [:FACTOR].
-    Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
-    tags::Set{Symbol}
     """Solver data.
     Accessors: [`getSolverData`](@ref), [`setSolverData!`](@ref)"""
     solverData::Base.RefValue{GenericFunctionNodeData{T}}
     """Solvable flag for the factor.
     Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)"""
     solvable::Base.RefValue{Int}
-    """Internal cache of the ordering of the neighbor variables. Rather use getVariableOrder to get the list as this is an internal value.
-    Accessors: [`getVariableOrder`](@ref)"""
-    _variableOrderSymbols::NTuple{N,Symbol}
+    """Dictionary of small data associated with this variable.
+    Accessors: [`getSmallData`](@ref), [`setSmallData!`](@ref)"""
+    smallData::Dict{Symbol, SmallDataTypes}
     # Inner constructor
     function DFGFactor{T}(label::Symbol,
                  timestamp::Union{DateTime,ZonedDateTime},
@@ -129,14 +134,10 @@ Base.@kwdef struct DFGFactor{T, N} <: AbstractDFGFactor
                  tags::Set{Symbol},
                  solverData::GenericFunctionNodeData{T},
                  solvable::Int,
-                 _variableOrderSymbols::NTuple{N,Symbol}) where {T,N}
-
-        #TODO Deprecate remove in v0.10.
-        if timestamp isa DateTime
-            Base.depwarn("DFGFactor timestamp field is now a ZonedTimestamp", :DFGFactor)
-            return new{T,N}(label, ZonedDateTime(timestamp, localzone()), nstime, tags, Ref(solverData), Ref(solvable), _variableOrderSymbols)
-        end
-        return new{T,N}(label, timestamp, nstime, tags, Ref(solverData), Ref(solvable), _variableOrderSymbols)
+                 _variableOrderSymbols::NTuple{N,Symbol};
+                 id::Union{UUID, Nothing} = nothing,
+                smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}()) where {T,N}
+        return new{T,N}(id, label, tags, _variableOrderSymbols, timestamp, nstime, Ref(solverData), Ref(solvable), smallData)
     end
 
 end
@@ -155,8 +156,10 @@ DFGFactor(label::Symbol,
           tags::Set{Symbol},
           solverData::GenericFunctionNodeData{T},
           solvable::Int,
-          _variableOrderSymbols::Tuple) where {T} =
-          DFGFactor{T}(label, timestamp, nstime, tags, solverData, solvable, _variableOrderSymbols)
+          _variableOrderSymbols::Tuple;
+          id::Union{UUID, Nothing} = nothing,
+          smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}()) where {T} =
+          DFGFactor{T}(label, timestamp, nstime, tags, solverData, solvable, _variableOrderSymbols, id=id, smallData=smallData)
 
 
 DFGFactor{T}(label::Symbol, variableOrderSymbols::Vector{Symbol}, timestamp::Union{DateTime,ZonedDateTime}=now(localzone()), data::GenericFunctionNodeData{T} = GenericFunctionNodeData{T}()) where {T} =
@@ -169,8 +172,10 @@ DFGFactor(label::Symbol,
           tags::Set{Symbol}=Set{Symbol}(),
           timestamp::Union{DateTime,ZonedDateTime}=now(localzone()),
           solvable::Int=1,
-          nstime::Nanosecond = Nanosecond(0)) where {T} =
-                DFGFactor{T}(label, timestamp, nstime, tags, data, solvable, Tuple(variableOrderSymbols))
+          nstime::Nanosecond = Nanosecond(0),
+          id::Union{UUID, Nothing} = nothing,
+          smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}()) where {T} =
+                DFGFactor{T}(label, timestamp, nstime, tags, data, solvable, Tuple(variableOrderSymbols), id=id, smallData=smallData)
 
 
 
@@ -204,18 +209,20 @@ Fields:
 $(TYPEDFIELDS)
 """
 Base.@kwdef struct DFGFactorSummary <: AbstractDFGFactor
+    """The ID for the factor"""
+    id::Union{UUID, Nothing}
     """Factor label, e.g. :x1f1.
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
-    """Variable timestamp.
-    Accessors: [`getTimestamp`](@ref)"""
-    timestamp::ZonedDateTime
     """Factor tags, e.g [:FACTOR].
     Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
     tags::Set{Symbol}
     """Internal cache of the ordering of the neighbor variables. Rather use getNeighbors to get the list as this is an internal value.
     Accessors: [`getVariableOrder`](@ref)"""
     _variableOrderSymbols::Vector{Symbol}
+    """Variable timestamp.
+    Accessors: [`getTimestamp`](@ref)"""
+    timestamp::ZonedDateTime
 end
 
 ##------------------------------------------------------------------------------
@@ -231,6 +238,8 @@ Fields:
 $(TYPEDFIELDS)
 """
 Base.@kwdef struct SkeletonDFGFactor <: AbstractDFGFactor
+    """The ID for the factor"""
+    id::Union{UUID, Nothing}
     """Factor label, e.g. :x1f1.
     Accessor: [`getLabel`](@ref)"""
     label::Symbol

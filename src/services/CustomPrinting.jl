@@ -29,6 +29,7 @@ function printVariable( io::IO, vert::DFGVariable;
         catch e
         end
         vnd = haskey(vert.solverDataDict, :default) ? getSolverData(vert, :default) : nothing
+        println(ioc, "  ID:         ", vert.id)
         println(ioc, "  timestamp:  ", vert.timestamp)
         println(ioc, "   nstime:    ", vert.nstime)
         print(ioc,   "  label:      ")
@@ -51,7 +52,7 @@ function printVariable( io::IO, vert::DFGVariable;
         
         if vnd !== nothing
             println(ioc, "    :default <-- VariableNodeData")
-            println(ioc, "      initilized:        ", isInitialized(vert, :default))
+            println(ioc, "      initialized:        ", isInitialized(vert, :default))
             println(ioc, "      marginalized:      ", isMarginalized(vert, :default))
             println(ioc, "      size bel. samples: ", size(vnd.val))
             print(ioc, "      kde bandwidths:    ")
@@ -116,6 +117,7 @@ function printFactor(   io::IO, vert::DFGFactor;
         printstyled(ioc, fctt.name.name,bold=true, color=:blue)
         printstyled(ioc, "...}}", bold=true)
         println(ioc)
+        println(ioc, "  ID:            ", vert.id)
         println(ioc, "  timestamp:     ", vert.timestamp)
         println(ioc, "   nstime:       ", vert.nstime)
         print(ioc,   "  label:         ")

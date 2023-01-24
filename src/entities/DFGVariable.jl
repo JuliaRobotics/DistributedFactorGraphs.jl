@@ -198,8 +198,6 @@ getEstimateFields(::MeanMaxPPE) = [:suggested, :max, :mean]
 ## DFG Variables
 ##==============================================================================
 
-const SmallDataTypes = Union{Int, Float64, String, Bool, Vector{Int}, Vector{Float64}, Vector{String}, Vector{Bool}}
-
 ##------------------------------------------------------------------------------
 ## DFGVariable lv2
 ##------------------------------------------------------------------------------
