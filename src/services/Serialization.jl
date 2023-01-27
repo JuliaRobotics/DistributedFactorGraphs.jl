@@ -307,7 +307,11 @@ function unpackVariable(
 
     # FIXME, drop nested packing, see DFG #867
     #   string serialization using packVariable and CGDFG serialization (Vector{String})
-    tags = Symbol.(packedProps["tags"])
+    tags_ = if packedProps["tags"] isa String
+        Symbol.(JSON2.read(packedProps["tags"], Vector{String}))
+    else
+        Symbol.(packedProps["tags"])
+    end
 
     # FIXME, drop nested packing, see DFG #867
     ppeDict = if unpackPPEs && haskey(packedProps,"ppesDict")
@@ -345,15 +349,24 @@ function unpackVariable(
     isnothing(variableType) && error("Cannot deserialize variableType '$variableTypeString' in variable '$label'")
     pointType = getPointType(variableType)
 
+    _ensureid!(s::Dict) = begin s["id"] = haskey(s, "id") ? s["id"] : nothing end
+    _ensureid!(s::PackedVariableNodeData) = s
+
     # FIXME, drop nested packing, see DFG #867
     solverData = if unpackSolverData && haskey(packedProps, "solverDataDict")
         packed = if packedProps["solverDataDict"] isa String
-            JSON2.read(packedProps["solverDataDict"], Dict{String, PackedVariableNodeData})
+            # JSON2.read(packedProps["solverDataDict"], Dict{String, PackedVariableNodeData})
+            # JSON3.read(packedProps["solverDataDict"], Dict{String, PackedVariableNodeData})
+            jdc = JSON.parse(packedProps["solverDataDict"])
+            jpvd = Dict{String,PackedVariableNodeData}()
+            for (k,v) in jdc
+                _ensureid!(v)
+                jpvd[k] = transcodeType(PackedVariableNodeData, v)
+            end
+            jpvd
         else
             packedProps["solverDataDict"]
         end
-        _ensureid!(s::Dict) = begin s["id"]=nothing; end
-        _ensureid!(s::PackedVariableNodeData) = s
         packedvals = values(packed)
         _ensureid!.(packedvals)
         # TODO deprecate, this is for DFG18 compat only
@@ -365,17 +378,20 @@ function unpackVariable(
     # Rebuild DFGVariable using the first solver variableType in solverData
     # @info "dbg Serialization 171" variableType Symbol(packedProps["label"]) timestamp nstime ppeDict solverData smallData Dict{Symbol,AbstractDataEntry}() Ref(packedProps["solvable"])
     # variable = DFGVariable{variableType}(Symbol(packedProps["label"]), timestamp, nstime, Set(tags), ppeDict, solverData,  smallData, Dict{Symbol,AbstractDataEntry}(), Ref(packedProps["solvable"]))
-    variable = DFGVariable( id = id,
-                            Symbol(packedProps["label"]), 
-                            variableType, 
-                            timestamp=timestamp, 
-                            nstime=nstime, 
-                            tags=Set{Symbol}(tags), 
-                            estimateDict=ppeDict, 
-                            solverDataDict=solverData,  
-                            smallData=smallData, 
-                            dataDict=Dict{Symbol,AbstractDataEntry}(), 
-                            solvable=packedProps["solvable"] )
+    
+    variable = DFGVariable{variableType}(;
+        id=id,
+        label = Symbol(packedProps["label"]), 
+        # variableType = variableType, 
+        timestamp = timestamp, 
+        nstime = nstime, 
+        tags = Set{Symbol}(tags_), 
+        ppeDict = ppeDict, 
+        solverDataDict = solverData,  
+        smallData= smallData, 
+        dataDict = Dict{Symbol,AbstractDataEntry}(), 
+        solvable = Ref(Int(packedProps["solvable"])) 
+    )
     #
 
     # Now rehydrate complete DataEntry type.

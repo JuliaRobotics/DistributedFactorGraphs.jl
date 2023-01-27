@@ -129,7 +129,7 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString)
 
     varFiles = readdir(varFolder)
     factorFiles = readdir(factorFolder)
-    for varFile in varFiles
+    @showprogress 1 "loading variables" for varFile in varFiles
         packedData = JSON.parsefile("$varFolder/$varFile"; dicttype=Dict{String, Any})
         # open("$varFolder/$varFile") do io
         #     packedData = JSON.parse(io; dicttype=Dict{String, Any})
@@ -141,7 +141,7 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString)
     # Adding variables
     map(v->addVariable!(dfgLoadInto, v), variables)
 
-    for factorFile in factorFiles
+    @showprogress 1 "loading factors" for factorFile in factorFiles
         open("$factorFolder/$factorFile") do io
             packedData = JSON2.read(io, Dict{String, Any})
             push!(factors, unpackFactor(dfgLoadInto, packedData))
@@ -155,7 +155,7 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString)
     # Finally, rebuild the CCW's for the factors to completely reinflate them
     # NOTE CREATES A NEW DFGFactor IF  CCW TYPE CHANGES
     @info "Rebuilding CCW's for the factors..."
-    for factor in factors
+    @showprogress 1 "build factor operational memory" for factor in factors
         rebuildFactorMetadata!(dfgLoadInto, factor)
     end
 
