@@ -17,99 +17,102 @@ Fields:
 $(TYPEDFIELDS)
 """
 Base.@kwdef mutable struct VariableNodeData{T<:InferenceVariable, P}
-    id::Union{UUID, Nothing} # If it's blank it doesn't exist in the DB.
+    id::Union{UUID, Nothing} = nothing # If it's blank it doesn't exist in the DB.
     val::Vector{P}
-    bw::Matrix{Float64}
-    BayesNetOutVertIDs::Vector{Symbol}
-    dimIDs::Vector{Int} # Likely deprecate
+    bw::Matrix{Float64} = zeros(0,0)
+    BayesNetOutVertIDs::Vector{Symbol} = Symbol[]
+    dimIDs::Vector{Int} = Int[] # Likely deprecate
 
-    dims::Int
-    eliminated::Bool
-    BayesNetVertID::Symbol #  Union{Nothing, }
-    separator::Vector{Symbol}
+    dims::Int = 0
+    eliminated::Bool = false
+    BayesNetVertID::Symbol = :NOTHING #  Union{Nothing, }
+    separator::Vector{Symbol} = Symbol[]
 
     variableType::T
-    initialized::Bool
+    initialized::Bool = false
     """
     Replacing previous `inferdim::Float64`, new `.infoPerCoord::Vector{Float64}` will in 
     future stores the amount information (per measurement dimension) captured in each 
     coordinate dimension.
     """
-    infoPerCoord::Vector{Float64}
-    ismargin::Bool
+    infoPerCoord::Vector{Float64} = Float64[0.0;]
+    ismargin::Bool = false
 
-    dontmargin::Bool
-    solveInProgress::Int
-    solvedCount::Int
+    dontmargin::Bool = false
+    solveInProgress::Int = 0
+    solvedCount::Int = 0
     solveKey::Symbol
 
-    events::Dict{Symbol,Threads.Condition}
+    events::Dict{Symbol,Threads.Condition} = Dict{Symbol,Threads.Condition}()
 
-    VariableNodeData{T,P}(w...)  where {T <:InferenceVariable, P} = new{T,P}(w...)
-    VariableNodeData{T,P}(;solveKey::Symbol=:default ) where {T <:InferenceVariable, P} = new{T,P}(
-            nothing,
-            Vector{P}(), 
-            zeros(0,0), 
-            Symbol[], 
-            Int[], 
-            0, 
-            false, 
-            :NOTHING, 
-            Symbol[], 
-            T(), 
-            false, 
-            Float64[0.0;], 
-            false, 
-            false, 
-            0, 
-            0, 
-            solveKey, 
-            Dict{Symbol,Threads.Condition}() )
+    # VariableNodeData{T,P}(w...)  where {T <:InferenceVariable, P} = new{T,P}(w...)
+    # VariableNodeData{T,P}(;solveKey::Symbol=:default ) where {T <:InferenceVariable, P} = new{T,P}(
+    #         nothing,
+    #         Vector{P}(), 
+    #         zeros(0,0), 
+    #         Symbol[], 
+    #         Int[], 
+    #         0, 
+    #         false, 
+    #         :NOTHING, 
+    #         Symbol[], 
+    #         T(), 
+    #         false, 
+    #         Float64[0.0;], 
+    #         false, 
+    #         false, 
+    #         0, 
+    #         0, 
+    #         solveKey, 
+    #         Dict{Symbol,Threads.Condition}() )
     #
 end
+
 
 ##------------------------------------------------------------------------------
 ## Constructors
 
-VariableNodeData{T}(;solveKey::Symbol=:default ) where T <: InferenceVariable = VariableNodeData{T, getPointType(T)}(solveKey=solveKey)
+VariableNodeData{T,P}(;solveKey::Symbol=:default) where {T <: InferenceVariable, P} = VariableNodeData(; val=Vector{P}(), variableType=T(), solveKey)
+VariableNodeData{T}(;solveKey::Symbol=:default ) where T <: InferenceVariable = VariableNodeData(; solveKey, variableType=T(), val=Vector{getPointType(T)}()) # {T, getPointType(T)}
 
-VariableNodeData(   val::Vector{P},
-                    bw::AbstractMatrix{<:Real},
-                    BayesNetOutVertIDs::AbstractVector{Symbol},
-                    dimIDs::AbstractVector{Int},
-                    dims::Int,
-                    eliminated::Bool,
-                    BayesNetVertID::Symbol,
-                    separator::AbstractVector{Symbol},
-                    variableType::T,
-                    initialized::Bool,
-                    ipc::AbstractVector{<:Real},
-                    ismargin::Bool,
-                    dontmargin::Bool,
-                    solveInProgress::Int=0,
-                    solvedCount::Int=0,
-                    solveKey::Symbol=:default,
-                    events::Dict{Symbol,Threads.Condition}=Dict{Symbol,Threads.Condition}();
-                    id::Union{UUID, Nothing}=nothing
-                ) where {T <: InferenceVariable, P} =
-                    VariableNodeData{T,P}(  id, val,bw,BayesNetOutVertIDs,dimIDs,dims,
-                                            eliminated,BayesNetVertID,separator,
-                                            variableType,initialized,ipc,ismargin,
-                                            dontmargin, solveInProgress, solvedCount,
-                                            solveKey, events  )
+# VariableNodeData(   val::Vector{P},
+#                     bw::AbstractMatrix{<:Real},
+#                     BayesNetOutVertIDs::AbstractVector{Symbol},
+#                     dimIDs::AbstractVector{Int},
+#                     dims::Int,
+#                     eliminated::Bool,
+#                     BayesNetVertID::Symbol,
+#                     separator::AbstractVector{Symbol},
+#                     variableType::T,
+#                     initialized::Bool,
+#                     ipc::AbstractVector{<:Real},
+#                     ismargin::Bool,
+#                     dontmargin::Bool,
+#                     solveInProgress::Int=0,
+#                     solvedCount::Int=0,
+#                     solveKey::Symbol=:default,
+#                     events::Dict{Symbol,Threads.Condition}=Dict{Symbol,Threads.Condition}();
+#                     id::Union{UUID, Nothing}=nothing
+#                 ) where {T <: InferenceVariable, P} =
+#                     VariableNodeData{T,P}(  id, val,bw,BayesNetOutVertIDs,dimIDs,dims,
+#                                             eliminated,BayesNetVertID,separator,
+#                                             variableType,initialized,ipc,ismargin,
+#                                             dontmargin, solveInProgress, solvedCount,
+#                                             solveKey, events  )
 #
 
 function VariableNodeData(variableType::T; solveKey::Symbol=:default) where T <: InferenceVariable
     #
     # p0 = getPointIdentity(T)
-    P0 = Vector{getPointType(T)}()
+    val = Vector{getPointType(T)}()
     # P0[1] = p0
-    BW = zeros(0,0)
-    # BW[1] = zeros(getDimension(T))
-    VariableNodeData(   P0, BW, Symbol[], Int[], 
-                        0, false, :NOTHING, Symbol[], 
-                        variableType, false, [0.0], false, 
-                        false, 0, 0, solveKey  )
+    bw = zeros(0,0)
+    # bw[1] = zeros(getDimension(T))
+    VariableNodeData(;  val, bw, solveKey, variableType  )
+    # VariableNodeData(   nothing, P0, BW, Symbol[], Int[], 
+    #                     0, false, :NOTHING, Symbol[], 
+    #                     variableType, false, [0.0], false, 
+    #                     false, 0, 0, solveKey  )
 end
 
 
