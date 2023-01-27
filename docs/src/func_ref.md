@@ -125,14 +125,6 @@ Modules = [DistributedFactorGraphs]
 Pages = ["FileDFG.jl"]
 ```
 
-### Neo4jDFGs
-
-```@autodocs
-Modules = [Neo4jDFGs]
-```
-
-
-
 ## Data Entries and Blobs
 
 ```@autodocs

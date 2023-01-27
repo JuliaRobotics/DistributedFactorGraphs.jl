@@ -1,7 +1,6 @@
 if false
 using Test
 using GraphPlot
-using Neo4j
 using DistributedFactorGraphs
 using Pkg
 using Dates
@@ -11,7 +10,6 @@ using SHA
 
 include("testBlocks.jl")
 
-testDFGAPI = Neo4jDFG
 testDFGAPI = GraphsDFG
 end
 # Build a basic graph.

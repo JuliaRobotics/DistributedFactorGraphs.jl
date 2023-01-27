@@ -35,14 +35,6 @@ To continue the example, run one of the following to create a DFG driver:
 dfg = GraphsDFG{SolverParams}(solverParams=SolverParams())
 ```
 
-### Creating a Neo4jDFG Graph
-
-```julia
-# Create a DFG with no solver parameters (just to demonstrate the difference) using the CloudGraphs driver, and connect it to a local Neo4j instance.
-cfg = Neo4jDFG{NoSolverParams}("localhost", 7474, "neo4j", "test",
-                                     "testUser", "testRobot", "testSession")
-```
-
 ## Creating Variables and Factors
 
 DFG and IIF rely on a CRUD (Create, Read, Update, and Delete) interface to allow users to create and edit graphs.
