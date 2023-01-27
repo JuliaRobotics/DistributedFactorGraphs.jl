@@ -267,10 +267,11 @@ function _unpackPPE(
     end
     ppeType = getTypeFromSerializationModule(_type)
     
-    ppe = Unmarshal.unmarshal(
-        ppeType,
-        packedPPE
-    )
+    pee = transcodeType.(ppeType, packedPPE) # from Dict to hard type
+    # ppe = Unmarshal.unmarshal(
+    #     ppeType,
+    #     packedPPE
+    # )
 
     return ppe
 end
@@ -351,13 +352,13 @@ function unpackVariable(
         else
             packedProps["solverDataDict"]
         end
-        Dict{Symbol, VariableNodeData{variableType, pointType}}(Symbol.(keys(packed)) .=> map(p -> unpackVariableNodeData(dfg, p), values(packed)))
-    elseif unpackSolverData && haskey(packedProps,"solverData") && packedProps["solverData"] isa AbstractVector
-        solverdict = Dict{Symbol, VariableNodeData{variableType, pointType}}()
-        for sd in packedProps["solverData"]
-            solverdict[Symbol(sd["solveKey"])] = _unpackVariableNodeData(dfg, sd)
-        end
-        solverdict
+        _ensureid!(s::Dict) = begin s["id"]=nothing; end
+        _ensureid!(s::PackedVariableNodeData) = s
+        packedvals = values(packed)
+        _ensureid!.(packedvals)
+        # TODO deprecate, this is for DFG18 compat only
+        packed_ = transcodeType.(PackedVariableNodeData, packedvals) # from Dict to hard type
+        Dict{Symbol, VariableNodeData{variableType, pointType}}(Symbol.(keys(packed)) .=> map(p -> unpackVariableNodeData(p), packed_))
     else
         Dict{Symbol, VariableNodeData{variableType, pointType}}()
     end
@@ -643,7 +644,7 @@ function unpackFactor(
 
     solvable = packedProps["solvable"]
 
-    smallData = Dict{Symbol, SmallDataTypes}( Symbol.(keys(packedProps["metadata"])) .=> values(packedProps["metadata"]) )
+    smallData = haskey(packedProps, "metadata") ? Dict{Symbol, SmallDataTypes}( Symbol.(keys(packedProps["metadata"])) .=> values(packedProps["metadata"]) ) : Dict{Symbol, SmallDataTypes}()
 
     # Rebuild DFGFactor
     #TODO use constuctor to create factor
