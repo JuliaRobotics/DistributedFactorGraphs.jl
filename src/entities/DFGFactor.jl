@@ -37,43 +37,28 @@ Designing (WIP)
 - in Main.SomeFactor <: AbstractRelativeMinimize
 """
 Base.@kwdef mutable struct GenericFunctionNodeData{T<:Union{<:AbstractPackedFactor, <:AbstractFactor, <:FactorOperationalMemory}}
-    eliminated::Bool
-    potentialused::Bool
-    edgeIDs::Vector{Int}
+    eliminated::Bool = false
+    potentialused::Bool = false
+    edgeIDs::Vector{Int} = Int[]
     fnc::T
-    multihypo::Vector{Float64} # TODO re-evaluate after refactoring w #477
-    certainhypo::Vector{Int}
-    nullhypo::Float64
-    solveInProgress::Int
-    inflation::Float64
+    multihypo::Vector{Float64} = Float64[] # TODO re-evaluate after refactoring w #477
+    certainhypo::Vector{Int} = Int[]
+    nullhypo::Float64 = 0.0
+    solveInProgress::Int = 0
+    inflation::Float64 = 0.0
 end
 
 ## Constructors
-
-GenericFunctionNodeData{T}() where T =
-    GenericFunctionNodeData(false, false, Int[], T())
-
-function GenericFunctionNodeData(   eliminated::Bool,
-                                    potentialused::Bool,
-                                    edgeIDs::Vector{Int},
-                                    fnc::T,
-                                    multihypo::Vector{<:Real}=Float64[],
-                                    certainhypo::Vector{Int}=Int[],
-                                    nullhypo::Real=0,
-                                    solveInP::Int=0,
-                                    inflation::Real=0.0 ) where T
-    return GenericFunctionNodeData{T}(eliminated, potentialused, edgeIDs, fnc, multihypo, certainhypo, nullhypo, solveInP, inflation)
-end
 
 
 ##------------------------------------------------------------------------------
 ## PackedFunctionNodeData and FunctionNodeData
 
 const PackedFunctionNodeData{T} = GenericFunctionNodeData{T} where T <: AbstractPackedFactor
-PackedFunctionNodeData(args...) = PackedFunctionNodeData{typeof(args[4])}(args...)
+PackedFunctionNodeData(args...; kw...) = PackedFunctionNodeData{typeof(args[4])}(args...; kw...)
 
 const FunctionNodeData{T} = GenericFunctionNodeData{T} where T <: Union{<:AbstractFactor, <:FactorOperationalMemory}
-FunctionNodeData(args...) = FunctionNodeData{typeof(args[4])}(args...)
+FunctionNodeData(args...; kw...) = FunctionNodeData{typeof(args[4])}(args...; kw...)
 
 
 # PackedFunctionNodeData(x2, x3, x4, x6::T, multihypo::Vector{Float64}=[], certainhypo::Vector{Int}=Int[], x9::Int=0) where T <: AbstractPackedFactor =
@@ -96,6 +81,10 @@ FunctionNodeData(args...) = FunctionNodeData{typeof(args[4])}(args...)
 """
 $(TYPEDEF)
 Complete factor structure for a DistributedFactorGraph factor.
+
+DevNotes
+- TODO make consistent the order of fields skeleton Skeleton, Summary, thru DFGFactor
+  - e.g. timestamp should be a later field.
 
   ---
 Fields:
@@ -162,10 +151,11 @@ DFGFactor(label::Symbol,
           DFGFactor{T}(label, timestamp, nstime, tags, solverData, solvable, _variableOrderSymbols, id=id, smallData=smallData)
 
 
-DFGFactor{T}(label::Symbol, variableOrderSymbols::Vector{Symbol}, timestamp::Union{DateTime,ZonedDateTime}=now(localzone()), data::GenericFunctionNodeData{T} = GenericFunctionNodeData{T}()) where {T} =
-                DFGFactor(label, timestamp, Nanosecond(0), Set{Symbol}(), data, 1, Tuple(variableOrderSymbols))
+DFGFactor{T}(label::Symbol, variableOrderSymbols::Vector{Symbol}, timestamp::Union{DateTime,ZonedDateTime}=now(localzone()), data::GenericFunctionNodeData{T} = GenericFunctionNodeData(fnc=T()); kw...) where {T} =
+                DFGFactor(label, timestamp, Nanosecond(0), Set{Symbol}(), data, 1, Tuple(variableOrderSymbols); kw...)
+#
 
-
+# TODO standardize new fields in kw constructors, .id
 DFGFactor(label::Symbol,
           variableOrderSymbols::Vector{Symbol},
           data::GenericFunctionNodeData{T};
@@ -175,7 +165,7 @@ DFGFactor(label::Symbol,
           nstime::Nanosecond = Nanosecond(0),
           id::Union{UUID, Nothing} = nothing,
           smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}()) where {T} =
-                DFGFactor{T}(label, timestamp, nstime, tags, data, solvable, Tuple(variableOrderSymbols), id=id, smallData=smallData)
+                DFGFactor{T}(label, timestamp, nstime, tags, data, solvable, Tuple(variableOrderSymbols); id, smallData)
 
 
 
@@ -255,7 +245,9 @@ end
 ## Constructors
 
 #NOTE I feel like a want to force a variableOrderSymbols
-SkeletonDFGFactor(label::Symbol, variableOrderSymbols::Vector{Symbol} = Symbol[]) = SkeletonDFGFactor(label, Set{Symbol}(), variableOrderSymbols)
+SkeletonDFGFactor(id::Union{UUID, Nothing}, label::Symbol, variableOrderSymbols::Vector{Symbol} = Symbol[]) = SkeletonDFGFactor(id, label, Set{Symbol}(), variableOrderSymbols)
+SkeletonDFGFactor(label::Symbol, variableOrderSymbols::Vector{Symbol} = Symbol[]; id::Union{UUID, Nothing}=nothing, tags=Set{Symbol}()) = SkeletonDFGFactor(id, label, tags, variableOrderSymbols)
+
 
 ##==============================================================================
 ## Define factor levels
@@ -265,11 +257,11 @@ const FactorDataLevel1 = Union{DFGFactor, DFGFactorSummary}
 const FactorDataLevel2 = Union{DFGFactor}
 
 ##==============================================================================
-## Convertion constructors
+## Conversion constructors
 ##==============================================================================
 
 DFGFactorSummary(f::DFGFactor) =
-    DFGFactorSummary(f.label, f.timestamp, deepcopy(f.tags), deepcopy(f._variableOrderSymbols))
+    DFGFactorSummary(f.id, f.label, deepcopy(f.tags), deepcopy(f._variableOrderSymbols), f.timestamp)
 
 SkeletonDFGFactor(f::FactorDataLevel1) =
-    SkeletonDFGFactor(f.label, deepcopy(f.tags), deepcopy(f._variableOrderSymbols))
+    SkeletonDFGFactor(f.id, f.label, deepcopy(f.tags), deepcopy(f._variableOrderSymbols))

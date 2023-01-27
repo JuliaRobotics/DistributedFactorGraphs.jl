@@ -249,7 +249,7 @@ The default DFGVariable constructor.
 """
 function DFGVariable(label::Symbol, variableType::Type{T};
             id::Union{UUID,Nothing}=nothing,
-            timestamp::Union{DateTime,ZonedDateTime}=now(localzone()),
+            timestamp::ZonedDateTime=now(localzone()),
             nstime::Nanosecond = Nanosecond(0),
             tags::Set{Symbol}=Set{Symbol}(),
             estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
@@ -258,11 +258,7 @@ function DFGVariable(label::Symbol, variableType::Type{T};
             dataDict::Dict{Symbol, AbstractDataEntry}=Dict{Symbol,AbstractDataEntry}(),
             solvable::Int=1) where {T <: InferenceVariable, P}
     #
-    if timestamp isa DateTime
-        DFGVariable{T}(id, label, ZonedDateTime(timestamp, localzone()), nstime, tags, estimateDict, solverDataDict, smallData, dataDict, Ref(solvable))
-    else
-        DFGVariable{T}(id, label, timestamp, nstime, tags, estimateDict, solverDataDict, smallData, dataDict, Ref(solvable))
-    end
+    DFGVariable{T}(id, label, timestamp, nstime, tags, estimateDict, solverDataDict, smallData, dataDict, Ref(solvable))
 end
 
 DFGVariable(label::Symbol, 
@@ -270,10 +266,14 @@ DFGVariable(label::Symbol,
             solverDataDict::Dict{Symbol, VariableNodeData{T,P}}=Dict{Symbol, VariableNodeData{T,getPointType(T)}}(),
             kw...) where {T <: InferenceVariable, P} = DFGVariable(label, T; solverDataDict=solverDataDict, kw...)
 #
+@deprecate DFGVariable(label::Symbol, T_::Type{<:InferenceVariable},w...; timestamp::DateTime=now(),kw...) DFGVariable(label, T_, w...; timestamp=ZonedDateTime(timestamp), kw...)
+#
+
 
 function DFGVariable(label::Symbol,
             solverData::VariableNodeData{T};
-            timestamp::Union{DateTime,ZonedDateTime}=now(localzone()),
+            id::Union{UUID, Nothing} = nothing,
+            timestamp::ZonedDateTime = now(localzone()),
             nstime::Nanosecond = Nanosecond(0),
             tags::Set{Symbol}=Set{Symbol}(),
             estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
@@ -281,11 +281,7 @@ function DFGVariable(label::Symbol,
             dataDict::Dict{Symbol, <: AbstractDataEntry}=Dict{Symbol,AbstractDataEntry}(),
             solvable::Int=1) where {T <: InferenceVariable}
     #
-    if timestamp isa DateTime
-        DFGVariable{T}(label, ZonedDateTime(timestamp, localzone()), nstime, tags, estimateDict, Dict{Symbol, VariableNodeData{T, getPointType(T)}}(:default=>solverData), smallData, dataDict, Ref(solvable))
-    else
-        DFGVariable{T}(label, timestamp, nstime, tags, estimateDict, Dict{Symbol, VariableNodeData{T, getPointType(T)}}(:default=>solverData), smallData, dataDict, Ref(solvable))
-    end
+    DFGVariable{T}(id, label, timestamp, nstime, tags, estimateDict, Dict{Symbol, VariableNodeData{T, getPointType(T)}}(:default=>solverData), smallData, dataDict, Ref(solvable))
 end
 
 Base.getproperty(x::DFGVariable,f::Symbol) = begin
@@ -348,6 +344,7 @@ Base.@kwdef struct DFGVariableSummary <: AbstractDFGVariable
     dataDict::Dict{Symbol, AbstractDataEntry}
 end
 
+
 ##------------------------------------------------------------------------------
 ## SkeletonDFGVariable.jl
 ##------------------------------------------------------------------------------
@@ -362,16 +359,16 @@ $(TYPEDFIELDS)
 """
 Base.@kwdef struct SkeletonDFGVariable <: AbstractDFGVariable
     """The ID for the variable"""
-    id::Union{UUID, Nothing}
+    id::Union{UUID, Nothing} = nothing
     """Variable label, e.g. :x1.
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
     Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
-    tags::Set{Symbol}
+    tags::Set{Symbol} = Set{Symbol}()
 end
 
-SkeletonDFGVariable(label::Symbol) = SkeletonDFGVariable(nothing, label, Set{Symbol}())
+SkeletonDFGVariable(label::Symbol, tags=Set{Symbol}(); id::Union{UUID, Nothing}=nothing) = SkeletonDFGVariable(id, label, tags)
 
 
 ##==============================================================================

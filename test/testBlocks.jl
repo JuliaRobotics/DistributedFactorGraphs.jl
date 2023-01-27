@@ -345,9 +345,9 @@ function  DFGFactorSCA()
     f1_tags = Set([:FACTOR])
     testTimestamp = now(localzone())
 
-    gfnd_prior = GenericFunctionNodeData(false, false, Int[], TestCCW(TestAbstractPrior()))
+    gfnd_prior = GenericFunctionNodeData(fnc=TestCCW(TestAbstractPrior()))
 
-    gfnd = GenericFunctionNodeData(false, false, Int[], TestCCW(TestFunctorInferenceType1()))
+    gfnd = GenericFunctionNodeData(fnc=TestCCW(TestFunctorInferenceType1()))
 
     f1 = DFGFactor{TestCCW{TestFunctorInferenceType1}}(f1_lbl, [:a,:b])
     f1 = DFGFactor(f1_lbl, [:a,:b], gfnd, tags = f1_tags, solvable=0)
@@ -1227,7 +1227,7 @@ function connectivityTestGraph(::Type{T}; VARTYPE=DFGVariable, FACTYPE=DFGFactor
         setSolvable!(dfg, :x8, 0)
         setSolvable!(dfg, :x9, 0)
 
-        gfnd = GenericFunctionNodeData(true, true, Int[], TestCCW(TestFunctorInferenceType1()), Float64[], Int[], 0, 1)
+        gfnd = GenericFunctionNodeData(eliminated=true, potentialused=true, fnc=TestCCW(TestFunctorInferenceType1()), multihypo=Float64[], certainhypo=Int[], solveInProgress=0, inflation=1.0)
         f_tags = Set([:FACTOR])
         # f1 = DFGFactor(f1_lbl, [:a,:b], gfnd, tags = f_tags)
 
@@ -1423,13 +1423,13 @@ function ProducingDotFiles(testDFGAPI,
     # create a simpler graph for dot testing
     dotdfg = testDFGAPI(userId="test@navability.io")
 
-    if v1 == nothing
+    if v1 === nothing
         v1 = VARTYPE(:a, VariableNodeData{TestVariableType1}())
     end
-    if v2 == nothing
+    if v2 === nothing
         v2 = VARTYPE(:b, VariableNodeData{TestVariableType1}())
     end
-    if f1 == nothing
+    if f1 === nothing
         f1 = (FACTYPE==DFGFactor) ? DFGFactor{TestFunctorInferenceType1}(:abf1, [:a, :b]) : FACTYPE(:abf1)
     end
 

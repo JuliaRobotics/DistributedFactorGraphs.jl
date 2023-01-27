@@ -18,7 +18,24 @@ end
 # TODO ADD DEPRECATION
 packVariable(::AbstractDFG, v::DFGVariable) = packVariable(v) 
 
+# # FIXME ON FIRE, THIS OLD CONSTRUCTOR SHOULD BE DELETED
+# function GenericFunctionNodeData(   eliminated::Bool,
+#                                     potentialused::Bool,
+#                                     edgeIDs::Vector{Int},
+#                                     fnc::T,
+#                                     multihypo::Vector{<:Real}=Float64[],
+#                                     certainhypo::Vector{Int}=Int[],
+#                                     nullhypo::Real=0,
+#                                     solveInProgress::Int=0,
+#                                     inflation::Real=0.0 ) where T
+#     return GenericFunctionNodeData{T}(; eliminated, potentialused, edgeIDs, fnc, multihypo, certainhypo, nullhypo, solveInProgress, inflation)
+# end
 
+# GenericFunctionNodeData{T}() where T = GenericFunctionNodeData(;fnc=T())
+
+
+# GenericFunctionNodeData{T}() where T =
+#     GenericFunctionNodeData( false, false, Int[], T())
 
 ## ================================================================================
 ## Deprecate before v0.20 - Kept longer with error
