@@ -592,8 +592,7 @@ end
 # end
 
 # TODO: REFACTOR THIS AS A JSON3 STRUCT DESERIALIZER.
-function fncStringToData(fncType::String, data::Union{String, NamedTuple})
-    packtype = DFG.getTypeFromSerializationModule("Packed"*fncType)
+function fncStringToData(packtype::Type, data::Union{String, <:NamedTuple})
     # Convert string to Named Tuples for kwargs
     fncData = data isa AbstractString ? JSON2.read(data) : data
 
@@ -610,6 +609,15 @@ function fncStringToData(fncType::String, data::Union{String, NamedTuple})
         fncData.inflation,
     )
     return packed
+end
+
+function fncStringToData(fncType::String, data::T) where T
+    packtype = DFG.getTypeFromSerializationModule("Packed"*fncType)
+    if packtype == T
+        data
+    else
+        fncStringToData(packtype, data)
+    end
 end
 
 # Returns `::DFGFactor`
