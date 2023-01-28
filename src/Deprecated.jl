@@ -41,6 +41,9 @@ packVariable(::AbstractDFG, v::DFGVariable) = packVariable(v)
 ## Deprecate before v0.20 - Kept longer with error
 ##=================================================================================
 
+@deprecate packVariableNodeData(fg::AbstractDFG, d::VariableNodeData) packVariableNodeData(d::VariableNodeData)
+@deprecate unpackVariableNodeData(fg::AbstractDFG, d::PackedVariableNodeData) unpackVariableNodeData(d::PackedVariableNodeData)
+
 function getTypeFromSerializationModule(dfg::G, moduleType::Symbol) where G <: AbstractDFG
   error("Deprecating getTypeFromSerializationModule(dfg,symbol), use getTypeFromSerializationModule(string) instead.")
   st = nothing
