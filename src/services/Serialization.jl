@@ -592,7 +592,7 @@ end
 # end
 
 # TODO: REFACTOR THIS AS A JSON3 STRUCT DESERIALIZER.
-function fncStringToData(packtype::Type, data::Union{String, <:NamedTuple})
+function fncStringToData(packtype::Type{<:AbstractPackedFactor}, data::Union{String, <:NamedTuple})
     # Convert string to Named Tuples for kwargs
     fncData = data isa AbstractString ? JSON2.read(data) : data
 
@@ -610,15 +610,29 @@ function fncStringToData(packtype::Type, data::Union{String, <:NamedTuple})
     )
     return packed
 end
-
-function fncStringToData(fncType::String, data::T) where T
+fncStringToData(::Type{T}, data::PackedFunctionNodeData{T}) where {T <: AbstractPackedFactor} = data
+function fncStringToData(fncType::String, data::PackedFunctionNodeData{T}) where {T <: AbstractPackedFactor}
     packtype = DFG.getTypeFromSerializationModule("Packed"*fncType)
     if packtype == T
+        data
+    else
+        error("Unknown type conversion\n$(fncType)\n$packtype\n$(PackedFunctionNodeData{T})")
+    end
+end
+
+function fncStringToData(fncType::String, data::T) where {T <: AbstractPackedFactor}
+    packtype = DFG.getTypeFromSerializationModule("Packed"*fncType)
+    if packtype == T # || T <: packtype
         data
     else
         fncStringToData(packtype, data)
     end
 end
+function fncStringToData(fncType::String, data::Union{String, <:NamedTuple})
+    packtype = DFG.getTypeFromSerializationModule("Packed"*fncType)
+    fncStringToData(packtype, data)
+end
+
 
 # Returns `::DFGFactor`
 function unpackFactor(
