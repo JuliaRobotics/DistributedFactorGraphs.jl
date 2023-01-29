@@ -54,6 +54,7 @@ function saveDFG(folder::AbstractString, dfg::AbstractDFG)
     savename = basename(string(savepath))
     @assert savename != ""
     destfile = joinpath(savedir, savename*".tar.gz")
+    # FIXME, switch to Tar.jl and Transcode Zlib / Codec, see #351
     if length(savedir) != 0
       run( pipeline(`tar -zcf - -C $savedir $savename`, stdout="$destfile"))
     else
