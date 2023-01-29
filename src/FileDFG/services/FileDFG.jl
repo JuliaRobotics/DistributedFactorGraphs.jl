@@ -42,16 +42,12 @@ function saveDFG(folder::AbstractString, dfg::AbstractDFG)
     # Variables
     for v in variables
         vPacked = packVariable(dfg, v)
-        io = open("$varFolder/$(v.label).json", "w")
-        println(io,JSON.json(vPacked))
-        close(io)
+        JSON3.write("$varFolder/$(v.label).json", vPacked)
     end
     # Factors
     for f in factors
         fPacked = packFactor(dfg, f)
-        io = open("$factorFolder/$(f.label).json", "w")
-        println(io,JSON.json(fPacked))
-        close(io)
+        JSON3.write("$factorFolder/$(f.label).json", fPacked)
     end
 
     savedir = dirname(savepath) # is this a path of just local name? #344 -- workaround with unique names
