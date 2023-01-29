@@ -104,10 +104,10 @@ function plotDFG(io::IO, ::MIME"application/prs.juno.plotpane+html", dfg::Abstra
                 ">
                 $(typeof(dfg))
                 <ul>
-                    <li>$(dfg.userId)</li>
-                    <li>$(dfg.robotId)</li>
-                    <li>$(dfg.sessionId)</li>
-                    <li>$(dfg.description)</li>
+                    <li>$(getUserLabel(dfg))</li>
+                    <li>$(getRobotLabel(dfg))</li>
+                    <li>$(getSessionLabel(dfg))</li>
+                    <li>$(getDescription(dfg))</li>
                 </ul>
                 <script charset="utf-8">
                     $(read(GraphPlot.Compose.snapsvgjs, String))

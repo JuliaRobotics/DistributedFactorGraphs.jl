@@ -57,7 +57,7 @@ export AbstractParams, NoSolverParams
 export AbstractBlobStore
 
 # accessors & crud
-export getUserId, getRobotId, getSessionId
+export getUserLabel, getRobotLabel, getSessionLabel
 export getDFGInfo
 export getDescription, setDescription!,
        getSolverParams, setSolverParams!,

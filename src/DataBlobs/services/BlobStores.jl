@@ -104,7 +104,7 @@ end
 function updateData!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol,  entry::AbstractDataEntry, blob::Vector{UInt8}; hashfunction = sha256)
     # Recalculate the hash - NOTE Assuming that this is going to be a BlobStoreEntry. TBD.
     newEntry = BlobStoreEntry(entry.label, entry.id, blobstore.key, bytes2hex(hashfunction(blob)),
-        "$(dfg.userId)|$(dfg.robotId)|$(dfg.sessionId)|$(label)",
+        buildSourceString(dfg, label),
         entry.description, entry.mimeType, entry.createdTimestamp)
 
     de = updateDataEntry!(dfg, label, newEntry)
@@ -137,7 +137,7 @@ function addData!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol,
 
 
     entry = BlobStoreEntry(key, id, blobstore.key, bytes2hex(hashfunction(blob)),
-                           "$(dfg.userId)|$(dfg.robotId)|$(dfg.sessionId)|$(label)",
+                           buildSourceString(dfg, label),
                            description, mimeType, timestamp)
 
     addData!(dfg, blobstore, label, entry, blob; hashfunction)
