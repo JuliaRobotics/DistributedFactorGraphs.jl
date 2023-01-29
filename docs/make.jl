@@ -16,10 +16,6 @@ makedocs(
             "Drawing Graphs" => "DrawingGraphs.md",
             "Quick API Reference" => "ref_api.md"
         ],
-        # "DistributedFactorGraph API's" => [
-        #     "LightDFGs" => "apis/LightGraphs.md",
-        #     "Neo4jDFGs" => "apis/CloudGraphs.md",
-        # ],
         "Function Reference" => "func_ref.md"
     ]
     # html_prettyurls = !("local" in ARGS),

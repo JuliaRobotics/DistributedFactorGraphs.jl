@@ -16,126 +16,103 @@ Data container for solver-specific data.
 Fields:
 $(TYPEDFIELDS)
 """
-mutable struct VariableNodeData{T<:InferenceVariable, P}
+Base.@kwdef mutable struct VariableNodeData{T<:InferenceVariable, P}
+    id::Union{UUID, Nothing} = nothing # If it's blank it doesn't exist in the DB.
     val::Vector{P}
-    bw::Matrix{Float64}
-    BayesNetOutVertIDs::Vector{Symbol}
-    dimIDs::Vector{Int} # Likely deprecate
+    bw::Matrix{Float64} = zeros(0,0)
+    BayesNetOutVertIDs::Vector{Symbol} = Symbol[]
+    dimIDs::Vector{Int} = Int[] # Likely deprecate
 
-    dims::Int
-    eliminated::Bool
-    BayesNetVertID::Symbol #  Union{Nothing, }
-    separator::Vector{Symbol}
+    dims::Int = 0
+    eliminated::Bool = false
+    BayesNetVertID::Symbol = :NOTHING #  Union{Nothing, }
+    separator::Vector{Symbol} = Symbol[]
 
     variableType::T
-    initialized::Bool
+    initialized::Bool = false
     """
     Replacing previous `inferdim::Float64`, new `.infoPerCoord::Vector{Float64}` will in 
     future stores the amount information (per measurement dimension) captured in each 
     coordinate dimension.
     """
-    infoPerCoord::Vector{Float64}
-    ismargin::Bool
+    infoPerCoord::Vector{Float64} = Float64[0.0;]
+    ismargin::Bool = false
 
-    dontmargin::Bool
-    solveInProgress::Int
-    solvedCount::Int
+    dontmargin::Bool = false
+    solveInProgress::Int = 0
+    solvedCount::Int = 0
     solveKey::Symbol
 
-    events::Dict{Symbol,Threads.Condition}
+    events::Dict{Symbol,Threads.Condition} = Dict{Symbol,Threads.Condition}()
 
-    # VariableNodeData{T,P}() = new{T,P}()
-    VariableNodeData{T,P}(w...)  where {T <:InferenceVariable, P} = new{T,P}(w...)
-    VariableNodeData{T,P}(;solveKey::Symbol=:default ) where {T <:InferenceVariable, P} = new{T,P}(
-            Vector{P}(), 
-            zeros(0,0), 
-            Symbol[], 
-            Int[], 
-            0, 
-            false, 
-            :NOTHING, 
-            Symbol[], 
-            T(), 
-            false, 
-            Float64[0.0;], 
-            false, 
-            false, 
-            0, 
-            0, 
-            solveKey, 
-            Dict{Symbol,Threads.Condition}() )
+    # VariableNodeData{T,P}(w...)  where {T <:InferenceVariable, P} = new{T,P}(w...)
+    # VariableNodeData{T,P}(;solveKey::Symbol=:default ) where {T <:InferenceVariable, P} = new{T,P}(
+    #         nothing,
+    #         Vector{P}(), 
+    #         zeros(0,0), 
+    #         Symbol[], 
+    #         Int[], 
+    #         0, 
+    #         false, 
+    #         :NOTHING, 
+    #         Symbol[], 
+    #         T(), 
+    #         false, 
+    #         Float64[0.0;], 
+    #         false, 
+    #         false, 
+    #         0, 
+    #         0, 
+    #         solveKey, 
+    #         Dict{Symbol,Threads.Condition}() )
     #
 end
+
 
 ##------------------------------------------------------------------------------
 ## Constructors
 
-VariableNodeData{T}(;solveKey::Symbol=:default ) where T <: InferenceVariable = VariableNodeData{T, getPointType(T)}(solveKey=solveKey)
+VariableNodeData{T,P}(;solveKey::Symbol=:default) where {T <: InferenceVariable, P} = VariableNodeData(; val=Vector{P}(), variableType=T(), solveKey)
+VariableNodeData{T}(;solveKey::Symbol=:default ) where T <: InferenceVariable = VariableNodeData(; solveKey, variableType=T(), val=Vector{getPointType(T)}()) # {T, getPointType(T)}
 
 # VariableNodeData(   val::Vector{P},
-#                     bw::Matrix{<:Real},
+#                     bw::AbstractMatrix{<:Real},
 #                     BayesNetOutVertIDs::AbstractVector{Symbol},
 #                     dimIDs::AbstractVector{Int},
 #                     dims::Int,
 #                     eliminated::Bool,
 #                     BayesNetVertID::Symbol,
-#                     separator::Array{Symbol,1},
+#                     separator::AbstractVector{Symbol},
 #                     variableType::T,
 #                     initialized::Bool,
-#                     inferdim::Float64,
+#                     ipc::AbstractVector{<:Real},
 #                     ismargin::Bool,
 #                     dontmargin::Bool,
 #                     solveInProgress::Int=0,
 #                     solvedCount::Int=0,
 #                     solveKey::Symbol=:default,
-#                     events::Dict{Symbol,Threads.Condition}=Dict{Symbol,Threads.Condition}()
-#                 ) where {T <: InferenceVariable, P} = 
-#                     VariableNodeData{T,P}(  val,bw,BayesNetOutVertIDs,dimIDs,dims,
+#                     events::Dict{Symbol,Threads.Condition}=Dict{Symbol,Threads.Condition}();
+#                     id::Union{UUID, Nothing}=nothing
+#                 ) where {T <: InferenceVariable, P} =
+#                     VariableNodeData{T,P}(  id, val,bw,BayesNetOutVertIDs,dimIDs,dims,
 #                                             eliminated,BayesNetVertID,separator,
-#                                             variableType,initialized,inferdim,ismargin,
-#                                             dontmargin, solveInProgress, solvedCount, 
+#                                             variableType,initialized,ipc,ismargin,
+#                                             dontmargin, solveInProgress, solvedCount,
 #                                             solveKey, events  )
-#
-
-
-#
-
-VariableNodeData(   val::Vector{P},
-                    bw::AbstractMatrix{<:Real},
-                    BayesNetOutVertIDs::AbstractVector{Symbol},
-                    dimIDs::AbstractVector{Int},
-                    dims::Int,
-                    eliminated::Bool,
-                    BayesNetVertID::Symbol,
-                    separator::AbstractVector{Symbol},
-                    variableType::T,
-                    initialized::Bool,
-                    ipc::AbstractVector{<:Real},
-                    ismargin::Bool,
-                    dontmargin::Bool,
-                    solveInProgress::Int=0,
-                    solvedCount::Int=0,
-                    solveKey::Symbol=:default,
-                    events::Dict{Symbol,Threads.Condition}=Dict{Symbol,Threads.Condition}()
-                ) where {T <: InferenceVariable, P} =
-                    VariableNodeData{T,P}(  val,bw,BayesNetOutVertIDs,dimIDs,dims,
-                                            eliminated,BayesNetVertID,separator,
-                                            variableType,initialized,ipc,ismargin,
-                                            dontmargin, solveInProgress, solvedCount,
-                                            solveKey, events  )
 #
 
 function VariableNodeData(variableType::T; solveKey::Symbol=:default) where T <: InferenceVariable
     #
     # p0 = getPointIdentity(T)
-    P0 = Vector{getPointType(T)}()
+    val = Vector{getPointType(T)}()
     # P0[1] = p0
-    BW = zeros(0,0)
-    # BW[1] = zeros(getDimension(T))
-    VariableNodeData(   P0, BW, Symbol[], Int[], 
-                        0, false, :NOTHING, Symbol[], 
-                        variableType, false, [0.0], false, 
-                        false, 0, 0, solveKey  )
+    bw = zeros(0,0)
+    # bw[1] = zeros(getDimension(T))
+    VariableNodeData(;  val, bw, solveKey, variableType  )
+    # VariableNodeData(   nothing, P0, BW, Symbol[], Int[], 
+    #                     0, false, :NOTHING, Symbol[], 
+    #                     variableType, false, [0.0], false, 
+    #                     false, 0, 0, solveKey  )
 end
 
 
@@ -152,17 +129,18 @@ Packed VariabeNodeData structure for serializing DFGVariables.
 Fields:
 $(TYPEDFIELDS)
 """
-mutable struct PackedVariableNodeData
-    vecval::Array{Float64,1}
+Base.@kwdef mutable struct PackedVariableNodeData
+    id::Union{UUID, Nothing} # If it's blank it doesn't exist in the DB.
+    vecval::Vector{Float64}
     dimval::Int
-    vecbw::Array{Float64,1}
+    vecbw::Vector{Float64}
     dimbw::Int
-    BayesNetOutVertIDs::Array{Symbol,1} # Int
-    dimIDs::Array{Int,1}
+    BayesNetOutVertIDs::Vector{Symbol} # Int
+    dimIDs::Vector{Int}
     dims::Int
     eliminated::Bool
     BayesNetVertID::Symbol # Int
-    separator::Array{Symbol,1} # Int
+    separator::Vector{Symbol} # Int
     variableType::String
     initialized::Bool
     infoPerCoord::Vector{Float64}
@@ -171,50 +149,7 @@ mutable struct PackedVariableNodeData
     solveInProgress::Int
     solvedCount::Int
     solveKey::Symbol
-    PackedVariableNodeData() = new()
-    PackedVariableNodeData(x1::Vector{Float64},
-                         x2::Int,
-                         x3::Vector{Float64},
-                         x4::Int,
-                         x5::Vector{Symbol}, # Int
-                         x6::Vector{Int},
-                         x7::Int,
-                         x8::Bool,
-                         x9::Symbol, # Int
-                         x10::Vector{Symbol}, # Int
-                         x11::String,
-                         x12::Bool,
-                         x13::AbstractVector{<:Real},
-                         x14::Bool,
-                         x15::Bool,
-                         x16::Int,
-                         solvedCount::Int,
-                         solveKey::Symbol) = new(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16, solvedCount, solveKey)
-     # More permissive constructor needed for unmarshalling
-     PackedVariableNodeData(x1::Vector,
-                          x2::Int,
-                          x3::Vector,
-                          x4::Int,
-                          x5::Vector, # Int
-                          x6::Vector,
-                          x7::Int,
-                          x8::Bool,
-                          x9::Symbol, # Int
-                          x10::Vector, # Int
-                          x11::String,
-                          x12::Bool,
-                          x13::AbstractVector{<:Real},
-                          x14::Bool,
-                          x15::Bool,
-                          x16::Int,
-                          solvedCount::Int,
-                          solveKey::Symbol) = new(
-                                convert(Vector{Float64},x1),x2,
-                                convert(Vector{Float64},x3),x4,
-                                convert(Vector{Symbol},x5),
-                                convert(Vector{Int},x6),x7,x8,x9,
-                                convert(Vector{Symbol},x10),x11,x12,
-                                x13,x14,x15,x16, solvedCount, solveKey )
+    _version::String = _getDFGVersion()
 end
 
 ##==============================================================================
@@ -236,18 +171,22 @@ abstract type AbstractPointParametricEst end
 Data container to store Parameteric Point Estimate (PPE) for mean and max.
 """
 Base.@kwdef struct MeanMaxPPE <: AbstractPointParametricEst
+    id::Union{UUID, Nothing} = nothing # If it's blank it doesn't exist in the DB.
     # repeat key value internally (from a design request by Sam)
     solveKey::Symbol
     suggested::Vector{Float64}
     max::Vector{Float64}
     mean::Vector{Float64}
-    lastUpdatedTimestamp::DateTime = now(Dates.UTC)
+    _type::String = "MeanMaxPPE"
+    _version::String = _getDFGVersion()
+    createdTimestamp::Union{ZonedDateTime, Nothing} = nothing
+    lastUpdatedTimestamp::Union{ZonedDateTime, Nothing} = nothing
 end
 
 ##------------------------------------------------------------------------------
 ## Constructors
 
-MeanMaxPPE(solveKey::Symbol, suggested::Vector{Float64}, max::Vector{Float64}, mean::Vector{Float64}) = MeanMaxPPE(solveKey, suggested, max, mean, now(UTC))
+MeanMaxPPE(solveKey::Symbol, suggested::Vector{Float64}, max::Vector{Float64}, mean::Vector{Float64}) = MeanMaxPPE(nothing, solveKey, suggested, max, mean, "MeanMaxPPE", _getDFGVersion(), now(tz"UTC"), now(tz"UTC"))
 
 ## Metadata
 """
@@ -262,8 +201,6 @@ getEstimateFields(::MeanMaxPPE) = [:suggested, :max, :mean]
 ## DFG Variables
 ##==============================================================================
 
-const SmallDataTypes = Union{Int, Float64, String, Bool, Vector{Int}, Vector{Float64}, Vector{String}, Vector{Bool}}
-
 ##------------------------------------------------------------------------------
 ## DFGVariable lv2
 ##------------------------------------------------------------------------------
@@ -275,7 +212,9 @@ Complete variable structure for a DistributedFactorGraph variable.
 Fields:
 $(TYPEDFIELDS)
 """
-struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
+Base.@kwdef struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
+    """The ID for the variable"""
+    id::Union{UUID, Nothing}
     """Variable label, e.g. :x1.
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
@@ -312,7 +251,8 @@ end
 The default DFGVariable constructor.
 """
 function DFGVariable(label::Symbol, variableType::Type{T};
-            timestamp::Union{DateTime,ZonedDateTime}=now(localzone()),
+            id::Union{UUID,Nothing}=nothing,
+            timestamp::ZonedDateTime=now(localzone()),
             nstime::Nanosecond = Nanosecond(0),
             tags::Set{Symbol}=Set{Symbol}(),
             estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
@@ -321,11 +261,7 @@ function DFGVariable(label::Symbol, variableType::Type{T};
             dataDict::Dict{Symbol, AbstractDataEntry}=Dict{Symbol,AbstractDataEntry}(),
             solvable::Int=1) where {T <: InferenceVariable, P}
     #
-    if timestamp isa DateTime
-        DFGVariable{T}(label, ZonedDateTime(timestamp, localzone()), nstime, tags, estimateDict, solverDataDict, smallData, dataDict, Ref(solvable))
-    else
-        DFGVariable{T}(label, timestamp, nstime, tags, estimateDict, solverDataDict, smallData, dataDict, Ref(solvable))
-    end
+    DFGVariable{T}(id, label, timestamp, nstime, tags, estimateDict, solverDataDict, smallData, dataDict, Ref(solvable))
 end
 
 DFGVariable(label::Symbol, 
@@ -333,10 +269,14 @@ DFGVariable(label::Symbol,
             solverDataDict::Dict{Symbol, VariableNodeData{T,P}}=Dict{Symbol, VariableNodeData{T,getPointType(T)}}(),
             kw...) where {T <: InferenceVariable, P} = DFGVariable(label, T; solverDataDict=solverDataDict, kw...)
 #
+@deprecate DFGVariable(label::Symbol, T_::Type{<:InferenceVariable},w...; timestamp::DateTime=now(),kw...) DFGVariable(label, T_, w...; timestamp=ZonedDateTime(timestamp), kw...)
+#
+
 
 function DFGVariable(label::Symbol,
             solverData::VariableNodeData{T};
-            timestamp::Union{DateTime,ZonedDateTime}=now(localzone()),
+            id::Union{UUID, Nothing} = nothing,
+            timestamp::ZonedDateTime = now(localzone()),
             nstime::Nanosecond = Nanosecond(0),
             tags::Set{Symbol}=Set{Symbol}(),
             estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
@@ -344,11 +284,7 @@ function DFGVariable(label::Symbol,
             dataDict::Dict{Symbol, <: AbstractDataEntry}=Dict{Symbol,AbstractDataEntry}(),
             solvable::Int=1) where {T <: InferenceVariable}
     #
-    if timestamp isa DateTime
-        DFGVariable{T}(label, ZonedDateTime(timestamp, localzone()), nstime, tags, estimateDict, Dict{Symbol, VariableNodeData{T, getPointType(T)}}(:default=>solverData), smallData, dataDict, Ref(solvable))
-    else
-        DFGVariable{T}(label, timestamp, nstime, tags, estimateDict, Dict{Symbol, VariableNodeData{T, getPointType(T)}}(:default=>solverData), smallData, dataDict, Ref(solvable))
-    end
+    DFGVariable{T}(id, label, timestamp, nstime, tags, estimateDict, Dict{Symbol, VariableNodeData{T, getPointType(T)}}(:default=>solverData), smallData, dataDict, Ref(solvable))
 end
 
 Base.getproperty(x::DFGVariable,f::Symbol) = begin
@@ -388,7 +324,9 @@ Summary variable structure for a DistributedFactorGraph variable.
 Fields:
 $(TYPEDFIELDS)
 """
-struct DFGVariableSummary <: AbstractDFGVariable
+Base.@kwdef struct DFGVariableSummary <: AbstractDFGVariable
+    """The ID for the variable"""
+    id::Union{UUID, Nothing}
     """Variable label, e.g. :x1.
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
@@ -409,6 +347,7 @@ struct DFGVariableSummary <: AbstractDFGVariable
     dataDict::Dict{Symbol, AbstractDataEntry}
 end
 
+
 ##------------------------------------------------------------------------------
 ## SkeletonDFGVariable.jl
 ##------------------------------------------------------------------------------
@@ -421,16 +360,18 @@ Skeleton variable structure for a DistributedFactorGraph variable.
 Fields:
 $(TYPEDFIELDS)
 """
-struct SkeletonDFGVariable <: AbstractDFGVariable
+Base.@kwdef struct SkeletonDFGVariable <: AbstractDFGVariable
+    """The ID for the variable"""
+    id::Union{UUID, Nothing} = nothing
     """Variable label, e.g. :x1.
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
     Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
-    tags::Set{Symbol}
+    tags::Set{Symbol} = Set{Symbol}()
 end
 
-SkeletonDFGVariable(label::Symbol) = SkeletonDFGVariable(label, Set{Symbol}())
+SkeletonDFGVariable(label::Symbol, tags=Set{Symbol}(); id::Union{UUID, Nothing}=nothing) = SkeletonDFGVariable(id, label, tags)
 
 
 ##==============================================================================
@@ -445,7 +386,7 @@ const VariableDataLevel2 = Union{DFGVariable}
 ##==============================================================================
 
 DFGVariableSummary(v::DFGVariable) =
-        DFGVariableSummary(v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.ppeDict), Symbol(typeof(getVariableType(v))), v.dataDict)
+        DFGVariableSummary(v.id, v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.ppeDict), Symbol(typeof(getVariableType(v))), v.dataDict)
 
 SkeletonDFGVariable(v::VariableDataLevel1) =
-            SkeletonDFGVariable(v.label, deepcopy(v.tags))
+            SkeletonDFGVariable(v.id, v.label, deepcopy(v.tags))

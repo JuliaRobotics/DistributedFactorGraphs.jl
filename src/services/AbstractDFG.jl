@@ -365,7 +365,7 @@ end
 #TODO use copy functions currently in attic
 """
     $(SIGNATURES)
-Gets an empty and unique Neo4jDFG derived from an existing DFG.
+Gets an empty and unique DFG derived from an existing DFG.
 """
 function _getDuplicatedEmptyDFG(dfg::AbstractDFG)
     error("_getDuplicatedEmptyDFG not implemented for $(typeof(dfg))")
@@ -1061,7 +1061,7 @@ function findShortestPathDijkstra end
 Relatively naive function counting linearly from-to
 
 DevNotes
-- Convert to using LightGraphs shortest path methods instead.
+- Convert to using Graphs shortest path methods instead.
 """
 function findFactorsBetweenNaive(   dfg::AbstractDFG, 
                                     from::Symbol,
@@ -1095,7 +1095,7 @@ DevNotes
 
 Related
 
-[`LightDFG.findShortestPathDijkstra`](@ref)
+[`GraphsDFG.findShortestPathDijkstra`](@ref)
 """
 function isPathFactorsHomogeneous(dfg::AbstractDFG, from::Symbol, to::Symbol)
     # FIXME, must consider all paths, not just shortest...
@@ -1336,7 +1336,7 @@ end
 
 
 ##==============================================================================
-## DOT Files, falls back to LightDFG dot functions
+## DOT Files, falls back to GraphsDFG dot functions
 ##==============================================================================
 """
     $(SIGNATURES)
@@ -1346,8 +1346,8 @@ Notes
 - Returns `::String`
 """
 function toDot(dfg::AbstractDFG)
-    #convert to LightDFG
-    ldfg = LightDFG{NoSolverParams}()
+    #convert to GraphsDFG
+    ldfg = GraphsDFG{NoSolverParams}()
     copyGraph!(ldfg, dfg, listVariables(dfg), listFactors(dfg))
     return toDot(ldfg)
 end
@@ -1364,8 +1364,8 @@ Note
 """
 function toDotFile(dfg::AbstractDFG, fileName::String="/tmp/dfg.dot")
 
-    #convert to LightDFG
-    ldfg = LightDFG{NoSolverParams}()
+    #convert to GraphsDFG
+    ldfg = GraphsDFG{NoSolverParams}()
     copyGraph!(ldfg, dfg, listVariables(dfg), listFactors(dfg))
 
     return toDotFile(ldfg, fileName)
@@ -1400,10 +1400,10 @@ Get a summary graph (first-class citizens of variables and factors) with the sam
 
 Notes
 - this is a copy of the original.
-- Returns `::LightDFG{NoSolverParams, DFGVariableSummary, DFGFactorSummary}`
+- Returns `::GraphsDFG{NoSolverParams, DFGVariableSummary, DFGFactorSummary}`
 """
 function getSummaryGraph(dfg::G) where {G <: AbstractDFG}
-    summaryDfg = LightDFG{NoSolverParams, DFGVariableSummary, DFGFactorSummary}(
+    summaryDfg = GraphsDFG{NoSolverParams, DFGVariableSummary, DFGFactorSummary}(
         description="Summary of $(getDescription(dfg))",
         userId=dfg.userId,
         robotId=dfg.robotId,

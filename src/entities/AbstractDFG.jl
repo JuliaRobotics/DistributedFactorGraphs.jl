@@ -45,3 +45,8 @@ $(TYPEDEF)
 Abstract parent struct for big data entry.
 """
 abstract type AbstractDataEntry end
+
+"""
+Types valid for small data.
+"""
+const SmallDataTypes = Union{Int, Float64, String, Bool, Vector{Int}, Vector{Float64}, Vector{String}, Vector{Bool}}

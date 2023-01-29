@@ -28,7 +28,8 @@ function printVariable( io::IO, vert::DFGVariable;
             println(ioc, "")
         catch e
         end
-        vnd = getSolverData(vert, :default)
+        vnd = haskey(vert.solverDataDict, :default) ? getSolverData(vert, :default) : nothing
+        println(ioc, "  ID:         ", vert.id)
         println(ioc, "  timestamp:  ", vert.timestamp)
         println(ioc, "   nstime:    ", vert.nstime)
         print(ioc,   "  label:      ")
@@ -38,7 +39,7 @@ function printVariable( io::IO, vert::DFGVariable;
         println(ioc, "  tags:       ", getTags(vert))
         solk = listSolveKeys(vert) |> collect
         lsolk = length(solk)
-        smsk = (rand(1:lsolk,100) |> unique)[1:minimum([4,lsolk])]
+        smsk = lsolk > 0 ? (rand(1:lsolk,100) |> unique)[1:minimum([4,lsolk])] : nothing
         # list the marginalization status
         ismarg = solk .|> x->isMarginalized(vert, x)
         isinit = solk .|> x->isInitialized(vert, x)
@@ -49,14 +50,16 @@ function printVariable( io::IO, vert::DFGVariable;
         printstyled(ioc, "  # marginalized:     ", bold=true)
         println(ioc, "(true=", sum(ismarg), ",false=", length(ismarg) - sum(ismarg), ")" )
         
-        println(ioc, "    :default <-- VariableNodeData")
-        println(ioc, "      initilized:        ", isInitialized(vert, :default))
-        println(ioc, "      marginalized:      ", isMarginalized(vert, :default))
-        println(ioc, "      size bel. samples: ", size(vnd.val))
-        print(ioc, "      kde bandwidths:    ")
-        0 < length(vnd.bw) ? println(ioc, round.(vnd.bw[1], digits=4)) : nothing
-        printstyled(ioc, "     VNDs: ",bold=true)
-        println(ioc, solk[smsk], 4<lsolk ? "..." : "")
+        if vnd !== nothing
+            println(ioc, "    :default <-- VariableNodeData")
+            println(ioc, "      initialized:        ", isInitialized(vert, :default))
+            println(ioc, "      marginalized:      ", isMarginalized(vert, :default))
+            println(ioc, "      size bel. samples: ", size(vnd.val))
+            print(ioc, "      kde bandwidths:    ")
+            0 < length(vnd.bw) ? println(ioc, round.(vnd.bw[1], digits=4)) : nothing
+            printstyled(ioc, "     VNDs: ",bold=true)
+            println(ioc, solk[smsk], 4<lsolk ? "..." : "")
+        end
         printstyled(ioc, "  # PPE solveKeys=    ($(length(getPPEDict(vert))))", bold=true)
         println(ioc, "")
         if haskey(getPPEDict(vert), :default)
@@ -114,6 +117,7 @@ function printFactor(   io::IO, vert::DFGFactor;
         printstyled(ioc, fctt.name.name,bold=true, color=:blue)
         printstyled(ioc, "...}}", bold=true)
         println(ioc)
+        println(ioc, "  ID:            ", vert.id)
         println(ioc, "  timestamp:     ", vert.timestamp)
         println(ioc, "   nstime:       ", vert.nstime)
         print(ioc,   "  label:         ")

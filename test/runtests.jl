@@ -1,20 +1,11 @@
 using Test
 using GraphPlot # For plotting tests
-using Neo4j
-push!(ENV,"DFG_USE_CGDFG"=>"true")
 using DistributedFactorGraphs
 using Pkg
 using Dates
 using TimeZones
 using SHA
 using UUIDs
-
-## To run the IIF tests, you need a local Neo4j with user/pass neo4j:test
-# To run a Docker image
-# NOTE: that Neo4j.jl doesn't currently support > Neo4j 3.x
-# Install: docker pull neo4j:3.5.6
-# Run: docker run -d --publish=7474:7474 --publish=7687:7687 --env NEO4J_AUTH=neo4j/test neo4j:3.5.6
-##
 
 # If you want to enable debugging logging (very verbose!)
 # using Logging
@@ -30,26 +21,14 @@ include("testBlocks.jl")
     include("compareTests.jl")
 end
 
-@testset "Testing LightDFG.FactorGraphs functions" begin
-    include("LightFactorGraphsTests.jl")
+@testset "Testing GraphsDFG.FactorGraphs functions" begin
+    include("FactorGraphsTests.jl")
 end
 
 
-if get(ENV, "DO_CGDFG_TESTS", "") == "true"
-    apis = [
-        GraphsDFG,
-        LightDFG,
-        Neo4jDFG,
-        ]
-    @warn "TEST: Removing all data for user 'test@navability.io'!"
-    clearUser!!(Neo4jDFG(userId="test@navability.io"))
-
-else
-    apis = [
-        GraphsDFG,
-        LightDFG,
-        ]
-end
+apis = [
+    GraphsDFG,
+    ]
 
 for api in apis
     @testset "Testing Driver: $(api)" begin
@@ -68,13 +47,13 @@ end
     include("consol_DataEntryBlobTests.jl")
 end
 
-@testset "LightDFG subtype tests" begin
+@testset "GraphsDFG subtype tests" begin
     for type in [(var=DFGVariableSummary, fac=DFGFactorSummary), (var=SkeletonDFGVariable,fac=SkeletonDFGFactor)]
         @testset "$(type.var) and $(type.fac) tests" begin
             @info "Testing $(type.var) and $(type.fac)"
             global VARTYPE = type.var
             global FACTYPE = type.fac
-            include("LightDFGSummaryTypes.jl")
+            include("GraphsDFGSummaryTypes.jl")
         end
     end
 end
@@ -92,7 +71,6 @@ if get(ENV, "IIF_TEST", "") == "true"
 
     apis = Vector{AbstractDFG}()
     push!(apis, GraphsDFG(solverParams=SolverParams(), userId="test@navability.io"))
-    get(ENV, "DO_CGDFG_TESTS", "false") == "true" && push!(apis, Neo4jDFG(solverParams=SolverParams(), userId="test@navability.io")) 
 
     for api in apis
         @testset "Testing Driver: $(typeof(api))" begin
@@ -113,18 +91,12 @@ if get(ENV, "IIF_TEST", "") == "true"
         include("iifCompareTests.jl")
     end
 
-    @testset "CGStructure Tests for CGDFG" begin
-        # Run the CGStructure tests
-        include("CGStructureTests.jl")
-    end
-
     # Simple graph solving test
     @testset "Simple graph solving test" begin
         # This is just to validate we're not going to blow up downstream.
         apis = [
             # GraphsDFG{SolverParams}(),
-            LightDFG(solverParams=SolverParams(), userId="test@navability.io"),
-            Neo4jDFG(solverParams=SolverParams(), userId="test@navability.io")
+            GraphsDFG(solverParams=SolverParams(), userId="test@navability.io"),
             ]
         for api in apis
             @info "Running simple solver test: $(typeof(api))"

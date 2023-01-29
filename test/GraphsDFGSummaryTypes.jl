@@ -2,15 +2,16 @@
 # VARTYPE = DFGVariableSummary
 # FACTYPE = DFGFactorSummary
 
-dfg = LightDFG{NoSolverParams, VARTYPE, FACTYPE}()
-DistributedFactorGraphs.DFGVariableSummary(label::Symbol) = DFGVariableSummary(label, DistributedFactorGraphs.now(localzone()), Set{Symbol}(), Dict{Symbol, MeanMaxPPE}(), :Pose2, Dict{Symbol,AbstractDataEntry}())
-DistributedFactorGraphs.DFGFactorSummary(label::Symbol) = DFGFactorSummary(label, DistributedFactorGraphs.now(localzone()), Set{Symbol}(), Symbol[])
+dfg = GraphsDFG{NoSolverParams, VARTYPE, FACTYPE}()
+DistributedFactorGraphs.DFGVariableSummary(label::Symbol) = DFGVariableSummary(nothing, label, DistributedFactorGraphs.now(localzone()), Set{Symbol}(), Dict{Symbol, MeanMaxPPE}(), :Pose2, Dict{Symbol,AbstractDataEntry}())
+DistributedFactorGraphs.DFGFactorSummary(label::Symbol) = DFGFactorSummary(nothing, label, Set{Symbol}(), Symbol[], DistributedFactorGraphs.now(localzone()))
 
-DistributedFactorGraphs.DFGVariableSummary(label::Symbol, ::VariableNodeData{T}) where T = DFGVariableSummary(label, DistributedFactorGraphs.now(localzone()), Set{Symbol}(), Dict{Symbol, MeanMaxPPE}(), Symbol(T), Dict{Symbol,AbstractDataEntry}())
+DistributedFactorGraphs.DFGVariableSummary(label::Symbol, ::VariableNodeData{T}) where T = DFGVariableSummary(nothing, label, DistributedFactorGraphs.now(localzone()), Set{Symbol}(), Dict{Symbol, MeanMaxPPE}(), Symbol(T), Dict{Symbol,AbstractDataEntry}())
 DistributedFactorGraphs.SkeletonDFGVariable(label::Symbol, args...) = SkeletonDFGVariable(label)
+DistributedFactorGraphs.SkeletonDFGVariable(label::Symbol, ::VariableNodeData{T}) where T = SkeletonDFGVariable(nothing, label, Set{Symbol}())
 
 
-dfg = LightDFG{NoSolverParams, VARTYPE, FACTYPE}()
+dfg = GraphsDFG{NoSolverParams, VARTYPE, FACTYPE}()
 v1 = VARTYPE(:a)
 v2 = VARTYPE(:b)
 v3 = VARTYPE(:c)
@@ -67,7 +68,7 @@ end
 
 
 @testset "Adjacency Matrices" begin
-    fg = LightDFG{NoSolverParams, VARTYPE, FACTYPE}()
+    fg = GraphsDFG{NoSolverParams, VARTYPE, FACTYPE}()
     addVariable!(fg, VARTYPE(:a))
     addVariable!(fg, VARTYPE(:b))
     addFactor!(fg,  [:a,:b], FACTYPE(:abf1))
@@ -77,17 +78,17 @@ end
 end
 
 @testset "Getting Neighbors" begin
-    GettingNeighbors(LightDFG{NoSolverParams, VARTYPE, FACTYPE}, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
+    GettingNeighbors(GraphsDFG{NoSolverParams, VARTYPE, FACTYPE}, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
 end
 
 @testset "Building Subgraphs" begin
-    BuildingSubgraphs(LightDFG{NoSolverParams, VARTYPE, FACTYPE}, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
+    BuildingSubgraphs(GraphsDFG{NoSolverParams, VARTYPE, FACTYPE}, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
 end
 
 @testset "Producing Dot Files" begin
-    ProducingDotFiles(LightDFG{NoSolverParams, VARTYPE, FACTYPE}, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
+    ProducingDotFiles(GraphsDFG{NoSolverParams, VARTYPE, FACTYPE}, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
 end
 
 @testset "Connectivity Test" begin
-     ConnectivityTest(LightDFG{NoSolverParams, VARTYPE, FACTYPE}, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
+     ConnectivityTest(GraphsDFG{NoSolverParams, VARTYPE, FACTYPE}, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
 end

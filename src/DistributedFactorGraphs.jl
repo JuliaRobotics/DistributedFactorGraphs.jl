@@ -25,6 +25,7 @@ using Reexport
 using JSON
 using Unmarshal
 using JSON2 # JSON2 requires all properties to be in correct sequence, can't guarantee that from DB.
+using JSON3
 using LinearAlgebra
 using SparseArrays
 using UUIDs
@@ -299,11 +300,8 @@ include("services/AbstractDFG.jl")
 include("GraphsDFG/GraphsDFG.jl")
 @reexport using .GraphsDFGs
 
-include("LightDFG/LightDFG.jl")
-@reexport using .LightDFGs
-
 #supported in Memory fg types
-const InMemoryDFGTypes = Union{GraphsDFG, LightDFG}
+const InMemoryDFGTypes = Union{GraphsDFG}
 const LocalDFG = GraphsDFG
 
 # Common includes
@@ -325,12 +323,6 @@ include("Common.jl")
 
 # Data Blob extensions
 include("DataBlobs/DataBlobs.jl")
-
-if get(ENV, "DFG_USE_CGDFG", "") == "true"
-    @info "Detected ENV[\"DFG_USE_CGDFG\"]: Including optional Neo4jDFG (LGPL) Driver"
-    include("Neo4jDFG/Neo4jDFG.jl")
-    @reexport using .Neo4jDFGs
-end
 
 function __init__()
     @require GraphPlot = "a2cc645c-3eea-5389-862e-a155d0052231" begin

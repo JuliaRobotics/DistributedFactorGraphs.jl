@@ -112,10 +112,10 @@ Modules = [DFGPlots]
 
 ## Drivers
 
-### LightDFGs
+### GraphsDFGs
 
 ```@autodocs
-Modules = [LightDFGs]
+Modules = [GraphsDFGs]
 ```
 
 ### FileDFG
@@ -124,14 +124,6 @@ Modules = [LightDFGs]
 Modules = [DistributedFactorGraphs]
 Pages = ["FileDFG.jl"]
 ```
-
-### Neo4jDFGs
-
-```@autodocs
-Modules = [Neo4jDFGs]
-```
-
-
 
 ## Data Entries and Blobs
 

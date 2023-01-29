@@ -18,11 +18,31 @@ end
 # TODO ADD DEPRECATION
 packVariable(::AbstractDFG, v::DFGVariable) = packVariable(v) 
 
+# # FIXME ON FIRE, THIS OLD CONSTRUCTOR SHOULD BE DELETED
+# function GenericFunctionNodeData(   eliminated::Bool,
+#                                     potentialused::Bool,
+#                                     edgeIDs::Vector{Int},
+#                                     fnc::T,
+#                                     multihypo::Vector{<:Real}=Float64[],
+#                                     certainhypo::Vector{Int}=Int[],
+#                                     nullhypo::Real=0,
+#                                     solveInProgress::Int=0,
+#                                     inflation::Real=0.0 ) where T
+#     return GenericFunctionNodeData{T}(; eliminated, potentialused, edgeIDs, fnc, multihypo, certainhypo, nullhypo, solveInProgress, inflation)
+# end
 
+# GenericFunctionNodeData{T}() where T = GenericFunctionNodeData(;fnc=T())
+
+
+# GenericFunctionNodeData{T}() where T =
+#     GenericFunctionNodeData( false, false, Int[], T())
 
 ## ================================================================================
 ## Deprecate before v0.20 - Kept longer with error
 ##=================================================================================
+
+@deprecate packVariableNodeData(fg::AbstractDFG, d::VariableNodeData) packVariableNodeData(d::VariableNodeData)
+@deprecate unpackVariableNodeData(fg::AbstractDFG, d::PackedVariableNodeData) unpackVariableNodeData(d::PackedVariableNodeData)
 
 function getTypeFromSerializationModule(dfg::G, moduleType::Symbol) where G <: AbstractDFG
   error("Deprecating getTypeFromSerializationModule(dfg,symbol), use getTypeFromSerializationModule(string) instead.")
@@ -116,7 +136,10 @@ const PackedInferenceType = AbstractPackedFactor  # will eventually deprecate
 
 export DefaultDFG
 
-const DefaultDFG = LightDFG
+const DefaultDFG = GraphsDFG
+
+export LightDFG
+LightDFG(args...; kwargs...) = error("LightDFG is deprecated and replaced with GraphsDFG")
 
 
 ## ================================================================================
