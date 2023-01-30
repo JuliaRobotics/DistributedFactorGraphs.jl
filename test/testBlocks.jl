@@ -850,11 +850,11 @@ function  DataEntriesTestBlock!(fg, v2)
     # listDataEntries
     # emptyDataEntries
     # mergeDataEntries
-    storeEntry = BlobStoreEntry(:a,uuid4(), :b, "","","","",now(localzone()))
+    storeEntry = BlobStoreEntry(uuid4(), :a, :b, "","","","", "", now(localzone()))
     @test getLabel(storeEntry) == storeEntry.label
     @test getId(storeEntry) == storeEntry.id
     @test getHash(storeEntry) == hex2bytes(storeEntry.hash)
-    @test getCreatedTimestamp(storeEntry) == storeEntry.createdTimestamp
+    @test getTimestamp(storeEntry) == storeEntry.timestamp
 
     oid = zeros(UInt8,12); oid[12] = 0x01
     de1 = MongodbDataEntry(:key1, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
@@ -903,13 +903,13 @@ end
 
 function blobsStoresTestBlock!(fg)
 
-    de1 = BlobStoreEntry(:label1,uuid4(), :store1, "AAAA","origin1","description1","mimetype1",now(localzone()))
-    de2 = BlobStoreEntry(:label2,uuid4(), :store2, "FFFF","origin2","description2","mimetype2",ZonedDateTime("2020-08-12T12:00:00.000+00:00"))
-    de2_update = BlobStoreEntry(:label2,uuid4(), :store2, "0123","origin2","description2","mimetype2",ZonedDateTime("2020-08-12T12:00:01.000+00:00"))
+    de1 = BlobStoreEntry(uuid4(),:label1, :store1, "AAAA","origin1","description1","mimetype1","", now(localzone()))
+    de2 = BlobStoreEntry(uuid4(),:label2, :store2, "FFFF","origin2","description2","mimetype2","", ZonedDateTime("2020-08-12T12:00:00.000+00:00"))
+    de2_update = BlobStoreEntry(uuid4(),:label2, :store2, "0123","origin2","description2","mimetype2","", ZonedDateTime("2020-08-12T12:00:01.000+00:00"))
     @test getLabel(de1) == de1.label
     @test getId(de1) == de1.id
     @test getHash(de1) == hex2bytes(de1.hash)
-    @test getCreatedTimestamp(de1) == de1.createdTimestamp
+    @test getTimestamp(de1) == de1.timestamp
 
     #add
     var1 = getVariable(fg, :a)
