@@ -349,15 +349,16 @@ function unpackVariable(
     isnothing(variableType) && error("Cannot deserialize variableType '$variableTypeString' in variable '$label'")
     pointType = getPointType(variableType)
 
-    _ensureid!(s::Dict) = begin s["id"] = haskey(s, "id") ? s["id"] : nothing end
-    _ensureid!(s::PackedVariableNodeData) = s
-
-    # FIXME, drop nested packing, see DFG #867
-    solverData = if unpackSolverData && haskey(packedProps, "solverDataDict")
-        packed = if packedProps["solverDataDict"] isa String
-            # JSON2.read(packedProps["solverDataDict"], Dict{String, PackedVariableNodeData})
-            # JSON3.read(packedProps["solverDataDict"], Dict{String, PackedVariableNodeData})
-            jdc = JSON.parse(packedProps["solverDataDict"])
+    function _unpackSolverData(
+        packedSolverData; 
+        oldkeys=false
+    )
+        _ensureid!(s::Dict) = begin s["id"] = haskey(s, "id") ? s["id"] : nothing end
+        _ensureid!(s::PackedVariableNodeData) = s
+        packed = if packedSolverData isa String
+            # JSON2.read(packedSolverData, Dict{String, PackedVariableNodeData})
+            # JSON3.read(packedSolverData, Dict{String, PackedVariableNodeData})
+            jdc = JSON.parse(packedSolverData)
             jpvd = Dict{String,PackedVariableNodeData}()
             for (k,v) in jdc
                 _ensureid!(v)
@@ -365,13 +366,23 @@ function unpackVariable(
             end
             jpvd
         else
-            packedProps["solverDataDict"]
+            packedSolverData
         end
         packedvals = values(packed)
         _ensureid!.(packedvals)
+        # @show keys(packed)
         # TODO deprecate, this is for DFG18 compat only
         packed_ = transcodeType.(PackedVariableNodeData, packedvals) # from Dict to hard type
-        Dict{Symbol, VariableNodeData{variableType, pointType}}(Symbol.(keys(packed)) .=> map(p -> unpackVariableNodeData(p), packed_))
+        unpacked_ = map(p -> unpackVariableNodeData(p), packed_)
+        keys_ = oldkeys ? Symbol.(keys(packed_)) : map(s->s.solveKey, unpacked_)
+        Dict{Symbol, VariableNodeData{variableType, pointType}}(keys_ .=> unpacked_)
+    end
+
+    # FIXME, drop nested packing, see DFG #867
+    solverData = if unpackSolverData && haskey(packedProps, "solverDataDict")
+        _unpackSolverData(packedProps["solverDataDict"]; oldkeys=false)
+    elseif unpackSolverData && haskey(packedProps, "solverData")
+        _unpackSolverData(packedProps["solverData"])
     else
         Dict{Symbol, VariableNodeData{variableType, pointType}}()
     end
@@ -380,13 +391,13 @@ function unpackVariable(
     # variable = DFGVariable{variableType}(Symbol(packedProps["label"]), timestamp, nstime, Set(tags), ppeDict, solverData,  smallData, Dict{Symbol,AbstractDataEntry}(), Ref(packedProps["solvable"]))
     
     variable = DFGVariable{variableType}(;
-        id=id,
+        id,
         label = Symbol(packedProps["label"]), 
         # variableType = variableType, 
-        timestamp = timestamp, 
-        nstime = nstime, 
+        timestamp, 
+        nstime, 
         tags = Set{Symbol}(tags_), 
-        ppeDict = ppeDict, 
+        ppeDict, 
         solverDataDict = solverData,  
         smallData= smallData, 
         dataDict = Dict{Symbol,AbstractDataEntry}(), 
