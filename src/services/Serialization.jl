@@ -68,6 +68,13 @@ function getStandardZDTString(stringTimestamp::String)
     # This is finding :59Z or :59.82-05:00 and fixing it to always have 3 subsecond digits.
     # Temporary fix until TimeZones.jl gets an upstream fix.
     return replace(ts, r":\d\d(\.\d+)?(Z|z|\+|-)" => _fixSubseconds)
+    # if occursin(r".*\:\d\d\+", packedProps["timestamp"]) 
+    #     ZonedDateTime(packedProps["timestamp"], "yyyy-mm-ddTHH:MM:SSzzzz")
+    # elseif occursin(r".*\:\d\d\.", packedProps["timestamp"])
+    #     ZonedDateTime(packedProps["timestamp"], "yyyy-mm-ddTHH:MM:SS.sss+zzzz")
+    # else
+    #     ZonedDateTime(packedProps["timestamp"])
+    # end
 end
 
 # Corrects any `::ZonedDateTime` fields of T in corresponding `interm::Dict` as `dateformat"yyyy-mm-ddTHH:MM:SS.ssszzz"`
@@ -658,6 +665,8 @@ function unpackFactor(
         UUID(packedProps["id"]) else nothing end
     label = packedProps["label"]
 
+    # various formats in which the timestamp might be stored
+    packedProps["timestamp"] = getStandardZDTString(packedProps["timestamp"])
     timestamp = ZonedDateTime(packedProps["timestamp"])
     nstime = Nanosecond(get(packedProps, "nstime", 0))
 
