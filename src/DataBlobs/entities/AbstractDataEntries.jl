@@ -8,7 +8,7 @@
 getLabel(entry::AbstractDataEntry) = entry.label
 getId(entry::AbstractDataEntry) = entry.id
 getHash(entry::AbstractDataEntry) = hex2bytes(entry.hash)
-getCreatedTimestamp(entry::AbstractDataEntry) = entry.createdTimestamp
+getTimestamp(entry::AbstractDataEntry) = entry.timestamp
 
 
 ##==============================================================================
@@ -18,45 +18,49 @@ export BlobStoreEntry
 
 """
     $(TYPEDEF)
-Genaral Data Store Entry.
+General Data Store Entry.
 """
-struct BlobStoreEntry <: AbstractDataEntry
+@Base.kwdef struct BlobStoreEntry <: AbstractDataEntry
+    id::Union{UUID, Nothing}=nothing
     label::Symbol
-    id::UUID
     blobstore::Symbol
     hash::String # Probably https://docs.julialang.org/en/v1/stdlib/SHA
     origin::String # E.g. user|robot|session|varlabel
     description::String
     mimeType::String
-    createdTimestamp::ZonedDateTime # of when the entry was created
+    metadata::String = ""
+    timestamp::ZonedDateTime = now(localzone())
+    _type::String = "BlobStoreEntry"
+    _version::String = string(_getDFGVersion()) # TBD consider upgrading to ::VersionNumber
 end
 
 _fixtimezone(cts::NamedTuple) = ZonedDateTime(cts.utc_datetime*"+00")
 
-# needed for deserialization from JSON during DFG v0.19 transition, see #867
-function BlobStoreEntry(;
-    label,
-    id,
-    blobstore,
-    hash,
-    origin,
-    description,
-    mimeType,
-    createdTimestamp,
-    kwargs... # drop excessive fields
-)
-    #
-    BlobStoreEntry(
-        Symbol(label),
-        UUID(id),
-        Symbol(blobstore),
-        hash,
-        origin,
-        description,
-        mimeType,
-        _fixtimezone(createdTimestamp),
-    )
-end
+# # needed for deserialization from JSON during DFG v0.19 transition, see #867
+# # TODO this function can likely be removed, since julia automatically tries type conversion on constructors.
+# function BlobStoreEntry(;
+#     id,
+#     label,
+#     blobstore,
+#     hash,
+#     origin,
+#     description,
+#     mimeType,
+#     timestamp,
+#     kwargs... # drop excessive fields
+# )
+#     #
+#     BlobStoreEntry(;
+#         id=UUID(id),
+#         label=Symbol(label),
+#         blobstore=Symbol(blobstore),
+#         hash,
+#         origin,
+#         description,
+#         mimeType,
+#         timestamp=_fixtimezone(timestamp),
+#     )
+# end
 
 # TODO
 """

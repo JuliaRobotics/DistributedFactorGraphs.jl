@@ -189,9 +189,9 @@ Base.show(io::IO, ::MIME"text/plain", f::DFGFactor) = printFactor(io, f, short=t
 
 function Base.show(io::IO, dfg::AbstractDFG)
     summary(io, dfg)
-    println(io, "\n  UserId: ", dfg.userId)
-    println(io, "  RobotId: ", dfg.robotId)
-    println(io, "  SessionId: ", dfg.sessionId)
+    println(io, "\n  UserLabel: ", dfg.userLabel)
+    println(io, "  RobotLabel: ", dfg.robotLabel)
+    println(io, "  SessionLabel: ", dfg.sessionLabel)
     println(io, "  Description: ", dfg.description)
     println(io, "  Nr variables: ", length(ls(dfg)))
     println(io, "  Nr factors: ",length(lsf(dfg)))

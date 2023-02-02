@@ -130,29 +130,22 @@ function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverP
     # "DFG Structure and Accessors"
     # Constructors
     # Constructors to be implemented
-    fg = T(solverParams=solparams, userId="test@navability.io")
+    fg = T(solverParams=solparams, userLabel="test@navability.io")
     #TODO test something better
     @test isa(fg, T)
-    @test getUserId(fg)=="test@navability.io"
-    @test getRobotId(fg)=="DefaultRobot"
-    @test getSessionId(fg)[1:8] == "Session_"
+    @test getUserLabel(fg)=="test@navability.io"
+    @test getRobotLabel(fg)=="DefaultRobot"
+    @test getSessionLabel(fg)[1:8] == "Session_"
 
     # Test the validation of the robot, session, and user IDs.
     notAllowedList = ["!notValid", "1notValid", "_notValid", "USER", "ROBOT", "SESSION",
                       "VARIABLE", "FACTOR", "ENVIRONMENT", "PPE", "DATA_ENTRY", "FACTORGRAPH"]
 
     for s in notAllowedList
-        @test_throws ErrorException T(solverParams=solparams, sessionId=s)
-        @test_throws ErrorException T(solverParams=solparams, robotId=s)
-        @test_throws ErrorException T(solverParams=solparams, userId=s)
+        @test_throws ErrorException T(solverParams=solparams, sessionLabel=s)
+        @test_throws ErrorException T(solverParams=solparams, robotLabel=s)
+        @test_throws ErrorException T(solverParams=solparams, userLabel=s)
     end
-
-
-    #NOTE I don't like, so not exporting, and not recommended to use
-    #     Technically if you set Ids its a new object
-    @test DistributedFactorGraphs.setUserId!(fg, "test@navability.io") == "test@navability.io"
-    @test DistributedFactorGraphs.setRobotId!(fg, "testRobotId") == "testRobotId"
-    @test DistributedFactorGraphs.setSessionId!(fg, "testSessionId") == "testSessionId"
 
     des = "description for runtest"
     uId = "test@navability.io"
@@ -166,9 +159,9 @@ function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverP
     # accesssors
     # get
     @test getDescription(fg) == des
-    @test getUserId(fg) == uId
-    @test getRobotId(fg) == rId
-    @test getSessionId(fg) == sId
+    @test getUserLabel(fg) == uId
+    @test getRobotLabel(fg) == rId
+    @test getSessionLabel(fg) == sId
     @test getAddHistory(fg) === fg.addHistory
 
     @test setUserData!(fg, Dict(ud)) == Dict(ud)
@@ -857,11 +850,19 @@ function  DataEntriesTestBlock!(fg, v2)
     # listDataEntries
     # emptyDataEntries
     # mergeDataEntries
-    storeEntry = BlobStoreEntry(:a,uuid4(), :b, "","","","",now(localzone()))
+    storeEntry = BlobStoreEntry(
+        id = uuid4(), 
+        label = :a, 
+        blobstore = :b, 
+        hash = "",
+        origin = "",
+        description = "",
+        mimeType = "", 
+        metadata = "")
     @test getLabel(storeEntry) == storeEntry.label
     @test getId(storeEntry) == storeEntry.id
     @test getHash(storeEntry) == hex2bytes(storeEntry.hash)
-    @test getCreatedTimestamp(storeEntry) == storeEntry.createdTimestamp
+    @test getTimestamp(storeEntry) == storeEntry.timestamp
 
     oid = zeros(UInt8,12); oid[12] = 0x01
     de1 = MongodbDataEntry(:key1, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
@@ -909,14 +910,39 @@ function  DataEntriesTestBlock!(fg, v2)
 end
 
 function blobsStoresTestBlock!(fg)
-
-    de1 = BlobStoreEntry(:label1,uuid4(), :store1, "AAAA","origin1","description1","mimetype1",now(localzone()))
-    de2 = BlobStoreEntry(:label2,uuid4(), :store2, "FFFF","origin2","description2","mimetype2",ZonedDateTime("2020-08-12T12:00:00.000+00:00"))
-    de2_update = BlobStoreEntry(:label2,uuid4(), :store2, "0123","origin2","description2","mimetype2",ZonedDateTime("2020-08-12T12:00:01.000+00:00"))
+    de1 = BlobStoreEntry(
+        id = uuid4(), 
+        label = :label1, 
+        blobstore = :store1, 
+        hash = "AAAA",
+        origin = "origin1",
+        description = "description1",
+        mimeType = "mimetype1", 
+        metadata = "")
+    de2 = BlobStoreEntry(
+        id = uuid4(), 
+        label = :label2, 
+        blobstore = :store2, 
+        hash = "FFFF",
+        origin = "origin2",
+        description = "description2",
+        mimeType = "mimetype2", 
+        metadata = "",
+        timestamp = ZonedDateTime("2020-08-12T12:00:00.000+00:00"))
+    de2_update = BlobStoreEntry(
+        id = uuid4(), 
+        label = :label2, 
+        blobstore = :store2, 
+        hash = "0123",
+        origin = "origin2",
+        description = "description2",
+        mimeType = "mimetype2", 
+        metadata = "",
+        timestamp = ZonedDateTime("2020-08-12T12:00:00.000+00:00"))
     @test getLabel(de1) == de1.label
     @test getId(de1) == de1.id
     @test getHash(de1) == hex2bytes(de1.hash)
-    @test getCreatedTimestamp(de1) == de1.createdTimestamp
+    @test getTimestamp(de1) == de1.timestamp
 
     #add
     var1 = getVariable(fg, :a)
@@ -1213,7 +1239,7 @@ function connectivityTestGraph(::Type{T}; VARTYPE=DFGVariable, FACTYPE=DFGFactor
     numNodesType1 = 5
     numNodesType2 = 5
 
-    dfg = T(userId="test@navability.io")
+    dfg = T(userLabel="test@navability.io")
 
     vars = vcat(map(n -> VARTYPE(Symbol("x$n"), VariableNodeData{TestVariableType1}()), 1:numNodesType1),
                 map(n -> VARTYPE(Symbol("x$(numNodesType1+n)"), VariableNodeData{TestVariableType2}()), 1:numNodesType2))
@@ -1421,7 +1447,7 @@ function ProducingDotFiles(testDFGAPI,
                            FACTYPE=DFGFactor)
     # "Producing Dot Files"
     # create a simpler graph for dot testing
-    dotdfg = testDFGAPI(userId="test@navability.io")
+    dotdfg = testDFGAPI(userLabel="test@navability.io")
 
     if v1 === nothing
         v1 = VARTYPE(:a, VariableNodeData{TestVariableType1}())
@@ -1531,7 +1557,7 @@ function CopyFunctionsTest(testDFGAPI; kwargs...)
     dcdfg_part1 = deepcopyGraph(GraphsDFG, dfg, vlbls1)
     dcdfg_part2 = deepcopyGraph(GraphsDFG, dfg, vlbls2)
 
-    mergedGraph = testDFGAPI(userId="test@navability.io")
+    mergedGraph = testDFGAPI(userLabel="test@navability.io")
     mergeGraph!(mergedGraph, dcdfg_part1)
     mergeGraph!(mergedGraph, dcdfg_part2)
 
@@ -1598,7 +1624,7 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
         # Save and load the graph to test.
         saveDFG(dfg, filename)
 
-        retDFG = testDFGAPI(userId="test@navability.io")
+        retDFG = testDFGAPI(userLabel="test@navability.io")
         @info "Going to load $filename"
 
         @test_throws AssertionError loadDFG!(retDFG,"badfilename")

@@ -34,7 +34,7 @@ end
     # dfg to copy to
     # creating a whole new graph with the same labels
     T = typeof(dfg)
-    dfg2 = T(solverParams=SolverParams(), userId="test@navability.io")
+    dfg2 = T(solverParams=SolverParams(), userLabel="test@navability.io")
 
     # Build a new in-memory IIF graph to transfer into the new graph.
     iiffg = initfg()

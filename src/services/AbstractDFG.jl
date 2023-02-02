@@ -13,9 +13,9 @@ Base.Broadcast.broadcastable(dfg::AbstractDFG) = Ref(dfg)
 ##==============================================================================
 # Standard recommended fields to implement for AbstractDFG
 # - `description::String`
-# - `userId::String`
-# - `robotId::String`
-# - `sessionId::String`
+# - `userLabel::String`
+# - `robotLabel::String`
+# - `sessionLabel::String`
 # - `userData::Dict{Symbol, String}`
 # - `robotData::Dict{Symbol, String}`
 # - `sessionData::Dict{Symbol, String}`
@@ -31,7 +31,7 @@ Base.Broadcast.broadcastable(dfg::AbstractDFG) = Ref(dfg)
     $(SIGNATURES)
 Convenience function to get all the metadata of a DFG
 """
-getDFGInfo(dfg::AbstractDFG) = (getDescription(dfg), getUserId(dfg), getRobotId(dfg), getSessionId(dfg), getUserData(dfg), getRobotData(dfg), getSessionData(dfg), getSolverParams(dfg))
+getDFGInfo(dfg::AbstractDFG) = (getDescription(dfg), getUserLabel(dfg), getRobotLabel(dfg), getSessionLabel(dfg), getUserData(dfg), getRobotData(dfg), getSessionData(dfg), getSolverParams(dfg))
 
 """
     $(SIGNATURES)
@@ -41,17 +41,17 @@ getDescription(dfg::AbstractDFG) = dfg.description
 """
     $(SIGNATURES)
 """
-getUserId(dfg::AbstractDFG) = dfg.userId
+getUserLabel(dfg::AbstractDFG) = dfg.userLabel
 
 """
     $(SIGNATURES)
 """
-getRobotId(dfg::AbstractDFG) = dfg.robotId
+getRobotLabel(dfg::AbstractDFG) = dfg.robotLabel
 
 """
     $(SIGNATURES)
 """
-getSessionId(dfg::AbstractDFG) = dfg.sessionId
+getSessionLabel(dfg::AbstractDFG) = dfg.sessionLabel
 
 """
     $(SIGNATURES)
@@ -86,21 +86,6 @@ rebuildFactorMetadata!(dfg::AbstractDFG{<:AbstractParams}, factor::AbstractDFGFa
     $(SIGNATURES)
 """
 setDescription!(dfg::AbstractDFG, description::String) = dfg.description = description
-
-"""
-    $(SIGNATURES)
-"""
-setUserId!(dfg::AbstractDFG, userId::String) = dfg.userId = userId
-
-"""
-    $(SIGNATURES)
-"""
-setRobotId!(dfg::AbstractDFG, robotId::String) = dfg.robotId = robotId
-
-"""
-    $(SIGNATURES)
-"""
-setSessionId!(dfg::AbstractDFG, sessionId::String) = dfg.sessionId = sessionId
 
 """
     $(SIGNATURES)
@@ -1182,7 +1167,7 @@ function buildSubgraph(::Type{G},
                        kwargs...) where G <: AbstractDFG
 
     if sessionId == ""
-        sessionId = getSessionId(dfg) * "_sub_$(string(uuid4())[1:6])"
+        sessionId = getSessionLabel(dfg) * "_sub_$(string(uuid4())[1:6])"
     end
 
     #build up the neighborhood from variableFactorLabels
@@ -1389,9 +1374,9 @@ function getSummary(dfg::G) where {G <: AbstractDFG}
     return DFGSummary(
         Dict(map(v->v.label, vars) .=> vars),
         Dict(map(f->f.label, facts) .=> facts),
-        dfg.userId,
-        dfg.robotId,
-        dfg.sessionId)
+        dfg.userLabel,
+        dfg.robotLabel,
+        dfg.sessionLabel)
 end
 
 """
@@ -1405,9 +1390,9 @@ Notes
 function getSummaryGraph(dfg::G) where {G <: AbstractDFG}
     summaryDfg = GraphsDFG{NoSolverParams, DFGVariableSummary, DFGFactorSummary}(
         description="Summary of $(getDescription(dfg))",
-        userId=dfg.userId,
-        robotId=dfg.robotId,
-        sessionId=dfg.sessionId)
+        userLabel=dfg.userLabel,
+        robotLabel=dfg.robotLabel,
+        sessionLabel=dfg.sessionLabel)
     deepcopyGraph!(summaryDfg, dfg)
     # for v in getVariables(dfg)
     #     newV = addVariable!(summaryDfg, DFGVariableSummary(v))

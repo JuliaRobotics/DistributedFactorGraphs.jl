@@ -23,7 +23,7 @@ using TimeZones
 using Distributions
 using Reexport
 using JSON
-using Unmarshal
+# using Unmarshal
 using JSON2 # JSON2 requires all properties to be in correct sequence, can't guarantee that from DB.
 using JSON3
 using LinearAlgebra
@@ -57,7 +57,7 @@ export AbstractParams, NoSolverParams
 export AbstractBlobStore
 
 # accessors & crud
-export getUserId, getRobotId, getSessionId
+export getUserLabel, getRobotLabel, getSessionLabel
 export getDFGInfo
 export getDescription, setDescription!,
        getSolverParams, setSolverParams!,

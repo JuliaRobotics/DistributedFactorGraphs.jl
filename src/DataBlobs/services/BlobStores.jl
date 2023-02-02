@@ -103,9 +103,9 @@ end
 
 function updateData!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol,  entry::AbstractDataEntry, blob::Vector{UInt8}; hashfunction = sha256)
     # Recalculate the hash - NOTE Assuming that this is going to be a BlobStoreEntry. TBD.
-    newEntry = BlobStoreEntry(entry.label, entry.id, blobstore.key, bytes2hex(hashfunction(blob)),
-        "$(dfg.userId)|$(dfg.robotId)|$(dfg.sessionId)|$(label)",
-        entry.description, entry.mimeType, entry.createdTimestamp)
+    newEntry = BlobStoreEntry(entry.id, entry.label, blobstore.key, bytes2hex(hashfunction(blob)),
+        buildSourceString(dfg, label),
+        entry.description, entry.mimeType, entry.metadata, entry.timestamp, entry._type, string(_getDFGVersion()))
 
     de = updateDataEntry!(dfg, label, newEntry)
     db = updateDataBlob!(blobstore, de, blob)
@@ -136,9 +136,16 @@ function addData!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol,
                   blob::Vector{UInt8}, timestamp=now(localzone()); description="", mimeType = "application/octet-stream", id::UUID = uuid4(), hashfunction = sha256)
 
 
-    entry = BlobStoreEntry(key, id, blobstore.key, bytes2hex(hashfunction(blob)),
-                           "$(dfg.userId)|$(dfg.robotId)|$(dfg.sessionId)|$(label)",
-                           description, mimeType, timestamp)
+    entry = BlobStoreEntry(
+        id = id, 
+        label = key, 
+        blobstore = blobstore.key, 
+        hash = bytes2hex(hashfunction(blob)),
+        origin = buildSourceString(dfg, label),
+        description = description, 
+        mimeType = mimeType, 
+        metadata = "", 
+        timestamp = timestamp)
 
     addData!(dfg, blobstore, label, entry, blob; hashfunction)
 end

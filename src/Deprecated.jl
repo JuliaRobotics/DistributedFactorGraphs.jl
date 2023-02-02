@@ -14,6 +14,10 @@ end
 ## Add @deprecate in v0.19, remove after v0.20
 ##=================================================================================
 
+function Base.convert(::Type{String}, v::VersionNumber)
+    @warn "Artificial conversion of VersionNumber to String will be deprected in future versions of DFG"
+    string(v)
+end
 
 # TODO ADD DEPRECATION
 packVariable(::AbstractDFG, v::DFGVariable) = packVariable(v) 
@@ -62,6 +66,26 @@ end
 ## ================================================================================
 ## Deprecate before v0.20
 ##=================================================================================
+
+
+# Need to implement this to allow Unmarshal to deserialize Nullable UUIDs and ZonedDateTimes
+# TODO: Move to JSON3.
+# import Unmarshal: unmarshal
+
+function unmarshal(::Type{Union{UUID, Nothing}}, x, verbose :: Bool = false, verboseLvl :: Int = 0)
+    if x !== nothing 
+        return UUID(x)
+    else 
+        return nothing
+    end
+end
+function unmarshal(::Type{Union{ZonedDateTime, Nothing}}, x, verbose :: Bool = false, verboseLvl :: Int = 0) 
+    if x !== nothing 
+        return ZonedDateTime(x)
+    else 
+        return nothing
+    end
+end
 
 export DefaultDFG
 

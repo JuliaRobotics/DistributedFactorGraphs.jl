@@ -17,54 +17,64 @@ Fields:
 $(TYPEDFIELDS)
 """
 Base.@kwdef mutable struct VariableNodeData{T<:InferenceVariable, P}
+    """
+    Globally unique identifier.
+    """
     id::Union{UUID, Nothing} = nothing # If it's blank it doesn't exist in the DB.
+    """
+    Vector of on-manifold points used to represent a ManifoldKernelDensity (or parametric) belief.
+    """
     val::Vector{P}
+    """
+    Common kernel bandwith parameter used with ManifoldKernelDensity, and as legacy also stores covariance until a dedicated field is created for parametric case.
+    """
     bw::Matrix{Float64} = zeros(0,0)
     BayesNetOutVertIDs::Vector{Symbol} = Symbol[]
-    dimIDs::Vector{Int} = Int[] # Likely deprecate
+    dimIDs::Vector{Int} = Int[] # TODO Likely deprecate
 
     dims::Int = 0
+    """
+    Flag used by junction (Bayes) tree construction algorith to know whether this variable has yet been included in the tree construction.
+    """
     eliminated::Bool = false
     BayesNetVertID::Symbol = :NOTHING #  Union{Nothing, }
     separator::Vector{Symbol} = Symbol[]
-
+    """
+    Variables each have a type, such as Position1, or RoME.Pose2, etc.
+    """
     variableType::T
+    """
+    False if initial numerical values are not yet available or stored values are not ready for further processing yet.
+    """
     initialized::Bool = false
     """
-    Replacing previous `inferdim::Float64`, new `.infoPerCoord::Vector{Float64}` will in 
-    future stores the amount information (per measurement dimension) captured in each 
-    coordinate dimension.
+    Stores the amount information (per measurement dimension) captured in each coordinate dimension.
     """
     infoPerCoord::Vector{Float64} = Float64[0.0;]
+    """
+    Should this variable solveKey be treated as marginalized in inference computations.
+    """
     ismargin::Bool = false
-
+    """
+    Shoudl this variable solveKey always be kept fluid and not be automatically marginalized.
+    """
     dontmargin::Bool = false
+    """
+    Convenience flag on whether a solver is currently busy working on this variable solveKey.
+    """
     solveInProgress::Int = 0
+    """
+    How many times has a solver updated this variable solveKey estimte.
+    """
     solvedCount::Int = 0
+    """
+    solveKey identifier associated with thsi VariableNodeData object.
+    """
     solveKey::Symbol
-
+    """
+    Future proofing field for when more multithreading operations on graph nodes are implemented, these conditions are meant to be used for atomic write transactions to this VND.
+    """
     events::Dict{Symbol,Threads.Condition} = Dict{Symbol,Threads.Condition}()
-
-    # VariableNodeData{T,P}(w...)  where {T <:InferenceVariable, P} = new{T,P}(w...)
-    # VariableNodeData{T,P}(;solveKey::Symbol=:default ) where {T <:InferenceVariable, P} = new{T,P}(
-    #         nothing,
-    #         Vector{P}(), 
-    #         zeros(0,0), 
-    #         Symbol[], 
-    #         Int[], 
-    #         0, 
-    #         false, 
-    #         :NOTHING, 
-    #         Symbol[], 
-    #         T(), 
-    #         false, 
-    #         Float64[0.0;], 
-    #         false, 
-    #         false, 
-    #         0, 
-    #         0, 
-    #         solveKey, 
-    #         Dict{Symbol,Threads.Condition}() )
     #
 end
 
@@ -75,32 +85,6 @@ end
 VariableNodeData{T,P}(;solveKey::Symbol=:default) where {T <: InferenceVariable, P} = VariableNodeData(; val=Vector{P}(), variableType=T(), solveKey)
 VariableNodeData{T}(;solveKey::Symbol=:default ) where T <: InferenceVariable = VariableNodeData(; solveKey, variableType=T(), val=Vector{getPointType(T)}()) # {T, getPointType(T)}
 
-# VariableNodeData(   val::Vector{P},
-#                     bw::AbstractMatrix{<:Real},
-#                     BayesNetOutVertIDs::AbstractVector{Symbol},
-#                     dimIDs::AbstractVector{Int},
-#                     dims::Int,
-#                     eliminated::Bool,
-#                     BayesNetVertID::Symbol,
-#                     separator::AbstractVector{Symbol},
-#                     variableType::T,
-#                     initialized::Bool,
-#                     ipc::AbstractVector{<:Real},
-#                     ismargin::Bool,
-#                     dontmargin::Bool,
-#                     solveInProgress::Int=0,
-#                     solvedCount::Int=0,
-#                     solveKey::Symbol=:default,
-#                     events::Dict{Symbol,Threads.Condition}=Dict{Symbol,Threads.Condition}();
-#                     id::Union{UUID, Nothing}=nothing
-#                 ) where {T <: InferenceVariable, P} =
-#                     VariableNodeData{T,P}(  id, val,bw,BayesNetOutVertIDs,dimIDs,dims,
-#                                             eliminated,BayesNetVertID,separator,
-#                                             variableType,initialized,ipc,ismargin,
-#                                             dontmargin, solveInProgress, solvedCount,
-#                                             solveKey, events  )
-#
-
 function VariableNodeData(variableType::T; solveKey::Symbol=:default) where T <: InferenceVariable
     #
     # p0 = getPointIdentity(T)
@@ -109,10 +93,6 @@ function VariableNodeData(variableType::T; solveKey::Symbol=:default) where T <:
     bw = zeros(0,0)
     # bw[1] = zeros(getDimension(T))
     VariableNodeData(;  val, bw, solveKey, variableType  )
-    # VariableNodeData(   nothing, P0, BW, Symbol[], Int[], 
-    #                     0, false, :NOTHING, Symbol[], 
-    #                     variableType, false, [0.0], false, 
-    #                     false, 0, 0, solveKey  )
 end
 
 
@@ -149,7 +129,7 @@ Base.@kwdef mutable struct PackedVariableNodeData
     solveInProgress::Int
     solvedCount::Int
     solveKey::Symbol
-    _version::String = _getDFGVersion()
+    _version::String = string(_getDFGVersion())
 end
 
 ##==============================================================================
@@ -178,7 +158,7 @@ Base.@kwdef struct MeanMaxPPE <: AbstractPointParametricEst
     max::Vector{Float64}
     mean::Vector{Float64}
     _type::String = "MeanMaxPPE"
-    _version::String = _getDFGVersion()
+    _version::String = string(_getDFGVersion())
     createdTimestamp::Union{ZonedDateTime, Nothing} = nothing
     lastUpdatedTimestamp::Union{ZonedDateTime, Nothing} = nothing
 end
@@ -186,7 +166,7 @@ end
 ##------------------------------------------------------------------------------
 ## Constructors
 
-MeanMaxPPE(solveKey::Symbol, suggested::Vector{Float64}, max::Vector{Float64}, mean::Vector{Float64}) = MeanMaxPPE(nothing, solveKey, suggested, max, mean, "MeanMaxPPE", _getDFGVersion(), now(tz"UTC"), now(tz"UTC"))
+MeanMaxPPE(solveKey::Symbol, suggested::Vector{Float64}, max::Vector{Float64}, mean::Vector{Float64}) = MeanMaxPPE(nothing, solveKey, suggested, max, mean, "MeanMaxPPE", string(_getDFGVersion()), now(tz"UTC"), now(tz"UTC"))
 
 ## Metadata
 """

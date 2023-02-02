@@ -1,5 +1,16 @@
 Listing news on any major breaking changes in DFG.  For regular changes, see integrated Github.com project milestones for DFG.
 
+# v0.19
+
+- Add ids and metadata to data types.
+- Use `Base.@kwdef` on stuct types for default values and serialization.
+- Dropped dependency on Unmarshal.jl.
+- Note src/Serialization.jl was refactored and currently contains lots of legacy code for DFG v0.18 compat, and much will be deleted in DFG v0.20 to standardize serialization around JSON3.jl, see #590.
+- `Neo4jDFG` has been removed.
+- `LightDFG` has been removed, and `GraphsDFG` is not the standard in-memory driver for alias `LocalDFG`.
+- Standardize all timestamp fields to `ZonedDateTime` from previous `DateTime` so that time zones will always be available.
+- internal `getDFGVersion()` function now returns a `::VersionNumber`.
+
 # v0.18.0
 
 - Unpack of GenericFactorNodeData with `reconstrFactorData` now gets `dfg::AbstractDFG` and `varOrder::Vector{Symbol}`, deprecating previous use of `convert` without the graph context (#832).
