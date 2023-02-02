@@ -17,20 +17,20 @@ JSON.show_json(io::JSONContext, serialization::CommonSerialization, uuid::UUID) 
 # FIXME return VersionNumber
 function _getDFGVersion()
     if haskey(Pkg.dependencies(), Base.UUID("b5cc3c7e-6572-11e9-2517-99fb8daf2f04"))
-        return string(Pkg.dependencies()[Base.UUID("b5cc3c7e-6572-11e9-2517-99fb8daf2f04")].version)
+        return string(Pkg.dependencies()[Base.UUID("b5cc3c7e-6572-11e9-2517-99fb8daf2f04")].version) |> VersionNumber
     else
         # This is arguably slower, but needed for Travis.
-        return Pkg.TOML.parse(read(joinpath(dirname(pathof(@__MODULE__)), "..", "Project.toml"), String))["version"]
+        return Pkg.TOML.parse(read(joinpath(dirname(pathof(@__MODULE__)), "..", "Project.toml"), String))["version"] |> VersionNumber
     end
 end
 
 function _versionCheck(props::Dict{String, Any})
     if haskey(props, "_version")
-        if props["_version"] != _getDFGVersion()
+        if VersionNumber(props["_version"]) < _getDFGVersion()
             @warn "This data was serialized using DFG $(props["_version"]) but you have $(_getDFGVersion()) installed, there may be deserialization issues." maxlog=10
         end
     else
-        @warn "There isn't a version tag in this data so it's older than v0.10, there may be deserialization issues."
+        error("There isn't a version tag in this data so it's older than v0.10, deserialization expected to fail.")
     end
 end
 
@@ -245,7 +245,7 @@ function packVariable(v::DFGVariable)
     props["variableType"] = typeModuleName(getVariableType(v))
     props["dataEntry"] = (Dict(keys(v.dataDict) .=> values(v.dataDict))) # map(bde -> JSON.json(bde), values(v.dataDict))))  
     props["dataEntryType"] = (Dict(keys(v.dataDict) .=> map(bde -> typeof(bde), values(v.dataDict)))) 
-    props["_version"] = _getDFGVersion()
+    props["_version"] = string(_getDFGVersion())
     return props #::Dict{String, Any}
 end
 
@@ -478,7 +478,7 @@ function packVariableNodeData(d::VariableNodeData{T}) where {T <: InferenceVaria
                                 d.solveInProgress,
                                 d.solvedCount,
                                 d.solveKey,
-                                _getDFGVersion())
+                                string(_getDFGVersion()))
 end
 
 function unpackVariableNodeData(d::PackedVariableNodeData)
@@ -565,7 +565,7 @@ function packFactor(dfg::AbstractDFG, f::DFGFactor)
     props["fnctype"] = String(_getname(fnctype))
     props["_variableOrderSymbols"] = f._variableOrderSymbols # JSON2.write(f._variableOrderSymbols)
     props["solvable"] = getSolvable(f)
-    props["_version"] = _getDFGVersion()
+    props["_version"] = string(_getDFGVersion())
     return props
 end
 

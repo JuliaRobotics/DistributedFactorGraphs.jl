@@ -14,6 +14,10 @@ end
 ## Add @deprecate in v0.19, remove after v0.20
 ##=================================================================================
 
+function Base.convert(::Type{String}, v::VersionNumber)
+    @warn "Artificial conversion of VersionNumber to String will be deprected in future versions of DFG"
+    string(v)
+end
 
 # TODO ADD DEPRECATION
 packVariable(::AbstractDFG, v::DFGVariable) = packVariable(v) 
