@@ -10,6 +10,7 @@ Listing news on any major breaking changes in DFG.  For regular changes, see int
 - `LightDFG` has been removed, and `GraphsDFG` is not the standard in-memory driver for alias `LocalDFG`.
 - Standardize all timestamp fields to `ZonedDateTime` from previous `DateTime` so that time zones will always be available.
 - internal `getDFGVersion()` function now returns a `::VersionNumber`.
+- Use `userLabel, robotLabel, sessionLabel` instead of legacy `userId, robotId, sessionId`.
 
 # v0.18.0
 
