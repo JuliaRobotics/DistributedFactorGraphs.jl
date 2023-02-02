@@ -17,32 +17,63 @@ Fields:
 $(TYPEDFIELDS)
 """
 Base.@kwdef mutable struct VariableNodeData{T<:InferenceVariable, P}
+    """
+    Globally unique identifier.
+    """
     id::Union{UUID, Nothing} = nothing # If it's blank it doesn't exist in the DB.
+    """
+    Vector of on-manifold points used to represent a ManifoldKernelDensity (or parametric) belief.
+    """
     val::Vector{P}
+    """
+    Common kernel bandwith parameter used with ManifoldKernelDensity, and as legacy also stores covariance until a dedicated field is created for parametric case.
+    """
     bw::Matrix{Float64} = zeros(0,0)
     BayesNetOutVertIDs::Vector{Symbol} = Symbol[]
-    dimIDs::Vector{Int} = Int[] # Likely deprecate
+    dimIDs::Vector{Int} = Int[] # TODO Likely deprecate
 
     dims::Int = 0
+    """
+    Flag used by junction (Bayes) tree construction algorith to know whether this variable has yet been included in the tree construction.
+    """
     eliminated::Bool = false
     BayesNetVertID::Symbol = :NOTHING #  Union{Nothing, }
     separator::Vector{Symbol} = Symbol[]
-
+    """
+    Variables each have a type, such as Position1, or RoME.Pose2, etc.
+    """
     variableType::T
+    """
+    False if initial numerical values are not yet available or stored values are not ready for further processing yet.
+    """
     initialized::Bool = false
     """
-    Replacing previous `inferdim::Float64`, new `.infoPerCoord::Vector{Float64}` will in 
-    future stores the amount information (per measurement dimension) captured in each 
-    coordinate dimension.
+    Stores the amount information (per measurement dimension) captured in each coordinate dimension.
     """
     infoPerCoord::Vector{Float64} = Float64[0.0;]
+    """
+    Should this variable solveKey be treated as marginalized in inference computations.
+    """
     ismargin::Bool = false
-
+    """
+    Shoudl this variable solveKey always be kept fluid and not be automatically marginalized.
+    """
     dontmargin::Bool = false
+    """
+    Convenience flag on whether a solver is currently busy working on this variable solveKey.
+    """
     solveInProgress::Int = 0
+    """
+    How many times has a solver updated this variable solveKey estimte.
+    """
     solvedCount::Int = 0
+    """
+    solveKey identifier associated with thsi VariableNodeData object.
+    """
     solveKey::Symbol
-
+    """
+    Future proofing field for when more multithreading operations on graph nodes are implemented, these conditions are meant to be used for atomic write transactions to this VND.
+    """
     events::Dict{Symbol,Threads.Condition} = Dict{Symbol,Threads.Condition}()
     #
 end
@@ -62,10 +93,6 @@ function VariableNodeData(variableType::T; solveKey::Symbol=:default) where T <:
     bw = zeros(0,0)
     # bw[1] = zeros(getDimension(T))
     VariableNodeData(;  val, bw, solveKey, variableType  )
-    # VariableNodeData(   nothing, P0, BW, Symbol[], Int[], 
-    #                     0, false, :NOTHING, Symbol[], 
-    #                     variableType, false, [0.0], false, 
-    #                     false, 0, 0, solveKey  )
 end
 
 

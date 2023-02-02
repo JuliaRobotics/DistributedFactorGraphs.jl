@@ -28,7 +28,7 @@ General Data Store Entry.
     origin::String # E.g. user|robot|session|varlabel
     description::String
     mimeType::String
-    metadata::String
+    metadata::String = ""
     timestamp::ZonedDateTime = now(localzone())
     _type::String = "BlobStoreEntry"
     _version::String = _getDFGVersion()
@@ -36,30 +36,31 @@ end
 
 _fixtimezone(cts::NamedTuple) = ZonedDateTime(cts.utc_datetime*"+00")
 
-# needed for deserialization from JSON during DFG v0.19 transition, see #867
-function BlobStoreEntry(;
-    id,
-    label,
-    blobstore,
-    hash,
-    origin,
-    description,
-    mimeType,
-    timestamp,
-    kwargs... # drop excessive fields
-)
-    #
-    BlobStoreEntry(
-        UUID(id),
-        Symbol(label),
-        Symbol(blobstore),
-        hash,
-        origin,
-        description,
-        mimeType,
-        _fixtimezone(timestamp),
-    )
-end
+# # needed for deserialization from JSON during DFG v0.19 transition, see #867
+# # TODO this function can likely be removed, since julia automatically tries type conversion on constructors.
+# function BlobStoreEntry(;
+#     id,
+#     label,
+#     blobstore,
+#     hash,
+#     origin,
+#     description,
+#     mimeType,
+#     timestamp,
+#     kwargs... # drop excessive fields
+# )
+#     #
+#     BlobStoreEntry(;
+#         id=UUID(id),
+#         label=Symbol(label),
+#         blobstore=Symbol(blobstore),
+#         hash,
+#         origin,
+#         description,
+#         mimeType,
+#         timestamp=_fixtimezone(timestamp),
+#     )
+# end
 
 # TODO
 """

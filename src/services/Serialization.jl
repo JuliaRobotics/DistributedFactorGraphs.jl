@@ -12,26 +12,9 @@ import JSON.Writer: StructuralContext, JSONContext, show_json
 import JSON.Serializations: CommonSerialization, StandardSerialization
 JSON.show_json(io::JSONContext, serialization::CommonSerialization, uuid::UUID) = print(io.io, "\"$uuid\"")
 
-# Need to implement this to allow Unmarshal to deserialize Nullable UUIDs and ZonedDateTimes
-# TODO: Move to JSON3.
-import Unmarshal: unmarshal
-
-function unmarshal(::Type{Union{UUID, Nothing}}, x, verbose :: Bool = false, verboseLvl :: Int = 0)
-    if x !== nothing 
-        return UUID(x)
-    else 
-        return nothing
-    end
-end
-function unmarshal(::Type{Union{ZonedDateTime, Nothing}}, x, verbose :: Bool = false, verboseLvl :: Int = 0) 
-    if x !== nothing 
-        return ZonedDateTime(x)
-    else 
-        return nothing
-    end
-end
 
 ## Version checking
+# FIXME return VersionNumber
 function _getDFGVersion()
     if haskey(Pkg.dependencies(), Base.UUID("b5cc3c7e-6572-11e9-2517-99fb8daf2f04"))
         return string(Pkg.dependencies()[Base.UUID("b5cc3c7e-6572-11e9-2517-99fb8daf2f04")].version)
@@ -81,7 +64,7 @@ end
 function standardizeZDTStrings!(T, interm::Dict)
     
     for (name, typ) in zip(fieldnames(T), T.types)
-        if typ <: ZonedDateTime
+        if typ <: ZonedDateTime && haskey(interm, name)
             namestr = string(name)
             interm[namestr] = getStandardZDTString(interm[namestr])
         end
@@ -144,6 +127,14 @@ end
     $SIGNATURES
 Should be a highly reusable function for any transcoding of intermediate type (or dict) to a desired output type.
 
+Notes:
+- Using Base.@kwdef and JSON3.jl probably has better conversion logic than this function.
+- This function was written to reduce dependency on Unmarshal.jl which was becoming stale.
+
+DevNotes
+- See if this function just be deprecated to use JSON3 or similar.
+- Do better with Union{Nothing, T} types (if this function is not replaced by JSON3)
+
 examples
 ```julia
 Base.@kwdef struct HardType
@@ -200,6 +191,7 @@ function transcodeType(
     # specializations as inner functions (don't have to be inners)
     # these few special cases came up with examples below, note recursions
     _instance(S::Type, x) = S(x)
+    _instance(S::Type{Union{Nothing, UUID}}, x::String) = UUID(x) # special case
     _instance(_::Type{S}, x::S) where S = x # if ambiguous, delete and do alternative `_instance(S::Type, x) = S===Any ? x : S(x)`
     _instance(S::Type{I}, x::AbstractString) where I <: Number = Base.parse(I, x)
     _instance(S::Type{E}, x::AbstractVector) where E <: AbstractVector = _instance.(eltype(E),x)
@@ -452,7 +444,8 @@ function unpackVariable(
             interm = _doparse(bdeInter) # JSON.parse(bdeInter) # bdeInter
             objType = getfield(DistributedFactorGraphs, Symbol(dataElemTypes[k]))
             standardizeZDTStrings!(objType, interm)
-            fullVal = Unmarshal.unmarshal(objType, interm)
+            fullVal = transcodeType(objType, interm)
+            # fullVal = Unmarshal.unmarshal(objType, interm)
             variable.dataDict[k] = fullVal
         end
     end
