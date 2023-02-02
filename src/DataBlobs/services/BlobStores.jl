@@ -105,7 +105,7 @@ function updateData!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symb
     # Recalculate the hash - NOTE Assuming that this is going to be a BlobStoreEntry. TBD.
     newEntry = BlobStoreEntry(entry.id, entry.label, blobstore.key, bytes2hex(hashfunction(blob)),
         buildSourceString(dfg, label),
-        entry.description, entry.mimeType, entry.metadata, entry.timestamp, entry._type, _getDFGVersion())
+        entry.description, entry.mimeType, entry.metadata, entry.timestamp, entry._type, string(_getDFGVersion()))
 
     de = updateDataEntry!(dfg, label, newEntry)
     db = updateDataBlob!(blobstore, de, blob)

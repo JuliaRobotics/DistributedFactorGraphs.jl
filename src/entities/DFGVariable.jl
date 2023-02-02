@@ -129,7 +129,7 @@ Base.@kwdef mutable struct PackedVariableNodeData
     solveInProgress::Int
     solvedCount::Int
     solveKey::Symbol
-    _version::String = _getDFGVersion()
+    _version::String = string(_getDFGVersion())
 end
 
 ##==============================================================================
@@ -158,7 +158,7 @@ Base.@kwdef struct MeanMaxPPE <: AbstractPointParametricEst
     max::Vector{Float64}
     mean::Vector{Float64}
     _type::String = "MeanMaxPPE"
-    _version::String = _getDFGVersion()
+    _version::String = string(_getDFGVersion())
     createdTimestamp::Union{ZonedDateTime, Nothing} = nothing
     lastUpdatedTimestamp::Union{ZonedDateTime, Nothing} = nothing
 end
@@ -166,7 +166,7 @@ end
 ##------------------------------------------------------------------------------
 ## Constructors
 
-MeanMaxPPE(solveKey::Symbol, suggested::Vector{Float64}, max::Vector{Float64}, mean::Vector{Float64}) = MeanMaxPPE(nothing, solveKey, suggested, max, mean, "MeanMaxPPE", _getDFGVersion(), now(tz"UTC"), now(tz"UTC"))
+MeanMaxPPE(solveKey::Symbol, suggested::Vector{Float64}, max::Vector{Float64}, mean::Vector{Float64}) = MeanMaxPPE(nothing, solveKey, suggested, max, mean, "MeanMaxPPE", string(_getDFGVersion()), now(tz"UTC"), now(tz"UTC"))
 
 ## Metadata
 """

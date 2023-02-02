@@ -31,7 +31,7 @@ General Data Store Entry.
     metadata::String = ""
     timestamp::ZonedDateTime = now(localzone())
     _type::String = "BlobStoreEntry"
-    _version::String = _getDFGVersion()
+    _version::String = string(_getDFGVersion()) # TBD consider upgrading to ::VersionNumber
 end
 
 _fixtimezone(cts::NamedTuple) = ZonedDateTime(cts.utc_datetime*"+00")
