@@ -12,26 +12,9 @@ import JSON.Writer: StructuralContext, JSONContext, show_json
 import JSON.Serializations: CommonSerialization, StandardSerialization
 JSON.show_json(io::JSONContext, serialization::CommonSerialization, uuid::UUID) = print(io.io, "\"$uuid\"")
 
-# Need to implement this to allow Unmarshal to deserialize Nullable UUIDs and ZonedDateTimes
-# TODO: Move to JSON3.
-import Unmarshal: unmarshal
-
-function unmarshal(::Type{Union{UUID, Nothing}}, x, verbose :: Bool = false, verboseLvl :: Int = 0)
-    if x !== nothing 
-        return UUID(x)
-    else 
-        return nothing
-    end
-end
-function unmarshal(::Type{Union{ZonedDateTime, Nothing}}, x, verbose :: Bool = false, verboseLvl :: Int = 0) 
-    if x !== nothing 
-        return ZonedDateTime(x)
-    else 
-        return nothing
-    end
-end
 
 ## Version checking
+# FIXME return VersionNumber
 function _getDFGVersion()
     if haskey(Pkg.dependencies(), Base.UUID("b5cc3c7e-6572-11e9-2517-99fb8daf2f04"))
         return string(Pkg.dependencies()[Base.UUID("b5cc3c7e-6572-11e9-2517-99fb8daf2f04")].version)
