@@ -21,7 +21,7 @@ export BlobStoreEntry
 General Data Store Entry.
 """
 @Base.kwdef struct BlobStoreEntry <: AbstractDataEntry
-    id::Union{UUID, Nothing}
+    id::Union{UUID, Nothing}=nothing
     label::Symbol
     blobstore::Symbol
     hash::String # Probably https://docs.julialang.org/en/v1/stdlib/SHA
@@ -30,6 +30,8 @@ General Data Store Entry.
     mimeType::String
     metadata::String
     timestamp::ZonedDateTime = now(localzone())
+    _type::String = "BlobStoreEntry"
+    _version::String = _getDFGVersion()
 end
 
 _fixtimezone(cts::NamedTuple) = ZonedDateTime(cts.utc_datetime*"+00")

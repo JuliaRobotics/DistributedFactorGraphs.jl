@@ -850,7 +850,15 @@ function  DataEntriesTestBlock!(fg, v2)
     # listDataEntries
     # emptyDataEntries
     # mergeDataEntries
-    storeEntry = BlobStoreEntry(uuid4(), :a, :b, "","","","", "", now(localzone()))
+    storeEntry = BlobStoreEntry(
+        id = uuid4(), 
+        label = :a, 
+        blobstore = :b, 
+        hash = "",
+        origin = "",
+        description = "",
+        mimeType = "", 
+        metadata = "")
     @test getLabel(storeEntry) == storeEntry.label
     @test getId(storeEntry) == storeEntry.id
     @test getHash(storeEntry) == hex2bytes(storeEntry.hash)
@@ -902,10 +910,35 @@ function  DataEntriesTestBlock!(fg, v2)
 end
 
 function blobsStoresTestBlock!(fg)
-
-    de1 = BlobStoreEntry(uuid4(),:label1, :store1, "AAAA","origin1","description1","mimetype1","", now(localzone()))
-    de2 = BlobStoreEntry(uuid4(),:label2, :store2, "FFFF","origin2","description2","mimetype2","", ZonedDateTime("2020-08-12T12:00:00.000+00:00"))
-    de2_update = BlobStoreEntry(uuid4(),:label2, :store2, "0123","origin2","description2","mimetype2","", ZonedDateTime("2020-08-12T12:00:01.000+00:00"))
+    de1 = BlobStoreEntry(
+        id = uuid4(), 
+        label = :label1, 
+        blobstore = :store1, 
+        hash = "AAAA",
+        origin = "origin1",
+        description = "description1",
+        mimeType = "mimetype1", 
+        metadata = "")
+    de2 = BlobStoreEntry(
+        id = uuid4(), 
+        label = :label2, 
+        blobstore = :store2, 
+        hash = "FFFF",
+        origin = "origin2",
+        description = "description2",
+        mimeType = "mimetype2", 
+        metadata = "",
+        timestamp = ZonedDateTime("2020-08-12T12:00:00.000+00:00"))
+    de2_update = BlobStoreEntry(
+        id = uuid4(), 
+        label = :label2, 
+        blobstore = :store2, 
+        hash = "0123",
+        origin = "origin2",
+        description = "description2",
+        mimeType = "mimetype2", 
+        metadata = "",
+        timestamp = ZonedDateTime("2020-08-12T12:00:00.000+00:00"))
     @test getLabel(de1) == de1.label
     @test getId(de1) == de1.id
     @test getHash(de1) == hex2bytes(de1.hash)
