@@ -37,6 +37,7 @@ end
 _fixtimezone(cts::NamedTuple) = ZonedDateTime(cts.utc_datetime*"+00")
 
 # needed for deserialization from JSON during DFG v0.19 transition, see #867
+# TODO this function can likely be removed, since julia automatically tries type conversion on constructors.
 function BlobStoreEntry(;
     id,
     label,
@@ -49,15 +50,15 @@ function BlobStoreEntry(;
     kwargs... # drop excessive fields
 )
     #
-    BlobStoreEntry(
-        UUID(id),
-        Symbol(label),
-        Symbol(blobstore),
+    BlobStoreEntry(;
+        id=UUID(id),
+        label=Symbol(label),
+        blobstore=Symbol(blobstore),
         hash,
         origin,
         description,
         mimeType,
-        _fixtimezone(timestamp),
+        timestamp=_fixtimezone(timestamp),
     )
 end
 
