@@ -14,10 +14,10 @@ end
 
 """
     $(SIGNATURES)
-Function to generate source string - userId|robotId|sessionId|varLabel
+Function to generate source string - userLabel|robotLabel|sessionLabel|varLabel
 """
 buildSourceString(dfg::AbstractDFG, label::Symbol) =
-    "$(dfg.userId)|$(dfg.robotId)|$(dfg.sessionId)|$label"
+    "$(getUserLabel(dfg))|$(getRobotLabel(dfg))|$(getSessionLabel(dfg))|$label"
 
 
 ##==============================================================================

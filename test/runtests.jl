@@ -70,7 +70,7 @@ if get(ENV, "IIF_TEST", "") == "true"
     using IncrementalInference
 
     apis = Vector{AbstractDFG}()
-    push!(apis, GraphsDFG(solverParams=SolverParams(), userId="test@navability.io"))
+    push!(apis, GraphsDFG(solverParams=SolverParams(), userLabel="test@navability.io"))
 
     for api in apis
         @testset "Testing Driver: $(typeof(api))" begin
@@ -96,7 +96,7 @@ if get(ENV, "IIF_TEST", "") == "true"
         # This is just to validate we're not going to blow up downstream.
         apis = [
             # GraphsDFG{SolverParams}(),
-            GraphsDFG(solverParams=SolverParams(), userId="test@navability.io"),
+            GraphsDFG(solverParams=SolverParams(), userLabel="test@navability.io"),
             ]
         for api in apis
             @info "Running simple solver test: $(typeof(api))"

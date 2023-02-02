@@ -10,9 +10,9 @@ An in-memory DistributedFactorGraph based on Graphs.jl with parameters:
 mutable struct GraphsDFG{T <: AbstractParams, V <: AbstractDFGVariable, F <:AbstractDFGFactor} <: AbstractDFG{T}
     g::FactorGraph{Int, V, F}
     description::String
-    userId::String
-    robotId::String
-    sessionId::String
+    userLabel::String
+    robotLabel::String
+    sessionLabel::String
     userData::Dict{Symbol, String}
     robotData::Dict{Symbol, String}
     sessionData::Dict{Symbol, String}
@@ -31,19 +31,19 @@ Create an in-memory GraphsDFG with the following parameters:
 """
 function GraphsDFG{T,V,F}(g::FactorGraph{Int,V,F}=FactorGraph{Int,V,F}();
                            description::String="Graphs.jl implementation",
-                           userId::String="DefaultUser",
-                           robotId::String="DefaultRobot",
-                           sessionId::String="Session_$(string(uuid4())[1:6])",
+                           userLabel::String="DefaultUser",
+                           robotLabel::String="DefaultRobot",
+                           sessionLabel::String="Session_$(string(uuid4())[1:6])",
                            userData::Dict{Symbol, String} = Dict{Symbol, String}(),
                            robotData::Dict{Symbol, String} = Dict{Symbol, String}(),
                            sessionData::Dict{Symbol, String} = Dict{Symbol, String}(),
                            solverParams::T=T(),
                            blobstores=Dict{Symbol, AbstractBlobStore}()) where {T <: AbstractParams, V <:AbstractDFGVariable, F<:AbstractDFGFactor}
-   # Validate the userId, robotId, and sessionId
-   !isValidLabel(userId) && error("'$userId' is not a valid User ID")
-   !isValidLabel(robotId) && error("'$robotId' is not a valid Robot ID")
-   !isValidLabel(sessionId) && error("'$sessionId' is not a valid Session ID")
-   return GraphsDFG{T,V,F}(g, description, userId, robotId, sessionId, userData, robotData, sessionData, Symbol[], solverParams, blobstores)
+   # Validate the userLabel, robotLabel, and sessionLabel
+   !isValidLabel(userLabel) && error("'$userLabel' is not a valid User label")
+   !isValidLabel(robotLabel) && error("'$robotLabel' is not a valid Robot label")
+   !isValidLabel(sessionLabel) && error("'$sessionLabel' is not a valid Session label")
+   return GraphsDFG{T,V,F}(g, description, userLabel, robotLabel, sessionLabel, userData, robotData, sessionData, Symbol[], solverParams, blobstores)
 end
 
 # GraphsDFG{T}(; kwargs...) where T <: AbstractParams = GraphsDFG{T,DFGVariable,DFGFactor}(;kwargs...)
@@ -68,24 +68,24 @@ end
 
 
 GraphsDFG(description::String,
-         userId::String,
-         robotId::String,
-         sessionId::String,
+         userLabel::String,
+         robotLabel::String,
+         sessionLabel::String,
          userData::Dict{Symbol, String},
          robotData::Dict{Symbol, String},
          sessionData::Dict{Symbol, String},
          solverParams::AbstractParams,
          blobstores=Dict{Symbol, AbstractBlobStore}()) =
-         GraphsDFG(FactorGraph{Int,DFGVariable,DFGFactor}(), description, userId, robotId, sessionId, userData, robotData, sessionData, Symbol[], solverParams, blobstores)
+         GraphsDFG(FactorGraph{Int,DFGVariable,DFGFactor}(), description, userLabel, robotLabel, sessionLabel, userData, robotData, sessionData, Symbol[], solverParams, blobstores)
 
 
 GraphsDFG{T,V,F}(description::String,
-                userId::String,
-                robotId::String,
-                sessionId::String,
+                userLabel::String,
+                robotLabel::String,
+                sessionLabel::String,
                 userData::Dict{Symbol, String},
                 robotData::Dict{Symbol, String},
                 sessionData::Dict{Symbol, String},
                 solverParams::T,
                 blobstores=Dict{Symbol, AbstractBlobStore}()) where {T <: AbstractParams, V <:AbstractDFGVariable, F<:AbstractDFGFactor} =
-                GraphsDFG(FactorGraph{Int,V,F}(), description, userId, robotId, sessionId, userData, robotData, sessionData, Symbol[], solverParams, blobstores)
+                GraphsDFG(FactorGraph{Int,V,F}(), description, userLabel, robotLabel, sessionLabel, userData, robotData, sessionData, Symbol[], solverParams, blobstores)

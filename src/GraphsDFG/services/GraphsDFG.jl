@@ -317,7 +317,7 @@ Gets an empty and unique GraphsDFG derived from an existing DFG.
 """
 function _getDuplicatedEmptyDFG(dfg::GraphsDFG{P,V,F}) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
     newDfg = GraphsDFG{P,V,F}(;
-        userId=dfg.userId, robotId=dfg.robotId, sessionId=dfg.sessionId,
+        userLabel=getUserLabel(dfg), robotLabel=getRobotLabel(dfg), sessionLabel=getSessionLabel(dfg),
         solverParams=deepcopy(dfg.solverParams))
     newDfg.description ="(Copy of) $(dfg.description)"
     return newDfg

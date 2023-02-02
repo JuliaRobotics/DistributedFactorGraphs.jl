@@ -44,27 +44,6 @@ Base.@kwdef mutable struct VariableNodeData{T<:InferenceVariable, P}
     solveKey::Symbol
 
     events::Dict{Symbol,Threads.Condition} = Dict{Symbol,Threads.Condition}()
-
-    # VariableNodeData{T,P}(w...)  where {T <:InferenceVariable, P} = new{T,P}(w...)
-    # VariableNodeData{T,P}(;solveKey::Symbol=:default ) where {T <:InferenceVariable, P} = new{T,P}(
-    #         nothing,
-    #         Vector{P}(), 
-    #         zeros(0,0), 
-    #         Symbol[], 
-    #         Int[], 
-    #         0, 
-    #         false, 
-    #         :NOTHING, 
-    #         Symbol[], 
-    #         T(), 
-    #         false, 
-    #         Float64[0.0;], 
-    #         false, 
-    #         false, 
-    #         0, 
-    #         0, 
-    #         solveKey, 
-    #         Dict{Symbol,Threads.Condition}() )
     #
 end
 
@@ -74,32 +53,6 @@ end
 
 VariableNodeData{T,P}(;solveKey::Symbol=:default) where {T <: InferenceVariable, P} = VariableNodeData(; val=Vector{P}(), variableType=T(), solveKey)
 VariableNodeData{T}(;solveKey::Symbol=:default ) where T <: InferenceVariable = VariableNodeData(; solveKey, variableType=T(), val=Vector{getPointType(T)}()) # {T, getPointType(T)}
-
-# VariableNodeData(   val::Vector{P},
-#                     bw::AbstractMatrix{<:Real},
-#                     BayesNetOutVertIDs::AbstractVector{Symbol},
-#                     dimIDs::AbstractVector{Int},
-#                     dims::Int,
-#                     eliminated::Bool,
-#                     BayesNetVertID::Symbol,
-#                     separator::AbstractVector{Symbol},
-#                     variableType::T,
-#                     initialized::Bool,
-#                     ipc::AbstractVector{<:Real},
-#                     ismargin::Bool,
-#                     dontmargin::Bool,
-#                     solveInProgress::Int=0,
-#                     solvedCount::Int=0,
-#                     solveKey::Symbol=:default,
-#                     events::Dict{Symbol,Threads.Condition}=Dict{Symbol,Threads.Condition}();
-#                     id::Union{UUID, Nothing}=nothing
-#                 ) where {T <: InferenceVariable, P} =
-#                     VariableNodeData{T,P}(  id, val,bw,BayesNetOutVertIDs,dimIDs,dims,
-#                                             eliminated,BayesNetVertID,separator,
-#                                             variableType,initialized,ipc,ismargin,
-#                                             dontmargin, solveInProgress, solvedCount,
-#                                             solveKey, events  )
-#
 
 function VariableNodeData(variableType::T; solveKey::Symbol=:default) where T <: InferenceVariable
     #
