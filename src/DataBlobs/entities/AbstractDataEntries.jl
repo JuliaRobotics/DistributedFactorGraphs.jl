@@ -22,6 +22,8 @@ General Data Store Entry.
 """
 @Base.kwdef struct BlobStoreEntry <: AbstractDataEntry
     id::Union{UUID, Nothing}=nothing
+    blobId::Union{UUID, Nothing}=nothing
+    originId::UUID
     label::Symbol
     blobstore::Symbol
     hash::String # Probably https://docs.julialang.org/en/v1/stdlib/SHA
