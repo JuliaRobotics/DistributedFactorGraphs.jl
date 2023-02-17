@@ -23,7 +23,7 @@ General Data Store Entry.
 @Base.kwdef struct BlobEntry <: AbstractDataEntry
     """ This is created by server-side GraphQL """
     id::Union{UUID, Nothing}=nothing 
-    """ This is the S3 blob ID, or the filesystem blob ID. """
+    """ This is the forced server generated blobId, or the filesystem blobId. """
     blobId::Union{UUID, Nothing}=nothing 
     """ This is the ID at creation at the edge, do whatever you want with this, but make sure you populate it. """
     originId::UUID
