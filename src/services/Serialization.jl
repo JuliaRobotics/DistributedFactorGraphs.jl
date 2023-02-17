@@ -221,7 +221,7 @@ function unpackVariable(
     end
 
     # FIXME, drop nested packing, see DFG #867
-    ppeDict = if unpackPPEs && haskey(packedProps,"ppesDict")
+    ppeDict = if unpackPPEs && haskey(packedProps,"ppeDict")
         JSON2.read(packedProps["ppeDict"], Dict{Symbol, MeanMaxPPE})
     elseif unpackPPEs && haskey(packedProps,"ppes") && packedProps["ppes"] isa AbstractVector
         # these different cases are not well covered in tests, but first fix #867
