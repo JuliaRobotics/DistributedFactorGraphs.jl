@@ -21,8 +21,11 @@ export BlobStoreEntry
 General Data Store Entry.
 """
 @Base.kwdef struct BlobStoreEntry <: AbstractDataEntry
-    id::Union{UUID, Nothing}=nothing
-    blobId::Union{UUID, Nothing}=nothing
+    """ This is created by server-side GraphQL """
+    id::Union{UUID, Nothing}=nothing 
+    """ This is the S3 blob ID, or the filesystem blob ID. """
+    blobId::Union{UUID, Nothing}=nothing 
+    """ This is the ID at creation at the edge, do whatever you want with this, but make sure you populate it. """
     originId::UUID
     label::Symbol
     blobstore::Symbol
