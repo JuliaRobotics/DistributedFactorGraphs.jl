@@ -20,7 +20,7 @@ export BlobStoreEntry
     $(TYPEDEF)
 General Data Store Entry.
 """
-@Base.kwdef struct BlobStoreEntry <: AbstractDataEntry
+@Base.kwdef struct BlobEntry <: AbstractDataEntry
     """ This is created by server-side GraphQL """
     id::Union{UUID, Nothing}=nothing 
     """ This is the S3 blob ID, or the filesystem blob ID. """
@@ -33,11 +33,14 @@ General Data Store Entry.
     origin::String # E.g. user|robot|session|varlabel
     description::String
     mimeType::String
-    metadata::String = ""
+    metadata::Dict{Symbol, SmallDataTypes} = Dict{Symbol,SmallDataTypes}()
     timestamp::ZonedDateTime = now(localzone())
-    _type::String = "BlobStoreEntry"
+    _type::String = "BlobEntry"
     _version::String = string(_getDFGVersion()) # TBD consider upgrading to ::VersionNumber
 end
+
+# should be deprecated by v0.21
+const BlobStoreEntry = BlobEntry
 
 _fixtimezone(cts::NamedTuple) = ZonedDateTime(cts.utc_datetime*"+00")
 
