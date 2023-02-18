@@ -466,11 +466,11 @@ end
 ##------------------------------------------------------------------------------
 """
     $(SIGNATURES)
-Get a list of IDs of the DFGVariables in the DFG.
+Get a list of labels of the DFGVariables in the graph.
 Optionally specify a label regular expression to retrieves a subset of the variables.
 Tags is a list of any tags that a node must have (at least one match).
 
-NOtes
+Notes
 - Returns `::Vector{Symbol}`
 
 Example
@@ -478,8 +478,7 @@ Example
 listVariables(dfg, r"l", tags=[:APRILTAG;])
 ```
 
-Related:
-- ls
+See also: [`ls`](@ref)
 """
 function listVariables( dfg::AbstractDFG, 
                         regexFilter::Union{Nothing, Regex}=nothing; 
@@ -502,7 +501,7 @@ end
 
 """
     $(SIGNATURES)
-Get a list of the IDs (labels) of the DFGFactors in the DFG.
+Get a list of the labels of the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
 function listFactors(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
