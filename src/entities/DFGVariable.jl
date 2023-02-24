@@ -24,7 +24,7 @@ Base.@kwdef mutable struct VariableNodeData{T<:InferenceVariable, P}
     """
     Vector of on-manifold points used to represent a ManifoldKernelDensity (or parametric) belief.
     """
-    val::Vector{P}
+    val::Vector{P} = Vector{P}()
     """
     Common kernel bandwith parameter used with ManifoldKernelDensity, and as legacy also stores covariance until a dedicated field is created for parametric case.
     """
@@ -42,7 +42,7 @@ Base.@kwdef mutable struct VariableNodeData{T<:InferenceVariable, P}
     """
     Variables each have a type, such as Position1, or RoME.Pose2, etc.
     """
-    variableType::T
+    variableType::T = T()
     """
     False if initial numerical values are not yet available or stored values are not ready for further processing yet.
     """
@@ -70,7 +70,7 @@ Base.@kwdef mutable struct VariableNodeData{T<:InferenceVariable, P}
     """
     solveKey identifier associated with thsi VariableNodeData object.
     """
-    solveKey::Symbol
+    solveKey::Symbol = :default
     """
     Future proofing field for when more multithreading operations on graph nodes are implemented, these conditions are meant to be used for atomic write transactions to this VND.
     """
@@ -81,20 +81,8 @@ end
 
 ##------------------------------------------------------------------------------
 ## Constructors
-
-VariableNodeData{T,P}(;solveKey::Symbol=:default) where {T <: InferenceVariable, P} = VariableNodeData(; val=Vector{P}(), variableType=T(), solveKey)
-VariableNodeData{T}(;solveKey::Symbol=:default ) where T <: InferenceVariable = VariableNodeData(; solveKey, variableType=T(), val=Vector{getPointType(T)}()) # {T, getPointType(T)}
-
-function VariableNodeData(variableType::T; solveKey::Symbol=:default) where T <: InferenceVariable
-    #
-    # p0 = getPointIdentity(T)
-    val = Vector{getPointType(T)}()
-    # P0[1] = p0
-    bw = zeros(0,0)
-    # bw[1] = zeros(getDimension(T))
-    VariableNodeData(;  val, bw, solveKey, variableType  )
-end
-
+VariableNodeData{T}(; kwargs...) where T <: InferenceVariable = VariableNodeData{T,typeof(getPointType(T))}(; kwargs...)
+VariableNodeData(variableType::InferenceVariable; kwargs...) = VariableNodeData{typeof(variableType)}(; kwargs...)
 
 
 ##==============================================================================
