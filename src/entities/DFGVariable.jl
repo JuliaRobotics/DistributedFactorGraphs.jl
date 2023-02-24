@@ -81,7 +81,7 @@ end
 
 ##------------------------------------------------------------------------------
 ## Constructors
-VariableNodeData{T}(; kwargs...) where T <: InferenceVariable = VariableNodeData{T,typeof(getPointType(T))}(; kwargs...)
+VariableNodeData{T}(; kwargs...) where T <: InferenceVariable = VariableNodeData{T,getPointType(T)}(; kwargs...)
 VariableNodeData(variableType::InferenceVariable; kwargs...) = VariableNodeData{typeof(variableType)}(; kwargs...)
 
 
