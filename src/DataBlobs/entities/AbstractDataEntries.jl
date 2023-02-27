@@ -33,7 +33,7 @@ General Data Store Entry.
     origin::String # E.g. user|robot|session|varlabel
     description::String
     mimeType::String
-    metadata::Dict{Symbol, SmallDataTypes} = Dict{Symbol,SmallDataTypes}()
+    metadata::String = ""
     timestamp::ZonedDateTime = now(localzone())
     _type::String = "BlobEntry"
     _version::String = string(_getDFGVersion()) # TBD consider upgrading to ::VersionNumber
