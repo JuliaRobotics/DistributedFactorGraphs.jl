@@ -69,6 +69,9 @@ Related
 [`updateDataEntry!`](@ref)
 
 $(METHODLIST)
+
+DevNotes
+- TODO TBD update verb on data since data blobs and entries are restricted to immutable only.
 """
 function updateData! end
 

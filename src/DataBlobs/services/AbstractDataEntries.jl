@@ -147,7 +147,10 @@ end
 
 """
     $(SIGNATURES)
-List the data entries associated with a particular variable.
+List the blob entries associated with a particular variable.
+
+DevNotes
+- TODO rename to listBlobEntries (drop noun Data in lower level calls)
 """
 function listDataEntries(var::AbstractDFGVariable)
     collect(keys(var.dataDict))
