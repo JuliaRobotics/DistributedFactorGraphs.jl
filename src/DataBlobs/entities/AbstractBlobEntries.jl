@@ -14,7 +14,6 @@ getTimestamp(entry::AbstractBlobEntry) = entry.timestamp
 ##==============================================================================
 ## BlobStoreEntry
 ##==============================================================================
-export BlobEntry
 
 """
     $(TYPEDEF)

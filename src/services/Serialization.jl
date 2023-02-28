@@ -298,7 +298,6 @@ function fncStringToData(fncType::String, data::T) where {T <: AbstractPackedFac
 end
 function fncStringToData(fncType::String, data::Union{String, <:NamedTuple})
     packtype = DFG.getTypeFromSerializationModule("Packed"*fncType)
-    @info "WHAT" packtype
     fncStringToData(packtype, data)
 end
 

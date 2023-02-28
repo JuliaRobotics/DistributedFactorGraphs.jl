@@ -3,8 +3,6 @@
 ##==============================================================================
 
 function getBlob(dfg::AbstractDFG, entry::BlobEntry)
-    @show entry
-    @show "I'm here"
     # cannot use entry.blobstore because the blob can be in any one of the blobstores
     stores = getBlobStores(dfg)
     for (k,store) in stores
@@ -98,7 +96,7 @@ end
 
 function addBlob!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol, entry::AbstractBlobEntry, blob::Vector{UInt8}; hashfunction = sha256)
     assertHash(entry, blob; hashfunction)
-    de = addDataEntry!(dfg, label, entry)
+    de = addBlobEntry!(dfg, label, entry)
     db = addBlob!(blobstore, de, blob)
     return de=>db
 end
@@ -109,7 +107,7 @@ function updateBlob!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symb
         buildSourceString(dfg, label),
         entry.description, entry.mimeType, entry.metadata, entry.timestamp, entry._type, string(_getDFGVersion()))
 
-    de = updateDataEntry!(dfg, label, newEntry)
+    de = updateBlobEntry!(dfg, label, newEntry)
     db = updateBlob!(blobstore, de, blob)
     return de=>db
 end

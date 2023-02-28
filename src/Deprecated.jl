@@ -19,6 +19,29 @@
 @deprecate deleteDataBlob!(w...;kw...) deleteBlob!(w...;kw...)
 @deprecate listDataBlobs(w...;kw...) listBlobs(w...;kw...)
 
+# function updateBlob!(
+#     dfg::AbstractDFG, 
+#     label::Symbol, 
+#     entry::BlobEntry
+# )
+#     # assertHash(entry, entry.data, hashfunction=hashfunction)
+#     de = updateBlobEntry!(dfg, label, entry)
+#     db = getBlob(dfg, entry)
+#     return de=>db
+# end
+
+# function addBlob!(
+#     dfg::AbstractDFG, 
+#     label::Symbol, 
+#     entry::BlobEntry; 
+#     hashfunction = sha256
+# )
+#     # assertHash(entry, entry.data, hashfunction=hashfunction)
+#     de = addBlobEntry!(dfg, label, entry)
+#     db = getBlob(dfg, entry)
+#     return de=>db
+# end
+
 ## ================================================================================
 ## Add @deprecate in v0.19, remove after v0.20
 ##=================================================================================

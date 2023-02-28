@@ -10,8 +10,8 @@ using SHA
 
 include("testBlocks.jl")
 
-testDFGAPI = GraphsDFG
 end
+
 # Build a basic graph.
 
 testDFGAPI = GraphsDFG
@@ -157,15 +157,16 @@ store = TestStore{Int}()
 @test_throws ErrorException listBlobs(store)
 
 
-##==============================================================================
-## Unimplemented Entry Blob Crud
-##==============================================================================
-struct NotImplementedDE <: AbstractDataEntry end
+# Dropping use of AbstractDataEntry
+# ##==============================================================================
+# ## Unimplemented Entry Blob Crud
+# ##==============================================================================
+# struct NotImplementedDE <: AbstractDataEntry end
 
-nde = NotImplementedDE()
+# nde = NotImplementedDE()
 
-@test_throws ErrorException getBlobBlob(dfg, nde)
-@test_throws ErrorException addBlob!(dfg, nde, 1)
-@test_throws ErrorException updateBlob!(dfg,  nde, 1)
-@test_throws ErrorException deleteBlob!(dfg, nde)
-@test_throws ErrorException listBlobs(dfg)
+# @test_throws ErrorException getBlobBlob(dfg, nde)
+# @test_throws ErrorException addBlob!(dfg, nde, 1)
+# @test_throws ErrorException updateBlob!(dfg,  nde, 1)
+# @test_throws ErrorException deleteBlob!(dfg, nde)
+# @test_throws ErrorException listBlobs(dfg)

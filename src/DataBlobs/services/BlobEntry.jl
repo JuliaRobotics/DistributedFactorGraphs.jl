@@ -1,6 +1,10 @@
 
-function assertHash(de::AbstractBlobEntry, db; hashfunction = sha256)
-    getHash(de) === nothing && @warn "Hey friends, how about some hashing?" && return true
+function assertHash(
+    de::AbstractBlobEntry, 
+    db::AbstractVector{UInt8}; 
+    hashfunction::Function = sha256
+)
+    getHash(de) === nothing && @warn "Missing hash?" && return true
     if  hashfunction(db) == getHash(de)
         return true #or nothing?
     else
@@ -92,7 +96,7 @@ function deleteBlob! end
 
 
 function getBlob(dfg::AbstractDFG, entry::AbstractBlobEntry)
-    error("$(typeof(dfg)) doesn't override 'getBlob'.")
+    error("$(typeof(dfg)) doesn't override 'getBlob', with $(typeof(entry)).")
 end
 
 function addBlob!(dfg::AbstractDFG, entry::AbstractBlobEntry, data::T) where T
@@ -115,6 +119,14 @@ end
 ## DFG Blob CRUD
 ##==============================================================================
 
+# function getBlob(
+#     dfg::AbstractDFG,
+#     entry::BlobEntry;
+#     checkhash::Bool=true,
+# )
+  
+# end
+
 function getBlob(
     dfg::AbstractDFG, 
     vlabel::Symbol, 
@@ -128,7 +140,7 @@ function getBlob(
     de = _first(de_)
     db = getBlob(dfg, de)
 
-    checkhash && de.hash !== nothing && assertHash(de, db, hashfunction=hashfunction)
+    checkhash && assertHash(de, db, hashfunction=hashfunction)
     return de=>db
 end
 
@@ -140,10 +152,25 @@ function addBlob!(
     hashfunction = sha256,
     checkhash::Bool=true
 )
-    checkhash && de.hash !== nothing && assertHash(entry, blob, hashfunction=hashfunction)
+    checkhash && assertHash(entry, blob, hashfunction=hashfunction)
     de = addBlobEntry!(dfg, label, entry)
     db = addBlob!(dfg, de, blob)
     return de=>db
+end
+
+function addBlob!(
+    ::Type{<:BlobEntry}, 
+    dfg::AbstractDFG, 
+    label::Symbol, 
+    key::Symbol, 
+    blob::AbstractVector{UInt8}, 
+    timestamp=now(localzone());
+    id::UUID = uuid4(), 
+    hashfunction::Function = sha256
+)
+    fde = BlobEntry(key, id, timestamp, blob)
+    de = addBlobEntry!(dfg, label, fde)
+    return de=>blob
 end
 
 function updateBlob!(
@@ -154,7 +181,7 @@ function updateBlob!(
     hashfunction = sha256,
     checkhash::Bool=true
 )
-    checkhash && de.hash !== nothing && assertHash(entry, blob, hashfunction=hashfunction)
+    checkhash && assertHash(entry, blob, hashfunction=hashfunction)
     de = updateBlobEntry!(dfg, label, entry)
     db = updateBlob!(dfg, de, blob)
     return de=>db

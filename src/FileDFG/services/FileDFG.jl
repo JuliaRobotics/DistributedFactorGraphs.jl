@@ -129,7 +129,6 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString)
     @showprogress 1 "loading variables" for varFile in varFiles
         packedData = read("$varFolder/$varFile", String)
         packedData = JSON3.read(packedData, PackedVariable)
-        @show packedData
         push!(variables, unpackVariable(packedData))
     end
     @info "Loaded $(length(variables)) variables - $(map(v->v.label, variables))"
