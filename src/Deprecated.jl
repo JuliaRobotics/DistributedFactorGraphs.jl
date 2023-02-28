@@ -3,6 +3,17 @@
 ## Remove in v0.21
 ##=================================================================================
 
+
+"""
+$(TYPEDEF)
+Abstract parent struct for big data entry.
+"""
+abstract type AbstractBlobEntry end
+
+# should be deprecated by v0.21
+export BlobStoreEntry
+const BlobStoreEntry = BlobEntry
+
 @deprecate hasDataEntry(w...;kw...) hasBlobEntry(w...;kw...)
 @deprecate getBlobEntry(w...;kw...) getBlobEntry(w...;kw...)
 @deprecate addDataEntry!(w...;kw...) addBlobEntry!(w...;kw...)

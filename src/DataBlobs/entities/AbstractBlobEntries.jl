@@ -1,15 +1,3 @@
-##==============================================================================
-## AbstractBlobEntry - Defined in src/entities/AbstractDFG.jl
-##==============================================================================
-# Fields to be implemented
-# label
-# id
-
-getLabel(entry::AbstractBlobEntry) = entry.label
-getId(entry::AbstractBlobEntry) = entry.id
-getHash(entry::AbstractBlobEntry) = hex2bytes(entry.hash)
-getTimestamp(entry::AbstractBlobEntry) = entry.timestamp
-
 
 ##==============================================================================
 ## BlobStoreEntry
@@ -19,7 +7,7 @@ getTimestamp(entry::AbstractBlobEntry) = entry.timestamp
     $(TYPEDEF)
 General Data Store Entry.
 """
-@Base.kwdef struct BlobEntry <: AbstractBlobEntry
+@Base.kwdef struct BlobEntry
     """ This is created by server-side GraphQL """
     id::Union{UUID, Nothing}=nothing 
     """ This is the forced server generated blobId, or the filesystem blobId. """
@@ -38,8 +26,5 @@ General Data Store Entry.
     _version::String = string(_getDFGVersion()) # TBD consider upgrading to ::VersionNumber
 end
 
-# should be deprecated by v0.21
-export BlobStoreEntry
-const BlobStoreEntry = BlobEntry
 
 _fixtimezone(cts::NamedTuple) = ZonedDateTime(cts.utc_datetime*"+00")

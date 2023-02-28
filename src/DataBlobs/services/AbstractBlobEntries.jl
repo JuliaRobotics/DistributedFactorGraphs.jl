@@ -1,15 +1,15 @@
 ##==============================================================================
-## AbstractBlobEntry - compare
+## BlobEntry - compare
 ##==============================================================================
 
 import Base: ==
 
-@generated function ==(x::T, y::T) where T <: AbstractBlobEntry
+@generated function ==(x::T, y::T) where T <: BlobEntry
     mapreduce(n -> :(x.$n == y.$n), (a,b)->:($a && $b), fieldnames(x))
 end
 
 ##==============================================================================
-## AbstractBlobEntry - common
+## BlobEntry - common
 ##==============================================================================
 
 """
@@ -21,7 +21,7 @@ buildSourceString(dfg::AbstractDFG, label::Symbol) =
 
 
 ##==============================================================================
-## AbstractBlobEntry - CRUD
+## BlobEntry - CRUD
 ##==============================================================================
 
 """
@@ -69,13 +69,13 @@ Should be extended if DFG variable is not returned by reference.
 
 Also see: [`getBlobEntry`](@ref), [`addDataBlob`](@ref), [`mergeBlobEntries!`](@ref)
 """
-function addBlobEntry!(var::AbstractDFGVariable, bde::AbstractBlobEntry)
+function addBlobEntry!(var::AbstractDFGVariable, bde::BlobEntry)
     haskey(var.dataDict, bde.label) && error("Data entry $(bde.label) already exists in variable $(getLabel(var))")
     var.dataDict[bde.label] = bde
     return bde
 end
 
-function addBlobEntry!(dfg::AbstractDFG, label::Symbol, bde::AbstractBlobEntry)
+function addBlobEntry!(dfg::AbstractDFG, label::Symbol, bde::BlobEntry)
     return addBlobEntry!(getVariable(dfg, label), bde)
 end
 
@@ -87,12 +87,12 @@ Update data entry
 DevNote
 - DF, unclear if `update` verb is applicable in this case, see #404
 """
-function updateBlobEntry!(var::AbstractDFGVariable,  bde::AbstractBlobEntry)
+function updateBlobEntry!(var::AbstractDFGVariable,  bde::BlobEntry)
     !haskey(var.dataDict, bde.label) && (@warn "$(bde.label) does not exist in variable $(getLabel(var)), adding")
     var.dataDict[bde.label] = bde
     return bde
 end
-function updateBlobEntry!(dfg::AbstractDFG, label::Symbol,  bde::AbstractBlobEntry)
+function updateBlobEntry!(dfg::AbstractDFG, label::Symbol,  bde::BlobEntry)
     # !isVariable(dfg, label) && return nothing
     return updateBlobEntry!(getVariable(dfg, label), bde)
 end
@@ -114,13 +114,13 @@ function deleteBlobEntry!(dfg::AbstractDFG, label::Symbol, key::Symbol)
     return deleteBlobEntry!(getVariable(dfg, label), key)
 end
 
-function deleteBlobEntry!(var::AbstractDFGVariable, entry::AbstractBlobEntry)
+function deleteBlobEntry!(var::AbstractDFGVariable, entry::BlobEntry)
     #users responsibility to delete data in db before deleting entry
     return deleteBlobEntry!(var, entry.label)
 end
 
 ##==============================================================================
-## AbstractBlobEntry - Helper functions, Lists, etc
+## BlobEntry - Helper functions, Lists, etc
 ##==============================================================================
 
 """
@@ -133,15 +133,15 @@ hasBlobEntry(var::AbstractDFGVariable, key::Symbol) = haskey(var.dataDict, key)
 
 """
     $(SIGNATURES)
-Get data entries, Vector{AbstractBlobEntry}
+Get data entries, Vector{BlobEntry}
 """
 function getBlobEntries(var::AbstractDFGVariable)
-    #or should we return the iterator, Base.ValueIterator{Dict{Symbol,AbstractBlobEntry}}?
+    #or should we return the iterator, Base.ValueIterator{Dict{Symbol,BlobEntry}}?
     collect(values(var.dataDict))
 end
 function getBlobEntries(dfg::AbstractDFG, label::Symbol)
     # !isVariable(dfg, label) && return nothing
-    #or should we return the iterator, Base.ValueIterator{Dict{Symbol,AbstractBlobEntry}}?
+    #or should we return the iterator, Base.ValueIterator{Dict{Symbol,BlobEntry}}?
     getBlobEntries(getVariable(dfg, label))
 end
 
@@ -212,7 +212,7 @@ function mergeBlobEntries!(
     dde = listBlobEntries(dst, dlbl)
         # HACK, verb list should just return vector of Symbol. NCE36
         _getid(s) = s
-        _getid(s::AbstractBlobEntry) = s.id
+        _getid(s::BlobEntry) = s.id
     uids = _getid.(dde) # (s->s.id).(dde)
     filter!(s -> !(_getid(s) in uids), des)
     # add any data entries not already in the destination variable, by uuid
@@ -231,7 +231,7 @@ function mergeBlobEntries!(
     dde = listBlobEntries(dst, dlbl)
         # HACK, verb list should just return vector of Symbol. NCE36
         _getid(s) = s
-        _getid(s::AbstractBlobEntry) = s.id    
+        _getid(s::BlobEntry) = s.id    
     uids = _getid.(dde) # (s->s.id).(dde)
     filter!(s -> !(_getid(s) in uids), des)
     if 0  < length(des)

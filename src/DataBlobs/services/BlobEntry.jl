@@ -1,6 +1,20 @@
 
+##==============================================================================
+## BlobEntry - Defined in src/entities/AbstractDFG.jl
+##==============================================================================
+# Fields to be implemented
+# label
+# id
+
+getLabel(entry::BlobEntry) = entry.label
+getId(entry::BlobEntry) = entry.id
+getHash(entry::BlobEntry) = hex2bytes(entry.hash)
+getTimestamp(entry::BlobEntry) = entry.timestamp
+
+
+
 function assertHash(
-    de::AbstractBlobEntry, 
+    de::BlobEntry, 
     db::AbstractVector{UInt8}; 
     hashfunction::Function = sha256
 )
@@ -11,6 +25,7 @@ function assertHash(
         error("Stored hash and data blob hash do not match")
     end
 end
+
 
 ##==============================================================================
 ## DFG BlobBlob CRUD
@@ -90,24 +105,25 @@ $(METHODLIST)
 function deleteBlob! end
 
 #
-# addBlob!(dfg::AbstractDFG,  entry::AbstractBlobEntry, blob)
-# updateBlob!(dfg::AbstractDFG,  entry::AbstractBlobEntry, blob)
-# deleteBlob!(dfg::AbstractDFG,  entry::AbstractBlobEntry)
+# addBlob!(dfg::AbstractDFG,  entry::BlobEntry, blob)
+# updateBlob!(dfg::AbstractDFG,  entry::BlobEntry, blob)
+# deleteBlob!(dfg::AbstractDFG,  entry::BlobEntry)
 
 
-function getBlob(dfg::AbstractDFG, entry::AbstractBlobEntry)
+
+function getBlob(dfg::AbstractDFG, entry::BlobEntry)
     error("$(typeof(dfg)) doesn't override 'getBlob', with $(typeof(entry)).")
 end
 
-function addBlob!(dfg::AbstractDFG, entry::AbstractBlobEntry, data::T) where T
+function addBlob!(dfg::AbstractDFG, entry::BlobEntry, data::T) where T
     error("$(typeof(dfg)) doesn't override 'addBlob!'.")
 end
 
-function updateBlob!(dfg::AbstractDFG,  entry::AbstractBlobEntry, data::T) where T
+function updateBlob!(dfg::AbstractDFG,  entry::BlobEntry, data::T) where T
     error("$(typeof(dfg)) doesn't override 'updateBlob!'.")
 end
 
-function deleteBlob!(dfg::AbstractDFG, entry::AbstractBlobEntry)
+function deleteBlob!(dfg::AbstractDFG, entry::BlobEntry)
     error("$(typeof(dfg)) doesn't override 'deleteBlob!'.")
 end
 
@@ -147,7 +163,7 @@ end
 function addBlob!(
     dfg::AbstractDFG, 
     label::Symbol, 
-    entry::AbstractBlobEntry, 
+    entry::BlobEntry, 
     blob::Vector{UInt8}; 
     hashfunction = sha256,
     checkhash::Bool=true
@@ -176,7 +192,7 @@ end
 function updateBlob!(
     dfg::AbstractDFG, 
     label::Symbol, 
-    entry::AbstractBlobEntry, 
+    entry::BlobEntry, 
     blob::Vector{UInt8};
     hashfunction = sha256,
     checkhash::Bool=true

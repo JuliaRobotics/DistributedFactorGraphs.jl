@@ -174,7 +174,7 @@ function unpackVariable(variable::PackedVariable; skipVersionCheck::Bool=false)
     solverDict = Dict{Symbol, VariableNodeData{variableType, pointType}}(
         map(sd -> sd.solveKey, variable.solverData) .=> 
         map(sd -> DFG.unpackVariableNodeData(sd), variable.solverData))
-    dataDict = Dict{Symbol, AbstractBlobEntry}(map(de -> de.label, variable.dataEntries) .=> variable.dataEntries)
+    dataDict = Dict{Symbol, BlobEntry}(map(de -> de.label, variable.dataEntries) .=> variable.dataEntries)
     metadata = JSON3.read(base64decode(variable.metadata), Dict{Symbol, DFG.SmallDataTypes})
 
     return DFGVariable(

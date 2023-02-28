@@ -234,7 +234,7 @@ Base.@kwdef struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
     smallData::Dict{Symbol, SmallDataTypes}
     """Dictionary of large data associated with this variable.
     Accessors: [`addDataEntry!`](@ref), [`getBlobEntry`](@ref), [`updateDataEntry!`](@ref), and [`deleteDataEntry!`](@ref)"""
-    dataDict::Dict{Symbol, AbstractBlobEntry}
+    dataDict::Dict{Symbol, BlobEntry}
     """Solvable flag for the variable.
     Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)"""
     solvable::Base.RefValue{Int}
@@ -255,7 +255,7 @@ function DFGVariable(label::Symbol, variableType::Type{T};
             estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
             solverDataDict::Dict{Symbol, VariableNodeData{T,P}}=Dict{Symbol, VariableNodeData{T,getPointType(T)}}(),
             smallData::Dict{Symbol, SmallDataTypes}=Dict{Symbol, SmallDataTypes}(),
-            dataDict::Dict{Symbol, AbstractBlobEntry}=Dict{Symbol,AbstractBlobEntry}(),
+            dataDict::Dict{Symbol, BlobEntry}=Dict{Symbol,BlobEntry}(),
             solvable::Int=1) where {T <: InferenceVariable, P}
     #
     DFGVariable{T}(id, label, timestamp, nstime, tags, estimateDict, solverDataDict, smallData, dataDict, Ref(solvable))
@@ -278,7 +278,7 @@ function DFGVariable(label::Symbol,
             tags::Set{Symbol}=Set{Symbol}(),
             estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
             smallData::Dict{Symbol, SmallDataTypes}=Dict{Symbol, SmallDataTypes}(),
-            dataDict::Dict{Symbol, <: AbstractBlobEntry}=Dict{Symbol,AbstractBlobEntry}(),
+            dataDict::Dict{Symbol, <: BlobEntry}=Dict{Symbol,BlobEntry}(),
             solvable::Int=1) where {T <: InferenceVariable}
     #
     DFGVariable{T}(id, label, timestamp, nstime, tags, estimateDict, Dict{Symbol, VariableNodeData{T, getPointType(T)}}(:default=>solverData), smallData, dataDict, Ref(solvable))
@@ -341,7 +341,7 @@ Base.@kwdef struct DFGVariableSummary <: AbstractDFGVariable
     variableTypeName::Symbol
     """Dictionary of large data associated with this variable.
     Accessors: [`addDataEntry!`](@ref), [`getBlobEntry`](@ref), [`updateDataEntry!`](@ref), and [`deleteDataEntry!`](@ref)"""
-    dataDict::Dict{Symbol, AbstractBlobEntry}
+    dataDict::Dict{Symbol, BlobEntry}
 end
 
 
