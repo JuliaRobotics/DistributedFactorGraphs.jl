@@ -61,7 +61,11 @@ end
     @test printVariable(iobuf, var1, skipfields=[:timestamp, :solver, :ppe, :nstime]) === nothing
     
     # for julia v1.6
-    @test String(take!(iobuf)) == "DFGVariable{TestVariableType1}\nid:\nnothing\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol, Union{Bool, Float64, Int64, Vector{Bool}, Vector{Float64}, Vector{Int64}, Vector{String}, String}}(:small=>\"data\")\ndataDict:\nDict{Symbol, DistributedFactorGraphs.AbstractBlobEntry}()\nsolvable:\n0\n"   
+    if DistributedFactorGraphs._getDFGVersion() < v"0.19"
+        @test String(take!(iobuf)) == "DFGVariable{TestVariableType1}\nid:\nnothing\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol, Union{Bool, Float64, Int64, Vector{Bool}, Vector{Float64}, Vector{Int64}, Vector{String}, String}}(:small=>\"data\")\ndataDict:\nDict{Symbol, DistributedFactorGraphs.BlobEntry}()\nsolvable:\n0\n"   
+    else
+        @test String(take!(iobuf)) == "DFGVariable{TestVariableType1}\nid:\nnothing\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol, Union{Bool, Float64, Int64, Vector{Bool}, Vector{Float64}, Vector{Int64}, Vector{String}, String}}(:small=>\"data\")\ndataDict:\nDict{Symbol, BlobEntry}()\nsolvable:\n0\n"   
+    end
 
     @test printVariable(iobuf, var1, short=true) === nothing
     varstr = String(take!(iobuf))

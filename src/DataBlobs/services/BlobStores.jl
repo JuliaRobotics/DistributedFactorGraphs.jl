@@ -63,7 +63,7 @@ end
 # Can specify which entries to copy with the `sourceEntries` parameter.
 # Returns the list of copied entries.
 # """
-# function copyBlobStore(sourceStore::D1, destStore::D2; sourceEntries=listEntries(sourceStore))::Vector{E} where {T, D1 <: AbstractDataStore{T}, D2 <: AbstractDataStore{T}, E <: AbstractBlobEntry}
+# function copyBlobStore(sourceStore::D1, destStore::D2; sourceEntries=listEntries(sourceStore))::Vector{E} where {T, D1 <: AbstractDataStore{T}, D2 <: AbstractDataStore{T}, E <: BlobEntry}
 #     # Quick check
 #     destEntries = listBlobs(destStore)
 #     typeof(sourceEntries) != typeof(destEntries) && error("Can't copy stores, source has entries of type $(typeof(sourceEntries)), destination has entries of type $(typeof(destEntries)).")
@@ -94,14 +94,14 @@ function getBlob(
     return de=>db
 end
 
-function addBlob!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol, entry::AbstractBlobEntry, blob::Vector{UInt8}; hashfunction = sha256)
+function addBlob!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol, entry::BlobEntry, blob::Vector{UInt8}; hashfunction = sha256)
     assertHash(entry, blob; hashfunction)
     de = addBlobEntry!(dfg, label, entry)
     db = addBlob!(blobstore, de, blob)
     return de=>db
 end
 
-function updateBlob!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol,  entry::AbstractBlobEntry, blob::Vector{UInt8}; hashfunction = sha256)
+function updateBlob!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol,  entry::BlobEntry, blob::Vector{UInt8}; hashfunction = sha256)
     # Recalculate the hash - NOTE Assuming that this is going to be a BlobEntry. TBD.
     newEntry = BlobEntry(entry.id, entry.blobId, entry.originId, entry.label, blobstore.key, bytes2hex(hashfunction(blob)),
         buildSourceString(dfg, label),
@@ -112,7 +112,7 @@ function updateBlob!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symb
     return de=>db
 end
 
-deleteBlob!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol, entry::AbstractBlobEntry) =
+deleteBlob!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol, entry::BlobEntry) =
             deleteBlob!(dfg, blobstore, label, entry.label)
 
 function deleteBlob!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol, key::Symbol)
