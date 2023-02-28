@@ -52,6 +52,7 @@ end
 
 
 @testset "Custom Printing" begin
+    global var1, var2, var3, v1_tags, vorphan
 
     iobuf = IOBuffer()
     # for now just test the interface and a bit of output
