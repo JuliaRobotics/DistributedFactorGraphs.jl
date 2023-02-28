@@ -116,25 +116,42 @@ deleteBlob!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol, entry
             deleteBlob!(dfg, blobstore, label, entry.label)
 
 function deleteBlob!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol, key::Symbol)
-    de = deleteDataEntry!(dfg, label, key)
+    de = deleteBlobEntry!(dfg, label, key)
     db = deleteBlob!(blobstore, de)
     return de=>db
 end
 
 ##==============================================================================
 
-addBlob!(dfg::AbstractDFG, blobstorekey::Symbol, label::Symbol, key::Symbol, blob::Vector{UInt8},
-         timestamp=now(localzone()); kwargs...) = addBlob!(dfg,
-                                                           getBlobStore(dfg, blobstorekey),
-                                                           label,
-                                                           key,
-                                                           blob,
-                                                           timestamp;
-                                                           kwargs...)
+addBlob!(
+    dfg::AbstractDFG, 
+    blobstorekey::Symbol, 
+    label::Symbol, 
+    key::Symbol, 
+    blob::Vector{UInt8},
+    timestamp=now(localzone()); 
+    kwargs...) = addBlob!(
+        dfg,
+        getBlobStore(dfg, blobstorekey),
+        label,
+        key,
+        blob,
+        timestamp;
+        kwargs...
+    )
 
-function addBlob!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol, key::Symbol,
-                  blob::Vector{UInt8}, timestamp=now(localzone()); description="", mimeType = "application/octet-stream", id::UUID = uuid4(), hashfunction = sha256)
-
+function addBlob!(
+    dfg::AbstractDFG, 
+    blobstore::AbstractBlobStore, 
+    label::Symbol, 
+    key::Symbol,
+    blob::Vector{UInt8}, 
+    timestamp=now(localzone()); 
+    description="", mimeType = "application/octet-stream", 
+    id::UUID = uuid4(), 
+    hashfunction = sha256
+)
+    #
     @warn "ID's and origin IDs should be reconciled here."
     entry = BlobEntry(
         id = id, 
@@ -155,7 +172,6 @@ end
 ##==============================================================================
 ## FolderStore
 ##==============================================================================
-export FolderStore
 
 struct FolderStore{T} <: AbstractBlobStore{T}
     key::Symbol
@@ -200,7 +216,7 @@ function addBlob!(store::FolderStore{T}, entry::BlobEntry, data::T) where T
             write(f, data)
         end
         open(entryfilename, "w") do f
-            JSON.print(f, entry)
+            JSON3.write(f, entry)
         end
         return data
     end
@@ -218,7 +234,7 @@ function updateBlob!(store::FolderStore{T},  entry::BlobEntry, data::T) where T
             write(f, data)
         end
         open(entryfilename, "w") do f
-            JSON.print(f, entry)
+            JSON3.write(f, entry)
         end
         return data
     end
@@ -238,7 +254,7 @@ end
 ##==============================================================================
 ## InMemoryBlobStore
 ##==============================================================================
-export InMemoryBlobStore
+
 struct InMemoryBlobStore{T} <: AbstractBlobStore{T}
     key::Symbol
     blobs::Dict{UUID, T}

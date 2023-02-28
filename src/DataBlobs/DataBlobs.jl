@@ -1,6 +1,4 @@
-# using BlobFrames
-# using CSV
-using JSON
+
 using SHA
 
 include("entities/AbstractBlobEntries.jl")
@@ -12,6 +10,8 @@ include("services/BlobStores.jl")
 
 # include("services/InMemoryStore.jl")
 
+export InMemoryBlobStore
+export FolderStore
 
 export BlobEntry
 
