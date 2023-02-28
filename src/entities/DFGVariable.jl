@@ -120,6 +120,10 @@ Base.@kwdef mutable struct PackedVariableNodeData
     _version::String = string(_getDFGVersion())
 end
 
+StructTypes.StructType(::Type{PackedVariableNodeData}) = StructTypes.UnorderedStruct()
+StructTypes.idproperty(::Type{PackedVariableNodeData}) = :id
+StructTypes.omitempties(::Type{PackedVariableNodeData}) = (:id,)
+
 ##==============================================================================
 ## PointParametricEst
 ##==============================================================================
@@ -151,6 +155,10 @@ Base.@kwdef struct MeanMaxPPE <: AbstractPointParametricEst
     lastUpdatedTimestamp::Union{ZonedDateTime, Nothing} = nothing
 end
 
+StructTypes.StructType(::Type{MeanMaxPPE}) = StructTypes.OrderedStruct()
+StructTypes.idproperty(::Type{MeanMaxPPE}) = :id
+StructTypes.omitempties(::Type{MeanMaxPPE}) = (:id,)
+
 ##------------------------------------------------------------------------------
 ## Constructors
 
@@ -168,6 +176,27 @@ getEstimateFields(::MeanMaxPPE) = [:suggested, :max, :mean]
 ##==============================================================================
 ## DFG Variables
 ##==============================================================================
+
+# Packed Variable
+Base.@kwdef struct PackedVariable
+    # NOTE: This has to match the order of the JSON deserializer as we're using OrderedStructs.
+    id::Union{UUID, Nothing}
+    label::Symbol
+    tags::Vector{Symbol}
+    timestamp::ZonedDateTime
+    nstime::Int
+    ppes::Vector{MeanMaxPPE}
+    dataEntries::Vector{BlobEntry}
+    variableType::String
+    _version::String
+    metadata::String
+    solvable::Int
+    solverData::Vector{PackedVariableNodeData}
+end
+
+StructTypes.StructType(::Type{PackedVariable}) = StructTypes.UnorderedStruct()
+StructTypes.idproperty(::Type{PackedVariable}) = :id
+StructTypes.omitempties(::Type{PackedVariable}) = (:id,)
 
 ##------------------------------------------------------------------------------
 ## DFGVariable lv2
@@ -204,8 +233,8 @@ Base.@kwdef struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
     Accessors: [`getSmallData`](@ref), [`setSmallData!`](@ref)"""
     smallData::Dict{Symbol, SmallDataTypes}
     """Dictionary of large data associated with this variable.
-    Accessors: [`addDataEntry!`](@ref), [`getDataEntry`](@ref), [`updateDataEntry!`](@ref), and [`deleteDataEntry!`](@ref)"""
-    dataDict::Dict{Symbol, AbstractDataEntry}
+    Accessors: [`addDataEntry!`](@ref), [`getBlobEntry`](@ref), [`updateDataEntry!`](@ref), and [`deleteDataEntry!`](@ref)"""
+    dataDict::Dict{Symbol, AbstractBlobEntry}
     """Solvable flag for the variable.
     Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)"""
     solvable::Base.RefValue{Int}
@@ -226,7 +255,7 @@ function DFGVariable(label::Symbol, variableType::Type{T};
             estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
             solverDataDict::Dict{Symbol, VariableNodeData{T,P}}=Dict{Symbol, VariableNodeData{T,getPointType(T)}}(),
             smallData::Dict{Symbol, SmallDataTypes}=Dict{Symbol, SmallDataTypes}(),
-            dataDict::Dict{Symbol, AbstractDataEntry}=Dict{Symbol,AbstractDataEntry}(),
+            dataDict::Dict{Symbol, AbstractBlobEntry}=Dict{Symbol,AbstractBlobEntry}(),
             solvable::Int=1) where {T <: InferenceVariable, P}
     #
     DFGVariable{T}(id, label, timestamp, nstime, tags, estimateDict, solverDataDict, smallData, dataDict, Ref(solvable))
@@ -249,7 +278,7 @@ function DFGVariable(label::Symbol,
             tags::Set{Symbol}=Set{Symbol}(),
             estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
             smallData::Dict{Symbol, SmallDataTypes}=Dict{Symbol, SmallDataTypes}(),
-            dataDict::Dict{Symbol, <: AbstractDataEntry}=Dict{Symbol,AbstractDataEntry}(),
+            dataDict::Dict{Symbol, <: AbstractBlobEntry}=Dict{Symbol,AbstractBlobEntry}(),
             solvable::Int=1) where {T <: InferenceVariable}
     #
     DFGVariable{T}(id, label, timestamp, nstime, tags, estimateDict, Dict{Symbol, VariableNodeData{T, getPointType(T)}}(:default=>solverData), smallData, dataDict, Ref(solvable))
@@ -311,8 +340,8 @@ Base.@kwdef struct DFGVariableSummary <: AbstractDFGVariable
     Accessor: [`getVariableType`](@ref)"""
     variableTypeName::Symbol
     """Dictionary of large data associated with this variable.
-    Accessors: [`addDataEntry!`](@ref), [`getDataEntry`](@ref), [`updateDataEntry!`](@ref), and [`deleteDataEntry!`](@ref)"""
-    dataDict::Dict{Symbol, AbstractDataEntry}
+    Accessors: [`addDataEntry!`](@ref), [`getBlobEntry`](@ref), [`updateDataEntry!`](@ref), and [`deleteDataEntry!`](@ref)"""
+    dataDict::Dict{Symbol, AbstractBlobEntry}
 end
 
 
@@ -341,6 +370,9 @@ end
 
 SkeletonDFGVariable(label::Symbol, tags=Set{Symbol}(); id::Union{UUID, Nothing}=nothing) = SkeletonDFGVariable(id, label, tags)
 
+StructTypes.StructType(::Type{SkeletonDFGVariable}) = StructTypes.OrderedStruct()
+StructTypes.idproperty(::Type{SkeletonDFGVariable}) = :id
+StructTypes.omitempties(::Type{SkeletonDFGVariable}) = (:id,)
 
 ##==============================================================================
 # Define variable levels

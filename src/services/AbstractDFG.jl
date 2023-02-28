@@ -172,7 +172,6 @@ emptySessionData!(dfg::AbstractDFG) = empty!(dfg.sessionData)
 ##==============================================================================
 ## AbstractBlobStore  CRUD
 ##==============================================================================
-abstract type AbstractBlobStore{T} end
 # AbstractBlobStore should have key or overwrite getKey
 getKey(store::AbstractBlobStore) = store.key
 
