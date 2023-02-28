@@ -27,6 +27,25 @@ function assertHash(
 end
 
 
+function Base.show(io::IO, entry::BlobEntry) 
+    println(io, "_type=BlobEntry {")
+    println(io, "  id:            ", entry.id) 
+    println(io, "  blobId:        ", entry.blobId) 
+    println(io, "  originId:      ", entry.originId) 
+    println(io, "  label:         ", entry.label) 
+    println(io, "  blobstore:     ", entry.blobstore) 
+    println(io, "  hash:          ", entry.hash) 
+    println(io, "  origin:        ", entry.origin) 
+    println(io, "  description:   ", entry.description) 
+    println(io, "  mimeType:      ", entry.mimeType)
+    println(io, "  timestamp      ", entry.timestamp)
+    println(io, "  _version:      ", entry._version) 
+    println(io, "}") 
+end 
+
+Base.show(io::IO, ::MIME"text/plain", entry::BlobEntry) = show(io, entry)
+
+
 ##==============================================================================
 ## DFG BlobBlob CRUD
 ##==============================================================================
