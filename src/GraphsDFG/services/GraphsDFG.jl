@@ -94,7 +94,7 @@ function addFactor!(dfg::GraphsDFG{<:AbstractParams, <:AbstractDFGVariable, F},
     return addFactor!(dfg, F(factor))
 end
 
-function getVariable(dfg::GraphsDFG, label::Symbol)
+function getVariable(dfg::GraphsDFG, label::Symbol; kw...)
     if !haskey(dfg.g.variables, label)
         error("Variable label '$(label)' does not exist in the factor graph")
     end
@@ -102,7 +102,7 @@ function getVariable(dfg::GraphsDFG, label::Symbol)
     return dfg.g.variables[label]
 end
 
-function getFactor(dfg::GraphsDFG, label::Symbol)
+function getFactor(dfg::GraphsDFG, label::Symbol; kw...)
     if !haskey(dfg.g.factors, label)
         error("Factor label '$(label)' does not exist in the factor graph")
     end

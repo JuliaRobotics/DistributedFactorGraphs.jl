@@ -221,7 +221,7 @@ end
     $(SIGNATURES)
 Get a DFGVariable from a DFG using its label.
 """
-function getVariable(dfg::G, label::Union{Symbol, String}) where G <: AbstractDFG
+function getVariable(dfg::G, label::Union{Symbol, String}; kw...) where G <: AbstractDFG
     error("getVariable not implemented for $(typeof(dfg))")
 end
 
@@ -229,7 +229,7 @@ end
     $(SIGNATURES)
 Get a DFGFactor from a DFG using its label.
 """
-function getFactor(dfg::G, label::Union{Symbol, String}) where G <: AbstractDFG
+function getFactor(dfg::G, label::Union{Symbol, String}; kw...) where G <: AbstractDFG
     error("getFactor not implemented for $(typeof(dfg))")
 end
 
@@ -365,9 +365,9 @@ end
 Get a DFGVariable with a specific solver key.
 In memory types still return a reference, other types returns a variable with only solveKey.
 """
-function getVariable(dfg::AbstractDFG, label::Symbol, solveKey::Symbol)
+function getVariable(dfg::AbstractDFG, label::Symbol, solveKey::Symbol; kw...)
 
-    var = getVariable(dfg, label)
+    var = getVariable(dfg, label; kw...)
 
     if isa(var, DFGVariable) && !haskey(var.solverDataDict, solveKey)
         error("Solvekey '$solveKey' does not exists in the variable")
