@@ -95,6 +95,8 @@ _,_ = getBlob(dfg, :x1, "random")
 _,_ = getBlob(dfg, :x1, r"rando")
 gde,gdb = getBlob(dfg, :x1, :random)
 
+@show gde
+
 @test incrDataLabelSuffix(dfg,:x1,:random) == :random_1
 @test incrDataLabelSuffix(dfg,:x1,:another_1) == :another_2
 # @test incrDataLabelSuffix(dfg,:x1,:another) == :another_2 # TODO exand support for Regex likely search on labels
