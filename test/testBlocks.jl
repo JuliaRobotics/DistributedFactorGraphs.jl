@@ -842,16 +842,18 @@ end
 function  DataEntriesTestBlock!(fg, v2)
     # "Data Entries"
 
-    # getDataEntry
-    # addDataEntry
-    # updateDataEntry
-    # deleteDataEntry
-    # getDataEntries
-    # listDataEntries
+    # getBlobEntry
+    # addBlobEntry
+    # updateBlobEntry
+    # deleteBlobEntry
+    # getBlobEntries
+    # listBlobEntries
     # emptyDataEntries
     # mergeDataEntries
-    storeEntry = BlobStoreEntry(
+    storeEntry = BlobEntry(
         id = uuid4(), 
+        blobId = uuid4(),
+        originId = uuid4(),
         label = :a, 
         blobstore = :b, 
         hash = "",
@@ -864,54 +866,89 @@ function  DataEntriesTestBlock!(fg, v2)
     @test getHash(storeEntry) == hex2bytes(storeEntry.hash)
     @test getTimestamp(storeEntry) == storeEntry.timestamp
 
-    oid = zeros(UInt8,12); oid[12] = 0x01
-    de1 = MongodbDataEntry(:key1, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
+    # oid = zeros(UInt8,12); oid[12] = 0x01
+    # de1 = MongodbDataEntry(:key1, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
+    de1 = BlobEntry(
+        id = uuid4(), 
+        blobId = uuid4(),
+        originId = uuid4(),
+        label = :key1, 
+        blobstore = :b, 
+        hash = "",
+        origin = "",
+        description = "",
+        mimeType = "", 
+        metadata = "")
 
-    oid = zeros(UInt8,12); oid[12] = 0x02
-    de2 = MongodbDataEntry(:key2, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
+    # oid = zeros(UInt8,12); oid[12] = 0x02
+    # de2 = MongodbDataEntry(:key2, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
+    de2 = BlobEntry(
+        id = uuid4(), 
+        blobId = uuid4(),
+        originId = uuid4(),
+        label = :key2, 
+        blobstore = :b, 
+        hash = "",
+        origin = "",
+        description = "",
+        mimeType = "", 
+        metadata = "")
 
-    oid = zeros(UInt8,12); oid[12] = 0x03
-    de2_update = MongodbDataEntry(:key2, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
+    # oid = zeros(UInt8,12); oid[12] = 0x03
+    # de2_update = MongodbDataEntry(:key2, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
+    de2_update = BlobEntry(
+        id = uuid4(), 
+        blobId = uuid4(),
+        originId = uuid4(),
+        label = :key2, 
+        blobstore = :b, 
+        hash = "",
+        origin = "",
+        description = "Yay",
+        mimeType = "", 
+        metadata = "")
 
     #add
     v1 = getVariable(fg, :a)
-    @test addDataEntry!(v1, de1) == de1
-    @test addDataEntry!(fg, :a, de2) == de2
-    @test_throws ErrorException addDataEntry!(v1, de1)
-    @test de2 in getDataEntries(v1)
+    @test addBlobEntry!(v1, de1) == de1
+    @test addBlobEntry!(fg, :a, de2) == de2
+    @test_throws ErrorException addBlobEntry!(v1, de1)
+    @test de2 in getBlobEntries(v1)
 
     #get
-    @test deepcopy(de1) == getDataEntry(v1, :key1)
-    @test deepcopy(de2) == getDataEntry(fg, :a, :key2)
-    @test_throws ErrorException getDataEntry(v2, :key1)
-    @test_throws ErrorException getDataEntry(fg, :b, :key1)
+    @test deepcopy(de1) == getBlobEntry(v1, :key1)
+    @test deepcopy(de2) == getBlobEntry(fg, :a, :key2)
+    @test_throws ErrorException getBlobEntry(v2, :key1)
+    @test_throws ErrorException getBlobEntry(fg, :b, :key1)
 
     #update
-    @test updateDataEntry!(fg, :a, de2_update) == de2_update
-    @test deepcopy(de2_update) == getDataEntry(fg, :a, :key2)
-    @test @test_logs (:warn, r"does not exist") updateDataEntry!(fg, :b, de2_update) == de2_update
+    @test updateBlobEntry!(fg, :a, de2_update) == de2_update
+    @test deepcopy(de2_update) == getBlobEntry(fg, :a, :key2)
+    @test @test_logs (:warn, r"does not exist") updateBlobEntry!(fg, :b, de2_update) == de2_update
 
     #list
-    entries = getDataEntries(fg, :a)
+    entries = getBlobEntries(fg, :a)
     @test length(entries) == 2
     @test issetequal(map(e->e.label, entries), [:key1, :key2])
-    @test length(getDataEntries(fg, :b)) == 1
+    @test length(getBlobEntries(fg, :b)) == 1
 
-    @test issetequal(listDataEntries(fg, :a), [:key1, :key2])
-    @test listDataEntries(fg, :b) == Symbol[:key2]
+    @test issetequal(listBlobEntries(fg, :a), [:key1, :key2])
+    @test listBlobEntries(fg, :b) == Symbol[:key2]
 
     #delete
-    @test deleteDataEntry!(v1, de1) == de1
-    @test listDataEntries(v1) == Symbol[:key2]
+    @test deleteBlobEntry!(v1, de1) == de1
+    @test listBlobEntries(v1) == Symbol[:key2]
     #delete from dfg
-    @test deleteDataEntry!(fg, :a, :key2) == de2_update
-    @test listDataEntries(v1) == Symbol[]
-    deleteDataEntry!(fg, :b, :key2)
+    @test deleteBlobEntry!(fg, :a, :key2) == de2_update
+    @test listBlobEntries(v1) == Symbol[]
+    deleteBlobEntry!(fg, :b, :key2)
 end
 
 function blobsStoresTestBlock!(fg)
-    de1 = BlobStoreEntry(
+    de1 = BlobEntry(
         id = uuid4(), 
+        blobId = uuid4(),
+        originId = uuid4(),
         label = :label1, 
         blobstore = :store1, 
         hash = "AAAA",
@@ -919,8 +956,10 @@ function blobsStoresTestBlock!(fg)
         description = "description1",
         mimeType = "mimetype1", 
         metadata = "")
-    de2 = BlobStoreEntry(
+    de2 = BlobEntry(
         id = uuid4(), 
+        blobId = uuid4(),
+        originId = uuid4(),
         label = :label2, 
         blobstore = :store2, 
         hash = "FFFF",
@@ -929,8 +968,10 @@ function blobsStoresTestBlock!(fg)
         mimeType = "mimetype2", 
         metadata = "",
         timestamp = ZonedDateTime("2020-08-12T12:00:00.000+00:00"))
-    de2_update = BlobStoreEntry(
+    de2_update = BlobEntry(
         id = uuid4(), 
+        blobId = uuid4(),
+        originId = uuid4(),
         label = :label2, 
         blobstore = :store2, 
         hash = "0123",
@@ -946,39 +987,39 @@ function blobsStoresTestBlock!(fg)
 
     #add
     var1 = getVariable(fg, :a)
-    @test addDataEntry!(var1, de1) == de1
+    @test addBlobEntry!(var1, de1) == de1
     updateVariable!(fg, var1)
-    @test addDataEntry!(fg, :a, de2) == de2
-    @test_throws ErrorException addDataEntry!(var1, de1)
-    @test de2 in getDataEntries(fg, var1.label)
+    @test addBlobEntry!(fg, :a, de2) == de2
+    @test_throws ErrorException addBlobEntry!(var1, de1)
+    @test de2 in getBlobEntries(fg, var1.label)
 
     #get
-    @test deepcopy(de1) == getDataEntry(var1, :label1)
-    @test deepcopy(de2) == getDataEntry(fg, :a, :label2)
-    @test_throws ErrorException getDataEntry(v2, :label1)
-    @test_throws ErrorException getDataEntry(fg, :b, :label1)
+    @test deepcopy(de1) == getBlobEntry(var1, :label1)
+    @test deepcopy(de2) == getBlobEntry(fg, :a, :label2)
+    @test_throws ErrorException getBlobEntry(v2, :label1)
+    @test_throws ErrorException getBlobEntry(fg, :b, :label1)
 
     #update
-    @test updateDataEntry!(fg, :a, de2_update) == de2_update
-    @test deepcopy(de2_update) == getDataEntry(fg, :a, :label2)
-    @test @test_logs (:warn, r"does not exist") updateDataEntry!(fg, :b, de2_update) == de2_update
+    @test updateBlobEntry!(fg, :a, de2_update) == de2_update
+    @test deepcopy(de2_update) == getBlobEntry(fg, :a, :label2)
+    @test @test_logs (:warn, r"does not exist") updateBlobEntry!(fg, :b, de2_update) == de2_update
 
     #list
-    entries = getDataEntries(fg, :a)
+    entries = getBlobEntries(fg, :a)
     @test length(entries) == 2
     @test issetequal(map(e->e.label, entries), [:label1, :label2])
-    @test length(getDataEntries(fg, :b)) == 1
+    @test length(getBlobEntries(fg, :b)) == 1
 
-    @test issetequal(listDataEntries(fg, :a), [:label1, :label2])
-    @test listDataEntries(fg, :b) == Symbol[:label2]
+    @test issetequal(listBlobEntries(fg, :a), [:label1, :label2])
+    @test listBlobEntries(fg, :b) == Symbol[:label2]
 
     #delete
-    @test deleteDataEntry!(fg, var1.label, de1.label) == de1
-    @test listDataEntries(fg, var1.label) == Symbol[:label2]
+    @test deleteBlobEntry!(fg, var1.label, de1.label) == de1
+    @test listBlobEntries(fg, var1.label) == Symbol[:label2]
     #delete from dfg
-    @test deleteDataEntry!(fg, :a, :label2) == de2_update
+    @test deleteBlobEntry!(fg, :a, :label2) == de2_update
     var1 = getVariable(fg, :a)
-    @test listDataEntries(var1) == Symbol[]
+    @test listBlobEntries(var1) == Symbol[]
 
     # Blobstore functions
     fs = FolderStore("/tmp/$(string(uuid4())[1:8])")
@@ -1002,19 +1043,19 @@ function blobsStoresTestBlock!(fg)
     # Data functions
     testData = rand(UInt8, 50)
     # Adding 
-    newData = addData!(fg, fs.key, :a, :testing, testData)
+    newData = addBlob!(fg, fs.key, :a, :testing, testData)
     # Listing
-    @test :testing in listDataEntries(fg, :a)
+    @test :testing in listBlobEntries(fg, :a)
     # Getting
-    data = getData(fg, fs, :a, :testing)
+    data = getBlob(fg, fs, :a, :testing)
     @test data[1].hash == newData[1].hash
     @test data[2] == newData[2]
     # Updating
-    updateData = updateData!(fg, fs, :a, newData[1], rand(UInt8, 50))
+    updateData = updateBlob!(fg, fs, :a, newData[1], rand(UInt8, 50))
     @test updateData[1].hash != data[1].hash
     @test updateData[2] != data[2]
     # Deleting
-    retData = deleteData!(fg, :a, :testing)
+    retData = deleteBlob!(fg, :a, :testing)
 
 end
 
@@ -1640,10 +1681,10 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
             @test getFactor(dfg, fact) == getFactor(retDFG, fact)
         end
 
-        # @test length(getDataEntries(getVariable(retDFG, :x1))) == 1
-        # @test typeof(getDataEntry(getVariable(retDFG, :x1),:testing)) == GeneralDataEntry
-        # @test length(getDataEntries(getVariable(retDFG, :x2))) == 1
-        # @test typeof(getDataEntry(getVariable(retDFG, :x2),:testing2)) == FileDataEntry
+        # @test length(getBlobEntries(getVariable(retDFG, :x1))) == 1
+        # @test typeof(getBlobEntry(getVariable(retDFG, :x1),:testing)) == GeneralDataEntry
+        # @test length(getBlobEntries(getVariable(retDFG, :x2))) == 1
+        # @test typeof(getBlobEntry(getVariable(retDFG, :x2),:testing2)) == FileDataEntry
     end
 
 end

@@ -41,7 +41,7 @@ function saveDFG(folder::AbstractString, dfg::AbstractDFG)
     map(f -> rm("$factorFolder/$f"), readdir(factorFolder))
     # Variables
     for v in variables
-        vPacked = packVariable(dfg, v)
+        vPacked = packVariable(v)
         JSON3.write("$varFolder/$(v.label).json", vPacked)
     end
     # Factors
@@ -127,11 +127,10 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString)
     varFiles = readdir(varFolder)
     factorFiles = readdir(factorFolder)
     @showprogress 1 "loading variables" for varFile in varFiles
-        packedData = JSON.parsefile("$varFolder/$varFile"; dicttype=Dict{String, Any})
-        # open("$varFolder/$varFile") do io
-        #     packedData = JSON.parse(io; dicttype=Dict{String, Any})
-            push!(variables, unpackVariable(dfgLoadInto, packedData))
-        # end
+        packedData = read("$varFolder/$varFile", String)
+        packedData = JSON3.read(packedData, PackedVariable)
+        @show packedData
+        push!(variables, unpackVariable(packedData))
     end
     @info "Loaded $(length(variables)) variables - $(map(v->v.label, variables))"
     @info "Inserting variables into graph..."
@@ -139,10 +138,9 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString)
     map(v->addVariable!(dfgLoadInto, v), variables)
 
     @showprogress 1 "loading factors" for factorFile in factorFiles
-        open("$factorFolder/$factorFile") do io
-            packedData = JSON2.read(io, Dict{String, Any})
-            push!(factors, unpackFactor(dfgLoadInto, packedData))
-        end
+        packedData = read("$factorFolder/$factorFile", String)
+        packedData = JSON3.read(packedData, PackedFactor)
+        push!(factors, unpackFactor(dfgLoadInto, packedData))
     end
     @info "Loaded $(length(variables)) factors - $(map(f->f.label, factors))"
     @info "Inserting factors into graph..."

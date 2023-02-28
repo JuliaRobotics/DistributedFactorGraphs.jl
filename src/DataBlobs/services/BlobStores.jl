@@ -2,12 +2,14 @@
 ## AbstractBlobStore CRUD Interface
 ##==============================================================================
 
-function getDataBlob(dfg::AbstractDFG, entry::BlobStoreEntry)
+function getBlob(dfg::AbstractDFG, entry::BlobEntry)
+    @show entry
+    @show "I'm here"
     # cannot use entry.blobstore because the blob can be in any one of the blobstores
     stores = getBlobStores(dfg)
     for (k,store) in stores
         try
-            blob = getDataBlob(store, entry)
+            blob = getBlob(store, entry)
             return blob
         catch err
             if !(err isa KeyError)
@@ -22,37 +24,37 @@ function getDataBlob(dfg::AbstractDFG, entry::BlobStoreEntry)
     )
 end
 
-function getDataBlob(store::AbstractBlobStore, entry::BlobStoreEntry)
-    error("$(typeof(store)) doesn't override 'getDataBlob'.")
+function getBlob(store::AbstractBlobStore, entry::BlobEntry)
+    error("$(typeof(store)) doesn't override 'getBlob'.")
 end
 
 
-addDataBlob!(dfg::AbstractDFG, entry::BlobStoreEntry, data::T) where T =
-        addDataBlob!(getBlobStore(dfg, entry.blobstore), entry, data)
+addBlob!(dfg::AbstractDFG, entry::BlobEntry, data::T) where T =
+        addBlob!(getBlobStore(dfg, entry.blobstore), entry, data)
 
-function addDataBlob!(store::AbstractBlobStore{T}, entry::BlobStoreEntry, data::T) where T
-    error("$(typeof(store)) doesn't override 'addDataBlob!'.")
+function addBlob!(store::AbstractBlobStore{T}, entry::BlobEntry, data::T) where T
+    error("$(typeof(store)) doesn't override 'addBlob!'.")
 end
 
 
-updateDataBlob!(dfg::AbstractDFG, entry::BlobStoreEntry, data::T) where T =
-        updateDataBlob!(getBlobStore(dfg, entry.blobstore), entry, data)
+updateBlob!(dfg::AbstractDFG, entry::BlobEntry, data::T) where T =
+        updateBlob!(getBlobStore(dfg, entry.blobstore), entry, data)
 
-function updateDataBlob!(store::AbstractBlobStore{T},  entry::BlobStoreEntry, data::T) where T
-    error("$(typeof(store)) doesn't override 'updateDataBlob!'.")
+function updateBlob!(store::AbstractBlobStore{T},  entry::BlobEntry, data::T) where T
+    error("$(typeof(store)) doesn't override 'updateBlob!'.")
 end
 
 
-deleteDataBlob!(dfg::AbstractDFG, entry::BlobStoreEntry) =
-        deleteDataBlob!(getBlobStore(dfg, entry.blobstore), entry)
+deleteBlob!(dfg::AbstractDFG, entry::BlobEntry) =
+        deleteBlob!(getBlobStore(dfg, entry.blobstore), entry)
 
-function deleteDataBlob!(store::AbstractBlobStore, entry::BlobStoreEntry)
-    error("$(typeof(store)) doesn't override 'deleteDataBlob!'.")
+function deleteBlob!(store::AbstractBlobStore, entry::BlobEntry)
+    error("$(typeof(store)) doesn't override 'deleteBlob!'.")
 end
 
 
-function listDataBlobs(store::AbstractBlobStore)
-    error("$(typeof(store)) doesn't override 'listDataBlobs'.")
+function listBlobs(store::AbstractBlobStore)
+    error("$(typeof(store)) doesn't override 'listBlobs'.")
 end
 
 
@@ -63,15 +65,15 @@ end
 # Can specify which entries to copy with the `sourceEntries` parameter.
 # Returns the list of copied entries.
 # """
-# function copyBlobStore(sourceStore::D1, destStore::D2; sourceEntries=listEntries(sourceStore))::Vector{E} where {T, D1 <: AbstractDataStore{T}, D2 <: AbstractDataStore{T}, E <: AbstractDataEntry}
+# function copyBlobStore(sourceStore::D1, destStore::D2; sourceEntries=listEntries(sourceStore))::Vector{E} where {T, D1 <: AbstractDataStore{T}, D2 <: AbstractDataStore{T}, E <: AbstractBlobEntry}
 #     # Quick check
-#     destEntries = listDataBlobs(destStore)
+#     destEntries = listBlobs(destStore)
 #     typeof(sourceEntries) != typeof(destEntries) && error("Can't copy stores, source has entries of type $(typeof(sourceEntries)), destination has entries of type $(typeof(destEntries)).")
 #     # Same source/destination check
 #     sourceStore == destStore && error("Can't specify same store for source and destination.")
 #     # Otherwise, continue
 #     for sourceEntry in sourceEntries
-#         addDataBlob!(destStore, deepcopy(sourceEntry), getDataBlob(sourceStore, sourceEntry))
+#         addBlob!(destStore, deepcopy(sourceEntry), getBlob(sourceStore, sourceEntry))
 #     end
 #     return sourceEntries
 # end
@@ -80,7 +82,7 @@ end
 ## Store and Entry Data CRUD
 ##==============================================================================
 
-function getData(
+function getBlob(
     dfg::AbstractDFG, 
     blobstore::AbstractBlobStore, 
     label::Symbol, 
@@ -88,43 +90,43 @@ function getData(
     hashfunction = sha256,
     checkhash::Bool=true
 )
-    de = getDataEntry(dfg, label, key)
-    db = getDataBlob(blobstore, de)
+    de = getBlobEntry(dfg, label, key)
+    db = getBlob(blobstore, de)
     checkhash && assertHash(de, db; hashfunction)
     return de=>db
 end
 
-function addData!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol, entry::AbstractDataEntry, blob::Vector{UInt8}; hashfunction = sha256)
+function addBlob!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol, entry::AbstractBlobEntry, blob::Vector{UInt8}; hashfunction = sha256)
     assertHash(entry, blob; hashfunction)
     de = addDataEntry!(dfg, label, entry)
-    db = addDataBlob!(blobstore, de, blob)
+    db = addBlob!(blobstore, de, blob)
     return de=>db
 end
 
-function updateData!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol,  entry::AbstractDataEntry, blob::Vector{UInt8}; hashfunction = sha256)
-    # Recalculate the hash - NOTE Assuming that this is going to be a BlobStoreEntry. TBD.
-    newEntry = BlobStoreEntry(entry.id, entry.label, blobstore.key, bytes2hex(hashfunction(blob)),
+function updateBlob!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol,  entry::AbstractBlobEntry, blob::Vector{UInt8}; hashfunction = sha256)
+    # Recalculate the hash - NOTE Assuming that this is going to be a BlobEntry. TBD.
+    newEntry = BlobEntry(entry.id, entry.blobId, entry.originId, entry.label, blobstore.key, bytes2hex(hashfunction(blob)),
         buildSourceString(dfg, label),
         entry.description, entry.mimeType, entry.metadata, entry.timestamp, entry._type, string(_getDFGVersion()))
 
     de = updateDataEntry!(dfg, label, newEntry)
-    db = updateDataBlob!(blobstore, de, blob)
+    db = updateBlob!(blobstore, de, blob)
     return de=>db
 end
 
-deleteData!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol, entry::AbstractDataEntry) =
-            deleteData!(dfg, blobstore, label, entry.label)
+deleteBlob!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol, entry::AbstractBlobEntry) =
+            deleteBlob!(dfg, blobstore, label, entry.label)
 
-function deleteData!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol, key::Symbol)
+function deleteBlob!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol, key::Symbol)
     de = deleteDataEntry!(dfg, label, key)
-    db = deleteDataBlob!(blobstore, de)
+    db = deleteBlob!(blobstore, de)
     return de=>db
 end
 
 ##==============================================================================
 
-addData!(dfg::AbstractDFG, blobstorekey::Symbol, label::Symbol, key::Symbol, blob::Vector{UInt8},
-         timestamp=now(localzone()); kwargs...) = addData!(dfg,
+addBlob!(dfg::AbstractDFG, blobstorekey::Symbol, label::Symbol, key::Symbol, blob::Vector{UInt8},
+         timestamp=now(localzone()); kwargs...) = addBlob!(dfg,
                                                            getBlobStore(dfg, blobstorekey),
                                                            label,
                                                            key,
@@ -132,12 +134,13 @@ addData!(dfg::AbstractDFG, blobstorekey::Symbol, label::Symbol, key::Symbol, blo
                                                            timestamp;
                                                            kwargs...)
 
-function addData!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol, key::Symbol,
+function addBlob!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol, key::Symbol,
                   blob::Vector{UInt8}, timestamp=now(localzone()); description="", mimeType = "application/octet-stream", id::UUID = uuid4(), hashfunction = sha256)
 
-
-    entry = BlobStoreEntry(
+    @warn "ID's and origin IDs should be reconciled here."
+    entry = BlobEntry(
         id = id, 
+        originId = id,
         label = key, 
         blobstore = blobstore.key, 
         hash = bytes2hex(hashfunction(blob)),
@@ -147,7 +150,7 @@ function addData!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol,
         metadata = "", 
         timestamp = timestamp)
 
-    addData!(dfg, blobstore, label, entry, blob; hashfunction)
+    addBlob!(dfg, blobstore, label, entry, blob; hashfunction)
 end
 
 
@@ -171,10 +174,10 @@ end
 
 FolderStore(foldername::String) = FolderStore{Vector{UInt8}}(:default_folder_store, foldername)
 
-blobfilename(store::FolderStore, entry::BlobStoreEntry) = joinpath(store.folder,"$(entry.id).dat")
-entryfilename(store::FolderStore, entry::BlobStoreEntry) = joinpath(store.folder,"$(entry.id).json")
+blobfilename(store::FolderStore, entry::BlobEntry) = joinpath(store.folder,"$(entry.id).dat")
+entryfilename(store::FolderStore, entry::BlobEntry) = joinpath(store.folder,"$(entry.id).json")
 
-function getDataBlob(store::FolderStore{T}, entry::BlobStoreEntry) where T
+function getBlob(store::FolderStore{T}, entry::BlobEntry) where T
     blobfilename = joinpath(store.folder,"$(entry.id).dat")
     # entryfilename = "$(store.folder)/$(entry.id).json"
     if isfile(blobfilename)
@@ -187,7 +190,7 @@ function getDataBlob(store::FolderStore{T}, entry::BlobStoreEntry) where T
     end
 end
 
-function addDataBlob!(store::FolderStore{T}, entry::BlobStoreEntry, data::T) where T
+function addBlob!(store::FolderStore{T}, entry::BlobEntry, data::T) where T
     blobfilename = joinpath(store.folder,"$(entry.id).dat")
     entryfilename = joinpath(store.folder,"$(entry.id).json")
     if isfile(blobfilename)
@@ -205,7 +208,7 @@ function addDataBlob!(store::FolderStore{T}, entry::BlobStoreEntry, data::T) whe
     end
 end
 
-function updateDataBlob!(store::FolderStore{T},  entry::BlobStoreEntry, data::T) where T
+function updateBlob!(store::FolderStore{T},  entry::BlobEntry, data::T) where T
     blobfilename = joinpath(store.folder,"$(entry.id).dat")
     entryfilename = joinpath(store.folder,"$(entry.id).json")
     if !isfile(blobfilename)
@@ -224,11 +227,11 @@ function updateDataBlob!(store::FolderStore{T},  entry::BlobStoreEntry, data::T)
 end
 
 
-function deleteDataBlob!(store::FolderStore{T}, entry::BlobStoreEntry) where T
+function deleteBlob!(store::FolderStore{T}, entry::BlobEntry) where T
     blobfilename = joinpath(store.folder,"$(entry.id).dat")
     entryfilename = joinpath(store.folder,"$(entry.id).json")
     
-    data = getDataBlob(store, entry)
+    data = getBlob(store, entry)
     rm(blobfilename)
     rm(entryfilename)
     return data
@@ -246,24 +249,24 @@ end
 InMemoryBlobStore{T}(storeKey::Symbol) where T = InMemoryBlobStore{Vector{UInt8}}(storeKey, Dict{UUID, T}())
 InMemoryBlobStore(storeKey::Symbol=:default_inmemory_store) = InMemoryBlobStore{Vector{UInt8}}(storeKey)
 
-function getDataBlob(store::InMemoryBlobStore{T}, entry::BlobStoreEntry) where T
+function getBlob(store::InMemoryBlobStore{T}, entry::BlobEntry) where T
     return store.blobs[entry.id]
 end
 
-function addDataBlob!(store::InMemoryBlobStore{T}, entry::BlobStoreEntry, data::T) where T
+function addBlob!(store::InMemoryBlobStore{T}, entry::BlobEntry, data::T) where T
     if haskey(store.blobs, entry.id)
         error("Key '$(entry.id)' blob already exists.")
     end
     return store.blobs[entry.id] = data
 end
 
-function updateDataBlob!(store::InMemoryBlobStore{T},  entry::BlobStoreEntry, data::T) where T
+function updateBlob!(store::InMemoryBlobStore{T},  entry::BlobEntry, data::T) where T
     if haskey(store.blobs, entry.id)
         @warn "Key '$(entry.id)' doesn't exist."
     end
     return store.blobs[entry.id] = data
 end
 
-function deleteDataBlob!(store::InMemoryBlobStore{T}, entry::BlobStoreEntry) where T
+function deleteBlob!(store::InMemoryBlobStore{T}, entry::BlobEntry) where T
     return pop!(store.blobs, entry.id)
 end

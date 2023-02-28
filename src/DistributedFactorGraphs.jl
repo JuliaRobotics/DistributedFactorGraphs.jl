@@ -26,6 +26,7 @@ using JSON
 # using Unmarshal
 using JSON2 # JSON2 requires all properties to be in correct sequence, can't guarantee that from DB.
 using JSON3
+using StructTypes
 using LinearAlgebra
 using SparseArrays
 using UUIDs
@@ -105,10 +106,10 @@ export getSummary, getSummaryGraph
 export DFGNode, AbstractDFGVariable, AbstractDFGFactor
 
 # Variables
-export DFGVariable, DFGVariableSummary, SkeletonDFGVariable
+export DFGVariable, DFGVariableSummary, SkeletonDFGVariable, PackedVariable
 
 # Factors
-export DFGFactor, DFGFactorSummary, SkeletonDFGFactor
+export DFGFactor, DFGFactorSummary, SkeletonDFGFactor, PackedFactor
 
 # Common
 export getSolvable, setSolvable!, isSolvable
@@ -197,13 +198,16 @@ export copyGraph!, deepcopyGraph, deepcopyGraph!, buildSubgraph, mergeGraph!
 
 # Entry Blob Data
 ##------------------------------------------------------------------------------
-export addDataEntry!, getDataEntry, updateDataEntry!, deleteDataEntry!, getDataEntries, listDataEntries, hasDataEntry, hasDataEntry
+
+export hasBlobEntry,getBlobEntry,addBlobEntry!,updateBlobEntry!,deleteBlobEntry!,listBlobEntry,listBlobEntrySequence,mergeBlobEntry!
+export incrDataLabelSuffix
+
+export addDataEntry!, getBlobEntry, updateDataEntry!, deleteDataEntry!, getBlobEntries, listDataEntries, hasDataEntry, hasDataEntry
 export listDataEntrySequence
 # convenience wrappers
 export addDataEntry!, mergeDataEntries!
-export incrDataLabelSuffix
 # aliases
-export addData!
+export addBlob!
 
 ##------------------------------------------------------------------------------
 # Factors
@@ -288,6 +292,9 @@ export printFactor, printVariable, printNode
 
 include("entities/AbstractDFG.jl")
 
+# Data Blob extensions
+include("DataBlobs/DataBlobs.jl")
+
 include("entities/DFGFactor.jl")
 
 include("entities/DFGVariable.jl")
@@ -320,9 +327,6 @@ include("services/CustomPrinting.jl")
 
 # To be moved as necessary.
 include("Common.jl")
-
-# Data Blob extensions
-include("DataBlobs/DataBlobs.jl")
 
 function __init__()
     @require GraphPlot = "a2cc645c-3eea-5389-862e-a155d0052231" begin

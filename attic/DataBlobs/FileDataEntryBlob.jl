@@ -1,25 +1,25 @@
 
 
-# @generated function ==(x::FileDataEntry, y::FileDataEntry)
+# @generated function ==(x::BlobEntry, y::BlobEntry)
 #     mapreduce(n -> :(x.$n == y.$n), (a,b)->:($a && $b), fieldnames(x))
 # end
 
 #
-# getHash(entry::AbstractDataEntry) = hex2bytes(entry.hash)
+# getHash(entry::AbstractBlobEntry) = hex2bytes(entry.hash)
 
 
 ##==============================================================================
-## FileDataEntry Common
+## BlobEntry Common
 ##==============================================================================
-blobfilename(entry::FileDataEntry) = joinpath(entry.folder,"$(entry.id).dat")
-entryfilename(entry::FileDataEntry) = joinpath(entry.folder,"$(entry.id).json")
+blobfilename(entry::BlobEntry) = joinpath(entry.folder,"$(entry.id).dat")
+entryfilename(entry::BlobEntry) = joinpath(entry.folder,"$(entry.id).json")
 
 
 ##==============================================================================
-## FileDataEntry Blob CRUD
+## BlobEntry Blob CRUD
 ##==============================================================================
 
-function getDataBlob(dfg::AbstractDFG, entry::FileDataEntry)
+function getBlob(dfg::AbstractDFG, entry::BlobEntry)
     if isfile(blobfilename(entry))
         open(blobfilename(entry)) do f
             return read(f)
@@ -30,7 +30,7 @@ function getDataBlob(dfg::AbstractDFG, entry::FileDataEntry)
     end
 end
 
-function addDataBlob!(dfg::AbstractDFG, entry::FileDataEntry, data::Vector{UInt8})
+function addBlob!(dfg::AbstractDFG, entry::BlobEntry, data::Vector{UInt8})
     if isfile(blobfilename(entry))
         error("Key '$(entry.id)' blob already exists.")
     elseif isfile(entryfilename(entry))
@@ -42,37 +42,37 @@ function addDataBlob!(dfg::AbstractDFG, entry::FileDataEntry, data::Vector{UInt8
         open(entryfilename(entry), "w") do f
             JSON.print(f, entry)
         end
-        return getDataBlob(dfg, entry)::Vector{UInt8}
+        return getBlob(dfg, entry)::Vector{UInt8}
     end
 end
 
-function updateDataBlob!(dfg::AbstractDFG, entry::FileDataEntry, data::Vector{UInt8})
+function updateBlob!(dfg::AbstractDFG, entry::BlobEntry, data::Vector{UInt8})
     if !isfile(blobfilename(entry))
         @warn "Entry '$(entry.id)' does not exist, adding."
-        return addDataBlob!(dfg, entry, data)
+        return addBlob!(dfg, entry, data)
     else
         # perhaps add an explicit force update flag and error otherwise
         @warn "Key '$(entry.id)' already exists, data will be overwritten."
-        deleteDataBlob!(dfg, entry)
-        return addDataBlob!(dfg, entry, data)
+        deleteBlob!(dfg, entry)
+        return addBlob!(dfg, entry, data)
     end
 end
 
-function deleteDataBlob!(dfg::AbstractDFG, entry::FileDataEntry)
-    data = getDataBlob(dfg, entry)
+function deleteBlob!(dfg::AbstractDFG, entry::BlobEntry)
+    data = getBlob(dfg, entry)
     rm(blobfilename(entry))
     rm(entryfilename(entry))
     return data
 end
 
 ##==============================================================================
-## FileDataEntry CRUD Helpers
+## BlobEntry CRUD Helpers
 ##==============================================================================
 
-function addData!(::Type{FileDataEntry}, dfg::AbstractDFG, label::Symbol, key::Symbol, folder::String, blob::Vector{UInt8}, timestamp=now(localzone());
+function addData!(::Type{BlobEntry}, dfg::AbstractDFG, label::Symbol, key::Symbol, folder::String, blob::Vector{UInt8}, timestamp=now(localzone());
                   id::UUID = uuid4(), hashfunction = sha256)
-    fde = FileDataEntry(key, id, folder, bytes2hex(hashfunction(blob)), timestamp)
+    fde = BlobEntry(key, id, folder, bytes2hex(hashfunction(blob)), timestamp)
     de = addDataEntry!(dfg, label, fde)
-    db = addDataBlob!(dfg, fde, blob)
+    db = addBlob!(dfg, fde, blob)
     return de=>db
 end

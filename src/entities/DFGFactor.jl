@@ -76,6 +76,26 @@ FunctionNodeData(args...; kw...) = FunctionNodeData{typeof(args[4])}(args...; kw
 # | DFGFactorSummary  |   X   |   X  |     X     |          |            |
 # | DFGFactor         |   X   |   X  |     X     |     X    |      X     |
 
+# Packed Factor
+Base.@kwdef struct PackedFactor
+    # NOTE: This has to match the order of the JSON deserializer as we're using OrderedStructs.
+    id::Union{UUID, Nothing}
+    label::Symbol
+    tags::Vector{Symbol}
+    _variableOrderSymbols::Vector{Symbol}
+    timestamp::ZonedDateTime
+    nstime::Int
+    fnctype::String
+    solvable::Int
+    data::String
+    metadata::String
+    _version::String
+  end
+  
+StructTypes.StructType(::Type{PackedFactor}) = StructTypes.UnorderedStruct()
+StructTypes.idproperty(::Type{PackedFactor}) = :id
+StructTypes.omitempties(::Type{PackedFactor}) = (:id,)
+  
 ## DFGFactor lv2
 
 """
@@ -248,6 +268,9 @@ end
 SkeletonDFGFactor(id::Union{UUID, Nothing}, label::Symbol, variableOrderSymbols::Vector{Symbol} = Symbol[]) = SkeletonDFGFactor(id, label, Set{Symbol}(), variableOrderSymbols)
 SkeletonDFGFactor(label::Symbol, variableOrderSymbols::Vector{Symbol} = Symbol[]; id::Union{UUID, Nothing}=nothing, tags=Set{Symbol}()) = SkeletonDFGFactor(id, label, tags, variableOrderSymbols)
 
+StructTypes.StructType(::Type{SkeletonDFGFactor}) = StructTypes.OrderedStruct()
+StructTypes.idproperty(::Type{SkeletonDFGFactor}) = :id
+StructTypes.omitempties(::Type{SkeletonDFGFactor}) = (:id,)
 
 ##==============================================================================
 ## Define factor levels

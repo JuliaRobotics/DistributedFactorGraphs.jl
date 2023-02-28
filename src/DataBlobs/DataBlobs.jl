@@ -1,23 +1,22 @@
-# using DataFrames
+# using BlobFrames
 # using CSV
 using JSON
 using SHA
 
-include("entities/AbstractDataEntries.jl")
-# include("entities/BlobStores.jl")
+include("entities/AbstractBlobEntries.jl")
+include("entities/BlobStores.jl")
 
-include("services/AbstractDataEntries.jl")
-include("services/DataEntryBlob.jl")
+include("services/AbstractBlobEntries.jl")
+include("services/BlobEntry.jl")
 include("services/BlobStores.jl")
 
-include("services/FileDataEntryBlob.jl")
-include("services/InMemoryDataEntryBlob.jl")
+include("services/InMemoryStore.jl")
 
 
-export AbstractDataEntry, GeneralDataEntry, MongodbDataEntry, FileDataEntry
+export BlobEntry
 
-export getData, addData!, updateData!, deleteData!, listStoreEntries
-export getDataBlob, addDataBlob!, updateDataBlob!, deleteDataBlob!, listDataBlobs
+export getBlob, addBlob!, updateBlob!, deleteBlob!, listBlobEntries
+export getBlobBlob, addBlob!, updateBlob!, deleteBlob!, listBlobs
 export copyStore
 
 export getId, getHash, getTimestamp

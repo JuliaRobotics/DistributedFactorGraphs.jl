@@ -1,5 +1,6 @@
 
-function assertHash(de::AbstractDataEntry, db; hashfunction = sha256)
+function assertHash(de::AbstractBlobEntry, db; hashfunction = sha256)
+    getHash(de) === nothing && @warn "Hey friends, how about some hashing?" && return true
     if  hashfunction(db) == getHash(de)
         return true #or nothing?
     else
@@ -8,163 +9,163 @@ function assertHash(de::AbstractDataEntry, db; hashfunction = sha256)
 end
 
 ##==============================================================================
-## DFG DataBlob CRUD
+## DFG BlobBlob CRUD
 ##==============================================================================
 
 """
     $(SIGNATURES)
 Get the data blob for the specified blobstore or dfg.
 """
-function getDataBlob end
+function getBlob end
 
 """
     $(SIGNATURES)
 Adds a blob to the blob store or dfg with the given entry.
 """
-function addDataBlob! end
+function addBlob! end
 
 """
     $(SIGNATURES)
 Update a blob to the blob store or dfg with the given entry.
 """
-function updateDataBlob! end
+function updateBlob! end
 
 """
     $(SIGNATURES)
 Delete a blob to the blob store or dfg with the given entry.
 """
-function deleteDataBlob! end
+function deleteBlob! end
 
 """
     $(SIGNATURES)
 List all ids in the blob store.
 """
-function listDataBlobs end
+function listBlobs end
 
 ##==============================================================================
-## Data CRUD interface
+## Blob CRUD interface
 ##==============================================================================
 
 """
 Get the data entry and blob for the specified blobstore or dfg retured as a tuple.
 Related
-[`getDataEntry`](@ref)
+[`getBlobEntry`](@ref)
 
 $(METHODLIST)
 """
-function getData end
+function getBlob end
 
 """
 Add a data Entry and Blob to a distributed factor graph or BlobStore.
 Related
-[`addDataEntry!`](@ref)
+[`addBlobEntry!`](@ref)
 
 $(METHODLIST)
 """
-function addData! end
+function addBlob! end
 
 """
 Update a data entry or blob to the blob store or dfg.
 Related
-[`updateDataEntry!`](@ref)
+[`updateBlobEntry!`](@ref)
 
 $(METHODLIST)
 
 DevNotes
 - TODO TBD update verb on data since data blobs and entries are restricted to immutable only.
 """
-function updateData! end
+function updateBlob! end
 
 """
 Delete a data entry and blob from the blob store or dfg.
 Related
-[`deleteDataEntry!`](@ref)
+[`deleteBlobEntry!`](@ref)
 
 $(METHODLIST)
 """
-function deleteData! end
+function deleteBlob! end
 
 #
-# addDataBlob!(dfg::AbstractDFG,  entry::AbstractDataEntry, blob)
-# updateDataBlob!(dfg::AbstractDFG,  entry::AbstractDataEntry, blob)
-# deleteDataBlob!(dfg::AbstractDFG,  entry::AbstractDataEntry)
+# addBlob!(dfg::AbstractDFG,  entry::AbstractBlobEntry, blob)
+# updateBlob!(dfg::AbstractDFG,  entry::AbstractBlobEntry, blob)
+# deleteBlob!(dfg::AbstractDFG,  entry::AbstractBlobEntry)
 
 
-function getDataBlob(dfg::AbstractDFG, entry::AbstractDataEntry)
-    error("$(typeof(dfg)) doesn't override 'getDataBlob'.")
+function getBlob(dfg::AbstractDFG, entry::AbstractBlobEntry)
+    error("$(typeof(dfg)) doesn't override 'getBlob'.")
 end
 
-function addDataBlob!(dfg::AbstractDFG, entry::AbstractDataEntry, data::T) where T
-    error("$(typeof(dfg)) doesn't override 'addDataBlob!'.")
+function addBlob!(dfg::AbstractDFG, entry::AbstractBlobEntry, data::T) where T
+    error("$(typeof(dfg)) doesn't override 'addBlob!'.")
 end
 
-function updateDataBlob!(dfg::AbstractDFG,  entry::AbstractDataEntry, data::T) where T
-    error("$(typeof(dfg)) doesn't override 'updateDataBlob!'.")
+function updateBlob!(dfg::AbstractDFG,  entry::AbstractBlobEntry, data::T) where T
+    error("$(typeof(dfg)) doesn't override 'updateBlob!'.")
 end
 
-function deleteDataBlob!(dfg::AbstractDFG, entry::AbstractDataEntry)
-    error("$(typeof(dfg)) doesn't override 'deleteDataBlob!'.")
+function deleteBlob!(dfg::AbstractDFG, entry::AbstractBlobEntry)
+    error("$(typeof(dfg)) doesn't override 'deleteBlob!'.")
 end
 
-function listDataBlobs(dfg::AbstractDFG)
-    error("$(typeof(dfg)) doesn't override 'listDataBlobs'.")
+function listBlobs(dfg::AbstractDFG)
+    error("$(typeof(dfg)) doesn't override 'listBlobs'.")
 end
 
 ##==============================================================================
-## DFG Data CRUD
+## DFG Blob CRUD
 ##==============================================================================
 
-function getData(
+function getBlob(
     dfg::AbstractDFG, 
     vlabel::Symbol, 
     key::Union{Symbol,UUID, <:AbstractString, Regex}; 
     hashfunction = sha256,
     checkhash::Bool=true
 )
-    de_ = getDataEntry(dfg, vlabel, key)
+    de_ = getBlobEntry(dfg, vlabel, key)
     _first(s) = s
     _first(s::AbstractVector) = s[1]
     de = _first(de_)
-    db = getDataBlob(dfg, de)
+    db = getBlob(dfg, de)
 
-    checkhash && assertHash(de, db, hashfunction=hashfunction)
+    checkhash && de.hash !== nothing && assertHash(de, db, hashfunction=hashfunction)
     return de=>db
 end
 
-function addData!(
+function addBlob!(
     dfg::AbstractDFG, 
     label::Symbol, 
-    entry::AbstractDataEntry, 
+    entry::AbstractBlobEntry, 
     blob::Vector{UInt8}; 
     hashfunction = sha256,
     checkhash::Bool=true
 )
-    checkhash && assertHash(entry, blob, hashfunction=hashfunction)
-    de = addDataEntry!(dfg, label, entry)
-    db = addDataBlob!(dfg, de, blob)
+    checkhash && de.hash !== nothing && assertHash(entry, blob, hashfunction=hashfunction)
+    de = addBlobEntry!(dfg, label, entry)
+    db = addBlob!(dfg, de, blob)
     return de=>db
 end
 
-function updateData!(
+function updateBlob!(
     dfg::AbstractDFG, 
     label::Symbol, 
-    entry::AbstractDataEntry, 
+    entry::AbstractBlobEntry, 
     blob::Vector{UInt8};
     hashfunction = sha256,
     checkhash::Bool=true
 )
-    checkhash && assertHash(entry, blob, hashfunction=hashfunction)
-    de = updateDataEntry!(dfg, label, entry)
-    db = updateDataBlob!(dfg, de, blob)
+    checkhash && de.hash !== nothing && assertHash(entry, blob, hashfunction=hashfunction)
+    de = updateBlobEntry!(dfg, label, entry)
+    db = updateBlob!(dfg, de, blob)
     return de=>db
 end
 
-function deleteData!(
+function deleteBlob!(
     dfg::AbstractDFG, 
     label::Symbol, 
     key::Symbol
 )
-    de = deleteDataEntry!(dfg, label, key)
-    db = deleteDataBlob!(dfg, de)
+    de = deleteBlobEntry!(dfg, label, key)
+    db = deleteBlob!(dfg, de)
     return de=>db
 end
