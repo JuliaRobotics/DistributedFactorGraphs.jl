@@ -1,5 +1,30 @@
+
 ##==============================================================================
 ## AbstractBlobStore CRUD Interface
+##==============================================================================
+
+function getBlob(store::AbstractBlobStore, entry::BlobEntry)
+    error("$(typeof(store)) doesn't override 'getBlob'.")
+end
+
+function addBlob!(store::AbstractBlobStore{T}, entry::BlobEntry, data::T) where T
+    error("$(typeof(store)) doesn't override 'addBlob!'.")
+end
+
+function updateBlob!(store::AbstractBlobStore{T},  entry::BlobEntry, data::T) where T
+    error("$(typeof(store)) doesn't override 'updateBlob!'.")
+end
+
+function deleteBlob!(store::AbstractBlobStore, entry::BlobEntry)
+    error("$(typeof(store)) doesn't override 'deleteBlob!'.")
+end
+
+function listBlobs(store::AbstractBlobStore)
+    error("$(typeof(store)) doesn't override 'listBlobs'.")
+end
+
+##==============================================================================
+## AbstractBlobStore derived CRUD for Blob 
 ##==============================================================================
 
 function getBlob(dfg::AbstractDFG, entry::BlobEntry)
@@ -22,38 +47,14 @@ function getBlob(dfg::AbstractDFG, entry::BlobEntry)
     )
 end
 
-function getBlob(store::AbstractBlobStore, entry::BlobEntry)
-    error("$(typeof(store)) doesn't override 'getBlob'.")
-end
-
-
 addBlob!(dfg::AbstractDFG, entry::BlobEntry, data::T) where T =
         addBlob!(getBlobStore(dfg, entry.blobstore), entry, data)
-
-function addBlob!(store::AbstractBlobStore{T}, entry::BlobEntry, data::T) where T
-    error("$(typeof(store)) doesn't override 'addBlob!'.")
-end
-
 
 updateBlob!(dfg::AbstractDFG, entry::BlobEntry, data::T) where T =
         updateBlob!(getBlobStore(dfg, entry.blobstore), entry, data)
 
-function updateBlob!(store::AbstractBlobStore{T},  entry::BlobEntry, data::T) where T
-    error("$(typeof(store)) doesn't override 'updateBlob!'.")
-end
-
-
 deleteBlob!(dfg::AbstractDFG, entry::BlobEntry) =
         deleteBlob!(getBlobStore(dfg, entry.blobstore), entry)
-
-function deleteBlob!(store::AbstractBlobStore, entry::BlobEntry)
-    error("$(typeof(store)) doesn't override 'deleteBlob!'.")
-end
-
-
-function listBlobs(store::AbstractBlobStore)
-    error("$(typeof(store)) doesn't override 'listBlobs'.")
-end
 
 
 #TODO
@@ -75,10 +76,6 @@ end
 #     end
 #     return sourceEntries
 # end
-
-##==============================================================================
-## Store and Entry Data CRUD
-##==============================================================================
 
 function getBlob(
     dfg::AbstractDFG, 
@@ -121,6 +118,8 @@ function deleteBlob!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symb
     return de=>db
 end
 
+##==============================================================================
+## Blob CRUD helper functions
 ##==============================================================================
 
 addBlob!(
@@ -167,7 +166,6 @@ function addBlob!(
 
     addBlob!(dfg, blobstore, label, entry, blob; hashfunction)
 end
-
 
 ##==============================================================================
 ## FolderStore

@@ -119,6 +119,67 @@ function deleteBlobEntry!(var::AbstractDFGVariable, entry::BlobEntry)
     return deleteBlobEntry!(var, entry.label)
 end
 
+
+
+
+##==============================================================================
+## Blob CRUD interface
+##==============================================================================
+
+
+"""
+Get the data entry and blob for the specified blobstore or dfg retured as a tuple.
+Get the data blob for the specified blobstore or dfg.
+
+Related
+[`getBlobEntry`](@ref)
+
+$(METHODLIST)
+"""
+function getBlob end
+
+"""
+Add a data Entry and Blob to a distributed factor graph or BlobStore.
+Adds a blob to the blob store or dfg with the given entry.
+
+Related
+[`addBlobEntry!`](@ref)
+
+$(METHODLIST)
+"""
+function addBlob! end
+
+"""
+Update a blob to the blob store or dfg with the given entry.
+Update a data entry or blob to the blob store or dfg.
+Related
+[`updateBlobEntry!`](@ref)
+
+$(METHODLIST)
+
+DevNotes
+- TODO TBD update verb on data since data blobs and entries are restricted to immutable only.
+"""
+function updateBlob! end
+
+"""
+Delete a data entry and blob from the blob store or dfg.
+Delete a blob to the blob store or dfg with the given entry.
+
+Related
+[`deleteBlobEntry!`](@ref)
+
+$(METHODLIST)
+"""
+function deleteBlob! end
+
+"""
+    $(SIGNATURES)
+List all ids in the blob store.
+"""
+function listBlobs end
+
+
 ##==============================================================================
 ## BlobEntry - Helper functions, Lists, etc
 ##==============================================================================

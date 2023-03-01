@@ -7,6 +7,7 @@ include("entities/BlobStores.jl")
 include("services/AbstractBlobEntries.jl")
 include("services/BlobEntry.jl")
 include("services/BlobStores.jl")
+include("services/Blob.jl")
 
 # include("services/InMemoryStore.jl")
 
