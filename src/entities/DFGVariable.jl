@@ -155,7 +155,7 @@ Base.@kwdef struct MeanMaxPPE <: AbstractPointParametricEst
     lastUpdatedTimestamp::Union{ZonedDateTime, Nothing} = nothing
 end
 
-StructTypes.StructType(::Type{MeanMaxPPE}) = StructTypes.OrderedStruct()
+StructTypes.StructType(::Type{MeanMaxPPE}) = StructTypes.UnorderedStruct()
 StructTypes.idproperty(::Type{MeanMaxPPE}) = :id
 StructTypes.omitempties(::Type{MeanMaxPPE}) = (:id,)
 
@@ -370,7 +370,7 @@ end
 
 SkeletonDFGVariable(label::Symbol, tags=Set{Symbol}(); id::Union{UUID, Nothing}=nothing) = SkeletonDFGVariable(id, label, tags)
 
-StructTypes.StructType(::Type{SkeletonDFGVariable}) = StructTypes.OrderedStruct()
+StructTypes.StructType(::Type{SkeletonDFGVariable}) = StructTypes.UnorderedStruct()
 StructTypes.idproperty(::Type{SkeletonDFGVariable}) = :id
 StructTypes.omitempties(::Type{SkeletonDFGVariable}) = (:id,)
 
