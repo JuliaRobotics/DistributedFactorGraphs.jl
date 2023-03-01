@@ -127,9 +127,15 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString)
     varFiles = readdir(varFolder)
     factorFiles = readdir(factorFolder)
     @showprogress 1 "loading variables" for varFile in varFiles
-        packedData = read("$varFolder/$varFile", String)
-        packedData = JSON3.read(packedData, PackedVariable)
-        push!(variables, unpackVariable(packedData))
+        try
+            jstr = read("$varFolder/$varFile", String)
+            packedData = JSON3.read(jstr, PackedVariable)
+            push!(variables, unpackVariable(packedData))
+        catch ex
+            @error("JSON3 is having trouble reading $varFolder/$varFile into a PackedVariable")
+            @show jstr
+            throw(ex)
+        end
     end
     @info "Loaded $(length(variables)) variables - $(map(v->v.label, variables))"
     @info "Inserting variables into graph..."
@@ -137,9 +143,15 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString)
     map(v->addVariable!(dfgLoadInto, v), variables)
 
     @showprogress 1 "loading factors" for factorFile in factorFiles
-        packedData = read("$factorFolder/$factorFile", String)
-        packedData = JSON3.read(packedData, PackedFactor)
-        push!(factors, unpackFactor(dfgLoadInto, packedData))
+        try
+            jstr = read("$factorFolder/$factorFile", String)
+            packedData = JSON3.read(jstr, PackedFactor)
+            push!(factors, unpackFactor(dfgLoadInto, packedData))
+        catch ex
+            @error("JSON3 is having trouble reading $factorFolder/$factorFile into a PackedFactor")
+            @show jstr
+            throw(ex)
+        end
     end
     @info "Loaded $(length(variables)) factors - $(map(f->f.label, factors))"
     @info "Inserting factors into graph..."
