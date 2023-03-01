@@ -127,8 +127,8 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString)
     varFiles = readdir(varFolder)
     factorFiles = readdir(factorFolder)
     @showprogress 1 "loading variables" for varFile in varFiles
+        jstr = read("$varFolder/$varFile", String)
         try
-            jstr = read("$varFolder/$varFile", String)
             packedData = JSON3.read(jstr, PackedVariable)
             push!(variables, unpackVariable(packedData))
         catch ex
@@ -143,8 +143,8 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString)
     map(v->addVariable!(dfgLoadInto, v), variables)
 
     @showprogress 1 "loading factors" for factorFile in factorFiles
+        jstr = read("$factorFolder/$factorFile", String)
         try
-            jstr = read("$factorFolder/$factorFile", String)
             packedData = JSON3.read(jstr, PackedFactor)
             push!(factors, unpackFactor(dfgLoadInto, packedData))
         catch ex
