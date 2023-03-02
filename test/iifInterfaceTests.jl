@@ -212,48 +212,70 @@ end
 end
 
 @testset "Data Entries" begin
-    oid = zeros(UInt8,12); oid[12] = 0x01
-    de1 = MongodbDataEntry(:key1, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
+    
+    de1 = BlobEntry(
+        originId = uuid4(),
+        label = :key1,
+        blobstore = :test,
+        hash = "",
+        origin = "",
+        description = "",
+        mimeType = ""
+    )
 
-    oid = zeros(UInt8,12); oid[12] = 0x02
-    de2 = MongodbDataEntry(:key2, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
+    de2 = BlobEntry(
+        originId = uuid4(),
+        label = :key2,
+        blobstore = :test,
+        hash = "",
+        origin = "",
+        description = "",
+        mimeType = ""
+    )
 
-    oid = zeros(UInt8,12); oid[12] = 0x03
-    de2_update = MongodbDataEntry(:key2, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
+    de2_update = BlobEntry(
+        originId = uuid4(),
+        label = :key2,
+        blobstore = :test,
+        hash = "",
+        origin = "",
+        description = "",
+        mimeType = "image/jpg"
+    )
 
     #add
     v1 = getVariable(dfg, :a)
-    @test addDataEntry!(v1, de1) == de1
-    @test addDataEntry!(dfg, :a, de2) == de2
-    @test_throws ErrorException addDataEntry!(v1, de1)
-    @test de2 in getDataEntries(v1)
+    @test addBlobEntry!(v1, de1) == de1
+    @test addBlobEntry!(dfg, :a, de2) == de2
+    @test_throws ErrorException addBlobEntry!(v1, de1)
+    @test de2 in getBlobEntries(v1)
 
     #get
-    @test deepcopy(de1) == getDataEntry(v1, :key1)
-    @test deepcopy(de2) == getDataEntry(dfg, :a, :key2)
-    @test_throws ErrorException getDataEntry(v2, :key1)
-    @test_throws ErrorException getDataEntry(dfg, :b, :key1)
+    @test deepcopy(de1) == getBlobEntry(v1, :key1)
+    @test deepcopy(de2) == getBlobEntry(dfg, :a, :key2)
+    @test_throws ErrorException getBlobEntry(v2, :key1)
+    @test_throws ErrorException getBlobEntry(dfg, :b, :key1)
 
     #update
-    @test updateDataEntry!(dfg, :a, de2_update) == de2_update
-    @test deepcopy(de2_update) == getDataEntry(dfg, :a, :key2)
-    @test @test_logs (:warn, r"does not exist") match_mode=:any updateDataEntry!(dfg, :b, de2_update) == de2_update
+    @test updateBlobEntry!(dfg, :a, de2_update) == de2_update
+    @test deepcopy(de2_update) == getBlobEntry(dfg, :a, :key2)
+    @test @test_logs (:warn, r"does not exist") match_mode=:any updateBlobEntry!(dfg, :b, de2_update) == de2_update
 
     #list
-    entries = getDataEntries(dfg, :a)
+    entries = getBlobEntries(dfg, :a)
     @test length(entries) == 2
     @test issetequal(map(e->e.label, entries), [:key1, :key2])
-    @test length(getDataEntries(dfg, :b)) == 1
+    @test length(getBlobEntries(dfg, :b)) == 1
 
-    @test issetequal(listDataEntries(dfg, :a), [:key1, :key2])
-    @test listDataEntries(dfg, :b) == Symbol[:key2]
+    @test issetequal(listBlobEntries(dfg, :a), [:key1, :key2])
+    @test listBlobEntries(dfg, :b) == Symbol[:key2]
 
     #delete
-    @test deleteDataEntry!(v1, :key1) == de1
-    @test listDataEntries(v1) == Symbol[:key2]
+    @test deleteBlobEntry!(v1, :key1) == de1
+    @test listBlobEntries(v1) == Symbol[:key2]
     #delete from ddfg
-    @test deleteDataEntry!(dfg, :a, :key2) == de2_update
-    @test listDataEntries(v1) == Symbol[]
+    @test deleteBlobEntry!(dfg, :a, :key2) == de2_update
+    @test listBlobEntries(v1) == Symbol[]
 end
 
 @testset "Updating Nodes and Estimates" begin

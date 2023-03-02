@@ -11,11 +11,29 @@ Abstract parent struct for big data entry.
 abstract type AbstractBlobEntry end
 
 # should be deprecated by v0.21
-export BlobStoreEntry
-const BlobStoreEntry = BlobEntry
+
+@deprecate BlobStoreEntry(
+    label::Symbol,
+    id::UUID,
+    blobstore::Symbol,
+    hash::String,
+    origin::String,
+    description::String,
+    mimeType::String,
+    createdTimestamp::ZonedDateTime) BlobEntry(;
+        originId=id,
+        label,
+        blobstore,
+        hash,
+        origin,
+        description,
+        mimeType,
+    )
+
 
 @deprecate hasDataEntry(w...;kw...) hasBlobEntry(w...;kw...)
-@deprecate getBlobEntry(w...;kw...) getBlobEntry(w...;kw...)
+@deprecate getDataEntry(w...;kw...) getBlobEntry(w...;kw...)
+@deprecate getDataEntries(w...;kw...) getBlobEntries(w...;kw...)
 @deprecate addDataEntry!(w...;kw...) addBlobEntry!(w...;kw...)
 @deprecate updateDataEntry!(w...;kw...) updateBlobEntry!(w...;kw...)
 @deprecate deleteDataEntry!(w...;kw...) deleteBlobEntry!(w...;kw...)
@@ -23,7 +41,7 @@ const BlobStoreEntry = BlobEntry
 @deprecate listDataEntrySequence(w...;kw...) listBlobEntrySequence(w...;kw...)
 @deprecate mergeDataEntry!(w...;kw...) mergeBlobEntry!(w...;kw...)
 
-@deprecate getData(w...;kw...) getBlob(w...;kw...)
+# @deprecate getData(w...;kw...) getBlob(w...;kw...)
 @deprecate getDataBlob(w...;kw...) getBlob(w...;kw...)
 @deprecate addDataBlob!(w...;kw...) addBlob!(w...;kw...)
 @deprecate updateDataBlob!(w...;kw...) updateBlob!(w...;kw...)
