@@ -20,12 +20,12 @@ using TimeZones
         map(v -> setSolvedCount!(v, Int(round(10*rand()))), verts)
 
         # Add some data entries
-        map(v -> addDataEntry!(v, BlobStoreEntry(:testing, uuid4(), :store, "", "", "", "", now(localzone()))), verts)
-        map(v -> addDataEntry!(v, BlobStoreEntry(:testing2, uuid4(), :store, "", "", "", "", ZonedDateTime(2014, 5, 30, 21, tz"UTC-4"))), verts)
+        map(v -> addBlobEntry!(v, BlobEntry(nothing, nothing, uuid4(), :testing, :store, "", "", "", "", "", now(localzone()), "BlobEntry", string(DFG._getDFGVersion()))), verts)
+        map(v -> addBlobEntry!(v, BlobEntry(nothing, nothing, uuid4(), :testing2, :store, "", "", "", "", "", ZonedDateTime(2014, 5, 30, 21, tz"UTC-4"), "BlobEntry", string(DFG._getDFGVersion()))), verts)
 
         # Add some PPEs
         ppe1 = MeanMaxPPE(:default, [1.0], [0.2], [3.456])
-        ppe2 = MeanMaxPPE(:other, [1.0], [0.2], [3.456], ZonedDateTime(2014, 5, 30, 21, tz"UTC-4"))
+        ppe2 = MeanMaxPPE(;solveKey=:other, suggested=[1.0], mean=[0.2], max=[3.456], createdTimestamp=ZonedDateTime(2014, 5, 30, 21, tz"UTC-4"))
         map(v -> addPPE!(dfg, getLabel(v), deepcopy(ppe1)), verts)
         map(v -> addPPE!(dfg, getLabel(v), deepcopy(ppe2)), verts)
 
@@ -67,7 +67,7 @@ using TimeZones
         
         # Check data entries
         for v in ls(dfg)
-            @test getDataEntries(getVariable(dfg, v)) == getDataEntries(getVariable(retDFG, v))
+            @test getBlobEntries(getVariable(dfg, v)) == getBlobEntries(getVariable(retDFG, v))
             @test issetequal(listPPEs(dfg, v), listPPEs(retDFG, v))
             for ppe in listPPEs(dfg, v)
                 @test getPPE(dfg, v, ppe) == getPPE(retDFG, v, ppe)
