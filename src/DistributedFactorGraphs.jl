@@ -22,6 +22,7 @@ using Dates
 using TimeZones
 using Distributions
 using Reexport
+using JSON2 # only for unpacking factorData via NamedTuples, TODO drop dependency
 using JSON3
 using StructTypes
 using LinearAlgebra

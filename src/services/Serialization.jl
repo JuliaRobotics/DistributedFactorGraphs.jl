@@ -35,7 +35,7 @@ end
 typeModuleName(varT::Type{<:InferenceVariable}) = typeModuleName(varT())
 
 """
-  $(SIGNATURES)
+    $(SIGNATURES)
 Get a type from the serialization module.
 """
 function getTypeFromSerializationModule(_typeString::AbstractString)
@@ -113,7 +113,7 @@ function unpackVariableNodeData(d::PackedVariableNodeData)
     vals = Vector{getPointType(T)}(undef, length(val_))
     # vals = getPoint.(T, val_)
     for (i,v) in enumerate(val_)
-      vals[i] = getPoint(T, v)
+        vals[i] = getPoint(T, v)
     end
     
     r4 = d.dimbw
@@ -191,6 +191,7 @@ function unpackVariable(variable::PackedVariable; skipVersionCheck::Bool=false)
         solvable=variable.solvable )
     end
 
+
 ##==============================================================================
 ## Factor Packing and unpacking
 ##==============================================================================
@@ -251,16 +252,20 @@ end
 function fncStringToData(packtype::Type{<:AbstractPackedFactor}, data::String)
 
     # Convert string to Named Tuples for kwargs
-    # packed = JSON3.read(data, GenericFunctionNodeData{packtype})
-    fncData = JSON3.read(data, Dict{String,Any})
+    # packed_ = JSON3.read(data, GenericFunctionNodeData{packtype})
+    fncData = JSON3.read(data) #, NamedTuple) # Dict{String,Any})
+
 
     # data isa AbstractString ? JSON2.read(data) : data
+    # JSON3.generate_type(packed.fnc)
+    # JSON3.generate_type(fncData["fnc"])
     
     # TODO use kwdef constructors instead,
-    @show fncData["fnc"]
-    packT = JSON3.read(JSON3.write(fncData["fnc"]), packtype)
-    # nt = NamedTuple{}
-    # packtype(;fncData["fnc"]...)
+    # @info "user factor" fncData["fnc"]
+    restring = JSON3.write(fncData["fnc"])
+    # @show restring
+    # packT = JSON3.read(restring, packtype)
+    packT = packtype(;JSON2.read(restring)...)
 
     packed = GenericFunctionNodeData{packtype}(
         fncData["eliminated"],
@@ -297,82 +302,47 @@ function fncStringToData(fncType::String, data::T) where {T <: AbstractPackedFac
     end
 end
 function fncStringToData(fncType::String, data::Union{String, <:NamedTuple})
+    # FIXME, should rather just store the data as `PackedFactorX` rather than hard code the type change here???
     packtype = DFG.getTypeFromSerializationModule("Packed"*fncType)
     fncStringToData(packtype, data)
 end
 
 
-# Returns `::DFGFactor`
 function unpackFactor(
-    dfg::G, 
-    packedFactor::PackedFactor;
+    dfg::AbstractDFG, 
+    factor::PackedFactor;
     skipVersionCheck::Bool=false
-) where G <: AbstractDFG
-    # Version checking.
-    !skipVersionCheck && _versionCheck(packedFactor)
-
-    # id = if haskey(packedProps, "id") && packedProps["id"] !== nothing 
-    #     UUID(packedProps["id"]) else nothing end
-    # label = packedProps["label"]
-
-    # # various formats in which the timestamp might be stored
-    # packedProps["timestamp"] = getStandardZDTString(packedProps["timestamp"])
-    # timestamp = ZonedDateTime(packedProps["timestamp"])
-    # nstime = Nanosecond(get(packedProps, "nstime", 0))
-
-    # Get the stored tags and variable order
-    # @assert !(packedProps["tags"] isa String) "unpackFactor expecting JSON only data, packed `tags` should be a vector of strings (not a single string of elements)."
-    # @assert !(packedProps["_variableOrderSymbols"] isa String) "unpackFactor expecting JSON only data, packed `_variableOrderSymbols` should be a vector of strings (not a single string of elements)."
-    # tags = Symbol.(packedProps["tags"])
-    # _variableOrderSymbols = Symbol.(packedProps["_variableOrderSymbols"])
-
-    data = packedFactor.data
-    # if(data isa AbstractString)
-    # data = JSON3.read(data, NamedTuple) # was a JSON2
-    # end
-    datatype = packedFactor.fnctype
-    @debug "DECODING factor type = '$(datatype)' for factor '$label'"
-    # packtype = getTypeFromSerializationModule("Packed"*datatype)
-
-    # FIXME type instability from nothing to T
-    packed = nothing
-    fullFactorData = nothing
+)
+    #
+    @debug "DECODING factor type = '$(factor.fnctype)' for factor '$(factor.label)'"
+    !skipVersionCheck && _versionCheck(factor)
     
+    fullFactorData = nothing
     try
-        packed = fncStringToData(datatype, data) #convert(GenericFunctionNodeData{packtype}, data) 
+        packedFnc = fncStringToData(factor.fnctype, factor.data)
         decodeType = getFactorOperationalMemoryType(dfg)
-        fullFactorData = decodePackedType(dfg, packedFactor._variableOrderSymbols, decodeType, packed)
+        fullFactorData = decodePackedType(dfg, factor._variableOrderSymbols, decodeType, packedFnc)
     catch ex
         io = IOBuffer()
         showerror(io, ex, catch_backtrace())
         err = String(take!(io))
-        msg = "Error while unpacking '$(packedFactor.label)' as '$datatype', please check the unpacking/packing converters for this factor - \r\n$err"
+        msg = "Error while unpacking '$(factor.label)' as '$(factor.fnctype)', please check the unpacking/packing converters for this factor - \r\n$err"
         error(msg)
-    end
+    end  
 
-    # solvable = packedProps["solvable"]
+    metadata = JSON3.read(base64decode(factor.metadata), Dict{Symbol, DFG.SmallDataTypes})
 
-    smallData = JSON3.read(base64decode(packedFactor.metadata), Dict{Symbol, DFG.SmallDataTypes})
-    # Rebuild DFGFactor
-    #TODO use constuctor to create factor
-    factor = DFGFactor( packedFactor.label,
-                        packedFactor.timestamp,
-                        Nanosecond(packedFactor.nstime),
-                        Set(packedFactor.tags),
-                        fullFactorData,
-                        packedFactor.solvable,
-                        Tuple(packedFactor._variableOrderSymbols);
-                        packedFactor.id,
-                        smallData)
-    #
-
-    # Note, once inserted, you still need to call rebuildFactorMetadata!
-    return factor
+    return DFGFactor(
+        factor.label,
+        factor.timestamp,
+        Nanosecond(factor.nstime),
+        Set(factor.tags),
+        fullFactorData,
+        factor.solvable,
+        Tuple(factor._variableOrderSymbols),
+        id=factor.id,
+        smallData = metadata
+    )
 end
 
-
-##==============================================================================
-## Serialization
-##==============================================================================
-
-
+#

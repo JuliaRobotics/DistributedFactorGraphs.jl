@@ -157,7 +157,7 @@ end
 
 StructTypes.StructType(::Type{MeanMaxPPE}) = StructTypes.UnorderedStruct()
 StructTypes.idproperty(::Type{MeanMaxPPE}) = :id
-StructTypes.omitempties(::Type{MeanMaxPPE}) = (:id,)
+StructTypes.omitempties(::Type{MeanMaxPPE}) = (:id,:createdTimestamp,:lastUpdatedTimestamp)
 
 ##------------------------------------------------------------------------------
 ## Constructors
