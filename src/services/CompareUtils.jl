@@ -421,7 +421,7 @@ function compareFactorGraphs( fgA::G1,
 
   TP = compareAll(fgA, fgB, skip=skiplist, show=show)
   TP = TP && compareSimilarVariables(fgA, fgB, skipsamples=skipsamples, show=show, skip=skiplist )
-  TP = TP && compareSimilarFactors(fgA, fgB, skipsamples=skipsamples, skipcompute=skipcompute, show=show )
+  TP = TP && compareSimilarFactors(fgA, fgB, skipsamples=skipsamples, skipcompute=skipcompute, show=show, skip=skiplist )
   TP = TP && compareAll(fgA.solverParams, fgB.solverParams, skip=skiplist)
 
   return TP
