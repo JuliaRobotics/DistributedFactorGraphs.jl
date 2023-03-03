@@ -37,7 +37,13 @@ function compareField(Allc, Bllc, syms)::Bool
     (!isdefined(Allc, syms) && !isdefined(Bllc, syms)) && return true
     !isdefined(Allc, syms) && return false
     !isdefined(Bllc, syms) && return false
-    return eval(:($Allc.$syms == $Bllc.$syms))
+    a = getproperty(Allc, syms)
+    b = getproperty(Bllc, syms)
+    if a isa Base.RefValue
+      return a[] == b[]
+    else
+      return a == b
+    end
 end
 
 """
@@ -57,6 +63,7 @@ function compareFields( Al::T1,
     (field in skip) && continue
     tp = compareField(Al, Bl, field)
     show && @debug("  $tp : $field") === nothing
+    show && !tp && (@debug "  $field" a=getproperty(Al,field) b=getproperty(Bl,field))
     !tp && return false
   end
   return true
@@ -414,7 +421,7 @@ function compareFactorGraphs( fgA::G1,
 
   TP = compareAll(fgA, fgB, skip=skiplist, show=show)
   TP = TP && compareSimilarVariables(fgA, fgB, skipsamples=skipsamples, show=show, skip=skiplist )
-  TP = TP && compareSimilarFactors(fgA, fgB, skipsamples=skipsamples, skipcompute=skipcompute, show=show )
+  TP = TP && compareSimilarFactors(fgA, fgB, skipsamples=skipsamples, skipcompute=skipcompute, show=show, skip=skiplist )
   TP = TP && compareAll(fgA.solverParams, fgB.solverParams, skip=skiplist)
 
   return TP

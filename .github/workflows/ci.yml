@@ -58,7 +58,7 @@ jobs:
       
       - name: Run tests
         env:
-          IIF_TEST: false
+          IIF_TEST: true
           DO_CGDFG_TESTS: false
           DFG_USE_CGDFG: false
         uses: julia-actions/julia-runtest@latest

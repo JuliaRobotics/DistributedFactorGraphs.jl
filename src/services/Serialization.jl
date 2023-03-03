@@ -159,7 +159,7 @@ function packVariable(v::AbstractDFGVariable; includePPEs::Bool=true, includeSol
         solvable = v.solvable,
         variableType = DFG.typeModuleName(DFG.getVariableType(v)),
         dataEntries = collect(values(v.dataDict)),
-        _version = DFG._getDFGVersion())
+        _version = string(DFG._getDFGVersion()))
 end
   
 function unpackVariable(variable::PackedVariable; skipVersionCheck::Bool=false)
