@@ -58,7 +58,7 @@ const BlobStoreEntry = BlobEntry
 ##=================================================================================
 
 function Base.convert(::Type{String}, v::VersionNumber)
-    @warn "Artificial conversion of VersionNumber to String will be deprected in future versions of DFG"
+    @warn "Artificial conversion of VersionNumber to String will be deprected in future versions of DFG" maxlog=50
     string(v)
 end
 
