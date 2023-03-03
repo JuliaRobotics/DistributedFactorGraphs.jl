@@ -2,7 +2,7 @@ using DistributedFactorGraphs
 using IncrementalInference
 using Test
 using TimeZones
-
+using UUIDs
 ##
 
 @testset "FileDFG Tests" begin
@@ -87,11 +87,11 @@ end
         loadFile = joinpath(@__DIR__, "data", file)
         global dfg
         dfgCopy = DistributedFactorGraphs._getDuplicatedEmptyDFG(dfg)
-        retDFG = loadDFG!(dfgCopy, loadFile)        
+        retDFG = loadDFG!(dfgCopy, loadFile)
         # It should have failed if there were any issues.
         # Trivial check as well
         @test issetequal(ls(retDFG), [:x1, :x2, :x3, :x4, :x5])
-        @test issetequal(lsf(retDFG), [:x3x4f1, :x4x5f1, :x1x2f1, :x2x3f1])
+        @test issetequal(lsf(retDFG), [:x3x4f1, :x4x5f1, :x1x2f1, :x2x3f1, :x1x2x3f1])
     end
 end
 
