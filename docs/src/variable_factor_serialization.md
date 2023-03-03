@@ -36,7 +36,7 @@ upFactor = unpackFactor(dfg, pFactor, IncrementalInference)
 # to make it useable. Please add an issue if this poses a problem or causes issues.
 ```
 
-As a more complex example, we can use JSON2 to stringify the data and write it to a folder of files as FileDFG does:
+As a more complex example, we can use JSON3 to stringify the data and write it to a folder of files as FileDFG does:
 
 ```julia
 using DistributedFactorGraphs
@@ -50,19 +50,19 @@ x0 = addVariable!(dfg, :x0, Pose2)
 # Add at a fixed location PriorPose2 to pin :x0 to a starting location (10,10, pi/4)
 prior = addFactor!(dfg, [:x0], PriorPose2( MvNormal([10; 10; 1.0/8.0], Matrix(Diagonal([0.1;0.1;0.05].^2))) ) )
 
-# Slightly fancier example: We can use JSON2, we can serialize to a string
+# Slightly fancier example: We can use JSON3, we can serialize to a string
 varFolder = "/tmp"
 for v in getVariables(dfg)
     vPacked = packVariable(dfg, v)
     io = open("$varFolder/$(v.label).json", "w")
-    JSON2.write(io, vPacked)
+    JSON3.write(io, vPacked)
     close(io)
 end
 # Factors
 for f in getFactors(dfg)
     fPacked = packFactor(dfg, f)
     io = open("$folder/factors/$(f.label).json", "w")
-    JSON2.write(io, fPacked)
+    JSON3.write(io, fPacked)
     close(io)
 end
 ```

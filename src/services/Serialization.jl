@@ -234,7 +234,7 @@ function packFactor(dfg::AbstractDFG, f::DFGFactor)
     return props
 end
 
-function reconstFactorData() end
+function reconstFactorData end
 
 function decodePackedType(dfg::AbstractDFG, varOrder::AbstractVector{Symbol}, ::Type{T}, packeddata::GenericFunctionNodeData{PT}) where {T<:FactorOperationalMemory, PT}
     #
@@ -248,24 +248,11 @@ function decodePackedType(dfg::AbstractDFG, varOrder::AbstractVector{Symbol}, ::
     return factordata
 end
 
-# TODO: REFACTOR THIS AS A JSON3 STRUCT DESERIALIZER.
 function fncStringToData(packtype::Type{<:AbstractPackedFactor}, data::String)
 
-    # Convert string to Named Tuples for kwargs
-    # packed_ = JSON3.read(data, GenericFunctionNodeData{packtype})
-    fncData = JSON3.read(data) #, NamedTuple) # Dict{String,Any})
-
-
-    # data isa AbstractString ? JSON2.read(data) : data
-    # JSON3.generate_type(packed.fnc)
-    # JSON3.generate_type(fncData["fnc"])
-    
-    # TODO use kwdef constructors instead,
-    # @info "user factor" fncData["fnc"]
-    restring = JSON3.write(fncData["fnc"])
-    # @show restring
-    # packT = JSON3.read(restring, packtype)
-    packT = packtype(;JSON2.read(restring)...)
+    # Read string as JSON object to use as kwargs
+    fncData = JSON3.read(data)
+    packT = packtype(;fncData.fnc...)
 
     packed = GenericFunctionNodeData{packtype}(
         fncData["eliminated"],
@@ -281,7 +268,7 @@ function fncStringToData(packtype::Type{<:AbstractPackedFactor}, data::String)
     )
     return packed
 end
-fncStringToData(packtype::Type{<:AbstractPackedFactor}, data::NamedTuple) = error("Who is calling deserialize factor with NamedTuple, likely JSON2 somewhere")
+fncStringToData(packtype::Type{<:AbstractPackedFactor}, data::NamedTuple) = error("Who is calling deserialize factor with NamedTuple, likely JSON3 somewhere")
 
 fncStringToData(::Type{T}, data::PackedFunctionNodeData{T}) where {T <: AbstractPackedFactor} = data
 function fncStringToData(fncType::String, data::PackedFunctionNodeData{T}) where {T <: AbstractPackedFactor}

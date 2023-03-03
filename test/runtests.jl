@@ -58,7 +58,7 @@ end
 end
 
 
-if get(ENV, "IIF_TEST", "") == "true"
+if get(ENV, "IIF_TEST", "true") == "true"
 
     # Switch to our upstream test branch.
     Pkg.add(PackageSpec(name="IncrementalInference", rev="upstream/dfg_integration_test"))
