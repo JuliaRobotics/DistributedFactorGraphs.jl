@@ -1,7 +1,7 @@
 
 using SHA
 
-include("entities/AbstractBlobEntries.jl")
+include("entities/BlobEntry.jl")
 include("entities/BlobStores.jl")
 
 include("services/AbstractBlobEntries.jl")
