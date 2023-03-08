@@ -35,7 +35,7 @@ Base.@kwdef mutable struct VariableNodeData{T<:InferenceVariable, P, N}
     """
     bw::Matrix{Float64} = zeros(0,0)
     "Parametric (Gaussian) covariance."
-    const covar::Vector{SMatrix{N, N, Float64}} = SMatrix{getDimension(variableType), getDimension(variableType), Float64}[]
+    covar::Vector{SMatrix{N, N, Float64}} = SMatrix{getDimension(variableType), getDimension(variableType), Float64}[]
     BayesNetOutVertIDs::Vector{Symbol} = Symbol[]
     dimIDs::Vector{Int} = Int[] # TODO Likely deprecate
 
