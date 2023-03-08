@@ -186,7 +186,7 @@ Base.@kwdef struct PackedVariable
     timestamp::ZonedDateTime
     nstime::Int
     ppes::Vector{MeanMaxPPE}
-    dataEntries::Vector{BlobEntry}
+    blobEntries::Vector{BlobEntry}
     variableType::String
     _version::String
     metadata::String

@@ -158,7 +158,7 @@ function packVariable(v::AbstractDFGVariable; includePPEs::Bool=true, includeSol
         metadata = base64encode(JSON3.write(v.smallData)),
         solvable = v.solvable,
         variableType = DFG.typeModuleName(DFG.getVariableType(v)),
-        dataEntries = collect(values(v.dataDict)),
+        blobEntries = collect(values(v.dataDict)),
         _version = string(DFG._getDFGVersion()))
 end
   
@@ -174,7 +174,7 @@ function unpackVariable(variable::PackedVariable; skipVersionCheck::Bool=false)
     solverDict = Dict{Symbol, VariableNodeData{variableType, pointType}}(
         map(sd -> sd.solveKey, variable.solverData) .=> 
         map(sd -> DFG.unpackVariableNodeData(sd), variable.solverData))
-    dataDict = Dict{Symbol, BlobEntry}(map(de -> de.label, variable.dataEntries) .=> variable.dataEntries)
+    dataDict = Dict{Symbol, BlobEntry}(map(de -> de.label, variable.blobEntries) .=> variable.blobEntries)
     metadata = JSON3.read(base64decode(variable.metadata), Dict{Symbol, DFG.SmallDataTypes})
 
     return DFGVariable(
@@ -215,11 +215,11 @@ function _packSolverData(
     end
 end
 
-# returns ::Dict{String, <:Any}
+# returns PackedFactor
 function packFactor(dfg::AbstractDFG, f::DFGFactor)
     fnctype = getSolverData(f).fnc.usrfnc!
     return PackedFactor(;    
-        id = f.id !== nothing ? string(f.id) : nothing,
+        id = f.id,
         label = f.label,
         tags = collect(f.tags),
         _variableOrderSymbols = f._variableOrderSymbols,
