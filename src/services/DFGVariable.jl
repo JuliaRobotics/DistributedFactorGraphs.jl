@@ -48,12 +48,10 @@ Related
 
 getVariableType
 """
-getVariableType(v::DFGVariable{T}) where T <: InferenceVariable = T()
+getVariableType(::DFGVariable{T}) where T = T()
 
-function getVariableType(vnd::VariableNodeData)
-    # @warn "getVariableType(::VariableNodeData) is being deprecated, use getVariableType(::DFGVariable) instead."
-    return vnd.variableType
-end
+getVariableType(::VariableNodeData{T}) where T = T()
+
 
 
 # TODO: Confirm that we can switch this out, instead of retrieving the complete variable.

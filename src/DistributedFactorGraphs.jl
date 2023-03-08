@@ -38,6 +38,7 @@ export AbstractManifold, manifold_dimension
 
 import RecursiveArrayTools: ArrayPartition
 export ArrayPartition
+using StaticArrays
 
 import Base: getindex
 
