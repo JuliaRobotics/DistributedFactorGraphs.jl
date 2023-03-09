@@ -120,6 +120,7 @@ Base.@kwdef mutable struct PackedVariableNodeData
     solveInProgress::Int
     solvedCount::Int
     solveKey::Symbol
+    covar::Vector{Float64}
     _version::String = string(_getDFGVersion())
 end
 
