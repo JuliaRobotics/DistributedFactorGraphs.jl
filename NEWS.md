@@ -4,6 +4,7 @@ Listing news on any major breaking changes in DFG.  For regular changes, see int
 
 - Close long running serialization redo (#590) using only JSON3.jl and StructTypes.jl going forward.
 - Standardize BlobEntry=>Blob naming of functions, and keeping convenience wrappers `{get,add,update,delete}Data[!]`.
+- Consolidate to only one `BlobEntry` definition, dropping use of `AbstractBlobEntry`.
 - Include type field `VariableNodeData.covar`.
 - Drop minimum Julia compat to 1.8.
 
