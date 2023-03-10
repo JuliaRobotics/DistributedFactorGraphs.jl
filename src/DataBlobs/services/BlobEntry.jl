@@ -36,7 +36,7 @@ getTimestamp(entry::BlobEntry) = entry.timestamp
 
 
 
-function assertHash(de::AbstractDataEntry, db; hashfunction::Function = sha256)
+function assertHash(de::BlobEntry, db; hashfunction::Function = sha256)
     getHash(de) === nothing && @warn "Missing hash?" && return true
     if  hashfunction(db) == getHash(de)
         return true #or nothing?
@@ -88,7 +88,7 @@ function getBlobEntry(var::AbstractDFGVariable, blobId::UUID)
         end
     end
     throw(
-        KeyError("No dataEntry with blobId $(blobId) found in variable $(getLabel(var))")
+        KeyError("No blobEntry with blobId $(blobId) found in variable $(getLabel(var))")
     )
 end
 
@@ -101,7 +101,7 @@ function getBlobEntry(var::AbstractDFGVariable, key::Regex)
         end
     end
     throw(
-        KeyError("No dataEntry with label matching regex $(key) found in variable $(getLabel(var))")
+        KeyError("No blobEntry with label matching regex $(key) found in variable $(getLabel(var))")
     )
 end
 
@@ -120,7 +120,7 @@ Should be extended if DFG variable is not returned by reference.
 Also see: [`getBlobEntry`](@ref), [`addBlob`](@ref), [`mergeBlobEntries!`](@ref)
 """
 function addBlobEntry!(var::AbstractDFGVariable, bde::BlobEntry)
-    haskey(var.dataDict, bde.label) && error("Data entry $(bde.label) already exists in variable $(getLabel(var))")
+    haskey(var.dataDict, bde.label) && error("blobEntry $(bde.label) already exists on variable $(getLabel(var))")
     var.dataDict[bde.label] = bde
     return bde
 end
@@ -179,9 +179,9 @@ end
 """
     $SIGNATURES
 
-Does a data entry (element) exist at `key`.
+Does a blob entry (element) exist with `blobLabel`.
 """
-hasBlobEntry(var::AbstractDFGVariable, key::Symbol) = haskey(var.dataDict, key)
+hasBlobEntry(var::AbstractDFGVariable, blobLabel::Symbol) = haskey(var.dataDict, blobLabel)
 
 
 """
@@ -213,7 +213,7 @@ end
 
 """
     $SIGNATURES
-List a collection of data entries per variable that match a particular `pattern::Regex`.
+List a collection of blob entries per variable that match a particular `pattern::Regex`.
 
 Notes
 - Optional sort function argument, default is unsorted.
@@ -244,7 +244,7 @@ end
 """
     $SIGNATURES
 
-Add a data entry into the destination variable which already exists 
+Add a blob entry into the destination variable which already exists 
 in a source variable.
 
 See also: [`addBlobEntry!`](@ref), [`getBlobEntry`](@ref), [`listBlobEntries`](@ref), [`getBlob`](@ref)

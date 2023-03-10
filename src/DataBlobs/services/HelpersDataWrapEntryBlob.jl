@@ -15,7 +15,7 @@ $(METHODLIST)
 function getData end
 
 """
-Add a data Entry and Blob to a distributed factor graph or BlobStore.
+Add both a BlobEntry and Blob to a distributed factor graph or BlobStore.
 Related
 [`addBlobEntry!`](@ref)
 
@@ -24,7 +24,7 @@ $(METHODLIST)
 function addData! end
 
 """
-Update a data entry or blob to the blob store or dfg.
+Update a blob entry or blob to the blob store or dfg.
 Related
 [`updateBlobEntry!`](@ref)
 
@@ -33,7 +33,7 @@ $(METHODLIST)
 function updateData! end
 
 """
-Delete a data entry and blob from the blob store or dfg.
+Delete a blob entry and blob from the blob store or dfg.
 Related
 [`deleteBlobEntry!`](@ref)
 
@@ -138,7 +138,8 @@ function addData!(
     key::Symbol,
     blob::Vector{UInt8}, 
     timestamp=now(localzone()); 
-    description="", mimeType = "application/octet-stream", 
+    description="", 
+    mimeType = "application/octet-stream", 
     id::UUID = uuid4(), 
     hashfunction = sha256
 )
