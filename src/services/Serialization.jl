@@ -95,6 +95,7 @@ function packVariableNodeData(d::VariableNodeData{T}) where {T <: InferenceVaria
                                 d.solveInProgress,
                                 d.solvedCount,
                                 d.solveKey,
+                                vec.(d.covar),
                                 string(_getDFGVersion()))
 end
 
@@ -125,7 +126,7 @@ function unpackVariableNodeData(d::PackedVariableNodeData)
         id = d.id,
         val = vals, 
         bw = BW, 
-        # covar = #FIXME serialize covar
+        covar = d.covar,
         BayesNetOutVertIDs = Symbol.(d.BayesNetOutVertIDs),
         dimIDs = d.dimIDs, 
         dims = d.dims, 
