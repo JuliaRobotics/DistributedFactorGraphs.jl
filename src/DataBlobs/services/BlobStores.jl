@@ -1,3 +1,55 @@
+##==============================================================================
+## Blob CRUD interface
+##==============================================================================
+
+
+"""
+Get the data blob for the specified blobstore or dfg.
+
+Related
+[`getBlobEntry`](@ref)
+
+$(METHODLIST)
+"""
+function getBlob end
+
+"""
+Adds a blob to the blob store or dfg with the given entry.
+
+Related
+[`addBlobEntry!`](@ref)
+
+$(METHODLIST)
+"""
+function addBlob! end
+
+"""
+Update a blob to the blob store or dfg with the given entry.
+Related
+[`updateBlobEntry!`](@ref)
+
+$(METHODLIST)
+
+DevNotes
+- TODO TBD update verb on data since data blobs and entries are restricted to immutable only.
+"""
+function updateBlob! end
+
+"""
+Delete a blob from the blob store or dfg with the given entry.
+
+Related
+[`deleteBlobEntry!`](@ref)
+
+$(METHODLIST)
+"""
+function deleteBlob! end
+
+"""
+    $(SIGNATURES)
+List all ids in the blob store.
+"""
+function listBlobs end
 
 ##==============================================================================
 ## AbstractBlobStore CRUD Interface
@@ -77,100 +129,10 @@ deleteBlob!(dfg::AbstractDFG, entry::BlobEntry) =
 #     return sourceEntries
 # end
 
-function getBlob(
-    dfg::AbstractDFG, 
-    blobstore::AbstractBlobStore, 
-    label::Symbol, 
-    key::Union{Symbol,UUID, <:AbstractString, Regex}; 
-    hashfunction = sha256,
-    checkhash::Bool=true
-)
-    de = getBlobEntry(dfg, label, key)
-    db = getBlob(blobstore, de)
-    checkhash && assertHash(de, db; hashfunction)
-    return de=>db
-end
-
-function addBlob!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol, entry::BlobEntry, blob::Vector{UInt8}; hashfunction = sha256)
-    assertHash(entry, blob; hashfunction)
-    de = addBlobEntry!(dfg, label, entry)
-    db = addBlob!(blobstore, de, blob)
-    return de=>db
-end
-
-function updateBlob!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol,  entry::BlobEntry, blob::Vector{UInt8}; hashfunction = sha256)
-    # Recalculate the hash - NOTE Assuming that this is going to be a BlobEntry. TBD.
-    newEntry = BlobEntry(entry.id, entry.blobId, entry.originId, entry.label, blobstore.key, bytes2hex(hashfunction(blob)),
-        buildSourceString(dfg, label),
-        entry.description, entry.mimeType, entry.metadata, entry.timestamp, entry._type, string(_getDFGVersion()))
-
-    de = updateBlobEntry!(dfg, label, newEntry)
-    db = updateBlob!(blobstore, de, blob)
-    return de=>db
-end
-
-deleteBlob!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol, entry::BlobEntry) =
-            deleteBlob!(dfg, blobstore, label, entry.label)
-
-function deleteBlob!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol, key::Symbol)
-    de = deleteBlobEntry!(dfg, label, key)
-    db = deleteBlob!(blobstore, de)
-    return de=>db
-end
-
-##==============================================================================
-## Blob CRUD helper functions
-##==============================================================================
-
-addBlob!(
-    dfg::AbstractDFG, 
-    blobstorekey::Symbol, 
-    label::Symbol, 
-    key::Symbol, 
-    blob::Vector{UInt8},
-    timestamp=now(localzone()); 
-    kwargs...) = addBlob!(
-        dfg,
-        getBlobStore(dfg, blobstorekey),
-        label,
-        key,
-        blob,
-        timestamp;
-        kwargs...
-    )
-
-function addBlob!(
-    dfg::AbstractDFG, 
-    blobstore::AbstractBlobStore, 
-    label::Symbol, 
-    key::Symbol,
-    blob::Vector{UInt8}, 
-    timestamp=now(localzone()); 
-    description="", mimeType = "application/octet-stream", 
-    id::UUID = uuid4(), 
-    hashfunction = sha256
-)
-    #
-    @warn "ID's and origin IDs should be reconciled here."
-    entry = BlobEntry(
-        id = id, 
-        originId = id,
-        label = key, 
-        blobstore = blobstore.key, 
-        hash = bytes2hex(hashfunction(blob)),
-        origin = buildSourceString(dfg, label),
-        description = description, 
-        mimeType = mimeType, 
-        metadata = "", 
-        timestamp = timestamp)
-
-    addBlob!(dfg, blobstore, label, entry, blob; hashfunction)
-end
 
 ##==============================================================================
 ## FolderStore
 ##==============================================================================
-
 struct FolderStore{T} <: AbstractBlobStore{T}
     key::Symbol
     folder::String

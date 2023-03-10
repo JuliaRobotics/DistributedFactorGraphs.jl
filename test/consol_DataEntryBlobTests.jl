@@ -10,6 +10,8 @@ using SHA
 
 include("testBlocks.jl")
 
+# import DistributedFactorGraphs: addData!, updateData!, getData, deleteData!
+
 end
 
 # Build a basic graph.
@@ -89,11 +91,11 @@ dataset2 = rand(UInt8, 1000)
 ds = FolderStore{Vector{UInt8}}(:filestore, "/tmp/dfgFolderStore")
 addBlobStore!(dfg, ds)
 
-ade,adb = addBlob!(dfg, :filestore, :x1, :random, dataset1)
-_,_     = addBlob!(dfg, :filestore, :x1, :another_1, dataset1)
-_,_ = getBlob(dfg, :x1, "random")
-_,_ = getBlob(dfg, :x1, r"rando")
-gde,gdb = getBlob(dfg, :x1, :random)
+ade,adb = addData!(dfg, :filestore, :x1, :random, dataset1)
+_,_     = addData!(dfg, :filestore, :x1, :another_1, dataset1)
+_,_ = getData(dfg, :x1, "random")
+_,_ = getData(dfg, :x1, r"rando")
+gde,gdb = getData(dfg, :x1, :random)
 
 @show gde
 
@@ -102,19 +104,19 @@ gde,gdb = getBlob(dfg, :x1, :random)
 # @test incrDataLabelSuffix(dfg,:x1,:another) == :another_2 # TODO exand support for Regex likely search on labels
 # @test incrDataLabelSuffix(dfg,:x1,"random") == "random_1" # TODO expand support for label::String
 
-dde,ddb = deleteBlob!(dfg, :x1, :random)
-_,_     = deleteBlob!(dfg, :x1, :another_1)
+dde,ddb = deleteData!(dfg, :x1, :random)
+_,_     = deleteData!(dfg, :x1, :another_1)
 
 @test ade == gde == dde
 @test adb == gdb == ddb
 
-ade2,adb2 = addBlob!(dfg, :x2, deepcopy(ade), dataset1)
+ade2,adb2 = addData!(dfg, :x2, deepcopy(ade), dataset1)
 # ade3,adb3 = updateBlob!(dfg, :x2, deepcopy(ade), dataset1)
 
 @test ade == ade2# == ade3
 @test adb == adb2# == adb3
 
-deleteBlob!(dfg, :x2, :random)
+deleteData!(dfg, :x2, :random)
 
 #test default folder store
 dfs = FolderStore("/tmp/defaultfolderstore")
@@ -130,20 +132,20 @@ dfs = FolderStore("/tmp/defaultfolderstore")
 ds = InMemoryBlobStore()
 addBlobStore!(dfg, ds)
 
-ade,adb = addBlob!(dfg, :default_inmemory_store, :x1, :random, dataset1)
-gde,gdb = getBlob(dfg, :x1, :random)
-dde,ddb = deleteBlob!(dfg, :x1, :random)
+ade,adb = addData!(dfg, :default_inmemory_store, :x1, :random, dataset1)
+gde,gdb = getData(dfg, :x1, :random)
+dde,ddb = deleteData!(dfg, :x1, :random)
 
 @test ade == gde == dde
 @test adb == gdb == ddb
 
-ade2,adb2 = addBlob!(dfg, :x2, deepcopy(ade), dataset1)
+ade2,adb2 = addData!(dfg, :x2, deepcopy(ade), dataset1)
 # ade3,adb3 = updateBlob!(dfg, :x2, deepcopy(ade), dataset1)
 
 @test ade == ade2# == ade3
 @test adb == adb2# == adb3
 
-deleteBlob!(dfg, :x2, :random)
+deleteData!(dfg, :x2, :random)
 
 ##==============================================================================
 ## Unimplemented store

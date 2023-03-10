@@ -233,7 +233,7 @@ Base.@kwdef struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
     Accessors: [`getSmallData`](@ref), [`setSmallData!`](@ref)"""
     smallData::Dict{Symbol, SmallDataTypes}
     """Dictionary of large data associated with this variable.
-    Accessors: [`addDataEntry!`](@ref), [`getBlobEntry`](@ref), [`updateDataEntry!`](@ref), and [`deleteDataEntry!`](@ref)"""
+    Accessors: [`addBlobEntry!`](@ref), [`getBlobEntry`](@ref), [`updateBlobEntry!`](@ref), and [`deleteBlobEntry!`](@ref)"""
     dataDict::Dict{Symbol, BlobEntry}
     """Solvable flag for the variable.
     Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)"""
@@ -340,7 +340,7 @@ Base.@kwdef struct DFGVariableSummary <: AbstractDFGVariable
     Accessor: [`getVariableType`](@ref)"""
     variableTypeName::Symbol
     """Dictionary of large data associated with this variable.
-    Accessors: [`addDataEntry!`](@ref), [`getBlobEntry`](@ref), [`updateDataEntry!`](@ref), and [`deleteDataEntry!`](@ref)"""
+    Accessors: [`addBlobEntry!`](@ref), [`getBlobEntry`](@ref), [`updateBlobEntry!`](@ref), and [`deleteBlobEntry!`](@ref)"""
     dataDict::Dict{Symbol, BlobEntry}
 end
 
