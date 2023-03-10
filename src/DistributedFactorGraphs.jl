@@ -199,10 +199,10 @@ export copyGraph!, deepcopyGraph, deepcopyGraph!, buildSubgraph, mergeGraph!
 export hasBlobEntry,getBlobEntry,addBlobEntry!,updateBlobEntry!,deleteBlobEntry!,listBlobEntry,listBlobEntrySequence,mergeBlobEntry!
 export incrDataLabelSuffix
 
-export addDataEntry!, getBlobEntry, updateDataEntry!, deleteDataEntry!, getBlobEntries, listDataEntries, hasDataEntry, hasDataEntry
+export getBlobEntries, listDataEntries, hasDataEntry, hasDataEntry
 export listDataEntrySequence
 # convenience wrappers
-export addDataEntry!, mergeDataEntries!
+export mergeDataEntries!
 # aliases
 export addBlob!
 
