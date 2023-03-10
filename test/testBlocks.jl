@@ -5,6 +5,7 @@ using Manifolds
 
 import Base: convert
 import DistributedFactorGraphs: reconstFactorData
+# import DistributedFactorGraphs: getData, addData!, updateData!, deleteData!
 
 # Test InferenceVariable Types
 # struct TestVariableType1 <: InferenceVariable
@@ -987,6 +988,7 @@ function blobsStoresTestBlock!(fg)
 
     #add
     var1 = getVariable(fg, :a)
+    var2 = getVariable(fg, :b)
     @test addBlobEntry!(var1, de1) == de1
     updateVariable!(fg, var1)
     @test addBlobEntry!(fg, :a, de2) == de2
@@ -996,7 +998,7 @@ function blobsStoresTestBlock!(fg)
     #get
     @test deepcopy(de1) == getBlobEntry(var1, :label1)
     @test deepcopy(de2) == getBlobEntry(fg, :a, :label2)
-    @test_throws ErrorException getBlobEntry(v2, :label1)
+    @test_throws ErrorException getBlobEntry(var2, :label1)
     @test_throws ErrorException getBlobEntry(fg, :b, :label1)
 
     #update
@@ -1043,19 +1045,19 @@ function blobsStoresTestBlock!(fg)
     # Data functions
     testData = rand(UInt8, 50)
     # Adding 
-    newData = addBlob!(fg, fs.key, :a, :testing, testData)
+    newData = addData!(fg, fs.key, :a, :testing, testData) # convenience wrapper over addBlob!
     # Listing
     @test :testing in listBlobEntries(fg, :a)
     # Getting
-    data = getBlob(fg, fs, :a, :testing)
+    data = getData(fg, fs, :a, :testing) # convenience wrapper over getBlob
     @test data[1].hash == newData[1].hash
     @test data[2] == newData[2]
     # Updating
-    updateData = updateBlob!(fg, fs, :a, newData[1], rand(UInt8, 50))
+    updateData = updateData!(fg, fs, :a, newData[1], rand(UInt8, 50)) # convenience wrapper around updateBlob!
     @test updateData[1].hash != data[1].hash
     @test updateData[2] != data[2]
     # Deleting
-    retData = deleteBlob!(fg, :a, :testing)
+    retData = deleteData!(fg, :a, :testing) # convenience wrapper around deleteBlob!
 
 end
 

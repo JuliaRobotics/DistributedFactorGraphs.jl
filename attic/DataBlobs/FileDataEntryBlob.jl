@@ -72,7 +72,7 @@ end
 function addData!(::Type{BlobEntry}, dfg::AbstractDFG, label::Symbol, key::Symbol, folder::String, blob::Vector{UInt8}, timestamp=now(localzone());
                   id::UUID = uuid4(), hashfunction = sha256)
     fde = BlobEntry(key, id, folder, bytes2hex(hashfunction(blob)), timestamp)
-    de = addDataEntry!(dfg, label, fde)
+    de = addBlobEntry!(dfg, label, fde)
     db = addBlob!(dfg, fde, blob)
     return de=>db
 end

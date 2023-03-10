@@ -4,10 +4,9 @@ using SHA
 include("entities/BlobEntry.jl")
 include("entities/BlobStores.jl")
 
-include("services/AbstractBlobEntries.jl")
 include("services/BlobEntry.jl")
 include("services/BlobStores.jl")
-include("services/Blob.jl")
+include("services/HelpersDataWrapEntryBlob.jl")
 
 # include("services/InMemoryStore.jl")
 
@@ -22,3 +21,6 @@ export BlobEntry
 # export copyStore
 
 export getId, getHash, getTimestamp
+
+# convenience wrappers
+export getData, addData!, updateData!, deleteData!
