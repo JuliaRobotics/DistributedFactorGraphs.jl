@@ -21,3 +21,6 @@ export BlobEntry
 # export copyStore
 
 export getId, getHash, getTimestamp
+
+# convenience wrappers
+export getData, addData!, updateData!, deleteData!

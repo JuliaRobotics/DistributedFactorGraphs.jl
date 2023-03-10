@@ -320,7 +320,7 @@ function incrDataLabelSuffix(
     hasund = false
     len = 0
     try
-        de,_ = getBlob(dfg, Symbol(vla), bllb)
+        de,_ = getData(dfg, Symbol(vla), bllb)
         bllb = string(bllb)
         # bllb *= bllb[end] != '_' ? "_" : ""
         datalabel[] = string(de.label)

@@ -4,7 +4,8 @@ using Dates
 using Manifolds
 
 import Base: convert
-import DistributedFactorGraphs: reconstFactorData, getData, addData!, updateData!, deleteData!
+import DistributedFactorGraphs: reconstFactorData
+# import DistributedFactorGraphs: getData, addData!, updateData!, deleteData!
 
 # Test InferenceVariable Types
 # struct TestVariableType1 <: InferenceVariable
