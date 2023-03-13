@@ -165,12 +165,12 @@ function getBlob(store::FolderStore{T}, entry::BlobEntry) where T
 end
 
 function addBlob!(store::FolderStore{T}, entry::BlobEntry, data::T) where T
-    blobfilename = joinpath(store.folder,"$(entry.id).dat")
-    entryfilename = joinpath(store.folder,"$(entry.id).json")
+    blobfilename = joinpath(store.folder,"$(entry.originId).dat")
+    entryfilename = joinpath(store.folder,"$(entry.originId).json")
     if isfile(blobfilename)
-        error("Key '$(entry.id)' blob already exists.")
+        error("Key '$(entry.originId)' blob already exists.")
     elseif isfile(entryfilename)
-        error("Key '$(entry.id)' entry already exists, but no blob.")
+        error("Key '$(entry.originId)' entry already exists, but no blob.")
     else
         open(blobfilename, "w") do f
             write(f, data)
@@ -178,17 +178,19 @@ function addBlob!(store::FolderStore{T}, entry::BlobEntry, data::T) where T
         open(entryfilename, "w") do f
             JSON3.write(f, entry)
         end
-        return data
+        # return data
+        # FIXME update for entry.blobId vs. entry.originId
+        return UUID(entry.originId)
     end
 end
 
 function updateBlob!(store::FolderStore{T},  entry::BlobEntry, data::T) where T
-    blobfilename = joinpath(store.folder,"$(entry.id).dat")
-    entryfilename = joinpath(store.folder,"$(entry.id).json")
+    blobfilename = joinpath(store.folder,"$(entry.originId).dat")
+    entryfilename = joinpath(store.folder,"$(entry.originId).json")
     if !isfile(blobfilename)
-        @warn "Key '$(entry.id)' doesn't exist."
+        @warn "Key '$(entry.originId)' doesn't exist."
     elseif !isfile(entryfilename)
-        @warn "Key '$(entry.id)' doesn't exist."
+        @warn "Key '$(entry.originId)' doesn't exist."
     else
         open(blobfilename, "w") do f
             write(f, data)
@@ -228,19 +230,21 @@ function getBlob(store::InMemoryBlobStore{T}, entry::BlobEntry) where T
 end
 
 function addBlob!(store::InMemoryBlobStore{T}, entry::BlobEntry, data::T) where T
-    if haskey(store.blobs, entry.id)
-        error("Key '$(entry.id)' blob already exists.")
+    if haskey(store.blobs, entry.originId)
+        error("Key '$(entry.originId)' blob already exists.")
     end
-    return store.blobs[entry.id] = data
+    # FIXME update for entry.originId vs .blobId
+    store.blobs[entry.originId] = data
+    return UUID(entry.originId)
 end
 
 function updateBlob!(store::InMemoryBlobStore{T},  entry::BlobEntry, data::T) where T
-    if haskey(store.blobs, entry.id)
-        @warn "Key '$(entry.id)' doesn't exist."
+    if haskey(store.blobs, entry.originId)
+        @warn "Key '$(entry.originId)' doesn't exist."
     end
-    return store.blobs[entry.id] = data
+    return store.blobs[entry.originId] = data
 end
 
 function deleteBlob!(store::InMemoryBlobStore{T}, entry::BlobEntry) where T
-    return pop!(store.blobs, entry.id)
+    return pop!(store.blobs, entry.originId)
 end

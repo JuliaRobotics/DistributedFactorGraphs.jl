@@ -77,13 +77,16 @@ Get data entry
 Also see: [`addBlobEntry`](@ref), [`getBlob`](@ref), [`listBlobEntries`](@ref)
 """
 function getBlobEntry(var::AbstractDFGVariable, key::Symbol)
-    !hasBlobEntry(var, key) && error("No dataEntry label $(key) found in variable $(getLabel(var))")
+    if !hasBlobEntry(var, key)
+        throw(KeyError("No dataEntry label $(key) found in variable $(getLabel(var)). Available keys: $(keys(var.dataDict))"))
+    end
     return var.dataDict[key]
 end
 
 function getBlobEntry(var::AbstractDFGVariable, blobId::UUID)
     for (k,v) in var.dataDict
-        if v.id == blobId
+        # FIXME stop using v.id since that has been repurposed for unique BlobEntry indexing
+        if v.originId == blobId || v.blobId == blobId || v.id == blobId
             return v
         end
     end
@@ -117,16 +120,27 @@ getBlobEntry(dfg::AbstractDFG, label::Symbol, key::Union{Symbol, UUID, <:Abstrac
 Add Data Entry to a DFG variable
 Should be extended if DFG variable is not returned by reference.
 
-Also see: [`getBlobEntry`](@ref), [`addBlob`](@ref), [`mergeBlobEntries!`](@ref)
+Also see: [`getBlobEntry`](@ref), [`addBlob!`](@ref), [`mergeBlobEntries!`](@ref)
 """
-function addBlobEntry!(var::AbstractDFGVariable, bde::BlobEntry)
-    haskey(var.dataDict, bde.label) && error("blobEntry $(bde.label) already exists on variable $(getLabel(var))")
-    var.dataDict[bde.label] = bde
-    return bde
+function addBlobEntry!(
+    var::AbstractDFGVariable, 
+    entry::BlobEntry;
+    blobId::Union{UUID,Nothing} = (isnothing(entry.blobId) ? entry.id : entry.blobId),
+    blobSize::Int = (hasfield(BlobEntry, :size) ? entry.size : -1)
+)
+    # see https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/985
+    haskey(var.dataDict, entry.label) && error("blobEntry $(entry.label) already exists on variable $(getLabel(var))")
+    var.dataDict[entry.label] = entry
+    return entry
 end
 
-function addBlobEntry!(dfg::AbstractDFG, label::Symbol, bde::BlobEntry)
-    return addBlobEntry!(getVariable(dfg, label), bde)
+function addBlobEntry!(
+    dfg::AbstractDFG, 
+    vLbl::Symbol, 
+    entry::BlobEntry;
+    kw...
+)
+    return addBlobEntry!(getVariable(dfg, vLbl), entry; kw...)
 end
 
 
