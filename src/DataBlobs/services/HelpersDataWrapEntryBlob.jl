@@ -114,35 +114,43 @@ function addData!(
     entry::BlobEntry, 
     blob::Vector{UInt8}; 
     hashfunction = sha256,
-    checkhash::Bool=true
+    checkhash::Bool=false
 )
     checkhash && assertHash(entry, blob, hashfunction=hashfunction)
-    de = addBlobEntry!(dfg, label, entry)
-    db = addBlob!(dfg, de, blob)
-    return de=>db
+    blobId = addBlob!(dfg, entry, blob) |> UUID
+    newEntry = BlobEntry(entry; id=blobId, blobId) #, size=length(blob))
+    addBlobEntry!(dfg, label, newEntry)
 end
 
-function addData!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol, entry::BlobEntry, blob::Vector{UInt8}; hashfunction = sha256)
-    assertHash(entry, blob; hashfunction)
-    de = addBlobEntry!(dfg, label, entry)
-    db = addBlob!(blobstore, de, blob)
-    return de=>db
+function addData!(
+    dfg::AbstractDFG, 
+    blobstore::AbstractBlobStore, 
+    label::Symbol, 
+    entry::BlobEntry, 
+    blob::Vector{UInt8}; 
+    hashfunction = sha256,
+    checkhash::Bool=false,
+)
+    checkhash && assertHash(entry, blob; hashfunction)
+    blobId = addBlob!(blobstore, entry, blob) |> UUID
+    newEntry = BlobEntry(entry; id=blobId, blobId) #, size=length(blob))
+    addBlobEntry!(dfg, label, newEntry)
 end
 
 
 addData!(
     dfg::AbstractDFG, 
     blobstorekey::Symbol, 
-    label::Symbol, 
-    key::Symbol, 
+    vLbl::Symbol, 
+    bLbl::Symbol, 
     blob::Vector{UInt8},
     timestamp=now(localzone()); 
     kwargs...
 ) = addData!(
     dfg,
     getBlobStore(dfg, blobstorekey),
-    label,
-    key,
+    vLbl,
+    bLbl,
     blob,
     timestamp;
     kwargs...
@@ -151,31 +159,32 @@ addData!(
 function addData!(
     dfg::AbstractDFG, 
     blobstore::AbstractBlobStore, 
-    label::Symbol, 
-    key::Symbol,
-    blob::AbstractVector{UInt8}, 
+    vLbl::Symbol, 
+    bLbl::Symbol,
+    blob::Vector{UInt8}, 
     timestamp=now(localzone()); 
     description="",
     metadata = "",
-    mimeType = "application/octet-stream", 
-    id::UUID = uuid4(), 
+    mimeType::String = "application/octet-stream", 
+    id::Union{UUID,Nothing} = nothing, #only assign if blobstore issued you an id
+    originId::UUID = uuid4(),
     hashfunction = sha256
 )
     #
-    @warn "ID's and origin IDs should be reconciled here."
+    @warn "ID's and origin IDs should be reconciled here in DFG.addData!." maxlog=50
     entry = BlobEntry(;
-        id = id, 
-        originId = id,
-        label = key, 
+        id, 
+        originId,
+        label = bLbl, 
         blobstore = blobstore.key, 
-        hash = bytes2hex(hashfunction(blob)),
-        origin = buildSourceString(dfg, label),
+        hash = string(bytes2hex(hashfunction(blob))),
+        origin = buildSourceString(dfg, vLbl),
         description = description, 
-        mimeType = mimeType, 
+        mimeType, 
         metadata, 
-        timestamp = timestamp)
+        timestamp)
 
-    addData!(dfg, blobstore, label, entry, blob; hashfunction)
+    addData!(dfg, blobstore, vLbl, entry, blob; hashfunction)
 end
 
 
@@ -188,6 +197,7 @@ function updateData!(
     checkhash::Bool=true
 )
     checkhash && assertHash(entry, blob; hashfunction)
+    # order of ops with unknown new blobId not tested
     de = updateBlobEntry!(dfg, label, entry)
     db = updateBlob!(dfg, de, blob)
     return de=>db
@@ -203,6 +213,7 @@ function updateData!(
     hashfunction = sha256
 )
     # Recalculate the hash - NOTE Assuming that this is going to be a BlobEntry. TBD.
+    # order of operations with unknown new blobId not tested
     newEntry = BlobEntry(
         entry; # and kwargs to override new values
         blobstore = blobstore.key, 

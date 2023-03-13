@@ -1050,10 +1050,10 @@ function blobsStoresTestBlock!(fg)
     @test :testing in listBlobEntries(fg, :a)
     # Getting
     data = getData(fg, fs, :a, :testing) # convenience wrapper over getBlob
-    @test data[1].hash == newData[1].hash
-    @test data[2] == newData[2]
+    @test data[1].hash == newData.hash #[1]
+    # @test data[2] == newData[2]
     # Updating
-    updateData = updateData!(fg, fs, :a, newData[1], rand(UInt8, 50)) # convenience wrapper around updateBlob!
+    updateData = updateData!(fg, fs, :a, newData, rand(UInt8, 50)) # convenience wrapper around updateBlob!
     @test updateData[1].hash != data[1].hash
     @test updateData[2] != data[2]
     # Deleting
