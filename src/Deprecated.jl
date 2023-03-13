@@ -4,6 +4,22 @@
 ##=================================================================================
 
 
+# #TODO check this one
+# function addData!(
+#     ::Type{<:BlobEntry}, 
+#     dfg::AbstractDFG, 
+#     vLbl::Symbol, 
+#     bLbl::Symbol, 
+#     blob::AbstractVector{UInt8}, 
+#     timestamp=now(localzone());
+#     id::UUID = uuid4(), 
+#     hashfunction::Function = sha256
+# )
+#     fde = BlobEntry(bLbl, id, timestamp, blob)
+#     de = addBlobEntry!(dfg, vLbl, fde)
+#     return de=>blob
+# end
+
 """
 $(TYPEDEF)
 Abstract parent struct for big data entry.

@@ -253,8 +253,8 @@ end
     #get
     @test deepcopy(de1) == getBlobEntry(v1, :key1)
     @test deepcopy(de2) == getBlobEntry(dfg, :a, :key2)
-    @test_throws ErrorException getBlobEntry(v2, :key1)
-    @test_throws ErrorException getBlobEntry(dfg, :b, :key1)
+    @test_throws KeyError getBlobEntry(v2, :key1)
+    @test_throws KeyError getBlobEntry(dfg, :b, :key1)
 
     #update
     @test updateBlobEntry!(dfg, :a, de2_update) == de2_update

@@ -919,8 +919,8 @@ function  DataEntriesTestBlock!(fg, v2)
     #get
     @test deepcopy(de1) == getBlobEntry(v1, :key1)
     @test deepcopy(de2) == getBlobEntry(fg, :a, :key2)
-    @test_throws ErrorException getBlobEntry(v2, :key1)
-    @test_throws ErrorException getBlobEntry(fg, :b, :key1)
+    @test_throws KeyError getBlobEntry(v2, :key1)
+    @test_throws KeyError getBlobEntry(fg, :b, :key1)
 
     #update
     @test updateBlobEntry!(fg, :a, de2_update) == de2_update
@@ -998,8 +998,8 @@ function blobsStoresTestBlock!(fg)
     #get
     @test deepcopy(de1) == getBlobEntry(var1, :label1)
     @test deepcopy(de2) == getBlobEntry(fg, :a, :label2)
-    @test_throws ErrorException getBlobEntry(var2, :label1)
-    @test_throws ErrorException getBlobEntry(fg, :b, :label1)
+    @test_throws KeyError getBlobEntry(var2, :label1)
+    @test_throws KeyError getBlobEntry(fg, :b, :label1)
 
     #update
     @test updateBlobEntry!(fg, :a, de2_update) == de2_update
@@ -1050,10 +1050,10 @@ function blobsStoresTestBlock!(fg)
     @test :testing in listBlobEntries(fg, :a)
     # Getting
     data = getData(fg, fs, :a, :testing) # convenience wrapper over getBlob
-    @test data[1].hash == newData[1].hash
-    @test data[2] == newData[2]
+    @test data[1].hash == newData.hash #[1]
+    # @test data[2] == newData[2]
     # Updating
-    updateData = updateData!(fg, fs, :a, newData[1], rand(UInt8, 50)) # convenience wrapper around updateBlob!
+    updateData = updateData!(fg, fs, :a, newData, rand(UInt8, 50)) # convenience wrapper around updateBlob!
     @test updateData[1].hash != data[1].hash
     @test updateData[2] != data[2]
     # Deleting
