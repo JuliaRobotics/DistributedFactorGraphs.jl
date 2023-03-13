@@ -125,7 +125,7 @@ Also see: [`getBlobEntry`](@ref), [`addBlob!`](@ref), [`mergeBlobEntries!`](@ref
 function addBlobEntry!(
     var::AbstractDFGVariable, 
     entry::BlobEntry;
-    blobId::UUID = (isnothing(entry.blobId) ? entry.id : entry.blobId),
+    blobId::Union{UUID,Nothing} = (isnothing(entry.blobId) ? entry.id : entry.blobId),
     blobSize::Int = (hasfield(BlobEntry, :size) ? entry.size : -1)
 )
     # see https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/985
