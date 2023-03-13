@@ -119,14 +119,25 @@ Should be extended if DFG variable is not returned by reference.
 
 Also see: [`getBlobEntry`](@ref), [`addBlob`](@ref), [`mergeBlobEntries!`](@ref)
 """
-function addBlobEntry!(var::AbstractDFGVariable, bde::BlobEntry)
-    haskey(var.dataDict, bde.label) && error("blobEntry $(bde.label) already exists on variable $(getLabel(var))")
-    var.dataDict[bde.label] = bde
-    return bde
+function addBlobEntry!(
+    var::AbstractDFGVariable, 
+    entry::BlobEntry;
+    # see https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/985
+    blobId::UUID = isnothing(entry.blobId) ? entry.id : entry.blobId ,
+    blobSize::Int = hasfield(DistributedFactorGraphs.BlobEntry, :size) ? entry.size : -1 ,
+)
+    haskey(var.dataDict, entry.label) && error("blobEntry $(entry.label) already exists on variable $(getLabel(var))")
+    var.dataDict[entry.label] = entry
+    return entry
 end
 
-function addBlobEntry!(dfg::AbstractDFG, label::Symbol, bde::BlobEntry)
-    return addBlobEntry!(getVariable(dfg, label), bde)
+function addBlobEntry!(
+    dfg::AbstractDFG, 
+    vLbl::Symbol, 
+    entry::BlobEntry;
+    kw...
+)
+    return addBlobEntry!(getVariable(dfg, vLbl), entry; kw...)
 end
 
 
