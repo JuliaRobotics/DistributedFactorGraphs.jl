@@ -919,8 +919,8 @@ function  DataEntriesTestBlock!(fg, v2)
     #get
     @test deepcopy(de1) == getBlobEntry(v1, :key1)
     @test deepcopy(de2) == getBlobEntry(fg, :a, :key2)
-    @test_throws ErrorException getBlobEntry(v2, :key1)
-    @test_throws ErrorException getBlobEntry(fg, :b, :key1)
+    @test_throws KeyError getBlobEntry(v2, :key1)
+    @test_throws KeyError getBlobEntry(fg, :b, :key1)
 
     #update
     @test updateBlobEntry!(fg, :a, de2_update) == de2_update
@@ -998,8 +998,8 @@ function blobsStoresTestBlock!(fg)
     #get
     @test deepcopy(de1) == getBlobEntry(var1, :label1)
     @test deepcopy(de2) == getBlobEntry(fg, :a, :label2)
-    @test_throws ErrorException getBlobEntry(var2, :label1)
-    @test_throws ErrorException getBlobEntry(fg, :b, :label1)
+    @test_throws KeyError getBlobEntry(var2, :label1)
+    @test_throws KeyError getBlobEntry(fg, :b, :label1)
 
     #update
     @test updateBlobEntry!(fg, :a, de2_update) == de2_update

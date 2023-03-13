@@ -2,6 +2,7 @@ Listing news on any major breaking changes in DFG.  For regular changes, see int
 
 # v0.20
 
+- Throw `KeyError` if `getBlobEntry` is not found, previously was `ErrorException`.
 - Change return type on `addData!` convenience wrappers to only return new `BlobEntry`.
 - Fix `addBlob!` calls for `FolderStore` and `InMemoryBlobStore` to use `BlobEntry.originId` and not previous bug `entry.id`.
 - Close long running serialization redo (#590) using only JSON3.jl and StructTypes.jl going forward.
