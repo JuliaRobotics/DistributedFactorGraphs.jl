@@ -42,6 +42,38 @@ $(METHODLIST)
 function deleteData! end
 
 
+# cosntruction helper from existing BlobEntry for user overriding via kwargs
+BlobEntry(
+    entry::BlobEntry;
+    id::Union{UUID,Nothing} = entry.id, 
+    blobId::Union{UUID,Nothing} = entry.blobId, 
+    originId::UUID = entry.originId, 
+    label::Symbol = entry.label, 
+    blobstore::Symbol = entry.blobstore, 
+    hash::String = entry.hash,
+    origin::String = entry.origin,
+    description::String = entry.description, 
+    mimeType::String = entry.mimeType, 
+    metadata::String = entry.metadata, 
+    timestamp::ZonedDateTime = entry.timestamp, 
+    _type::String = entry._type, 
+    _version::String = entry._version,
+) = BlobEntry(;
+    id,
+    blobId,
+    originId,
+    label,
+    blobstore,
+    hash,
+    origin,
+    description,
+    mimeType,
+    metadata,
+    timestamp,
+    _type,
+    _version
+)
+
 function getData(
     dfg::AbstractDFG, 
     vlabel::Symbol, 
@@ -97,21 +129,6 @@ function addData!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol,
     return de=>db
 end
 
-#TODO check this one
-function addData!(
-    ::Type{<:BlobEntry}, 
-    dfg::AbstractDFG, 
-    label::Symbol, 
-    key::Symbol, 
-    blob::AbstractVector{UInt8}, 
-    timestamp=now(localzone());
-    id::UUID = uuid4(), 
-    hashfunction::Function = sha256
-)
-    fde = BlobEntry(key, id, timestamp, blob)
-    de = addBlobEntry!(dfg, label, fde)
-    return de=>blob
-end
 
 addData!(
     dfg::AbstractDFG, 
@@ -122,30 +139,31 @@ addData!(
     timestamp=now(localzone()); 
     kwargs...
 ) = addData!(
-        dfg,
-        getBlobStore(dfg, blobstorekey),
-        label,
-        key,
-        blob,
-        timestamp;
-        kwargs...
-    )
+    dfg,
+    getBlobStore(dfg, blobstorekey),
+    label,
+    key,
+    blob,
+    timestamp;
+    kwargs...
+)
 
 function addData!(
     dfg::AbstractDFG, 
     blobstore::AbstractBlobStore, 
     label::Symbol, 
     key::Symbol,
-    blob::Vector{UInt8}, 
+    blob::AbstractVector{UInt8}, 
     timestamp=now(localzone()); 
-    description="", 
+    description="",
+    metadata = "",
     mimeType = "application/octet-stream", 
     id::UUID = uuid4(), 
     hashfunction = sha256
 )
     #
     @warn "ID's and origin IDs should be reconciled here."
-    entry = BlobEntry(
+    entry = BlobEntry(;
         id = id, 
         originId = id,
         label = key, 
@@ -154,7 +172,7 @@ function addData!(
         origin = buildSourceString(dfg, label),
         description = description, 
         mimeType = mimeType, 
-        metadata = "", 
+        metadata, 
         timestamp = timestamp)
 
     addData!(dfg, blobstore, label, entry, blob; hashfunction)
@@ -169,17 +187,29 @@ function updateData!(
     hashfunction = sha256,
     checkhash::Bool=true
 )
-    checkhash && assertHash(entry, blob, hashfunction=hashfunction)
+    checkhash && assertHash(entry, blob; hashfunction)
     de = updateBlobEntry!(dfg, label, entry)
     db = updateBlob!(dfg, de, blob)
     return de=>db
 end
 
-function updateData!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol,  entry::BlobEntry, blob::Vector{UInt8}; hashfunction = sha256)
+
+function updateData!(
+    dfg::AbstractDFG, 
+    blobstore::AbstractBlobStore, 
+    label::Symbol, 
+    entry::BlobEntry, 
+    blob::Vector{UInt8}; 
+    hashfunction = sha256
+)
     # Recalculate the hash - NOTE Assuming that this is going to be a BlobEntry. TBD.
-    newEntry = BlobEntry(entry.id, entry.blobId, entry.originId, entry.label, blobstore.key, bytes2hex(hashfunction(blob)),
-        buildSourceString(dfg, label),
-        entry.description, entry.mimeType, entry.metadata, entry.timestamp, entry._type, string(_getDFGVersion()))
+    newEntry = BlobEntry(
+        entry; # and kwargs to override new values
+        blobstore = blobstore.key, 
+        hash = string(bytes2hex(hashfunction(blob))),
+        origin = buildSourceString(dfg, label),
+        _version = string(_getDFGVersion()),
+    )
 
     de = updateBlobEntry!(dfg, label, newEntry)
     db = updateBlob!(blobstore, de, blob)
@@ -188,20 +218,34 @@ end
 
 function deleteData!(
     dfg::AbstractDFG, 
-    label::Symbol, 
-    key::Symbol
+    vLbl::Symbol, 
+    bLbl::Symbol
 )
-    de = deleteBlobEntry!(dfg, label, key)
+    de = deleteBlobEntry!(dfg, vLbl, bLbl)
     db = deleteBlob!(dfg, de)
     return de=>db
 end
 
 
-deleteData!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol, entry::BlobEntry) =
-            deleteBlob!(dfg, blobstore, label, entry.label)
+deleteData!(
+    dfg::AbstractDFG, 
+    blobstore::AbstractBlobStore, 
+    label::Symbol, 
+    entry::BlobEntry
+) = deleteBlob!(
+    dfg, 
+    blobstore, 
+    label, 
+    entry.label
+)
 
-function deleteData!(dfg::AbstractDFG, blobstore::AbstractBlobStore, label::Symbol, key::Symbol)
-    de = deleteBlobEntry!(dfg, label, key)
+function deleteData!(
+    dfg::AbstractDFG, 
+    blobstore::AbstractBlobStore, 
+    vLbl::Symbol, 
+    bLbl::Symbol
+)
+    de = deleteBlobEntry!(dfg, vLbl, bLbl)
     db = deleteBlob!(blobstore, de)
     return de=>db
 end
