@@ -177,8 +177,14 @@ getEstimateFields(::MeanMaxPPE) = [:suggested, :max, :mean]
 ## DFG Variables
 ##==============================================================================
 
-# Packed Variable
-Base.@kwdef struct PackedVariable
+export Variable
+  
+"""
+    $(TYPEDEF)
+
+The Variable information packed in a way that accomdates multi-lang using json.
+"""
+Base.@kwdef struct Variable
     # NOTE: This has to match the order of the JSON deserializer as we're using OrderedStructs.
     id::Union{UUID, Nothing}
     label::Symbol
@@ -193,10 +199,11 @@ Base.@kwdef struct PackedVariable
     solvable::Int
     solverData::Vector{PackedVariableNodeData}
 end
+const PackedVariable = Variable
 
-StructTypes.StructType(::Type{PackedVariable}) = StructTypes.UnorderedStruct()
-StructTypes.idproperty(::Type{PackedVariable}) = :id
-StructTypes.omitempties(::Type{PackedVariable}) = (:id,)
+StructTypes.StructType(::Type{Variable}) = StructTypes.UnorderedStruct()
+StructTypes.idproperty(::Type{Variable}) = :id
+StructTypes.omitempties(::Type{Variable}) = (:id,)
 
 ##------------------------------------------------------------------------------
 ## DFGVariable lv2
