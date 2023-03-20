@@ -46,7 +46,7 @@ function assertHash(de::BlobEntry, db; hashfunction::Function = sha256)
 end
 
 
-function Base.show(io::IO, entry::BlobEntry) 
+function Base.show(io::IO, ::MIME"text/plain", entry::BlobEntry)
     println(io, "_type=BlobEntry {")
     println(io, "  id:            ", entry.id) 
     println(io, "  blobId:        ", entry.blobId) 
@@ -61,10 +61,6 @@ function Base.show(io::IO, entry::BlobEntry)
     println(io, "  _version:      ", entry._version) 
     println(io, "}") 
 end 
-
-Base.show(io::IO, ::MIME"text/plain", entry::BlobEntry) = show(io, entry)
-
-
 
 ##==============================================================================
 ## BlobEntry - CRUD

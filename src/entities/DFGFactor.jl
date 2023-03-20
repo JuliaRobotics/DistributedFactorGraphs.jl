@@ -48,6 +48,12 @@ Base.@kwdef mutable struct GenericFunctionNodeData{T<:Union{<:AbstractPackedFact
     inflation::Float64 = 0.0
 end
 
+# TODO should we move non FactorOperationalMemory to DFGFactor: 
+# fnc, multihypo, nullhypo, inflation ?
+# that way we split solverData <: FactorOperationalMemory and constants
+# TODO see if above ever changes?
+
+
 ## Constructors
 
 
@@ -78,8 +84,7 @@ FunctionNodeData(args...; kw...) = FunctionNodeData{typeof(args[4])}(args...; kw
 
 # Packed Factor
 Base.@kwdef struct PackedFactor
-    # NOTE: This has to match the order of the JSON deserializer as we're using OrderedStructs.
-    id::Union{UUID, Nothing}
+    id::Union{UUID, Nothing} = nothing
     label::Symbol
     tags::Vector{Symbol}
     _variableOrderSymbols::Vector{Symbol}
@@ -89,7 +94,7 @@ Base.@kwdef struct PackedFactor
     solvable::Int
     data::String
     metadata::String
-    _version::String
+    _version::String = string(_getDFGVersion())
   end
   
 StructTypes.StructType(::Type{PackedFactor}) = StructTypes.UnorderedStruct()

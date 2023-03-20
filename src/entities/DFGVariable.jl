@@ -91,7 +91,7 @@ VariableNodeData(variableType::InferenceVariable; kwargs...) = VariableNodeData{
 
 """
 $(TYPEDEF)
-Packed VariabeNodeData structure for serializing DFGVariables.
+Packed VariableNodeData structure for serializing DFGVariables.
 
   ---
 Fields:
@@ -118,6 +118,17 @@ Base.@kwdef mutable struct PackedVariableNodeData
     solvedCount::Int
     solveKey::Symbol
     _version::String = string(_getDFGVersion())
+end
+
+function Base.propertynames(x::PackedVariableNodeData, private::Bool=false)
+    if private
+        return fieldnames(PackedVariableNodeData)
+    else
+        return (:vecval, :dimval, :vecbw, :dimbw, :BayesNetOutVertIDs,
+                :dimIDs, :dims, :eliminated, :BayesNetVertID, :separator, 
+                :variableType, :initialized, :infoPerCoord, :ismargin, :dontmargin, 
+                :solveInProgress, :solvedCount, :solveKey, :_version)
+    end
 end
 
 StructTypes.StructType(::Type{PackedVariableNodeData}) = StructTypes.UnorderedStruct()
@@ -155,6 +166,10 @@ Base.@kwdef struct MeanMaxPPE <: AbstractPointParametricEst
     lastUpdatedTimestamp::Union{ZonedDateTime, Nothing} = nothing
 end
 
+function Base.propertynames(x::MeanMaxPPE, private::Bool = false)
+    return (:solveKey, :suggested, :max, :mean, :_type, :_version)
+end
+
 StructTypes.StructType(::Type{MeanMaxPPE}) = StructTypes.UnorderedStruct()
 StructTypes.idproperty(::Type{MeanMaxPPE}) = :id
 StructTypes.omitempties(::Type{MeanMaxPPE}) = (:id,:createdTimestamp,:lastUpdatedTimestamp)
@@ -179,19 +194,18 @@ getEstimateFields(::MeanMaxPPE) = [:suggested, :max, :mean]
 
 # Packed Variable
 Base.@kwdef struct PackedVariable
-    # NOTE: This has to match the order of the JSON deserializer as we're using OrderedStructs.
-    id::Union{UUID, Nothing}
+    id::Union{UUID, Nothing} = nothing
     label::Symbol
-    tags::Vector{Symbol}
-    timestamp::ZonedDateTime
-    nstime::Int
-    ppes::Vector{MeanMaxPPE}
-    blobEntries::Vector{BlobEntry}
+    tags::Vector{Symbol} = Symbol[]
+    timestamp::ZonedDateTime = now(tz"UTC")
+    nstime::Int = 0
+    ppes::Vector{MeanMaxPPE} = MeanMaxPPE[]
+    blobEntries::Vector{BlobEntry} = BlobEntry[]
     variableType::String
-    _version::String
-    metadata::String
-    solvable::Int
-    solverData::Vector{PackedVariableNodeData}
+    _version::String = string(_getDFGVersion())
+    metadata::String = "e30="
+    solvable::Int = 1
+    solverData::Vector{PackedVariableNodeData} = PackedVariableNodeData[]
 end
 
 StructTypes.StructType(::Type{PackedVariable}) = StructTypes.UnorderedStruct()
@@ -344,6 +358,27 @@ Base.@kwdef struct DFGVariableSummary <: AbstractDFGVariable
     dataDict::Dict{Symbol, BlobEntry}
 end
 
+function DFGVariableSummary(
+    id,
+    label,
+    timestamp,
+    tags,
+    ::Nothing,
+    variableTypeName,
+    ::Nothing,
+)
+    return DFGVariableSummary(
+        id,
+        label,
+        timestamp,
+        tags,
+        Dict{Symbol, MeanMaxPPE}(),
+        variableTypeName,
+        Dict{Symbol, BlobEntry}(),
+    )
+end
+
+StructTypes.names(::Type{DFGVariableSummary}) = ((:variableTypeName, :variableType),)
 
 ##------------------------------------------------------------------------------
 ## SkeletonDFGVariable.jl
