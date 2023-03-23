@@ -86,6 +86,9 @@ setTimestamp(f::DFGFactor, ts::ZonedDateTime) = DFGFactor(f.label, ts, f.nstime,
 setTimestamp(f::DFGFactorSummary, ts::ZonedDateTime) = DFGFactorSummary(f.id, f.label, f.tags, f._variableOrderSymbols, ts)
 setTimestamp(f::DFGFactorSummary, ts::DateTime) = DFGFactorSummary(f, ZonedDateTime(ts, localzone()))
 
+function setTimestamp(v::PackedFactor, timestamp::ZonedDateTime)
+  return PackedFactor(;(key => getproperty(v, key) for key in fieldnames(PackedFactor))..., timestamp)
+end
 
 ##------------------------------------------------------------------------------
 ## solvable

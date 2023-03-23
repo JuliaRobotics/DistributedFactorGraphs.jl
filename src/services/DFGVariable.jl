@@ -344,6 +344,9 @@ function setTimestamp(v::DFGVariableSummary, ts::ZonedDateTime; verbose::Bool=tr
     return DFGVariableSummary(v.id, v.label, ts, v.tags, v.ppeDict, v.variableTypeName, v.dataDict)
 end
 
+function setTimestamp(v::PackedVariable, timestamp::ZonedDateTime; verbose::Bool=true)
+    return PackedVariable(;(key => getproperty(v, key) for key in fieldnames(PackedVariable))..., timestamp)
+end
 
 ##------------------------------------------------------------------------------
 ## solvable

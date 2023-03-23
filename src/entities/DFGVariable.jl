@@ -178,7 +178,7 @@ getEstimateFields(::MeanMaxPPE) = [:suggested, :max, :mean]
 ##==============================================================================
 
 # Packed Variable
-Base.@kwdef struct PackedVariable
+Base.@kwdef struct PackedVariable  <: AbstractDFGVariable
     id::Union{UUID, Nothing} = nothing
     label::Symbol
     tags::Vector{Symbol} = Symbol[]
@@ -397,8 +397,8 @@ StructTypes.omitempties(::Type{SkeletonDFGVariable}) = (:id,)
 ##==============================================================================
 # Define variable levels
 ##==============================================================================
-const VariableDataLevel0 = Union{DFGVariable, DFGVariableSummary, SkeletonDFGVariable}
-const VariableDataLevel1 = Union{DFGVariable, DFGVariableSummary}
+const VariableDataLevel0 = Union{DFGVariable, DFGVariableSummary, PackedVariable, SkeletonDFGVariable}
+const VariableDataLevel1 = Union{DFGVariable, DFGVariableSummary, PackedVariable}
 const VariableDataLevel2 = Union{DFGVariable}
 
 ##==============================================================================
