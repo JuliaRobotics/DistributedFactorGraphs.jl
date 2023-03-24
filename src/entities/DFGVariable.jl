@@ -218,7 +218,7 @@ Base.@kwdef struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref), [`setTimestamp`](@ref)"""
     timestamp::ZonedDateTime
-    """Nano second time, for more resolution on timestamp (only subsecond information)"""
+    """Nanoseconds since a user-understood epoch (i.e unix epoch, robot boot time, etc.)"""
     nstime::Nanosecond
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
     Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
