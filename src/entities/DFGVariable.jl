@@ -120,17 +120,6 @@ Base.@kwdef mutable struct PackedVariableNodeData
     _version::String = string(_getDFGVersion())
 end
 
-function Base.propertynames(x::PackedVariableNodeData, private::Bool=false)
-    if private
-        return fieldnames(PackedVariableNodeData)
-    else
-        return (:vecval, :dimval, :vecbw, :dimbw, :BayesNetOutVertIDs,
-                :dimIDs, :dims, :eliminated, :BayesNetVertID, :separator, 
-                :variableType, :initialized, :infoPerCoord, :ismargin, :dontmargin, 
-                :solveInProgress, :solvedCount, :solveKey, :_version)
-    end
-end
-
 StructTypes.StructType(::Type{PackedVariableNodeData}) = StructTypes.UnorderedStruct()
 StructTypes.idproperty(::Type{PackedVariableNodeData}) = :id
 StructTypes.omitempties(::Type{PackedVariableNodeData}) = (:id,)
@@ -164,10 +153,6 @@ Base.@kwdef struct MeanMaxPPE <: AbstractPointParametricEst
     _version::String = string(_getDFGVersion())
     createdTimestamp::Union{ZonedDateTime, Nothing} = nothing
     lastUpdatedTimestamp::Union{ZonedDateTime, Nothing} = nothing
-end
-
-function Base.propertynames(x::MeanMaxPPE, private::Bool = false)
-    return (:solveKey, :suggested, :max, :mean, :_type, :_version)
 end
 
 StructTypes.StructType(::Type{MeanMaxPPE}) = StructTypes.UnorderedStruct()

@@ -26,20 +26,8 @@ General Data Store Entry.
     _version::String = string(_getDFGVersion()) # TBD consider upgrading to ::VersionNumber
 end
 
-
-function Base.propertynames(x::BlobEntry, private::Bool=false)
-    if private
-        return fieldnames(BlobEntry)
-    else
-        return (:blobId, :originId, :label, :blobstore, :hash, :origin, :description, 
-                :mimeType, :metadata, :timestamp, :_type, :_version)
-    end
-end
-
 StructTypes.StructType(::Type{BlobEntry}) = StructTypes.UnorderedStruct()
 StructTypes.idproperty(::Type{BlobEntry}) = :id
 StructTypes.omitempties(::Type{BlobEntry}) = (:id,)
-
-
 
 _fixtimezone(cts::NamedTuple) = ZonedDateTime(cts.utc_datetime*"+00")
