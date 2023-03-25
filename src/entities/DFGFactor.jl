@@ -89,7 +89,7 @@ Base.@kwdef struct PackedFactor <: AbstractDFGFactor
     tags::Vector{Symbol}
     _variableOrderSymbols::Vector{Symbol}
     timestamp::ZonedDateTime
-    nstime::Int
+    nstime::String
     fnctype::String
     solvable::Int
     data::String

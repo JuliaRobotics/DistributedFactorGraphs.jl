@@ -183,7 +183,7 @@ Base.@kwdef struct PackedVariable  <: AbstractDFGVariable
     label::Symbol
     tags::Vector{Symbol} = Symbol[]
     timestamp::ZonedDateTime = now(tz"UTC")
-    nstime::Int = 0
+    nstime::String = "0"
     ppes::Vector{MeanMaxPPE} = MeanMaxPPE[]
     blobEntries::Vector{BlobEntry} = BlobEntry[]
     variableType::String
