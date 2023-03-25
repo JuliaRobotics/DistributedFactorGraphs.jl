@@ -2,7 +2,7 @@
 ## ================================================================================
 ## Remove in v0.21
 ##=================================================================================
-
+@deprecate packFactor(dfg::AbstractDFG, f::DFGFactor) packFactor(f::DFGFactor)
 
 # #TODO check this one
 # function addData!(

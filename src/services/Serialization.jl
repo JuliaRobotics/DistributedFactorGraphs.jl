@@ -151,7 +151,7 @@ function packVariable(v::AbstractDFGVariable; includePPEs::Bool=true, includeSol
         id=v.id,
         label = v.label,
         timestamp = v.timestamp,
-        nstime = v.nstime.value,
+        nstime = string(v.nstime.value),
         tags = collect(v.tags), # Symbol.()
         ppes = collect(values(v.ppeDict)),
         solverData = packVariableNodeData.(collect(values(v.solverDataDict))),
@@ -216,7 +216,7 @@ function _packSolverData(
 end
 
 # returns PackedFactor
-function packFactor(dfg::AbstractDFG, f::DFGFactor)
+function packFactor(f::DFGFactor)
     fnctype = getSolverData(f).fnc.usrfnc!
     return PackedFactor(;    
         id = f.id,
@@ -224,7 +224,7 @@ function packFactor(dfg::AbstractDFG, f::DFGFactor)
         tags = collect(f.tags),
         _variableOrderSymbols = f._variableOrderSymbols,
         timestamp = f.timestamp,
-        nstime = f.nstime.value,
+        nstime = string(f.nstime.value),
         fnctype = String(_getname(fnctype)),
         solvable = getSolvable(f),
         metadata = base64encode(JSON3.write(f.smallData)),
