@@ -200,6 +200,7 @@ export hasBlobEntry,getBlobEntry,addBlobEntry!,updateBlobEntry!,deleteBlobEntry!
 export incrDataLabelSuffix
 
 export getBlobEntries, listDataEntries, hasDataEntry, hasDataEntry
+export getBlobEntriesVariables
 export listDataEntrySequence
 # convenience wrappers
 export mergeDataEntries!
