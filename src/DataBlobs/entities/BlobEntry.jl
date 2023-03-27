@@ -30,6 +30,4 @@ StructTypes.StructType(::Type{BlobEntry}) = StructTypes.UnorderedStruct()
 StructTypes.idproperty(::Type{BlobEntry}) = :id
 StructTypes.omitempties(::Type{BlobEntry}) = (:id,)
 
-
-
 _fixtimezone(cts::NamedTuple) = ZonedDateTime(cts.utc_datetime*"+00")

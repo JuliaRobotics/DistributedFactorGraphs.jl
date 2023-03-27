@@ -702,7 +702,7 @@ function  VSDTestBlock!(fg, v1)
     #  - `updateVariableSolverData!`
     #  - `deleteVariableSolverData!`
     #
-    # > - `getVariableSolverDataAll` #TODO Data is already plural so maybe Variables, All or Dict
+    # > - `getVariableSolverDataAll` #TODO Data is already plural so maybe Variables, All or Dict, or use Datum for singular
     # > - `getVariablesSolverData`
     #
     # **Set like**
