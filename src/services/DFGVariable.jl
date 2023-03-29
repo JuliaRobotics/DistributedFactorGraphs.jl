@@ -389,6 +389,13 @@ function getPPE(vari::VariableDataLevel1, solveKey::Symbol=:default)
     # return haskey(ppeDict, solveKey) ? ppeDict[solveKey] : nothing
 end
 
+"""
+    $SIGNATURES
+
+Get all the parametric point estimate (PPE) for a variable in the factor graph.
+"""
+function getPPEs end
+
 # afew more aliases on PPE, brought back from deprecated DF
 
 """

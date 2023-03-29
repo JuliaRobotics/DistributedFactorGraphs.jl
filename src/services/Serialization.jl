@@ -6,10 +6,16 @@ export _packSolverData
 const TYPEKEY = "_type"
 
 ## Version checking
-# FIXME return VersionNumber
+#NOTE fixed really bad function but kept similar as fallback #TODO upgrade to use pkgversion(m::Module)
 function _getDFGVersion()
-    if haskey(Pkg.dependencies(), Base.UUID("b5cc3c7e-6572-11e9-2517-99fb8daf2f04"))
-        return string(Pkg.dependencies()[Base.UUID("b5cc3c7e-6572-11e9-2517-99fb8daf2f04")].version) |> VersionNumber
+
+    pkgorigin = get(Base.pkgorigins, Base.PkgId(DistributedFactorGraphs), nothing) 
+    if !isnothing(pkgorigin) 
+        return pkgorigin.version
+    end
+    dep = get(Pkg.dependencies(), Base.UUID("b5cc3c7e-6572-11e9-2517-99fb8daf2f04"), nothing)
+    if !isnothing(dep)
+        return dep.version
     else
         # This is arguably slower, but needed for Travis.
         return Pkg.TOML.parse(read(joinpath(dirname(pathof(@__MODULE__)), "..", "Project.toml"), String))["version"] |> VersionNumber
@@ -18,7 +24,7 @@ end
 
 function _versionCheck(node::Union{<:PackedVariable, <:PackedFactor})
     if VersionNumber(node._version) < _getDFGVersion()
-        @warn "This data was serialized using DFG $(props["_version"]) but you have $(_getDFGVersion()) installed, there may be deserialization issues." maxlog=10
+        @warn "This data was serialized using DFG $(node._version) but you have $(_getDFGVersion()) installed, there may be deserialization issues." maxlog=10
     end
 end
 

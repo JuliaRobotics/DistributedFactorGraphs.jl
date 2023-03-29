@@ -193,6 +193,33 @@ Base.@kwdef struct PackedVariable  <: AbstractDFGVariable
     solverData::Vector{PackedVariableNodeData} = PackedVariableNodeData[]
 end
 
+#IIF like contruction helper for packed variable
+function PackedVariable(
+    label::Symbol,
+    variableType::String;
+    tags::Vector{Symbol} = Symbol[],
+    timestamp::ZonedDateTime = now(tz"UTC"),
+    solvable::Int = 1,
+    nanosecondtime::Int64 = 0,
+    smalldata::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
+    kwargs...
+)
+    union!(tags, [:VARIABLE])
+
+    pacvar = PackedVariable(;
+        label,
+        variableType,
+        nstime = string(nanosecondtime),
+        solvable,
+        tags,
+        metadata = base64encode(JSON3.write(smalldata)),
+        timestamp,
+        kwargs...
+    )
+
+    return pacvar
+end
+
 StructTypes.StructType(::Type{PackedVariable}) = StructTypes.UnorderedStruct()
 StructTypes.idproperty(::Type{PackedVariable}) = :id
 StructTypes.omitempties(::Type{PackedVariable}) = (:id,)
@@ -265,7 +292,7 @@ DFGVariable(label::Symbol,
             solverDataDict::Dict{Symbol, VariableNodeData{T,P}}=Dict{Symbol, VariableNodeData{T,getPointType(T)}}(),
             kw...) where {T <: InferenceVariable, P} = DFGVariable(label, T; solverDataDict=solverDataDict, kw...)
 #
-@deprecate DFGVariable(label::Symbol, T_::Type{<:InferenceVariable},w...; timestamp::DateTime=now(),kw...) DFGVariable(label, T_, w...; timestamp=ZonedDateTime(timestamp), kw...)
+# @deprecate DFGVariable(label::Symbol, T_::Type{<:InferenceVariable},w...; timestamp::DateTime=now(),kw...) DFGVariable(label, T_, w...; timestamp=ZonedDateTime(timestamp), kw...)
 #
 
 

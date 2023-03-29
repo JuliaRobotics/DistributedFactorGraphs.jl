@@ -173,6 +173,7 @@ export getPPEDict, getVariablePPEDict, getVariablePPE
 
 # CRUD & SET
 export getPPE,
+       getPPEs,
        getVariablePPE,
        addPPE!,
        updatePPE!,
