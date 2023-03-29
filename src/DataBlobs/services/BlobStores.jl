@@ -55,24 +55,28 @@ function listBlobs end
 ## AbstractBlobStore CRUD Interface
 ##==============================================================================
 
-function getBlob(store::AbstractBlobStore, entry::BlobEntry)
+function getBlob(store::AbstractBlobStore, ::UUID)
     error("$(typeof(store)) doesn't override 'getBlob'.")
 end
 
-function addBlob!(store::AbstractBlobStore{T}, entry::BlobEntry, data::T) where T
+function addBlob!(store::AbstractBlobStore{T}, ::UUID, ::T) where {T}
     error("$(typeof(store)) doesn't override 'addBlob!'.")
 end
 
-function updateBlob!(store::AbstractBlobStore{T},  entry::BlobEntry, data::T) where T
+function updateBlob!(store::AbstractBlobStore{T}, ::UUID, ::T) where {T}
     error("$(typeof(store)) doesn't override 'updateBlob!'.")
 end
 
-function deleteBlob!(store::AbstractBlobStore, entry::BlobEntry)
+function deleteBlob!(store::AbstractBlobStore, ::UUID)
     error("$(typeof(store)) doesn't override 'deleteBlob!'.")
 end
 
 function listBlobs(store::AbstractBlobStore)
     error("$(typeof(store)) doesn't override 'listBlobs'.")
+end
+
+function hasBlob(store::AbstractBlobStore, ::UUID)
+    error("$(typeof(store)) doesn't override 'hasBlob'.")
 end
 
 ##==============================================================================
@@ -82,7 +86,7 @@ end
 function getBlob(dfg::AbstractDFG, entry::BlobEntry)
     # cannot use entry.blobstore because the blob can be in any one of the blobstores
     stores = getBlobStores(dfg)
-    for (k,store) in stores
+    for (k, store) in stores
         try
             blob = getBlob(store, entry)
             return blob
@@ -94,20 +98,45 @@ function getBlob(dfg::AbstractDFG, entry::BlobEntry)
     end
     throw(
         KeyError(
-            "could not find $(entry.label), uuid $(entry.id)) in any of the listed blobstores:\n $([s->getKey(s) for (s,v) in stores]))"
+            "could not find $(entry.label), uuid $blobId) in any of the listed blobstores:\n $([s->getKey(s) for (s,v) in stores]))"
         )
     )
 end
 
-addBlob!(dfg::AbstractDFG, entry::BlobEntry, data::T) where T =
-        addBlob!(getBlobStore(dfg, entry.blobstore), entry, data)
+getBlob(store::AbstractBlobStore, entry::BlobEntry) =
+    getBlob(store, entry.originId)
 
-updateBlob!(dfg::AbstractDFG, entry::BlobEntry, data::T) where T =
-        updateBlob!(getBlobStore(dfg, entry.blobstore), entry, data)
+#add 
+addBlob!(dfg::AbstractDFG, entry::BlobEntry, data) =
+    addBlob!(getBlobStore(dfg, entry.blobstore), entry, data)
 
+addBlob!(store::AbstractBlobStore, entry::BlobEntry, data) =
+    addBlob!(store, entry.originId, data)
+    
+addBlob!(store::AbstractBlobStore, data) =
+    addBlob!(store, uuid4(), data)
+
+#fallback as not all blobStores use filename
+addBlob!(store::AbstractBlobStore, blobId::UUID, data, ::String) = 
+    addBlob!(store, blobId, data)
+
+#update
+updateBlob!(dfg::AbstractDFG, entry::BlobEntry, data::T) where {T} =
+    updateBlob!(getBlobStore(dfg, entry.blobstore), entry, data)
+
+updateBlob!(store::AbstractBlobStore, entry::BlobEntry, data) =
+    updateBlob!(store, entry.originId, data)
+
+#delete
 deleteBlob!(dfg::AbstractDFG, entry::BlobEntry) =
-        deleteBlob!(getBlobStore(dfg, entry.blobstore), entry)
+    deleteBlob!(getBlobStore(dfg, entry.blobstore), entry)
 
+deleteBlob!(store::AbstractBlobStore, entry::BlobEntry) =
+    deleteBlob!(store, entry.originId)
+
+
+#has
+hasBlob(dfg::AbstractDFG, entry::BlobEntry) = hasBlob(getBlobStore(dfg, entry.blobstore), entry.originId)
 
 #TODO
 # """
@@ -136,7 +165,7 @@ deleteBlob!(dfg::AbstractDFG, entry::BlobEntry) =
 struct FolderStore{T} <: AbstractBlobStore{T}
     key::Symbol
     folder::String
-    function FolderStore{T}(key, folder) where T
+    function FolderStore{T}(key, folder) where {T}
         if !isdir(folder)
             @info "Folder '$folder' doesn't exist - creating."
             # create new folder
@@ -148,70 +177,61 @@ end
 
 FolderStore(foldername::String) = FolderStore{Vector{UInt8}}(:default_folder_store, foldername)
 
-blobfilename(store::FolderStore, entry::BlobEntry) = joinpath(store.folder,"$(entry.id).dat")
-entryfilename(store::FolderStore, entry::BlobEntry) = joinpath(store.folder,"$(entry.id).json")
+blobfilename(store::FolderStore, blobId::UUID) = joinpath(store.folder, "$blobId.dat")
 
-function getBlob(store::FolderStore{T}, entry::BlobEntry) where T
-    blobfilename = joinpath(store.folder,"$(entry.id).dat")
-    # entryfilename = "$(store.folder)/$(entry.id).json"
+function getBlob(store::FolderStore{T}, blobId::UUID) where {T}
+    blobfilename = joinpath(store.folder, "$blobId.dat")
     if isfile(blobfilename)
         open(blobfilename) do f
             return read(f)
         end
     else
         throw(KeyError("Could not find file '$(blobfilename)'."))
-        # return nothing
     end
 end
 
-function addBlob!(store::FolderStore{T}, entry::BlobEntry, data::T) where T
-    blobfilename = joinpath(store.folder,"$(entry.originId).dat")
-    entryfilename = joinpath(store.folder,"$(entry.originId).json")
+function addBlob!(store::FolderStore{T}, blobId::UUID, data::T) where {T}
+    blobfilename = joinpath(store.folder, "$blobId.dat")
     if isfile(blobfilename)
-        error("Key '$(entry.originId)' blob already exists.")
-    elseif isfile(entryfilename)
-        error("Key '$(entry.originId)' entry already exists, but no blob.")
+        throw(KeyError("Key '$blobId' blob already exists."))
     else
         open(blobfilename, "w") do f
             write(f, data)
-        end
-        open(entryfilename, "w") do f
-            JSON3.write(f, entry)
         end
         # return data
-        # FIXME update for entry.blobId vs. entry.originId
-        return UUID(entry.originId)
+        return blobId
     end
 end
 
-function updateBlob!(store::FolderStore{T},  entry::BlobEntry, data::T) where T
-    blobfilename = joinpath(store.folder,"$(entry.originId).dat")
-    entryfilename = joinpath(store.folder,"$(entry.originId).json")
+function updateBlob!(store::FolderStore{T}, blobId::UUID, data::T) where {T}
+    blobfilename = joinpath(store.folder, "$blobId.dat")
     if !isfile(blobfilename)
-        @warn "Key '$(entry.originId)' doesn't exist."
-    elseif !isfile(entryfilename)
-        @warn "Key '$(entry.originId)' doesn't exist."
+        @warn "Key '$blobId' doesn't exist."
     else
         open(blobfilename, "w") do f
             write(f, data)
-        end
-        open(entryfilename, "w") do f
-            JSON3.write(f, entry)
         end
         return data
     end
 end
 
 
-function deleteBlob!(store::FolderStore{T}, entry::BlobEntry) where T
-    blobfilename = joinpath(store.folder,"$(entry.id).dat")
-    entryfilename = joinpath(store.folder,"$(entry.id).json")
-    
+function deleteBlob!(store::FolderStore{T}, blobId::UUID) where {T}
+    blobfilename = joinpath(store.folder, "$blobId.dat")
+
     data = getBlob(store, entry)
     rm(blobfilename)
-    rm(entryfilename)
     return data
 end
+
+#hasBlob or existsBlob?
+function hasBlob(store::FolderStore, blobId::UUID)
+    blobfilename = joinpath(store.folder, "$blobId.dat")
+    isfile(blobfilename)
+end
+
+hasBlob(store::FolderStore, entry::BlobEntry) = hasBlob(store, entry.originId)
+
 
 ##==============================================================================
 ## InMemoryBlobStore
@@ -219,32 +239,33 @@ end
 
 struct InMemoryBlobStore{T} <: AbstractBlobStore{T}
     key::Symbol
-    blobs::Dict{UUID, T}
+    blobs::Dict{UUID,T}
 end
 
-InMemoryBlobStore{T}(storeKey::Symbol) where T = InMemoryBlobStore{Vector{UInt8}}(storeKey, Dict{UUID, T}())
+InMemoryBlobStore{T}(storeKey::Symbol) where {T} = InMemoryBlobStore{Vector{UInt8}}(storeKey, Dict{UUID,T}())
 InMemoryBlobStore(storeKey::Symbol=:default_inmemory_store) = InMemoryBlobStore{Vector{UInt8}}(storeKey)
 
-function getBlob(store::InMemoryBlobStore{T}, entry::BlobEntry) where T
-    return store.blobs[entry.id]
+function getBlob(store::InMemoryBlobStore, blobId::UUID)
+    return store.blobs[blobId]
 end
 
-function addBlob!(store::InMemoryBlobStore{T}, entry::BlobEntry, data::T) where T
+function addBlob!(store::InMemoryBlobStore{T}, blobId::UUID, data::T) where {T}
     if haskey(store.blobs, entry.originId)
-        error("Key '$(entry.originId)' blob already exists.")
+        error("Key '$blobId' blob already exists.")
     end
-    # FIXME update for entry.originId vs .blobId
-    store.blobs[entry.originId] = data
-    return UUID(entry.originId)
+    store.blobs[blobId] = data
+    return UUIDblobId
 end
 
-function updateBlob!(store::InMemoryBlobStore{T},  entry::BlobEntry, data::T) where T
-    if haskey(store.blobs, entry.originId)
-        @warn "Key '$(entry.originId)' doesn't exist."
+function updateBlob!(store::InMemoryBlobStore{T}, blobId::UUID, data::T) where {T}
+    if haskey(store.blobs, blobId)
+        @warn "Key '$blobId' doesn't exist."
     end
-    return store.blobs[entry.originId] = data
+    return store.blobs[blobId] = data
 end
 
-function deleteBlob!(store::InMemoryBlobStore{T}, entry::BlobEntry) where T
-    return pop!(store.blobs, entry.originId)
+function deleteBlob!(store::InMemoryBlobStore, blobId::UUID)
+    return pop!(store.blobs, blobId)
 end
+
+hasBlob(store::InMemoryBlobStore, blobId::UUID) = haskey(store.blobs, blobId)

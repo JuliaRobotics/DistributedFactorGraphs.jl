@@ -81,8 +81,7 @@ end
 
 function getBlobEntry(var::AbstractDFGVariable, blobId::UUID)
     for (k,v) in var.dataDict
-        # FIXME stop using v.id since that has been repurposed for unique BlobEntry indexing
-        if v.originId == blobId || v.blobId == blobId || v.id == blobId
+        if blobId in [v.originId, v.blobId]
             return v
         end
     end
@@ -93,7 +92,9 @@ end
 
 #TODO consider changing this to use `first` as in julia's findfirst - as in findfirstBlobEntry->label::Symbol
 # or getBlobEntryFirst, btw this returns a vector in some other places
-function getBlobEntry(var::AbstractDFGVariable, key::Regex)
+@deprecate getBlobEntry(var::AbstractDFGVariable, key::Regex) getfirstBlobEntry(var, key)
+
+function getfirstBlobEntry(var::AbstractDFGVariable, key::Regex)
     for (k,v) in var.dataDict
         if occursin(key, string(v.label))
             return v
@@ -106,7 +107,7 @@ end
 
 getBlobEntry(var::AbstractDFGVariable, key::AbstractString) = getBlobEntry(var,Regex(key))
 
-
+#TODO split betweeen getfirstBlobEntry and getBlobEntry
 getBlobEntry(dfg::AbstractDFG, label::Symbol, key::Union{Symbol, UUID, <:AbstractString, Regex}) = getBlobEntry(getVariable(dfg, label), key)
 # getBlobEntry(dfg::AbstractDFG, label::Symbol, key::Symbol) = getBlobEntry(getVariable(dfg, label), key)
 
@@ -121,12 +122,21 @@ Also see: [`getBlobEntry`](@ref), [`addBlob!`](@ref), [`mergeBlobEntries!`](@ref
 function addBlobEntry!(
     var::AbstractDFGVariable, 
     entry::BlobEntry;
-    blobId::Union{UUID,Nothing} = (isnothing(entry.blobId) ? entry.id : entry.blobId),
-    blobSize::Int = (hasfield(BlobEntry, :size) ? entry.size : -1)
 )
     # see https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/985
+    # blobId::Union{UUID,Nothing} = (isnothing(entry.blobId) ? entry.id : entry.blobId),
+    # blobSize::Int = (hasfield(BlobEntry, :size) ? entry.size : -1)
     haskey(var.dataDict, entry.label) && error("blobEntry $(entry.label) already exists on variable $(getLabel(var))")
     var.dataDict[entry.label] = entry
+    return entry
+end
+
+function addBlobEntry!(
+    var::PackedVariable, 
+    entry::BlobEntry,
+)   
+    entry.label in getproperty.(var.blobEntries,:label) && error("blobEntry $(entry.label) already exists on variable $(getLabel(var))")
+    push!(var.blobEntries, entry)
     return entry
 end
 
@@ -134,9 +144,8 @@ function addBlobEntry!(
     dfg::AbstractDFG, 
     vLbl::Symbol, 
     entry::BlobEntry;
-    kw...
 )
-    return addBlobEntry!(getVariable(dfg, vLbl), entry; kw...)
+    return addBlobEntry!(getVariable(dfg, vLbl), entry)
 end
 
 
@@ -203,11 +212,24 @@ function getBlobEntries(var::AbstractDFGVariable)
     #or should we return the iterator, Base.ValueIterator{Dict{Symbol,BlobEntry}}?
     collect(values(var.dataDict))
 end
+
+function getBlobEntries(var::PackedVariable)
+    var.blobEntries
+end
+
 function getBlobEntries(dfg::AbstractDFG, label::Symbol)
     # !isVariable(dfg, label) && return nothing
     #or should we return the iterator, Base.ValueIterator{Dict{Symbol,BlobEntry}}?
     getBlobEntries(getVariable(dfg, label))
 end
+
+function getBlobEntries(dfg::AbstractDFG, label::Symbol, regex::Regex)
+    entries = getBlobEntries(dfg, label)
+    return filter(entries) do e
+        occursin(regex, string(e.label))
+    end        
+end
+
 
 """
     $(SIGNATURES)

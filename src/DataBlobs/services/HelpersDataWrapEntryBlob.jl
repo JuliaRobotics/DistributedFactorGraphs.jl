@@ -42,7 +42,7 @@ $(METHODLIST)
 function deleteData! end
 
 
-# cosntruction helper from existing BlobEntry for user overriding via kwargs
+# construction helper from existing BlobEntry for user overriding via kwargs
 BlobEntry(
     entry::BlobEntry;
     id::Union{UUID,Nothing} = entry.id, 
@@ -91,13 +91,12 @@ function getData(
     return de=>db
 end
 
-
-#TODO from blobstores
+# This is the normal one
 function getData(
     dfg::AbstractDFG, 
     blobstore::AbstractBlobStore, 
     label::Symbol, 
-    key::Union{Symbol,UUID, <:AbstractString, Regex}; 
+    key::Symbol; 
     hashfunction = sha256,
     checkhash::Bool=true
 )
@@ -180,7 +179,7 @@ function addData!(
         blobstore = blobstore.key, 
         hash = string(bytes2hex(hashfunction(blob))),
         origin = buildSourceString(dfg, vLbl),
-        description = description, 
+        description, 
         mimeType, 
         metadata, 
         timestamp)
@@ -239,17 +238,19 @@ function deleteData!(
 end
 
 
-deleteData!(
+function deleteData!(
     dfg::AbstractDFG, 
     blobstore::AbstractBlobStore, 
     vLbl::Symbol, 
     entry::BlobEntry
-) = deleteBlob!(
-    dfg, 
-    blobstore, 
-    vLbl, 
-    entry.label
-)
+) 
+    return deleteData!(
+        dfg, 
+        blobstore, 
+        vLbl, 
+        entry.label
+    )
+end
 
 function deleteData!(
     dfg::AbstractDFG, 

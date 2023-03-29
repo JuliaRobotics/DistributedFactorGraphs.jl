@@ -30,6 +30,8 @@ using UUIDs
 using Pkg
 using TensorCast
 using ProgressMeter
+using SHA
+
 
 # used for @defVariable
 import ManifoldsBase
@@ -283,6 +285,18 @@ export
 ## CustomPrinting.jl
 export printFactor, printVariable, printNode
 
+# Data Blobs
+export InMemoryBlobStore
+export FolderStore
+export BlobEntry
+export getBlob, addBlob!, updateBlob!, deleteBlob!, listBlobEntries
+export listBlobs
+export BlobEntry
+# export copyStore
+export getId, getHash, getTimestamp
+# convenience wrappers
+export getData, addData!, updateData!, deleteData!
+
 ##==============================================================================
 ## Files Includes
 ##==============================================================================
@@ -292,7 +306,8 @@ export printFactor, printVariable, printNode
 include("entities/AbstractDFG.jl")
 
 # Data Blob extensions
-include("DataBlobs/DataBlobs.jl")
+include("DataBlobs/entities/BlobEntry.jl")
+include("DataBlobs/entities/BlobStores.jl")
 
 include("entities/DFGFactor.jl")
 
@@ -317,6 +332,10 @@ include("services/DFGVariable.jl")
 include("services/DFGFactor.jl")
 include("Deprecated.jl")
 include("services/CompareUtils.jl")
+#Blobs
+include("DataBlobs/services/BlobEntry.jl")
+include("DataBlobs/services/BlobStores.jl")
+include("DataBlobs/services/HelpersDataWrapEntryBlob.jl")
 
 # Include the FilesDFG API.
 include("FileDFG/FileDFG.jl")
