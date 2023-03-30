@@ -83,13 +83,13 @@ FunctionNodeData(args...; kw...) = FunctionNodeData{typeof(args[4])}(args...; kw
 # | DFGFactor         |   X   |   X  |     X     |     X    |      X     |
 
 # Packed Factor
-Base.@kwdef struct PackedFactor
+Base.@kwdef struct PackedFactor <: AbstractDFGFactor
     id::Union{UUID, Nothing} = nothing
     label::Symbol
     tags::Vector{Symbol}
     _variableOrderSymbols::Vector{Symbol}
     timestamp::ZonedDateTime
-    nstime::Int
+    nstime::String
     fnctype::String
     solvable::Int
     data::String
@@ -280,8 +280,8 @@ StructTypes.omitempties(::Type{SkeletonDFGFactor}) = (:id,)
 ##==============================================================================
 ## Define factor levels
 ##==============================================================================
-const FactorDataLevel0 = Union{DFGFactor, DFGFactorSummary, SkeletonDFGFactor}
-const FactorDataLevel1 = Union{DFGFactor, DFGFactorSummary}
+const FactorDataLevel0 = Union{DFGFactor, DFGFactorSummary, PackedFactor, SkeletonDFGFactor}
+const FactorDataLevel1 = Union{DFGFactor, DFGFactorSummary, PackedFactor}
 const FactorDataLevel2 = Union{DFGFactor}
 
 ##==============================================================================

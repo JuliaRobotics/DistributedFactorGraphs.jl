@@ -344,6 +344,9 @@ function setTimestamp(v::DFGVariableSummary, ts::ZonedDateTime; verbose::Bool=tr
     return DFGVariableSummary(v.id, v.label, ts, v.tags, v.ppeDict, v.variableTypeName, v.dataDict)
 end
 
+function setTimestamp(v::PackedVariable, timestamp::ZonedDateTime; verbose::Bool=true)
+    return PackedVariable(;(key => getproperty(v, key) for key in fieldnames(PackedVariable))..., timestamp)
+end
 
 ##------------------------------------------------------------------------------
 ## solvable
@@ -385,6 +388,13 @@ function getPPE(vari::VariableDataLevel1, solveKey::Symbol=:default)
     return  getPPEDict(vari)[solveKey]
     # return haskey(ppeDict, solveKey) ? ppeDict[solveKey] : nothing
 end
+
+"""
+    $SIGNATURES
+
+Get all the parametric point estimate (PPE) for a variable in the factor graph.
+"""
+function getPPEs end
 
 # afew more aliases on PPE, brought back from deprecated DF
 
