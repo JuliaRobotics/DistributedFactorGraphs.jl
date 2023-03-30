@@ -46,7 +46,7 @@ function assertHash(de::BlobEntry, db; hashfunction::Function = sha256)
 end
 
 
-function Base.show(io::IO, entry::BlobEntry) 
+function Base.show(io::IO, ::MIME"text/plain", entry::BlobEntry)
     println(io, "_type=BlobEntry {")
     println(io, "  id:            ", entry.id) 
     println(io, "  blobId:        ", entry.blobId) 
@@ -61,10 +61,6 @@ function Base.show(io::IO, entry::BlobEntry)
     println(io, "  _version:      ", entry._version) 
     println(io, "}") 
 end 
-
-Base.show(io::IO, ::MIME"text/plain", entry::BlobEntry) = show(io, entry)
-
-
 
 ##==============================================================================
 ## BlobEntry - CRUD
@@ -200,7 +196,8 @@ hasBlobEntry(var::AbstractDFGVariable, blobLabel::Symbol) = haskey(var.dataDict,
 
 """
     $(SIGNATURES)
-Get data entries, Vector{BlobEntry}
+
+Get blob entries, Vector{BlobEntry}
 """
 function getBlobEntries(var::AbstractDFGVariable)
     #or should we return the iterator, Base.ValueIterator{Dict{Symbol,BlobEntry}}?
@@ -211,6 +208,36 @@ function getBlobEntries(dfg::AbstractDFG, label::Symbol)
     #or should we return the iterator, Base.ValueIterator{Dict{Symbol,BlobEntry}}?
     getBlobEntries(getVariable(dfg, label))
 end
+
+"""
+    $(SIGNATURES)
+
+Get all blob entries matching a Regex pattern over variables
+
+Notes
+- Use `dropEmpties=true` to not include empty lists in result.
+- Use keyword `varList` for which variables to search through.
+"""
+function getBlobEntriesVariables(
+    dfg::AbstractDFG,
+    bLblPattern::Regex;
+    varList::AbstractVector{Symbol} = sort(listVariables(dfg); lt=natural_lt),
+    dropEmpties::Bool = false
+)
+    RETLIST = Vector{Vector{BlobEntry}}()
+    @showprogress "Get entries matching $bLblPattern" for vl in varList
+        bes = filter(
+            s->occursin(bLblPattern,string(s.label)),
+            listBlobEntries(dfg,vl)
+        )
+        # only push to list if there are entries on this variable
+        (!dropEmpties || 0 < length(bes)) ? nothing : continue
+        push!(RETLIST, bes)
+    end
+    
+    return RETLIST
+end
+
 
 """
     $(SIGNATURES)

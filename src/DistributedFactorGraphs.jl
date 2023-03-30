@@ -173,6 +173,7 @@ export getPPEDict, getVariablePPEDict, getVariablePPE
 
 # CRUD & SET
 export getPPE,
+       getPPEs,
        getVariablePPE,
        addPPE!,
        updatePPE!,
@@ -200,6 +201,7 @@ export hasBlobEntry,getBlobEntry,addBlobEntry!,updateBlobEntry!,deleteBlobEntry!
 export incrDataLabelSuffix
 
 export getBlobEntries, listDataEntries, hasDataEntry, hasDataEntry
+export getBlobEntriesVariables
 export listDataEntrySequence
 # convenience wrappers
 export mergeDataEntries!

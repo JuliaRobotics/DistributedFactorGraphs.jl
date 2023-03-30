@@ -952,7 +952,7 @@ function copyGraph!(destDFG::AbstractDFG,
     # And then all factors to the destDFG.
     for factor in sourceFactors
         # Get the original factor variables (we need them to create it)
-        sourceFactorVariableIds = getNeighbors(sourceDFG, factor)
+        sourceFactorVariableIds = collect(factor._variableOrderSymbols)
         # Find the labels and associated variables in our new subgraph
         factVariableIds = Symbol[]
         for variable in sourceFactorVariableIds

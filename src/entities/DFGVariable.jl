@@ -91,7 +91,7 @@ VariableNodeData(variableType::InferenceVariable; kwargs...) = VariableNodeData{
 
 """
 $(TYPEDEF)
-Packed VariabeNodeData structure for serializing DFGVariables.
+Packed VariableNodeData structure for serializing DFGVariables.
 
   ---
 Fields:
@@ -177,6 +177,7 @@ getEstimateFields(::MeanMaxPPE) = [:suggested, :max, :mean]
 ## DFG Variables
 ##==============================================================================
 
+
 export Variable
   
 """
@@ -184,20 +185,46 @@ export Variable
 
 The Variable information packed in a way that accomdates multi-lang using json.
 """
-Base.@kwdef struct Variable
-    # NOTE: This has to match the order of the JSON deserializer as we're using OrderedStructs.
-    id::Union{UUID, Nothing}
+Base.@kwdef struct Variable <: AbstractDFGVariable
+    id::Union{UUID, Nothing} = nothing
     label::Symbol
-    tags::Vector{Symbol}
-    timestamp::ZonedDateTime
-    nstime::Int
-    ppes::Vector{MeanMaxPPE}
-    blobEntries::Vector{BlobEntry}
+    tags::Vector{Symbol} = Symbol[]
+    timestamp::ZonedDateTime = now(tz"UTC")
+    nstime::String = "0"
+    ppes::Vector{MeanMaxPPE} = MeanMaxPPE[]
+    blobEntries::Vector{BlobEntry} = BlobEntry[]
     variableType::String
-    _version::String
-    metadata::String
-    solvable::Int
-    solverData::Vector{PackedVariableNodeData}
+    _version::String = string(_getDFGVersion())
+    metadata::String = "e30="
+    solvable::Int = 1
+    solverData::Vector{PackedVariableNodeData} = PackedVariableNodeData[]
+end
+
+#IIF like contruction helper for packed variable
+function PackedVariable(
+    label::Symbol,
+    variableType::String;
+    tags::Vector{Symbol} = Symbol[],
+    timestamp::ZonedDateTime = now(tz"UTC"),
+    solvable::Int = 1,
+    nanosecondtime::Int64 = 0,
+    smalldata::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
+    kwargs...
+)
+    union!(tags, [:VARIABLE])
+
+    pacvar = PackedVariable(;
+        label,
+        variableType,
+        nstime = string(nanosecondtime),
+        solvable,
+        tags,
+        metadata = base64encode(JSON3.write(smalldata)),
+        timestamp,
+        kwargs...
+    )
+
+    return pacvar
 end
 const PackedVariable = Variable
 
@@ -273,7 +300,7 @@ DFGVariable(label::Symbol,
             solverDataDict::Dict{Symbol, VariableNodeData{T,P}}=Dict{Symbol, VariableNodeData{T,getPointType(T)}}(),
             kw...) where {T <: InferenceVariable, P} = DFGVariable(label, T; solverDataDict=solverDataDict, kw...)
 #
-@deprecate DFGVariable(label::Symbol, T_::Type{<:InferenceVariable},w...; timestamp::DateTime=now(),kw...) DFGVariable(label, T_, w...; timestamp=ZonedDateTime(timestamp), kw...)
+# @deprecate DFGVariable(label::Symbol, T_::Type{<:InferenceVariable},w...; timestamp::DateTime=now(),kw...) DFGVariable(label, T_, w...; timestamp=ZonedDateTime(timestamp), kw...)
 #
 
 
@@ -351,6 +378,27 @@ Base.@kwdef struct DFGVariableSummary <: AbstractDFGVariable
     dataDict::Dict{Symbol, BlobEntry}
 end
 
+function DFGVariableSummary(
+    id,
+    label,
+    timestamp,
+    tags,
+    ::Nothing,
+    variableTypeName,
+    ::Nothing,
+)
+    return DFGVariableSummary(
+        id,
+        label,
+        timestamp,
+        tags,
+        Dict{Symbol, MeanMaxPPE}(),
+        variableTypeName,
+        Dict{Symbol, BlobEntry}(),
+    )
+end
+
+StructTypes.names(::Type{DFGVariableSummary}) = ((:variableTypeName, :variableType),)
 
 ##------------------------------------------------------------------------------
 ## SkeletonDFGVariable.jl
@@ -384,8 +432,8 @@ StructTypes.omitempties(::Type{SkeletonDFGVariable}) = (:id,)
 ##==============================================================================
 # Define variable levels
 ##==============================================================================
-const VariableDataLevel0 = Union{DFGVariable, DFGVariableSummary, SkeletonDFGVariable}
-const VariableDataLevel1 = Union{DFGVariable, DFGVariableSummary}
+const VariableDataLevel0 = Union{DFGVariable, DFGVariableSummary, PackedVariable, SkeletonDFGVariable}
+const VariableDataLevel1 = Union{DFGVariable, DFGVariableSummary, PackedVariable}
 const VariableDataLevel2 = Union{DFGVariable}
 
 ##==============================================================================

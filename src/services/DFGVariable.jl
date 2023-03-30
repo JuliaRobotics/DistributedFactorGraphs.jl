@@ -16,8 +16,8 @@ getPPEMean(fg::AbstractDFG, varlabel::Symbol, solveKey::Symbol=:default) =
                 
 "$(SIGNATURES)"
 getPPESuggested(est::AbstractPointParametricEst) = est.suggested
-getPPESuggested(fg::AbstractDFG, varlabel::Symbol, solveKey::Symbol=:default) =
-                getPPE(fg, varlabel, solveKey) |> getPPESuggested
+getPPESuggested(var::DFGVariable, solveKey::Symbol=:default) = getPPE(var, solveKey) |> getPPESuggested
+getPPESuggested(dfg::AbstractDFG, varlabel::Symbol, solveKey::Symbol=:default) = getPPE(getVariable(dfg, varlabel), solveKey) |> getPPESuggested
 
 "$(SIGNATURES)"
 getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimestamp
@@ -344,6 +344,9 @@ function setTimestamp(v::DFGVariableSummary, ts::ZonedDateTime; verbose::Bool=tr
     return DFGVariableSummary(v.id, v.label, ts, v.tags, v.ppeDict, v.variableTypeName, v.dataDict)
 end
 
+function setTimestamp(v::PackedVariable, timestamp::ZonedDateTime; verbose::Bool=true)
+    return PackedVariable(;(key => getproperty(v, key) for key in fieldnames(PackedVariable))..., timestamp)
+end
 
 ##------------------------------------------------------------------------------
 ## solvable
@@ -385,6 +388,13 @@ function getPPE(vari::VariableDataLevel1, solveKey::Symbol=:default)
     return  getPPEDict(vari)[solveKey]
     # return haskey(ppeDict, solveKey) ? ppeDict[solveKey] : nothing
 end
+
+"""
+    $SIGNATURES
+
+Get all the parametric point estimate (PPE) for a variable in the factor graph.
+"""
+function getPPEs end
 
 # afew more aliases on PPE, brought back from deprecated DF
 
@@ -570,7 +580,7 @@ Get variable solverdata for a given solve key.
 """
 function getVariableSolverData(dfg::AbstractDFG, variablekey::Symbol, solvekey::Symbol=:default)
     v = getVariable(dfg, variablekey)
-    !haskey(v.solverDataDict, solvekey) && error("Solve key '$solvekey' not found in variable '$variablekey'")
+    !haskey(v.solverDataDict, solvekey) && throw(KeyError("Solve key '$solvekey' not found in variable '$variablekey'"))
     return v.solverDataDict[solvekey]
 end
 
@@ -736,7 +746,7 @@ function deleteVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, solveK
     var = getVariable(dfg, variablekey)
 
     if !haskey(var.solverDataDict, solveKey)
-        error("VariableNodeData '$(solveKey)' does not exist")
+        throw(KeyError("VariableNodeData '$(solveKey)' does not exist"))
     end
     vnd = pop!(var.solverDataDict, solveKey)
     return vnd
@@ -793,14 +803,13 @@ Notes
 - Defaults on keywords `solveKey` and `method`
 
 Related
-getMeanPPE, getMaxPPE, getKDEMean, getKDEFit, getPPEs, getVariablePPEs
+[`getMeanPPE`](@ref), [`getMaxPPE`](@ref), [`updatePPE!`](@ref), getKDEMean, getKDEFit, getPPEs, getVariablePPEs
 """
-function getPPE(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol=:default)
-    v = getVariable(dfg, variablekey)
-    !haskey(v.ppeDict, ppekey) && error("PPE key '$ppekey' not found in variable '$variablekey'")
+function getPPE(v::DFGVariable, ppekey::Symbol=:default)
+    !haskey(v.ppeDict, ppekey) && throw(KeyError("PPE key '$ppekey' not found in variable '$(getLabel(v))'"))
     return v.ppeDict[ppekey]
 end
-
+getPPE(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol=:default) = getPPE(getVariable(dfg, variablekey), ppekey)
 # Not the most efficient call but it at least reuses above (in memory it's probably ok)
 getPPE(dfg::AbstractDFG, sourceVariable::VariableDataLevel1, ppekey::Symbol=:default) = getPPE(dfg, sourceVariable.label, ppekey)
 
@@ -870,7 +879,7 @@ function deletePPE!(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol=:defau
     var = getVariable(dfg, variablekey)
 
     if !haskey(var.ppeDict, ppekey)
-        error("VariableNodeData '$(ppekey)' does not exist")
+        throw(KeyError("VariableNodeData '$(ppekey)' does not exist"))
     end
     vnd = pop!(var.ppeDict, ppekey)
     return vnd
