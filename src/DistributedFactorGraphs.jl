@@ -32,6 +32,7 @@ using TensorCast
 using ProgressMeter
 using SHA
 
+using CSV
 
 # used for @defVariable
 import ManifoldsBase

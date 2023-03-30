@@ -103,36 +103,43 @@ function getBlob(dfg::AbstractDFG, entry::BlobEntry)
     )
 end
 
-getBlob(store::AbstractBlobStore, entry::BlobEntry) =
-    getBlob(store, entry.originId)
+function getBlob(store::AbstractBlobStore, entry::BlobEntry)
+    blobId = isnothing(entry.blobId) ? entry.originId : entry.blobId
+    getBlob(store, blobId)
+end
 
 #add 
 addBlob!(dfg::AbstractDFG, entry::BlobEntry, data) =
     addBlob!(getBlobStore(dfg, entry.blobstore), entry, data)
 
-addBlob!(store::AbstractBlobStore, entry::BlobEntry, data) =
-    addBlob!(store, entry.originId, data)
-    
+function addBlob!(store::AbstractBlobStore, entry::BlobEntry, data)
+    blobId = isnothing(entry.blobId) ? entry.originId : entry.blobId
+    addBlob!(store, blobId, data)
+end
+
 addBlob!(store::AbstractBlobStore, data) =
     addBlob!(store, uuid4(), data)
 
 #fallback as not all blobStores use filename
-addBlob!(store::AbstractBlobStore, blobId::UUID, data, ::String) = 
+addBlob!(store::AbstractBlobStore, blobId::UUID, data, ::String) =
     addBlob!(store, blobId, data)
 
 #update
 updateBlob!(dfg::AbstractDFG, entry::BlobEntry, data::T) where {T} =
     updateBlob!(getBlobStore(dfg, entry.blobstore), entry, data)
 
-updateBlob!(store::AbstractBlobStore, entry::BlobEntry, data) =
-    updateBlob!(store, entry.originId, data)
-
+function updateBlob!(store::AbstractBlobStore, entry::BlobEntry, data)
+    blobId = isnothing(entry.blobId) ? entry.originId : entry.blobId
+    updateBlob!(store, blobId, data)
+end
 #delete
 deleteBlob!(dfg::AbstractDFG, entry::BlobEntry) =
     deleteBlob!(getBlobStore(dfg, entry.blobstore), entry)
 
-deleteBlob!(store::AbstractBlobStore, entry::BlobEntry) =
-    deleteBlob!(store, entry.originId)
+function deleteBlob!(store::AbstractBlobStore, entry::BlobEntry)
+    blobId = isnothing(entry.blobId) ? entry.originId : entry.blobId
+    deleteBlob!(store, blobId)
+end
 
 
 #has
@@ -250,7 +257,7 @@ function getBlob(store::InMemoryBlobStore, blobId::UUID)
 end
 
 function addBlob!(store::InMemoryBlobStore{T}, blobId::UUID, data::T) where {T}
-    if haskey(store.blobs, entry.originId)
+    if haskey(store.blobs, blobId)
         error("Key '$blobId' blob already exists.")
     end
     store.blobs[blobId] = data
@@ -269,3 +276,54 @@ function deleteBlob!(store::InMemoryBlobStore, blobId::UUID)
 end
 
 hasBlob(store::InMemoryBlobStore, blobId::UUID) = haskey(store.blobs, blobId)
+
+
+##==============================================================================
+## LinkStore Link blobId to a existing local folder
+##==============================================================================
+
+struct LinkStore <: AbstractBlobStore{String}
+    key::Symbol
+    csvfile::String
+    cache::Dict{UUID, String}
+
+    function LinkStore(key, csvfile)
+        if !isfile(csvfile)
+            @info "File '$csvfile' doesn't exist - creating."
+            # create new folder
+            open(csvfile, "w") do io
+                println(io, "blobid,path")
+            end
+            return new(key, csvfile, Dict{UUID, String}())
+        else
+            file = CSV.File(csvfile)
+            cache = Dict(UUID.(file.blobid) .=> file.path)
+            return new(key, csvfile, cache)
+        end
+    end
+end
+
+function getBlob(store::LinkStore, blobId::UUID)
+    fname = get(store.cache, blobId, nothing)
+    read(fname)
+end
+
+function addBlob!(store::LinkStore, entry::BlobEntry, linkfile::String)
+    addBlob!(store, entry.originId, nothing, linkfile::String)
+end
+
+function addBlob!(store::LinkStore, blobId::UUID, blob::Any, linkfile::String) 
+    if haskey(store.cache, blobId)
+        error("blobId $blobId already exists in the store")
+    end
+    push!(store.cache, blobId=>linkfile)
+    open(store.csvfile, "a") do f
+        println(f, blobId,",",linkfile)
+    end
+    getBlob(store, blobId)
+end
+
+function deleteBlob!(store::LinkStore, args...)
+    error("deleteDataBlob(::LinkStore) not supported")
+end
+
