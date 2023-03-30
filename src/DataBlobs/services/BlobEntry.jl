@@ -94,7 +94,7 @@ end
 # or getBlobEntryFirst, btw this returns a vector in some other places
 @deprecate getBlobEntry(var::AbstractDFGVariable, key::Regex) getfirstBlobEntry(var, key)
 
-function getfirstBlobEntry(var::AbstractDFGVariable, key::Regex)
+function getBlobEntryFirst(var::AbstractDFGVariable, key::Regex)
     for (k,v) in var.dataDict
         if occursin(key, string(v.label))
             return v
