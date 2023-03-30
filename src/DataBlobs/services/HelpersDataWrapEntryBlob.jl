@@ -6,7 +6,7 @@
 # NOTE this is the convenience wrappers for entry and blob.
 
 """
-Get the data entry and blob for the specified blobstore or dfg retured as a tuple.
+Get the blob entry and blob for the specified blobstore or dfg retured as a tuple.
 Related
 [`getBlobEntry`](@ref)
 
@@ -241,12 +241,12 @@ end
 deleteData!(
     dfg::AbstractDFG, 
     blobstore::AbstractBlobStore, 
-    label::Symbol, 
+    vLbl::Symbol, 
     entry::BlobEntry
 ) = deleteBlob!(
     dfg, 
     blobstore, 
-    label, 
+    vLbl, 
     entry.label
 )
 

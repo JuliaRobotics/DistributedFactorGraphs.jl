@@ -91,7 +91,7 @@ VariableNodeData(variableType::InferenceVariable; kwargs...) = VariableNodeData{
 
 """
 $(TYPEDEF)
-Packed VariabeNodeData structure for serializing DFGVariables.
+Packed VariableNodeData structure for serializing DFGVariables.
 
   ---
 Fields:
@@ -179,19 +179,18 @@ getEstimateFields(::MeanMaxPPE) = [:suggested, :max, :mean]
 
 # Packed Variable
 Base.@kwdef struct PackedVariable
-    # NOTE: This has to match the order of the JSON deserializer as we're using OrderedStructs.
-    id::Union{UUID, Nothing}
+    id::Union{UUID, Nothing} = nothing
     label::Symbol
-    tags::Vector{Symbol}
-    timestamp::ZonedDateTime
-    nstime::Int
-    ppes::Vector{MeanMaxPPE}
-    blobEntries::Vector{BlobEntry}
+    tags::Vector{Symbol} = Symbol[]
+    timestamp::ZonedDateTime = now(tz"UTC")
+    nstime::Int = 0
+    ppes::Vector{MeanMaxPPE} = MeanMaxPPE[]
+    blobEntries::Vector{BlobEntry} = BlobEntry[]
     variableType::String
-    _version::String
-    metadata::String
-    solvable::Int
-    solverData::Vector{PackedVariableNodeData}
+    _version::String = string(_getDFGVersion())
+    metadata::String = "e30="
+    solvable::Int = 1
+    solverData::Vector{PackedVariableNodeData} = PackedVariableNodeData[]
 end
 
 StructTypes.StructType(::Type{PackedVariable}) = StructTypes.UnorderedStruct()
@@ -344,6 +343,27 @@ Base.@kwdef struct DFGVariableSummary <: AbstractDFGVariable
     dataDict::Dict{Symbol, BlobEntry}
 end
 
+function DFGVariableSummary(
+    id,
+    label,
+    timestamp,
+    tags,
+    ::Nothing,
+    variableTypeName,
+    ::Nothing,
+)
+    return DFGVariableSummary(
+        id,
+        label,
+        timestamp,
+        tags,
+        Dict{Symbol, MeanMaxPPE}(),
+        variableTypeName,
+        Dict{Symbol, BlobEntry}(),
+    )
+end
+
+StructTypes.names(::Type{DFGVariableSummary}) = ((:variableTypeName, :variableType),)
 
 ##------------------------------------------------------------------------------
 ## SkeletonDFGVariable.jl
