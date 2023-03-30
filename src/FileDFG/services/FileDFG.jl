@@ -40,12 +40,12 @@ function saveDFG(folder::AbstractString, dfg::AbstractDFG)
     map(f -> rm("$varFolder/$f"), readdir(varFolder))
     map(f -> rm("$factorFolder/$f"), readdir(factorFolder))
     # Variables
-    for v in variables
+    @showprogress "saving variables" for v in variables
         vPacked = packVariable(v)
         JSON3.write("$varFolder/$(v.label).json", vPacked)
     end
     # Factors
-    for f in factors
+    @showprogress "saving factors" for f in factors
         fPacked = packFactor(dfg, f)
         JSON3.write("$factorFolder/$(f.label).json", fPacked)
     end
@@ -56,9 +56,9 @@ function saveDFG(folder::AbstractString, dfg::AbstractDFG)
     destfile = joinpath(savedir, savename*".tar.gz")
     # FIXME, switch to Tar.jl and Transcode Zlib / Codec, see #351
     if length(savedir) != 0
-      run( pipeline(`tar -zcf - -C $savedir $savename`, stdout="$destfile"))
+        run( pipeline(`tar -zcf - -C $savedir $savename`, stdout="$destfile"))
     else
-      run( pipeline(`tar -zcf - $savename`, stdout="$destfile"))
+        run( pipeline(`tar -zcf - $savename`, stdout="$destfile"))
     end
     Base.rm(joinpath(savedir,savename), recursive=true)
 end
