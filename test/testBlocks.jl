@@ -5,6 +5,7 @@ using Manifolds
 
 import Base: convert
 import DistributedFactorGraphs: reconstFactorData
+# import DistributedFactorGraphs: getData, addData!, updateData!, deleteData!
 
 # Test InferenceVariable Types
 # struct TestVariableType1 <: InferenceVariable
@@ -112,8 +113,7 @@ end
 
 
 ##
-# global testDFGAPI = Neo4jDFG
-# global testDFGAPI = LightDFG
+# global testDFGAPI = GraphsDFG
 # T = testDFGAPI
 
 #test Specific definitions
@@ -131,29 +131,22 @@ function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverP
     # "DFG Structure and Accessors"
     # Constructors
     # Constructors to be implemented
-    fg = T(solverParams=solparams, userId="test@navability.io")
+    fg = T(solverParams=solparams, userLabel="test@navability.io")
     #TODO test something better
     @test isa(fg, T)
-    @test getUserId(fg)=="test@navability.io"
-    @test getRobotId(fg)=="DefaultRobot"
-    @test getSessionId(fg)[1:8] == "Session_"
+    @test getUserLabel(fg)=="test@navability.io"
+    @test getRobotLabel(fg)=="DefaultRobot"
+    @test getSessionLabel(fg)[1:8] == "Session_"
 
     # Test the validation of the robot, session, and user IDs.
     notAllowedList = ["!notValid", "1notValid", "_notValid", "USER", "ROBOT", "SESSION",
                       "VARIABLE", "FACTOR", "ENVIRONMENT", "PPE", "DATA_ENTRY", "FACTORGRAPH"]
 
     for s in notAllowedList
-        @test_throws ErrorException T(solverParams=solparams, sessionId=s)
-        @test_throws ErrorException T(solverParams=solparams, robotId=s)
-        @test_throws ErrorException T(solverParams=solparams, userId=s)
+        @test_throws ErrorException T(solverParams=solparams, sessionLabel=s)
+        @test_throws ErrorException T(solverParams=solparams, robotLabel=s)
+        @test_throws ErrorException T(solverParams=solparams, userLabel=s)
     end
-
-
-    #NOTE I don't like, so not exporting, and not recommended to use
-    #     Technically if you set Ids its a new object
-    @test DistributedFactorGraphs.setUserId!(fg, "test@navability.io") == "test@navability.io"
-    @test DistributedFactorGraphs.setRobotId!(fg, "testRobotId") == "testRobotId"
-    @test DistributedFactorGraphs.setSessionId!(fg, "testSessionId") == "testSessionId"
 
     des = "description for runtest"
     uId = "test@navability.io"
@@ -167,12 +160,11 @@ function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverP
     # accesssors
     # get
     @test getDescription(fg) == des
-    @test getUserId(fg) == uId
-    @test getRobotId(fg) == rId
-    @test getSessionId(fg) == sId
+    @test getUserLabel(fg) == uId
+    @test getRobotLabel(fg) == rId
+    @test getSessionLabel(fg) == sId
     @test getAddHistory(fg) === fg.addHistory
 
-    # Need to set this for Neo4jDFG
     @test setUserData!(fg, Dict(ud)) == Dict(ud)
     @test setRobotData!(fg, Dict(rd)) == Dict(rd)
     @test setSessionData!(fg, Dict(sd)) == Dict(sd)
@@ -347,9 +339,9 @@ function  DFGFactorSCA()
     f1_tags = Set([:FACTOR])
     testTimestamp = now(localzone())
 
-    gfnd_prior = GenericFunctionNodeData(false, false, Int[], TestCCW(TestAbstractPrior()))
+    gfnd_prior = GenericFunctionNodeData(fnc=TestCCW(TestAbstractPrior()))
 
-    gfnd = GenericFunctionNodeData(false, false, Int[], TestCCW(TestFunctorInferenceType1()))
+    gfnd = GenericFunctionNodeData(fnc=TestCCW(TestFunctorInferenceType1()))
 
     f1 = DFGFactor{TestCCW{TestFunctorInferenceType1}}(f1_lbl, [:a,:b])
     f1 = DFGFactor(f1_lbl, [:a,:b], gfnd, tags = f1_tags, solvable=0)
@@ -419,7 +411,7 @@ function  VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     #TODO test remaining add signitures
     # global fg
     # fg = GraphsDFG(solverParams=NoSolverParams())
-    # fg = LightDFG(solverParams=NoSolverParams())
+    # fg = GraphsDFG(solverParams=NoSolverParams())
     # add update delete
 @test addVariable!(fg, v1) == v1
 @test addVariable!(fg, v2) == v2
@@ -710,7 +702,7 @@ function  VSDTestBlock!(fg, v1)
     #  - `updateVariableSolverData!`
     #  - `deleteVariableSolverData!`
     #
-    # > - `getVariableSolverDataAll` #TODO Data is already plural so maybe Variables, All or Dict
+    # > - `getVariableSolverDataAll` #TODO Data is already plural so maybe Variables, All or Dict, or use Datum for singular
     # > - `getVariablesSolverData`
     #
     # **Set like**
@@ -851,110 +843,185 @@ end
 function  DataEntriesTestBlock!(fg, v2)
     # "Data Entries"
 
-    # getDataEntry
-    # addDataEntry
-    # updateDataEntry
-    # deleteDataEntry
-    # getDataEntries
-    # listDataEntries
+    # getBlobEntry
+    # addBlobEntry
+    # updateBlobEntry
+    # deleteBlobEntry
+    # getBlobEntries
+    # listBlobEntries
     # emptyDataEntries
     # mergeDataEntries
-    storeEntry = BlobStoreEntry(:a,uuid4(), :b, "","","","",now(localzone()))
+    storeEntry = BlobEntry(
+        id = uuid4(), 
+        blobId = uuid4(),
+        originId = uuid4(),
+        label = :a, 
+        blobstore = :b, 
+        hash = "",
+        origin = "",
+        description = "",
+        mimeType = "", 
+        metadata = "")
     @test getLabel(storeEntry) == storeEntry.label
     @test getId(storeEntry) == storeEntry.id
     @test getHash(storeEntry) == hex2bytes(storeEntry.hash)
-    @test getCreatedTimestamp(storeEntry) == storeEntry.createdTimestamp
+    @test getTimestamp(storeEntry) == storeEntry.timestamp
 
-    oid = zeros(UInt8,12); oid[12] = 0x01
-    de1 = MongodbDataEntry(:key1, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
+    # oid = zeros(UInt8,12); oid[12] = 0x01
+    # de1 = MongodbDataEntry(:key1, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
+    de1 = BlobEntry(
+        id = uuid4(), 
+        blobId = uuid4(),
+        originId = uuid4(),
+        label = :key1, 
+        blobstore = :b, 
+        hash = "",
+        origin = "",
+        description = "",
+        mimeType = "", 
+        metadata = "")
 
-    oid = zeros(UInt8,12); oid[12] = 0x02
-    de2 = MongodbDataEntry(:key2, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
+    # oid = zeros(UInt8,12); oid[12] = 0x02
+    # de2 = MongodbDataEntry(:key2, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
+    de2 = BlobEntry(
+        id = uuid4(), 
+        blobId = uuid4(),
+        originId = uuid4(),
+        label = :key2, 
+        blobstore = :b, 
+        hash = "",
+        origin = "",
+        description = "",
+        mimeType = "", 
+        metadata = "")
 
-    oid = zeros(UInt8,12); oid[12] = 0x03
-    de2_update = MongodbDataEntry(:key2, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
+    # oid = zeros(UInt8,12); oid[12] = 0x03
+    # de2_update = MongodbDataEntry(:key2, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
+    de2_update = BlobEntry(
+        id = uuid4(), 
+        blobId = uuid4(),
+        originId = uuid4(),
+        label = :key2, 
+        blobstore = :b, 
+        hash = "",
+        origin = "",
+        description = "Yay",
+        mimeType = "", 
+        metadata = "")
 
     #add
     v1 = getVariable(fg, :a)
-    @test addDataEntry!(v1, de1) == de1
-    @test addDataEntry!(fg, :a, de2) == de2
-    @test_throws ErrorException addDataEntry!(v1, de1)
-    @test de2 in getDataEntries(v1)
+    @test addBlobEntry!(v1, de1) == de1
+    @test addBlobEntry!(fg, :a, de2) == de2
+    @test_throws ErrorException addBlobEntry!(v1, de1)
+    @test de2 in getBlobEntries(v1)
 
     #get
-    @test deepcopy(de1) == getDataEntry(v1, :key1)
-    @test deepcopy(de2) == getDataEntry(fg, :a, :key2)
-    @test_throws ErrorException getDataEntry(v2, :key1)
-    @test_throws ErrorException getDataEntry(fg, :b, :key1)
+    @test deepcopy(de1) == getBlobEntry(v1, :key1)
+    @test deepcopy(de2) == getBlobEntry(fg, :a, :key2)
+    @test_throws KeyError getBlobEntry(v2, :key1)
+    @test_throws KeyError getBlobEntry(fg, :b, :key1)
 
     #update
-    @test updateDataEntry!(fg, :a, de2_update) == de2_update
-    @test deepcopy(de2_update) == getDataEntry(fg, :a, :key2)
-    @test @test_logs (:warn, r"does not exist") updateDataEntry!(fg, :b, de2_update) == de2_update
+    @test updateBlobEntry!(fg, :a, de2_update) == de2_update
+    @test deepcopy(de2_update) == getBlobEntry(fg, :a, :key2)
+    @test @test_logs (:warn, r"does not exist") updateBlobEntry!(fg, :b, de2_update) == de2_update
 
     #list
-    entries = getDataEntries(fg, :a)
+    entries = getBlobEntries(fg, :a)
     @test length(entries) == 2
     @test issetequal(map(e->e.label, entries), [:key1, :key2])
-    @test length(getDataEntries(fg, :b)) == 1
+    @test length(getBlobEntries(fg, :b)) == 1
 
-    @test issetequal(listDataEntries(fg, :a), [:key1, :key2])
-    @test listDataEntries(fg, :b) == Symbol[:key2]
+    @test issetequal(listBlobEntries(fg, :a), [:key1, :key2])
+    @test listBlobEntries(fg, :b) == Symbol[:key2]
 
     #delete
-    @test deleteDataEntry!(v1, de1) == de1
-    @test listDataEntries(v1) == Symbol[:key2]
+    @test deleteBlobEntry!(v1, de1) == de1
+    @test listBlobEntries(v1) == Symbol[:key2]
     #delete from dfg
-    @test deleteDataEntry!(fg, :a, :key2) == de2_update
-    @test listDataEntries(v1) == Symbol[]
-    deleteDataEntry!(fg, :b, :key2)
+    @test deleteBlobEntry!(fg, :a, :key2) == de2_update
+    @test listBlobEntries(v1) == Symbol[]
+    deleteBlobEntry!(fg, :b, :key2)
 end
 
 function blobsStoresTestBlock!(fg)
-
-    de1 = BlobStoreEntry(:label1,uuid4(), :store1, "AAAA","origin1","description1","mimetype1",now(localzone()))
-    de2 = BlobStoreEntry(:label2,uuid4(), :store2, "FFFF","origin2","description2","mimetype2",ZonedDateTime("2020-08-12T12:00:00.000+00:00"))
-    de2_update = BlobStoreEntry(:label2,uuid4(), :store2, "0123","origin2","description2","mimetype2",ZonedDateTime("2020-08-12T12:00:01.000+00:00"))
+    de1 = BlobEntry(
+        id = uuid4(), 
+        blobId = uuid4(),
+        originId = uuid4(),
+        label = :label1, 
+        blobstore = :store1, 
+        hash = "AAAA",
+        origin = "origin1",
+        description = "description1",
+        mimeType = "mimetype1", 
+        metadata = "")
+    de2 = BlobEntry(
+        id = uuid4(), 
+        blobId = uuid4(),
+        originId = uuid4(),
+        label = :label2, 
+        blobstore = :store2, 
+        hash = "FFFF",
+        origin = "origin2",
+        description = "description2",
+        mimeType = "mimetype2", 
+        metadata = "",
+        timestamp = ZonedDateTime("2020-08-12T12:00:00.000+00:00"))
+    de2_update = BlobEntry(
+        id = uuid4(), 
+        blobId = uuid4(),
+        originId = uuid4(),
+        label = :label2, 
+        blobstore = :store2, 
+        hash = "0123",
+        origin = "origin2",
+        description = "description2",
+        mimeType = "mimetype2", 
+        metadata = "",
+        timestamp = ZonedDateTime("2020-08-12T12:00:00.000+00:00"))
     @test getLabel(de1) == de1.label
     @test getId(de1) == de1.id
     @test getHash(de1) == hex2bytes(de1.hash)
-    @test getCreatedTimestamp(de1) == de1.createdTimestamp
+    @test getTimestamp(de1) == de1.timestamp
 
     #add
     var1 = getVariable(fg, :a)
-    @test addDataEntry!(var1, de1) == de1
+    var2 = getVariable(fg, :b)
+    @test addBlobEntry!(var1, de1) == de1
     updateVariable!(fg, var1)
-    @test addDataEntry!(fg, :a, de2) == de2
-    @test_throws ErrorException addDataEntry!(var1, de1)
-    @test de2 in getDataEntries(fg, var1.label)
+    @test addBlobEntry!(fg, :a, de2) == de2
+    @test_throws ErrorException addBlobEntry!(var1, de1)
+    @test de2 in getBlobEntries(fg, var1.label)
 
     #get
-    @test deepcopy(de1) == getDataEntry(var1, :label1)
-    @test deepcopy(de2) == getDataEntry(fg, :a, :label2)
-    @test_throws ErrorException getDataEntry(v2, :label1)
-    @test_throws ErrorException getDataEntry(fg, :b, :label1)
+    @test deepcopy(de1) == getBlobEntry(var1, :label1)
+    @test deepcopy(de2) == getBlobEntry(fg, :a, :label2)
+    @test_throws KeyError getBlobEntry(var2, :label1)
+    @test_throws KeyError getBlobEntry(fg, :b, :label1)
 
     #update
-    @test updateDataEntry!(fg, :a, de2_update) == de2_update
-    @test deepcopy(de2_update) == getDataEntry(fg, :a, :label2)
-    @test @test_logs (:warn, r"does not exist") updateDataEntry!(fg, :b, de2_update) == de2_update
+    @test updateBlobEntry!(fg, :a, de2_update) == de2_update
+    @test deepcopy(de2_update) == getBlobEntry(fg, :a, :label2)
+    @test @test_logs (:warn, r"does not exist") updateBlobEntry!(fg, :b, de2_update) == de2_update
 
     #list
-    entries = getDataEntries(fg, :a)
+    entries = getBlobEntries(fg, :a)
     @test length(entries) == 2
     @test issetequal(map(e->e.label, entries), [:label1, :label2])
-    @test length(getDataEntries(fg, :b)) == 1
+    @test length(getBlobEntries(fg, :b)) == 1
 
-    @test issetequal(listDataEntries(fg, :a), [:label1, :label2])
-    @test listDataEntries(fg, :b) == Symbol[:label2]
+    @test issetequal(listBlobEntries(fg, :a), [:label1, :label2])
+    @test listBlobEntries(fg, :b) == Symbol[:label2]
 
     #delete
-    @test deleteDataEntry!(fg, var1.label, de1.label) == de1
-    @test listDataEntries(fg, var1.label) == Symbol[:label2]
+    @test deleteBlobEntry!(fg, var1.label, de1.label) == de1
+    @test listBlobEntries(fg, var1.label) == Symbol[:label2]
     #delete from dfg
-    @test deleteDataEntry!(fg, :a, :label2) == de2_update
+    @test deleteBlobEntry!(fg, :a, :label2) == de2_update
     var1 = getVariable(fg, :a)
-    @test listDataEntries(var1) == Symbol[]
+    @test listBlobEntries(var1) == Symbol[]
 
     # Blobstore functions
     fs = FolderStore("/tmp/$(string(uuid4())[1:8])")
@@ -978,19 +1045,19 @@ function blobsStoresTestBlock!(fg)
     # Data functions
     testData = rand(UInt8, 50)
     # Adding 
-    newData = addData!(fg, fs.key, :a, :testing, testData)
+    newData = addData!(fg, fs.key, :a, :testing, testData) # convenience wrapper over addBlob!
     # Listing
-    @test :testing in listDataEntries(fg, :a)
+    @test :testing in listBlobEntries(fg, :a)
     # Getting
-    data = getData(fg, fs, :a, :testing)
-    @test data[1].hash == newData[1].hash
-    @test data[2] == newData[2]
+    data = getData(fg, fs, :a, :testing) # convenience wrapper over getBlob
+    @test data[1].hash == newData.hash #[1]
+    # @test data[2] == newData[2]
     # Updating
-    updateData = updateData!(fg, fs, :a, newData[1], rand(UInt8, 50))
+    updateData = updateData!(fg, fs, :a, newData, rand(UInt8, 50)) # convenience wrapper around updateBlob!
     @test updateData[1].hash != data[1].hash
     @test updateData[2] != data[2]
     # Deleting
-    retData = deleteData!(fg, :a, :testing)
+    retData = deleteData!(fg, :a, :testing) # convenience wrapper around deleteBlob!
 
 end
 
@@ -1215,7 +1282,7 @@ function connectivityTestGraph(::Type{T}; VARTYPE=DFGVariable, FACTYPE=DFGFactor
     numNodesType1 = 5
     numNodesType2 = 5
 
-    dfg = T(userId="test@navability.io")
+    dfg = T(userLabel="test@navability.io")
 
     vars = vcat(map(n -> VARTYPE(Symbol("x$n"), VariableNodeData{TestVariableType1}()), 1:numNodesType1),
                 map(n -> VARTYPE(Symbol("x$(numNodesType1+n)"), VariableNodeData{TestVariableType2}()), 1:numNodesType2))
@@ -1229,7 +1296,7 @@ function connectivityTestGraph(::Type{T}; VARTYPE=DFGVariable, FACTYPE=DFGFactor
         setSolvable!(dfg, :x8, 0)
         setSolvable!(dfg, :x9, 0)
 
-        gfnd = GenericFunctionNodeData(true, true, Int[], TestCCW(TestFunctorInferenceType1()), Float64[], Int[], 0, 1)
+        gfnd = GenericFunctionNodeData(eliminated=true, potentialused=true, fnc=TestCCW(TestFunctorInferenceType1()), multihypo=Float64[], certainhypo=Int[], solveInProgress=0, inflation=1.0)
         f_tags = Set([:FACTOR])
         # f1 = DFGFactor(f1_lbl, [:a,:b], gfnd, tags = f_tags)
 
@@ -1264,7 +1331,7 @@ function  GettingNeighbors(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
     @test getNeighbors(dfg, :x1x2f1) == ls(dfg, :x1x2f1)
 
     # Solvable
-    #TODO if not a LightDFG with and summary or skeleton
+    #TODO if not a GraphsDFG with and summary or skeleton
     if VARTYPE == DFGVariable
         @test getNeighbors(dfg, :x5, solvable=2) == Symbol[]
         @test issetequal(getNeighbors(dfg, :x5, solvable=0), [:x4x5f1,:x5x6f1])
@@ -1300,7 +1367,7 @@ end
 #     # Only returns x1 and x2
 #     @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
 #
-#     #TODO if not a LightDFG with and summary or skeleton
+#     #TODO if not a GraphsDFG with and summary or skeleton
 #     if VARTYPE == DFGVariable
 #         # DFG issue #201 Test include orphan factors with filtering - should only return x7 with solvable=1
 #         @test_broken begin
@@ -1314,7 +1381,7 @@ end
 #         setSolvable!(dfg, :x8x9f1, 0)
 #         dfgSubgraph = getSubgraphAroundNode(dfg, getVariable(dfg, :x8), 2, true, solvable=1)
 #         @test issetequal([:x8, :x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
-#         #end if not a LightDFG with and summary or skeleton
+#         #end if not a GraphsDFG with and summary or skeleton
 #     end
 #     # DFG issue #95 - confirming that getSubgraphAroundNode retains order
 #     # REF: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/95
@@ -1347,11 +1414,11 @@ function  BuildingSubgraphs(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
     # Only returns x1 and x2
     @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
 
-    #TODO if not a LightDFG with and summary or skeleton
+    #TODO if not a GraphsDFG with and summary or skeleton
     if VARTYPE == DFGVariable
         dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [:x8], 2, solvable=1)
         @test issetequal([:x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
-        #end if not a LightDFG with and summary or skeleton
+        #end if not a GraphsDFG with and summary or skeleton
     end
     # DFG issue #95 - confirming that getSubgraphAroundNode retains order
     # REF: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/95
@@ -1423,15 +1490,15 @@ function ProducingDotFiles(testDFGAPI,
                            FACTYPE=DFGFactor)
     # "Producing Dot Files"
     # create a simpler graph for dot testing
-    dotdfg = testDFGAPI(userId="test@navability.io")
+    dotdfg = testDFGAPI(userLabel="test@navability.io")
 
-    if v1 == nothing
+    if v1 === nothing
         v1 = VARTYPE(:a, VariableNodeData{TestVariableType1}())
     end
-    if v2 == nothing
+    if v2 === nothing
         v2 = VARTYPE(:b, VariableNodeData{TestVariableType1}())
     end
-    if f1 == nothing
+    if f1 === nothing
         f1 = (FACTYPE==DFGFactor) ? DFGFactor{TestFunctorInferenceType1}(:abf1, [:a, :b]) : FACTYPE(:abf1)
     end
 
@@ -1442,8 +1509,8 @@ function ProducingDotFiles(testDFGAPI,
     # │   caller = ProducingDotFiles(testDFGAPI::Type{GraphsDFG}, v1::Nothing, v2::Nothing, f1::Nothing; VARTYPE::Type{DFGVariable}, FACTYPE::Type{DFGFactor}) at testBlocks.jl:1440
     # └ @ Main ~/.julia/dev/DistributedFactorGraphs/test/testBlocks.jl:1440
     addFactor!(dotdfg, [v1, v2], f1)
-    #NOTE hardcoded toDot will have different results so test LightGraphs seperately
-    if testDFGAPI <: LightDFG || testDFGAPI <: GraphsDFG || testDFGAPI <: Neo4jDFG
+    #NOTE hardcoded toDot will have different results so test Graphs seperately
+    if testDFGAPI <: GraphsDFG || testDFGAPI <: GraphsDFG
         todotstr = toDot(dotdfg)
         todota = todotstr == "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box, fontsize=8, fixedsize=false, height=0.1, width=0.1];\na -- abf1\nb -- abf1\n}\n"
         todotb = todotstr == "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box, fontsize=8, fixedsize=false, height=0.1, width=0.1];\nb -- abf1\na -- abf1\n}\n"
@@ -1473,7 +1540,7 @@ end
 
 function CopyFunctionsTest(testDFGAPI; kwargs...)
 
-    # testDFGAPI = LightDFG
+    # testDFGAPI = GraphsDFG
     # kwargs = ()
 
     dfg, verts, facs = connectivityTestGraph(testDFGAPI; kwargs...)
@@ -1481,28 +1548,28 @@ function CopyFunctionsTest(testDFGAPI; kwargs...)
     varlbls = ls(dfg)
     faclbls = lsf(dfg)
 
-    dcdfg = deepcopyGraph(LightDFG, dfg)
+    dcdfg = deepcopyGraph(GraphsDFG, dfg)
 
     @test issetequal(ls(dcdfg), varlbls)
     @test issetequal(lsf(dcdfg), faclbls)
 
     vlbls = [:x2, :x3]
     flbls = [:x2x3f1]
-    dcdfg_part = deepcopyGraph(LightDFG, dfg, vlbls, flbls)
+    dcdfg_part = deepcopyGraph(GraphsDFG, dfg, vlbls, flbls)
 
     @test issetequal(ls(dcdfg_part), vlbls)
     @test issetequal(lsf(dcdfg_part), flbls)
 
     # deepcopy subgraph ignoring orphans
     # @test_logs (:warn, r"orphan") # orphan warning has been suppressed given overwhelming printouts
-    dcdfg_part = deepcopyGraph(LightDFG, dfg, vlbls, union(flbls, [:x1x2f1]))
+    dcdfg_part = deepcopyGraph(GraphsDFG, dfg, vlbls, union(flbls, [:x1x2f1]))
     @test issetequal(ls(dcdfg_part), vlbls)
     @test issetequal(lsf(dcdfg_part), flbls)
 
     # deepcopy subgraph with 2 parts
     vlbls = [:x2, :x3, :x5, :x6, :x10]
     flbls = [:x2x3f1, :x5x6f1]
-    dcdfg_part = deepcopyGraph(LightDFG, dfg, vlbls, flbls)
+    dcdfg_part = deepcopyGraph(GraphsDFG, dfg, vlbls, flbls)
     @test issetequal(ls(dcdfg_part), vlbls)
     @test issetequal(lsf(dcdfg_part), flbls)
     @test !isConnected(dcdfg_part)
@@ -1510,16 +1577,16 @@ function CopyFunctionsTest(testDFGAPI; kwargs...)
 
 
     vlbls = [:x2, :x3]
-    dcdfg_part =  deepcopyGraph(LightDFG, dfg, vlbls; verbose=false)
+    dcdfg_part =  deepcopyGraph(GraphsDFG, dfg, vlbls; verbose=false)
     @test issetequal(ls(dcdfg_part), vlbls)
     @test issetequal(lsf(dcdfg_part), [:x2x3f1])
 
     # not found errors
-    @test_throws ErrorException deepcopyGraph(LightDFG, dfg, [:x1, :a])
-    @test_throws ErrorException deepcopyGraph(LightDFG, dfg, [:x1], [:f1])
+    @test_throws ErrorException deepcopyGraph(GraphsDFG, dfg, [:x1, :a])
+    @test_throws ErrorException deepcopyGraph(GraphsDFG, dfg, [:x1], [:f1])
 
     # already exists errors
-    dcdfg_part = deepcopyGraph(LightDFG, dfg, [:x1, :x2, :x3], [:x1x2f1, :x2x3f1])
+    dcdfg_part = deepcopyGraph(GraphsDFG, dfg, [:x1, :x2, :x3], [:x1x2f1, :x2x3f1])
     @test_throws ErrorException deepcopyGraph!(dcdfg_part, dfg, [:x4, :x2, :x3], [:x1x2f1, :x2x3f1])
     @test_throws ErrorException deepcopyGraph!(dcdfg_part, dfg, [:x1x2f1])
 
@@ -1530,10 +1597,10 @@ function CopyFunctionsTest(testDFGAPI; kwargs...)
 
     vlbls1 = [:x1, :x2, :x3]
     vlbls2 = [:x4, :x5, :x6]
-    dcdfg_part1 = deepcopyGraph(LightDFG, dfg, vlbls1)
-    dcdfg_part2 = deepcopyGraph(LightDFG, dfg, vlbls2)
+    dcdfg_part1 = deepcopyGraph(GraphsDFG, dfg, vlbls1)
+    dcdfg_part2 = deepcopyGraph(GraphsDFG, dfg, vlbls2)
 
-    mergedGraph = testDFGAPI(userId="test@navability.io")
+    mergedGraph = testDFGAPI(userLabel="test@navability.io")
     mergeGraph!(mergedGraph, dcdfg_part1)
     mergeGraph!(mergedGraph, dcdfg_part2)
 
@@ -1545,8 +1612,8 @@ function CopyFunctionsTest(testDFGAPI; kwargs...)
     # @test issetequal(ls(condfg), varlbls)
     # @test issetequal(lsf(condfg), faclbls)
     #
-    # condfg = convert(LightDFG, dfg)
-    # @test condfg isa LightDFG
+    # condfg = convert(GraphsDFG, dfg)
+    # @test condfg isa GraphsDFG
     # @test issetequal(ls(condfg), varlbls)
     # @test issetequal(lsf(condfg), faclbls)
 
@@ -1557,7 +1624,7 @@ end
 
 function FileDFGTestBlock(testDFGAPI; kwargs...)
 
-    # testDFGAPI = LightDFG
+    # testDFGAPI = GraphsDFG
     # kwargs = ()
     # filename = "/tmp/fileDFG"
     dfg, verts, facs = connectivityTestGraph(testDFGAPI; kwargs...)
@@ -1600,7 +1667,7 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
         # Save and load the graph to test.
         saveDFG(dfg, filename)
 
-        retDFG = testDFGAPI(userId="test@navability.io")
+        retDFG = testDFGAPI(userLabel="test@navability.io")
         @info "Going to load $filename"
 
         @test_throws AssertionError loadDFG!(retDFG,"badfilename")
@@ -1616,10 +1683,10 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
             @test getFactor(dfg, fact) == getFactor(retDFG, fact)
         end
 
-        # @test length(getDataEntries(getVariable(retDFG, :x1))) == 1
-        # @test typeof(getDataEntry(getVariable(retDFG, :x1),:testing)) == GeneralDataEntry
-        # @test length(getDataEntries(getVariable(retDFG, :x2))) == 1
-        # @test typeof(getDataEntry(getVariable(retDFG, :x2),:testing2)) == FileDataEntry
+        # @test length(getBlobEntries(getVariable(retDFG, :x1))) == 1
+        # @test typeof(getBlobEntry(getVariable(retDFG, :x1),:testing)) == GeneralDataEntry
+        # @test length(getBlobEntries(getVariable(retDFG, :x2))) == 1
+        # @test typeof(getBlobEntry(getVariable(retDFG, :x2),:testing2)) == FileDataEntry
     end
 
 end

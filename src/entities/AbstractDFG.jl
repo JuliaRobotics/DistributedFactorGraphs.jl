@@ -41,7 +41,6 @@ struct NoSolverParams <: AbstractParams
 end
 
 """
-$(TYPEDEF)
-Abstract parent struct for big data entry.
+Types valid for small data.
 """
-abstract type AbstractDataEntry end
+const SmallDataTypes = Union{Int, Float64, String, Bool, Vector{Int}, Vector{Float64}, Vector{String}, Vector{Bool}}

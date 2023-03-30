@@ -82,8 +82,9 @@ _getPriorType(_type::Type{<:InferenceVariable}) = getfield(_type.name.module, Sy
 # getTimestamp
 
 setTimestamp(f::AbstractDFGFactor, ts::DateTime, timezone=localzone()) = setTimestamp(f, ZonedDateTime(ts,  timezone))
-setTimestamp(f::DFGFactor, ts::ZonedDateTime) = DFGFactor(f.label, ts, f.nstime, f.tags, f.solverData, f.solvable, getfield(f,:_variableOrderSymbols))
-setTimestamp(f::DFGFactorSummary, ts::ZonedDateTime) = DFGFactorSummary(f.label, ts, f.tags, f._variableOrderSymbols)
+setTimestamp(f::DFGFactor, ts::ZonedDateTime) = DFGFactor(f.label, ts, f.nstime, f.tags, f.solverData, f.solvable, getfield(f,:_variableOrderSymbols); id=f.id)
+setTimestamp(f::DFGFactorSummary, ts::ZonedDateTime) = DFGFactorSummary(f.id, f.label, f.tags, f._variableOrderSymbols, ts)
+setTimestamp(f::DFGFactorSummary, ts::DateTime) = DFGFactorSummary(f, ZonedDateTime(ts, localzone()))
 
 
 ##------------------------------------------------------------------------------

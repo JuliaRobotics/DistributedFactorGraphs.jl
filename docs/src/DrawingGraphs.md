@@ -25,7 +25,7 @@ using Cairo # hide
 # Construct graph using IIF
 using IncrementalInference
 # Create graph
-dfg = LightDFG{SolverParams}(solverParams=SolverParams())
+dfg = GraphsDFG{SolverParams}(solverParams=SolverParams())
 v1 = addVariable!(dfg, :x0, ContinuousScalar, tags = [:POSE], solvable=1)
 v2 = addVariable!(dfg, :x1, ContinuousScalar, tags = [:POSE], solvable=1)
 v3 = addVariable!(dfg, :l0, ContinuousScalar, tags = [:LANDMARK], solvable=1)
@@ -72,7 +72,7 @@ using DistributedFactorGraphs
 # Construct graph using IIF
 using IncrementalInference
 # Create graph
-dfg = LightDFG{SolverParams}(solverParams=SolverParams())
+dfg = GraphsDFG{SolverParams}(solverParams=SolverParams())
 v1 = addVariable!(dfg, :x0, ContinuousScalar, tags = [:POSE], solvable=1)
 v2 = addVariable!(dfg, :x1, ContinuousScalar, tags = [:POSE], solvable=1)
 v3 = addVariable!(dfg, :l0, ContinuousScalar, tags = [:LANDMARK], solvable=1)

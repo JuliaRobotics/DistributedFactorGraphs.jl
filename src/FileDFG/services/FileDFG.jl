@@ -9,7 +9,7 @@ DevNotes:
 # Example
 ```julia
 using DistributedFactorGraphs, IncrementalInference
-# Create a DFG - can make one directly, e.g. LightDFG{NoSolverParams}() or use IIF:
+# Create a DFG - can make one directly, e.g. GraphsDFG{NoSolverParams}() or use IIF:
 dfg = initfg()
 # ... Add stuff to graph using either IIF or DFG:
 v1 = addVariable!(dfg, :a, ContinuousScalar, tags = [:POSE], solvable=0)
@@ -41,23 +41,20 @@ function saveDFG(folder::AbstractString, dfg::AbstractDFG)
     map(f -> rm("$factorFolder/$f"), readdir(factorFolder))
     # Variables
     for v in variables
-        vPacked = packVariable(dfg, v)
-        io = open("$varFolder/$(v.label).json", "w")
-        JSON2.write(io, vPacked)
-        close(io)
+        vPacked = packVariable(v)
+        JSON3.write("$varFolder/$(v.label).json", vPacked)
     end
     # Factors
     for f in factors
         fPacked = packFactor(dfg, f)
-        io = open("$factorFolder/$(f.label).json", "w")
-        JSON2.write(io, fPacked)
-        close(io)
+        JSON3.write("$factorFolder/$(f.label).json", fPacked)
     end
 
     savedir = dirname(savepath) # is this a path of just local name? #344 -- workaround with unique names
     savename = basename(string(savepath))
     @assert savename != ""
     destfile = joinpath(savedir, savename*".tar.gz")
+    # FIXME, switch to Tar.jl and Transcode Zlib / Codec, see #351
     if length(savedir) != 0
       run( pipeline(`tar -zcf - -C $savedir $savename`, stdout="$destfile"))
     else
@@ -76,7 +73,7 @@ parameter.
 # Example
 ```julia
 using DistributedFactorGraphs, IncrementalInference
-# Create a DFG - can make one directly, e.g. LightDFG{NoSolverParams}() or use IIF:
+# Create a DFG - can make one directly, e.g. GraphsDFG{NoSolverParams}() or use IIF:
 dfg = initfg()
 # Load the graph
 loadDFG!(dfg, "/tmp/savedgraph.tar.gz")
@@ -129,10 +126,15 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString)
 
     varFiles = readdir(varFolder)
     factorFiles = readdir(factorFolder)
-    for varFile in varFiles
-        open("$varFolder/$varFile") do io
-            packedData = JSON2.read(io, Dict{String, Any})
-            push!(variables, unpackVariable(dfgLoadInto, packedData))
+    @showprogress 1 "loading variables" for varFile in varFiles
+        jstr = read("$varFolder/$varFile", String)
+        try
+            packedData = JSON3.read(jstr, PackedVariable)
+            push!(variables, unpackVariable(packedData))
+        catch ex
+            @error("JSON3 is having trouble reading $varFolder/$varFile into a PackedVariable")
+            @show jstr
+            throw(ex)
         end
     end
     @info "Loaded $(length(variables)) variables - $(map(v->v.label, variables))"
@@ -140,10 +142,15 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString)
     # Adding variables
     map(v->addVariable!(dfgLoadInto, v), variables)
 
-    for factorFile in factorFiles
-        open("$factorFolder/$factorFile") do io
-            packedData = JSON2.read(io, Dict{String, Any})
+    @showprogress 1 "loading factors" for factorFile in factorFiles
+        jstr = read("$factorFolder/$factorFile", String)
+        try
+            packedData = JSON3.read(jstr, PackedFactor)
             push!(factors, unpackFactor(dfgLoadInto, packedData))
+        catch ex
+            @error("JSON3 is having trouble reading $factorFolder/$factorFile into a PackedFactor")
+            @show jstr
+            throw(ex)
         end
     end
     @info "Loaded $(length(variables)) factors - $(map(f->f.label, factors))"
@@ -154,15 +161,15 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString)
     # Finally, rebuild the CCW's for the factors to completely reinflate them
     # NOTE CREATES A NEW DFGFactor IF  CCW TYPE CHANGES
     @info "Rebuilding CCW's for the factors..."
-    for factor in factors
+    @showprogress 1 "build factor operational memory" for factor in factors
         rebuildFactorMetadata!(dfgLoadInto, factor)
     end
 
     # remove the temporary unzipped file
     if unzip
-      @info "DFG.loadDFG! is deleting a temp folder created during unzip, $loaddir"
-      # need this because the number of files created in /tmp/caesar/random is becoming redonkulous.
-      Base.rm(loaddir, recursive=true, force=true)
+        @info "DFG.loadDFG! is deleting a temp folder created during unzip, $loaddir"
+        # need this because the number of files created in /tmp/caesar/random is becoming redonkulous.
+        Base.rm(loaddir, recursive=true, force=true)
     end
 
     return dfgLoadInto

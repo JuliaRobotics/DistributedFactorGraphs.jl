@@ -13,9 +13,9 @@ Base.Broadcast.broadcastable(dfg::AbstractDFG) = Ref(dfg)
 ##==============================================================================
 # Standard recommended fields to implement for AbstractDFG
 # - `description::String`
-# - `userId::String`
-# - `robotId::String`
-# - `sessionId::String`
+# - `userLabel::String`
+# - `robotLabel::String`
+# - `sessionLabel::String`
 # - `userData::Dict{Symbol, String}`
 # - `robotData::Dict{Symbol, String}`
 # - `sessionData::Dict{Symbol, String}`
@@ -31,7 +31,7 @@ Base.Broadcast.broadcastable(dfg::AbstractDFG) = Ref(dfg)
     $(SIGNATURES)
 Convenience function to get all the metadata of a DFG
 """
-getDFGInfo(dfg::AbstractDFG) = (getDescription(dfg), getUserId(dfg), getRobotId(dfg), getSessionId(dfg), getUserData(dfg), getRobotData(dfg), getSessionData(dfg), getSolverParams(dfg))
+getDFGInfo(dfg::AbstractDFG) = (getDescription(dfg), getUserLabel(dfg), getRobotLabel(dfg), getSessionLabel(dfg), getUserData(dfg), getRobotData(dfg), getSessionData(dfg), getSolverParams(dfg))
 
 """
     $(SIGNATURES)
@@ -41,17 +41,17 @@ getDescription(dfg::AbstractDFG) = dfg.description
 """
     $(SIGNATURES)
 """
-getUserId(dfg::AbstractDFG) = dfg.userId
+getUserLabel(dfg::AbstractDFG) = dfg.userLabel
 
 """
     $(SIGNATURES)
 """
-getRobotId(dfg::AbstractDFG) = dfg.robotId
+getRobotLabel(dfg::AbstractDFG) = dfg.robotLabel
 
 """
     $(SIGNATURES)
 """
-getSessionId(dfg::AbstractDFG) = dfg.sessionId
+getSessionLabel(dfg::AbstractDFG) = dfg.sessionLabel
 
 """
     $(SIGNATURES)
@@ -86,21 +86,6 @@ rebuildFactorMetadata!(dfg::AbstractDFG{<:AbstractParams}, factor::AbstractDFGFa
     $(SIGNATURES)
 """
 setDescription!(dfg::AbstractDFG, description::String) = dfg.description = description
-
-"""
-    $(SIGNATURES)
-"""
-setUserId!(dfg::AbstractDFG, userId::String) = dfg.userId = userId
-
-"""
-    $(SIGNATURES)
-"""
-setRobotId!(dfg::AbstractDFG, robotId::String) = dfg.robotId = robotId
-
-"""
-    $(SIGNATURES)
-"""
-setSessionId!(dfg::AbstractDFG, sessionId::String) = dfg.sessionId = sessionId
 
 """
     $(SIGNATURES)
@@ -187,7 +172,6 @@ emptySessionData!(dfg::AbstractDFG) = empty!(dfg.sessionData)
 ##==============================================================================
 ## AbstractBlobStore  CRUD
 ##==============================================================================
-abstract type AbstractBlobStore{T} end
 # AbstractBlobStore should have key or overwrite getKey
 getKey(store::AbstractBlobStore) = store.key
 
@@ -365,7 +349,7 @@ end
 #TODO use copy functions currently in attic
 """
     $(SIGNATURES)
-Gets an empty and unique Neo4jDFG derived from an existing DFG.
+Gets an empty and unique DFG derived from an existing DFG.
 """
 function _getDuplicatedEmptyDFG(dfg::AbstractDFG)
     error("_getDuplicatedEmptyDFG not implemented for $(typeof(dfg))")
@@ -481,11 +465,11 @@ end
 ##------------------------------------------------------------------------------
 """
     $(SIGNATURES)
-Get a list of IDs of the DFGVariables in the DFG.
+Get a list of labels of the DFGVariables in the graph.
 Optionally specify a label regular expression to retrieves a subset of the variables.
 Tags is a list of any tags that a node must have (at least one match).
 
-NOtes
+Notes
 - Returns `::Vector{Symbol}`
 
 Example
@@ -493,8 +477,7 @@ Example
 listVariables(dfg, r"l", tags=[:APRILTAG;])
 ```
 
-Related:
-- ls
+See also: [`ls`](@ref)
 """
 function listVariables( dfg::AbstractDFG, 
                         regexFilter::Union{Nothing, Regex}=nothing; 
@@ -517,7 +500,7 @@ end
 
 """
     $(SIGNATURES)
-Get a list of the IDs (labels) of the DFGFactors in the DFG.
+Get a list of the labels of the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
 function listFactors(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
@@ -1061,7 +1044,7 @@ function findShortestPathDijkstra end
 Relatively naive function counting linearly from-to
 
 DevNotes
-- Convert to using LightGraphs shortest path methods instead.
+- Convert to using Graphs shortest path methods instead.
 """
 function findFactorsBetweenNaive(   dfg::AbstractDFG, 
                                     from::Symbol,
@@ -1095,7 +1078,7 @@ DevNotes
 
 Related
 
-[`LightDFG.findShortestPathDijkstra`](@ref)
+[`GraphsDFG.findShortestPathDijkstra`](@ref)
 """
 function isPathFactorsHomogeneous(dfg::AbstractDFG, from::Symbol, to::Symbol)
     # FIXME, must consider all paths, not just shortest...
@@ -1182,7 +1165,7 @@ function buildSubgraph(::Type{G},
                        kwargs...) where G <: AbstractDFG
 
     if sessionId == ""
-        sessionId = getSessionId(dfg) * "_sub_$(string(uuid4())[1:6])"
+        sessionId = getSessionLabel(dfg) * "_sub_$(string(uuid4())[1:6])"
     end
 
     #build up the neighborhood from variableFactorLabels
@@ -1336,7 +1319,7 @@ end
 
 
 ##==============================================================================
-## DOT Files, falls back to LightDFG dot functions
+## DOT Files, falls back to GraphsDFG dot functions
 ##==============================================================================
 """
     $(SIGNATURES)
@@ -1346,8 +1329,8 @@ Notes
 - Returns `::String`
 """
 function toDot(dfg::AbstractDFG)
-    #convert to LightDFG
-    ldfg = LightDFG{NoSolverParams}()
+    #convert to GraphsDFG
+    ldfg = GraphsDFG{NoSolverParams}()
     copyGraph!(ldfg, dfg, listVariables(dfg), listFactors(dfg))
     return toDot(ldfg)
 end
@@ -1364,8 +1347,8 @@ Note
 """
 function toDotFile(dfg::AbstractDFG, fileName::String="/tmp/dfg.dot")
 
-    #convert to LightDFG
-    ldfg = LightDFG{NoSolverParams}()
+    #convert to GraphsDFG
+    ldfg = GraphsDFG{NoSolverParams}()
     copyGraph!(ldfg, dfg, listVariables(dfg), listFactors(dfg))
 
     return toDotFile(ldfg, fileName)
@@ -1389,9 +1372,9 @@ function getSummary(dfg::G) where {G <: AbstractDFG}
     return DFGSummary(
         Dict(map(v->v.label, vars) .=> vars),
         Dict(map(f->f.label, facts) .=> facts),
-        dfg.userId,
-        dfg.robotId,
-        dfg.sessionId)
+        dfg.userLabel,
+        dfg.robotLabel,
+        dfg.sessionLabel)
 end
 
 """
@@ -1400,14 +1383,14 @@ Get a summary graph (first-class citizens of variables and factors) with the sam
 
 Notes
 - this is a copy of the original.
-- Returns `::LightDFG{NoSolverParams, DFGVariableSummary, DFGFactorSummary}`
+- Returns `::GraphsDFG{NoSolverParams, DFGVariableSummary, DFGFactorSummary}`
 """
 function getSummaryGraph(dfg::G) where {G <: AbstractDFG}
-    summaryDfg = LightDFG{NoSolverParams, DFGVariableSummary, DFGFactorSummary}(
+    summaryDfg = GraphsDFG{NoSolverParams, DFGVariableSummary, DFGFactorSummary}(
         description="Summary of $(getDescription(dfg))",
-        userId=dfg.userId,
-        robotId=dfg.robotId,
-        sessionId=dfg.sessionId)
+        userLabel=dfg.userLabel,
+        robotLabel=dfg.robotLabel,
+        sessionLabel=dfg.sessionLabel)
     deepcopyGraph!(summaryDfg, dfg)
     # for v in getVariables(dfg)
     #     newV = addVariable!(summaryDfg, DFGVariableSummary(v))

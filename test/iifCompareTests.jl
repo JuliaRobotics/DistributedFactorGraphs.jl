@@ -52,17 +52,17 @@ using Test
 
     initAll!(fg2)
 
-    @test compareSimilarVariables(fg, fg2, skipsamples=true, skip=Symbol[:initialized;:inferdim;:ppeDict;:solvedCount])
+    @test compareSimilarVariables(fg, fg2, skipsamples=true, skip=Symbol[:infoPerCoord;:initialized;:inferdim;:ppeDict;:solvedCount])
     # fg2 has been solved, so it should fail on the estimate dictionary
     @test !compareSimilarVariables(fg, fg2, skipsamples=true, skip=Symbol[:initialized;:inferdim])
 
     tree = buildTreeReset!(fg2)
 
-    @test compareSimilarFactors(fg, fg2, skipsamples=true, skipcompute=true)
+    @test compareSimilarFactors(fg, fg2, skipsamples=true, skipcompute=true, skip=[:fullvariables])
 
     @test !compareSimilarFactors(fg, fg2, skipsamples=true, skipcompute=false)
 
-    @test compareFactorGraphs(fg, fg2, skipsamples=true, skipcompute=true, skip=[:initialized;:inferdim;:ppeDict; :solvedCount])
+    @test compareFactorGraphs(fg, fg2, skipsamples=true, skipcompute=true, skip=[:fullvariables; :infoPerCoord; :initialized; :inferdim; :ppeDict; :solvedCount])
 
 end
 
@@ -85,7 +85,7 @@ end
     addVariable!(fg, :l1, ContinuousScalar)
     addFactor!(fg, [:x1;:l1], LinearRelative(Rayleigh()))
 
-    sfg = buildSubgraph(LightDFG, fg, [:x0;:x1])
+    sfg = buildSubgraph(GraphsDFG, fg, [:x0;:x1])
 
     @warn "FIXME This is NOT supposed to pass"
     @test_skip compareFactorGraphs(fg, sfg, skip=[:labelDict;:addHistory;:logpath])

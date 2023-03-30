@@ -37,7 +37,13 @@ function compareField(Allc, Bllc, syms)::Bool
     (!isdefined(Allc, syms) && !isdefined(Bllc, syms)) && return true
     !isdefined(Allc, syms) && return false
     !isdefined(Bllc, syms) && return false
-    return eval(:($Allc.$syms == $Bllc.$syms))
+    a = getproperty(Allc, syms)
+    b = getproperty(Bllc, syms)
+    if a isa Base.RefValue
+      return a[] == b[]
+    else
+      return a == b
+    end
 end
 
 """
@@ -57,6 +63,7 @@ function compareFields( Al::T1,
     (field in skip) && continue
     tp = compareField(Al, Bl, field)
     show && @debug("  $tp : $field") === nothing
+    show && !tp && (@debug "  $field" a=getproperty(Al,field) b=getproperty(Bl,field))
     !tp && return false
   end
   return true
@@ -234,6 +241,9 @@ end
     $SIGNATURES
 
 Compare that all fields are the same in a `::FactorGraph` factor.
+
+DevNotes
+- TODO `getSolverData(A).fnc.varValsAll / varidx` are only defined downstream, so should should this function not be in IIF?
 """
 function compareFactor(A::DFGFactor,
                        B::DFGFactor;
@@ -250,17 +260,18 @@ function compareFactor(A::DFGFactor,
   if !TP || :fnc in skip
     return TP
   end
-  TP = TP & compareAllSpecial(getSolverData(A).fnc, getSolverData(B).fnc, skip=union([:cpt;:measurement;:params;:varidx;:threadmodel;:_gradients], skip), show=show)
+  TP = TP & compareAllSpecial(getSolverData(A).fnc, getSolverData(B).fnc, skip=union([:cpt;:measurement;:params;:varValsAll;:varidx;:threadmodel;:_gradients], skip), show=show)
   @debug "compareFactor 3/5" TP
   if !(:measurement in skip)
     TP = TP & (skipsamples || compareAll(getSolverData(A).fnc.measurement, getSolverData(B).fnc.measurement, show=show, skip=skip))
   end
   @debug "compareFactor 4/5" TP
-  if !(:params in skip)
-    TP = TP & (skipcompute || compareAll(getSolverData(A).fnc.params, getSolverData(B).fnc.params, show=show, skip=skip))
+  if !(:varValsAll in skip) && hasfield(typeof(getSolverData(A).fnc), :varValsAll)
+    TP = TP & (skipcompute || compareAll(getSolverData(A).fnc.varValsAll, getSolverData(B).fnc.varValsAll, show=show, skip=skip))
   end
-  if !(:varidx in skip)
-    TP = TP & (skipcompute || compareAll(getSolverData(A).fnc.varidx, getSolverData(B).fnc.varidx, show=show, skip=skip))
+  @debug "compareFactor 5/5" TP
+  if !(:varidx in skip) && hasfield(typeof(getSolverData(A).fnc), :varidx) && getSolverData(A).fnc.varidx isa Base.RefValue
+    TP = TP & (skipcompute || compareAll(getSolverData(A).fnc.varidx[], getSolverData(B).fnc.varidx[], show=show, skip=skip))
   end
 
   return TP
@@ -410,7 +421,7 @@ function compareFactorGraphs( fgA::G1,
 
   TP = compareAll(fgA, fgB, skip=skiplist, show=show)
   TP = TP && compareSimilarVariables(fgA, fgB, skipsamples=skipsamples, show=show, skip=skiplist )
-  TP = TP && compareSimilarFactors(fgA, fgB, skipsamples=skipsamples, skipcompute=skipcompute, show=show )
+  TP = TP && compareSimilarFactors(fgA, fgB, skipsamples=skipsamples, skipcompute=skipcompute, show=show, skip=skiplist )
   TP = TP && compareAll(fgA.solverParams, fgB.solverParams, skip=skiplist)
 
   return TP

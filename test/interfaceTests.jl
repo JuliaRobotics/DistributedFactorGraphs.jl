@@ -1,7 +1,6 @@
 if false
 using Test
 using GraphPlot
-using Neo4j
 using DistributedFactorGraphs
 using Pkg
 using Dates
@@ -10,8 +9,7 @@ using TimeZones
 
 include("testBlocks.jl")
 
-testDFGAPI = Neo4jDFG
-testDFGAPI = LightDFG
+testDFGAPI = GraphsDFG
 
 # Enable debug logging
 using Logging
@@ -21,8 +19,6 @@ global_logger(logger)
 # or
 logger = ConsoleLogger(stdout, Logging.Debug)
 global_logger(logger)
-# or
-ENV["JULIA_DEBUG"] = :Neo4jDFGs #module name or file name
 
 end
 
@@ -64,12 +60,11 @@ end
 
     @test printVariable(iobuf, var1, skipfields=[:timestamp, :solver, :ppe, :nstime]) === nothing
     
-    if VERSION < v"1.6.0-beta1"
-        # for julia < v1.6
-        @test String(take!(iobuf)) == "DFGVariable{TestVariableType1}\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol,Union{Bool, Float64, Int64, Array{Bool,1}, Array{Float64,1}, Array{Int64,1}, Array{String,1}, String}}(:small=>\"data\")\ndataDict:\nDict{Symbol,AbstractDataEntry}()\nsolvable:\n0\n"
+    # for julia v1.6
+    if DistributedFactorGraphs._getDFGVersion() < v"0.19"
+        @test String(take!(iobuf)) == "DFGVariable{TestVariableType1}\nid:\nnothing\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol, Union{Bool, Float64, Int64, Vector{Bool}, Vector{Float64}, Vector{Int64}, Vector{String}, String}}(:small=>\"data\")\ndataDict:\nDict{Symbol, DistributedFactorGraphs.BlobEntry}()\nsolvable:\n0\n"   
     else
-        # for julia v1.6
-        @test String(take!(iobuf)) == "DFGVariable{TestVariableType1}\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol, Union{Bool, Float64, Int64, Vector{Bool}, Vector{Float64}, Vector{Int64}, Vector{String}, String}}(:small=>\"data\")\ndataDict:\nDict{Symbol, AbstractDataEntry}()\nsolvable:\n0\n"   
+        @test String(take!(iobuf)) == "DFGVariable{TestVariableType1}\nid:\nnothing\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol, Union{Bool, Float64, Int64, Vector{Bool}, Vector{Float64}, Vector{Int64}, Vector{String}, String}}(:small=>\"data\")\ndataDict:\nDict{Symbol, BlobEntry}()\nsolvable:\n0\n"   
     end
 
     @test printVariable(iobuf, var1, short=true) === nothing
@@ -82,9 +77,9 @@ end
 
 
     @test printFactor(iobuf, fac1, skipfields=[:timestamp, :solver, :nstime]) === nothing
-    @test occursin(r"DFGFactor.*\nlabel:\n:abf1", String(take!(iobuf)))
+    @test occursin(r"DFGFactor.*\nid:\nnothing\nlabel:\n:abf1", String(take!(iobuf)))
 
-    String(take!(iobuf)) == "DFGFactor{TestCCW{TestFunctorInferenceType1}}\nlabel:\n:abf1\ntags:\nSet([:tag1, :tag2])\nsolvable:\n0\nsolvable:\n1\n_variableOrderSymbols:\n[:a, :b]\n"
+    String(take!(iobuf)) == "DFGFactor{TestCCW{TestFunctorInferenceType1}}\nid:\nnothing\nlabel:\n:abf1\ntags:\nSet([:tag1, :tag2])\nsolvable:\n0\nsolvable:\n1\n_variableOrderSymbols:\n[:a, :b]\n"
 
     @test printFactor(iobuf, fac1, short=true) === nothing
     @show teststr = String(take!(iobuf))
@@ -152,7 +147,7 @@ end
 ##
 @testset "Adjacency Matrices" begin
 
-    fg = testDFGAPI(userId="test@navability.io")
+    fg = testDFGAPI(userLabel="test@navability.io")
     addVariable!(fg, var1)
     setSolvable!(fg, :a, 1)
     addVariable!(fg, var2)
@@ -196,7 +191,7 @@ end
 
 @testset "Copy Functions" begin
     rand(6)
-    fg = testDFGAPI(userId="test@navability.io")
+    fg = testDFGAPI(userLabel="test@navability.io")
     addVariable!(fg, var1)
     addVariable!(fg, var2)
     addVariable!(fg, var3)
@@ -207,7 +202,7 @@ end
     # @test getVariableOrder(fg,:f1) == getVariableOrder(fgcopy,:f1)
 
     #test copyGraph, deepcopyGraph[!]
-    fgcopy = testDFGAPI(userId="test@navability.io")
+    fgcopy = testDFGAPI(userLabel="test@navability.io")
     DFG.deepcopyGraph!(fgcopy, fg)
     @test getVariableOrder(fg,:abf1) == getVariableOrder(fgcopy,:abf1)
 
@@ -223,6 +218,7 @@ end
         @test_skip FileDFGTestBlock(testDFGAPI)
     end
 end
+
 #=
 fg = fg1
 v1 = var1

@@ -1,103 +1,103 @@
+
 ## ================================================================================
-## LEGACY ON TIMESTAMPS, TODO DEPRECATE
+## Remove in v0.21
 ##=================================================================================
 
 
-Base.promote_rule(::Type{DateTime}, ::Type{ZonedDateTime}) = DateTime
-function Base.convert(::Type{DateTime}, ts::ZonedDateTime)
-    @warn "DFG now uses ZonedDateTime, temporary promoting and converting to DateTime local time"
-    return DateTime(ts, Local)
-end
+# #TODO check this one
+# function addData!(
+#     ::Type{<:BlobEntry}, 
+#     dfg::AbstractDFG, 
+#     vLbl::Symbol, 
+#     bLbl::Symbol, 
+#     blob::AbstractVector{UInt8}, 
+#     timestamp=now(localzone());
+#     id::UUID = uuid4(), 
+#     hashfunction::Function = sha256
+# )
+#     fde = BlobEntry(bLbl, id, timestamp, blob)
+#     de = addBlobEntry!(dfg, vLbl, fde)
+#     return de=>blob
+# end
+
+"""
+$(TYPEDEF)
+Abstract parent struct for big data entry.
+"""
+abstract type AbstractBlobEntry end
+
+# should be deprecated by v0.21
+
+@deprecate BlobStoreEntry(
+    label::Symbol,
+    id::UUID,
+    blobstore::Symbol,
+    hash::String,
+    origin::String,
+    description::String,
+    mimeType::String,
+    createdTimestamp::ZonedDateTime) BlobEntry(;
+        originId=id,
+        label,
+        blobstore,
+        hash,
+        origin,
+        description,
+        mimeType,
+    )
+
+
+@deprecate hasDataEntry(w...;kw...) hasBlobEntry(w...;kw...)
+@deprecate getDataEntry(w...;kw...) getBlobEntry(w...;kw...)
+@deprecate getDataEntries(w...;kw...) getBlobEntries(w...;kw...)
+@deprecate addDataEntry!(w...;kw...) addBlobEntry!(w...;kw...)
+@deprecate updateDataEntry!(w...;kw...) updateBlobEntry!(w...;kw...)
+@deprecate deleteDataEntry!(w...;kw...) deleteBlobEntry!(w...;kw...)
+@deprecate listDataEntry(w...;kw...) listBlobEntry(w...;kw...)
+@deprecate listDataEntrySequence(w...;kw...) listBlobEntrySequence(w...;kw...)
+@deprecate mergeDataEntry!(w...;kw...) mergeBlobEntry!(w...;kw...)
+
+# @deprecate getData(w...;kw...) getBlob(w...;kw...)
+@deprecate getDataBlob(w...;kw...) getBlob(w...;kw...)
+@deprecate addDataBlob!(w...;kw...) addBlob!(w...;kw...)
+@deprecate updateDataBlob!(w...;kw...) updateBlob!(w...;kw...)
+@deprecate deleteDataBlob!(w...;kw...) deleteBlob!(w...;kw...)
+@deprecate listDataBlobs(w...;kw...) listBlobs(w...;kw...)
+
+# function updateBlob!(
+#     dfg::AbstractDFG, 
+#     label::Symbol, 
+#     entry::BlobEntry
+# )
+#     # assertHash(entry, entry.data, hashfunction=hashfunction)
+#     de = updateBlobEntry!(dfg, label, entry)
+#     db = getBlob(dfg, entry)
+#     return de=>db
+# end
+
+# function addBlob!(
+#     dfg::AbstractDFG, 
+#     label::Symbol, 
+#     entry::BlobEntry; 
+#     hashfunction = sha256
+# )
+#     # assertHash(entry, entry.data, hashfunction=hashfunction)
+#     de = addBlobEntry!(dfg, label, entry)
+#     db = getBlob(dfg, entry)
+#     return de=>db
+# end
 
 ## ================================================================================
-## Deprecate before v0.20 - Kept longer with error
+## Add @deprecate in v0.19, remove after v0.20
 ##=================================================================================
 
-function getTypeFromSerializationModule(dfg::G, moduleType::Symbol) where G <: AbstractDFG
-  error("Deprecating getTypeFromSerializationModule(dfg,symbol), use getTypeFromSerializationModule(string) instead.")
-  st = nothing
-  try
-      st = getfield(Main, Symbol(moduleType))
-  catch ex
-      @error "Unable to deserialize packed variableType $(moduleType)"
-      io = IOBuffer()
-      showerror(io, ex, catch_backtrace())
-      err = String(take!(io))
-      @error(err)
-  end
-  return st
+function Base.convert(::Type{String}, v::VersionNumber)
+    @warn "Artificial conversion of VersionNumber to String will be deprected in future versions of DFG" maxlog=50
+    string(v)
 end
 
-## ================================================================================
-## Deprecate before v0.19 - Kept longer with error
-##=================================================================================
-
-Base.getproperty(x::VariableNodeData,f::Symbol) = begin
-  if f == :inferdim
-    error("vnd.inferdim::Float64 was deprecated and is now obsolete, use vnd.infoPerCoord::Vector{Float64} instead")
-  else
-    getfield(x,f)
-  end
-end
-
-function Base.setproperty!(x::VariableNodeData, f::Symbol, val)
-  if f == :inferdim
-    error("vnd.inferdim::Float64 was deprecated and is now obsolete, use vnd.infoPerCoord::Vector{Float64} instead")
-  end
-  return setfield!(x, f, convert(fieldtype(typeof(x), f), val))
-end
-
-Base.getproperty(x::PackedVariableNodeData,f::Symbol) = begin
-  if f == :inferdim
-    error("pvnd.inferdim::Float64 was deprecated and is now obsolete, use vnd.infoPerCoord::Vector{Float64} instead")
-  else
-    getfield(x,f)
-  end
-end
-
-function Base.setproperty!(x::PackedVariableNodeData, f::Symbol, val)
-  if f == :inferdim
-    error("pvnd.inferdim::Float64 was deprecated and is now obsolete, use vnd.infoPerCoord::Vector{Float64} instead")
-  end
-  return setfield!(x, f, convert(fieldtype(typeof(x), f), val))
-end
-
-
-
-function VariableNodeData(val::Vector,
-                          bw::AbstractMatrix{<:Real},
-                          BayesNetOutVertIDs::AbstractVector{Symbol},
-                          dimIDs::AbstractVector{Int},
-                          dims::Int,
-                          eliminated::Bool,
-                          BayesNetVertID::Symbol,
-                          separator::AbstractVector{Symbol},
-                          variableType,
-                          initialized::Bool,
-                          inferdim::Real,
-                          w...; kw...)
-  error("VariableNodeData field inferdim was deprecated and is now obsolete, use infoPerCoord instead")
-end
-
-
-
-## ================================================================================
-## Deprecate before v0.19
-##=================================================================================
-
-# FIXME, change this to a deprecation in v0.19
-export deepcopySupersolve!, deepcopySolvekeys!
-const deepcopySupersolve! = cloneSolveKey!
-# @deprecate deepcopySupersolve!(w...;kw...) cloneSolveKey!(w...;kw...)
-const deepcopySolvekeys! = cloneSolveKey!
-# @deprecate deepcopySolvekeys!(w...;kw...) cloneSolveKey!(w...;kw...)
-
-@deprecate dfgplot(w...;kw...) plotDFG(w...;kw...)
-
-export FunctorInferenceType, PackedInferenceType
-
-const FunctorInferenceType = AbstractFactor       # will eventually deprecate
-const PackedInferenceType = AbstractPackedFactor  # will eventually deprecate
+# TODO ADD DEPRECATION
+@deprecate packVariable(::AbstractDFG, v::DFGVariable) packVariable(v) 
 
 ## ================================================================================
 ## Deprecate before v0.20
@@ -105,16 +105,5 @@ const PackedInferenceType = AbstractPackedFactor  # will eventually deprecate
 
 export DefaultDFG
 
-const DefaultDFG = LightDFG
+const DefaultDFG = GraphsDFG
 
-
-## ================================================================================
-## Deprecate before v0.20
-##=================================================================================
-
-# FIXME uncomment before start of v0.19
-# @deprecate deepcopySupersolve!(w...;kw...) cloneSolveKey!(w...;kw...)
-# @deprecate deepcopySolvekeys!(w...;kw...) cloneSolveKey!(w...;kw...)
-
-
-#

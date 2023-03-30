@@ -127,8 +127,8 @@ function getDimension end
 getDimension(::Type{T}) where {T <: InferenceVariable} = manifold_dimension(getManifold(T))
 getDimension(::T) where {T <: InferenceVariable} = manifold_dimension(getManifold(T))
 getDimension(M::ManifoldsBase.AbstractManifold) = manifold_dimension(M)
+getDimension(p::Distributions.Distribution) = length(p)
 getDimension(var::DFGVariable) = getDimension(getVariableType(var))
-
 
 """
     $SIGNATURES
@@ -332,16 +332,16 @@ function setTimestamp(v::DFGVariable, ts::ZonedDateTime; verbose::Bool=true)
     if verbose
         @warn "verbose=true: setTimestamp(::DFGVariable,...) creates a returns a new immutable DFGVariable object (and didn't change a distributed factor graph object), make sure you are using the right pointers: getVariable(...).  See setTimestamp!(...) and note suggested use is at addVariable!(..., [timestamp=...]).  See DFG #315 for explanation."
     end
-    return DFGVariable(v.label, ts, v.nstime, v.tags, v.ppeDict, v.solverDataDict, v.smallData, v.dataDict, Ref(v.solvable))
+    return DFGVariable(v.id, v.label, ts, v.nstime, v.tags, v.ppeDict, v.solverDataDict, v.smallData, v.dataDict, Ref(v.solvable))
 end
 
-setTimestamp(v::AbstractDFGVariable, ts::DateTime, timezone=localzone(); verbose::Bool=true) = setTimestamp(v, ZonedDateTime(ts,  timezone); verbose=verbose)
+setTimestamp(v::AbstractDFGVariable, ts::DateTime, timezone=localzone(); verbose::Bool=true) = setTimestamp(v, ZonedDateTime(ts,  timezone); verbose)
 
 function setTimestamp(v::DFGVariableSummary, ts::ZonedDateTime; verbose::Bool=true)
     if verbose
         @warn "verbose=true: setTimestamp(::DFGVariableSummary,...) creates and returns a new immutable DFGVariable object (and didn't change a distributed factor graph object), make sure you are using the right pointers: getVariable(...).  See setTimestamp!(...) and note suggested use is at addVariable!(..., [timestamp=...]).  See DFG #315 for explanation."
     end
-    return DFGVariableSummary(v.label, ts, v.tags, v.ppeDict, v.variableTypeName, v.dataDict)
+    return DFGVariableSummary(v.id, v.label, ts, v.tags, v.ppeDict, v.variableTypeName, v.dataDict)
 end
 
 
