@@ -601,7 +601,7 @@ function  PPETestBlock!(fg, v1)
     # Delete it
     @test deletePPE!(fg, :a, :default) == ppe
 
-    @test_throws ErrorException getPPE(fg, :a, :default)
+    @test_throws KeyError getPPE(fg, :a, :default)
     # Update add it
     @test @test_logs (:warn, Regex("'$(ppe.solveKey)' does not exist")) match_mode=:any updatePPE!(fg, :a, ppe) == ppe
     # Update update it
@@ -761,7 +761,7 @@ function  VSDTestBlock!(fg, v1)
     # Delete parametric from v1
     @test deleteVariableSolverData!(fg, :a, :parametric) == vnd
 
-    @test_throws ErrorException getVariableSolverData(fg, :a, :parametric)
+    @test_throws KeyError getVariableSolverData(fg, :a, :parametric)
 
     #FIXME copied from lower
     @test getSolverData(v1) === v1.solverDataDict[:default]

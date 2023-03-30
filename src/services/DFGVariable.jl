@@ -570,7 +570,7 @@ Get variable solverdata for a given solve key.
 """
 function getVariableSolverData(dfg::AbstractDFG, variablekey::Symbol, solvekey::Symbol=:default)
     v = getVariable(dfg, variablekey)
-    !haskey(v.solverDataDict, solvekey) && error("Solve key '$solvekey' not found in variable '$variablekey'")
+    !haskey(v.solverDataDict, solvekey) && throw(KeyError("Solve key '$solvekey' not found in variable '$variablekey'"))
     return v.solverDataDict[solvekey]
 end
 
@@ -736,7 +736,7 @@ function deleteVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, solveK
     var = getVariable(dfg, variablekey)
 
     if !haskey(var.solverDataDict, solveKey)
-        error("VariableNodeData '$(solveKey)' does not exist")
+        throw(KeyError("VariableNodeData '$(solveKey)' does not exist"))
     end
     vnd = pop!(var.solverDataDict, solveKey)
     return vnd
@@ -796,7 +796,7 @@ Related
 [`getMeanPPE`](@ref), [`getMaxPPE`](@ref), [`updatePPE!`](@ref), getKDEMean, getKDEFit, getPPEs, getVariablePPEs
 """
 function getPPE(v::DFGVariable, ppekey::Symbol=:default)
-    !haskey(v.ppeDict, ppekey) && error("PPE key '$ppekey' not found in variable '$(getLabel(v))'")
+    !haskey(v.ppeDict, ppekey) && throw(KeyError("PPE key '$ppekey' not found in variable '$(getLabel(v))'"))
     return v.ppeDict[ppekey]
 end
 getPPE(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol=:default) = getPPE(getVariable(dfg, variablekey), ppekey)
@@ -869,7 +869,7 @@ function deletePPE!(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol=:defau
     var = getVariable(dfg, variablekey)
 
     if !haskey(var.ppeDict, ppekey)
-        error("VariableNodeData '$(ppekey)' does not exist")
+        throw(KeyError("VariableNodeData '$(ppekey)' does not exist"))
     end
     vnd = pop!(var.ppeDict, ppekey)
     return vnd
