@@ -201,7 +201,7 @@ Base.@kwdef struct Variable <: AbstractDFGVariable
 end
 
 #IIF like contruction helper for packed variable
-function PackedVariable(
+function Variable(
     label::Symbol,
     variableType::String;
     tags::Vector{Symbol} = Symbol[],
@@ -213,7 +213,7 @@ function PackedVariable(
 )
     union!(tags, [:VARIABLE])
 
-    pacvar = PackedVariable(;
+    pacvar = Variable(;
         label,
         variableType,
         nstime = string(nanosecondtime),
@@ -432,8 +432,8 @@ StructTypes.omitempties(::Type{SkeletonDFGVariable}) = (:id,)
 ##==============================================================================
 # Define variable levels
 ##==============================================================================
-const VariableDataLevel0 = Union{DFGVariable, DFGVariableSummary, PackedVariable, SkeletonDFGVariable}
-const VariableDataLevel1 = Union{DFGVariable, DFGVariableSummary, PackedVariable}
+const VariableDataLevel0 = Union{DFGVariable, DFGVariableSummary, Variable, SkeletonDFGVariable}
+const VariableDataLevel1 = Union{DFGVariable, DFGVariableSummary, Variable}
 const VariableDataLevel2 = Union{DFGVariable}
 
 ##==============================================================================
