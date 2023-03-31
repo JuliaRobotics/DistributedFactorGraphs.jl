@@ -9,8 +9,12 @@ const TYPEKEY = "_type"
 #NOTE fixed really bad function but kept similar as fallback #TODO upgrade to use pkgversion(m::Module)
 function _getDFGVersion()
 
+    if VERSION >= v"1.9"
+        return pkgversion(DistributedFactorGraphs)
+    end
+    #TODO when we drop jl<1.9 remove the rest here
     pkgorigin = get(Base.pkgorigins, Base.PkgId(DistributedFactorGraphs), nothing) 
-    if !isnothing(pkgorigin) 
+    if !isnothing(pkgorigin) && !isnothing(pkgorigin.version) 
         return pkgorigin.version
     end
     dep = get(Pkg.dependencies(), Base.UUID("b5cc3c7e-6572-11e9-2517-99fb8daf2f04"), nothing)
