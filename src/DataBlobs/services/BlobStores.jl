@@ -117,6 +117,7 @@ function addBlob!(store::AbstractBlobStore, entry::BlobEntry, data)
     addBlob!(store, blobId, data)
 end
 
+# also creates an originId as uuid4
 addBlob!(store::AbstractBlobStore, data) =
     addBlob!(store, uuid4(), data)
 
