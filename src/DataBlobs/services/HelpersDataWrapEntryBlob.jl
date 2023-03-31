@@ -117,8 +117,8 @@ function addData!(
 )
     checkhash && assertHash(entry, blob, hashfunction=hashfunction)
     blobId = addBlob!(dfg, entry, blob) |> UUID
-    newEntry = BlobEntry(entry; id=blobId, blobId) #, size=length(blob))
-    addBlobEntry!(dfg, label, newEntry; blobSize=length(blob))
+    newEntry = BlobEntry(entry; blobId) #, size=length(blob))
+    addBlobEntry!(dfg, label, newEntry)
 end
 
 function addData!(
@@ -132,8 +132,8 @@ function addData!(
 )
     checkhash && assertHash(entry, blob; hashfunction)
     blobId = addBlob!(blobstore, entry, blob) |> UUID
-    newEntry = BlobEntry(entry; id=blobId, blobId) #, size=length(blob))
-    addBlobEntry!(dfg, label, newEntry; blobSize=length(blob))
+    newEntry = BlobEntry(entry; blobId) #, size=length(blob))
+    addBlobEntry!(dfg, label, newEntry)
 end
 
 

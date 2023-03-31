@@ -18,7 +18,7 @@ mutable struct GraphsDFG{T <: AbstractParams, V <: AbstractDFGVariable, F <:Abst
     sessionData::Dict{Symbol, String}
     addHistory::Vector{Symbol} #TODO: Discuss more - is this an audit trail?
     solverParams::T # Solver parameters
-    blobStores::OrderedDict{Symbol, <:AbstractBlobStore}
+    blobStores::Dict{Symbol, <:AbstractBlobStore}
 end
 
 """

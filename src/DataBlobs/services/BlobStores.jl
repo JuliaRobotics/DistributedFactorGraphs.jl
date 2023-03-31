@@ -226,7 +226,7 @@ end
 function deleteBlob!(store::FolderStore{T}, blobId::UUID) where {T}
     blobfilename = joinpath(store.folder, "$blobId.dat")
 
-    data = getBlob(store, entry)
+    data = getBlob(store, blobId)
     rm(blobfilename)
     return data
 end
@@ -261,7 +261,7 @@ function addBlob!(store::InMemoryBlobStore{T}, blobId::UUID, data::T) where {T}
         error("Key '$blobId' blob already exists.")
     end
     store.blobs[blobId] = data
-    return UUIDblobId
+    return blobId
 end
 
 function updateBlob!(store::InMemoryBlobStore{T}, blobId::UUID, data::T) where {T}
