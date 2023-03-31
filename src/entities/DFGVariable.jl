@@ -177,8 +177,15 @@ getEstimateFields(::MeanMaxPPE) = [:suggested, :max, :mean]
 ## DFG Variables
 ##==============================================================================
 
-# Packed Variable
-Base.@kwdef struct PackedVariable  <: AbstractDFGVariable
+
+export Variable
+  
+"""
+    $(TYPEDEF)
+
+The Variable information packed in a way that accomdates multi-lang using json.
+"""
+Base.@kwdef struct Variable <: AbstractDFGVariable
     id::Union{UUID, Nothing} = nothing
     label::Symbol
     tags::Vector{Symbol} = Symbol[]
@@ -194,7 +201,7 @@ Base.@kwdef struct PackedVariable  <: AbstractDFGVariable
 end
 
 #IIF like contruction helper for packed variable
-function PackedVariable(
+function Variable(
     label::Symbol,
     variableType::String;
     tags::Vector{Symbol} = Symbol[],
@@ -206,7 +213,7 @@ function PackedVariable(
 )
     union!(tags, [:VARIABLE])
 
-    pacvar = PackedVariable(;
+    pacvar = Variable(;
         label,
         variableType,
         nstime = string(nanosecondtime),
@@ -219,10 +226,11 @@ function PackedVariable(
 
     return pacvar
 end
+const PackedVariable = Variable
 
-StructTypes.StructType(::Type{PackedVariable}) = StructTypes.UnorderedStruct()
-StructTypes.idproperty(::Type{PackedVariable}) = :id
-StructTypes.omitempties(::Type{PackedVariable}) = (:id,)
+StructTypes.StructType(::Type{Variable}) = StructTypes.UnorderedStruct()
+StructTypes.idproperty(::Type{Variable}) = :id
+StructTypes.omitempties(::Type{Variable}) = (:id,)
 
 ##------------------------------------------------------------------------------
 ## DFGVariable lv2
@@ -424,8 +432,8 @@ StructTypes.omitempties(::Type{SkeletonDFGVariable}) = (:id,)
 ##==============================================================================
 # Define variable levels
 ##==============================================================================
-const VariableDataLevel0 = Union{DFGVariable, DFGVariableSummary, PackedVariable, SkeletonDFGVariable}
-const VariableDataLevel1 = Union{DFGVariable, DFGVariableSummary, PackedVariable}
+const VariableDataLevel0 = Union{DFGVariable, DFGVariableSummary, Variable, SkeletonDFGVariable}
+const VariableDataLevel1 = Union{DFGVariable, DFGVariableSummary, Variable}
 const VariableDataLevel2 = Union{DFGVariable}
 
 ##==============================================================================
