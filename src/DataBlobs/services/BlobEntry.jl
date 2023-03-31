@@ -90,10 +90,14 @@ function getBlobEntry(var::AbstractDFGVariable, blobId::UUID)
     )
 end
 
-#TODO consider changing this to use `first` as in julia's findfirst - as in findfirstBlobEntry->label::Symbol
-# or getBlobEntryFirst, btw this returns a vector in some other places
-@deprecate getBlobEntry(var::AbstractDFGVariable, key::Regex) getfirstBlobEntry(var, key)
+@deprecate getBlobEntry(var::AbstractDFGVariable, key::Regex) getBlobEntryFirst(var, key)
 
+"""
+    $(SIGNATURES)
+Finds and returns the first blob entry that matches the regex.
+
+Also see: [`getBlobEntry`](@ref)
+"""
 function getBlobEntryFirst(var::AbstractDFGVariable, key::Regex)
     for (k,v) in var.dataDict
         if occursin(key, string(v.label))
