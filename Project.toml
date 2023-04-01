@@ -27,6 +27,7 @@ TimeZones = "f269a46b-ccf7-5d73-abea-4c690281aa53"
 UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 
 [compat]
+CSV = "0.10"
 Colors = "0.10, 0.11, 0.12"
 Distributions = "0.23, 0.24, 0.25"
 DocStringExtensions = "0.8, 0.9"
