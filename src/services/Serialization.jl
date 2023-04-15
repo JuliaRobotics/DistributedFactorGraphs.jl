@@ -6,10 +6,20 @@ export _packSolverData
 const TYPEKEY = "_type"
 
 ## Version checking
-# FIXME return VersionNumber
+#NOTE fixed really bad function but kept similar as fallback #TODO upgrade to use pkgversion(m::Module)
 function _getDFGVersion()
-    if haskey(Pkg.dependencies(), Base.UUID("b5cc3c7e-6572-11e9-2517-99fb8daf2f04"))
-        return string(Pkg.dependencies()[Base.UUID("b5cc3c7e-6572-11e9-2517-99fb8daf2f04")].version) |> VersionNumber
+
+    if VERSION >= v"1.9"
+        return pkgversion(DistributedFactorGraphs)
+    end
+    #TODO when we drop jl<1.9 remove the rest here
+    pkgorigin = get(Base.pkgorigins, Base.PkgId(DistributedFactorGraphs), nothing) 
+    if !isnothing(pkgorigin) && !isnothing(pkgorigin.version) 
+        return pkgorigin.version
+    end
+    dep = get(Pkg.dependencies(), Base.UUID("b5cc3c7e-6572-11e9-2517-99fb8daf2f04"), nothing)
+    if !isnothing(dep)
+        return dep.version
     else
         # This is arguably slower, but needed for Travis.
         return Pkg.TOML.parse(read(joinpath(dirname(pathof(@__MODULE__)), "..", "Project.toml"), String))["version"] |> VersionNumber
@@ -18,7 +28,7 @@ end
 
 function _versionCheck(node::Union{<:PackedVariable, <:PackedFactor})
     if VersionNumber(node._version) < _getDFGVersion()
-        @warn "This data was serialized using DFG $(props["_version"]) but you have $(_getDFGVersion()) installed, there may be deserialization issues." maxlog=10
+        @warn "This data was serialized using DFG $(node._version) but you have $(_getDFGVersion()) installed, there may be deserialization issues." maxlog=10
     end
 end
 
@@ -152,7 +162,7 @@ function packVariable(v::AbstractDFGVariable; includePPEs::Bool=true, includeSol
         id=v.id,
         label = v.label,
         timestamp = v.timestamp,
-        nstime = v.nstime.value,
+        nstime = string(v.nstime.value),
         tags = collect(v.tags), # Symbol.()
         ppes = collect(values(v.ppeDict)),
         solverData = packVariableNodeData.(collect(values(v.solverDataDict))),
@@ -217,7 +227,7 @@ function _packSolverData(
 end
 
 # returns PackedFactor
-function packFactor(dfg::AbstractDFG, f::DFGFactor)
+function packFactor(f::DFGFactor)
     fnctype = getSolverData(f).fnc.usrfnc!
     return PackedFactor(;    
         id = f.id,
@@ -225,7 +235,7 @@ function packFactor(dfg::AbstractDFG, f::DFGFactor)
         tags = collect(f.tags),
         _variableOrderSymbols = f._variableOrderSymbols,
         timestamp = f.timestamp,
-        nstime = f.nstime.value,
+        nstime = string(f.nstime.value),
         fnctype = String(_getname(fnctype)),
         solvable = getSolvable(f),
         metadata = base64encode(JSON3.write(f.smallData)),

@@ -91,8 +91,8 @@ dataset2 = rand(UInt8, 1000)
 ds = FolderStore{Vector{UInt8}}(:filestore, "/tmp/dfgFolderStore")
 addBlobStore!(dfg, ds)
 
-ade,adb = addData!(dfg, :filestore, :x1, :random, dataset1)
-_,_     = addData!(dfg, :filestore, :x1, :another_1, dataset1)
+ade = addData!(dfg, :filestore, :x1, :random, dataset1)
+_   = addData!(dfg, :filestore, :x1, :another_1, dataset1)
 _,_ = getData(dfg, :x1, "random")
 _,_ = getData(dfg, :x1, r"rando")
 gde,gdb = getData(dfg, :x1, :random)
@@ -108,13 +108,13 @@ dde,ddb = deleteData!(dfg, :x1, :random)
 _,_     = deleteData!(dfg, :x1, :another_1)
 
 @test ade == gde == dde
-@test adb == gdb == ddb
+@test dataset1 == gdb == ddb
 
-ade2,adb2 = addData!(dfg, :x2, deepcopy(ade), dataset1)
+ade2 = addData!(dfg, :x2, deepcopy(ade), dataset1)
 # ade3,adb3 = updateBlob!(dfg, :x2, deepcopy(ade), dataset1)
 
 @test ade == ade2# == ade3
-@test adb == adb2# == adb3
+# @test adb == adb2# == adb3
 
 deleteData!(dfg, :x2, :random)
 
@@ -132,18 +132,18 @@ dfs = FolderStore("/tmp/defaultfolderstore")
 ds = InMemoryBlobStore()
 addBlobStore!(dfg, ds)
 
-ade,adb = addData!(dfg, :default_inmemory_store, :x1, :random, dataset1)
+ade = addData!(dfg, :default_inmemory_store, :x1, :random, dataset1)
 gde,gdb = getData(dfg, :x1, :random)
 dde,ddb = deleteData!(dfg, :x1, :random)
 
 @test ade == gde == dde
-@test adb == gdb == ddb
+@test dataset1 == gdb == ddb
 
-ade2,adb2 = addData!(dfg, :x2, deepcopy(ade), dataset1)
+ade2 = addData!(dfg, :x2, deepcopy(ade), dataset1)
 # ade3,adb3 = updateBlob!(dfg, :x2, deepcopy(ade), dataset1)
 
 @test ade == ade2# == ade3
-@test adb == adb2# == adb3
+# @test adb == adb2# == adb3
 
 deleteData!(dfg, :x2, :random)
 

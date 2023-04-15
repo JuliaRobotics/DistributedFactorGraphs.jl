@@ -590,9 +590,9 @@ function  PPETestBlock!(fg, v1)
     @test_throws ErrorException addPPE!(fg, :a, ppe)
 
     @test listPPEs(fg, :a) == [:default]
-    # Get the data back - note that this is a reference to above.
-    @test getPPE(fg, :a, :default) == ppe
 
+    # Get the data back - note that this is a reference to above.
+    @test getPPE(getVariable(fg, :a), :default) == ppe
     @test getPPE(fg, :a, :default) == ppe
     @test getPPEMean(fg, :a, :default) == ppe.mean
     @test getPPEMax(fg, :a, :default) == ppe.max
@@ -601,7 +601,7 @@ function  PPETestBlock!(fg, v1)
     # Delete it
     @test deletePPE!(fg, :a, :default) == ppe
 
-    @test_throws ErrorException getPPE(fg, :a, :default)
+    @test_throws KeyError getPPE(fg, :a, :default)
     # Update add it
     @test @test_logs (:warn, Regex("'$(ppe.solveKey)' does not exist")) match_mode=:any updatePPE!(fg, :a, ppe) == ppe
     # Update update it
@@ -702,7 +702,7 @@ function  VSDTestBlock!(fg, v1)
     #  - `updateVariableSolverData!`
     #  - `deleteVariableSolverData!`
     #
-    # > - `getVariableSolverDataAll` #TODO Data is already plural so maybe Variables, All or Dict
+    # > - `getVariableSolverDataAll` #TODO Data is already plural so maybe Variables, All or Dict, or use Datum for singular
     # > - `getVariablesSolverData`
     #
     # **Set like**
@@ -761,7 +761,7 @@ function  VSDTestBlock!(fg, v1)
     # Delete parametric from v1
     @test deleteVariableSolverData!(fg, :a, :parametric) == vnd
 
-    @test_throws ErrorException getVariableSolverData(fg, :a, :parametric)
+    @test_throws KeyError getVariableSolverData(fg, :a, :parametric)
 
     #FIXME copied from lower
     @test getSolverData(v1) === v1.solverDataDict[:default]
@@ -919,8 +919,8 @@ function  DataEntriesTestBlock!(fg, v2)
     #get
     @test deepcopy(de1) == getBlobEntry(v1, :key1)
     @test deepcopy(de2) == getBlobEntry(fg, :a, :key2)
-    @test_throws ErrorException getBlobEntry(v2, :key1)
-    @test_throws ErrorException getBlobEntry(fg, :b, :key1)
+    @test_throws KeyError getBlobEntry(v2, :key1)
+    @test_throws KeyError getBlobEntry(fg, :b, :key1)
 
     #update
     @test updateBlobEntry!(fg, :a, de2_update) == de2_update
@@ -998,8 +998,8 @@ function blobsStoresTestBlock!(fg)
     #get
     @test deepcopy(de1) == getBlobEntry(var1, :label1)
     @test deepcopy(de2) == getBlobEntry(fg, :a, :label2)
-    @test_throws ErrorException getBlobEntry(var2, :label1)
-    @test_throws ErrorException getBlobEntry(fg, :b, :label1)
+    @test_throws KeyError getBlobEntry(var2, :label1)
+    @test_throws KeyError getBlobEntry(fg, :b, :label1)
 
     #update
     @test updateBlobEntry!(fg, :a, de2_update) == de2_update
@@ -1050,10 +1050,10 @@ function blobsStoresTestBlock!(fg)
     @test :testing in listBlobEntries(fg, :a)
     # Getting
     data = getData(fg, fs, :a, :testing) # convenience wrapper over getBlob
-    @test data[1].hash == newData[1].hash
-    @test data[2] == newData[2]
+    @test data[1].hash == newData.hash #[1]
+    # @test data[2] == newData[2]
     # Updating
-    updateData = updateData!(fg, fs, :a, newData[1], rand(UInt8, 50)) # convenience wrapper around updateBlob!
+    updateData = updateData!(fg, fs, :a, newData, rand(UInt8, 50)) # convenience wrapper around updateBlob!
     @test updateData[1].hash != data[1].hash
     @test updateData[2] != data[2]
     # Deleting

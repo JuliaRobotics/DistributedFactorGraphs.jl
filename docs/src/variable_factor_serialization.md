@@ -26,7 +26,7 @@ prior = addFactor!(dfg, [:x0], PriorPose2( MvNormal([10; 10; 1.0/8.0], Matrix(Di
 
 # Now serialize them:
 pVariable = packVariable(dfg, x0)
-pFactor = packFactor(dfg, prior)
+pFactor = packFactor(prior)
 
 # And we can deserialize them
 upVariable = unpackVariable(dfg, pVariable)
@@ -60,7 +60,7 @@ for v in getVariables(dfg)
 end
 # Factors
 for f in getFactors(dfg)
-    fPacked = packFactor(dfg, f)
+    fPacked = packFactor(f)
     io = open("$folder/factors/$(f.label).json", "w")
     JSON3.write(io, fPacked)
     close(io)
