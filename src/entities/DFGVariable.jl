@@ -20,7 +20,7 @@ Fields:
 $(TYPEDFIELDS)
 """
 Base.@kwdef mutable struct VariableNodeData{T<:InferenceVariable, P, N}
-    "DEPRECATED remove in DFG v0.21"
+    "DEPRECATED remove in DFG v0.22"
     variableType::T=T() #tricky deprecation, also change covar to using N and not variableType
     """
     Globally unique identifier.
@@ -31,7 +31,7 @@ Base.@kwdef mutable struct VariableNodeData{T<:InferenceVariable, P, N}
     """
     val::Vector{P} = Vector{P}()
     """
-    Common kernel bandwith parameter used with ManifoldKernelDensity, and as legacy also stores covariance until a dedicated field is created for parametric case.
+    Common kernel bandwith parameter used with ManifoldKernelDensity, see field `covar` for the parametric covariance.
     """
     bw::Matrix{Float64} = zeros(0,0)
     "Parametric (Gaussian) covariance."
@@ -39,9 +39,9 @@ Base.@kwdef mutable struct VariableNodeData{T<:InferenceVariable, P, N}
     BayesNetOutVertIDs::Vector{Symbol} = Symbol[]
     dimIDs::Vector{Int} = Int[] # TODO Likely deprecate
 
-    dims::Int = 0
+    dims::Int = getDimension(variableType) #TODO should we deprecate in favor of N
     """
-    Flag used by junction (Bayes) tree construction algorith to know whether this variable has yet been included in the tree construction.
+    Flag used by junction (Bayes) tree construction algorithm to know whether this variable has yet been included in the tree construction.
     """
     eliminated::Bool = false
     BayesNetVertID::Symbol = :NOTHING #  Union{Nothing, }
@@ -53,13 +53,13 @@ Base.@kwdef mutable struct VariableNodeData{T<:InferenceVariable, P, N}
     """
     Stores the amount information (per measurement dimension) captured in each coordinate dimension.
     """
-    infoPerCoord::Vector{Float64} = Float64[0.0;]
+    infoPerCoord::Vector{Float64} = zeros(getDimension(variableType))
     """
     Should this variable solveKey be treated as marginalized in inference computations.
     """
     ismargin::Bool = false
     """
-    Shoudl this variable solveKey always be kept fluid and not be automatically marginalized.
+    Should this variable solveKey always be kept fluid and not be automatically marginalized.
     """
     dontmargin::Bool = false
     """
@@ -71,7 +71,7 @@ Base.@kwdef mutable struct VariableNodeData{T<:InferenceVariable, P, N}
     """
     solvedCount::Int = 0
     """
-    solveKey identifier associated with thsi VariableNodeData object.
+    solveKey identifier associated with this VariableNodeData object.
     """
     solveKey::Symbol = :default
     """
@@ -120,7 +120,7 @@ Base.@kwdef mutable struct PackedVariableNodeData
     solveInProgress::Int
     solvedCount::Int
     solveKey::Symbol
-    covar::Vector{Vector{Float64}}
+    covar::Vector{Float64}
     _version::String = string(_getDFGVersion())
 end
 

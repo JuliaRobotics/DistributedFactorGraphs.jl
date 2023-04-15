@@ -92,6 +92,9 @@ function packVariableNodeData(d::VariableNodeData{T}) where {T <: InferenceVaria
     zeros(1,0)
   end
   _val = castval[:]
+
+  length(d.covar) > 1 && @warn("Packing of more than one parametric covariance is NOT supported yet, only packing first.")
+  
   return PackedVariableNodeData(d.id, _val, size(castval,1),
                                 d.bw[:], size(d.bw,1),
                                 d.BayesNetOutVertIDs,
@@ -105,7 +108,7 @@ function packVariableNodeData(d::VariableNodeData{T}) where {T <: InferenceVaria
                                 d.solveInProgress,
                                 d.solvedCount,
                                 d.solveKey,
-                                vec.(d.covar),
+                                isempty(d.covar) ? Float64[] : vec(d.covar[1]),
                                 string(_getDFGVersion()))
 end
 
@@ -132,11 +135,13 @@ function unpackVariableNodeData(d::PackedVariableNodeData)
     BW = reshape(d.vecbw,r4,c4)
 
     # 
-    return VariableNodeData{T, getPointType(T), getDimension(T)}(;
+    N = getDimension(T)
+    return VariableNodeData{T, getPointType(T), N}(;
         id = d.id,
         val = vals, 
         bw = BW, 
-        covar = d.covar,
+        #TODO only one covar is currently supported in packed VND
+        covar = isempty(d.covar) ? SMatrix{N, N, Float64}[] : [d.covar],
         BayesNetOutVertIDs = Symbol.(d.BayesNetOutVertIDs),
         dimIDs = d.dimIDs, 
         dims = d.dims, 
