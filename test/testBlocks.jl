@@ -943,6 +943,16 @@ function  DataEntriesTestBlock!(fg, v2)
     @test deleteBlobEntry!(fg, :a, :key2) == de2_update
     @test listBlobEntries(v1) == Symbol[]
     deleteBlobEntry!(fg, :b, :key2)
+
+    # packed variable data entries
+    pacv = packVariable(v1)
+    @test addBlobEntry!(pacv, de1) == de1
+    @test hasBlobEntry(pacv, :key1)
+    @test deepcopy(de1) == getBlobEntry(pacv, :key1)
+    @test getBlobEntries(pacv) == [deepcopy(de1)]
+    @test issetequal(listBlobEntries(pacv), [:key1])
+    # @test deleteBlobEntry!(pacv, de1) == de1
+
 end
 
 function blobsStoresTestBlock!(fg)

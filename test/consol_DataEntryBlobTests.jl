@@ -97,6 +97,8 @@ _,_ = getData(dfg, :x1, "random")
 _,_ = getData(dfg, :x1, r"rando")
 gde,gdb = getData(dfg, :x1, :random)
 
+@test hasBlob(dfg, ade)
+
 @show gde
 
 @test incrDataLabelSuffix(dfg,:x1,:random) == :random_1
@@ -142,6 +144,11 @@ dde,ddb = deleteData!(dfg, :x1, :random)
 ade2 = addData!(dfg, :x2, deepcopy(ade), dataset1)
 # ade3,adb3 = updateBlob!(dfg, :x2, deepcopy(ade), dataset1)
 
+@test hasBlob(dfg, ade2)
+@test hasBlob(ds, ade2.blobId)
+
+@test length(listBlobs(ds)) == 1
+
 @test ade == ade2# == ade3
 # @test adb == adb2# == adb3
 
@@ -159,18 +166,6 @@ store = TestStore{Int}()
 @test_throws ErrorException updateBlob!(store,  ade, 1)
 @test_throws ErrorException deleteBlob!(store, ade)
 @test_throws ErrorException listBlobs(store)
+@test_throws ErrorException hasBlob(store, uuid4())
 
 
-# Dropping use of AbstractDataEntry
-# ##==============================================================================
-# ## Unimplemented Entry Blob Crud
-# ##==============================================================================
-# struct NotImplementedDE <: AbstractDataEntry end
-
-# nde = NotImplementedDE()
-
-# @test_throws ErrorException getBlobBlob(dfg, nde)
-# @test_throws ErrorException addBlob!(dfg, nde, 1)
-# @test_throws ErrorException updateBlob!(dfg,  nde, 1)
-# @test_throws ErrorException deleteBlob!(dfg, nde)
-# @test_throws ErrorException listBlobs(dfg)

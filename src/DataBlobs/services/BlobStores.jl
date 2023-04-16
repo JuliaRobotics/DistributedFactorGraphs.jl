@@ -278,6 +278,7 @@ end
 
 hasBlob(store::InMemoryBlobStore, blobId::UUID) = haskey(store.blobs, blobId)
 
+listBlobs(store::InMemoryBlobStore) = collect(keys(store.blobs))
 
 ##==============================================================================
 ## LinkStore Link blobId to a existing local folder

@@ -291,7 +291,7 @@ export printFactor, printVariable, printNode
 export InMemoryBlobStore
 export FolderStore
 export BlobEntry
-export getBlob, addBlob!, updateBlob!, deleteBlob!, listBlobEntries
+export getBlob, addBlob!, updateBlob!, deleteBlob!, hasBlob, listBlobEntries
 export listBlobs
 export BlobEntry
 # export copyStore
