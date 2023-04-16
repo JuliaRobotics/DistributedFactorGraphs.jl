@@ -13,10 +13,15 @@ $(TYPEDEF)
 Data container for solver-specific data.
 
   ---
+T: Variable type, such as Position1, or RoME.Pose2, etc.
+P: Variable point type, the type of the manifold point.
+N: Manifold dimension.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef mutable struct VariableNodeData{T<:InferenceVariable, P}
+Base.@kwdef mutable struct VariableNodeData{T<:InferenceVariable, P, N}
+    "DEPRECATED remove in DFG v0.22"
+    variableType::T=T() #tricky deprecation, also change covar to using N and not variableType
     """
     Globally unique identifier.
     """
@@ -26,23 +31,21 @@ Base.@kwdef mutable struct VariableNodeData{T<:InferenceVariable, P}
     """
     val::Vector{P} = Vector{P}()
     """
-    Common kernel bandwith parameter used with ManifoldKernelDensity, and as legacy also stores covariance until a dedicated field is created for parametric case.
+    Common kernel bandwith parameter used with ManifoldKernelDensity, see field `covar` for the parametric covariance.
     """
     bw::Matrix{Float64} = zeros(0,0)
+    "Parametric (Gaussian) covariance."
+    covar::Vector{SMatrix{N, N, Float64}} = SMatrix{getDimension(variableType), getDimension(variableType), Float64}[]
     BayesNetOutVertIDs::Vector{Symbol} = Symbol[]
     dimIDs::Vector{Int} = Int[] # TODO Likely deprecate
 
-    dims::Int = 0
+    dims::Int = getDimension(variableType) #TODO should we deprecate in favor of N
     """
-    Flag used by junction (Bayes) tree construction algorith to know whether this variable has yet been included in the tree construction.
+    Flag used by junction (Bayes) tree construction algorithm to know whether this variable has yet been included in the tree construction.
     """
     eliminated::Bool = false
     BayesNetVertID::Symbol = :NOTHING #  Union{Nothing, }
     separator::Vector{Symbol} = Symbol[]
-    """
-    Variables each have a type, such as Position1, or RoME.Pose2, etc.
-    """
-    variableType::T = T()
     """
     False if initial numerical values are not yet available or stored values are not ready for further processing yet.
     """
@@ -50,13 +53,13 @@ Base.@kwdef mutable struct VariableNodeData{T<:InferenceVariable, P}
     """
     Stores the amount information (per measurement dimension) captured in each coordinate dimension.
     """
-    infoPerCoord::Vector{Float64} = Float64[0.0;]
+    infoPerCoord::Vector{Float64} = zeros(getDimension(variableType))
     """
     Should this variable solveKey be treated as marginalized in inference computations.
     """
     ismargin::Bool = false
     """
-    Shoudl this variable solveKey always be kept fluid and not be automatically marginalized.
+    Should this variable solveKey always be kept fluid and not be automatically marginalized.
     """
     dontmargin::Bool = false
     """
@@ -68,7 +71,7 @@ Base.@kwdef mutable struct VariableNodeData{T<:InferenceVariable, P}
     """
     solvedCount::Int = 0
     """
-    solveKey identifier associated with thsi VariableNodeData object.
+    solveKey identifier associated with this VariableNodeData object.
     """
     solveKey::Symbol = :default
     """
@@ -81,8 +84,8 @@ end
 
 ##------------------------------------------------------------------------------
 ## Constructors
-VariableNodeData{T}(; kwargs...) where T <: InferenceVariable = VariableNodeData{T,getPointType(T)}(; kwargs...)
-VariableNodeData(variableType::InferenceVariable; kwargs...) = VariableNodeData{typeof(variableType)}(; kwargs...)
+VariableNodeData{T}(; kwargs...) where T <: InferenceVariable = VariableNodeData{T,getPointType(T),getDimension(T)}(; kwargs...)
+VariableNodeData(variableType::InferenceVariable; kwargs...) = VariableNodeData{typeof(variableType)}(;kwargs...)
 
 
 ##==============================================================================
@@ -117,6 +120,7 @@ Base.@kwdef mutable struct PackedVariableNodeData
     solveInProgress::Int
     solvedCount::Int
     solveKey::Symbol
+    covar::Vector{Float64}
     _version::String = string(_getDFGVersion())
 end
 
@@ -243,35 +247,35 @@ Complete variable structure for a DistributedFactorGraph variable.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct DFGVariable{T<:InferenceVariable} <: AbstractDFGVariable
+Base.@kwdef struct DFGVariable{T<:InferenceVariable, P, N} <: AbstractDFGVariable
     """The ID for the variable"""
-    id::Union{UUID, Nothing}
+    id::Union{UUID, Nothing} = nothing
     """Variable label, e.g. :x1.
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref), [`setTimestamp`](@ref)"""
-    timestamp::ZonedDateTime
+    timestamp::ZonedDateTime = now(localzone())
     """Nano second time, for more resolution on timestamp (only subsecond information)"""
-    nstime::Nanosecond
+    nstime::Nanosecond = Nanosecond(0) 
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
     Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
-    tags::Set{Symbol}
+    tags::Set{Symbol} = Set{Symbol}()
     """Dictionary of parametric point estimates keyed by solverDataDict keys
     Accessors: [`addPPE!`](@ref), [`updatePPE!`](@ref), and [`deletePPE!`](@ref)"""
-    ppeDict::Dict{Symbol, <: AbstractPointParametricEst}
+    ppeDict::Dict{Symbol, AbstractPointParametricEst} = Dict{Symbol, AbstractPointParametricEst}()
     """Dictionary of solver data. May be a subset of all solutions if a solver key was specified in the get call.
     Accessors: [`addVariableSolverData!`](@ref), [`updateVariableSolverData!`](@ref), and [`deleteVariableSolverData!`](@ref)"""
-    solverDataDict::Dict{Symbol, <: VariableNodeData{T}}
+    solverDataDict::Dict{Symbol, VariableNodeData{T,P,N}} = Dict{Symbol, VariableNodeData{T,P,N}}()
     """Dictionary of small data associated with this variable.
     Accessors: [`getSmallData`](@ref), [`setSmallData!`](@ref)"""
-    smallData::Dict{Symbol, SmallDataTypes}
+    smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}()
     """Dictionary of large data associated with this variable.
     Accessors: [`addBlobEntry!`](@ref), [`getBlobEntry`](@ref), [`updateBlobEntry!`](@ref), and [`deleteBlobEntry!`](@ref)"""
-    dataDict::Dict{Symbol, BlobEntry}
+    dataDict::Dict{Symbol, BlobEntry} = Dict{Symbol, BlobEntry}()
     """Solvable flag for the variable.
     Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)"""
-    solvable::Base.RefValue{Int}
+    solvable::Base.RefValue{Int} = Ref(1)
 end
 
 ##------------------------------------------------------------------------------
@@ -281,42 +285,33 @@ end
     $SIGNATURES
 The default DFGVariable constructor.
 """
-function DFGVariable(label::Symbol, variableType::Type{T};
-            id::Union{UUID,Nothing}=nothing,
-            timestamp::ZonedDateTime=now(localzone()),
-            nstime::Nanosecond = Nanosecond(0),
-            tags::Set{Symbol}=Set{Symbol}(),
-            estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
-            solverDataDict::Dict{Symbol, VariableNodeData{T,P}}=Dict{Symbol, VariableNodeData{T,getPointType(T)}}(),
-            smallData::Dict{Symbol, SmallDataTypes}=Dict{Symbol, SmallDataTypes}(),
-            dataDict::Dict{Symbol, BlobEntry}=Dict{Symbol,BlobEntry}(),
-            solvable::Int=1) where {T <: InferenceVariable, P}
-    #
-    DFGVariable{T}(id, label, timestamp, nstime, tags, estimateDict, solverDataDict, smallData, dataDict, Ref(solvable))
+function DFGVariable(
+    label::Symbol, 
+    T::Type{<:InferenceVariable};
+    estimateDict=nothing,
+    timestamp=now(localzone()),
+    solvable::Union{Int, Base.RefValue{Int}}=Ref(1),
+    kwargs...
+)
+    #TODO deprecated, remove in v0.21 should have already been deprecated
+    if !isnothing(estimateDict)
+        error("Keyword argument `estimateDict` is deprecated use `ppeDict`")
+    end
+    if !isa(timestamp, ZonedDateTime)
+        @warn "timestamp<:DateTime is deprecated, timestamp must be a ZonedDateTime, using local zone."
+        timestamp = ZonedDateTime(timestamp,localzone())
+    end
+
+    solvable isa Int && (solvable = Ref(solvable))
+
+    N = getDimension(T)
+    P = getPointType(T)
+    DFGVariable{T,P,N}(;label, timestamp, solvable, kwargs...)
 end
 
-DFGVariable(label::Symbol, 
-            variableType::T; 
-            solverDataDict::Dict{Symbol, VariableNodeData{T,P}}=Dict{Symbol, VariableNodeData{T,getPointType(T)}}(),
-            kw...) where {T <: InferenceVariable, P} = DFGVariable(label, T; solverDataDict=solverDataDict, kw...)
-#
-# @deprecate DFGVariable(label::Symbol, T_::Type{<:InferenceVariable},w...; timestamp::DateTime=now(),kw...) DFGVariable(label, T_, w...; timestamp=ZonedDateTime(timestamp), kw...)
-#
+DFGVariable(label::Symbol, variableType::InferenceVariable; kwargs...) = DFGVariable(label, typeof(variableType); kwargs...)
 
-
-function DFGVariable(label::Symbol,
-            solverData::VariableNodeData{T};
-            id::Union{UUID, Nothing} = nothing,
-            timestamp::ZonedDateTime = now(localzone()),
-            nstime::Nanosecond = Nanosecond(0),
-            tags::Set{Symbol}=Set{Symbol}(),
-            estimateDict::Dict{Symbol, <: AbstractPointParametricEst}=Dict{Symbol, MeanMaxPPE}(),
-            smallData::Dict{Symbol, SmallDataTypes}=Dict{Symbol, SmallDataTypes}(),
-            dataDict::Dict{Symbol, <: BlobEntry}=Dict{Symbol,BlobEntry}(),
-            solvable::Int=1) where {T <: InferenceVariable}
-    #
-    DFGVariable{T}(id, label, timestamp, nstime, tags, estimateDict, Dict{Symbol, VariableNodeData{T, getPointType(T)}}(:default=>solverData), smallData, dataDict, Ref(solvable))
-end
+DFGVariable(label::Symbol, solverData::VariableNodeData; kwargs...) = DFGVariable(;label, solverDataDict=Dict(:default=>solverData), kwargs...)
 
 Base.getproperty(x::DFGVariable,f::Symbol) = begin
     if f == :solvable
@@ -334,14 +329,6 @@ Base.setproperty!(x::DFGVariable,f::Symbol, val) = begin
     end
 end
 
-
-##------------------------------------------------------------------------------
-# TODO: can't see the reason to overwrite copy, leaving it here for now
-# function Base.copy(o::DFGVariable)::DFGVariable
-#     return DFGVariable(o.label, getVariableType(o)(), tags=copy(o.tags), estimateDict=copy(o.estimateDict),
-#                         solverDataDict=copy(o.solverDataDict), smallData=copy(o.smallData),
-#                         dataDict=copy(o.dataDict), solvable=getSolvable(o))
-# end
 
 ##------------------------------------------------------------------------------
 ## DFGVariableSummary lv1

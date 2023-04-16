@@ -742,7 +742,7 @@ function  VSDTestBlock!(fg, v1)
 
     altVnd = vnd |> deepcopy
     keepVnd = getSolverData(getVariable(fg, :a), :parametric) |> deepcopy
-    altVnd.infoPerCoord = [-99.0;]
+    altVnd.infoPerCoord .= [-99.0;]
     retVnd = updateVariableSolverData!(fg, :a, altVnd, false, [:infoPerCoord;])
     @test retVnd == altVnd
 
@@ -1641,7 +1641,7 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
         vnd.dims = 1
         vnd.dontmargin = true
         vnd.eliminated = true
-        vnd.infoPerCoord = Float64[1.5;]
+        vnd.infoPerCoord .= Float64[1.5;]
         vnd.initialized = true
         vnd.ismargin = true
         push!(vnd.separator, :sep)

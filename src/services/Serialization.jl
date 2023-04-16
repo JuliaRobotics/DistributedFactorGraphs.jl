@@ -83,7 +83,7 @@ end
 
 # returns a PackedVariableNodeData
 function packVariableNodeData(d::VariableNodeData{T}) where {T <: InferenceVariable}
-  @debug "Dispatching conversion variable -> packed variable for type $(string(d.variableType))"
+  @debug "Dispatching conversion variable -> packed variable for type $(string(getVariableType(d)))"
   castval = if 0 < length(d.val)
     precast = getCoordinates.(T, d.val)
     @cast castval[i,j] := precast[j][i]
@@ -92,12 +92,15 @@ function packVariableNodeData(d::VariableNodeData{T}) where {T <: InferenceVaria
     zeros(1,0)
   end
   _val = castval[:]
+
+  length(d.covar) > 1 && @warn("Packing of more than one parametric covariance is NOT supported yet, only packing first.")
+  
   return PackedVariableNodeData(d.id, _val, size(castval,1),
                                 d.bw[:], size(d.bw,1),
                                 d.BayesNetOutVertIDs,
                                 d.dimIDs, d.dims, d.eliminated,
                                 d.BayesNetVertID, d.separator,
-                                typeModuleName(d.variableType),
+                                typeModuleName(getVariableType(d)),
                                 d.initialized,
                                 d.infoPerCoord,
                                 d.ismargin,
@@ -105,6 +108,7 @@ function packVariableNodeData(d::VariableNodeData{T}) where {T <: InferenceVaria
                                 d.solveInProgress,
                                 d.solvedCount,
                                 d.solveKey,
+                                isempty(d.covar) ? Float64[] : vec(d.covar[1]),
                                 string(_getDFGVersion()))
 end
 
@@ -131,25 +135,27 @@ function unpackVariableNodeData(d::PackedVariableNodeData)
     BW = reshape(d.vecbw,r4,c4)
 
     # 
-    return VariableNodeData{T, getPointType(T)}(
-        d.id,
-        vals, 
-        BW, 
-        Symbol.(d.BayesNetOutVertIDs),
-        d.dimIDs, 
-        d.dims, 
-        d.eliminated, 
-        Symbol(d.BayesNetVertID), 
-        Symbol.(d.separator),
-        T(), 
-        d.initialized, 
-        d.infoPerCoord, 
-        d.ismargin, 
-        d.dontmargin, 
-        d.solveInProgress, 
-        d.solvedCount, 
-        Symbol(d.solveKey),
-        Dict{Symbol,Threads.Condition}() )
+    N = getDimension(T)
+    return VariableNodeData{T, getPointType(T), N}(;
+        id = d.id,
+        val = vals, 
+        bw = BW, 
+        #TODO only one covar is currently supported in packed VND
+        covar = isempty(d.covar) ? SMatrix{N, N, Float64}[] : [d.covar],
+        BayesNetOutVertIDs = Symbol.(d.BayesNetOutVertIDs),
+        dimIDs = d.dimIDs, 
+        dims = d.dims, 
+        eliminated = d.eliminated, 
+        BayesNetVertID = Symbol(d.BayesNetVertID), 
+        separator = Symbol.(d.separator),
+        initialized = d.initialized, 
+        infoPerCoord = d.infoPerCoord, 
+        ismargin = d.ismargin, 
+        dontmargin = d.dontmargin, 
+        solveInProgress = d.solveInProgress, 
+        solvedCount = d.solvedCount, 
+        solveKey = Symbol(d.solveKey),
+        events = Dict{Symbol,Threads.Condition}() )
 end
 
 ##==============================================================================
@@ -188,13 +194,13 @@ function unpackVariable(variable::PackedVariable; skipVersionCheck::Bool=false)
     metadata = JSON3.read(base64decode(variable.metadata), Dict{Symbol, DFG.SmallDataTypes})
 
     return DFGVariable(
-        id = variable.id,
         variable.label, 
-        variableType, 
+        variableType;
+        id = variable.id,
         timestamp=variable.timestamp, 
         nstime=Nanosecond(variable.nstime), 
         tags=Set(variable.tags), 
-        estimateDict=ppeDict, 
+        ppeDict=ppeDict, 
         solverDataDict=solverDict,  
         smallData=metadata, 
         dataDict=dataDict, 
