@@ -79,6 +79,13 @@ function getBlobEntry(var::AbstractDFGVariable, key::Symbol)
     return var.dataDict[key]
 end
 
+function getBlobEntry(var::PackedVariable, key::Symbol)   
+    if !hasBlobEntry(var, key)
+        throw(KeyError("No dataEntry label $(key) found in variable $(getLabel(var)). Available keys: $(keys(var.dataDict))"))
+    end    
+    return var.blobEntries[findfirst(x->x.label == key, var.blobEntries)]
+end
+
 function getBlobEntry(var::AbstractDFGVariable, blobId::UUID)
     for (k,v) in var.dataDict
         if blobId in [v.originId, v.blobId]
@@ -204,6 +211,9 @@ Does a blob entry (element) exist with `blobLabel`.
 """
 hasBlobEntry(var::AbstractDFGVariable, blobLabel::Symbol) = haskey(var.dataDict, blobLabel)
 
+function hasBlobEntry(var::PackedVariable, label::Symbol)
+    return label in getproperty.(var.blobEntries, :label)
+end
 
 """
     $(SIGNATURES)
@@ -269,6 +279,10 @@ List the blob entries associated with a particular variable.
 """
 function listBlobEntries(var::AbstractDFGVariable)
     collect(keys(var.dataDict))
+end
+
+function listBlobEntries(var::PackedVariable)
+    return getproperty.(var.blobEntries, :label)
 end
 
 function listBlobEntries(dfg::AbstractDFG, label::Symbol)
