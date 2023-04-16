@@ -90,8 +90,6 @@ function getBlobEntry(var::AbstractDFGVariable, blobId::UUID)
     )
 end
 
-@deprecate getBlobEntry(var::AbstractDFGVariable, key::Regex) getBlobEntryFirst(var, key)
-
 """
     $(SIGNATURES)
 Finds and returns the first blob entry that matches the regex.

@@ -1,3 +1,8 @@
+## ================================================================================
+## Remove in v0.22
+##=================================================================================
+
+@deprecate getBlobEntry(var::AbstractDFGVariable, key::Regex) getBlobEntryFirst(var, key)
 
 ## ================================================================================
 ## Remove in v0.21
@@ -87,23 +92,4 @@ abstract type AbstractBlobEntry end
 #     return de=>db
 # end
 
-## ================================================================================
-## Add @deprecate in v0.19, remove after v0.20
-##=================================================================================
-
-function Base.convert(::Type{String}, v::VersionNumber)
-    @warn "Artificial conversion of VersionNumber to String will be deprected in future versions of DFG" maxlog=50
-    string(v)
-end
-
-# TODO ADD DEPRECATION
-@deprecate packVariable(::AbstractDFG, v::DFGVariable) packVariable(v) 
-
-## ================================================================================
-## Deprecate before v0.20
-##=================================================================================
-
-export DefaultDFG
-
-const DefaultDFG = GraphsDFG
 
