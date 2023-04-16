@@ -48,6 +48,12 @@ Base.@kwdef mutable struct GenericFunctionNodeData{T<:Union{<:AbstractPackedFact
     inflation::Float64 = 0.0
 end
 
+# TODO should we move non FactorOperationalMemory to DFGFactor: 
+# fnc, multihypo, nullhypo, inflation ?
+# that way we split solverData <: FactorOperationalMemory and constants
+# TODO see if above ever changes?
+
+
 ## Constructors
 
 
@@ -77,19 +83,18 @@ FunctionNodeData(args...; kw...) = FunctionNodeData{typeof(args[4])}(args...; kw
 # | DFGFactor         |   X   |   X  |     X     |     X    |      X     |
 
 # Packed Factor
-Base.@kwdef struct PackedFactor
-    # NOTE: This has to match the order of the JSON deserializer as we're using OrderedStructs.
-    id::Union{UUID, Nothing}
+Base.@kwdef struct PackedFactor <: AbstractDFGFactor
+    id::Union{UUID, Nothing} = nothing
     label::Symbol
     tags::Vector{Symbol}
     _variableOrderSymbols::Vector{Symbol}
     timestamp::ZonedDateTime
-    nstime::Int
+    nstime::String
     fnctype::String
     solvable::Int
     data::String
     metadata::String
-    _version::String
+    _version::String = string(_getDFGVersion())
   end
   
 StructTypes.StructType(::Type{PackedFactor}) = StructTypes.UnorderedStruct()
@@ -275,8 +280,8 @@ StructTypes.omitempties(::Type{SkeletonDFGFactor}) = (:id,)
 ##==============================================================================
 ## Define factor levels
 ##==============================================================================
-const FactorDataLevel0 = Union{DFGFactor, DFGFactorSummary, SkeletonDFGFactor}
-const FactorDataLevel1 = Union{DFGFactor, DFGFactorSummary}
+const FactorDataLevel0 = Union{DFGFactor, DFGFactorSummary, PackedFactor, SkeletonDFGFactor}
+const FactorDataLevel1 = Union{DFGFactor, DFGFactorSummary, PackedFactor}
 const FactorDataLevel2 = Union{DFGFactor}
 
 ##==============================================================================

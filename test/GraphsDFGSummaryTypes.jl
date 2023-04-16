@@ -24,6 +24,50 @@ union!(v1.tags, [:VARIABLE, :POSE])
 union!(v2.tags, [:VARIABLE, :LANDMARK])
 union!(f1.tags, [:FACTOR])
 
+if false 
+#TODO add to tests
+VARTYPE = PackedVariable
+FACTYPE = PackedFactor
+dfg = GraphsDFG{NoSolverParams, PackedVariable, PackedFactor}()
+v1 = PackedVariable(;label=:a, variableType="Pose2", tags=[:VARIABLE, :POSE])
+v2 = PackedVariable(;label=:b, variableType="Pose2", tags=[:VARIABLE, :LANDMARK])
+v3 = PackedVariable(;label=:c, variableType="Pose2")
+orphan = PackedVariable(;label=:orphan, variableType="Pose2")
+f0 = PackedFactor(;
+    label=:af1,
+    tags = [:FACTOR],
+    _variableOrderSymbols=[:a],
+    timestamp=DFG.Dates.now(DFG.tz"Z"),
+    nstime=0,
+    fnctype="PriorPose2",
+    solvable=1,
+    data = "",
+    metadata = "",
+)
+f1 = PackedFactor(;
+    label=:abf1,
+    tags = [:FACTOR],
+    _variableOrderSymbols=[:a, :b],
+    timestamp=DFG.Dates.now(DFG.tz"Z"),
+    nstime=0,
+    fnctype="Pose2Pose2",
+    solvable=1,
+    data = "",
+    metadata = "",
+)
+f2 = PackedFactor(;
+    label=:bcf1,
+    tags = [:FACTOR],
+    _variableOrderSymbols=[:b, :c],
+    timestamp=DFG.Dates.now(DFG.tz"Z"),
+    nstime=0,
+    fnctype="Pose2Pose2",
+    solvable=1,
+    data = "",
+    metadata = "",
+)
+end
+
 
 @testset "Variables and Factors CRUD and SET" begin
     VariablesandFactorsCRUD_SET!(dfg,v1,v2,v3,f0,f1,f2)

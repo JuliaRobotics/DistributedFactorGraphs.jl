@@ -6,10 +6,20 @@ export _packSolverData
 const TYPEKEY = "_type"
 
 ## Version checking
-# FIXME return VersionNumber
+#NOTE fixed really bad function but kept similar as fallback #TODO upgrade to use pkgversion(m::Module)
 function _getDFGVersion()
-    if haskey(Pkg.dependencies(), Base.UUID("b5cc3c7e-6572-11e9-2517-99fb8daf2f04"))
-        return string(Pkg.dependencies()[Base.UUID("b5cc3c7e-6572-11e9-2517-99fb8daf2f04")].version) |> VersionNumber
+
+    if VERSION >= v"1.9"
+        return pkgversion(DistributedFactorGraphs)
+    end
+    #TODO when we drop jl<1.9 remove the rest here
+    pkgorigin = get(Base.pkgorigins, Base.PkgId(DistributedFactorGraphs), nothing) 
+    if !isnothing(pkgorigin) && !isnothing(pkgorigin.version) 
+        return pkgorigin.version
+    end
+    dep = get(Pkg.dependencies(), Base.UUID("b5cc3c7e-6572-11e9-2517-99fb8daf2f04"), nothing)
+    if !isnothing(dep)
+        return dep.version
     else
         # This is arguably slower, but needed for Travis.
         return Pkg.TOML.parse(read(joinpath(dirname(pathof(@__MODULE__)), "..", "Project.toml"), String))["version"] |> VersionNumber
@@ -18,7 +28,7 @@ end
 
 function _versionCheck(node::Union{<:PackedVariable, <:PackedFactor})
     if VersionNumber(node._version) < _getDFGVersion()
-        @warn "This data was serialized using DFG $(props["_version"]) but you have $(_getDFGVersion()) installed, there may be deserialization issues." maxlog=10
+        @warn "This data was serialized using DFG $(node._version) but you have $(_getDFGVersion()) installed, there may be deserialization issues." maxlog=10
     end
 end
 
@@ -73,7 +83,7 @@ end
 
 # returns a PackedVariableNodeData
 function packVariableNodeData(d::VariableNodeData{T}) where {T <: InferenceVariable}
-  @debug "Dispatching conversion variable -> packed variable for type $(string(d.variableType))"
+  @debug "Dispatching conversion variable -> packed variable for type $(string(getVariableType(d)))"
   castval = if 0 < length(d.val)
     precast = getCoordinates.(T, d.val)
     @cast castval[i,j] := precast[j][i]
@@ -82,12 +92,15 @@ function packVariableNodeData(d::VariableNodeData{T}) where {T <: InferenceVaria
     zeros(1,0)
   end
   _val = castval[:]
+
+  length(d.covar) > 1 && @warn("Packing of more than one parametric covariance is NOT supported yet, only packing first.")
+  
   return PackedVariableNodeData(d.id, _val, size(castval,1),
                                 d.bw[:], size(d.bw,1),
                                 d.BayesNetOutVertIDs,
                                 d.dimIDs, d.dims, d.eliminated,
                                 d.BayesNetVertID, d.separator,
-                                typeModuleName(d.variableType),
+                                typeModuleName(getVariableType(d)),
                                 d.initialized,
                                 d.infoPerCoord,
                                 d.ismargin,
@@ -95,6 +108,7 @@ function packVariableNodeData(d::VariableNodeData{T}) where {T <: InferenceVaria
                                 d.solveInProgress,
                                 d.solvedCount,
                                 d.solveKey,
+                                isempty(d.covar) ? Float64[] : vec(d.covar[1]),
                                 string(_getDFGVersion()))
 end
 
@@ -121,25 +135,27 @@ function unpackVariableNodeData(d::PackedVariableNodeData)
     BW = reshape(d.vecbw,r4,c4)
 
     # 
-    return VariableNodeData{T, getPointType(T)}(
-        d.id,
-        vals, 
-        BW, 
-        Symbol.(d.BayesNetOutVertIDs),
-        d.dimIDs, 
-        d.dims, 
-        d.eliminated, 
-        Symbol(d.BayesNetVertID), 
-        Symbol.(d.separator),
-        T(), 
-        d.initialized, 
-        d.infoPerCoord, 
-        d.ismargin, 
-        d.dontmargin, 
-        d.solveInProgress, 
-        d.solvedCount, 
-        Symbol(d.solveKey),
-        Dict{Symbol,Threads.Condition}() )
+    N = getDimension(T)
+    return VariableNodeData{T, getPointType(T), N}(;
+        id = d.id,
+        val = vals, 
+        bw = BW, 
+        #TODO only one covar is currently supported in packed VND
+        covar = isempty(d.covar) ? SMatrix{N, N, Float64}[] : [d.covar],
+        BayesNetOutVertIDs = Symbol.(d.BayesNetOutVertIDs),
+        dimIDs = d.dimIDs, 
+        dims = d.dims, 
+        eliminated = d.eliminated, 
+        BayesNetVertID = Symbol(d.BayesNetVertID), 
+        separator = Symbol.(d.separator),
+        initialized = d.initialized, 
+        infoPerCoord = d.infoPerCoord, 
+        ismargin = d.ismargin, 
+        dontmargin = d.dontmargin, 
+        solveInProgress = d.solveInProgress, 
+        solvedCount = d.solvedCount, 
+        solveKey = Symbol(d.solveKey),
+        events = Dict{Symbol,Threads.Condition}() )
 end
 
 ##==============================================================================
@@ -151,7 +167,7 @@ function packVariable(v::AbstractDFGVariable; includePPEs::Bool=true, includeSol
         id=v.id,
         label = v.label,
         timestamp = v.timestamp,
-        nstime = v.nstime.value,
+        nstime = string(v.nstime.value),
         tags = collect(v.tags), # Symbol.()
         ppes = collect(values(v.ppeDict)),
         solverData = packVariableNodeData.(collect(values(v.solverDataDict))),
@@ -178,13 +194,13 @@ function unpackVariable(variable::PackedVariable; skipVersionCheck::Bool=false)
     metadata = JSON3.read(base64decode(variable.metadata), Dict{Symbol, DFG.SmallDataTypes})
 
     return DFGVariable(
-        id = variable.id,
         variable.label, 
-        variableType, 
+        variableType;
+        id = variable.id,
         timestamp=variable.timestamp, 
         nstime=Nanosecond(variable.nstime), 
         tags=Set(variable.tags), 
-        estimateDict=ppeDict, 
+        ppeDict=ppeDict, 
         solverDataDict=solverDict,  
         smallData=metadata, 
         dataDict=dataDict, 
@@ -216,7 +232,7 @@ function _packSolverData(
 end
 
 # returns PackedFactor
-function packFactor(dfg::AbstractDFG, f::DFGFactor)
+function packFactor(f::DFGFactor)
     fnctype = getSolverData(f).fnc.usrfnc!
     return PackedFactor(;    
         id = f.id,
@@ -224,7 +240,7 @@ function packFactor(dfg::AbstractDFG, f::DFGFactor)
         tags = collect(f.tags),
         _variableOrderSymbols = f._variableOrderSymbols,
         timestamp = f.timestamp,
-        nstime = f.nstime.value,
+        nstime = string(f.nstime.value),
         fnctype = String(_getname(fnctype)),
         solvable = getSolvable(f),
         metadata = base64encode(JSON3.write(f.smallData)),

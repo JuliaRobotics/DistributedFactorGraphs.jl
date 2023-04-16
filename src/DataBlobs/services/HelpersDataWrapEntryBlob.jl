@@ -6,7 +6,7 @@
 # NOTE this is the convenience wrappers for entry and blob.
 
 """
-Get the data entry and blob for the specified blobstore or dfg retured as a tuple.
+Get the blob entry and blob for the specified blobstore or dfg retured as a tuple.
 Related
 [`getBlobEntry`](@ref)
 
@@ -42,7 +42,7 @@ $(METHODLIST)
 function deleteData! end
 
 
-# cosntruction helper from existing BlobEntry for user overriding via kwargs
+# construction helper from existing BlobEntry for user overriding via kwargs
 BlobEntry(
     entry::BlobEntry;
     id::Union{UUID,Nothing} = entry.id, 
@@ -91,13 +91,12 @@ function getData(
     return de=>db
 end
 
-
-#TODO from blobstores
+# This is the normal one
 function getData(
     dfg::AbstractDFG, 
     blobstore::AbstractBlobStore, 
     label::Symbol, 
-    key::Union{Symbol,UUID, <:AbstractString, Regex}; 
+    key::Symbol; 
     hashfunction = sha256,
     checkhash::Bool=true
 )
@@ -118,8 +117,8 @@ function addData!(
 )
     checkhash && assertHash(entry, blob, hashfunction=hashfunction)
     blobId = addBlob!(dfg, entry, blob) |> UUID
-    newEntry = BlobEntry(entry; id=blobId, blobId) #, size=length(blob))
-    addBlobEntry!(dfg, label, newEntry; blobSize=length(blob))
+    newEntry = BlobEntry(entry; blobId) #, size=length(blob))
+    addBlobEntry!(dfg, label, newEntry)
 end
 
 function addData!(
@@ -133,8 +132,8 @@ function addData!(
 )
     checkhash && assertHash(entry, blob; hashfunction)
     blobId = addBlob!(blobstore, entry, blob) |> UUID
-    newEntry = BlobEntry(entry; id=blobId, blobId) #, size=length(blob))
-    addBlobEntry!(dfg, label, newEntry; blobSize=length(blob))
+    newEntry = BlobEntry(entry; blobId) #, size=length(blob))
+    addBlobEntry!(dfg, label, newEntry)
 end
 
 
@@ -156,6 +155,7 @@ addData!(
     kwargs...
 )
 
+#FIXME id used wrong
 function addData!(
     dfg::AbstractDFG, 
     blobstore::AbstractBlobStore, 
@@ -179,7 +179,7 @@ function addData!(
         blobstore = blobstore.key, 
         hash = string(bytes2hex(hashfunction(blob))),
         origin = buildSourceString(dfg, vLbl),
-        description = description, 
+        description, 
         mimeType, 
         metadata, 
         timestamp)
@@ -238,17 +238,19 @@ function deleteData!(
 end
 
 
-deleteData!(
+function deleteData!(
     dfg::AbstractDFG, 
     blobstore::AbstractBlobStore, 
-    label::Symbol, 
+    vLbl::Symbol, 
     entry::BlobEntry
-) = deleteBlob!(
-    dfg, 
-    blobstore, 
-    label, 
-    entry.label
-)
+) 
+    return deleteData!(
+        dfg, 
+        blobstore, 
+        vLbl, 
+        entry.label
+    )
+end
 
 function deleteData!(
     dfg::AbstractDFG, 

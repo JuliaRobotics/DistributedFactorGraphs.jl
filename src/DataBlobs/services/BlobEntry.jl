@@ -46,7 +46,7 @@ function assertHash(de::BlobEntry, db; hashfunction::Function = sha256)
 end
 
 
-function Base.show(io::IO, entry::BlobEntry) 
+function Base.show(io::IO, ::MIME"text/plain", entry::BlobEntry)
     println(io, "_type=BlobEntry {")
     println(io, "  id:            ", entry.id) 
     println(io, "  blobId:        ", entry.blobId) 
@@ -61,10 +61,6 @@ function Base.show(io::IO, entry::BlobEntry)
     println(io, "  _version:      ", entry._version) 
     println(io, "}") 
 end 
-
-Base.show(io::IO, ::MIME"text/plain", entry::BlobEntry) = show(io, entry)
-
-
 
 ##==============================================================================
 ## BlobEntry - CRUD
@@ -85,8 +81,7 @@ end
 
 function getBlobEntry(var::AbstractDFGVariable, blobId::UUID)
     for (k,v) in var.dataDict
-        # FIXME stop using v.id since that has been repurposed for unique BlobEntry indexing
-        if v.originId == blobId || v.blobId == blobId || v.id == blobId
+        if blobId in [v.originId, v.blobId]
             return v
         end
     end
@@ -95,9 +90,15 @@ function getBlobEntry(var::AbstractDFGVariable, blobId::UUID)
     )
 end
 
-#TODO consider changing this to use `first` as in julia's findfirst - as in findfirstBlobEntry->label::Symbol
-# or getBlobEntryFirst, btw this returns a vector in some other places
-function getBlobEntry(var::AbstractDFGVariable, key::Regex)
+@deprecate getBlobEntry(var::AbstractDFGVariable, key::Regex) getBlobEntryFirst(var, key)
+
+"""
+    $(SIGNATURES)
+Finds and returns the first blob entry that matches the regex.
+
+Also see: [`getBlobEntry`](@ref)
+"""
+function getBlobEntryFirst(var::AbstractDFGVariable, key::Regex)
     for (k,v) in var.dataDict
         if occursin(key, string(v.label))
             return v
@@ -110,7 +111,7 @@ end
 
 getBlobEntry(var::AbstractDFGVariable, key::AbstractString) = getBlobEntry(var,Regex(key))
 
-
+#TODO split betweeen getfirstBlobEntry and getBlobEntry
 getBlobEntry(dfg::AbstractDFG, label::Symbol, key::Union{Symbol, UUID, <:AbstractString, Regex}) = getBlobEntry(getVariable(dfg, label), key)
 # getBlobEntry(dfg::AbstractDFG, label::Symbol, key::Symbol) = getBlobEntry(getVariable(dfg, label), key)
 
@@ -125,12 +126,21 @@ Also see: [`getBlobEntry`](@ref), [`addBlob!`](@ref), [`mergeBlobEntries!`](@ref
 function addBlobEntry!(
     var::AbstractDFGVariable, 
     entry::BlobEntry;
-    blobId::Union{UUID,Nothing} = (isnothing(entry.blobId) ? entry.id : entry.blobId),
-    blobSize::Int = (hasfield(BlobEntry, :size) ? entry.size : -1)
 )
     # see https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/985
+    # blobId::Union{UUID,Nothing} = (isnothing(entry.blobId) ? entry.id : entry.blobId),
+    # blobSize::Int = (hasfield(BlobEntry, :size) ? entry.size : -1)
     haskey(var.dataDict, entry.label) && error("blobEntry $(entry.label) already exists on variable $(getLabel(var))")
     var.dataDict[entry.label] = entry
+    return entry
+end
+
+function addBlobEntry!(
+    var::PackedVariable, 
+    entry::BlobEntry,
+)   
+    entry.label in getproperty.(var.blobEntries,:label) && error("blobEntry $(entry.label) already exists on variable $(getLabel(var))")
+    push!(var.blobEntries, entry)
     return entry
 end
 
@@ -138,9 +148,8 @@ function addBlobEntry!(
     dfg::AbstractDFG, 
     vLbl::Symbol, 
     entry::BlobEntry;
-    kw...
 )
-    return addBlobEntry!(getVariable(dfg, vLbl), entry; kw...)
+    return addBlobEntry!(getVariable(dfg, vLbl), entry)
 end
 
 
@@ -200,17 +209,61 @@ hasBlobEntry(var::AbstractDFGVariable, blobLabel::Symbol) = haskey(var.dataDict,
 
 """
     $(SIGNATURES)
-Get data entries, Vector{BlobEntry}
+
+Get blob entries, Vector{BlobEntry}
 """
 function getBlobEntries(var::AbstractDFGVariable)
     #or should we return the iterator, Base.ValueIterator{Dict{Symbol,BlobEntry}}?
     collect(values(var.dataDict))
 end
+
+function getBlobEntries(var::PackedVariable)
+    var.blobEntries
+end
+
 function getBlobEntries(dfg::AbstractDFG, label::Symbol)
     # !isVariable(dfg, label) && return nothing
     #or should we return the iterator, Base.ValueIterator{Dict{Symbol,BlobEntry}}?
     getBlobEntries(getVariable(dfg, label))
 end
+
+function getBlobEntries(dfg::AbstractDFG, label::Symbol, regex::Regex)
+    entries = getBlobEntries(dfg, label)
+    return filter(entries) do e
+        occursin(regex, string(e.label))
+    end        
+end
+
+
+"""
+    $(SIGNATURES)
+
+Get all blob entries matching a Regex pattern over variables
+
+Notes
+- Use `dropEmpties=true` to not include empty lists in result.
+- Use keyword `varList` for which variables to search through.
+"""
+function getBlobEntriesVariables(
+    dfg::AbstractDFG,
+    bLblPattern::Regex;
+    varList::AbstractVector{Symbol} = sort(listVariables(dfg); lt=natural_lt),
+    dropEmpties::Bool = false
+)
+    RETLIST = Vector{Vector{BlobEntry}}()
+    @showprogress "Get entries matching $bLblPattern" for vl in varList
+        bes = filter(
+            s->occursin(bLblPattern,string(s.label)),
+            listBlobEntries(dfg,vl)
+        )
+        # only push to list if there are entries on this variable
+        (!dropEmpties || 0 < length(bes)) ? nothing : continue
+        push!(RETLIST, bes)
+    end
+    
+    return RETLIST
+end
+
 
 """
     $(SIGNATURES)

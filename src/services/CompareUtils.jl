@@ -175,7 +175,7 @@ function compare(a::VariableNodeData, b::VariableNodeData)
     a.ismargin != b.ismargin && @debug("ismargin is not equal")==nothing && return false
     a.dontmargin != b.dontmargin && @debug("dontmargin is not equal")==nothing && return false
     a.solveInProgress != b.solveInProgress && @debug("solveInProgress is not equal")==nothing && return false
-    typeof(a.variableType) != typeof(b.variableType) && @debug("variableType is not equal")==nothing && return false
+    getVariableType(a) != getVariableType(b) && @debug("variableType is not equal")==nothing && return false
     return true
 end
 
@@ -204,8 +204,8 @@ function compareVariable(A::DFGVariable,
   varskiplist = union(varskiplist, [:variableType])
   union!(varskiplist, skip)
   TP = TP && compareAll(Ad, Bd, skip=varskiplist, show=show)
-  TP = TP && typeof(Ad.variableType) == typeof(Bd.variableType)
-  TP = TP && compareAll(Ad.variableType, Bd.variableType, show=show, skip=skip)
+  TP = TP && typeof(getVariableType(Ad)) == typeof(getVariableType(Bd))
+  TP = TP && compareAll(getVariableType(Ad), getVariableType(Bd), show=show, skip=skip)
   return TP
 end
 
