@@ -18,10 +18,10 @@ implement compare if needed.
 
 
 # Generate compares automatically for all in this union
-const GeneratedCompareUnion = Union{MeanMaxPPE, VariableNodeData,
-                              DFGVariable, DFGVariableSummary, SkeletonDFGVariable,
+const GeneratedCompareUnion = Union{MeanMaxPPE, VariableNodeData, PackedVariableNodeData,
+                              DFGVariable, Variable, DFGVariableSummary, SkeletonDFGVariable,
                               GenericFunctionNodeData,
-                              DFGFactor, DFGFactorSummary, SkeletonDFGFactor}
+                              DFGFactor, PackedFactor, DFGFactorSummary, SkeletonDFGFactor}
 
 @generated function ==(x::T, y::T) where T <: GeneratedCompareUnion
     ignored = []
