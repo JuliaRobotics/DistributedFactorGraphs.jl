@@ -17,7 +17,6 @@ module DistributedFactorGraphs
 using Base
 using Base64
 using DocStringExtensions
-using Requires
 using Dates
 using TimeZones
 using Distributions
@@ -299,6 +298,8 @@ export getId, getHash, getTimestamp
 # convenience wrappers
 export getData, addData!, updateData!, deleteData!
 
+export plotDFG
+
 ##==============================================================================
 ## Files Includes
 ##==============================================================================
@@ -348,13 +349,8 @@ include("services/CustomPrinting.jl")
 # To be moved as necessary.
 include("Common.jl")
 
-function __init__()
-    @require GraphPlot = "a2cc645c-3eea-5389-862e-a155d0052231" begin
-        @info "DistributedFactorGraphs.jl is adding tools using GraphPlot.jl"
-        include("DFGPlots/DFGPlots.jl")
-        @reexport using .DFGPlots
-    end
-end
+function plotDFG end
+
 
 
 end
