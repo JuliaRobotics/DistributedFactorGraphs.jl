@@ -905,7 +905,7 @@ function findVariableNearTimestamp(dfg::AbstractDFG,
 end
 
 findVariableNearTimestamp(dfg::AbstractDFG, timest::DateTime, regexFilter::Union{Nothing, Regex}=nothing;
-                          timezone=localzone(), kwargs...) =
+                          timezone=tz"UTC", kwargs...) =
     findVariableNearTimestamp(dfg, ZonedDateTime(timest, timezone), regexFilter; kwargs...)
 
 ##==============================================================================

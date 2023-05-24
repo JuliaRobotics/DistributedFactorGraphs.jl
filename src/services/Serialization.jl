@@ -322,7 +322,11 @@ function unpackFactor(
     
     fullFactorData = nothing
     try
-        packedFnc = fncStringToData(factor.fnctype, factor.data)
+        if factor.data[1] == '{'
+            packedFnc = fncStringToData(factor.fnctype, factor.data)
+        else
+            packedFnc = fncStringToData(factor.fnctype, String(base64decode(factor.data)))
+        end
         decodeType = getFactorOperationalMemoryType(dfg)
         fullFactorData = decodePackedType(dfg, factor._variableOrderSymbols, decodeType, packedFnc)
     catch ex

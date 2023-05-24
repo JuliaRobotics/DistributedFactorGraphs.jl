@@ -72,7 +72,7 @@ global _invalidIds = [
     "VARIABLE", "FACTOR", "ENVIRONMENT", 
     "PPE", "DATA_ENTRY", "FACTORGRAPH"]
 
-global _validLabelRegex = r"^[a-zA-Z][\w\.\@]*$"
+global _validLabelRegex = r"^[a-zA-Z][-\w\.\@]*$"
 
 """
 $(SIGNATURES)
