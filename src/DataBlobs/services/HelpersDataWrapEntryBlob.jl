@@ -51,11 +51,14 @@ BlobEntry(
     label::Symbol = entry.label, 
     blobstore::Symbol = entry.blobstore, 
     hash::String = entry.hash,
+    size::Union{Int,Nothing} = entry.size,
     origin::String = entry.origin,
     description::String = entry.description, 
     mimeType::String = entry.mimeType, 
     metadata::String = entry.metadata, 
     timestamp::ZonedDateTime = entry.timestamp, 
+    createdTimestamp = entry.createdTimestamp,
+    lastUpdatedTimestamp = entry.lastUpdatedTimestamp,
     _type::String = entry._type, 
     _version::String = entry._version,
 ) = BlobEntry(;
@@ -66,10 +69,13 @@ BlobEntry(
     blobstore,
     hash,
     origin,
+    size,
     description,
     mimeType,
     metadata,
     timestamp,
+    createdTimestamp,
+    lastUpdatedTimestamp,
     _type,
     _version
 )

@@ -30,6 +30,8 @@ using Pkg
 using TensorCast
 using ProgressMeter
 using SHA
+using OrderedCollections
+using FileIO
 
 using CSV
 
@@ -210,6 +212,7 @@ export listDataEntrySequence
 export mergeDataEntries!
 # aliases
 export addBlob!
+export packBlob, unpackBlob
 
 ##------------------------------------------------------------------------------
 # Factors
@@ -338,6 +341,7 @@ include("services/CompareUtils.jl")
 #Blobs
 include("DataBlobs/services/BlobEntry.jl")
 include("DataBlobs/services/BlobStores.jl")
+include("DataBlobs/services/BlobPacking.jl")
 include("DataBlobs/services/HelpersDataWrapEntryBlob.jl")
 
 # Include the FilesDFG API.

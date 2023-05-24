@@ -617,51 +617,53 @@ Related
 
 mergeVariableSolverData!
 """
-function updateVariableSolverData!(dfg::AbstractDFG,
-                                   variablekey::Symbol,
-                                   vnd::VariableNodeData,
-                                   useCopy::Bool=true,
-                                   fields::Vector{Symbol}=Symbol[]; 
-                                   warn_if_absent::Bool=true)
+function updateVariableSolverData!(
+    dfg::AbstractDFG,
+    variablekey::Symbol,
+    vnd::VariableNodeData,
+    useCopy::Bool=false,
+    fields::Vector{Symbol}=Symbol[]; 
+    warn_if_absent::Bool=true
+)
     #This is basically just setSolverData
     var = getVariable(dfg, variablekey)
-
     warn_if_absent && !haskey(var.solverDataDict, vnd.solveKey) && @warn "VariableNodeData '$(vnd.solveKey)' does not exist, adding"
 
     # for InMemoryDFGTypes do memory copy or repointing, for cloud this would be an different kind of update.
-    usevnd = useCopy ? deepcopy(vnd) : vnd
+    usevnd = vnd # useCopy ? deepcopy(vnd) : vnd
     # should just one, or many pointers be updated?
-    useExisting = haskey(var.solverDataDict, vnd.solveKey) && isa(var.solverDataDict[vnd.solveKey], VariableNodeData) && length(fields) != 0
+    @show useExisting = haskey(var.solverDataDict, vnd.solveKey) && isa(var.solverDataDict[vnd.solveKey], VariableNodeData) && length(fields) != 0
     # @error useExisting vnd.solveKey
     if useExisting
-      # change multiple pointers inside the VND var.solverDataDict[solvekey]
-      for field in fields
-        destField = getfield(var.solverDataDict[vnd.solveKey], field)
-        srcField = getfield(usevnd, field)
-        if isa(destField, Array) && size(destField) == size(srcField)
-          # use broadcast (in-place operation)
-          destField .= srcField
-        else
-          # change pointer of destination VND object member
-          setfield!(var.solverDataDict[vnd.solveKey], field, srcField)
+        # change multiple pointers inside the VND var.solverDataDict[solvekey]
+        for field in fields
+            destField = getfield(var.solverDataDict[vnd.solveKey], field)
+            srcField = getfield(usevnd, field)
+            if isa(destField, Array) && size(destField) == size(srcField)
+            # use broadcast (in-place operation)
+            destField .= srcField
+            else
+            # change pointer of destination VND object member
+            setfield!(var.solverDataDict[vnd.solveKey], field, srcField)
+            end
         end
-      end
     else
-      # change a single pointer in var.solverDataDict
-      var.solverDataDict[vnd.solveKey] = usevnd
+        # change a single pointer in var.solverDataDict
+        var.solverDataDict[vnd.solveKey] = usevnd
     end
 
     return var.solverDataDict[vnd.solveKey]
 end
 
-function updateVariableSolverData!(dfg::AbstractDFG,
-                                   variablekey::Symbol,
-                                   vnd::VariableNodeData,
-                                   solveKey::Symbol,
-                                   useCopy::Bool=true,
-                                   fields::Vector{Symbol}=Symbol[];
-                                   warn_if_absent::Bool=true)
-
+function updateVariableSolverData!(
+    dfg::AbstractDFG,
+    variablekey::Symbol,
+    vnd::VariableNodeData,
+    solveKey::Symbol,
+    useCopy::Bool=false,
+    fields::Vector{Symbol}=Symbol[];
+    warn_if_absent::Bool=true
+)
     # TODO not very clean
     if vnd.solveKey != solveKey
         @warn("updateVariableSolverData with solveKey parameter might change in the future, see DFG #565. Future warnings are suppressed", maxlog=1) 
@@ -674,12 +676,14 @@ function updateVariableSolverData!(dfg::AbstractDFG,
 end
 
 
-function updateVariableSolverData!( dfg::AbstractDFG,
-                                    sourceVariable::DFGVariable,
-                                    solveKey::Symbol=:default,
-                                    useCopy::Bool=true,
-                                    fields::Vector{Symbol}=Symbol[];
-                                    warn_if_absent::Bool=true )
+function updateVariableSolverData!( 
+    dfg::AbstractDFG,
+    sourceVariable::DFGVariable,
+    solveKey::Symbol=:default,
+    useCopy::Bool=false,
+    fields::Vector{Symbol}=Symbol[];
+    warn_if_absent::Bool=true 
+)
     #
     vnd = getSolverData(sourceVariable, solveKey)
     # toshow = listSolveKeys(sourceVariable) |> collect
@@ -689,12 +693,14 @@ function updateVariableSolverData!( dfg::AbstractDFG,
     updateVariableSolverData!(dfg, sourceVariable.label, vnd, useCopy, fields; warn_if_absent=warn_if_absent)
 end
 
-function updateVariableSolverData!( dfg::AbstractDFG,
-                                    sourceVariables::Vector{<:DFGVariable},
-                                    solveKey::Symbol=:default,
-                                    useCopy::Bool=true,
-                                    fields::Vector{Symbol}=Symbol[];
-                                    warn_if_absent::Bool=true)
+function updateVariableSolverData!( 
+    dfg::AbstractDFG,
+    sourceVariables::Vector{<:DFGVariable},
+    solveKey::Symbol=:default,
+    useCopy::Bool=false,
+    fields::Vector{Symbol}=Symbol[];
+    warn_if_absent::Bool=true
+)
     #I think cloud would do this in bulk for speed
     for var in sourceVariables
         updateVariableSolverData!(dfg, var.label, getSolverData(var, solveKey), useCopy, fields; warn_if_absent=warn_if_absent)
@@ -708,13 +714,15 @@ Duplicate a `solveKey`` into a destination from a source.
 Notes
 - Can copy between graphs, or to different solveKeys within one graph.
 """
-function cloneSolveKey!(dest_dfg::AbstractDFG,
-                        dest::Symbol,
-                        src_dfg::AbstractDFG,
-                        src::Symbol;
-                        solvable::Int=0,
-                        labels=intersect(ls(dest_dfg, solvable=solvable), ls(src_dfg, solvable=solvable)),
-                        verbose::Bool=false  )
+function cloneSolveKey!(
+    dest_dfg::AbstractDFG,
+    dest::Symbol,
+    src_dfg::AbstractDFG,
+    src::Symbol;
+    solvable::Int=0,
+    labels=intersect(ls(dest_dfg, solvable=solvable), ls(src_dfg, solvable=solvable)),
+    verbose::Bool=false  
+)
     #
     for x in labels
         sd = deepcopy(getSolverData(getVariable(src_dfg, x), src))
@@ -725,10 +733,12 @@ function cloneSolveKey!(dest_dfg::AbstractDFG,
     nothing
 end
 
-function cloneSolveKey!( dfg::AbstractDFG,
-                dest::Symbol,
-                src::Symbol;
-                kw...  )
+function cloneSolveKey!( 
+    dfg::AbstractDFG,
+    dest::Symbol,
+    src::Symbol;
+    kw...
+)
     #
     @assert dest != src "Must copy to a different solveKey within the same graph, $dest."
     cloneSolveKey!(dfg, dest, dfg, src; kw...)
