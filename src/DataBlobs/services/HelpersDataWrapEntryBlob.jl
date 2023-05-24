@@ -51,7 +51,7 @@ BlobEntry(
     label::Symbol = entry.label, 
     blobstore::Symbol = entry.blobstore, 
     hash::String = entry.hash,
-    size::Int = entry.size,
+    size::Union{Int,Nothing} = entry.size,
     origin::String = entry.origin,
     description::String = entry.description, 
     mimeType::String = entry.mimeType, 
