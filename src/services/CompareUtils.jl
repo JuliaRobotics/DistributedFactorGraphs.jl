@@ -267,7 +267,7 @@ function compareFactor(A::DFGFactor,
   end
   @debug "compareFactor 4/5" TP
   if !(:varValsAll in skip) && hasfield(typeof(getSolverData(A).fnc), :varValsAll)
-    TP = TP & (skipcompute || compareAll(getSolverData(A).fnc.varValsAll, getSolverData(B).fnc.varValsAll, show=show, skip=skip))
+    TP = TP & (skipcompute || compareAll(getSolverData(A).fnc.varValsAll[], getSolverData(B).fnc.varValsAll[], show=show, skip=skip))
   end
   @debug "compareFactor 5/5" TP
   if !(:varidx in skip) && hasfield(typeof(getSolverData(A).fnc), :varidx) && getSolverData(A).fnc.varidx isa Base.RefValue
