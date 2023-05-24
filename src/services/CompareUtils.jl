@@ -114,10 +114,12 @@ Recursively compare the all fields of T that are not in `skip` for objects `Al` 
 
 TODO > add to func_ref.md
 """
-function compareAll(Al::T,
-                    Bl::T;
-                    show::Bool=true,
-                    skip::Vector{Symbol}=Symbol[]  )::Bool where {T <: Tuple}
+function compareAll(
+  Al::Tuple,
+  Bl::Tuple;
+  show::Bool=true,
+  skip::Vector{Symbol}=Symbol[]
+)
   #
   length(Al) != length(Bl) && return false
   for i in 1:length(Al)
@@ -161,22 +163,25 @@ function compareAll(Al::T1, Bl::T2; show::Bool=true, skip::Vector{Symbol}=Symbol
 end
 
 #Compare VariableNodeData
-function compare(a::VariableNodeData, b::VariableNodeData)
-    a.val != b.val && @debug("val is not equal")==nothing && return false
-    a.bw != b.bw && @debug("bw is not equal")==nothing && return false
-    a.BayesNetOutVertIDs != b.BayesNetOutVertIDs && @debug("BayesNetOutVertIDs is not equal")==nothing && return false
-    a.dimIDs != b.dimIDs && @debug("dimIDs is not equal")==nothing && return false
-    a.dims != b.dims && @debug("dims is not equal")==nothing && return false
-    a.eliminated != b.eliminated && @debug("eliminated is not equal")==nothing && return false
-    a.BayesNetVertID != b.BayesNetVertID && @debug("BayesNetVertID is not equal")==nothing && return false
-    a.separator != b.separator && @debug("separator is not equal")==nothing && return false
-    a.initialized != b.initialized && @debug("initialized is not equal")==nothing && return false
-    !isapprox(a.infoPerCoord, b.infoPerCoord, atol=1e-13) && @debug("infoPerCoord is not equal")==nothing && return false
-    a.ismargin != b.ismargin && @debug("ismargin is not equal")==nothing && return false
-    a.dontmargin != b.dontmargin && @debug("dontmargin is not equal")==nothing && return false
-    a.solveInProgress != b.solveInProgress && @debug("solveInProgress is not equal")==nothing && return false
-    getVariableType(a) != getVariableType(b) && @debug("variableType is not equal")==nothing && return false
-    return true
+function compare(
+  a::VariableNodeData, 
+  b::VariableNodeData
+)
+  a.val != b.val && @debug("val is not equal")==nothing && return false
+  a.bw != b.bw && @debug("bw is not equal")==nothing && return false
+  a.BayesNetOutVertIDs != b.BayesNetOutVertIDs && @debug("BayesNetOutVertIDs is not equal")==nothing && return false
+  a.dimIDs != b.dimIDs && @debug("dimIDs is not equal")==nothing && return false
+  a.dims != b.dims && @debug("dims is not equal")==nothing && return false
+  a.eliminated != b.eliminated && @debug("eliminated is not equal")==nothing && return false
+  a.BayesNetVertID != b.BayesNetVertID && @debug("BayesNetVertID is not equal")==nothing && return false
+  a.separator != b.separator && @debug("separator is not equal")==nothing && return false
+  a.initialized != b.initialized && @debug("initialized is not equal")==nothing && return false
+  !isapprox(a.infoPerCoord, b.infoPerCoord, atol=1e-13) && @debug("infoPerCoord is not equal")==nothing && return false
+  a.ismargin != b.ismargin && @debug("ismargin is not equal")==nothing && return false
+  a.dontmargin != b.dontmargin && @debug("dontmargin is not equal")==nothing && return false
+  a.solveInProgress != b.solveInProgress && @debug("solveInProgress is not equal")==nothing && return false
+  getVariableType(a) != getVariableType(b) && @debug("variableType is not equal")==nothing && return false
+  return true
 end
 
 """
@@ -184,11 +189,13 @@ end
 
 Compare that all fields are the same in a `::FactorGraph` variable.
 """
-function compareVariable(A::DFGVariable,
-                         B::DFGVariable;
-                         skip::Vector{Symbol}=Symbol[],
-                         show::Bool=true,
-                         skipsamples::Bool=true  )::Bool
+function compareVariable(
+  A::DFGVariable,
+  B::DFGVariable;
+  skip::Vector{Symbol}=Symbol[],
+  show::Bool=true,
+  skipsamples::Bool=true
+)
   #
   skiplist = union([:attributes;:solverDataDict;:createdTimestamp;:lastUpdatedTimestamp],skip)
   TP = compareAll(A, B, skip=skiplist, show=show)
@@ -206,13 +213,15 @@ function compareVariable(A::DFGVariable,
   TP = TP && compareAll(Ad, Bd, skip=varskiplist, show=show)
   TP = TP && typeof(getVariableType(Ad)) == typeof(getVariableType(Bd))
   TP = TP && compareAll(getVariableType(Ad), getVariableType(Bd), show=show, skip=skip)
-  return TP
+  return TP::Bool
 end
 
-function compareAllSpecial(A::T1,
-                           B::T2;
-                           skip=Symbol[],
-                           show::Bool=true) where {T1 <: GenericFunctionNodeData, T2 <: GenericFunctionNodeData}
+function compareAllSpecial(
+  A::T1,
+  B::T2;
+  skip=Symbol[],
+  show::Bool=true
+) where {T1 <: GenericFunctionNodeData, T2 <: GenericFunctionNodeData}
   if T1 != T2
     @warn "compareAllSpecial is comparing different types" T1 T2
     # return false
@@ -245,12 +254,14 @@ Compare that all fields are the same in a `::FactorGraph` factor.
 DevNotes
 - TODO `getSolverData(A).fnc.varValsAll / varidx` are only defined downstream, so should should this function not be in IIF?
 """
-function compareFactor(A::DFGFactor,
-                       B::DFGFactor;
-                       show::Bool=true,
-                       skip::Vector{Symbol}=Symbol[],
-                       skipsamples::Bool=true,
-                       skipcompute::Bool=true  )
+function compareFactor(
+  A::DFGFactor,
+  B::DFGFactor;
+  show::Bool=true,
+  skip::Vector{Symbol}=Symbol[],
+  skipsamples::Bool=true,
+  skipcompute::Bool=true
+)
   #
   skip_ = union([:attributes;:solverData;:_variableOrderSymbols;:_gradients],skip)
   TP =  compareAll(A, B, skip=skip_, show=show)
@@ -267,7 +278,7 @@ function compareFactor(A::DFGFactor,
   end
   @debug "compareFactor 4/5" TP
   if !(:varValsAll in skip) && hasfield(typeof(getSolverData(A).fnc), :varValsAll)
-    TP = TP & (skipcompute || compareAll(getSolverData(A).fnc.varValsAll[], getSolverData(B).fnc.varValsAll[], show=show, skip=skip))
+    TP = TP & (skipcompute || compareAll(getSolverData(A).fnc.varValsAll, getSolverData(B).fnc.varValsAll, show=show, skip=skip))
   end
   @debug "compareFactor 5/5" TP
   if !(:varidx in skip) && hasfield(typeof(getSolverData(A).fnc), :varidx) && getSolverData(A).fnc.varidx isa Base.RefValue
@@ -296,11 +307,13 @@ Related:
 
 `compareFactorGraphs`, `compareSimilarVariables`, `compareVariable`, `ls`
 """
-function compareAllVariables(fgA::G1,
-                             fgB::G2;
-                             skip::Vector{Symbol}=Symbol[],
-                             show::Bool=true,
-                             skipsamples::Bool=true )::Bool where {G1 <: AbstractDFG, G2 <: AbstractDFG}
+function compareAllVariables(
+  fgA::AbstractDFG,
+  fgB::AbstractDFG;
+  skip::Vector{Symbol}=Symbol[],
+  show::Bool=true,
+  skipsamples::Bool=true 
+)
   # get all the variables in A or B
   xlA =  listVariables(fgA)
   xlB =  listVariables(fgB)
@@ -322,7 +335,7 @@ function compareAllVariables(fgA::G1,
   end
 
   # return comparison result
-  return TP
+  return TP::Bool
 end
 
 """
@@ -337,11 +350,13 @@ Related:
 
 `compareFactorGraphs`, `compareAllVariables`, `compareSimilarFactors`, `compareVariable`, `ls`.
 """
-function compareSimilarVariables(fgA::G1,
-                                 fgB::G2;
-                                 skip::Vector{Symbol}=Symbol[],
-                                 show::Bool=true,
-                                 skipsamples::Bool=true )::Bool where {G1 <: AbstractDFG, G2 <: AbstractDFG}
+function compareSimilarVariables(
+  fgA::AbstractDFG,
+  fgB::AbstractDFG;
+  skip::Vector{Symbol}=Symbol[],
+  show::Bool=true,
+  skipsamples::Bool=true 
+)
   #
   xlA = listVariables(fgA)
   xlB = listVariables(fgB)
@@ -357,7 +372,7 @@ function compareSimilarVariables(fgA::G1,
   end
 
   # return comparison result
-  return TP
+  return TP::Bool
 end
 
 """
@@ -369,12 +384,14 @@ Related:
 
 `compareFactorGraphs`, `compareSimilarVariables`, `compareAllVariables`, `ls`.
 """
-function compareSimilarFactors( fgA::G1,
-                                fgB::G2;
-                                skipsamples::Bool=true,
-                                skipcompute::Bool=true,
-                                skip::AbstractVector{Symbol}=Symbol[],
-                                show::Bool=true  ) where {G1 <: AbstractDFG, G2 <: AbstractDFG}
+function compareSimilarFactors( 
+  fgA::AbstractDFG,
+  fgB::AbstractDFG;
+  skipsamples::Bool=true,
+  skipcompute::Bool=true,
+  skip::AbstractVector{Symbol}=Symbol[],
+  show::Bool=true
+)
   #
   xlA = listFactors(fgA)
   xlB = listFactors(fgB)
@@ -408,12 +425,14 @@ Related:
 
 `compareSimilarVariables`, `compareSimilarFactors`, `compareAllVariables`, `ls`.
 """
-function compareFactorGraphs( fgA::G1,
-                              fgB::G2;
-                              skipsamples::Bool=true,
-                              skipcompute::Bool=true,
-                              skip::Vector{Symbol}=Symbol[],
-                              show::Bool=true  ) where {G1 <: AbstractDFG, G2 <: AbstractDFG}
+function compareFactorGraphs( 
+  fgA::AbstractDFG,
+  fgB::AbstractDFG;
+  skipsamples::Bool=true,
+  skipcompute::Bool=true,
+  skip::Vector{Symbol}=Symbol[],
+  show::Bool=true  
+)
   #
   skiplist = Symbol[:g;:bn;:IDs;:fIDs;:id;:nodeIDs;:factorIDs;:fifo;:solverParams; :factorOperationalMemoryType]
   skiplist = union(skiplist, skip)
