@@ -267,7 +267,13 @@ end
 function fncStringToData(packtype::Type{<:AbstractPackedFactor}, data::String)
 
     # Read string as JSON object to use as kwargs
-    fncData = JSON3.read(data)
+    fncData = JSON3.read(
+        if data[1] == '{'
+            data
+        else
+            String(base64decode(data))
+        end
+    )
     packT = packtype(;fncData.fnc...)
 
     packed = GenericFunctionNodeData{packtype}(
