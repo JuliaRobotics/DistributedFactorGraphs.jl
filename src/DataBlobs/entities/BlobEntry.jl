@@ -29,7 +29,7 @@ Notes:
     """ Context from which a BlobEntry=>Blob was first created. E.g. user|robot|session|varlabel. """
     origin::String 
     """ number of bytes in blob """
-    size::Int = -1
+    size::Union{Int, Nothing} = nothing
     """ Additional information that can help a different user of the Blob. """
     description::String = ""
     """ MIME description describing the format of binary data in the `Blob`, e.g. 'image/png' or 'application/json; _type=CameraModel'. """
