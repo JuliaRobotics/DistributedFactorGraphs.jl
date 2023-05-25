@@ -1,3 +1,11 @@
+
+
+## ================================================================================
+## Remove in v0.23
+##=================================================================================
+
+@deprecate BlobEntry(id, blobId, originId::UUID, label::Symbol, blobstore::Symbol, hash::String, origin::String, description::String, mimeType::String, metadata::String, timestamp::ZonedDateTime, _type::String, _version::String) BlobEntry(id, blobId, originId, label, blobstore, hash, origin, -1, description, mimeType, metadata, timestamp, nothing, nothing, _type, _version)
+
 ## ================================================================================
 ## Remove in v0.22
 ##=================================================================================

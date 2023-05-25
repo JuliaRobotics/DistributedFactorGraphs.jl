@@ -17,7 +17,6 @@ module DistributedFactorGraphs
 using Base
 using Base64
 using DocStringExtensions
-using Requires
 using Dates
 using TimeZones
 using Distributions
@@ -31,6 +30,8 @@ using Pkg
 using TensorCast
 using ProgressMeter
 using SHA
+using OrderedCollections
+using FileIO
 
 using CSV
 
@@ -211,6 +212,7 @@ export listDataEntrySequence
 export mergeDataEntries!
 # aliases
 export addBlob!
+export packBlob, unpackBlob
 
 ##------------------------------------------------------------------------------
 # Factors
@@ -299,6 +301,8 @@ export getId, getHash, getTimestamp
 # convenience wrappers
 export getData, addData!, updateData!, deleteData!
 
+export plotDFG
+
 ##==============================================================================
 ## Files Includes
 ##==============================================================================
@@ -337,6 +341,7 @@ include("services/CompareUtils.jl")
 #Blobs
 include("DataBlobs/services/BlobEntry.jl")
 include("DataBlobs/services/BlobStores.jl")
+include("DataBlobs/services/BlobPacking.jl")
 include("DataBlobs/services/HelpersDataWrapEntryBlob.jl")
 
 # Include the FilesDFG API.
@@ -348,13 +353,8 @@ include("services/CustomPrinting.jl")
 # To be moved as necessary.
 include("Common.jl")
 
-function __init__()
-    @require GraphPlot = "a2cc645c-3eea-5389-862e-a155d0052231" begin
-        @info "DistributedFactorGraphs.jl is adding tools using GraphPlot.jl"
-        include("DFGPlots/DFGPlots.jl")
-        @reexport using .DFGPlots
-    end
-end
+function plotDFG end
+
 
 
 end

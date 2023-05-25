@@ -2,11 +2,13 @@ module DFGPlots
 
 using Colors
 using Graphs
-using ..GraphPlot
+using GraphPlot
 using DocStringExtensions
-import ..GraphPlot: gplot
+import GraphPlot: gplot
 
-using ...DistributedFactorGraphs
+using DistributedFactorGraphs
+
+import DistributedFactorGraphs.plotDFG
 
 export
     plotDFG,
