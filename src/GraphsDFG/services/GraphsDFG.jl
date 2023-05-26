@@ -178,7 +178,7 @@ function listVariables(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothin
     if length(tags) > 0
         return map(v -> v.label, getVariables(dfg, regexFilter, tags=tags, solvable=solvable))
     else
-        variables = collect(keys(dfg.g.variables))
+        variables = copy(dfg.g.variables.keys)
         regexFilter !== nothing && (variables = filter(v -> occursin(regexFilter, String(v)), variables))
         solvable != 0 && (variables = filter(vId -> _isSolvable(dfg, vId, solvable), variables))
         return variables::Vector{Symbol}
@@ -206,7 +206,7 @@ function listFactors(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing;
     if length(tags) > 0
         return map(v -> v.label, getFactors(dfg, regexFilter, tags=tags, solvable=solvable))
     end
-    factors = collect(keys(dfg.g.factors))
+    factors = copy(dfg.g.factors.keys)
     if regexFilter != nothing
         factors = filter(f -> occursin(regexFilter, String(f)), factors)
     end
