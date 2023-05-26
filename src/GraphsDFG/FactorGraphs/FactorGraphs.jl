@@ -150,6 +150,9 @@ function rem_vertex!(g::FactorGraph{T,V,F}, v::Integer) where {T,V,F}
     label = g.labels[v]
     delete!(g.variables, label)
     delete!(g.factors, label)
+    
+    OrderedCollections.rehash!(g.variables)
+    OrderedCollections.rehash!(g.factors)
 
     if v != lastv
         g.labels[v] = g.labels[lastv] #lastSym
