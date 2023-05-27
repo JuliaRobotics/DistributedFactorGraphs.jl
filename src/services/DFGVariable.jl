@@ -632,7 +632,7 @@ function updateVariableSolverData!(
     # for InMemoryDFGTypes do memory copy or repointing, for cloud this would be an different kind of update.
     usevnd = vnd # useCopy ? deepcopy(vnd) : vnd
     # should just one, or many pointers be updated?
-    @show useExisting = haskey(var.solverDataDict, vnd.solveKey) && isa(var.solverDataDict[vnd.solveKey], VariableNodeData) && length(fields) != 0
+    useExisting = haskey(var.solverDataDict, vnd.solveKey) && isa(var.solverDataDict[vnd.solveKey], VariableNodeData) && length(fields) != 0
     # @error useExisting vnd.solveKey
     if useExisting
         # change multiple pointers inside the VND var.solverDataDict[solvekey]
