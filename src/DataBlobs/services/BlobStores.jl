@@ -125,6 +125,9 @@ addBlob!(store::AbstractBlobStore, data) =
 addBlob!(store::AbstractBlobStore, blobId::UUID, data, ::String) =
     addBlob!(store, blobId, data)
 
+addBlob!(store::AbstractBlobStore, data, ::String) =
+    addBlob!(store, uuid4(), data)
+
 #update
 updateBlob!(dfg::AbstractDFG, entry::BlobEntry, data::T) where {T} =
     updateBlob!(getBlobStore(dfg, entry.blobstore), entry, data)
