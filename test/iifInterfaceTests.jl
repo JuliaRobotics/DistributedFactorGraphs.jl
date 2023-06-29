@@ -199,9 +199,9 @@ end
     @test !isInitialized(v2, :second)
 
     # Session, robot, and user small data tests
-    smallUserData = Dict{Symbol, String}(:a => "42", :b => "Hello")
-    smallRobotData = Dict{Symbol, String}(:a => "43", :b => "Hello")
-    smallSessionData = Dict{Symbol, String}(:a => "44", :b => "Hello")
+    smallUserData = Dict{Symbol, SmallDataTypes}(:a => "42", :b => "Hello")
+    smallRobotData = Dict{Symbol, SmallDataTypes}(:a => "43", :b => "Hello")
+    smallSessionData = Dict{Symbol, SmallDataTypes}(:a => "44", :b => "Hello")
     setUserData!(dfg, deepcopy(smallUserData))
     setRobotData!(dfg, deepcopy(smallRobotData))
     setSessionData!(dfg, deepcopy(smallSessionData))
