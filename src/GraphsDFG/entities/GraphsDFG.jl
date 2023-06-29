@@ -13,9 +13,9 @@ mutable struct GraphsDFG{T <: AbstractParams, V <: AbstractDFGVariable, F <:Abst
     userLabel::String
     robotLabel::String
     sessionLabel::String
-    userData::OrderedDict{Symbol, String}
-    robotData::OrderedDict{Symbol, String}
-    sessionData::OrderedDict{Symbol, String}
+    userData::Dict{Symbol, SmallDataTypes}
+    robotData::Dict{Symbol, SmallDataTypes}
+    sessionData::Dict{Symbol, SmallDataTypes}
     userBlobEntries::OrderedDict{Symbol, BlobEntry}
     robotBlobEntries::OrderedDict{Symbol, BlobEntry}
     sessionBlobEntries::OrderedDict{Symbol, BlobEntry}
@@ -38,12 +38,13 @@ function GraphsDFG{T,V,F}(
     userLabel::String="DefaultUser",
     robotLabel::String="DefaultRobot",
     sessionLabel::String="Session_$(string(uuid4())[1:6])",
-    userData::OrderedDict{Symbol, SmallDataTypes} = OrderedDict{Symbol, SmallDataTypes}(),
-    robotData::OrderedDict{Symbol, SmallDataTypes} = OrderedDict{Symbol, SmallDataTypes}(),
-    sessionData::OrderedDict{Symbol, SmallDataTypes} = OrderedDict{Symbol, SmallDataTypes}(),
+    userData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
+    robotData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
+    sessionData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
     userBlobEntries::OrderedDict{Symbol, BlobEntry} = OrderedDict{Symbol, BlobEntry}(),
     robotBlobEntries::OrderedDict{Symbol, BlobEntry} = OrderedDict{Symbol, BlobEntry}(),
     sessionBlobEntries::OrderedDict{Symbol, BlobEntry} = OrderedDict{Symbol, BlobEntry}(),
+    addHistory::Vector{Symbol} = Symbol[],
     solverParams::T=T(),
     blobstores=Dict{Symbol, AbstractBlobStore}(),
 ) where {T <: AbstractParams, V <:AbstractDFGVariable, F<:AbstractDFGFactor}
@@ -64,22 +65,13 @@ function GraphsDFG{T,V,F}(
         userBlobEntries,
         robotBlobEntries,
         sessionBlobEntries,
-        Symbol[],
+        addHistory,
         solverParams,
         blobstores
     )
 end
 
 # GraphsDFG{T}(; kwargs...) where T <: AbstractParams = GraphsDFG{T,DFGVariable,DFGFactor}(;kwargs...)
-
-"""
-    $(SIGNATURES)
-
-Create an in-memory GraphsDFG with the following parameters:
-- T: Solver parameters (defaults to `NoSolverParams()`)
-- V: Variable type
-- F: Factor type
-"""
 function GraphsDFG{T}(g::FactorGraph{Int,DFGVariable,DFGFactor}=FactorGraph{Int,DFGVariable,DFGFactor}();
                      kwargs...) where T <: AbstractParams
     return GraphsDFG{T,DFGVariable,DFGFactor}(g; kwargs...)
@@ -91,25 +83,51 @@ function GraphsDFG(g::FactorGraph{Int,DFGVariable,DFGFactor}=FactorGraph{Int,DFG
 end
 
 
-GraphsDFG(description::String,
-         userLabel::String,
-         robotLabel::String,
-         sessionLabel::String,
-         userData::OrderedDict{Symbol, SmallDataTypes},
-         robotData::OrderedDict{Symbol, SmallDataTypes},
-         sessionData::OrderedDict{Symbol, SmallDataTypes},
-         solverParams::AbstractParams,
-         blobstores=Dict{Symbol, AbstractBlobStore}()) =
-         GraphsDFG(FactorGraph{Int,DFGVariable,DFGFactor}(), description, userLabel, robotLabel, sessionLabel, userData, robotData, sessionData, Symbol[], solverParams, blobstores)
+GraphsDFG(
+    description::String,
+    userLabel::String,
+    robotLabel::String,
+    sessionLabel::String,
+    userData::Dict{Symbol, SmallDataTypes},
+    robotData::Dict{Symbol, SmallDataTypes},
+    sessionData::Dict{Symbol, SmallDataTypes},
+    solverParams::AbstractParams,
+    blobstores=Dict{Symbol, AbstractBlobStore}()
+) = GraphsDFG{typeof(solverParams),DFGVariable,DFGFactor}(
+        FactorGraph{Int,DFGVariable,DFGFactor}();
+        description,
+        userLabel,
+        robotLabel,
+        sessionLabel,
+        userData,
+        robotData,
+        sessionData,
+        solverParams,
+        blobstores
+    )
 
 
-GraphsDFG{T,V,F}(description::String,
-                userLabel::String,
-                robotLabel::String,
-                sessionLabel::String,
-                userData::OrderedDict{Symbol, SmallDataTypes},
-                robotData::OrderedDict{Symbol, SmallDataTypes},
-                sessionData::OrderedDict{Symbol, SmallDataTypes},
-                solverParams::T,
-                blobstores=Dict{Symbol, AbstractBlobStore}()) where {T <: AbstractParams, V <:AbstractDFGVariable, F<:AbstractDFGFactor} =
-                GraphsDFG(FactorGraph{Int,V,F}(), description, userLabel, robotLabel, sessionLabel, userData, robotData, sessionData, Symbol[], solverParams, blobstores)
+function GraphsDFG{T,V,F}(
+    description::String,
+    userLabel::String,
+    robotLabel::String,
+    sessionLabel::String,
+    userData::Dict{Symbol, SmallDataTypes},
+    robotData::Dict{Symbol, SmallDataTypes},
+    sessionData::Dict{Symbol, SmallDataTypes},
+    solverParams::T,
+    blobstores=Dict{Symbol, AbstractBlobStore}()
+) where {T <: AbstractParams, V <:AbstractDFGVariable, F<:AbstractDFGFactor}
+    return GraphsDFG{T,V,F}(
+        FactorGraph{Int,V,F}();
+        description,
+        userLabel,
+        robotLabel,
+        sessionLabel,
+        userData,
+        robotData,
+        sessionData,
+        solverParams,
+        blobstores
+    )
+end

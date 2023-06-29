@@ -30,8 +30,9 @@ using Pkg
 using TensorCast
 using ProgressMeter
 using SHA
-using OrderedCollections
 using FileIO
+using OrderedCollections
+export OrderedDict
 
 using CSV
 
