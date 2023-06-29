@@ -170,6 +170,13 @@ emptySessionData!(dfg::AbstractDFG) = empty!(dfg.sessionData)
 #TODO add__Data!?
 
 ##==============================================================================
+## User/Robot/Session Blob Entries CRUD
+##==============================================================================
+function getSessionBlobEntry end
+function getSessionBlobEntries end
+function addSessionBlobEntries! end
+
+##==============================================================================
 ## AbstractBlobStore  CRUD
 ##==============================================================================
 # AbstractBlobStore should have key or overwrite getKey

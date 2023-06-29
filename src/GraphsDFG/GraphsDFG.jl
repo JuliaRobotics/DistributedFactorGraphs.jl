@@ -3,6 +3,8 @@ module GraphsDFGs
 using Graphs
 using DocStringExtensions
 using UUIDs
+using JSON3
+using OrderedCollections
 
 using ...DistributedFactorGraphs
 
@@ -44,7 +46,10 @@ import ...DistributedFactorGraphs:  setSolverParams!,
                                     _getDuplicatedEmptyDFG,
                                     toDot,
                                     toDotFile,
-                                    findShortestPathDijkstra
+                                    findShortestPathDijkstra,
+                                    getSessionBlobEntry,
+                                    getSessionBlobEntries,
+                                    addSessionBlobEntries!
 
 include("FactorGraphs/FactorGraphs.jl")
 using .FactorGraphs

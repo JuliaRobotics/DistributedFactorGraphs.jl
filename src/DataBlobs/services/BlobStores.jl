@@ -98,7 +98,7 @@ function getBlob(dfg::AbstractDFG, entry::BlobEntry)
     end
     throw(
         KeyError(
-            "could not find $(entry.label), uuid $blobId) in any of the listed blobstores:\n $([s->getKey(s) for (s,v) in stores]))"
+            "could not find $(entry.label), uuid $(entry.blobId) in any of the listed blobstores:\n $([s->getKey(s) for (s,v) in stores]))"
         )
     )
 end
