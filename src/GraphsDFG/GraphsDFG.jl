@@ -49,6 +49,7 @@ import ...DistributedFactorGraphs:  setSolverParams!,
                                     findShortestPathDijkstra,
                                     getSessionBlobEntry,
                                     getSessionBlobEntries,
+                                    addSessionBlobEntry!,
                                     addSessionBlobEntries!
 
 include("FactorGraphs/FactorGraphs.jl")
