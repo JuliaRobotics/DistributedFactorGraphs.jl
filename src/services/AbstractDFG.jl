@@ -178,6 +178,7 @@ function addSessionBlobEntry! end
 function addSessionBlobEntries! end
 function updateSessionBlobEntry! end
 function deleteSessionBlobEntry! end
+function listSessionBlobEntries end
 
 function getRobotBlobEntry end
 function getRobotBlobEntries end
@@ -185,6 +186,7 @@ function addRobotBlobEntry! end
 function addRobotBlobEntries! end
 function updateRobotBlobEntry! end
 function deleteRobotBlobEntry! end
+function listRobotBlobEntries end
 
 function getUserBlobEntry end
 function getUserBlobEntries end
@@ -192,6 +194,7 @@ function addUserBlobEntry! end
 function addUserBlobEntries! end
 function updateUserBlobEntry! end
 function deleteUserBlobEntry! end
+function listUserBlobEntries end
 
 ##==============================================================================
 ## AbstractBlobStore  CRUD
