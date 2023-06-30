@@ -501,7 +501,11 @@ function getSessionBlobEntries(fg::GraphsDFG, startwith::Union{Nothing,String}=n
 end
 
 function addSessionBlobEntry!(fg::GraphsDFG, entry::BlobEntry)
+    if haskey(fg.sessionBlobEntries, entry.label)
+        error("BlobEntry '$(entry.label)' already exists in the factor graph's session blob entries.")
+    end
     push!(fg.sessionBlobEntries, entry.label=>entry)
+    return entry
 end
 
 function addSessionBlobEntries!(fg::GraphsDFG, entries::Vector{BlobEntry})
