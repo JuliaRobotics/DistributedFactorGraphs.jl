@@ -69,6 +69,9 @@ export getDescription, setDescription!,
        getRobotData, setRobotData!,
        getSessionData, setSessionData!,
        getAddHistory
+
+export getSessionBlobEntry, addSessionBlobEntry!
+
 export getBlobStore,
        addBlobStore!,
        updateBlobStore!,

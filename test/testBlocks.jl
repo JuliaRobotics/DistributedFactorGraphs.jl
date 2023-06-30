@@ -246,6 +246,39 @@ function  UserRobotSessionData!(fg::AbstractDFG)
 
 end
 
+# User, Robot, Session Data Blob Entries
+function  UserRobotSessionBlobEntries!(fg::AbstractDFG)
+
+    be = BlobEntry(
+        id = uuid4(), 
+        blobId = uuid4(),
+        originId = uuid4(),
+        label = :key1, 
+        blobstore = :b, 
+        hash = "",
+        origin = "",
+        description = "",
+        mimeType = "", 
+        metadata = ""
+    )
+
+    # User Blob Entries
+    #TODO
+
+    # Robot Blob Entries
+    #TODO
+
+    # Session Blob Entries
+    ae = addSessionBlobEntry!(fg, be)
+    @test ae == be
+    ge = getSessionBlobEntry(fg, :key1)
+    @test ge == be
+    
+    #TODO
+
+
+end
+
 function DFGVariableSCA()
     # "DFG Variable"
 
