@@ -98,7 +98,7 @@ function getBlob(dfg::AbstractDFG, entry::BlobEntry)
     end
     throw(
         KeyError(
-            "could not find $(entry.label), uuid $blobId) in any of the listed blobstores:\n $([s->getKey(s) for (s,v) in stores]))"
+            "could not find $(entry.label), uuid $(entry.blobId) in any of the listed blobstores:\n $([s->getKey(s) for (s,v) in stores]))"
         )
     )
 end
@@ -124,6 +124,9 @@ addBlob!(store::AbstractBlobStore, data) =
 #fallback as not all blobStores use filename
 addBlob!(store::AbstractBlobStore, blobId::UUID, data, ::String) =
     addBlob!(store, blobId, data)
+
+addBlob!(store::AbstractBlobStore, data, ::String) =
+    addBlob!(store, uuid4(), data)
 
 #update
 updateBlob!(dfg::AbstractDFG, entry::BlobEntry, data::T) where {T} =

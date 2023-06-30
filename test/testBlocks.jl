@@ -152,10 +152,10 @@ function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverP
     uId = "test@navability.io"
     rId = "testRobotId"
     sId = "testSessionId"
-    ud = :ud=>"udEntry"
-    rd = :rd=>"rdEntry"
-    sd = :sd=>"sdEntry"
-    fg = T(des, uId,  rId,  sId,  Dict{Symbol, String}(ud),  Dict{Symbol, String}(rd),  Dict{Symbol, String}(sd),  solparams)
+    ud = Dict{Symbol,SmallDataTypes}(:ud=>"udEntry")
+    rd = Dict{Symbol,SmallDataTypes}(:rd=>"rdEntry")
+    sd = Dict{Symbol,SmallDataTypes}(:sd=>"sdEntry")
+    fg = T(des, uId,  rId,  sId,  ud,  rd,  sd,  solparams)
 
     # accesssors
     # get
@@ -165,18 +165,18 @@ function DFGStructureAndAccessors(::Type{T}, solparams::AbstractParams=NoSolverP
     @test getSessionLabel(fg) == sId
     @test getAddHistory(fg) === fg.addHistory
 
-    @test setUserData!(fg, Dict(ud)) == Dict(ud)
-    @test setRobotData!(fg, Dict(rd)) == Dict(rd)
-    @test setSessionData!(fg, Dict(sd)) == Dict(sd)
-    @test getUserData(fg) == Dict(ud)
-    @test getRobotData(fg) == Dict(rd)
-    @test getSessionData(fg) == Dict(sd)
+    @test setUserData!(fg, ud) == ud
+    @test setRobotData!(fg, rd) == rd
+    @test setSessionData!(fg, sd) == sd
+    @test getUserData(fg) == ud
+    @test getRobotData(fg) == rd
+    @test getSessionData(fg) == sd
 
     @test getSolverParams(fg) == NoSolverParams()
 
-    smallUserData = Dict{Symbol, String}(:a => "42", :b => "Hello")
-    smallRobotData = Dict{Symbol, String}(:a => "43", :b => "Hello")
-    smallSessionData = Dict{Symbol, String}(:a => "44", :b => "Hello")
+    smallUserData = Dict{Symbol, SmallDataTypes}(:a => "42", :b => "Hello")
+    smallRobotData = Dict{Symbol, SmallDataTypes}(:a => "43", :b => "Hello")
+    smallSessionData = Dict{Symbol, SmallDataTypes}(:a => "44", :b => "Hello")
 
     #TODO CRUD vs set
     @test setUserData!(fg, deepcopy(smallUserData)) == smallUserData
@@ -243,6 +243,39 @@ function  UserRobotSessionData!(fg::AbstractDFG)
     # mergeUserData
     # mergeRobotData
     # mergeSessionData
+
+end
+
+# User, Robot, Session Data Blob Entries
+function  UserRobotSessionBlobEntries!(fg::AbstractDFG)
+
+    be = BlobEntry(
+        id = uuid4(), 
+        blobId = uuid4(),
+        originId = uuid4(),
+        label = :key1, 
+        blobstore = :b, 
+        hash = "",
+        origin = "",
+        description = "",
+        mimeType = "", 
+        metadata = ""
+    )
+
+    # User Blob Entries
+    #TODO
+
+    # Robot Blob Entries
+    #TODO
+
+    # Session Blob Entries
+    ae = addSessionBlobEntry!(fg, be)
+    @test ae == be
+    ge = getSessionBlobEntry(fg, :key1)
+    @test ge == be
+    
+    #TODO
+
 
 end
 

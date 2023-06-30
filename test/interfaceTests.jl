@@ -34,6 +34,10 @@ end
     UserRobotSessionData!(fg1)
 end
 
+@testset "User, Robot, Session Blob Entries" begin
+    UserRobotSessionBlobEntries!(fg1)
+end
+
 # DFGVariable structure construction and accessors
 @testset "DFG Variable" begin
     global var1, var2, var3, v1_tags, vorphan

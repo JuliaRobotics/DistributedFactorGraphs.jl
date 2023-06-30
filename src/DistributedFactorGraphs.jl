@@ -30,8 +30,9 @@ using Pkg
 using TensorCast
 using ProgressMeter
 using SHA
-using OrderedCollections
 using FileIO
+using OrderedCollections
+export OrderedDict
 
 using CSV
 
@@ -68,6 +69,9 @@ export getDescription, setDescription!,
        getRobotData, setRobotData!,
        getSessionData, setSessionData!,
        getAddHistory
+
+export getSessionBlobEntry, addSessionBlobEntry!
+
 export getBlobStore,
        addBlobStore!,
        updateBlobStore!,

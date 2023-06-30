@@ -100,14 +100,14 @@ $SIGNATURES
 
 Get the user data associated with the graph.
 """
-getUserData(dfg::AbstractDFG) = return dfg.userData
+getUserData(dfg::AbstractDFG) = dfg.userData
 
 """
 $SIGNATURES
 
 Set the user data associated with the graph.
 """
-function setUserData!(dfg::AbstractDFG, data::Dict{Symbol, String})
+function setUserData!(dfg::AbstractDFG, data::Dict{Symbol, SmallDataTypes})
     dfg.userData = data #TODO keep memory? use clear and then add
     return dfg.userData
 end
@@ -117,14 +117,14 @@ $SIGNATURES
 
 Get the robot data associated with the graph.
 """
-getRobotData(dfg::AbstractDFG)::Union{Nothing, Dict{Symbol, String}} = return dfg.robotData
+getRobotData(dfg::AbstractDFG) = dfg.robotData
 
 """
 $SIGNATURES
 
 Set the robot data associated with the graph.
 """
-function setRobotData!(dfg::AbstractDFG, data::Dict{Symbol, String})
+function setRobotData!(dfg::AbstractDFG, data::Dict{Symbol, SmallDataTypes})
     dfg.robotData = data
     return dfg.robotData
 end
@@ -134,14 +134,14 @@ $SIGNATURES
 
 Get the session data associated with the graph.
 """
-getSessionData(dfg::AbstractDFG)::Dict{Symbol, String} = return dfg.sessionData
+getSessionData(dfg::AbstractDFG) = dfg.sessionData
 
 """
 $SIGNATURES
 
 Set the session data associated with the graph.
 """
-function setSessionData!(dfg::AbstractDFG, data::Dict{Symbol, String})
+function setSessionData!(dfg::AbstractDFG, data::Dict{Symbol, SmallDataTypes})
     dfg.sessionData = data
     return dfg.sessionData
 end
@@ -151,9 +151,9 @@ end
 ##==============================================================================
 
 #NOTE with API standardization this should become something like:
-getUserData(dfg::AbstractDFG, key::Symbol)::String = dfg.userData[key]
-getRobotData(dfg::AbstractDFG, key::Symbol)::String = dfg.robotData[key]
-getSessionData(dfg::AbstractDFG, key::Symbol)::String = dfg.sessionData[key]
+getUserData(dfg::AbstractDFG, key::Symbol) = dfg.userData[key]
+getRobotData(dfg::AbstractDFG, key::Symbol) = dfg.robotData[key]
+getSessionData(dfg::AbstractDFG, key::Symbol) = dfg.sessionData[key]
 
 updateUserData!(dfg::AbstractDFG, pair::Pair{Symbol,String}) = push!(dfg.userData, pair)
 updateRobotData!(dfg::AbstractDFG, pair::Pair{Symbol,String}) = push!(dfg.robotData, pair)
@@ -168,6 +168,30 @@ emptyRobotData!(dfg::AbstractDFG) = empty!(dfg.robotData)
 emptySessionData!(dfg::AbstractDFG) = empty!(dfg.sessionData)
 
 #TODO add__Data!?
+
+##==============================================================================
+## User/Robot/Session Blob Entries CRUD
+##==============================================================================
+function getSessionBlobEntry end
+function getSessionBlobEntries end
+function addSessionBlobEntry! end
+function addSessionBlobEntries! end
+function updateSessionBlobEntry! end
+function deleteSessionBlobEntry! end
+
+function getRobotBlobEntry end
+function getRobotBlobEntries end
+function addRobotBlobEntry! end
+function addRobotBlobEntries! end
+function updateRobotBlobEntry! end
+function deleteRobotBlobEntry! end
+
+function getUserBlobEntry end
+function getUserBlobEntries end
+function addUserBlobEntry! end
+function addUserBlobEntries! end
+function updateUserBlobEntry! end
+function deleteUserBlobEntry! end
 
 ##==============================================================================
 ## AbstractBlobStore  CRUD

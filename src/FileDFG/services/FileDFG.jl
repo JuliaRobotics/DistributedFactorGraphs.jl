@@ -124,8 +124,8 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString)
     !isdir(varFolder) && error("Can't load DFG graph - folder '$varFolder' doesn't exist")
     !isdir(factorFolder) && error("Can't load DFG graph - folder '$factorFolder' doesn't exist")
 
-    varFiles = readdir(varFolder)
-    factorFiles = readdir(factorFolder)
+    varFiles = sort(readdir(varFolder; sort=false); lt=natural_lt)
+    factorFiles = sort(readdir(factorFolder; sort=false); lt=natural_lt)
     @showprogress 1 "loading variables" for varFile in varFiles
         jstr = read("$varFolder/$varFile", String)
         try

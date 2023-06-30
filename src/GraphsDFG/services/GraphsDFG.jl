@@ -480,3 +480,54 @@ function traverseGraphTopologicalSort(fg::GraphsDFG, s::Symbol, fs_tree=bfs_tree
     return symlist
 end
 
+
+# FG blob entries 
+# session blob entries
+function getBlobEntry(var::AbstractDFGVariable, key::Symbol)
+    if !hasBlobEntry(var, key)
+        throw(KeyError("No dataEntry label $(key) found in variable $(getLabel(var)). Available keys: $(keys(var.dataDict))"))
+    end
+    return var.dataDict[key]
+end
+
+function getSessionBlobEntry(fg::GraphsDFG, label::Symbol)
+    return fg.sessionBlobEntries[label]
+end
+
+function getSessionBlobEntries(fg::GraphsDFG, startwith::Union{Nothing,String}=nothing)
+    entries = collect(values(fg.sessionBlobEntries))
+    !isnothing(startwith) && filter!(e->startswith(string(e.label), startwith), entries)
+    return entries
+end
+
+function addSessionBlobEntry!(fg::GraphsDFG, entry::BlobEntry)
+    if haskey(fg.sessionBlobEntries, entry.label)
+        error("BlobEntry '$(entry.label)' already exists in the factor graph's session blob entries.")
+    end
+    push!(fg.sessionBlobEntries, entry.label=>entry)
+    return entry
+end
+
+function addSessionBlobEntries!(fg::GraphsDFG, entries::Vector{BlobEntry})
+    return map(entries) do entry
+        addSessionBlobEntry!(fg, entry)
+    end
+end
+
+# function getSessionBlobEntry(fg::GraphsDFG, label::Symbol)
+#     return JSON3.read(fg.sessionData[label], BlobEntry)
+# end
+
+# function getSessionBlobEntries(fg::GraphsDFG, startwith::Union{Nothing,String}=nothing)
+#     entries = map(values(fg.sessionData)) do entry
+#         JSON3.read(entry, BlobEntry)
+#     end
+#     !isnothing(startwith) && filter!(e->startswith(string(e.label), startwith), entries)
+#     return entries
+# end
+
+# function addSessionBlobEntries!(fg::GraphsDFG, entries::Vector{BlobEntry})
+#     return map(entries) do entry
+#         push!(fg.sessionData, entry.label=>JSON3.write(entry))
+#     end
+# end
