@@ -24,7 +24,7 @@ Notes:
     label::Symbol
     """ A hint about where the `Blob` itself might be stored.  Remember that a Blob may be duplicated over multiple blobstores. """
     blobstore::Symbol
-    """ A hash value to ensure data consistency which must correspond to the stored hash upon retrieval.  [Legacy: some usage functions allow the check to be skipped if needed.] """
+    """ A hash value to ensure data consistency which must correspond to the stored hash upon retrieval.  Use `bytes2hex(sha256(blob))`. [Legacy: some usage functions allow the check to be skipped if needed.] """
     hash::String # Probably https://docs.julialang.org/en/v1/stdlib/SHA
     """ Context from which a BlobEntry=>Blob was first created. E.g. user|robot|session|varlabel. """
     origin::String 
@@ -43,7 +43,7 @@ Notes:
     """ Use carefully, but necessary to support advanced usage such as time synchronization over Blob data. """
     lastUpdatedTimestamp::Union{ZonedDateTime,Nothing} = nothing
     """ Self type declaration for when duck-typing happens. """
-    _type::String = "BlobEntry"
+    _type::String = "DistributedFactorGraph.BlobEntry"
     """ Type version of this BlobEntry. TBD.jl consider upgrading to `::VersionNumber`. """
     _version::String = string(_getDFGVersion())
 end

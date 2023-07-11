@@ -8,9 +8,9 @@ abstract type AbstractPackedFactor end
 
 abstract type AbstractPrior <: AbstractFactor end
 abstract type AbstractRelative <: AbstractFactor end
-abstract type AbstractRelativeRoots <: AbstractRelative end    # NOTE Cannot be used for partials
+# abstract type AbstractRelativeRoots <: AbstractRelative end    # TODO deprecate
 abstract type AbstractRelativeMinimize <: AbstractRelative end
-abstract type AbstractManifoldMinimize <: AbstractRelative end # FIXME move here from IIF
+abstract type AbstractManifoldMinimize <: AbstractRelative end
 
 # NOTE DF, Convolution is IIF idea, but DFG should know about "FactorOperationalMemory"
 # DF, IIF.CommonConvWrapper <: FactorOperationalMemory #
