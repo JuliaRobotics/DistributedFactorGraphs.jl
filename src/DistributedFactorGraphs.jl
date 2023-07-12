@@ -224,7 +224,7 @@ export packBlob, unpackBlob
 # Factor Data
 export GenericFunctionNodeData, PackedFunctionNodeData, FunctionNodeData
 export AbstractFactor, AbstractPackedFactor
-export AbstractPrior, AbstractRelative, AbstractRelativeRoots, AbstractRelativeMinimize, AbstractManifoldMinimize
+export AbstractPrior, AbstractRelative, AbstractRelativeMinimize, AbstractManifoldMinimize
 export FactorOperationalMemory
 
 # accessors

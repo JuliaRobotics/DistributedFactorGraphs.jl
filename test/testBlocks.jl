@@ -32,7 +32,7 @@ struct TestFunctorInferenceType1 <: AbstractRelative end
 struct TestFunctorInferenceType2 <: AbstractRelative end
 
 struct TestAbstractPrior <: AbstractPrior end
-struct TestAbstractRelativeFactor <: AbstractRelativeRoots end
+# struct TestAbstractRelativeFactor <: AbstractRelativeRoots end
 struct TestAbstractRelativeFactorMinimize <: AbstractRelativeMinimize end
 
 Base.@kwdef struct PackedTestFunctorInferenceType1 <: AbstractPackedFactor

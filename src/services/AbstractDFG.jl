@@ -950,20 +950,22 @@ Related:
 - [`getNeighborhood`](@ref)
 - [`mergeGraph!`](@ref)
 """
-function copyGraph!(destDFG::AbstractDFG,
-                    sourceDFG::AbstractDFG,
-                    variableLabels::Vector{Symbol},
-                    factorLabels::Vector{Symbol};
-                    copyGraphMetadata::Bool=false,
-                    overwriteDest::Bool=false,
-                    deepcopyNodes::Bool=false,
-                    verbose::Bool = false)
+function copyGraph!(
+    destDFG::AbstractDFG,
+    sourceDFG::AbstractDFG,
+    variableLabels::AbstractVector{Symbol}=listVariables(sourceDFG),
+    factorLabels::AbstractVector{Symbol}=listFactors(sourceDFG);
+    copyGraphMetadata::Bool=false,
+    overwriteDest::Bool=false,
+    deepcopyNodes::Bool=false,
+    verbose::Bool = false
+)
     # Split into variables and factors
     sourceVariables = map(vId->getVariable(sourceDFG, vId), variableLabels)
     sourceFactors = map(fId->getFactor(sourceDFG, fId), factorLabels)
 
     # Now we have to add all variables first,
-    for variable in sourceVariables
+    @showprogress "copy variables" for variable in sourceVariables
         variableCopy = deepcopyNodes ? deepcopy(variable) : variable
         if !exists(destDFG, variable)
             addVariable!(destDFG, variableCopy)
@@ -974,7 +976,7 @@ function copyGraph!(destDFG::AbstractDFG,
         end
     end
     # And then all factors to the destDFG.
-    for factor in sourceFactors
+    @showprogress "copy factors" for factor in sourceFactors
         # Get the original factor variables (we need them to create it)
         sourceFactorVariableIds = collect(factor._variableOrderSymbols)
         # Find the labels and associated variables in our new subgraph
