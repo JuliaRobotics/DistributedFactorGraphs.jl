@@ -33,12 +33,13 @@ end
 ## Compare
 ##==============================================================================
 
-function compareField(Allc, Bllc, syms)::Bool
+function compareField(Allc, Bllc, syms)
     (!isdefined(Allc, syms) && !isdefined(Bllc, syms)) && return true
     !isdefined(Allc, syms) && return false
     !isdefined(Bllc, syms) && return false
     a = getproperty(Allc, syms)
     b = getproperty(Bllc, syms)
+    @debug "Comparing field directly a vs b" syms a b 
     if a isa Base.RefValue
       return a[] == b[]
     else
@@ -72,7 +73,7 @@ end
 function compareFields( Al::T,
                         Bl::T;
                         show::Bool=true,
-                        skip::Vector{Symbol}=Symbol[]  )::Bool where {T <: Union{Number, AbstractString}}
+                        skip::Vector{Symbol}=Symbol[]  ) where {T <: Union{Number, AbstractString}}
   #
   return Al == Bl
 end
@@ -80,7 +81,7 @@ end
 function compareAll(Al::T,
                     Bl::T;
                     show::Bool=true,
-                    skip::Vector{Symbol}=Symbol[]  )::Bool where {T <: Union{AbstractString,Symbol}}
+                    skip::Vector{Symbol}=Symbol[]  ) where {T <: Union{AbstractString,Symbol}}
   #
   return Al == Bl
 end
@@ -88,7 +89,7 @@ end
 function compareAll(Al::T,
                     Bl::T;
                     show::Bool=true,
-                    skip::Vector{Symbol}=Symbol[]  )::Bool where {T <: Union{Array{<:Number}, Number}}
+                    skip::Vector{Symbol}=Symbol[]  ) where {T <: Union{Array{<:Number}, Number}}
   #
   (length(Al) != length(Bl)) && return false
   return norm(Al - Bl) < 1e-6
@@ -97,7 +98,7 @@ end
 function compareAll(Al::T,
                     Bl::T;
                     show::Bool=true,
-                    skip::Vector{Symbol}=Symbol[]  )::Bool where {T <: Array}
+                    skip::Vector{Symbol}=Symbol[]  ) where {T <: Array}
   #
   (length(Al) != length(Bl)) && return false
   for i in 1:length(Al)
@@ -131,7 +132,7 @@ end
 function compareAll(Al::T,
                     Bl::T;
                     show::Bool=true,
-                    skip::Vector{Symbol}=Symbol[]  )::Bool where {T <: Dict}
+                    skip::Vector{Symbol}=Symbol[]  ) where {T <: Dict}
   #
   (length(Al) != length(Bl)) && return false
   for (id, val) in Al
