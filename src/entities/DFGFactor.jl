@@ -232,7 +232,7 @@ Base.@kwdef struct DFGFactorSummary <: AbstractDFGFactor
     """Factor tags, e.g [:FACTOR].
     Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
     tags::Set{Symbol}
-    """Internal cache of the ordering of the neighbor variables. Rather use getNeighbors to get the list as this is an internal value.
+    """Internal cache of the ordering of the neighbor variables. Rather use listNeighbors to get the list as this is an internal value.
     Accessors: [`getVariableOrder`](@ref)"""
     _variableOrderSymbols::Vector{Symbol}
     """Variable timestamp.
@@ -261,7 +261,7 @@ Base.@kwdef struct SkeletonDFGFactor <: AbstractDFGFactor
     """Factor tags, e.g [:FACTOR].
     Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
     tags::Set{Symbol}
-    """Internal cache of the ordering of the neighbor variables. Rather use getNeighbors to get the list as this is an internal value.
+    """Internal cache of the ordering of the neighbor variables. Rather use listNeighbors to get the list as this is an internal value.
     Accessors: [`getVariableOrder`](@ref)"""
     _variableOrderSymbols::Vector{Symbol}
 end

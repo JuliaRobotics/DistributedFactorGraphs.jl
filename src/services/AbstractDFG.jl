@@ -365,8 +365,8 @@ end
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
 """
-function getNeighbors(dfg::AbstractDFG, label::Symbol; solvable::Int=0)
-    error("getNeighbors not implemented for $(typeof(dfg))")
+function listNeighbors(dfg::AbstractDFG, label::Symbol; solvable::Int=0)
+    error("listNeighbors not implemented for $(typeof(dfg))")
 end
 
 
@@ -479,8 +479,8 @@ end
 ## Connectivity Alias
 ##------------------------------------------------------------------------------
 
-function getNeighbors(dfg::AbstractDFG, node::DFGNode; solvable::Int=0)
-    getNeighbors(dfg, node.label, solvable=solvable)
+function listNeighbors(dfg::AbstractDFG, node::DFGNode; solvable::Int=0)
+    listNeighbors(dfg, node.label; solvable)
 end
 
 
@@ -621,14 +621,14 @@ end
 Retrieve a list of labels of the immediate neighbors around a given variable or factor.
 """
 function ls(dfg::G, node::T; solvable::Int=0) where {G <: AbstractDFG, T <: DFGNode}
-    return getNeighbors(dfg, node, solvable=solvable)
+    return listNeighbors(dfg, node, solvable=solvable)
 end
 function ls(dfg::G, label::Symbol; solvable::Int=0) where G <: AbstractDFG
-    return getNeighbors(dfg, label, solvable=solvable)
+    return listNeighbors(dfg, label, solvable=solvable)
 end
 
 function lsf(dfg::G, label::Symbol; solvable::Int=0)::Vector{Symbol} where G <: AbstractDFG
-  return getNeighbors(dfg, label, solvable=solvable)
+  return listNeighbors(dfg, label, solvable=solvable)
 end
 
 ## list by types
@@ -1146,7 +1146,7 @@ function getNeighborhood(dfg::AbstractDFG, label::Symbol, distance::Int)
     for dist in 1:distance
         newNeighbors = Set{Symbol}()
         for node in curList
-            neighbors = getNeighbors(dfg, node)
+            neighbors = listNeighbors(dfg, node)
             for neighbor in neighbors
                 push!(neighborList, neighbor)
                 push!(newNeighbors, neighbor)
@@ -1313,7 +1313,7 @@ function getAdjacencyMatrixSymbols(dfg::AbstractDFG; solvable::Int=0)
     adjMat[2:end, 1] = factLabels
     adjMat[1, 2:end] = varLabels
     for (fIndex, factLabel) in enumerate(factLabels)
-        factVars = getNeighbors(dfg, getFactor(dfg, factLabel), solvable=solvable)
+        factVars = listNeighbors(dfg, getFactor(dfg, factLabel), solvable=solvable)
         map(vLabel -> adjMat[fIndex+1,vDict[vLabel]] = factLabel, factVars)
     end
     return adjMat
@@ -1341,7 +1341,7 @@ function getBiadjacencyMatrix(dfg::AbstractDFG; solvable::Int=0)
     adjMat = spzeros(Int, length(factLabels), length(varLabels))
 
     for (fIndex, factLabel) in enumerate(factLabels)
-        factVars = getNeighbors(dfg, getFactor(dfg, factLabel), solvable=solvable)
+        factVars = listNeighbors(dfg, getFactor(dfg, factLabel), solvable=solvable)
         map(vLabel -> adjMat[fIndex,vDict[vLabel]] = 1, factVars)
     end
     return (B=adjMat, varLabels=varLabels, facLabels=factLabels)
@@ -1426,7 +1426,7 @@ function getSummaryGraph(dfg::G) where {G <: AbstractDFG}
     #     newV = addVariable!(summaryDfg, DFGVariableSummary(v))
     # end
     # for f in getFactors(dfg)
-    #     addFactor!(summaryDfg, getNeighbors(dfg, f), DFGFactorSummary(f))
+    #     addFactor!(summaryDfg, listNeighbors(dfg, f), DFGFactorSummary(f))
     # end
     return summaryDfg
 end

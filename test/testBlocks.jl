@@ -1366,24 +1366,24 @@ function  GettingNeighbors(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
     # Trivial test to validate that intersect([], []) returns order of first parameter
     @test intersect([:x3, :x2, :x1], [:x1, :x2]) == [:x2, :x1]
     # Get neighbors tests
-    @test getNeighbors(dfg, verts[1]) == [:x1x2f1]
-    neighbors = getNeighbors(dfg, getFactor(dfg, :x1x2f1))
+    @test listNeighbors(dfg, verts[1]) == [:x1x2f1]
+    neighbors = listNeighbors(dfg, getFactor(dfg, :x1x2f1))
     @test neighbors == [:x1, :x2]
     # Testing aliases
-    @test getNeighbors(dfg, getFactor(dfg, :x1x2f1)) == ls(dfg, getFactor(dfg, :x1x2f1))
-    @test getNeighbors(dfg, :x1x2f1) == ls(dfg, :x1x2f1)
+    @test listNeighbors(dfg, getFactor(dfg, :x1x2f1)) == ls(dfg, getFactor(dfg, :x1x2f1))
+    @test listNeighbors(dfg, :x1x2f1) == ls(dfg, :x1x2f1)
 
     # Solvable
     #TODO if not a GraphsDFG with and summary or skeleton
     if VARTYPE == DFGVariable
-        @test getNeighbors(dfg, :x5, solvable=2) == Symbol[]
-        @test issetequal(getNeighbors(dfg, :x5, solvable=0), [:x4x5f1,:x5x6f1])
-        @test issetequal(getNeighbors(dfg, :x5), [:x4x5f1,:x5x6f1])
-        @test getNeighbors(dfg, :x7x8f1, solvable=0) == [:x7, :x8]
-        @test getNeighbors(dfg, :x7x8f1, solvable=1) == [:x7]
-        @test getNeighbors(dfg, verts[1], solvable=0) == [:x1x2f1]
-        @test getNeighbors(dfg, verts[1], solvable=2) == Symbol[]
-        @test getNeighbors(dfg, verts[1]) == [:x1x2f1]
+        @test listNeighbors(dfg, :x5, solvable=2) == Symbol[]
+        @test issetequal(listNeighbors(dfg, :x5, solvable=0), [:x4x5f1,:x5x6f1])
+        @test issetequal(listNeighbors(dfg, :x5), [:x4x5f1,:x5x6f1])
+        @test listNeighbors(dfg, :x7x8f1, solvable=0) == [:x7, :x8]
+        @test listNeighbors(dfg, :x7x8f1, solvable=1) == [:x7]
+        @test listNeighbors(dfg, verts[1], solvable=0) == [:x1x2f1]
+        @test listNeighbors(dfg, verts[1], solvable=2) == Symbol[]
+        @test listNeighbors(dfg, verts[1]) == [:x1x2f1]
     end
 
 end
