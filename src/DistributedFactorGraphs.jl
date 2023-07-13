@@ -199,7 +199,7 @@ export packVariableNodeData, unpackVariableNodeData
 
 export getSolvedCount, isSolved, setSolvedCount!, isInitialized, isMarginalized, setMarginalized!
 
-export getNeighborhood, getNeighbors, _getDuplicatedEmptyDFG
+export getNeighborhood, listNeighbors, _getDuplicatedEmptyDFG
 export findFactorsBetweenNaive
 export copyGraph!, deepcopyGraph, deepcopyGraph!, buildSubgraph, mergeGraph!
 

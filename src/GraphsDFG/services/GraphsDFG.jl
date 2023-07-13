@@ -138,7 +138,7 @@ function deleteVariable!(dfg::GraphsDFG, label::Symbol)#::Tuple{AbstractDFGVaria
 
     deleteNeighbors = true # reserved, orphaned factors are not supported at this time
     if deleteNeighbors
-        neigfacs = map(l->deleteFactor!(dfg, l), getNeighbors(dfg, label))
+        neigfacs = map(l->deleteFactor!(dfg, l), listNeighbors(dfg, label))
     end
     variable = dfg.g.variables[label]
     rem_vertex!(dfg.g, dfg.g.labels[label])
@@ -231,7 +231,7 @@ function _isSolvable(dfg::GraphsDFG, label::Symbol, ready::Int)::Bool
     return false
 end
 
-function getNeighbors(dfg::GraphsDFG, node::DFGNode; solvable::Int=0)
+function listNeighbors(dfg::GraphsDFG, node::DFGNode; solvable::Int=0)
     label = node.label
     if !exists(dfg, label)
         error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
@@ -252,7 +252,7 @@ function getNeighbors(dfg::GraphsDFG, node::DFGNode; solvable::Int=0)
 end
 
 
-function getNeighbors(dfg::GraphsDFG, label::Symbol; solvable::Int=0)::Vector{Symbol}
+function listNeighbors(dfg::GraphsDFG, label::Symbol; solvable::Int=0)::Vector{Symbol}
     if !exists(dfg, label)
         error("Variable/factor with label '$(label)' does not exist in the factor graph")
     end

@@ -131,8 +131,8 @@ struct NotImplementedDFG{T} <: AbstractDFG{T} end
     @test_throws ErrorException getVariables(dfg)
     @test_throws ErrorException getFactors(dfg)
     @test_throws ErrorException isConnected(dfg)
-    @test_throws ErrorException getNeighbors(dfg, v1)
-    @test_throws ErrorException getNeighbors(dfg, :a)
+    @test_throws ErrorException listNeighbors(dfg, v1)
+    @test_throws ErrorException listNeighbors(dfg, :a)
 
     @test_throws ErrorException _getDuplicatedEmptyDFG(dfg)
 
