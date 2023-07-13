@@ -308,6 +308,10 @@ function getVariables(dfg::G, regexFilter::Union{Nothing, Regex}=nothing; tags::
     error("getVariables not implemented for $(typeof(dfg))")
 end
 
+function getVariables(dfg::AbstractDFG, labels::Vector{Symbol})
+    return map(label->getVariable(dfg, label), labels)
+end
+
 """
     $(SIGNATURES)
 List the DFGFactors in the DFG.
