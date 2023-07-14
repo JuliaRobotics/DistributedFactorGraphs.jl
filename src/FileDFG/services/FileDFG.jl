@@ -17,7 +17,7 @@ v1 = addVariable!(dfg, :a, ContinuousScalar, tags = [:POSE], solvable=0)
 saveDFG(dfg, "/tmp/saveDFG.tar.gz")
 ```
 """
-function saveDFG(folder::AbstractString, dfg::AbstractDFG)
+function saveDFG(folder::AbstractString, dfg::AbstractDFG; saveMetadata::Bool=false)
 
     # TODO: Deprecate the folder functionality
 
@@ -46,29 +46,40 @@ function saveDFG(folder::AbstractString, dfg::AbstractDFG)
     end
     # Factors
     @showprogress "saving factors" for f in factors
-        fPacked = packFactor(dfg, f)
+        fPacked = packFactor(f)
         JSON3.write("$factorFolder/$(f.label).json", fPacked)
+    end
+    #GraphsDFG metadata
+    if saveMetadata
+        @assert isa(dfg, GraphsDFG) "only metadata for GraphsDFG are supported"
+        @info "saving dfg metadata"
+        fgPacked = GraphsDFGs.packDFGMetadata(dfg)
+        JSON3.write("$savepath/dfg.json", fgPacked)
     end
 
     savedir = dirname(savepath) # is this a path of just local name? #344 -- workaround with unique names
     savename = basename(string(savepath))
     @assert savename != ""
     destfile = joinpath(savedir, savename*".tar.gz")
-    # FIXME, switch to Tar.jl and Transcode Zlib / Codec, see #351
-    if length(savedir) != 0
-        run( pipeline(`tar -zcf - -C $savedir $savename`, stdout="$destfile"))
-    else
-        run( pipeline(`tar -zcf - $savename`, stdout="$destfile"))
-    end
+    
+    #create Tarbal using Tar.jl #351
+    tar_gz = open(destfile, write=true)
+    tar = CodecZlib.GzipCompressorStream(tar_gz)
+    Tar.create(joinpath(savedir,savename), tar)
+    close(tar)
+    #not compressed version
+    # Tar.create(joinpath(savedir,savename), destfile)
+
     Base.rm(joinpath(savedir,savename), recursive=true)
 end
 # support both argument orders, #581
 saveDFG(dfg::AbstractDFG, folder::AbstractString) = saveDFG(folder, dfg)
 
+#TODO  loadDFG(dst::AbstractString) to load an equivalent dfg, but defined in IIF
+
 """
     $(SIGNATURES)
-Load a DFG from a saved folder. Always provide the IIF module as the second
-parameter.
+Load a DFG from a saved folder.
 
 # Example
 ```julia
@@ -81,7 +92,7 @@ loadDFG!(dfg, "/tmp/savedgraph.tar.gz")
 ls(dfg)
 ```
 """
-function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString)
+function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString; overwriteDFGMetadata::Bool=false)
 
     #
     # loaddir gets deleted so needs to be unique
@@ -112,8 +123,25 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString)
         @info "loadDFG! detected a gzip $dstname -- unpacking via $loaddir now..."
         Base.rm(folder, recursive=true, force=true)
         # unzip the tar file
-        run(`tar -zxf $dstname -C $loaddir`)
+
+        tar_gz = open(dstname)
+        tar = CodecZlib.GzipDecompressorStream(tar_gz)
+        Tar.extract(tar, folder)
+        close(tar)
+
+        #or for non-compressed
+        # Tar.extract(dstname, folder)
     end
+
+    #GraphsDFG metadata
+    if overwriteDFGMetadata 
+        @assert isa(dfgLoadInto, GraphsDFG) "Only GraphsDFG metadata are supported"
+        @info "loading dfg metadata"
+        jstr = read("$folder/dfg.json", String)
+        fgPacked = JSON3.read(jstr, GraphsDFGs.PackedGraphsDFG)
+        GraphsDFGs.unpackDFGMetadata!(dfgLoadInto, fgPacked)
+    end
+
     # extract the factor graph from fileDFG folder
     variables = DFGVariable[]
     factors = DFGFactor[]

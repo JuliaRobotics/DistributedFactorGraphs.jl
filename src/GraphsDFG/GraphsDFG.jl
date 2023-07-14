@@ -59,6 +59,7 @@ using .FactorGraphs
 # Imports
 include("entities/GraphsDFG.jl")
 include("services/GraphsDFG.jl")
+include("services/GraphsDFGSerialization.jl")
 
 # Exports
 export GraphsDFG

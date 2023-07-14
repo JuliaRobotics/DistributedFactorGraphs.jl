@@ -31,6 +31,9 @@ using TensorCast
 using ProgressMeter
 using SHA
 using FileIO
+import Tar
+import CodecZlib
+
 using OrderedCollections
 export OrderedDict
 
@@ -70,7 +73,10 @@ export getDescription, setDescription!,
        getSessionData, setSessionData!,
        getAddHistory
 
-export getSessionBlobEntry, addSessionBlobEntry!
+export getSessionBlobEntry,
+       getSessionBlobEntries,
+       addSessionBlobEntry!
+
 
 export getBlobStore,
        addBlobStore!,
