@@ -92,7 +92,7 @@ loadDFG!(dfg, "/tmp/savedgraph.tar.gz")
 ls(dfg)
 ```
 """
-function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString; overwriteDFGMetadata::Bool=false)
+function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString; overwriteDFGMetadata::Bool=true)
 
     #
     # loaddir gets deleted so needs to be unique
