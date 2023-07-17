@@ -73,10 +73,24 @@ export getDescription, setDescription!,
        getSessionData, setSessionData!,
        getAddHistory
 
-export getSessionBlobEntry,
-       getSessionBlobEntries,
-       addSessionBlobEntry!
-
+export  getSessionBlobEntry,
+        getSessionBlobEntries,
+        addSessionBlobEntry!,
+        addSessionBlobEntries!,
+        updateSessionBlobEntry!,
+        deleteSessionBlobEntry!,
+        getRobotBlobEntry,
+        getRobotBlobEntries,
+        addRobotBlobEntry!,
+        addRobotBlobEntries!,
+        updateRobotBlobEntry!,
+        deleteRobotBlobEntry!,
+        getUserBlobEntry,
+        getUserBlobEntries,
+        addUserBlobEntry!,
+        addUserBlobEntries!,
+        updateUserBlobEntry!,
+        deleteUserBlobEntry!
 
 export getBlobStore,
        addBlobStore!,
