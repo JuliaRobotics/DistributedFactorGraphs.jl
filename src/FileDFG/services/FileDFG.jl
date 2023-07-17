@@ -17,7 +17,7 @@ v1 = addVariable!(dfg, :a, ContinuousScalar, tags = [:POSE], solvable=0)
 saveDFG(dfg, "/tmp/saveDFG.tar.gz")
 ```
 """
-function saveDFG(folder::AbstractString, dfg::AbstractDFG; saveMetadata::Bool=false)
+function saveDFG(folder::AbstractString, dfg::AbstractDFG; saveMetadata::Bool=true)
 
     # TODO: Deprecate the folder functionality
 
