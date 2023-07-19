@@ -92,7 +92,7 @@ loadDFG!(dfg, "/tmp/savedgraph.tar.gz")
 ls(dfg)
 ```
 """
-function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString; overwriteDFGMetadata::Bool=true)
+function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString; overwriteDFGMetadata::Bool=true, useDeprExtract::Bool=false)
 
     #
     # loaddir gets deleted so needs to be unique
@@ -124,10 +124,16 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString; overwriteDFGMet
         Base.rm(folder, recursive=true, force=true)
         # unzip the tar file
 
-        tar_gz = open(dstname)
-        tar = CodecZlib.GzipDecompressorStream(tar_gz)
-        Tar.extract(tar, folder)
-        close(tar)
+        # TODO deprecated, remove. Kept for legacy support if older tarbals
+        if useDeprExtract
+            @warn "Old FileDFG compressed tar files are deprecated, load with useDeprExtract=true and use saveDFG again to update"
+            run(`tar -zxf $dstname -C $loaddir`)
+        else
+            tar_gz = open(dstname)
+            tar = CodecZlib.GzipDecompressorStream(tar_gz)
+            Tar.extract(tar, folder)
+            close(tar)
+        end
 
         #or for non-compressed
         # Tar.extract(dstname, folder)
