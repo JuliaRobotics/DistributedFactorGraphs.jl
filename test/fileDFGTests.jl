@@ -76,13 +76,13 @@ using UUIDs
     
 
         # Save and load the graph to test.
-        saveDFG(filename, dfg; saveMetadata=true)
+        saveDFG(filename, dfg)
 
         @info "Going to load $filename"
         copyDfg = DistributedFactorGraphs._getDuplicatedEmptyDFG(dfg)
         @test_throws AssertionError loadDFG!(DistributedFactorGraphs._getDuplicatedEmptyDFG(dfg),"badfilename")
 
-        retDFG = loadDFG!(copyDfg, filename; overwriteDFGMetadata=true)
+        retDFG = loadDFG!(copyDfg, filename)
 
         @test issetequal(ls(dfg), ls(retDFG))
         @test issetequal(lsf(dfg), lsf(retDFG))

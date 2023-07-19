@@ -5,6 +5,7 @@ using DocStringExtensions
 using UUIDs
 using JSON3
 using OrderedCollections
+using StructTypes
 
 using ...DistributedFactorGraphs
 

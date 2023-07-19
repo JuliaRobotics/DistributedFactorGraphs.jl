@@ -1,5 +1,6 @@
+using InteractiveUtils
 
-@kwdef struct PackedGraphsDFG
+@kwdef struct PackedGraphsDFG{T<:AbstractParams}
     description::String
     userLabel::String
     robotLabel::String
@@ -11,9 +12,19 @@
     robotBlobEntries::OrderedDict{Symbol, BlobEntry}
     sessionBlobEntries::OrderedDict{Symbol, BlobEntry}
     addHistory::Vector{Symbol}
+    solverParams::T
+    solverParams_type::String = string(typeof(solverParams))
     #TODO
-    # solverParams::Dict{Symbol, Any}
     # blobStores::Dict{Symbol, AbstractBlobStore}
+end
+
+StructTypes.StructType(::Type{PackedGraphsDFG}) = StructTypes.AbstractType()
+StructTypes.subtypekey(::Type{PackedGraphsDFG}) = :solverParams_type
+#TODO look at StructTypes.@register_struct_subtype when new StructTypes.jl is tagged (for type field)
+
+function StructTypes.subtypes(::Type{PackedGraphsDFG}) 
+    subs = subtypes(AbstractParams)
+    NamedTuple(map(s->Symbol(s)=>PackedGraphsDFG{s}, subs))
 end
 
 ##

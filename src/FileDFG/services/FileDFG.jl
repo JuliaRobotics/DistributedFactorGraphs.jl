@@ -209,5 +209,31 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString; overwriteDFGMet
     return dfgLoadInto
 end
 
-# to be extended by users with particular choices in dispatch.
-function loadDFG end
+function loadDFG(file::AbstractString)
+
+     # add if doesn't have .tar.gz extension
+    if !contains(basename(file), ".tar.gz")
+        file *= ".tar.gz"
+    end
+    # check the file actually exists
+    @assert isfile(file) "cannot find file $file"
+    
+    # only extract dfg.json to rebuild DFG object
+    tar_gz = open(file)
+    tar = CodecZlib.GzipDecompressorStream(tar_gz)
+    loaddir = Tar.extract(hdr -> contains(hdr.path, "dfg.json"), tar)
+    close(tar)
+    
+    #Only GraphsDFG metadata supported
+    jstr = read("$loaddir/dfg.json", String)
+    fgPacked = JSON3.read(jstr, GraphsDFGs.PackedGraphsDFG)
+    dfg = GraphsDFGs.unpackDFGMetadata(fgPacked)
+
+
+    @debug "DFG.loadDFG! is deleting a temp folder created during unzip, $loaddir"
+    # cleanup temporary folder
+    Base.rm(loaddir, recursive=true, force=true)
+
+    return loadDFG!(dfg, file)
+
+end
