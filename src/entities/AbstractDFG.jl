@@ -37,8 +37,11 @@ abstract type AbstractDFG{T<:AbstractParams} end
 $(TYPEDEF)
 Empty structure for solver parameters.
 """
-struct NoSolverParams <: AbstractParams
+@kwdef struct NoSolverParams <: AbstractParams
+    d::Int = 0#FIXME JSON3.jl error MethodError: no method matching read(::StructTypes.SingletonType, ...
 end
+
+StructTypes.StructType(::NoSolverParams) = StructTypes.Struct()
 
 """
 Types valid for small data.

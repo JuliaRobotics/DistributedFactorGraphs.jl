@@ -42,6 +42,39 @@ using UUIDs
         #test multihypo
         addFactor!(dfg, [:x1, :x2, :x3], LinearRelative(Normal(50.0,2.0)), multihypo = [1, 0.3, 0.7])
 
+
+        #test user/robot/session metadata
+
+        
+        #test user/robot/session blob entries
+        be = BlobEntry(
+            nothing, 
+            nothing, 
+            uuid4(), 
+            :testing2, 
+            :store, 
+            "", 
+            "", 
+            "", 
+            "", 
+            "", 
+            ZonedDateTime(2023, 2, 3, 20, tz"UTC+1"), 
+            "BlobEntry", 
+            string(DFG._getDFGVersion())
+        )
+
+        addSessionBlobEntry!(dfg, be)
+        #TODO addRobotBlobEntry!(dfg, be)
+        #TODO addUserBlobEntry!(dfg, be)
+        smallUserData = Dict{Symbol, SmallDataTypes}(:a => "42", :b => "small_user")
+        smallRobotData = Dict{Symbol, SmallDataTypes}(:a => "43", :b => "small_robot")
+        smallSessionData = Dict{Symbol, SmallDataTypes}(:a => "44", :b => "small_session")
+
+        setUserData!(dfg, smallUserData)
+        setRobotData!(dfg, smallRobotData)
+        setSessionData!(dfg, smallSessionData)
+    
+
         # Save and load the graph to test.
         saveDFG(filename, dfg)
 
