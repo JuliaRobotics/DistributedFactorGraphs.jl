@@ -1,4 +1,9 @@
 Listing news on any major breaking changes in DFG.  For regular changes, see integrated Github.com project milestones for DFG.
+# v0.23
+- save/loadDFG now users Tar.jl and CodecZlib.jl #351.
+- save/loadDFG now preserves meta fields #921.
+- Deprecate getNeighbors for listNeighbors.
+- Dropped AbstractRelativeRoots.
 
 # v0.20
 
