@@ -140,7 +140,7 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString; overwriteDFGMet
     end
 
     #GraphsDFG metadata
-    if overwriteDFGMetadata 
+    if overwriteDFGMetadata && !useDeprExtract
         @assert isa(dfgLoadInto, GraphsDFG) "Only GraphsDFG metadata are supported"
         @info "loading dfg metadata"
         jstr = read("$folder/dfg.json", String)
