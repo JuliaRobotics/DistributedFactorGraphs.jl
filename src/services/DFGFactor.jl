@@ -118,6 +118,7 @@ Get the variable ordering for this factor.
 Should be equivalent to listNeighbors unless something was deleted in the graph.
 """
 getVariableOrder(fct::DFGFactor) = fct._variableOrderSymbols::Vector{Symbol}
+getVariableOrder(fct::PackedFactor) = fct._variableOrderSymbols::Vector{Symbol}
 getVariableOrder(dfg::AbstractDFG, fct::Symbol) = getVariableOrder(getFactor(dfg, fct))
 
 ##------------------------------------------------------------------------------

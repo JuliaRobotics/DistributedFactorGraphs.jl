@@ -162,7 +162,7 @@ end
 ## Variable Packing and unpacking
 ##==============================================================================
 
-function packVariable(v::AbstractDFGVariable; includePPEs::Bool=true, includeSolveData::Bool=true, includeDataEntries::Bool=true)
+function packVariable(v::DFGVariable; includePPEs::Bool=true, includeSolveData::Bool=true, includeDataEntries::Bool=true)
     return PackedVariable(;
         id=v.id,
         label = v.label,
@@ -177,7 +177,11 @@ function packVariable(v::AbstractDFGVariable; includePPEs::Bool=true, includeSol
         blobEntries = collect(values(v.dataDict)),
         _version = string(DFG._getDFGVersion()))
 end
-  
+
+function packVariable(v::Variable; includePPEs::Bool=true, includeSolveData::Bool=true, includeDataEntries::Bool=true)
+    return v
+end
+
 function unpackVariable(variable::PackedVariable; skipVersionCheck::Bool=false)
     !skipVersionCheck && _versionCheck(variable)
 
@@ -205,8 +209,9 @@ function unpackVariable(variable::PackedVariable; skipVersionCheck::Bool=false)
         smallData=metadata, 
         dataDict=dataDict, 
         solvable=variable.solvable )
-    end
+end
 
+DFGVariable(v::Variable) = unpackVariable(v)
 
 ##==============================================================================
 ## Factor Packing and unpacking
@@ -249,6 +254,8 @@ function packFactor(f::DFGFactor)
         _version = string(_getDFGVersion()))
     return props
 end
+
+packFactor(f::PackedFactor) = f
 
 function reconstFactorData end
 

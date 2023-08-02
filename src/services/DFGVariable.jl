@@ -450,6 +450,8 @@ Note: Rather use SmallData CRUD
 """
 getSmallData(v::DFGVariable) = v.smallData
 
+getSmallData(v::Variable) = JSON3.read(base64decode(v.metadata))
+
 """
     $(SIGNATURES)
 Set the small data for a variable.
