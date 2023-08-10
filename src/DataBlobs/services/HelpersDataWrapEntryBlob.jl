@@ -85,12 +85,15 @@ function getData(
     vlabel::Symbol, 
     key::Union{Symbol,UUID, <:AbstractString, Regex}; 
     hashfunction = sha256,
-    checkhash::Bool=true
+    checkhash::Bool=true,
+    getlast::Bool=true
 )
-    de_ = getBlobEntry(dfg, vlabel, key)
+    de_ = getBlobEntries(dfg, vlabel, key)
+    lbls = (s->s.label).(de_)
+    idx = sortperm(lbls; rev=getlast)
     _first(s) = s
     _first(s::AbstractVector) = s[1]
-    de = _first(de_)
+    de = _first(de_[idx])
     db = getBlob(dfg, de)
 
     checkhash && assertHash(de, db, hashfunction=hashfunction)
@@ -104,7 +107,8 @@ function getData(
     label::Symbol, 
     key::Symbol; 
     hashfunction = sha256,
-    checkhash::Bool=true
+    checkhash::Bool=true,
+    getlast::Bool=true
 )
     de = getBlobEntry(dfg, label, key)
     db = getBlob(blobstore, de)
@@ -121,7 +125,7 @@ function addData!(
     hashfunction = sha256,
     checkhash::Bool=false
 )
-    checkhash && assertHash(entry, blob, hashfunction=hashfunction)
+    checkhash && assertHash(entry, blob; hashfunction)
     blobId = addBlob!(dfg, entry, blob) |> UUID
     newEntry = BlobEntry(entry; blobId) #, size=length(blob))
     addBlobEntry!(dfg, label, newEntry)
