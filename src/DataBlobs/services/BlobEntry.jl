@@ -114,6 +114,14 @@ function getBlobEntryFirst(var::AbstractDFGVariable, key::Regex)
     )
 end
 
+function getBlobEntryFirst(var::Variable, key::Regex)   
+    firstIdx = findfirst(x->contains(string(x.label), key), var.blobEntries)
+    if isnothing(firstIdx)
+        throw(KeyError("$key"))
+    end
+    return var.blobEntries[firstIdx]
+end
+
 getBlobEntry(var::AbstractDFGVariable, key::AbstractString) = getBlobEntry(var,Regex(key))
 
 #TODO split betweeen getfirstBlobEntry and getBlobEntry
