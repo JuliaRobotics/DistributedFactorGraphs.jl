@@ -242,6 +242,8 @@ function getBlobEntries(dfg::AbstractDFG, label::Symbol, regex::Regex)
     end        
 end
 
+getBlobEntries(dfg::AbstractDFG, label::Symbol, skey::Union{Symbol, <:AbstractString}) = getBlobEntries(dfg, label, Regex(string(skey)))
+
 
 """
     $(SIGNATURES)
@@ -413,7 +415,7 @@ function incrDataLabelSuffix(
     catch err
         # append latest count
         if !(err isa KeyError)
-        throw(err)
+            throw(err)
         end
     end
     # the piece from old label without the suffix count number
