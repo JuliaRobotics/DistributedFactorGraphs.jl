@@ -656,13 +656,14 @@ end
 
 """
     $(SIGNATURES)
-Helper to return neighbors at distance 2 around a given node label.
+Helper to return neighbors at distance 2 around a given node.
 """
 function ls2(dfg::AbstractDFG, label::Symbol)
     l2 = getNeighborhood(dfg, label, 2)
     l1 = getNeighborhood(dfg, label, 1)
     return setdiff(l2, l1)
 end
+ls2(dfg::AbstractDFG, v::AbstractDFGVariable) = ls(dfg, getLabel(v))
 
 """
     $SIGNATURES
