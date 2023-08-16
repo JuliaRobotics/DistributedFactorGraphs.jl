@@ -51,6 +51,9 @@ function unpackBlob(::Type{format"JSON"}, blob::Vector{UInt8})
     return String(copy(blob))
 end
 
+unpackBlob(entry::BlobEntry, blob::Vector{UInt8}) = unpackBlob(entry.mimeType, blob)
+unpackBlob(eb::Pair{<:BlobEntry, Vector{UInt8}}) = unpackBlob(eb[1], eb[2])
+
 
 # 2/ FileIO
 function packBlob(::Type{T}, data::Any; kwargs...) where T <: DataFormat
