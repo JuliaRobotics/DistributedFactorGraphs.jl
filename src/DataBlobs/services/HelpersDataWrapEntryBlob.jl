@@ -92,8 +92,12 @@ function getData(
     lbls = (s->s.label).(de_)
     idx = sortperm(lbls; rev=getlast)
     _first(s) = s
-    _first(s::AbstractVector) = s[1]
+    _first(s::AbstractVector) = 0 < length(s) ? s[1] : nothing
     de = _first(de_[idx])
+    if isnothing(de)
+        @error "Could not find in $vlabel the key $key"
+        return nothing
+    end
     db = getBlob(dfg, de)
 
     checkhash && assertHash(de, db, hashfunction=hashfunction)
