@@ -21,7 +21,7 @@ mutable struct GraphsDFG{T <: AbstractParams, V <: AbstractDFGVariable, F <:Abst
     sessionBlobEntries::OrderedDict{Symbol, BlobEntry}
     addHistory::Vector{Symbol} #TODO: Discuss more - is this an audit trail?
     solverParams::T # Solver parameters
-    blobStores::Dict{Symbol, <:AbstractBlobStore}
+    blobStores::Dict{Symbol, AbstractBlobStore}
 end
 
 """
@@ -46,7 +46,7 @@ function GraphsDFG{T,V,F}(
     sessionBlobEntries::OrderedDict{Symbol, BlobEntry} = OrderedDict{Symbol, BlobEntry}(),
     addHistory::Vector{Symbol} = Symbol[],
     solverParams::T=T(),
-    blobstores=Dict{Symbol, AbstractBlobStore}(),
+    blobStores=Dict{Symbol, AbstractBlobStore}(),
 ) where {T <: AbstractParams, V <:AbstractDFGVariable, F<:AbstractDFGFactor}
     # Validate the userLabel, robotLabel, and sessionLabel
     !isValidLabel(userLabel) && error("'$userLabel' is not a valid User label")
@@ -67,7 +67,7 @@ function GraphsDFG{T,V,F}(
         sessionBlobEntries,
         addHistory,
         solverParams,
-        blobstores
+        blobStores
     )
 end
 
@@ -92,7 +92,7 @@ GraphsDFG(
     robotData::Dict{Symbol, SmallDataTypes},
     sessionData::Dict{Symbol, SmallDataTypes},
     solverParams::AbstractParams,
-    blobstores=Dict{Symbol, AbstractBlobStore}()
+    blobStores=Dict{Symbol, AbstractBlobStore}()
 ) = GraphsDFG{typeof(solverParams),DFGVariable,DFGFactor}(
         FactorGraph{Int,DFGVariable,DFGFactor}();
         description,
@@ -103,7 +103,7 @@ GraphsDFG(
         robotData,
         sessionData,
         solverParams,
-        blobstores
+        blobStores
     )
 
 
@@ -116,7 +116,7 @@ function GraphsDFG{T,V,F}(
     robotData::Dict{Symbol, SmallDataTypes},
     sessionData::Dict{Symbol, SmallDataTypes},
     solverParams::T,
-    blobstores=Dict{Symbol, AbstractBlobStore}()
+    blobStores=Dict{Symbol, AbstractBlobStore}()
 ) where {T <: AbstractParams, V <:AbstractDFGVariable, F<:AbstractDFGFactor}
     return GraphsDFG{T,V,F}(
         FactorGraph{Int,V,F}();
@@ -128,6 +128,6 @@ function GraphsDFG{T,V,F}(
         robotData,
         sessionData,
         solverParams,
-        blobstores
+        blobStores
     )
 end

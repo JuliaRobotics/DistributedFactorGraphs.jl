@@ -1266,7 +1266,7 @@ function mergeVariableData!(dfg::AbstractDFG, sourceVariable::AbstractDFGVariabl
     :solverDataDict in fieldnames(typeof(var)) && mergeVariableSolverData!(var, sourceVariable)
 
     #update if its not a InMemoryDFGTypes, otherwise it was a reference
-    # if satelite nodes are used it can be updated seprarately
+    # if satelite nodes are used it can be updated separately
     # !(isa(dfg, InMemoryDFGTypes)) && updateVariable!(dfg, var)
 
     return var

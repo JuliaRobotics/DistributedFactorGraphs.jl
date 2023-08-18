@@ -347,6 +347,12 @@ include("entities/AbstractDFGSummary.jl")
 
 include("services/AbstractDFG.jl")
 
+#Blobs
+include("DataBlobs/services/BlobEntry.jl")
+include("DataBlobs/services/BlobStores.jl")
+include("DataBlobs/services/BlobPacking.jl")
+include("DataBlobs/services/HelpersDataWrapEntryBlob.jl")
+
 # In Memory Types
 include("GraphsDFG/GraphsDFG.jl")
 @reexport using .GraphsDFGs
@@ -362,11 +368,6 @@ include("services/DFGVariable.jl")
 include("services/DFGFactor.jl")
 include("Deprecated.jl")
 include("services/CompareUtils.jl")
-#Blobs
-include("DataBlobs/services/BlobEntry.jl")
-include("DataBlobs/services/BlobStores.jl")
-include("DataBlobs/services/BlobPacking.jl")
-include("DataBlobs/services/HelpersDataWrapEntryBlob.jl")
 
 # Include the FilesDFG API.
 include("FileDFG/FileDFG.jl")

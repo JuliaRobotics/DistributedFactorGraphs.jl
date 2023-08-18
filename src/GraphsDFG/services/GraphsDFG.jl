@@ -1,4 +1,10 @@
 
+function getDFGMetadata(fg::GraphsDFG) 
+    metafields = Set(fieldnames(GraphsDFG))
+    setdiff!(metafields, [:g, :solverParams])
+    metaprops = NamedTuple(k => getproperty(fg, k) for k in metafields)
+    return metaprops
+end
 
 function exists(dfg::GraphsDFG{P,V,F}, node::V) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
     return haskey(dfg.g.variables, node.label)

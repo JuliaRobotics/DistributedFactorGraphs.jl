@@ -149,7 +149,6 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString; overwriteDFGMet
     end
 
     # extract the factor graph from fileDFG folder
-    variables = DFGVariable[]
     factors = DFGFactor[]
     varFolder = "$folder/variables"
     factorFolder = "$folder/factors"
@@ -160,43 +159,62 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString; overwriteDFGMet
 
     varFiles = sort(readdir(varFolder; sort=false); lt=natural_lt)
     factorFiles = sort(readdir(factorFolder; sort=false); lt=natural_lt)
-    @showprogress 1 "loading variables" for varFile in varFiles
-        jstr = read("$varFolder/$varFile", String)
-        try
-            packedData = JSON3.read(jstr, PackedVariable)
-            push!(variables, unpackVariable(packedData))
-        catch ex
-            @error("JSON3 is having trouble reading $varFolder/$varFile into a PackedVariable")
-            @show jstr
-            throw(ex)
+
+    if isa(dfgLoadInto, GraphsDFG) && GraphsDFGs._variablestype(dfgLoadInto) == Variable
+        variables = @showprogress 1 "loading variables" map(varFiles) do varFile
+            jstr = read("$varFolder/$varFile", String)
+            return JSON3.read(jstr, PackedVariable)
+        end
+    else
+        variables = DFGVariable[]
+        @showprogress 1 "loading variables" for varFile in varFiles
+            jstr = read("$varFolder/$varFile", String)
+            try
+                packedData = JSON3.read(jstr, PackedVariable)
+                push!(variables, unpackVariable(packedData))
+            catch ex
+                @error("JSON3 is having trouble reading $varFolder/$varFile into a PackedVariable")
+                @show jstr
+                throw(ex)
+            end
         end
     end
-    @info "Loaded $(length(variables)) variables - $(map(v->v.label, variables))"
+
+    @info "Loaded $(length(variables)) variables"#- $(map(v->v.label, variables))"
     @info "Inserting variables into graph..."
     # Adding variables
     map(v->addVariable!(dfgLoadInto, v), variables)
 
-    @showprogress 1 "loading factors" for factorFile in factorFiles
-        jstr = read("$factorFolder/$factorFile", String)
-        try
-            packedData = JSON3.read(jstr, PackedFactor)
-            push!(factors, unpackFactor(dfgLoadInto, packedData))
-        catch ex
-            @error("JSON3 is having trouble reading $factorFolder/$factorFile into a PackedFactor")
-            @show jstr
-            throw(ex)
+    if isa(dfgLoadInto, GraphsDFG) && GraphsDFGs._factorstype(dfgLoadInto) == PackedFactor
+        factors = @showprogress 1 "loading factors" map(factorFiles) do factorFile
+            jstr = read("$factorFolder/$factorFile", String)
+            return JSON3.read(jstr, PackedFactor)
+        end
+    else
+        @showprogress 1 "loading factors" for factorFile in factorFiles
+            jstr = read("$factorFolder/$factorFile", String)
+            try
+                packedData = JSON3.read(jstr, PackedFactor)
+                push!(factors, unpackFactor(dfgLoadInto, packedData))
+            catch ex
+                @error("JSON3 is having trouble reading $factorFolder/$factorFile into a PackedFactor")
+                @show jstr
+                throw(ex)
+            end
         end
     end
-    @info "Loaded $(length(variables)) factors - $(map(f->f.label, factors))"
+    @info "Loaded $(length(factors)) factors"# - $(map(f->f.label, factors))"
     @info "Inserting factors into graph..."
     # # Adding factors
     map(f->addFactor!(dfgLoadInto, f), factors)
 
-    # Finally, rebuild the CCW's for the factors to completely reinflate them
-    # NOTE CREATES A NEW DFGFactor IF  CCW TYPE CHANGES
-    @info "Rebuilding CCW's for the factors..."
-    @showprogress 1 "build factor operational memory" for factor in factors
-        rebuildFactorMetadata!(dfgLoadInto, factor)
+    if isa(dfgLoadInto, GraphsDFG) && GraphsDFGs._factorstype(dfgLoadInto) != PackedFactor
+        # Finally, rebuild the CCW's for the factors to completely reinflate them
+        # NOTE CREATES A NEW DFGFactor IF  CCW TYPE CHANGES
+        @info "Rebuilding CCW's for the factors..."
+        @showprogress 1 "build factor operational memory" for factor in factors
+            rebuildFactorMetadata!(dfgLoadInto, factor)
+        end
     end
 
     # remove the temporary unzipped file
