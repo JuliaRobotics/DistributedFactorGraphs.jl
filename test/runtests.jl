@@ -24,10 +24,7 @@ end
     include("FactorGraphsTests.jl")
 end
 
-
-apis = [
-    GraphsDFG,
-    ]
+apis = [GraphsDFG]
 
 for api in apis
     @testset "Testing Driver: $(api)" begin
@@ -38,7 +35,7 @@ for api in apis
 end
 
 # Test special cases
- @testset "Plotting Tests" begin
+@testset "Plotting Tests" begin
     include("plottingTest.jl")
 end
 
@@ -47,7 +44,10 @@ end
 end
 
 @testset "GraphsDFG subtype tests" begin
-    for type in [(var=DFGVariableSummary, fac=DFGFactorSummary), (var=SkeletonDFGVariable,fac=SkeletonDFGFactor)]
+    for type in [
+        (var = DFGVariableSummary, fac = DFGFactorSummary),
+        (var = SkeletonDFGVariable, fac = SkeletonDFGFactor),
+    ]
         @testset "$(type.var) and $(type.fac) tests" begin
             @info "Testing $(type.var) and $(type.fac)"
             global VARTYPE = type.var
@@ -57,11 +57,12 @@ end
     end
 end
 
-
 if get(ENV, "IIF_TEST", "true") == "true"
 
     # Switch to our upstream test branch.
-    Pkg.add(PackageSpec(name="IncrementalInference", rev="upstream/dfg_integration_test"))
+    Pkg.add(
+        PackageSpec(; name = "IncrementalInference", rev = "upstream/dfg_integration_test"),
+    )
     @info "------------------------------------------------------------------------"
     @info "These tests are using IncrementalInference to do additional driver tests"
     @info "------------------------------------------------------------------------"
@@ -69,7 +70,10 @@ if get(ENV, "IIF_TEST", "true") == "true"
     using IncrementalInference
 
     apis = Vector{AbstractDFG}()
-    push!(apis, GraphsDFG(solverParams=SolverParams(), userLabel="test@navability.io"))
+    push!(
+        apis,
+        GraphsDFG(; solverParams = SolverParams(), userLabel = "test@navability.io"),
+    )
 
     for api in apis
         @testset "Testing Driver: $(typeof(api))" begin
@@ -95,8 +99,8 @@ if get(ENV, "IIF_TEST", "true") == "true"
         # This is just to validate we're not going to blow up downstream.
         apis = [
             # GraphsDFG{SolverParams}(),
-            GraphsDFG(solverParams=SolverParams(), userLabel="test@navability.io"),
-            ]
+            GraphsDFG(; solverParams = SolverParams(), userLabel = "test@navability.io"),
+        ]
         for api in apis
             @info "Running simple solver test: $(typeof(api))"
             global dfg = deepcopy(api)
@@ -106,7 +110,6 @@ if get(ENV, "IIF_TEST", "true") == "true"
 else
     @warn "Skipping IncrementalInference driver tests"
 end
-
 
 struct NotImplementedDFG{T} <: AbstractDFG{T} end
 
@@ -138,5 +141,4 @@ struct NotImplementedDFG{T} <: AbstractDFG{T} end
 
     @test_throws ErrorException isVariable(dfg, :a)
     @test_throws ErrorException isFactor(dfg, :a)
-
 end

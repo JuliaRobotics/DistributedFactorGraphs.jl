@@ -2,7 +2,6 @@
 ## Blob CRUD interface
 ##==============================================================================
 
-
 """
 Get the data blob for the specified blobstore or dfg.
 
@@ -56,27 +55,27 @@ function listBlobs end
 ##==============================================================================
 
 function getBlob(store::AbstractBlobStore, ::UUID)
-    error("$(typeof(store)) doesn't override 'getBlob'.")
+    return error("$(typeof(store)) doesn't override 'getBlob'.")
 end
 
 function addBlob!(store::AbstractBlobStore{T}, ::UUID, ::T) where {T}
-    error("$(typeof(store)) doesn't override 'addBlob!'.")
+    return error("$(typeof(store)) doesn't override 'addBlob!'.")
 end
 
 function updateBlob!(store::AbstractBlobStore{T}, ::UUID, ::T) where {T}
-    error("$(typeof(store)) doesn't override 'updateBlob!'.")
+    return error("$(typeof(store)) doesn't override 'updateBlob!'.")
 end
 
 function deleteBlob!(store::AbstractBlobStore, ::UUID)
-    error("$(typeof(store)) doesn't override 'deleteBlob!'.")
+    return error("$(typeof(store)) doesn't override 'deleteBlob!'.")
 end
 
 function listBlobs(store::AbstractBlobStore)
-    error("$(typeof(store)) doesn't override 'listBlobs'.")
+    return error("$(typeof(store)) doesn't override 'listBlobs'.")
 end
 
 function hasBlob(store::AbstractBlobStore, ::UUID)
-    error("$(typeof(store)) doesn't override 'hasBlob'.")
+    return error("$(typeof(store)) doesn't override 'hasBlob'.")
 end
 
 ##==============================================================================
@@ -98,56 +97,59 @@ function getBlob(dfg::AbstractDFG, entry::BlobEntry)
     end
     throw(
         KeyError(
-            "could not find $(entry.label), uuid $(entry.blobId) in any of the listed blobstores:\n $([s->getKey(s) for (s,v) in stores]))"
-        )
+            "could not find $(entry.label), uuid $(entry.blobId) in any of the listed blobstores:\n $([s->getKey(s) for (s,v) in stores]))",
+        ),
     )
 end
 
 function getBlob(store::AbstractBlobStore, entry::BlobEntry)
     blobId = isnothing(entry.blobId) ? entry.originId : entry.blobId
-    getBlob(store, blobId)
+    return getBlob(store, blobId)
 end
 
 #add 
-addBlob!(dfg::AbstractDFG, entry::BlobEntry, data) =
-    addBlob!(getBlobStore(dfg, entry.blobstore), entry, data)
+function addBlob!(dfg::AbstractDFG, entry::BlobEntry, data)
+    return addBlob!(getBlobStore(dfg, entry.blobstore), entry, data)
+end
 
 function addBlob!(store::AbstractBlobStore, entry::BlobEntry, data)
     blobId = isnothing(entry.blobId) ? entry.originId : entry.blobId
-    addBlob!(store, blobId, data)
+    return addBlob!(store, blobId, data)
 end
 
 # also creates an originId as uuid4
-addBlob!(store::AbstractBlobStore, data) =
-    addBlob!(store, uuid4(), data)
+addBlob!(store::AbstractBlobStore, data) = addBlob!(store, uuid4(), data)
 
 #fallback as not all blobStores use filename
-addBlob!(store::AbstractBlobStore, blobId::UUID, data, ::String) =
-    addBlob!(store, blobId, data)
+function addBlob!(store::AbstractBlobStore, blobId::UUID, data, ::String)
+    return addBlob!(store, blobId, data)
+end
 
-addBlob!(store::AbstractBlobStore, data, ::String) =
-    addBlob!(store, uuid4(), data)
+addBlob!(store::AbstractBlobStore, data, ::String) = addBlob!(store, uuid4(), data)
 
 #update
-updateBlob!(dfg::AbstractDFG, entry::BlobEntry, data::T) where {T} =
-    updateBlob!(getBlobStore(dfg, entry.blobstore), entry, data)
+function updateBlob!(dfg::AbstractDFG, entry::BlobEntry, data::T) where {T}
+    return updateBlob!(getBlobStore(dfg, entry.blobstore), entry, data)
+end
 
 function updateBlob!(store::AbstractBlobStore, entry::BlobEntry, data)
     blobId = isnothing(entry.blobId) ? entry.originId : entry.blobId
-    updateBlob!(store, blobId, data)
+    return updateBlob!(store, blobId, data)
 end
 #delete
-deleteBlob!(dfg::AbstractDFG, entry::BlobEntry) =
-    deleteBlob!(getBlobStore(dfg, entry.blobstore), entry)
+function deleteBlob!(dfg::AbstractDFG, entry::BlobEntry)
+    return deleteBlob!(getBlobStore(dfg, entry.blobstore), entry)
+end
 
 function deleteBlob!(store::AbstractBlobStore, entry::BlobEntry)
     blobId = isnothing(entry.blobId) ? entry.originId : entry.blobId
-    deleteBlob!(store, blobId)
+    return deleteBlob!(store, blobId)
 end
 
-
 #has
-hasBlob(dfg::AbstractDFG, entry::BlobEntry) = hasBlob(getBlobStore(dfg, entry.blobstore), entry.originId)
+function hasBlob(dfg::AbstractDFG, entry::BlobEntry)
+    return hasBlob(getBlobStore(dfg, entry.blobstore), entry.originId)
+end
 
 #TODO
 # """
@@ -169,7 +171,6 @@ hasBlob(dfg::AbstractDFG, entry::BlobEntry) = hasBlob(getBlobStore(dfg, entry.bl
 #     return sourceEntries
 # end
 
-
 ##==============================================================================
 ## FolderStore
 ##==============================================================================
@@ -186,7 +187,9 @@ struct FolderStore{T} <: AbstractBlobStore{T}
     end
 end
 
-FolderStore(foldername::String) = FolderStore{Vector{UInt8}}(:default_folder_store, foldername)
+function FolderStore(foldername::String)
+    return FolderStore{Vector{UInt8}}(:default_folder_store, foldername)
+end
 
 blobfilename(store::FolderStore, blobId::UUID) = joinpath(store.folder, "$blobId.dat")
 
@@ -207,7 +210,7 @@ function addBlob!(store::FolderStore{T}, blobId::UUID, data::T) where {T}
         throw(KeyError("Key '$blobId' blob already exists."))
     else
         open(blobfilename, "w") do f
-            write(f, data)
+            return write(f, data)
         end
         # return data
         return blobId
@@ -220,12 +223,11 @@ function updateBlob!(store::FolderStore{T}, blobId::UUID, data::T) where {T}
         @warn "Key '$blobId' doesn't exist."
     else
         open(blobfilename, "w") do f
-            write(f, data)
+            return write(f, data)
         end
         return data
     end
 end
-
 
 function deleteBlob!(store::FolderStore{T}, blobId::UUID) where {T}
     blobfilename = joinpath(store.folder, "$blobId.dat")
@@ -238,11 +240,10 @@ end
 #hasBlob or existsBlob?
 function hasBlob(store::FolderStore, blobId::UUID)
     blobfilename = joinpath(store.folder, "$blobId.dat")
-    isfile(blobfilename)
+    return isfile(blobfilename)
 end
 
 hasBlob(store::FolderStore, entry::BlobEntry) = hasBlob(store, entry.originId)
-
 
 ##==============================================================================
 ## InMemoryBlobStore
@@ -250,11 +251,15 @@ hasBlob(store::FolderStore, entry::BlobEntry) = hasBlob(store, entry.originId)
 
 struct InMemoryBlobStore{T} <: AbstractBlobStore{T}
     key::Symbol
-    blobs::Dict{UUID,T}
+    blobs::Dict{UUID, T}
 end
 
-InMemoryBlobStore{T}(storeKey::Symbol) where {T} = InMemoryBlobStore{Vector{UInt8}}(storeKey, Dict{UUID,T}())
-InMemoryBlobStore(storeKey::Symbol=:default_inmemory_store) = InMemoryBlobStore{Vector{UInt8}}(storeKey)
+function InMemoryBlobStore{T}(storeKey::Symbol) where {T}
+    return InMemoryBlobStore{Vector{UInt8}}(storeKey, Dict{UUID, T}())
+end
+function InMemoryBlobStore(storeKey::Symbol = :default_inmemory_store)
+    return InMemoryBlobStore{Vector{UInt8}}(storeKey)
+end
 
 function getBlob(store::InMemoryBlobStore, blobId::UUID)
     return store.blobs[blobId]
@@ -297,7 +302,7 @@ struct LinkStore <: AbstractBlobStore{String}
             @info "File '$csvfile' doesn't exist - creating."
             # create new folder
             open(csvfile, "w") do io
-                println(io, "blobid,path")
+                return println(io, "blobid,path")
             end
             return new(key, csvfile, Dict{UUID, String}())
         else
@@ -310,25 +315,24 @@ end
 
 function getBlob(store::LinkStore, blobId::UUID)
     fname = get(store.cache, blobId, nothing)
-    read(fname)
+    return read(fname)
 end
 
 function addBlob!(store::LinkStore, entry::BlobEntry, linkfile::String)
-    addBlob!(store, entry.originId, nothing, linkfile::String)
+    return addBlob!(store, entry.originId, nothing, linkfile::String)
 end
 
-function addBlob!(store::LinkStore, blobId::UUID, blob::Any, linkfile::String) 
+function addBlob!(store::LinkStore, blobId::UUID, blob::Any, linkfile::String)
     if haskey(store.cache, blobId)
         error("blobId $blobId already exists in the store")
     end
-    push!(store.cache, blobId=>linkfile)
+    push!(store.cache, blobId => linkfile)
     open(store.csvfile, "a") do f
-        println(f, blobId,",",linkfile)
+        return println(f, blobId, ",", linkfile)
     end
-    getBlob(store, blobId)
+    return getBlob(store, blobId)
 end
 
 function deleteBlob!(store::LinkStore, args...)
-    error("deleteDataBlob(::LinkStore) not supported")
+    return error("deleteDataBlob(::LinkStore) not supported")
 end
-

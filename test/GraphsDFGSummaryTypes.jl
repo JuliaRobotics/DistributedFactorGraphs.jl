@@ -3,13 +3,52 @@
 # FACTYPE = DFGFactorSummary
 
 dfg = GraphsDFG{NoSolverParams, VARTYPE, FACTYPE}()
-DistributedFactorGraphs.DFGVariableSummary(label::Symbol) = DFGVariableSummary(nothing, label, DistributedFactorGraphs.now(localzone()), Set{Symbol}(), Dict{Symbol, MeanMaxPPE}(), :Pose2, Dict{Symbol,BlobEntry}())
-DistributedFactorGraphs.DFGFactorSummary(label::Symbol) = DFGFactorSummary(nothing, label, Set{Symbol}(), Symbol[], DistributedFactorGraphs.now(localzone()))
+function DistributedFactorGraphs.DFGVariableSummary(label::Symbol)
+    return DFGVariableSummary(
+        nothing,
+        label,
+        DistributedFactorGraphs.now(localzone()),
+        Set{Symbol}(),
+        Dict{Symbol, MeanMaxPPE}(),
+        :Pose2,
+        Dict{Symbol, BlobEntry}(),
+    )
+end
+function DistributedFactorGraphs.DFGFactorSummary(label::Symbol)
+    return DFGFactorSummary(
+        nothing,
+        label,
+        Set{Symbol}(),
+        Symbol[],
+        DistributedFactorGraphs.now(localzone()),
+    )
+end
 
-DistributedFactorGraphs.DFGVariableSummary(label::Symbol, ::VariableNodeData{T}) where T = DFGVariableSummary(nothing, label, DistributedFactorGraphs.now(localzone()), Set{Symbol}(), Dict{Symbol, MeanMaxPPE}(), Symbol(T), Dict{Symbol,BlobEntry}())
-DistributedFactorGraphs.SkeletonDFGVariable(label::Symbol, args...) = SkeletonDFGVariable(label)
-DistributedFactorGraphs.SkeletonDFGVariable(label::Symbol, ::VariableNodeData{T}) where T = SkeletonDFGVariable(nothing, label, Set{Symbol}())
+function DistributedFactorGraphs.DFGVariableSummary(
+    label::Symbol,
+    ::VariableNodeData{T},
+) where {T}
+    return DFGVariableSummary(
+        nothing,
+        label,
+        DistributedFactorGraphs.now(localzone()),
+        Set{Symbol}(),
+        Dict{Symbol, MeanMaxPPE}(),
+        Symbol(T),
+        Dict{Symbol, BlobEntry}(),
+    )
+end
 
+function DistributedFactorGraphs.SkeletonDFGVariable(label::Symbol, args...)
+    return SkeletonDFGVariable(label)
+end
+
+function DistributedFactorGraphs.SkeletonDFGVariable(
+    label::Symbol,
+    ::VariableNodeData{T},
+) where {T}
+    return SkeletonDFGVariable(nothing, label, Set{Symbol}())
+end
 
 dfg = GraphsDFG{NoSolverParams, VARTYPE, FACTYPE}()
 v1 = VARTYPE(:a)
@@ -18,65 +57,63 @@ v3 = VARTYPE(:c)
 f0 = FACTYPE(:af1)
 f1 = FACTYPE(:abf1)
 f2 = FACTYPE(:bcf1)
-append!(f2._variableOrderSymbols, [:b,:c])
+append!(f2._variableOrderSymbols, [:b, :c])
 
 union!(v1.tags, [:VARIABLE, :POSE])
 union!(v2.tags, [:VARIABLE, :LANDMARK])
 union!(f1.tags, [:FACTOR])
 
-if false 
-#TODO add to tests
-VARTYPE = PackedVariable
-FACTYPE = PackedFactor
-dfg = GraphsDFG{NoSolverParams, PackedVariable, PackedFactor}()
-v1 = PackedVariable(;label=:a, variableType="Pose2", tags=[:VARIABLE, :POSE])
-v2 = PackedVariable(;label=:b, variableType="Pose2", tags=[:VARIABLE, :LANDMARK])
-v3 = PackedVariable(;label=:c, variableType="Pose2")
-orphan = PackedVariable(;label=:orphan, variableType="Pose2")
-f0 = PackedFactor(;
-    label=:af1,
-    tags = [:FACTOR],
-    _variableOrderSymbols=[:a],
-    timestamp=DFG.Dates.now(DFG.tz"Z"),
-    nstime=0,
-    fnctype="PriorPose2",
-    solvable=1,
-    data = "",
-    metadata = "",
-)
-f1 = PackedFactor(;
-    label=:abf1,
-    tags = [:FACTOR],
-    _variableOrderSymbols=[:a, :b],
-    timestamp=DFG.Dates.now(DFG.tz"Z"),
-    nstime=0,
-    fnctype="Pose2Pose2",
-    solvable=1,
-    data = "",
-    metadata = "",
-)
-f2 = PackedFactor(;
-    label=:bcf1,
-    tags = [:FACTOR],
-    _variableOrderSymbols=[:b, :c],
-    timestamp=DFG.Dates.now(DFG.tz"Z"),
-    nstime=0,
-    fnctype="Pose2Pose2",
-    solvable=1,
-    data = "",
-    metadata = "",
-)
+if false
+    #TODO add to tests
+    VARTYPE = PackedVariable
+    FACTYPE = PackedFactor
+    dfg = GraphsDFG{NoSolverParams, PackedVariable, PackedFactor}()
+    v1 = PackedVariable(; label = :a, variableType = "Pose2", tags = [:VARIABLE, :POSE])
+    v2 = PackedVariable(; label = :b, variableType = "Pose2", tags = [:VARIABLE, :LANDMARK])
+    v3 = PackedVariable(; label = :c, variableType = "Pose2")
+    orphan = PackedVariable(; label = :orphan, variableType = "Pose2")
+    f0 = PackedFactor(;
+        label = :af1,
+        tags = [:FACTOR],
+        _variableOrderSymbols = [:a],
+        timestamp = DFG.Dates.now(DFG.tz"Z"),
+        nstime = 0,
+        fnctype = "PriorPose2",
+        solvable = 1,
+        data = "",
+        metadata = "",
+    )
+    f1 = PackedFactor(;
+        label = :abf1,
+        tags = [:FACTOR],
+        _variableOrderSymbols = [:a, :b],
+        timestamp = DFG.Dates.now(DFG.tz"Z"),
+        nstime = 0,
+        fnctype = "Pose2Pose2",
+        solvable = 1,
+        data = "",
+        metadata = "",
+    )
+    f2 = PackedFactor(;
+        label = :bcf1,
+        tags = [:FACTOR],
+        _variableOrderSymbols = [:b, :c],
+        timestamp = DFG.Dates.now(DFG.tz"Z"),
+        nstime = 0,
+        fnctype = "Pose2Pose2",
+        solvable = 1,
+        data = "",
+        metadata = "",
+    )
 end
-
 
 @testset "Variables and Factors CRUD and SET" begin
-    VariablesandFactorsCRUD_SET!(dfg,v1,v2,v3,f0,f1,f2)
+    VariablesandFactorsCRUD_SET!(dfg, v1, v2, v3, f0, f1, f2)
 end
-
 
 # Gets
 @testset "Gets, Sets, and Accessors" begin
-    global dfg,v1,v2,f1
+    global dfg, v1, v2, f1
 
     @test getLabel(v1) == v1.label
     @test getTags(v1) == v1.tags
@@ -103,36 +140,50 @@ end
         @test getTimestamp(f1ts) == testTimestamp
         @test_throws MethodError setTimestamp!(v1, testTimestamp)
     end
-
 end
 
 @testset "Updating Nodes" begin
     VARTYPE == DFGVariableSummary && PPETestBlock!(dfg, v1)
 end
 
-
 @testset "Adjacency Matrices" begin
     fg = GraphsDFG{NoSolverParams, VARTYPE, FACTYPE}()
     addVariable!(fg, VARTYPE(:a))
     addVariable!(fg, VARTYPE(:b))
-    addFactor!(fg,  [:a,:b], FACTYPE(:abf1))
+    addFactor!(fg, [:a, :b], FACTYPE(:abf1))
     addVariable!(fg, VARTYPE(:orphan))
 
     AdjacencyMatricesTestBlock(fg)
 end
 
 @testset "Getting Neighbors" begin
-    GettingNeighbors(GraphsDFG{NoSolverParams, VARTYPE, FACTYPE}, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
+    GettingNeighbors(
+        GraphsDFG{NoSolverParams, VARTYPE, FACTYPE};
+        VARTYPE = VARTYPE,
+        FACTYPE = FACTYPE,
+    )
 end
 
 @testset "Building Subgraphs" begin
-    BuildingSubgraphs(GraphsDFG{NoSolverParams, VARTYPE, FACTYPE}, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
+    BuildingSubgraphs(
+        GraphsDFG{NoSolverParams, VARTYPE, FACTYPE};
+        VARTYPE = VARTYPE,
+        FACTYPE = FACTYPE,
+    )
 end
 
 @testset "Producing Dot Files" begin
-    ProducingDotFiles(GraphsDFG{NoSolverParams, VARTYPE, FACTYPE}, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
+    ProducingDotFiles(
+        GraphsDFG{NoSolverParams, VARTYPE, FACTYPE};
+        VARTYPE = VARTYPE,
+        FACTYPE = FACTYPE,
+    )
 end
 
 @testset "Connectivity Test" begin
-     ConnectivityTest(GraphsDFG{NoSolverParams, VARTYPE, FACTYPE}, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
+    ConnectivityTest(
+        GraphsDFG{NoSolverParams, VARTYPE, FACTYPE};
+        VARTYPE = VARTYPE,
+        FACTYPE = FACTYPE,
+    )
 end
