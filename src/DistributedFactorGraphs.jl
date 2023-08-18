@@ -152,7 +152,6 @@ export DFGFactor, DFGFactorSummary, SkeletonDFGFactor, PackedFactor
 
 # Common
 export getSolvable, setSolvable!, isSolvable
-export getInternalId
 export getVariableLabelNumber
 
 # accessors
@@ -163,9 +162,6 @@ export isSolveInProgress, getSolveInProgress
 
 # CRUD & SET
 export listTags, mergeTags!, removeTags!, emptyTags!
-
-#this isn't acttually implemented. TODO remove or implement
-export addTags!
 
 ##------------------------------------------------------------------------------
 # Variable
@@ -184,8 +180,6 @@ export getVariableType
 # VariableType functions
 export getDimension, getManifold, getPointType
 export getPointIdentity, getPoint, getCoordinates
-
-export getManifolds # TODO Deprecate?
 
 # Small Data CRUD
 export SmallDataTypes,
@@ -242,12 +236,11 @@ export hasBlobEntry,
     addBlobEntry!,
     updateBlobEntry!,
     deleteBlobEntry!,
-    listBlobEntry,
     listBlobEntrySequence,
-    mergeBlobEntry!
+    mergeBlobEntries!
 export incrDataLabelSuffix
 
-export getBlobEntries, listDataEntries, hasDataEntry, hasDataEntry
+export getBlobEntries, hasDataEntry, hasDataEntry
 export getBlobEntriesVariables
 export listDataEntrySequence
 # convenience wrappers
@@ -319,7 +312,6 @@ export compare,
     compareFactor,
     compareAllVariables,
     compareSimilarVariables,
-    compareSubsetFactorGraph,
     compareSimilarFactors,
     compareFactorGraphs
 

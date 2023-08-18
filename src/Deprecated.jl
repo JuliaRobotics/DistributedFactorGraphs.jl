@@ -94,9 +94,7 @@ abstract type AbstractBlobEntry end
 @deprecate addDataEntry!(w...; kw...) addBlobEntry!(w...; kw...)
 @deprecate updateDataEntry!(w...; kw...) updateBlobEntry!(w...; kw...)
 @deprecate deleteDataEntry!(w...; kw...) deleteBlobEntry!(w...; kw...)
-@deprecate listDataEntry(w...; kw...) listBlobEntry(w...; kw...)
 @deprecate listDataEntrySequence(w...; kw...) listBlobEntrySequence(w...; kw...)
-@deprecate mergeDataEntry!(w...; kw...) mergeBlobEntry!(w...; kw...)
 
 # @deprecate getData(w...;kw...) getBlob(w...;kw...)
 @deprecate getDataBlob(w...; kw...) getBlob(w...; kw...)
