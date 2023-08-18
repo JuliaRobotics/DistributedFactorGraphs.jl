@@ -1,16 +1,22 @@
 
-function getDFGMetadata(fg::GraphsDFG) 
+function getDFGMetadata(fg::GraphsDFG)
     metafields = Set(fieldnames(GraphsDFG))
     setdiff!(metafields, [:g, :solverParams])
     metaprops = NamedTuple(k => getproperty(fg, k) for k in metafields)
     return metaprops
 end
 
-function exists(dfg::GraphsDFG{P,V,F}, node::V) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
+function exists(
+    dfg::GraphsDFG{P, V, F},
+    node::V,
+) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
     return haskey(dfg.g.variables, node.label)
 end
 
-function exists(dfg::GraphsDFG{P,V,F}, node::F) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
+function exists(
+    dfg::GraphsDFG{P, V, F},
+    node::F,
+) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
     return haskey(dfg.g.factors, node.label)
 end
 
@@ -18,16 +24,24 @@ exists(dfg::GraphsDFG, nId::Symbol) = haskey(dfg.g.labels, nId)
 
 exists(dfg::GraphsDFG, node::DFGNode) = exists(dfg, node.label)
 
-function isVariable(dfg::GraphsDFG{P,V,F}, sym::Symbol) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
+function isVariable(
+    dfg::GraphsDFG{P, V, F},
+    sym::Symbol,
+) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
     return haskey(dfg.g.variables, sym)
 end
 
-function isFactor(dfg::GraphsDFG{P,V,F}, sym::Symbol) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
+function isFactor(
+    dfg::GraphsDFG{P, V, F},
+    sym::Symbol,
+) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
     return haskey(dfg.g.factors, sym)
 end
 
-
-function addVariable!(dfg::GraphsDFG{<:AbstractParams, V, <:AbstractDFGFactor}, variable::V)::V where V <: AbstractDFGVariable
+function addVariable!(
+    dfg::GraphsDFG{<:AbstractParams, V, <:AbstractDFGFactor},
+    variable::V,
+)::V where {V <: AbstractDFGVariable}
     #TODO should this be an error
     if haskey(dfg.g.variables, variable.label)
         error("Variable '$(variable.label)' already exists in the factor graph")
@@ -41,11 +55,12 @@ function addVariable!(dfg::GraphsDFG{<:AbstractParams, V, <:AbstractDFGFactor}, 
     return variable
 end
 
-function addVariable!(dfg::GraphsDFG{<:AbstractParams, VD, <:AbstractDFGFactor},
-                      variable::AbstractDFGVariable)::VD where VD <: AbstractDFGVariable
+function addVariable!(
+    dfg::GraphsDFG{<:AbstractParams, VD, <:AbstractDFGFactor},
+    variable::AbstractDFGVariable,
+)::VD where {VD <: AbstractDFGVariable}
     return addVariable!(dfg, VD(variable))
 end
-
 
 #moved to abstract
 # function addFactor!(dfg::GraphsDFG{<:AbstractParams, V, F}, variables::Vector{<:V}, factor::F)::F where {V <: AbstractDFGVariable, F <: AbstractDFGFactor}
@@ -84,8 +99,10 @@ end
 #     return factor
 # end
 
-
-function addFactor!(dfg::GraphsDFG{<:AbstractParams, <:AbstractDFGVariable, F}, factor::F) where F <: AbstractDFGFactor
+function addFactor!(
+    dfg::GraphsDFG{<:AbstractParams, <:AbstractDFGVariable, F},
+    factor::F,
+) where {F <: AbstractDFGFactor}
     if haskey(dfg.g.factors, factor.label)
         error("Factor '$(factor.label)' already exists in the factor graph")
     end
@@ -95,8 +112,10 @@ function addFactor!(dfg::GraphsDFG{<:AbstractParams, <:AbstractDFGVariable, F}, 
     return factor
 end
 
-function addFactor!(dfg::GraphsDFG{<:AbstractParams, <:AbstractDFGVariable, F},
-                      factor::AbstractDFGFactor) where F <: AbstractDFGFactor
+function addFactor!(
+    dfg::GraphsDFG{<:AbstractParams, <:AbstractDFGVariable, F},
+    factor::AbstractDFGFactor,
+) where {F <: AbstractDFGFactor}
     return addFactor!(dfg, F(factor))
 end
 
@@ -115,23 +134,34 @@ function getFactor(dfg::GraphsDFG, label::Symbol)
     return dfg.g.factors[label]
 end
 
-function updateVariable!(dfg::GraphsDFG, variable::AbstractDFGVariable; warn_if_absent::Bool=true)
+function updateVariable!(
+    dfg::GraphsDFG,
+    variable::AbstractDFGVariable;
+    warn_if_absent::Bool = true,
+)
     if !haskey(dfg.g.variables, variable.label)
-        warn_if_absent && @warn "Variable label '$(variable.label)' does not exist in the factor graph, adding"
+        warn_if_absent &&
+            @warn "Variable label '$(variable.label)' does not exist in the factor graph, adding"
         return addVariable!(dfg, variable)
     end
     dfg.g.variables[variable.label] = variable
     return variable
 end
 
-function updateFactor!(dfg::GraphsDFG, factor::AbstractDFGFactor; warn_if_absent::Bool=true)
+function updateFactor!(
+    dfg::GraphsDFG,
+    factor::AbstractDFGFactor;
+    warn_if_absent::Bool = true,
+)
     if !haskey(dfg.g.factors, factor.label)
-        warn_if_absent && @warn "Factor label '$(factor.label)' does not exist in the factor graph, adding"
+        warn_if_absent &&
+            @warn "Factor label '$(factor.label)' does not exist in the factor graph, adding"
         return addFactor!(dfg, factor)
     end
 
     # Confirm that we're not updating the neighbors
-    dfg.g.factors[factor.label]._variableOrderSymbols != factor._variableOrderSymbols && error("Cannot update the factor, the neighbors are not the same.")
+    dfg.g.factors[factor.label]._variableOrderSymbols != factor._variableOrderSymbols &&
+        error("Cannot update the factor, the neighbors are not the same.")
 
     dfg.g.factors[factor.label] = factor
     return factor
@@ -144,7 +174,7 @@ function deleteVariable!(dfg::GraphsDFG, label::Symbol)#::Tuple{AbstractDFGVaria
 
     deleteNeighbors = true # reserved, orphaned factors are not supported at this time
     if deleteNeighbors
-        neigfacs = map(l->deleteFactor!(dfg, l), listNeighbors(dfg, label))
+        neigfacs = map(l -> deleteFactor!(dfg, l), listNeighbors(dfg, label))
     end
     variable = dfg.g.variables[label]
     rem_vertex!(dfg.g, dfg.g.labels[label])
@@ -152,16 +182,26 @@ function deleteVariable!(dfg::GraphsDFG, label::Symbol)#::Tuple{AbstractDFGVaria
     return variable, neigfacs
 end
 
-function deleteFactor!(dfg::GraphsDFG, label::Symbol; suppressGetFactor::Bool=false)::AbstractDFGFactor
+function deleteFactor!(
+    dfg::GraphsDFG,
+    label::Symbol;
+    suppressGetFactor::Bool = false,
+)::AbstractDFGFactor
     if !haskey(dfg.g.factors, label)
         error("Factor label '$(label)' does not exist in the factor graph")
     end
     factor = dfg.g.factors[label]
-    rem_vertex!(dfg.g,  dfg.g.labels[label])
+    rem_vertex!(dfg.g, dfg.g.labels[label])
     return factor
 end
 
-function getVariables(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0, detail=nothing)
+function getVariables(
+    dfg::GraphsDFG,
+    regexFilter::Union{Nothing, Regex} = nothing;
+    tags::Vector{Symbol} = Symbol[],
+    solvable::Int = 0,
+    detail = nothing,
+)
 
     # variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGVariable, vertices(dfg.g)))
     variables = collect(values(dfg.g.variables))
@@ -172,26 +212,41 @@ function getVariables(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing
         variables = filter(v -> _isSolvable(dfg, v.label, solvable), variables)
     end
     if length(tags) > 0
-        mask = map(v -> length(intersect(v.tags, tags)) > 0, variables )
+        mask = map(v -> length(intersect(v.tags, tags)) > 0, variables)
         return variables[mask]
     end
     return variables
 end
 
-function listVariables(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)
+function listVariables(
+    dfg::GraphsDFG,
+    regexFilter::Union{Nothing, Regex} = nothing;
+    tags::Vector{Symbol} = Symbol[],
+    solvable::Int = 0,
+)
 
     # variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGVariable, vertices(dfg.g)))
     if length(tags) > 0
-        return map(v -> v.label, getVariables(dfg, regexFilter, tags=tags, solvable=solvable))
+        return map(
+            v -> v.label,
+            getVariables(dfg, regexFilter; tags = tags, solvable = solvable),
+        )
     else
         variables = copy(dfg.g.variables.keys)
-        regexFilter !== nothing && (variables = filter(v -> occursin(regexFilter, String(v)), variables))
-        solvable != 0 && (variables = filter(vId -> _isSolvable(dfg, vId, solvable), variables))
+        regexFilter !== nothing &&
+            (variables = filter(v -> occursin(regexFilter, String(v)), variables))
+        solvable != 0 &&
+            (variables = filter(vId -> _isSolvable(dfg, vId, solvable), variables))
         return variables::Vector{Symbol}
     end
 end
 
-function getFactors(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)
+function getFactors(
+    dfg::GraphsDFG,
+    regexFilter::Union{Nothing, Regex} = nothing;
+    tags::Vector{Symbol} = Symbol[],
+    solvable::Int = 0,
+)
     # factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGFactor, vertices(dfg.g)))
     factors = collect(values(dfg.g.factors))
     if regexFilter != nothing
@@ -201,16 +256,24 @@ function getFactors(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; 
         factors = filter(f -> _isSolvable(dfg, f.label, solvable), factors)
     end
     if length(tags) > 0
-        mask = map(v -> length(intersect(v.tags, tags)) > 0, factors )
+        mask = map(v -> length(intersect(v.tags, tags)) > 0, factors)
         return factors[mask]
     end
     return factors
 end
 
-function listFactors(dfg::GraphsDFG, regexFilter::Union{Nothing, Regex}=nothing; tags::Vector{Symbol}=Symbol[], solvable::Int=0)
+function listFactors(
+    dfg::GraphsDFG,
+    regexFilter::Union{Nothing, Regex} = nothing;
+    tags::Vector{Symbol} = Symbol[],
+    solvable::Int = 0,
+)
     # factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGFactor, vertices(dfg.g)))
     if length(tags) > 0
-        return map(v -> v.label, getFactors(dfg, regexFilter, tags=tags, solvable=solvable))
+        return map(
+            v -> v.label,
+            getFactors(dfg, regexFilter; tags = tags, solvable = solvable),
+        )
     end
     factors = copy(dfg.g.factors.keys)
     if regexFilter != nothing
@@ -228,7 +291,6 @@ function isConnected(dfg::GraphsDFG)::Bool
 end
 
 function _isSolvable(dfg::GraphsDFG, label::Symbol, ready::Int)::Bool
-
     haskey(dfg.g.variables, label) && (return dfg.g.variables[label].solvable >= ready)
     haskey(dfg.g.factors, label) && (return dfg.g.factors[label].solvable >= ready)
 
@@ -237,13 +299,15 @@ function _isSolvable(dfg::GraphsDFG, label::Symbol, ready::Int)::Bool
     return false
 end
 
-function listNeighbors(dfg::GraphsDFG, node::DFGNode; solvable::Int=0)
+function listNeighbors(dfg::GraphsDFG, node::DFGNode; solvable::Int = 0)
     label = node.label
     if !exists(dfg, label)
-        error("Variable/factor with label '$(node.label)' does not exist in the factor graph")
+        error(
+            "Variable/factor with label '$(node.label)' does not exist in the factor graph",
+        )
     end
 
-    neighbors_il =  FactorGraphs.outneighbors(dfg.g, dfg.g.labels[label])
+    neighbors_il = FactorGraphs.outneighbors(dfg.g, dfg.g.labels[label])
     neighbors_ll = [dfg.g.labels[i] for i in neighbors_il]
     # Additional filtering
     solvable != 0 && filter!(lbl -> _isSolvable(dfg, lbl, solvable), neighbors_ll)
@@ -257,13 +321,12 @@ function listNeighbors(dfg::GraphsDFG, node::DFGNode; solvable::Int=0)
     return neighbors_ll::Vector{Symbol}
 end
 
-
-function listNeighbors(dfg::GraphsDFG, label::Symbol; solvable::Int=0)::Vector{Symbol}
+function listNeighbors(dfg::GraphsDFG, label::Symbol; solvable::Int = 0)::Vector{Symbol}
     if !exists(dfg, label)
         error("Variable/factor with label '$(label)' does not exist in the factor graph")
     end
 
-    neighbors_il =  FactorGraphs.outneighbors(dfg.g, dfg.g.labels[label])
+    neighbors_il = FactorGraphs.outneighbors(dfg.g, dfg.g.labels[label])
     neighbors_ll = [dfg.g.labels[i] for i in neighbors_il]
     # Additional filtering
     solvable != 0 && filter!(lbl -> _isSolvable(dfg, lbl, solvable), neighbors_ll)
@@ -275,10 +338,14 @@ function listNeighbors(dfg::GraphsDFG, label::Symbol; solvable::Int=0)::Vector{S
     end
 
     return neighbors_ll
-
 end
 
-function getNeighborhood(dfg::GraphsDFG, variableFactorLabels::Vector{Symbol}, distance::Int; solvable::Int=0)::Vector{Symbol}
+function getNeighborhood(
+    dfg::GraphsDFG,
+    variableFactorLabels::Vector{Symbol},
+    distance::Int;
+    solvable::Int = 0,
+)::Vector{Symbol}
     # find neighbors at distance to add
     nbhood = Int[]
 
@@ -291,7 +358,6 @@ function getNeighborhood(dfg::GraphsDFG, variableFactorLabels::Vector{Symbol}, d
     solvable != 0 && filter!(nlbl -> (getSolvable(dfg, nlbl) >= solvable), allvarfacs)
 
     return allvarfacs
-
 end
 
 # TODO copy GraphsDFG to GraphsDFG overwrite
@@ -303,32 +369,41 @@ end
 #                     deepcopyNodes::Bool=false,
 #                     verbose::Bool = true)
 
-
 #  Biadjacency Matrix https://en.wikipedia.org/wiki/Adjacency_matrix#Of_a_bipartite_graph
-function getBiadjacencyMatrix(dfg::GraphsDFG; solvable::Int=0)::NamedTuple{(:B, :varLabels, :facLabels),Tuple{Graphs.SparseMatrixCSC,Vector{Symbol}, Vector{Symbol}}}
-    varLabels = listVariables(dfg, solvable=solvable)
-    factLabels = listFactors(dfg, solvable=solvable)
+function getBiadjacencyMatrix(
+    dfg::GraphsDFG;
+    solvable::Int = 0,
+)::NamedTuple{
+    (:B, :varLabels, :facLabels),
+    Tuple{Graphs.SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}},
+}
+    varLabels = listVariables(dfg; solvable = solvable)
+    factLabels = listFactors(dfg; solvable = solvable)
     varIndex = [dfg.g.labels[s] for s in varLabels]
     factIndex = [dfg.g.labels[s] for s in factLabels]
 
     adj = adjacency_matrix(dfg.g)
 
     adjvf = adj[factIndex, varIndex]
-    return (B=adjvf, varLabels=varLabels, facLabels=factLabels)
+    return (B = adjvf, varLabels = varLabels, facLabels = factLabels)
 end
 
 """
     $(SIGNATURES)
 Gets an empty and unique GraphsDFG derived from an existing DFG.
 """
-function _getDuplicatedEmptyDFG(dfg::GraphsDFG{P,V,F}) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
-    newDfg = GraphsDFG{P,V,F}(;
-        userLabel=getUserLabel(dfg), robotLabel=getRobotLabel(dfg), sessionLabel=getSessionLabel(dfg),
-        solverParams=deepcopy(dfg.solverParams))
-    newDfg.description ="(Copy of) $(dfg.description)"
+function _getDuplicatedEmptyDFG(
+    dfg::GraphsDFG{P, V, F},
+) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
+    newDfg = GraphsDFG{P, V, F}(;
+        userLabel = getUserLabel(dfg),
+        robotLabel = getRobotLabel(dfg),
+        sessionLabel = getSessionLabel(dfg),
+        solverParams = deepcopy(dfg.solverParams),
+    )
+    newDfg.description = "(Copy of) $(dfg.description)"
     return newDfg
 end
-
 
 #TODO JT test.
 """
@@ -342,18 +417,21 @@ function savedot_attributes(io::IO, dfg::GraphsDFG)
         write(io, "$vl [color=red, shape=ellipse];\n")
     end
     for fl in listFactors(dfg)
-        write(io, "$fl [color=blue, shape=box, fontsize=8, fixedsize=false, height=0.1, width=0.1];\n")
+        write(
+            io,
+            "$fl [color=blue, shape=box, fontsize=8, fixedsize=false, height=0.1, width=0.1];\n",
+        )
     end
 
     for e in edges(dfg.g)
         write(io, "$(dfg.g.labels[src(e)]) -- $(dfg.g.labels[dst(e)])\n")
     end
-    write(io, "}\n")
+    return write(io, "}\n")
 end
 
-function toDotFile(dfg::GraphsDFG, fileName::String="/tmp/dfg.dot")
+function toDotFile(dfg::GraphsDFG, fileName::String = "/tmp/dfg.dot")
     open(fileName, "w") do fid
-        savedot_attributes(fid, dfg)
+        return savedot_attributes(fid, dfg)
     end
     return nothing
 end
@@ -365,7 +443,6 @@ function toDot(dfg::GraphsDFG)
     close(m)
     return String(data)
 end
-
 
 """
     $SIGNATURES
@@ -395,43 +472,49 @@ Related
 
 [`findFactorsBetweenNaive`](@ref), `Graphs.dijkstra_shortest_paths`
 """
-function findShortestPathDijkstra(  dfg::GraphsDFG, 
-                                    from::Symbol,
-                                    to::Symbol;
-                                    regexVariables::Union{Nothing, Regex}=nothing,
-                                    regexFactors::Union{Nothing, Regex}=nothing,
-                                    tagsVariables::Vector{Symbol}=Symbol[],
-                                    tagsFactors::Vector{Symbol}=Symbol[],
-                                    typeVariables::Union{Nothing, <:AbstractVector}=nothing,
-                                    typeFactors::Union{Nothing, <:AbstractVector}=nothing,
-                                    solvable::Int=0,
-                                    initialized::Union{Nothing,Bool}=nothing  )
+function findShortestPathDijkstra(
+    dfg::GraphsDFG,
+    from::Symbol,
+    to::Symbol;
+    regexVariables::Union{Nothing, Regex} = nothing,
+    regexFactors::Union{Nothing, Regex} = nothing,
+    tagsVariables::Vector{Symbol} = Symbol[],
+    tagsFactors::Vector{Symbol} = Symbol[],
+    typeVariables::Union{Nothing, <:AbstractVector} = nothing,
+    typeFactors::Union{Nothing, <:AbstractVector} = nothing,
+    solvable::Int = 0,
+    initialized::Union{Nothing, Bool} = nothing,
+)
     #
     # helper function to filter on vector of types
-    function _filterTypeList(thelist::Vector{Symbol}, typeList, listfnc=x->ls(dfg, x) )
+    function _filterTypeList(thelist::Vector{Symbol}, typeList, listfnc = x -> ls(dfg, x))
         thelist_ = Symbol[]
         for type_ in typeList
             union!(thelist_, listfnc(type_))
         end
-        intersect( thelist, thelist_ )
+        return intersect(thelist, thelist_)
     end
 
     #
-    duplicate = regexVariables !== nothing ||
-                regexFactors !== nothing   ||
-                0 < length(tagsVariables)  ||
-                0 < length(tagsFactors)    ||
-                typeVariables !== nothing  ||
-                typeFactors !== nothing    ||
-                initialized !== nothing    ||
-                solvable != 0
+    duplicate =
+        regexVariables !== nothing ||
+        regexFactors !== nothing ||
+        0 < length(tagsVariables) ||
+        0 < length(tagsFactors) ||
+        typeVariables !== nothing ||
+        typeFactors !== nothing ||
+        initialized !== nothing ||
+        solvable != 0
     #
     dfg_ = if duplicate
         # use copy if filter is being applied
-        varList = ls(dfg, regexVariables, tags=tagsVariables, solvable=solvable)
-        fctList = lsf(dfg, regexFactors, tags=tagsFactors, solvable=solvable)
-        varList = typeVariables !== nothing ? _filterTypeList(varList, typeVariables) : varList
-        fctList = typeFactors !== nothing ? _filterTypeList(fctList, typeFactors, x->lsf(dfg, x)) : fctList
+        varList = ls(dfg, regexVariables; tags = tagsVariables, solvable = solvable)
+        fctList = lsf(dfg, regexFactors; tags = tagsFactors, solvable = solvable)
+        varList =
+            typeVariables !== nothing ? _filterTypeList(varList, typeVariables) : varList
+        fctList =
+            typeFactors !== nothing ?
+            _filterTypeList(fctList, typeFactors, x -> lsf(dfg, x)) : fctList
         varList = if initialized !== nothing
             initmask = isInitialized.(dfg, varList) .== initialized
             varList[initmask]
@@ -453,9 +536,9 @@ function findShortestPathDijkstra(  dfg::GraphsDFG,
     toI = dfg_.g.labels[to]
 
     # get shortest path from graph provider
-    path_state = Graphs.dijkstra_shortest_paths( dfg_.g.graph, [frI;] )
-    path = Graphs.enumerate_paths( path_state, toI )
-    dijkpath = map( x->dfg_.g.labels[x], path )
+    path_state = Graphs.dijkstra_shortest_paths(dfg_.g.graph, [frI;])
+    path = Graphs.enumerate_paths(path_state, toI)
+    dijkpath = map(x -> dfg_.g.labels[x], path)
 
     # return the list of symbols
     return dijkpath
@@ -479,19 +562,22 @@ end
 Return a topological sort of a factor graph as a vector of vertex labels in topological order.
 Starting from s::Symbol  
 """
-function traverseGraphTopologicalSort(fg::GraphsDFG, s::Symbol, fs_tree=bfs_tree)
+function traverseGraphTopologicalSort(fg::GraphsDFG, s::Symbol, fs_tree = bfs_tree)
     tree = fs_tree(fg, s)
     list = topological_sort_by_dfs(tree)
-    symlist = map(s->fg.g.labels[s], list)
+    symlist = map(s -> fg.g.labels[s], list)
     return symlist
 end
-
 
 # FG blob entries 
 # session blob entries
 function getBlobEntry(var::AbstractDFGVariable, key::Symbol)
     if !hasBlobEntry(var, key)
-        throw(KeyError("No dataEntry label $(key) found in variable $(getLabel(var)). Available keys: $(keys(var.dataDict))"))
+        throw(
+            KeyError(
+                "No dataEntry label $(key) found in variable $(getLabel(var)). Available keys: $(keys(var.dataDict))",
+            ),
+        )
     end
     return var.dataDict[key]
 end
@@ -500,23 +586,25 @@ function getSessionBlobEntry(fg::GraphsDFG, label::Symbol)
     return fg.sessionBlobEntries[label]
 end
 
-function getSessionBlobEntries(fg::GraphsDFG, startwith::Union{Nothing,String}=nothing)
+function getSessionBlobEntries(fg::GraphsDFG, startwith::Union{Nothing, String} = nothing)
     entries = collect(values(fg.sessionBlobEntries))
-    !isnothing(startwith) && filter!(e->startswith(string(e.label), startwith), entries)
+    !isnothing(startwith) && filter!(e -> startswith(string(e.label), startwith), entries)
     return entries
 end
 
 function addSessionBlobEntry!(fg::GraphsDFG, entry::BlobEntry)
     if haskey(fg.sessionBlobEntries, entry.label)
-        error("BlobEntry '$(entry.label)' already exists in the factor graph's session blob entries.")
+        error(
+            "BlobEntry '$(entry.label)' already exists in the factor graph's session blob entries.",
+        )
     end
-    push!(fg.sessionBlobEntries, entry.label=>entry)
+    push!(fg.sessionBlobEntries, entry.label => entry)
     return entry
 end
 
 function addSessionBlobEntries!(fg::GraphsDFG, entries::Vector{BlobEntry})
     return map(entries) do entry
-        addSessionBlobEntry!(fg, entry)
+        return addSessionBlobEntry!(fg, entry)
     end
 end
 

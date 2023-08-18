@@ -37,9 +37,9 @@ $SIGNATURES
 
 Set the tags for a DFGNode.
 """
-function setTags!(f::DataLevel0, tags::Union{Vector{Symbol},Set{Symbol}})
-  empty!(f.tags)
-  union!(f.tags, tags)
+function setTags!(f::DataLevel0, tags::Union{Vector{Symbol}, Set{Symbol}})
+    empty!(f.tags)
+    return union!(f.tags, tags)
 end
 
 ##------------------------------------------------------------------------------
@@ -53,7 +53,6 @@ Get the timestamp of a DFGNode.
 """
 getTimestamp(v::DataLevel1) = v.timestamp
 
-
 """
     $SIGNATURES
 
@@ -64,15 +63,17 @@ See also [`setTimestamp`](@ref)
 """
 function setTimestamp!(dfg::AbstractDFG, lbl::Symbol, ts::ZonedDateTime)
     if isVariable(dfg, lbl)
-        return updateVariable!(dfg, setTimestamp(getVariable(dfg,lbl), ts; verbose=false))
+        return updateVariable!(
+            dfg,
+            setTimestamp(getVariable(dfg, lbl), ts; verbose = false),
+        )
     else
-        return updateFactor!(dfg, setTimestamp(getFactor(dfg,lbl), ts))
+        return updateFactor!(dfg, setTimestamp(getFactor(dfg, lbl), ts))
     end
 end
 
-setTimestamp!(dfg::AbstractDFG, lbl::Symbol, ts::DateTime, timezone=localzone()) = setTimestamp!(dfg, lbl, ZonedDateTime(ts,  timezone))
-
-
+setTimestamp!(dfg::AbstractDFG, lbl::Symbol, ts::DateTime, timezone = localzone()) =
+    setTimestamp!(dfg, lbl, ZonedDateTime(ts, timezone))
 
 ##------------------------------------------------------------------------------
 ## solvable
@@ -95,11 +96,11 @@ getSolvable(var::Union{DFGVariable, DFGFactor})::Int = var.solvable
 Get 'solvable' parameter for either a variable or factor.
 """
 function getSolvable(dfg::AbstractDFG, sym::Symbol)::Int
-  if isVariable(dfg, sym)
-    return getVariable(dfg, sym).solvable
-  elseif isFactor(dfg, sym)
-    return getFactor(dfg, sym).solvable
-  end
+    if isVariable(dfg, sym)
+        return getVariable(dfg, sym).solvable
+    elseif isFactor(dfg, sym)
+        return getFactor(dfg, sym).solvable
+    end
 end
 
 #TODO data level2 for N
@@ -108,11 +109,10 @@ end
 
 Set the `solvable` parameter for either a variable or factor.
 """
-function setSolvable!(node::N, solvable::Int)::Int where N <: DFGNode
-  node.solvable = solvable
-  return solvable
+function setSolvable!(node::N, solvable::Int)::Int where {N <: DFGNode}
+    node.solvable = solvable
+    return solvable
 end
-
 
 """
     $SIGNATURES
@@ -120,15 +120,13 @@ end
 Set the `solvable` parameter for either a variable or factor.
 """
 function setSolvable!(dfg::AbstractDFG, sym::Symbol, solvable::Int)::Int
-  if isVariable(dfg, sym)
-    getVariable(dfg, sym).solvable = solvable
-  elseif isFactor(dfg, sym)
-    getFactor(dfg, sym).solvable = solvable
-  end
-  return solvable
+    if isVariable(dfg, sym)
+        getVariable(dfg, sym).solvable = solvable
+    elseif isFactor(dfg, sym)
+        getFactor(dfg, sym).solvable = solvable
+    end
+    return solvable
 end
-
-
 
 """
     $SIGNATURES
@@ -139,7 +137,6 @@ Related:
 - `getSolvable`(@ref)
 """
 isSolvable(node::Union{DFGVariable, DFGFactor}) = getSolvable(node) > 0
-
 
 ##------------------------------------------------------------------------------
 ## solveInProgress
@@ -157,17 +154,21 @@ Related
 
 isSolvable
 """
-function getSolveInProgress(var::Union{DFGVariable, DFGFactor}, solveKey::Symbol=:default)::Int
+function getSolveInProgress(
+    var::Union{DFGVariable, DFGFactor},
+    solveKey::Symbol = :default,
+)::Int
     # Variable
-    var isa DFGVariable && return haskey(getSolverDataDict(var), solveKey) ? getSolverDataDict(var)[solveKey].solveInProgress : 0
+    var isa DFGVariable && return haskey(getSolverDataDict(var), solveKey) ?
+           getSolverDataDict(var)[solveKey].solveInProgress : 0
     # Factor
     return getSolverData(var).solveInProgress
 end
 
 #TODO missing set solveInProgress and graph level accessor
 
-isSolveInProgress(node::Union{DFGVariable, DFGFactor}, solvekey::Symbol=:default) = getSolveInProgress(node, solvekey) > 0
-
+isSolveInProgress(node::Union{DFGVariable, DFGFactor}, solvekey::Symbol = :default) =
+    getSolveInProgress(node, solvekey) > 0
 
 ##==============================================================================
 ## Common Layer 2 CRUD and SET
@@ -182,8 +183,8 @@ $SIGNATURES
 Return the tags for a variable or factor.
 """
 function listTags(dfg::AbstractDFG, sym::Symbol)
-  getFnc = isVariable(dfg,sym) ? getVariable : getFactor
-  getTags(getFnc(dfg, sym))
+    getFnc = isVariable(dfg, sym) ? getVariable : getFactor
+    return getTags(getFnc(dfg, sym))
 end
 #alias for completeness
 listTags(f::DataLevel0) = getTags(f)
@@ -194,11 +195,10 @@ listTags(f::DataLevel0) = getTags(f)
 Merge add tags to a variable or factor (union)
 """
 function mergeTags!(dfg::InMemoryDFGTypes, sym::Symbol, tags::Vector{Symbol})
-  getFnc = isVariable(dfg,sym) ? getVariable : getFactor
-  union!(getTags(getFnc(dfg, sym)), tags)
+    getFnc = isVariable(dfg, sym) ? getVariable : getFactor
+    return union!(getTags(getFnc(dfg, sym)), tags)
 end
 mergeTags!(f::DataLevel0, tags::Vector{Symbol}) = union!(f.tags, tags)
-
 
 """
 $SIGNATURES
@@ -206,8 +206,8 @@ $SIGNATURES
 Remove the tags from the node (setdiff)
 """
 function removeTags!(dfg::InMemoryDFGTypes, sym::Symbol, tags::Vector{Symbol})
-  getFnc = isVariable(dfg,sym) ? getVariable : getFactor
-  setdiff!(getTags(getFnc(dfg, sym)), tags)
+    getFnc = isVariable(dfg, sym) ? getVariable : getFactor
+    return setdiff!(getTags(getFnc(dfg, sym)), tags)
 end
 removeTags!(f::DataLevel0, tags::Vector{Symbol}) = setdiff!(f.tags, tags)
 
@@ -217,7 +217,7 @@ $SIGNATURES
 Empty all tags from the node (empty)
 """
 function emptyTags!(dfg::InMemoryDFGTypes, sym::Symbol)
-  getFnc = isVariable(dfg,sym) ? getVariable : getFactor
-  empty!(getTags(getFnc(dfg, sym)))
+    getFnc = isVariable(dfg, sym) ? getVariable : getFactor
+    return empty!(getTags(getFnc(dfg, sym)))
 end
 emptyTags!(f::DataLevel0) = empty!(f.tags)

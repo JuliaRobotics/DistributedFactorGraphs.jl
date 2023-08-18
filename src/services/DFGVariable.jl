@@ -6,18 +6,20 @@
 ##==============================================================================
 "$(SIGNATURES)"
 getPPEMax(est::AbstractPointParametricEst) = est.max
-getPPEMax(fg::AbstractDFG, varlabel::Symbol, solveKey::Symbol=:default) =
-                getPPE(fg, varlabel, solveKey) |> getPPEMax
+getPPEMax(fg::AbstractDFG, varlabel::Symbol, solveKey::Symbol = :default) =
+    getPPE(fg, varlabel, solveKey) |> getPPEMax
 
 "$(SIGNATURES)"
 getPPEMean(est::AbstractPointParametricEst) = est.mean
-getPPEMean(fg::AbstractDFG, varlabel::Symbol, solveKey::Symbol=:default) =
-                getPPE(fg, varlabel, solveKey) |> getPPEMean
-                
+getPPEMean(fg::AbstractDFG, varlabel::Symbol, solveKey::Symbol = :default) =
+    getPPE(fg, varlabel, solveKey) |> getPPEMean
+
 "$(SIGNATURES)"
 getPPESuggested(est::AbstractPointParametricEst) = est.suggested
-getPPESuggested(var::DFGVariable, solveKey::Symbol=:default) = getPPE(var, solveKey) |> getPPESuggested
-getPPESuggested(dfg::AbstractDFG, varlabel::Symbol, solveKey::Symbol=:default) = getPPE(getVariable(dfg, varlabel), solveKey) |> getPPESuggested
+getPPESuggested(var::DFGVariable, solveKey::Symbol = :default) =
+    getPPE(var, solveKey) |> getPPESuggested
+getPPESuggested(dfg::AbstractDFG, varlabel::Symbol, solveKey::Symbol = :default) =
+    getPPE(getVariable(dfg, varlabel), solveKey) |> getPPESuggested
 
 "$(SIGNATURES)"
 getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimestamp
@@ -48,18 +50,15 @@ Related
 
 getVariableType
 """
-getVariableType(::DFGVariable{T}) where T = T()
+getVariableType(::DFGVariable{T}) where {T} = T()
 
-getVariableType(::VariableNodeData{T}) where T = T()
-
-
+getVariableType(::VariableNodeData{T}) where {T} = T()
 
 # TODO: Confirm that we can switch this out, instead of retrieving the complete variable.
 # getVariableType(v::DFGVariable) = getVariableType(getSolverData(v))
 
 # Optimized in CGDFG
-getVariableType(dfg::AbstractDFG, lbl::Symbol) = getVariableType(getVariable(dfg,lbl))
-
+getVariableType(dfg::AbstractDFG, lbl::Symbol) = getVariableType(getVariable(dfg, lbl))
 
 ##------------------------------------------------------------------------------
 ## InferenceVariable
@@ -74,7 +73,6 @@ getVariableType(dfg::AbstractDFG, lbl::Symbol) = getVariableType(getVariable(dfg
 # getManifolds(::Type{<:T}) where {T <: ManifoldsBase.AbstractManifold} = convert(Tuple, T)
 # getManifolds(::T) where {T <: ManifoldsBase.AbstractManifold} = getManifolds(T)
 
-
 """
     @defVariable StructName manifolds<:ManifoldsBase.AbstractManifold
 
@@ -88,24 +86,32 @@ DFG.@defVariable Pose2 SpecialEuclidean(2) ArrayPartition([0;0.0],[1 0; 0 1.0])
 ```
 """
 macro defVariable(structname, manifold, point_identity)
-    return esc(quote
-        Base.@__doc__ struct $structname <: InferenceVariable end
+    return esc(
+        quote
+            Base.@__doc__ struct $structname <: InferenceVariable end
 
-        # user manifold must be a <:Manifold
-        @assert ($manifold isa AbstractManifold) "@defVariable of "*string($structname)*" requires that the "*string($manifold)*" be a subtype of `ManifoldsBase.AbstractManifold`"
+            # user manifold must be a <:Manifold
+            @assert ($manifold isa AbstractManifold) "@defVariable of " *
+                                                     string($structname) *
+                                                     " requires that the " *
+                                                     string($manifold) *
+                                                     " be a subtype of `ManifoldsBase.AbstractManifold`"
 
-        DFG.getManifold(::Type{$structname}) = $manifold
+            DFG.getManifold(::Type{$structname}) = $manifold
 
-        DFG.getPointType(::Type{$structname}) = typeof($point_identity)
+            DFG.getPointType(::Type{$structname}) = typeof($point_identity)
 
-        DFG.getPointIdentity(::Type{$structname}) = $point_identity
+            DFG.getPointIdentity(::Type{$structname}) = $point_identity
 
-        DFG.getVariableType(::typeof($manifold)) = $structname
-
-    end)
+            DFG.getVariableType(::typeof($manifold)) = $structname
+        end,
+    )
 end
 
-Base.convert(::Type{<:AbstractManifold}, ::Union{<:T, Type{<:T}}) where {T <: InferenceVariable} = getManifold(T)
+Base.convert(
+    ::Type{<:AbstractManifold},
+    ::Union{<:T, Type{<:T}},
+) where {T <: InferenceVariable} = getManifold(T)
 
 """
     $SIGNATURES
@@ -145,7 +151,6 @@ Notes
 function getPointIdentity end
 getPointIdentity(::T) where {T <: InferenceVariable} = getPointIdentity(T)
 
-
 """
     $SIGNATURES
 
@@ -160,11 +165,15 @@ Related
 
 [`getCoordinates`](@ref)
 """
-function getPoint(::Type{T}, v::AbstractVector, basis=ManifoldsBase.DefaultOrthogonalBasis()) where {T <: InferenceVariable}
+function getPoint(
+    ::Type{T},
+    v::AbstractVector,
+    basis = ManifoldsBase.DefaultOrthogonalBasis(),
+) where {T <: InferenceVariable}
     M = getManifold(T)
     p0 = getPointIdentity(T)
     X = ManifoldsBase.get_vector(M, p0, v, basis)
-    ManifoldsBase.exp(M, p0, X)
+    return ManifoldsBase.exp(M, p0, X)
 end
 
 """
@@ -180,13 +189,16 @@ Related
 
 [`getPoint`](@ref)
 """
-function getCoordinates(::Type{T}, p, basis=ManifoldsBase.DefaultOrthogonalBasis()) where {T <: InferenceVariable}
+function getCoordinates(
+    ::Type{T},
+    p,
+    basis = ManifoldsBase.DefaultOrthogonalBasis(),
+) where {T <: InferenceVariable}
     M = getManifold(T)
     p0 = getPointIdentity(T)
     X = ManifoldsBase.log(M, p0, p)
-    ManifoldsBase.get_coordinates(M, p0, X, basis)
+    return ManifoldsBase.get_coordinates(M, p0, X, basis)
 end
-
 
 ##------------------------------------------------------------------------------
 ## solvedCount
@@ -202,9 +214,10 @@ Related
 isSolved, setSolvedCount!
 """
 getSolvedCount(v::VariableNodeData) = v.solvedCount
-getSolvedCount(v::VariableDataLevel2, solveKey::Symbol=:default) = getSolverData(v, solveKey) |> getSolvedCount
-getSolvedCount(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = getSolvedCount(getVariable(dfg, sym), solveKey)
-
+getSolvedCount(v::VariableDataLevel2, solveKey::Symbol = :default) =
+    getSolverData(v, solveKey) |> getSolvedCount
+getSolvedCount(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol = :default) =
+    getSolvedCount(getVariable(dfg, sym), solveKey)
 
 """
     $SIGNATURES
@@ -216,9 +229,10 @@ Related
 getSolved, isSolved
 """
 setSolvedCount!(v::VariableNodeData, val::Int) = v.solvedCount = val
-setSolvedCount!(v::VariableDataLevel2, val::Int, solveKey::Symbol=:default) = setSolvedCount!(getSolverData(v, solveKey), val)
-setSolvedCount!(dfg::AbstractDFG, sym::Symbol, val::Int, solveKey::Symbol=:default) = setSolvedCount!(getVariable(dfg, sym), val, solveKey)
-
+setSolvedCount!(v::VariableDataLevel2, val::Int, solveKey::Symbol = :default) =
+    setSolvedCount!(getSolverData(v, solveKey), val)
+setSolvedCount!(dfg::AbstractDFG, sym::Symbol, val::Int, solveKey::Symbol = :default) =
+    setSolvedCount!(getVariable(dfg, sym), val, solveKey)
 
 """
     $SIGNATURES
@@ -230,8 +244,10 @@ Related
 getSolved, setSolved!
 """
 isSolved(v::VariableNodeData) = 0 < v.solvedCount
-isSolved(v::VariableDataLevel2, solveKey::Symbol=:default) = getSolverData(v, solveKey) |> isSolved
-isSolved(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = isSolved(getVariable(dfg, sym), solveKey)
+isSolved(v::VariableDataLevel2, solveKey::Symbol = :default) =
+    getSolverData(v, solveKey) |> isSolved
+isSolved(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol = :default) =
+    isSolved(getVariable(dfg, sym), solveKey)
 
 ##------------------------------------------------------------------------------
 ## initialized
@@ -244,21 +260,20 @@ Returns state of variable data `.initialized` flag.
 Notes:
 - used by both factor graph variable and Bayes tree clique logic.
 """
-function isInitialized(var::DFGVariable, key::Symbol=:default)
-  data = getSolverData(var, key)
-  if data === nothing
-    #TODO we still have a mixture of 2 error behaviours
-      # DF, not sure I follow the error here?
-  return false
-  else
-    return data.initialized
-  end
+function isInitialized(var::DFGVariable, key::Symbol = :default)
+    data = getSolverData(var, key)
+    if data === nothing
+        #TODO we still have a mixture of 2 error behaviours
+        # DF, not sure I follow the error here?
+        return false
+    else
+        return data.initialized
+    end
 end
 
-function isInitialized(dfg::AbstractDFG, label::Symbol, key::Symbol=:default)
-  return isInitialized(getVariable(dfg, label), key)::Bool
+function isInitialized(dfg::AbstractDFG, label::Symbol, key::Symbol = :default)
+    return isInitialized(getVariable(dfg, label), key)::Bool
 end
-
 
 """
     $SIGNATURES
@@ -268,8 +283,10 @@ Return `::Bool` on whether this variable has been marginalized.
 Notes:
 - VariableNodeData default `solveKey=:default`
 """
-isMarginalized(vert::DFGVariable, solveKey::Symbol=:default) = getSolverData(vert, solveKey).ismargin
-isMarginalized(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = isMarginalized(DFG.getVariable(dfg, sym), solveKey)
+isMarginalized(vert::DFGVariable, solveKey::Symbol = :default) =
+    getSolverData(vert, solveKey).ismargin
+isMarginalized(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol = :default) =
+    isMarginalized(DFG.getVariable(dfg, sym), solveKey)
 
 """
     $SIGNATURES
@@ -277,11 +294,12 @@ isMarginalized(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol=:default) = isMar
 Mark a variable as marginalized `true` or `false`.
 """
 function setMarginalized!(vnd::VariableNodeData, val::Bool)
-  vnd.ismargin = val
+    return vnd.ismargin = val
 end
-setMarginalized!(vari::DFGVariable, val::Bool, solveKey::Symbol=:default) = setMarginalized!(getSolverData(vari, solveKey), val)
-setMarginalized!(dfg::AbstractDFG, sym::Symbol, val::Bool, solveKey::Symbol=:default) = setMarginalized!(getVariable(dfg, sym), val, solveKey)
-
+setMarginalized!(vari::DFGVariable, val::Bool, solveKey::Symbol = :default) =
+    setMarginalized!(getSolverData(vari, solveKey), val)
+setMarginalized!(dfg::AbstractDFG, sym::Symbol, val::Bool, solveKey::Symbol = :default) =
+    setMarginalized!(getVariable(dfg, sym), val, solveKey)
 
 ##==============================================================================
 ## Variables
@@ -326,24 +344,51 @@ Since the `timestamp` field is not mutable `setTimestamp` returns a new variable
 Use [`updateVariable!`](@ref) on the returened variable to update it in the factor graph if needed. Alternatively use [`setTimestamp!`](@ref).
 See issue #315.
 """
-function setTimestamp(v::DFGVariable, ts::ZonedDateTime; verbose::Bool=true)
+function setTimestamp(v::DFGVariable, ts::ZonedDateTime; verbose::Bool = true)
     if verbose
         @warn "verbose=true: setTimestamp(::DFGVariable,...) creates a returns a new immutable DFGVariable object (and didn't change a distributed factor graph object), make sure you are using the right pointers: getVariable(...).  See setTimestamp!(...) and note suggested use is at addVariable!(..., [timestamp=...]).  See DFG #315 for explanation."
     end
-    return DFGVariable(v.id, v.label, ts, v.nstime, v.tags, v.ppeDict, v.solverDataDict, v.smallData, v.dataDict, Ref(v.solvable))
+    return DFGVariable(
+        v.id,
+        v.label,
+        ts,
+        v.nstime,
+        v.tags,
+        v.ppeDict,
+        v.solverDataDict,
+        v.smallData,
+        v.dataDict,
+        Ref(v.solvable),
+    )
 end
 
-setTimestamp(v::AbstractDFGVariable, ts::DateTime, timezone=localzone(); verbose::Bool=true) = setTimestamp(v, ZonedDateTime(ts,  timezone); verbose)
+setTimestamp(
+    v::AbstractDFGVariable,
+    ts::DateTime,
+    timezone = localzone();
+    verbose::Bool = true,
+) = setTimestamp(v, ZonedDateTime(ts, timezone); verbose)
 
-function setTimestamp(v::DFGVariableSummary, ts::ZonedDateTime; verbose::Bool=true)
+function setTimestamp(v::DFGVariableSummary, ts::ZonedDateTime; verbose::Bool = true)
     if verbose
         @warn "verbose=true: setTimestamp(::DFGVariableSummary,...) creates and returns a new immutable DFGVariable object (and didn't change a distributed factor graph object), make sure you are using the right pointers: getVariable(...).  See setTimestamp!(...) and note suggested use is at addVariable!(..., [timestamp=...]).  See DFG #315 for explanation."
     end
-    return DFGVariableSummary(v.id, v.label, ts, v.tags, v.ppeDict, v.variableTypeName, v.dataDict)
+    return DFGVariableSummary(
+        v.id,
+        v.label,
+        ts,
+        v.tags,
+        v.ppeDict,
+        v.variableTypeName,
+        v.dataDict,
+    )
 end
 
-function setTimestamp(v::PackedVariable, timestamp::ZonedDateTime; verbose::Bool=true)
-    return PackedVariable(;(key => getproperty(v, key) for key in fieldnames(PackedVariable))..., timestamp)
+function setTimestamp(v::PackedVariable, timestamp::ZonedDateTime; verbose::Bool = true)
+    return PackedVariable(;
+        (key => getproperty(v, key) for key in fieldnames(PackedVariable))...,
+        timestamp,
+    )
 end
 
 ##------------------------------------------------------------------------------
@@ -368,7 +413,6 @@ Get the PPE dictionary for a variable.  Recommended to use CRUD operations inste
 """
 getPPEDict(v::VariableDataLevel1) = v.ppeDict
 
-
 #TODO FIXME don't know if this should exist, should rather always update with fg object to simplify inmem vs cloud
 """
     $SIGNATURES
@@ -382,8 +426,8 @@ Related
 
 getMeanPPE, getMaxPPE, getKDEMean, getKDEFit, getPPEs, getVariablePPEs
 """
-function getPPE(vari::VariableDataLevel1, solveKey::Symbol=:default)
-    return  getPPEDict(vari)[solveKey]
+function getPPE(vari::VariableDataLevel1, solveKey::Symbol = :default)
+    return getPPEDict(vari)[solveKey]
     # return haskey(ppeDict, solveKey) ? ppeDict[solveKey] : nothing
 end
 
@@ -416,16 +460,17 @@ Get solver data dictionary for a variable.  Advised to use graph CRUD operations
 """
 getSolverDataDict(v::DFGVariable) = v.solverDataDict
 
-
 # TODO move to crud, don't know if this should exist, should rather always update with fg object to simplify inmem vs cloud
 """
     $SIGNATURES
 
 Retrieve solver data structure stored in a variable.
 """
-function getSolverData(v::DFGVariable, key::Symbol=:default)
+function getSolverData(v::DFGVariable, key::Symbol = :default)
     #TODO this does not fit in with some of the other error behaviour. but its used so added @error
-    vnd =  haskey(getSolverDataDict(v), key) ? getSolverDataDict(v)[key] : (@error "Variable $(getLabel(v)) does not have solver data $(key)"; nothing)
+    vnd =
+        haskey(getSolverDataDict(v), key) ? getSolverDataDict(v)[key] :
+        (@error "Variable $(getLabel(v)) does not have solver data $(key)"; nothing)
     return vnd
 end
 
@@ -434,9 +479,9 @@ end
     $SIGNATURES
 Set solver data structure stored in a variable.
 """
-function setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol=:default)
+function setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol = :default)
     @assert key == data.solveKey "VariableNodeData.solveKey=:$(data.solveKey) does not match requested :$(key)"
-    v.solverDataDict[key] = data
+    return v.solverDataDict[key] = data
 end
 
 ##------------------------------------------------------------------------------
@@ -460,7 +505,7 @@ Note: Rather use SmallData CRUD
 """
 function setSmallData!(v::DFGVariable, smallData::Dict{Symbol, SmallDataTypes})
     empty!(v.smallData)
-    merge!(v.smallData, smallData)
+    return merge!(v.smallData, smallData)
 end
 
 # Generic SmallData CRUD
@@ -470,15 +515,19 @@ end
     $(SIGNATURES)
 Get the small data entry at `key` for variable `label` in `dfg`
 """
-function getSmallData(dfg::AbstractDFG, label::Symbol, key::Symbol) 
-    getVariable(dfg, label).smallData[key]
+function getSmallData(dfg::AbstractDFG, label::Symbol, key::Symbol)
+    return getVariable(dfg, label).smallData[key]
 end
 
 """
     $(SIGNATURES)
 Add a small data pair `key=>value` for variable `label` in `dfg`
 """
-function addSmallData!(dfg::AbstractDFG, label::Symbol, pair::Pair{Symbol, <:SmallDataTypes})
+function addSmallData!(
+    dfg::AbstractDFG,
+    label::Symbol,
+    pair::Pair{Symbol, <:SmallDataTypes},
+)
     v = getVariable(dfg, label)
     haskey(v.smallData, pair.first) && error("$(pair.first) already exists.")
     push!(v.smallData, pair)
@@ -490,9 +539,16 @@ end
     $(SIGNATURES)
 Update a small data pair `key=>value` for variable `label` in `dfg`
 """
-function updateSmallData!(dfg::AbstractDFG, label::Symbol, pair::Pair{Symbol, <:SmallDataTypes}; warn_if_absent::Bool=true)
+function updateSmallData!(
+    dfg::AbstractDFG,
+    label::Symbol,
+    pair::Pair{Symbol, <:SmallDataTypes};
+    warn_if_absent::Bool = true,
+)
     v = getVariable(dfg, label)
-    warn_if_absent && !haskey(v.smallData, pair.first) && @warn("$(pair.first) does not exist, adding.")
+    warn_if_absent &&
+        !haskey(v.smallData, pair.first) &&
+        @warn("$(pair.first) does not exist, adding.")
     push!(v.smallData, pair)
     updateVariable!(dfg, v)
     return v.smallData #or pair TODO
@@ -529,7 +585,6 @@ function emptySmallData!(dfg::AbstractDFG, label::Symbol)
     return v.smallData #or pair TODO
 end
 
-
 ##------------------------------------------------------------------------------
 ## Data Entries and Blobs
 ##------------------------------------------------------------------------------
@@ -552,7 +607,6 @@ end
 Retrieve the soft type name symbol for a DFGVariableSummary. ie :Point2, Pose2, etc.
 """
 getVariableTypeName(v::DFGVariableSummary) = v.variableTypeName::Symbol
-
 
 function getVariableType(v::DFGVariableSummary)::InferenceVariable
     @warn "Looking for type in `Main`. Only use if `variableType` has only one implementation, ie. Pose2. Otherwise use the full variable."
@@ -578,18 +632,26 @@ end
     $(SIGNATURES)
 Get variable solverdata for a given solve key.
 """
-function getVariableSolverData(dfg::AbstractDFG, variablekey::Symbol, solvekey::Symbol=:default)
+function getVariableSolverData(
+    dfg::AbstractDFG,
+    variablekey::Symbol,
+    solvekey::Symbol = :default,
+)
     v = getVariable(dfg, variablekey)
-    !haskey(v.solverDataDict, solvekey) && throw(KeyError("Solve key '$solvekey' not found in variable '$variablekey'"))
+    !haskey(v.solverDataDict, solvekey) &&
+        throw(KeyError("Solve key '$solvekey' not found in variable '$variablekey'"))
     return v.solverDataDict[solvekey]
 end
-
 
 """
     $(SIGNATURES)
 Add variable solver data, errors if it already exists.
 """
-function addVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData)
+function addVariableSolverData!(
+    dfg::AbstractDFG,
+    variablekey::Symbol,
+    vnd::VariableNodeData,
+)
     var = getVariable(dfg, variablekey)
     if haskey(var.solverDataDict, vnd.solveKey)
         error("VariableNodeData '$(vnd.solveKey)' already exists")
@@ -603,9 +665,15 @@ end
 Add a new solver data  entry from a deepcopy of the source variable solver data.
 NOTE: Copies the solver data.
 """
-addVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable, solveKey::Symbol=:default) =
-    addVariableSolverData!(dfg, sourceVariable.label, deepcopy(getSolverData(sourceVariable, solveKey)))
-
+addVariableSolverData!(
+    dfg::AbstractDFG,
+    sourceVariable::DFGVariable,
+    solveKey::Symbol = :default,
+) = addVariableSolverData!(
+    dfg,
+    sourceVariable.label,
+    deepcopy(getSolverData(sourceVariable, solveKey)),
+)
 
 """
     $(SIGNATURES)
@@ -623,18 +691,23 @@ function updateVariableSolverData!(
     dfg::AbstractDFG,
     variablekey::Symbol,
     vnd::VariableNodeData,
-    useCopy::Bool=false,
-    fields::Vector{Symbol}=Symbol[]; 
-    warn_if_absent::Bool=true
+    useCopy::Bool = false,
+    fields::Vector{Symbol} = Symbol[];
+    warn_if_absent::Bool = true,
 )
     #This is basically just setSolverData
     var = getVariable(dfg, variablekey)
-    warn_if_absent && !haskey(var.solverDataDict, vnd.solveKey) && @warn "VariableNodeData '$(vnd.solveKey)' does not exist, adding"
+    warn_if_absent &&
+        !haskey(var.solverDataDict, vnd.solveKey) &&
+        @warn "VariableNodeData '$(vnd.solveKey)' does not exist, adding"
 
     # for InMemoryDFGTypes do memory copy or repointing, for cloud this would be an different kind of update.
     usevnd = vnd # useCopy ? deepcopy(vnd) : vnd
     # should just one, or many pointers be updated?
-    useExisting = haskey(var.solverDataDict, vnd.solveKey) && isa(var.solverDataDict[vnd.solveKey], VariableNodeData) && length(fields) != 0
+    useExisting =
+        haskey(var.solverDataDict, vnd.solveKey) &&
+        isa(var.solverDataDict[vnd.solveKey], VariableNodeData) &&
+        length(fields) != 0
     # @error useExisting vnd.solveKey
     if useExisting
         # change multiple pointers inside the VND var.solverDataDict[solvekey]
@@ -642,11 +715,11 @@ function updateVariableSolverData!(
             destField = getfield(var.solverDataDict[vnd.solveKey], field)
             srcField = getfield(usevnd, field)
             if isa(destField, Array) && size(destField) == size(srcField)
-            # use broadcast (in-place operation)
-            destField .= srcField
+                # use broadcast (in-place operation)
+                destField .= srcField
             else
-            # change pointer of destination VND object member
-            setfield!(var.solverDataDict[vnd.solveKey], field, srcField)
+                # change pointer of destination VND object member
+                setfield!(var.solverDataDict[vnd.solveKey], field, srcField)
             end
         end
     else
@@ -662,29 +735,45 @@ function updateVariableSolverData!(
     variablekey::Symbol,
     vnd::VariableNodeData,
     solveKey::Symbol,
-    useCopy::Bool=false,
-    fields::Vector{Symbol}=Symbol[];
-    warn_if_absent::Bool=true
+    useCopy::Bool = false,
+    fields::Vector{Symbol} = Symbol[];
+    warn_if_absent::Bool = true,
 )
     # TODO not very clean
     if vnd.solveKey != solveKey
-        @warn("updateVariableSolverData with solveKey parameter might change in the future, see DFG #565. Future warnings are suppressed", maxlog=1) 
+        @warn(
+            "updateVariableSolverData with solveKey parameter might change in the future, see DFG #565. Future warnings are suppressed",
+            maxlog = 1
+        )
         usevnd = useCopy ? deepcopy(vnd) : vnd
         usevnd.solveKey = solveKey
-        return updateVariableSolverData!(dfg, variablekey, usevnd, useCopy, fields; warn_if_absent=warn_if_absent)
+        return updateVariableSolverData!(
+            dfg,
+            variablekey,
+            usevnd,
+            useCopy,
+            fields;
+            warn_if_absent = warn_if_absent,
+        )
     else
-        return updateVariableSolverData!(dfg, variablekey, vnd, useCopy, fields; warn_if_absent=warn_if_absent)
+        return updateVariableSolverData!(
+            dfg,
+            variablekey,
+            vnd,
+            useCopy,
+            fields;
+            warn_if_absent = warn_if_absent,
+        )
     end
 end
 
-
-function updateVariableSolverData!( 
+function updateVariableSolverData!(
     dfg::AbstractDFG,
     sourceVariable::DFGVariable,
-    solveKey::Symbol=:default,
-    useCopy::Bool=false,
-    fields::Vector{Symbol}=Symbol[];
-    warn_if_absent::Bool=true 
+    solveKey::Symbol = :default,
+    useCopy::Bool = false,
+    fields::Vector{Symbol} = Symbol[];
+    warn_if_absent::Bool = true,
 )
     #
     vnd = getSolverData(sourceVariable, solveKey)
@@ -692,20 +781,34 @@ function updateVariableSolverData!(
     # @info "update DFGVar solveKey" solveKey vnd.solveKey 
     # @show toshow
     @assert solveKey == vnd.solveKey "VariableNodeData's solveKey=:$(vnd.solveKey) does not match requested :$solveKey"
-    updateVariableSolverData!(dfg, sourceVariable.label, vnd, useCopy, fields; warn_if_absent=warn_if_absent)
+    return updateVariableSolverData!(
+        dfg,
+        sourceVariable.label,
+        vnd,
+        useCopy,
+        fields;
+        warn_if_absent = warn_if_absent,
+    )
 end
 
-function updateVariableSolverData!( 
+function updateVariableSolverData!(
     dfg::AbstractDFG,
     sourceVariables::Vector{<:DFGVariable},
-    solveKey::Symbol=:default,
-    useCopy::Bool=false,
-    fields::Vector{Symbol}=Symbol[];
-    warn_if_absent::Bool=true
+    solveKey::Symbol = :default,
+    useCopy::Bool = false,
+    fields::Vector{Symbol} = Symbol[];
+    warn_if_absent::Bool = true,
 )
     #I think cloud would do this in bulk for speed
     for var in sourceVariables
-        updateVariableSolverData!(dfg, var.label, getSolverData(var, solveKey), useCopy, fields; warn_if_absent=warn_if_absent)
+        updateVariableSolverData!(
+            dfg,
+            var.label,
+            getSolverData(var, solveKey),
+            useCopy,
+            fields;
+            warn_if_absent = warn_if_absent,
+        )
     end
 end
 
@@ -721,29 +824,24 @@ function cloneSolveKey!(
     dest::Symbol,
     src_dfg::AbstractDFG,
     src::Symbol;
-    solvable::Int=0,
-    labels=intersect(ls(dest_dfg, solvable=solvable), ls(src_dfg, solvable=solvable)),
-    verbose::Bool=false  
+    solvable::Int = 0,
+    labels = intersect(ls(dest_dfg; solvable = solvable), ls(src_dfg; solvable = solvable)),
+    verbose::Bool = false,
 )
     #
     for x in labels
         sd = deepcopy(getSolverData(getVariable(src_dfg, x), src))
         sd.solveKey = dest
-        updateVariableSolverData!(dest_dfg, x, sd, true, Symbol[]; warn_if_absent=verbose )
+        updateVariableSolverData!(dest_dfg, x, sd, true, Symbol[]; warn_if_absent = verbose)
     end
-    
-    nothing
+
+    return nothing
 end
 
-function cloneSolveKey!( 
-    dfg::AbstractDFG,
-    dest::Symbol,
-    src::Symbol;
-    kw...
-)
+function cloneSolveKey!(dfg::AbstractDFG, dest::Symbol, src::Symbol; kw...)
     #
     @assert dest != src "Must copy to a different solveKey within the same graph, $dest."
-    cloneSolveKey!(dfg, dest, dfg, src; kw...)
+    return cloneSolveKey!(dfg, dest, dfg, src; kw...)
 end
 
 #
@@ -752,7 +850,11 @@ end
     $(SIGNATURES)
 Delete variable solver data, returns the deleted element.
 """
-function deleteVariableSolverData!(dfg::AbstractDFG, variablekey::Symbol, solveKey::Symbol=:default)
+function deleteVariableSolverData!(
+    dfg::AbstractDFG,
+    variablekey::Symbol,
+    solveKey::Symbol = :default,
+)
     var = getVariable(dfg, variablekey)
 
     if !haskey(var.solverDataDict, solveKey)
@@ -766,8 +868,11 @@ end
     $(SIGNATURES)
 Delete variable solver data, returns the deleted element.
 """
-deleteVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable, solveKey::Symbol=:default) =
-    deleteVariableSolverData!(dfg, sourceVariable.label, solveKey)
+deleteVariableSolverData!(
+    dfg::AbstractDFG,
+    sourceVariable::DFGVariable,
+    solveKey::Symbol = :default,
+) = deleteVariableSolverData!(dfg, sourceVariable.label, solveKey)
 
 ##------------------------------------------------------------------------------
 ## SET: list, merge
@@ -794,8 +899,8 @@ function mergeVariableSolverData!(destVariable::DFGVariable, sourceVariable::DFG
     return destVariable
 end
 
-mergeVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable) =     mergeVariableSolverData!(getVariable(dfg,getLabel(sourceVariable)), sourceVariable)
-
+mergeVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable) =
+    mergeVariableSolverData!(getVariable(dfg, getLabel(sourceVariable)), sourceVariable)
 
 ##==============================================================================
 ## Point Parametric Estimates
@@ -815,19 +920,26 @@ Notes
 Related
 [`getMeanPPE`](@ref), [`getMaxPPE`](@ref), [`updatePPE!`](@ref), getKDEMean, getKDEFit, getPPEs, getVariablePPEs
 """
-function getPPE(v::DFGVariable, ppekey::Symbol=:default)
-    !haskey(v.ppeDict, ppekey) && throw(KeyError("PPE key '$ppekey' not found in variable '$(getLabel(v))'"))
+function getPPE(v::DFGVariable, ppekey::Symbol = :default)
+    !haskey(v.ppeDict, ppekey) &&
+        throw(KeyError("PPE key '$ppekey' not found in variable '$(getLabel(v))'"))
     return v.ppeDict[ppekey]
 end
-getPPE(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol=:default) = getPPE(getVariable(dfg, variablekey), ppekey)
+getPPE(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol = :default) =
+    getPPE(getVariable(dfg, variablekey), ppekey)
 # Not the most efficient call but it at least reuses above (in memory it's probably ok)
-getPPE(dfg::AbstractDFG, sourceVariable::VariableDataLevel1, ppekey::Symbol=:default) = getPPE(dfg, sourceVariable.label, ppekey)
+getPPE(dfg::AbstractDFG, sourceVariable::VariableDataLevel1, ppekey::Symbol = :default) =
+    getPPE(dfg, sourceVariable.label, ppekey)
 
 """
     $(SIGNATURES)
 Add variable PPE, errors if it already exists.
 """
-function addPPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::P) where {P <: AbstractPointParametricEst}
+function addPPE!(
+    dfg::AbstractDFG,
+    variablekey::Symbol,
+    ppe::P,
+) where {P <: AbstractPointParametricEst}
     var = getVariable(dfg, variablekey)
     if haskey(var.ppeDict, ppe.solveKey)
         error("PPE '$(ppe.solveKey)' already exists")
@@ -841,9 +953,8 @@ end
 Add a new PPE entry from a deepcopy of the source variable PPE.
 NOTE: Copies the PPE.
 """
-addPPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol=:default) =
+addPPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol = :default) =
     addPPE!(dfg, sourceVariable.label, deepcopy(getPPE(sourceVariable, ppekey)))
-
 
 """
     $(SIGNATURES)
@@ -852,7 +963,12 @@ Update PPE data if it exists, otherwise add it -- one call per `key::Symbol=:def
 Notes
 - uses `ppe.solveKey` as solveKey.
 """
-function updatePPE!(dfg::AbstractDFG, variablekey::Symbol, ppe::AbstractPointParametricEst; warn_if_absent::Bool=true)
+function updatePPE!(
+    dfg::AbstractDFG,
+    variablekey::Symbol,
+    ppe::AbstractPointParametricEst;
+    warn_if_absent::Bool = true,
+)
     var = getVariable(dfg, variablekey)
     if warn_if_absent && !haskey(var.ppeDict, ppe.solveKey)
         @warn "PPE '$(ppe.solveKey)' does not exist, adding"
@@ -867,17 +983,36 @@ end
 Update PPE data if it exists, otherwise add it.
 NOTE: Copies the PPE data.
 """
-updatePPE!(dfg::AbstractDFG, sourceVariable::VariableDataLevel1, ppekey::Symbol=:default; warn_if_absent::Bool=true) =
-    updatePPE!(dfg, sourceVariable.label, deepcopy(getPPE(sourceVariable, ppekey)); warn_if_absent=warn_if_absent)
+updatePPE!(
+    dfg::AbstractDFG,
+    sourceVariable::VariableDataLevel1,
+    ppekey::Symbol = :default;
+    warn_if_absent::Bool = true,
+) = updatePPE!(
+    dfg,
+    sourceVariable.label,
+    deepcopy(getPPE(sourceVariable, ppekey));
+    warn_if_absent = warn_if_absent,
+)
 
 """
     $(SIGNATURES)
 Update PPE data if it exists, otherwise add it.
 """
-function updatePPE!(dfg::AbstractDFG, sourceVariables::Vector{<:VariableDataLevel1}, ppekey::Symbol=:default; warn_if_absent::Bool=true)
+function updatePPE!(
+    dfg::AbstractDFG,
+    sourceVariables::Vector{<:VariableDataLevel1},
+    ppekey::Symbol = :default;
+    warn_if_absent::Bool = true,
+)
     #I think cloud would do this in bulk for speed
     for var in sourceVariables
-        updatePPE!(dfg, var.label, getPPE(dfg, var, ppekey); warn_if_absent=warn_if_absent)
+        updatePPE!(
+            dfg,
+            var.label,
+            getPPE(dfg, var, ppekey);
+            warn_if_absent = warn_if_absent,
+        )
     end
 end
 
@@ -885,7 +1020,7 @@ end
     $(SIGNATURES)
 Delete PPE data, returns the deleted element.
 """
-function deletePPE!(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol=:default)
+function deletePPE!(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol = :default)
     var = getVariable(dfg, variablekey)
 
     if !haskey(var.ppeDict, ppekey)
@@ -899,7 +1034,7 @@ end
     $(SIGNATURES)
 Delete PPE data, returns the deleted element.
 """
-deletePPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol=:default) =
+deletePPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol = :default) =
     deletePPE!(dfg, sourceVariable.label, ppekey)
 
 ##------------------------------------------------------------------------------

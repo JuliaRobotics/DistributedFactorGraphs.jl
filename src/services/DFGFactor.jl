@@ -47,8 +47,8 @@ using RoME
 @assert RoME.PriorPose2 == DFG._getPriorType(Pose2)
 ```
 """
-_getPriorType(_type::Type{<:InferenceVariable}) = getfield(_type.name.module, Symbol(:Prior, _type.name.name))
-
+_getPriorType(_type::Type{<:InferenceVariable}) =
+    getfield(_type.name.module, Symbol(:Prior, _type.name.name))
 
 ##==============================================================================
 ## Factors
@@ -81,13 +81,28 @@ _getPriorType(_type::Type{<:InferenceVariable}) = getfield(_type.name.module, Sy
 ## COMMON
 # getTimestamp
 
-setTimestamp(f::AbstractDFGFactor, ts::DateTime, timezone=localzone()) = setTimestamp(f, ZonedDateTime(ts,  timezone))
-setTimestamp(f::DFGFactor, ts::ZonedDateTime) = DFGFactor(f.label, ts, f.nstime, f.tags, f.solverData, f.solvable, getfield(f,:_variableOrderSymbols); id=f.id)
-setTimestamp(f::DFGFactorSummary, ts::ZonedDateTime) = DFGFactorSummary(f.id, f.label, f.tags, f._variableOrderSymbols, ts)
-setTimestamp(f::DFGFactorSummary, ts::DateTime) = DFGFactorSummary(f, ZonedDateTime(ts, localzone()))
+setTimestamp(f::AbstractDFGFactor, ts::DateTime, timezone = localzone()) =
+    setTimestamp(f, ZonedDateTime(ts, timezone))
+setTimestamp(f::DFGFactor, ts::ZonedDateTime) = DFGFactor(
+    f.label,
+    ts,
+    f.nstime,
+    f.tags,
+    f.solverData,
+    f.solvable,
+    getfield(f, :_variableOrderSymbols);
+    id = f.id,
+)
+setTimestamp(f::DFGFactorSummary, ts::ZonedDateTime) =
+    DFGFactorSummary(f.id, f.label, f.tags, f._variableOrderSymbols, ts)
+setTimestamp(f::DFGFactorSummary, ts::DateTime) =
+    DFGFactorSummary(f, ZonedDateTime(ts, localzone()))
 
 function setTimestamp(v::PackedFactor, timestamp::ZonedDateTime)
-  return PackedFactor(;(key => getproperty(v, key) for key in fieldnames(PackedFactor))..., timestamp)
+    return PackedFactor(;
+        (key => getproperty(v, key) for key in fieldnames(PackedFactor))...,
+        timestamp,
+    )
 end
 
 ##------------------------------------------------------------------------------
@@ -104,7 +119,6 @@ end
 ##------------------------------------------------------------------------------
 
 ## COMMON
-
 
 ##------------------------------------------------------------------------------
 ## _variableOrderSymbols
@@ -130,17 +144,15 @@ getVariableOrder(dfg::AbstractDFG, fct::Symbol) = getVariableOrder(getFactor(dfg
 
 Retrieve solver data structure stored in a factor.
 """
-function getSolverData(f::F) where F <: DFGFactor
-  return f.solverData
+function getSolverData(f::F) where {F <: DFGFactor}
+    return f.solverData
 end
 
 setSolverData!(f::DFGFactor, data::GenericFunctionNodeData) = f.solverData = data
 
-
 ##------------------------------------------------------------------------------
 ## utility
 ##------------------------------------------------------------------------------
-
 
 """
     $SIGNATURES
@@ -148,16 +160,16 @@ setSolverData!(f::DFGFactor, data::GenericFunctionNodeData) = f.solverData = dat
 Return `::Bool` on whether given factor `fc::Symbol` is a prior in factor graph `dfg`.
 """
 function isPrior(dfg::AbstractDFG, fc::Symbol)
-  fco = getFactor(dfg, fc)
-  isPrior(getFactorType(fco))
+    fco = getFactor(dfg, fc)
+    return isPrior(getFactorType(fco))
 end
 
 function isPrior(::AbstractPrior)
-  return true
+    return true
 end
 
 function isPrior(::AbstractRelative)
-  return false
+    return false
 end
 
 ##==============================================================================
