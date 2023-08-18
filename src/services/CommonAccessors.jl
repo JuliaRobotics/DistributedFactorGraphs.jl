@@ -160,7 +160,7 @@ function getSolveInProgress(
     solveKey::Symbol = :default,
 )::Int
     # Variable
-    if var isa DFGVariable 
+    if var isa DFGVariable
         if haskey(getSolverDataDict(var), solveKey)
             return getSolverDataDict(var)[solveKey].solveInProgress
         else
