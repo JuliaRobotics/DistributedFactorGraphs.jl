@@ -47,8 +47,9 @@ using RoME
 @assert RoME.PriorPose2 == DFG._getPriorType(Pose2)
 ```
 """
-_getPriorType(_type::Type{<:InferenceVariable}) =
-    getfield(_type.name.module, Symbol(:Prior, _type.name.name))
+function _getPriorType(_type::Type{<:InferenceVariable})
+    return getfield(_type.name.module, Symbol(:Prior, _type.name.name))
+end
 
 ##==============================================================================
 ## Factors
@@ -81,22 +82,27 @@ _getPriorType(_type::Type{<:InferenceVariable}) =
 ## COMMON
 # getTimestamp
 
-setTimestamp(f::AbstractDFGFactor, ts::DateTime, timezone = localzone()) =
-    setTimestamp(f, ZonedDateTime(ts, timezone))
-setTimestamp(f::DFGFactor, ts::ZonedDateTime) = DFGFactor(
-    f.label,
-    ts,
-    f.nstime,
-    f.tags,
-    f.solverData,
-    f.solvable,
-    getfield(f, :_variableOrderSymbols);
-    id = f.id,
-)
-setTimestamp(f::DFGFactorSummary, ts::ZonedDateTime) =
-    DFGFactorSummary(f.id, f.label, f.tags, f._variableOrderSymbols, ts)
-setTimestamp(f::DFGFactorSummary, ts::DateTime) =
-    DFGFactorSummary(f, ZonedDateTime(ts, localzone()))
+function setTimestamp(f::AbstractDFGFactor, ts::DateTime, timezone = localzone())
+    return setTimestamp(f, ZonedDateTime(ts, timezone))
+end
+function setTimestamp(f::DFGFactor, ts::ZonedDateTime)
+    return DFGFactor(
+        f.label,
+        ts,
+        f.nstime,
+        f.tags,
+        f.solverData,
+        f.solvable,
+        getfield(f, :_variableOrderSymbols);
+        id = f.id,
+    )
+end
+function setTimestamp(f::DFGFactorSummary, ts::ZonedDateTime)
+    return DFGFactorSummary(f.id, f.label, f.tags, f._variableOrderSymbols, ts)
+end
+function setTimestamp(f::DFGFactorSummary, ts::DateTime)
+    return DFGFactorSummary(f, ZonedDateTime(ts, localzone()))
+end
 
 function setTimestamp(v::PackedFactor, timestamp::ZonedDateTime)
     return PackedFactor(;

@@ -62,8 +62,9 @@ end
 
 const PackedFunctionNodeData{T} =
     GenericFunctionNodeData{T} where {T <: AbstractPackedFactor}
-PackedFunctionNodeData(args...; kw...) =
-    PackedFunctionNodeData{typeof(args[4])}(args...; kw...)
+function PackedFunctionNodeData(args...; kw...)
+    return PackedFunctionNodeData{typeof(args[4])}(args...; kw...)
+end
 
 const FunctionNodeData{T} = GenericFunctionNodeData{
     T,
@@ -178,7 +179,7 @@ $(SIGNATURES)
 
 Construct a DFG factor given a label.
 """
-DFGFactor(
+function DFGFactor(
     label::Symbol,
     timestamp::Union{DateTime, ZonedDateTime},
     nstime::Nanosecond,
@@ -188,38 +189,42 @@ DFGFactor(
     _variableOrderSymbols::Tuple;
     id::Union{UUID, Nothing} = nothing,
     smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
-) where {T} = DFGFactor{T}(
-    label,
-    timestamp,
-    nstime,
-    tags,
-    solverData,
-    solvable,
-    _variableOrderSymbols;
-    id = id,
-    smallData = smallData,
-)
+) where {T}
+    return DFGFactor{T}(
+        label,
+        timestamp,
+        nstime,
+        tags,
+        solverData,
+        solvable,
+        _variableOrderSymbols;
+        id = id,
+        smallData = smallData,
+    )
+end
 
-DFGFactor{T}(
+function DFGFactor{T}(
     label::Symbol,
     variableOrderSymbols::Vector{Symbol},
     timestamp::Union{DateTime, ZonedDateTime} = now(localzone()),
     data::GenericFunctionNodeData{T} = GenericFunctionNodeData(; fnc = T());
     kw...,
-) where {T} = DFGFactor(
-    label,
-    timestamp,
-    Nanosecond(0),
-    Set{Symbol}(),
-    data,
-    1,
-    Tuple(variableOrderSymbols);
-    kw...,
-)
+) where {T}
+    return DFGFactor(
+        label,
+        timestamp,
+        Nanosecond(0),
+        Set{Symbol}(),
+        data,
+        1,
+        Tuple(variableOrderSymbols);
+        kw...,
+    )
+end
 #
 
 # TODO standardize new fields in kw constructors, .id
-DFGFactor(
+function DFGFactor(
     label::Symbol,
     variableOrderSymbols::Vector{Symbol},
     data::GenericFunctionNodeData{T};
@@ -229,17 +234,19 @@ DFGFactor(
     nstime::Nanosecond = Nanosecond(0),
     id::Union{UUID, Nothing} = nothing,
     smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
-) where {T} = DFGFactor{T}(
-    label,
-    timestamp,
-    nstime,
-    tags,
-    data,
-    solvable,
-    Tuple(variableOrderSymbols);
-    id,
-    smallData,
-)
+) where {T}
+    return DFGFactor{T}(
+        label,
+        timestamp,
+        nstime,
+        tags,
+        data,
+        solvable,
+        Tuple(variableOrderSymbols);
+        id,
+        smallData,
+    )
+end
 
 Base.getproperty(x::DFGFactor, f::Symbol) = begin
     if f == :solvable || f == :solverData
@@ -251,7 +258,7 @@ Base.getproperty(x::DFGFactor, f::Symbol) = begin
     end
 end
 
-Base.setproperty!(x::DFGFactor, f::Symbol, val) = begin
+function Base.setproperty!(x::DFGFactor, f::Symbol, val)
     if f == :solvable || f == :solverData
         getfield(x, f)[] = val
     else
@@ -317,17 +324,21 @@ end
 ## Constructors
 
 #NOTE I feel like a want to force a variableOrderSymbols
-SkeletonDFGFactor(
+function SkeletonDFGFactor(
     id::Union{UUID, Nothing},
     label::Symbol,
     variableOrderSymbols::Vector{Symbol} = Symbol[],
-) = SkeletonDFGFactor(id, label, Set{Symbol}(), variableOrderSymbols)
-SkeletonDFGFactor(
+)
+    return SkeletonDFGFactor(id, label, Set{Symbol}(), variableOrderSymbols)
+end
+function SkeletonDFGFactor(
     label::Symbol,
     variableOrderSymbols::Vector{Symbol} = Symbol[];
     id::Union{UUID, Nothing} = nothing,
     tags = Set{Symbol}(),
-) = SkeletonDFGFactor(id, label, tags, variableOrderSymbols)
+)
+    return SkeletonDFGFactor(id, label, tags, variableOrderSymbols)
+end
 
 StructTypes.StructType(::Type{SkeletonDFGFactor}) = StructTypes.OrderedStruct()
 StructTypes.idproperty(::Type{SkeletonDFGFactor}) = :id
@@ -344,13 +355,21 @@ const FactorDataLevel2 = Union{DFGFactor}
 ## Conversion constructors
 ##==============================================================================
 
-DFGFactorSummary(f::DFGFactor) = DFGFactorSummary(
-    f.id,
-    f.label,
-    deepcopy(f.tags),
-    deepcopy(f._variableOrderSymbols),
-    f.timestamp,
-)
+function DFGFactorSummary(f::DFGFactor)
+    return DFGFactorSummary(
+        f.id,
+        f.label,
+        deepcopy(f.tags),
+        deepcopy(f._variableOrderSymbols),
+        f.timestamp,
+    )
+end
 
-SkeletonDFGFactor(f::FactorDataLevel1) =
-    SkeletonDFGFactor(f.id, f.label, deepcopy(f.tags), deepcopy(f._variableOrderSymbols))
+function SkeletonDFGFactor(f::FactorDataLevel1)
+    return SkeletonDFGFactor(
+        f.id,
+        f.label,
+        deepcopy(f.tags),
+        deepcopy(f._variableOrderSymbols),
+    )
+end

@@ -48,7 +48,8 @@ Base.length(b::BiDictMap) = length(b.int_sym)
 #NOTE to future self: This will work only with GraphsGraphs that always follows a 1:nv(g) index
 Base.firstindex(v::BiDictMap) = 1
 Base.lastindex(v::BiDictMap) = length(v.int_sym)
-Base.iterate(v::BiDictMap, i = 1) =
-    (length(v.int_sym) < i ? nothing : (v.int_sym[i], i + 1))
+function Base.iterate(v::BiDictMap, i = 1)
+    return (length(v.int_sym) < i ? nothing : (v.int_sym[i], i + 1))
+end
 Base.keys(v::BiDictMap) = Base.OneTo(length(v.int_sym))
 Base.isempty(v::BiDictMap) = (length(v.int_sym) == 0)

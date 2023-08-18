@@ -21,13 +21,15 @@ struct DFGPlotProps
     drawlabels::Bool
 end
 
-DFGPlotProps() = DFGPlotProps(
-    (var = colorant"seagreen", fac = colorant"cyan3"),
-    (var = 1.0, fac = 0.3),
-    (var = :box, fac = :elipse),
-    spring_layout,
-    true,
-)
+function DFGPlotProps()
+    return DFGPlotProps(
+        (var = colorant"seagreen", fac = colorant"cyan3"),
+        (var = 1.0, fac = 0.3),
+        (var = :box, fac = :elipse),
+        spring_layout,
+        true,
+    )
+end
 
 """
     $(SIGNATURES)

@@ -41,7 +41,7 @@ $(METHODLIST)
 function deleteData! end
 
 # construction helper from existing BlobEntry for user overriding via kwargs
-BlobEntry(
+function BlobEntry(
     entry::BlobEntry;
     id::Union{UUID, Nothing} = entry.id,
     blobId::Union{UUID, Nothing} = entry.blobId,
@@ -59,24 +59,26 @@ BlobEntry(
     lastUpdatedTimestamp = entry.lastUpdatedTimestamp,
     _type::String = entry._type,
     _version::String = entry._version,
-) = BlobEntry(;
-    id,
-    blobId,
-    originId,
-    label,
-    blobstore,
-    hash,
-    origin,
-    size,
-    description,
-    mimeType,
-    metadata,
-    timestamp,
-    createdTimestamp,
-    lastUpdatedTimestamp,
-    _type,
-    _version,
 )
+    return BlobEntry(;
+        id,
+        blobId,
+        originId,
+        label,
+        blobstore,
+        hash,
+        origin,
+        size,
+        description,
+        mimeType,
+        metadata,
+        timestamp,
+        createdTimestamp,
+        lastUpdatedTimestamp,
+        _type,
+        _version,
+    )
+end
 
 function getData(
     dfg::AbstractDFG,
@@ -147,7 +149,7 @@ function addData!(
     return addBlobEntry!(dfg, label, newEntry)
 end
 
-addData!(
+function addData!(
     dfg::AbstractDFG,
     blobstorekey::Symbol,
     vLbl::Symbol,
@@ -155,7 +157,17 @@ addData!(
     blob::Vector{UInt8},
     timestamp = now(localzone());
     kwargs...,
-) = addData!(dfg, getBlobStore(dfg, blobstorekey), vLbl, bLbl, blob, timestamp; kwargs...)
+)
+    return addData!(
+        dfg,
+        getBlobStore(dfg, blobstorekey),
+        vLbl,
+        bLbl,
+        blob,
+        timestamp;
+        kwargs...,
+    )
+end
 
 #FIXME id used wrong
 function addData!(

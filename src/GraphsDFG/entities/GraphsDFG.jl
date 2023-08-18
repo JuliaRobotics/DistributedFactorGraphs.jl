@@ -91,7 +91,7 @@ function GraphsDFG(
     return GraphsDFG{T, DFGVariable, DFGFactor}(g; solverParams, kwargs...)
 end
 
-GraphsDFG(
+function GraphsDFG(
     description::String,
     userLabel::String,
     robotLabel::String,
@@ -101,18 +101,20 @@ GraphsDFG(
     sessionData::Dict{Symbol, SmallDataTypes},
     solverParams::AbstractParams,
     blobStores = Dict{Symbol, AbstractBlobStore}(),
-) = GraphsDFG{typeof(solverParams), DFGVariable, DFGFactor}(
-    FactorGraph{Int, DFGVariable, DFGFactor}();
-    description,
-    userLabel,
-    robotLabel,
-    sessionLabel,
-    userData,
-    robotData,
-    sessionData,
-    solverParams,
-    blobStores,
 )
+    return GraphsDFG{typeof(solverParams), DFGVariable, DFGFactor}(
+        FactorGraph{Int, DFGVariable, DFGFactor}();
+        description,
+        userLabel,
+        robotLabel,
+        sessionLabel,
+        userData,
+        robotData,
+        sessionData,
+        solverParams,
+        blobStores,
+    )
+end
 
 function GraphsDFG{T, V, F}(
     description::String,

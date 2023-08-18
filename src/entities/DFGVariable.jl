@@ -84,10 +84,12 @@ end
 
 ##------------------------------------------------------------------------------
 ## Constructors
-VariableNodeData{T}(; kwargs...) where {T <: InferenceVariable} =
-    VariableNodeData{T, getPointType(T), getDimension(T)}(; kwargs...)
-VariableNodeData(variableType::InferenceVariable; kwargs...) =
-    VariableNodeData{typeof(variableType)}(; kwargs...)
+function VariableNodeData{T}(; kwargs...) where {T <: InferenceVariable}
+    return VariableNodeData{T, getPointType(T), getDimension(T)}(; kwargs...)
+end
+function VariableNodeData(variableType::InferenceVariable; kwargs...)
+    return VariableNodeData{typeof(variableType)}(; kwargs...)
+end
 
 ##==============================================================================
 ## PackedVariableNodeData.jl
@@ -162,28 +164,31 @@ end
 
 StructTypes.StructType(::Type{MeanMaxPPE}) = StructTypes.UnorderedStruct()
 StructTypes.idproperty(::Type{MeanMaxPPE}) = :id
-StructTypes.omitempties(::Type{MeanMaxPPE}) =
-    (:id, :createdTimestamp, :lastUpdatedTimestamp)
+function StructTypes.omitempties(::Type{MeanMaxPPE})
+    return (:id, :createdTimestamp, :lastUpdatedTimestamp)
+end
 
 ##------------------------------------------------------------------------------
 ## Constructors
 
-MeanMaxPPE(
+function MeanMaxPPE(
     solveKey::Symbol,
     suggested::Vector{Float64},
     max::Vector{Float64},
     mean::Vector{Float64},
-) = MeanMaxPPE(
-    nothing,
-    solveKey,
-    suggested,
-    max,
-    mean,
-    "MeanMaxPPE",
-    string(_getDFGVersion()),
-    now(tz"UTC"),
-    now(tz"UTC"),
 )
+    return MeanMaxPPE(
+        nothing,
+        solveKey,
+        suggested,
+        max,
+        mean,
+        "MeanMaxPPE",
+        string(_getDFGVersion()),
+        now(tz"UTC"),
+        now(tz"UTC"),
+    )
+end
 
 ## Metadata
 """
@@ -327,11 +332,13 @@ function DFGVariable(
     return DFGVariable{T, P, N}(; label, timestamp, solvable, kwargs...)
 end
 
-DFGVariable(label::Symbol, variableType::InferenceVariable; kwargs...) =
-    DFGVariable(label, typeof(variableType); kwargs...)
+function DFGVariable(label::Symbol, variableType::InferenceVariable; kwargs...)
+    return DFGVariable(label, typeof(variableType); kwargs...)
+end
 
-DFGVariable(label::Symbol, solverData::VariableNodeData; kwargs...) =
-    DFGVariable(; label, solverDataDict = Dict(:default => solverData), kwargs...)
+function DFGVariable(label::Symbol, solverData::VariableNodeData; kwargs...)
+    return DFGVariable(; label, solverDataDict = Dict(:default => solverData), kwargs...)
+end
 
 Base.getproperty(x::DFGVariable, f::Symbol) = begin
     if f == :solvable
@@ -429,11 +436,13 @@ Base.@kwdef struct SkeletonDFGVariable <: AbstractDFGVariable
     tags::Set{Symbol} = Set{Symbol}()
 end
 
-SkeletonDFGVariable(
+function SkeletonDFGVariable(
     label::Symbol,
     tags = Set{Symbol}();
     id::Union{UUID, Nothing} = nothing,
-) = SkeletonDFGVariable(id, label, tags)
+)
+    return SkeletonDFGVariable(id, label, tags)
+end
 
 StructTypes.StructType(::Type{SkeletonDFGVariable}) = StructTypes.UnorderedStruct()
 StructTypes.idproperty(::Type{SkeletonDFGVariable}) = :id
@@ -451,15 +460,18 @@ const VariableDataLevel2 = Union{DFGVariable}
 ## Convertion constructors
 ##==============================================================================
 
-DFGVariableSummary(v::DFGVariable) = DFGVariableSummary(
-    v.id,
-    v.label,
-    v.timestamp,
-    deepcopy(v.tags),
-    deepcopy(v.ppeDict),
-    Symbol(typeof(getVariableType(v))),
-    v.dataDict,
-)
+function DFGVariableSummary(v::DFGVariable)
+    return DFGVariableSummary(
+        v.id,
+        v.label,
+        v.timestamp,
+        deepcopy(v.tags),
+        deepcopy(v.ppeDict),
+        Symbol(typeof(getVariableType(v))),
+        v.dataDict,
+    )
+end
 
-SkeletonDFGVariable(v::VariableDataLevel1) =
-    SkeletonDFGVariable(v.id, v.label, deepcopy(v.tags))
+function SkeletonDFGVariable(v::VariableDataLevel1)
+    return SkeletonDFGVariable(v.id, v.label, deepcopy(v.tags))
+end

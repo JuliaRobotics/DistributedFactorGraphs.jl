@@ -108,8 +108,9 @@ function getBlob(store::AbstractBlobStore, entry::BlobEntry)
 end
 
 #add 
-addBlob!(dfg::AbstractDFG, entry::BlobEntry, data) =
-    addBlob!(getBlobStore(dfg, entry.blobstore), entry, data)
+function addBlob!(dfg::AbstractDFG, entry::BlobEntry, data)
+    return addBlob!(getBlobStore(dfg, entry.blobstore), entry, data)
+end
 
 function addBlob!(store::AbstractBlobStore, entry::BlobEntry, data)
     blobId = isnothing(entry.blobId) ? entry.originId : entry.blobId
@@ -120,22 +121,25 @@ end
 addBlob!(store::AbstractBlobStore, data) = addBlob!(store, uuid4(), data)
 
 #fallback as not all blobStores use filename
-addBlob!(store::AbstractBlobStore, blobId::UUID, data, ::String) =
-    addBlob!(store, blobId, data)
+function addBlob!(store::AbstractBlobStore, blobId::UUID, data, ::String)
+    return addBlob!(store, blobId, data)
+end
 
 addBlob!(store::AbstractBlobStore, data, ::String) = addBlob!(store, uuid4(), data)
 
 #update
-updateBlob!(dfg::AbstractDFG, entry::BlobEntry, data::T) where {T} =
-    updateBlob!(getBlobStore(dfg, entry.blobstore), entry, data)
+function updateBlob!(dfg::AbstractDFG, entry::BlobEntry, data::T) where {T}
+    return updateBlob!(getBlobStore(dfg, entry.blobstore), entry, data)
+end
 
 function updateBlob!(store::AbstractBlobStore, entry::BlobEntry, data)
     blobId = isnothing(entry.blobId) ? entry.originId : entry.blobId
     return updateBlob!(store, blobId, data)
 end
 #delete
-deleteBlob!(dfg::AbstractDFG, entry::BlobEntry) =
-    deleteBlob!(getBlobStore(dfg, entry.blobstore), entry)
+function deleteBlob!(dfg::AbstractDFG, entry::BlobEntry)
+    return deleteBlob!(getBlobStore(dfg, entry.blobstore), entry)
+end
 
 function deleteBlob!(store::AbstractBlobStore, entry::BlobEntry)
     blobId = isnothing(entry.blobId) ? entry.originId : entry.blobId
@@ -143,8 +147,9 @@ function deleteBlob!(store::AbstractBlobStore, entry::BlobEntry)
 end
 
 #has
-hasBlob(dfg::AbstractDFG, entry::BlobEntry) =
-    hasBlob(getBlobStore(dfg, entry.blobstore), entry.originId)
+function hasBlob(dfg::AbstractDFG, entry::BlobEntry)
+    return hasBlob(getBlobStore(dfg, entry.blobstore), entry.originId)
+end
 
 #TODO
 # """
@@ -182,8 +187,9 @@ struct FolderStore{T} <: AbstractBlobStore{T}
     end
 end
 
-FolderStore(foldername::String) =
-    FolderStore{Vector{UInt8}}(:default_folder_store, foldername)
+function FolderStore(foldername::String)
+    return FolderStore{Vector{UInt8}}(:default_folder_store, foldername)
+end
 
 blobfilename(store::FolderStore, blobId::UUID) = joinpath(store.folder, "$blobId.dat")
 
@@ -248,10 +254,12 @@ struct InMemoryBlobStore{T} <: AbstractBlobStore{T}
     blobs::Dict{UUID, T}
 end
 
-InMemoryBlobStore{T}(storeKey::Symbol) where {T} =
-    InMemoryBlobStore{Vector{UInt8}}(storeKey, Dict{UUID, T}())
-InMemoryBlobStore(storeKey::Symbol = :default_inmemory_store) =
-    InMemoryBlobStore{Vector{UInt8}}(storeKey)
+function InMemoryBlobStore{T}(storeKey::Symbol) where {T}
+    return InMemoryBlobStore{Vector{UInt8}}(storeKey, Dict{UUID, T}())
+end
+function InMemoryBlobStore(storeKey::Symbol = :default_inmemory_store)
+    return InMemoryBlobStore{Vector{UInt8}}(storeKey)
+end
 
 function getBlob(store::InMemoryBlobStore, blobId::UUID)
     return store.blobs[blobId]

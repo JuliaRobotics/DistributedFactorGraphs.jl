@@ -332,13 +332,19 @@ function fncStringToData(packtype::Type{<:AbstractPackedFactor}, data::String)
     )
     return packed
 end
-fncStringToData(packtype::Type{<:AbstractPackedFactor}, data::NamedTuple) =
-    error("Who is calling deserialize factor with NamedTuple, likely JSON3 somewhere")
 
-fncStringToData(
+function fncStringToData(packtype::Type{<:AbstractPackedFactor}, data::NamedTuple)
+    return error(
+        "Who is calling deserialize factor with NamedTuple, likely JSON3 somewhere",
+    )
+end
+
+function fncStringToData(
     ::Type{T},
     data::PackedFunctionNodeData{T},
-) where {T <: AbstractPackedFactor} = data
+) where {T <: AbstractPackedFactor}
+    return data
+end
 function fncStringToData(
     fncType::String,
     data::PackedFunctionNodeData{T},

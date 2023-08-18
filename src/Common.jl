@@ -3,8 +3,9 @@
 _getmodule(t::T) where {T} = T.name.module
 _getname(t::T) where {T} = T.name.name
 
-convertPackedType(t::Union{T, Type{T}}) where {T <: AbstractFactor} =
-    getfield(_getmodule(t), Symbol("Packed$(_getname(t))"))
+function convertPackedType(t::Union{T, Type{T}}) where {T <: AbstractFactor}
+    return getfield(_getmodule(t), Symbol("Packed$(_getname(t))"))
+end
 function convertStructType(::Type{PT}) where {PT <: AbstractPackedFactor}
     # see #668 for expanded reasoning.  PT may be ::UnionAll if the type is of template type.
     ptt = PT isa DataType ? PT.name.name : PT
@@ -22,8 +23,9 @@ end
 # split at digit to not digit change
 splitbynum(x::AbstractString) = split(x, r"(?<=\D)(?=\d)|(?<=\d)(?=\D)")
 #parse to Int
-numstringtonum(arr::Vector{<:AbstractString}) =
-    [(n = tryparse(Int, e)) != nothing ? n : e for e in arr]
+function numstringtonum(arr::Vector{<:AbstractString})
+    return [(n = tryparse(Int, e)) != nothing ? n : e for e in arr]
+end
 #natural less than
 function natural_lt(x::T, y::T) where {T <: AbstractString}
     xarr = numstringtonum(splitbynum(x))
@@ -62,8 +64,9 @@ Related
 
 ls, lsf
 """
-sortDFG(vars::Vector{<:DFGNode}; by = getTimestamp, kwargs...) =
-    sort(vars; by = by, kwargs...)
+function sortDFG(vars::Vector{<:DFGNode}; by = getTimestamp, kwargs...)
+    return sort(vars; by = by, kwargs...)
+end
 sortDFG(vars::Vector{Symbol}; lt = natural_lt, kwargs...) = sort(vars; lt = lt, kwargs...)
 
 ##==============================================================================
@@ -113,8 +116,9 @@ DevNotes
 - make prefix Regex based for longer -- i.e. `:apriltag578`, `:lm1_4`
 
 """
-getVariableLabelNumber(vs::Symbol, prefix = string(vs)[1]) =
-    parse(Int, string(vs)[(length(prefix) + 1):end])
+function getVariableLabelNumber(vs::Symbol, prefix = string(vs)[1])
+    return parse(Int, string(vs)[(length(prefix) + 1):end])
+end
 
 ## =================================
 ## Additional Downstream dispatches

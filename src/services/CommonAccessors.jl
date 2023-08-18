@@ -72,8 +72,9 @@ function setTimestamp!(dfg::AbstractDFG, lbl::Symbol, ts::ZonedDateTime)
     end
 end
 
-setTimestamp!(dfg::AbstractDFG, lbl::Symbol, ts::DateTime, timezone = localzone()) =
-    setTimestamp!(dfg, lbl, ZonedDateTime(ts, timezone))
+function setTimestamp!(dfg::AbstractDFG, lbl::Symbol, ts::DateTime, timezone = localzone())
+    return setTimestamp!(dfg, lbl, ZonedDateTime(ts, timezone))
+end
 
 ##------------------------------------------------------------------------------
 ## solvable
@@ -159,16 +160,22 @@ function getSolveInProgress(
     solveKey::Symbol = :default,
 )::Int
     # Variable
-    var isa DFGVariable && return haskey(getSolverDataDict(var), solveKey) ?
-           getSolverDataDict(var)[solveKey].solveInProgress : 0
+    if var isa DFGVariable 
+        if haskey(getSolverDataDict(var), solveKey)
+            return getSolverDataDict(var)[solveKey].solveInProgress
+        else
+            return 0
+        end
+    end
     # Factor
     return getSolverData(var).solveInProgress
 end
 
 #TODO missing set solveInProgress and graph level accessor
 
-isSolveInProgress(node::Union{DFGVariable, DFGFactor}, solvekey::Symbol = :default) =
-    getSolveInProgress(node, solvekey) > 0
+function isSolveInProgress(node::Union{DFGVariable, DFGFactor}, solvekey::Symbol = :default)
+    return getSolveInProgress(node, solvekey) > 0
+end
 
 ##==============================================================================
 ## Common Layer 2 CRUD and SET

@@ -171,8 +171,9 @@ end
 
 Display and return to console the user factor identified by tag name.
 """
-printFactor(dfg::AbstractDFG, sym::Symbol; kwargs...) =
-    printFactor(getFactor(dfg, sym); kwargs...)
+function printFactor(dfg::AbstractDFG, sym::Symbol; kwargs...)
+    return printFactor(getFactor(dfg, sym); kwargs...)
+end
 
 """
    $SIGNATURES
@@ -182,22 +183,29 @@ Display the content of `VariableNodeData` to console for a given factor graph an
 Dev Notes
 - TODO split as two show macros between AMP and DFG
 """
-printVariable(dfg::AbstractDFG, sym::Symbol; kwargs...) =
-    printVariable(getVariable(dfg, sym); kwargs...)
+function printVariable(dfg::AbstractDFG, sym::Symbol; kwargs...)
+    return printVariable(getVariable(dfg, sym); kwargs...)
+end
 
-printNode(dfg::AbstractDFG, sym::Symbol; kwargs...) =
-    isVariable(dfg, sym) ? printVariable(dfg, sym; kwargs...) :
-    printFactor(dfg, sym; kwargs...)
+function printNode(dfg::AbstractDFG, sym::Symbol; kwargs...)
+    if isVariable(dfg, sym)
+        return printVariable(dfg, sym; kwargs...)
+    else
+        return printFactor(dfg, sym; kwargs...)
+    end
+end
 
 ##==============================================================================
 ## Overloading show
 ##==============================================================================
 # Base.show_default(io, v)
-Base.show(io::IO, ::MIME"text/plain", v::DFGVariable) =
-    printVariable(io, v; short = true, limit = false)
+function Base.show(io::IO, ::MIME"text/plain", v::DFGVariable)
+    return printVariable(io, v; short = true, limit = false)
+end
 
-Base.show(io::IO, ::MIME"text/plain", f::DFGFactor) =
-    printFactor(io, f; short = true, limit = false)
+function Base.show(io::IO, ::MIME"text/plain", f::DFGFactor)
+    return printFactor(io, f; short = true, limit = false)
+end
 
 function Base.show(io::IO, dfg::AbstractDFG)
     summary(io, dfg)
@@ -215,8 +223,10 @@ end
 Base.show(io::IO, ::MIME"text/plain", dfg::AbstractDFG) = show(io, dfg)
 
 #default for Atom/Juno
-Base.show(
+function Base.show(
     io::IO,
     ::MIME"application/prs.juno.inline",
     x::Union{AbstractDFG, DFGVariable, DFGFactor},
-) = show(io, x)
+)
+    return show(io, x)
+end

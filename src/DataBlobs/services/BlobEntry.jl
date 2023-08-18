@@ -17,8 +17,9 @@ end
     $(SIGNATURES)
 Function to generate source string - userLabel|robotLabel|sessionLabel|varLabel
 """
-buildSourceString(dfg::AbstractDFG, label::Symbol) =
-    "$(getUserLabel(dfg))|$(getRobotLabel(dfg))|$(getSessionLabel(dfg))|$label"
+function buildSourceString(dfg::AbstractDFG, label::Symbol)
+    return "$(getUserLabel(dfg))|$(getRobotLabel(dfg))|$(getSessionLabel(dfg))|$label"
+end
 
 ##==============================================================================
 ## BlobEntry - Defined in src/entities/AbstractDFG.jl
@@ -128,11 +129,13 @@ end
 getBlobEntry(var::AbstractDFGVariable, key::AbstractString) = getBlobEntry(var, Regex(key))
 
 #TODO split betweeen getfirstBlobEntry and getBlobEntry
-getBlobEntry(
+function getBlobEntry(
     dfg::AbstractDFG,
     label::Symbol,
     key::Union{Symbol, UUID, <:AbstractString, Regex},
-) = getBlobEntry(getVariable(dfg, label), key)
+)
+    return getBlobEntry(getVariable(dfg, label), key)
+end
 # getBlobEntry(dfg::AbstractDFG, label::Symbol, key::Symbol) = getBlobEntry(getVariable(dfg, label), key)
 
 """
@@ -245,8 +248,13 @@ function getBlobEntries(dfg::AbstractDFG, label::Symbol, regex::Regex)
     end
 end
 
-getBlobEntries(dfg::AbstractDFG, label::Symbol, skey::Union{Symbol, <:AbstractString}) =
-    getBlobEntries(dfg, label, Regex(string(skey)))
+function getBlobEntries(
+    dfg::AbstractDFG,
+    label::Symbol,
+    skey::Union{Symbol, <:AbstractString},
+)
+    return getBlobEntries(dfg, label, Regex(string(skey)))
+end
 
 """
     $(SIGNATURES)

@@ -510,11 +510,16 @@ function findShortestPathDijkstra(
         # use copy if filter is being applied
         varList = ls(dfg, regexVariables; tags = tagsVariables, solvable = solvable)
         fctList = lsf(dfg, regexFactors; tags = tagsFactors, solvable = solvable)
-        varList =
-            typeVariables !== nothing ? _filterTypeList(varList, typeVariables) : varList
-        fctList =
-            typeFactors !== nothing ?
-            _filterTypeList(fctList, typeFactors, x -> lsf(dfg, x)) : fctList
+        varList = if typeVariables !== nothing
+            _filterTypeList(varList, typeVariables)
+        else
+            varList
+        end
+        fctList = if typeFactors !== nothing
+            _filterTypeList(fctList, typeFactors, x -> lsf(dfg, x))
+        else
+            fctList
+        end
         varList = if initialized !== nothing
             initmask = isInitialized.(dfg, varList) .== initialized
             varList[initmask]

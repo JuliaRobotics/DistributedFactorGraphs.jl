@@ -31,16 +31,18 @@ Base.Broadcast.broadcastable(dfg::AbstractDFG) = Ref(dfg)
     $(SIGNATURES)
 Convenience function to get all the metadata of a DFG
 """
-getDFGInfo(dfg::AbstractDFG) = (
-    getDescription(dfg),
-    getUserLabel(dfg),
-    getRobotLabel(dfg),
-    getSessionLabel(dfg),
-    getUserData(dfg),
-    getRobotData(dfg),
-    getSessionData(dfg),
-    getSolverParams(dfg),
-)
+function getDFGInfo(dfg::AbstractDFG)
+    return (
+        getDescription(dfg),
+        getUserLabel(dfg),
+        getRobotLabel(dfg),
+        getSessionLabel(dfg),
+        getUserData(dfg),
+        getRobotData(dfg),
+        getSessionData(dfg),
+        getSolverParams(dfg),
+    )
+end
 
 """
     $(SIGNATURES)
@@ -77,22 +79,27 @@ getSolverParams(dfg::AbstractDFG) = dfg.solverParams
 
 Method must be overloaded by the user for Serialization to work.  E.g. IncrementalInference uses `CommonConvWrapper <: FactorOperationalMemory`.
 """
-getFactorOperationalMemoryType(dummy) = error(
-    "Please extend your workspace with function getFactorOperationalMemoryType(<:AbstractParams) for your usecase, e.g. IncrementalInference uses `CommonConvWrapper <: FactorOperationalMemory`",
-)
-getFactorOperationalMemoryType(dfg::AbstractDFG) =
-    getFactorOperationalMemoryType(getSolverParams(dfg))
+function getFactorOperationalMemoryType(dummy)
+    return error(
+        "Please extend your workspace with function getFactorOperationalMemoryType(<:AbstractParams) for your usecase, e.g. IncrementalInference uses `CommonConvWrapper <: FactorOperationalMemory`",
+    )
+end
+function getFactorOperationalMemoryType(dfg::AbstractDFG)
+    return getFactorOperationalMemoryType(getSolverParams(dfg))
+end
 
 """
     $(SIGNATURES)
 
 Method must be overloaded by the user for Serialization to work.
 """
-rebuildFactorMetadata!(
+function rebuildFactorMetadata!(
     dfg::AbstractDFG{<:AbstractParams},
     factor::AbstractDFGFactor,
     neighbors = [],
-) = error("rebuildFactorMetadata! is not implemented for $(typeof(dfg))")
+)
+    return error("rebuildFactorMetadata! is not implemented for $(typeof(dfg))")
+end
 
 ##------------------------------------------------------------------------------
 ## Setters
@@ -108,8 +115,9 @@ setDescription!(dfg::AbstractDFG, description::String) = dfg.description = descr
 """
 #NOTE a MethodError will be thrown if solverParams type does not mach the one in dfg
 # TODO Is it ok or do we want any abstract solver paramters
-setSolverParams!(dfg::AbstractDFG, solverParams::AbstractParams) =
-    dfg.solverParams = solverParams
+function setSolverParams!(dfg::AbstractDFG, solverParams::AbstractParams)
+    return dfg.solverParams = solverParams
+end
 
 # Accessors and CRUD for user/robot/session Data
 """
@@ -174,8 +182,9 @@ getSessionData(dfg::AbstractDFG, key::Symbol) = dfg.sessionData[key]
 
 updateUserData!(dfg::AbstractDFG, pair::Pair{Symbol, String}) = push!(dfg.userData, pair)
 updateRobotData!(dfg::AbstractDFG, pair::Pair{Symbol, String}) = push!(dfg.robotData, pair)
-updateSessionData!(dfg::AbstractDFG, pair::Pair{Symbol, String}) =
-    push!(dfg.sessionData, pair)
+function updateSessionData!(dfg::AbstractDFG, pair::Pair{Symbol, String})
+    return push!(dfg.sessionData, pair)
+end
 
 deleteUserData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.userData, key)
 deleteRobotData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.robotData, key)
@@ -219,10 +228,12 @@ getKey(store::AbstractBlobStore) = store.key
 
 getBlobStores(dfg::AbstractDFG) = dfg.blobStores
 getBlobStore(dfg::AbstractDFG, key::Symbol) = dfg.blobStores[key]
-addBlobStore!(dfg::AbstractDFG, bs::AbstractBlobStore) =
-    push!(dfg.blobStores, getKey(bs) => bs)
-updateBlobStore!(dfg::AbstractDFG, bs::AbstractBlobStore) =
-    push!(dfg.blobStores, getKey(bs) => bs)
+function addBlobStore!(dfg::AbstractDFG, bs::AbstractBlobStore)
+    return push!(dfg.blobStores, getKey(bs) => bs)
+end
+function updateBlobStore!(dfg::AbstractDFG, bs::AbstractBlobStore)
+    return push!(dfg.blobStores, getKey(bs) => bs)
+end
 deleteBlobStore!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.blobStores, key)
 emptyBlobStore!(dfg::AbstractDFG) = empty!(dfg.blobStores)
 listBlobStores(dfg::AbstractDFG) = collect(keys(dfg.blobStores))
@@ -589,8 +600,11 @@ function listVariables(
 )
     #
     retlist::Vector{Symbol} = ls(dfg, typeFilter)
-    return 0 < length(tags) || solvable != 0 ?
-           intersect(retlist, ls(dfg; tags = tags, solvable = solvable)) : retlist
+    if 0 < length(tags) || solvable != 0
+        return intersect(retlist, ls(dfg; tags = tags, solvable = solvable))
+    else
+        return retlist
+    end
 end
 
 """
@@ -631,12 +645,14 @@ function listSolveKeys(
     return skeys
 end
 
-listSolveKeys(
+function listSolveKeys(
     dfg::AbstractDFG,
     lbl::Symbol,
     filterSolveKeys::Union{Regex, Nothing} = nothing,
     skeys = Set{Symbol}(),
-) = listSolveKeys(getVariable(dfg, lbl), filterSolveKeys, skeys)
+)
+    return listSolveKeys(getVariable(dfg, lbl), filterSolveKeys, skeys)
+end
 #
 
 function listSolveKeys(
@@ -1018,13 +1034,20 @@ function findVariableNearTimestamp(
     return RET
 end
 
-findVariableNearTimestamp(
+function findVariableNearTimestamp(
     dfg::AbstractDFG,
     timest::DateTime,
     regexFilter::Union{Nothing, Regex} = nothing;
     timezone = tz"UTC",
     kwargs...,
-) = findVariableNearTimestamp(dfg, ZonedDateTime(timest, timezone), regexFilter; kwargs...)
+)
+    return findVariableNearTimestamp(
+        dfg,
+        ZonedDateTime(timest, timezone),
+        regexFilter;
+        kwargs...,
+    )
+end
 
 ##==============================================================================
 ## Copy Functions
@@ -1197,8 +1220,9 @@ function findFactorsBetweenNaive(
     for num = (SRT + 1):STP
         next = Symbol(prefix, num)
         fct = intersect(ls(dfg, prev), ls(dfg, next))
-        !assertSingles ? nothing :
-        @assert length(fct) == 1 "assertSingles=true, won't return multiple factors joining variables at this time"
+        if assertSingles
+            @assert length(fct) == 1 "assertSingles=true, won't return multiple factors joining variables at this time"
+        end
         union!(fctlist, fct)
         prev = next
     end

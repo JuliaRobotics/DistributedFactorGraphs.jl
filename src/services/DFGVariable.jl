@@ -6,20 +6,24 @@
 ##==============================================================================
 "$(SIGNATURES)"
 getPPEMax(est::AbstractPointParametricEst) = est.max
-getPPEMax(fg::AbstractDFG, varlabel::Symbol, solveKey::Symbol = :default) =
-    getPPE(fg, varlabel, solveKey) |> getPPEMax
+function getPPEMax(fg::AbstractDFG, varlabel::Symbol, solveKey::Symbol = :default)
+    return getPPE(fg, varlabel, solveKey) |> getPPEMax
+end
 
 "$(SIGNATURES)"
 getPPEMean(est::AbstractPointParametricEst) = est.mean
-getPPEMean(fg::AbstractDFG, varlabel::Symbol, solveKey::Symbol = :default) =
-    getPPE(fg, varlabel, solveKey) |> getPPEMean
+function getPPEMean(fg::AbstractDFG, varlabel::Symbol, solveKey::Symbol = :default)
+    return getPPE(fg, varlabel, solveKey) |> getPPEMean
+end
 
 "$(SIGNATURES)"
 getPPESuggested(est::AbstractPointParametricEst) = est.suggested
-getPPESuggested(var::DFGVariable, solveKey::Symbol = :default) =
-    getPPE(var, solveKey) |> getPPESuggested
-getPPESuggested(dfg::AbstractDFG, varlabel::Symbol, solveKey::Symbol = :default) =
-    getPPE(getVariable(dfg, varlabel), solveKey) |> getPPESuggested
+function getPPESuggested(var::DFGVariable, solveKey::Symbol = :default)
+    return getPPE(var, solveKey) |> getPPESuggested
+end
+function getPPESuggested(dfg::AbstractDFG, varlabel::Symbol, solveKey::Symbol = :default)
+    return getPPE(getVariable(dfg, varlabel), solveKey) |> getPPESuggested
+end
 
 "$(SIGNATURES)"
 getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimestamp
@@ -108,10 +112,12 @@ macro defVariable(structname, manifold, point_identity)
     )
 end
 
-Base.convert(
+function Base.convert(
     ::Type{<:AbstractManifold},
     ::Union{<:T, Type{<:T}},
-) where {T <: InferenceVariable} = getManifold(T)
+) where {T <: InferenceVariable}
+    return getManifold(T)
+end
 
 """
     $SIGNATURES
@@ -214,10 +220,12 @@ Related
 isSolved, setSolvedCount!
 """
 getSolvedCount(v::VariableNodeData) = v.solvedCount
-getSolvedCount(v::VariableDataLevel2, solveKey::Symbol = :default) =
-    getSolverData(v, solveKey) |> getSolvedCount
-getSolvedCount(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol = :default) =
-    getSolvedCount(getVariable(dfg, sym), solveKey)
+function getSolvedCount(v::VariableDataLevel2, solveKey::Symbol = :default)
+    return getSolverData(v, solveKey) |> getSolvedCount
+end
+function getSolvedCount(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol = :default)
+    return getSolvedCount(getVariable(dfg, sym), solveKey)
+end
 
 """
     $SIGNATURES
@@ -229,10 +237,17 @@ Related
 getSolved, isSolved
 """
 setSolvedCount!(v::VariableNodeData, val::Int) = v.solvedCount = val
-setSolvedCount!(v::VariableDataLevel2, val::Int, solveKey::Symbol = :default) =
-    setSolvedCount!(getSolverData(v, solveKey), val)
-setSolvedCount!(dfg::AbstractDFG, sym::Symbol, val::Int, solveKey::Symbol = :default) =
-    setSolvedCount!(getVariable(dfg, sym), val, solveKey)
+function setSolvedCount!(v::VariableDataLevel2, val::Int, solveKey::Symbol = :default)
+    return setSolvedCount!(getSolverData(v, solveKey), val)
+end
+function setSolvedCount!(
+    dfg::AbstractDFG,
+    sym::Symbol,
+    val::Int,
+    solveKey::Symbol = :default,
+)
+    return setSolvedCount!(getVariable(dfg, sym), val, solveKey)
+end
 
 """
     $SIGNATURES
@@ -244,10 +259,12 @@ Related
 getSolved, setSolved!
 """
 isSolved(v::VariableNodeData) = 0 < v.solvedCount
-isSolved(v::VariableDataLevel2, solveKey::Symbol = :default) =
-    getSolverData(v, solveKey) |> isSolved
-isSolved(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol = :default) =
-    isSolved(getVariable(dfg, sym), solveKey)
+function isSolved(v::VariableDataLevel2, solveKey::Symbol = :default)
+    return getSolverData(v, solveKey) |> isSolved
+end
+function isSolved(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol = :default)
+    return isSolved(getVariable(dfg, sym), solveKey)
+end
 
 ##------------------------------------------------------------------------------
 ## initialized
@@ -283,10 +300,12 @@ Return `::Bool` on whether this variable has been marginalized.
 Notes:
 - VariableNodeData default `solveKey=:default`
 """
-isMarginalized(vert::DFGVariable, solveKey::Symbol = :default) =
-    getSolverData(vert, solveKey).ismargin
-isMarginalized(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol = :default) =
-    isMarginalized(DFG.getVariable(dfg, sym), solveKey)
+function isMarginalized(vert::DFGVariable, solveKey::Symbol = :default)
+    return getSolverData(vert, solveKey).ismargin
+end
+function isMarginalized(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol = :default)
+    return isMarginalized(DFG.getVariable(dfg, sym), solveKey)
+end
 
 """
     $SIGNATURES
@@ -296,10 +315,17 @@ Mark a variable as marginalized `true` or `false`.
 function setMarginalized!(vnd::VariableNodeData, val::Bool)
     return vnd.ismargin = val
 end
-setMarginalized!(vari::DFGVariable, val::Bool, solveKey::Symbol = :default) =
-    setMarginalized!(getSolverData(vari, solveKey), val)
-setMarginalized!(dfg::AbstractDFG, sym::Symbol, val::Bool, solveKey::Symbol = :default) =
-    setMarginalized!(getVariable(dfg, sym), val, solveKey)
+function setMarginalized!(vari::DFGVariable, val::Bool, solveKey::Symbol = :default)
+    return setMarginalized!(getSolverData(vari, solveKey), val)
+end
+function setMarginalized!(
+    dfg::AbstractDFG,
+    sym::Symbol,
+    val::Bool,
+    solveKey::Symbol = :default,
+)
+    return setMarginalized!(getVariable(dfg, sym), val, solveKey)
+end
 
 ##==============================================================================
 ## Variables
@@ -362,12 +388,14 @@ function setTimestamp(v::DFGVariable, ts::ZonedDateTime; verbose::Bool = true)
     )
 end
 
-setTimestamp(
+function setTimestamp(
     v::AbstractDFGVariable,
     ts::DateTime,
     timezone = localzone();
     verbose::Bool = true,
-) = setTimestamp(v, ZonedDateTime(ts, timezone); verbose)
+)
+    return setTimestamp(v, ZonedDateTime(ts, timezone); verbose)
+end
 
 function setTimestamp(v::DFGVariableSummary, ts::ZonedDateTime; verbose::Bool = true)
     if verbose
@@ -468,9 +496,11 @@ Retrieve solver data structure stored in a variable.
 """
 function getSolverData(v::DFGVariable, key::Symbol = :default)
     #TODO this does not fit in with some of the other error behaviour. but its used so added @error
-    vnd =
-        haskey(getSolverDataDict(v), key) ? getSolverDataDict(v)[key] :
+    vnd = if haskey(getSolverDataDict(v), key)
+        getSolverDataDict(v)[key]
+    else
         (@error "Variable $(getLabel(v)) does not have solver data $(key)"; nothing)
+    end
     return vnd
 end
 
@@ -665,15 +695,17 @@ end
 Add a new solver data  entry from a deepcopy of the source variable solver data.
 NOTE: Copies the solver data.
 """
-addVariableSolverData!(
+function addVariableSolverData!(
     dfg::AbstractDFG,
     sourceVariable::DFGVariable,
     solveKey::Symbol = :default,
-) = addVariableSolverData!(
-    dfg,
-    sourceVariable.label,
-    deepcopy(getSolverData(sourceVariable, solveKey)),
 )
+    return addVariableSolverData!(
+        dfg,
+        sourceVariable.label,
+        deepcopy(getSolverData(sourceVariable, solveKey)),
+    )
+end
 
 """
     $(SIGNATURES)
@@ -868,11 +900,13 @@ end
     $(SIGNATURES)
 Delete variable solver data, returns the deleted element.
 """
-deleteVariableSolverData!(
+function deleteVariableSolverData!(
     dfg::AbstractDFG,
     sourceVariable::DFGVariable,
     solveKey::Symbol = :default,
-) = deleteVariableSolverData!(dfg, sourceVariable.label, solveKey)
+)
+    return deleteVariableSolverData!(dfg, sourceVariable.label, solveKey)
+end
 
 ##------------------------------------------------------------------------------
 ## SET: list, merge
@@ -899,8 +933,12 @@ function mergeVariableSolverData!(destVariable::DFGVariable, sourceVariable::DFG
     return destVariable
 end
 
-mergeVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable) =
-    mergeVariableSolverData!(getVariable(dfg, getLabel(sourceVariable)), sourceVariable)
+function mergeVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable)
+    return mergeVariableSolverData!(
+        getVariable(dfg, getLabel(sourceVariable)),
+        sourceVariable,
+    )
+end
 
 ##==============================================================================
 ## Point Parametric Estimates
@@ -925,11 +963,17 @@ function getPPE(v::DFGVariable, ppekey::Symbol = :default)
         throw(KeyError("PPE key '$ppekey' not found in variable '$(getLabel(v))'"))
     return v.ppeDict[ppekey]
 end
-getPPE(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol = :default) =
-    getPPE(getVariable(dfg, variablekey), ppekey)
+function getPPE(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol = :default)
+    return getPPE(getVariable(dfg, variablekey), ppekey)
+end
 # Not the most efficient call but it at least reuses above (in memory it's probably ok)
-getPPE(dfg::AbstractDFG, sourceVariable::VariableDataLevel1, ppekey::Symbol = :default) =
-    getPPE(dfg, sourceVariable.label, ppekey)
+function getPPE(
+    dfg::AbstractDFG,
+    sourceVariable::VariableDataLevel1,
+    ppekey::Symbol = :default,
+)
+    return getPPE(dfg, sourceVariable.label, ppekey)
+end
 
 """
     $(SIGNATURES)
@@ -953,8 +997,9 @@ end
 Add a new PPE entry from a deepcopy of the source variable PPE.
 NOTE: Copies the PPE.
 """
-addPPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol = :default) =
-    addPPE!(dfg, sourceVariable.label, deepcopy(getPPE(sourceVariable, ppekey)))
+function addPPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol = :default)
+    return addPPE!(dfg, sourceVariable.label, deepcopy(getPPE(sourceVariable, ppekey)))
+end
 
 """
     $(SIGNATURES)
@@ -983,17 +1028,19 @@ end
 Update PPE data if it exists, otherwise add it.
 NOTE: Copies the PPE data.
 """
-updatePPE!(
+function updatePPE!(
     dfg::AbstractDFG,
     sourceVariable::VariableDataLevel1,
     ppekey::Symbol = :default;
     warn_if_absent::Bool = true,
-) = updatePPE!(
-    dfg,
-    sourceVariable.label,
-    deepcopy(getPPE(sourceVariable, ppekey));
-    warn_if_absent = warn_if_absent,
 )
+    return updatePPE!(
+        dfg,
+        sourceVariable.label,
+        deepcopy(getPPE(sourceVariable, ppekey));
+        warn_if_absent = warn_if_absent,
+    )
+end
 
 """
     $(SIGNATURES)
@@ -1034,8 +1081,13 @@ end
     $(SIGNATURES)
 Delete PPE data, returns the deleted element.
 """
-deletePPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol = :default) =
-    deletePPE!(dfg, sourceVariable.label, ppekey)
+function deletePPE!(
+    dfg::AbstractDFG,
+    sourceVariable::DFGVariable,
+    ppekey::Symbol = :default,
+)
+    return deletePPE!(dfg, sourceVariable.label, ppekey)
+end
 
 ##------------------------------------------------------------------------------
 ## SET: list, merge
