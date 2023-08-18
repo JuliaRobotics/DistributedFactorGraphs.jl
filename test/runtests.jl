@@ -6,6 +6,7 @@ using Dates
 using TimeZones
 using SHA
 using UUIDs
+using Aqua
 
 # If you want to enable debugging logging (very verbose!)
 # using Logging
@@ -141,4 +142,15 @@ struct NotImplementedDFG{T} <: AbstractDFG{T} end
 
     @test_throws ErrorException isVariable(dfg, :a)
     @test_throws ErrorException isFactor(dfg, :a)
+end
+
+@testset "Testing Code Quality with Aqua" begin
+    Aqua.test_ambiguities([DistributedFactorGraphs])
+    Aqua.test_unbound_args(DistributedFactorGraphs)
+    Aqua.test_undefined_exports(DistributedFactorGraphs)
+    Aqua.test_piracy(DistributedFactorGraphs)
+    Aqua.test_project_extras(DistributedFactorGraphs)
+    Aqua.test_stale_deps(DistributedFactorGraphs; ignore = [:Colors])
+    Aqua.test_deps_compat(DistributedFactorGraphs)
+    Aqua.test_project_toml_formatting(DistributedFactorGraphs)
 end
