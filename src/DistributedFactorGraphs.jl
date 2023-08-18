@@ -233,7 +233,6 @@ export getBlobEntries, listDataEntries, hasDataEntry, hasDataEntry
 export getBlobEntriesVariables
 export listDataEntrySequence
 # convenience wrappers
-export mergeDataEntries!
 # aliases
 export addBlob!
 export packBlob, unpackBlob

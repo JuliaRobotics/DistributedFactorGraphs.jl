@@ -370,14 +370,11 @@ function mergeBlobEntries!(
 )
     des = listBlobEntries(src, slbl)
     # don't add data entries that already exist 
-    dde = listBlobEntries(dst, dlbl)
-        # HACK, verb list should just return vector of Symbol. NCE36
-        _getid(s) = s
-        _getid(s::BlobEntry) = s.id    
-    uids = _getid.(dde) # (s->s.id).(dde)
-    filter!(s -> !(_getid(s) in uids), des)
+    uids = listBlobEntries(dst, dlbl)
+    # verb list should just return vector of Symbol. NCE36
+    filter!(s -> !(s in uids), des)
     if 0  < length(des)
-        union(((s->mergeBlobEntries!(dst, dlbl, src, slbl, s.id)).(des))...)
+        union(((s->mergeBlobEntries!(dst, dlbl, src, slbl, s)).(des))...)
     end
 end
 
