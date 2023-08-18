@@ -112,7 +112,7 @@ function addBlob!(dfg::AbstractDFG, entry::BlobEntry, data)
     return addBlob!(getBlobStore(dfg, entry.blobstore), entry, data)
 end
 
-function addBlob!(store::AbstractBlobStore, entry::BlobEntry, data)
+function addBlob!(store::AbstractBlobStore{T}, entry::BlobEntry, data::T) where {T}
     blobId = isnothing(entry.blobId) ? entry.originId : entry.blobId
     return addBlob!(store, blobId, data)
 end
@@ -125,7 +125,9 @@ function addBlob!(store::AbstractBlobStore, blobId::UUID, data, ::String)
     return addBlob!(store, blobId, data)
 end
 
-addBlob!(store::AbstractBlobStore, data, ::String) = addBlob!(store, uuid4(), data)
+function addBlob!(store::AbstractBlobStore{T}, data::T, ::String) where {T}
+    return addBlob!(store, uuid4(), data)
+end
 
 #update
 function updateBlob!(dfg::AbstractDFG, entry::BlobEntry, data::T) where {T}
@@ -336,3 +338,6 @@ end
 function deleteBlob!(store::LinkStore, args...)
     return error("deleteDataBlob(::LinkStore) not supported")
 end
+
+deleteBlob!(store::LinkStore, ::BlobEntry) = deleteBlob!(store)
+deleteBlob!(store::LinkStore, ::UUID) = deleteBlob!(store)
