@@ -129,6 +129,7 @@ end
     # Existence
     @test exists(dfg, :a) == true
     @test exists(dfg, v1) == true
+    @show exists(dfg, :nope)
     @test exists(dfg, :nope) == false
     # isFactor and isVariable
     @test isFactor(dfg, f1.label)
@@ -139,6 +140,7 @@ end
     @test !isFactor(dfg, :doesntexist)
 
     @test issetequal([:a, :b], listVariables(dfg))
+    @show listFactors(dfg)
     @test issetequal([:abf1], listFactors(dfg))
 
     # @test @test_deprecated getVariableIds(dfg) == listVariables(dfg)
@@ -151,7 +153,7 @@ end
     @test !isPrior(dfg, :abf1) # f1 is not a prior
     @test lsfPriors(dfg) == []
     #FIXME don't know what it is supposed to do
-    @test_broken lsfTypes(dfg)
+    @test 0 < length( lsfTypes(dfg) )
 
     @test ls(dfg, LinearRelative) == [:abf1]
     @test lsf(dfg, LinearRelative) == [:abf1]
@@ -161,7 +163,7 @@ end
     @test getVariableType(dfg, :a) isa Position{1}
 
     #TODO what is lsTypes supposed to return?
-    @test_broken lsTypes(dfg)
+    @test 0 < length( lsTypes(dfg) )
 
     @test issetequal(ls(dfg, Position{1}), [:a, :b])
     @test issetequal(lsWho(dfg, :Position), [:a, :b])
