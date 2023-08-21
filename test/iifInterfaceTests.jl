@@ -152,8 +152,8 @@ end
 
     @test !isPrior(dfg, :abf1) # f1 is not a prior
     @test lsfPriors(dfg) == []
-    #FIXME don't know what it is supposed to do
-    @test 0 < length(lsfTypes(dfg))
+
+    @test lsfTypes(dfg) == [:LinearRelative]
 
     @test ls(dfg, LinearRelative) == [:abf1]
     @test lsf(dfg, LinearRelative) == [:abf1]
@@ -162,8 +162,7 @@ end
     @test getVariableType(v1) isa Position{1}
     @test getVariableType(dfg, :a) isa Position{1}
 
-    #TODO what is lsTypes supposed to return?
-    @test 0 < length(lsTypes(dfg))
+    @test lsTypes(dfg) == [:Position]
 
     @test issetequal(ls(dfg, Position{1}), [:a, :b])
     @test issetequal(lsWho(dfg, :Position), [:a, :b])
