@@ -166,26 +166,16 @@ function loadDFG!(
     varFiles = sort(readdir(varFolder; sort = false); lt = natural_lt)
     factorFiles = sort(readdir(factorFolder; sort = false); lt = natural_lt)
 
+    packedvars = @showprogress 1 "loading variables" map(varFiles) do varFile
+        jstr = read("$varFolder/$varFile", String)
+        return JSON3.read(jstr, PackedVariable)
+    end
+    # FIXME, why is this treated different from VariableSkeleton, VariableSummary?
+    # FIXME, still creates type instability on `variables` as either `::Variable` or `::DFGVariable`
     if isa(dfgLoadInto, GraphsDFG) && GraphsDFGs._variablestype(dfgLoadInto) == Variable
-        variables = @showprogress 1 "loading variables" map(varFiles) do varFile
-            jstr = read("$varFolder/$varFile", String)
-            return JSON3.read(jstr, PackedVariable)
-        end
+        variables = packedvars
     else
-        variables = DFGVariable[]
-        @showprogress 1 "loading variables" for varFile in varFiles
-            jstr = read("$varFolder/$varFile", String)
-            try
-                packedData = JSON3.read(jstr, PackedVariable)
-                push!(variables, unpackVariable(packedData))
-            catch ex
-                @error(
-                    "JSON3 is having trouble reading $varFolder/$varFile into a PackedVariable"
-                )
-                @show jstr
-                throw(ex)
-            end
-        end
+        variables = unpackVariable.(packedvars)
     end
 
     @info "Loaded $(length(variables)) variables"#- $(map(v->v.label, variables))"
@@ -193,26 +183,17 @@ function loadDFG!(
     # Adding variables
     map(v -> addVariable!(dfgLoadInto, v), variables)
 
-    if isa(dfgLoadInto, GraphsDFG) && GraphsDFGs._factorstype(dfgLoadInto) == PackedFactor
-        factors = @showprogress 1 "loading factors" map(factorFiles) do factorFile
-            jstr = read("$factorFolder/$factorFile", String)
-            return JSON3.read(jstr, PackedFactor)
-        end
-    else
-        @showprogress 1 "loading factors" for factorFile in factorFiles
-            jstr = read("$factorFolder/$factorFile", String)
-            try
-                packedData = JSON3.read(jstr, PackedFactor)
-                push!(factors, unpackFactor(dfgLoadInto, packedData))
-            catch ex
-                @error(
-                    "JSON3 is having trouble reading $factorFolder/$factorFile into a PackedFactor"
-                )
-                @show jstr
-                throw(ex)
-            end
-        end
+    packedfacts = @showprogress 1 "loading factors" map(factorFiles) do factorFile
+        jstr = read("$factorFolder/$factorFile", String)
+        return JSON3.read(jstr, PackedFactor)
     end
+    # FIXME, still creates type instability on `variables` as either `::Factor` or `::DFGFactor{<:}`
+    if isa(dfgLoadInto, GraphsDFG) && GraphsDFGs._factorstype(dfgLoadInto) == PackedFactor
+        factors = packedfacts
+    else
+        factors = unpackFactor.(dfgLoadInto, packedfacts)
+    end
+
     @info "Loaded $(length(factors)) factors"# - $(map(f->f.label, factors))"
     @info "Inserting factors into graph..."
     # # Adding factors
