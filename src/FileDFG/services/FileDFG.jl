@@ -172,10 +172,10 @@ function loadDFG!(
     end
     # FIXME, why is this treated different from VariableSkeleton, VariableSummary?
     # FIXME, still creates type instability on `variables` as either `::Variable` or `::DFGVariable`
-    variables = if isa(dfgLoadInto, GraphsDFG) && GraphsDFGs._variablestype(dfgLoadInto) == Variable
-        packedvars
+    if isa(dfgLoadInto, GraphsDFG) && GraphsDFGs._variablestype(dfgLoadInto) == Variable
+        variables = packedvars
     else
-        unpackVariable.(packedvars)
+        variables = unpackVariable.(packedvars)
     end
 
     @info "Loaded $(length(variables)) variables"#- $(map(v->v.label, variables))"
@@ -188,10 +188,10 @@ function loadDFG!(
         return JSON3.read(jstr, PackedFactor)
     end
     # FIXME, still creates type instability on `variables` as either `::Factor` or `::DFGFactor{<:}`
-    factors = if isa(dfgLoadInto, GraphsDFG) && GraphsDFGs._factorstype(dfgLoadInto) == PackedFactor
-        packedfacts
+    if isa(dfgLoadInto, GraphsDFG) && GraphsDFGs._factorstype(dfgLoadInto) == PackedFactor
+        factors = packedfacts
     else
-        unpackFactor.(dfgLoadInto, packedfacts)
+        factors = unpackFactor.(dfgLoadInto, packedfacts)
     end
 
     @info "Loaded $(length(factors)) factors"# - $(map(f->f.label, factors))"
