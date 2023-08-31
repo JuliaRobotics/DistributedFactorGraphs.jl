@@ -13,7 +13,7 @@ using InteractiveUtils
     sessionBlobEntries::OrderedDict{Symbol, BlobEntry}
     addHistory::Vector{Symbol}
     solverParams::T
-    solverParams_type::String = string(typeof(solverParams))
+    solverParams_type::String = string(nameof(typeof(solverParams)))
     # TODO remove Union.Nothing in DFG v0.24
     typePackedVariable::Union{Nothing, Bool} = false # Are variables packed or full
     typePackedFactor::Union{Nothing, Bool} = false # Are factors packed or full
@@ -26,7 +26,7 @@ StructTypes.subtypekey(::Type{PackedGraphsDFG}) = :solverParams_type
 
 function StructTypes.subtypes(::Type{PackedGraphsDFG})
     subs = subtypes(AbstractParams)
-    return NamedTuple(map(s -> Symbol(s) => PackedGraphsDFG{s}, subs))
+    return NamedTuple(map(s -> nameof(s) => PackedGraphsDFG{s}, subs))
 end
 
 _variablestype(fg::GraphsDFG{<:AbstractParams, T, <:AbstractDFGFactor}) where {T} = T
