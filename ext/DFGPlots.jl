@@ -10,26 +10,26 @@ using DistributedFactorGraphs
 
 import DistributedFactorGraphs.plotDFG
 
-export
-    plotDFG,
-    DFGPlotProps
+export plotDFG, DFGPlotProps
 
 struct DFGPlotProps
-    nodefillc::NamedTuple{(:var,:fac),Tuple{RGB,RGB}}
-    nodesize::NamedTuple{(:var,:fac),Tuple{Float64,Float64}}
-    shape::NamedTuple{(:var,:fac),Tuple{Symbol,Symbol}} #not upported yet
+    nodefillc::NamedTuple{(:var, :fac), Tuple{RGB, RGB}}
+    nodesize::NamedTuple{(:var, :fac), Tuple{Float64, Float64}}
+    shape::NamedTuple{(:var, :fac), Tuple{Symbol, Symbol}} #not upported yet
 
     layout::Function #spring_layout, spectral_layout
     drawlabels::Bool
 end
 
-DFGPlotProps() = DFGPlotProps(  (var=colorant"seagreen", fac=colorant"cyan3"),
-                                (var=1.0, fac=0.3),
-                                (var=:box, fac=:elipse),
-                                spring_layout,
-                                true)
-
-
+function DFGPlotProps()
+    return DFGPlotProps(
+        (var = colorant"seagreen", fac = colorant"cyan3"),
+        (var = 1.0, fac = 0.3),
+        (var = :box, fac = :elipse),
+        spring_layout,
+        true,
+    )
+end
 
 """
     $(SIGNATURES)
@@ -51,47 +51,58 @@ draw(PDF("/tmp/graph.pdf", 16cm, 16cm), plotDFG(fg))
 More information at [GraphPlot.jl](https://github.com/JuliaGraphs/GraphPlot.jl)
 """
 function plotDFG(dfg::GraphsDFG, p::DFGPlotProps = DFGPlotProps())
-
     nodetypes = [haskey(dfg.g.variables, s) for s in dfg.g.labels]
 
     nodesize = [isVar ? p.nodesize.var : p.nodesize.fac for isVar in nodetypes]
     # nodelabel = [isVar ? string(get_prop(dfg.g,i,:label)) : "" for (i,isVar) in enumerate(nodetypes)]
     if p.drawlabels
-        nodelabel = [nodetypes[i] ? string(s) : "" for (i,s) in enumerate(dfg.g.labels)]
+        nodelabel = [nodetypes[i] ? string(s) : "" for (i, s) in enumerate(dfg.g.labels)]
     else
         nodelabel = nothing
     end
 
     nodefillc = [isVar ? p.nodefillc.var : p.nodefillc.fac for isVar in nodetypes]
 
-    gplot(dfg.g, nodelabel=nodelabel, nodesize=nodesize, nodefillc=nodefillc, layout=p.layout)
-
+    return gplot(
+        dfg.g;
+        nodelabel = nodelabel,
+        nodesize = nodesize,
+        nodefillc = nodefillc,
+        layout = p.layout,
+    )
 end
 
 function plotDFG(dfg::AbstractDFG, p::DFGPlotProps = DFGPlotProps())
     # TODO implement convert functions
     ldfg = GraphsDFG{NoSolverParams}()
-    copyGraph!(ldfg, dfg, listVariables(dfg), listFactors(dfg), copyGraphMetadata=false)
-    plotDFG(ldfg, p)
+    copyGraph!(ldfg, dfg, listVariables(dfg), listFactors(dfg); copyGraphMetadata = false)
+    return plotDFG(ldfg, p)
 end
 
 function gplot(dfg::GraphsDFG; keyargs...)
-    gplot(dfg.g; keyargs...)
+    return gplot(dfg.g; keyargs...)
 end
 
 #TODO decide if we want to overload show for display in juno, It's a bit annoying with development
 # function Base.show(io::IO, ::MIME"application/prs.juno.plotpane+html", dfg::AbstractDFG)
 function plotDFG(io::IO, ::MIME"application/prs.juno.plotpane+html", dfg::AbstractDFG)
-
     if length(ls(dfg)) != 0
         size = get(io, :juno_plotsize, [100, 100])
 
         plot_output = IOBuffer()
-        GraphPlot.draw(GraphPlot.SVGJS(plot_output, GraphPlot.Compose.default_graphic_width,
-                   GraphPlot.Compose.default_graphic_width, false), plotDFG(dfg))
+        GraphPlot.draw(
+            GraphPlot.SVGJS(
+                plot_output,
+                GraphPlot.Compose.default_graphic_width,
+                GraphPlot.Compose.default_graphic_width,
+                false,
+            ),
+            plotDFG(dfg),
+        )
         plotsvg = String(take!(plot_output))
 
-        print(io,
+        print(
+            io,
             """
                 <div style="
                 background-color: #eee;
@@ -119,12 +130,11 @@ function plotDFG(io::IO, ::MIME"application/prs.juno.plotpane+html", dfg::Abstra
                 </script>
                 $(plotsvg)
                 </div>
-            """)
+            """,
+        )
     else
-         Base.show(io,  dfg)
+        Base.show(io, dfg)
     end
-
 end
-
 
 end

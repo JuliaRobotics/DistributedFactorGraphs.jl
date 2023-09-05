@@ -19,9 +19,9 @@ N: Manifold dimension.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef mutable struct VariableNodeData{T<:InferenceVariable, P, N}
+Base.@kwdef mutable struct VariableNodeData{T <: InferenceVariable, P, N}
     "DEPRECATED remove in DFG v0.22"
-    variableType::T=T() #tricky deprecation, also change covar to using N and not variableType
+    variableType::T = T() #tricky deprecation, also change covar to using N and not variableType
     """
     Globally unique identifier.
     """
@@ -33,9 +33,10 @@ Base.@kwdef mutable struct VariableNodeData{T<:InferenceVariable, P, N}
     """
     Common kernel bandwith parameter used with ManifoldKernelDensity, see field `covar` for the parametric covariance.
     """
-    bw::Matrix{Float64} = zeros(0,0)
+    bw::Matrix{Float64} = zeros(0, 0)
     "Parametric (Gaussian) covariance."
-    covar::Vector{SMatrix{N, N, Float64}} = SMatrix{getDimension(variableType), getDimension(variableType), Float64}[]
+    covar::Vector{SMatrix{N, N, Float64}} =
+        SMatrix{getDimension(variableType), getDimension(variableType), Float64}[]
     BayesNetOutVertIDs::Vector{Symbol} = Symbol[]
     dimIDs::Vector{Int} = Int[] # TODO Likely deprecate
 
@@ -77,16 +78,18 @@ Base.@kwdef mutable struct VariableNodeData{T<:InferenceVariable, P, N}
     """
     Future proofing field for when more multithreading operations on graph nodes are implemented, these conditions are meant to be used for atomic write transactions to this VND.
     """
-    events::Dict{Symbol,Threads.Condition} = Dict{Symbol,Threads.Condition}()
+    events::Dict{Symbol, Threads.Condition} = Dict{Symbol, Threads.Condition}()
     #
 end
 
-
 ##------------------------------------------------------------------------------
 ## Constructors
-VariableNodeData{T}(; kwargs...) where T <: InferenceVariable = VariableNodeData{T,getPointType(T),getDimension(T)}(; kwargs...)
-VariableNodeData(variableType::InferenceVariable; kwargs...) = VariableNodeData{typeof(variableType)}(;kwargs...)
-
+function VariableNodeData{T}(; kwargs...) where {T <: InferenceVariable}
+    return VariableNodeData{T, getPointType(T), getDimension(T)}(; kwargs...)
+end
+function VariableNodeData(variableType::InferenceVariable; kwargs...)
+    return VariableNodeData{typeof(variableType)}(; kwargs...)
+end
 
 ##==============================================================================
 ## PackedVariableNodeData.jl
@@ -161,12 +164,31 @@ end
 
 StructTypes.StructType(::Type{MeanMaxPPE}) = StructTypes.UnorderedStruct()
 StructTypes.idproperty(::Type{MeanMaxPPE}) = :id
-StructTypes.omitempties(::Type{MeanMaxPPE}) = (:id,:createdTimestamp,:lastUpdatedTimestamp)
+function StructTypes.omitempties(::Type{MeanMaxPPE})
+    return (:id, :createdTimestamp, :lastUpdatedTimestamp)
+end
 
 ##------------------------------------------------------------------------------
 ## Constructors
 
-MeanMaxPPE(solveKey::Symbol, suggested::Vector{Float64}, max::Vector{Float64}, mean::Vector{Float64}) = MeanMaxPPE(nothing, solveKey, suggested, max, mean, "MeanMaxPPE", string(_getDFGVersion()), now(tz"UTC"), now(tz"UTC"))
+function MeanMaxPPE(
+    solveKey::Symbol,
+    suggested::Vector{Float64},
+    max::Vector{Float64},
+    mean::Vector{Float64},
+)
+    return MeanMaxPPE(
+        nothing,
+        solveKey,
+        suggested,
+        max,
+        mean,
+        "MeanMaxPPE",
+        string(_getDFGVersion()),
+        now(tz"UTC"),
+        now(tz"UTC"),
+    )
+end
 
 ## Metadata
 """
@@ -181,9 +203,8 @@ getEstimateFields(::MeanMaxPPE) = [:suggested, :max, :mean]
 ## DFG Variables
 ##==============================================================================
 
-
 export Variable
-  
+
 """
     $(TYPEDEF)
 
@@ -213,7 +234,7 @@ function Variable(
     solvable::Int = 1,
     nanosecondtime::Int64 = 0,
     smalldata::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
-    kwargs...
+    kwargs...,
 )
     union!(tags, [:VARIABLE])
 
@@ -225,7 +246,7 @@ function Variable(
         tags,
         metadata = base64encode(JSON3.write(smalldata)),
         timestamp,
-        kwargs...
+        kwargs...,
     )
 
     return pacvar
@@ -247,7 +268,7 @@ Complete variable structure for a DistributedFactorGraph variable.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct DFGVariable{T<:InferenceVariable, P, N} <: AbstractDFGVariable
+Base.@kwdef struct DFGVariable{T <: InferenceVariable, P, N} <: AbstractDFGVariable
     """The ID for the variable"""
     id::Union{UUID, Nothing} = nothing
     """Variable label, e.g. :x1.
@@ -257,16 +278,18 @@ Base.@kwdef struct DFGVariable{T<:InferenceVariable, P, N} <: AbstractDFGVariabl
     Accessors: [`getTimestamp`](@ref), [`setTimestamp`](@ref)"""
     timestamp::ZonedDateTime = now(localzone())
     """Nanoseconds since a user-understood epoch (i.e unix epoch, robot boot time, etc.)"""
-    nstime::Nanosecond = Nanosecond(0) 
+    nstime::Nanosecond = Nanosecond(0)
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
     Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
     tags::Set{Symbol} = Set{Symbol}()
     """Dictionary of parametric point estimates keyed by solverDataDict keys
     Accessors: [`addPPE!`](@ref), [`updatePPE!`](@ref), and [`deletePPE!`](@ref)"""
-    ppeDict::Dict{Symbol, AbstractPointParametricEst} = Dict{Symbol, AbstractPointParametricEst}()
+    ppeDict::Dict{Symbol, AbstractPointParametricEst} =
+        Dict{Symbol, AbstractPointParametricEst}()
     """Dictionary of solver data. May be a subset of all solutions if a solver key was specified in the get call.
     Accessors: [`addVariableSolverData!`](@ref), [`updateVariableSolverData!`](@ref), and [`deleteVariableSolverData!`](@ref)"""
-    solverDataDict::Dict{Symbol, VariableNodeData{T,P,N}} = Dict{Symbol, VariableNodeData{T,P,N}}()
+    solverDataDict::Dict{Symbol, VariableNodeData{T, P, N}} =
+        Dict{Symbol, VariableNodeData{T, P, N}}()
     """Dictionary of small data associated with this variable.
     Accessors: [`getSmallData`](@ref), [`setSmallData!`](@ref)"""
     smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}()
@@ -286,12 +309,12 @@ end
 The default DFGVariable constructor.
 """
 function DFGVariable(
-    label::Symbol, 
+    label::Symbol,
     T::Type{<:InferenceVariable};
-    estimateDict=nothing,
-    timestamp=now(localzone()),
-    solvable::Union{Int, Base.RefValue{Int}}=Ref(1),
-    kwargs...
+    estimateDict = nothing,
+    timestamp = now(localzone()),
+    solvable::Union{Int, Base.RefValue{Int}} = Ref(1),
+    kwargs...,
 )
     #TODO deprecated, remove in v0.21 should have already been deprecated
     if !isnothing(estimateDict)
@@ -299,36 +322,39 @@ function DFGVariable(
     end
     if !isa(timestamp, ZonedDateTime)
         @warn "timestamp<:DateTime is deprecated, timestamp must be a ZonedDateTime, using local zone."
-        timestamp = ZonedDateTime(timestamp,localzone())
+        timestamp = ZonedDateTime(timestamp, localzone())
     end
 
     solvable isa Int && (solvable = Ref(solvable))
 
     N = getDimension(T)
     P = getPointType(T)
-    DFGVariable{T,P,N}(;label, timestamp, solvable, kwargs...)
+    return DFGVariable{T, P, N}(; label, timestamp, solvable, kwargs...)
 end
 
-DFGVariable(label::Symbol, variableType::InferenceVariable; kwargs...) = DFGVariable(label, typeof(variableType); kwargs...)
+function DFGVariable(label::Symbol, variableType::InferenceVariable; kwargs...)
+    return DFGVariable(label, typeof(variableType); kwargs...)
+end
 
-DFGVariable(label::Symbol, solverData::VariableNodeData; kwargs...) = DFGVariable(;label, solverDataDict=Dict(:default=>solverData), kwargs...)
+function DFGVariable(label::Symbol, solverData::VariableNodeData; kwargs...)
+    return DFGVariable(; label, solverDataDict = Dict(:default => solverData), kwargs...)
+end
 
-Base.getproperty(x::DFGVariable,f::Symbol) = begin
+Base.getproperty(x::DFGVariable, f::Symbol) = begin
     if f == :solvable
-        getfield(x,f)[]
+        getfield(x, f)[]
     else
-        getfield(x,f)
+        getfield(x, f)
     end
 end
 
-Base.setproperty!(x::DFGVariable,f::Symbol, val) = begin
+Base.setproperty!(x::DFGVariable, f::Symbol, val) = begin
     if f == :solvable
-        getfield(x,f)[] = val
+        getfield(x, f)[] = val
     else
-        setfield!(x,f,val)
+        setfield!(x, f, val)
     end
 end
-
 
 ##------------------------------------------------------------------------------
 ## DFGVariableSummary lv1
@@ -410,7 +436,13 @@ Base.@kwdef struct SkeletonDFGVariable <: AbstractDFGVariable
     tags::Set{Symbol} = Set{Symbol}()
 end
 
-SkeletonDFGVariable(label::Symbol, tags=Set{Symbol}(); id::Union{UUID, Nothing}=nothing) = SkeletonDFGVariable(id, label, tags)
+function SkeletonDFGVariable(
+    label::Symbol,
+    tags = Set{Symbol}();
+    id::Union{UUID, Nothing} = nothing,
+)
+    return SkeletonDFGVariable(id, label, tags)
+end
 
 StructTypes.StructType(::Type{SkeletonDFGVariable}) = StructTypes.UnorderedStruct()
 StructTypes.idproperty(::Type{SkeletonDFGVariable}) = :id
@@ -419,7 +451,8 @@ StructTypes.omitempties(::Type{SkeletonDFGVariable}) = (:id,)
 ##==============================================================================
 # Define variable levels
 ##==============================================================================
-const VariableDataLevel0 = Union{DFGVariable, DFGVariableSummary, Variable, SkeletonDFGVariable}
+const VariableDataLevel0 =
+    Union{DFGVariable, DFGVariableSummary, Variable, SkeletonDFGVariable}
 const VariableDataLevel1 = Union{DFGVariable, DFGVariableSummary, Variable}
 const VariableDataLevel2 = Union{DFGVariable}
 
@@ -427,8 +460,18 @@ const VariableDataLevel2 = Union{DFGVariable}
 ## Convertion constructors
 ##==============================================================================
 
-DFGVariableSummary(v::DFGVariable) =
-        DFGVariableSummary(v.id, v.label, v.timestamp, deepcopy(v.tags), deepcopy(v.ppeDict), Symbol(typeof(getVariableType(v))), v.dataDict)
+function DFGVariableSummary(v::DFGVariable)
+    return DFGVariableSummary(
+        v.id,
+        v.label,
+        v.timestamp,
+        deepcopy(v.tags),
+        deepcopy(v.ppeDict),
+        Symbol(typeof(getVariableType(v))),
+        v.dataDict,
+    )
+end
 
-SkeletonDFGVariable(v::VariableDataLevel1) =
-            SkeletonDFGVariable(v.id, v.label, deepcopy(v.tags))
+function SkeletonDFGVariable(v::VariableDataLevel1)
+    return SkeletonDFGVariable(v.id, v.label, deepcopy(v.tags))
+end

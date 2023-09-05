@@ -47,8 +47,9 @@ using RoME
 @assert RoME.PriorPose2 == DFG._getPriorType(Pose2)
 ```
 """
-_getPriorType(_type::Type{<:InferenceVariable}) = getfield(_type.name.module, Symbol(:Prior, _type.name.name))
-
+function _getPriorType(_type::Type{<:InferenceVariable})
+    return getfield(_type.name.module, Symbol(:Prior, _type.name.name))
+end
 
 ##==============================================================================
 ## Factors
@@ -81,13 +82,33 @@ _getPriorType(_type::Type{<:InferenceVariable}) = getfield(_type.name.module, Sy
 ## COMMON
 # getTimestamp
 
-setTimestamp(f::AbstractDFGFactor, ts::DateTime, timezone=localzone()) = setTimestamp(f, ZonedDateTime(ts,  timezone))
-setTimestamp(f::DFGFactor, ts::ZonedDateTime) = DFGFactor(f.label, ts, f.nstime, f.tags, f.solverData, f.solvable, getfield(f,:_variableOrderSymbols); id=f.id)
-setTimestamp(f::DFGFactorSummary, ts::ZonedDateTime) = DFGFactorSummary(f.id, f.label, f.tags, f._variableOrderSymbols, ts)
-setTimestamp(f::DFGFactorSummary, ts::DateTime) = DFGFactorSummary(f, ZonedDateTime(ts, localzone()))
+function setTimestamp(f::AbstractDFGFactor, ts::DateTime, timezone = localzone())
+    return setTimestamp(f, ZonedDateTime(ts, timezone))
+end
+function setTimestamp(f::DFGFactor, ts::ZonedDateTime)
+    return DFGFactor(
+        f.label,
+        ts,
+        f.nstime,
+        f.tags,
+        f.solverData,
+        f.solvable,
+        getfield(f, :_variableOrderSymbols);
+        id = f.id,
+    )
+end
+function setTimestamp(f::DFGFactorSummary, ts::ZonedDateTime)
+    return DFGFactorSummary(f.id, f.label, f.tags, f._variableOrderSymbols, ts)
+end
+function setTimestamp(f::DFGFactorSummary, ts::DateTime)
+    return DFGFactorSummary(f, ZonedDateTime(ts, localzone()))
+end
 
 function setTimestamp(v::PackedFactor, timestamp::ZonedDateTime)
-  return PackedFactor(;(key => getproperty(v, key) for key in fieldnames(PackedFactor))..., timestamp)
+    return PackedFactor(;
+        (key => getproperty(v, key) for key in fieldnames(PackedFactor))...,
+        timestamp,
+    )
 end
 
 ##------------------------------------------------------------------------------
@@ -105,7 +126,6 @@ end
 
 ## COMMON
 
-
 ##------------------------------------------------------------------------------
 ## _variableOrderSymbols
 ##------------------------------------------------------------------------------
@@ -118,6 +138,7 @@ Get the variable ordering for this factor.
 Should be equivalent to listNeighbors unless something was deleted in the graph.
 """
 getVariableOrder(fct::DFGFactor) = fct._variableOrderSymbols::Vector{Symbol}
+getVariableOrder(fct::PackedFactor) = fct._variableOrderSymbols::Vector{Symbol}
 getVariableOrder(dfg::AbstractDFG, fct::Symbol) = getVariableOrder(getFactor(dfg, fct))
 
 ##------------------------------------------------------------------------------
@@ -129,17 +150,15 @@ getVariableOrder(dfg::AbstractDFG, fct::Symbol) = getVariableOrder(getFactor(dfg
 
 Retrieve solver data structure stored in a factor.
 """
-function getSolverData(f::F) where F <: DFGFactor
-  return f.solverData
+function getSolverData(f::F) where {F <: DFGFactor}
+    return f.solverData
 end
 
 setSolverData!(f::DFGFactor, data::GenericFunctionNodeData) = f.solverData = data
 
-
 ##------------------------------------------------------------------------------
 ## utility
 ##------------------------------------------------------------------------------
-
 
 """
     $SIGNATURES
@@ -147,16 +166,16 @@ setSolverData!(f::DFGFactor, data::GenericFunctionNodeData) = f.solverData = dat
 Return `::Bool` on whether given factor `fc::Symbol` is a prior in factor graph `dfg`.
 """
 function isPrior(dfg::AbstractDFG, fc::Symbol)
-  fco = getFactor(dfg, fc)
-  isPrior(getFactorType(fco))
+    fco = getFactor(dfg, fc)
+    return isPrior(getFactorType(fco))
 end
 
 function isPrior(::AbstractPrior)
-  return true
+    return true
 end
 
 function isPrior(::AbstractRelative)
-  return false
+    return false
 end
 
 ##==============================================================================

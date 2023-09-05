@@ -17,12 +17,12 @@ v1 = addVariable!(dfg, :a, ContinuousScalar, tags = [:POSE], solvable=0)
 saveDFG(dfg, "/tmp/saveDFG.tar.gz")
 ```
 """
-function saveDFG(folder::AbstractString, dfg::AbstractDFG; saveMetadata::Bool=true)
+function saveDFG(folder::AbstractString, dfg::AbstractDFG; saveMetadata::Bool = true)
 
     # TODO: Deprecate the folder functionality
 
     # Clean up save path if a file is specified
-    savepath = folder[end] == '/' ? folder[1:end-1] : folder
+    savepath = folder[end] == '/' ? folder[1:(end - 1)] : folder
     savepath = splitext(splitext(savepath)[1])[1] # In case of .tar.gz
 
     variables = getVariables(dfg)
@@ -60,17 +60,17 @@ function saveDFG(folder::AbstractString, dfg::AbstractDFG; saveMetadata::Bool=tr
     savedir = dirname(savepath) # is this a path of just local name? #344 -- workaround with unique names
     savename = basename(string(savepath))
     @assert savename != ""
-    destfile = joinpath(savedir, savename*".tar.gz")
-    
+    destfile = joinpath(savedir, savename * ".tar.gz")
+
     #create Tarbal using Tar.jl #351
-    tar_gz = open(destfile, write=true)
+    tar_gz = open(destfile; write = true)
     tar = CodecZlib.GzipCompressorStream(tar_gz)
-    Tar.create(joinpath(savedir,savename), tar)
+    Tar.create(joinpath(savedir, savename), tar)
     close(tar)
     #not compressed version
     # Tar.create(joinpath(savedir,savename), destfile)
 
-    Base.rm(joinpath(savedir,savename), recursive=true)
+    return Base.rm(joinpath(savedir, savename); recursive = true)
 end
 # support both argument orders, #581
 saveDFG(dfg::AbstractDFG, folder::AbstractString) = saveDFG(folder, dfg)
@@ -92,11 +92,16 @@ loadDFG!(dfg, "/tmp/savedgraph.tar.gz")
 ls(dfg)
 ```
 """
-function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString; overwriteDFGMetadata::Bool=true, useDeprExtract::Bool=false)
+function loadDFG!(
+    dfgLoadInto::AbstractDFG,
+    dst::AbstractString;
+    overwriteDFGMetadata::Bool = true,
+    useDeprExtract::Bool = false,
+)
 
     #
     # loaddir gets deleted so needs to be unique
-    loaddir=split(joinpath("/","tmp","caesar","random", string(uuid1())), '-')[1]
+    loaddir = split(joinpath("/", "tmp", "caesar", "random", string(uuid1())), '-')[1]
     # Check if zipped destination (dst) by first doing fuzzy search from user supplied dst
     folder = dst  # working directory for fileDFG variable and factor operations
     dstname = dst # path name could either be legacy FileDFG dir or .tar.gz file of FileDFG files.
@@ -115,13 +120,13 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString; overwriteDFGMet
     @assert isfile(dstname) "cannot find file $dstname"
     # TODO -- what if it is not a tar.gz but classic folder instead?
     # do actual unzipping
-    filename = lastdirname[1:(end-length(".tar.gz"))] |> string
+    filename = lastdirname[1:(end - length(".tar.gz"))] |> string
     if unzip
         @show sfolder = split(dstname, '.')
         Base.mkpath(loaddir)
         folder = joinpath(loaddir, filename) #splitpath(string(sfolder[end-2]))[end]
         @info "loadDFG! detected a gzip $dstname -- unpacking via $loaddir now..."
-        Base.rm(folder, recursive=true, force=true)
+        Base.rm(folder; recursive = true, force = true)
         # unzip the tar file
 
         # TODO deprecated, remove. Kept for legacy support if older tarbals
@@ -149,61 +154,65 @@ function loadDFG!(dfgLoadInto::AbstractDFG, dst::AbstractString; overwriteDFGMet
     end
 
     # extract the factor graph from fileDFG folder
-    variables = DFGVariable[]
     factors = DFGFactor[]
     varFolder = "$folder/variables"
     factorFolder = "$folder/factors"
     # Folder preparations
     !isdir(folder) && error("Can't load DFG graph - folder '$folder' doesn't exist")
     !isdir(varFolder) && error("Can't load DFG graph - folder '$varFolder' doesn't exist")
-    !isdir(factorFolder) && error("Can't load DFG graph - folder '$factorFolder' doesn't exist")
+    !isdir(factorFolder) &&
+        error("Can't load DFG graph - folder '$factorFolder' doesn't exist")
 
-    varFiles = sort(readdir(varFolder; sort=false); lt=natural_lt)
-    factorFiles = sort(readdir(factorFolder; sort=false); lt=natural_lt)
-    @showprogress 1 "loading variables" for varFile in varFiles
+    varFiles = sort(readdir(varFolder; sort = false); lt = natural_lt)
+    factorFiles = sort(readdir(factorFolder; sort = false); lt = natural_lt)
+
+    packedvars = @showprogress 1 "loading variables" map(varFiles) do varFile
         jstr = read("$varFolder/$varFile", String)
-        try
-            packedData = JSON3.read(jstr, PackedVariable)
-            push!(variables, unpackVariable(packedData))
-        catch ex
-            @error("JSON3 is having trouble reading $varFolder/$varFile into a PackedVariable")
-            @show jstr
-            throw(ex)
-        end
+        return JSON3.read(jstr, PackedVariable)
     end
-    @info "Loaded $(length(variables)) variables - $(map(v->v.label, variables))"
+    # FIXME, why is this treated different from VariableSkeleton, VariableSummary?
+    # FIXME, still creates type instability on `variables` as either `::Variable` or `::DFGVariable`
+    if isa(dfgLoadInto, GraphsDFG) && GraphsDFGs._variablestype(dfgLoadInto) == Variable
+        variables = packedvars
+    else
+        variables = unpackVariable.(packedvars)
+    end
+
+    @info "Loaded $(length(variables)) variables"#- $(map(v->v.label, variables))"
     @info "Inserting variables into graph..."
     # Adding variables
-    map(v->addVariable!(dfgLoadInto, v), variables)
+    map(v -> addVariable!(dfgLoadInto, v), variables)
 
-    @showprogress 1 "loading factors" for factorFile in factorFiles
+    packedfacts = @showprogress 1 "loading factors" map(factorFiles) do factorFile
         jstr = read("$factorFolder/$factorFile", String)
-        try
-            packedData = JSON3.read(jstr, PackedFactor)
-            push!(factors, unpackFactor(dfgLoadInto, packedData))
-        catch ex
-            @error("JSON3 is having trouble reading $factorFolder/$factorFile into a PackedFactor")
-            @show jstr
-            throw(ex)
-        end
+        return JSON3.read(jstr, PackedFactor)
     end
-    @info "Loaded $(length(variables)) factors - $(map(f->f.label, factors))"
+    # FIXME, still creates type instability on `variables` as either `::Factor` or `::DFGFactor{<:}`
+    if isa(dfgLoadInto, GraphsDFG) && GraphsDFGs._factorstype(dfgLoadInto) == PackedFactor
+        factors = packedfacts
+    else
+        factors = unpackFactor.(dfgLoadInto, packedfacts)
+    end
+
+    @info "Loaded $(length(factors)) factors"# - $(map(f->f.label, factors))"
     @info "Inserting factors into graph..."
     # # Adding factors
-    map(f->addFactor!(dfgLoadInto, f), factors)
+    map(f -> addFactor!(dfgLoadInto, f), factors)
 
-    # Finally, rebuild the CCW's for the factors to completely reinflate them
-    # NOTE CREATES A NEW DFGFactor IF  CCW TYPE CHANGES
-    @info "Rebuilding CCW's for the factors..."
-    @showprogress 1 "build factor operational memory" for factor in factors
-        rebuildFactorMetadata!(dfgLoadInto, factor)
+    if isa(dfgLoadInto, GraphsDFG) && GraphsDFGs._factorstype(dfgLoadInto) != PackedFactor
+        # Finally, rebuild the CCW's for the factors to completely reinflate them
+        # NOTE CREATES A NEW DFGFactor IF  CCW TYPE CHANGES
+        @info "Rebuilding CCW's for the factors..."
+        @showprogress 1 "build factor operational memory" for factor in factors
+            rebuildFactorMetadata!(dfgLoadInto, factor)
+        end
     end
 
     # remove the temporary unzipped file
     if unzip
         @info "DFG.loadDFG! is deleting a temp folder created during unzip, $loaddir"
         # need this because the number of files created in /tmp/caesar/random is becoming redonkulous.
-        Base.rm(loaddir, recursive=true, force=true)
+        Base.rm(loaddir; recursive = true, force = true)
     end
 
     return dfgLoadInto
@@ -211,29 +220,27 @@ end
 
 function loadDFG(file::AbstractString)
 
-     # add if doesn't have .tar.gz extension
+    # add if doesn't have .tar.gz extension
     if !contains(basename(file), ".tar.gz")
         file *= ".tar.gz"
     end
     # check the file actually exists
     @assert isfile(file) "cannot find file $file"
-    
+
     # only extract dfg.json to rebuild DFG object
     tar_gz = open(file)
     tar = CodecZlib.GzipDecompressorStream(tar_gz)
     loaddir = Tar.extract(hdr -> contains(hdr.path, "dfg.json"), tar)
     close(tar)
-    
+
     #Only GraphsDFG metadata supported
     jstr = read("$loaddir/dfg.json", String)
     fgPacked = JSON3.read(jstr, GraphsDFGs.PackedGraphsDFG)
     dfg = GraphsDFGs.unpackDFGMetadata(fgPacked)
 
-
     @debug "DFG.loadDFG! is deleting a temp folder created during unzip, $loaddir"
     # cleanup temporary folder
-    Base.rm(loaddir, recursive=true, force=true)
+    Base.rm(loaddir; recursive = true, force = true)
 
     return loadDFG!(dfg, file)
-
 end

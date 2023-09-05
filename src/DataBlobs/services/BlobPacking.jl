@@ -12,11 +12,11 @@
 #             - image/png
 
 const _MIMETypes = OrderedDict{MIME, DataType}()
-push!(_MIMETypes, MIME("application/octet-stream/json")=>format"JSON")
-push!(_MIMETypes, MIME("application/bson")=>format"BSON")
-push!(_MIMETypes, MIME("image/png")=>format"PNG")
-push!(_MIMETypes, MIME("image/jpeg")=>format"JPG")
-push!(_MIMETypes, MIME("application/octet-stream; ext=las")=>format"LAS")
+push!(_MIMETypes, MIME("application/octet-stream/json") => format"JSON")
+push!(_MIMETypes, MIME("application/bson") => format"BSON")
+push!(_MIMETypes, MIME("image/png") => format"PNG")
+push!(_MIMETypes, MIME("image/jpeg") => format"JPG")
+push!(_MIMETypes, MIME("application/octet-stream; ext=las") => format"LAS")
 
 """
     packBlob
@@ -38,7 +38,6 @@ function unpackBlob(T::MIME, blob)
     return unpackBlob(dataformat, blob)
 end
 
-
 # 1. JSON strings are saved as is
 function packBlob(::Type{format"JSON"}, json_str::String)
     mimetype = findfirst(==(format"JSON"), _MIMETypes)
@@ -51,9 +50,11 @@ function unpackBlob(::Type{format"JSON"}, blob::Vector{UInt8})
     return String(copy(blob))
 end
 
+unpackBlob(entry::BlobEntry, blob::Vector{UInt8}) = unpackBlob(entry.mimeType, blob)
+unpackBlob(eb::Pair{<:BlobEntry, Vector{UInt8}}) = unpackBlob(eb[1], eb[2])
 
 # 2/ FileIO
-function packBlob(::Type{T}, data::Any; kwargs...) where T <: DataFormat
+function packBlob(::Type{T}, data::Any; kwargs...) where {T <: DataFormat}
     io = IOBuffer()
     save(Stream{T}(io), data; kwargs...)
     blob = take!(io)
@@ -65,13 +66,10 @@ function packBlob(::Type{T}, data::Any; kwargs...) where T <: DataFormat
     return blob, mimetype
 end
 
-function unpackBlob(::Type{T}, blob::Vector{UInt8}) where T <: DataFormat
+function unpackBlob(::Type{T}, blob::Vector{UInt8}) where {T <: DataFormat}
     io = IOBuffer(blob)
     return load(Stream{T}(io))
 end
-
-
-
 
 # if false
 # json_str = "{\"name\":\"John\"}"
@@ -80,7 +78,6 @@ end
 # @assert json_str == unpackBlob(MIME("application/octet-stream/json"), blob)
 # @assert json_str == unpackBlob("application/octet-stream/json", blob)
 
-
 # blob,mime = packBlob(format"PNG", img)
 # up_img = unpackBlob(format"PNG", blob)
 
@@ -88,8 +85,4 @@ end
 # packBlob(format"BSON", Dict("name"=>"John"))
 # unpackBlob(format"BSON", Dict("name"=>"John"))
 
-
 # end
-
-
-

@@ -1,25 +1,24 @@
 if false
-using Test
-using GraphPlot
-using DistributedFactorGraphs
-using Pkg
-using Dates
-using UUIDs
-using TimeZones
+    using Test
+    using GraphPlot
+    using DistributedFactorGraphs
+    using Pkg
+    using Dates
+    using UUIDs
+    using TimeZones
 
-include("testBlocks.jl")
+    include("testBlocks.jl")
 
-testDFGAPI = GraphsDFG
+    testDFGAPI = GraphsDFG
 
-# Enable debug logging
-using Logging
-logger = SimpleLogger(stdout, Logging.Debug)
-global_logger(logger)
+    # Enable debug logging
+    using Logging
+    logger = SimpleLogger(stdout, Logging.Debug)
+    global_logger(logger)
 
-# or
-logger = ConsoleLogger(stdout, Logging.Debug)
-global_logger(logger)
-
+    # or
+    logger = ConsoleLogger(stdout, Logging.Debug)
+    global_logger(logger)
 end
 
 # DFG Accessors
@@ -49,11 +48,9 @@ end
     global fac0, fac1, fac2 = DFGFactorSCA()
 end
 
-
 @testset "Variables and Factors CRUD and SET" begin
     VariablesandFactorsCRUD_SET!(fg1, var1, var2, var3, fac0, fac1, fac2)
 end
-
 
 @testset "Custom Printing" begin
     global var1, var2, var3, v1_tags, vorphan
@@ -63,16 +60,19 @@ end
     @test printVariable(var1) === nothing
     @test printFactor(fac1) === nothing
 
-    @test printVariable(iobuf, var1, skipfields=[:timestamp, :solver, :ppe, :nstime]) === nothing
-    
+    @test printVariable(iobuf, var1; skipfields = [:timestamp, :solver, :ppe, :nstime]) ===
+          nothing
+
     # for julia v1.6
     if DistributedFactorGraphs._getDFGVersion() < v"0.19"
-        @test String(take!(iobuf)) == "DFGVariable{TestVariableType1}\nid:\nnothing\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol, Union{Bool, Float64, Int64, Vector{Bool}, Vector{Float64}, Vector{Int64}, Vector{String}, String}}(:small=>\"data\")\ndataDict:\nDict{Symbol, DistributedFactorGraphs.BlobEntry}()\nsolvable:\n0\n"   
+        @test String(take!(iobuf)) ==
+              "DFGVariable{TestVariableType1}\nid:\nnothing\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol, Union{Bool, Float64, Int64, Vector{Bool}, Vector{Float64}, Vector{Int64}, Vector{String}, String}}(:small=>\"data\")\ndataDict:\nDict{Symbol, DistributedFactorGraphs.BlobEntry}()\nsolvable:\n0\n"
     else
-        @test String(take!(iobuf)) == "DFGVariable{TestVariableType1, Vector{Float64}, 1}\nid:\nnothing\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol, Union{Bool, Float64, Int64, Vector{Bool}, Vector{Float64}, Vector{Int64}, Vector{String}, String}}(:small=>\"data\")\ndataDict:\nDict{Symbol, BlobEntry}()\nsolvable:\n0\n"   
+        @test String(take!(iobuf)) ==
+              "DFGVariable{TestVariableType1, Vector{Float64}, 1}\nid:\nnothing\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol, Union{Bool, Float64, Int64, Vector{Bool}, Vector{Float64}, Vector{Int64}, Vector{String}, String}}(:small=>\"data\")\ndataDict:\nDict{Symbol, BlobEntry}()\nsolvable:\n0\n"
     end
 
-    @test printVariable(iobuf, var1, short=true) === nothing
+    @test printVariable(iobuf, var1; short = true) === nothing
     varstr = String(take!(iobuf))
     @test occursin(r"DFGVariable", varstr)
     @test occursin(r"timestamp", varstr)
@@ -80,13 +80,13 @@ end
     @test occursin(r"bandwidths", varstr)
     #  == "DFGVariable{TestVariableType1}\nlabel: a\ntags: Set([:VARIABLE, :POSE])\nsize marginal samples: (1, 1)\nkde bandwidths: [0.0]\nNo PPEs\n"
 
-
-    @test printFactor(iobuf, fac1, skipfields=[:timestamp, :solver, :nstime]) === nothing
+    @test printFactor(iobuf, fac1; skipfields = [:timestamp, :solver, :nstime]) === nothing
     @test occursin(r"DFGFactor.*\nid:\nnothing\nlabel:\n:abf1", String(take!(iobuf)))
 
-    String(take!(iobuf)) == "DFGFactor{TestCCW{TestFunctorInferenceType1}}\nid:\nnothing\nlabel:\n:abf1\ntags:\nSet([:tag1, :tag2])\nsolvable:\n0\nsolvable:\n1\n_variableOrderSymbols:\n[:a, :b]\n"
+    String(take!(iobuf)) ==
+    "DFGFactor{TestCCW{TestFunctorInferenceType1}}\nid:\nnothing\nlabel:\n:abf1\ntags:\nSet([:tag1, :tag2])\nsolvable:\n0\nsolvable:\n1\n_variableOrderSymbols:\n[:a, :b]\n"
 
-    @test printFactor(iobuf, fac1, short=true) === nothing
+    @test printFactor(iobuf, fac1; short = true) === nothing
     @show teststr = String(take!(iobuf))
     @test occursin(r"DFGFactor", teststr)
     @test occursin(r"label", teststr)
@@ -100,9 +100,9 @@ end
     @test show(fac1) === nothing
 
     @test show(iobuf, MIME("text/plain"), var1) === nothing
-    isapprox(length(take!(iobuf)), 452, atol=10)
+    isapprox(length(take!(iobuf)), 452; atol = 10)
     @test show(iobuf, MIME("text/plain"), fac1) === nothing
-    isapprox(length(take!(iobuf)), 301, atol=10)
+    isapprox(length(take!(iobuf)), 301; atol = 10)
 
     @test printVariable(fg1, :a) === nothing
     @test printFactor(fg1, :abf1) === nothing
@@ -117,7 +117,6 @@ end
 @testset "tags" begin
     tagsTestBlock!(fg1, var1, v1_tags)
 end
-
 
 @testset "Parametric Point Estimates" begin
     PPETestBlock!(fg1, var1)
@@ -141,7 +140,7 @@ end
 end
 
 @testset "TODO Sorteer groep" begin
-    if typeof(fg1)  <: InMemoryDFGTypes
+    if typeof(fg1) <: InMemoryDFGTypes
         testGroup!(fg1, var1, var2, fac0, fac1)
     else
         @test_skip testGroup!(fg1, var1, var2, fac0, fac1)
@@ -151,8 +150,7 @@ end
 # order up to here is important, TODO maybe make independant
 ##
 @testset "Adjacency Matrices" begin
-
-    fg = testDFGAPI(userLabel="test@navability.io")
+    fg = testDFGAPI(; userLabel = "test@navability.io")
     addVariable!(fg, var1)
     setSolvable!(fg, :a, 1)
     addVariable!(fg, var2)
@@ -160,7 +158,6 @@ end
     addVariable!(fg, vorphan)
 
     AdjacencyMatricesTestBlock(fg)
-
 end
 
 @testset "Getting Neighbors" begin
@@ -193,10 +190,9 @@ end
     ConnectivityTest(testDFGAPI)
 end
 
-
 @testset "Copy Functions" begin
     rand(6)
-    fg = testDFGAPI(userLabel="test@navability.io")
+    fg = testDFGAPI(; userLabel = "test@navability.io")
     addVariable!(fg, var1)
     addVariable!(fg, var2)
     addVariable!(fg, var3)
@@ -207,12 +203,11 @@ end
     # @test getVariableOrder(fg,:f1) == getVariableOrder(fgcopy,:f1)
 
     #test copyGraph, deepcopyGraph[!]
-    fgcopy = testDFGAPI(userLabel="test@navability.io")
+    fgcopy = testDFGAPI(; userLabel = "test@navability.io")
     DFG.deepcopyGraph!(fgcopy, fg)
-    @test getVariableOrder(fg,:abf1) == getVariableOrder(fgcopy,:abf1)
+    @test getVariableOrder(fg, :abf1) == getVariableOrder(fgcopy, :abf1)
 
     CopyFunctionsTest(testDFGAPI)
-
 end
 
 @testset "File Save Functions" begin

@@ -50,7 +50,6 @@ using StaticArrays
 
 import Base: getindex
 
-
 ##==============================================================================
 # Exports
 ##==============================================================================
@@ -66,41 +65,47 @@ export AbstractBlobStore
 # accessors & crud
 export getUserLabel, getRobotLabel, getSessionLabel
 export getDFGInfo
-export getDescription, setDescription!,
-       getSolverParams, setSolverParams!,
-       getUserData, setUserData!,
-       getRobotData, setRobotData!,
-       getSessionData, setSessionData!,
-       getAddHistory
+export getDescription,
+    setDescription!,
+    getSolverParams,
+    setSolverParams!,
+    getUserData,
+    setUserData!,
+    getRobotData,
+    setRobotData!,
+    getSessionData,
+    setSessionData!,
+    getAddHistory
 
-export  getSessionBlobEntry,
-        getSessionBlobEntries,
-        addSessionBlobEntry!,
-        addSessionBlobEntries!,
-        updateSessionBlobEntry!,
-        deleteSessionBlobEntry!,
-        getRobotBlobEntry,
-        getRobotBlobEntries,
-        addRobotBlobEntry!,
-        addRobotBlobEntries!,
-        updateRobotBlobEntry!,
-        deleteRobotBlobEntry!,
-        getUserBlobEntry,
-        getUserBlobEntries,
-        addUserBlobEntry!,
-        addUserBlobEntries!,
-        updateUserBlobEntry!,
-        deleteUserBlobEntry!
+export getSessionBlobEntry,
+    getSessionBlobEntries,
+    addSessionBlobEntry!,
+    addSessionBlobEntries!,
+    updateSessionBlobEntry!,
+    deleteSessionBlobEntry!,
+    getRobotBlobEntry,
+    getRobotBlobEntries,
+    addRobotBlobEntry!,
+    addRobotBlobEntries!,
+    updateRobotBlobEntry!,
+    deleteRobotBlobEntry!,
+    getUserBlobEntry,
+    getUserBlobEntries,
+    addUserBlobEntry!,
+    addUserBlobEntries!,
+    updateUserBlobEntry!,
+    deleteUserBlobEntry!
 
 export getBlobStore,
-       addBlobStore!,
-       updateBlobStore!,
-       deleteBlobStore!,
-       emptyBlobStore!,
-       listBlobStores
+    addBlobStore!, updateBlobStore!, deleteBlobStore!, emptyBlobStore!, listBlobStores
 
 # TODO Not sure these are needed or should work everywhere, implement in cloud?
-export updateUserData!, updateRobotData!, updateSessionData!, deleteUserData!, deleteRobotData!, deleteSessionData!
+export updateUserData!,
+    updateRobotData!,
+    updateSessionData!,
+    deleteUserData!,
+    deleteRobotData!,
+    deleteSessionData!
 export emptyUserData!, emptyRobotData!, emptySessionData!
 
 # Graph Types: exported from modules or @reexport
@@ -108,14 +113,22 @@ export InMemoryDFGTypes, LocalDFG
 
 # AbstractDFG Interface
 export exists,
-       addVariable!, addFactor!,
-       getVariable, getFactor,
-       updateVariable!, updateFactor!,
-       deleteVariable!, deleteFactor!,
-       listVariables, listFactors,
-       listSolveKeys, listSupersolves,
-       getVariables, getFactors,
-       isVariable, isFactor
+    addVariable!,
+    addFactor!,
+    getVariable,
+    getFactor,
+    updateVariable!,
+    updateFactor!,
+    deleteVariable!,
+    deleteFactor!,
+    listVariables,
+    listFactors,
+    listSolveKeys,
+    listSupersolves,
+    getVariables,
+    getFactors,
+    isVariable,
+    isFactor
 
 export getindex
 
@@ -139,7 +152,6 @@ export DFGFactor, DFGFactorSummary, SkeletonDFGFactor, PackedFactor
 
 # Common
 export getSolvable, setSolvable!, isSolvable
-export getInternalId
 export getVariableLabelNumber
 
 # accessors
@@ -150,9 +162,6 @@ export isSolveInProgress, getSolveInProgress
 
 # CRUD & SET
 export listTags, mergeTags!, removeTags!, emptyTags!
-
-#this isn't acttually implemented. TODO remove or implement
-export addTags!
 
 ##------------------------------------------------------------------------------
 # Variable
@@ -172,22 +181,24 @@ export getVariableType
 export getDimension, getManifold, getPointType
 export getPointIdentity, getPoint, getCoordinates
 
-export getManifolds # TODO Deprecate?
-
 # Small Data CRUD
-export SmallDataTypes, getSmallData, addSmallData!, updateSmallData!, deleteSmallData!, listSmallData, emptySmallData!
+export SmallDataTypes,
+    getSmallData,
+    addSmallData!,
+    updateSmallData!,
+    deleteSmallData!,
+    listSmallData,
+    emptySmallData!
 export getSmallData, setSmallData!
-
 
 # CRUD & SET
 export getVariableSolverData,
-       addVariableSolverData!,
-       updateVariableSolverData!,
-       deleteVariableSolverData!,
-       listVariableSolverData,
-       mergeVariableSolverData!,
-       cloneSolveKey!
-
+    addVariableSolverData!,
+    updateVariableSolverData!,
+    deleteVariableSolverData!,
+    listVariableSolverData,
+    mergeVariableSolverData!,
+    cloneSolveKey!
 
 # PPE
 ##------------------------------------------------------------------------------
@@ -202,14 +213,7 @@ export getPPEDict, getVariablePPEDict, getVariablePPE
 
 # CRUD & SET
 export getPPE,
-       getPPEs,
-       getVariablePPE,
-       addPPE!,
-       updatePPE!,
-       deletePPE!,
-       listPPEs,
-       mergePPEs! #TODO look at rename to just mergePPE to match with cloud?
-
+    getPPEs, getVariablePPE, addPPE!, updatePPE!, deletePPE!, listPPEs, mergePPEs! #TODO look at rename to just mergePPE to match with cloud?
 
 # Variable Node Data
 ##------------------------------------------------------------------------------
@@ -217,7 +221,8 @@ export VariableNodeData, PackedVariableNodeData
 
 export packVariableNodeData, unpackVariableNodeData
 
-export getSolvedCount, isSolved, setSolvedCount!, isInitialized, isMarginalized, setMarginalized!
+export getSolvedCount,
+    isSolved, setSolvedCount!, isInitialized, isMarginalized, setMarginalized!
 
 export getNeighborhood, listNeighbors, _getDuplicatedEmptyDFG
 export findFactorsBetweenNaive
@@ -226,14 +231,19 @@ export copyGraph!, deepcopyGraph, deepcopyGraph!, buildSubgraph, mergeGraph!
 # Entry Blob Data
 ##------------------------------------------------------------------------------
 
-export hasBlobEntry,getBlobEntry,addBlobEntry!,updateBlobEntry!,deleteBlobEntry!,listBlobEntry,listBlobEntrySequence,mergeBlobEntry!
+export hasBlobEntry,
+    getBlobEntry,
+    addBlobEntry!,
+    updateBlobEntry!,
+    deleteBlobEntry!,
+    listBlobEntrySequence,
+    mergeBlobEntries!
 export incrDataLabelSuffix
 
-export getBlobEntries, listDataEntries, hasDataEntry, hasDataEntry
+export getBlobEntries, hasDataEntry, hasDataEntry
 export getBlobEntriesVariables
 export listDataEntrySequence
 # convenience wrappers
-export mergeDataEntries!
 # aliases
 export addBlob!
 export packBlob, unpackBlob
@@ -293,8 +303,7 @@ export findShortestPathDijkstra
 export isPathFactorsHomogeneous
 
 # Comparisons
-export
-    compare,
+export compare,
     compareField,
     compareFields,
     compareAll,
@@ -303,10 +312,8 @@ export
     compareFactor,
     compareAllVariables,
     compareSimilarVariables,
-    compareSubsetFactorGraph,
     compareSimilarFactors,
     compareFactorGraphs
-
 
 ## Deprecated exports should be listed in Deprecated.jl if possible, otherwise here
 
@@ -347,6 +354,12 @@ include("entities/AbstractDFGSummary.jl")
 
 include("services/AbstractDFG.jl")
 
+#Blobs
+include("DataBlobs/services/BlobEntry.jl")
+include("DataBlobs/services/BlobStores.jl")
+include("DataBlobs/services/BlobPacking.jl")
+include("DataBlobs/services/HelpersDataWrapEntryBlob.jl")
+
 # In Memory Types
 include("GraphsDFG/GraphsDFG.jl")
 @reexport using .GraphsDFGs
@@ -362,11 +375,6 @@ include("services/DFGVariable.jl")
 include("services/DFGFactor.jl")
 include("Deprecated.jl")
 include("services/CompareUtils.jl")
-#Blobs
-include("DataBlobs/services/BlobEntry.jl")
-include("DataBlobs/services/BlobStores.jl")
-include("DataBlobs/services/BlobPacking.jl")
-include("DataBlobs/services/HelpersDataWrapEntryBlob.jl")
 
 # Include the FilesDFG API.
 include("FileDFG/FileDFG.jl")
@@ -378,7 +386,5 @@ include("services/CustomPrinting.jl")
 include("Common.jl")
 
 function plotDFG end
-
-
 
 end
