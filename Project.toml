@@ -1,6 +1,6 @@
 name = "DistributedFactorGraphs"
 uuid = "b5cc3c7e-6572-11e9-2517-99fb8daf2f04"
-version = "0.23.2"
+version = "0.23.3"
 
 [deps]
 Base64 = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"

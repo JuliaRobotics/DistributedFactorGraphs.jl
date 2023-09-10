@@ -399,7 +399,7 @@ If the blob label `datalabel_1` already exists, then this function will return t
 """
 function incrDataLabelSuffix(
     dfg::AbstractDFG,
-    vla,
+    vla::Union{Symbol, <:AbstractString},
     bllb::S;
     datalabel = Ref(""),
 ) where {S <: Union{Symbol, <:AbstractString}}
