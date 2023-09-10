@@ -88,7 +88,9 @@ function getData(
     checkhash::Bool = true,
     getlast::Bool = true,
 )
-    de_ = getBlobEntries(dfg, vlabel, key)
+    _getblobentr(g, v, k) = getBlobEntries(g, v, k)
+    _getblobentr(g, v, k::UUID) = [getBlobEntry(g, v, k);]
+    de_ = _getblobentr(dfg, vlabel, key)
     lbls = (s -> s.label).(de_)
     idx = sortperm(lbls; rev = getlast)
     _first(s) = s
