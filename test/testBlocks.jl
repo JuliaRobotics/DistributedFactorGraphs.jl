@@ -1170,7 +1170,7 @@ function blobsStoresTestBlock!(fg)
     @show bllb = DistributedFactorGraphs.incrDataLabelSuffix(fg, :a, :testing)
     newData2 = addData!(fg, fs.key, :a, bllb, testData) # convenience wrapper over addBlob!
     nbe = listBlobEntries(fg, :a)
-    filter!(s->occursin(r"testing",string(s)), nbe)
+    filter!(s -> occursin(r"testing", string(s)), nbe)
     @test 2 == length(nbe)
     # TODO: incrSuffix when adding repeat labels, e.g. :testing_1, :testing_2
     data2 = getData(fg, :a, :testing)
