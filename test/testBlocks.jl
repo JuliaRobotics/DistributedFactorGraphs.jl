@@ -1152,11 +1152,29 @@ function blobsStoresTestBlock!(fg)
     # Getting
     data = getData(fg, fs, :a, :testing) # convenience wrapper over getBlob
     @test data[1].hash == newData.hash #[1]
+    # more dispatches
+    data = getData(fg, :a, :testing) # convenience wrapper over getBlob
+    @test data[1].hash == newData.hash #[1]
+    data = getData(fg, :a, "testing") # convenience wrapper over getBlob
+    @test data[1].hash == newData.hash #[1]
+    data = getData(fg, :a, r"testing") # convenience wrapper over getBlob
+    @test data[1].hash == newData.hash #[1]
+    be = getBlobEntry(fg, :a, r"testing")
+    data = getData(fg, :a, be.originId) # convenience wrapper over getBlob
+    @test data[1].hash == newData.hash #[1]
     # @test data[2] == newData[2]
     # Updating
     updateData = updateData!(fg, fs, :a, newData, rand(UInt8, 50)) # convenience wrapper around updateBlob!
     @test updateData[1].hash != data[1].hash
     @test updateData[2] != data[2]
+    @show bllb = DistributedFactorGraphs.incrDataLabelSuffix(fg, :a, :testing)
+    newData2 = addData!(fg, fs.key, :a, bllb, testData) # convenience wrapper over addBlob!
+    nbe = listBlobEntries(fg, :a)
+    filter!(s->occursin(r"testing",string(s)), nbe)
+    @test 2 == length(nbe)
+    # TODO: incrSuffix when adding repeat labels, e.g. :testing_1, :testing_2
+    data2 = getData(fg, :a, :testing)
+    data3 = getData(fg, :a, bllb)
     # Deleting
     return retData = deleteData!(fg, :a, :testing) # convenience wrapper around deleteBlob!
 end
