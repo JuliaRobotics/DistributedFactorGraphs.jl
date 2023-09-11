@@ -195,6 +195,18 @@ Notes:
 function deleteBlobEntry!(var::AbstractDFGVariable, key::Symbol)
     return pop!(var.dataDict, key)
 end
+
+function deleteBlobEntry!(var::PackedVariable, key::Symbol)
+    if !hasBlobEntry(var, key)
+        throw(
+            KeyError(
+                "No dataEntry label $(key) found in variable $(getLabel(var)). Available keys: $(keys(var.dataDict))",
+            ),
+        )
+    end
+    return deleteat!(var.blobEntries, findfirst(x -> x.label == key, var.blobEntries))
+end
+
 function deleteBlobEntry!(dfg::AbstractDFG, label::Symbol, key::Symbol)
     #users responsibility to delete data in db before deleting entry
     # !isVariable(dfg, label) && return nothing
