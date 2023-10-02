@@ -373,12 +373,12 @@ end
 function getBiadjacencyMatrix(
     dfg::GraphsDFG;
     solvable::Int = 0,
+    varLabels = listVariables(dfg; solvable = solvable),
+    factLabels = listFactors(dfg; solvable = solvable),
 )::NamedTuple{
     (:B, :varLabels, :facLabels),
     Tuple{Graphs.SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}},
 }
-    varLabels = listVariables(dfg; solvable = solvable)
-    factLabels = listFactors(dfg; solvable = solvable)
     varIndex = [dfg.g.labels[s] for s in varLabels]
     factIndex = [dfg.g.labels[s] for s in factLabels]
 
