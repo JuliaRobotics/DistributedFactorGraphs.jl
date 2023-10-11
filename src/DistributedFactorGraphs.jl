@@ -233,6 +233,7 @@ export copyGraph!, deepcopyGraph, deepcopyGraph!, buildSubgraph, mergeGraph!
 
 export hasBlobEntry,
     getBlobEntry,
+    getBlobEntryFirst,
     addBlobEntry!,
     updateBlobEntry!,
     deleteBlobEntry!,
