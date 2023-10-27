@@ -1076,7 +1076,7 @@ function copyGraph!(
     overwriteDest::Bool = false,
     deepcopyNodes::Bool = false,
     verbose::Bool = false,
-    showprogress::Bool = false,
+    showprogress::Bool = verbose,
 )
     # Split into variables and factors
     sourceVariables = map(vId -> getVariable(sourceDFG, vId), variableLabels)
