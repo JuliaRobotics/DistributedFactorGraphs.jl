@@ -1076,13 +1076,15 @@ function copyGraph!(
     overwriteDest::Bool = false,
     deepcopyNodes::Bool = false,
     verbose::Bool = false,
+    showprogress::Bool = false,
 )
     # Split into variables and factors
     sourceVariables = map(vId -> getVariable(sourceDFG, vId), variableLabels)
     sourceFactors = map(fId -> getFactor(sourceDFG, fId), factorLabels)
 
     # Now we have to add all variables first,
-    @showprogress "copy variables" for variable in sourceVariables
+    @showprogress desc = "copy variables" enabled = showprogress for variable in
+                                                                     sourceVariables
         variableCopy = deepcopyNodes ? deepcopy(variable) : variable
         if !exists(destDFG, variable)
             addVariable!(destDFG, variableCopy)
@@ -1093,7 +1095,7 @@ function copyGraph!(
         end
     end
     # And then all factors to the destDFG.
-    @showprogress "copy factors" for factor in sourceFactors
+    @showprogress desc = "copy factors" enabled = showprogress for factor in sourceFactors
         # Get the original factor variables (we need them to create it)
         sourceFactorVariableIds = collect(factor._variableOrderSymbols)
         # Find the labels and associated variables in our new subgraph
