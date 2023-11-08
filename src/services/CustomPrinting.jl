@@ -143,7 +143,7 @@ function printFactor(
         for f in setdiff(fieldnames(fctt), skipfields)
             printstyled(ioc, f, ":"; color = :magenta)
             println(ioc)
-            show(ioc, getproperty(fct, f))
+            show(ioc, typeof(getproperty(fct, f)).name.name)
             println(ioc)
         end
     else
