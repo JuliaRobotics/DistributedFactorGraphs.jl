@@ -91,6 +91,8 @@ loadDFG!(dfg, "/tmp/savedgraph.tar.gz")
 # Use the DFG as you do normally.
 ls(dfg)
 ```
+
+See also: [`loadDFG`](@ref), [`saveDFG`](@ref)
 """
 function loadDFG!(
     dfgLoadInto::AbstractDFG,
@@ -218,6 +220,13 @@ function loadDFG!(
     return dfgLoadInto
 end
 
+"""
+    $SIGNATURES
+
+Convenience graph loader into a default `LocalDFG`.
+
+See also: [`loadDFG!`](@ref), [`saveDFG`](@ref)
+"""
 function loadDFG(file::AbstractString)
 
     # add if doesn't have .tar.gz extension
@@ -238,7 +247,7 @@ function loadDFG(file::AbstractString)
     fgPacked = JSON3.read(jstr, GraphsDFGs.PackedGraphsDFG)
     dfg = GraphsDFGs.unpackDFGMetadata(fgPacked)
 
-    @debug "DFG.loadDFG! is deleting a temp folder created during unzip, $loaddir"
+    @debug "DFG.loadDFG is deleting a temp folder created during unzip, $loaddir"
     # cleanup temporary folder
     Base.rm(loaddir; recursive = true, force = true)
 

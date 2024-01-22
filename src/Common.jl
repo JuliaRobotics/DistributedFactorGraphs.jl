@@ -124,5 +124,16 @@ end
 ## Additional Downstream dispatches
 ## =================================
 
+"""
+    $SIGNATURES
+
+Default non-parametric graph solution.
+"""
 function solveGraph! end
+
+"""
+    $SIGNATURES
+
+Standard parametric graph solution (Experimental).
+"""
 function solveGraphParametric! end
