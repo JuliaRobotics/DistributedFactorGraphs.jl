@@ -148,9 +148,9 @@ end
     Aqua.test_ambiguities([DistributedFactorGraphs])
     Aqua.test_unbound_args(DistributedFactorGraphs)
     Aqua.test_undefined_exports(DistributedFactorGraphs)
-    Aqua.test_piracy(DistributedFactorGraphs)
+    Aqua.test_piracies(DistributedFactorGraphs)
     Aqua.test_project_extras(DistributedFactorGraphs)
     Aqua.test_stale_deps(DistributedFactorGraphs; ignore = [:Colors])
     Aqua.test_deps_compat(DistributedFactorGraphs)
-    Aqua.test_project_toml_formatting(DistributedFactorGraphs)
+    # Aqua.test_project_toml_formatting(DistributedFactorGraphs) # deprecated in Aqua.jl v0.8
 end
