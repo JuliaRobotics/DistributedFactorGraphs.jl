@@ -84,9 +84,9 @@ Solved graphs contain packed parametric estimates for the variables, which are k
 
 For each PPE structure, there are accessors for getting individual values:
 
-- [`getMaxPPE`](@ref)
-- [`getMeanPPE`](@ref)
-- [`getSuggestedPPE`](@ref)
+- [`getPPEMax`](@ref)
+- [`getPPEMean`](@ref)
+- [`getPPESuggested`](@ref)
 
 
 Related functions for getting, adding/updating, and deleting PPE structures:
