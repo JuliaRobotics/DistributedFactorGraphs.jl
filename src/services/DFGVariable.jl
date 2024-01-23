@@ -475,6 +475,12 @@ Return full dictionary of PPEs in a variable, recommended to rather use CRUD: [`
 """
 getVariablePPEDict(vari::VariableDataLevel1) = getPPEDict(vari)
 
+"""
+    getVariablePPE(::DFGVariable)
+    getVariablePPE(::VariableNodeData)
+
+Get the Parametric Point Estimate of the given variable.
+"""
 getVariablePPE(args...) = getPPE(args...)
 
 ##------------------------------------------------------------------------------
@@ -956,7 +962,7 @@ Notes
 - Defaults on keywords `solveKey` and `method`
 
 Related
-[`getMeanPPE`](@ref), [`getMaxPPE`](@ref), [`updatePPE!`](@ref), getKDEMean, getKDEFit, getPPEs, getVariablePPEs
+[`getPPEMean`](@ref), [`getPPEMax`](@ref), [`updatePPE!`](@ref), `mean(BeliefType)`
 """
 function getPPE(v::DFGVariable, ppekey::Symbol = :default)
     !haskey(v.ppeDict, ppekey) &&
