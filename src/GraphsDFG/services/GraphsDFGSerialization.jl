@@ -65,8 +65,19 @@ function unpackDFGMetadata(packed::PackedGraphsDFG)
     #FIXME Deprecate remove in DFG v0.24
     setdiff!(commonfields, [:blobStores])
     blobStores = Dict{Symbol, AbstractBlobStore}()
+    
     !isnothing(packed.blobStores) && merge!(blobStores, packed.blobStores)
 
+    _isfolderstorepath(s) = false
+    _isfolderstorepath(s::FolderStore) = ispath(s)
+    # FIXME escalate to keyword
+    for (ks,bs) in blobStores
+        if !_isfolderstorepath(bs)
+            delete!(blobStores, ks)
+            @warn("Unable to load blobstore, $(ks)")
+        end
+    end
+    
     props = (k => getproperty(packed, k) for k in commonfields)
 
     VT = if isnothing(packed.typePackedVariable) || !packed.typePackedVariable
