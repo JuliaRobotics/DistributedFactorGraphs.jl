@@ -251,5 +251,5 @@ function loadDFG(file::AbstractString)
     # cleanup temporary folder
     Base.rm(loaddir; recursive = true, force = true)
 
-    return loadDFG!(dfg, file)
+    return loadDFG!(dfg, file; overwriteDFGMetadata = false)
 end
