@@ -183,9 +183,9 @@ end
 
 function FolderStore(foldername::String; createfolder = true)
     if createfolder && !isdir(foldername)
-        @info "Folder '$folder' doesn't exist - creating."
+        @info "Folder '$foldername' doesn't exist - creating."
         # create new folder
-        mkpath(folder)
+        mkpath(foldername)
     end
     return FolderStore{Vector{UInt8}}(:default_folder_store, foldername)
 end
