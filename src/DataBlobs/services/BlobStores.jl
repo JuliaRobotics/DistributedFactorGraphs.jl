@@ -179,17 +179,14 @@ end
 struct FolderStore{T} <: AbstractBlobStore{T}
     key::Symbol
     folder::String
-    function FolderStore{T}(key, folder) where {T}
-        if !isdir(folder)
-            @info "Folder '$folder' doesn't exist - creating."
-            # create new folder
-            mkpath(folder)
-        end
-        return new(key, folder)
-    end
 end
 
-function FolderStore(foldername::String)
+function FolderStore(foldername::String; createfolder = true)
+    if createfolder && !isdir(foldername)
+        @info "Folder '$foldername' doesn't exist - creating."
+        # create new folder
+        mkpath(foldername)
+    end
     return FolderStore{Vector{UInt8}}(:default_folder_store, foldername)
 end
 
