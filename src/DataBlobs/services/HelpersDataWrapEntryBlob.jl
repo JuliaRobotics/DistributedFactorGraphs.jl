@@ -122,6 +122,7 @@ function getData(
     return de => db
 end
 
+#FIXME Should `addData!`` not return entry=>blob pair?
 function addData!(
     dfg::AbstractDFG,
     label::Symbol,
@@ -171,7 +172,6 @@ function addData!(
     )
 end
 
-#FIXME id used wrong
 function addData!(
     dfg::AbstractDFG,
     blobstore::AbstractBlobStore,
@@ -182,14 +182,15 @@ function addData!(
     description = "",
     metadata = "",
     mimeType::String = "application/octet-stream",
-    id::Union{UUID, Nothing} = nothing, #only assign if blobstore issued you an id
+    id::Union{UUID, Nothing} = nothing,
+    blobId::Union{UUID, Nothing} = nothing, #only assign if blobstore issued you an id
     originId::UUID = uuid4(),
     hashfunction = sha256,
 )
     #
-    @warn "ID's and origin IDs should be reconciled here in DFG.addData!." maxlog = 50
     entry = BlobEntry(;
         id,
+        blobId,
         originId,
         label = bLbl,
         blobstore = blobstore.key,
@@ -202,6 +203,40 @@ function addData!(
     )
 
     return addData!(dfg, blobstore, vLbl, entry, blob; hashfunction)
+end
+
+function addData!(
+    dfg::AbstractDFG,
+    blobstore::AbstractBlobStore{T},
+    vLbl::Symbol,
+    blobLabel::Symbol,
+    blob::T,
+    timestamp = now(localzone());
+    description = "",
+    metadata = "",
+    mimeType::String = "application/octet-stream",
+    origin = buildSourceString(dfg, vLbl),
+    # hashfunction = sha256,
+) where T
+    #
+    # checkhash && assertHash(entry, blob; hashfunction)
+    blobId = addBlob!(blobstore, blob)
+
+    entry = BlobEntry(;
+        blobId,
+        originId = blobId,
+        label = blobLabel,
+        blobstore = blobstore.key,
+        # hash = string(bytes2hex(hashfunction(blob))),
+        hash = "",
+        origin,
+        description,
+        mimeType,
+        metadata,
+        timestamp,
+    )
+    addBlobEntry!(dfg, vLbl, entry)
+    return entry => blob
 end
 
 function updateData!(
