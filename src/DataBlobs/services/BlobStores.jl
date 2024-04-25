@@ -352,6 +352,13 @@ struct RowBlob{T} <: Tables.AbstractRow
     id::UUID
     blob::T
 end
+
+function RowBlob(::Type{T}, nt::NamedTuple) where T
+    id = nt.id
+    blob = T(nt[keys(nt)[2:end]])
+    RowBlob(id, blob)
+end
+
 function Tables.getcolumn(row::RowBlob, i::Int)
     return i == 1 ? getfield(row, :id) : Tables.getcolumn(getfield(row, :blob), i-1)
 end
@@ -375,6 +382,15 @@ function RowBlobStore{T}(storeKey::Symbol) where {T}
 end
 function RowBlobStore(storeKey::Symbol, T::DataType)
     return RowBlobStore{T}(storeKey)
+end
+
+function RowBlobStore(storeKey::Symbol, T::DataType, table)
+    store = RowBlobStore(storeKey, T)
+    for nt in Tables.namedtupleiterator(table)
+        row = DFG.RowBlob(T, nt)
+        store.blobs[row.id] = row
+    end
+    return store
 end
 
 # Tables interface
