@@ -217,7 +217,7 @@ function addData!(
     mimeType::String = "application/octet-stream",
     origin = buildSourceString(dfg, vLbl),
     # hashfunction = sha256,
-) where T
+) where {T}
     #
     # checkhash && assertHash(entry, blob; hashfunction)
     blobId = addBlob!(blobstore, blob)

@@ -339,8 +339,6 @@ end
 deleteBlob!(store::LinkStore, ::BlobEntry) = deleteBlob!(store)
 deleteBlob!(store::LinkStore, ::UUID) = deleteBlob!(store)
 
-
-
 ##==============================================================================
 ## RowBlobStore Ordered Dict Row Table Blob Store
 ##==============================================================================
@@ -353,22 +351,21 @@ struct RowBlob{T} <: Tables.AbstractRow
     blob::T
 end
 
-function RowBlob(::Type{T}, nt::NamedTuple) where T
+function RowBlob(::Type{T}, nt::NamedTuple) where {T}
     id = nt.id
     blob = T(nt[keys(nt)[2:end]])
-    RowBlob(id, blob)
+    return RowBlob(id, blob)
 end
 
 function Tables.getcolumn(row::RowBlob, i::Int)
-    return i == 1 ? getfield(row, :id) : Tables.getcolumn(getfield(row, :blob), i-1)
+    return i == 1 ? getfield(row, :id) : Tables.getcolumn(getfield(row, :blob), i - 1)
 end
-function Tables.getcolumn(row::RowBlob, nm::Symbol) 
-    return nm == :id ? getfield(row, :id) : Tables.getcolumn(getfield(row, :blob), nm) 
+function Tables.getcolumn(row::RowBlob, nm::Symbol)
+    return nm == :id ? getfield(row, :id) : Tables.getcolumn(getfield(row, :blob), nm)
 end
-function Tables.columnnames(row::RowBlob) 
+function Tables.columnnames(row::RowBlob)
     return (:id, Tables.columnnames(getfield(row, :blob))...)
 end
-
 
 ## RowBlobStore
 
@@ -394,12 +391,11 @@ function RowBlobStore(storeKey::Symbol, T::DataType, table)
 end
 
 # Tables interface
-Tables.istable(::Type{RowBlobStore{T}}) where T = true
-Tables.rowaccess(::Type{RowBlobStore{T}}) where T = true
+Tables.istable(::Type{RowBlobStore{T}}) where {T} = true
+Tables.rowaccess(::Type{RowBlobStore{T}}) where {T} = true
 Tables.rows(store::RowBlobStore) = values(store.blobs)
 #TODO
 # Tables.materializer(::Type{RowBlobStore{T}}) where T = Tables.rowtable
-
 
 ##
 function getBlob(store::RowBlobStore, blobId::UUID)
@@ -429,46 +425,41 @@ hasBlob(store::RowBlobStore, blobId::UUID) = haskey(store.blobs, blobId)
 
 listBlobs(store::RowBlobStore) = collect(keys(store.blobs))
 
-
 # TODO also see about wrapping a table directly
 ##
 if false
+    rb = RowBlob(uuid4(), (a = [1, 2], b = [3, 4]))
 
+    Tables.columnnames(rb)
 
-rb = RowBlob(uuid4(),(a=[1,2], b=[3,4]))
+    tstore = RowBlobStore(:namedtuple, @NamedTuple{a::Vector{Int}, b::Vector{Int}})
 
-Tables.columnnames(rb)
+    addBlob!(tstore, uuid4(), (a = [1, 2], b = [3, 4]))
+    addBlob!(tstore, uuid4(), (a = [5, 6], b = [7, 8]))
+    addBlob!(tstore, uuid4(), (a = [9, 10], b = [11, 12]))
 
+    rowtbl = Tables.rowtable(tstore)
+    coltbl = Tables.columntable(rowtbl)
 
-tstore = RowBlobStore(:namedtuple, @NamedTuple{a::Vector{Int}, b::Vector{Int}})
+    Tables.rows(tstore)
+    tbl = Tables.rowtable(tstore)
 
-addBlob!(tstore, uuid4(), (a=[1,2], b=[3,4]))
-addBlob!(tstore, uuid4(), (a=[5,6], b=[7,8]))
-addBlob!(tstore, uuid4(), (a=[9,10], b=[11,12]))
+    first(Tables.namedtupleiterator(tstore))
 
-rowtbl = Tables.rowtable(tstore)
-coltbl = Tables.columntable(rowtbl)
+    # Tables.materializer(tstore)
 
+    ##
+    struct Foo
+        a::Float64
+        b::Float64
+    end
 
-Tables.rows(tstore)
-tbl = Tables.rowtable(tstore)
+    sstore = RowBlobStore(:struct_Foo, Foo)
 
-first(Tables.namedtupleiterator(tstore))
+    addBlob!(sstore, uuid4(), Foo(1, 2))
+    addBlob!(sstore, uuid4(), Foo(3, 4))
+    addBlob!(sstore, uuid4(), Foo(5, 6))
 
-# Tables.materializer(tstore)
-
-##
-struct Foo
-    a::Float64
-    b::Float64
-end
-
-sstore = RowBlobStore(:struct_Foo, Foo)
-
-addBlob!(sstore, uuid4(), Foo(1,2))
-addBlob!(sstore, uuid4(), Foo(3,4))
-addBlob!(sstore, uuid4(), Foo(5,6))
-
-Tables.rowtable(sstore)
+    Tables.rowtable(sstore)
 end
 ##
