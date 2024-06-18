@@ -51,6 +51,51 @@ function _getPriorType(_type::Type{<:InferenceVariable})
     return getfield(_type.name.module, Symbol(:Prior, _type.name.name))
 end
 
+
+##==============================================================================
+## Default Factors Function Macro
+##==============================================================================
+function pack end
+function unpack end
+"""
+    @defFactorFunction StructName factortype<:AbstractFactor manifolds<:ManifoldsBase.AbstractManifold
+
+A macro to create a new factor function with name `StructName` and manifolds.  Note that 
+the `manifolds` is an object and *must* be a subtype of `ManifoldsBase.AbstractManifold`.
+See documentation in [Manifolds.jl on making your own](https://juliamanifolds.github.io/Manifolds.jl/stable/examples/manifold.html). 
+
+Example:
+```
+DFG.@defFactorFunction Pose2Pos2 AbstractManifoldMinimize SpecialEuclidean(2)
+```
+"""
+macro defFactorFunction(structname, factortype, manifold)
+    packedstructname = Symbol("Packed", structname)
+    return esc(
+        quote
+            Base.@__doc__ struct $structname{T} <: $factortype 
+                Z::T
+            end
+
+            # Base.@__doc__ struct $packedstructname{T<:PackedSamplableBelief} <: AbstractPackedFactor 
+            Base.@__doc__ struct $packedstructname{T} <: AbstractPackedFactor 
+                Z::T
+            end
+
+            # user manifold must be a <:Manifold
+            @assert ($manifold isa AbstractManifold) "@defVariable of " *
+                                                     string($structname) *
+                                                     " requires that the " *
+                                                     string($manifold) *
+                                                     " be a subtype of `ManifoldsBase.AbstractManifold`"
+
+            DFG.getManifold(::Type{$structname}) = $manifold
+            DFG.pack(d::$structname) = $packedstructname(packDistribution(d.Z))
+            DFG.unpack(d::$packedstructname) = $structname(unpackDistribution(d.Z)) 
+        end,
+    )
+end
+
 ##==============================================================================
 ## Factors
 ##==============================================================================
