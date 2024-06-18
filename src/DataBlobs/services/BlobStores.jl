@@ -181,13 +181,13 @@ struct FolderStore{T} <: AbstractBlobStore{T}
     folder::String
 end
 
-function FolderStore(foldername::String; createfolder = true)
+function FolderStore(foldername::String; label=:default_folder_store, createfolder = true)
     if createfolder && !isdir(foldername)
         @info "Folder '$foldername' doesn't exist - creating."
         # create new folder
         mkpath(foldername)
     end
-    return FolderStore{Vector{UInt8}}(:default_folder_store, foldername)
+    return FolderStore{Vector{UInt8}}(label, foldername)
 end
 
 blobfilename(store::FolderStore, blobId::UUID) = joinpath(store.folder, string(blobId))
