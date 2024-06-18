@@ -51,7 +51,6 @@ function _getPriorType(_type::Type{<:InferenceVariable})
     return getfield(_type.name.module, Symbol(:Prior, _type.name.name))
 end
 
-
 ##==============================================================================
 ## Default Factors Function Macro
 ##==============================================================================
@@ -73,12 +72,12 @@ macro defFactorFunction(structname, factortype, manifold)
     packedstructname = Symbol("Packed", structname)
     return esc(
         quote
-            Base.@__doc__ struct $structname{T} <: $factortype 
+            Base.@__doc__ struct $structname{T} <: $factortype
                 Z::T
             end
 
             # Base.@__doc__ struct $packedstructname{T<:PackedSamplableBelief} <: AbstractPackedFactor 
-            Base.@__doc__ struct $packedstructname{T} <: AbstractPackedFactor 
+            Base.@__doc__ struct $packedstructname{T} <: AbstractPackedFactor
                 Z::T
             end
 
@@ -91,7 +90,7 @@ macro defFactorFunction(structname, factortype, manifold)
 
             DFG.getManifold(::Type{$structname}) = $manifold
             DFG.pack(d::$structname) = $packedstructname(packDistribution(d.Z))
-            DFG.unpack(d::$packedstructname) = $structname(unpackDistribution(d.Z)) 
+            DFG.unpack(d::$packedstructname) = $structname(unpackDistribution(d.Z))
         end,
     )
 end
