@@ -38,6 +38,7 @@ using OrderedCollections
 export OrderedDict
 
 using CSV
+using Tables
 
 # used for @defVariable
 import ManifoldsBase

@@ -1302,7 +1302,7 @@ function getNeighborhood(
     solvable::Int = 0,
 )
     # find neighbors at distance to add
-    neighbors = Symbol[]
+    neighbors = Set{Symbol}()
     if distance > 0
         for l in variableFactorLabels
             union!(neighbors, getNeighborhood(dfg, l, distance))
