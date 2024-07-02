@@ -2,8 +2,7 @@
 ## ================================================================================
 ## Remove in v0.25
 ##=================================================================================
-@deprecate getBlobEntry(var::AbstractDFGVariable, key::AbstractString) =
-    getBlobEntryFirst(var, Regex(key))
+@deprecate getBlobEntry(var::AbstractDFGVariable, key::AbstractString) getBlobEntryFirst(var, Regex(key))
 
 ## ================================================================================
 ## Remove in v0.24
