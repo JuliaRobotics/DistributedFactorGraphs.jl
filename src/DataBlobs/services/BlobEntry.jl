@@ -126,14 +126,11 @@ function getBlobEntryFirst(var::Variable, key::Regex)
     return var.blobEntries[firstIdx]
 end
 
-getBlobEntry(var::AbstractDFGVariable, key::AbstractString) = getBlobEntry(var, Regex(key))
+function getBlobEntryFirst(dfg::AbstractDFG, label::Symbol, key::Regex)
+    return getBlobEntryFirst(getVariable(dfg, label), key)
+end
 
-#TODO split betweeen getfirstBlobEntry and getBlobEntry
-function getBlobEntry(
-    dfg::AbstractDFG,
-    label::Symbol,
-    key::Union{Symbol, UUID, <:AbstractString, Regex},
-)
+function getBlobEntry(dfg::AbstractDFG, label::Symbol, key::Union{Symbol, UUID})
     return getBlobEntry(getVariable(dfg, label), key)
 end
 # getBlobEntry(dfg::AbstractDFG, label::Symbol, key::Symbol) = getBlobEntry(getVariable(dfg, label), key)
