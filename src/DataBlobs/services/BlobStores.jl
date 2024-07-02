@@ -181,7 +181,7 @@ struct FolderStore{T} <: AbstractBlobStore{T}
     folder::String
 end
 
-function FolderStore(foldername::String; label=:default_folder_store, createfolder = true)
+function FolderStore(foldername::String; label = :default_folder_store, createfolder = true)
     if createfolder && !isdir(foldername)
         @info "Folder '$foldername' doesn't exist - creating."
         # create new folder
