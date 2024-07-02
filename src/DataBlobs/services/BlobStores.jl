@@ -190,10 +190,10 @@ function FolderStore(foldername::String; createfolder = true)
     return FolderStore{Vector{UInt8}}(:default_folder_store, foldername)
 end
 
-blobfilename(store::FolderStore, blobId::UUID) = joinpath(store.folder, "$blobId.dat")
+blobfilename(store::FolderStore, blobId::UUID) = joinpath(store.folder, string(blobId))
 
 function getBlob(store::FolderStore{T}, blobId::UUID) where {T}
-    blobfilename = joinpath(store.folder, "$blobId.dat")
+    blobfilename = joinpath(store.folder, string(blobId))
     if isfile(blobfilename)
         open(blobfilename) do f
             return read(f)
@@ -204,7 +204,7 @@ function getBlob(store::FolderStore{T}, blobId::UUID) where {T}
 end
 
 function addBlob!(store::FolderStore{T}, blobId::UUID, data::T) where {T}
-    blobfilename = joinpath(store.folder, "$blobId.dat")
+    blobfilename = joinpath(store.folder, string(blobId))
     if isfile(blobfilename)
         throw(KeyError("Key '$blobId' blob already exists."))
     else
@@ -217,7 +217,7 @@ function addBlob!(store::FolderStore{T}, blobId::UUID, data::T) where {T}
 end
 
 function updateBlob!(store::FolderStore{T}, blobId::UUID, data::T) where {T}
-    blobfilename = joinpath(store.folder, "$blobId.dat")
+    blobfilename = joinpath(store.folder, string(blobId))
     if !isfile(blobfilename)
         @warn "Key '$blobId' doesn't exist."
     else
@@ -229,7 +229,7 @@ function updateBlob!(store::FolderStore{T}, blobId::UUID, data::T) where {T}
 end
 
 function deleteBlob!(store::FolderStore{T}, blobId::UUID) where {T}
-    blobfilename = joinpath(store.folder, "$blobId.dat")
+    blobfilename = joinpath(store.folder, string(blobId))
 
     data = getBlob(store, blobId)
     rm(blobfilename)
@@ -238,7 +238,7 @@ end
 
 #hasBlob or existsBlob?
 function hasBlob(store::FolderStore, blobId::UUID)
-    blobfilename = joinpath(store.folder, "$blobId.dat")
+    blobfilename = joinpath(store.folder, string(blobId))
     return isfile(blobfilename)
 end
 
