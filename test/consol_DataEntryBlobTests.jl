@@ -86,7 +86,7 @@ dataset2 = rand(UInt8, 1000)
 ##==============================================================================
 
 # Create a data store and add it to DFG
-mkdir("/tmp/dfgFolderStore")
+mkpath("/tmp/dfgFolderStore")
 ds = FolderStore{Vector{UInt8}}(:filestore, "/tmp/dfgFolderStore")
 addBlobStore!(dfg, ds)
 

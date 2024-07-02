@@ -241,9 +241,8 @@ export hasBlobEntry,
     mergeBlobEntries!
 export incrDataLabelSuffix
 
-export getBlobEntries, hasDataEntry, hasDataEntry
+export getBlobEntries
 export getBlobEntriesVariables
-export listDataEntrySequence
 # convenience wrappers
 # aliases
 export addBlob!

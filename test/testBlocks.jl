@@ -1159,7 +1159,7 @@ function blobsStoresTestBlock!(fg)
     @test data[1].hash == newData.hash #[1]
     data = getData(fg, :a, r"testing") # convenience wrapper over getBlob
     @test data[1].hash == newData.hash #[1]
-    be = getBlobEntry(fg, :a, r"testing")
+    be = getBlobEntryFirst(fg, :a, r"testing")
     data = getData(fg, :a, be.originId) # convenience wrapper over getBlob
     @test data[1].hash == newData.hash #[1]
     # @test data[2] == newData[2]
