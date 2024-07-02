@@ -1,5 +1,11 @@
 Listing news on any major breaking changes in DFG.  For regular changes, see integrated Github.com project milestones for DFG.
+
+# v0.24
+
+- Remove `FolderStore` `.dat` legacy extension. To upgrade a legacy FolderStore remove extention with something like: `foreach(f->mv(f,split(f,".")[1]), files)`
+
 # v0.23
+
 - save/loadDFG now users Tar.jl and CodecZlib.jl #351.
 - save/loadDFG now preserves meta fields #921.
 - Deprecate getNeighbors for listNeighbors.
