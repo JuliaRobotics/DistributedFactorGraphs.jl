@@ -130,6 +130,16 @@ function getBlobEntryFirst(dfg::AbstractDFG, label::Symbol, key::Regex)
     return getBlobEntryFirst(getVariable(dfg, label), key)
 end
 
+# TODO Consider autogenerating all methods of the form:
+# verbNoun(dfg::DFGVariable, label::Symbol, args...; kwargs...) = verbNoun(getVariable(dfg, label), args...; kwargs...)
+# with something like:
+# getvariablemethod = [
+#     :getBlobEntryFirst,
+# ]
+# for met in methodstooverload  
+#     @eval DistributedFactorGraphs $met(dfg::AbstractDFG, label::Symbol, args...; kwargs...) = $met(getVariable(dfg, label), args...; kwargs...)
+# end
+
 function getBlobEntry(dfg::AbstractDFG, label::Symbol, key::Union{Symbol, UUID})
     return getBlobEntry(getVariable(dfg, label), key)
 end

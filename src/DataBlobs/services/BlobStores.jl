@@ -181,13 +181,13 @@ struct FolderStore{T} <: AbstractBlobStore{T}
     folder::String
 end
 
-function FolderStore(foldername::String; createfolder = true)
+function FolderStore(foldername::String; label = :default_folder_store, createfolder = true)
     if createfolder && !isdir(foldername)
         @info "Folder '$foldername' doesn't exist - creating."
         # create new folder
         mkpath(foldername)
     end
-    return FolderStore{Vector{UInt8}}(:default_folder_store, foldername)
+    return FolderStore{Vector{UInt8}}(label, foldername)
 end
 
 blobfilename(store::FolderStore, blobId::UUID) = joinpath(store.folder, string(blobId))
@@ -254,7 +254,7 @@ struct InMemoryBlobStore{T} <: AbstractBlobStore{T}
 end
 
 function InMemoryBlobStore{T}(storeKey::Symbol) where {T}
-    return InMemoryBlobStore{Vector{UInt8}}(storeKey, Dict{UUID, T}())
+    return InMemoryBlobStore{T}(storeKey, Dict{UUID, T}())
 end
 function InMemoryBlobStore(storeKey::Symbol = :default_inmemory_store)
     return InMemoryBlobStore{Vector{UInt8}}(storeKey)
@@ -338,3 +338,128 @@ end
 
 deleteBlob!(store::LinkStore, ::BlobEntry) = deleteBlob!(store)
 deleteBlob!(store::LinkStore, ::UUID) = deleteBlob!(store)
+
+##==============================================================================
+## RowBlobStore Ordered Dict Row Table Blob Store
+##==============================================================================
+
+# RowBlob
+# T must be compatable with the AbstactRow iterator
+# struct and named tuple as examples
+struct RowBlob{T} <: Tables.AbstractRow
+    id::UUID
+    blob::T
+end
+
+function RowBlob(::Type{T}, nt::NamedTuple) where {T}
+    id = nt.id
+    blob = T(nt[keys(nt)[2:end]])
+    return RowBlob(id, blob)
+end
+
+function Tables.getcolumn(row::RowBlob, i::Int)
+    return i == 1 ? getfield(row, :id) : Tables.getcolumn(getfield(row, :blob), i - 1)
+end
+function Tables.getcolumn(row::RowBlob, nm::Symbol)
+    return nm == :id ? getfield(row, :id) : Tables.getcolumn(getfield(row, :blob), nm)
+end
+function Tables.columnnames(row::RowBlob)
+    return (:id, Tables.columnnames(getfield(row, :blob))...)
+end
+
+## RowBlobStore
+
+struct RowBlobStore{T} <: AbstractBlobStore{T}
+    key::Symbol
+    blobs::OrderedDict{UUID, RowBlob{T}}
+end
+
+function RowBlobStore{T}(storeKey::Symbol) where {T}
+    return RowBlobStore{T}(storeKey, OrderedDict{UUID, RowBlob{T}}())
+end
+function RowBlobStore(storeKey::Symbol, T::DataType)
+    return RowBlobStore{T}(storeKey)
+end
+
+function RowBlobStore(storeKey::Symbol, T::DataType, table)
+    store = RowBlobStore(storeKey, T)
+    for nt in Tables.namedtupleiterator(table)
+        row = DFG.RowBlob(T, nt)
+        store.blobs[row.id] = row
+    end
+    return store
+end
+
+# Tables interface
+Tables.istable(::Type{RowBlobStore{T}}) where {T} = true
+Tables.rowaccess(::Type{RowBlobStore{T}}) where {T} = true
+Tables.rows(store::RowBlobStore) = values(store.blobs)
+#TODO
+# Tables.materializer(::Type{RowBlobStore{T}}) where T = Tables.rowtable
+
+##
+function getBlob(store::RowBlobStore, blobId::UUID)
+    return getfield(store.blobs[blobId], :blob)
+end
+
+function addBlob!(store::RowBlobStore{T}, blobId::UUID, blob::T) where {T}
+    if haskey(store.blobs, blobId)
+        error("Key '$blobId' blob already exists.")
+    end
+    store.blobs[blobId] = RowBlob(blobId, blob)
+    return blobId
+end
+
+function updateBlob!(store::RowBlobStore{T}, blobId::UUID, blob::T) where {T}
+    if haskey(store.blobs, blobId)
+        @warn "Key '$blobId' doesn't exist."
+    end
+    return store.blobs[blobId] = RowBlob(blobId, blob)
+end
+
+function deleteBlob!(store::RowBlobStore, blobId::UUID)
+    return getfield(pop!(store.blobs, blobId), :blob)
+end
+
+hasBlob(store::RowBlobStore, blobId::UUID) = haskey(store.blobs, blobId)
+
+listBlobs(store::RowBlobStore) = collect(keys(store.blobs))
+
+# TODO also see about wrapping a table directly
+##
+if false
+    rb = RowBlob(uuid4(), (a = [1, 2], b = [3, 4]))
+
+    Tables.columnnames(rb)
+
+    tstore = RowBlobStore(:namedtuple, @NamedTuple{a::Vector{Int}, b::Vector{Int}})
+
+    addBlob!(tstore, uuid4(), (a = [1, 2], b = [3, 4]))
+    addBlob!(tstore, uuid4(), (a = [5, 6], b = [7, 8]))
+    addBlob!(tstore, uuid4(), (a = [9, 10], b = [11, 12]))
+
+    rowtbl = Tables.rowtable(tstore)
+    coltbl = Tables.columntable(rowtbl)
+
+    Tables.rows(tstore)
+    tbl = Tables.rowtable(tstore)
+
+    first(Tables.namedtupleiterator(tstore))
+
+    # Tables.materializer(tstore)
+
+    ##
+    struct Foo
+        a::Float64
+        b::Float64
+    end
+
+    sstore = RowBlobStore(:struct_Foo, Foo)
+
+    addBlob!(sstore, uuid4(), Foo(1, 2))
+    addBlob!(sstore, uuid4(), Foo(3, 4))
+    addBlob!(sstore, uuid4(), Foo(5, 6))
+
+    Tables.rowtable(sstore)
+end
+##
