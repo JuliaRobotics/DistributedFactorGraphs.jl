@@ -24,7 +24,7 @@ end
 splitbynum(x::AbstractString) = split(x, r"(?<=\D)(?=\d)|(?<=\d)(?=\D)")
 #parse to Int
 function numstringtonum(arr::Vector{<:AbstractString})
-    return [(n = tryparse(Int, e)) != nothing ? n : e for e in arr]
+    return [(n = tryparse(Int, e)) !== nothing ? n : e for e in arr]
 end
 #natural less than
 function natural_lt(x::T, y::T) where {T <: AbstractString}

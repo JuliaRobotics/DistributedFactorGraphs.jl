@@ -174,7 +174,7 @@ function loadDFG!(
     end
     # FIXME, why is this treated different from VariableSkeleton, VariableSummary?
     # FIXME, still creates type instability on `variables` as either `::Variable` or `::DFGVariable`
-    if isa(dfgLoadInto, GraphsDFG) && GraphsDFGs._variablestype(dfgLoadInto) == Variable
+    if isa(dfgLoadInto, GraphsDFG) && getTypeDFGVariables(dfgLoadInto) == Variable
         variables = packedvars
     else
         variables = unpackVariable.(packedvars)
@@ -190,7 +190,7 @@ function loadDFG!(
         return JSON3.read(jstr, PackedFactor)
     end
     # FIXME, still creates type instability on `variables` as either `::Factor` or `::DFGFactor{<:}`
-    if isa(dfgLoadInto, GraphsDFG) && GraphsDFGs._factorstype(dfgLoadInto) == PackedFactor
+    if isa(dfgLoadInto, GraphsDFG) && getTypeDFGFactors(dfgLoadInto) == PackedFactor
         factors = packedfacts
     else
         factors = unpackFactor.(dfgLoadInto, packedfacts)
@@ -201,7 +201,7 @@ function loadDFG!(
     # # Adding factors
     map(f -> addFactor!(dfgLoadInto, f), factors)
 
-    if isa(dfgLoadInto, GraphsDFG) && GraphsDFGs._factorstype(dfgLoadInto) != PackedFactor
+    if isa(dfgLoadInto, GraphsDFG) && getTypeDFGFactors(dfgLoadInto) != PackedFactor
         # Finally, rebuild the CCW's for the factors to completely reinflate them
         # NOTE CREATES A NEW DFGFactor IF  CCW TYPE CHANGES
         @info "Rebuilding CCW's for the factors..."
