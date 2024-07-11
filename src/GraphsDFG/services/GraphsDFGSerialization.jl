@@ -29,8 +29,8 @@ function StructTypes.subtypes(::Type{PackedGraphsDFG})
     return NamedTuple(map(s -> nameof(s) => PackedGraphsDFG{s}, subs))
 end
 
-_variablestype(fg::GraphsDFG{<:AbstractParams, T, <:AbstractDFGFactor}) where {T} = T
-_factorstype(fg::GraphsDFG{<:AbstractParams, <:AbstractDFGVariable, T}) where {T} = T
+getTypeDFGVariables(fg::GraphsDFG{<:AbstractParams, T, <:AbstractDFGFactor}) where {T} = T
+getTypeDFGFactors(fg::GraphsDFG{<:AbstractParams, <:AbstractDFGVariable, T}) where {T} = T
 
 ##
 """
@@ -52,8 +52,8 @@ function packDFGMetadata(fg::GraphsDFG)
 
     props = (k => getproperty(fg, k) for k in commonfields)
     return PackedGraphsDFG(;
-        typePackedVariable = _variablestype(fg) == Variable,
-        typePackedFactor = _factorstype(fg) == PackedFactor,
+        typePackedVariable = getTypeDFGVariables(fg) == Variable,
+        typePackedFactor = getTypeDFGFactors(fg) == PackedFactor,
         blobStores,
         props...,
     )

@@ -245,7 +245,10 @@ function unpackVariable(variable::PackedVariable; skipVersionCheck::Bool = false
     )
 end
 
+DFGVariable(v::DFGVariable) = v
 DFGVariable(v::Variable) = unpackVariable(v)
+Variable(v::Variable) = v
+Variable(v::DFGVariable) = packVariable(v)
 
 ##==============================================================================
 ## Factor Packing and unpacking

@@ -52,7 +52,9 @@ import ...DistributedFactorGraphs:
     getSessionBlobEntry,
     getSessionBlobEntries,
     addSessionBlobEntry!,
-    addSessionBlobEntries!
+    addSessionBlobEntries!,
+    getTypeDFGVariables,
+    getTypeDFGFactors
 
 include("FactorGraphs/FactorGraphs.jl")
 using .FactorGraphs

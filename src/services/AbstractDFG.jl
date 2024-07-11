@@ -101,6 +101,18 @@ function rebuildFactorMetadata!(
     return error("rebuildFactorMetadata! is not implemented for $(typeof(dfg))")
 end
 
+"""
+    $(SIGNATURES)
+Function to get the type of the variables in the DFG.
+"""
+function getTypeDFGVariables end
+
+"""
+    $(SIGNATURES)
+Function to get the type of the factors in the DFG.
+"""
+function getTypeDFGFactors end
+
 ##------------------------------------------------------------------------------
 ## Setters
 ##------------------------------------------------------------------------------
@@ -371,6 +383,10 @@ function getFactors(
     solvable::Int = 0,
 ) where {G <: AbstractDFG}
     return error("getFactors not implemented for $(typeof(dfg))")
+end
+
+function getFactors(dfg::AbstractDFG, labels::Vector{Symbol})
+    return map(label -> getFactor(dfg, label), labels)
 end
 
 ##------------------------------------------------------------------------------
@@ -1079,9 +1095,8 @@ function copyGraph!(
     showprogress::Bool = verbose,
 )
     # Split into variables and factors
-    sourceVariables = map(vId -> getVariable(sourceDFG, vId), variableLabels)
-    sourceFactors = map(fId -> getFactor(sourceDFG, fId), factorLabels)
-
+    sourceVariables = getVariables(sourceDFG, variableLabels)
+    sourceFactors = getFactors(sourceDFG, factorLabels)
     # Now we have to add all variables first,
     @showprogress desc = "copy variables" enabled = showprogress for variable in
                                                                      sourceVariables
