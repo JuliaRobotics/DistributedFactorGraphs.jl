@@ -385,6 +385,10 @@ function getFactors(
     return error("getFactors not implemented for $(typeof(dfg))")
 end
 
+function getFactors(dfg::AbstractDFG, labels::Vector{Symbol})
+    return map(label -> getFactor(dfg, label), labels)
+end
+
 ##------------------------------------------------------------------------------
 ## Checking Types
 ##------------------------------------------------------------------------------
