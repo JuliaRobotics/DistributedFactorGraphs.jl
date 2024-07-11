@@ -54,10 +54,19 @@ end
 ##==============================================================================
 ## Default Factors Function Macro
 ##==============================================================================
+export PackedSamplableBelief
+# export pack, unpack, packDistribution, unpackDistribution
+
 function pack end
 function unpack end
+function packDistribution end
+function unpackDistribution end
+
+abstract type PackedSamplableBelief end
+StructTypes.StructType(::Type{<:PackedSamplableBelief}) = StructTypes.UnorderedStruct()
+
 """
-    @defFactorFunction StructName factortype<:AbstractFactor manifolds<:ManifoldsBase.AbstractManifold
+    @defFactorType StructName factortype<:AbstractFactor manifolds<:ManifoldsBase.AbstractManifold
 
 A macro to create a new factor function with name `StructName` and manifolds.  Note that 
 the `manifolds` is an object and *must* be a subtype of `ManifoldsBase.AbstractManifold`.
@@ -65,10 +74,10 @@ See documentation in [Manifolds.jl on making your own](https://juliamanifolds.gi
 
 Example:
 ```
-DFG.@defFactorFunction Pose2Pos2 AbstractManifoldMinimize SpecialEuclidean(2)
+DFG.@defFactorType Pose2Pos2 AbstractManifoldMinimize SpecialEuclidean(2)
 ```
 """
-macro defFactorFunction(structname, factortype, manifold)
+macro defFactorType(structname, factortype, manifold)
     packedstructname = Symbol("Packed", structname)
     return esc(
         quote
@@ -76,8 +85,7 @@ macro defFactorFunction(structname, factortype, manifold)
                 Z::T
             end
 
-            # Base.@__doc__ struct $packedstructname{T<:PackedSamplableBelief} <: AbstractPackedFactor 
-            Base.@__doc__ struct $packedstructname{T} <: AbstractPackedFactor
+            Base.@__doc__ struct $packedstructname{T<:PackedSamplableBelief} <: AbstractPackedFactor 
                 Z::T
             end
 
@@ -89,8 +97,8 @@ macro defFactorFunction(structname, factortype, manifold)
                                                      " be a subtype of `ManifoldsBase.AbstractManifold`"
 
             DFG.getManifold(::Type{$structname}) = $manifold
-            DFG.pack(d::$structname) = $packedstructname(packDistribution(d.Z))
-            DFG.unpack(d::$packedstructname) = $structname(unpackDistribution(d.Z))
+            DFG.pack(d::$structname) = $packedstructname(DFG.packDistribution(d.Z))
+            DFG.unpack(d::$packedstructname) = $structname(DFG.unpackDistribution(d.Z))
         end,
     )
 end
