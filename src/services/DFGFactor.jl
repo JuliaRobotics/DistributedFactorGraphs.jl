@@ -85,7 +85,8 @@ macro defFactorType(structname, factortype, manifold)
                 Z::T
             end
 
-            Base.@__doc__ struct $packedstructname{T<:PackedSamplableBelief} <: AbstractPackedFactor 
+            Base.@__doc__ struct $packedstructname{T <: PackedSamplableBelief} <:
+                                 AbstractPackedFactor
                 Z::T
             end
 
