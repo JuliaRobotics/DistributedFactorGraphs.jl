@@ -232,6 +232,10 @@ function addUserBlobEntries! end
 function updateUserBlobEntry! end
 function deleteUserBlobEntry! end
 
+function listSessionBlobEntries end
+function listRobotBlobEntries end
+function listUserBlobEntries end
+
 ##==============================================================================
 ## AbstractBlobStore  CRUD
 ##==============================================================================

@@ -597,6 +597,18 @@ function getSessionBlobEntries(fg::GraphsDFG, startwith::Union{Nothing, String} 
     return entries
 end
 
+function listSessionBlobEntries(fg::GraphsDFG)
+    return collect(keys(fg.sessionBlobEntries))
+end
+
+function listRobotBlobEntries(fg::GraphsDFG)
+    return collect(keys(fg.robotBlobEntries))
+end
+
+function listUserBlobEntries(fg::GraphsDFG)
+    return collect(keys(fg.userBlobEntries))
+end
+
 function addSessionBlobEntry!(fg::GraphsDFG, entry::BlobEntry)
     if haskey(fg.sessionBlobEntries, entry.label)
         error(
