@@ -95,7 +95,10 @@ export getSessionBlobEntry,
     addUserBlobEntry!,
     addUserBlobEntries!,
     updateUserBlobEntry!,
-    deleteUserBlobEntry!
+    deleteUserBlobEntry!,
+    listSessionBlobEntries,
+    listRobotBlobEntries,
+    listUserBlobEntries
 
 export getBlobStore,
     addBlobStore!, updateBlobStore!, deleteBlobStore!, emptyBlobStore!, listBlobStores

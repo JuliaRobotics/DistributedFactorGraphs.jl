@@ -53,6 +53,9 @@ import ...DistributedFactorGraphs:
     getSessionBlobEntries,
     addSessionBlobEntry!,
     addSessionBlobEntries!,
+    listSessionBlobEntries,
+    listRobotBlobEntries,
+    listUserBlobEntries,
     getTypeDFGVariables,
     getTypeDFGFactors
 
