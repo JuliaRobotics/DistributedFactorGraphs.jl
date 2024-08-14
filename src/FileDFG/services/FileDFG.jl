@@ -168,7 +168,7 @@ function loadDFG!(
     varFiles = sort(readdir(varFolder; sort = false); lt = natural_lt)
     factorFiles = sort(readdir(factorFolder; sort = false); lt = natural_lt)
 
-    packedvars = @showprogress 1 "loading variables" map(varFiles) do varFile
+    packedvars = @showprogress 1 "loading variables" asyncmap(varFiles) do varFile
         jstr = read("$varFolder/$varFile", String)
         return JSON3.read(jstr, PackedVariable)
     end
@@ -185,7 +185,7 @@ function loadDFG!(
     # Adding variables
     map(v -> addVariable!(dfgLoadInto, v), variables)
 
-    packedfacts = @showprogress 1 "loading factors" map(factorFiles) do factorFile
+    packedfacts = @showprogress 1 "loading factors" asyncmap(factorFiles) do factorFile
         jstr = read("$factorFolder/$factorFile", String)
         return JSON3.read(jstr, PackedFactor)
     end
