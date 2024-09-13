@@ -157,7 +157,6 @@ end
 
     @test ls(dfg, LinearRelative) == [:abf1]
     @test lsf(dfg, LinearRelative) == [:abf1]
-    @test lsfWho(dfg, :LinearRelative) == [:abf1]
 
     @test getVariableType(v1) isa Position{1}
     @test getVariableType(dfg, :a) isa Position{1}

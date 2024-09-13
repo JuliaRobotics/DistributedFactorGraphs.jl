@@ -4,6 +4,8 @@
 ##=================================================================================
 @deprecate getBlobEntry(var::AbstractDFGVariable, key::AbstractString) getBlobEntryFirst(var, Regex(key))
 
+@deprecate lsfWho(dfg::AbstractDFG, type::Symbol) lsf(dfg, getfield(Main, type))
+
 ## ================================================================================
 ## Deprecated in v0.23
 ##=================================================================================

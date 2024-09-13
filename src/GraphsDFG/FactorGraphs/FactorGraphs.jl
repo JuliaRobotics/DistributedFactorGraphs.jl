@@ -134,7 +134,7 @@ function addFactor!(
     g::FactorGraph{T, V, F},
     variableLabels::Vector{Symbol},
     factor::F,
-)::Bool where {T, V, F}
+) where {T, V, F}
     haskey(g.labels, factor.label) &&
         (@error "Label $(factor.label) already in fg"; return false)
 

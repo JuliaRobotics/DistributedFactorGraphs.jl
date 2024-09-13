@@ -41,7 +41,7 @@ end
 function addVariable!(
     dfg::GraphsDFG{<:AbstractParams, V, <:AbstractDFGFactor},
     variable::V,
-)::V where {V <: AbstractDFGVariable}
+) where {V <: AbstractDFGVariable}
     #TODO should this be an error
     if haskey(dfg.g.variables, variable.label)
         error("Variable '$(variable.label)' already exists in the factor graph")
@@ -58,7 +58,7 @@ end
 function addVariable!(
     dfg::GraphsDFG{<:AbstractParams, VD, <:AbstractDFGFactor},
     variable::AbstractDFGVariable,
-)::VD where {VD <: AbstractDFGVariable}
+) where {VD <: AbstractDFGVariable}
     return addVariable!(dfg, VD(variable))
 end
 
@@ -186,7 +186,7 @@ function deleteFactor!(
     dfg::GraphsDFG,
     label::Symbol;
     suppressGetFactor::Bool = false,
-)::AbstractDFGFactor
+)
     if !haskey(dfg.g.factors, label)
         error("Factor label '$(label)' does not exist in the factor graph")
     end
@@ -285,12 +285,12 @@ function listFactors(
     return factors::Vector{Symbol}
 end
 
-function isConnected(dfg::GraphsDFG)::Bool
+function isConnected(dfg::GraphsDFG)
     return Graphs.is_connected(dfg.g)
     # return length(Graphs.connected_components(dfg.g)) == 1
 end
 
-function _isSolvable(dfg::GraphsDFG, label::Symbol, ready::Int)::Bool
+function _isSolvable(dfg::GraphsDFG, label::Symbol, ready::Int)
     haskey(dfg.g.variables, label) && (return dfg.g.variables[label].solvable >= ready)
     haskey(dfg.g.factors, label) && (return dfg.g.factors[label].solvable >= ready)
 
@@ -321,7 +321,7 @@ function listNeighbors(dfg::GraphsDFG, node::DFGNode; solvable::Int = 0)
     return neighbors_ll::Vector{Symbol}
 end
 
-function listNeighbors(dfg::GraphsDFG, label::Symbol; solvable::Int = 0)::Vector{Symbol}
+function listNeighbors(dfg::GraphsDFG, label::Symbol; solvable::Int = 0)
     if !exists(dfg, label)
         error("Variable/factor with label '$(label)' does not exist in the factor graph")
     end
@@ -345,7 +345,7 @@ function getNeighborhood(
     variableFactorLabels::Vector{Symbol},
     distance::Int;
     solvable::Int = 0,
-)::Vector{Symbol}
+)
     # find neighbors at distance to add
     nbhood = Int[]
 
@@ -375,10 +375,7 @@ function getBiadjacencyMatrix(
     solvable::Int = 0,
     varLabels = listVariables(dfg; solvable = solvable),
     factLabels = listFactors(dfg; solvable = solvable),
-)::NamedTuple{
-    (:B, :varLabels, :facLabels),
-    Tuple{Graphs.SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}},
-}
+)
     varIndex = [dfg.g.labels[s] for s in varLabels]
     factIndex = [dfg.g.labels[s] for s in factLabels]
 

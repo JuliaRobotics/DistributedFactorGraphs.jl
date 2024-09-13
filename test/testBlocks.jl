@@ -1207,7 +1207,6 @@ function testGroup!(fg, v1, v2, f0, f1)
 
         @test ls(fg, TestFunctorInferenceType1) == [:abf1]
         @test lsf(fg, TestAbstractPrior) == [:af1]
-        @test lsfWho(fg, :TestFunctorInferenceType1) == [:abf1]
 
         @test getVariableType(v1) == TestVariableType1()
         @test getVariableType(fg, :a) == TestVariableType1()

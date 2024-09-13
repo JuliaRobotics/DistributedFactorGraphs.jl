@@ -286,7 +286,7 @@ export isValidLabel
 ## List
 export ls, lsf, ls2
 export lsTypes, lsfTypes, lsTypesDict, lsfTypesDict
-export lsWho, lsfWho
+export lsWho
 export isPrior, lsfPriors
 export hasTags, hasTagsNeighbors
 
