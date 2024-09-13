@@ -643,7 +643,7 @@ Retrieve the soft type name symbol for a DFGVariableSummary. ie :Point2, Pose2, 
 """
 getVariableTypeName(v::DFGVariableSummary) = v.variableTypeName::Symbol
 
-function getVariableType(v::DFGVariableSummary)::InferenceVariable
+function getVariableType(v::DFGVariableSummary)
     @warn "Looking for type in `Main`. Only use if `variableType` has only one implementation, ie. Pose2. Otherwise use the full variable."
     return getfield(Main, v.variableTypeName)()
 end
@@ -921,7 +921,7 @@ end
     $(SIGNATURES)
 List all the solver data keys in the variable.
 """
-function listVariableSolverData(dfg::AbstractDFG, variablekey::Symbol)::Vector{Symbol}
+function listVariableSolverData(dfg::AbstractDFG, variablekey::Symbol)
     v = getVariable(dfg, variablekey)
     return collect(keys(v.solverDataDict))
 end

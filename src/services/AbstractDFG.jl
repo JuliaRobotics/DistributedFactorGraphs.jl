@@ -637,7 +637,7 @@ function listFactors(
     regexFilter::Union{Nothing, Regex} = nothing;
     tags::Vector{Symbol} = Symbol[],
     solvable::Int = 0,
-)::Vector{Symbol} where {G <: AbstractDFG}
+) where {G <: AbstractDFG}
     return map(f -> f.label, getFactors(dfg, regexFilter; tags = tags, solvable = solvable))
 end
 
@@ -754,7 +754,7 @@ function lsf(
     dfg::G,
     label::Symbol;
     solvable::Int = 0,
-)::Vector{Symbol} where {G <: AbstractDFG}
+) where {G <: AbstractDFG}
     return listNeighbors(dfg, label; solvable = solvable)
 end
 

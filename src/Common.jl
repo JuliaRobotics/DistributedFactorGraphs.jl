@@ -91,7 +91,7 @@ $(SIGNATURES)
 
 Returns true if the label is valid for a session, robot, or user ID.
 """
-function isValidLabel(id::Union{Symbol, String})::Bool
+function isValidLabel(id::Union{Symbol, String})
     if typeof(id) == Symbol
         id = String(id)
     end

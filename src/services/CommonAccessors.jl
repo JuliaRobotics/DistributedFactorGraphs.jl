@@ -88,7 +88,7 @@ Variables or factors may or may not be 'solvable', depending on a user definitio
 Related:
 - isSolveInProgress
 """
-getSolvable(var::Union{DFGVariable, DFGFactor})::Int = var.solvable
+getSolvable(var::Union{DFGVariable, DFGFactor}) = var.solvable
 #TODO DataLevel2
 
 """
@@ -96,7 +96,7 @@ getSolvable(var::Union{DFGVariable, DFGFactor})::Int = var.solvable
 
 Get 'solvable' parameter for either a variable or factor.
 """
-function getSolvable(dfg::AbstractDFG, sym::Symbol)::Int
+function getSolvable(dfg::AbstractDFG, sym::Symbol)
     if isVariable(dfg, sym)
         return getVariable(dfg, sym).solvable
     elseif isFactor(dfg, sym)
@@ -110,7 +110,7 @@ end
 
 Set the `solvable` parameter for either a variable or factor.
 """
-function setSolvable!(node::N, solvable::Int)::Int where {N <: DFGNode}
+function setSolvable!(node::N, solvable::Int) where {N <: DFGNode}
     node.solvable = solvable
     return solvable
 end
@@ -120,7 +120,7 @@ end
 
 Set the `solvable` parameter for either a variable or factor.
 """
-function setSolvable!(dfg::AbstractDFG, sym::Symbol, solvable::Int)::Int
+function setSolvable!(dfg::AbstractDFG, sym::Symbol, solvable::Int)
     if isVariable(dfg, sym)
         getVariable(dfg, sym).solvable = solvable
     elseif isFactor(dfg, sym)
@@ -158,7 +158,7 @@ isSolvable
 function getSolveInProgress(
     var::Union{DFGVariable, DFGFactor},
     solveKey::Symbol = :default,
-)::Int
+)
     # Variable
     if var isa DFGVariable
         if haskey(getSolverDataDict(var), solveKey)
