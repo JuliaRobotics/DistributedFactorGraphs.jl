@@ -775,6 +775,15 @@ function ls(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: AbstractFactor}
     return map(x -> x.label, vxx)
 end
 
+"""
+    $(SIGNATURES)
+Lists the factors of a specific type in the factor graph. 
+Example, list all the Point2Point2 factors in the factor graph `dfg`:
+    lsfWho(dfg, :Point2Point2)
+
+Notes
+- Return `Vector{Symbol}`
+"""
 function lsf(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: AbstractFactor}
     return ls(dfg, T)
 end
@@ -833,32 +842,6 @@ function lsWho(dfg::AbstractDFG, type::Symbol)
     for v in vars
         varType = typeof(getVariableType(v)) |> nameof
         varType == type && push!(labels, v.label)
-    end
-    return labels
-end
-
-"""
-    $(SIGNATURES)
-Gives back all factor labels that fit the bill:
-    lsfWho(dfg, :Point2Point2)
-
-Notes
-- Returns `Vector{Symbol}`
-
-Dev Notes
-- Cloud versions will benefit from less data transfer
- - `ls(dfg::C, ::T) where {C <: CloudDFG, T <: ..}`
-
-Related
-
-ls, lsf, lsfPriors
-"""
-function lsfWho(dfg::AbstractDFG, type::Symbol)
-    facs = getFactors(dfg)
-    labels = Symbol[]
-    for f in facs
-        facType = typeof(getFactorType(f)) |> nameof
-        facType == type && push!(labels, f.label)
     end
     return labels
 end
