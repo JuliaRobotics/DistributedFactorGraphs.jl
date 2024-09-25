@@ -35,7 +35,7 @@ Base.@kwdef struct BlobEntry
     """ MIME description describing the format of binary data in the `Blob`, e.g. 'image/png' or 'application/json; _type=CameraModel'. """
     mimeType::String = "application/octet-stream"
     """ Additional storage for functional metadata used in some scenarios, e.g. to support advanced features such as `parsejson(base64decode(entry.metadata))['time_sync']`. """
-    metadata::String = ""
+    metadata::String = "e30="
     """ When the Blob itself was first created. """
     timestamp::ZonedDateTime = now(localzone())
     """ When the BlobEntry was created. """
@@ -43,6 +43,7 @@ Base.@kwdef struct BlobEntry
     """ Use carefully, but necessary to support advanced usage such as time synchronization over Blob data. """
     lastUpdatedTimestamp::Union{ZonedDateTime, Nothing} = nothing
     """ Self type declaration for when duck-typing happens. """
+    #TODO Deprecate this field
     _type::String = "DistributedFactorGraph.BlobEntry"
     """ Type version of this BlobEntry. TBD.jl consider upgrading to `::VersionNumber`. """
     _version::String = string(_getDFGVersion())

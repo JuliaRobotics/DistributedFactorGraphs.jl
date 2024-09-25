@@ -126,6 +126,9 @@ Base.@kwdef mutable struct PackedVariableNodeData
     covar::Vector{Float64}
     _version::String = string(_getDFGVersion())
 end
+# maybe add
+# createdTimestamp::DateTime#!
+# lastUpdatedTimestamp::DateTime#!
 
 StructTypes.StructType(::Type{PackedVariableNodeData}) = StructTypes.UnorderedStruct()
 StructTypes.idproperty(::Type{PackedVariableNodeData}) = :id
@@ -224,6 +227,10 @@ Base.@kwdef struct Variable <: AbstractDFGVariable
     solvable::Int = 1
     solverData::Vector{PackedVariableNodeData} = PackedVariableNodeData[]
 end
+# maybe add to variable
+# createdTimestamp::DateTime
+# lastUpdatedTimestamp::DateTime
+
 
 #IIF like contruction helper for packed variable
 function Variable(
