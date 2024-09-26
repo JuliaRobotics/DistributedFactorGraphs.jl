@@ -42,9 +42,6 @@ Base.@kwdef struct BlobEntry
     createdTimestamp::Union{ZonedDateTime, Nothing} = nothing
     """ Use carefully, but necessary to support advanced usage such as time synchronization over Blob data. """
     lastUpdatedTimestamp::Union{ZonedDateTime, Nothing} = nothing
-    """ Self type declaration for when duck-typing happens. """
-    #TODO Deprecate this field
-    _type::String = "DistributedFactorGraph.BlobEntry"
     """ Type version of this BlobEntry. TBD.jl consider upgrading to `::VersionNumber`. """
     _version::String = string(_getDFGVersion())
 end

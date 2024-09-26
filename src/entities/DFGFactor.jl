@@ -109,6 +109,13 @@ end
 # createdTimestamp::DateTime
 # lastUpdatedTimestamp::DateTime
 
+# TODO consolidate to just one type
+"""
+$(TYPEDEF)
+Abstract parent type for all InferenceTypes, which are the
+functions inside of factors.
+"""
+abstract type InferenceType <: DFG.AbstractPackedFactor end
 # this is the GenericFunctionNodeData for packed types
 const FactorData = PackedFunctionNodeData{InferenceType}
 
