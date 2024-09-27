@@ -211,30 +211,46 @@ emptySessionData!(dfg::AbstractDFG) = empty!(dfg.sessionData)
 ##==============================================================================
 ## User/Robot/Session Blob Entries CRUD
 ##==============================================================================
-function getSessionBlobEntry end
-function getSessionBlobEntries end
-function addSessionBlobEntry! end
-function addSessionBlobEntries! end
-function updateSessionBlobEntry! end
-function deleteSessionBlobEntry! end
+@deprecate getSessionBlobEntry(dfg::AbstractDFG, label::Symbol) getFgBlobEntry(dfg, label)
+@deprecate getSessionBlobEntries(args...) getFgBlobEntries(args...)
+@deprecate addSessionBlobEntry!(args...) addFgBlobEntry!(args...)
+@deprecate addSessionBlobEntries!(args...) addFgBlobEntries!(args...)
+@deprecate updateSessionBlobEntry!(args...) updateFgBlobEntry!(args...)
+@deprecate deleteSessionBlobEntry!(args...) deleteFgBlobEntry!(args...)
 
-function getRobotBlobEntry end
-function getRobotBlobEntries end
-function addRobotBlobEntry! end
-function addRobotBlobEntries! end
-function updateRobotBlobEntry! end
-function deleteRobotBlobEntry! end
+function getFgBlobEntry end
+function getFgBlobEntries end
+function addFgBlobEntry! end
+function addFgBlobEntries! end
+function updateFgBlobEntry! end
+function deleteFgBlobEntry! end
 
-function getUserBlobEntry end
-function getUserBlobEntries end
-function addUserBlobEntry! end
-function addUserBlobEntries! end
-function updateUserBlobEntry! end
-function deleteUserBlobEntry! end
+@deprecate getRobotBlobEntry(args...) getAgentBlobEntry(args...)
+@deprecate getRobotBlobEntries(args...) getAgentBlobEntries(args...)
+@deprecate addRobotBlobEntry!(args...) addAgentBlobEntry!(args...)
+@deprecate addRobotBlobEntries!(args...) addAgentBlobEntries!(args...)
+@deprecate updateRobotBlobEntry!(args...) updateAgentBlobEntry!(args...)
+@deprecate deleteRobotBlobEntry!(args...) deleteAgentBlobEntry!(args...)
+@deprecate getUserBlobEntry(args...) getAgentBlobEntry(args...)
+@deprecate getUserBlobEntries(args...) getAgentBlobEntries(args...)
+@deprecate addUserBlobEntry!(args...) addAgentBlobEntry!(args...)
+@deprecate addUserBlobEntries!(args...) addAgentBlobEntries!(args...)
+@deprecate updateUserBlobEntry!(args...) updateAgentBlobEntry!(args...)
+@deprecate deleteUserBlobEntry!(args...) deleteAgentBlobEntry!(args...)
 
-function listSessionBlobEntries end
-function listRobotBlobEntries end
-function listUserBlobEntries end
+function getAgentBlobEntry end
+function getAgentBlobEntries end
+function addAgentBlobEntry! end
+function addAgentBlobEntries! end
+function updateAgentBlobEntry! end
+function deleteAgentBlobEntry! end
+
+@deprecate listSessionBlobEntries(args...) listFgBlobEntries
+@deprecate listRobotBlobEntries(args...) listAgentBlobEntries
+@deprecate listUserBlobEntries(args...) listAgentBlobEntries
+
+function listFgBlobEntries end
+function listAgentBlobEntries end
 
 ##==============================================================================
 ## AbstractBlobStore  CRUD
