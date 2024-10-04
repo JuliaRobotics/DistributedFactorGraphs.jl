@@ -149,48 +149,62 @@ function setUserData!(dfg::AbstractDFG, data::Dict{Symbol, SmallDataTypes})
     return dfg.userData
 end
 
-"""
-$SIGNATURES
-
-Get the robot data associated with the graph.
-"""
-getRobotData(dfg::AbstractDFG) = dfg.robotData
 
 """
 $SIGNATURES
 
-Set the robot data associated with the graph.
+Get the metadata from the agent in the AbstractDFG.
 """
-function setRobotData!(dfg::AbstractDFG, data::Dict{Symbol, SmallDataTypes})
+getAgentMetadata(dfg::AbstractDFG) = dfg.robotData
+getRobotData(dfg::AbstractDFG) = getAgentMetadata(dfg) #TODO deprecate
+
+"""
+$SIGNATURES
+
+Set the metadata of the agent in the AbstractDFG.
+"""
+function setAgentMetadata!(dfg::AbstractDFG, data::Dict{Symbol, SmallDataTypes})
     dfg.robotData = data
     return dfg.robotData
 end
+setRobotData!(dfg::AbstractDFG, data::Dict{Symbol, SmallDataTypes}) = setAgentMetadata!(dfg, data) #TODO deprecate
 
 """
 $SIGNATURES
 
-Get the session data associated with the graph.
+Get the metadata from the factorgraph in the AbstractDFG.
 """
-getSessionData(dfg::AbstractDFG) = dfg.sessionData
+getFgMetadata(dfg::AbstractDFG) = dfg.sessionData
+getSessionData(dfg::AbstractDFG) = getFgMetadata(dfg::AbstractDFG) #TODO deprecate
 
 """
 $SIGNATURES
 
-Set the session data associated with the graph.
+Get the metadata of the node.
 """
-function setSessionData!(dfg::AbstractDFG, data::Dict{Symbol, SmallDataTypes})
+getMetadata(node::DFGNode) = node.metadata
+
+"""
+$SIGNATURES
+
+Set the metadata of the factorgraph in the AbstractDFG.
+"""
+function setFgMetadata!(dfg::AbstractDFG, data::Dict{Symbol, SmallDataTypes})
     dfg.sessionData = data
     return dfg.sessionData
 end
 
+setSessionData!(dfg::AbstractDFG, data::Dict{Symbol, SmallDataTypes}) = setFgMetadata!(dfg, data) #TODO deprecate
+
+
 ##==============================================================================
 ## User/Robot/Session Data CRUD
 ##==============================================================================
-
+#TODO maybe only support get and set?
 #NOTE with API standardization this should become something like:
-getUserData(dfg::AbstractDFG, key::Symbol) = dfg.userData[key]
-getRobotData(dfg::AbstractDFG, key::Symbol) = dfg.robotData[key]
-getSessionData(dfg::AbstractDFG, key::Symbol) = dfg.sessionData[key]
+getUserData(dfg::AbstractDFG, key::Symbol) = getUserData(dfg)[key]
+getRobotData(dfg::AbstractDFG, key::Symbol) = getRobotData(dfg)[key]
+getSessionData(dfg::AbstractDFG, key::Symbol) = getSessionData(dfg)[key]
 
 updateUserData!(dfg::AbstractDFG, pair::Pair{Symbol, String}) = push!(dfg.userData, pair)
 updateRobotData!(dfg::AbstractDFG, pair::Pair{Symbol, String}) = push!(dfg.robotData, pair)
@@ -245,9 +259,9 @@ function addAgentBlobEntries! end
 function updateAgentBlobEntry! end
 function deleteAgentBlobEntry! end
 
-@deprecate listSessionBlobEntries(args...) listFgBlobEntries
-@deprecate listRobotBlobEntries(args...) listAgentBlobEntries
-@deprecate listUserBlobEntries(args...) listAgentBlobEntries
+@deprecate listSessionBlobEntries(args...) listFgBlobEntries(args...)
+@deprecate listRobotBlobEntries(args...) listAgentBlobEntries(args...)
+@deprecate listUserBlobEntries(args...) listAgentBlobEntries(args...)
 
 function listFgBlobEntries end
 function listAgentBlobEntries end

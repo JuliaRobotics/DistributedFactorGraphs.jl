@@ -573,16 +573,6 @@ end
 
 # FG blob entries 
 # session blob entries
-function getBlobEntry(var::AbstractDFGVariable, key::Symbol)
-    if !hasBlobEntry(var, key)
-        throw(
-            KeyError(
-                "No dataEntry label $(key) found in variable $(getLabel(var)). Available keys: $(keys(var.dataDict))",
-            ),
-        )
-    end
-    return var.dataDict[key]
-end
 
 function getSessionBlobEntry(fg::GraphsDFG, label::Symbol)
     return fg.sessionBlobEntries[label]
