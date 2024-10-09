@@ -356,6 +356,8 @@ include("entities/DFGVariable.jl")
 
 include("entities/AbstractDFGSummary.jl")
 
+include("entities/Agent.jl")
+
 include("services/AbstractDFG.jl")
 
 #Blobs
