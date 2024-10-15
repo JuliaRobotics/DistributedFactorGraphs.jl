@@ -120,6 +120,12 @@ abstract type InferenceType <: DFG.AbstractPackedFactor end
 const FactorData = PackedFunctionNodeData{InferenceType}
 
 # Packed Factor constructor
+function assembleFactorName(xisyms::Union{Vector{String}, Vector{Symbol}})
+    return Symbol(xisyms..., "f_", string(uuid4())[1:4])
+end
+
+getFncTypeName(fnc::InferenceType) = split(string(typeof(fnc)), ".")[end]
+
 function Factor(
     xisyms::Vector{Symbol},
     fnc::InferenceType;
