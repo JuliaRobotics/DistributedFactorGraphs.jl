@@ -117,7 +117,7 @@ struct NotImplementedDFG{T} <: AbstractDFG{T} end
 @testset "No Interface tests" begin
     dfg = NotImplementedDFG{NoSolverParams}()
     v1 = SkeletonDFGVariable(:v1)
-    f1 = SkeletonDFGFactor(:f1)
+    f1 = SkeletonDFGFactor(:f1, [:v1])
 
     @test_throws ErrorException exists(dfg, v1)
     @test_throws ErrorException exists(dfg, f1)
