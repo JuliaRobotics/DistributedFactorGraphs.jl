@@ -41,4 +41,3 @@
 ##=================================================================================
 #NOTE free up getNeighbors to return the variables or factors
 @deprecate getNeighbors(args...; kwargs...) listNeighbors(args...; kwargs...)
-
