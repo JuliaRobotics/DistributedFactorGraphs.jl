@@ -1494,7 +1494,10 @@ function connectivityTestGraph(
 
     else
         facs = map(
-            n -> addFactor!(dfg, FACTYPE(Symbol("x$(n)x$(n+1)f1"), [vars[n].label, vars[n + 1].label])),
+            n -> addFactor!(
+                dfg,
+                FACTYPE(Symbol("x$(n)x$(n+1)f1"), [vars[n].label, vars[n + 1].label]),
+            ),
             1:(length(vars) - 1),
         )
     end

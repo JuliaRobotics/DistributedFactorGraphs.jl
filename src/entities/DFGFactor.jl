@@ -355,18 +355,12 @@ end
 
 function DFGFactorSummary(
     label::Symbol,
-    variableOrderSymbols::Vector{Symbol}; 
-    timestamp::ZonedDateTime = now(localzone()), 
+    variableOrderSymbols::Vector{Symbol};
+    timestamp::ZonedDateTime = now(localzone()),
     tags::Set{Symbol} = Set{Symbol}(),
     id::Union{UUID, Nothing} = nothing,
 )
-    return DFGFactorSummary(
-        id,
-        label,
-        tags,
-        variableOrderSymbols,
-        timestamp,
-    )
+    return DFGFactorSummary(id, label, tags, variableOrderSymbols, timestamp)
 end
 
 ##------------------------------------------------------------------------------
