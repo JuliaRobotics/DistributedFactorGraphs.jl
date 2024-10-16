@@ -98,7 +98,6 @@ function loadDFG!(
     dfgLoadInto::AbstractDFG,
     dst::AbstractString;
     overwriteDFGMetadata::Bool = true,
-    useDeprExtract::Bool = false,
 )
 
     #
@@ -130,24 +129,16 @@ function loadDFG!(
         @info "loadDFG! detected a gzip $dstname -- unpacking via $loaddir now..."
         Base.rm(folder; recursive = true, force = true)
         # unzip the tar file
-
-        # TODO deprecated, remove. Kept for legacy support if older tarbals
-        if useDeprExtract
-            @warn "Old FileDFG compressed tar files are deprecated, load with useDeprExtract=true and use saveDFG again to update"
-            run(`tar -zxf $dstname -C $loaddir`)
-        else
-            tar_gz = open(dstname)
-            tar = CodecZlib.GzipDecompressorStream(tar_gz)
-            Tar.extract(tar, folder)
-            close(tar)
-        end
-
+        tar_gz = open(dstname)
+        tar = CodecZlib.GzipDecompressorStream(tar_gz)
+        Tar.extract(tar, folder)
+        close(tar)
         #or for non-compressed
         # Tar.extract(dstname, folder)
     end
 
     #GraphsDFG metadata
-    if overwriteDFGMetadata && !useDeprExtract
+    if overwriteDFGMetadata
         @assert isa(dfgLoadInto, GraphsDFG) "Only GraphsDFG metadata are supported"
         @info "loading dfg metadata"
         jstr = read("$folder/dfg.json", String)

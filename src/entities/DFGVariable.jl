@@ -317,20 +317,10 @@ The default DFGVariable constructor.
 function DFGVariable(
     label::Symbol,
     T::Type{<:InferenceVariable};
-    estimateDict = nothing,
-    timestamp = now(localzone()),
+    timestamp::ZonedDateTime = now(localzone()),
     solvable::Union{Int, Base.RefValue{Int}} = Ref(1),
     kwargs...,
 )
-    #TODO deprecated, remove in v0.21 should have already been deprecated
-    if !isnothing(estimateDict)
-        error("Keyword argument `estimateDict` is deprecated use `ppeDict`")
-    end
-    if !isa(timestamp, ZonedDateTime)
-        @warn "timestamp<:DateTime is deprecated, timestamp must be a ZonedDateTime, using local zone."
-        timestamp = ZonedDateTime(timestamp, localzone())
-    end
-
     solvable isa Int && (solvable = Ref(solvable))
 
     N = getDimension(T)

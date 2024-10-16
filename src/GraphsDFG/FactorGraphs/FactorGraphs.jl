@@ -140,7 +140,8 @@ function addFactor!(
 
     for vlabel in variableLabels
         !haskey(g.labels, vlabel) && (
-            @error "Variable '$(vlabel)' not found in graph when creating Factor '$(factor.label)'"; return false
+            throw(KeyError(vlabel))
+            # @error "Variable '$(vlabel)' not found in graph when creating Factor '$(factor.label)'"; return false
         ) #TODO debug error or exception?
     end
 

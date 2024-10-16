@@ -215,7 +215,7 @@ function Base.show(io::IO, dfg::AbstractDFG)
     println(io, "  Description: ", getDescription(dfg))
     println(io, "  Nr variables: ", length(ls(dfg)))
     println(io, "  Nr factors: ", length(lsf(dfg)))
-    println(io, "  Agent Metadata: ", keys(getAgentmetadata(dfg)))
+    println(io, "  Agent Metadata: ", keys(getAgentMetadata(dfg)))
     println(io, "  Graph Metadata: ", keys(getGraphMetadata(dfg)))
     return
 end

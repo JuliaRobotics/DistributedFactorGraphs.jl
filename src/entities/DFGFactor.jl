@@ -353,6 +353,22 @@ Base.@kwdef struct DFGFactorSummary <: AbstractDFGFactor
     timestamp::ZonedDateTime
 end
 
+function DFGFactorSummary(
+    label::Symbol,
+    variableOrderSymbols::Vector{Symbol}; 
+    timestamp::ZonedDateTime = now(localzone()), 
+    tags::Set{Symbol} = Set{Symbol}(),
+    id::Union{UUID, Nothing} = nothing,
+)
+    return DFGFactorSummary(
+        id,
+        label,
+        tags,
+        variableOrderSymbols,
+        timestamp,
+    )
+end
+
 ##------------------------------------------------------------------------------
 ## SkeletonDFGFactor lv0
 ##------------------------------------------------------------------------------
@@ -392,7 +408,7 @@ function SkeletonDFGFactor(
 end
 function SkeletonDFGFactor(
     label::Symbol,
-    variableOrderSymbols::Vector{Symbol} = Symbol[];
+    variableOrderSymbols::Vector{Symbol};
     id::Union{UUID, Nothing} = nothing,
     tags = Set{Symbol}(),
 )

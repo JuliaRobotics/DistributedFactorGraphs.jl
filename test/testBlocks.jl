@@ -474,11 +474,11 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     @test getLabel(fg[getLabel(v1)]) == getLabel(v1)
 
     #TODO standardize this error and res also for that matter
-    @test_throws Exception addFactor!(fg, [:a, :nope], f1)
-    @test_throws Exception addFactor!(fg, [v1, v2, v3], f1)
+    fnope = DFGFactor{TestCCW{TestFunctorInferenceType1}}(:broken, [:a, :nope])
+    @test_throws KeyError addFactor!(fg, fnope)
 
-    @test addFactor!(fg, [v1, v2], f1) == f1
-    @test_throws ErrorException addFactor!(fg, [v1, v2], f1)
+    @test addFactor!(fg, f1) == f1
+    @test_throws ErrorException addFactor!(fg, f1)
 
     @test getLabel(fg[getLabel(f1)]) == getLabel(f1)
 
@@ -494,7 +494,7 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
         f2,
     ) === f2
     @test updateFactor!(fg, f2) === f2
-    @test_throws ErrorException addFactor!(fg, [:b, :c], f2)
+    @test_throws ErrorException addFactor!(fg, f2)
     #TODO Graphs.jl, but look at refactoring absract @test_throws ErrorException addFactor!(fg, f2)
 
     if f2 isa DFGFactor
@@ -1367,8 +1367,8 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test setSolvable!(fg, f1.label, 0) == 0
         @test getSolvable(fg, f1.label) == 0
 
-        #TODO follow up on why f1 is no longer referenced, and remove next line
-        @test_broken getSolvable(f1) == 0
+        @test getSolvable(f1) == 0
+        setSolvable!(f1, 1)
 
         # isFactor and isVariable
         @test isFactor(fg, f1.label)
@@ -1494,7 +1494,7 @@ function connectivityTestGraph(
 
     else
         facs = map(
-            n -> addFactor!(dfg, [vars[n], vars[n + 1]], FACTYPE(Symbol("x$(n)x$(n+1)f1"))),
+            n -> addFactor!(dfg, FACTYPE(Symbol("x$(n)x$(n+1)f1"), [vars[n].label, vars[n + 1].label])),
             1:(length(vars) - 1),
         )
     end
@@ -1698,7 +1698,7 @@ function ProducingDotFiles(
         if (FACTYPE == DFGFactor)
             f1 = DFGFactor{TestFunctorInferenceType1}(:abf1, [:a, :b])
         else
-            f1 = FACTYPE(:abf1)
+            f1 = FACTYPE(:abf1, [:a, :b])
         end
     end
 
@@ -1708,7 +1708,7 @@ function ProducingDotFiles(
     # ┌ Warning: addFactor!(dfg, variables, factor) is deprecated, use addFactor!(dfg, factor)
     # │   caller = ProducingDotFiles(testDFGAPI::Type{GraphsDFG}, v1::Nothing, v2::Nothing, f1::Nothing; VARTYPE::Type{DFGVariable}, FACTYPE::Type{DFGFactor}) at testBlocks.jl:1440
     # └ @ Main ~/.julia/dev/DistributedFactorGraphs/test/testBlocks.jl:1440
-    addFactor!(dotdfg, [v1, v2], f1)
+    addFactor!(dotdfg, f1)
     #NOTE hardcoded toDot will have different results so test Graphs seperately
     if testDFGAPI <: GraphsDFG || testDFGAPI <: GraphsDFG
         todotstr = toDot(dotdfg)
