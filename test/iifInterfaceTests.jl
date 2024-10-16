@@ -73,11 +73,11 @@ end
     @test addVariable!(dfg2, v2) == v2
     @test @test_logs (:warn, r"exist") match_mode = :any updateVariable!(dfg2, v3) == v3
     @test_throws ErrorException addVariable!(dfg2, v3)
-    @test addFactor!(dfg2, [v1, v2], f1) == f1
-    @test_throws ErrorException addFactor!(dfg2, [v1, v2], f1)
+    @test addFactor!(dfg2, f1) == f1
+    @test_throws ErrorException addFactor!(dfg2, f1)
     # @test @test_logs (:warn, r"exist") updateFactor!(dfg2, f2) == f2
     @test updateFactor!(dfg2, f2) == f2
-    @test_throws ErrorException addFactor!(dfg2, [:b, :c], f2)
+    @test_throws ErrorException addFactor!(dfg2, f2)
 
     dv3, dv3facs = deleteVariable!(dfg2, v3)
     #TODO write compare if we want to compare complete one, for now just label

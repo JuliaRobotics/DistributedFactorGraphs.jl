@@ -66,7 +66,7 @@ end
         [:a, :b],
         SkeletonDFGFactor(:abf1, [:a, :b]),
     )
-    @test @test_logs (:error, r"not found") !FactorGraphs.addFactor!(
+    @test_throws KeyError FactorGraphs.addFactor!(
         fg,
         [:a, :c],
         SkeletonDFGFactor(:acf1, [:a, :c]),

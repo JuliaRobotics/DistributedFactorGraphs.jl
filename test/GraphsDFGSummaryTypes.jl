@@ -14,15 +14,6 @@ function DistributedFactorGraphs.DFGVariableSummary(label::Symbol)
         Dict{Symbol, BlobEntry}(),
     )
 end
-function DistributedFactorGraphs.DFGFactorSummary(label::Symbol)
-    return DFGFactorSummary(
-        nothing,
-        label,
-        Set{Symbol}(),
-        Symbol[],
-        DistributedFactorGraphs.now(localzone()),
-    )
-end
 
 function DistributedFactorGraphs.DFGVariableSummary(
     label::Symbol,
@@ -54,10 +45,9 @@ dfg = GraphsDFG{NoSolverParams, VARTYPE, FACTYPE}()
 v1 = VARTYPE(:a)
 v2 = VARTYPE(:b)
 v3 = VARTYPE(:c)
-f0 = FACTYPE(:af1)
-f1 = FACTYPE(:abf1)
-f2 = FACTYPE(:bcf1)
-append!(f2._variableOrderSymbols, [:b, :c])
+f0 = FACTYPE(:af1, [:a])
+f1 = FACTYPE(:abf1, [:a, :b])
+f2 = FACTYPE(:bcf1, [:b, :c])
 
 union!(v1.tags, [:VARIABLE, :POSE])
 union!(v2.tags, [:VARIABLE, :LANDMARK])
@@ -150,7 +140,7 @@ end
     fg = GraphsDFG{NoSolverParams, VARTYPE, FACTYPE}()
     addVariable!(fg, VARTYPE(:a))
     addVariable!(fg, VARTYPE(:b))
-    addFactor!(fg, [:a, :b], FACTYPE(:abf1))
+    addFactor!(fg, FACTYPE(:abf1, [:a, :b]))
     addVariable!(fg, VARTYPE(:orphan))
 
     AdjacencyMatricesTestBlock(fg)
