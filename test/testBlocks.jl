@@ -158,11 +158,11 @@ function DFGStructureAndAccessors(
         "USER",
         "ROBOT",
         "SESSION",
+        "AGENT",
         "VARIABLE",
         "FACTOR",
-        "ENVIRONMENT",
         "PPE",
-        "DATA_ENTRY",
+        "BLOB_ENTRY",
         "FACTORGRAPH",
     ]
 

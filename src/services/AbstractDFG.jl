@@ -155,7 +155,6 @@ $SIGNATURES
 Get the metadata from the agent in the AbstractDFG.
 """
 getAgentMetadata(dfg::AbstractDFG) = dfg.robotData
-getRobotData(dfg::AbstractDFG) = getAgentMetadata(dfg) #TODO deprecate
 
 """
 $SIGNATURES
@@ -175,8 +174,7 @@ $SIGNATURES
 
 Get the metadata from the factorgraph in the AbstractDFG.
 """
-getFgMetadata(dfg::AbstractDFG) = dfg.sessionData
-getSessionData(dfg::AbstractDFG) = getFgMetadata(dfg::AbstractDFG) #TODO deprecate
+getGraphMetadata(dfg::AbstractDFG) = dfg.sessionData
 
 """
 $SIGNATURES
@@ -190,13 +188,13 @@ $SIGNATURES
 
 Set the metadata of the factorgraph in the AbstractDFG.
 """
-function setFgMetadata!(dfg::AbstractDFG, data::Dict{Symbol, SmallDataTypes})
+function setGraphMetadata!(dfg::AbstractDFG, data::Dict{Symbol, SmallDataTypes})
     dfg.sessionData = data
     return dfg.sessionData
 end
 
 function setSessionData!(dfg::AbstractDFG, data::Dict{Symbol, SmallDataTypes})
-    return setFgMetadata!(dfg, data)
+    return setGraphMetadata!(dfg, data)
 end #TODO deprecate
 
 ##==============================================================================
@@ -227,32 +225,13 @@ emptySessionData!(dfg::AbstractDFG) = empty!(dfg.sessionData)
 ##==============================================================================
 ## User/Robot/Session Blob Entries CRUD
 ##==============================================================================
-@deprecate getSessionBlobEntry(dfg::AbstractDFG, label::Symbol) getFgBlobEntry(dfg, label)
-@deprecate getSessionBlobEntries(args...) getFgBlobEntries(args...)
-@deprecate addSessionBlobEntry!(args...) addFgBlobEntry!(args...)
-@deprecate addSessionBlobEntries!(args...) addFgBlobEntries!(args...)
-@deprecate updateSessionBlobEntry!(args...) updateFgBlobEntry!(args...)
-@deprecate deleteSessionBlobEntry!(args...) deleteFgBlobEntry!(args...)
 
-function getFgBlobEntry end
-function getFgBlobEntries end
-function addFgBlobEntry! end
-function addFgBlobEntries! end
-function updateFgBlobEntry! end
-function deleteFgBlobEntry! end
-
-@deprecate getRobotBlobEntry(args...) getAgentBlobEntry(args...)
-@deprecate getRobotBlobEntries(args...) getAgentBlobEntries(args...)
-@deprecate addRobotBlobEntry!(args...) addAgentBlobEntry!(args...)
-@deprecate addRobotBlobEntries!(args...) addAgentBlobEntries!(args...)
-@deprecate updateRobotBlobEntry!(args...) updateAgentBlobEntry!(args...)
-@deprecate deleteRobotBlobEntry!(args...) deleteAgentBlobEntry!(args...)
-@deprecate getUserBlobEntry(args...) getAgentBlobEntry(args...)
-@deprecate getUserBlobEntries(args...) getAgentBlobEntries(args...)
-@deprecate addUserBlobEntry!(args...) addAgentBlobEntry!(args...)
-@deprecate addUserBlobEntries!(args...) addAgentBlobEntries!(args...)
-@deprecate updateUserBlobEntry!(args...) updateAgentBlobEntry!(args...)
-@deprecate deleteUserBlobEntry!(args...) deleteAgentBlobEntry!(args...)
+function getGraphBlobEntry end
+function getGraphBlobEntries end
+function addGraphBlobEntry! end
+function addGraphBlobEntries! end
+function updateGraphBlobEntry! end
+function deleteGraphBlobEntry! end
 
 function getAgentBlobEntry end
 function getAgentBlobEntries end
@@ -261,11 +240,7 @@ function addAgentBlobEntries! end
 function updateAgentBlobEntry! end
 function deleteAgentBlobEntry! end
 
-@deprecate listSessionBlobEntries(args...) listFgBlobEntries(args...)
-@deprecate listRobotBlobEntries(args...) listAgentBlobEntries(args...)
-@deprecate listUserBlobEntries(args...) listAgentBlobEntries(args...)
-
-function listFgBlobEntries end
+function listGraphBlobEntries end
 function listAgentBlobEntries end
 
 ##==============================================================================

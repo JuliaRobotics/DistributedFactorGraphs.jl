@@ -57,7 +57,6 @@ function BlobEntry(
     timestamp::ZonedDateTime = entry.timestamp,
     createdTimestamp = entry.createdTimestamp,
     lastUpdatedTimestamp = entry.lastUpdatedTimestamp,
-    _type::String = entry._type,
     _version::String = entry._version,
 )
     return BlobEntry(;
@@ -75,7 +74,6 @@ function BlobEntry(
         timestamp,
         createdTimestamp,
         lastUpdatedTimestamp,
-        _type,
         _version,
     )
 end

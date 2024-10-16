@@ -8,7 +8,6 @@ abstract type AbstractPackedFactor end
 
 abstract type AbstractPrior <: AbstractFactor end
 abstract type AbstractRelative <: AbstractFactor end
-# abstract type AbstractRelativeRoots <: AbstractRelative end    # TODO deprecate
 abstract type AbstractRelativeMinimize <: AbstractRelative end
 abstract type AbstractManifoldMinimize <: AbstractRelative end
 

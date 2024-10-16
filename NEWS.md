@@ -1,6 +1,14 @@
 Listing news on any major breaking changes in DFG.  For regular changes, see integrated Github.com project milestones for DFG.
 
 # v0.24
+- Deprecated nouns:
+    SessionBlobEntry -> GraphBlobEntry
+    RobotBlobEntry -> AgentBlobEntry
+    UserBlobEntry -> AgentBlobEntry
+    RobotData -> AgentMetadata
+    SessionData -> GraphMetadata 
+
+# v0.24
 
 - Remove `FolderStore` `.dat` legacy extension. To upgrade a legacy FolderStore remove extention with something like: `foreach(f->mv(f,split(f,".")[1]), files)`
 

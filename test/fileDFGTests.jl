@@ -26,42 +26,32 @@ using UUIDs
         map(
             v -> addBlobEntry!(
                 v,
-                BlobEntry(
-                    nothing,
-                    nothing,
-                    uuid4(),
-                    :testing,
-                    :store,
-                    "",
-                    "",
-                    "",
-                    "",
-                    "",
-                    now(localzone()),
-                    "BlobEntry",
-                    string(DFG._getDFGVersion()),
-                ),
+                BlobEntry(;
+                    blobId = uuid4(),
+                    label = :testing,
+                    blobstore = :store,
+                    hash = "",
+                    origin = "",
+                    description = "",
+                    mimeType = "",
+                    timestamp = now(localzone())
+                )
             ),
             verts,
         )
         map(
             v -> addBlobEntry!(
                 v,
-                BlobEntry(
-                    nothing,
-                    nothing,
-                    uuid4(),
-                    :testing2,
-                    :store,
-                    "",
-                    "",
-                    "",
-                    "",
-                    "",
-                    ZonedDateTime(2014, 5, 30, 21, tz"UTC-4"),
-                    "BlobEntry",
-                    string(DFG._getDFGVersion()),
-                ),
+                BlobEntry(;
+                    blobId = uuid4(),
+                    label = :testing2,
+                    blobstore = :store,
+                    hash = "",
+                    origin = "",
+                    description = "",
+                    mimeType = "",
+                    timestamp = ZonedDateTime(2014, 5, 30, 21, tz"UTC-4")
+                )
             ),
             verts,
         )
@@ -105,25 +95,19 @@ using UUIDs
         #test user/robot/session metadata
 
         #test user/robot/session blob entries
-        be = BlobEntry(
-            nothing,
-            nothing,
-            uuid4(),
-            :testing2,
-            :store,
-            "",
-            "",
-            "",
-            "",
-            "",
-            ZonedDateTime(2023, 2, 3, 20, tz"UTC+1"),
-            "BlobEntry",
-            string(DFG._getDFGVersion()),
+        be = BlobEntry(;
+            blobId = uuid4(),
+            label = :testing2,
+            blobstore = :store,
+            hash = "",
+            origin = "",
+            description = "",
+            mimeType = "",
+            timestamp = ZonedDateTime(2023, 2, 3, 20, tz"UTC+1")
         )
 
-        addSessionBlobEntry!(dfg, be)
-        #TODO addRobotBlobEntry!(dfg, be)
-        #TODO addUserBlobEntry!(dfg, be)
+        addGraphBlobEntry!(dfg, be)
+        #TODO addAgentBlobEntry!(dfg, be)
         smallUserData = Dict{Symbol, SmallDataTypes}(:a => "42", :b => "small_user")
         smallRobotData = Dict{Symbol, SmallDataTypes}(:a => "43", :b => "small_robot")
         smallSessionData = Dict{Symbol, SmallDataTypes}(:a => "44", :b => "small_session")

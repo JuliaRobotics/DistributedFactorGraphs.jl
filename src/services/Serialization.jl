@@ -2,9 +2,6 @@
 # TODO dev and debugging, used by some of the DFG drivers
 export _packSolverData
 
-# For all types that pack their type into their own structure (e.g. PPE)
-const TYPEKEY = "_type"
-
 ## Version checking
 #NOTE fixed really bad function but kept similar as fallback #TODO upgrade to use pkgversion(m::Module)
 function _getDFGVersion()

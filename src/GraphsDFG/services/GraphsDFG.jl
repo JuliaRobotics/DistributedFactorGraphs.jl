@@ -570,29 +570,25 @@ end
 # FG blob entries 
 # session blob entries
 
-function getSessionBlobEntry(fg::GraphsDFG, label::Symbol)
+function getGraphBlobEntry(fg::GraphsDFG, label::Symbol)
     return fg.sessionBlobEntries[label]
 end
 
-function getSessionBlobEntries(fg::GraphsDFG, startwith::Union{Nothing, String} = nothing)
+function getGraphBlobEntries(fg::GraphsDFG, startwith::Union{Nothing, String} = nothing)
     entries = collect(values(fg.sessionBlobEntries))
     !isnothing(startwith) && filter!(e -> startswith(string(e.label), startwith), entries)
     return entries
 end
 
-function listSessionBlobEntries(fg::GraphsDFG)
+function listGraphBlobEntries(fg::GraphsDFG)
     return collect(keys(fg.sessionBlobEntries))
 end
 
-function listRobotBlobEntries(fg::GraphsDFG)
+function listAgentBlobEntries(fg::GraphsDFG)
     return collect(keys(fg.robotBlobEntries))
 end
 
-function listUserBlobEntries(fg::GraphsDFG)
-    return collect(keys(fg.userBlobEntries))
-end
-
-function addSessionBlobEntry!(fg::GraphsDFG, entry::BlobEntry)
+function addGraphBlobEntry!(fg::GraphsDFG, entry::BlobEntry)
     if haskey(fg.sessionBlobEntries, entry.label)
         error(
             "BlobEntry '$(entry.label)' already exists in the factor graph's session blob entries.",
@@ -602,9 +598,9 @@ function addSessionBlobEntry!(fg::GraphsDFG, entry::BlobEntry)
     return entry
 end
 
-function addSessionBlobEntries!(fg::GraphsDFG, entries::Vector{BlobEntry})
+function addGraphBlobEntries!(fg::GraphsDFG, entries::Vector{BlobEntry})
     return map(entries) do entry
-        return addSessionBlobEntry!(fg, entry)
+        return addGraphBlobEntry!(fg, entry)
     end
 end
 
