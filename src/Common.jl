@@ -70,21 +70,21 @@ end
 sortDFG(vars::Vector{Symbol}; lt = natural_lt, kwargs...) = sort(vars; lt = lt, kwargs...)
 
 ##==============================================================================
-## Validation of session, robot, and user IDs.
+## Validation of session, robot, and user labels.
 ##==============================================================================
 global _invalidIds = [
     "USER",
     "ROBOT",
     "SESSION",
+    "AGENT",
     "VARIABLE",
     "FACTOR",
-    "ENVIRONMENT",
     "PPE",
-    "DATA_ENTRY",
+    "BLOB_ENTRY",
     "FACTORGRAPH",
 ]
 
-global _validLabelRegex = r"^[a-zA-Z][-\w\.\@]*$"
+const global _validLabelRegex::Regex = r"^[a-zA-Z][-\w\.\@]*$"
 
 """
 $(SIGNATURES)
@@ -95,8 +95,7 @@ function isValidLabel(id::Union{Symbol, String})
     if typeof(id) == Symbol
         id = String(id)
     end
-    return all(t -> t != uppercase(id), _invalidIds) &&
-           match(_validLabelRegex, id) !== nothing
+    return !in(uppercase(id), _invalidIds) && !isnothing(match(_validLabelRegex, id))
 end
 
 """

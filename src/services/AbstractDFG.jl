@@ -37,9 +37,9 @@ function getDFGInfo(dfg::AbstractDFG)
         getUserLabel(dfg),
         getRobotLabel(dfg),
         getSessionLabel(dfg),
-        getUserData(dfg),
-        getRobotData(dfg),
-        getSessionData(dfg),
+        getAgentMetadata(dfg), #FIXME
+        getAgentMetadata(dfg),
+        getGraphMetadata(dfg),
         getSolverParams(dfg),
     )
 end
@@ -132,36 +132,20 @@ function setSolverParams!(dfg::AbstractDFG, solverParams::AbstractParams)
 end
 
 # Accessors and CRUD for user/robot/session Data
-"""
-$SIGNATURES
-
-Get the user data associated with the graph.
-"""
-getUserData(dfg::AbstractDFG) = dfg.userData
 
 """
 $SIGNATURES
 
-Set the user data associated with the graph.
+Get the metadata from the agent in the AbstractDFG.
 """
-function setUserData!(dfg::AbstractDFG, data::Dict{Symbol, SmallDataTypes})
-    dfg.userData = data #TODO keep memory? use clear and then add
-    return dfg.userData
-end
+getAgentMetadata(dfg::AbstractDFG) = dfg.robotData
 
 """
 $SIGNATURES
 
-Get the robot data associated with the graph.
+Set the metadata of the agent in the AbstractDFG.
 """
-getRobotData(dfg::AbstractDFG) = dfg.robotData
-
-"""
-$SIGNATURES
-
-Set the robot data associated with the graph.
-"""
-function setRobotData!(dfg::AbstractDFG, data::Dict{Symbol, SmallDataTypes})
+function setAgentMetadata!(dfg::AbstractDFG, data::Dict{Symbol, SmallDataTypes})
     dfg.robotData = data
     return dfg.robotData
 end
@@ -169,16 +153,23 @@ end
 """
 $SIGNATURES
 
-Get the session data associated with the graph.
+Get the metadata from the factorgraph in the AbstractDFG.
 """
-getSessionData(dfg::AbstractDFG) = dfg.sessionData
+getGraphMetadata(dfg::AbstractDFG) = dfg.sessionData
 
 """
 $SIGNATURES
 
-Set the session data associated with the graph.
+Get the metadata of the node.
 """
-function setSessionData!(dfg::AbstractDFG, data::Dict{Symbol, SmallDataTypes})
+getMetadata(node::DFGNode) = node.metadata
+
+"""
+$SIGNATURES
+
+Set the metadata of the factorgraph in the AbstractDFG.
+"""
+function setGraphMetadata!(dfg::AbstractDFG, data::Dict{Symbol, SmallDataTypes})
     dfg.sessionData = data
     return dfg.sessionData
 end
@@ -186,55 +177,46 @@ end
 ##==============================================================================
 ## User/Robot/Session Data CRUD
 ##==============================================================================
-
+#TODO maybe only support get and set?
 #NOTE with API standardization this should become something like:
-getUserData(dfg::AbstractDFG, key::Symbol) = dfg.userData[key]
-getRobotData(dfg::AbstractDFG, key::Symbol) = dfg.robotData[key]
-getSessionData(dfg::AbstractDFG, key::Symbol) = dfg.sessionData[key]
+getAgentMetadata(dfg::AbstractDFG, key::Symbol) = getAgentMetadata(dfg)[key]
+getGraphMetadata(dfg::AbstractDFG, key::Symbol) = getGraphMetadata(dfg)[key]
 
-updateUserData!(dfg::AbstractDFG, pair::Pair{Symbol, String}) = push!(dfg.userData, pair)
-updateRobotData!(dfg::AbstractDFG, pair::Pair{Symbol, String}) = push!(dfg.robotData, pair)
-function updateSessionData!(dfg::AbstractDFG, pair::Pair{Symbol, String})
+function updateAgentMetadata!(dfg::AbstractDFG, pair::Pair{Symbol, String})
+    return push!(dfg.robotData, pair)
+end
+function updateGraphMetadata!(dfg::AbstractDFG, pair::Pair{Symbol, String})
     return push!(dfg.sessionData, pair)
 end
 
-deleteUserData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.userData, key)
-deleteRobotData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.robotData, key)
-deleteSessionData!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.sessionData, key)
+deleteAgentMetadata!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.robotData, key)
+deleteGraphMetadata!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.sessionData, key)
 
-emptyUserData!(dfg::AbstractDFG) = empty!(dfg.userData)
-emptyRobotData!(dfg::AbstractDFG) = empty!(dfg.robotData)
-emptySessionData!(dfg::AbstractDFG) = empty!(dfg.sessionData)
+emptyAgentMetadata!(dfg::AbstractDFG) = empty!(dfg.robotData)
+emptyGraphMetadata!(dfg::AbstractDFG) = empty!(dfg.sessionData)
 
 #TODO add__Data!?
 
 ##==============================================================================
 ## User/Robot/Session Blob Entries CRUD
 ##==============================================================================
-function getSessionBlobEntry end
-function getSessionBlobEntries end
-function addSessionBlobEntry! end
-function addSessionBlobEntries! end
-function updateSessionBlobEntry! end
-function deleteSessionBlobEntry! end
 
-function getRobotBlobEntry end
-function getRobotBlobEntries end
-function addRobotBlobEntry! end
-function addRobotBlobEntries! end
-function updateRobotBlobEntry! end
-function deleteRobotBlobEntry! end
+function getGraphBlobEntry end
+function getGraphBlobEntries end
+function addGraphBlobEntry! end
+function addGraphBlobEntries! end
+function updateGraphBlobEntry! end
+function deleteGraphBlobEntry! end
 
-function getUserBlobEntry end
-function getUserBlobEntries end
-function addUserBlobEntry! end
-function addUserBlobEntries! end
-function updateUserBlobEntry! end
-function deleteUserBlobEntry! end
+function getAgentBlobEntry end
+function getAgentBlobEntries end
+function addAgentBlobEntry! end
+function addAgentBlobEntries! end
+function updateAgentBlobEntry! end
+function deleteAgentBlobEntry! end
 
-function listSessionBlobEntries end
-function listRobotBlobEntries end
-function listUserBlobEntries end
+function listGraphBlobEntries end
+function listAgentBlobEntries end
 
 ##==============================================================================
 ## AbstractBlobStore  CRUD
@@ -1119,9 +1101,8 @@ function copyGraph!(
     end
 
     if copyGraphMetadata
-        setUserData(destDFG, getUserData(sourceDFG))
-        setRobotData(destDFG, getRobotData(sourceDFG))
-        setSessionData(destDFG, getSessionData(sourceDFG))
+        setAgentMetadata(destDFG, getAgentMetadata(sourceDFG))
+        setGraphMetadata(destDFG, getGraphMetadata(sourceDFG))
     end
     return nothing
 end

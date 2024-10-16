@@ -8,7 +8,6 @@ abstract type AbstractPackedFactor end
 
 abstract type AbstractPrior <: AbstractFactor end
 abstract type AbstractRelative <: AbstractFactor end
-# abstract type AbstractRelativeRoots <: AbstractRelative end    # TODO deprecate
 abstract type AbstractRelativeMinimize <: AbstractRelative end
 abstract type AbstractManifoldMinimize <: AbstractRelative end
 
@@ -84,7 +83,9 @@ FunctionNodeData(args...; kw...) = FunctionNodeData{typeof(args[4])}(args...; kw
 # |-------------------|:-----:|:----:|:---------:|:--------:|:----------:|
 # | SkeletonDFGFactor |   X   |   x  |           |          |            |
 # | DFGFactorSummary  |   X   |   X  |     X     |          |            |
+# | PackedFactor      |   X   |   X  |     X     |     X    |      X*    |
 # | DFGFactor         |   X   |   X  |     X     |     X    |      X     |
+# *not available without reconstruction
 
 # Packed Factor
 Base.@kwdef struct PackedFactor <: AbstractDFGFactor
@@ -99,6 +100,64 @@ Base.@kwdef struct PackedFactor <: AbstractDFGFactor
     data::String
     metadata::String
     _version::String = string(_getDFGVersion())
+    # blobEntries::Vector{BlobEntry}#TODO should factor have blob entries?
+end
+#TODO type not in DFG PackedFactor, should it be?
+# _type::String
+
+# createdTimestamp::DateTime
+# lastUpdatedTimestamp::DateTime
+
+# TODO consolidate to just one type
+"""
+$(TYPEDEF)
+Abstract parent type for all InferenceTypes, which are the
+functions inside of factors.
+"""
+abstract type InferenceType <: DFG.AbstractPackedFactor end
+# this is the GenericFunctionNodeData for packed types
+const FactorData = PackedFunctionNodeData{InferenceType}
+
+# Packed Factor constructor
+function assembleFactorName(xisyms::Union{Vector{String}, Vector{Symbol}})
+    return Symbol(xisyms..., "f_", string(uuid4())[1:4])
+end
+
+getFncTypeName(fnc::InferenceType) = split(string(typeof(fnc)), ".")[end]
+
+function Factor(
+    xisyms::Vector{Symbol},
+    fnc::InferenceType;
+    multihypo::Vector{Float64} = Float64[],
+    nullhypo::Float64 = 0.0,
+    solvable::Int = 1,
+    tags::Vector{Symbol} = Symbol[],
+    timestamp::ZonedDateTime = TimeZones.now(tz"UTC"),
+    inflation::Real = 3.0,
+    label::Symbol = assembleFactorName(xisyms),
+    nstime::Int = 0,
+    metadata::Dict{Symbol, DFG.SmallDataTypes} = Dict{Symbol, DFG.SmallDataTypes}(),
+)
+    # create factor data
+    factordata = FactorData(; fnc, multihypo, nullhypo, inflation)
+
+    fnctype = getFncTypeName(fnc)
+
+    union!(tags, [:FACTOR])
+    # create factor 
+    factor = PackedFactor(;
+        label,
+        tags,
+        _variableOrderSymbols = xisyms,
+        timestamp,
+        nstime = string(nstime),
+        fnctype,
+        solvable,
+        data = base64encode(JSON3.write(factordata)),
+        metadata = base64encode(JSON3.write(metadata)),
+    )
+
+    return factor
 end
 
 StructTypes.StructType(::Type{PackedFactor}) = StructTypes.UnorderedStruct()

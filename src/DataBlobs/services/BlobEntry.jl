@@ -43,7 +43,7 @@ function assertHash(de::BlobEntry, db; hashfunction::Function = sha256)
 end
 
 function Base.show(io::IO, ::MIME"text/plain", entry::BlobEntry)
-    println(io, "_type=BlobEntry {")
+    println(io, "BlobEntry {")
     println(io, "  id:            ", entry.id)
     println(io, "  blobId:        ", entry.blobId)
     println(io, "  originId:      ", entry.originId)

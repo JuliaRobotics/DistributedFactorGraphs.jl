@@ -70,47 +70,34 @@ export getDescription,
     setDescription!,
     getSolverParams,
     setSolverParams!,
-    getUserData,
-    setUserData!,
-    getRobotData,
-    setRobotData!,
-    getSessionData,
-    setSessionData!,
+    getAgentMetadata,
+    setAgentMetadata!,
+    getGraphMetadata,
+    setGraphMetadata!,
     getAddHistory
 
-export getSessionBlobEntry,
-    getSessionBlobEntries,
-    addSessionBlobEntry!,
-    addSessionBlobEntries!,
-    updateSessionBlobEntry!,
-    deleteSessionBlobEntry!,
-    getRobotBlobEntry,
-    getRobotBlobEntries,
-    addRobotBlobEntry!,
-    addRobotBlobEntries!,
-    updateRobotBlobEntry!,
-    deleteRobotBlobEntry!,
-    getUserBlobEntry,
-    getUserBlobEntries,
-    addUserBlobEntry!,
-    addUserBlobEntries!,
-    updateUserBlobEntry!,
-    deleteUserBlobEntry!,
-    listSessionBlobEntries,
-    listRobotBlobEntries,
-    listUserBlobEntries
+export getGraphBlobEntry,
+    getGraphBlobEntries,
+    addGraphBlobEntry!,
+    addGraphBlobEntries!,
+    updateGraphBlobEntry!,
+    deleteGraphBlobEntry!,
+    getAgentBlobEntry,
+    getAgentBlobEntries,
+    addAgentBlobEntry!,
+    addAgentBlobEntries!,
+    updateAgentBlobEntry!,
+    deleteAgentBlobEntry!,
+    listGraphBlobEntries,
+    listAgentBlobEntries
 
 export getBlobStore,
     addBlobStore!, updateBlobStore!, deleteBlobStore!, emptyBlobStore!, listBlobStores
 
 # TODO Not sure these are needed or should work everywhere, implement in cloud?
-export updateUserData!,
-    updateRobotData!,
-    updateSessionData!,
-    deleteUserData!,
-    deleteRobotData!,
-    deleteSessionData!
-export emptyUserData!, emptyRobotData!, emptySessionData!
+export updateAgentMetadata!,
+    updateGraphMetadata!, deleteAgentMetadata!, deleteGraphMetadata!
+export emptyAgentMetadata!, emptyGraphMetadata!
 
 # Graph Types: exported from modules or @reexport
 export InMemoryDFGTypes, LocalDFG
@@ -355,6 +342,8 @@ include("entities/DFGFactor.jl")
 include("entities/DFGVariable.jl")
 
 include("entities/AbstractDFGSummary.jl")
+
+include("entities/Agent.jl")
 
 include("services/AbstractDFG.jl")
 
