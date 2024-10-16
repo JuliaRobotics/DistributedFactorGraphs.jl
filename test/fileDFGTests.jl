@@ -34,8 +34,8 @@ using UUIDs
                     origin = "",
                     description = "",
                     mimeType = "",
-                    timestamp = now(localzone())
-                )
+                    timestamp = now(localzone()),
+                ),
             ),
             verts,
         )
@@ -50,8 +50,8 @@ using UUIDs
                     origin = "",
                     description = "",
                     mimeType = "",
-                    timestamp = ZonedDateTime(2014, 5, 30, 21, tz"UTC-4")
-                )
+                    timestamp = ZonedDateTime(2014, 5, 30, 21, tz"UTC-4"),
+                ),
             ),
             verts,
         )
@@ -103,7 +103,7 @@ using UUIDs
             origin = "",
             description = "",
             mimeType = "",
-            timestamp = ZonedDateTime(2023, 2, 3, 20, tz"UTC+1")
+            timestamp = ZonedDateTime(2023, 2, 3, 20, tz"UTC+1"),
         )
 
         addGraphBlobEntry!(dfg, be)

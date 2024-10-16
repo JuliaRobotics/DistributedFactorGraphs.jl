@@ -182,7 +182,9 @@ end
 getAgentMetadata(dfg::AbstractDFG, key::Symbol) = getAgentMetadata(dfg)[key]
 getGraphMetadata(dfg::AbstractDFG, key::Symbol) = getGraphMetadata(dfg)[key]
 
-updateAgentMetadata!(dfg::AbstractDFG, pair::Pair{Symbol, String}) = push!(dfg.robotData, pair)
+function updateAgentMetadata!(dfg::AbstractDFG, pair::Pair{Symbol, String})
+    return push!(dfg.robotData, pair)
+end
 function updateGraphMetadata!(dfg::AbstractDFG, pair::Pair{Symbol, String})
     return push!(dfg.sessionData, pair)
 end

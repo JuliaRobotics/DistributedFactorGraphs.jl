@@ -96,9 +96,7 @@ export getBlobStore,
 
 # TODO Not sure these are needed or should work everywhere, implement in cloud?
 export updateAgentMetadata!,
-    updateGraphMetadata!,
-    deleteAgentMetadata!,
-    deleteGraphMetadata!
+    updateGraphMetadata!, deleteAgentMetadata!, deleteGraphMetadata!
 export emptyAgentMetadata!, emptyGraphMetadata!
 
 # Graph Types: exported from modules or @reexport
