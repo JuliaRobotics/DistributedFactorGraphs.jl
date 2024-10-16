@@ -106,7 +106,6 @@ macro defVariable(structname, manifold, point_identity)
             DFG.getPointType(::Type{$structname}) = typeof($point_identity)
 
             DFG.getPointIdentity(::Type{$structname}) = $point_identity
-
         end,
     )
 end

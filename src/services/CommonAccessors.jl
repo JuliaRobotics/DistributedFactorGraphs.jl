@@ -155,10 +155,7 @@ Related
 
 isSolvable
 """
-function getSolveInProgress(
-    var::Union{DFGVariable, DFGFactor},
-    solveKey::Symbol = :default,
-)
+function getSolveInProgress(var::Union{DFGVariable, DFGFactor}, solveKey::Symbol = :default)
     # Variable
     if var isa DFGVariable
         if haskey(getSolverDataDict(var), solveKey)

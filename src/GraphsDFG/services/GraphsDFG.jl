@@ -182,11 +182,7 @@ function deleteVariable!(dfg::GraphsDFG, label::Symbol)#::Tuple{AbstractDFGVaria
     return variable, neigfacs
 end
 
-function deleteFactor!(
-    dfg::GraphsDFG,
-    label::Symbol;
-    suppressGetFactor::Bool = false,
-)
+function deleteFactor!(dfg::GraphsDFG, label::Symbol; suppressGetFactor::Bool = false)
     if !haskey(dfg.g.factors, label)
         error("Factor label '$(label)' does not exist in the factor graph")
     end
