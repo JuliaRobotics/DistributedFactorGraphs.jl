@@ -161,7 +161,6 @@ function Factor(
     return factor
 end
 
-
 StructTypes.StructType(::Type{PackedFactor}) = StructTypes.UnorderedStruct()
 StructTypes.idproperty(::Type{PackedFactor}) = :id
 StructTypes.omitempties(::Type{PackedFactor}) = (:id,)

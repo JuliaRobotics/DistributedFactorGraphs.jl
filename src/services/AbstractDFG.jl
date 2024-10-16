@@ -149,7 +149,6 @@ function setUserData!(dfg::AbstractDFG, data::Dict{Symbol, SmallDataTypes})
     return dfg.userData
 end
 
-
 """
 $SIGNATURES
 
@@ -167,7 +166,9 @@ function setAgentMetadata!(dfg::AbstractDFG, data::Dict{Symbol, SmallDataTypes})
     dfg.robotData = data
     return dfg.robotData
 end
-setRobotData!(dfg::AbstractDFG, data::Dict{Symbol, SmallDataTypes}) = setAgentMetadata!(dfg, data) #TODO deprecate
+function setRobotData!(dfg::AbstractDFG, data::Dict{Symbol, SmallDataTypes})
+    return setAgentMetadata!(dfg, data)
+end #TODO deprecate
 
 """
 $SIGNATURES
@@ -194,8 +195,9 @@ function setFgMetadata!(dfg::AbstractDFG, data::Dict{Symbol, SmallDataTypes})
     return dfg.sessionData
 end
 
-setSessionData!(dfg::AbstractDFG, data::Dict{Symbol, SmallDataTypes}) = setFgMetadata!(dfg, data) #TODO deprecate
-
+function setSessionData!(dfg::AbstractDFG, data::Dict{Symbol, SmallDataTypes})
+    return setFgMetadata!(dfg, data)
+end #TODO deprecate
 
 ##==============================================================================
 ## User/Robot/Session Data CRUD
@@ -780,11 +782,7 @@ function ls(dfg::G, label::Symbol; solvable::Int = 0) where {G <: AbstractDFG}
     return listNeighbors(dfg, label; solvable = solvable)
 end
 
-function lsf(
-    dfg::G,
-    label::Symbol;
-    solvable::Int = 0,
-) where {G <: AbstractDFG}
+function lsf(dfg::G, label::Symbol; solvable::Int = 0) where {G <: AbstractDFG}
     return listNeighbors(dfg, label; solvable = solvable)
 end
 

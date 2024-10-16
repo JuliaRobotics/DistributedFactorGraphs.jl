@@ -231,7 +231,6 @@ end
 # createdTimestamp::DateTime
 # lastUpdatedTimestamp::DateTime
 
-
 #IIF like contruction helper for packed variable
 function Variable(
     label::Symbol,
