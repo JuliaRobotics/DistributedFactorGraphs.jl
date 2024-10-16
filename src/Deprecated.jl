@@ -1,7 +1,7 @@
 ## ================================================================================
 ## Deprecated in v0.25
 ##=================================================================================
-@deprecate getSessionBlobEntry(dfg::AbstractDFG, label::Symbol) getGraphBlobEntry(dfg, label)
+@deprecate getSessionBlobEntry(args...) getGraphBlobEntry(args...)
 @deprecate getSessionBlobEntries(args...) getGraphBlobEntries(args...)
 @deprecate addSessionBlobEntry!(args...) addGraphBlobEntry!(args...)
 @deprecate addSessionBlobEntries!(args...) addGraphBlobEntries!(args...)
@@ -23,8 +23,18 @@
 @deprecate listRobotBlobEntries(args...) listAgentBlobEntries(args...)
 @deprecate listUserBlobEntries(args...) listAgentBlobEntries(args...)
 
-@deprecate getRobotData(dfg::AbstractDFG) getAgentMetadata(dfg)
-@deprecate getSessionData(dfg::AbstractDFG) getGraphMetadata(dfg)
+@deprecate getUserData(args...) getAgentMetadata(args...)
+@deprecate getRobotData(args...) getAgentMetadata(args...)
+@deprecate getSessionData(args...) getGraphMetadata(args...)
+
+@deprecate setUserData!(args...) setAgentMetadata!(args...)
+@deprecate setRobotData!(args...) setAgentMetadata!(args...)
+@deprecate setSessionData!(args...) setGraphMetadata!(args...)
+
+#TODO 
+# @deprecate getUserLabel(dfg) getAgentLabel(dfg)
+# @deprecate getRobotLabel(dfg) getAgentLabel(dfg)
+# @deprecate getSessionLabel(dfg) getGraphLabel(dfg)
 
 ## ================================================================================
 ## Deprecated in v0.24

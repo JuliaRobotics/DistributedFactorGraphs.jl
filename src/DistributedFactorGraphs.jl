@@ -70,12 +70,10 @@ export getDescription,
     setDescription!,
     getSolverParams,
     setSolverParams!,
-    getUserData,
-    setUserData!,
-    getRobotData,
-    setRobotData!,
-    getSessionData,
-    setSessionData!,
+    getAgentMetadata,
+    setAgentMetadata!,
+    getGraphMetadata,
+    setGraphMetadata!,
     getAddHistory
 
 export getGraphBlobEntry,
@@ -97,13 +95,11 @@ export getBlobStore,
     addBlobStore!, updateBlobStore!, deleteBlobStore!, emptyBlobStore!, listBlobStores
 
 # TODO Not sure these are needed or should work everywhere, implement in cloud?
-export updateUserData!,
-    updateRobotData!,
-    updateSessionData!,
-    deleteUserData!,
-    deleteRobotData!,
-    deleteSessionData!
-export emptyUserData!, emptyRobotData!, emptySessionData!
+export updateAgentMetadata!,
+    updateGraphMetadata!,
+    deleteAgentMetadata!,
+    deleteGraphMetadata!
+export emptyAgentMetadata!, emptyGraphMetadata!
 
 # Graph Types: exported from modules or @reexport
 export InMemoryDFGTypes, LocalDFG

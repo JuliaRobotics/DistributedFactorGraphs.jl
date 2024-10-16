@@ -604,11 +604,11 @@ function addGraphBlobEntries!(fg::GraphsDFG, entries::Vector{BlobEntry})
     end
 end
 
-# function getSessionBlobEntry(fg::GraphsDFG, label::Symbol)
+# function getGraphBlobEntry(fg::GraphsDFG, label::Symbol)
 #     return JSON3.read(fg.sessionData[label], BlobEntry)
 # end
 
-# function getSessionBlobEntries(fg::GraphsDFG, startwith::Union{Nothing,String}=nothing)
+# function getGraphBlobEntries(fg::GraphsDFG, startwith::Union{Nothing,String}=nothing)
 #     entries = map(values(fg.sessionData)) do entry
 #         JSON3.read(entry, BlobEntry)
 #     end
@@ -616,7 +616,7 @@ end
 #     return entries
 # end
 
-# function addSessionBlobEntries!(fg::GraphsDFG, entries::Vector{BlobEntry})
+# function addGraphBlobEntries!(fg::GraphsDFG, entries::Vector{BlobEntry})
 #     return map(entries) do entry
 #         push!(fg.sessionData, entry.label=>JSON3.write(entry))
 #     end

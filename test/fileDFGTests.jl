@@ -108,13 +108,11 @@ using UUIDs
 
         addGraphBlobEntry!(dfg, be)
         #TODO addAgentBlobEntry!(dfg, be)
-        smallUserData = Dict{Symbol, SmallDataTypes}(:a => "42", :b => "small_user")
         smallRobotData = Dict{Symbol, SmallDataTypes}(:a => "43", :b => "small_robot")
         smallSessionData = Dict{Symbol, SmallDataTypes}(:a => "44", :b => "small_session")
 
-        setUserData!(dfg, smallUserData)
-        setRobotData!(dfg, smallRobotData)
-        setSessionData!(dfg, smallSessionData)
+        setAgentMetadata!(dfg, smallRobotData)
+        setGraphMetadata!(dfg, smallSessionData)
 
         # Save and load the graph to test.
         saveDFG(filename, dfg)

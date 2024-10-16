@@ -219,15 +219,12 @@ end
     @test !isInitialized(v2, :second)
 
     # Session, robot, and user small data tests
-    smallUserData = Dict{Symbol, SmallDataTypes}(:a => "42", :b => "Hello")
     smallRobotData = Dict{Symbol, SmallDataTypes}(:a => "43", :b => "Hello")
     smallSessionData = Dict{Symbol, SmallDataTypes}(:a => "44", :b => "Hello")
-    setUserData!(dfg, deepcopy(smallUserData))
-    setRobotData!(dfg, deepcopy(smallRobotData))
-    setSessionData!(dfg, deepcopy(smallSessionData))
-    @test getUserData(dfg) == smallUserData
-    @test getRobotData(dfg) == smallRobotData
-    @test getSessionData(dfg) == smallSessionData
+    setAgentMetadata!(dfg, deepcopy(smallRobotData))
+    setGraphMetadata!(dfg, deepcopy(smallSessionData))
+    @test getAgentMetadata(dfg) == smallRobotData
+    @test getGraphMetadata(dfg) == smallSessionData
 end
 
 @testset "Data Entries" begin

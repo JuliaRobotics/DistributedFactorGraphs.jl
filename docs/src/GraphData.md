@@ -190,21 +190,19 @@ Graphs reside inside a hierarchy made up in the following way:
 
 This data can be retrieved with the follow functions:
 
-- [`getUserData`](@ref)
-- [`getRobotData`](@ref)
-- [`getSessionData`](@ref)
+- [`getAgentMetadata`](@ref)
+- [`getGraphMetadata`](@ref)
 
 
 It can be set using the following functions:
 
-- [`setUserData!`](@ref)
-- [`setRobotData!`](@ref)
-- [`setSessionData!`](@ref)
+- [`setAgentMetadata!`](@ref)
+- [`setGraphMetadata!`](@ref)
 
 
 Example of using graph-level data:
 
 ```julia
-setUserData!(dfg, Dict(:a => "Hello"))
-getUserData(dfg)
+setAgentMetadata!(dfg, Dict(:a => "Hello"))
+getAgentMetadata(dfg)
 ```

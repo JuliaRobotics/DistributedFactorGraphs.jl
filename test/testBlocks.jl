@@ -189,12 +189,10 @@ function DFGStructureAndAccessors(
     @test getSessionLabel(fg) == sId
     @test getAddHistory(fg) === fg.addHistory
 
-    @test setUserData!(fg, ud) == ud
-    @test setRobotData!(fg, rd) == rd
-    @test setSessionData!(fg, sd) == sd
-    @test getUserData(fg) == ud
-    @test getRobotData(fg) == rd
-    @test getSessionData(fg) == sd
+    @test setAgentMetadata!(fg, rd) == rd
+    @test setGraphMetadata!(fg, sd) == sd
+    @test getAgentMetadata(fg) == rd
+    @test getGraphMetadata(fg) == sd
 
     @test getSolverParams(fg) == NoSolverParams()
 
@@ -203,13 +201,11 @@ function DFGStructureAndAccessors(
     smallSessionData = Dict{Symbol, SmallDataTypes}(:a => "44", :b => "Hello")
 
     #TODO CRUD vs set
-    @test setUserData!(fg, deepcopy(smallUserData)) == smallUserData
-    @test setRobotData!(fg, deepcopy(smallRobotData)) == smallRobotData
-    @test setSessionData!(fg, deepcopy(smallSessionData)) == smallSessionData
+    @test setAgentMetadata!(fg, deepcopy(smallRobotData)) == smallRobotData
+    @test setGraphMetadata!(fg, deepcopy(smallSessionData)) == smallSessionData
 
-    @test getUserData(fg) == smallUserData
-    @test getRobotData(fg) == smallRobotData
-    @test getSessionData(fg) == smallSessionData
+    @test getAgentMetadata(fg) == smallRobotData
+    @test getGraphMetadata(fg) == smallSessionData
 
     # NOTE see note in AbstractDFG.jl setSolverParams!
     @test_throws MethodError setSolverParams!(fg, GeenSolverParams()) == GeenSolverParams()
@@ -232,37 +228,28 @@ end
 # User, Robot, Session Data
 function UserRobotSessionData!(fg::AbstractDFG)
     # "User, Robot, Session Data"
-    # User Data
-    @test getUserData(fg, :a) == "42"
-    #TODO
-    @test_broken addUserData!
-    @test updateUserData!(fg, :b => "1") == getUserData(fg)
-    @test getUserData(fg, :b) == deleteUserData!(fg, :b)
-    @test emptyUserData!(fg) == Dict{Symbol, String}()
 
     # Robot Data
-    @test getRobotData(fg, :a) == "43"
+    @test getAgentMetadata(fg, :a) == "43"
     #TODO
-    @test_broken addRobotData!
-    @test updateRobotData!(fg, :b => "2") == getRobotData(fg)
-    @test getRobotData(fg, :b) == deleteRobotData!(fg, :b)
-    @test emptyRobotData!(fg) == Dict{Symbol, String}()
+    @test_broken addAgentMetadata!
+    @test updateAgentMetadata!(fg, :b => "2") == getAgentMetadata(fg)
+    @test getAgentMetadata(fg, :b) == deleteAgentMetadata!(fg, :b)
+    @test emptyAgentMetadata!(fg) == Dict{Symbol, String}()
 
     # SessionData
-    @test getSessionData(fg, :a) == "44"
+    @test getGraphMetadata(fg, :a) == "44"
     #TODO
-    @test_broken addSessionData!
-    @test updateSessionData!(fg, :b => "3") == getSessionData(fg)
-    @test getSessionData(fg, :b) == deleteSessionData!(fg, :b)
-    @test emptySessionData!(fg) == Dict{Symbol, String}()
+    @test_broken addGraphMetadata!
+    @test updateGraphMetadata!(fg, :b => "3") == getGraphMetadata(fg)
+    @test getGraphMetadata(fg, :b) == deleteGraphMetadata!(fg, :b)
+    @test emptyGraphMetadata!(fg) == Dict{Symbol, String}()
 
     # TODO Set-like if we want eg. list, merge, etc
-    # listUserData
-    # listRobotData
-    # listSessionData
-    # mergeUserData
-    # mergeRobotData
-    # mergeSessionData
+    # listAgentMetadata
+    # listGraphMetadata
+    # mergeAgentData
+    # mergeGraphData
 
 end
 
@@ -288,9 +275,9 @@ function UserRobotSessionBlobEntries!(fg::AbstractDFG)
     #TODO
 
     # Session Blob Entries
-    ae = addSessionBlobEntry!(fg, be)
+    ae = addGraphBlobEntry!(fg, be)
     @test ae == be
-    ge = getSessionBlobEntry(fg, :key1)
+    ge = getGraphBlobEntry(fg, :key1)
     @test ge == be
 
     #TODO

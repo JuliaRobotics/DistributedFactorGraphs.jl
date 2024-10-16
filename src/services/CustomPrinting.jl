@@ -215,9 +215,9 @@ function Base.show(io::IO, dfg::AbstractDFG)
     println(io, "  Description: ", getDescription(dfg))
     println(io, "  Nr variables: ", length(ls(dfg)))
     println(io, "  Nr factors: ", length(lsf(dfg)))
-    println(io, "  User Data: ", keys(getUserData(dfg)))
-    println(io, "  Robot Data: ", keys(getRobotData(dfg)))
-    return println(io, "  Session Data: ", keys(getSessionData(dfg)))
+    println(io, "  Agent Metadata: ", keys(getAgentmetadata(dfg)))
+    println(io, "  Graph Metadata: ", keys(getGraphMetadata(dfg)))
+    return
 end
 
 Base.show(io::IO, ::MIME"text/plain", dfg::AbstractDFG) = show(io, dfg)
