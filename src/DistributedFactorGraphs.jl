@@ -139,7 +139,7 @@ export DFGNode, AbstractDFGVariable, AbstractDFGFactor
 export DFGVariable, DFGVariableSummary, SkeletonDFGVariable, PackedVariable
 
 # Factors
-export DFGFactor, DFGFactorSummary, SkeletonDFGFactor, PackedFactor
+export DFGFactor, DFGFactorSummary, SkeletonDFGFactor, PackedFactor, Factor
 
 # Common
 export getSolvable, setSolvable!, isSolvable

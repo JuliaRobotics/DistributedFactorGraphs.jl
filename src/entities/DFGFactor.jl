@@ -398,6 +398,7 @@ function SkeletonDFGFactor(
     label::Symbol,
     variableOrderSymbols::Vector{Symbol} = Symbol[],
 )
+    @warn "SkeletonDFGFactor(id::Union{UUID, Nothing}...) is deprecated, use SkeletonDFGFactor(label, variableOrderSymbols) instead"
     return SkeletonDFGFactor(id, label, Set{Symbol}(), variableOrderSymbols)
 end
 function SkeletonDFGFactor(
