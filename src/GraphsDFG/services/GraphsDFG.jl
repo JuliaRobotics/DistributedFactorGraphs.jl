@@ -196,21 +196,25 @@ function getVariables(
     regexFilter::Union{Nothing, Regex} = nothing;
     tags::Vector{Symbol} = Symbol[],
     solvable::Int = 0,
+    solvableFilter::Union{Nothing, Base.Fix2} = nothing,
     detail = nothing,
 )
 
     # variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGVariable, vertices(dfg.g)))
     variables = collect(values(dfg.g.variables))
-    if regexFilter !== nothing
-        variables = filter(v -> occursin(regexFilter, String(v.label)), variables)
-    end
-    if solvable != 0
-        variables = filter(v -> _isSolvable(dfg, v.label, solvable), variables)
-    end
-    if length(tags) > 0
-        mask = map(v -> length(intersect(v.tags, tags)) > 0, variables)
-        return variables[mask]
-    end
+
+    !isnothing(regexFilter) &&
+        filter!(v -> occursin(regexFilter, String(v.label)), variables)
+    
+    solvable != 0 &&
+        filter!(v -> _isSolvable(dfg, v.label, solvable), variables)
+    
+    !isempty(tags) &&
+        filter!(v -> !isempty(intersect(v.tags, tags)), variables)
+
+    !isnothing(solvableFilter) &&
+        filter!(v -> solvableFilter(getSolvable(v)), variables)
+
     return variables
 end
 
@@ -219,6 +223,7 @@ function listVariables(
     regexFilter::Union{Nothing, Regex} = nothing;
     tags::Vector{Symbol} = Symbol[],
     solvable::Int = 0,
+    solvableFilter::Union{Nothing, Base.Fix2} = nothing,
 )
 
     # variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGVariable, vertices(dfg.g)))
@@ -229,10 +234,12 @@ function listVariables(
         )
     else
         variables = copy(dfg.g.variables.keys)
-        regexFilter !== nothing &&
-            (variables = filter(v -> occursin(regexFilter, String(v)), variables))
+        !isnothing(regexFilter) &&
+            filter!(v -> occursin(regexFilter, String(v)), variables)
         solvable != 0 &&
-            (variables = filter(vId -> _isSolvable(dfg, vId, solvable), variables))
+            filter!(vId -> _isSolvable(dfg, vId, solvable), variables)
+        !isnothing(solvableFilter) &&
+            filter!(v -> solvableFilter(getSolvable(dfg, v)), variables)
         return variables::Vector{Symbol}
     end
 end
