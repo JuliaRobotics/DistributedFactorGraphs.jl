@@ -8,8 +8,7 @@ using OrderedCollections
 using StructTypes
 
 using ...DistributedFactorGraphs
-
-# import ...DistributedFactorGraphs: AbstractDFG, DFGNode, AbstractDFGVariable, AbstractDFGFactor, DFGSummary, AbstractParams, NoSolverParams, DFGVariable, DFGFactor
+using ...DistributedFactorGraphs: Agent
 
 # import DFG functions to extend
 import ...DistributedFactorGraphs:

@@ -209,9 +209,8 @@ end
 
 function Base.show(io::IO, dfg::AbstractDFG)
     summary(io, dfg)
-    println(io, "\n  UserLabel: ", getUserLabel(dfg))
-    println(io, "  RobotLabel: ", getRobotLabel(dfg))
-    println(io, "  SessionLabel: ", getSessionLabel(dfg))
+    println(io, "  AgentLabel: ", getAgentLabel(dfg))
+    println(io, "  FactorgraphLabel: ", getGraphLabel(dfg))
     println(io, "  Description: ", getDescription(dfg))
     println(io, "  Nr variables: ", length(ls(dfg)))
     println(io, "  Nr factors: ", length(lsf(dfg)))

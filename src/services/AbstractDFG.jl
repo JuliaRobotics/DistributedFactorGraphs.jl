@@ -11,6 +11,7 @@ Base.Broadcast.broadcastable(dfg::AbstractDFG) = Ref(dfg)
 ##==============================================================================
 ## Interface for an AbstractDFG
 ##==============================================================================
+# TODO update to remove URS
 # Standard recommended fields to implement for AbstractDFG
 # - `description::String`
 # - `userLabel::String`
@@ -33,16 +34,24 @@ Convenience function to get all the metadata of a DFG
 """
 function getDFGInfo(dfg::AbstractDFG)
     return (
-        getDescription(dfg),
-        getUserLabel(dfg),
-        getRobotLabel(dfg),
-        getSessionLabel(dfg),
-        getAgentMetadata(dfg), #FIXME
-        getAgentMetadata(dfg),
-        getGraphMetadata(dfg),
-        getSolverParams(dfg),
+       description = getDescription(dfg),
+       agentLabel = getAgentLabel(dfg),
+       graphLabel = getGraphLabel(dfg),
+       agentMetadata = getAgentMetadata(dfg),
+       graphMetadata = getGraphMetadata(dfg),
+       solverParams = getSolverParams(dfg),
     )
 end
+
+"""
+    $(SIGNATURES)
+"""
+getAgent(dfg::AbstractDFG) = dfg.agent
+
+"""
+    $(SIGNATURES)
+"""
+function getGraph end
 
 """
     $(SIGNATURES)
@@ -52,17 +61,12 @@ getDescription(dfg::AbstractDFG) = dfg.description
 """
     $(SIGNATURES)
 """
-getUserLabel(dfg::AbstractDFG) = dfg.userLabel
+getAgentLabel(dfg::AbstractDFG) = getLabel(getAgent(dfg))
 
 """
     $(SIGNATURES)
 """
-getRobotLabel(dfg::AbstractDFG) = dfg.robotLabel
-
-"""
-    $(SIGNATURES)
-"""
-getSessionLabel(dfg::AbstractDFG) = dfg.sessionLabel
+getGraphLabel(dfg::AbstractDFG) = getLabel(dfg)
 
 """
     $(SIGNATURES)
@@ -136,9 +140,28 @@ end
 """
 $SIGNATURES
 
+Get the metadata of the node.
+"""
+getMetadata(node) = node.metadata
+
+
+"""
+$SIGNATURES
+
+Set the metadata of the node.
+"""
+function setMetadata!(node, data::Dict{Symbol, SmallDataTypes})
+    empty!(node.metadata)
+    merge!(node.metadata, data)
+end
+
+
+"""
+$SIGNATURES
+
 Get the metadata from the agent in the AbstractDFG.
 """
-getAgentMetadata(dfg::AbstractDFG) = dfg.robotData
+getAgentMetadata(dfg::AbstractDFG) = getMetadata(getAgent(dfg))
 
 """
 $SIGNATURES
@@ -146,8 +169,8 @@ $SIGNATURES
 Set the metadata of the agent in the AbstractDFG.
 """
 function setAgentMetadata!(dfg::AbstractDFG, data::Dict{Symbol, SmallDataTypes})
-    dfg.robotData = data
-    return dfg.robotData
+    agent = getAgent(dfg)
+    return setMetadata!(agent, data)
 end
 
 """
@@ -155,14 +178,8 @@ $SIGNATURES
 
 Get the metadata from the factorgraph in the AbstractDFG.
 """
-getGraphMetadata(dfg::AbstractDFG) = dfg.sessionData
+getGraphMetadata(dfg::AbstractDFG) = getMetadata(dfg)
 
-"""
-$SIGNATURES
-
-Get the metadata of the node.
-"""
-getMetadata(node::DFGNode) = node.metadata
 
 """
 $SIGNATURES
@@ -170,12 +187,11 @@ $SIGNATURES
 Set the metadata of the factorgraph in the AbstractDFG.
 """
 function setGraphMetadata!(dfg::AbstractDFG, data::Dict{Symbol, SmallDataTypes})
-    dfg.sessionData = data
-    return dfg.sessionData
+    return setMetadata!(dfg, data)
 end
 
 ##==============================================================================
-## User/Robot/Session Data CRUD
+## Agent/Graph Data CRUD
 ##==============================================================================
 #TODO maybe only support get and set?
 #NOTE with API standardization this should become something like:
@@ -183,22 +199,22 @@ getAgentMetadata(dfg::AbstractDFG, key::Symbol) = getAgentMetadata(dfg)[key]
 getGraphMetadata(dfg::AbstractDFG, key::Symbol) = getGraphMetadata(dfg)[key]
 
 function updateAgentMetadata!(dfg::AbstractDFG, pair::Pair{Symbol, String})
-    return push!(dfg.robotData, pair)
+    return push!(dfg.agent.metadata, pair)
 end
 function updateGraphMetadata!(dfg::AbstractDFG, pair::Pair{Symbol, String})
-    return push!(dfg.sessionData, pair)
+    return push!(dfg.graphMetadata, pair)
 end
 
-deleteAgentMetadata!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.robotData, key)
-deleteGraphMetadata!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.sessionData, key)
+deleteAgentMetadata!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.agent.metadata, key)
+deleteGraphMetadata!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.graphMetadata, key)
 
-emptyAgentMetadata!(dfg::AbstractDFG) = empty!(dfg.robotData)
-emptyGraphMetadata!(dfg::AbstractDFG) = empty!(dfg.sessionData)
+emptyAgentMetadata!(dfg::AbstractDFG) = empty!(dfg.agent.metadata)
+emptyGraphMetadata!(dfg::AbstractDFG) = empty!(dfg.graphMetadata)
 
 #TODO add__Data!?
 
 ##==============================================================================
-## User/Robot/Session Blob Entries CRUD
+## Agent/Graph Blob Entries CRUD
 ##==============================================================================
 
 function getGraphBlobEntry end
@@ -1084,16 +1100,15 @@ function deepcopyGraph(
     sourceDFG::AbstractDFG,
     variableLabels::Vector{Symbol} = ls(sourceDFG),
     factorLabels::Vector{Symbol} = lsf(sourceDFG);
-    sessionId::String = "",
+    graphLabel::Symbol = Symbol(getGraphLabel(sourceDFG), "_cp_$(string(uuid4())[1:6])"),
+    sessionId = nothing,
     kwargs...,
 ) where {T <: AbstractDFG}
-    ginfo = [getDFGInfo(sourceDFG)...]
-    if sessionId == ""
-        ginfo[4] *= "_copy$(string(uuid4())[1:6])"
-    else
-        ginfo[4] = sessionId
-    end
-    destDFG = T(ginfo...)
+    ginfo = getDFGInfo(sourceDFG)
+
+    !isnothing(sessionId) && @warn "sessionId is deprecated, use graphLabel instead"
+
+    destDFG = T(;ginfo..., graphLabel)
     copyGraph!(
         destDFG,
         sourceDFG,
@@ -1248,12 +1263,12 @@ function buildSubgraph(
     variableFactorLabels::Vector{Symbol},
     distance::Int = 0;
     solvable::Int = 0,
-    sessionId::String = "",
+    graphLabel::Symbol = Symbol(getGraphLabel(dfg), "_sub_$(string(uuid4())[1:6])"),
+    sessionId = nothing,
     kwargs...,
 ) where {G <: AbstractDFG}
-    if sessionId == ""
-        sessionId = getSessionLabel(dfg) * "_sub_$(string(uuid4())[1:6])"
-    end
+
+    !isnothing(sessionId) && @warn "sessionId is deprecated, use graphLabel instead"
 
     #build up the neighborhood from variableFactorLabels
     allvarfacs = getNeighborhood(dfg, variableFactorLabels, distance; solvable = solvable)
@@ -1266,7 +1281,7 @@ function buildSubgraph(
         dfg,
         variableLabels,
         factorLabels;
-        sessionId = sessionId,
+        graphLabel,
         kwargs...,
     )
     return destDFG
@@ -1474,26 +1489,6 @@ end
 ##==============================================================================
 
 """
-    $(SIGNATURES)
-Get a summary of the graph (first-class citizens of variables and factors).
-Returns a DFGSummary.
-
-Notes
-- Returns `::DFGSummary`
-"""
-function getSummary(dfg::G) where {G <: AbstractDFG}
-    vars = map(v -> DFGVariableSummary(v), getVariables(dfg))
-    facts = map(f -> DFGFactorSummary(f), getFactors(dfg))
-    return DFGSummary(
-        Dict(map(v -> v.label, vars) .=> vars),
-        Dict(map(f -> f.label, facts) .=> facts),
-        dfg.userLabel,
-        dfg.robotLabel,
-        dfg.sessionLabel,
-    )
-end
-
-"""
 $(SIGNATURES)
 Get a summary graph (first-class citizens of variables and factors) with the same structure as the original graph.
 
@@ -1502,6 +1497,7 @@ Notes
 - Returns `::GraphsDFG{NoSolverParams, DFGVariableSummary, DFGFactorSummary}`
 """
 function getSummaryGraph(dfg::G) where {G <: AbstractDFG}
+    #TODO fix deprecated constructor
     summaryDfg = GraphsDFG{NoSolverParams, DFGVariableSummary, DFGFactorSummary}(;
         description = "Summary of $(getDescription(dfg))",
         userLabel = dfg.userLabel,

@@ -64,7 +64,6 @@ export AbstractParams, NoSolverParams
 export AbstractBlobStore
 
 # accessors & crud
-export getUserLabel, getRobotLabel, getSessionLabel
 export getDFGInfo
 export getDescription,
     setDescription!,
@@ -95,9 +94,10 @@ export getBlobStore,
     addBlobStore!, updateBlobStore!, deleteBlobStore!, emptyBlobStore!, listBlobStores
 
 # TODO Not sure these are needed or should work everywhere, implement in cloud?
-export updateAgentMetadata!,
-    updateGraphMetadata!, deleteAgentMetadata!, deleteGraphMetadata!
-export emptyAgentMetadata!, emptyGraphMetadata!
+# NOTE not exporiting these for now. For consistency `get` and `set` might work better.
+# export updateAgentMetadata!,
+#     updateGraphMetadata!, deleteAgentMetadata!, deleteGraphMetadata!
+# export emptyAgentMetadata!, emptyGraphMetadata!
 
 # Graph Types: exported from modules or @reexport
 export InMemoryDFGTypes, LocalDFG
@@ -127,10 +127,7 @@ export isConnected
 
 export getBiadjacencyMatrix
 
-#summary structure
-export DFGSummary
-
-export getSummary, getSummaryGraph
+export getSummaryGraph
 
 # Abstract Nodes
 export DFGNode, AbstractDFGVariable, AbstractDFGFactor
@@ -147,6 +144,8 @@ export getVariableLabelNumber
 
 # accessors
 export getLabel, getTimestamp, setTimestamp, setTimestamp!, getTags, setTags!
+
+export getAgentLabel, getGraphLabel
 
 # Node Data
 export isSolveInProgress, getSolveInProgress
@@ -340,8 +339,6 @@ include("DataBlobs/entities/BlobStores.jl")
 include("entities/DFGFactor.jl")
 
 include("entities/DFGVariable.jl")
-
-include("entities/AbstractDFGSummary.jl")
 
 include("entities/Agent.jl")
 

@@ -31,10 +31,13 @@
 @deprecate setRobotData!(args...) setAgentMetadata!(args...)
 @deprecate setSessionData!(args...) setGraphMetadata!(args...)
 
-#TODO 
-# @deprecate getUserLabel(dfg) getAgentLabel(dfg)
-# @deprecate getRobotLabel(dfg) getAgentLabel(dfg)
-# @deprecate getSessionLabel(dfg) getGraphLabel(dfg)
+@deprecate getUserLabel(dfg) getAgentLabel(dfg)
+@deprecate getRobotLabel(dfg) getAgentLabel(dfg)
+@deprecate getSessionLabel(dfg) getGraphLabel(dfg)
+
+export DFGSummary
+DFGSummary(args) = error("DFGSummary is deprecated")
+@deprecate getSummary(dfg::AbstractDFG) getSummaryGraph(dfg)
 
 ## ================================================================================
 ## Deprecated in v0.24

@@ -26,7 +26,7 @@ function _getDFGVersion()
 end
 
 function _versionCheck(node::Union{<:PackedVariable, <:PackedFactor})
-    if VersionNumber(node._version) < _getDFGVersion()
+    if VersionNumber(node._version).minor < _getDFGVersion().minor
         @warn "This data was serialized using DFG $(node._version) but you have $(_getDFGVersion()) installed, there may be deserialization issues." maxlog =
             10
     end

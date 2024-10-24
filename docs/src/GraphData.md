@@ -174,19 +174,17 @@ getSmallData(x0)
 ## Graph-Related Data
 
 DFG can store data in the graph itself (as opposed to inside graph elements).
-When you retrieve graphs from a database, this information is carried along. If
-you are working with an in-memory graph, the structure is flattened into the
-graph itself as `userData`, `robotData`, and `sessionData`.
+When you retrieve distributed factor graphs from a database, this information is carried along. If
+you are working with an in-memory graph, the DFG structure contains the graph itself as well as
+`Agent` and `Graph` data.
 
 Graphs reside inside a hierarchy made up in the following way:
-- User1
-  - Robot1
-    - Session1 (the graph itself)
-- User2
-  - Robot2
-  - Robot3
-    - Session2
-    - Session3
+- Agent
+  - Metadata
+  - BlobEntries
+- Graph
+  - Metadata
+  - BlobEntries
 
 This data can be retrieved with the follow functions:
 

@@ -396,9 +396,8 @@ function _getDuplicatedEmptyDFG(
     dfg::GraphsDFG{P, V, F},
 ) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
     newDfg = GraphsDFG{P, V, F}(;
-        userLabel = getUserLabel(dfg),
-        robotLabel = getRobotLabel(dfg),
-        sessionLabel = getSessionLabel(dfg),
+        agentLabel = getAgentLabel(dfg),
+        graphLabel = getGraphLabel(dfg),
         solverParams = deepcopy(dfg.solverParams),
     )
     newDfg.description = "(Copy of) $(dfg.description)"
@@ -575,33 +574,31 @@ function traverseGraphTopologicalSort(fg::GraphsDFG, s::Symbol, fs_tree = bfs_tr
 end
 
 # FG blob entries 
-# session blob entries
-
 function getGraphBlobEntry(fg::GraphsDFG, label::Symbol)
-    return fg.sessionBlobEntries[label]
+    return fg.graphBlobEntries[label]
 end
 
 function getGraphBlobEntries(fg::GraphsDFG, startwith::Union{Nothing, String} = nothing)
-    entries = collect(values(fg.sessionBlobEntries))
+    entries = collect(values(fg.graphBlobEntries))
     !isnothing(startwith) && filter!(e -> startswith(string(e.label), startwith), entries)
     return entries
 end
 
 function listGraphBlobEntries(fg::GraphsDFG)
-    return collect(keys(fg.sessionBlobEntries))
+    return collect(keys(fg.graphBlobEntries))
 end
 
 function listAgentBlobEntries(fg::GraphsDFG)
-    return collect(keys(fg.robotBlobEntries))
+    return collect(keys(fg.agent.blobEntries))
 end
 
 function addGraphBlobEntry!(fg::GraphsDFG, entry::BlobEntry)
-    if haskey(fg.sessionBlobEntries, entry.label)
+    if haskey(fg.graphBlobEntries, entry.label)
         error(
-            "BlobEntry '$(entry.label)' already exists in the factor graph's session blob entries.",
+            "BlobEntry '$(entry.label)' already exists in the factor graph's blob entries.",
         )
     end
-    push!(fg.sessionBlobEntries, entry.label => entry)
+    push!(fg.graphBlobEntries, entry.label => entry)
     return entry
 end
 
@@ -611,20 +608,3 @@ function addGraphBlobEntries!(fg::GraphsDFG, entries::Vector{BlobEntry})
     end
 end
 
-# function getGraphBlobEntry(fg::GraphsDFG, label::Symbol)
-#     return JSON3.read(fg.sessionData[label], BlobEntry)
-# end
-
-# function getGraphBlobEntries(fg::GraphsDFG, startwith::Union{Nothing,String}=nothing)
-#     entries = map(values(fg.sessionData)) do entry
-#         JSON3.read(entry, BlobEntry)
-#     end
-#     !isnothing(startwith) && filter!(e->startswith(string(e.label), startwith), entries)
-#     return entries
-# end
-
-# function addGraphBlobEntries!(fg::GraphsDFG, entries::Vector{BlobEntry})
-#     return map(entries) do entry
-#         push!(fg.sessionData, entry.label=>JSON3.write(entry))
-#     end
-# end

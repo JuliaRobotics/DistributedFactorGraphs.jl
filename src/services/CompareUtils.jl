@@ -553,16 +553,17 @@ function compareFactorGraphs(
 )
     #
     skiplist = Symbol[
-        :g
-        :bn
-        :IDs
-        :fIDs
-        :id
-        :nodeIDs
-        :factorIDs
-        :fifo
-        :solverParams
-        :factorOperationalMemoryType
+        :g,
+        :bn,
+        :IDs,
+        :fIDs,
+        :id,
+        :nodeIDs,
+        :factorIDs,
+        :fifo,
+        :solverParams,
+        :factorOperationalMemoryType,
+        :agent
     ]
     skiplist = union(skiplist, skip)
     @warn "compareFactorGraphs will skip comparisons on: $skiplist"
