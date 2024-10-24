@@ -40,8 +40,8 @@ DFG.getAgent(dfg::GraphsDFG) = dfg.agent
 DFG.getGraphLabel(dfg::GraphsDFG) = dfg.graphLabel
 DFG.getMetadata(dfg::GraphsDFG) = dfg.graphMetadata
 function DFG.setMetadata!(dfg::GraphsDFG, metadata::Dict{Symbol, SmallDataTypes})
-   empty!(dfg.graphMetadata)
-   merge!(dfg.graphMetadata, metadata)
+    empty!(dfg.graphMetadata)
+    return merge!(dfg.graphMetadata, metadata)
 end
 
 deprecatedDfgFields = [
@@ -107,7 +107,13 @@ function GraphsDFG{T, V, F}(
     agentTags::Vector{Symbol} = Symbol[],
     agentMetadata = Dict{Symbol, SmallDataTypes}(),
     agentBlobEntries = OrderedDict{Symbol, BlobEntry}(),
-    agent::Agent = Agent(agentLabel, agentDescription, agentTags, agentMetadata, agentBlobEntries),
+    agent::Agent = Agent(
+        agentLabel,
+        agentDescription,
+        agentTags,
+        agentMetadata,
+        agentBlobEntries,
+    ),
 
     #Deprecated fields
     userLabel::Union{Nothing, String} = nothing,
@@ -129,7 +135,7 @@ function GraphsDFG{T, V, F}(
         !isnothing(sessionData),
         !isnothing(userBlobEntries),
         !isnothing(robotBlobEntries),
-        !isnothing(sessionBlobEntries)
+        !isnothing(sessionBlobEntries),
     ])
         #deprecated in v0.25
         Base.depwarn(

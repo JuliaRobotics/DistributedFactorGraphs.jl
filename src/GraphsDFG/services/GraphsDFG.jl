@@ -205,15 +205,12 @@ function getVariables(
 
     !isnothing(regexFilter) &&
         filter!(v -> occursin(regexFilter, String(v.label)), variables)
-    
-    solvable != 0 &&
-        filter!(v -> _isSolvable(dfg, v.label, solvable), variables)
-    
-    !isempty(tags) &&
-        filter!(v -> !isempty(intersect(v.tags, tags)), variables)
 
-    !isnothing(solvableFilter) &&
-        filter!(v -> solvableFilter(getSolvable(v)), variables)
+    solvable != 0 && filter!(v -> _isSolvable(dfg, v.label, solvable), variables)
+
+    !isempty(tags) && filter!(v -> !isempty(intersect(v.tags, tags)), variables)
+
+    !isnothing(solvableFilter) && filter!(v -> solvableFilter(getSolvable(v)), variables)
 
     return variables
 end
@@ -234,10 +231,8 @@ function listVariables(
         )
     else
         variables = copy(dfg.g.variables.keys)
-        !isnothing(regexFilter) &&
-            filter!(v -> occursin(regexFilter, String(v)), variables)
-        solvable != 0 &&
-            filter!(vId -> _isSolvable(dfg, vId, solvable), variables)
+        !isnothing(regexFilter) && filter!(v -> occursin(regexFilter, String(v)), variables)
+        solvable != 0 && filter!(vId -> _isSolvable(dfg, vId, solvable), variables)
         !isnothing(solvableFilter) &&
             filter!(v -> solvableFilter(getSolvable(dfg, v)), variables)
         return variables::Vector{Symbol}
@@ -607,4 +602,3 @@ function addGraphBlobEntries!(fg::GraphsDFG, entries::Vector{BlobEntry})
         return addGraphBlobEntry!(fg, entry)
     end
 end
-

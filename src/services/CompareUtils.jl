@@ -563,7 +563,7 @@ function compareFactorGraphs(
         :fifo,
         :solverParams,
         :factorOperationalMemoryType,
-        :agent
+        :agent,
     ]
     skiplist = union(skiplist, skip)
     @warn "compareFactorGraphs will skip comparisons on: $skiplist"

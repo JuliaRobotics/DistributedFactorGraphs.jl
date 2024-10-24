@@ -19,7 +19,7 @@ using InteractiveUtils
     typePackedVariable::Bool = false # Are variables packed or full
     typePackedFactor::Bool = false # Are factors packed or full
     blobStores::Union{Nothing, Dict{Symbol, FolderStore{Vector{UInt8}}}}
-    
+
     # new structure to replace URS
     #TODO remove union nothing after v0.25
     graphLabel::Union{Nothing, Symbol}
@@ -75,12 +75,11 @@ function unpackDFGMetadata(packed::PackedGraphsDFG)
     # setdiff!(commonfields, [:blobStores])
     # blobStores = Dict{Symbol, AbstractBlobStore}()
     # !isnothing(packed.blobStores) && merge!(blobStores, packed.blobStores)
-    
+
     setdiff!(commonfields, [deprecatedDfgFields; :blobStores])
     blobStores = packed.blobStores
 
     if isnothing(packed.agent)
-
         agentBlobEntries = nothing
         agentMetadata = nothing
         agentLabel = nothing
@@ -115,12 +114,12 @@ function unpackDFGMetadata(packed::PackedGraphsDFG)
                     """
                 end
             end
-        end 
+        end
 
-        agent = Agent(; 
+        agent = Agent(;
             label = agentLabel,
-            blobEntries = agentBlobEntries, 
-            metadata = agentMetadata, 
+            blobEntries = agentBlobEntries,
+            metadata = agentMetadata,
         )
     else
         agent = packed.agent
@@ -155,7 +154,7 @@ function unpackDFGMetadata(packed::PackedGraphsDFG)
     # FT = isnothing(packed.typePackedFactor) || packed.typePackedFactor ? PackedFactor : DFGFactor
 
     props = filter!(collect(props)) do (k, v)
-        !isnothing(v)
+        return !isnothing(v)
     end
 
     return GraphsDFG{typeof(packed.solverParams), VT, FT}(;
@@ -164,7 +163,8 @@ function unpackDFGMetadata(packed::PackedGraphsDFG)
         graphMetadata,
         graphLabel,
         agent,
-        props...)
+        props...,
+    )
 end
 
 function unpackDFGMetadata!(dfg::GraphsDFG, packed::PackedGraphsDFG)

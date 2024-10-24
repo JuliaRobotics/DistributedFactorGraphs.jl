@@ -34,12 +34,12 @@ Convenience function to get all the metadata of a DFG
 """
 function getDFGInfo(dfg::AbstractDFG)
     return (
-       description = getDescription(dfg),
-       agentLabel = getAgentLabel(dfg),
-       graphLabel = getGraphLabel(dfg),
-       agentMetadata = getAgentMetadata(dfg),
-       graphMetadata = getGraphMetadata(dfg),
-       solverParams = getSolverParams(dfg),
+        description = getDescription(dfg),
+        agentLabel = getAgentLabel(dfg),
+        graphLabel = getGraphLabel(dfg),
+        agentMetadata = getAgentMetadata(dfg),
+        graphMetadata = getGraphMetadata(dfg),
+        solverParams = getSolverParams(dfg),
     )
 end
 
@@ -144,7 +144,6 @@ Get the metadata of the node.
 """
 getMetadata(node) = node.metadata
 
-
 """
 $SIGNATURES
 
@@ -152,9 +151,8 @@ Set the metadata of the node.
 """
 function setMetadata!(node, data::Dict{Symbol, SmallDataTypes})
     empty!(node.metadata)
-    merge!(node.metadata, data)
+    return merge!(node.metadata, data)
 end
-
 
 """
 $SIGNATURES
@@ -179,7 +177,6 @@ $SIGNATURES
 Get the metadata from the factorgraph in the AbstractDFG.
 """
 getGraphMetadata(dfg::AbstractDFG) = getMetadata(dfg)
-
 
 """
 $SIGNATURES
@@ -1108,7 +1105,7 @@ function deepcopyGraph(
 
     !isnothing(sessionId) && @warn "sessionId is deprecated, use graphLabel instead"
 
-    destDFG = T(;ginfo..., graphLabel)
+    destDFG = T(; ginfo..., graphLabel)
     copyGraph!(
         destDFG,
         sourceDFG,
@@ -1267,7 +1264,6 @@ function buildSubgraph(
     sessionId = nothing,
     kwargs...,
 ) where {G <: AbstractDFG}
-
     !isnothing(sessionId) && @warn "sessionId is deprecated, use graphLabel instead"
 
     #build up the neighborhood from variableFactorLabels
@@ -1276,14 +1272,7 @@ function buildSubgraph(
     variableLabels = intersect(listVariables(dfg), allvarfacs)
     factorLabels = intersect(listFactors(dfg), allvarfacs)
     # Copy the section of graph we want
-    destDFG = deepcopyGraph(
-        G,
-        dfg,
-        variableLabels,
-        factorLabels;
-        graphLabel,
-        kwargs...,
-    )
+    destDFG = deepcopyGraph(G, dfg, variableLabels, factorLabels; graphLabel, kwargs...)
     return destDFG
 end
 
