@@ -100,7 +100,7 @@ if get(ENV, "IIF_TEST", "true") == "true"
         # This is just to validate we're not going to blow up downstream.
         apis = [
             # GraphsDFG{SolverParams}(),
-            GraphsDFG(; solverParams = SolverParams(), userLabel = "test@navability.io"),
+            GraphsDFG(; solverParams = SolverParams()),
         ]
         for api in apis
             @info "Running simple solver test: $(typeof(api))"

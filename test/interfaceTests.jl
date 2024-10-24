@@ -30,11 +30,11 @@ end
 
 # User, Robot, Session Data
 @testset "User, Robot, Session Data" begin
-    UserRobotSessionData!(fg1)
+    GraphAgentMetadata!(fg1)
 end
 
 @testset "User, Robot, Session Blob Entries" begin
-    UserRobotSessionBlobEntries!(fg1)
+    GraphAgentBlobEntries!(fg1)
 end
 
 # DFGVariable structure construction and accessors

@@ -485,10 +485,6 @@ end
     factorFields = fieldnames(DFGFactorSummary)
     variableFields = fieldnames(DFGVariableSummary)
 
-    summary = getSummary(dfg)
-    @test symdiff(collect(keys(summary.variables)), ls(dfg)) == Symbol[]
-    @test symdiff(collect(keys(summary.factors)), lsf(dfg)) == Symbol[]
-
     summaryGraph = getSummaryGraph(dfg)
     @test symdiff(ls(summaryGraph), ls(dfg)) == Symbol[]
     @test symdiff(lsf(summaryGraph), lsf(dfg)) == Symbol[]

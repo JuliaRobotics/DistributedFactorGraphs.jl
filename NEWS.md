@@ -1,12 +1,16 @@
 Listing news on any major breaking changes in DFG.  For regular changes, see integrated Github.com project milestones for DFG.
 
-# v0.24
+# v0.25
 - Deprecated nouns:
     SessionBlobEntry -> GraphBlobEntry
     RobotBlobEntry -> AgentBlobEntry
     UserBlobEntry -> AgentBlobEntry
     RobotData -> AgentMetadata
-    SessionData -> GraphMetadata 
+    SessionData -> GraphMetadata
+    UserLabel -> AgentLabel
+    RobotLabel -> AgentLabel
+    SessionLabel -> GraphLabel
+- v0.24 FileDFGs can be loaded with v0.25 with the exception of the User[Label/Data/BlobEntries]
 
 # v0.24
 

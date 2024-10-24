@@ -2,22 +2,31 @@ using InteractiveUtils
 
 @kwdef struct PackedGraphsDFG{T <: AbstractParams}
     description::String
-    userLabel::String
-    robotLabel::String
-    sessionLabel::String
-    userData::Dict{Symbol, SmallDataTypes}
-    robotData::Dict{Symbol, SmallDataTypes}
-    sessionData::Dict{Symbol, SmallDataTypes}
-    userBlobEntries::OrderedDict{Symbol, BlobEntry}
-    robotBlobEntries::OrderedDict{Symbol, BlobEntry}
-    sessionBlobEntries::OrderedDict{Symbol, BlobEntry}
+    # ------ deprecated fields v0.25 ---------
+    userLabel::Union{Nothing, String} = nothing
+    robotLabel::Union{Nothing, String} = nothing
+    sessionLabel::Union{Nothing, String} = nothing
+    userData::Union{Nothing, Dict{Symbol, SmallDataTypes}} = nothing
+    robotData::Union{Nothing, Dict{Symbol, SmallDataTypes}} = nothing
+    sessionData::Union{Nothing, Dict{Symbol, SmallDataTypes}} = nothing
+    userBlobEntries::Union{Nothing, OrderedDict{Symbol, BlobEntry}} = nothing
+    robotBlobEntries::Union{Nothing, OrderedDict{Symbol, BlobEntry}} = nothing
+    sessionBlobEntries::Union{Nothing, OrderedDict{Symbol, BlobEntry}} = nothing
+    # ---------------------------------
     addHistory::Vector{Symbol}
     solverParams::T
     solverParams_type::String = string(nameof(typeof(solverParams)))
-    # TODO remove Union.Nothing in DFG v0.24
-    typePackedVariable::Union{Nothing, Bool} = false # Are variables packed or full
-    typePackedFactor::Union{Nothing, Bool} = false # Are factors packed or full
+    typePackedVariable::Bool = false # Are variables packed or full
+    typePackedFactor::Bool = false # Are factors packed or full
     blobStores::Union{Nothing, Dict{Symbol, FolderStore{Vector{UInt8}}}}
+
+    # new structure to replace URS
+    #TODO remove union nothing after v0.25
+    graphLabel::Union{Nothing, Symbol}
+    graphTags::Union{Nothing, Vector{Symbol}}
+    graphMetadata::Union{Nothing, Dict{Symbol, SmallDataTypes}}
+    graphBlobEntries::Union{Nothing, OrderedDict{Symbol, BlobEntry}}
+    agent::Union{Nothing, Agent}
 end
 
 StructTypes.StructType(::Type{PackedGraphsDFG}) = StructTypes.AbstractType()
@@ -40,7 +49,7 @@ Packing function to serialize DFG metadata from.
 function packDFGMetadata(fg::GraphsDFG)
     commonfields = intersect(fieldnames(PackedGraphsDFG), fieldnames(GraphsDFG))
 
-    setdiff!(commonfields, [:blobStores])
+    setdiff!(commonfields, [deprecatedDfgFields; :blobStores])
     blobStores = Dict{Symbol, FolderStore{Vector{UInt8}}}()
     foreach(values(fg.blobStores)) do store
         if store isa FolderStore{Vector{UInt8}}
@@ -63,10 +72,61 @@ function unpackDFGMetadata(packed::PackedGraphsDFG)
     commonfields = intersect(fieldnames(GraphsDFG), fieldnames(PackedGraphsDFG))
 
     #FIXME Deprecate remove in DFG v0.24
-    setdiff!(commonfields, [:blobStores])
-    blobStores = Dict{Symbol, AbstractBlobStore}()
+    # setdiff!(commonfields, [:blobStores])
+    # blobStores = Dict{Symbol, AbstractBlobStore}()
+    # !isnothing(packed.blobStores) && merge!(blobStores, packed.blobStores)
 
-    !isnothing(packed.blobStores) && merge!(blobStores, packed.blobStores)
+    setdiff!(commonfields, [deprecatedDfgFields; :blobStores])
+    blobStores = packed.blobStores
+
+    if isnothing(packed.agent)
+        agentBlobEntries = nothing
+        agentMetadata = nothing
+        agentLabel = nothing
+        graphBlobEntries = nothing
+        graphMetadata = nothing
+        graphLabel = nothing
+
+        for f in deprecatedDfgFields
+            if !isnothing(getproperty(packed, f))
+                if f == :robotBlobEntries
+                    agentBlobEntries = getproperty(packed, f)
+                    @warn "Converting deprecated $f to agentBlobEntries"
+                elseif f == :robotData
+                    agentMetadata = getproperty(packed, f)
+                    @warn "Converting deprecated $f to agentMetadata"
+                elseif f == :robotLabel
+                    agentLabel = Symbol(getproperty(packed, f))
+                    @warn "Converting deprecated $f to agentLabel"
+                elseif f == :sessionBlobEntries
+                    graphBlobEntries = getproperty(packed, f)
+                    @warn "Converting deprecated $f to graphBlobEntries"
+                elseif f == :sessionData
+                    graphMetadata = getproperty(packed, f)
+                    @warn "onverting deprecated $f to graphMetadata"
+                elseif f == :sessionLabel
+                    graphLabel = Symbol(getproperty(packed, f))
+                    @warn "Converting deprecated $f to graphLabel"
+                else
+                    @warn """
+                    Field $f is deprecated as part of removing user/robot/session. Replace with Agent or Factorgraph [Label/Metadata/BlobEntries]
+                        No convertion done for $f
+                    """
+                end
+            end
+        end
+
+        agent = Agent(;
+            label = agentLabel,
+            blobEntries = agentBlobEntries,
+            metadata = agentMetadata,
+        )
+    else
+        agent = packed.agent
+        graphBlobEntries = packed.graphBlobEntries
+        graphMetadata = packed.graphMetadata
+        graphLabel = packed.graphLabel
+    end
 
     _isfolderstorepath(s) = false
     _isfolderstorepath(s::FolderStore) = ispath(s.folder)
@@ -92,14 +152,27 @@ function unpackDFGMetadata(packed::PackedGraphsDFG)
     end
     # VT = isnothing(packed.typePackedVariable) || packed.typePackedVariable ? Variable : DFGVariable 
     # FT = isnothing(packed.typePackedFactor) || packed.typePackedFactor ? PackedFactor : DFGFactor
-    return GraphsDFG{typeof(packed.solverParams), VT, FT}(; blobStores, props...)
+
+    props = filter!(collect(props)) do (k, v)
+        return !isnothing(v)
+    end
+
+    return GraphsDFG{typeof(packed.solverParams), VT, FT}(;
+        blobStores,
+        graphBlobEntries,
+        graphMetadata,
+        graphLabel,
+        agent,
+        props...,
+    )
 end
 
 function unpackDFGMetadata!(dfg::GraphsDFG, packed::PackedGraphsDFG)
     commonfields = intersect(fieldnames(GraphsDFG), fieldnames(PackedGraphsDFG))
 
     #FIXME Deprecate remove Nothing union in DFG v0.24
-    setdiff!(commonfields, [:blobStores])
+    #FIXME also remove deprectedDFG fields depr in v0.25
+    setdiff!(commonfields, [deprecatedDfgFields; :blobStores])
     !isnothing(packed.blobStores) && merge!(dfg.blobStores, packed.blobStores)
 
     props = (k => getproperty(packed, k) for k in commonfields)

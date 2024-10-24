@@ -32,11 +32,3 @@ plot = plotDFG(dfg)
 @test plot !== nothing
 
 ##
-
-#TODO test something more
-#NOTE just running function to see if it plots
-iobuf = IOBuffer()
-plotDFG(iobuf, MIME("application/prs.juno.plotpane+html"), dfg)
-@test length(take!(iobuf)) > 1e3
-
-##

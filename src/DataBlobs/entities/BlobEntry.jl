@@ -7,11 +7,10 @@
     $(TYPEDEF)
 
 A `BlobEntry` is a small about of structured data that holds reference information to find an actual blob. Many `BlobEntry`s 
-can exist on different graph nodes spanning Robots, and Sessions which can all reference the same `Blob`.  A `BlobEntry` 
-is also a equivalent to a bridging entry between local `.originId` and a remotely assigned `.blobIds`.
+can exist on different graph nodes spanning Agents and Factor Graphs which can all reference the same `Blob`.
 
 Notes:
-- All `.blobId`s are unique across the entire distributed system and are immutable.  The `.originId` should be globally unique except for stochastic `uuid4` collisions that cannot be checked from a main reference owing to practical limitations such as network connectivity.
+- `blobId`s should be unique within a blobstore and are immutable.
 """
 Base.@kwdef struct BlobEntry
     """ Remotely assigned and globally unique identifier for the `BlobEntry` itself (not the `.blobId`). """
@@ -26,7 +25,7 @@ Base.@kwdef struct BlobEntry
     blobstore::Symbol = :default
     """ A hash value to ensure data consistency which must correspond to the stored hash upon retrieval.  Use `bytes2hex(sha256(blob))`. [Legacy: some usage functions allow the check to be skipped if needed.] """
     hash::String = ""# Probably https://docs.julialang.org/en/v1/stdlib/SHA
-    """ Context from which a BlobEntry=>Blob was first created. E.g. user|robot|session|varlabel. """
+    """ Context from which a BlobEntry=>Blob was first created. E.g. agent|graph|varlabel. """
     origin::String = ""
     """ number of bytes in blob as a string"""
     size::Union{String, Nothing} = "" #TODO remove union, use "" as nothing

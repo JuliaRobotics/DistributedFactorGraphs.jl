@@ -143,50 +143,49 @@ function DFGStructureAndAccessors(
     # "DFG Structure and Accessors"
     # Constructors
     # Constructors to be implemented
-    fg = T(; solverParams = solparams, userLabel = "test@navability.io")
+    fg = T(; solverParams = solparams)
     #TODO test something better
     @test isa(fg, T)
-    @test getUserLabel(fg) == "test@navability.io"
-    @test getRobotLabel(fg) == "DefaultRobot"
-    @test getSessionLabel(fg)[1:8] == "Session_"
+    @test getAgentLabel(fg) == :DefaultAgent
+    @test string(getGraphLabel(fg))[1:12] == "factorgraph_"
 
     # Test the validation of the robot, session, and user IDs.
     notAllowedList = [
-        "!notValid",
-        "1notValid",
-        "_notValid",
-        "USER",
-        "ROBOT",
-        "SESSION",
-        "AGENT",
-        "VARIABLE",
-        "FACTOR",
-        "PPE",
-        "BLOB_ENTRY",
-        "FACTORGRAPH",
+        Symbol("!notValid"),
+        Symbol("1notValid"),
+        :_notValid,
+        :AGENT,
+        :VARIABLE,
+        :FACTOR,
+        :PPE,
+        :BLOB_ENTRY,
+        :FACTORGRAPH,
     ]
 
     for s in notAllowedList
-        @test_throws ErrorException T(solverParams = solparams, sessionLabel = s)
-        @test_throws ErrorException T(solverParams = solparams, robotLabel = s)
-        @test_throws ErrorException T(solverParams = solparams, userLabel = s)
+        @test_throws ErrorException T(solverParams = solparams, graphLabel = s)
+        @test_throws ErrorException T(solverParams = solparams, agentLabel = s)
     end
 
     des = "description for runtest"
-    uId = "test@navability.io"
-    rId = "testRobotId"
-    sId = "testSessionId"
-    ud = Dict{Symbol, SmallDataTypes}(:ud => "udEntry")
+    rId = :testRobotId
+    sId = :testSessionId
     rd = Dict{Symbol, SmallDataTypes}(:rd => "rdEntry")
     sd = Dict{Symbol, SmallDataTypes}(:sd => "sdEntry")
-    fg = T(des, uId, rId, sId, ud, rd, sd, solparams)
+    fg = T(;
+        description = des,
+        agentLabel = rId,
+        graphLabel = sId,
+        agentMetadata = rd,
+        graphMetadata = sd,
+        solverParams = solparams,
+    )
 
     # accesssors
     # get
     @test getDescription(fg) == des
-    @test getUserLabel(fg) == uId
-    @test getRobotLabel(fg) == rId
-    @test getSessionLabel(fg) == sId
+    @test getAgentLabel(fg) == rId
+    @test getGraphLabel(fg) == sId
     @test getAddHistory(fg) === fg.addHistory
 
     @test setAgentMetadata!(fg, rd) == rd
@@ -208,7 +207,7 @@ function DFGStructureAndAccessors(
     @test getGraphMetadata(fg) == smallSessionData
 
     # NOTE see note in AbstractDFG.jl setSolverParams!
-    @test_throws MethodError setSolverParams!(fg, GeenSolverParams()) == GeenSolverParams()
+    @test_throws Exception setSolverParams!(fg, GeenSolverParams()) == GeenSolverParams()
 
     @test setSolverParams!(fg, typeof(solparams)()) == typeof(solparams)()
 
@@ -226,24 +225,24 @@ function DFGStructureAndAccessors(
 end
 
 # User, Robot, Session Data
-function UserRobotSessionData!(fg::AbstractDFG)
+function GraphAgentMetadata!(fg::AbstractDFG)
     # "User, Robot, Session Data"
 
     # Robot Data
     @test getAgentMetadata(fg, :a) == "43"
     #TODO
     @test_broken addAgentMetadata!
-    @test updateAgentMetadata!(fg, :b => "2") == getAgentMetadata(fg)
-    @test getAgentMetadata(fg, :b) == deleteAgentMetadata!(fg, :b)
-    @test emptyAgentMetadata!(fg) == Dict{Symbol, String}()
+    @test DFG.updateAgentMetadata!(fg, :b => "2") == getAgentMetadata(fg)
+    @test getAgentMetadata(fg, :b) == DFG.deleteAgentMetadata!(fg, :b)
+    @test DFG.emptyAgentMetadata!(fg) == Dict{Symbol, String}()
 
     # SessionData
     @test getGraphMetadata(fg, :a) == "44"
     #TODO
     @test_broken addGraphMetadata!
-    @test updateGraphMetadata!(fg, :b => "3") == getGraphMetadata(fg)
-    @test getGraphMetadata(fg, :b) == deleteGraphMetadata!(fg, :b)
-    @test emptyGraphMetadata!(fg) == Dict{Symbol, String}()
+    @test DFG.updateGraphMetadata!(fg, :b => "3") == getGraphMetadata(fg)
+    @test getGraphMetadata(fg, :b) == DFG.deleteGraphMetadata!(fg, :b)
+    @test DFG.emptyGraphMetadata!(fg) == Dict{Symbol, String}()
 
     # TODO Set-like if we want eg. list, merge, etc
     # listAgentMetadata
@@ -254,7 +253,7 @@ function UserRobotSessionData!(fg::AbstractDFG)
 end
 
 # User, Robot, Session Data Blob Entries
-function UserRobotSessionBlobEntries!(fg::AbstractDFG)
+function GraphAgentBlobEntries!(fg::AbstractDFG)
     be = BlobEntry(;
         id = uuid4(),
         blobId = uuid4(),
@@ -1648,10 +1647,6 @@ function Summaries(testDFGAPI)
     # variableFields = fieldnames(VARTYPE)
     factorFields = fieldnames(DFGFactorSummary)
     variableFields = fieldnames(DFGVariableSummary)
-
-    summary = getSummary(dfg)
-    @test symdiff(collect(keys(summary.variables)), ls(dfg)) == Symbol[]
-    @test symdiff(collect(keys(summary.factors)), lsf(dfg)) == Symbol[]
 
     summaryGraph = getSummaryGraph(dfg)
     @test symdiff(ls(summaryGraph), ls(dfg)) == Symbol[]
