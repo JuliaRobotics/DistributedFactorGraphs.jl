@@ -167,7 +167,10 @@ end
         # It should have failed if there were any issues.
         # Trivial check as well
         @test issetequal(ls(retDFG), [:l1, :x0, :x1, :x2, :x3, :x4, :x5, :x6])
-        @test issetequal(lsf(retDFG), [:x0f1, :x0l1f1, :x0x1f1, :x1x2f1, :x2x3f1, :x3x4f1, :x4x5f1, :x5x6f1, :x6l1f1])
+        @test issetequal(
+            lsf(retDFG),
+            [:x0f1, :x0l1f1, :x0x1f1, :x1x2f1, :x2x3f1, :x3x4f1, :x4x5f1, :x5x6f1, :x6l1f1],
+        )
     end
 end
 

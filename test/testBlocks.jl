@@ -172,7 +172,14 @@ function DFGStructureAndAccessors(
     sId = :testSessionId
     rd = Dict{Symbol, SmallDataTypes}(:rd => "rdEntry")
     sd = Dict{Symbol, SmallDataTypes}(:sd => "sdEntry")
-    fg = T(; description = des, agentLabel = rId, graphLabel=sId, agentMetadata=rd, graphMetadata=sd, solverParams=solparams)
+    fg = T(;
+        description = des,
+        agentLabel = rId,
+        graphLabel = sId,
+        agentMetadata = rd,
+        graphMetadata = sd,
+        solverParams = solparams,
+    )
 
     # accesssors
     # get
