@@ -104,9 +104,10 @@ Base.@kwdef struct PackedFactor <: AbstractDFGFactor
 end
 #TODO type not in DFG PackedFactor, should it be?
 # _type::String
-
 # createdTimestamp::DateTime
 # lastUpdatedTimestamp::DateTime
+
+PackedFactor(f::PackedFactor) = f
 
 # TODO consolidate to just one type
 """

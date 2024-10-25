@@ -123,9 +123,8 @@ function loadDFG!(
     # do actual unzipping
     filename = lastdirname[1:(end - length(".tar.gz"))] |> string
     if unzip
-        @show sfolder = split(dstname, '.')
         Base.mkpath(loaddir)
-        folder = joinpath(loaddir, filename) #splitpath(string(sfolder[end-2]))[end]
+        folder = joinpath(loaddir, filename)
         @info "loadDFG! detected a gzip $dstname -- unpacking via $loaddir now..."
         Base.rm(folder; recursive = true, force = true)
         # unzip the tar file
