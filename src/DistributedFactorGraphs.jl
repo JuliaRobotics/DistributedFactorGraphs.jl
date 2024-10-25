@@ -105,7 +105,9 @@ export InMemoryDFGTypes, LocalDFG
 # AbstractDFG Interface
 export exists,
     addVariable!,
+    addVariables!,
     addFactor!,
+    addFactors!,
     getVariable,
     getFactor,
     updateVariable!,

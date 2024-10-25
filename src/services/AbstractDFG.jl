@@ -279,11 +279,31 @@ function addVariable!(
 end
 
 """
-Add a DFGFactor to a DFG.
     $(SIGNATURES)
+Add a Vector{DFGVariable} to a DFG.
+"""
+function addVariables!(dfg::AbstractDFG, variables::Vector{<:AbstractDFGVariable})
+    return asyncmap(variables) do v
+        return addVariable!(dfg, v)
+    end
+end
+
+"""
+    $(SIGNATURES)
+Add a DFGFactor to a DFG.
 """
 function addFactor!(dfg::AbstractDFG, factor::F) where {F <: AbstractDFGFactor}
     return error("addFactor! not implemented for $(typeof(dfg))(dfg, factor)")
+end
+
+"""
+    $(SIGNATURES)
+Add a Vector{DFGFactor} to a DFG.
+"""
+function addFactors!(dfg::AbstractDFG, factors::Vector{<:AbstractDFGFactor})
+    return asyncmap(factors) do f
+        return addFactor!(dfg, f)
+    end
 end
 
 """
