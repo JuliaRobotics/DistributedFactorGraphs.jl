@@ -207,7 +207,7 @@ function Base.show(io::IO, ::MIME"text/plain", f::DFGFactor)
     return printFactor(io, f; short = true, limit = false)
 end
 
-function Base.show(io::IO, dfg::AbstractDFG)
+function Base.show(io::IO, ::MIME"text/plain", dfg::AbstractDFG)
     summary(io, dfg)
     println(io, "  AgentLabel: ", getAgentLabel(dfg))
     println(io, "  FactorgraphLabel: ", getGraphLabel(dfg))
@@ -218,8 +218,6 @@ function Base.show(io::IO, dfg::AbstractDFG)
     println(io, "  Graph Metadata: ", keys(getGraphMetadata(dfg)))
     return
 end
-
-Base.show(io::IO, ::MIME"text/plain", dfg::AbstractDFG) = show(io, dfg)
 
 #default for Atom/Juno
 function Base.show(
