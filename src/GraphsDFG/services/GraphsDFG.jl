@@ -228,7 +228,7 @@ function listVariables(
         return map(
             v -> v.label,
             getVariables(dfg, regexFilter; tags = tags, solvable = solvable),
-        )
+        )::Vector{Symbol}
     else
         variables = copy(dfg.g.variables.keys)
         !isnothing(regexFilter) && filter!(v -> occursin(regexFilter, String(v)), variables)
@@ -247,7 +247,7 @@ function getFactors(
 )
     # factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGFactor, vertices(dfg.g)))
     factors = collect(values(dfg.g.factors))
-    if regexFilter != nothing
+    if !isnothing(regexFilter)
         factors = filter(f -> occursin(regexFilter, String(f.label)), factors)
     end
     if solvable != 0
@@ -274,7 +274,7 @@ function listFactors(
         )
     end
     factors = copy(dfg.g.factors.keys)
-    if regexFilter != nothing
+    if !isnothing(regexFilter)
         factors = filter(f -> occursin(regexFilter, String(f)), factors)
     end
     if solvable != 0
@@ -298,25 +298,7 @@ function _isSolvable(dfg::GraphsDFG, label::Symbol, ready::Int)
 end
 
 function listNeighbors(dfg::GraphsDFG, node::DFGNode; solvable::Int = 0)
-    label = node.label
-    if !exists(dfg, label)
-        error(
-            "Variable/factor with label '$(node.label)' does not exist in the factor graph",
-        )
-    end
-
-    neighbors_il = FactorGraphs.outneighbors(dfg.g, dfg.g.labels[label])
-    neighbors_ll = [dfg.g.labels[i] for i in neighbors_il]
-    # Additional filtering
-    solvable != 0 && filter!(lbl -> _isSolvable(dfg, lbl, solvable), neighbors_ll)
-
-    # Variable sorting (order is important)
-    if typeof(node) <: AbstractDFGFactor
-        order = intersect(node._variableOrderSymbols, neighbors_ll)#map(v->v.dfgNode.label, neighbors))
-        return order
-    end
-
-    return neighbors_ll::Vector{Symbol}
+    return listNeighbors(dfg, node.label; solvable)
 end
 
 function listNeighbors(dfg::GraphsDFG, label::Symbol; solvable::Int = 0)
@@ -332,10 +314,10 @@ function listNeighbors(dfg::GraphsDFG, label::Symbol; solvable::Int = 0)
     # Variable sorting (order is important)
     if haskey(dfg.g.factors, label)
         order = intersect(dfg.g.factors[label]._variableOrderSymbols, neighbors_ll)#map(v->v.dfgNode.label, neighbors))
-        return order
+        return order::Vector{Symbol}
     end
 
-    return neighbors_ll
+    return neighbors_ll::Vector{Symbol}
 end
 
 function getNeighborhood(

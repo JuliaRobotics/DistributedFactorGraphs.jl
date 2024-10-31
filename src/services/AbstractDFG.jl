@@ -583,12 +583,15 @@ Get a list of the labels of the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
 function listFactors(
-    dfg::G,
+    dfg::AbstractDFG,
     regexFilter::Union{Nothing, Regex} = nothing;
     tags::Vector{Symbol} = Symbol[],
     solvable::Int = 0,
-) where {G <: AbstractDFG}
-    return map(f -> f.label, getFactors(dfg, regexFilter; tags = tags, solvable = solvable))
+)
+    return map(
+        f -> f.label,
+        getFactors(dfg, regexFilter; tags = tags, solvable = solvable),
+    )::Vector{Symbol}
 end
 
 """
