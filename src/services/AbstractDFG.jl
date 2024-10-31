@@ -588,7 +588,10 @@ function listFactors(
     tags::Vector{Symbol} = Symbol[],
     solvable::Int = 0,
 )
-    return map(f -> f.label, getFactors(dfg, regexFilter; tags = tags, solvable = solvable))::Vector{Symbol}
+    return map(
+        f -> f.label,
+        getFactors(dfg, regexFilter; tags = tags, solvable = solvable),
+    )::Vector{Symbol}
 end
 
 """

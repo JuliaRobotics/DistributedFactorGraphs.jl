@@ -298,7 +298,7 @@ function _isSolvable(dfg::GraphsDFG, label::Symbol, ready::Int)
 end
 
 function listNeighbors(dfg::GraphsDFG, node::DFGNode; solvable::Int = 0)
-    listNeighbors(dfg, node.label; solvable)
+    return listNeighbors(dfg, node.label; solvable)
 end
 
 function listNeighbors(dfg::GraphsDFG, label::Symbol; solvable::Int = 0)
