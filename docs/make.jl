@@ -1,6 +1,5 @@
 using Documenter
 using GraphPlot
-push!(ENV, "DFG_USE_CGDFG" => "true")
 using DistributedFactorGraphs
 
 makedocs(;
@@ -16,13 +15,14 @@ makedocs(;
             "Drawing Graphs" => "DrawingGraphs.md",
             "Quick API Reference" => "ref_api.md",
         ],
-        "Function Reference" => "func_ref.md",
+        "Reference" => ["func_ref.md", "services_ref.md", "blob_ref.md"],
     ],
+    # warnonly=[:doctest],
+    # checkdocs=:none,
     # html_prettyurls = !("local" in ARGS),
 )
 
 deploydocs(;
     repo = "github.com/JuliaRobotics/DistributedFactorGraphs.jl.git",
     target = "build",
-    # deps   = Deps.pip("mkdocs", "python-markdown-math")
 )

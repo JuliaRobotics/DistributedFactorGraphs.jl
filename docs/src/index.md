@@ -24,5 +24,6 @@ Pages = [
     "DrawingGraphs.md"
     "ref_api.md"
     "func_ref.md"
+    "blob_ref.md"
 ]
 ```
