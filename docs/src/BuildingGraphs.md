@@ -2,7 +2,7 @@
 
 In this section constructing DFG graphs will be discussed. To start, bring DistributedFactorGraphs into your workspace:
 
-```@example buildingGraphs; continued = true
+```julia
 using DistributedFactorGraphs
 ```
 
@@ -14,7 +14,7 @@ So for the following examples, IncrementalInference will be used to create the v
 using Pkg
 Pkg.add("IncrementalInference")
 ```
-```@example buildingGraphs; continued = true
+```julia
 using IncrementalInference
 ```
 
@@ -30,7 +30,7 @@ To continue the example, run one of the following to create a DFG driver:
 
 ### Creating a GraphsDFG Graph
 
-```@example buildingGraphs; continued = true
+```julia
 # Create a DFG with default solver parameters using the Graphs.jl driver.
 dfg = GraphsDFG{SolverParams}(solverParams=SolverParams())
 ```
@@ -54,7 +54,7 @@ In addition, the following optional parameters are provided:
 
 Three variables are added:
 
-```@example buildingGraphs; continued = true
+```julia
 v1 = addVariable!(dfg, :x0, ContinuousScalar, tags = [:POSE], solvable=1)
 v2 = addVariable!(dfg, :x1, ContinuousScalar, tags = [:POSE], solvable=1)
 v3 = addVariable!(dfg, :l0, ContinuousScalar, tags = [:LANDMARK], solvable=1)
@@ -73,7 +73,7 @@ Additionally, the solvable flag is also set to indicate that the factor can be u
 
 Four factors are added: a prior, a linear conditional relationship with a normal distribution between x0 and x1, and a pair of linear conditional relationships between each pose and the landmark.
 
-```@example buildingGraphs; continued = true
+```julia
 prior = addFactor!(dfg, [:x0], Prior(Normal(0,1)))
 f1 = addFactor!(dfg, [:x0; :x1], LinearRelative(Normal(50.0,2.0)), solvable=1)
 f1 = addFactor!(dfg, [:l0; :x0], LinearRelative(Normal(40.0,5.0)), solvable=1)
@@ -97,12 +97,12 @@ variable and factor labels can be retrieved with the [`ls`](@ref)/[`listVariable
 [`lsf`](@ref)/[`listFactors`](@ref) functions:
 
 For example listing the variables in the graph we created above:
-```@example buildingGraphs
+```julia
 ls(dfg)
 ```
 
 Or listing the factors:
-```@example buildingGraphs
+```julia
 lsf(dfg)
 ```
 
