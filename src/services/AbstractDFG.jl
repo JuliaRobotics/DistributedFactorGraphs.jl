@@ -600,7 +600,7 @@ List all the solvekeys used amongst all variables in the distributed factor grap
 
 Related
 
-[`listSupersolves`](@ref), [`getSolverDataDict`](@ref), [`listVariables`](@ref)
+[`listSolveKeys`](@ref), [`getSolverDataDict`](@ref), [`listVariables`](@ref)
 """
 function listSolveKeys(
     variable::DFGVariable,
@@ -1143,7 +1143,34 @@ end
 ##==============================================================================
 ## Automated Graph Searching
 ##==============================================================================
+"""
+    $SIGNATURES
 
+Speciallized function available to only GraphsDFG at this time.
+
+Notes
+- Has option for various types of filters (increases memory usage)
+
+Example
+```julia
+using IncrementalInference
+
+# canonical example graph as example
+fg = generateGraph_Kaess()
+
+@show path = findShortestPathDijkstra(fg, :x1, :x3)
+@show isVariable.(fg, path)
+@show isFactor.(fg, path)
+```
+
+DevNotes
+- TODO expand to other AbstractDFG entities.
+- TODO use of filter resource consumption can be improved.
+
+Related
+
+[`findFactorsBetweenNaive`](@ref), `Graphs.dijkstra_shortest_paths`
+"""
 function findShortestPathDijkstra end
 
 """
@@ -1190,7 +1217,7 @@ DevNotes
 
 Related
 
-[`GraphsDFG.findShortestPathDijkstra`](@ref)
+[`findShortestPathDijkstra`](@ref)
 """
 function isPathFactorsHomogeneous(dfg::AbstractDFG, from::Symbol, to::Symbol)
     # FIXME, must consider all paths, not just shortest...

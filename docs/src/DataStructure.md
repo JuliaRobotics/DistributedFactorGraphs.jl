@@ -13,11 +13,11 @@ summary of the types and the available properties (some of which are derived) is
 
 Accessible properties for each of the variable structures:
 
-|                     | Label | Timestamp | Tags | Estimates | Soft Type | Solvable | Solver Data | Small Data | Big Data Entries |
-|---------------------|-------|-----------|------|-----------|-----------|----------|-------------|------------|------------------|
-| SkeletonDFGVariable | X     |           | X    |           |           |          |             |            |                  |
-| DFGVariableSummary  | X     | X         | X    | X         | Symbol    |          |             |            | X                |
-| DFGVariable         | X     | X         | X    | X         | X         | X        | X           | X          | X                |
+|                     | Label | Timestamp | Tags | Estimates | Soft Type | Solvable | Solver Data | Metadata | Blob Entries |
+|---------------------|-------|-----------|------|-----------|-----------|----------|-------------|----------|--------------|
+| SkeletonDFGVariable | X     |           | X    |           |           |          |             |          |              |
+| DFGVariableSummary  | X     | X         | X    | X         | Symbol    |          |             |          | X            |
+| DFGVariable         | X     | X         | X    | X         | X         | X        | X           | X        | X            |
 
 Accessible properties for each of the factor structures:
 
@@ -27,21 +27,26 @@ Accessible properties for each of the factor structures:
 | DFGFactorSummary  | X     | X         | X    |             |          |             |
 | DFGFactor         | X     | X         | X    | X           | X        | X           |
 
-## DFG Skeleton
+## DFG Skeleton types
 
 - [`SkeletonDFGVariable`](@ref)
 - [`SkeletonDFGFactor`](@ref)
 
-## DFG Summary
+## DFG Summary types
 
 - [`DFGVariableSummary`](@ref)
 - [`DFGFactorSummary`](@ref)
 
-## Full DFG Node
+## DFG Portable and Storeable types
+
+- [`Variable`](@ref)
+- [`PackedFactor`](@ref)
+
+## DFG Full solvable types
 
 - [`DFGVariable`](@ref)
 - [`DFGFactor`](@ref)
 
 ## Additional Offloaded Data
 
-Additional, larger data can be associated with variables using keyed big data entries.  
+Additional, larger data can be associated with variables and factors using keyed blob entries.  

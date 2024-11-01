@@ -66,7 +66,7 @@ end
     $(SIGNATURES)
 Get data entry
 
-Also see: [`addBlobEntry`](@ref), [`getBlob`](@ref), [`listBlobEntries`](@ref)
+Also see: [`addBlobEntry!`](@ref), [`getBlob`](@ref), [`listBlobEntries`](@ref)
 """
 function getBlobEntry(var::AbstractDFGVariable, key::Symbol)
     if !hasBlobEntry(var, key)

@@ -134,7 +134,7 @@ function unpackDFGMetadata(packed::PackedGraphsDFG)
     for (ks, bs) in blobStores
         if !_isfolderstorepath(bs)
             delete!(blobStores, ks)
-            @warn("Unable to load blobstore, $ks")
+            @warn("Unable to load blobstore, $ks from $(bs.folder)")
         end
     end
 

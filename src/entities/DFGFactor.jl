@@ -87,7 +87,11 @@ FunctionNodeData(args...; kw...) = FunctionNodeData{typeof(args[4])}(args...; kw
 # | DFGFactor         |   X   |   X  |     X     |     X    |      X     |
 # *not available without reconstruction
 
-# Packed Factor
+"""
+    $(TYPEDEF)
+
+The Factor information packed in a way that accomdates multi-lang using json.
+"""
 Base.@kwdef struct PackedFactor <: AbstractDFGFactor
     id::Union{UUID, Nothing} = nothing
     label::Symbol

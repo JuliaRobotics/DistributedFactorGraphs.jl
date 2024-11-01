@@ -377,6 +377,6 @@ include("services/CustomPrinting.jl")
 # To be moved as necessary.
 include("Common.jl")
 
-function plotDFG end
+include("weakdeps_prototypes.jl")
 
 end
