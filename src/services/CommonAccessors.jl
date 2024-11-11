@@ -38,7 +38,7 @@ $SIGNATURES
 Set the tags for a DFGNode.
 """
 function setTags!(f::DataLevel0, tags::Union{Vector{Symbol}, Set{Symbol}})
-    empty!(f.tags)
+    f.tags !== tags && empty!(f.tags)
     return union!(f.tags, tags)
 end
 

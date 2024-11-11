@@ -149,9 +149,10 @@ $SIGNATURES
 
 Set the metadata of the node.
 """
-function setMetadata!(node, data::Dict{Symbol, SmallDataTypes})
-    empty!(node.metadata)
-    return merge!(node.metadata, data)
+function setMetadata!(node, metadata::Dict{Symbol, SmallDataTypes})
+    # with set old data should be removed, but care is taken to make sure its not the same object
+    node.metadata !== metadata && empty!(node.metadata)
+    return merge!(node.metadata, metadata)
 end
 
 """

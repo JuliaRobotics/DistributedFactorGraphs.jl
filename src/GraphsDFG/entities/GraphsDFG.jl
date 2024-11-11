@@ -40,7 +40,8 @@ DFG.getAgent(dfg::GraphsDFG) = dfg.agent
 DFG.getGraphLabel(dfg::GraphsDFG) = dfg.graphLabel
 DFG.getMetadata(dfg::GraphsDFG) = dfg.graphMetadata
 function DFG.setMetadata!(dfg::GraphsDFG, metadata::Dict{Symbol, SmallDataTypes})
-    empty!(dfg.graphMetadata)
+    # with set old data should be removed, but care is taken to make sure its not the same object
+    dfg.graphMetadata !== metadata && empty!(dfg.graphMetadata)
     return merge!(dfg.graphMetadata, metadata)
 end
 
