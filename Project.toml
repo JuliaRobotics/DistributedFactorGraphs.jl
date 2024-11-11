@@ -33,11 +33,14 @@ UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 
 [weakdeps]
 GraphPlot = "a2cc645c-3eea-5389-862e-a155d0052231"
+Arrow = "69666777-d1a9-59fb-9406-91d4454c9d45"
 
 [extensions]
 DFGPlots = "GraphPlot"
+BlobArrow = "Arrow"
 
 [compat]
+Arrow = "2.7"
 Aqua = "0.8"
 Base64 = "1.10"
 CSV = "0.10"

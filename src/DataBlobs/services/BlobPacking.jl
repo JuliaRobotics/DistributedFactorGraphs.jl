@@ -10,6 +10,7 @@
 #             - application/bson 
 #             - image/jpeg
 #             - image/png
+#             - application/vnd.apache.arrow.file
 
 const _MIMETypes = OrderedDict{MIME, DataType}()
 push!(_MIMETypes, MIME("application/octet-stream/json") => format"JSON")
