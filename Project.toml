@@ -40,8 +40,8 @@ DFGPlots = "GraphPlot"
 BlobArrow = "Arrow"
 
 [compat]
-Arrow = "2.7"
 Aqua = "0.8"
+Arrow = "2.7"
 Base64 = "1.10"
 CSV = "0.10"
 CodecZlib = "0.7"
