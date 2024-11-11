@@ -174,14 +174,14 @@ export getDimension, getManifold, getPointType
 export getPointIdentity, getPoint, getCoordinates
 
 # Small Data CRUD
-export SmallDataTypes,
-    getSmallData,
-    addSmallData!,
-    updateSmallData!,
-    deleteSmallData!,
-    listSmallData,
-    emptySmallData!
-export getSmallData, setSmallData!
+export SmallDataTypes
+export getMetadata,
+    setMetadata!,
+    addMetadata!,
+    updateMetadata!,
+    deleteMetadata!,
+    listMetadata,
+    emptyMetadata!
 
 # CRUD & SET
 export getVariableSolverData,
@@ -239,6 +239,7 @@ export getBlobEntriesVariables
 # aliases
 export addBlob!
 export packBlob, unpackBlob
+export @format_str
 
 ##------------------------------------------------------------------------------
 # Factors
@@ -325,6 +326,18 @@ export getId, getHash, getTimestamp
 export getData, addData!, updateData!, deleteData!
 
 export plotDFG
+
+## TODO maybe move to DFG
+# addAgent!
+# listAgents
+# addGraph!
+# deleteGraph!
+# listGraphs
+# getAgents
+# getModel
+# getModels
+# addModel!
+# getGraphs
 
 ##==============================================================================
 ## Files Includes

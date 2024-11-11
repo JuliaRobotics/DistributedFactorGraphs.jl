@@ -519,49 +519,25 @@ function setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol = :d
 end
 
 ##------------------------------------------------------------------------------
-## smallData
+## Variable Metadata
 ##------------------------------------------------------------------------------
 
-"""
-    $(SIGNATURES)
-Get the small data for a variable.
-Note: Rather use SmallData CRUD
-"""
-getSmallData(v::DFGVariable) = v.smallData
-
-getSmallData(v::Variable) = JSON3.read(base64decode(v.metadata))
-
-"""
-    $(SIGNATURES)
-Set the small data for a variable.
-This will overwrite old smallData.
-Note: Rather use SmallData CRUD
-"""
-function setSmallData!(v::DFGVariable, smallData::Dict{Symbol, SmallDataTypes})
-    empty!(v.smallData)
-    return merge!(v.smallData, smallData)
-end
-
-# Generic SmallData CRUD
+# Generic Metadata CRUD
 # TODO optimize for difference in in-memory by extending in other drivers. 
 
 """
     $(SIGNATURES)
-Get the small data entry at `key` for variable `label` in `dfg`
+Get the Metadata entry at `key` for variable `label` in `dfg`
 """
-function getSmallData(dfg::AbstractDFG, label::Symbol, key::Symbol)
+function getMetadata(dfg::AbstractDFG, label::Symbol, key::Symbol)
     return getVariable(dfg, label).smallData[key]
 end
 
 """
     $(SIGNATURES)
-Add a small data pair `key=>value` for variable `label` in `dfg`
+Add a Metadata pair `key=>value` for variable `label` in `dfg`
 """
-function addSmallData!(
-    dfg::AbstractDFG,
-    label::Symbol,
-    pair::Pair{Symbol, <:SmallDataTypes},
-)
+function addMetadata!(dfg::AbstractDFG, label::Symbol, pair::Pair{Symbol, <:SmallDataTypes})
     v = getVariable(dfg, label)
     haskey(v.smallData, pair.first) && error("$(pair.first) already exists.")
     push!(v.smallData, pair)
@@ -571,9 +547,9 @@ end
 
 """
     $(SIGNATURES)
-Update a small data pair `key=>value` for variable `label` in `dfg`
+Update a Metadata pair `key=>value` for variable `label` in `dfg`
 """
-function updateSmallData!(
+function updateMetadata!(
     dfg::AbstractDFG,
     label::Symbol,
     pair::Pair{Symbol, <:SmallDataTypes};
@@ -590,9 +566,9 @@ end
 
 """
     $(SIGNATURES)
-Delete a small data entry at `key` for variable `label` in `dfg`
+Delete a Metadata entry at `key` for variable `label` in `dfg`
 """
-function deleteSmallData!(dfg::AbstractDFG, label::Symbol, key::Symbol)
+function deleteMetadata!(dfg::AbstractDFG, label::Symbol, key::Symbol)
     v = getVariable(dfg, label)
     rval = pop!(v.smallData, key)
     updateVariable!(dfg, v)
@@ -601,18 +577,18 @@ end
 
 """
     $(SIGNATURES)
-List all small data keys for a variable `label` in `dfg`
+List all Metadata keys for a variable `label` in `dfg`
 """
-function listSmallData(dfg::AbstractDFG, label::Symbol)
+function listMetadata(dfg::AbstractDFG, label::Symbol)
     v = getVariable(dfg, label)
     return collect(keys(v.smallData)) #or pair TODO
 end
 
 """
     $(SIGNATURES)
-Empty all small data from variable `label` in `dfg`
+Empty all Metadata from variable `label` in `dfg`
 """
-function emptySmallData!(dfg::AbstractDFG, label::Symbol)
+function emptyMetadata!(dfg::AbstractDFG, label::Symbol)
     v = getVariable(dfg, label)
     empty!(v.smallData)
     updateVariable!(dfg, v)
@@ -675,6 +651,11 @@ function getVariableSolverData(
     !haskey(v.solverDataDict, solvekey) &&
         throw(KeyError("Solve key '$solvekey' not found in variable '$variablekey'"))
     return v.solverDataDict[solvekey]
+end
+
+function getVariableSolverDataAll(dfg::AbstractDFG, variablekey::Symbol)
+    v = getVariable(dfg, variablekey)
+    return collect(values(v.solverDataDict))
 end
 
 """
@@ -1003,6 +984,14 @@ NOTE: Copies the PPE.
 """
 function addPPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol = :default)
     return addPPE!(dfg, sourceVariable.label, deepcopy(getPPE(sourceVariable, ppekey)))
+end
+
+function addPPEs!(
+    dfg::AbstractDFG,
+    sourceVariables::Vector{DFGVariable},
+    ppekey::Symbol = :default,
+)
+    return addPPE!.(dfg, sourceVariables, ppekey)
 end
 
 """
