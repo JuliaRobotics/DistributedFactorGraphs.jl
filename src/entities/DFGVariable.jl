@@ -306,7 +306,7 @@ Base.@kwdef struct DFGVariable{T <: InferenceVariable, P, N} <: AbstractDFGVaria
     solverDataDict::Dict{Symbol, VariableNodeData{T, P, N}} =
         Dict{Symbol, VariableNodeData{T, P, N}}()
     """Dictionary of small data associated with this variable.
-    Accessors: [`getSmallData`](@ref), [`setSmallData!`](@ref)"""
+    Accessors: [`getMetadata`](@ref), [`setMetadata!`](@ref)"""
     smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}()
     """Dictionary of large data associated with this variable.
     Accessors: [`addBlobEntry!`](@ref), [`getBlobEntry`](@ref), [`updateBlobEntry!`](@ref), and [`deleteBlobEntry!`](@ref)"""

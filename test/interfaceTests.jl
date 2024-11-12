@@ -126,7 +126,7 @@ end
     VSDTestBlock!(fg1, var1)
 end
 
-@testset "SmallData CRUD" begin
+@testset "Metadata CRUD" begin
     smallDataTestBlock!(fg1)
 end
 

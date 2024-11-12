@@ -207,7 +207,7 @@ Base.@kwdef struct DFGFactor{T, N} <: AbstractDFGFactor
     Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)"""
     solvable::Base.RefValue{Int}
     """Dictionary of small data associated with this variable.
-    Accessors: [`getSmallData`](@ref), [`setSmallData!`](@ref)"""
+    Accessors: [`getMetadata`](@ref), [`setMetadata!`](@ref)"""
     smallData::Dict{Symbol, SmallDataTypes}
     # Inner constructor
     function DFGFactor{T}(

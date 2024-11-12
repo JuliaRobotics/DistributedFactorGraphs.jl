@@ -339,7 +339,7 @@ function DFGVariableSCA()
 
     @test getPPEDict(v1) == v1.ppeDict
 
-    @test getSmallData(v1) == Dict{Symbol, SmallDataTypes}()
+    @test getMetadata(v1) == Dict{Symbol, SmallDataTypes}()
 
     @test getVariableType(v1) == TestVariableType1()
 
@@ -359,8 +359,8 @@ function DFGVariableSCA()
     @test getSolvable(v1) == 1
     @test setSolvable!(v1, 0) == 0
 
-    @test setSmallData!(v1, small) == small
-    @test getSmallData(v1) == small
+    @test setMetadata!(v1, small) == small
+    @test getMetadata(v1) == small
 
     #no accessors on dataDict, only CRUD
 
@@ -878,34 +878,34 @@ function VSDTestBlock!(fg, v1)
 end
 
 function smallDataTestBlock!(fg)
-    @test listSmallData(fg, :a) == Symbol[:small]
-    @test listSmallData(fg, :b) == Symbol[]
-    @test small = getSmallData(fg, :a, :small) == "data"
+    @test listMetadata(fg, :a) == Symbol[:small]
+    @test listMetadata(fg, :b) == Symbol[]
+    @test small = getMetadata(fg, :a, :small) == "data"
 
-    @test addSmallData!(fg, :a, :a => 5) == getVariable(fg, :a).smallData
-    @test addSmallData!(fg, :a, :b => 10.0) == getVariable(fg, :a).smallData
-    @test addSmallData!(fg, :a, :c => true) == getVariable(fg, :a).smallData
-    @test addSmallData!(fg, :a, :d => "yes") == getVariable(fg, :a).smallData
-    @test addSmallData!(fg, :a, :e => [1, 2, 3]) == getVariable(fg, :a).smallData
-    @test addSmallData!(fg, :a, :f => [1.4, 2.5, 3.6]) == getVariable(fg, :a).smallData
-    @test addSmallData!(fg, :a, :g => ["yes", "maybe"]) == getVariable(fg, :a).smallData
-    @test addSmallData!(fg, :a, :h => [true, false]) == getVariable(fg, :a).smallData
+    @test addMetadata!(fg, :a, :a => 5) == getVariable(fg, :a).smallData
+    @test addMetadata!(fg, :a, :b => 10.0) == getVariable(fg, :a).smallData
+    @test addMetadata!(fg, :a, :c => true) == getVariable(fg, :a).smallData
+    @test addMetadata!(fg, :a, :d => "yes") == getVariable(fg, :a).smallData
+    @test addMetadata!(fg, :a, :e => [1, 2, 3]) == getVariable(fg, :a).smallData
+    @test addMetadata!(fg, :a, :f => [1.4, 2.5, 3.6]) == getVariable(fg, :a).smallData
+    @test addMetadata!(fg, :a, :g => ["yes", "maybe"]) == getVariable(fg, :a).smallData
+    @test addMetadata!(fg, :a, :h => [true, false]) == getVariable(fg, :a).smallData
 
-    @test_throws ErrorException addSmallData!(fg, :a, :a => 3)
-    @test updateSmallData!(fg, :a, :a => 3) == getVariable(fg, :a).smallData
+    @test_throws ErrorException addMetadata!(fg, :a, :a => 3)
+    @test updateMetadata!(fg, :a, :a => 3) == getVariable(fg, :a).smallData
 
-    @test_throws MethodError addSmallData!(fg, :a, :no => 0x01)
-    @test_throws MethodError addSmallData!(fg, :a, :no => 1.0f0)
-    @test_throws MethodError addSmallData!(fg, :a, :no => Nanosecond(3))
-    @test_throws MethodError addSmallData!(fg, :a, :no => [0x01])
-    @test_throws MethodError addSmallData!(fg, :a, :no => [1.0f0])
-    @test_throws MethodError addSmallData!(fg, :a, :no => [Nanosecond(3)])
+    @test_throws MethodError addMetadata!(fg, :a, :no => 0x01)
+    @test_throws MethodError addMetadata!(fg, :a, :no => 1.0f0)
+    @test_throws MethodError addMetadata!(fg, :a, :no => Nanosecond(3))
+    @test_throws MethodError addMetadata!(fg, :a, :no => [0x01])
+    @test_throws MethodError addMetadata!(fg, :a, :no => [1.0f0])
+    @test_throws MethodError addMetadata!(fg, :a, :no => [Nanosecond(3)])
 
-    @test deleteSmallData!(fg, :a, :a) == 3
-    @test updateSmallData!(fg, :a, :a => 3) == getVariable(fg, :a).smallData
-    @test length(listSmallData(fg, :a)) == 9
-    emptySmallData!(fg, :a)
-    @test length(listSmallData(fg, :a)) == 0
+    @test deleteMetadata!(fg, :a, :a) == 3
+    @test updateMetadata!(fg, :a, :a => 3) == getVariable(fg, :a).smallData
+    @test length(listMetadata(fg, :a)) == 9
+    emptyMetadata!(fg, :a)
+    @test length(listMetadata(fg, :a)) == 0
 end
 
 function DataEntriesTestBlock!(fg, v2)
