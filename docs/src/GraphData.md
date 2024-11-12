@@ -156,15 +156,15 @@ itself, large entries will slow the graph down, so if data should exceed a
 few bytes/kb, it should rather be saved in bigData.
 
 
-- [`getSmallData`](@ref)
-- [`setSmallData!`](@ref)
+- [`getMetadata`](@ref)
+- [`setMetadata!`](@ref)
 
 
 Example:
 
 ```julia
-setSmallData!(x0, Dict("entry"=>"entry value"))
-getSmallData(x0)
+setMetadata!(x0, Dict("entry"=>"entry value"))
+getMetadata(x0)
 ```
 
 #### Big Data

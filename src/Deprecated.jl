@@ -39,6 +39,17 @@ export DFGSummary
 DFGSummary(args) = error("DFGSummary is deprecated")
 @deprecate getSummary(dfg::AbstractDFG) getSummaryGraph(dfg)
 
+##------------------------------------------------------------------------------
+## smallData
+##------------------------------------------------------------------------------
+@deprecate getSmallData(args...) getMetadata(args...)
+@deprecate setSmallData!(args...) setMetadata!(args...)
+@deprecate addSmallData!(args...) addMetadata!(args...)
+@deprecate updateSmallData!(args...) updateMetadata!(args...)
+@deprecate deleteSmallData!(args...) deleteMetadata!(args...)
+@deprecate listSmallData(args...) listMetadata(args...)
+@deprecate emptySmallData!(args...) emptyMetadata!(args...)
+
 ## ================================================================================
 ## Deprecated in v0.24
 ##=================================================================================

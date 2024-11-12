@@ -30,6 +30,25 @@ Base.Broadcast.broadcastable(dfg::AbstractDFG) = Ref(dfg)
 ##------------------------------------------------------------------------------
 """
     $(SIGNATURES)
+Get the id of the node.
+"""
+getId(node) = node.id
+
+"""
+    $(SIGNATURES)
+Get the label of the node.
+"""
+getLabel(node) = node.label
+
+"""
+$SIGNATURES
+
+Get the metadata of the node.
+"""
+getMetadata(node) = node.metadata
+
+"""
+    $(SIGNATURES)
 Convenience function to get all the metadata of a DFG
 """
 function getDFGInfo(dfg::AbstractDFG)
@@ -120,6 +139,15 @@ function getTypeDFGFactors end
 ##------------------------------------------------------------------------------
 ## Setters
 ##------------------------------------------------------------------------------
+"""
+    $SIGNATURES
+Set the metadata of the node.
+"""
+function setMetadata!(node, metadata::Dict{Symbol, SmallDataTypes})
+    # with set old data should be removed, but care is taken to make sure its not the same object
+    node.metadata !== metadata && empty!(node.metadata)
+    return merge!(node.metadata, metadata)
+end
 
 """
     $(SIGNATURES)
@@ -136,24 +164,6 @@ function setSolverParams!(dfg::AbstractDFG, solverParams::AbstractParams)
 end
 
 # Accessors and CRUD for user/robot/session Data
-
-"""
-$SIGNATURES
-
-Get the metadata of the node.
-"""
-getMetadata(node) = node.metadata
-
-"""
-$SIGNATURES
-
-Set the metadata of the node.
-"""
-function setMetadata!(node, metadata::Dict{Symbol, SmallDataTypes})
-    # with set old data should be removed, but care is taken to make sure its not the same object
-    node.metadata !== metadata && empty!(node.metadata)
-    return merge!(node.metadata, metadata)
-end
 
 """
 $SIGNATURES
@@ -212,7 +222,7 @@ emptyGraphMetadata!(dfg::AbstractDFG) = empty!(dfg.graphMetadata)
 #TODO add__Data!?
 
 ##==============================================================================
-## Agent/Graph Blob Entries CRUD
+## Agent/Graph/Model Blob Entries CRUD
 ##==============================================================================
 
 function getGraphBlobEntry end
@@ -229,8 +239,16 @@ function addAgentBlobEntries! end
 function updateAgentBlobEntry! end
 function deleteAgentBlobEntry! end
 
+function getModelBlobEntry end
+function getModelBlobEntries end
+function addModelBlobEntry! end
+function addModelBlobEntries! end
+function updateModelBlobEntry! end
+function deleteModelBlobEntry! end
+
 function listGraphBlobEntries end
 function listAgentBlobEntries end
+function listModelBlobEntries end
 
 ##==============================================================================
 ## AbstractBlobStore  CRUD
@@ -317,11 +335,41 @@ end
 
 """
     $(SIGNATURES)
+Get a VariableSummary from a DFG.
+"""
+function getVariableSummary end
+
+"""
+    $(SIGNATURES)
+Get the variables from a DFG as a Vector{VariableSummary}.
+"""
+function getVariablesSummary end
+
+"""
+    $(SIGNATURES)
+Get a VariableSkeleton from a DFG.
+"""
+function getVariableSkeleton end
+
+"""
+    $(SIGNATURES)
+Get the variables from a DFG as a Vector{VariableSkeleton}.
+"""
+function getVariablesSkeleton end
+
+"""
+    $(SIGNATURES)
 Get a DFGFactor from a DFG using its label.
 """
 function getFactor(dfg::G, label::Union{Symbol, String}) where {G <: AbstractDFG}
     return error("getFactor not implemented for $(typeof(dfg))")
 end
+
+"""
+    $(SIGNATURES)
+Get the skeleton factors from a DFG as a Vector{FactorSkeleton}.
+"""
+function getFactorsSkeleton end
 
 function Base.getindex(dfg::AbstractDFG, lbl::Union{Symbol, String})
     if isVariable(dfg, lbl)

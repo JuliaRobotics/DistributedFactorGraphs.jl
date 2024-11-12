@@ -28,8 +28,6 @@ end
 # label
 # id
 
-getLabel(entry::BlobEntry) = entry.label
-getId(entry::BlobEntry) = entry.id
 getHash(entry::BlobEntry) = hex2bytes(entry.hash)
 getTimestamp(entry::BlobEntry) = entry.timestamp
 
@@ -171,6 +169,10 @@ end
 
 function addBlobEntry!(dfg::AbstractDFG, vLbl::Symbol, entry::BlobEntry;)
     return addBlobEntry!(getVariable(dfg, vLbl), entry)
+end
+
+function addBlobEntries!(dfg::AbstractDFG, vLbl::Symbol, entries::Vector{BlobEntry})
+    return addBlobEntry!.(dfg, vLbl, entries)
 end
 
 """

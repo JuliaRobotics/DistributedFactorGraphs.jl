@@ -263,6 +263,15 @@ StructTypes.StructType(::Type{Variable}) = StructTypes.UnorderedStruct()
 StructTypes.idproperty(::Type{Variable}) = :id
 StructTypes.omitempties(::Type{Variable}) = (:id,)
 
+function getMetadata(v::Variable)
+    return JSON3.read(base64decode(v.metadata), Dict{Symbol, SmallDataTypes})
+end
+
+function setMetadata!(v::Variable, metadata::Dict{Symbol, SmallDataTypes})
+    return error("FIXME: Metadata is not currently mutable in a Variable")
+    # v.metadata = base64encode(JSON3.write(metadata))
+end
+
 ##------------------------------------------------------------------------------
 ## DFGVariable lv2
 ##------------------------------------------------------------------------------
@@ -297,7 +306,7 @@ Base.@kwdef struct DFGVariable{T <: InferenceVariable, P, N} <: AbstractDFGVaria
     solverDataDict::Dict{Symbol, VariableNodeData{T, P, N}} =
         Dict{Symbol, VariableNodeData{T, P, N}}()
     """Dictionary of small data associated with this variable.
-    Accessors: [`getSmallData`](@ref), [`setSmallData!`](@ref)"""
+    Accessors: [`getMetadata`](@ref), [`setMetadata!`](@ref)"""
     smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}()
     """Dictionary of large data associated with this variable.
     Accessors: [`addBlobEntry!`](@ref), [`getBlobEntry`](@ref), [`updateBlobEntry!`](@ref), and [`deleteBlobEntry!`](@ref)"""
@@ -350,6 +359,13 @@ Base.setproperty!(x::DFGVariable, f::Symbol, val) = begin
     else
         setfield!(x, f, val)
     end
+end
+
+getMetadata(v::DFGVariable) = v.smallData
+
+function setMetadata!(v::DFGVariable, metadata::Dict{Symbol, SmallDataTypes})
+    v.smallData !== metadata && empty!(v.smallData)
+    return merge!(v.smallData, metadata)
 end
 
 ##------------------------------------------------------------------------------
