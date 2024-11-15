@@ -4,7 +4,10 @@ using Arrow
 using DistributedFactorGraphs
 using DistributedFactorGraphs: _MIMETypes
 
-push!(_MIMETypes, MIME("application/vnd.apache.arrow.file") => format"Arrow") # see issue #507
+function __init__()
+    @info "Including Arrow blobs support in DFG."
+    return push!(_MIMETypes, MIME("application/vnd.apache.arrow.file") => format"Arrow") # see issue #507
+end
 
 # kwargs: compress = :lz4,
 function DFG.packBlob(::Type{format"Arrow"}, data; kwargs...)
