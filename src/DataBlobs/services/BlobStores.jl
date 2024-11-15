@@ -181,6 +181,9 @@ struct FolderStore{T} <: AbstractBlobStore{T}
     folder::String
 end
 
+#TODO rename key to label for consistency
+getLabel(store::FolderStore) = store.key
+
 function FolderStore(foldername::String; label = :default_folder_store, createfolder = true)
     if createfolder && !isdir(foldername)
         @info "Folder '$foldername' doesn't exist - creating."

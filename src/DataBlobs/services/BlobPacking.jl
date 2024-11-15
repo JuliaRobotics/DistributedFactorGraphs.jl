@@ -17,7 +17,8 @@ push!(_MIMETypes, MIME("application/octet-stream/json") => format"JSON")
 push!(_MIMETypes, MIME("application/bson") => format"BSON")
 push!(_MIMETypes, MIME("image/png") => format"PNG")
 push!(_MIMETypes, MIME("image/jpeg") => format"JPG")
-push!(_MIMETypes, MIME("application/octet-stream; ext=las") => format"LAS")
+push!(_MIMETypes, MIME("application/vnd.las") => format"LAS")
+push!(_MIMETypes, MIME("application/vnd.apache.parque") => format"Parquet") # Provided by FileIO with ParquetFiles 
 
 """
     packBlob
