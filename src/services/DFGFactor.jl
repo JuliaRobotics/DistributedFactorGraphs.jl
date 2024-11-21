@@ -52,6 +52,59 @@ function _getPriorType(_type::Type{<:InferenceVariable})
 end
 
 ##==============================================================================
+## Default Factors Function Macro
+##==============================================================================
+export PackedSamplableBelief
+# export pack, unpack, packDistribution, unpackDistribution
+
+function pack end
+function unpack end
+function packDistribution end
+function unpackDistribution end
+
+abstract type PackedSamplableBelief end
+StructTypes.StructType(::Type{<:PackedSamplableBelief}) = StructTypes.UnorderedStruct()
+
+"""
+    @defFactorType StructName factortype<:AbstractFactor manifolds<:ManifoldsBase.AbstractManifold
+
+A macro to create a new factor function with name `StructName` and manifolds.  Note that 
+the `manifolds` is an object and *must* be a subtype of `ManifoldsBase.AbstractManifold`.
+See documentation in [Manifolds.jl on making your own](https://juliamanifolds.github.io/Manifolds.jl/stable/examples/manifold.html). 
+
+Example:
+```
+DFG.@defFactorType Pose2Pos2 AbstractManifoldMinimize SpecialEuclidean(2)
+```
+"""
+macro defFactorType(structname, factortype, manifold)
+    packedstructname = Symbol("Packed", structname)
+    return esc(
+        quote
+            Base.@__doc__ struct $structname{T} <: $factortype
+                Z::T
+            end
+
+            Base.@__doc__ struct $packedstructname{T <: PackedSamplableBelief} <:
+                                 AbstractPackedFactor
+                Z::T
+            end
+
+            # user manifold must be a <:Manifold
+            @assert ($manifold isa AbstractManifold) "@defVariable of " *
+                                                     string($structname) *
+                                                     " requires that the " *
+                                                     string($manifold) *
+                                                     " be a subtype of `ManifoldsBase.AbstractManifold`"
+
+            DFG.getManifold(::Type{$structname}) = $manifold
+            DFG.pack(d::$structname) = $packedstructname(DFG.packDistribution(d.Z))
+            DFG.unpack(d::$packedstructname) = $structname(DFG.unpackDistribution(d.Z))
+        end,
+    )
+end
+
+##==============================================================================
 ## Factors
 ##==============================================================================
 # |                   | label | tags | timestamp | solvable | solverData |
