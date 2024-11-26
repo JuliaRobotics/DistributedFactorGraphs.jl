@@ -138,7 +138,7 @@ export DFGNode, AbstractDFGVariable, AbstractDFGFactor
 export VariableCompute, VariableSummary, VariableSkeleton, VariableDFG
 
 # Factors
-export FactorCompute, FactorSummary, FactorSkeleton, PackedFactor, Factor
+export FactorCompute, FactorSummary, FactorSkeleton, FactorDFG
 
 # Common
 export getSolvable, setSolvable!, isSolvable
@@ -420,7 +420,9 @@ const DFGFactorSummary = FactorSummary
 export DFGFactor
 const DFGFactor = FactorCompute
 
-
-const FactorDFG = PackedFactor
+export PackedFactor
+const PackedFactor = FactorDFG
+export Factor
+const Factor = FactorDFG
 
 end

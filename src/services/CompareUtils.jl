@@ -27,7 +27,7 @@ const GeneratedCompareUnion = Union{
     VariableSkeleton,
     GenericFunctionNodeData,
     FactorCompute,
-    PackedFactor,
+    FactorDFG,
     FactorSummary,
     FactorSkeleton,
 }

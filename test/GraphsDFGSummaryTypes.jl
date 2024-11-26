@@ -56,13 +56,13 @@ union!(f1.tags, [:FACTOR])
 if false
     #TODO add to tests
     VARTYPE = VariableDFG
-    FACTYPE = PackedFactor
-    dfg = GraphsDFG{NoSolverParams, VariableDFG, PackedFactor}()
+    FACTYPE = FactorDFG
+    dfg = GraphsDFG{NoSolverParams, VariableDFG, FactorDFG}()
     v1 = VariableDFG(; label = :a, variableType = "Pose2", tags = [:VARIABLE, :POSE])
     v2 = VariableDFG(; label = :b, variableType = "Pose2", tags = [:VARIABLE, :LANDMARK])
     v3 = VariableDFG(; label = :c, variableType = "Pose2")
     orphan = VariableDFG(; label = :orphan, variableType = "Pose2")
-    f0 = PackedFactor(;
+    f0 = FactorDFG(;
         label = :af1,
         tags = [:FACTOR],
         _variableOrderSymbols = [:a],
@@ -73,7 +73,7 @@ if false
         data = "",
         metadata = "",
     )
-    f1 = PackedFactor(;
+    f1 = FactorDFG(;
         label = :abf1,
         tags = [:FACTOR],
         _variableOrderSymbols = [:a, :b],
@@ -84,7 +84,7 @@ if false
         data = "",
         metadata = "",
     )
-    f2 = PackedFactor(;
+    f2 = FactorDFG(;
         label = :bcf1,
         tags = [:FACTOR],
         _variableOrderSymbols = [:b, :c],

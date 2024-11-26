@@ -25,7 +25,7 @@ function _getDFGVersion()
     end
 end
 
-function _versionCheck(node::Union{<:VariableDFG, <:PackedFactor})
+function _versionCheck(node::Union{<:VariableDFG, <:FactorDFG})
     if VersionNumber(node._version).minor < _getDFGVersion().minor
         @warn "This data was serialized using DFG $(node._version) but you have $(_getDFGVersion()) installed, there may be deserialization issues." maxlog =
             10
@@ -267,10 +267,10 @@ function _packSolverData(f::FactorCompute, fnctype::AbstractFactor)
     end
 end
 
-# returns PackedFactor
+# returns FactorDFG
 function packFactor(f::FactorCompute)
     fnctype = getSolverData(f).fnc.usrfnc!
-    return PackedFactor(;
+    return FactorDFG(;
         id = f.id,
         label = f.label,
         tags = collect(f.tags),
@@ -287,7 +287,7 @@ function packFactor(f::FactorCompute)
     return props
 end
 
-packFactor(f::PackedFactor) = f
+packFactor(f::FactorDFG) = f
 
 function reconstFactorData end
 
@@ -375,7 +375,7 @@ end
 
 function unpackFactor(
     dfg::AbstractDFG,
-    factor::PackedFactor;
+    factor::FactorDFG;
     skipVersionCheck::Bool = false,
 )
     #

@@ -83,7 +83,7 @@ FunctionNodeData(args...; kw...) = FunctionNodeData{typeof(args[4])}(args...; kw
 # |-------------------|:-----:|:----:|:---------:|:--------:|:----------:|
 # | FactorSkeleton |   X   |   x  |           |          |            |
 # | FactorSummary  |   X   |   X  |     X     |          |            |
-# | PackedFactor      |   X   |   X  |     X     |     X    |      X*    |
+# | FactorDFG      |   X   |   X  |     X     |     X    |      X*    |
 # | FactorCompute         |   X   |   X  |     X     |     X    |      X     |
 # *not available without reconstruction
 
@@ -92,7 +92,7 @@ FunctionNodeData(args...; kw...) = FunctionNodeData{typeof(args[4])}(args...; kw
 
 The Factor information packed in a way that accomdates multi-lang using json.
 """
-Base.@kwdef struct PackedFactor <: AbstractDFGFactor
+Base.@kwdef struct FactorDFG <: AbstractDFGFactor
     id::Union{UUID, Nothing} = nothing
     label::Symbol
     tags::Vector{Symbol}
@@ -106,12 +106,12 @@ Base.@kwdef struct PackedFactor <: AbstractDFGFactor
     _version::String = string(_getDFGVersion())
     # blobEntries::Vector{BlobEntry}#TODO should factor have blob entries?
 end
-#TODO type not in DFG PackedFactor, should it be?
+#TODO type not in DFG FactorDFG, should it be?
 # _type::String
 # createdTimestamp::DateTime
 # lastUpdatedTimestamp::DateTime
 
-PackedFactor(f::PackedFactor) = f
+FactorDFG(f::FactorDFG) = f
 
 # TODO consolidate to just one type
 """
@@ -130,7 +130,7 @@ end
 
 getFncTypeName(fnc::InferenceType) = split(string(typeof(fnc)), ".")[end]
 
-function Factor(
+function FactorDFG(
     xisyms::Vector{Symbol},
     fnc::InferenceType;
     multihypo::Vector{Float64} = Float64[],
@@ -150,7 +150,7 @@ function Factor(
 
     union!(tags, [:FACTOR])
     # create factor 
-    factor = PackedFactor(;
+    factor = FactorDFG(;
         label,
         tags,
         _variableOrderSymbols = xisyms,
@@ -165,9 +165,9 @@ function Factor(
     return factor
 end
 
-StructTypes.StructType(::Type{PackedFactor}) = StructTypes.UnorderedStruct()
-StructTypes.idproperty(::Type{PackedFactor}) = :id
-StructTypes.omitempties(::Type{PackedFactor}) = (:id,)
+StructTypes.StructType(::Type{FactorDFG}) = StructTypes.UnorderedStruct()
+StructTypes.idproperty(::Type{FactorDFG}) = :id
+StructTypes.omitempties(::Type{FactorDFG}) = (:id,)
 
 ## FactorCompute lv2
 
@@ -422,8 +422,8 @@ StructTypes.omitempties(::Type{FactorSkeleton}) = (:id,)
 ##==============================================================================
 ## Define factor levels
 ##==============================================================================
-const FactorDataLevel0 = Union{FactorCompute, FactorSummary, PackedFactor, FactorSkeleton}
-const FactorDataLevel1 = Union{FactorCompute, FactorSummary, PackedFactor}
+const FactorDataLevel0 = Union{FactorCompute, FactorSummary, FactorDFG, FactorSkeleton}
+const FactorDataLevel1 = Union{FactorCompute, FactorSummary, FactorDFG}
 const FactorDataLevel2 = Union{FactorCompute}
 
 ##==============================================================================

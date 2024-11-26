@@ -104,9 +104,9 @@ function setTimestamp(f::FactorSummary, ts::DateTime)
     return FactorSummary(f, ZonedDateTime(ts, localzone()))
 end
 
-function setTimestamp(v::PackedFactor, timestamp::ZonedDateTime)
-    return PackedFactor(;
-        (key => getproperty(v, key) for key in fieldnames(PackedFactor))...,
+function setTimestamp(v::FactorDFG, timestamp::ZonedDateTime)
+    return FactorDFG(;
+        (key => getproperty(v, key) for key in fieldnames(FactorDFG))...,
         timestamp,
     )
 end
@@ -138,7 +138,7 @@ Get the variable ordering for this factor.
 Should be equivalent to listNeighbors unless something was deleted in the graph.
 """
 getVariableOrder(fct::FactorCompute) = fct._variableOrderSymbols::Vector{Symbol}
-getVariableOrder(fct::PackedFactor) = fct._variableOrderSymbols::Vector{Symbol}
+getVariableOrder(fct::FactorDFG) = fct._variableOrderSymbols::Vector{Symbol}
 getVariableOrder(dfg::AbstractDFG, fct::Symbol) = getVariableOrder(getFactor(dfg, fct))
 
 ##------------------------------------------------------------------------------

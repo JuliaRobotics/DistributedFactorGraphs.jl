@@ -40,7 +40,7 @@ Accessible properties for each of the factor structures:
 ## DFG Portable and Storeable types
 
 - [`VariableDFG`](@ref)
-- [`PackedFactor`](@ref)
+- [`FactorDFG`](@ref)
 
 ## DFG Full solvable types
 
