@@ -27,7 +27,7 @@ Pages = ["services/CommonAccessors.jl"]
 
 ```@autodocs
 Modules = [DistributedFactorGraphs]
-Pages = ["services/DFGVariable.jl"]
+Pages = ["services/VariableCompute.jl"]
 ```
 
 ## DFG Factor Accessors CRUD and SET opperations

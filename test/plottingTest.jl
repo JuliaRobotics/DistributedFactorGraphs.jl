@@ -12,7 +12,7 @@ using Manifolds
 # Now make a complex graph for connectivity tests
 numNodes = 10
 dfg = GraphsDFG{NoSolverParams}()
-verts = map(n -> DFGVariable(Symbol("x$n"), TestInferenceVariable1()), 1:numNodes)
+verts = map(n -> VariableCompute(Symbol("x$n"), TestInferenceVariable1()), 1:numNodes)
 map(v -> addVariable!(dfg, v), verts)
 map(
     n -> addFactor!(

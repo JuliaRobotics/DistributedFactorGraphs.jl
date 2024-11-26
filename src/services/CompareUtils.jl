@@ -21,7 +21,7 @@ const GeneratedCompareUnion = Union{
     MeanMaxPPE,
     VariableNodeData,
     PackedVariableNodeData,
-    DFGVariable,
+    VariableCompute,
     Variable,
     VariableSummary,
     VariableSkeleton,
@@ -236,8 +236,8 @@ end
 Compare that all fields are the same in a `::FactorGraph` variable.
 """
 function compareVariable(
-    A::DFGVariable,
-    B::DFGVariable;
+    A::VariableCompute,
+    B::VariableCompute;
     skip::Vector{Symbol} = Symbol[],
     show::Bool = true,
     skipsamples::Bool = true,

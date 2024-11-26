@@ -273,7 +273,7 @@ function setMetadata!(v::Variable, metadata::Dict{Symbol, SmallDataTypes})
 end
 
 ##------------------------------------------------------------------------------
-## DFGVariable lv2
+## VariableCompute lv2
 ##------------------------------------------------------------------------------
 """
 $(TYPEDEF)
@@ -283,7 +283,7 @@ Complete variable structure for a DistributedFactorGraph variable.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct DFGVariable{T <: InferenceVariable, P, N} <: AbstractDFGVariable
+Base.@kwdef struct VariableCompute{T <: InferenceVariable, P, N} <: AbstractDFGVariable
     """The ID for the variable"""
     id::Union{UUID, Nothing} = nothing
     """Variable label, e.g. :x1.
@@ -321,9 +321,9 @@ end
 
 """
     $SIGNATURES
-The default DFGVariable constructor.
+The default VariableCompute constructor.
 """
-function DFGVariable(
+function VariableCompute(
     label::Symbol,
     T::Type{<:InferenceVariable};
     timestamp::ZonedDateTime = now(localzone()),
@@ -334,18 +334,18 @@ function DFGVariable(
 
     N = getDimension(T)
     P = getPointType(T)
-    return DFGVariable{T, P, N}(; label, timestamp, solvable, kwargs...)
+    return VariableCompute{T, P, N}(; label, timestamp, solvable, kwargs...)
 end
 
-function DFGVariable(label::Symbol, variableType::InferenceVariable; kwargs...)
-    return DFGVariable(label, typeof(variableType); kwargs...)
+function VariableCompute(label::Symbol, variableType::InferenceVariable; kwargs...)
+    return VariableCompute(label, typeof(variableType); kwargs...)
 end
 
-function DFGVariable(label::Symbol, solverData::VariableNodeData; kwargs...)
-    return DFGVariable(; label, solverDataDict = Dict(:default => solverData), kwargs...)
+function VariableCompute(label::Symbol, solverData::VariableNodeData; kwargs...)
+    return VariableCompute(; label, solverDataDict = Dict(:default => solverData), kwargs...)
 end
 
-Base.getproperty(x::DFGVariable, f::Symbol) = begin
+Base.getproperty(x::VariableCompute, f::Symbol) = begin
     if f == :solvable
         getfield(x, f)[]
     else
@@ -353,7 +353,7 @@ Base.getproperty(x::DFGVariable, f::Symbol) = begin
     end
 end
 
-Base.setproperty!(x::DFGVariable, f::Symbol, val) = begin
+Base.setproperty!(x::VariableCompute, f::Symbol, val) = begin
     if f == :solvable
         getfield(x, f)[] = val
     else
@@ -361,9 +361,9 @@ Base.setproperty!(x::DFGVariable, f::Symbol, val) = begin
     end
 end
 
-getMetadata(v::DFGVariable) = v.smallData
+getMetadata(v::VariableCompute) = v.smallData
 
-function setMetadata!(v::DFGVariable, metadata::Dict{Symbol, SmallDataTypes})
+function setMetadata!(v::VariableCompute, metadata::Dict{Symbol, SmallDataTypes})
     v.smallData !== metadata && empty!(v.smallData)
     return merge!(v.smallData, metadata)
 end
@@ -464,15 +464,15 @@ StructTypes.omitempties(::Type{VariableSkeleton}) = (:id,)
 # Define variable levels
 ##==============================================================================
 const VariableDataLevel0 =
-    Union{DFGVariable, VariableSummary, Variable, VariableSkeleton}
-const VariableDataLevel1 = Union{DFGVariable, VariableSummary, Variable}
-const VariableDataLevel2 = Union{DFGVariable}
+    Union{VariableCompute, VariableSummary, Variable, VariableSkeleton}
+const VariableDataLevel1 = Union{VariableCompute, VariableSummary, Variable}
+const VariableDataLevel2 = Union{VariableCompute}
 
 ##==============================================================================
 ## Conversion constructors
 ##==============================================================================
 
-function VariableSummary(v::DFGVariable)
+function VariableSummary(v::VariableCompute)
     return VariableSummary(
         v.id,
         v.label,

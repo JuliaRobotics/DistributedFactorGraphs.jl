@@ -291,25 +291,25 @@ function DFGVariableSCA()
     small = Dict{Symbol, SmallDataTypes}(:small => "data")
     testTimestamp = now(localzone())
     # Constructors
-    v1 = DFGVariable(
+    v1 = VariableCompute(
         v1_lbl,
         TestVariableType1();
         tags = v1_tags,
         solvable = 0,
         solverDataDict = Dict(:default => VariableNodeData{TestVariableType1}()),
     )
-    v2 = DFGVariable(
+    v2 = VariableCompute(
         :b,
         VariableNodeData{TestVariableType2}();
         tags = Set([:VARIABLE, :LANDMARK]),
     )
-    v3 = DFGVariable(
+    v3 = VariableCompute(
         :c,
         VariableNodeData{TestVariableType2}();
         timestamp = ZonedDateTime("2020-08-11T00:12:03.000-05:00"),
     )
 
-    vorphan = DFGVariable(
+    vorphan = VariableCompute(
         :orphan,
         TestVariableType1();
         tags = v1_tags,
@@ -386,7 +386,7 @@ function DFGFactorSCA()
     # "DFG Factor"
 
     # Constructors
-    #DFGVariable solvable default to 1, but Factor to 0, is that correct
+    #VariableCompute solvable default to 1, but Factor to 0, is that correct
     f1_lbl = :abf1
     f1_tags = Set([:FACTOR])
     testTimestamp = now(localzone())
@@ -552,11 +552,11 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
 
     @test addFactor!(fg, f0) == f0
 
-    if isa(v1, DFGVariable)
+    if isa(v1, VariableCompute)
         #TODO decide if this should be @error or other type
         @test_throws ErrorException getVariable(fg, :a, :missingfoo)
     else
-        @test_logs (:warn, r"supported for type DFGVariable") getVariable(
+        @test_logs (:warn, r"supported for type VariableCompute") getVariable(
             fg,
             :a,
             :missingfoo,
@@ -605,7 +605,7 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     @test ls(fg) == listVariables(fg)
     @test lsf(fg) == listFactors(fg)
 
-    if getVariable(fg, ls(fg)[1]) isa DFGVariable
+    if getVariable(fg, ls(fg)[1]) isa VariableCompute
         @test :default in listSolveKeys(fg)
         @test :default in listSolveKeys(fg, r"a"; filterSolveKeys = r"default")
         @test :default in listSupersolves(fg)
@@ -1390,10 +1390,10 @@ end
 
 # Feed with graph a b solvable orphan not factor on a b
 # fg = testDFGAPI()
-# addVariable!(fg, DFGVariable(:a, TestVariableType1()))
-# addVariable!(fg, DFGVariable(:b, TestVariableType1()))
+# addVariable!(fg, VariableCompute(:a, TestVariableType1()))
+# addVariable!(fg, VariableCompute(:b, TestVariableType1()))
 # addFactor!(fg, DFGFactor(:abf1, [:a,:b], GenericFunctionNodeData{TestFunctorInferenceType1, Symbol}()))
-# addVariable!(fg, DFGVariable(:orphan, TestVariableType1(), solvable = 0))
+# addVariable!(fg, VariableCompute(:orphan, TestVariableType1(), solvable = 0))
 function AdjacencyMatricesTestBlock(fg)
     # Normal
     #deprecated
@@ -1415,8 +1415,8 @@ function AdjacencyMatricesTestBlock(fg)
     @test symdiff(v_ll, [:a, :b, :orphan]) == Symbol[]
     @test symdiff(f_ll, [:abf1]) == Symbol[]
 
-    # Only do solvable tests on DFGVariable
-    if isa(getVariable(fg, :a), DFGVariable)
+    # Only do solvable tests on VariableCompute
+    if isa(getVariable(fg, :a), VariableCompute)
         # Filtered - REF DFG #201
         adjMat, v_ll, f_ll = getBiadjacencyMatrix(fg; solvable = 0)
         @test size(adjMat) == (1, 3)
@@ -1434,7 +1434,7 @@ end
 # Now make a complex graph for connectivity tests
 function connectivityTestGraph(
     ::Type{T};
-    VARTYPE = DFGVariable,
+    VARTYPE = VariableCompute,
     FACTYPE = DFGFactor,
 ) where {T <: AbstractDFG}#InMemoryDFGTypes
     #settings
@@ -1506,7 +1506,7 @@ end
 
 # dfg, verts, facs = connectivityTestGraph(testDFGAPI)
 
-function GettingNeighbors(testDFGAPI; VARTYPE = DFGVariable, FACTYPE = DFGFactor)
+function GettingNeighbors(testDFGAPI; VARTYPE = VariableCompute, FACTYPE = DFGFactor)
     # "Getting Neighbors"
     dfg, verts, facs =
         connectivityTestGraph(testDFGAPI; VARTYPE = VARTYPE, FACTYPE = FACTYPE)
@@ -1522,7 +1522,7 @@ function GettingNeighbors(testDFGAPI; VARTYPE = DFGVariable, FACTYPE = DFGFactor
 
     # Solvable
     #TODO if not a GraphsDFG with and summary or skeleton
-    if VARTYPE == DFGVariable
+    if VARTYPE == VariableCompute
         @test listNeighbors(dfg, :x5; solvable = 2) == Symbol[]
         @test issetequal(listNeighbors(dfg, :x5; solvable = 0), [:x4x5f1, :x5x6f1])
         @test issetequal(listNeighbors(dfg, :x5), [:x4x5f1, :x5x6f1])
@@ -1535,7 +1535,7 @@ function GettingNeighbors(testDFGAPI; VARTYPE = DFGVariable, FACTYPE = DFGFactor
 end
 
 #TODO confirm these tests are covered somewhere then delete
-# function  GettingSubgraphs(testDFGAPI; VARTYPE=DFGVariable, FACTYPE=DFGFactor)
+# function  GettingSubgraphs(testDFGAPI; VARTYPE=VariableCompute, FACTYPE=DFGFactor)
 #
 #     # "Getting Subgraphs"
 #     dfg, verts, facs = connectivityTestGraph(testDFGAPI, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
@@ -1557,7 +1557,7 @@ end
 #     @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
 #
 #     #TODO if not a GraphsDFG with and summary or skeleton
-#     if VARTYPE == DFGVariable
+#     if VARTYPE == VariableCompute
 #         # DFG issue #201 Test include orphan factors with filtering - should only return x7 with solvable=1
 #         @test_broken begin
 #             dfgSubgraph = getSubgraphAroundNode(dfg, getFactor(dfg, :x7x8f1), 1, true, solvable=0)
@@ -1585,7 +1585,7 @@ end
 #
 # end
 
-function BuildingSubgraphs(testDFGAPI; VARTYPE = DFGVariable, FACTYPE = DFGFactor)
+function BuildingSubgraphs(testDFGAPI; VARTYPE = VariableCompute, FACTYPE = DFGFactor)
 
     # "Getting Subgraphs"
     dfg, verts, facs =
@@ -1604,7 +1604,7 @@ function BuildingSubgraphs(testDFGAPI; VARTYPE = DFGVariable, FACTYPE = DFGFacto
     @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
 
     #TODO if not a GraphsDFG with and summary or skeleton
-    if VARTYPE == DFGVariable
+    if VARTYPE == VariableCompute
         dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [:x8], 2; solvable = 1)
         @test issetequal([:x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
         #end if not a GraphsDFG with and summary or skeleton
@@ -1622,7 +1622,7 @@ function BuildingSubgraphs(testDFGAPI; VARTYPE = DFGVariable, FACTYPE = DFGFacto
     end
 
     #TODO buildSubgraph default constructors for skeleton and summary
-    if VARTYPE == DFGVariable
+    if VARTYPE == VariableCompute
         dfgSubgraph = buildSubgraph(dfg, [:x1, :x2, :x1x2f1])
         @test issetequal([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
 
@@ -1679,7 +1679,7 @@ function ProducingDotFiles(
     v1 = nothing,
     v2 = nothing,
     f1 = nothing;
-    VARTYPE = DFGVariable,
+    VARTYPE = VariableCompute,
     FACTYPE = DFGFactor,
 )
     # "Producing Dot Files"
@@ -1704,7 +1704,7 @@ function ProducingDotFiles(
     addVariable!(dotdfg, v2)
     # FIXME, fix deprecation
     # ┌ Warning: addFactor!(dfg, variables, factor) is deprecated, use addFactor!(dfg, factor)
-    # │   caller = ProducingDotFiles(testDFGAPI::Type{GraphsDFG}, v1::Nothing, v2::Nothing, f1::Nothing; VARTYPE::Type{DFGVariable}, FACTYPE::Type{DFGFactor}) at testBlocks.jl:1440
+    # │   caller = ProducingDotFiles(testDFGAPI::Type{GraphsDFG}, v1::Nothing, v2::Nothing, f1::Nothing; VARTYPE::Type{VariableCompute}, FACTYPE::Type{DFGFactor}) at testBlocks.jl:1440
     # └ @ Main ~/.julia/dev/DistributedFactorGraphs/test/testBlocks.jl:1440
     addFactor!(dotdfg, f1)
     #NOTE hardcoded toDot will have different results so test Graphs seperately

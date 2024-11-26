@@ -135,7 +135,7 @@ export getSummaryGraph
 export DFGNode, AbstractDFGVariable, AbstractDFGFactor
 
 # Variables
-export DFGVariable, VariableSummary, VariableSkeleton, PackedVariable
+export VariableCompute, VariableSummary, VariableSkeleton, PackedVariable
 
 # Factors
 export DFGFactor, DFGFactorSummary, SkeletonDFGFactor, PackedFactor, Factor
@@ -355,7 +355,7 @@ include("DataBlobs/entities/BlobStores.jl")
 
 include("entities/DFGFactor.jl")
 
-include("entities/DFGVariable.jl")
+include("entities/VariableCompute.jl")
 
 include("entities/Agent.jl")
 
@@ -378,7 +378,7 @@ const LocalDFG = GraphsDFG
 # Common includes
 include("services/CommonAccessors.jl")
 include("services/Serialization.jl")
-include("services/DFGVariable.jl")
+include("services/VariableCompute.jl")
 include("services/DFGFactor.jl")
 include("Deprecated.jl")
 include("services/CompareUtils.jl")
@@ -402,7 +402,9 @@ const SkeletonDFGVariable = VariableSkeleton
 export DFGVariableSummary 
 const DFGVariableSummary = VariableSummary
 
-const VariableCompute = DFGVariable
+export DFGVariable
+const DFGVariable = VariableCompute
+
 const VariableDFG = PackedVariable
 
 # Starting Factor-level noun -djective standardisation 

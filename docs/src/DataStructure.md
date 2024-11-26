@@ -17,7 +17,7 @@ Accessible properties for each of the variable structures:
 |---------------------|-------|-----------|------|-----------|-----------|----------|-------------|----------|--------------|
 | VariableSkeleton | X     |           | X    |           |           |          |             |          |              |
 | VariableSummary  | X     | X         | X    | X         | Symbol    |          |             |          | X            |
-| DFGVariable         | X     | X         | X    | X         | X         | X        | X           | X        | X            |
+| VariableCompute         | X     | X         | X    | X         | X         | X        | X           | X        | X            |
 
 Accessible properties for each of the factor structures:
 
@@ -44,7 +44,7 @@ Accessible properties for each of the factor structures:
 
 ## DFG Full solvable types
 
-- [`DFGVariable`](@ref)
+- [`VariableCompute`](@ref)
 - [`DFGFactor`](@ref)
 
 ## Additional Offloaded Data

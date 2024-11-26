@@ -163,7 +163,7 @@ function loadDFG!(
     # FIXME, why is this treated different from VariableSkeleton, VariableSummary?
 
     usePackedVariable = isa(dfgLoadInto, GraphsDFG) && getTypeDFGVariables(dfgLoadInto) == Variable
-    # type instability on `variables` as either `::Vector{Variable}` or `::Vector{DFGVariable{<:}}` (vector of abstract)
+    # type instability on `variables` as either `::Vector{Variable}` or `::Vector{VariableCompute{<:}}` (vector of abstract)
     variables = @showprogress 1 "loading variables" asyncmap(varFiles) do varFile
         jstr = read("$varFolder/$varFile", String)
         packedvar = JSON3.read(jstr, PackedVariable)

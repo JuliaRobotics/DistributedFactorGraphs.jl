@@ -288,7 +288,7 @@ end
 
 """
     $(SIGNATURES)
-Add a DFGVariable to a DFG.
+Add a VariableCompute to a DFG.
 """
 function addVariable!(
     dfg::G,
@@ -299,7 +299,7 @@ end
 
 """
     $(SIGNATURES)
-Add a Vector{DFGVariable} to a DFG.
+Add a Vector{VariableCompute} to a DFG.
 """
 function addVariables!(dfg::AbstractDFG, variables::Vector{<:AbstractDFGVariable})
     return asyncmap(variables) do v
@@ -327,7 +327,7 @@ end
 
 """
     $(SIGNATURES)
-Get a DFGVariable from a DFG using its label.
+Get a VariableCompute from a DFG using its label.
 """
 function getVariable(dfg::G, label::Union{Symbol, String}) where {G <: AbstractDFG}
     return error("getVariable not implemented for $(typeof(dfg))")
@@ -383,7 +383,7 @@ end
 
 """
     $(SIGNATURES)
-Update a complete DFGVariable in the DFG.
+Update a complete VariableCompute in the DFG.
 """
 function updateVariable!(
     dfg::G,
@@ -402,7 +402,7 @@ end
 
 """
     $(SIGNATURES)
-Delete a DFGVariable from the DFG using its label.
+Delete a VariableCompute from the DFG using its label.
 """
 function deleteVariable!(dfg::AbstractDFG, label::Symbol)
     return error("deleteVariable! not implemented for $(typeof(dfg))")
@@ -466,7 +466,7 @@ end
 
 Return whether `sym::Symbol` represents a variable vertex in the graph DFG.
 Checks whether it both exists in the graph and is a variable.
-(If you rather want a quick for type, just do node isa DFGVariable)
+(If you rather want a quick for type, just do node isa VariableCompute)
 """
 function isVariable(dfg::G, sym::Symbol) where {G <: AbstractDFG}
     return error("isVariable not implemented for $(typeof(dfg))")
@@ -521,16 +521,16 @@ end
 
 """
     $(SIGNATURES)
-Get a DFGVariable with a specific solver key.
+Get a VariableCompute with a specific solver key.
 In memory types still return a reference, other types returns a variable with only solveKey.
 """
 function getVariable(dfg::AbstractDFG, label::Symbol, solveKey::Symbol)
     var = getVariable(dfg, label)
 
-    if isa(var, DFGVariable) && !haskey(var.solverDataDict, solveKey)
+    if isa(var, VariableCompute) && !haskey(var.solverDataDict, solveKey)
         error("Solvekey '$solveKey' does not exists in the variable")
-    elseif !isa(var, DFGVariable)
-        @warn "getVariable(dfg, label, solveKey) only supported for type DFGVariable."
+    elseif !isa(var, VariableCompute)
+        @warn "getVariable(dfg, label, solveKey) only supported for type VariableCompute."
     end
 
     return var
@@ -538,7 +538,7 @@ end
 
 """
     $(SIGNATURES)
-Delete a referenced DFGVariable from the DFG.
+Delete a referenced VariableCompute from the DFG.
 
 Notes
 - Returns `Tuple{AbstractDFGVariable, Vector{<:AbstractDFGFactor}}`
@@ -652,7 +652,7 @@ Related
 [`listSolveKeys`](@ref), [`getSolverDataDict`](@ref), [`listVariables`](@ref)
 """
 function listSolveKeys(
-    variable::DFGVariable,
+    variable::VariableCompute,
     filterSolveKeys::Union{Regex, Nothing} = nothing,
     skeys = Set{Symbol}(),
 )

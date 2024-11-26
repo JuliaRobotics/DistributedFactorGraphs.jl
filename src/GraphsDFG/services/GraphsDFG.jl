@@ -200,7 +200,7 @@ function getVariables(
     detail = nothing,
 )
 
-    # variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGVariable, vertices(dfg.g)))
+    # variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa VariableCompute, vertices(dfg.g)))
     variables = collect(values(dfg.g.variables))
 
     !isnothing(regexFilter) &&
@@ -223,7 +223,7 @@ function listVariables(
     solvableFilter::Union{Nothing, Base.Fix2} = nothing,
 )
 
-    # variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGVariable, vertices(dfg.g)))
+    # variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa VariableCompute, vertices(dfg.g)))
     if length(tags) > 0
         return map(
             v -> v.label,

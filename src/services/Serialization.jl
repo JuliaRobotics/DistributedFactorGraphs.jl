@@ -176,7 +176,7 @@ end
 ##==============================================================================
 
 function packVariable(
-    v::DFGVariable;
+    v::VariableCompute;
     includePPEs::Bool = true,
     includeSolveData::Bool = true,
     includeDataEntries::Bool = true,
@@ -227,7 +227,7 @@ function unpackVariable(variable::PackedVariable; skipVersionCheck::Bool = false
     )
     metadata = JSON3.read(base64decode(variable.metadata), Dict{Symbol, DFG.SmallDataTypes})
 
-    return DFGVariable(
+    return VariableCompute(
         variable.label,
         variableType;
         id = variable.id,
@@ -242,10 +242,10 @@ function unpackVariable(variable::PackedVariable; skipVersionCheck::Bool = false
     )
 end
 
-DFGVariable(v::DFGVariable) = v
-DFGVariable(v::Variable) = unpackVariable(v)
+VariableCompute(v::VariableCompute) = v
+VariableCompute(v::Variable) = unpackVariable(v)
 Variable(v::Variable) = v
-Variable(v::DFGVariable) = packVariable(v)
+Variable(v::VariableCompute) = packVariable(v)
 
 ##==============================================================================
 ## Factor Packing and unpacking

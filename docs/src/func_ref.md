@@ -34,7 +34,7 @@ Pages = ["entities/AbstractDFGSummary.jl"]
 
 ```@autodocs
 Modules = [DistributedFactorGraphs]
-Pages = ["entities/DFGVariable.jl"]
+Pages = ["entities/VariableCompute.jl"]
 ```
 
 ### DFG Factor Nodes

@@ -129,7 +129,7 @@ function getBlobEntryFirst(dfg::AbstractDFG, label::Symbol, key::Regex)
 end
 
 # TODO Consider autogenerating all methods of the form:
-# verbNoun(dfg::DFGVariable, label::Symbol, args...; kwargs...) = verbNoun(getVariable(dfg, label), args...; kwargs...)
+# verbNoun(dfg::VariableCompute, label::Symbol, args...; kwargs...) = verbNoun(getVariable(dfg, label), args...; kwargs...)
 # with something like:
 # getvariablemethod = [
 #     :getBlobEntryFirst,
