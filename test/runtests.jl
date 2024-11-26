@@ -46,7 +46,7 @@ end
 
 @testset "GraphsDFG subtype tests" begin
     for type in [
-        (var = DFGVariableSummary, fac = DFGFactorSummary),
+        (var = VariableSummary, fac = DFGFactorSummary),
         (var = VariableSkeleton, fac = SkeletonDFGFactor),
     ]
         @testset "$(type.var) and $(type.fac) tests" begin

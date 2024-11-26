@@ -135,7 +135,7 @@ export getSummaryGraph
 export DFGNode, AbstractDFGVariable, AbstractDFGFactor
 
 # Variables
-export DFGVariable, DFGVariableSummary, VariableSkeleton, PackedVariable
+export DFGVariable, VariableSummary, VariableSkeleton, PackedVariable
 
 # Factors
 export DFGFactor, DFGFactorSummary, SkeletonDFGFactor, PackedFactor, Factor
@@ -399,7 +399,9 @@ include("weakdeps_prototypes.jl")
 export SkeletonDFGVariable
 const SkeletonDFGVariable = VariableSkeleton
 
-const VariableSummary = DFGVariableSummary
+export DFGVariableSummary 
+const DFGVariableSummary = VariableSummary
+
 const VariableCompute = DFGVariable
 const VariableDFG = PackedVariable
 

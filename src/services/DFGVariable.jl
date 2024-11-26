@@ -332,7 +332,7 @@ end
 # |                     | label | tags | timestamp | ppe | variableTypeName | solvable | solverData | smallData | dataEntries |
 # |---------------------|:-----:|:----:|:---------:|:---:|:----------------:|:--------:|:----------:|:---------:|:-----------:|
 # | VariableSkeleton |   X   |   X  |           |     |                  |          |            |           |             |
-# | DFGVariableSummary  |   X   |   X  |     X     |  X  |         X        |          |            |           |       X     |
+# | VariableSummary  |   X   |   X  |     X     |  X  |         X        |          |            |           |       X     |
 # | DFGVariable         |   X   |   X  |     x     |  X  |                  |     X    |      X     |     X     |       X     |
 #
 ##------------------------------------------------------------------------------
@@ -395,11 +395,11 @@ function setTimestamp(
     return setTimestamp(v, ZonedDateTime(ts, timezone); verbose)
 end
 
-function setTimestamp(v::DFGVariableSummary, ts::ZonedDateTime; verbose::Bool = true)
+function setTimestamp(v::VariableSummary, ts::ZonedDateTime; verbose::Bool = true)
     if verbose
-        @warn "verbose=true: setTimestamp(::DFGVariableSummary,...) creates and returns a new immutable DFGVariable object (and didn't change a distributed factor graph object), make sure you are using the right pointers: getVariable(...).  See setTimestamp!(...) and note suggested use is at addVariable!(..., [timestamp=...]).  See DFG #315 for explanation."
+        @warn "verbose=true: setTimestamp(::VariableSummary,...) creates and returns a new immutable DFGVariable object (and didn't change a distributed factor graph object), make sure you are using the right pointers: getVariable(...).  See setTimestamp!(...) and note suggested use is at addVariable!(..., [timestamp=...]).  See DFG #315 for explanation."
     end
-    return DFGVariableSummary(
+    return VariableSummary(
         v.id,
         v.label,
         ts,
@@ -604,21 +604,21 @@ end
 ##------------------------------------------------------------------------------
 ## variableTypeName
 ##------------------------------------------------------------------------------
-## getter in DFGVariableSummary only
+## getter in VariableSummary only
 ## can be utility function for others
 ## TODO this should return the variableType object, or try to. it should be getVariableTypeName for the accessor
 ## TODO Consider parameter N in variableType for dims, and storing constructor in variableTypeName
 ## TODO or just not having this function at all
-# getVariableType(v::DFGVariableSummary) = v.softypename()
+# getVariableType(v::VariableSummary) = v.softypename()
 ##------------------------------------------------------------------------------
 
 """
     $SIGNATURES
-Retrieve the soft type name symbol for a DFGVariableSummary. ie :Point2, Pose2, etc.
+Retrieve the soft type name symbol for a VariableSummary. ie :Point2, Pose2, etc.
 """
-getVariableTypeName(v::DFGVariableSummary) = v.variableTypeName::Symbol
+getVariableTypeName(v::VariableSummary) = v.variableTypeName::Symbol
 
-function getVariableType(v::DFGVariableSummary)
+function getVariableType(v::VariableSummary)
     @warn "Looking for type in `Main`. Only use if `variableType` has only one implementation, ie. Pose2. Otherwise use the full variable."
     return getfield(Main, v.variableTypeName)()
 end

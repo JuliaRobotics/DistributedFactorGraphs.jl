@@ -1,10 +1,10 @@
 
-# VARTYPE = DFGVariableSummary
+# VARTYPE = VariableSummary
 # FACTYPE = DFGFactorSummary
 
 dfg = GraphsDFG{NoSolverParams, VARTYPE, FACTYPE}()
-function DistributedFactorGraphs.DFGVariableSummary(label::Symbol)
-    return DFGVariableSummary(
+function DistributedFactorGraphs.VariableSummary(label::Symbol)
+    return VariableSummary(
         nothing,
         label,
         DistributedFactorGraphs.now(localzone()),
@@ -15,11 +15,11 @@ function DistributedFactorGraphs.DFGVariableSummary(label::Symbol)
     )
 end
 
-function DistributedFactorGraphs.DFGVariableSummary(
+function DistributedFactorGraphs.VariableSummary(
     label::Symbol,
     ::VariableNodeData{T},
 ) where {T}
-    return DFGVariableSummary(
+    return VariableSummary(
         nothing,
         label,
         DistributedFactorGraphs.now(localzone()),
@@ -111,7 +111,7 @@ end
     @test getLabel(f1) == f1.label
     @test getTags(f1) == f1.tags
 
-    if VARTYPE == DFGVariableSummary
+    if VARTYPE == VariableSummary
         @test getTimestamp(v1) == v1.timestamp
         @test getVariablePPEDict(v1) == v1.ppeDict
         @test_throws KeyError getVariablePPE(v1, :notfound)
@@ -133,7 +133,7 @@ end
 end
 
 @testset "Updating Nodes" begin
-    VARTYPE == DFGVariableSummary && PPETestBlock!(dfg, v1)
+    VARTYPE == VariableSummary && PPETestBlock!(dfg, v1)
 end
 
 @testset "Adjacency Matrices" begin

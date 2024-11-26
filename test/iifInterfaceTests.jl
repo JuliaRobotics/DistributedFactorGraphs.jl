@@ -483,7 +483,7 @@ end
 
 @testset "Summaries and Summary Graphs" begin
     factorFields = fieldnames(DFGFactorSummary)
-    variableFields = fieldnames(DFGVariableSummary)
+    variableFields = fieldnames(VariableSummary)
 
     summaryGraph = getSummaryGraph(dfg)
     @test symdiff(ls(summaryGraph), ls(dfg)) == Symbol[]

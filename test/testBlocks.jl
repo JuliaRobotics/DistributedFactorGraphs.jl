@@ -1642,11 +1642,11 @@ function Summaries(testDFGAPI)
     # "Summaries and Summary Graphs"
     dfg, verts, facs = connectivityTestGraph(testDFGAPI)
     #TODO for summary
-    # if VARTYPE == DFGVariableSummary
+    # if VARTYPE == VariableSummary
     # factorFields = fieldnames(FACTYPE)
     # variableFields = fieldnames(VARTYPE)
     factorFields = fieldnames(DFGFactorSummary)
-    variableFields = fieldnames(DFGVariableSummary)
+    variableFields = fieldnames(VariableSummary)
 
     summaryGraph = getSummaryGraph(dfg)
     @test symdiff(ls(summaryGraph), ls(dfg)) == Symbol[]

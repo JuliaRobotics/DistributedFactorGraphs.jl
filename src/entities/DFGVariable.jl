@@ -369,7 +369,7 @@ function setMetadata!(v::DFGVariable, metadata::Dict{Symbol, SmallDataTypes})
 end
 
 ##------------------------------------------------------------------------------
-## DFGVariableSummary lv1
+## VariableSummary lv1
 ##------------------------------------------------------------------------------
 
 """
@@ -380,7 +380,7 @@ Summary variable structure for a DistributedFactorGraph variable.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct DFGVariableSummary <: AbstractDFGVariable
+Base.@kwdef struct VariableSummary <: AbstractDFGVariable
     """The ID for the variable"""
     id::Union{UUID, Nothing}
     """Variable label, e.g. :x1.
@@ -403,7 +403,7 @@ Base.@kwdef struct DFGVariableSummary <: AbstractDFGVariable
     dataDict::Dict{Symbol, BlobEntry}
 end
 
-function DFGVariableSummary(
+function VariableSummary(
     id,
     label,
     timestamp,
@@ -412,7 +412,7 @@ function DFGVariableSummary(
     variableTypeName,
     ::Nothing,
 )
-    return DFGVariableSummary(
+    return VariableSummary(
         id,
         label,
         timestamp,
@@ -423,7 +423,7 @@ function DFGVariableSummary(
     )
 end
 
-StructTypes.names(::Type{DFGVariableSummary}) = ((:variableTypeName, :variableType),)
+StructTypes.names(::Type{VariableSummary}) = ((:variableTypeName, :variableType),)
 
 ##------------------------------------------------------------------------------
 ## VariableSkeleton.jl
@@ -464,16 +464,16 @@ StructTypes.omitempties(::Type{VariableSkeleton}) = (:id,)
 # Define variable levels
 ##==============================================================================
 const VariableDataLevel0 =
-    Union{DFGVariable, DFGVariableSummary, Variable, VariableSkeleton}
-const VariableDataLevel1 = Union{DFGVariable, DFGVariableSummary, Variable}
+    Union{DFGVariable, VariableSummary, Variable, VariableSkeleton}
+const VariableDataLevel1 = Union{DFGVariable, VariableSummary, Variable}
 const VariableDataLevel2 = Union{DFGVariable}
 
 ##==============================================================================
 ## Conversion constructors
 ##==============================================================================
 
-function DFGVariableSummary(v::DFGVariable)
-    return DFGVariableSummary(
+function VariableSummary(v::DFGVariable)
+    return VariableSummary(
         v.id,
         v.label,
         v.timestamp,
