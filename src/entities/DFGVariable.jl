@@ -404,15 +404,7 @@ Base.@kwdef struct VariableSummary <: AbstractDFGVariable
     dataDict::Dict{Symbol, BlobEntry}
 end
 
-function VariableSummary(
-    id,
-    label,
-    timestamp,
-    tags,
-    ::Nothing,
-    variableTypeName,
-    ::Nothing,
-)
+function VariableSummary(id, label, timestamp, tags, ::Nothing, variableTypeName, ::Nothing)
     return VariableSummary(
         id,
         label,

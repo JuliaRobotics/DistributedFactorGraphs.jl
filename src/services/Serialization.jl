@@ -373,11 +373,7 @@ function fncStringToData(fncType::String, data::Union{String, <:NamedTuple})
     return fncStringToData(packtype, data)
 end
 
-function unpackFactor(
-    dfg::AbstractDFG,
-    factor::FactorDFG;
-    skipVersionCheck::Bool = false,
-)
+function unpackFactor(dfg::AbstractDFG, factor::FactorDFG; skipVersionCheck::Bool = false)
     #
     @debug "DECODING factor type = '$(factor.fnctype)' for factor '$(factor.label)'"
     !skipVersionCheck && _versionCheck(factor)
