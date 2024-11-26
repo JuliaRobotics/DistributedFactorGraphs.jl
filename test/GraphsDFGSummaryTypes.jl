@@ -30,15 +30,15 @@ function DistributedFactorGraphs.DFGVariableSummary(
     )
 end
 
-function DistributedFactorGraphs.SkeletonDFGVariable(label::Symbol, args...)
-    return SkeletonDFGVariable(label)
+function DistributedFactorGraphs.VariableSkeleton(label::Symbol, args...)
+    return VariableSkeleton(label)
 end
 
-function DistributedFactorGraphs.SkeletonDFGVariable(
+function DistributedFactorGraphs.VariableSkeleton(
     label::Symbol,
     ::VariableNodeData{T},
 ) where {T}
-    return SkeletonDFGVariable(nothing, label, Set{Symbol}())
+    return VariableSkeleton(nothing, label, Set{Symbol}())
 end
 
 dfg = GraphsDFG{NoSolverParams, VARTYPE, FACTYPE}()

@@ -517,7 +517,7 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     @test getAddHistory(fg) == [:a, :b, :c]
 
     # Extra timestamp functions https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/315
-    if !(v1 isa SkeletonDFGVariable)
+    if !(v1 isa VariableSkeleton)
         newtimestamp = now(localzone())
         @test !(setTimestamp!(fg, :c, newtimestamp) === v3)
         @test getVariable(fg, :c) |> getTimestamp == newtimestamp

@@ -15,7 +15,7 @@ Accessible properties for each of the variable structures:
 
 |                     | Label | Timestamp | Tags | Estimates | Soft Type | Solvable | Solver Data | Metadata | Blob Entries |
 |---------------------|-------|-----------|------|-----------|-----------|----------|-------------|----------|--------------|
-| SkeletonDFGVariable | X     |           | X    |           |           |          |             |          |              |
+| VariableSkeleton | X     |           | X    |           |           |          |             |          |              |
 | DFGVariableSummary  | X     | X         | X    | X         | Symbol    |          |             |          | X            |
 | DFGVariable         | X     | X         | X    | X         | X         | X        | X           | X        | X            |
 
@@ -29,7 +29,7 @@ Accessible properties for each of the factor structures:
 
 ## DFG Skeleton types
 
-- [`SkeletonDFGVariable`](@ref)
+- [`VariableSkeleton`](@ref)
 - [`SkeletonDFGFactor`](@ref)
 
 ## DFG Summary types

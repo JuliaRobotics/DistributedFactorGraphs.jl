@@ -24,7 +24,7 @@ const GeneratedCompareUnion = Union{
     DFGVariable,
     Variable,
     DFGVariableSummary,
-    SkeletonDFGVariable,
+    VariableSkeleton,
     GenericFunctionNodeData,
     DFGFactor,
     PackedFactor,

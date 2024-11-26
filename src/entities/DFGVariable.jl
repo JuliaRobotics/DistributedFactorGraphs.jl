@@ -426,7 +426,7 @@ end
 StructTypes.names(::Type{DFGVariableSummary}) = ((:variableTypeName, :variableType),)
 
 ##------------------------------------------------------------------------------
-## SkeletonDFGVariable.jl
+## VariableSkeleton.jl
 ##------------------------------------------------------------------------------
 
 """
@@ -437,7 +437,7 @@ Skeleton variable structure for a DistributedFactorGraph variable.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct SkeletonDFGVariable <: AbstractDFGVariable
+Base.@kwdef struct VariableSkeleton <: AbstractDFGVariable
     """The ID for the variable"""
     id::Union{UUID, Nothing} = nothing
     """Variable label, e.g. :x1.
@@ -448,28 +448,28 @@ Base.@kwdef struct SkeletonDFGVariable <: AbstractDFGVariable
     tags::Set{Symbol} = Set{Symbol}()
 end
 
-function SkeletonDFGVariable(
+function VariableSkeleton(
     label::Symbol,
     tags = Set{Symbol}();
     id::Union{UUID, Nothing} = nothing,
 )
-    return SkeletonDFGVariable(id, label, tags)
+    return VariableSkeleton(id, label, tags)
 end
 
-StructTypes.StructType(::Type{SkeletonDFGVariable}) = StructTypes.UnorderedStruct()
-StructTypes.idproperty(::Type{SkeletonDFGVariable}) = :id
-StructTypes.omitempties(::Type{SkeletonDFGVariable}) = (:id,)
+StructTypes.StructType(::Type{VariableSkeleton}) = StructTypes.UnorderedStruct()
+StructTypes.idproperty(::Type{VariableSkeleton}) = :id
+StructTypes.omitempties(::Type{VariableSkeleton}) = (:id,)
 
 ##==============================================================================
 # Define variable levels
 ##==============================================================================
 const VariableDataLevel0 =
-    Union{DFGVariable, DFGVariableSummary, Variable, SkeletonDFGVariable}
+    Union{DFGVariable, DFGVariableSummary, Variable, VariableSkeleton}
 const VariableDataLevel1 = Union{DFGVariable, DFGVariableSummary, Variable}
 const VariableDataLevel2 = Union{DFGVariable}
 
 ##==============================================================================
-## Convertion constructors
+## Conversion constructors
 ##==============================================================================
 
 function DFGVariableSummary(v::DFGVariable)
@@ -484,6 +484,6 @@ function DFGVariableSummary(v::DFGVariable)
     )
 end
 
-function SkeletonDFGVariable(v::VariableDataLevel1)
-    return SkeletonDFGVariable(v.id, v.label, deepcopy(v.tags))
+function VariableSkeleton(v::VariableDataLevel1)
+    return VariableSkeleton(v.id, v.label, deepcopy(v.tags))
 end

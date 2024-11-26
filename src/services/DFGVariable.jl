@@ -331,7 +331,7 @@ end
 #
 # |                     | label | tags | timestamp | ppe | variableTypeName | solvable | solverData | smallData | dataEntries |
 # |---------------------|:-----:|:----:|:---------:|:---:|:----------------:|:--------:|:----------:|:---------:|:-----------:|
-# | SkeletonDFGVariable |   X   |   X  |           |     |                  |          |            |           |             |
+# | VariableSkeleton |   X   |   X  |           |     |                  |          |            |           |             |
 # | DFGVariableSummary  |   X   |   X  |     X     |  X  |         X        |          |            |           |       X     |
 # | DFGVariable         |   X   |   X  |     x     |  X  |                  |     X    |      X     |     X     |       X     |
 #

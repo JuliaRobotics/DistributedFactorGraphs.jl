@@ -47,7 +47,7 @@ end
 @testset "GraphsDFG subtype tests" begin
     for type in [
         (var = DFGVariableSummary, fac = DFGFactorSummary),
-        (var = SkeletonDFGVariable, fac = SkeletonDFGFactor),
+        (var = VariableSkeleton, fac = SkeletonDFGFactor),
     ]
         @testset "$(type.var) and $(type.fac) tests" begin
             @info "Testing $(type.var) and $(type.fac)"
@@ -116,7 +116,7 @@ struct NotImplementedDFG{T} <: AbstractDFG{T} end
 
 @testset "No Interface tests" begin
     dfg = NotImplementedDFG{NoSolverParams}()
-    v1 = SkeletonDFGVariable(:v1)
+    v1 = VariableSkeleton(:v1)
     f1 = SkeletonDFGFactor(:f1, [:v1])
 
     @test_throws ErrorException exists(dfg, v1)
