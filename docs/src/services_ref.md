@@ -34,7 +34,7 @@ Pages = ["services/VariableCompute.jl"]
 
 ```@autodocs
 Modules = [DistributedFactorGraphs]
-Pages = ["services/DFGFactor.jl"]
+Pages = ["services/FactorCompute.jl"]
 ```
 
 ## Printing

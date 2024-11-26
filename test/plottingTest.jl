@@ -17,7 +17,7 @@ map(v -> addVariable!(dfg, v), verts)
 map(
     n -> addFactor!(
         dfg,
-        DFGFactor{TestFunctorInferenceType1}(
+        FactorCompute{TestFunctorInferenceType1}(
             Symbol("x$(n)x$(n+1)f1"),
             [verts[n].label, verts[n + 1].label],
         ),

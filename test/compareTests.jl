@@ -59,10 +59,10 @@ gfnd3 = GenericFunctionNodeData(;
 @test gfnd1 == gfnd2
 @test !(gfnd1 == gfnd3)
 
-# DFGFactor
-f1 = DFGFactor(:f1, [:a, :b], gfnd1)
+# FactorCompute
+f1 = FactorCompute(:f1, [:a, :b], gfnd1)
 f2 = deepcopy(f1)
-f3 = DFGFactor(:f1, [:b, :a], gfnd1)
+f3 = FactorCompute(:f1, [:b, :a], gfnd1)
 
 @test f1 == f2
 @test !(f1 == f3)

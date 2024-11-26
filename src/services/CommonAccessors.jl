@@ -88,7 +88,7 @@ Variables or factors may or may not be 'solvable', depending on a user definitio
 Related:
 - isSolveInProgress
 """
-getSolvable(var::Union{VariableCompute, DFGFactor}) = var.solvable
+getSolvable(var::Union{VariableCompute, FactorCompute}) = var.solvable
 #TODO DataLevel2
 
 """
@@ -137,7 +137,7 @@ returns true if `getSolvable` > 0
 Related:
 - `getSolvable`(@ref)
 """
-isSolvable(node::Union{VariableCompute, DFGFactor}) = getSolvable(node) > 0
+isSolvable(node::Union{VariableCompute, FactorCompute}) = getSolvable(node) > 0
 
 ##------------------------------------------------------------------------------
 ## solveInProgress
@@ -155,7 +155,7 @@ Related
 
 isSolvable
 """
-function getSolveInProgress(var::Union{VariableCompute, DFGFactor}, solveKey::Symbol = :default)
+function getSolveInProgress(var::Union{VariableCompute, FactorCompute}, solveKey::Symbol = :default)
     # Variable
     if var isa VariableCompute
         if haskey(getSolverDataDict(var), solveKey)
@@ -170,7 +170,7 @@ end
 
 #TODO missing set solveInProgress and graph level accessor
 
-function isSolveInProgress(node::Union{VariableCompute, DFGFactor}, solvekey::Symbol = :default)
+function isSolveInProgress(node::Union{VariableCompute, FactorCompute}, solvekey::Symbol = :default)
     return getSolveInProgress(node, solvekey) > 0
 end
 

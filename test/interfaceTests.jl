@@ -43,7 +43,7 @@ end
     var1, var2, var3, vorphan, v1_tags = DFGVariableSCA()
 end
 
-# DFGFactor structure construction and accessors
+# FactorCompute structure construction and accessors
 @testset "DFG Factor" begin
     global fac0, fac1, fac2 = DFGFactorSCA()
 end
@@ -81,14 +81,14 @@ end
     #  == "VariableCompute{TestVariableType1}\nlabel: a\ntags: Set([:VARIABLE, :POSE])\nsize marginal samples: (1, 1)\nkde bandwidths: [0.0]\nNo PPEs\n"
 
     @test printFactor(iobuf, fac1; skipfields = [:timestamp, :solver, :nstime]) === nothing
-    @test occursin(r"DFGFactor.*\nid:\nnothing\nlabel:\n:abf1", String(take!(iobuf)))
+    @test occursin(r"FactorCompute.*\nid:\nnothing\nlabel:\n:abf1", String(take!(iobuf)))
 
     String(take!(iobuf)) ==
-    "DFGFactor{TestCCW{TestFunctorInferenceType1}}\nid:\nnothing\nlabel:\n:abf1\ntags:\nSet([:tag1, :tag2])\nsolvable:\n0\nsolvable:\n1\n_variableOrderSymbols:\n[:a, :b]\n"
+    "FactorCompute{TestCCW{TestFunctorInferenceType1}}\nid:\nnothing\nlabel:\n:abf1\ntags:\nSet([:tag1, :tag2])\nsolvable:\n0\nsolvable:\n1\n_variableOrderSymbols:\n[:a, :b]\n"
 
     @test printFactor(iobuf, fac1; short = true) === nothing
     @show teststr = String(take!(iobuf))
-    @test occursin(r"DFGFactor", teststr)
+    @test occursin(r"FactorCompute", teststr)
     @test occursin(r"label", teststr)
     @test occursin(r"timestamp", teststr)
     @test occursin(r"tags", teststr)

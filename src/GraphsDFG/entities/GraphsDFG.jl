@@ -173,20 +173,20 @@ function GraphsDFG{T, V, F}(
     )
 end
 
-# GraphsDFG{T}(; kwargs...) where T <: AbstractParams = GraphsDFG{T,VariableCompute,DFGFactor}(;kwargs...)
+# GraphsDFG{T}(; kwargs...) where T <: AbstractParams = GraphsDFG{T,VariableCompute,FactorCompute}(;kwargs...)
 function GraphsDFG{T}(
-    g::FactorGraph{Int, VariableCompute, DFGFactor} = FactorGraph{Int, VariableCompute, DFGFactor}();
+    g::FactorGraph{Int, VariableCompute, FactorCompute} = FactorGraph{Int, VariableCompute, FactorCompute}();
     kwargs...,
 ) where {T <: AbstractParams}
-    return GraphsDFG{T, VariableCompute, DFGFactor}(g; kwargs...)
+    return GraphsDFG{T, VariableCompute, FactorCompute}(g; kwargs...)
 end
 
 function GraphsDFG(
-    g::FactorGraph{Int, VariableCompute, DFGFactor} = FactorGraph{Int, VariableCompute, DFGFactor}();
+    g::FactorGraph{Int, VariableCompute, FactorCompute} = FactorGraph{Int, VariableCompute, FactorCompute}();
     solverParams::T = NoSolverParams(),
     kwargs...,
 ) where {T}
-    return GraphsDFG{T, VariableCompute, DFGFactor}(g; solverParams, kwargs...)
+    return GraphsDFG{T, VariableCompute, FactorCompute}(g; solverParams, kwargs...)
 end
 
 function GraphsDFG(
@@ -205,8 +205,8 @@ function GraphsDFG(
         "user/robot/session is deprecated. Replace with agent[Label/Metadata/BlobEntries] or graph[Label/Metadata/BlobEntries].",
         :GraphsDFG,
     )
-    return GraphsDFG{typeof(solverParams), VariableCompute, DFGFactor}(
-        FactorGraph{Int, VariableCompute, DFGFactor}();
+    return GraphsDFG{typeof(solverParams), VariableCompute, FactorCompute}(
+        FactorGraph{Int, VariableCompute, FactorCompute}();
         description,
         userLabel,
         robotLabel,

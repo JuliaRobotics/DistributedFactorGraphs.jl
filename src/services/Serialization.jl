@@ -251,7 +251,7 @@ VariableDFG(v::VariableCompute) = packVariable(v)
 ## Factor Packing and unpacking
 ##==============================================================================
 
-function _packSolverData(f::DFGFactor, fnctype::AbstractFactor)
+function _packSolverData(f::FactorCompute, fnctype::AbstractFactor)
     #
     packtype = convertPackedType(fnctype)
     try
@@ -268,7 +268,7 @@ function _packSolverData(f::DFGFactor, fnctype::AbstractFactor)
 end
 
 # returns PackedFactor
-function packFactor(f::DFGFactor)
+function packFactor(f::FactorCompute)
     fnctype = getSolverData(f).fnc.usrfnc!
     return PackedFactor(;
         id = f.id,
@@ -402,7 +402,7 @@ function unpackFactor(
 
     metadata = JSON3.read(base64decode(factor.metadata), Dict{Symbol, DFG.SmallDataTypes})
 
-    return DFGFactor(
+    return FactorCompute(
         factor.label,
         factor.timestamp,
         Nanosecond(factor.nstime),

@@ -309,7 +309,7 @@ end
 
 """
     $(SIGNATURES)
-Add a DFGFactor to a DFG.
+Add a FactorCompute to a DFG.
 """
 function addFactor!(dfg::AbstractDFG, factor::F) where {F <: AbstractDFGFactor}
     return error("addFactor! not implemented for $(typeof(dfg))(dfg, factor)")
@@ -317,7 +317,7 @@ end
 
 """
     $(SIGNATURES)
-Add a Vector{DFGFactor} to a DFG.
+Add a Vector{FactorCompute} to a DFG.
 """
 function addFactors!(dfg::AbstractDFG, factors::Vector{<:AbstractDFGFactor})
     return asyncmap(factors) do f
@@ -359,7 +359,7 @@ function getVariablesSkeleton end
 
 """
     $(SIGNATURES)
-Get a DFGFactor from a DFG using its label.
+Get a FactorCompute from a DFG using its label.
 """
 function getFactor(dfg::G, label::Union{Symbol, String}) where {G <: AbstractDFG}
     return error("getFactor not implemented for $(typeof(dfg))")
@@ -394,7 +394,7 @@ end
 
 """
     $(SIGNATURES)
-Update a complete DFGFactor in the DFG.
+Update a complete FactorCompute in the DFG.
 """
 function updateFactor!(dfg::G, factor::F) where {G <: AbstractDFG, F <: AbstractDFGFactor}
     return error("updateFactor! not implemented for $(typeof(dfg))")
@@ -409,7 +409,7 @@ function deleteVariable!(dfg::AbstractDFG, label::Symbol)
 end
 """
     $(SIGNATURES)
-Delete a DFGFactor from the DFG using its label.
+Delete a FactorCompute from the DFG using its label.
 """
 function deleteFactor!(
     dfg::G,
@@ -477,7 +477,7 @@ end
 
 Return whether `sym::Symbol` represents a factor vertex in the graph DFG.
 Checks whether it both exists in the graph and is a factor.
-(If you rather want a quicker for type, just do node isa DFGFactor)
+(If you rather want a quicker for type, just do node isa FactorCompute)
 """
 function isFactor(dfg::G, sym::Symbol) where {G <: AbstractDFG}
     return error("isFactor not implemented for $(typeof(dfg))")
@@ -549,7 +549,7 @@ end
 
 """
     $(SIGNATURES)
-Delete the referened DFGFactor from the DFG.
+Delete the referened FactorCompute from the DFG.
 """
 function deleteFactor!(
     dfg::G,

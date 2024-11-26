@@ -26,7 +26,7 @@ const GeneratedCompareUnion = Union{
     VariableSummary,
     VariableSkeleton,
     GenericFunctionNodeData,
-    DFGFactor,
+    FactorCompute,
     PackedFactor,
     FactorSummary,
     FactorSkeleton,
@@ -307,8 +307,8 @@ DevNotes
 - TODO `getSolverData(A).fnc.varValsAll / varidx` are only defined downstream, so should should this function not be in IIF?
 """
 function compareFactor(
-    A::DFGFactor,
-    B::DFGFactor;
+    A::FactorCompute,
+    B::FactorCompute;
     show::Bool = true,
     skip::Vector{Symbol} = Symbol[],
     skipsamples::Bool = true,

@@ -562,7 +562,7 @@ end
 ## Factor Packing and unpacking
 ##==============================================================================
 
-function _packSolverData(f::DFGFactor, fnctype::AbstractFactor)
+function _packSolverData(f::FactorCompute, fnctype::AbstractFactor)
     #
     packtype = convertPackedType(fnctype)
     try
@@ -579,7 +579,7 @@ function _packSolverData(f::DFGFactor, fnctype::AbstractFactor)
 end
 
 # returns ::Dict{String, <:Any}
-function packFactor(dfg::AbstractDFG, f::DFGFactor)
+function packFactor(dfg::AbstractDFG, f::FactorCompute)
     # Construct the properties to save
     props = Dict{String, Any}()
     props["id"] = f.id !== nothing ? string(f.id) : nothing
@@ -692,7 +692,7 @@ function fncStringToData(fncType::String, data::Union{String, <:NamedTuple})
     return fncStringToData(packtype, data)
 end
 
-# Returns `::DFGFactor`
+# Returns `::FactorCompute`
 function unpackFactor(
     dfg::G,
     packedProps::Dict{String, Any};
@@ -753,9 +753,9 @@ function unpackFactor(
         Dict{Symbol, SmallDataTypes}()
     end
 
-    # Rebuild DFGFactor
+    # Rebuild FactorCompute
     #TODO use constuctor to create factor
-    factor = DFGFactor(
+    factor = FactorCompute(
         Symbol(label),
         timestamp,
         nstime,

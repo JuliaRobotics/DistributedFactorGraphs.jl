@@ -245,7 +245,7 @@ function getFactors(
     tags::Vector{Symbol} = Symbol[],
     solvable::Int = 0,
 )
-    # factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGFactor, vertices(dfg.g)))
+    # factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa FactorCompute, vertices(dfg.g)))
     factors = collect(values(dfg.g.factors))
     if !isnothing(regexFilter)
         factors = filter(f -> occursin(regexFilter, String(f.label)), factors)
@@ -266,7 +266,7 @@ function listFactors(
     tags::Vector{Symbol} = Symbol[],
     solvable::Int = 0,
 )
-    # factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa DFGFactor, vertices(dfg.g)))
+    # factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa FactorCompute, vertices(dfg.g)))
     if length(tags) > 0
         return map(
             v -> v.label,

@@ -25,7 +25,7 @@ Accessible properties for each of the factor structures:
 |-------------------|-------|-----------|------|-------------|----------|-------------|
 | FactorSkeleton | X     |           | X    |             |          |             |
 | FactorSummary  | X     | X         | X    |             |          |             |
-| DFGFactor         | X     | X         | X    | X           | X        | X           |
+| FactorCompute         | X     | X         | X    | X           | X        | X           |
 
 ## DFG Skeleton types
 
@@ -45,7 +45,7 @@ Accessible properties for each of the factor structures:
 ## DFG Full solvable types
 
 - [`VariableCompute`](@ref)
-- [`DFGFactor`](@ref)
+- [`FactorCompute`](@ref)
 
 ## Additional Offloaded Data
 

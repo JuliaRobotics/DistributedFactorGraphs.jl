@@ -146,12 +146,12 @@ function unpackDFGMetadata(packed::PackedGraphsDFG)
         VariableDFG
     end
     FT = if isnothing(packed.typePackedFactor) || !packed.typePackedFactor
-        DFGFactor
+        FactorCompute
     else
         PackedFactor
     end
     # VT = isnothing(packed.typePackedVariable) || packed.typePackedVariable ? Variable : VariableCompute 
-    # FT = isnothing(packed.typePackedFactor) || packed.typePackedFactor ? PackedFactor : DFGFactor
+    # FT = isnothing(packed.typePackedFactor) || packed.typePackedFactor ? PackedFactor : FactorCompute
 
     props = filter!(collect(props)) do (k, v)
         return !isnothing(v)

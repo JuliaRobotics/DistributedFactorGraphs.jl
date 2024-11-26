@@ -41,7 +41,7 @@ Pages = ["entities/VariableCompute.jl"]
 
 ```@autodocs
 Modules = [DistributedFactorGraphs]
-Pages = ["entities/DFGFactor.jl"]
+Pages = ["entities/FactorCompute.jl"]
 ```
 
 ## DFG Plots [GraphPlot.jl]

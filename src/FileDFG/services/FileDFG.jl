@@ -146,7 +146,7 @@ function loadDFG!(
     end
 
     # extract the factor graph from fileDFG folder
-    factors = DFGFactor[]
+    factors = FactorCompute[]
     varFolder = "$folder/variables"
     factorFolder = "$folder/factors"
     # Folder preparations
@@ -181,7 +181,7 @@ function loadDFG!(
 
     usePackedFactor = isa(dfgLoadInto, GraphsDFG) && getTypeDFGFactors(dfgLoadInto) == PackedFactor
 
-    # `factors` is not type stable `::Vector{Factor}` or `::Vector{DFGFactor{<:}}` (vector of abstract)
+    # `factors` is not type stable `::Vector{Factor}` or `::Vector{FactorCompute{<:}}` (vector of abstract)
     factors = @showprogress 1 "loading factors" asyncmap(factorFiles) do factorFile
         jstr = read("$factorFolder/$factorFile", String)
         packedfact = JSON3.read(jstr, PackedFactor)
@@ -199,7 +199,7 @@ function loadDFG!(
 
     if isa(dfgLoadInto, GraphsDFG) && getTypeDFGFactors(dfgLoadInto) != PackedFactor
         # Finally, rebuild the CCW's for the factors to completely reinflate them
-        # NOTE CREATES A NEW DFGFactor IF  CCW TYPE CHANGES
+        # NOTE CREATES A NEW FactorCompute IF  CCW TYPE CHANGES
         @info "Rebuilding CCW's for the factors..."
         @showprogress 1 "build factor operational memory" for factor in factors
             rebuildFactorMetadata!(dfgLoadInto, factor)

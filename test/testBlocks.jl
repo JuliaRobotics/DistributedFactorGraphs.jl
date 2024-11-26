@@ -83,7 +83,7 @@ TestCCW{T}() where {T} = TestCCW(T())
 Base.:(==)(a::TestCCW, b::TestCCW) = a.usrfnc! == b.usrfnc!
 
 DFG.getFactorOperationalMemoryType(par::NoSolverParams) = TestCCW
-DFG.rebuildFactorMetadata!(dfg::AbstractDFG{NoSolverParams}, fac::DFGFactor) = fac
+DFG.rebuildFactorMetadata!(dfg::AbstractDFG{NoSolverParams}, fac::FactorCompute) = fac
 
 function reconstFactorData(
     dfg::AbstractDFG,
@@ -395,10 +395,10 @@ function DFGFactorSCA()
 
     gfnd = GenericFunctionNodeData(; fnc = TestCCW(TestFunctorInferenceType1()))
 
-    f1 = DFGFactor{TestCCW{TestFunctorInferenceType1}}(f1_lbl, [:a, :b])
-    f1 = DFGFactor(f1_lbl, [:a, :b], gfnd; tags = f1_tags, solvable = 0)
+    f1 = FactorCompute{TestCCW{TestFunctorInferenceType1}}(f1_lbl, [:a, :b])
+    f1 = FactorCompute(f1_lbl, [:a, :b], gfnd; tags = f1_tags, solvable = 0)
 
-    f2 = DFGFactor{TestCCW{TestFunctorInferenceType1}}(
+    f2 = FactorCompute{TestCCW{TestFunctorInferenceType1}}(
         :bcf1,
         [:b, :c],
         ZonedDateTime("2020-08-11T00:12:03.000-05:00"),
@@ -447,7 +447,7 @@ function DFGFactorSCA()
     @test setSolverData!(f1, deepcopy(gfnd)) == gfnd
 
     # create f0 here for a later timestamp
-    f0 = DFGFactor(:af1, [:a], gfnd_prior; tags = Set([:PRIOR]))
+    f0 = FactorCompute(:af1, [:a], gfnd_prior; tags = Set([:PRIOR]))
 
     #fill in undefined fields
     # f2.solverData.certainhypo = Int[]
@@ -473,7 +473,7 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     @test getLabel(fg[getLabel(v1)]) == getLabel(v1)
 
     #TODO standardize this error and res also for that matter
-    fnope = DFGFactor{TestCCW{TestFunctorInferenceType1}}(:broken, [:a, :nope])
+    fnope = FactorCompute{TestCCW{TestFunctorInferenceType1}}(:broken, [:a, :nope])
     @test_throws KeyError addFactor!(fg, fnope)
 
     @test addFactor!(fg, f1) == f1
@@ -496,8 +496,8 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     @test_throws ErrorException addFactor!(fg, f2)
     #TODO Graphs.jl, but look at refactoring absract @test_throws ErrorException addFactor!(fg, f2)
 
-    if f2 isa DFGFactor
-        f2_mod = DFGFactor(
+    if f2 isa FactorCompute
+        f2_mod = FactorCompute(
             f2.label,
             f2.timestamp,
             f2.nstime,
@@ -590,7 +590,7 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     @test isFactor(fg, :abf1)
     @test !isFactor(fg, :a)
 
-    if f0 isa DFGFactor
+    if f0 isa FactorCompute
         @test isPrior(fg, :af1)
         @test !isPrior(fg, :abf1)
     end
@@ -612,7 +612,7 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     end
 
     # simple broadcast test
-    if f0 isa DFGFactor
+    if f0 isa FactorCompute
         @test issetequal(
             getFactorType.(fg, lsf(fg)),
             [TestFunctorInferenceType1(), TestAbstractPrior()],
@@ -1392,7 +1392,7 @@ end
 # fg = testDFGAPI()
 # addVariable!(fg, VariableCompute(:a, TestVariableType1()))
 # addVariable!(fg, VariableCompute(:b, TestVariableType1()))
-# addFactor!(fg, DFGFactor(:abf1, [:a,:b], GenericFunctionNodeData{TestFunctorInferenceType1, Symbol}()))
+# addFactor!(fg, FactorCompute(:abf1, [:a,:b], GenericFunctionNodeData{TestFunctorInferenceType1, Symbol}()))
 # addVariable!(fg, VariableCompute(:orphan, TestVariableType1(), solvable = 0))
 function AdjacencyMatricesTestBlock(fg)
     # Normal
@@ -1435,7 +1435,7 @@ end
 function connectivityTestGraph(
     ::Type{T};
     VARTYPE = VariableCompute,
-    FACTYPE = DFGFactor,
+    FACTYPE = FactorCompute,
 ) where {T <: AbstractDFG}#InMemoryDFGTypes
     #settings
     numNodesType1 = 5
@@ -1459,7 +1459,7 @@ function connectivityTestGraph(
 
     foreach(v -> addVariable!(dfg, v), vars)
 
-    if FACTYPE == DFGFactor
+    if FACTYPE == FactorCompute
         #change ready and solveInProgress for x7,x8 for improved tests on x7x8f1
         #NOTE because defaults changed
         setSolvable!(dfg, :x8, 0)
@@ -1475,12 +1475,12 @@ function connectivityTestGraph(
             inflation = 1.0,
         )
         f_tags = Set([:FACTOR])
-        # f1 = DFGFactor(f1_lbl, [:a,:b], gfnd, tags = f_tags)
+        # f1 = FactorCompute(f1_lbl, [:a,:b], gfnd, tags = f_tags)
 
         facs = map(
             n -> addFactor!(
                 dfg,
-                DFGFactor(
+                FactorCompute(
                     Symbol("x$(n)x$(n+1)f1"),
                     [vars[n].label, vars[n + 1].label],
                     deepcopy(gfnd);
@@ -1506,7 +1506,7 @@ end
 
 # dfg, verts, facs = connectivityTestGraph(testDFGAPI)
 
-function GettingNeighbors(testDFGAPI; VARTYPE = VariableCompute, FACTYPE = DFGFactor)
+function GettingNeighbors(testDFGAPI; VARTYPE = VariableCompute, FACTYPE = FactorCompute)
     # "Getting Neighbors"
     dfg, verts, facs =
         connectivityTestGraph(testDFGAPI; VARTYPE = VARTYPE, FACTYPE = FACTYPE)
@@ -1535,7 +1535,7 @@ function GettingNeighbors(testDFGAPI; VARTYPE = VariableCompute, FACTYPE = DFGFa
 end
 
 #TODO confirm these tests are covered somewhere then delete
-# function  GettingSubgraphs(testDFGAPI; VARTYPE=VariableCompute, FACTYPE=DFGFactor)
+# function  GettingSubgraphs(testDFGAPI; VARTYPE=VariableCompute, FACTYPE=FactorCompute)
 #
 #     # "Getting Subgraphs"
 #     dfg, verts, facs = connectivityTestGraph(testDFGAPI, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
@@ -1585,7 +1585,7 @@ end
 #
 # end
 
-function BuildingSubgraphs(testDFGAPI; VARTYPE = VariableCompute, FACTYPE = DFGFactor)
+function BuildingSubgraphs(testDFGAPI; VARTYPE = VariableCompute, FACTYPE = FactorCompute)
 
     # "Getting Subgraphs"
     dfg, verts, facs =
@@ -1680,7 +1680,7 @@ function ProducingDotFiles(
     v2 = nothing,
     f1 = nothing;
     VARTYPE = VariableCompute,
-    FACTYPE = DFGFactor,
+    FACTYPE = FactorCompute,
 )
     # "Producing Dot Files"
     # create a simpler graph for dot testing
@@ -1693,8 +1693,8 @@ function ProducingDotFiles(
         v2 = VARTYPE(:b, VariableNodeData{TestVariableType1}())
     end
     if f1 === nothing
-        if (FACTYPE == DFGFactor)
-            f1 = DFGFactor{TestFunctorInferenceType1}(:abf1, [:a, :b])
+        if (FACTYPE == FactorCompute)
+            f1 = FactorCompute{TestFunctorInferenceType1}(:abf1, [:a, :b])
         else
             f1 = FACTYPE(:abf1, [:a, :b])
         end
@@ -1704,7 +1704,7 @@ function ProducingDotFiles(
     addVariable!(dotdfg, v2)
     # FIXME, fix deprecation
     # ┌ Warning: addFactor!(dfg, variables, factor) is deprecated, use addFactor!(dfg, factor)
-    # │   caller = ProducingDotFiles(testDFGAPI::Type{GraphsDFG}, v1::Nothing, v2::Nothing, f1::Nothing; VARTYPE::Type{VariableCompute}, FACTYPE::Type{DFGFactor}) at testBlocks.jl:1440
+    # │   caller = ProducingDotFiles(testDFGAPI::Type{GraphsDFG}, v1::Nothing, v2::Nothing, f1::Nothing; VARTYPE::Type{VariableCompute}, FACTYPE::Type{FactorCompute}) at testBlocks.jl:1440
     # └ @ Main ~/.julia/dev/DistributedFactorGraphs/test/testBlocks.jl:1440
     addFactor!(dotdfg, f1)
     #NOTE hardcoded toDot will have different results so test Graphs seperately

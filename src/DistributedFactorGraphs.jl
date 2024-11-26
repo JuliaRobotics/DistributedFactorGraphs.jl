@@ -138,7 +138,7 @@ export DFGNode, AbstractDFGVariable, AbstractDFGFactor
 export VariableCompute, VariableSummary, VariableSkeleton, VariableDFG
 
 # Factors
-export DFGFactor, FactorSummary, FactorSkeleton, PackedFactor, Factor
+export FactorCompute, FactorSummary, FactorSkeleton, PackedFactor, Factor
 
 # Common
 export getSolvable, setSolvable!, isSolvable
@@ -355,7 +355,7 @@ include("DataBlobs/entities/BlobStores.jl")
 
 include("entities/DFGFactor.jl")
 
-include("entities/VariableCompute.jl")
+include("entities/DFGVariable.jl")
 
 include("entities/Agent.jl")
 
@@ -378,7 +378,7 @@ const LocalDFG = GraphsDFG
 # Common includes
 include("services/CommonAccessors.jl")
 include("services/Serialization.jl")
-include("services/VariableCompute.jl")
+include("services/DFGVariable.jl")
 include("services/DFGFactor.jl")
 include("Deprecated.jl")
 include("services/CompareUtils.jl")
@@ -417,7 +417,10 @@ const SkeletonDFGFactor = FactorSkeleton
 export DFGFactorSummary
 const DFGFactorSummary = FactorSummary
 
-const FactorCompute = DFGFactor
+export DFGFactor
+const DFGFactor = FactorCompute
+
+
 const FactorDFG = PackedFactor
 
 end

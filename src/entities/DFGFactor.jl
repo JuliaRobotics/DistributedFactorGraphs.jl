@@ -49,7 +49,7 @@ Base.@kwdef mutable struct GenericFunctionNodeData{
     inflation::Float64 = 0.0
 end
 
-# TODO should we move non FactorOperationalMemory to DFGFactor: 
+# TODO should we move non FactorOperationalMemory to FactorCompute: 
 # fnc, multihypo, nullhypo, inflation ?
 # that way we split solverData <: FactorOperationalMemory and constants
 # TODO see if above ever changes?
@@ -84,7 +84,7 @@ FunctionNodeData(args...; kw...) = FunctionNodeData{typeof(args[4])}(args...; kw
 # | FactorSkeleton |   X   |   x  |           |          |            |
 # | FactorSummary  |   X   |   X  |     X     |          |            |
 # | PackedFactor      |   X   |   X  |     X     |     X    |      X*    |
-# | DFGFactor         |   X   |   X  |     X     |     X    |      X     |
+# | FactorCompute         |   X   |   X  |     X     |     X    |      X     |
 # *not available without reconstruction
 
 """
@@ -169,21 +169,21 @@ StructTypes.StructType(::Type{PackedFactor}) = StructTypes.UnorderedStruct()
 StructTypes.idproperty(::Type{PackedFactor}) = :id
 StructTypes.omitempties(::Type{PackedFactor}) = (:id,)
 
-## DFGFactor lv2
+## FactorCompute lv2
 
 """
 $(TYPEDEF)
 Complete factor structure for a DistributedFactorGraph factor.
 
 DevNotes
-- TODO make consistent the order of fields skeleton Skeleton, Summary, thru DFGFactor
+- TODO make consistent the order of fields skeleton Skeleton, Summary, thru FactorCompute
   - e.g. timestamp should be a later field.
 
   ---
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct DFGFactor{T, N} <: AbstractDFGFactor
+Base.@kwdef struct FactorCompute{T, N} <: AbstractDFGFactor
     """The ID for the factor"""
     id::Union{UUID, Nothing}
     """Factor label, e.g. :x1f1.
@@ -210,7 +210,7 @@ Base.@kwdef struct DFGFactor{T, N} <: AbstractDFGFactor
     Accessors: [`getMetadata`](@ref), [`setMetadata!`](@ref)"""
     smallData::Dict{Symbol, SmallDataTypes}
     # Inner constructor
-    function DFGFactor{T}(
+    function FactorCompute{T}(
         label::Symbol,
         timestamp::Union{DateTime, ZonedDateTime},
         nstime::Nanosecond,
@@ -243,7 +243,7 @@ $(SIGNATURES)
 
 Construct a DFG factor given a label.
 """
-function DFGFactor(
+function FactorCompute(
     label::Symbol,
     timestamp::Union{DateTime, ZonedDateTime},
     nstime::Nanosecond,
@@ -254,7 +254,7 @@ function DFGFactor(
     id::Union{UUID, Nothing} = nothing,
     smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
 ) where {T}
-    return DFGFactor{T}(
+    return FactorCompute{T}(
         label,
         timestamp,
         nstime,
@@ -267,14 +267,14 @@ function DFGFactor(
     )
 end
 
-function DFGFactor{T}(
+function FactorCompute{T}(
     label::Symbol,
     variableOrderSymbols::Vector{Symbol},
     timestamp::Union{DateTime, ZonedDateTime} = now(localzone()),
     data::GenericFunctionNodeData{T} = GenericFunctionNodeData(; fnc = T());
     kw...,
 ) where {T}
-    return DFGFactor(
+    return FactorCompute(
         label,
         timestamp,
         Nanosecond(0),
@@ -288,7 +288,7 @@ end
 #
 
 # TODO standardize new fields in kw constructors, .id
-function DFGFactor(
+function FactorCompute(
     label::Symbol,
     variableOrderSymbols::Vector{Symbol},
     data::GenericFunctionNodeData{T};
@@ -299,7 +299,7 @@ function DFGFactor(
     id::Union{UUID, Nothing} = nothing,
     smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
 ) where {T}
-    return DFGFactor{T}(
+    return FactorCompute{T}(
         label,
         timestamp,
         nstime,
@@ -312,7 +312,7 @@ function DFGFactor(
     )
 end
 
-Base.getproperty(x::DFGFactor, f::Symbol) = begin
+Base.getproperty(x::FactorCompute, f::Symbol) = begin
     if f == :solvable || f == :solverData
         getfield(x, f)[]
     elseif f == :_variableOrderSymbols
@@ -322,7 +322,7 @@ Base.getproperty(x::DFGFactor, f::Symbol) = begin
     end
 end
 
-function Base.setproperty!(x::DFGFactor, f::Symbol, val)
+function Base.setproperty!(x::FactorCompute, f::Symbol, val)
     if f == :solvable || f == :solverData
         getfield(x, f)[] = val
     else
@@ -422,15 +422,15 @@ StructTypes.omitempties(::Type{FactorSkeleton}) = (:id,)
 ##==============================================================================
 ## Define factor levels
 ##==============================================================================
-const FactorDataLevel0 = Union{DFGFactor, FactorSummary, PackedFactor, FactorSkeleton}
-const FactorDataLevel1 = Union{DFGFactor, FactorSummary, PackedFactor}
-const FactorDataLevel2 = Union{DFGFactor}
+const FactorDataLevel0 = Union{FactorCompute, FactorSummary, PackedFactor, FactorSkeleton}
+const FactorDataLevel1 = Union{FactorCompute, FactorSummary, PackedFactor}
+const FactorDataLevel2 = Union{FactorCompute}
 
 ##==============================================================================
 ## Conversion constructors
 ##==============================================================================
 
-function FactorSummary(f::DFGFactor)
+function FactorSummary(f::FactorCompute)
     return FactorSummary(
         f.id,
         f.label,
