@@ -57,7 +57,7 @@ end
 # |                   | label | tags | timestamp | solvable | solverData |
 # |-------------------|:-----:|:----:|:---------:|:--------:|:----------:|
 # | FactorSkeleton |   X   |   x  |           |          |            |
-# | DFGFactorSummary  |   X   |   X  |     X     |          |            |
+# | FactorSummary  |   X   |   X  |     X     |          |            |
 # | DFGFactor         |   X   |   X  |     X     |     X    |      X     |
 
 ##------------------------------------------------------------------------------
@@ -97,11 +97,11 @@ function setTimestamp(f::DFGFactor, ts::ZonedDateTime)
         id = f.id,
     )
 end
-function setTimestamp(f::DFGFactorSummary, ts::ZonedDateTime)
-    return DFGFactorSummary(f.id, f.label, f.tags, f._variableOrderSymbols, ts)
+function setTimestamp(f::FactorSummary, ts::ZonedDateTime)
+    return FactorSummary(f.id, f.label, f.tags, f._variableOrderSymbols, ts)
 end
-function setTimestamp(f::DFGFactorSummary, ts::DateTime)
-    return DFGFactorSummary(f, ZonedDateTime(ts, localzone()))
+function setTimestamp(f::FactorSummary, ts::DateTime)
+    return FactorSummary(f, ZonedDateTime(ts, localzone()))
 end
 
 function setTimestamp(v::PackedFactor, timestamp::ZonedDateTime)

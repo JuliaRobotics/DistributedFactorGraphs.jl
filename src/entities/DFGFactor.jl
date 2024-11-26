@@ -82,7 +82,7 @@ FunctionNodeData(args...; kw...) = FunctionNodeData{typeof(args[4])}(args...; kw
 # |                   | label | tags | timestamp | solvable | solverData |
 # |-------------------|:-----:|:----:|:---------:|:--------:|:----------:|
 # | FactorSkeleton |   X   |   x  |           |          |            |
-# | DFGFactorSummary  |   X   |   X  |     X     |          |            |
+# | FactorSummary  |   X   |   X  |     X     |          |            |
 # | PackedFactor      |   X   |   X  |     X     |     X    |      X*    |
 # | DFGFactor         |   X   |   X  |     X     |     X    |      X     |
 # *not available without reconstruction
@@ -330,7 +330,7 @@ function Base.setproperty!(x::DFGFactor, f::Symbol, val)
     end
 end
 ##------------------------------------------------------------------------------
-## DFGFactorSummary lv1
+## FactorSummary lv1
 ##------------------------------------------------------------------------------
 
 """
@@ -341,7 +341,7 @@ Read-only summary factor structure for a DistributedFactorGraph factor.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct DFGFactorSummary <: AbstractDFGFactor
+Base.@kwdef struct FactorSummary <: AbstractDFGFactor
     """The ID for the factor"""
     id::Union{UUID, Nothing}
     """Factor label, e.g. :x1f1.
@@ -358,14 +358,14 @@ Base.@kwdef struct DFGFactorSummary <: AbstractDFGFactor
     timestamp::ZonedDateTime
 end
 
-function DFGFactorSummary(
+function FactorSummary(
     label::Symbol,
     variableOrderSymbols::Vector{Symbol};
     timestamp::ZonedDateTime = now(localzone()),
     tags::Set{Symbol} = Set{Symbol}(),
     id::Union{UUID, Nothing} = nothing,
 )
-    return DFGFactorSummary(id, label, tags, variableOrderSymbols, timestamp)
+    return FactorSummary(id, label, tags, variableOrderSymbols, timestamp)
 end
 
 ##------------------------------------------------------------------------------
@@ -422,16 +422,16 @@ StructTypes.omitempties(::Type{FactorSkeleton}) = (:id,)
 ##==============================================================================
 ## Define factor levels
 ##==============================================================================
-const FactorDataLevel0 = Union{DFGFactor, DFGFactorSummary, PackedFactor, FactorSkeleton}
-const FactorDataLevel1 = Union{DFGFactor, DFGFactorSummary, PackedFactor}
+const FactorDataLevel0 = Union{DFGFactor, FactorSummary, PackedFactor, FactorSkeleton}
+const FactorDataLevel1 = Union{DFGFactor, FactorSummary, PackedFactor}
 const FactorDataLevel2 = Union{DFGFactor}
 
 ##==============================================================================
 ## Conversion constructors
 ##==============================================================================
 
-function DFGFactorSummary(f::DFGFactor)
-    return DFGFactorSummary(
+function FactorSummary(f::DFGFactor)
+    return FactorSummary(
         f.id,
         f.label,
         deepcopy(f.tags),

@@ -482,7 +482,7 @@ end
 # end
 
 @testset "Summaries and Summary Graphs" begin
-    factorFields = fieldnames(DFGFactorSummary)
+    factorFields = fieldnames(FactorSummary)
     variableFields = fieldnames(VariableSummary)
 
     summaryGraph = getSummaryGraph(dfg)

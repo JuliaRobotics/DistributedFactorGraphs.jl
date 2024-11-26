@@ -1645,7 +1645,7 @@ function Summaries(testDFGAPI)
     # if VARTYPE == VariableSummary
     # factorFields = fieldnames(FACTYPE)
     # variableFields = fieldnames(VARTYPE)
-    factorFields = fieldnames(DFGFactorSummary)
+    factorFields = fieldnames(FactorSummary)
     variableFields = fieldnames(VariableSummary)
 
     summaryGraph = getSummaryGraph(dfg)

@@ -28,7 +28,7 @@ const GeneratedCompareUnion = Union{
     GenericFunctionNodeData,
     DFGFactor,
     PackedFactor,
-    DFGFactorSummary,
+    FactorSummary,
     FactorSkeleton,
 }
 

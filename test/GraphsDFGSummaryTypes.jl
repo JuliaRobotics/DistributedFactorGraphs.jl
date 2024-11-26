@@ -1,6 +1,6 @@
 
 # VARTYPE = VariableSummary
-# FACTYPE = DFGFactorSummary
+# FACTYPE = FactorSummary
 
 dfg = GraphsDFG{NoSolverParams, VARTYPE, FACTYPE}()
 function DistributedFactorGraphs.VariableSummary(label::Symbol)
@@ -117,7 +117,7 @@ end
         @test_throws KeyError getVariablePPE(v1, :notfound)
         @test getVariableTypeName(v1) == :Pose2
 
-        # FACTYPE == DFGFactorSummary
+        # FACTYPE == FactorSummary
         testTimestamp = now(localzone())
         v1ts = setTimestamp(v1, testTimestamp)
         @test getTimestamp(v1ts) == testTimestamp

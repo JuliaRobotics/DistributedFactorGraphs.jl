@@ -1582,11 +1582,11 @@ Get a summary graph (first-class citizens of variables and factors) with the sam
 
 Notes
 - this is a copy of the original.
-- Returns `::GraphsDFG{NoSolverParams, VariableSummary, DFGFactorSummary}`
+- Returns `::GraphsDFG{NoSolverParams, VariableSummary, FactorSummary}`
 """
 function getSummaryGraph(dfg::G) where {G <: AbstractDFG}
     #TODO fix deprecated constructor
-    summaryDfg = GraphsDFG{NoSolverParams, VariableSummary, DFGFactorSummary}(;
+    summaryDfg = GraphsDFG{NoSolverParams, VariableSummary, FactorSummary}(;
         description = "Summary of $(getDescription(dfg))",
         userLabel = dfg.userLabel,
         robotLabel = dfg.robotLabel,
@@ -1597,7 +1597,7 @@ function getSummaryGraph(dfg::G) where {G <: AbstractDFG}
     #     newV = addVariable!(summaryDfg, VariableSummary(v))
     # end
     # for f in getFactors(dfg)
-    #     addFactor!(summaryDfg, listNeighbors(dfg, f), DFGFactorSummary(f))
+    #     addFactor!(summaryDfg, listNeighbors(dfg, f), FactorSummary(f))
     # end
     return summaryDfg
 end
