@@ -399,7 +399,7 @@ include("weakdeps_prototypes.jl")
 export SkeletonDFGVariable
 const SkeletonDFGVariable = VariableSkeleton
 
-export DFGVariableSummary 
+export DFGVariableSummary
 const DFGVariableSummary = VariableSummary
 
 export DFGVariable

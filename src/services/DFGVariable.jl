@@ -912,7 +912,10 @@ Merges and updates solver and estimate data for a variable (variable can be from
 If the same key is present in another collection, the value for that key will be the value it has in the last collection listed (updated).
 Note: Makes a copy of the estimates and solver data so that there is no coupling between graphs.
 """
-function mergeVariableSolverData!(destVariable::VariableCompute, sourceVariable::VariableCompute)
+function mergeVariableSolverData!(
+    destVariable::VariableCompute,
+    sourceVariable::VariableCompute,
+)
     # We don't know which graph this came from, must be copied!
     merge!(destVariable.solverDataDict, deepcopy(sourceVariable.solverDataDict))
     return destVariable
@@ -982,7 +985,11 @@ end
 Add a new PPE entry from a deepcopy of the source variable PPE.
 NOTE: Copies the PPE.
 """
-function addPPE!(dfg::AbstractDFG, sourceVariable::VariableCompute, ppekey::Symbol = :default)
+function addPPE!(
+    dfg::AbstractDFG,
+    sourceVariable::VariableCompute,
+    ppekey::Symbol = :default,
+)
     return addPPE!(dfg, sourceVariable.label, deepcopy(getPPE(sourceVariable, ppekey)))
 end
 

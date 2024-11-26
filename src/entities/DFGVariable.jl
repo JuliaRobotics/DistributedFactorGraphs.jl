@@ -339,7 +339,11 @@ function VariableCompute(label::Symbol, variableType::InferenceVariable; kwargs.
 end
 
 function VariableCompute(label::Symbol, solverData::VariableNodeData; kwargs...)
-    return VariableCompute(; label, solverDataDict = Dict(:default => solverData), kwargs...)
+    return VariableCompute(;
+        label,
+        solverDataDict = Dict(:default => solverData),
+        kwargs...,
+    )
 end
 
 Base.getproperty(x::VariableCompute, f::Symbol) = begin

@@ -175,14 +175,22 @@ end
 
 # GraphsDFG{T}(; kwargs...) where T <: AbstractParams = GraphsDFG{T,VariableCompute,FactorCompute}(;kwargs...)
 function GraphsDFG{T}(
-    g::FactorGraph{Int, VariableCompute, FactorCompute} = FactorGraph{Int, VariableCompute, FactorCompute}();
+    g::FactorGraph{Int, VariableCompute, FactorCompute} = FactorGraph{
+        Int,
+        VariableCompute,
+        FactorCompute,
+    }();
     kwargs...,
 ) where {T <: AbstractParams}
     return GraphsDFG{T, VariableCompute, FactorCompute}(g; kwargs...)
 end
 
 function GraphsDFG(
-    g::FactorGraph{Int, VariableCompute, FactorCompute} = FactorGraph{Int, VariableCompute, FactorCompute}();
+    g::FactorGraph{Int, VariableCompute, FactorCompute} = FactorGraph{
+        Int,
+        VariableCompute,
+        FactorCompute,
+    }();
     solverParams::T = NoSolverParams(),
     kwargs...,
 ) where {T}

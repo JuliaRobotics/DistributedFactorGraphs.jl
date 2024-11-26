@@ -155,7 +155,10 @@ Related
 
 isSolvable
 """
-function getSolveInProgress(var::Union{VariableCompute, FactorCompute}, solveKey::Symbol = :default)
+function getSolveInProgress(
+    var::Union{VariableCompute, FactorCompute},
+    solveKey::Symbol = :default,
+)
     # Variable
     if var isa VariableCompute
         if haskey(getSolverDataDict(var), solveKey)
@@ -170,7 +173,10 @@ end
 
 #TODO missing set solveInProgress and graph level accessor
 
-function isSolveInProgress(node::Union{VariableCompute, FactorCompute}, solvekey::Symbol = :default)
+function isSolveInProgress(
+    node::Union{VariableCompute, FactorCompute},
+    solvekey::Symbol = :default,
+)
     return getSolveInProgress(node, solvekey) > 0
 end
 

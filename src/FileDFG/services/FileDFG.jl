@@ -162,7 +162,8 @@ function loadDFG!(
 
     # FIXME, why is this treated different from VariableSkeleton, VariableSummary?
 
-    usePackedVariable = isa(dfgLoadInto, GraphsDFG) && getTypeDFGVariables(dfgLoadInto) == VariableDFG
+    usePackedVariable =
+        isa(dfgLoadInto, GraphsDFG) && getTypeDFGVariables(dfgLoadInto) == VariableDFG
     # type instability on `variables` as either `::Vector{Variable}` or `::Vector{VariableCompute{<:}}` (vector of abstract)
     variables = @showprogress 1 "loading variables" asyncmap(varFiles) do varFile
         jstr = read("$varFolder/$varFile", String)
@@ -179,7 +180,8 @@ function loadDFG!(
     # Adding variables
     map(v -> addVariable!(dfgLoadInto, v), variables)
 
-    usePackedFactor = isa(dfgLoadInto, GraphsDFG) && getTypeDFGFactors(dfgLoadInto) == FactorDFG
+    usePackedFactor =
+        isa(dfgLoadInto, GraphsDFG) && getTypeDFGFactors(dfgLoadInto) == FactorDFG
 
     # `factors` is not type stable `::Vector{Factor}` or `::Vector{FactorCompute{<:}}` (vector of abstract)
     factors = @showprogress 1 "loading factors" asyncmap(factorFiles) do factorFile
