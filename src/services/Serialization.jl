@@ -25,7 +25,7 @@ function _getDFGVersion()
     end
 end
 
-function _versionCheck(node::Union{<:PackedVariable, <:PackedFactor})
+function _versionCheck(node::Union{<:VariableDFG, <:PackedFactor})
     if VersionNumber(node._version).minor < _getDFGVersion().minor
         @warn "This data was serialized using DFG $(node._version) but you have $(_getDFGVersion()) installed, there may be deserialization issues." maxlog =
             10
@@ -181,7 +181,7 @@ function packVariable(
     includeSolveData::Bool = true,
     includeDataEntries::Bool = true,
 )
-    return PackedVariable(;
+    return VariableDFG(;
         id = v.id,
         label = v.label,
         timestamp = v.timestamp,
@@ -198,7 +198,7 @@ function packVariable(
 end
 
 function packVariable(
-    v::Variable;
+    v::VariableDFG;
     includePPEs::Bool = true,
     includeSolveData::Bool = true,
     includeDataEntries::Bool = true,
@@ -206,7 +206,7 @@ function packVariable(
     return v
 end
 
-function unpackVariable(variable::PackedVariable; skipVersionCheck::Bool = false)
+function unpackVariable(variable::VariableDFG; skipVersionCheck::Bool = false)
     !skipVersionCheck && _versionCheck(variable)
 
     # Variable and point type
@@ -243,9 +243,9 @@ function unpackVariable(variable::PackedVariable; skipVersionCheck::Bool = false
 end
 
 VariableCompute(v::VariableCompute) = v
-VariableCompute(v::Variable) = unpackVariable(v)
-Variable(v::Variable) = v
-Variable(v::VariableCompute) = packVariable(v)
+VariableCompute(v::VariableDFG) = unpackVariable(v)
+VariableDFG(v::VariableDFG) = v
+VariableDFG(v::VariableCompute) = packVariable(v)
 
 ##==============================================================================
 ## Factor Packing and unpacking

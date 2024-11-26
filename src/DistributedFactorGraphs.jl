@@ -135,7 +135,7 @@ export getSummaryGraph
 export DFGNode, AbstractDFGVariable, AbstractDFGFactor
 
 # Variables
-export VariableCompute, VariableSummary, VariableSkeleton, PackedVariable
+export VariableCompute, VariableSummary, VariableSkeleton, VariableDFG
 
 # Factors
 export DFGFactor, DFGFactorSummary, SkeletonDFGFactor, PackedFactor, Factor
@@ -405,7 +405,10 @@ const DFGVariableSummary = VariableSummary
 export DFGVariable
 const DFGVariable = VariableCompute
 
-const VariableDFG = PackedVariable
+export PackedVariable
+const PackedVariable = VariableDFG
+export Variable
+const Variable = VariableDFG
 
 # Starting Factor-level noun -djective standardisation 
 const FactorSkeleton = SkeletonDFGFactor

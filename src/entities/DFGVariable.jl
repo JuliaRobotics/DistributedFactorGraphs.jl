@@ -206,14 +206,12 @@ getEstimateFields(::MeanMaxPPE) = [:suggested, :max, :mean]
 ## DFG Variables
 ##==============================================================================
 
-export Variable
-
 """
     $(TYPEDEF)
 
 The Variable information packed in a way that accomdates multi-lang using json.
 """
-Base.@kwdef struct Variable <: AbstractDFGVariable
+Base.@kwdef struct VariableDFG <: AbstractDFGVariable
     id::Union{UUID, Nothing} = nothing
     label::Symbol
     tags::Vector{Symbol} = Symbol[]
@@ -232,7 +230,7 @@ end
 # lastUpdatedTimestamp::DateTime
 
 #IIF like contruction helper for packed variable
-function Variable(
+function VariableDFG(
     label::Symbol,
     variableType::String;
     tags::Vector{Symbol} = Symbol[],
@@ -244,7 +242,7 @@ function Variable(
 )
     union!(tags, [:VARIABLE])
 
-    pacvar = Variable(;
+    pacvar = VariableDFG(;
         label,
         variableType,
         nstime = string(nanosecondtime),
@@ -257,17 +255,16 @@ function Variable(
 
     return pacvar
 end
-const PackedVariable = Variable
 
-StructTypes.StructType(::Type{Variable}) = StructTypes.UnorderedStruct()
-StructTypes.idproperty(::Type{Variable}) = :id
-StructTypes.omitempties(::Type{Variable}) = (:id,)
+StructTypes.StructType(::Type{VariableDFG}) = StructTypes.UnorderedStruct()
+StructTypes.idproperty(::Type{VariableDFG}) = :id
+StructTypes.omitempties(::Type{VariableDFG}) = (:id,)
 
-function getMetadata(v::Variable)
+function getMetadata(v::VariableDFG)
     return JSON3.read(base64decode(v.metadata), Dict{Symbol, SmallDataTypes})
 end
 
-function setMetadata!(v::Variable, metadata::Dict{Symbol, SmallDataTypes})
+function setMetadata!(v::VariableDFG, metadata::Dict{Symbol, SmallDataTypes})
     return error("FIXME: Metadata is not currently mutable in a Variable")
     # v.metadata = base64encode(JSON3.write(metadata))
 end
@@ -464,8 +461,8 @@ StructTypes.omitempties(::Type{VariableSkeleton}) = (:id,)
 # Define variable levels
 ##==============================================================================
 const VariableDataLevel0 =
-    Union{VariableCompute, VariableSummary, Variable, VariableSkeleton}
-const VariableDataLevel1 = Union{VariableCompute, VariableSummary, Variable}
+    Union{VariableCompute, VariableSummary, VariableDFG, VariableSkeleton}
+const VariableDataLevel1 = Union{VariableCompute, VariableSummary, VariableDFG}
 const VariableDataLevel2 = Union{VariableCompute}
 
 ##==============================================================================

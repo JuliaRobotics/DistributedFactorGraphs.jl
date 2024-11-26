@@ -410,9 +410,9 @@ function setTimestamp(v::VariableSummary, ts::ZonedDateTime; verbose::Bool = tru
     )
 end
 
-function setTimestamp(v::PackedVariable, timestamp::ZonedDateTime; verbose::Bool = true)
-    return PackedVariable(;
-        (key => getproperty(v, key) for key in fieldnames(PackedVariable))...,
+function setTimestamp(v::VariableDFG, timestamp::ZonedDateTime; verbose::Bool = true)
+    return VariableDFG(;
+        (key => getproperty(v, key) for key in fieldnames(VariableDFG))...,
         timestamp,
     )
 end

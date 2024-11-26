@@ -61,7 +61,7 @@ function packDFGMetadata(fg::GraphsDFG)
 
     props = (k => getproperty(fg, k) for k in commonfields)
     return PackedGraphsDFG(;
-        typePackedVariable = getTypeDFGVariables(fg) == Variable,
+        typePackedVariable = getTypeDFGVariables(fg) == VariableDFG,
         typePackedFactor = getTypeDFGFactors(fg) == PackedFactor,
         blobStores,
         props...,
@@ -143,7 +143,7 @@ function unpackDFGMetadata(packed::PackedGraphsDFG)
     VT = if isnothing(packed.typePackedVariable) || !packed.typePackedVariable
         VariableCompute
     else
-        Variable
+        VariableDFG
     end
     FT = if isnothing(packed.typePackedFactor) || !packed.typePackedFactor
         DFGFactor
