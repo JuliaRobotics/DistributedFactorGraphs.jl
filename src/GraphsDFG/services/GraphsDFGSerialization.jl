@@ -110,7 +110,7 @@ function unpackDFGMetadata(packed::PackedGraphsDFG)
                 else
                     @warn """
                     Field $f is deprecated as part of removing user/robot/session. Replace with Agent or Factorgraph [Label/Metadata/BlobEntries]
-                        No convertion done for $f
+                        No conversion done for $f
                     """
                 end
             end
