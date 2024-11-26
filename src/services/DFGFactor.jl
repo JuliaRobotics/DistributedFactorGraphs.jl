@@ -56,7 +56,7 @@ end
 ##==============================================================================
 # |                   | label | tags | timestamp | solvable | solverData |
 # |-------------------|:-----:|:----:|:---------:|:--------:|:----------:|
-# | SkeletonDFGFactor |   X   |   x  |           |          |            |
+# | FactorSkeleton |   X   |   x  |           |          |            |
 # | DFGFactorSummary  |   X   |   X  |     X     |          |            |
 # | DFGFactor         |   X   |   X  |     X     |     X    |      X     |
 

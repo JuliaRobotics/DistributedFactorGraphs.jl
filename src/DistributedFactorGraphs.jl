@@ -138,7 +138,7 @@ export DFGNode, AbstractDFGVariable, AbstractDFGFactor
 export VariableCompute, VariableSummary, VariableSkeleton, VariableDFG
 
 # Factors
-export DFGFactor, DFGFactorSummary, SkeletonDFGFactor, PackedFactor, Factor
+export DFGFactor, DFGFactorSummary, FactorSkeleton, PackedFactor, Factor
 
 # Common
 export getSolvable, setSolvable!, isSolvable
@@ -410,8 +410,10 @@ const PackedVariable = VariableDFG
 export Variable
 const Variable = VariableDFG
 
-# Starting Factor-level noun -djective standardisation 
-const FactorSkeleton = SkeletonDFGFactor
+# Starting Factor-level noun-adjective standardisation 
+export SkeletonDFGFactor
+const SkeletonDFGFactor = FactorSkeleton
+
 const FactorSummary = DFGFactorSummary
 const FactorCompute = DFGFactor
 const FactorDFG = PackedFactor

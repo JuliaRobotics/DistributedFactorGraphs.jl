@@ -29,7 +29,7 @@ const GeneratedCompareUnion = Union{
     DFGFactor,
     PackedFactor,
     DFGFactorSummary,
-    SkeletonDFGFactor,
+    FactorSkeleton,
 }
 
 @generated function ==(x::T, y::T) where {T <: GeneratedCompareUnion}

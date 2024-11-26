@@ -81,7 +81,7 @@ FunctionNodeData(args...; kw...) = FunctionNodeData{typeof(args[4])}(args...; kw
 #
 # |                   | label | tags | timestamp | solvable | solverData |
 # |-------------------|:-----:|:----:|:---------:|:--------:|:----------:|
-# | SkeletonDFGFactor |   X   |   x  |           |          |            |
+# | FactorSkeleton |   X   |   x  |           |          |            |
 # | DFGFactorSummary  |   X   |   X  |     X     |          |            |
 # | PackedFactor      |   X   |   X  |     X     |     X    |      X*    |
 # | DFGFactor         |   X   |   X  |     X     |     X    |      X     |
@@ -369,7 +369,7 @@ function DFGFactorSummary(
 end
 
 ##------------------------------------------------------------------------------
-## SkeletonDFGFactor lv0
+## FactorSkeleton lv0
 ##------------------------------------------------------------------------------
 
 """
@@ -380,7 +380,7 @@ Skeleton factor structure for a DistributedFactorGraph factor.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct SkeletonDFGFactor <: AbstractDFGFactor
+Base.@kwdef struct FactorSkeleton <: AbstractDFGFactor
     """The ID for the factor"""
     id::Union{UUID, Nothing}
     """Factor label, e.g. :x1f1.
@@ -398,31 +398,31 @@ end
 ## Constructors
 
 #NOTE I feel like a want to force a variableOrderSymbols
-function SkeletonDFGFactor(
+function FactorSkeleton(
     id::Union{UUID, Nothing},
     label::Symbol,
     variableOrderSymbols::Vector{Symbol} = Symbol[],
 )
-    @warn "SkeletonDFGFactor(id::Union{UUID, Nothing}...) is deprecated, use SkeletonDFGFactor(label, variableOrderSymbols) instead"
-    return SkeletonDFGFactor(id, label, Set{Symbol}(), variableOrderSymbols)
+    @warn "FactorSkeleton(id::Union{UUID, Nothing}...) is deprecated, use FactorSkeleton(label, variableOrderSymbols) instead"
+    return FactorSkeleton(id, label, Set{Symbol}(), variableOrderSymbols)
 end
-function SkeletonDFGFactor(
+function FactorSkeleton(
     label::Symbol,
     variableOrderSymbols::Vector{Symbol};
     id::Union{UUID, Nothing} = nothing,
     tags = Set{Symbol}(),
 )
-    return SkeletonDFGFactor(id, label, tags, variableOrderSymbols)
+    return FactorSkeleton(id, label, tags, variableOrderSymbols)
 end
 
-StructTypes.StructType(::Type{SkeletonDFGFactor}) = StructTypes.OrderedStruct()
-StructTypes.idproperty(::Type{SkeletonDFGFactor}) = :id
-StructTypes.omitempties(::Type{SkeletonDFGFactor}) = (:id,)
+StructTypes.StructType(::Type{FactorSkeleton}) = StructTypes.OrderedStruct()
+StructTypes.idproperty(::Type{FactorSkeleton}) = :id
+StructTypes.omitempties(::Type{FactorSkeleton}) = (:id,)
 
 ##==============================================================================
 ## Define factor levels
 ##==============================================================================
-const FactorDataLevel0 = Union{DFGFactor, DFGFactorSummary, PackedFactor, SkeletonDFGFactor}
+const FactorDataLevel0 = Union{DFGFactor, DFGFactorSummary, PackedFactor, FactorSkeleton}
 const FactorDataLevel1 = Union{DFGFactor, DFGFactorSummary, PackedFactor}
 const FactorDataLevel2 = Union{DFGFactor}
 
@@ -440,8 +440,8 @@ function DFGFactorSummary(f::DFGFactor)
     )
 end
 
-function SkeletonDFGFactor(f::FactorDataLevel1)
-    return SkeletonDFGFactor(
+function FactorSkeleton(f::FactorDataLevel1)
+    return FactorSkeleton(
         f.id,
         f.label,
         deepcopy(f.tags),

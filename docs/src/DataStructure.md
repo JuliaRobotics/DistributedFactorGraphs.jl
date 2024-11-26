@@ -23,14 +23,14 @@ Accessible properties for each of the factor structures:
 
 |                   | Label | Timestamp | Tags | Factor Type | Solvable | Solver Data |
 |-------------------|-------|-----------|------|-------------|----------|-------------|
-| SkeletonDFGFactor | X     |           | X    |             |          |             |
+| FactorSkeleton | X     |           | X    |             |          |             |
 | DFGFactorSummary  | X     | X         | X    |             |          |             |
 | DFGFactor         | X     | X         | X    | X           | X        | X           |
 
 ## DFG Skeleton types
 
 - [`VariableSkeleton`](@ref)
-- [`SkeletonDFGFactor`](@ref)
+- [`FactorSkeleton`](@ref)
 
 ## DFG Summary types
 
