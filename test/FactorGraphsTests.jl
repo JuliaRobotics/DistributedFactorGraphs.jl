@@ -46,9 +46,7 @@ end
     fg = FactorGraphs.FactorGraph{Int, VariableSkeleton, FactorSkeleton}()
 
     @test !FactorGraphs.is_directed(fg)
-    @test !FactorGraphs.is_directed(
-        FactorGraph{Int, VariableSkeleton, FactorSkeleton},
-    )
+    @test !FactorGraphs.is_directed(FactorGraph{Int, VariableSkeleton, FactorSkeleton})
 
     @test isa(zero(fg), FactorGraph{Int64, VariableSkeleton, FactorSkeleton})
 
