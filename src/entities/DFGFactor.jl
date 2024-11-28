@@ -49,7 +49,7 @@ Base.@kwdef mutable struct GenericFunctionNodeData{
     inflation::Float64 = 0.0
 end
 
-# TODO should we move non FactorOperationalMemory to DFGFactor: 
+# TODO should we move non FactorOperationalMemory to FactorCompute: 
 # fnc, multihypo, nullhypo, inflation ?
 # that way we split solverData <: FactorOperationalMemory and constants
 # TODO see if above ever changes?
@@ -81,10 +81,10 @@ FunctionNodeData(args...; kw...) = FunctionNodeData{typeof(args[4])}(args...; kw
 #
 # |                   | label | tags | timestamp | solvable | solverData |
 # |-------------------|:-----:|:----:|:---------:|:--------:|:----------:|
-# | SkeletonDFGFactor |   X   |   x  |           |          |            |
-# | DFGFactorSummary  |   X   |   X  |     X     |          |            |
-# | PackedFactor      |   X   |   X  |     X     |     X    |      X*    |
-# | DFGFactor         |   X   |   X  |     X     |     X    |      X     |
+# | FactorSkeleton |   X   |   x  |           |          |            |
+# | FactorSummary  |   X   |   X  |     X     |          |            |
+# | FactorDFG      |   X   |   X  |     X     |     X    |      X*    |
+# | FactorCompute         |   X   |   X  |     X     |     X    |      X     |
 # *not available without reconstruction
 
 """
@@ -92,7 +92,7 @@ FunctionNodeData(args...; kw...) = FunctionNodeData{typeof(args[4])}(args...; kw
 
 The Factor information packed in a way that accomdates multi-lang using json.
 """
-Base.@kwdef struct PackedFactor <: AbstractDFGFactor
+Base.@kwdef struct FactorDFG <: AbstractDFGFactor
     id::Union{UUID, Nothing} = nothing
     label::Symbol
     tags::Vector{Symbol}
@@ -106,12 +106,12 @@ Base.@kwdef struct PackedFactor <: AbstractDFGFactor
     _version::String = string(_getDFGVersion())
     # blobEntries::Vector{BlobEntry}#TODO should factor have blob entries?
 end
-#TODO type not in DFG PackedFactor, should it be?
+#TODO type not in DFG FactorDFG, should it be?
 # _type::String
 # createdTimestamp::DateTime
 # lastUpdatedTimestamp::DateTime
 
-PackedFactor(f::PackedFactor) = f
+FactorDFG(f::FactorDFG) = f
 
 # TODO consolidate to just one type
 """
@@ -130,7 +130,7 @@ end
 
 getFncTypeName(fnc::InferenceType) = split(string(typeof(fnc)), ".")[end]
 
-function Factor(
+function FactorDFG(
     xisyms::Vector{Symbol},
     fnc::InferenceType;
     multihypo::Vector{Float64} = Float64[],
@@ -150,7 +150,7 @@ function Factor(
 
     union!(tags, [:FACTOR])
     # create factor 
-    factor = PackedFactor(;
+    factor = FactorDFG(;
         label,
         tags,
         _variableOrderSymbols = xisyms,
@@ -165,25 +165,25 @@ function Factor(
     return factor
 end
 
-StructTypes.StructType(::Type{PackedFactor}) = StructTypes.UnorderedStruct()
-StructTypes.idproperty(::Type{PackedFactor}) = :id
-StructTypes.omitempties(::Type{PackedFactor}) = (:id,)
+StructTypes.StructType(::Type{FactorDFG}) = StructTypes.UnorderedStruct()
+StructTypes.idproperty(::Type{FactorDFG}) = :id
+StructTypes.omitempties(::Type{FactorDFG}) = (:id,)
 
-## DFGFactor lv2
+## FactorCompute lv2
 
 """
 $(TYPEDEF)
 Complete factor structure for a DistributedFactorGraph factor.
 
 DevNotes
-- TODO make consistent the order of fields skeleton Skeleton, Summary, thru DFGFactor
+- TODO make consistent the order of fields skeleton Skeleton, Summary, thru FactorCompute
   - e.g. timestamp should be a later field.
 
   ---
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct DFGFactor{T, N} <: AbstractDFGFactor
+Base.@kwdef struct FactorCompute{T, N} <: AbstractDFGFactor
     """The ID for the factor"""
     id::Union{UUID, Nothing}
     """Factor label, e.g. :x1f1.
@@ -210,7 +210,7 @@ Base.@kwdef struct DFGFactor{T, N} <: AbstractDFGFactor
     Accessors: [`getMetadata`](@ref), [`setMetadata!`](@ref)"""
     smallData::Dict{Symbol, SmallDataTypes}
     # Inner constructor
-    function DFGFactor{T}(
+    function FactorCompute{T}(
         label::Symbol,
         timestamp::Union{DateTime, ZonedDateTime},
         nstime::Nanosecond,
@@ -243,7 +243,7 @@ $(SIGNATURES)
 
 Construct a DFG factor given a label.
 """
-function DFGFactor(
+function FactorCompute(
     label::Symbol,
     timestamp::Union{DateTime, ZonedDateTime},
     nstime::Nanosecond,
@@ -254,7 +254,7 @@ function DFGFactor(
     id::Union{UUID, Nothing} = nothing,
     smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
 ) where {T}
-    return DFGFactor{T}(
+    return FactorCompute{T}(
         label,
         timestamp,
         nstime,
@@ -267,14 +267,14 @@ function DFGFactor(
     )
 end
 
-function DFGFactor{T}(
+function FactorCompute{T}(
     label::Symbol,
     variableOrderSymbols::Vector{Symbol},
     timestamp::Union{DateTime, ZonedDateTime} = now(localzone()),
     data::GenericFunctionNodeData{T} = GenericFunctionNodeData(; fnc = T());
     kw...,
 ) where {T}
-    return DFGFactor(
+    return FactorCompute(
         label,
         timestamp,
         Nanosecond(0),
@@ -288,7 +288,7 @@ end
 #
 
 # TODO standardize new fields in kw constructors, .id
-function DFGFactor(
+function FactorCompute(
     label::Symbol,
     variableOrderSymbols::Vector{Symbol},
     data::GenericFunctionNodeData{T};
@@ -299,7 +299,7 @@ function DFGFactor(
     id::Union{UUID, Nothing} = nothing,
     smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
 ) where {T}
-    return DFGFactor{T}(
+    return FactorCompute{T}(
         label,
         timestamp,
         nstime,
@@ -312,7 +312,7 @@ function DFGFactor(
     )
 end
 
-Base.getproperty(x::DFGFactor, f::Symbol) = begin
+Base.getproperty(x::FactorCompute, f::Symbol) = begin
     if f == :solvable || f == :solverData
         getfield(x, f)[]
     elseif f == :_variableOrderSymbols
@@ -322,7 +322,7 @@ Base.getproperty(x::DFGFactor, f::Symbol) = begin
     end
 end
 
-function Base.setproperty!(x::DFGFactor, f::Symbol, val)
+function Base.setproperty!(x::FactorCompute, f::Symbol, val)
     if f == :solvable || f == :solverData
         getfield(x, f)[] = val
     else
@@ -330,7 +330,7 @@ function Base.setproperty!(x::DFGFactor, f::Symbol, val)
     end
 end
 ##------------------------------------------------------------------------------
-## DFGFactorSummary lv1
+## FactorSummary lv1
 ##------------------------------------------------------------------------------
 
 """
@@ -341,7 +341,7 @@ Read-only summary factor structure for a DistributedFactorGraph factor.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct DFGFactorSummary <: AbstractDFGFactor
+Base.@kwdef struct FactorSummary <: AbstractDFGFactor
     """The ID for the factor"""
     id::Union{UUID, Nothing}
     """Factor label, e.g. :x1f1.
@@ -358,18 +358,18 @@ Base.@kwdef struct DFGFactorSummary <: AbstractDFGFactor
     timestamp::ZonedDateTime
 end
 
-function DFGFactorSummary(
+function FactorSummary(
     label::Symbol,
     variableOrderSymbols::Vector{Symbol};
     timestamp::ZonedDateTime = now(localzone()),
     tags::Set{Symbol} = Set{Symbol}(),
     id::Union{UUID, Nothing} = nothing,
 )
-    return DFGFactorSummary(id, label, tags, variableOrderSymbols, timestamp)
+    return FactorSummary(id, label, tags, variableOrderSymbols, timestamp)
 end
 
 ##------------------------------------------------------------------------------
-## SkeletonDFGFactor lv0
+## FactorSkeleton lv0
 ##------------------------------------------------------------------------------
 
 """
@@ -380,7 +380,7 @@ Skeleton factor structure for a DistributedFactorGraph factor.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct SkeletonDFGFactor <: AbstractDFGFactor
+Base.@kwdef struct FactorSkeleton <: AbstractDFGFactor
     """The ID for the factor"""
     id::Union{UUID, Nothing}
     """Factor label, e.g. :x1f1.
@@ -398,40 +398,40 @@ end
 ## Constructors
 
 #NOTE I feel like a want to force a variableOrderSymbols
-function SkeletonDFGFactor(
+function FactorSkeleton(
     id::Union{UUID, Nothing},
     label::Symbol,
     variableOrderSymbols::Vector{Symbol} = Symbol[],
 )
-    @warn "SkeletonDFGFactor(id::Union{UUID, Nothing}...) is deprecated, use SkeletonDFGFactor(label, variableOrderSymbols) instead"
-    return SkeletonDFGFactor(id, label, Set{Symbol}(), variableOrderSymbols)
+    @warn "FactorSkeleton(id::Union{UUID, Nothing}...) is deprecated, use FactorSkeleton(label, variableOrderSymbols) instead"
+    return FactorSkeleton(id, label, Set{Symbol}(), variableOrderSymbols)
 end
-function SkeletonDFGFactor(
+function FactorSkeleton(
     label::Symbol,
     variableOrderSymbols::Vector{Symbol};
     id::Union{UUID, Nothing} = nothing,
     tags = Set{Symbol}(),
 )
-    return SkeletonDFGFactor(id, label, tags, variableOrderSymbols)
+    return FactorSkeleton(id, label, tags, variableOrderSymbols)
 end
 
-StructTypes.StructType(::Type{SkeletonDFGFactor}) = StructTypes.OrderedStruct()
-StructTypes.idproperty(::Type{SkeletonDFGFactor}) = :id
-StructTypes.omitempties(::Type{SkeletonDFGFactor}) = (:id,)
+StructTypes.StructType(::Type{FactorSkeleton}) = StructTypes.OrderedStruct()
+StructTypes.idproperty(::Type{FactorSkeleton}) = :id
+StructTypes.omitempties(::Type{FactorSkeleton}) = (:id,)
 
 ##==============================================================================
 ## Define factor levels
 ##==============================================================================
-const FactorDataLevel0 = Union{DFGFactor, DFGFactorSummary, PackedFactor, SkeletonDFGFactor}
-const FactorDataLevel1 = Union{DFGFactor, DFGFactorSummary, PackedFactor}
-const FactorDataLevel2 = Union{DFGFactor}
+const FactorDataLevel0 = Union{FactorCompute, FactorSummary, FactorDFG, FactorSkeleton}
+const FactorDataLevel1 = Union{FactorCompute, FactorSummary, FactorDFG}
+const FactorDataLevel2 = Union{FactorCompute}
 
 ##==============================================================================
 ## Conversion constructors
 ##==============================================================================
 
-function DFGFactorSummary(f::DFGFactor)
-    return DFGFactorSummary(
+function FactorSummary(f::FactorCompute)
+    return FactorSummary(
         f.id,
         f.label,
         deepcopy(f.tags),
@@ -440,8 +440,8 @@ function DFGFactorSummary(f::DFGFactor)
     )
 end
 
-function SkeletonDFGFactor(f::FactorDataLevel1)
-    return SkeletonDFGFactor(
+function FactorSkeleton(f::FactorDataLevel1)
+    return FactorSkeleton(
         f.id,
         f.label,
         deepcopy(f.tags),

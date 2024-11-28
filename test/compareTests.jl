@@ -30,16 +30,18 @@ ppe2.max[1] = 0.1
 @test !(ppe1 == ppe2)
 @test !(ppe1 == ppe3)
 
-# DFGVariable
-v1 = DFGVariable(:x1, TestVariableType1())
+# VariableCompute
+v1 = VariableCompute(:x1, TestVariableType1())
 v2 = deepcopy(v1)
-v3 = DFGVariable(:x2, TestVariableType2())
+v3 = VariableCompute(:x2, TestVariableType2())
 
 @test v1 == v2
 v2.solvable = 0
 @test !(v1 == v2)
 @test !(v1 == v3)
-@test !(DFGVariable(:x1, TestVariableType1()) == DFGVariable(:x1, TestVariableType2()))
+@test !(
+    VariableCompute(:x1, TestVariableType1()) == VariableCompute(:x1, TestVariableType2())
+)
 
 # GenericFunctionNodeData
 gfnd1 = GenericFunctionNodeData(;
@@ -59,10 +61,10 @@ gfnd3 = GenericFunctionNodeData(;
 @test gfnd1 == gfnd2
 @test !(gfnd1 == gfnd3)
 
-# DFGFactor
-f1 = DFGFactor(:f1, [:a, :b], gfnd1)
+# FactorCompute
+f1 = FactorCompute(:f1, [:a, :b], gfnd1)
 f2 = deepcopy(f1)
-f3 = DFGFactor(:f1, [:b, :a], gfnd1)
+f3 = FactorCompute(:f1, [:b, :a], gfnd1)
 
 @test f1 == f2
 @test !(f1 == f3)

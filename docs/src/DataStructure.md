@@ -15,37 +15,37 @@ Accessible properties for each of the variable structures:
 
 |                     | Label | Timestamp | Tags | Estimates | Soft Type | Solvable | Solver Data | Metadata | Blob Entries |
 |---------------------|-------|-----------|------|-----------|-----------|----------|-------------|----------|--------------|
-| SkeletonDFGVariable | X     |           | X    |           |           |          |             |          |              |
-| DFGVariableSummary  | X     | X         | X    | X         | Symbol    |          |             |          | X            |
-| DFGVariable         | X     | X         | X    | X         | X         | X        | X           | X        | X            |
+| VariableSkeleton | X     |           | X    |           |           |          |             |          |              |
+| VariableSummary  | X     | X         | X    | X         | Symbol    |          |             |          | X            |
+| VariableCompute         | X     | X         | X    | X         | X         | X        | X           | X        | X            |
 
 Accessible properties for each of the factor structures:
 
 |                   | Label | Timestamp | Tags | Factor Type | Solvable | Solver Data |
 |-------------------|-------|-----------|------|-------------|----------|-------------|
-| SkeletonDFGFactor | X     |           | X    |             |          |             |
-| DFGFactorSummary  | X     | X         | X    |             |          |             |
-| DFGFactor         | X     | X         | X    | X           | X        | X           |
+| FactorSkeleton | X     |           | X    |             |          |             |
+| FactorSummary  | X     | X         | X    |             |          |             |
+| FactorCompute         | X     | X         | X    | X           | X        | X           |
 
 ## DFG Skeleton types
 
-- [`SkeletonDFGVariable`](@ref)
-- [`SkeletonDFGFactor`](@ref)
+- [`VariableSkeleton`](@ref)
+- [`FactorSkeleton`](@ref)
 
 ## DFG Summary types
 
-- [`DFGVariableSummary`](@ref)
-- [`DFGFactorSummary`](@ref)
+- [`VariableSummary`](@ref)
+- [`FactorSummary`](@ref)
 
 ## DFG Portable and Storeable types
 
-- [`Variable`](@ref)
-- [`PackedFactor`](@ref)
+- [`VariableDFG`](@ref)
+- [`FactorDFG`](@ref)
 
 ## DFG Full solvable types
 
-- [`DFGVariable`](@ref)
-- [`DFGFactor`](@ref)
+- [`VariableCompute`](@ref)
+- [`FactorCompute`](@ref)
 
 ## Additional Offloaded Data
 

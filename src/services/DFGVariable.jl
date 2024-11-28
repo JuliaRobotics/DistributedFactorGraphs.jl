@@ -18,7 +18,7 @@ end
 
 "$(SIGNATURES)"
 getPPESuggested(est::AbstractPointParametricEst) = est.suggested
-function getPPESuggested(var::DFGVariable, solveKey::Symbol = :default)
+function getPPESuggested(var::VariableCompute, solveKey::Symbol = :default)
     return getPPE(var, solveKey) |> getPPESuggested
 end
 function getPPESuggested(dfg::AbstractDFG, varlabel::Symbol, solveKey::Symbol = :default)
@@ -54,12 +54,12 @@ Related
 
 getVariableType
 """
-getVariableType(::DFGVariable{T}) where {T} = T()
+getVariableType(::VariableCompute{T}) where {T} = T()
 
 getVariableType(::VariableNodeData{T}) where {T} = T()
 
 # TODO: Confirm that we can switch this out, instead of retrieving the complete variable.
-# getVariableType(v::DFGVariable) = getVariableType(getSolverData(v))
+# getVariableType(v::VariableCompute) = getVariableType(getSolverData(v))
 
 # Optimized in CGDFG
 getVariableType(dfg::AbstractDFG, lbl::Symbol) = getVariableType(getVariable(dfg, lbl))
@@ -122,7 +122,7 @@ end
 Interface function to return the `<:ManifoldsBase.AbstractManifold` object of `variableType<:InferenceVariable`.
 """
 getManifold(::T) where {T <: InferenceVariable} = getManifold(T)
-getManifold(vari::DFGVariable) = getVariableType(vari) |> getManifold
+getManifold(vari::VariableCompute) = getVariableType(vari) |> getManifold
 # covers both <:InferenceVariable and <:AbstractFactor
 getManifold(dfg::AbstractDFG, lbl::Symbol) = getManifold(dfg[lbl])
 
@@ -136,7 +136,7 @@ getDimension(::Type{T}) where {T <: InferenceVariable} = manifold_dimension(getM
 getDimension(::T) where {T <: InferenceVariable} = manifold_dimension(getManifold(T))
 getDimension(M::ManifoldsBase.AbstractManifold) = manifold_dimension(M)
 getDimension(p::Distributions.Distribution) = length(p)
-getDimension(var::DFGVariable) = getDimension(getVariableType(var))
+getDimension(var::VariableCompute) = getDimension(getVariableType(var))
 
 """
     $SIGNATURES
@@ -275,7 +275,7 @@ Returns state of variable data `.initialized` flag.
 Notes:
 - used by both factor graph variable and Bayes tree clique logic.
 """
-function isInitialized(var::DFGVariable, key::Symbol = :default)
+function isInitialized(var::VariableCompute, key::Symbol = :default)
     data = getSolverData(var, key)
     if data === nothing
         #TODO we still have a mixture of 2 error behaviours
@@ -298,7 +298,7 @@ Return `::Bool` on whether this variable has been marginalized.
 Notes:
 - VariableNodeData default `solveKey=:default`
 """
-function isMarginalized(vert::DFGVariable, solveKey::Symbol = :default)
+function isMarginalized(vert::VariableCompute, solveKey::Symbol = :default)
     return getSolverData(vert, solveKey).ismargin
 end
 function isMarginalized(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol = :default)
@@ -313,7 +313,7 @@ Mark a variable as marginalized `true` or `false`.
 function setMarginalized!(vnd::VariableNodeData, val::Bool)
     return vnd.ismargin = val
 end
-function setMarginalized!(vari::DFGVariable, val::Bool, solveKey::Symbol = :default)
+function setMarginalized!(vari::VariableCompute, val::Bool, solveKey::Symbol = :default)
     return setMarginalized!(getSolverData(vari, solveKey), val)
 end
 function setMarginalized!(
@@ -331,9 +331,9 @@ end
 #
 # |                     | label | tags | timestamp | ppe | variableTypeName | solvable | solverData | smallData | dataEntries |
 # |---------------------|:-----:|:----:|:---------:|:---:|:----------------:|:--------:|:----------:|:---------:|:-----------:|
-# | SkeletonDFGVariable |   X   |   X  |           |     |                  |          |            |           |             |
-# | DFGVariableSummary  |   X   |   X  |     X     |  X  |         X        |          |            |           |       X     |
-# | DFGVariable         |   X   |   X  |     x     |  X  |                  |     X    |      X     |     X     |       X     |
+# | VariableSkeleton |   X   |   X  |           |     |                  |          |            |           |             |
+# | VariableSummary  |   X   |   X  |     X     |  X  |         X        |          |            |           |       X     |
+# | VariableCompute         |   X   |   X  |     x     |  X  |                  |     X    |      X     |     X     |       X     |
 #
 ##------------------------------------------------------------------------------
 
@@ -362,17 +362,17 @@ end
 """
     $SIGNATURES
 
-Set the timestamp of a DFGVariable object returning a new DFGVariable.
+Set the timestamp of a VariableCompute object returning a new VariableCompute.
 Note:
 Since the `timestamp` field is not mutable `setTimestamp` returns a new variable with the updated timestamp (note the absence of `!`).
 Use [`updateVariable!`](@ref) on the returened variable to update it in the factor graph if needed. Alternatively use [`setTimestamp!`](@ref).
 See issue #315.
 """
-function setTimestamp(v::DFGVariable, ts::ZonedDateTime; verbose::Bool = true)
+function setTimestamp(v::VariableCompute, ts::ZonedDateTime; verbose::Bool = true)
     if verbose
-        @warn "verbose=true: setTimestamp(::DFGVariable,...) creates a returns a new immutable DFGVariable object (and didn't change a distributed factor graph object), make sure you are using the right pointers: getVariable(...).  See setTimestamp!(...) and note suggested use is at addVariable!(..., [timestamp=...]).  See DFG #315 for explanation."
+        @warn "verbose=true: setTimestamp(::VariableCompute,...) creates a returns a new immutable VariableCompute object (and didn't change a distributed factor graph object), make sure you are using the right pointers: getVariable(...).  See setTimestamp!(...) and note suggested use is at addVariable!(..., [timestamp=...]).  See DFG #315 for explanation."
     end
-    return DFGVariable(
+    return VariableCompute(
         v.id,
         v.label,
         ts,
@@ -395,11 +395,11 @@ function setTimestamp(
     return setTimestamp(v, ZonedDateTime(ts, timezone); verbose)
 end
 
-function setTimestamp(v::DFGVariableSummary, ts::ZonedDateTime; verbose::Bool = true)
+function setTimestamp(v::VariableSummary, ts::ZonedDateTime; verbose::Bool = true)
     if verbose
-        @warn "verbose=true: setTimestamp(::DFGVariableSummary,...) creates and returns a new immutable DFGVariable object (and didn't change a distributed factor graph object), make sure you are using the right pointers: getVariable(...).  See setTimestamp!(...) and note suggested use is at addVariable!(..., [timestamp=...]).  See DFG #315 for explanation."
+        @warn "verbose=true: setTimestamp(::VariableSummary,...) creates and returns a new immutable VariableCompute object (and didn't change a distributed factor graph object), make sure you are using the right pointers: getVariable(...).  See setTimestamp!(...) and note suggested use is at addVariable!(..., [timestamp=...]).  See DFG #315 for explanation."
     end
-    return DFGVariableSummary(
+    return VariableSummary(
         v.id,
         v.label,
         ts,
@@ -410,9 +410,9 @@ function setTimestamp(v::DFGVariableSummary, ts::ZonedDateTime; verbose::Bool = 
     )
 end
 
-function setTimestamp(v::PackedVariable, timestamp::ZonedDateTime; verbose::Bool = true)
-    return PackedVariable(;
-        (key => getproperty(v, key) for key in fieldnames(PackedVariable))...,
+function setTimestamp(v::VariableDFG, timestamp::ZonedDateTime; verbose::Bool = true)
+    return VariableDFG(;
+        (key => getproperty(v, key) for key in fieldnames(VariableDFG))...,
         timestamp,
     )
 end
@@ -474,7 +474,7 @@ Return full dictionary of PPEs in a variable, recommended to rather use CRUD: [`
 getVariablePPEDict(vari::VariableDataLevel1) = getPPEDict(vari)
 
 """
-    getVariablePPE(::DFGVariable)
+    getVariablePPE(::VariableCompute)
     getVariablePPE(::VariableNodeData)
 
 Get the Parametric Point Estimate of the given variable.
@@ -490,7 +490,7 @@ getVariablePPE(args...) = getPPE(args...)
 
 Get solver data dictionary for a variable.  Advised to use graph CRUD operations instead.
 """
-getSolverDataDict(v::DFGVariable) = v.solverDataDict
+getSolverDataDict(v::VariableCompute) = v.solverDataDict
 
 # TODO move to crud, don't know if this should exist, should rather always update with fg object to simplify inmem vs cloud
 """
@@ -498,7 +498,7 @@ getSolverDataDict(v::DFGVariable) = v.solverDataDict
 
 Retrieve solver data structure stored in a variable.
 """
-function getSolverData(v::DFGVariable, key::Symbol = :default)
+function getSolverData(v::VariableCompute, key::Symbol = :default)
     #TODO this does not fit in with some of the other error behaviour. but its used so added @error
     vnd = if haskey(getSolverDataDict(v), key)
         getSolverDataDict(v)[key]
@@ -513,7 +513,7 @@ end
     $SIGNATURES
 Set solver data structure stored in a variable.
 """
-function setSolverData!(v::DFGVariable, data::VariableNodeData, key::Symbol = :default)
+function setSolverData!(v::VariableCompute, data::VariableNodeData, key::Symbol = :default)
     @assert key == data.solveKey "VariableNodeData.solveKey=:$(data.solveKey) does not match requested :$(key)"
     return v.solverDataDict[key] = data
 end
@@ -604,21 +604,21 @@ end
 ##------------------------------------------------------------------------------
 ## variableTypeName
 ##------------------------------------------------------------------------------
-## getter in DFGVariableSummary only
+## getter in VariableSummary only
 ## can be utility function for others
 ## TODO this should return the variableType object, or try to. it should be getVariableTypeName for the accessor
 ## TODO Consider parameter N in variableType for dims, and storing constructor in variableTypeName
 ## TODO or just not having this function at all
-# getVariableType(v::DFGVariableSummary) = v.softypename()
+# getVariableType(v::VariableSummary) = v.softypename()
 ##------------------------------------------------------------------------------
 
 """
     $SIGNATURES
-Retrieve the soft type name symbol for a DFGVariableSummary. ie :Point2, Pose2, etc.
+Retrieve the soft type name symbol for a VariableSummary. ie :Point2, Pose2, etc.
 """
-getVariableTypeName(v::DFGVariableSummary) = v.variableTypeName::Symbol
+getVariableTypeName(v::VariableSummary) = v.variableTypeName::Symbol
 
-function getVariableType(v::DFGVariableSummary)
+function getVariableType(v::VariableSummary)
     @warn "Looking for type in `Main`. Only use if `variableType` has only one implementation, ie. Pose2. Otherwise use the full variable."
     return getfield(Main, v.variableTypeName)()
 end
@@ -682,7 +682,7 @@ NOTE: Copies the solver data.
 """
 function addVariableSolverData!(
     dfg::AbstractDFG,
-    sourceVariable::DFGVariable,
+    sourceVariable::VariableCompute,
     solveKey::Symbol = :default,
 )
     return addVariableSolverData!(
@@ -786,7 +786,7 @@ end
 
 function updateVariableSolverData!(
     dfg::AbstractDFG,
-    sourceVariable::DFGVariable,
+    sourceVariable::VariableCompute,
     solveKey::Symbol = :default,
     useCopy::Bool = false,
     fields::Vector{Symbol} = Symbol[];
@@ -810,7 +810,7 @@ end
 
 function updateVariableSolverData!(
     dfg::AbstractDFG,
-    sourceVariables::Vector{<:DFGVariable},
+    sourceVariables::Vector{<:VariableCompute},
     solveKey::Symbol = :default,
     useCopy::Bool = false,
     fields::Vector{Symbol} = Symbol[];
@@ -887,7 +887,7 @@ Delete variable solver data, returns the deleted element.
 """
 function deleteVariableSolverData!(
     dfg::AbstractDFG,
-    sourceVariable::DFGVariable,
+    sourceVariable::VariableCompute,
     solveKey::Symbol = :default,
 )
     return deleteVariableSolverData!(dfg, sourceVariable.label, solveKey)
@@ -912,13 +912,16 @@ Merges and updates solver and estimate data for a variable (variable can be from
 If the same key is present in another collection, the value for that key will be the value it has in the last collection listed (updated).
 Note: Makes a copy of the estimates and solver data so that there is no coupling between graphs.
 """
-function mergeVariableSolverData!(destVariable::DFGVariable, sourceVariable::DFGVariable)
+function mergeVariableSolverData!(
+    destVariable::VariableCompute,
+    sourceVariable::VariableCompute,
+)
     # We don't know which graph this came from, must be copied!
     merge!(destVariable.solverDataDict, deepcopy(sourceVariable.solverDataDict))
     return destVariable
 end
 
-function mergeVariableSolverData!(dfg::AbstractDFG, sourceVariable::DFGVariable)
+function mergeVariableSolverData!(dfg::AbstractDFG, sourceVariable::VariableCompute)
     return mergeVariableSolverData!(
         getVariable(dfg, getLabel(sourceVariable)),
         sourceVariable,
@@ -943,7 +946,7 @@ Notes
 Related
 [`getPPEMean`](@ref), [`getPPEMax`](@ref), [`updatePPE!`](@ref), `mean(BeliefType)`
 """
-function getPPE(v::DFGVariable, ppekey::Symbol = :default)
+function getPPE(v::VariableCompute, ppekey::Symbol = :default)
     !haskey(v.ppeDict, ppekey) &&
         throw(KeyError("PPE key '$ppekey' not found in variable '$(getLabel(v))'"))
     return v.ppeDict[ppekey]
@@ -982,13 +985,17 @@ end
 Add a new PPE entry from a deepcopy of the source variable PPE.
 NOTE: Copies the PPE.
 """
-function addPPE!(dfg::AbstractDFG, sourceVariable::DFGVariable, ppekey::Symbol = :default)
+function addPPE!(
+    dfg::AbstractDFG,
+    sourceVariable::VariableCompute,
+    ppekey::Symbol = :default,
+)
     return addPPE!(dfg, sourceVariable.label, deepcopy(getPPE(sourceVariable, ppekey)))
 end
 
 function addPPEs!(
     dfg::AbstractDFG,
-    sourceVariables::Vector{DFGVariable},
+    sourceVariables::Vector{VariableCompute},
     ppekey::Symbol = :default,
 )
     return addPPE!.(dfg, sourceVariables, ppekey)
@@ -1076,7 +1083,7 @@ Delete PPE data, returns the deleted element.
 """
 function deletePPE!(
     dfg::AbstractDFG,
-    sourceVariable::DFGVariable,
+    sourceVariable::VariableCompute,
     ppekey::Symbol = :default,
 )
     return deletePPE!(dfg, sourceVariable.label, ppekey)

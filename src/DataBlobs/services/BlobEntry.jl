@@ -77,7 +77,7 @@ function getBlobEntry(var::AbstractDFGVariable, key::Symbol)
     return var.dataDict[key]
 end
 
-function getBlobEntry(var::PackedVariable, key::Symbol)
+function getBlobEntry(var::VariableDFG, key::Symbol)
     if !hasBlobEntry(var, key)
         throw(
             KeyError(
@@ -116,7 +116,7 @@ function getBlobEntryFirst(var::AbstractDFGVariable, key::Regex)
     )
 end
 
-function getBlobEntryFirst(var::Variable, key::Regex)
+function getBlobEntryFirst(var::VariableDFG, key::Regex)
     firstIdx = findfirst(x -> contains(string(x.label), key), var.blobEntries)
     if isnothing(firstIdx)
         throw(KeyError("$key"))
@@ -129,7 +129,7 @@ function getBlobEntryFirst(dfg::AbstractDFG, label::Symbol, key::Regex)
 end
 
 # TODO Consider autogenerating all methods of the form:
-# verbNoun(dfg::DFGVariable, label::Symbol, args...; kwargs...) = verbNoun(getVariable(dfg, label), args...; kwargs...)
+# verbNoun(dfg::VariableCompute, label::Symbol, args...; kwargs...) = verbNoun(getVariable(dfg, label), args...; kwargs...)
 # with something like:
 # getvariablemethod = [
 #     :getBlobEntryFirst,
@@ -160,7 +160,7 @@ function addBlobEntry!(var::AbstractDFGVariable, entry::BlobEntry;)
     return entry
 end
 
-function addBlobEntry!(var::PackedVariable, entry::BlobEntry)
+function addBlobEntry!(var::VariableDFG, entry::BlobEntry)
     entry.label in getproperty.(var.blobEntries, :label) &&
         error("blobEntry $(entry.label) already exists on variable $(getLabel(var))")
     push!(var.blobEntries, entry)
@@ -205,7 +205,7 @@ function deleteBlobEntry!(var::AbstractDFGVariable, key::Symbol)
     return pop!(var.dataDict, key)
 end
 
-function deleteBlobEntry!(var::PackedVariable, key::Symbol)
+function deleteBlobEntry!(var::VariableDFG, key::Symbol)
     if !hasBlobEntry(var, key)
         throw(
             KeyError(
@@ -238,7 +238,7 @@ Does a blob entry (element) exist with `blobLabel`.
 """
 hasBlobEntry(var::AbstractDFGVariable, blobLabel::Symbol) = haskey(var.dataDict, blobLabel)
 
-function hasBlobEntry(var::PackedVariable, label::Symbol)
+function hasBlobEntry(var::VariableDFG, label::Symbol)
     return label in getproperty.(var.blobEntries, :label)
 end
 
@@ -252,7 +252,7 @@ function getBlobEntries(var::AbstractDFGVariable)
     return collect(values(var.dataDict))
 end
 
-function getBlobEntries(var::PackedVariable)
+function getBlobEntries(var::VariableDFG)
     return var.blobEntries
 end
 
@@ -311,7 +311,7 @@ function listBlobEntries(var::AbstractDFGVariable)
     return collect(keys(var.dataDict))
 end
 
-function listBlobEntries(var::PackedVariable)
+function listBlobEntries(var::VariableDFG)
     return getproperty.(var.blobEntries, :label)
 end
 

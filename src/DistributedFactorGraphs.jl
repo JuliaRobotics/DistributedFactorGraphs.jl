@@ -135,10 +135,10 @@ export getSummaryGraph
 export DFGNode, AbstractDFGVariable, AbstractDFGFactor
 
 # Variables
-export DFGVariable, DFGVariableSummary, SkeletonDFGVariable, PackedVariable
+export VariableCompute, VariableSummary, VariableSkeleton, VariableDFG
 
 # Factors
-export DFGFactor, DFGFactorSummary, SkeletonDFGFactor, PackedFactor, Factor
+export FactorCompute, FactorSummary, FactorSkeleton, FactorDFG
 
 # Common
 export getSolvable, setSolvable!, isSolvable
@@ -330,6 +330,7 @@ export plotDFG
 
 ## TODO maybe move to DFG
 # addAgent!
+# deleteAgent!
 # listAgents
 # addGraph!
 # deleteGraph!
@@ -392,5 +393,36 @@ include("services/CustomPrinting.jl")
 include("Common.jl")
 
 include("weakdeps_prototypes.jl")
+
+#TODO start off as just an alias before deprecating
+# Starting Variable-level nouns-adjective standardisation 
+export SkeletonDFGVariable
+const SkeletonDFGVariable = VariableSkeleton
+
+export DFGVariableSummary
+const DFGVariableSummary = VariableSummary
+
+export DFGVariable
+const DFGVariable = VariableCompute
+
+export PackedVariable
+const PackedVariable = VariableDFG
+export Variable
+const Variable = VariableDFG
+
+# Starting Factor-level noun-adjective standardisation 
+export SkeletonDFGFactor
+const SkeletonDFGFactor = FactorSkeleton
+
+export DFGFactorSummary
+const DFGFactorSummary = FactorSummary
+
+export DFGFactor
+const DFGFactor = FactorCompute
+
+export PackedFactor
+const PackedFactor = FactorDFG
+export Factor
+const Factor = FactorDFG
 
 end

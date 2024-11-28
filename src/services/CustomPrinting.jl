@@ -2,11 +2,11 @@
 ## Printing Variables and Factors
 ##==============================================================================
 
-printVariable(vert::DFGVariable; kwargs...) = printVariable(stdout::IO, vert; kwargs...)
+printVariable(vert::VariableCompute; kwargs...) = printVariable(stdout::IO, vert; kwargs...)
 
 function printVariable(
     io::IO,
-    vert::DFGVariable;
+    vert::VariableCompute;
     short::Bool = false,
     compact::Bool = true,
     limit::Bool = true,
@@ -107,10 +107,10 @@ function printVariable(
     return nothing
 end
 
-printFactor(vert::DFGFactor; kwargs...) = printFactor(stdout::IO, vert; kwargs...)
+printFactor(vert::FactorCompute; kwargs...) = printFactor(stdout::IO, vert; kwargs...)
 function printFactor(
     io::IO,
-    vert::DFGFactor;
+    vert::FactorCompute;
     short::Bool = false,
     compact::Bool = true,
     limit::Bool = true,
@@ -199,11 +199,11 @@ end
 ## Overloading show
 ##==============================================================================
 # Base.show_default(io, v)
-function Base.show(io::IO, ::MIME"text/plain", v::DFGVariable)
+function Base.show(io::IO, ::MIME"text/plain", v::VariableCompute)
     return printVariable(io, v; short = true, limit = false)
 end
 
-function Base.show(io::IO, ::MIME"text/plain", f::DFGFactor)
+function Base.show(io::IO, ::MIME"text/plain", f::FactorCompute)
     return printFactor(io, f; short = true, limit = false)
 end
 
@@ -223,7 +223,7 @@ end
 function Base.show(
     io::IO,
     ::MIME"application/prs.juno.inline",
-    x::Union{AbstractDFG, DFGVariable, DFGFactor},
+    x::Union{AbstractDFG, VariableCompute, FactorCompute},
 )
     return show(io, x)
 end

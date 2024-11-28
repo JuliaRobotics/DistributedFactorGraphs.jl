@@ -1,10 +1,10 @@
 
-# VARTYPE = DFGVariableSummary
-# FACTYPE = DFGFactorSummary
+# VARTYPE = VariableSummary
+# FACTYPE = FactorSummary
 
 dfg = GraphsDFG{NoSolverParams, VARTYPE, FACTYPE}()
-function DistributedFactorGraphs.DFGVariableSummary(label::Symbol)
-    return DFGVariableSummary(
+function DistributedFactorGraphs.VariableSummary(label::Symbol)
+    return VariableSummary(
         nothing,
         label,
         DistributedFactorGraphs.now(localzone()),
@@ -15,11 +15,11 @@ function DistributedFactorGraphs.DFGVariableSummary(label::Symbol)
     )
 end
 
-function DistributedFactorGraphs.DFGVariableSummary(
+function DistributedFactorGraphs.VariableSummary(
     label::Symbol,
     ::VariableNodeData{T},
 ) where {T}
-    return DFGVariableSummary(
+    return VariableSummary(
         nothing,
         label,
         DistributedFactorGraphs.now(localzone()),
@@ -30,15 +30,15 @@ function DistributedFactorGraphs.DFGVariableSummary(
     )
 end
 
-function DistributedFactorGraphs.SkeletonDFGVariable(label::Symbol, args...)
-    return SkeletonDFGVariable(label)
+function DistributedFactorGraphs.VariableSkeleton(label::Symbol, args...)
+    return VariableSkeleton(label)
 end
 
-function DistributedFactorGraphs.SkeletonDFGVariable(
+function DistributedFactorGraphs.VariableSkeleton(
     label::Symbol,
     ::VariableNodeData{T},
 ) where {T}
-    return SkeletonDFGVariable(nothing, label, Set{Symbol}())
+    return VariableSkeleton(nothing, label, Set{Symbol}())
 end
 
 dfg = GraphsDFG{NoSolverParams, VARTYPE, FACTYPE}()
@@ -55,14 +55,14 @@ union!(f1.tags, [:FACTOR])
 
 if false
     #TODO add to tests
-    VARTYPE = PackedVariable
-    FACTYPE = PackedFactor
-    dfg = GraphsDFG{NoSolverParams, PackedVariable, PackedFactor}()
-    v1 = PackedVariable(; label = :a, variableType = "Pose2", tags = [:VARIABLE, :POSE])
-    v2 = PackedVariable(; label = :b, variableType = "Pose2", tags = [:VARIABLE, :LANDMARK])
-    v3 = PackedVariable(; label = :c, variableType = "Pose2")
-    orphan = PackedVariable(; label = :orphan, variableType = "Pose2")
-    f0 = PackedFactor(;
+    VARTYPE = VariableDFG
+    FACTYPE = FactorDFG
+    dfg = GraphsDFG{NoSolverParams, VariableDFG, FactorDFG}()
+    v1 = VariableDFG(; label = :a, variableType = "Pose2", tags = [:VARIABLE, :POSE])
+    v2 = VariableDFG(; label = :b, variableType = "Pose2", tags = [:VARIABLE, :LANDMARK])
+    v3 = VariableDFG(; label = :c, variableType = "Pose2")
+    orphan = VariableDFG(; label = :orphan, variableType = "Pose2")
+    f0 = FactorDFG(;
         label = :af1,
         tags = [:FACTOR],
         _variableOrderSymbols = [:a],
@@ -73,7 +73,7 @@ if false
         data = "",
         metadata = "",
     )
-    f1 = PackedFactor(;
+    f1 = FactorDFG(;
         label = :abf1,
         tags = [:FACTOR],
         _variableOrderSymbols = [:a, :b],
@@ -84,7 +84,7 @@ if false
         data = "",
         metadata = "",
     )
-    f2 = PackedFactor(;
+    f2 = FactorDFG(;
         label = :bcf1,
         tags = [:FACTOR],
         _variableOrderSymbols = [:b, :c],
@@ -111,13 +111,13 @@ end
     @test getLabel(f1) == f1.label
     @test getTags(f1) == f1.tags
 
-    if VARTYPE == DFGVariableSummary
+    if VARTYPE == VariableSummary
         @test getTimestamp(v1) == v1.timestamp
         @test getVariablePPEDict(v1) == v1.ppeDict
         @test_throws KeyError getVariablePPE(v1, :notfound)
         @test getVariableTypeName(v1) == :Pose2
 
-        # FACTYPE == DFGFactorSummary
+        # FACTYPE == FactorSummary
         testTimestamp = now(localzone())
         v1ts = setTimestamp(v1, testTimestamp)
         @test getTimestamp(v1ts) == testTimestamp
@@ -133,7 +133,7 @@ end
 end
 
 @testset "Updating Nodes" begin
-    VARTYPE == DFGVariableSummary && PPETestBlock!(dfg, v1)
+    VARTYPE == VariableSummary && PPETestBlock!(dfg, v1)
 end
 
 @testset "Adjacency Matrices" begin

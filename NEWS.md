@@ -10,6 +10,20 @@ Listing news on any major breaking changes in DFG.  For regular changes, see int
     UserLabel -> AgentLabel
     RobotLabel -> AgentLabel
     SessionLabel -> GraphLabel
+
+Variables and Factors are renamed and aliased to the old names, see #1109.
+- Factor-level noun-adjectives
+    SkeletonDFGFactor -> FactorSkeleton
+    DFGFactorSummary -> FactorSummary
+    DFGFactor -> FactorCompute
+    PackedFactor/Factor -> FactorDFG
+
+- Variable-level noun-adjectives
+    SkeletonDFGVariable -> VariableSkeleton
+    DFGVariableSummary -> VariableSummary
+    DFGVariable -> VariableCompute
+    PackedVariable/Variable -> VariableDFG
+
 - v0.24 FileDFGs can be loaded with v0.25 with the exception of the User[Label/Data/BlobEntries]
 
 # v0.24

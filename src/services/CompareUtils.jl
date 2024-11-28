@@ -21,15 +21,15 @@ const GeneratedCompareUnion = Union{
     MeanMaxPPE,
     VariableNodeData,
     PackedVariableNodeData,
-    DFGVariable,
-    Variable,
-    DFGVariableSummary,
-    SkeletonDFGVariable,
+    VariableCompute,
+    VariableDFG,
+    VariableSummary,
+    VariableSkeleton,
     GenericFunctionNodeData,
-    DFGFactor,
-    PackedFactor,
-    DFGFactorSummary,
-    SkeletonDFGFactor,
+    FactorCompute,
+    FactorDFG,
+    FactorSummary,
+    FactorSkeleton,
 }
 
 @generated function ==(x::T, y::T) where {T <: GeneratedCompareUnion}
@@ -236,8 +236,8 @@ end
 Compare that all fields are the same in a `::FactorGraph` variable.
 """
 function compareVariable(
-    A::DFGVariable,
-    B::DFGVariable;
+    A::VariableCompute,
+    B::VariableCompute;
     skip::Vector{Symbol} = Symbol[],
     show::Bool = true,
     skipsamples::Bool = true,
@@ -307,8 +307,8 @@ DevNotes
 - TODO `getSolverData(A).fnc.varValsAll / varidx` are only defined downstream, so should should this function not be in IIF?
 """
 function compareFactor(
-    A::DFGFactor,
-    B::DFGFactor;
+    A::FactorCompute,
+    B::FactorCompute;
     show::Bool = true,
     skip::Vector{Symbol} = Symbol[],
     skipsamples::Bool = true,

@@ -43,33 +43,31 @@ end
         FactorGraph{Int64, AbstractDFGVariable, AbstractDFGFactor},
     )
 
-    fg = FactorGraphs.FactorGraph{Int, SkeletonDFGVariable, SkeletonDFGFactor}()
+    fg = FactorGraphs.FactorGraph{Int, VariableSkeleton, FactorSkeleton}()
 
     @test !FactorGraphs.is_directed(fg)
-    @test !FactorGraphs.is_directed(
-        FactorGraph{Int, SkeletonDFGVariable, SkeletonDFGFactor},
-    )
+    @test !FactorGraphs.is_directed(FactorGraph{Int, VariableSkeleton, FactorSkeleton})
 
-    @test isa(zero(fg), FactorGraph{Int64, SkeletonDFGVariable, SkeletonDFGFactor})
+    @test isa(zero(fg), FactorGraph{Int64, VariableSkeleton, FactorSkeleton})
 
     # @test
-    @test FactorGraphs.addVariable!(fg, SkeletonDFGVariable(:a))
+    @test FactorGraphs.addVariable!(fg, VariableSkeleton(:a))
     @test @test_logs (:error, r"already") !FactorGraphs.addVariable!(
         fg,
-        SkeletonDFGVariable(:a),
+        VariableSkeleton(:a),
     )
-    @test FactorGraphs.addVariable!(fg, SkeletonDFGVariable(:b))
+    @test FactorGraphs.addVariable!(fg, VariableSkeleton(:b))
 
-    @test FactorGraphs.addFactor!(fg, [:a, :b], SkeletonDFGFactor(:abf1, [:a, :b]))
+    @test FactorGraphs.addFactor!(fg, [:a, :b], FactorSkeleton(:abf1, [:a, :b]))
     @test @test_logs (:error, r"already") !FactorGraphs.addFactor!(
         fg,
         [:a, :b],
-        SkeletonDFGFactor(:abf1, [:a, :b]),
+        FactorSkeleton(:abf1, [:a, :b]),
     )
     @test_throws KeyError FactorGraphs.addFactor!(
         fg,
         [:a, :c],
-        SkeletonDFGFactor(:acf1, [:a, :c]),
+        FactorSkeleton(:acf1, [:a, :c]),
     )
 
     @test eltype(fg) == Int

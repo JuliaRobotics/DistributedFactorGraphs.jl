@@ -206,14 +206,12 @@ getEstimateFields(::MeanMaxPPE) = [:suggested, :max, :mean]
 ## DFG Variables
 ##==============================================================================
 
-export Variable
-
 """
     $(TYPEDEF)
 
 The Variable information packed in a way that accomdates multi-lang using json.
 """
-Base.@kwdef struct Variable <: AbstractDFGVariable
+Base.@kwdef struct VariableDFG <: AbstractDFGVariable
     id::Union{UUID, Nothing} = nothing
     label::Symbol
     tags::Vector{Symbol} = Symbol[]
@@ -232,7 +230,7 @@ end
 # lastUpdatedTimestamp::DateTime
 
 #IIF like contruction helper for packed variable
-function Variable(
+function VariableDFG(
     label::Symbol,
     variableType::String;
     tags::Vector{Symbol} = Symbol[],
@@ -244,7 +242,7 @@ function Variable(
 )
     union!(tags, [:VARIABLE])
 
-    pacvar = Variable(;
+    pacvar = VariableDFG(;
         label,
         variableType,
         nstime = string(nanosecondtime),
@@ -257,23 +255,22 @@ function Variable(
 
     return pacvar
 end
-const PackedVariable = Variable
 
-StructTypes.StructType(::Type{Variable}) = StructTypes.UnorderedStruct()
-StructTypes.idproperty(::Type{Variable}) = :id
-StructTypes.omitempties(::Type{Variable}) = (:id,)
+StructTypes.StructType(::Type{VariableDFG}) = StructTypes.UnorderedStruct()
+StructTypes.idproperty(::Type{VariableDFG}) = :id
+StructTypes.omitempties(::Type{VariableDFG}) = (:id,)
 
-function getMetadata(v::Variable)
+function getMetadata(v::VariableDFG)
     return JSON3.read(base64decode(v.metadata), Dict{Symbol, SmallDataTypes})
 end
 
-function setMetadata!(v::Variable, metadata::Dict{Symbol, SmallDataTypes})
+function setMetadata!(v::VariableDFG, metadata::Dict{Symbol, SmallDataTypes})
     return error("FIXME: Metadata is not currently mutable in a Variable")
     # v.metadata = base64encode(JSON3.write(metadata))
 end
 
 ##------------------------------------------------------------------------------
-## DFGVariable lv2
+## VariableCompute lv2
 ##------------------------------------------------------------------------------
 """
 $(TYPEDEF)
@@ -283,7 +280,7 @@ Complete variable structure for a DistributedFactorGraph variable.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct DFGVariable{T <: InferenceVariable, P, N} <: AbstractDFGVariable
+Base.@kwdef struct VariableCompute{T <: InferenceVariable, P, N} <: AbstractDFGVariable
     """The ID for the variable"""
     id::Union{UUID, Nothing} = nothing
     """Variable label, e.g. :x1.
@@ -321,9 +318,9 @@ end
 
 """
     $SIGNATURES
-The default DFGVariable constructor.
+The default VariableCompute constructor.
 """
-function DFGVariable(
+function VariableCompute(
     label::Symbol,
     T::Type{<:InferenceVariable};
     timestamp::ZonedDateTime = now(localzone()),
@@ -334,18 +331,22 @@ function DFGVariable(
 
     N = getDimension(T)
     P = getPointType(T)
-    return DFGVariable{T, P, N}(; label, timestamp, solvable, kwargs...)
+    return VariableCompute{T, P, N}(; label, timestamp, solvable, kwargs...)
 end
 
-function DFGVariable(label::Symbol, variableType::InferenceVariable; kwargs...)
-    return DFGVariable(label, typeof(variableType); kwargs...)
+function VariableCompute(label::Symbol, variableType::InferenceVariable; kwargs...)
+    return VariableCompute(label, typeof(variableType); kwargs...)
 end
 
-function DFGVariable(label::Symbol, solverData::VariableNodeData; kwargs...)
-    return DFGVariable(; label, solverDataDict = Dict(:default => solverData), kwargs...)
+function VariableCompute(label::Symbol, solverData::VariableNodeData; kwargs...)
+    return VariableCompute(;
+        label,
+        solverDataDict = Dict(:default => solverData),
+        kwargs...,
+    )
 end
 
-Base.getproperty(x::DFGVariable, f::Symbol) = begin
+Base.getproperty(x::VariableCompute, f::Symbol) = begin
     if f == :solvable
         getfield(x, f)[]
     else
@@ -353,7 +354,7 @@ Base.getproperty(x::DFGVariable, f::Symbol) = begin
     end
 end
 
-Base.setproperty!(x::DFGVariable, f::Symbol, val) = begin
+Base.setproperty!(x::VariableCompute, f::Symbol, val) = begin
     if f == :solvable
         getfield(x, f)[] = val
     else
@@ -361,15 +362,15 @@ Base.setproperty!(x::DFGVariable, f::Symbol, val) = begin
     end
 end
 
-getMetadata(v::DFGVariable) = v.smallData
+getMetadata(v::VariableCompute) = v.smallData
 
-function setMetadata!(v::DFGVariable, metadata::Dict{Symbol, SmallDataTypes})
+function setMetadata!(v::VariableCompute, metadata::Dict{Symbol, SmallDataTypes})
     v.smallData !== metadata && empty!(v.smallData)
     return merge!(v.smallData, metadata)
 end
 
 ##------------------------------------------------------------------------------
-## DFGVariableSummary lv1
+## VariableSummary lv1
 ##------------------------------------------------------------------------------
 
 """
@@ -380,7 +381,7 @@ Summary variable structure for a DistributedFactorGraph variable.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct DFGVariableSummary <: AbstractDFGVariable
+Base.@kwdef struct VariableSummary <: AbstractDFGVariable
     """The ID for the variable"""
     id::Union{UUID, Nothing}
     """Variable label, e.g. :x1.
@@ -403,16 +404,8 @@ Base.@kwdef struct DFGVariableSummary <: AbstractDFGVariable
     dataDict::Dict{Symbol, BlobEntry}
 end
 
-function DFGVariableSummary(
-    id,
-    label,
-    timestamp,
-    tags,
-    ::Nothing,
-    variableTypeName,
-    ::Nothing,
-)
-    return DFGVariableSummary(
+function VariableSummary(id, label, timestamp, tags, ::Nothing, variableTypeName, ::Nothing)
+    return VariableSummary(
         id,
         label,
         timestamp,
@@ -423,10 +416,10 @@ function DFGVariableSummary(
     )
 end
 
-StructTypes.names(::Type{DFGVariableSummary}) = ((:variableTypeName, :variableType),)
+StructTypes.names(::Type{VariableSummary}) = ((:variableTypeName, :variableType),)
 
 ##------------------------------------------------------------------------------
-## SkeletonDFGVariable.jl
+## VariableSkeleton.jl
 ##------------------------------------------------------------------------------
 
 """
@@ -437,7 +430,7 @@ Skeleton variable structure for a DistributedFactorGraph variable.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct SkeletonDFGVariable <: AbstractDFGVariable
+Base.@kwdef struct VariableSkeleton <: AbstractDFGVariable
     """The ID for the variable"""
     id::Union{UUID, Nothing} = nothing
     """Variable label, e.g. :x1.
@@ -448,32 +441,32 @@ Base.@kwdef struct SkeletonDFGVariable <: AbstractDFGVariable
     tags::Set{Symbol} = Set{Symbol}()
 end
 
-function SkeletonDFGVariable(
+function VariableSkeleton(
     label::Symbol,
     tags = Set{Symbol}();
     id::Union{UUID, Nothing} = nothing,
 )
-    return SkeletonDFGVariable(id, label, tags)
+    return VariableSkeleton(id, label, tags)
 end
 
-StructTypes.StructType(::Type{SkeletonDFGVariable}) = StructTypes.UnorderedStruct()
-StructTypes.idproperty(::Type{SkeletonDFGVariable}) = :id
-StructTypes.omitempties(::Type{SkeletonDFGVariable}) = (:id,)
+StructTypes.StructType(::Type{VariableSkeleton}) = StructTypes.UnorderedStruct()
+StructTypes.idproperty(::Type{VariableSkeleton}) = :id
+StructTypes.omitempties(::Type{VariableSkeleton}) = (:id,)
 
 ##==============================================================================
 # Define variable levels
 ##==============================================================================
 const VariableDataLevel0 =
-    Union{DFGVariable, DFGVariableSummary, Variable, SkeletonDFGVariable}
-const VariableDataLevel1 = Union{DFGVariable, DFGVariableSummary, Variable}
-const VariableDataLevel2 = Union{DFGVariable}
+    Union{VariableCompute, VariableSummary, VariableDFG, VariableSkeleton}
+const VariableDataLevel1 = Union{VariableCompute, VariableSummary, VariableDFG}
+const VariableDataLevel2 = Union{VariableCompute}
 
 ##==============================================================================
-## Convertion constructors
+## Conversion constructors
 ##==============================================================================
 
-function DFGVariableSummary(v::DFGVariable)
-    return DFGVariableSummary(
+function VariableSummary(v::VariableCompute)
+    return VariableSummary(
         v.id,
         v.label,
         v.timestamp,
@@ -484,6 +477,6 @@ function DFGVariableSummary(v::DFGVariable)
     )
 end
 
-function SkeletonDFGVariable(v::VariableDataLevel1)
-    return SkeletonDFGVariable(v.id, v.label, deepcopy(v.tags))
+function VariableSkeleton(v::VariableDataLevel1)
+    return VariableSkeleton(v.id, v.label, deepcopy(v.tags))
 end

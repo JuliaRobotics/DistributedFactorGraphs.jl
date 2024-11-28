@@ -238,7 +238,7 @@ end
 ##==============================================================================
 ## Variable Packing and unpacking
 ##==============================================================================
-function packVariable(v::DFGVariable)
+function packVariable(v::VariableCompute)
     props = Dict{String, Any}()
     props["label"] = string(v.label)
     props["timestamp"] = v.timestamp
@@ -286,7 +286,7 @@ end
 
 """
     $SIGNATURES
-Returns a DFGVariable.
+Returns a VariableCompute.
 
 DevNotes
 - v0.19 packVariable fixed nested JSON bug on these fields, see #867:
@@ -404,11 +404,11 @@ function unpackVariable(
     else
         Dict{Symbol, VariableNodeData{variableType, pointType}}()
     end
-    # Rebuild DFGVariable using the first solver variableType in solverData
+    # Rebuild VariableCompute using the first solver variableType in solverData
     # @info "dbg Serialization 171" variableType Symbol(packedProps["label"]) timestamp nstime ppeDict solverData smallData Dict{Symbol,AbstractBlobEntry}() Ref(packedProps["solvable"])
-    # variable = DFGVariable{variableType}(Symbol(packedProps["label"]), timestamp, nstime, Set(tags), ppeDict, solverData,  smallData, Dict{Symbol,AbstractBlobEntry}(), Ref(packedProps["solvable"]))
+    # variable = VariableCompute{variableType}(Symbol(packedProps["label"]), timestamp, nstime, Set(tags), ppeDict, solverData,  smallData, Dict{Symbol,AbstractBlobEntry}(), Ref(packedProps["solvable"]))
 
-    variable = DFGVariable{variableType}(;
+    variable = VariableCompute{variableType}(;
         id,
         label = Symbol(packedProps["label"]),
         # variableType = variableType, 
@@ -562,7 +562,7 @@ end
 ## Factor Packing and unpacking
 ##==============================================================================
 
-function _packSolverData(f::DFGFactor, fnctype::AbstractFactor)
+function _packSolverData(f::FactorCompute, fnctype::AbstractFactor)
     #
     packtype = convertPackedType(fnctype)
     try
@@ -579,7 +579,7 @@ function _packSolverData(f::DFGFactor, fnctype::AbstractFactor)
 end
 
 # returns ::Dict{String, <:Any}
-function packFactor(dfg::AbstractDFG, f::DFGFactor)
+function packFactor(dfg::AbstractDFG, f::FactorCompute)
     # Construct the properties to save
     props = Dict{String, Any}()
     props["id"] = f.id !== nothing ? string(f.id) : nothing
@@ -692,7 +692,7 @@ function fncStringToData(fncType::String, data::Union{String, <:NamedTuple})
     return fncStringToData(packtype, data)
 end
 
-# Returns `::DFGFactor`
+# Returns `::FactorCompute`
 function unpackFactor(
     dfg::G,
     packedProps::Dict{String, Any};
@@ -753,9 +753,9 @@ function unpackFactor(
         Dict{Symbol, SmallDataTypes}()
     end
 
-    # Rebuild DFGFactor
+    # Rebuild FactorCompute
     #TODO use constuctor to create factor
-    factor = DFGFactor(
+    factor = FactorCompute(
         Symbol(label),
         timestamp,
         nstime,

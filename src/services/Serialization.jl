@@ -25,7 +25,7 @@ function _getDFGVersion()
     end
 end
 
-function _versionCheck(node::Union{<:PackedVariable, <:PackedFactor})
+function _versionCheck(node::Union{<:VariableDFG, <:FactorDFG})
     if VersionNumber(node._version).minor < _getDFGVersion().minor
         @warn "This data was serialized using DFG $(node._version) but you have $(_getDFGVersion()) installed, there may be deserialization issues." maxlog =
             10
@@ -176,12 +176,12 @@ end
 ##==============================================================================
 
 function packVariable(
-    v::DFGVariable;
+    v::VariableCompute;
     includePPEs::Bool = true,
     includeSolveData::Bool = true,
     includeDataEntries::Bool = true,
 )
-    return PackedVariable(;
+    return VariableDFG(;
         id = v.id,
         label = v.label,
         timestamp = v.timestamp,
@@ -198,7 +198,7 @@ function packVariable(
 end
 
 function packVariable(
-    v::Variable;
+    v::VariableDFG;
     includePPEs::Bool = true,
     includeSolveData::Bool = true,
     includeDataEntries::Bool = true,
@@ -206,7 +206,7 @@ function packVariable(
     return v
 end
 
-function unpackVariable(variable::PackedVariable; skipVersionCheck::Bool = false)
+function unpackVariable(variable::VariableDFG; skipVersionCheck::Bool = false)
     !skipVersionCheck && _versionCheck(variable)
 
     # Variable and point type
@@ -227,7 +227,7 @@ function unpackVariable(variable::PackedVariable; skipVersionCheck::Bool = false
     )
     metadata = JSON3.read(base64decode(variable.metadata), Dict{Symbol, DFG.SmallDataTypes})
 
-    return DFGVariable(
+    return VariableCompute(
         variable.label,
         variableType;
         id = variable.id,
@@ -242,16 +242,16 @@ function unpackVariable(variable::PackedVariable; skipVersionCheck::Bool = false
     )
 end
 
-DFGVariable(v::DFGVariable) = v
-DFGVariable(v::Variable) = unpackVariable(v)
-Variable(v::Variable) = v
-Variable(v::DFGVariable) = packVariable(v)
+VariableCompute(v::VariableCompute) = v
+VariableCompute(v::VariableDFG) = unpackVariable(v)
+VariableDFG(v::VariableDFG) = v
+VariableDFG(v::VariableCompute) = packVariable(v)
 
 ##==============================================================================
 ## Factor Packing and unpacking
 ##==============================================================================
 
-function _packSolverData(f::DFGFactor, fnctype::AbstractFactor)
+function _packSolverData(f::FactorCompute, fnctype::AbstractFactor)
     #
     packtype = convertPackedType(fnctype)
     try
@@ -267,10 +267,10 @@ function _packSolverData(f::DFGFactor, fnctype::AbstractFactor)
     end
 end
 
-# returns PackedFactor
-function packFactor(f::DFGFactor)
+# returns FactorDFG
+function packFactor(f::FactorCompute)
     fnctype = getSolverData(f).fnc.usrfnc!
-    return PackedFactor(;
+    return FactorDFG(;
         id = f.id,
         label = f.label,
         tags = collect(f.tags),
@@ -287,7 +287,7 @@ function packFactor(f::DFGFactor)
     return props
 end
 
-packFactor(f::PackedFactor) = f
+packFactor(f::FactorDFG) = f
 
 function reconstFactorData end
 
@@ -373,11 +373,7 @@ function fncStringToData(fncType::String, data::Union{String, <:NamedTuple})
     return fncStringToData(packtype, data)
 end
 
-function unpackFactor(
-    dfg::AbstractDFG,
-    factor::PackedFactor;
-    skipVersionCheck::Bool = false,
-)
+function unpackFactor(dfg::AbstractDFG, factor::FactorDFG; skipVersionCheck::Bool = false)
     #
     @debug "DECODING factor type = '$(factor.fnctype)' for factor '$(factor.label)'"
     !skipVersionCheck && _versionCheck(factor)
@@ -402,7 +398,7 @@ function unpackFactor(
 
     metadata = JSON3.read(base64decode(factor.metadata), Dict{Symbol, DFG.SmallDataTypes})
 
-    return DFGFactor(
+    return FactorCompute(
         factor.label,
         factor.timestamp,
         Nanosecond(factor.nstime),

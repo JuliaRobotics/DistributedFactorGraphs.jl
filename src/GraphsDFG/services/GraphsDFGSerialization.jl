@@ -61,8 +61,8 @@ function packDFGMetadata(fg::GraphsDFG)
 
     props = (k => getproperty(fg, k) for k in commonfields)
     return PackedGraphsDFG(;
-        typePackedVariable = getTypeDFGVariables(fg) == Variable,
-        typePackedFactor = getTypeDFGFactors(fg) == PackedFactor,
+        typePackedVariable = getTypeDFGVariables(fg) == VariableDFG,
+        typePackedFactor = getTypeDFGFactors(fg) == FactorDFG,
         blobStores,
         props...,
     )
@@ -110,7 +110,7 @@ function unpackDFGMetadata(packed::PackedGraphsDFG)
                 else
                     @warn """
                     Field $f is deprecated as part of removing user/robot/session. Replace with Agent or Factorgraph [Label/Metadata/BlobEntries]
-                        No convertion done for $f
+                        No conversion done for $f
                     """
                 end
             end
@@ -141,17 +141,17 @@ function unpackDFGMetadata(packed::PackedGraphsDFG)
     props = (k => getproperty(packed, k) for k in commonfields)
 
     VT = if isnothing(packed.typePackedVariable) || !packed.typePackedVariable
-        DFGVariable
+        VariableCompute
     else
-        Variable
+        VariableDFG
     end
     FT = if isnothing(packed.typePackedFactor) || !packed.typePackedFactor
-        DFGFactor
+        FactorCompute
     else
-        PackedFactor
+        FactorDFG
     end
-    # VT = isnothing(packed.typePackedVariable) || packed.typePackedVariable ? Variable : DFGVariable 
-    # FT = isnothing(packed.typePackedFactor) || packed.typePackedFactor ? PackedFactor : DFGFactor
+    # VT = isnothing(packed.typePackedVariable) || packed.typePackedVariable ? Variable : VariableCompute 
+    # FT = isnothing(packed.typePackedFactor) || packed.typePackedFactor ? FactorDFG : FactorCompute
 
     props = filter!(collect(props)) do (k, v)
         return !isnothing(v)

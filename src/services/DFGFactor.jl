@@ -17,7 +17,7 @@
 Return reference to the user factor in `<:AbstractDFG` identified by `::Symbol`.
 """
 getFactorFunction(fcd::GenericFunctionNodeData) = fcd.fnc.usrfnc!
-getFactorFunction(fc::DFGFactor) = getFactorFunction(getSolverData(fc))
+getFactorFunction(fc::FactorCompute) = getFactorFunction(getSolverData(fc))
 getFactorFunction(dfg::AbstractDFG, fsym::Symbol) = getFactorFunction(getFactor(dfg, fsym))
 
 """
@@ -29,7 +29,7 @@ Notes
 - Replaces older `getfnctype`.
 """
 getFactorType(data::GenericFunctionNodeData) = data.fnc.usrfnc!
-getFactorType(fct::DFGFactor) = getFactorType(getSolverData(fct))
+getFactorType(fct::FactorCompute) = getFactorType(getSolverData(fct))
 getFactorType(dfg::AbstractDFG, lbl::Symbol) = getFactorType(getFactor(dfg, lbl))
 
 """
@@ -56,9 +56,9 @@ end
 ##==============================================================================
 # |                   | label | tags | timestamp | solvable | solverData |
 # |-------------------|:-----:|:----:|:---------:|:--------:|:----------:|
-# | SkeletonDFGFactor |   X   |   x  |           |          |            |
-# | DFGFactorSummary  |   X   |   X  |     X     |          |            |
-# | DFGFactor         |   X   |   X  |     X     |     X    |      X     |
+# | FactorSkeleton |   X   |   x  |           |          |            |
+# | FactorSummary  |   X   |   X  |     X     |          |            |
+# | FactorCompute         |   X   |   X  |     X     |     X    |      X     |
 
 ##------------------------------------------------------------------------------
 ## label
@@ -85,8 +85,8 @@ end
 function setTimestamp(f::AbstractDFGFactor, ts::DateTime, timezone = localzone())
     return setTimestamp(f, ZonedDateTime(ts, timezone))
 end
-function setTimestamp(f::DFGFactor, ts::ZonedDateTime)
-    return DFGFactor(
+function setTimestamp(f::FactorCompute, ts::ZonedDateTime)
+    return FactorCompute(
         f.label,
         ts,
         f.nstime,
@@ -97,16 +97,16 @@ function setTimestamp(f::DFGFactor, ts::ZonedDateTime)
         id = f.id,
     )
 end
-function setTimestamp(f::DFGFactorSummary, ts::ZonedDateTime)
-    return DFGFactorSummary(f.id, f.label, f.tags, f._variableOrderSymbols, ts)
+function setTimestamp(f::FactorSummary, ts::ZonedDateTime)
+    return FactorSummary(f.id, f.label, f.tags, f._variableOrderSymbols, ts)
 end
-function setTimestamp(f::DFGFactorSummary, ts::DateTime)
-    return DFGFactorSummary(f, ZonedDateTime(ts, localzone()))
+function setTimestamp(f::FactorSummary, ts::DateTime)
+    return FactorSummary(f, ZonedDateTime(ts, localzone()))
 end
 
-function setTimestamp(v::PackedFactor, timestamp::ZonedDateTime)
-    return PackedFactor(;
-        (key => getproperty(v, key) for key in fieldnames(PackedFactor))...,
+function setTimestamp(v::FactorDFG, timestamp::ZonedDateTime)
+    return FactorDFG(;
+        (key => getproperty(v, key) for key in fieldnames(FactorDFG))...,
         timestamp,
     )
 end
@@ -137,8 +137,8 @@ $SIGNATURES
 Get the variable ordering for this factor.
 Should be equivalent to listNeighbors unless something was deleted in the graph.
 """
-getVariableOrder(fct::DFGFactor) = fct._variableOrderSymbols::Vector{Symbol}
-getVariableOrder(fct::PackedFactor) = fct._variableOrderSymbols::Vector{Symbol}
+getVariableOrder(fct::FactorCompute) = fct._variableOrderSymbols::Vector{Symbol}
+getVariableOrder(fct::FactorDFG) = fct._variableOrderSymbols::Vector{Symbol}
 getVariableOrder(dfg::AbstractDFG, fct::Symbol) = getVariableOrder(getFactor(dfg, fct))
 
 ##------------------------------------------------------------------------------
@@ -150,11 +150,11 @@ getVariableOrder(dfg::AbstractDFG, fct::Symbol) = getVariableOrder(getFactor(dfg
 
 Retrieve solver data structure stored in a factor.
 """
-function getSolverData(f::F) where {F <: DFGFactor}
+function getSolverData(f::F) where {F <: FactorCompute}
     return f.solverData
 end
 
-setSolverData!(f::DFGFactor, data::GenericFunctionNodeData) = f.solverData = data
+setSolverData!(f::FactorCompute, data::GenericFunctionNodeData) = f.solverData = data
 
 ##------------------------------------------------------------------------------
 ## utility

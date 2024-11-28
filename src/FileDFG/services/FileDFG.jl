@@ -146,7 +146,7 @@ function loadDFG!(
     end
 
     # extract the factor graph from fileDFG folder
-    factors = DFGFactor[]
+    factors = FactorCompute[]
     varFolder = "$folder/variables"
     factorFolder = "$folder/factors"
     # Folder preparations
@@ -155,19 +155,24 @@ function loadDFG!(
     !isdir(factorFolder) &&
         error("Can't load DFG graph - folder '$factorFolder' doesn't exist")
 
-    varFiles = sort(readdir(varFolder; sort = false); lt = natural_lt)
-    factorFiles = sort(readdir(factorFolder; sort = false); lt = natural_lt)
+    # varFiles = sort(readdir(varFolder; sort = false); lt = natural_lt)
+    # factorFiles = sort(readdir(factorFolder; sort = false); lt = natural_lt)
+    varFiles = readdir(varFolder; sort = false)
+    factorFiles = readdir(factorFolder; sort = false)
 
-    packedvars = @showprogress 1 "loading variables" asyncmap(varFiles) do varFile
-        jstr = read("$varFolder/$varFile", String)
-        return JSON3.read(jstr, PackedVariable)
-    end
     # FIXME, why is this treated different from VariableSkeleton, VariableSummary?
-    # FIXME, still creates type instability on `variables` as either `::Variable` or `::DFGVariable`
-    if isa(dfgLoadInto, GraphsDFG) && getTypeDFGVariables(dfgLoadInto) == Variable
-        variables = packedvars
-    else
-        variables = unpackVariable.(packedvars)
+
+    usePackedVariable =
+        isa(dfgLoadInto, GraphsDFG) && getTypeDFGVariables(dfgLoadInto) == VariableDFG
+    # type instability on `variables` as either `::Vector{Variable}` or `::Vector{VariableCompute{<:}}` (vector of abstract)
+    variables = @showprogress 1 "loading variables" asyncmap(varFiles) do varFile
+        jstr = read("$varFolder/$varFile", String)
+        packedvar = JSON3.read(jstr, VariableDFG)
+        if usePackedVariable
+            return packedvar
+        else
+            return unpackVariable(packedvar)
+        end
     end
 
     @info "Loaded $(length(variables)) variables"#- $(map(v->v.label, variables))"
@@ -175,15 +180,18 @@ function loadDFG!(
     # Adding variables
     map(v -> addVariable!(dfgLoadInto, v), variables)
 
-    packedfacts = @showprogress 1 "loading factors" asyncmap(factorFiles) do factorFile
+    usePackedFactor =
+        isa(dfgLoadInto, GraphsDFG) && getTypeDFGFactors(dfgLoadInto) == FactorDFG
+
+    # `factors` is not type stable `::Vector{Factor}` or `::Vector{FactorCompute{<:}}` (vector of abstract)
+    factors = @showprogress 1 "loading factors" asyncmap(factorFiles) do factorFile
         jstr = read("$factorFolder/$factorFile", String)
-        return JSON3.read(jstr, PackedFactor)
-    end
-    # FIXME, still creates type instability on `variables` as either `::Factor` or `::DFGFactor{<:}`
-    if isa(dfgLoadInto, GraphsDFG) && getTypeDFGFactors(dfgLoadInto) == PackedFactor
-        factors = packedfacts
-    else
-        factors = unpackFactor.(dfgLoadInto, packedfacts)
+        packedfact = JSON3.read(jstr, FactorDFG)
+        if usePackedFactor
+            return packedfact
+        else
+            return unpackFactor(dfgLoadInto, packedfact)
+        end
     end
 
     @info "Loaded $(length(factors)) factors"# - $(map(f->f.label, factors))"
@@ -191,9 +199,9 @@ function loadDFG!(
     # # Adding factors
     map(f -> addFactor!(dfgLoadInto, f), factors)
 
-    if isa(dfgLoadInto, GraphsDFG) && getTypeDFGFactors(dfgLoadInto) != PackedFactor
+    if isa(dfgLoadInto, GraphsDFG) && getTypeDFGFactors(dfgLoadInto) != FactorDFG
         # Finally, rebuild the CCW's for the factors to completely reinflate them
-        # NOTE CREATES A NEW DFGFactor IF  CCW TYPE CHANGES
+        # NOTE CREATES A NEW FactorCompute IF  CCW TYPE CHANGES
         @info "Rebuilding CCW's for the factors..."
         @showprogress 1 "build factor operational memory" for factor in factors
             rebuildFactorMetadata!(dfgLoadInto, factor)
