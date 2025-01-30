@@ -122,7 +122,7 @@ deleteData!(dfg, :x2, :random)
 #test default folder store
 dfs = FolderStore("/tmp/defaultfolderstore")
 @test dfs.folder == "/tmp/defaultfolderstore"
-@test dfs.key == :default_folder_store
+@test getLabel(dfs) == :default_folder_store
 @test dfs isa FolderStore{Vector{UInt8}}
 
 ##==============================================================================
