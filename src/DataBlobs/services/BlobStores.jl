@@ -97,7 +97,7 @@ function getBlob(dfg::AbstractDFG, entry::BlobEntry)
     end
     throw(
         KeyError(
-            "could not find $(entry.label), uuid $(entry.blobId) in any of the listed blobstores:\n $([s->getKey(s) for (s,v) in stores]))",
+            "could not find $(entry.label), uuid $(entry.blobId) in any of the listed blobstores:\n $([s->getLabel(s) for (s,v) in stores]))",
         ),
     )
 end
@@ -177,12 +177,9 @@ end
 ## FolderStore
 ##==============================================================================
 struct FolderStore{T} <: AbstractBlobStore{T}
-    key::Symbol
+    label::Symbol
     folder::String
 end
-
-#TODO rename key to label for consistency
-getLabel(store::FolderStore) = store.key
 
 function FolderStore(foldername::String; label = :default_folder_store, createfolder = true)
     if createfolder && !isdir(foldername)
@@ -247,12 +244,13 @@ end
 
 hasBlob(store::FolderStore, entry::BlobEntry) = hasBlob(store, entry.originId)
 
+listBlobs(store::FolderStore) = readdir(store.folder)
 ##==============================================================================
 ## InMemoryBlobStore
 ##==============================================================================
 
 struct InMemoryBlobStore{T} <: AbstractBlobStore{T}
-    key::Symbol
+    label::Symbol
     blobs::Dict{UUID, T}
 end
 
@@ -295,22 +293,22 @@ listBlobs(store::InMemoryBlobStore) = collect(keys(store.blobs))
 ##==============================================================================
 
 struct LinkStore <: AbstractBlobStore{String}
-    key::Symbol
+    label::Symbol
     csvfile::String
     cache::Dict{UUID, String}
 
-    function LinkStore(key, csvfile)
+    function LinkStore(label, csvfile)
         if !isfile(csvfile)
             @info "File '$csvfile' doesn't exist - creating."
             # create new folder
             open(csvfile, "w") do io
                 return println(io, "blobid,path")
             end
-            return new(key, csvfile, Dict{UUID, String}())
+            return new(label, csvfile, Dict{UUID, String}())
         else
             file = CSV.File(csvfile)
             cache = Dict(UUID.(file.blobid) .=> file.path)
-            return new(key, csvfile, cache)
+            return new(label, csvfile, cache)
         end
     end
 end
@@ -373,7 +371,7 @@ end
 ## RowBlobStore
 
 struct RowBlobStore{T} <: AbstractBlobStore{T}
-    key::Symbol
+    label::Symbol
     blobs::OrderedDict{UUID, RowBlob{T}}
 end
 

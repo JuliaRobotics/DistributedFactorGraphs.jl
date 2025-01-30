@@ -191,7 +191,7 @@ function addData!(
         blobId,
         originId,
         label = bLbl,
-        blobstore = blobstore.key,
+        blobstore = getLabel(blobstore),
         hash = string(bytes2hex(hashfunction(blob))),
         origin = buildSourceString(dfg, vLbl),
         description,
@@ -224,7 +224,7 @@ function addData!(
         blobId,
         originId = blobId,
         label = blobLabel,
-        blobstore = blobstore.key,
+        blobstore = getLabel(blobstore),
         # hash = string(bytes2hex(hashfunction(blob))),
         hash = "",
         origin,
@@ -264,7 +264,7 @@ function updateData!(
     # order of operations with unknown new blobId not tested
     newEntry = BlobEntry(
         entry; # and kwargs to override new values
-        blobstore = blobstore.key,
+        blobstore = getLabel(blobstore),
         hash = string(bytes2hex(hashfunction(blob))),
         origin = buildSourceString(dfg, label),
         _version = string(_getDFGVersion()),

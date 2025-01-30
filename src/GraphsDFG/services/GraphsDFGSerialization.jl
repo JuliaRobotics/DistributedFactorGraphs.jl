@@ -53,9 +53,9 @@ function packDFGMetadata(fg::GraphsDFG)
     blobStores = Dict{Symbol, FolderStore{Vector{UInt8}}}()
     foreach(values(fg.blobStores)) do store
         if store isa FolderStore{Vector{UInt8}}
-            blobStores[store.key] = store
+            blobStores[getLabel(store)] = store
         else
-            @warn "BlobStore $(store.key) of type $(typeof(store)) is not supported yet and will not be saved"
+            @warn "BlobStore $(getLabel(store)) of type $(typeof(store)) is not supported yet and will not be saved"
         end
     end
 

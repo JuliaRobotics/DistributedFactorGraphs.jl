@@ -253,16 +253,15 @@ function listModelBlobEntries end
 ##==============================================================================
 ## AbstractBlobStore  CRUD
 ##==============================================================================
-# AbstractBlobStore should have key or overwrite getKey
-getKey(store::AbstractBlobStore) = store.key
+# AbstractBlobStore should have label or overwrite getLabel
 
 getBlobStores(dfg::AbstractDFG) = dfg.blobStores
 getBlobStore(dfg::AbstractDFG, key::Symbol) = dfg.blobStores[key]
 function addBlobStore!(dfg::AbstractDFG, bs::AbstractBlobStore)
-    return push!(dfg.blobStores, getKey(bs) => bs)
+    return push!(dfg.blobStores, getLabel(bs) => bs)
 end
 function updateBlobStore!(dfg::AbstractDFG, bs::AbstractBlobStore)
-    return push!(dfg.blobStores, getKey(bs) => bs)
+    return push!(dfg.blobStores, getLabel(bs) => bs)
 end
 deleteBlobStore!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.blobStores, key)
 emptyBlobStore!(dfg::AbstractDFG) = empty!(dfg.blobStores)

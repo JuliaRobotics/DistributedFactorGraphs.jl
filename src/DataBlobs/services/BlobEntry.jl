@@ -79,11 +79,7 @@ end
 
 function getBlobEntry(var::VariableDFG, key::Symbol)
     if !hasBlobEntry(var, key)
-        throw(
-            KeyError(
-                "No dataEntry label $(key) found in variable $(getLabel(var)). Available keys: $(keys(var.dataDict))",
-            ),
-        )
+        throw(KeyError(key))
     end
     return var.blobEntries[findfirst(x -> x.label == key, var.blobEntries)]
 end

@@ -30,6 +30,7 @@ Notes
 """
 getFactorType(data::GenericFunctionNodeData) = data.fnc.usrfnc!
 getFactorType(fct::FactorCompute) = getFactorType(getSolverData(fct))
+getFactorType(f::FactorDFG) = getTypeFromSerializationModule(f.fnctype)() # TODO find a better way to do this that does not rely on empty constructor
 getFactorType(dfg::AbstractDFG, lbl::Symbol) = getFactorType(getFactor(dfg, lbl))
 
 """
@@ -150,7 +151,7 @@ getVariableOrder(dfg::AbstractDFG, fct::Symbol) = getVariableOrder(getFactor(dfg
 
 Retrieve solver data structure stored in a factor.
 """
-function getSolverData(f::F) where {F <: FactorCompute}
+function getSolverData(f::FactorCompute)
     return f.solverData
 end
 

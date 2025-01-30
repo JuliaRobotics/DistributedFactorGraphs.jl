@@ -39,6 +39,8 @@ export DFGSummary
 DFGSummary(args) = error("DFGSummary is deprecated")
 @deprecate getSummary(dfg::AbstractDFG) getSummaryGraph(dfg)
 
+@deprecate getKey(store::AbstractBlobStore) getLabel(store)
+
 ##------------------------------------------------------------------------------
 ## smallData
 ##------------------------------------------------------------------------------

@@ -1115,14 +1115,14 @@ function blobsStoresTestBlock!(fg)
     # Adding
     addBlobStore!(fg, fs)
     # Listing
-    @test listBlobStores(fg) == [fs.key]
+    @test listBlobStores(fg) == [fs.label]
     # Getting
-    @test getBlobStore(fg, fs.key) == fs
+    @test getBlobStore(fg, fs.label) == fs
     # Deleting
-    @test deleteBlobStore!(fg, fs.key) == fs
+    @test deleteBlobStore!(fg, fs.label) == fs
     # Updating
     updateBlobStore!(fg, fs)
-    @test listBlobStores(fg) == [fs.key]
+    @test listBlobStores(fg) == [fs.label]
     # Emptying
     emptyBlobStore!(fg)
     @test listBlobStores(fg) == []
@@ -1132,7 +1132,7 @@ function blobsStoresTestBlock!(fg)
     # Data functions
     testData = rand(UInt8, 50)
     # Adding 
-    newData = addData!(fg, fs.key, :a, :testing, testData) # convenience wrapper over addBlob!
+    newData = addData!(fg, fs.label, :a, :testing, testData) # convenience wrapper over addBlob!
     # Listing
     @test :testing in listBlobEntries(fg, :a)
     # Getting
@@ -1154,7 +1154,7 @@ function blobsStoresTestBlock!(fg)
     @test updateData[1].hash != data[1].hash
     @test updateData[2] != data[2]
     @show bllb = DistributedFactorGraphs.incrDataLabelSuffix(fg, :a, :testing)
-    newData2 = addData!(fg, fs.key, :a, bllb, testData) # convenience wrapper over addBlob!
+    newData2 = addData!(fg, fs.label, :a, bllb, testData) # convenience wrapper over addBlob!
     nbe = listBlobEntries(fg, :a)
     filter!(s -> occursin(r"testing", string(s)), nbe)
     @test 2 == length(nbe)
