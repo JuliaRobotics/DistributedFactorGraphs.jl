@@ -354,6 +354,7 @@ export plotDFG
 ##==============================================================================
 
 # Entities
+include("errors.jl")
 
 include("entities/AbstractDFG.jl")
 

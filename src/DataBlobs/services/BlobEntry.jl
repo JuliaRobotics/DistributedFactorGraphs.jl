@@ -67,18 +67,14 @@ Also see: [`addBlobentry!`](@ref), [`getBlob`](@ref), [`listBlobentries`](@ref)
 """
 function getBlobentry(var::AbstractDFGVariable, key::Symbol)
     if !hasBlobentry(var, key)
-        throw(
-            KeyError(
-                "No dataEntry label $(key) found in variable $(getLabel(var)). Available keys: $(keys(var.dataDict))",
-            ),
-        )
+        throw(DFGLabelError(key, keys(var.dataDict)))
     end
     return var.dataDict[key]
 end
 
 function getBlobentry(var::VariableDFG, key::Symbol)
     if !hasBlobentry(var, key)
-        throw(KeyError(key))
+        throw(DFGLabelError(key))
     end
     return var.blobEntries[findfirst(x -> x.label == key, var.blobEntries)]
 end
