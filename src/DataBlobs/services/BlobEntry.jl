@@ -84,6 +84,7 @@ function getBlobEntry(var::VariableDFG, key::Symbol)
     return var.blobEntries[findfirst(x -> x.label == key, var.blobEntries)]
 end
 
+#TODO maybe rename to getBlobEntryFirst
 function getBlobEntry(var::AbstractDFGVariable, blobId::UUID)
     for (k, v) in var.dataDict
         if blobId in [v.originId, v.blobId]
@@ -121,7 +122,14 @@ function getBlobEntryFirst(var::VariableDFG, key::Regex)
 end
 
 function getBlobEntryFirst(dfg::AbstractDFG, label::Symbol, key::Regex)
-    return getBlobEntryFirst(getVariable(dfg, label), key)
+    els = listBlobEntries(dfg, label)
+    firstIdx = findfirst(contains(key), string.(els))
+    isnothing(firstIdx) && throw(
+        KeyError(
+            "No blobEntry with label matching regex $(key) found in variable $(label)",
+        ),
+    )
+    return getBlobEntry(dfg, label, els[firstIdx])
 end
 
 # TODO Consider autogenerating all methods of the form:

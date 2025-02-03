@@ -527,9 +527,17 @@ function getGraphBlobEntry(fg::GraphsDFG, label::Symbol)
     return fg.graphBlobEntries[label]
 end
 
-function getGraphBlobEntries(fg::GraphsDFG, startwith::Union{Nothing, String} = nothing)
+function getGraphBlobEntries(
+    fg::GraphsDFG,
+    filt::Union{Nothing, String, Base.Fix2} = nothing,
+)
     entries = collect(values(fg.graphBlobEntries))
-    !isnothing(startwith) && filter!(e -> startswith(string(e.label), startwith), entries)
+    if !isnothing(filt) && isa(filt, String)
+        @warn "String filter is deprecated, use startswith(filt_string) instead"
+        filter!(e -> startswith(string(e.label), filt), entries)
+    elseif !isnothing(filt)
+        filter!(e -> filt(string(e.label)), entries)
+    end
     return entries
 end
 
