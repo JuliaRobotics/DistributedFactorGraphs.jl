@@ -83,9 +83,17 @@ end
 ##==============================================================================
 
 function getBlob(dfg::AbstractDFG, entry::BlobEntry)
-    # cannot use entry.blobstore because the blob can be in any one of the blobstores
     stores = getBlobStores(dfg)
-    for (k, store) in stores
+    storekeys = collect(keys(stores))
+    # first check the saved blobstore and then fall back to the rest
+    fidx = findfirst(==(entry.blobstore), storekeys)
+    if !isnothing(fidx)
+        skey = storekeys[fidx]
+        popat!(storekeys, fidx)
+        pushfirst!(storekeys, skey)
+    end
+    for k in storekeys
+        store = stores[k]
         try
             blob = getBlob(store, entry)
             return blob
@@ -180,6 +188,9 @@ struct FolderStore{T} <: AbstractBlobStore{T}
     label::Symbol
     folder::String
 end
+
+#TODO added in v0.25 to avoid a breaking change in deserialization old DFGs, remove.
+StructTypes.StructType(::Type{<:FolderStore}) = StructTypes.OrderedStruct()
 
 function FolderStore(foldername::String; label = :default_folder_store, createfolder = true)
     if createfolder && !isdir(foldername)
