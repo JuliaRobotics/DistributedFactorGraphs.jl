@@ -28,7 +28,7 @@ Base.@kwdef struct BlobEntry
     """ Context from which a BlobEntry=>Blob was first created. E.g. agent|graph|varlabel. """
     origin::String = ""
     """ number of bytes in blob as a string"""
-    size::Union{String, Nothing} = "" #TODO remove union, use "" as nothing
+    size::Union{String, Nothing} = "-1" #TODO remove union -> size::String = "-1"
     """ Additional information that can help a different user of the Blob. """
     description::String = ""
     """ MIME description describing the format of binary data in the `Blob`, e.g. 'image/png' or 'application/json; _type=CameraModel'. """

@@ -158,7 +158,7 @@ function FactorDFG(
         nstime = string(nstime),
         fnctype,
         solvable,
-        data = base64encode(JSON3.write(factordata)),
+        data = JSON3.write(factordata),
         metadata = base64encode(JSON3.write(metadata)),
     )
 
