@@ -18,8 +18,9 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.10'
-          - 'nightly'
+          - 'lts' # long term support
+          - '1'   # stable
+          # - 'pre' # pre-release
         os:
           - ubuntu-latest
         arch:
@@ -29,7 +30,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Setup Julia
-        uses: julia-actions/setup-julia@v1
+        uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
@@ -57,8 +58,6 @@ jobs:
       - name: Run tests
         env:
           IIF_TEST: true
-          DO_CGDFG_TESTS: false
-          DFG_USE_CGDFG: false
         uses: julia-actions/julia-runtest@latest
         continue-on-error: ${{ matrix.version == 'nightly' }}
       
@@ -80,9 +79,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Setup julia
-        uses: julia-actions/setup-julia@v1
+        uses: julia-actions/setup-julia@v2
         with:
-          version: '1.10'
+          version: 'lts'
           arch: x64
 
       - name: Build Docs
