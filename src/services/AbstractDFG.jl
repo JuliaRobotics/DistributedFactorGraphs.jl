@@ -429,7 +429,6 @@ function getVariables(
     regexFilter::Union{Nothing, Regex} = nothing;
     tags::Vector{Symbol} = Symbol[],
     solvable::Int = 0,
-    detail = nothing,
 ) where {G <: AbstractDFG}
     return error("getVariables not implemented for $(typeof(dfg))")
 end

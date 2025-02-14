@@ -197,7 +197,6 @@ function getVariables(
     tags::Vector{Symbol} = Symbol[],
     solvable::Int = 0,
     solvableFilter::Union{Nothing, Base.Fix2} = nothing,
-    detail = nothing,
 )
 
     # variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa VariableCompute, vertices(dfg.g)))
