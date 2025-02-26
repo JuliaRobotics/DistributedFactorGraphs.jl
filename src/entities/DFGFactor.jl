@@ -47,6 +47,7 @@ Base.@kwdef mutable struct GenericFunctionNodeData{
     nullhypo::Float64 = 0.0
     solveInProgress::Int = 0
     inflation::Float64 = 0.0
+    # _type 
 end
 
 # TODO should we move non FactorOperationalMemory to FactorCompute: 
@@ -99,12 +100,26 @@ Base.@kwdef struct FactorDFG <: AbstractDFGFactor
     _variableOrderSymbols::Vector{Symbol}
     timestamp::ZonedDateTime
     nstime::String
-    fnctype::String
+    fnctype::String # TBD future deprecation?
     solvable::Int
-    data::String
+    data::String # -> JSONObject? + {_type: ,...}
     metadata::String
     _version::String = string(_getDFGVersion())
+    # _type = "DistributedFactorGraphs.FactorDFG" // anybody can try JSON3.write(facdfg)
+
     # blobEntries::Vector{BlobEntry}#TODO should factor have blob entries?
+
+    ## Future
+    # [delete .data/
+    # fnctype::String -> (observFnc_type::String + (observFnc::T + JSON {onser->_type:"RoME.Pose3Pose3",}))
+    # eliminated::Bool = false
+    # potentialused::Bool = false
+    # edgeIDs::Vector{Int} = Int[]
+    # multihypo::Vector{Float64} = Float64[] # TODO re-evaluate after refactoring w #477
+    # certainhypo::Vector{Int} = Int[]
+    # nullhypo::Float64 = 0.0
+    # solveInProgress::Int = 0
+    # inflation::Float64 = 0.0
 end
 #TODO type not in DFG FactorDFG, should it be?
 # _type::String
