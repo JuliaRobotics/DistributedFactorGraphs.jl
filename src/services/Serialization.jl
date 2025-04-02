@@ -407,7 +407,6 @@ function unpackFactor(dfg::AbstractDFG, factor::FactorDFG; skipVersionCheck::Boo
     else
         computeMem = Ref{FactorOperationalMemory}()
     end
-    
     return FactorCompute(
         factor.label,
         factor.timestamp,
@@ -426,7 +425,7 @@ end
 
 function unpackObservation(factor::FactorDFG)
     #FIXME completely refactor to not need getTypeFromSerializationModule and just use StructTypes
-    observpacked = getObservation(factor)        
+    observpacked = getObservation(factor)
     #TODO change to unpack: observ = unpack(observpacked)        
     packtype = DFG.getTypeFromSerializationModule("Packed" * factor.fnctype)
     return convert(convertStructType(packtype), observpacked)

@@ -60,7 +60,6 @@ end
     inflation::Float64 = 0.0
 end
 
-
 # TODO should we move non FactorOperationalMemory to FactorCompute: 
 # fnc, multihypo, nullhypo, inflation ?
 # that way we split solverData <: FactorOperationalMemory and constants
@@ -179,7 +178,6 @@ function FactorDFG(
     )
 end
 
-
 FactorDFG(f::FactorDFG) = f
 
 # TODO consolidate to just one type
@@ -285,7 +283,6 @@ Base.@kwdef struct FactorCompute{FT <: AbstractFactor, N} <: AbstractDFGFactor
     observation::FT
     state::FactorState
     computeMem::Base.RefValue{<:FactorOperationalMemory} #TODO easy of use vs. performance as container is abstract in any case.
-
 end
 
 ##------------------------------------------------------------------------------
@@ -343,9 +340,7 @@ function FactorCompute(
     id::Union{UUID, Nothing} = nothing,
     smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
 )
-    
     observation = getFactorType(solverData)
-    
     state = FactorState(
         solverData.eliminated,
         solverData.potentialused,
