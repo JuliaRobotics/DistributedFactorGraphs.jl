@@ -92,7 +92,7 @@ macro defFactorType(structname, factortype, manifold)
             end
 
             # user manifold must be a <:Manifold
-            @assert ($manifold isa AbstractManifold) "@defVariable of " *
+            @assert ($manifold isa AbstractManifold) "@defFactorType of " *
                                                      string($structname) *
                                                      " requires that the " *
                                                      string($manifold) *
