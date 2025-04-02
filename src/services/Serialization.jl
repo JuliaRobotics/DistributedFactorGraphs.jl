@@ -273,7 +273,7 @@ function packFactor(f::FactorCompute)
     return FactorDFG(;
         id = f.id,
         label = f.label,
-        tags = collect(f.tags),
+        tags = f.tags,
         _variableOrderSymbols = f._variableOrderSymbols,
         timestamp = f.timestamp,
         nstime = string(f.nstime.value),
@@ -283,6 +283,8 @@ function packFactor(f::FactorCompute)
         # Pack the node data
         data = JSON3.write(_packSolverData(f, fnctype)),
         _version = string(_getDFGVersion()),
+        state = f.state,
+        observJSON = JSON3.write(packObservation(f)),
     )
     return props
 end
@@ -378,10 +380,12 @@ function unpackFactor(dfg::AbstractDFG, factor::FactorDFG; skipVersionCheck::Boo
     @debug "DECODING factor type = '$(factor.fnctype)' for factor '$(factor.label)'"
     !skipVersionCheck && _versionCheck(factor)
 
-    fullFactorData = nothing
+    local fullFactorData
+    local observation
     try
         if factor.data[1] == '{'
             packedFnc = fncStringToData(factor.fnctype, factor.data)
+            observation = unpackObservation(factor)
         else
             packedFnc = fncStringToData(factor.fnctype, String(base64decode(factor.data)))
         end
@@ -398,6 +402,12 @@ function unpackFactor(dfg::AbstractDFG, factor::FactorDFG; skipVersionCheck::Boo
 
     metadata = JSON3.read(base64decode(factor.metadata), Dict{Symbol, DFG.SmallDataTypes})
 
+    if fullFactorData.fnc isa FactorOperationalMemory
+        computeMem = Ref(fullFactorData.fnc)
+    else
+        computeMem = Ref{FactorOperationalMemory}()
+    end
+    
     return FactorCompute(
         factor.label,
         factor.timestamp,
@@ -408,6 +418,52 @@ function unpackFactor(dfg::AbstractDFG, factor::FactorDFG; skipVersionCheck::Boo
         Tuple(factor._variableOrderSymbols);
         id = factor.id,
         smallData = metadata,
+        state = factor.state,
+        observation,
+        computeMem,
+    )
+end
+
+function unpackObservation(factor::FactorDFG)
+    #FIXME completely refactor to not need getTypeFromSerializationModule and just use StructTypes
+    observpacked = getObservation(factor)        
+    #TODO change to unpack: observ = unpack(observpacked)        
+    packtype = DFG.getTypeFromSerializationModule("Packed" * factor.fnctype)
+    return convert(convertStructType(packtype), observpacked)
+end
+
+packObservation(f::FactorCompute) = packObservation(getObservation(f))
+function packObservation(observ::AbstractFactor)
+    packtype = convertPackedType(observ)
+    return convert(packtype, observ)
+end
+
+function unpackFactor(factor::FactorDFG; skipVersionCheck::Bool = false)
+    #
+    @debug "DECODING factor type = '$(factor.fnctype)' for factor '$(factor.label)'"
+    !skipVersionCheck && _versionCheck(factor)
+
+    local observation
+    try
+        observation = unpackObservation(factor)
+    catch
+        @error "Error while unpacking '$(factor.label)' as '$(factor.fnctype)', please check the unpacking/packing converters for this factor"
+        rethrow()
+    end
+
+    return FactorCompute(
+        factor.id,
+        factor.label,
+        factor.tags,
+        Tuple(factor._variableOrderSymbols),
+        factor.timestamp,
+        Nanosecond(factor.nstime),
+        Ref{GenericFunctionNodeData}(),
+        Ref(factor.solvable),
+        getMetadata(factor),
+        observation,
+        factor.state,
+        Ref{FactorOperationalMemory}(),
     )
 end
 

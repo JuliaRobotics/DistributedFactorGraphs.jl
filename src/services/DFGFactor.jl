@@ -2,6 +2,10 @@
 ## Accessors
 ##==============================================================================
 
+function getMetadata(f::FactorDFG)
+    return JSON3.read(base64decode(f.metadata), Dict{Symbol, SmallDataTypes})
+end
+
 ##==============================================================================
 ## GenericFunctionNodeData
 ##==============================================================================
@@ -32,6 +36,14 @@ getFactorType(data::GenericFunctionNodeData) = data.fnc.usrfnc!
 getFactorType(fct::FactorCompute) = getFactorType(getSolverData(fct))
 getFactorType(f::FactorDFG) = getTypeFromSerializationModule(f.fnctype)() # TODO find a better way to do this that does not rely on empty constructor
 getFactorType(dfg::AbstractDFG, lbl::Symbol) = getFactorType(getFactor(dfg, lbl))
+
+getState(f::AbstractDFGFactor) = f.state
+getObservation(f::FactorCompute) = f.observation
+function getObservation(f::FactorDFG)
+    #FIXME completely refactor to not need getTypeFromSerializationModule and just use StructTypes
+    packtype = DFG.getTypeFromSerializationModule("Packed" * f.fnctype)
+    return packtype(; JSON3.read(f.observJSON)...)
+end
 
 """
     $SIGNATURES

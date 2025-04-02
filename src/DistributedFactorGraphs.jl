@@ -18,6 +18,7 @@ using Base
 using Base64
 using DocStringExtensions
 using Dates
+using Random
 using TimeZones
 using Distributions
 using Reexport
