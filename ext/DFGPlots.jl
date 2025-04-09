@@ -23,9 +23,9 @@ end
 
 function DFGPlotProps()
     return DFGPlotProps(
-        (var = colorant"seagreen", fac = colorant"cyan3"),
-        (var = 30.0, fac = 10.0),
-        (var = :box, fac = :elipse),
+        (var = colorant"lightgreen", fac = colorant"cyan3"),
+        (var = 40.0, fac = 20.0),
+        (var = :circle, fac = :rect),
         GraphMakie.Stress(),
         true,
     )
@@ -42,19 +42,22 @@ function plotDFG(dfg::GraphsDFG; p::DFGPlotProps = DFGPlotProps(), interactive::
         ilabels = nothing
     end
 
-    nodefillc = [isVar ? p.nodefillc.var : p.nodefillc.fac for isVar in nodetypes]
+    node_color = [isVar ? p.nodefillc.var : p.nodefillc.fac for isVar in nodetypes]
+    marker = [isVar ? p.shape.var : p.shape.fac for isVar in nodetypes]
 
     figaxpl = graphplot(
         dfg.g;
         ilabels,
         layout = p.layout,
         node_size = nodesize,
-        # nodesize = nodesize,
-        # nodefillc = nodefillc,
-        # layout = p.layout,
+        node_color,
+        node_attr = (marker = marker,),
     )
 
     (f, ax, p) = figaxpl
+
+    label_text = GraphMakie.text!(ax, 0, 0; text="", font = :bold, fontsize=30, glowcolor=(:white, 1), glowwidth=3)
+
     ax.aspect = GraphMakie.DataAspect()
     if interactive
         function node_drag_action(state, idx, event, axis)
@@ -67,6 +70,15 @@ function plotDFG(dfg::GraphsDFG; p::DFGPlotProps = DFGPlotProps(), interactive::
         ndrag = NodeDragHandler(node_drag_action)
         GraphMakie.deregister_interaction!(ax, :rectanglezoom)
         GraphMakie.register_interaction!(ax, :ndrag, ndrag)
+
+        function node_hover_action(state, idx, event, axis)
+            label = dfg.g.labels[idx]
+            label_text.text[] = state ? string(label) : ""
+            label_text.transformation.translation[] = (event.data..., 0)
+        end
+        nhover = NodeHoverHandler(node_hover_action)
+        GraphMakie.register_interaction!(ax, :nhover, nhover)
+
     end
     return figaxpl
 end 
