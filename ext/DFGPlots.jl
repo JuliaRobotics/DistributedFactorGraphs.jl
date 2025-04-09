@@ -17,7 +17,7 @@ struct DFGPlotProps
     nodesize::NamedTuple{(:var, :fac), Tuple{Float64, Float64}}
     shape::NamedTuple{(:var, :fac), Tuple{Symbol, Symbol}} #not upported yet
 
-    layout #FIXME add layout type
+    layout::Any #FIXME add layout type
     drawlabels::Bool
 end
 
@@ -56,15 +56,23 @@ function plotDFG(dfg::GraphsDFG; p::DFGPlotProps = DFGPlotProps(), interactive::
 
     (f, ax, p) = figaxpl
 
-    label_text = GraphMakie.text!(ax, 0, 0; text="", font = :bold, fontsize=30, glowcolor=(:white, 1), glowwidth=3)
+    label_text = GraphMakie.text!(
+        ax,
+        0,
+        0;
+        text = "",
+        font = :bold,
+        fontsize = 30,
+        glowcolor = (:white, 1),
+        glowwidth = 3,
+    )
 
     ax.aspect = GraphMakie.DataAspect()
     if interactive
         function node_drag_action(state, idx, event, axis)
             p[:node_pos][][idx] = event.data
-            p[:node_pos][] = p[:node_pos][]
+            return p[:node_pos][] = p[:node_pos][]
         end
-        
         GraphMakie.hidedecorations!(ax)
         GraphMakie.hidespines!(ax)
         ndrag = NodeDragHandler(node_drag_action)
@@ -74,14 +82,13 @@ function plotDFG(dfg::GraphsDFG; p::DFGPlotProps = DFGPlotProps(), interactive::
         function node_hover_action(state, idx, event, axis)
             label = dfg.g.labels[idx]
             label_text.text[] = state ? string(label) : ""
-            label_text.transformation.translation[] = (event.data..., 0)
+            return label_text.transformation.translation[] = (event.data..., 0)
         end
         nhover = NodeHoverHandler(node_hover_action)
         GraphMakie.register_interaction!(ax, :nhover, nhover)
-
     end
     return figaxpl
-end 
+end
 
 function plotDFG(dfg::AbstractDFG, p::DFGPlotProps = DFGPlotProps())
     # TODO implement convert functions
