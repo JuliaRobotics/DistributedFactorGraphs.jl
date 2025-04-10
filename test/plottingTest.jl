@@ -1,4 +1,4 @@
-using GraphPlot
+using GraphMakie
 using DistributedFactorGraphs
 # using DistributedFactorGraphs.DFGPlots
 using Test
@@ -27,7 +27,7 @@ map(
 
 ##
 
-# Using GraphPlot plotting
+# Using GraphMakie plotting
 plot = plotDFG(dfg)
 @test plot !== nothing
 

@@ -1,20 +1,20 @@
 # Drawing Graphs
 
-Graphs can be visualized by using either `GraphPlot` or rendering to .dot files (which can be viewed using xdot).
+Graphs can be visualized by using either `GraphMakie` or rendering to .dot files (which can be viewed using xdot).
 
-## GraphPlot  
+## GraphMakie  
 
-`GraphPlot` plotting is available if `GraphPlot` is imported before DFG is imported. Install `GraphPlot` using the following command:
+`GraphMakie` plotting is available if `GraphMakie` is imported before DFG is imported. Install `GraphMakie` using the following command:
 
 ```julia
 using Pkg
-Pkg.add("GraphPlot")
+Pkg.add("GraphMakie")
 ```
 
-Then bring `GraphPlot` in before DFG:
+Then bring `GraphMakie` in before DFG:
 
 ```julia
-using GraphPlot
+using GraphMakie
 using DistributedFactorGraphs
 ```
 
@@ -38,7 +38,7 @@ f1 = addFactor!(dfg, [:l0; :x1], LinearRelative(Normal(-10.0,5.0)), solvable=1)
 plotDFG(dfg)
 ```
 
-### Rendering GraphPlot to PDF
+### Rendering GraphMakie to PDF
 
 The graph can be rendered to PDF, SVG or JPG in the following way by including compose:
 
@@ -57,12 +57,12 @@ FIXME show graph.svg
 
 ### More Information
 
-More information at [GraphPlot.jl](https://github.com/JuliaGraphs/GraphPlot.jl)
+More information at [GraphMakie.jl](https://github.com/MakieOrg/GraphMakie.jl)
 
 ## Dot Files
 
 Dot files are a standard format for visualizing graphs and applications such as
-xdot are available to view the files. Dot plotting does not require `GraphPlot`
+xdot are available to view the files. Dot plotting does not require `GraphMakie`
 and can be drawn by either:
 - Calling [`toDot`](@ref) on any graph to produce a string of the graph
 - Calling [`toDotFile`](@ref) on any graph to save it directly to a dotfile

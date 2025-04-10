@@ -44,7 +44,7 @@ Modules = [DistributedFactorGraphs]
 Pages = ["entities/DFGFactor.jl"]
 ```
 
-## DFG Plots [GraphPlot.jl]
+## DFG Plots [GraphMakie.jl]
 
 ```@autodocs
 Modules = [DistributedFactorGraphs]
