@@ -1,5 +1,5 @@
 using Test
-using GraphPlot # For plotting tests
+using GraphMakie # For plotting tests
 using DistributedFactorGraphs
 using Pkg
 using Dates

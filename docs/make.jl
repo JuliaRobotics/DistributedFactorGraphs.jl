@@ -1,5 +1,5 @@
 using Documenter
-using GraphPlot
+using GraphMakie
 using DistributedFactorGraphs
 
 makedocs(;
