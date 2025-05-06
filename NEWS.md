@@ -1,5 +1,8 @@
 Listing news on any major breaking changes in DFG.  For regular changes, see integrated Github.com project milestones for DFG.
 
+# v0.26
+- Graph structure plotting now uses GraphMakie.jl instead of GraphPlot.jl. Update by replacing `using GraphPlot` with `using GraphMakie`.
+
 # v0.25
 - Deprecated nouns:
     SessionBlobEntry -> GraphBlobEntry

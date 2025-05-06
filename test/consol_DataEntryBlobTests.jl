@@ -1,6 +1,6 @@
 if false
     using Test
-    using GraphPlot
+    using GraphMakie
     using DistributedFactorGraphs
     using Pkg
     using Dates
