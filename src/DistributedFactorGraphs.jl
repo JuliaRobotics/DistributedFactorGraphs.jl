@@ -110,8 +110,8 @@ export exists,
     addFactors!,
     getVariable,
     getFactor,
-    updateVariable!,
-    updateFactor!,
+    mergeVariable!,
+    mergeFactor!,
     deleteVariable!,
     deleteFactor!,
     listVariables,
@@ -145,7 +145,7 @@ export getSolvable, setSolvable!, isSolvable
 export getVariableLabelNumber
 
 # accessors
-export getLabel, getTimestamp, setTimestamp, setTimestamp!, getTags, setTags!
+export getLabel, getTimestamp, setTimestamp, getTags, setTags!
 
 export getAgentLabel, getGraphLabel
 

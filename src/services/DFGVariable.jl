@@ -365,7 +365,7 @@ end
 Set the timestamp of a VariableCompute object returning a new VariableCompute.
 Note:
 Since the `timestamp` field is not mutable `setTimestamp` returns a new variable with the updated timestamp (note the absence of `!`).
-Use [`updateVariable!`](@ref) on the returened variable to update it in the factor graph if needed. Alternatively use [`setTimestamp!`](@ref).
+Use [`mergeVariable!`](@ref) on the returened variable to update it in the factor graph if needed. Alternatively use [`setTimestamp!`](@ref).
 See issue #315.
 """
 function setTimestamp(v::VariableCompute, ts::ZonedDateTime; verbose::Bool = true)
@@ -541,7 +541,7 @@ function addMetadata!(dfg::AbstractDFG, label::Symbol, pair::Pair{Symbol, <:Smal
     v = getVariable(dfg, label)
     haskey(v.smallData, pair.first) && error("$(pair.first) already exists.")
     push!(v.smallData, pair)
-    updateVariable!(dfg, v)
+    mergeVariable!(dfg, v)
     return v.smallData #or pair TODO
 end
 
@@ -560,7 +560,7 @@ function updateMetadata!(
         !haskey(v.smallData, pair.first) &&
         @warn("$(pair.first) does not exist, adding.")
     push!(v.smallData, pair)
-    updateVariable!(dfg, v)
+    mergeVariable!(dfg, v)
     return v.smallData #or pair TODO
 end
 
@@ -571,7 +571,7 @@ Delete a Metadata entry at `key` for variable `label` in `dfg`
 function deleteMetadata!(dfg::AbstractDFG, label::Symbol, key::Symbol)
     v = getVariable(dfg, label)
     pop!(v.smallData, key)
-    updateVariable!(dfg, v)
+    mergeVariable!(dfg, v)
     return 1
 end
 
@@ -591,7 +591,7 @@ Empty all Metadata from variable `label` in `dfg`
 function emptyMetadata!(dfg::AbstractDFG, label::Symbol)
     v = getVariable(dfg, label)
     empty!(v.smallData)
-    updateVariable!(dfg, v)
+    mergeVariable!(dfg, v)
     return v.smallData #or pair TODO
 end
 

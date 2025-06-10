@@ -213,7 +213,7 @@ function updateGraphMetadata!(dfg::AbstractDFG, pair::Pair{Symbol, String})
     return push!(dfg.graphMetadata, pair)
 end
 
-function deleteAgentMetadata!(dfg::AbstractDFG, key::Symbol) 
+function deleteAgentMetadata!(dfg::AbstractDFG, key::Symbol)
     pop!(dfg.agent.metadata, key)
     return 1
 end
@@ -392,21 +392,21 @@ end
 
 """
     $(SIGNATURES)
-Update a complete VariableCompute in the DFG.
+Merge a Variable to the DFG. Overwrites the existing variable if it exists or adds it if it does not.
 """
-function updateVariable!(
+function mergeVariable!(
     dfg::G,
     variable::V,
 ) where {G <: AbstractDFG, V <: AbstractDFGVariable}
-    return error("updateVariable! not implemented for $(typeof(dfg))")
+    return error("mergeVariable! not implemented for $(typeof(dfg))")
 end
 
 """
     $(SIGNATURES)
-Update a complete FactorCompute in the DFG.
+Merge a Factor to the DFG. Overwrites the existing factor if it exists or adds it if it does not.
 """
-function updateFactor!(dfg::G, factor::F) where {G <: AbstractDFG, F <: AbstractDFGFactor}
-    return error("updateFactor! not implemented for $(typeof(dfg))")
+function mergeFactor!(dfg::G, factor::F) where {G <: AbstractDFG, F <: AbstractDFGFactor}
+    return error("mergeFactor! not implemented for $(typeof(dfg))")
 end
 
 """
@@ -1097,7 +1097,7 @@ function copyGraph!(
         if !exists(destDFG, variable)
             addVariable!(destDFG, variableCopy)
         elseif overwriteDest
-            updateVariable!(destDFG, variableCopy)
+            mergeVariable!(destDFG, variableCopy)
         else
             error("Variable $(variable.label) already exists in destination graph!")
         end
@@ -1119,7 +1119,7 @@ function copyGraph!(
             if !exists(destDFG, factor)
                 addFactor!(destDFG, factorCopy)
             elseif overwriteDest
-                updateFactor!(destDFG, factorCopy)
+                mergeFactor!(destDFG, factorCopy)
             else
                 error("Factor $(factor.label) already exists in destination graph!")
             end
@@ -1458,7 +1458,7 @@ function mergeVariableData!(dfg::AbstractDFG, sourceVariable::AbstractDFGVariabl
 
     #update if its not a InMemoryDFGTypes, otherwise it was a reference
     # if satelite nodes are used it can be updated separately
-    # !(isa(dfg, InMemoryDFGTypes)) && updateVariable!(dfg, var)
+    # !(isa(dfg, InMemoryDFGTypes)) && mergeVariable!(dfg, var)
 
     return var
 end

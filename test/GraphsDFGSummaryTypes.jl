@@ -121,14 +121,14 @@ end
         testTimestamp = now(localzone())
         v1ts = setTimestamp(v1, testTimestamp)
         @test getTimestamp(v1ts) == testTimestamp
-        #follow with updateVariable!(fg, v1ts)
-        # setTimestamp!(v1, testTimestamp) not implemented, we can do an setTimestamp() updateVariable!() for a setTimestamp!(dfg, v1, testTimestamp)
-        @test_throws MethodError setTimestamp!(v1, testTimestamp)
+        #follow with mergeVariable!(fg, v1ts)
+        # setTimestamp!(v1, testTimestamp) not implemented, we can do an setTimestamp() mergeVariable!() for a setTimestamp!(dfg, v1, testTimestamp)
+        @test_throws MethodError DFG.setTimestamp!(v1, testTimestamp)
 
         f1ts = setTimestamp(f1, testTimestamp)
         @test !(f1ts === f1)
         @test getTimestamp(f1ts) == testTimestamp
-        @test_throws MethodError setTimestamp!(v1, testTimestamp)
+        @test_throws MethodError DFG.setTimestamp!(v1, testTimestamp)
     end
 end
 

@@ -3,8 +3,19 @@
 ##=================================================================================
 
 @deprecate getNeighborhood(args...; kwargs...) listNeighborhood(args...; kwargs...)
-@deprecate addBlob!(store::AbstractBlobStore, blobId::UUID, data, ::String) addBlob!(store, blobId, data)
-@deprecate addBlob!(store::AbstractBlobStore{T}, data::T, ::String) where {T} addBlob!(store, uuid4(), data)
+@deprecate addBlob!(store::AbstractBlobStore, blobId::UUID, data, ::String) addBlob!(
+    store,
+    blobId,
+    data,
+)
+@deprecate addBlob!(store::AbstractBlobStore{T}, data::T, ::String) where {T} addBlob!(
+    store,
+    uuid4(),
+    data,
+)
+
+@deprecate updateVariable!(args...) mergeVariable!(args...)
+@deprecate updateFactor!(args...) mergeFactor!(args...)
 
 ## ================================================================================
 ## Deprecated in v0.25
@@ -69,4 +80,3 @@ DFGSummary(args) = error("DFGSummary is deprecated")
 )
 
 @deprecate lsfWho(dfg::AbstractDFG, type::Symbol) lsf(dfg, getfield(Main, type))
-
