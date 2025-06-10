@@ -24,7 +24,7 @@ end
 function DFGPlotProps()
     return DFGPlotProps(
         (var = colorant"lightgreen", fac = colorant"cyan3"),
-        (var = 40.0, fac = 20.0),
+        (var = 50.0, fac = 20.0),
         (var = :circle, fac = :rect),
         GraphMakie.Stress(),
         true,

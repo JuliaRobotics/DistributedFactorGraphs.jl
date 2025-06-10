@@ -206,7 +206,8 @@ Notes:
 - users responsibility to delete data in db before deleting entry
 """
 function deleteBlobEntry!(var::AbstractDFGVariable, key::Symbol)
-    return pop!(var.dataDict, key)
+    pop!(var.dataDict, key)
+    return 1
 end
 
 function deleteBlobEntry!(var::VariableDFG, key::Symbol)
@@ -217,7 +218,8 @@ function deleteBlobEntry!(var::VariableDFG, key::Symbol)
             ),
         )
     end
-    return deleteat!(var.blobEntries, findfirst(x -> x.label == key, var.blobEntries))
+    deleteat!(var.blobEntries, findfirst(x -> x.label == key, var.blobEntries))
+    return 1
 end
 
 function deleteBlobEntry!(dfg::AbstractDFG, label::Symbol, key::Symbol)

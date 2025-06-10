@@ -1,4 +1,12 @@
 ## ================================================================================
+## Deprecated in v0.27
+##=================================================================================
+
+@deprecate getNeighborhood(args...; kwargs...) listNeighborhood(args...; kwargs...)
+@deprecate addBlob!(store::AbstractBlobStore, blobId::UUID, data, ::String) addBlob!(store, blobId, data)
+@deprecate addBlob!(store::AbstractBlobStore{T}, data::T, ::String) where {T} addBlob!(store, uuid4(), data)
+
+## ================================================================================
 ## Deprecated in v0.25
 ##=================================================================================
 @deprecate getSessionBlobEntry(args...) getGraphBlobEntry(args...)
@@ -62,8 +70,3 @@ DFGSummary(args) = error("DFGSummary is deprecated")
 
 @deprecate lsfWho(dfg::AbstractDFG, type::Symbol) lsf(dfg, getfield(Main, type))
 
-## ================================================================================
-## Deprecated in v0.23
-##=================================================================================
-#NOTE free up getNeighbors to return the variables or factors
-@deprecate getNeighbors(args...; kwargs...) listNeighbors(args...; kwargs...)

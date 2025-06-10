@@ -276,9 +276,10 @@ function updateData!(
 end
 
 function deleteData!(dfg::AbstractDFG, vLbl::Symbol, bLbl::Symbol)
-    de = deleteBlobEntry!(dfg, vLbl, bLbl)
-    db = deleteBlob!(dfg, de)
-    return de => db
+    de = getBlobEntry(dfg, vLbl, bLbl)
+    deleteBlobEntry!(dfg, vLbl, bLbl)
+    deleteBlob!(dfg, de)
+    return 2
 end
 
 function deleteData!(
@@ -296,7 +297,8 @@ function deleteData!(
     vLbl::Symbol,
     bLbl::Symbol,
 )
-    de = deleteBlobEntry!(dfg, vLbl, bLbl)
-    db = deleteBlob!(blobstore, de)
-    return de => db
+    de = getBlobEntry(dfg, vLbl, bLbl)
+    deleteBlobEntry!(dfg, vLbl, bLbl)
+    deleteBlob!(blobstore, de)
+    return 2
 end

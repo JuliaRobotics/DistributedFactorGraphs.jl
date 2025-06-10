@@ -79,17 +79,11 @@ end
     @test updateFactor!(dfg2, f2) == f2
     @test_throws ErrorException addFactor!(dfg2, f2)
 
-    dv3, dv3facs = deleteVariable!(dfg2, v3)
-    #TODO write compare if we want to compare complete one, for now just label
-    # @test dv3 == v3
-    @test dv3.label == v3.label
+    dv3 = deleteVariable!(dfg2, v3)
+    @test dv3 == 2
     @test_throws ErrorException deleteVariable!(dfg2, v3)
 
     @test issetequal(ls(dfg2), [:a, :b])
-    df2 = dv3facs[1]
-    #TODO write compare if we want to compare complete one, for now just label
-    # @test df2 == f2
-    @test df2.label == f2.label
     @test_throws ErrorException deleteFactor!(dfg2, f2)
 
     @test lsf(dfg2) == [:abf1]
@@ -290,10 +284,10 @@ end
     @test listBlobEntries(dfg, :b) == Symbol[:key2]
 
     #delete
-    @test deleteBlobEntry!(v1, :key1) == de1
+    @test deleteBlobEntry!(v1, :key1) == 1
     @test listBlobEntries(v1) == Symbol[:key2]
     #delete from ddfg
-    @test deleteBlobEntry!(dfg, :a, :key2) == de2_update
+    @test deleteBlobEntry!(dfg, :a, :key2) == 1
     @test listBlobEntries(v1) == Symbol[]
 end
 
