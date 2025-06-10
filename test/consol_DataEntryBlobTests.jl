@@ -105,11 +105,11 @@ gde, gdb = getData(dfg, :x1, :random)
 # @test incrDataLabelSuffix(dfg,:x1,:another) == :another_2 # TODO exand support for Regex likely search on labels
 # @test incrDataLabelSuffix(dfg,:x1,"random") == "random_1" # TODO expand support for label::String
 
-dde, ddb = deleteData!(dfg, :x1, :random)
-_, _ = deleteData!(dfg, :x1, :another_1)
+@test deleteData!(dfg, :x1, :random) == 2
+@test deleteData!(dfg, :x1, :another_1) == 2
 
-@test ade == gde == dde
-@test dataset1 == gdb == ddb
+@test ade == gde
+@test dataset1 == gdb
 
 ade2 = addData!(dfg, :x2, deepcopy(ade), dataset1)
 # ade3,adb3 = updateBlob!(dfg, :x2, deepcopy(ade), dataset1)
@@ -135,10 +135,10 @@ addBlobStore!(dfg, ds)
 
 ade = addData!(dfg, :default_inmemory_store, :x1, :random, dataset1)
 gde, gdb = getData(dfg, :x1, :random)
-dde, ddb = deleteData!(dfg, :x1, :random)
+@test deleteData!(dfg, :x1, :random) == 2
 
-@test ade == gde == dde
-@test dataset1 == gdb == ddb
+@test ade == gde
+@test dataset1 == gdb
 
 ade2 = addData!(dfg, :x2, deepcopy(ade), dataset1)
 # ade3,adb3 = updateBlob!(dfg, :x2, deepcopy(ade), dataset1)

@@ -233,7 +233,7 @@ function GraphAgentMetadata!(fg::AbstractDFG)
     #TODO
     @test_broken addAgentMetadata!
     @test DFG.updateAgentMetadata!(fg, :b => "2") == getAgentMetadata(fg)
-    @test getAgentMetadata(fg, :b) == DFG.deleteAgentMetadata!(fg, :b)
+    @test DFG.deleteAgentMetadata!(fg, :b) == 1
     @test DFG.emptyAgentMetadata!(fg) == Dict{Symbol, String}()
 
     # SessionData
@@ -241,7 +241,7 @@ function GraphAgentMetadata!(fg::AbstractDFG)
     #TODO
     @test_broken addGraphMetadata!
     @test DFG.updateGraphMetadata!(fg, :b => "3") == getGraphMetadata(fg)
-    @test getGraphMetadata(fg, :b) == DFG.deleteGraphMetadata!(fg, :b)
+    @test DFG.deleteGraphMetadata!(fg, :b) == 1
     @test DFG.emptyGraphMetadata!(fg) == Dict{Symbol, String}()
 
     # TODO Set-like if we want eg. list, merge, etc
@@ -528,24 +528,22 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     #deletions
     delvarCompare = getVariable(fg, :c)
     delfacCompare = getFactor(fg, :bcf1)
-    delvar, delfacs = deleteVariable!(fg, v3)
-    @test delvarCompare == delvar
-    @test delfacCompare == delfacs[1]
+    ndel = deleteVariable!(fg, v3)
+    @test ndel == 2
     @test_throws ErrorException deleteVariable!(fg, v3)
     @test setdiff(ls(fg), [:a, :b]) == []
 
     @test addVariable!(fg, v3) === v3
     @test addFactor!(fg, f2) === f2
 
-    @test getFactor(fg, :bcf1) == deleteFactor!(fg, f2)
+    @test deleteFactor!(fg, f2) == 1
     @test_throws ErrorException deleteFactor!(fg, f2)
     @test lsf(fg) == [:abf1]
 
     delvarCompare = getVariable(fg, :c)
     delfacCompare = []
-    delvar, delfacs = deleteVariable!(fg, v3)
-    @test delvarCompare == delvar
-    @test delfacCompare == []
+    ndel = deleteVariable!(fg, v3)
+    @test ndel == 1
 
     @test getVariable(fg, :a) == v1
     @test getVariable(fg, :a, :default) == v1
@@ -668,7 +666,7 @@ function PPETestBlock!(fg, v1)
     @test getPPESuggested(fg, :a, :default) == ppe.suggested
 
     # Delete it
-    @test deletePPE!(fg, :a, :default) == ppe
+    @test deletePPE!(fg, :a, :default) == 1
 
     @test_throws KeyError getPPE(fg, :a, :default)
     # Update add it
@@ -679,21 +677,21 @@ function PPETestBlock!(fg, v1)
     ) == ppe
     # Update update it
     @test updatePPE!(fg, :a, ppe) == ppe
-    @test deletePPE!(fg, :a, :default) == ppe
+    @test deletePPE!(fg, :a, :default) == 1
 
     # manually add ppe to v1 for tests
     v1.ppeDict[:default] = deepcopy(ppe)
     # Bulk copy PPE's for :x1
     @test updatePPE!(fg, [v1], :default) == nothing
     # Delete it
-    @test deletePPE!(fg, :a, :default) == ppe
+    @test deletePPE!(fg, :a, :default) == 1
 
     # New interface
     @test addPPE!(fg, :a, ppe) == ppe
     # Update update it
     @test updatePPE!(fg, :a, ppe) == ppe
     # Delete it
-    @test deletePPE!(fg, :a, :default) == ppe
+    @test deletePPE!(fg, :a, :default) == 1
 
     #FIXME copied from lower
     # @test @test_deprecated getVariablePPEs(v1) == v1.ppeDict
@@ -709,7 +707,7 @@ function PPETestBlock!(fg, v1)
     @test getPPE(fg, :a, :default) == ppe
 
     # Delete it
-    @test deletePPE!(fg, :a, :default) == ppe
+    @test deletePPE!(fg, :a, :default) == 1
     # Update add it
     updatePPE!(fg, :a, ppe) #, :default)
     # Update update it
@@ -719,7 +717,7 @@ function PPETestBlock!(fg, v1)
     # Bulk copy PPE's for x0 and x1
     updatePPE!(fg, [v1], :default)
     # Delete it
-    @test deletePPE!(fg, :a, :default) == ppe
+    @test deletePPE!(fg, :a, :default) == 1
 
     #TODO DEPRECATE
     # getEstimates
@@ -800,7 +798,7 @@ function VSDTestBlock!(fg, v1)
     @test vndBack == vnd
 
     # Delete it
-    @test deleteVariableSolverData!(fg, :a, :parametric) == vndBack
+    @test deleteVariableSolverData!(fg, :a, :parametric) == 1
     # Update add it
     @test @test_logs (:warn, r"does not exist") updateVariableSolverData!(fg, :a, vnd) ==
                                                 vnd
@@ -832,7 +830,7 @@ function VSDTestBlock!(fg, v1)
     @test getSolverData(getVariable(fg, :a), :parametric).bw != altVnd.bw
 
     # Delete parametric from v1
-    @test deleteVariableSolverData!(fg, :a, :parametric) == vnd
+    @test deleteVariableSolverData!(fg, :a, :parametric) == 1
 
     @test_throws KeyError getVariableSolverData(fg, :a, :parametric)
 
@@ -852,7 +850,7 @@ function VSDTestBlock!(fg, v1)
     vndBack = getVariableSolverData(fg, :a, :parametric)
     @test vndBack == vnd
     # Delete it
-    @test deleteVariableSolverData!(fg, :a, :parametric) == vndBack
+    @test deleteVariableSolverData!(fg, :a, :parametric) == 1
     # Update add it
     updateVariableSolverData!(fg, :a, vnd)
     # Update update it
@@ -860,8 +858,9 @@ function VSDTestBlock!(fg, v1)
     # Bulk copy update x0
     updateVariableSolverData!(fg, [v1], :default)
     # Delete parametric from v1
-    return deleteVariableSolverData!(fg, :a, :parametric)
+    deleteVariableSolverData!(fg, :a, :parametric)
 
+    return nothing
     #TODO
     # mergeVariableSolverData!(...)
 
@@ -901,7 +900,7 @@ function smallDataTestBlock!(fg)
     @test_throws MethodError addMetadata!(fg, :a, :no => [1.0f0])
     @test_throws MethodError addMetadata!(fg, :a, :no => [Nanosecond(3)])
 
-    @test deleteMetadata!(fg, :a, :a) == 3
+    @test deleteMetadata!(fg, :a, :a) == 1
     @test updateMetadata!(fg, :a, :a => 3) == getVariable(fg, :a).smallData
     @test length(listMetadata(fg, :a)) == 9
     emptyMetadata!(fg, :a)
@@ -1010,10 +1009,10 @@ function DataEntriesTestBlock!(fg, v2)
     @test listBlobEntries(fg, :b) == Symbol[:key2]
 
     #delete
-    @test deleteBlobEntry!(v1, de1) == de1
+    @test deleteBlobEntry!(v1, de1) == 1
     @test listBlobEntries(v1) == Symbol[:key2]
     #delete from dfg
-    @test deleteBlobEntry!(fg, :a, :key2) == de2_update
+    @test deleteBlobEntry!(fg, :a, :key2) == 1
     @test listBlobEntries(v1) == Symbol[]
     deleteBlobEntry!(fg, :b, :key2)
 
@@ -1103,10 +1102,10 @@ function blobsStoresTestBlock!(fg)
     @test listBlobEntries(fg, :b) == Symbol[:label2]
 
     #delete
-    @test deleteBlobEntry!(fg, var1.label, de1.label) == de1
+    @test deleteBlobEntry!(fg, var1.label, de1.label) == 1
     @test listBlobEntries(fg, var1.label) == Symbol[:label2]
     #delete from dfg
-    @test deleteBlobEntry!(fg, :a, :label2) == de2_update
+    @test deleteBlobEntry!(fg, :a, :label2) == 1
     var1 = getVariable(fg, :a)
     @test listBlobEntries(var1) == Symbol[]
 
@@ -1119,7 +1118,7 @@ function blobsStoresTestBlock!(fg)
     # Getting
     @test getBlobStore(fg, fs.label) == fs
     # Deleting
-    @test deleteBlobStore!(fg, fs.label) == fs
+    @test deleteBlobStore!(fg, fs.label) == 1
     # Updating
     updateBlobStore!(fg, fs)
     @test listBlobStores(fg) == [fs.label]

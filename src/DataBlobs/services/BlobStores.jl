@@ -128,23 +128,13 @@ end
 # also creates an originId as uuid4
 addBlob!(store::AbstractBlobStore, data) = addBlob!(store, uuid4(), data)
 
-#fallback as not all blobStores use filename
-function addBlob!(store::AbstractBlobStore, blobId::UUID, data, ::String)
-    return addBlob!(store, blobId, data)
-end
-
-function addBlob!(store::AbstractBlobStore{T}, data::T, ::String) where {T}
-    return addBlob!(store, uuid4(), data)
-end
-
 #update
-function updateBlob!(dfg::AbstractDFG, entry::BlobEntry, data::T) where {T}
-    return updateBlob!(getBlobStore(dfg, entry.blobstore), entry, data)
+function updateBlob!(dfg::AbstractDFG, entry::BlobEntry, data)
+    return updateBlob!(getBlobStore(dfg, entry.blobstore), entry.blobId, data)
 end
 
 function updateBlob!(store::AbstractBlobStore, entry::BlobEntry, data)
-    blobId = isnothing(entry.blobId) ? entry.originId : entry.blobId
-    return updateBlob!(store, blobId, data)
+    return updateBlob!(store, entry.blobId, data)
 end
 #delete
 function deleteBlob!(dfg::AbstractDFG, entry::BlobEntry)
@@ -241,10 +231,8 @@ end
 
 function deleteBlob!(store::FolderStore{T}, blobId::UUID) where {T}
     blobfilename = joinpath(store.folder, string(blobId))
-
-    data = getBlob(store, blobId)
     rm(blobfilename)
-    return data
+    return 1
 end
 
 #hasBlob or existsBlob?
@@ -292,7 +280,8 @@ function updateBlob!(store::InMemoryBlobStore{T}, blobId::UUID, data::T) where {
 end
 
 function deleteBlob!(store::InMemoryBlobStore, blobId::UUID)
-    return pop!(store.blobs, blobId)
+    pop!(store.blobs, blobId)
+    return 1
 end
 
 hasBlob(store::InMemoryBlobStore, blobId::UUID) = haskey(store.blobs, blobId)
@@ -430,7 +419,8 @@ function updateBlob!(store::RowBlobStore{T}, blobId::UUID, blob::T) where {T}
 end
 
 function deleteBlob!(store::RowBlobStore, blobId::UUID)
-    return getfield(pop!(store.blobs, blobId), :blob)
+    getfield(pop!(store.blobs, blobId), :blob)
+    return 1
 end
 
 hasBlob(store::RowBlobStore, blobId::UUID) = haskey(store.blobs, blobId)

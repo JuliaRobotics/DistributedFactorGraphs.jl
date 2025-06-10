@@ -570,9 +570,9 @@ Delete a Metadata entry at `key` for variable `label` in `dfg`
 """
 function deleteMetadata!(dfg::AbstractDFG, label::Symbol, key::Symbol)
     v = getVariable(dfg, label)
-    rval = pop!(v.smallData, key)
+    pop!(v.smallData, key)
     updateVariable!(dfg, v)
-    return rval
+    return 1
 end
 
 """
@@ -877,8 +877,8 @@ function deleteVariableSolverData!(
     if !haskey(var.solverDataDict, solveKey)
         throw(KeyError("VariableNodeData '$(solveKey)' does not exist"))
     end
-    vnd = pop!(var.solverDataDict, solveKey)
-    return vnd
+    pop!(var.solverDataDict, solveKey)
+    return 1
 end
 
 """
@@ -1073,8 +1073,8 @@ function deletePPE!(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol = :def
     if !haskey(var.ppeDict, ppekey)
         throw(KeyError("VariableNodeData '$(ppekey)' does not exist"))
     end
-    vnd = pop!(var.ppeDict, ppekey)
-    return vnd
+    pop!(var.ppeDict, ppekey)
+    return 1
 end
 
 """

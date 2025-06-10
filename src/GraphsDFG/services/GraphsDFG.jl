@@ -174,21 +174,18 @@ function deleteVariable!(dfg::GraphsDFG, label::Symbol)#::Tuple{AbstractDFGVaria
 
     deleteNeighbors = true # reserved, orphaned factors are not supported at this time
     if deleteNeighbors
-        neigfacs = map(l -> deleteFactor!(dfg, l), listNeighbors(dfg, label))
+        del_facs = map(l -> deleteFactor!(dfg, l), listNeighbors(dfg, label))
     end
-    variable = dfg.g.variables[label]
     rem_vertex!(dfg.g, dfg.g.labels[label])
-
-    return variable, neigfacs
+    return sum(del_facs) + 1
 end
 
 function deleteFactor!(dfg::GraphsDFG, label::Symbol; suppressGetFactor::Bool = false)
     if !haskey(dfg.g.factors, label)
         error("Factor label '$(label)' does not exist in the factor graph")
     end
-    factor = dfg.g.factors[label]
     rem_vertex!(dfg.g, dfg.g.labels[label])
-    return factor
+    return 1
 end
 
 function getVariables(
@@ -319,7 +316,7 @@ function listNeighbors(dfg::GraphsDFG, label::Symbol; solvable::Int = 0)
     return neighbors_ll::Vector{Symbol}
 end
 
-function getNeighborhood(
+function listNeighborhood(
     dfg::GraphsDFG,
     variableFactorLabels::Vector{Symbol},
     distance::Int;

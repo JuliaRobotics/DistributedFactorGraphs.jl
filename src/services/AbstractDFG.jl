@@ -213,8 +213,15 @@ function updateGraphMetadata!(dfg::AbstractDFG, pair::Pair{Symbol, String})
     return push!(dfg.graphMetadata, pair)
 end
 
-deleteAgentMetadata!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.agent.metadata, key)
-deleteGraphMetadata!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.graphMetadata, key)
+function deleteAgentMetadata!(dfg::AbstractDFG, key::Symbol) 
+    pop!(dfg.agent.metadata, key)
+    return 1
+end
+
+function deleteGraphMetadata!(dfg::AbstractDFG, key::Symbol)
+    pop!(dfg.graphMetadata, key)
+    return 1
+end
 
 emptyAgentMetadata!(dfg::AbstractDFG) = empty!(dfg.agent.metadata)
 emptyGraphMetadata!(dfg::AbstractDFG) = empty!(dfg.graphMetadata)
@@ -263,7 +270,10 @@ end
 function updateBlobStore!(dfg::AbstractDFG, bs::AbstractBlobStore)
     return push!(dfg.blobStores, getLabel(bs) => bs)
 end
-deleteBlobStore!(dfg::AbstractDFG, key::Symbol) = pop!(dfg.blobStores, key)
+function deleteBlobStore!(dfg::AbstractDFG, key::Symbol)
+    pop!(dfg.blobStores, key)
+    return 1
+end
 emptyBlobStore!(dfg::AbstractDFG) = empty!(dfg.blobStores)
 listBlobStores(dfg::AbstractDFG) = collect(keys(dfg.blobStores))
 
@@ -1366,8 +1376,8 @@ function buildSubgraph(
     #build up the neighborhood from variableFactorLabels
     allvarfacs = getNeighborhood(dfg, variableFactorLabels, distance; solvable = solvable)
 
-    variableLabels = intersect(listVariables(dfg), allvarfacs)
-    factorLabels = intersect(listFactors(dfg), allvarfacs)
+    variableLabels = intersect(allvarfacs, listVariables(dfg))
+    factorLabels = intersect(allvarfacs, listFactors(dfg))
     # Copy the section of graph we want
     destDFG = deepcopyGraph(G, dfg, variableLabels, factorLabels; graphLabel, kwargs...)
     return destDFG
