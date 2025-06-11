@@ -264,13 +264,9 @@ end
     @test_throws KeyError getBlobEntry(dfg, :b, :key1)
 
     #update
-    @test updateBlobEntry!(dfg, :a, de2_update) == de2_update
+    @test mergeBlobentry!(dfg, :a, de2_update) == 1
     @test deepcopy(de2_update) == getBlobEntry(dfg, :a, :key2)
-    @test @test_logs (:warn, r"does not exist") match_mode = :any updateBlobEntry!(
-        dfg,
-        :b,
-        de2_update,
-    ) == de2_update
+    @test mergeBlobentry!(dfg, :b, de2_update) == 1
 
     #list
     entries = getBlobEntries(dfg, :a)

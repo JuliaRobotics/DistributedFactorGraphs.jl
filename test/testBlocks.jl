@@ -988,10 +988,9 @@ function DataEntriesTestBlock!(fg, v2)
     @test_throws KeyError getBlobEntry(fg, :b, :key1)
 
     #update
-    @test updateBlobEntry!(fg, :a, de2_update) == de2_update
+    @test mergeBlobentry!(fg, :a, de2_update) == 1
     @test deepcopy(de2_update) == getBlobEntry(fg, :a, :key2)
-    @test @test_logs (:warn, r"does not exist") updateBlobEntry!(fg, :b, de2_update) ==
-                                                de2_update
+    @test mergeBlobentry!(fg, :b, de2_update) == 1
 
     #list
     entries = getBlobEntries(fg, :a)
@@ -1081,10 +1080,9 @@ function blobsStoresTestBlock!(fg)
     @test_throws KeyError getBlobEntry(fg, :b, :label1)
 
     #update
-    @test updateBlobEntry!(fg, :a, de2_update) == de2_update
+    @test mergeBlobentry!(fg, :a, de2_update) == 1
     @test deepcopy(de2_update) == getBlobEntry(fg, :a, :label2)
-    @test @test_logs (:warn, r"does not exist") updateBlobEntry!(fg, :b, de2_update) ==
-                                                de2_update
+    @test mergeBlobentry!(fg, :b, de2_update) == 1
 
     #list
     entries = getBlobEntries(fg, :a)
@@ -1143,9 +1141,7 @@ function blobsStoresTestBlock!(fg)
     @test data[1].hash == newData.hash #[1]
     # @test data[2] == newData[2]
     # Updating
-    updateData = updateData!(fg, fs, :a, newData, rand(UInt8, 50)) # convenience wrapper around updateBlob!
-    @test updateData[1].hash != data[1].hash
-    @test updateData[2] != data[2]
+    @test updateData!(fg, fs, :a, newData, rand(UInt8, 50)) == 2
     @show bllb = DistributedFactorGraphs.incrDataLabelSuffix(fg, :a, :testing)
     newData2 = addData!(fg, fs.label, :a, bllb, testData) # convenience wrapper over addBlob!
     nbe = listBlobEntries(fg, :a)

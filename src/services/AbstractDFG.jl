@@ -236,14 +236,14 @@ function getGraphBlobEntry end
 function getGraphBlobEntries end
 function addGraphBlobEntry! end
 function addGraphBlobEntries! end
-function updateGraphBlobEntry! end
+function mergeGraphBlobentry! end
 function deleteGraphBlobEntry! end
 
 function getAgentBlobEntry end
 function getAgentBlobEntries end
 function addAgentBlobEntry! end
 function addAgentBlobEntries! end
-function updateAgentBlobEntry! end
+function mergeAgentBlobentry! end
 function deleteAgentBlobEntry! end
 
 function getModelBlobEntry end
@@ -392,20 +392,19 @@ end
 
 """
     $(SIGNATURES)
-Merge a Variable to the DFG. Overwrites the existing variable if it exists or adds it if it does not.
+Merge a variable into the DFG. If a variable with the same label exists, it will be overwritten; 
+otherwise, the variable will be added to the graph.
 """
-function mergeVariable!(
-    dfg::G,
-    variable::V,
-) where {G <: AbstractDFG, V <: AbstractDFGVariable}
+function mergeVariable!(dfg::AbstractDFG, variable::AbstractDFGVariable)
     return error("mergeVariable! not implemented for $(typeof(dfg))")
 end
 
 """
     $(SIGNATURES)
-Merge a Factor to the DFG. Overwrites the existing factor if it exists or adds it if it does not.
+Merge a factor into the DFG. If a factor with the same label exists, it will be overwritten; 
+otherwise, the factor will be added to the graph.
 """
-function mergeFactor!(dfg::G, factor::F) where {G <: AbstractDFG, F <: AbstractDFGFactor}
+function mergeFactor!(dfg::AbstractDFG, factor::AbstractDFGFactor)
     return error("mergeFactor! not implemented for $(typeof(dfg))")
 end
 
@@ -420,12 +419,8 @@ end
     $(SIGNATURES)
 Delete a FactorCompute from the DFG using its label.
 """
-function deleteFactor!(
-    dfg::G,
-    label::Symbol;
-    suppressGetFactor::Bool = false,
-) where {G <: AbstractDFG}
-    return error("deleteFactors not implemented for $(typeof(dfg))")
+function deleteFactor!(dfg::AbstractDFG, label::Symbol)
+    return error("deleteFactor not implemented for $(typeof(dfg))")
 end
 
 """
