@@ -46,12 +46,12 @@ import ...DistributedFactorGraphs:
     toDot,
     toDotFile,
     findShortestPathDijkstra,
-    getGraphBlobEntry,
-    getGraphBlobEntries,
-    addGraphBlobEntry!,
-    addGraphBlobEntries!,
-    listGraphBlobEntries,
-    listAgentBlobEntries,
+    getGraphBlobentry,
+    getGraphBlobentries,
+    addGraphBlobentry!,
+    addGraphBlobentries!,
+    listGraphBlobentries,
+    listAgentBlobentries,
     getTypeDFGVariables,
     getTypeDFGFactors
 

@@ -3,5 +3,5 @@
     description::String = ""
     tags::Vector{Symbol} = Symbol[]
     metadata::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}()
-    blobEntries::OrderedDict{Symbol, BlobEntry} = OrderedDict{Symbol, BlobEntry}()
+    blobEntries::OrderedDict{Symbol, Blobentry} = OrderedDict{Symbol, Blobentry}()
 end

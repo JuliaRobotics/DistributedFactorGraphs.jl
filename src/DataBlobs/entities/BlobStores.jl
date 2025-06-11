@@ -1,1 +1,1 @@
-abstract type AbstractBlobStore{T} end
+abstract type AbstractBlobstore{T} end

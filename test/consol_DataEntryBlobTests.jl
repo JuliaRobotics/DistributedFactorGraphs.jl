@@ -45,21 +45,21 @@ dataset2 = rand(UInt8, 1000)
 # @test ade == ade2 == ade3
 # @test adb == adb2 == adb3
 
-# @test :random in listBlobEntries(dfg, :x2)
-# @test length(listBlobEntries(dfg, :x1)) === 0
-# @test length(listBlobEntries(dfg, :x2)) === 1
+# @test :random in listBlobentries(dfg, :x2)
+# @test length(listBlobentries(dfg, :x1)) === 0
+# @test length(listBlobentries(dfg, :x2)) === 1
 
-# mergeBlobEntries!(dfg, :x1, dfg, :x2, :random)
+# mergeBlobentries!(dfg, :x1, dfg, :x2, :random)
 
-# @test length(listBlobEntries(dfg, :x1)) === 1
-# @test :random in listBlobEntries(dfg, :x1)
-# @test length(listBlobEntries(dfg, :x2)) === 1
+# @test length(listBlobentries(dfg, :x1)) === 1
+# @test :random in listBlobentries(dfg, :x1)
+# @test length(listBlobentries(dfg, :x2)) === 1
 
 # deleteBlob!(dfg, :x1, :random)
 # deleteBlob!(dfg, :x2, :random)
 
-# @test length(listBlobEntries(dfg, :x1)) === 0
-# @test length(listBlobEntries(dfg, :x2)) === 0
+# @test length(listBlobentries(dfg, :x1)) === 0
+# @test length(listBlobentries(dfg, :x2)) === 0
 
 # ##==============================================================================
 # ## FileDataEntry
@@ -88,7 +88,7 @@ dataset2 = rand(UInt8, 1000)
 # Create a data store and add it to DFG
 mkpath("/tmp/dfgFolderStore")
 ds = FolderStore{Vector{UInt8}}(:filestore, "/tmp/dfgFolderStore")
-addBlobStore!(dfg, ds)
+addBlobstore!(dfg, ds)
 
 ade = addData!(dfg, :filestore, :x1, :random, dataset1)
 _ = addData!(dfg, :filestore, :x1, :another_1, dataset1)
@@ -126,12 +126,12 @@ dfs = FolderStore("/tmp/defaultfolderstore")
 @test dfs isa FolderStore{Vector{UInt8}}
 
 ##==============================================================================
-## InMemoryBlobStore
+## InMemoryBlobstore
 ##==============================================================================
 
 # Create a data store and add it to DFG
-ds = InMemoryBlobStore()
-addBlobStore!(dfg, ds)
+ds = InMemoryBlobstore()
+addBlobstore!(dfg, ds)
 
 ade = addData!(dfg, :default_inmemory_store, :x1, :random, dataset1)
 gde, gdb = getData(dfg, :x1, :random)
@@ -156,7 +156,7 @@ deleteData!(dfg, :x2, :random)
 ##==============================================================================
 ## Unimplemented store
 ##==============================================================================
-struct TestStore{T} <: DFG.AbstractBlobStore{T} end
+struct TestStore{T} <: DFG.AbstractBlobstore{T} end
 
 store = TestStore{Int}()
 

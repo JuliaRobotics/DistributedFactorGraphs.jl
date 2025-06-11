@@ -1,4 +1,4 @@
-# Blobs and BlobEntries
+# Blobs and Blobentries
 
 ```@contents
 Pages = [

@@ -9,9 +9,9 @@ using InteractiveUtils
     userData::Union{Nothing, Dict{Symbol, SmallDataTypes}} = nothing
     robotData::Union{Nothing, Dict{Symbol, SmallDataTypes}} = nothing
     sessionData::Union{Nothing, Dict{Symbol, SmallDataTypes}} = nothing
-    userBlobEntries::Union{Nothing, OrderedDict{Symbol, BlobEntry}} = nothing
-    robotBlobEntries::Union{Nothing, OrderedDict{Symbol, BlobEntry}} = nothing
-    sessionBlobEntries::Union{Nothing, OrderedDict{Symbol, BlobEntry}} = nothing
+    userBlobEntries::Union{Nothing, OrderedDict{Symbol, Blobentry}} = nothing
+    robotBlobEntries::Union{Nothing, OrderedDict{Symbol, Blobentry}} = nothing
+    sessionBlobEntries::Union{Nothing, OrderedDict{Symbol, Blobentry}} = nothing
     # ---------------------------------
     addHistory::Vector{Symbol}
     solverParams::T
@@ -25,7 +25,7 @@ using InteractiveUtils
     graphLabel::Union{Nothing, Symbol}
     graphTags::Union{Nothing, Vector{Symbol}}
     graphMetadata::Union{Nothing, Dict{Symbol, SmallDataTypes}}
-    graphBlobEntries::Union{Nothing, OrderedDict{Symbol, BlobEntry}}
+    graphBlobEntries::Union{Nothing, OrderedDict{Symbol, Blobentry}}
     agent::Union{Nothing, Agent}
 end
 
@@ -55,7 +55,7 @@ function packDFGMetadata(fg::GraphsDFG)
         if store isa FolderStore{Vector{UInt8}}
             blobStores[getLabel(store)] = store
         else
-            @warn "BlobStore $(getLabel(store)) of type $(typeof(store)) is not supported yet and will not be saved"
+            @warn "Blobstore $(getLabel(store)) of type $(typeof(store)) is not supported yet and will not be saved"
         end
     end
 
@@ -73,7 +73,7 @@ function unpackDFGMetadata(packed::PackedGraphsDFG)
 
     #FIXME Deprecate remove in DFG v0.24
     # setdiff!(commonfields, [:blobStores])
-    # blobStores = Dict{Symbol, AbstractBlobStore}()
+    # blobStores = Dict{Symbol, AbstractBlobstore}()
     # !isnothing(packed.blobStores) && merge!(blobStores, packed.blobStores)
 
     setdiff!(commonfields, [deprecatedDfgFields; :blobStores])

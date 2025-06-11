@@ -20,18 +20,18 @@ mutable struct GraphsDFG{
     userData::Union{Nothing, Dict{Symbol, SmallDataTypes}}
     robotData::Union{Nothing, Dict{Symbol, SmallDataTypes}}
     sessionData::Union{Nothing, Dict{Symbol, SmallDataTypes}}
-    userBlobEntries::Union{Nothing, OrderedDict{Symbol, BlobEntry}}
-    robotBlobEntries::Union{Nothing, OrderedDict{Symbol, BlobEntry}}
-    sessionBlobEntries::Union{Nothing, OrderedDict{Symbol, BlobEntry}}
+    userBlobEntries::Union{Nothing, OrderedDict{Symbol, Blobentry}}
+    robotBlobEntries::Union{Nothing, OrderedDict{Symbol, Blobentry}}
+    sessionBlobEntries::Union{Nothing, OrderedDict{Symbol, Blobentry}}
     # ---------------------------------
     addHistory::Vector{Symbol} #TODO: Discuss more - is this an audit trail?
     solverParams::T # Solver parameters
-    blobStores::Dict{Symbol, AbstractBlobStore}
+    blobStores::Dict{Symbol, AbstractBlobstore}
     # new structure to replace URS
     graphLabel::Symbol # graph (session) label
     graphTags::Vector{Symbol}
     graphMetadata::Dict{Symbol, SmallDataTypes} # graph (session) metadata
-    graphBlobEntries::OrderedDict{Symbol, BlobEntry} #graph (session) blob entries
+    graphBlobEntries::OrderedDict{Symbol, Blobentry} #graph (session) blob entries
     agent::Agent # (robot)
 end
 
@@ -94,12 +94,12 @@ function GraphsDFG{T, V, F}(
     g::FactorGraph{Int, V, F} = FactorGraph{Int, V, F}();
     addHistory::Vector{Symbol} = Symbol[],
     solverParams::T = T(),
-    blobStores = Dict{Symbol, AbstractBlobStore}(),
+    blobStores = Dict{Symbol, AbstractBlobstore}(),
     # factor graph TODO maybe move to FactorGraph or make a new Graph struct to hold these (similar to Agent) 
     graphLabel::Symbol = Symbol("factorgraph_", string(uuid4())[1:6]),
     graphTags::Vector{Symbol} = Symbol[],
     graphMetadata = Dict{Symbol, SmallDataTypes}(),
-    graphBlobEntries = OrderedDict{Symbol, BlobEntry}(),
+    graphBlobEntries = OrderedDict{Symbol, Blobentry}(),
     description::String = "",
     graphDescription::String = description,
     # agent
@@ -107,7 +107,7 @@ function GraphsDFG{T, V, F}(
     agentDescription::String = "",
     agentTags::Vector{Symbol} = Symbol[],
     agentMetadata = Dict{Symbol, SmallDataTypes}(),
-    agentBlobEntries = OrderedDict{Symbol, BlobEntry}(),
+    agentBlobEntries = OrderedDict{Symbol, Blobentry}(),
     agent::Agent = Agent(
         agentLabel,
         agentDescription,
@@ -123,9 +123,9 @@ function GraphsDFG{T, V, F}(
     userData::Union{Nothing, Dict{Symbol, SmallDataTypes}} = nothing,
     robotData::Union{Nothing, Dict{Symbol, SmallDataTypes}} = nothing,
     sessionData::Union{Nothing, Dict{Symbol, SmallDataTypes}} = nothing,
-    userBlobEntries::Union{Nothing, OrderedDict{Symbol, BlobEntry}} = nothing,
-    robotBlobEntries::Union{Nothing, OrderedDict{Symbol, BlobEntry}} = nothing,
-    sessionBlobEntries::Union{Nothing, OrderedDict{Symbol, BlobEntry}} = nothing,
+    userBlobEntries::Union{Nothing, OrderedDict{Symbol, Blobentry}} = nothing,
+    robotBlobEntries::Union{Nothing, OrderedDict{Symbol, Blobentry}} = nothing,
+    sessionBlobEntries::Union{Nothing, OrderedDict{Symbol, Blobentry}} = nothing,
 ) where {T <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
     if any([
         !isnothing(userLabel),
@@ -206,7 +206,7 @@ function GraphsDFG(
     robotData::Dict{Symbol, SmallDataTypes},
     sessionData::Dict{Symbol, SmallDataTypes},
     solverParams::AbstractParams,
-    blobStores = Dict{Symbol, AbstractBlobStore}(),
+    blobStores = Dict{Symbol, AbstractBlobstore}(),
 )
     #deprecated in v0.25
     Base.depwarn(
@@ -236,7 +236,7 @@ function GraphsDFG{T, V, F}(
     robotData::Dict{Symbol, SmallDataTypes},
     sessionData::Dict{Symbol, SmallDataTypes},
     solverParams::T,
-    blobStores = Dict{Symbol, AbstractBlobStore}(),
+    blobStores = Dict{Symbol, AbstractBlobstore}(),
 ) where {T <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
 
     #deprecated in v0.25

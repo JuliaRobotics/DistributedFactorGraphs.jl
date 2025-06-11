@@ -4,6 +4,8 @@ Listing news on any major breaking changes in DFG.  For regular changes, see int
 - `delete` returns number of nodes deleted and no longer the object that was deleted.
 - Deprecate `updateVariable!` for `mergeVariable!`, note `merege` returns number of nodes updated/added.
 - Deprecate `updateFactor!` for `mergeFactor!`, note `merege` returns number of nodes updated/added.
+- Rename BlobEntry to Blobentry, see #1123.
+- Rename BlobStore to Blobstore, see #1124.
 
 # v0.26
 - Graph structure plotting now uses GraphMakie.jl instead of GraphPlot.jl. Update by replacing `using GraphPlot` with `using GraphMakie`.

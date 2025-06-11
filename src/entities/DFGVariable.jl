@@ -223,7 +223,7 @@ Base.@kwdef struct VariableDFG <: AbstractDFGVariable
     timestamp::ZonedDateTime = now(tz"UTC")
     nstime::String = "0"
     ppes::Vector{MeanMaxPPE} = MeanMaxPPE[]
-    blobEntries::Vector{BlobEntry} = BlobEntry[]
+    blobEntries::Vector{Blobentry} = Blobentry[]
     variableType::String
     _version::String = string(_getDFGVersion())
     metadata::String = "e30="
@@ -311,8 +311,8 @@ Base.@kwdef struct VariableCompute{T <: InferenceVariable, P, N} <: AbstractDFGV
     Accessors: [`getMetadata`](@ref), [`setMetadata!`](@ref)"""
     smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}()
     """Dictionary of large data associated with this variable.
-    Accessors: [`addBlobEntry!`](@ref), [`getBlobEntry`](@ref), [`mergeBlobentry!`](@ref), and [`deleteBlobEntry!`](@ref)"""
-    dataDict::Dict{Symbol, BlobEntry} = Dict{Symbol, BlobEntry}()
+    Accessors: [`addBlobentry!`](@ref), [`getBlobentry`](@ref), [`mergeBlobentry!`](@ref), and [`deleteBlobentry!`](@ref)"""
+    dataDict::Dict{Symbol, Blobentry} = Dict{Symbol, Blobentry}()
     """Solvable flag for the variable.
     Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)"""
     solvable::Base.RefValue{Int} = Ref(1)
@@ -405,8 +405,8 @@ Base.@kwdef struct VariableSummary <: AbstractDFGVariable
     Accessor: [`getVariableType`](@ref)"""
     variableTypeName::Symbol
     """Dictionary of large data associated with this variable.
-    Accessors: [`addBlobEntry!`](@ref), [`getBlobEntry`](@ref), [`mergeBlobentry!`](@ref), and [`deleteBlobEntry!`](@ref)"""
-    dataDict::Dict{Symbol, BlobEntry}
+    Accessors: [`addBlobentry!`](@ref), [`getBlobentry`](@ref), [`mergeBlobentry!`](@ref), and [`deleteBlobentry!`](@ref)"""
+    dataDict::Dict{Symbol, Blobentry}
 end
 
 function VariableSummary(id, label, timestamp, tags, ::Nothing, variableTypeName, ::Nothing)
@@ -417,7 +417,7 @@ function VariableSummary(id, label, timestamp, tags, ::Nothing, variableTypeName
         tags,
         Dict{Symbol, MeanMaxPPE}(),
         variableTypeName,
-        Dict{Symbol, BlobEntry}(),
+        Dict{Symbol, Blobentry}(),
     )
 end
 

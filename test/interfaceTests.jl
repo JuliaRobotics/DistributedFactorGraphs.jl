@@ -34,7 +34,7 @@ end
 end
 
 @testset "User, Robot, Session Blob Entries" begin
-    GraphAgentBlobEntries!(fg1)
+    GraphAgentBlobentries!(fg1)
 end
 
 # VariableCompute structure construction and accessors
@@ -66,10 +66,10 @@ end
     # for julia v1.6
     if DistributedFactorGraphs._getDFGVersion() < v"0.19"
         @test String(take!(iobuf)) ==
-              "VariableCompute{TestVariableType1}\nid:\nnothing\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol, Union{Bool, Float64, Int64, Vector{Bool}, Vector{Float64}, Vector{Int64}, Vector{String}, String}}(:small=>\"data\")\ndataDict:\nDict{Symbol, DistributedFactorGraphs.BlobEntry}()\nsolvable:\n0\n"
+              "VariableCompute{TestVariableType1}\nid:\nnothing\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol, Union{Bool, Float64, Int64, Vector{Bool}, Vector{Float64}, Vector{Int64}, Vector{String}, String}}(:small=>\"data\")\ndataDict:\nDict{Symbol, DistributedFactorGraphs.Blobentry}()\nsolvable:\n0\n"
     else
         @test String(take!(iobuf)) ==
-              "VariableCompute{TestVariableType1, Vector{Float64}, 1}\nid:\nnothing\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol, Union{Bool, Float64, Int64, Vector{Bool}, Vector{Float64}, Vector{Int64}, Vector{String}, String}}(:small=>\"data\")\ndataDict:\nDict{Symbol, BlobEntry}()\nsolvable:\n0\n"
+              "VariableCompute{TestVariableType1, Vector{Float64}, 1}\nid:\nnothing\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol, Union{Bool, Float64, Int64, Vector{Bool}, Vector{Float64}, Vector{Int64}, Vector{String}, String}}(:small=>\"data\")\ndataDict:\nDict{Symbol, Blobentry}()\nsolvable:\n0\n"
     end
 
     @test printVariable(iobuf, var1; short = true) === nothing

@@ -222,7 +222,7 @@ function unpackVariable(variable::VariableDFG; skipVersionCheck::Bool = false)
         map(sd -> sd.solveKey, variable.solverData) .=>
             map(sd -> DFG.unpackVariableNodeData(sd), variable.solverData),
     )
-    dataDict = Dict{Symbol, BlobEntry}(
+    dataDict = Dict{Symbol, Blobentry}(
         map(de -> de.label, variable.blobEntries) .=> variable.blobEntries,
     )
     metadata = JSON3.read(base64decode(variable.metadata), Dict{Symbol, DFG.SmallDataTypes})

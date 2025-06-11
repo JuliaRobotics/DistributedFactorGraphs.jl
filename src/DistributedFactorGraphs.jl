@@ -61,7 +61,7 @@ export DFG
 ##------------------------------------------------------------------------------
 export AbstractDFG
 export AbstractParams, NoSolverParams
-export AbstractBlobStore
+export AbstractBlobstore
 
 # accessors & crud
 export getDFGInfo
@@ -75,23 +75,23 @@ export getDescription,
     setGraphMetadata!,
     getAddHistory
 
-export getGraphBlobEntry,
-    getGraphBlobEntries,
-    addGraphBlobEntry!,
-    addGraphBlobEntries!,
+export getGraphBlobentry,
+    getGraphBlobentries,
+    addGraphBlobentry!,
+    addGraphBlobentries!,
     mergeGraphBlobentry!,
-    deleteGraphBlobEntry!,
-    getAgentBlobEntry,
-    getAgentBlobEntries,
-    addAgentBlobEntry!,
-    addAgentBlobEntries!,
+    deleteGraphBlobentry!,
+    getAgentBlobentry,
+    getAgentBlobentries,
+    addAgentBlobentry!,
+    addAgentBlobentries!,
     mergeAgentBlobentry!,
-    deleteAgentBlobEntry!,
-    listGraphBlobEntries,
-    listAgentBlobEntries
+    deleteAgentBlobentry!,
+    listGraphBlobentries,
+    listAgentBlobentries
 
-export getBlobStore,
-    addBlobStore!, updateBlobStore!, deleteBlobStore!, emptyBlobStore!, listBlobStores
+export getBlobstore,
+    addBlobstore!, updateBlobstore!, deleteBlobstore!, emptyBlobstore!, listBlobstores
 
 # TODO Not sure these are needed or should work everywhere, implement in cloud?
 # NOTE not exporiting these for now. For consistency `get` and `set` might work better.
@@ -223,19 +223,19 @@ export copyGraph!, deepcopyGraph, deepcopyGraph!, buildSubgraph, mergeGraph!
 # Entry Blob Data
 ##------------------------------------------------------------------------------
 
-export hasBlobEntry,
-    getBlobEntry,
-    getBlobEntryFirst,
-    addBlobEntry!,
-    addBlobEntries!,
+export hasBlobentry,
+    getBlobentry,
+    getBlobentryFirst,
+    addBlobentry!,
+    addBlobentries!,
     mergeBlobentry!,
-    deleteBlobEntry!,
-    listBlobEntrySequence,
-    mergeBlobEntries!
+    deleteBlobentry!,
+    listBlobentrySequence,
+    mergeBlobentries!
 export incrDataLabelSuffix
 
-export getBlobEntries
-export getBlobEntriesVariables
+export getBlobentries
+export getBlobentriesVariables
 # convenience wrappers
 # aliases
 export addBlob!
@@ -315,12 +315,12 @@ export compare,
 export printFactor, printVariable, printNode
 
 # Data Blobs
-export InMemoryBlobStore
+export InMemoryBlobstore
 export FolderStore
-export BlobEntry
-export getBlob, addBlob!, updateBlob!, deleteBlob!, hasBlob, listBlobEntries
+export Blobentry
+export getBlob, addBlob!, updateBlob!, deleteBlob!, hasBlob, listBlobentries
 export listBlobs
-export BlobEntry
+export Blobentry
 # export copyStore
 export getId, getHash, getTimestamp
 # convenience wrappers
