@@ -25,7 +25,7 @@ function addBlob! end
 """
 Update a blob to the blob store or dfg with the given entry.
 Related
-[`updateBlobEntry!`](@ref)
+[`mergeBlobentry!`](@ref)
 
 $(METHODLIST)
 

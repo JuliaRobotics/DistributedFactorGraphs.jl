@@ -303,15 +303,15 @@ Base.@kwdef struct VariableCompute{T <: InferenceVariable, P, N} <: AbstractDFGV
     Accessors: [`addPPE!`](@ref), [`updatePPE!`](@ref), and [`deletePPE!`](@ref)"""
     ppeDict::Dict{Symbol, AbstractPointParametricEst} =
         Dict{Symbol, AbstractPointParametricEst}()
-    """Dictionary of solver data. May be a subset of all solutions if a solver key was specified in the get call.
-    Accessors: [`addVariableSolverData!`](@ref), [`updateVariableSolverData!`](@ref), and [`deleteVariableSolverData!`](@ref)"""
+    """Dictionary of solver data. May be a subset of all solutions if a solver label was specified in the get call.
+    Accessors: [`addVariableSolverData!`](@ref), [`mergeVariableState!`](@ref), and [`deleteVariableSolverData!`](@ref)"""
     solverDataDict::Dict{Symbol, VariableNodeData{T, P, N}} =
         Dict{Symbol, VariableNodeData{T, P, N}}()
     """Dictionary of small data associated with this variable.
     Accessors: [`getMetadata`](@ref), [`setMetadata!`](@ref)"""
     smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}()
     """Dictionary of large data associated with this variable.
-    Accessors: [`addBlobEntry!`](@ref), [`getBlobEntry`](@ref), [`updateBlobEntry!`](@ref), and [`deleteBlobEntry!`](@ref)"""
+    Accessors: [`addBlobEntry!`](@ref), [`getBlobEntry`](@ref), [`mergeBlobentry!`](@ref), and [`deleteBlobEntry!`](@ref)"""
     dataDict::Dict{Symbol, BlobEntry} = Dict{Symbol, BlobEntry}()
     """Solvable flag for the variable.
     Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)"""
@@ -405,7 +405,7 @@ Base.@kwdef struct VariableSummary <: AbstractDFGVariable
     Accessor: [`getVariableType`](@ref)"""
     variableTypeName::Symbol
     """Dictionary of large data associated with this variable.
-    Accessors: [`addBlobEntry!`](@ref), [`getBlobEntry`](@ref), [`updateBlobEntry!`](@ref), and [`deleteBlobEntry!`](@ref)"""
+    Accessors: [`addBlobEntry!`](@ref), [`getBlobEntry`](@ref), [`mergeBlobentry!`](@ref), and [`deleteBlobEntry!`](@ref)"""
     dataDict::Dict{Symbol, BlobEntry}
 end
 

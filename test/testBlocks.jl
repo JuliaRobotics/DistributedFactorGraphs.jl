@@ -348,12 +348,12 @@ function DFGVariableSCA()
     @test setTags!(v3, testTags) == Set(testTags)
     @test setTags!(v3, Set(testTags)) == Set(testTags)
 
-    #NOTE  a variable's timestamp is considered similar to its label.  setTimestamp! (not implemented) would create a new variable and call updateVariable!
-    v1ts = setTimestamp(v1, testTimestamp)
+    #NOTE  a variable's timestamp is considered similar to its label.  setTimestamp! (not implemented) would create a new variable and call mergeVariable!
+    v1ts = DFG.setTimestamp(v1, testTimestamp)
     @test getTimestamp(v1ts) == testTimestamp
-    #follow with updateVariable!(fg, v1ts)
+    #follow with mergeVariable!(fg, v1ts)
 
-    @test_throws MethodError setTimestamp!(v1, testTimestamp)
+    @test_throws MethodError DFG.setTimestamp!(v1, testTimestamp)
 
     @test setSolvable!(v1, 1) == 1
     @test getSolvable(v1) == 1
@@ -433,7 +433,7 @@ function DFGFactorSCA()
     f1ts = setTimestamp(f1, testTimestamp)
     @test !(f1ts === f1)
     @test getTimestamp(f1ts) == testTimestamp
-    #follow with updateFactor!(fg, v1ts)
+    #follow with mergeFactor!(fg, v1ts)
 
     #TODO Should throw method error
     # @test_throws MethodError setTimestamp!(f1, testTimestamp)
@@ -481,18 +481,12 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
 
     @test getLabel(fg[getLabel(f1)]) == getLabel(f1)
 
-    @test @test_logs (:warn, Regex("'$(v3.label)' does not exist")) match_mode = :any updateVariable!(
-        fg,
-        v3,
-    ) == v3
-    @test updateVariable!(fg, v3) == v3
+    @test mergeVariable!(fg, v3) == 1
+    @test mergeVariable!(fg, v3) == 1
     @test_throws ErrorException addVariable!(fg, v3)
 
-    @test @test_logs (:warn, Regex("'$(f2.label)' does not exist")) match_mode = :any updateFactor!(
-        fg,
-        f2,
-    ) === f2
-    @test updateFactor!(fg, f2) === f2
+    @test mergeFactor!(fg, f2) == 1
+    @test mergeFactor!(fg, f2) == 1
     @test_throws ErrorException addFactor!(fg, f2)
     #TODO Graphs.jl, but look at refactoring absract @test_throws ErrorException addFactor!(fg, f2)
 
@@ -511,7 +505,7 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
         pop!(f2_mod._variableOrderSymbols)
     end
 
-    @test_throws ErrorException updateFactor!(fg, f2_mod)
+    @test_throws ErrorException mergeFactor!(fg, f2_mod)
     @test issetequal(lsf(fg), [:bcf1, :abf1])
 
     @test getAddHistory(fg) == [:a, :b, :c]
@@ -519,10 +513,10 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     # Extra timestamp functions https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/315
     if !(v1 isa VariableSkeleton)
         newtimestamp = now(localzone())
-        @test !(setTimestamp!(fg, :c, newtimestamp) === v3)
+        @test !(DFG.setTimestamp!(fg, :c, newtimestamp) === v3)
         @test getVariable(fg, :c) |> getTimestamp == newtimestamp
 
-        @test !(setTimestamp!(fg, :bcf1, newtimestamp) === f2)
+        @test !(DFG.setTimestamp!(fg, :bcf1, newtimestamp) === f2)
         @test getFactor(fg, :bcf1) |> getTimestamp == newtimestamp
     end
     #deletions
@@ -994,10 +988,9 @@ function DataEntriesTestBlock!(fg, v2)
     @test_throws KeyError getBlobEntry(fg, :b, :key1)
 
     #update
-    @test updateBlobEntry!(fg, :a, de2_update) == de2_update
+    @test mergeBlobentry!(fg, :a, de2_update) == 1
     @test deepcopy(de2_update) == getBlobEntry(fg, :a, :key2)
-    @test @test_logs (:warn, r"does not exist") updateBlobEntry!(fg, :b, de2_update) ==
-                                                de2_update
+    @test mergeBlobentry!(fg, :b, de2_update) == 1
 
     #list
     entries = getBlobEntries(fg, :a)
@@ -1075,7 +1068,7 @@ function blobsStoresTestBlock!(fg)
     var1 = getVariable(fg, :a)
     var2 = getVariable(fg, :b)
     @test addBlobEntry!(var1, de1) == de1
-    updateVariable!(fg, var1)
+    mergeVariable!(fg, var1)
     @test addBlobEntry!(fg, :a, de2) == de2
     @test_throws ErrorException addBlobEntry!(var1, de1)
     @test de2 in getBlobEntries(fg, var1.label)
@@ -1087,10 +1080,9 @@ function blobsStoresTestBlock!(fg)
     @test_throws KeyError getBlobEntry(fg, :b, :label1)
 
     #update
-    @test updateBlobEntry!(fg, :a, de2_update) == de2_update
+    @test mergeBlobentry!(fg, :a, de2_update) == 1
     @test deepcopy(de2_update) == getBlobEntry(fg, :a, :label2)
-    @test @test_logs (:warn, r"does not exist") updateBlobEntry!(fg, :b, de2_update) ==
-                                                de2_update
+    @test mergeBlobentry!(fg, :b, de2_update) == 1
 
     #list
     entries = getBlobEntries(fg, :a)
@@ -1149,9 +1141,7 @@ function blobsStoresTestBlock!(fg)
     @test data[1].hash == newData.hash #[1]
     # @test data[2] == newData[2]
     # Updating
-    updateData = updateData!(fg, fs, :a, newData, rand(UInt8, 50)) # convenience wrapper around updateBlob!
-    @test updateData[1].hash != data[1].hash
-    @test updateData[2] != data[2]
+    @test updateData!(fg, fs, :a, newData, rand(UInt8, 50)) == 2
     @show bllb = DistributedFactorGraphs.incrDataLabelSuffix(fg, :a, :testing)
     newData2 = addData!(fg, fs.label, :a, bllb, testData) # convenience wrapper over addBlob!
     nbe = listBlobEntries(fg, :a)
@@ -1857,7 +1847,7 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
         vnd.solvedCount = 2
         # vnd.val[1] = [2.0;]
         #update
-        updateVariable!(dfg, v4)
+        mergeVariable!(dfg, v4)
 
         f45 = getFactor(dfg, :x4x5f1)
         fsd = f45.solverData
@@ -1870,7 +1860,7 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
         fsd.potentialused = true
         fsd.solveInProgress = true
         #update factor
-        updateFactor!(dfg, f45)
+        mergeFactor!(dfg, f45)
 
         # Save and load the graph to test.
         saveDFG(dfg, filename)

@@ -58,17 +58,14 @@ getTimestamp(v::DataLevel1) = v.timestamp
 
 Set the timestamp of a Variable/Factor object in a factor graph.
 Note:
-Since `timestamp` is not mutable `setTimestamp!` calls `updateVariable!` internally.
+Since `timestamp` is not mutable `setTimestamp!` calls `mergeVariable!` internally.
 See also [`setTimestamp`](@ref)
 """
 function setTimestamp!(dfg::AbstractDFG, lbl::Symbol, ts::ZonedDateTime)
     if isVariable(dfg, lbl)
-        return updateVariable!(
-            dfg,
-            setTimestamp(getVariable(dfg, lbl), ts; verbose = false),
-        )
+        return mergeVariable!(dfg, setTimestamp(getVariable(dfg, lbl), ts; verbose = false))
     else
-        return updateFactor!(dfg, setTimestamp(getFactor(dfg, lbl), ts))
+        return mergeFactor!(dfg, setTimestamp(getFactor(dfg, lbl), ts))
     end
 end
 

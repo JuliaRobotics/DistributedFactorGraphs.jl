@@ -69,7 +69,7 @@ using UUIDs
         map(v -> addPPE!(dfg, getLabel(v), deepcopy(ppe2)), verts)
 
         #call update to set it on cloud
-        updateVariable!.(dfg, verts)
+        mergeVariable!.(dfg, verts)
 
         facts = map(
             n -> addFactor!(
@@ -82,7 +82,7 @@ using UUIDs
         map(f -> setSolvable!(f, Int(round(rand()))), facts)
         map(f -> f.solverData.eliminated = rand() > 0.5, facts)
         map(f -> f.solverData.potentialused = rand() > 0.5, facts)
-        updateFactor!.(dfg, facts)
+        mergeFactor!.(dfg, facts)
 
         #test multihypo
         addFactor!(

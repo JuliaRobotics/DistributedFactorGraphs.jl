@@ -365,7 +365,7 @@ end
 Set the timestamp of a VariableCompute object returning a new VariableCompute.
 Note:
 Since the `timestamp` field is not mutable `setTimestamp` returns a new variable with the updated timestamp (note the absence of `!`).
-Use [`updateVariable!`](@ref) on the returened variable to update it in the factor graph if needed. Alternatively use [`setTimestamp!`](@ref).
+Use [`mergeVariable!`](@ref) on the returened variable to update it in the factor graph if needed. Alternatively use [`setTimestamp!`](@ref).
 See issue #315.
 """
 function setTimestamp(v::VariableCompute, ts::ZonedDateTime; verbose::Bool = true)
@@ -541,7 +541,7 @@ function addMetadata!(dfg::AbstractDFG, label::Symbol, pair::Pair{Symbol, <:Smal
     v = getVariable(dfg, label)
     haskey(v.smallData, pair.first) && error("$(pair.first) already exists.")
     push!(v.smallData, pair)
-    updateVariable!(dfg, v)
+    mergeVariable!(dfg, v)
     return v.smallData #or pair TODO
 end
 
@@ -560,7 +560,7 @@ function updateMetadata!(
         !haskey(v.smallData, pair.first) &&
         @warn("$(pair.first) does not exist, adding.")
     push!(v.smallData, pair)
-    updateVariable!(dfg, v)
+    mergeVariable!(dfg, v)
     return v.smallData #or pair TODO
 end
 
@@ -571,7 +571,7 @@ Delete a Metadata entry at `key` for variable `label` in `dfg`
 function deleteMetadata!(dfg::AbstractDFG, label::Symbol, key::Symbol)
     v = getVariable(dfg, label)
     pop!(v.smallData, key)
-    updateVariable!(dfg, v)
+    mergeVariable!(dfg, v)
     return 1
 end
 
@@ -591,7 +591,7 @@ Empty all Metadata from variable `label` in `dfg`
 function emptyMetadata!(dfg::AbstractDFG, label::Symbol)
     v = getVariable(dfg, label)
     empty!(v.smallData)
-    updateVariable!(dfg, v)
+    mergeVariable!(dfg, v)
     return v.smallData #or pair TODO
 end
 
@@ -694,139 +694,22 @@ end
 
 """
     $(SIGNATURES)
-Update variable solver data if it exists, otherwise add it.
-
-Notes:
-- `useCopy=true` to copy solver data and keep separate memory.
-- Use `fields` to updated only a few VND.fields while adhering to `useCopy`.
+Update the variable state if it exists, otherwise add it.
 
 Related
 
-mergeVariableSolverData!
+mergeVariableStates!
 """
-function updateVariableSolverData!(
-    dfg::AbstractDFG,
-    variablekey::Symbol,
-    vnd::VariableNodeData,
-    useCopy::Bool = false,
-    fields::Vector{Symbol} = Symbol[];
-    warn_if_absent::Bool = true,
-)
-    #This is basically just setSolverData
-    var = getVariable(dfg, variablekey)
-    warn_if_absent &&
-        !haskey(var.solverDataDict, vnd.solveKey) &&
-        @warn "VariableNodeData '$(vnd.solveKey)' does not exist, adding"
+function mergeVariableState!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData)
+    v = getVariable(dfg, variablekey)
 
-    # for InMemoryDFGTypes do memory copy or repointing, for cloud this would be an different kind of update.
-    usevnd = vnd # useCopy ? deepcopy(vnd) : vnd
-    # should just one, or many pointers be updated?
-    useExisting =
-        haskey(var.solverDataDict, vnd.solveKey) &&
-        isa(var.solverDataDict[vnd.solveKey], VariableNodeData) &&
-        length(fields) != 0
-    # @error useExisting vnd.solveKey
-    if useExisting
-        # change multiple pointers inside the VND var.solverDataDict[solvekey]
-        for field in fields
-            destField = getfield(var.solverDataDict[vnd.solveKey], field)
-            srcField = getfield(usevnd, field)
-            if isa(destField, Array) && size(destField) == size(srcField)
-                # use broadcast (in-place operation)
-                destField .= srcField
-            else
-                # change pointer of destination VND object member
-                setfield!(var.solverDataDict[vnd.solveKey], field, srcField)
-            end
-        end
+    if !haskey(v.solverDataDict, vnd.solveKey)
+        addVariableSolverData!(dfg, variablekey, vnd)
     else
-        # change a single pointer in var.solverDataDict
-        var.solverDataDict[vnd.solveKey] = usevnd
+        v.solverDataDict[vnd.solveKey] = usevnd
     end
 
-    return var.solverDataDict[vnd.solveKey]
-end
-
-function updateVariableSolverData!(
-    dfg::AbstractDFG,
-    variablekey::Symbol,
-    vnd::VariableNodeData,
-    solveKey::Symbol,
-    useCopy::Bool = false,
-    fields::Vector{Symbol} = Symbol[];
-    warn_if_absent::Bool = true,
-)
-    # TODO not very clean
-    if vnd.solveKey != solveKey
-        @warn(
-            "updateVariableSolverData with solveKey parameter might change in the future, see DFG #565. Future warnings are suppressed",
-            maxlog = 1
-        )
-        usevnd = useCopy ? deepcopy(vnd) : vnd
-        usevnd.solveKey = solveKey
-        return updateVariableSolverData!(
-            dfg,
-            variablekey,
-            usevnd,
-            useCopy,
-            fields;
-            warn_if_absent = warn_if_absent,
-        )
-    else
-        return updateVariableSolverData!(
-            dfg,
-            variablekey,
-            vnd,
-            useCopy,
-            fields;
-            warn_if_absent = warn_if_absent,
-        )
-    end
-end
-
-function updateVariableSolverData!(
-    dfg::AbstractDFG,
-    sourceVariable::VariableCompute,
-    solveKey::Symbol = :default,
-    useCopy::Bool = false,
-    fields::Vector{Symbol} = Symbol[];
-    warn_if_absent::Bool = true,
-)
-    #
-    vnd = getSolverData(sourceVariable, solveKey)
-    # toshow = listSolveKeys(sourceVariable) |> collect
-    # @info "update DFGVar solveKey" solveKey vnd.solveKey 
-    # @show toshow
-    @assert solveKey == vnd.solveKey "VariableNodeData's solveKey=:$(vnd.solveKey) does not match requested :$solveKey"
-    return updateVariableSolverData!(
-        dfg,
-        sourceVariable.label,
-        vnd,
-        useCopy,
-        fields;
-        warn_if_absent = warn_if_absent,
-    )
-end
-
-function updateVariableSolverData!(
-    dfg::AbstractDFG,
-    sourceVariables::Vector{<:VariableCompute},
-    solveKey::Symbol = :default,
-    useCopy::Bool = false,
-    fields::Vector{Symbol} = Symbol[];
-    warn_if_absent::Bool = true,
-)
-    #I think cloud would do this in bulk for speed
-    for var in sourceVariables
-        updateVariableSolverData!(
-            dfg,
-            var.label,
-            getSolverData(var, solveKey),
-            useCopy,
-            fields;
-            warn_if_absent = warn_if_absent,
-        )
-    end
+    return 1
 end
 
 """

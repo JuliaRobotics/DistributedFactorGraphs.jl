@@ -135,8 +135,8 @@ independently using the functions as discussed in the update section below.
 
 Full variables and factors can be updated using the following functions:
 
-- [`updateVariable!`](@ref)
-- [`updateFactor!`](@ref)
+- [`mergeVariable!`](@ref)
+- [`mergeFactor!`](@ref)
 
 
 **NOTE**: Skeleton and summary variables are read-only. To perform updates you

@@ -79,13 +79,13 @@ export getGraphBlobEntry,
     getGraphBlobEntries,
     addGraphBlobEntry!,
     addGraphBlobEntries!,
-    updateGraphBlobEntry!,
+    mergeGraphBlobentry!,
     deleteGraphBlobEntry!,
     getAgentBlobEntry,
     getAgentBlobEntries,
     addAgentBlobEntry!,
     addAgentBlobEntries!,
-    updateAgentBlobEntry!,
+    mergeAgentBlobentry!,
     deleteAgentBlobEntry!,
     listGraphBlobEntries,
     listAgentBlobEntries
@@ -110,8 +110,8 @@ export exists,
     addFactors!,
     getVariable,
     getFactor,
-    updateVariable!,
-    updateFactor!,
+    mergeVariable!,
+    mergeFactor!,
     deleteVariable!,
     deleteFactor!,
     listVariables,
@@ -145,7 +145,7 @@ export getSolvable, setSolvable!, isSolvable
 export getVariableLabelNumber
 
 # accessors
-export getLabel, getTimestamp, setTimestamp, setTimestamp!, getTags, setTags!
+export getLabel, getTimestamp, setTimestamp, getTags, setTags!
 
 export getAgentLabel, getGraphLabel
 
@@ -186,7 +186,7 @@ export getMetadata,
 # CRUD & SET
 export getVariableSolverData,
     addVariableSolverData!,
-    updateVariableSolverData!,
+    mergeVariableState!,
     deleteVariableSolverData!,
     listVariableSolverData,
     mergeVariableSolverData!,
@@ -228,7 +228,7 @@ export hasBlobEntry,
     getBlobEntryFirst,
     addBlobEntry!,
     addBlobEntries!,
-    updateBlobEntry!,
+    mergeBlobentry!,
     deleteBlobEntry!,
     listBlobEntrySequence,
     mergeBlobEntries!

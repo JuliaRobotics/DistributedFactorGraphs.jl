@@ -47,7 +47,6 @@ Labels are the principle identifier of a variable or factor.
 Each variable or factor can have a timestamp associated with it.
 
 - [`getTimestamp`](@ref)
-- [`setTimestamp!`](@ref)
 
 
 #### Tags
@@ -129,7 +128,7 @@ Related functions:
 - [`listVariableSolverData`](@ref)
 - [`getVariableSolverData`](@ref)
 - [`addVariableSolverData!`](@ref)
-- [`updateVariableSolverData!`](@ref)
+- [`mergeVariableState!`](@ref)
 - [`deleteVariableSolverData!`](@ref)
 - [`mergeVariableSolverData!`](@ref)
 

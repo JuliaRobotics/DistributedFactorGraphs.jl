@@ -134,37 +134,29 @@ function getFactor(dfg::GraphsDFG, label::Symbol)
     return dfg.g.factors[label]
 end
 
-function updateVariable!(
-    dfg::GraphsDFG,
-    variable::AbstractDFGVariable;
-    warn_if_absent::Bool = true,
-)
+function mergeVariable!(dfg::GraphsDFG, variable::AbstractDFGVariable)
     if !haskey(dfg.g.variables, variable.label)
-        warn_if_absent &&
-            @warn "Variable label '$(variable.label)' does not exist in the factor graph, adding"
-        return addVariable!(dfg, variable)
+        addVariable!(dfg, variable)
+    else
+        dfg.g.variables[variable.label] = variable
     end
-    dfg.g.variables[variable.label] = variable
-    return variable
+    return 1
 end
 
-function updateFactor!(
-    dfg::GraphsDFG,
-    factor::AbstractDFGFactor;
-    warn_if_absent::Bool = true,
-)
+function mergeFactor!(dfg::GraphsDFG, factor::AbstractDFGFactor;)
     if !haskey(dfg.g.factors, factor.label)
-        warn_if_absent &&
-            @warn "Factor label '$(factor.label)' does not exist in the factor graph, adding"
-        return addFactor!(dfg, factor)
+        addFactor!(dfg, factor)
+    elseif dfg.g.factors[factor.label]._variableOrderSymbols != factor._variableOrderSymbols
+        #TODO should we allow merging the factor neighbors or error as before?
+        error("Cannot update the factor, the neighbors are not the same.")
+        # We need to delete the factor if we are updating the neighbors
+        deleteFactor!(dfg, factor.label)
+        addFactor!(dfg, factor)
+    else
+        dfg.g.factors[factor.label] = factor
     end
 
-    # Confirm that we're not updating the neighbors
-    dfg.g.factors[factor.label]._variableOrderSymbols != factor._variableOrderSymbols &&
-        error("Cannot update the factor, the neighbors are not the same.")
-
-    dfg.g.factors[factor.label] = factor
-    return factor
+    return 1
 end
 
 function deleteVariable!(dfg::GraphsDFG, label::Symbol)#::Tuple{AbstractDFGVariable, Vector{<:AbstractDFGFactor}}

@@ -25,7 +25,7 @@ function addData! end
 """
 Update a blob entry or blob to the blob store or dfg.
 Related
-[`updateBlobEntry!`](@ref)
+[`mergeBlobentry!`](@ref)
 
 $(METHODLIST)
 """
@@ -247,9 +247,9 @@ function updateData!(
 )
     checkhash && assertHash(entry, blob; hashfunction)
     # order of ops with unknown new blobId not tested
-    de = updateBlobEntry!(dfg, label, entry)
+    mergeBlobentry!(dfg, label, entry)
     db = updateBlob!(dfg, de, blob)
-    return de => db
+    return 2
 end
 
 function updateData!(
@@ -269,10 +269,9 @@ function updateData!(
         origin = buildSourceString(dfg, label),
         _version = string(_getDFGVersion()),
     )
-
-    de = updateBlobEntry!(dfg, label, newEntry)
-    db = updateBlob!(blobstore, de, blob)
-    return de => db
+    mergeBlobentry!(dfg, label, newEntry)
+    updateBlob!(blobstore, newEntry, blob)
+    return 2
 end
 
 function deleteData!(dfg::AbstractDFG, vLbl::Symbol, bLbl::Symbol)

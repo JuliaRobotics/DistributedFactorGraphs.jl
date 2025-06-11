@@ -181,20 +181,21 @@ end
 
 """
     $(SIGNATURES)
-Update data entry
-
-DevNote
-- DF, unclear if `update` verb is applicable in this case, see #404
+Update a Blobentry in the factor graph.
+If the Blobentry does not exist, it will be added.
+Notes:
 """
-function updateBlobEntry!(var::AbstractDFGVariable, bde::BlobEntry)
-    !haskey(var.dataDict, bde.label) &&
-        (@warn "$(bde.label) does not exist in variable $(getLabel(var)), adding")
-    var.dataDict[bde.label] = bde
-    return bde
+function mergeBlobentry!(var::AbstractDFGVariable, bde::BlobEntry)
+    if !haskey(var.dataDict, bde.label)
+        addBlobEntry!(var, bde)
+    else
+        var.dataDict[bde.label] = bde
+    end
+    return 1
 end
-function updateBlobEntry!(dfg::AbstractDFG, label::Symbol, bde::BlobEntry)
+function mergeBlobentry!(dfg::AbstractDFG, label::Symbol, bde::BlobEntry)
     # !isVariable(dfg, label) && return nothing
-    return updateBlobEntry!(getVariable(dfg, label), bde)
+    return mergeBlobentry!(getVariable(dfg, label), bde)
 end
 
 """

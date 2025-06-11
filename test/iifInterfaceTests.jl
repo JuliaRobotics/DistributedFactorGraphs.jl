@@ -71,12 +71,12 @@ end
     # Add it to the new graph.
     @test addVariable!(dfg2, v1) == v1
     @test addVariable!(dfg2, v2) == v2
-    @test @test_logs (:warn, r"exist") match_mode = :any updateVariable!(dfg2, v3) == v3
+    @test mergeVariable!(dfg2, v3) == 1
     @test_throws ErrorException addVariable!(dfg2, v3)
     @test addFactor!(dfg2, f1) == f1
     @test_throws ErrorException addFactor!(dfg2, f1)
-    # @test @test_logs (:warn, r"exist") updateFactor!(dfg2, f2) == f2
-    @test updateFactor!(dfg2, f2) == f2
+    # @test @test_logs (:warn, r"exist") mergeFactor!(dfg2, f2) == f2
+    @test mergeFactor!(dfg2, f2) == 1
     @test_throws ErrorException addFactor!(dfg2, f2)
 
     dv3 = deleteVariable!(dfg2, v3)
@@ -176,11 +176,9 @@ end
 
     # Sets
     v1Prime = deepcopy(v1)
-    @test updateVariable!(dfg, v1Prime) == v1 #Maybe move to crud
-    @test updateVariable!(dfg, v1Prime) == getVariable(dfg, v1.label)
+    @test mergeVariable!(dfg, v1Prime) == 1 #Maybe move to crud
     f1Prime = deepcopy(f1)
-    @test updateFactor!(dfg, f1Prime) == f1 #Maybe move to crud
-    @test updateFactor!(dfg, f1Prime) == getFactor(dfg, f1.label)
+    @test mergeFactor!(dfg, f1Prime) == 1 #Maybe move to crud
 
     # Accessors
     @test getLabel(v1) == v1.label
@@ -266,13 +264,9 @@ end
     @test_throws KeyError getBlobEntry(dfg, :b, :key1)
 
     #update
-    @test updateBlobEntry!(dfg, :a, de2_update) == de2_update
+    @test mergeBlobentry!(dfg, :a, de2_update) == 1
     @test deepcopy(de2_update) == getBlobEntry(dfg, :a, :key2)
-    @test @test_logs (:warn, r"does not exist") match_mode = :any updateBlobEntry!(
-        dfg,
-        :b,
-        de2_update,
-    ) == de2_update
+    @test mergeBlobentry!(dfg, :b, de2_update) == 1
 
     #list
     entries = getBlobEntries(dfg, :a)
@@ -401,8 +395,8 @@ setSolvable!(verts[7], 1)
 setSolvable!(verts[8], 0)
 getSolverData(verts[8]).solveInProgress = 1
 #call update to set it on cloud
-updateVariable!(dfg, verts[7])
-updateVariable!(dfg, verts[8])
+mergeVariable!(dfg, verts[7])
+mergeVariable!(dfg, verts[8])
 
 facts = map(
     n -> addFactor!(

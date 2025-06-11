@@ -213,7 +213,7 @@ function updateGraphMetadata!(dfg::AbstractDFG, pair::Pair{Symbol, String})
     return push!(dfg.graphMetadata, pair)
 end
 
-function deleteAgentMetadata!(dfg::AbstractDFG, key::Symbol) 
+function deleteAgentMetadata!(dfg::AbstractDFG, key::Symbol)
     pop!(dfg.agent.metadata, key)
     return 1
 end
@@ -236,14 +236,14 @@ function getGraphBlobEntry end
 function getGraphBlobEntries end
 function addGraphBlobEntry! end
 function addGraphBlobEntries! end
-function updateGraphBlobEntry! end
+function mergeGraphBlobentry! end
 function deleteGraphBlobEntry! end
 
 function getAgentBlobEntry end
 function getAgentBlobEntries end
 function addAgentBlobEntry! end
 function addAgentBlobEntries! end
-function updateAgentBlobEntry! end
+function mergeAgentBlobentry! end
 function deleteAgentBlobEntry! end
 
 function getModelBlobEntry end
@@ -392,21 +392,20 @@ end
 
 """
     $(SIGNATURES)
-Update a complete VariableCompute in the DFG.
+Merge a variable into the DFG. If a variable with the same label exists, it will be overwritten; 
+otherwise, the variable will be added to the graph.
 """
-function updateVariable!(
-    dfg::G,
-    variable::V,
-) where {G <: AbstractDFG, V <: AbstractDFGVariable}
-    return error("updateVariable! not implemented for $(typeof(dfg))")
+function mergeVariable!(dfg::AbstractDFG, variable::AbstractDFGVariable)
+    return error("mergeVariable! not implemented for $(typeof(dfg))")
 end
 
 """
     $(SIGNATURES)
-Update a complete FactorCompute in the DFG.
+Merge a factor into the DFG. If a factor with the same label exists, it will be overwritten; 
+otherwise, the factor will be added to the graph.
 """
-function updateFactor!(dfg::G, factor::F) where {G <: AbstractDFG, F <: AbstractDFGFactor}
-    return error("updateFactor! not implemented for $(typeof(dfg))")
+function mergeFactor!(dfg::AbstractDFG, factor::AbstractDFGFactor)
+    return error("mergeFactor! not implemented for $(typeof(dfg))")
 end
 
 """
@@ -420,12 +419,8 @@ end
     $(SIGNATURES)
 Delete a FactorCompute from the DFG using its label.
 """
-function deleteFactor!(
-    dfg::G,
-    label::Symbol;
-    suppressGetFactor::Bool = false,
-) where {G <: AbstractDFG}
-    return error("deleteFactors not implemented for $(typeof(dfg))")
+function deleteFactor!(dfg::AbstractDFG, label::Symbol)
+    return error("deleteFactor not implemented for $(typeof(dfg))")
 end
 
 """
@@ -1097,7 +1092,7 @@ function copyGraph!(
         if !exists(destDFG, variable)
             addVariable!(destDFG, variableCopy)
         elseif overwriteDest
-            updateVariable!(destDFG, variableCopy)
+            mergeVariable!(destDFG, variableCopy)
         else
             error("Variable $(variable.label) already exists in destination graph!")
         end
@@ -1119,7 +1114,7 @@ function copyGraph!(
             if !exists(destDFG, factor)
                 addFactor!(destDFG, factorCopy)
             elseif overwriteDest
-                updateFactor!(destDFG, factorCopy)
+                mergeFactor!(destDFG, factorCopy)
             else
                 error("Factor $(factor.label) already exists in destination graph!")
             end
@@ -1458,7 +1453,7 @@ function mergeVariableData!(dfg::AbstractDFG, sourceVariable::AbstractDFGVariabl
 
     #update if its not a InMemoryDFGTypes, otherwise it was a reference
     # if satelite nodes are used it can be updated separately
-    # !(isa(dfg, InMemoryDFGTypes)) && updateVariable!(dfg, var)
+    # !(isa(dfg, InMemoryDFGTypes)) && mergeVariable!(dfg, var)
 
     return var
 end

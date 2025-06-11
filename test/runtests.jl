@@ -127,8 +127,8 @@ struct NotImplementedDFG{T} <: AbstractDFG{T} end
 
     @test_throws ErrorException getVariable(dfg, :a)
     @test_throws ErrorException getFactor(dfg, :a)
-    @test_throws ErrorException updateVariable!(dfg, v1)
-    @test_throws ErrorException updateFactor!(dfg, f1)
+    @test_throws ErrorException mergeVariable!(dfg, v1)
+    @test_throws ErrorException mergeFactor!(dfg, f1)
 
     @test_throws ErrorException deleteVariable!(dfg, :a)
     @test_throws ErrorException deleteFactor!(dfg, :a)
