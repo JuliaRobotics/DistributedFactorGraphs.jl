@@ -1,16 +1,16 @@
 
 ##==============================================================================
-## BlobEntry - compare
+## Blobentry - compare
 ##==============================================================================
 
 import Base: ==
 
-@generated function ==(x::T, y::T) where {T <: BlobEntry}
+@generated function ==(x::T, y::T) where {T <: Blobentry}
     return mapreduce(n -> :(x.$n == y.$n), (a, b) -> :($a && $b), fieldnames(x))
 end
 
 ##==============================================================================
-## BlobEntry - common
+## Blobentry - common
 ##==============================================================================
 
 """
@@ -22,16 +22,16 @@ function buildSourceString(dfg::AbstractDFG, label::Symbol)
 end
 
 ##==============================================================================
-## BlobEntry - Defined in src/entities/AbstractDFG.jl
+## Blobentry - Defined in src/entities/AbstractDFG.jl
 ##==============================================================================
 # Fields to be implemented
 # label
 # id
 
-getHash(entry::BlobEntry) = hex2bytes(entry.hash)
-getTimestamp(entry::BlobEntry) = entry.timestamp
+getHash(entry::Blobentry) = hex2bytes(entry.hash)
+getTimestamp(entry::Blobentry) = entry.timestamp
 
-function assertHash(de::BlobEntry, db; hashfunction::Function = sha256)
+function assertHash(de::Blobentry, db; hashfunction::Function = sha256)
     getHash(de) === nothing && @warn "Missing hash?" && return true
     if hashfunction(db) == getHash(de)
         return true #or nothing?
@@ -40,8 +40,8 @@ function assertHash(de::BlobEntry, db; hashfunction::Function = sha256)
     end
 end
 
-function Base.show(io::IO, ::MIME"text/plain", entry::BlobEntry)
-    println(io, "BlobEntry {")
+function Base.show(io::IO, ::MIME"text/plain", entry::Blobentry)
+    println(io, "Blobentry {")
     println(io, "  id:            ", entry.id)
     println(io, "  blobId:        ", entry.blobId)
     println(io, "  originId:      ", entry.originId)
@@ -57,17 +57,17 @@ function Base.show(io::IO, ::MIME"text/plain", entry::BlobEntry)
 end
 
 ##==============================================================================
-## BlobEntry - CRUD
+## Blobentry - CRUD
 ##==============================================================================
 
 """
     $(SIGNATURES)
 Get data entry
 
-Also see: [`addBlobEntry!`](@ref), [`getBlob`](@ref), [`listBlobEntries`](@ref)
+Also see: [`addBlobentry!`](@ref), [`getBlob`](@ref), [`listBlobentries`](@ref)
 """
-function getBlobEntry(var::AbstractDFGVariable, key::Symbol)
-    if !hasBlobEntry(var, key)
+function getBlobentry(var::AbstractDFGVariable, key::Symbol)
+    if !hasBlobentry(var, key)
         throw(
             KeyError(
                 "No dataEntry label $(key) found in variable $(getLabel(var)). Available keys: $(keys(var.dataDict))",
@@ -77,15 +77,15 @@ function getBlobEntry(var::AbstractDFGVariable, key::Symbol)
     return var.dataDict[key]
 end
 
-function getBlobEntry(var::VariableDFG, key::Symbol)
-    if !hasBlobEntry(var, key)
+function getBlobentry(var::VariableDFG, key::Symbol)
+    if !hasBlobentry(var, key)
         throw(KeyError(key))
     end
     return var.blobEntries[findfirst(x -> x.label == key, var.blobEntries)]
 end
 
-#TODO maybe rename to getBlobEntryFirst
-function getBlobEntry(var::AbstractDFGVariable, blobId::UUID)
+#TODO maybe rename to getBlobentryFirst
+function getBlobentry(var::AbstractDFGVariable, blobId::UUID)
     for (k, v) in var.dataDict
         if blobId in [v.originId, v.blobId]
             return v
@@ -98,9 +98,9 @@ end
     $(SIGNATURES)
 Finds and returns the first blob entry that matches the regex.
 
-Also see: [`getBlobEntry`](@ref)
+Also see: [`getBlobentry`](@ref)
 """
-function getBlobEntryFirst(var::AbstractDFGVariable, key::Regex)
+function getBlobentryFirst(var::AbstractDFGVariable, key::Regex)
     for (k, v) in var.dataDict
         if occursin(key, string(v.label))
             return v
@@ -113,7 +113,7 @@ function getBlobEntryFirst(var::AbstractDFGVariable, key::Regex)
     )
 end
 
-function getBlobEntryFirst(var::VariableDFG, key::Regex)
+function getBlobentryFirst(var::VariableDFG, key::Regex)
     firstIdx = findfirst(x -> contains(string(x.label), key), var.blobEntries)
     if isnothing(firstIdx)
         throw(KeyError("$key"))
@@ -121,62 +121,62 @@ function getBlobEntryFirst(var::VariableDFG, key::Regex)
     return var.blobEntries[firstIdx]
 end
 
-function getBlobEntryFirst(dfg::AbstractDFG, label::Symbol, key::Regex)
-    els = listBlobEntries(dfg, label)
+function getBlobentryFirst(dfg::AbstractDFG, label::Symbol, key::Regex)
+    els = listBlobentries(dfg, label)
     firstIdx = findfirst(contains(key), string.(els))
     isnothing(firstIdx) && throw(
         KeyError(
             "No blobEntry with label matching regex $(key) found in variable $(label)",
         ),
     )
-    return getBlobEntry(dfg, label, els[firstIdx])
+    return getBlobentry(dfg, label, els[firstIdx])
 end
 
 # TODO Consider autogenerating all methods of the form:
 # verbNoun(dfg::VariableCompute, label::Symbol, args...; kwargs...) = verbNoun(getVariable(dfg, label), args...; kwargs...)
 # with something like:
 # getvariablemethod = [
-#     :getBlobEntryFirst,
+#     :getBlobentryFirst,
 # ]
 # for met in methodstooverload  
 #     @eval DistributedFactorGraphs $met(dfg::AbstractDFG, label::Symbol, args...; kwargs...) = $met(getVariable(dfg, label), args...; kwargs...)
 # end
 
-function getBlobEntry(dfg::AbstractDFG, label::Symbol, key::Union{Symbol, UUID})
-    return getBlobEntry(getVariable(dfg, label), key)
+function getBlobentry(dfg::AbstractDFG, label::Symbol, key::Union{Symbol, UUID})
+    return getBlobentry(getVariable(dfg, label), key)
 end
-# getBlobEntry(dfg::AbstractDFG, label::Symbol, key::Symbol) = getBlobEntry(getVariable(dfg, label), key)
+# getBlobentry(dfg::AbstractDFG, label::Symbol, key::Symbol) = getBlobentry(getVariable(dfg, label), key)
 
 """
     $(SIGNATURES)
 Add Data Entry to a DFG variable
 Should be extended if DFG variable is not returned by reference.
 
-Also see: [`getBlobEntry`](@ref), [`addBlob!`](@ref), [`mergeBlobEntries!`](@ref)
+Also see: [`getBlobentry`](@ref), [`addBlob!`](@ref), [`mergeBlobentries!`](@ref)
 """
-function addBlobEntry!(var::AbstractDFGVariable, entry::BlobEntry;)
+function addBlobentry!(var::AbstractDFGVariable, entry::Blobentry;)
     # see https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/985
     # blobId::Union{UUID,Nothing} = (isnothing(entry.blobId) ? entry.id : entry.blobId),
-    # blobSize::Int = (hasfield(BlobEntry, :size) ? entry.size : -1)
+    # blobSize::Int = (hasfield(Blobentry, :size) ? entry.size : -1)
     haskey(var.dataDict, entry.label) &&
         error("blobEntry $(entry.label) already exists on variable $(getLabel(var))")
     var.dataDict[entry.label] = entry
     return entry
 end
 
-function addBlobEntry!(var::VariableDFG, entry::BlobEntry)
+function addBlobentry!(var::VariableDFG, entry::Blobentry)
     entry.label in getproperty.(var.blobEntries, :label) &&
         error("blobEntry $(entry.label) already exists on variable $(getLabel(var))")
     push!(var.blobEntries, entry)
     return entry
 end
 
-function addBlobEntry!(dfg::AbstractDFG, vLbl::Symbol, entry::BlobEntry;)
-    return addBlobEntry!(getVariable(dfg, vLbl), entry)
+function addBlobentry!(dfg::AbstractDFG, vLbl::Symbol, entry::Blobentry;)
+    return addBlobentry!(getVariable(dfg, vLbl), entry)
 end
 
-function addBlobEntries!(dfg::AbstractDFG, vLbl::Symbol, entries::Vector{BlobEntry})
-    return addBlobEntry!.(dfg, vLbl, entries)
+function addBlobentries!(dfg::AbstractDFG, vLbl::Symbol, entries::Vector{Blobentry})
+    return addBlobentry!.(dfg, vLbl, entries)
 end
 
 """
@@ -185,15 +185,15 @@ Update a Blobentry in the factor graph.
 If the Blobentry does not exist, it will be added.
 Notes:
 """
-function mergeBlobentry!(var::AbstractDFGVariable, bde::BlobEntry)
+function mergeBlobentry!(var::AbstractDFGVariable, bde::Blobentry)
     if !haskey(var.dataDict, bde.label)
-        addBlobEntry!(var, bde)
+        addBlobentry!(var, bde)
     else
         var.dataDict[bde.label] = bde
     end
     return 1
 end
-function mergeBlobentry!(dfg::AbstractDFG, label::Symbol, bde::BlobEntry)
+function mergeBlobentry!(dfg::AbstractDFG, label::Symbol, bde::Blobentry)
     # !isVariable(dfg, label) && return nothing
     return mergeBlobentry!(getVariable(dfg, label), bde)
 end
@@ -206,13 +206,13 @@ Note this doesn't remove it from any data stores.
 Notes:
 - users responsibility to delete data in db before deleting entry
 """
-function deleteBlobEntry!(var::AbstractDFGVariable, key::Symbol)
+function deleteBlobentry!(var::AbstractDFGVariable, key::Symbol)
     pop!(var.dataDict, key)
     return 1
 end
 
-function deleteBlobEntry!(var::VariableDFG, key::Symbol)
-    if !hasBlobEntry(var, key)
+function deleteBlobentry!(var::VariableDFG, key::Symbol)
+    if !hasBlobentry(var, key)
         throw(
             KeyError(
                 "No dataEntry label $(key) found in variable $(getLabel(var)). Available keys: $(keys(var.dataDict))",
@@ -223,19 +223,19 @@ function deleteBlobEntry!(var::VariableDFG, key::Symbol)
     return 1
 end
 
-function deleteBlobEntry!(dfg::AbstractDFG, label::Symbol, key::Symbol)
+function deleteBlobentry!(dfg::AbstractDFG, label::Symbol, key::Symbol)
     #users responsibility to delete data in db before deleting entry
     # !isVariable(dfg, label) && return nothing
-    return deleteBlobEntry!(getVariable(dfg, label), key)
+    return deleteBlobentry!(getVariable(dfg, label), key)
 end
 
-function deleteBlobEntry!(var::AbstractDFGVariable, entry::BlobEntry)
+function deleteBlobentry!(var::AbstractDFGVariable, entry::Blobentry)
     #users responsibility to delete data in db before deleting entry
-    return deleteBlobEntry!(var, entry.label)
+    return deleteBlobentry!(var, entry.label)
 end
 
 ##==============================================================================
-## BlobEntry - Helper functions, Lists, etc
+## Blobentry - Helper functions, Lists, etc
 ##==============================================================================
 
 """
@@ -243,45 +243,45 @@ end
 
 Does a blob entry (element) exist with `blobLabel`.
 """
-hasBlobEntry(var::AbstractDFGVariable, blobLabel::Symbol) = haskey(var.dataDict, blobLabel)
+hasBlobentry(var::AbstractDFGVariable, blobLabel::Symbol) = haskey(var.dataDict, blobLabel)
 
-function hasBlobEntry(var::VariableDFG, label::Symbol)
+function hasBlobentry(var::VariableDFG, label::Symbol)
     return label in getproperty.(var.blobEntries, :label)
 end
 
 """
     $(SIGNATURES)
 
-Get blob entries, Vector{BlobEntry}
+Get blob entries, Vector{Blobentry}
 """
-function getBlobEntries(var::AbstractDFGVariable)
-    #or should we return the iterator, Base.ValueIterator{Dict{Symbol,BlobEntry}}?
+function getBlobentries(var::AbstractDFGVariable)
+    #or should we return the iterator, Base.ValueIterator{Dict{Symbol,Blobentry}}?
     return collect(values(var.dataDict))
 end
 
-function getBlobEntries(var::VariableDFG)
+function getBlobentries(var::VariableDFG)
     return var.blobEntries
 end
 
-function getBlobEntries(dfg::AbstractDFG, label::Symbol)
+function getBlobentries(dfg::AbstractDFG, label::Symbol)
     # !isVariable(dfg, label) && return nothing
-    #or should we return the iterator, Base.ValueIterator{Dict{Symbol,BlobEntry}}?
-    return getBlobEntries(getVariable(dfg, label))
+    #or should we return the iterator, Base.ValueIterator{Dict{Symbol,Blobentry}}?
+    return getBlobentries(getVariable(dfg, label))
 end
 
-function getBlobEntries(dfg::AbstractDFG, label::Symbol, regex::Regex)
-    entries = getBlobEntries(dfg, label)
+function getBlobentries(dfg::AbstractDFG, label::Symbol, regex::Regex)
+    entries = getBlobentries(dfg, label)
     return filter(entries) do e
         return occursin(regex, string(e.label))
     end
 end
 
-function getBlobEntries(
+function getBlobentries(
     dfg::AbstractDFG,
     label::Symbol,
     skey::Union{Symbol, <:AbstractString},
 )
-    return getBlobEntries(dfg, label, Regex(string(skey)))
+    return getBlobentries(dfg, label, Regex(string(skey)))
 end
 
 """
@@ -293,15 +293,15 @@ Notes
 - Use `dropEmpties=true` to not include empty lists in result.
 - Use keyword `varList` for which variables to search through.
 """
-function getBlobEntriesVariables(
+function getBlobentriesVariables(
     dfg::AbstractDFG,
     bLblPattern::Regex;
     varList::AbstractVector{Symbol} = sort(listVariables(dfg); lt = natural_lt),
     dropEmpties::Bool = false,
 )
-    RETLIST = Vector{Vector{BlobEntry}}()
+    RETLIST = Vector{Vector{Blobentry}}()
     @showprogress "Get entries matching $bLblPattern" for vl in varList
-        bes = filter(s -> occursin(bLblPattern, string(s.label)), listBlobEntries(dfg, vl))
+        bes = filter(s -> occursin(bLblPattern, string(s.label)), listBlobentries(dfg, vl))
         # only push to list if there are entries on this variable
         (!dropEmpties || 0 < length(bes)) ? nothing : continue
         push!(RETLIST, bes)
@@ -314,17 +314,17 @@ end
     $(SIGNATURES)
 List the blob entries associated with a particular variable.
 """
-function listBlobEntries(var::AbstractDFGVariable)
+function listBlobentries(var::AbstractDFGVariable)
     return collect(keys(var.dataDict))
 end
 
-function listBlobEntries(var::VariableDFG)
+function listBlobentries(var::VariableDFG)
     return getproperty.(var.blobEntries, :label)
 end
 
-function listBlobEntries(dfg::AbstractDFG, label::Symbol)
+function listBlobentries(dfg::AbstractDFG, label::Symbol)
     # !isVariable(dfg, label) && return nothing
-    return listBlobEntries(getVariable(dfg, label))
+    return listBlobentries(getVariable(dfg, label))
 end
 
 """
@@ -337,7 +337,7 @@ Notes
 
 Example
 ```julia
-listBlobEntrySequence(fg, :x0, r"IMG_CENTER", sortDFG)
+listBlobentrySequence(fg, :x0, r"IMG_CENTER", sortDFG)
 15-element Vector{Symbol}:
  :IMG_CENTER_21676
  :IMG_CENTER_21677
@@ -346,14 +346,14 @@ listBlobEntrySequence(fg, :x0, r"IMG_CENTER", sortDFG)
 ...
 ```
 """
-function listBlobEntrySequence(
+function listBlobentrySequence(
     dfg::AbstractDFG,
     lb::Symbol,
     pattern::Regex,
     _sort::Function = (x) -> x,
 )
     #
-    ents_ = listBlobEntries(dfg, lb)
+    ents_ = listBlobentries(dfg, lb)
     entReg = map(l -> match(pattern, string(l)), ents_)
     entMsk = entReg .!== nothing
     return ents_[findall(entMsk)] |> _sort
@@ -365,9 +365,9 @@ end
 Add a blob entry into the destination variable which already exists 
 in a source variable.
 
-See also: [`addBlobEntry!`](@ref), [`getBlobEntry`](@ref), [`listBlobEntries`](@ref), [`getBlob`](@ref)
+See also: [`addBlobentry!`](@ref), [`getBlobentry`](@ref), [`listBlobentries`](@ref), [`getBlob`](@ref)
 """
-function mergeBlobEntries!(
+function mergeBlobentries!(
     dst::AbstractDFG,
     dlbl::Symbol,
     src::AbstractDFG,
@@ -377,44 +377,44 @@ function mergeBlobEntries!(
     #
     _makevec(s) = [s;]
     _makevec(s::AbstractVector) = s
-    des_ = getBlobEntry(src, slbl, bllb)
+    des_ = getBlobentry(src, slbl, bllb)
     des = _makevec(des_)
     # don't add data entries that already exist 
-    dde = listBlobEntries(dst, dlbl)
+    dde = listBlobentries(dst, dlbl)
     # HACK, verb list should just return vector of Symbol. NCE36
     _getid(s) = s
-    _getid(s::BlobEntry) = s.id
+    _getid(s::Blobentry) = s.id
     uids = _getid.(dde) # (s->s.id).(dde)
     filter!(s -> !(_getid(s) in uids), des)
     # add any data entries not already in the destination variable, by uuid
-    return addBlobEntry!.(dst, dlbl, des)
+    return addBlobentry!.(dst, dlbl, des)
 end
 
-function mergeBlobEntries!(
+function mergeBlobentries!(
     dst::AbstractDFG,
     dlbl::Symbol,
     src::AbstractDFG,
     slbl::Symbol,
     ::Colon = :,
 )
-    des = listBlobEntries(src, slbl)
+    des = listBlobentries(src, slbl)
     # don't add data entries that already exist 
-    uids = listBlobEntries(dst, dlbl)
+    uids = listBlobentries(dst, dlbl)
     # verb list should just return vector of Symbol. NCE36
     filter!(s -> !(s in uids), des)
     if 0 < length(des)
-        union(((s -> mergeBlobEntries!(dst, dlbl, src, slbl, s)).(des))...)
+        union(((s -> mergeBlobentries!(dst, dlbl, src, slbl, s)).(des))...)
     end
 end
 
-function mergeBlobEntries!(
+function mergeBlobentries!(
     dest::AbstractDFG,
     src::AbstractDFG,
     w...;
     varList::AbstractVector = listVariables(dest) |> sortDFG,
 )
     @showprogress 1 "merging data entries" for vl in varList
-        mergeBlobEntries!(dest, vl, src, vl, w...)
+        mergeBlobentries!(dest, vl, src, vl, w...)
     end
     return varList
 end

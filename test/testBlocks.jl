@@ -253,8 +253,8 @@ function GraphAgentMetadata!(fg::AbstractDFG)
 end
 
 # User, Robot, Session Data Blob Entries
-function GraphAgentBlobEntries!(fg::AbstractDFG)
-    be = BlobEntry(;
+function GraphAgentBlobentries!(fg::AbstractDFG)
+    be = Blobentry(;
         id = uuid4(),
         blobId = uuid4(),
         originId = uuid4(),
@@ -274,9 +274,9 @@ function GraphAgentBlobEntries!(fg::AbstractDFG)
     #TODO
 
     # Session Blob Entries
-    ae = addGraphBlobEntry!(fg, be)
+    ae = addGraphBlobentry!(fg, be)
     @test ae == be
-    ge = getGraphBlobEntry(fg, :key1)
+    ge = getGraphBlobentry(fg, :key1)
     @test ge == be
 
     #TODO
@@ -904,15 +904,15 @@ end
 function DataEntriesTestBlock!(fg, v2)
     # "Data Entries"
 
-    # getBlobEntry
-    # addBlobEntry
-    # updateBlobEntry
-    # deleteBlobEntry
-    # getBlobEntries
-    # listBlobEntries
+    # getBlobentry
+    # addBlobentry
+    # updateBlobentry
+    # deleteBlobentry
+    # getBlobentries
+    # listBlobentries
     # emptyDataEntries
     # mergeDataEntries
-    storeEntry = BlobEntry(;
+    storeEntry = Blobentry(;
         id = uuid4(),
         blobId = uuid4(),
         originId = uuid4(),
@@ -931,7 +931,7 @@ function DataEntriesTestBlock!(fg, v2)
 
     # oid = zeros(UInt8,12); oid[12] = 0x01
     # de1 = MongodbDataEntry(:key1, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
-    de1 = BlobEntry(;
+    de1 = Blobentry(;
         id = uuid4(),
         blobId = uuid4(),
         originId = uuid4(),
@@ -946,7 +946,7 @@ function DataEntriesTestBlock!(fg, v2)
 
     # oid = zeros(UInt8,12); oid[12] = 0x02
     # de2 = MongodbDataEntry(:key2, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
-    de2 = BlobEntry(;
+    de2 = Blobentry(;
         id = uuid4(),
         blobId = uuid4(),
         originId = uuid4(),
@@ -961,7 +961,7 @@ function DataEntriesTestBlock!(fg, v2)
 
     # oid = zeros(UInt8,12); oid[12] = 0x03
     # de2_update = MongodbDataEntry(:key2, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
-    de2_update = BlobEntry(;
+    de2_update = Blobentry(;
         id = uuid4(),
         blobId = uuid4(),
         originId = uuid4(),
@@ -976,52 +976,52 @@ function DataEntriesTestBlock!(fg, v2)
 
     #add
     v1 = getVariable(fg, :a)
-    @test addBlobEntry!(v1, de1) == de1
-    @test addBlobEntry!(fg, :a, de2) == de2
-    @test_throws ErrorException addBlobEntry!(v1, de1)
-    @test de2 in getBlobEntries(v1)
+    @test addBlobentry!(v1, de1) == de1
+    @test addBlobentry!(fg, :a, de2) == de2
+    @test_throws ErrorException addBlobentry!(v1, de1)
+    @test de2 in getBlobentries(v1)
 
     #get
-    @test deepcopy(de1) == getBlobEntry(v1, :key1)
-    @test deepcopy(de2) == getBlobEntry(fg, :a, :key2)
-    @test_throws KeyError getBlobEntry(v2, :key1)
-    @test_throws KeyError getBlobEntry(fg, :b, :key1)
+    @test deepcopy(de1) == getBlobentry(v1, :key1)
+    @test deepcopy(de2) == getBlobentry(fg, :a, :key2)
+    @test_throws KeyError getBlobentry(v2, :key1)
+    @test_throws KeyError getBlobentry(fg, :b, :key1)
 
     #update
     @test mergeBlobentry!(fg, :a, de2_update) == 1
-    @test deepcopy(de2_update) == getBlobEntry(fg, :a, :key2)
+    @test deepcopy(de2_update) == getBlobentry(fg, :a, :key2)
     @test mergeBlobentry!(fg, :b, de2_update) == 1
 
     #list
-    entries = getBlobEntries(fg, :a)
+    entries = getBlobentries(fg, :a)
     @test length(entries) == 2
     @test issetequal(map(e -> e.label, entries), [:key1, :key2])
-    @test length(getBlobEntries(fg, :b)) == 1
+    @test length(getBlobentries(fg, :b)) == 1
 
-    @test issetequal(listBlobEntries(fg, :a), [:key1, :key2])
-    @test listBlobEntries(fg, :b) == Symbol[:key2]
+    @test issetequal(listBlobentries(fg, :a), [:key1, :key2])
+    @test listBlobentries(fg, :b) == Symbol[:key2]
 
     #delete
-    @test deleteBlobEntry!(v1, de1) == 1
-    @test listBlobEntries(v1) == Symbol[:key2]
+    @test deleteBlobentry!(v1, de1) == 1
+    @test listBlobentries(v1) == Symbol[:key2]
     #delete from dfg
-    @test deleteBlobEntry!(fg, :a, :key2) == 1
-    @test listBlobEntries(v1) == Symbol[]
-    deleteBlobEntry!(fg, :b, :key2)
+    @test deleteBlobentry!(fg, :a, :key2) == 1
+    @test listBlobentries(v1) == Symbol[]
+    deleteBlobentry!(fg, :b, :key2)
 
     # packed variable data entries
     pacv = packVariable(v1)
-    @test addBlobEntry!(pacv, de1) == de1
-    @test hasBlobEntry(pacv, :key1)
-    @test deepcopy(de1) == getBlobEntry(pacv, :key1)
-    @test getBlobEntries(pacv) == [deepcopy(de1)]
-    @test issetequal(listBlobEntries(pacv), [:key1])
-    # @test deleteBlobEntry!(pacv, de1) == de1
+    @test addBlobentry!(pacv, de1) == de1
+    @test hasBlobentry(pacv, :key1)
+    @test deepcopy(de1) == getBlobentry(pacv, :key1)
+    @test getBlobentries(pacv) == [deepcopy(de1)]
+    @test issetequal(listBlobentries(pacv), [:key1])
+    # @test deleteBlobentry!(pacv, de1) == de1
 
 end
 
 function blobsStoresTestBlock!(fg)
-    de1 = BlobEntry(;
+    de1 = Blobentry(;
         id = uuid4(),
         blobId = uuid4(),
         originId = uuid4(),
@@ -1033,7 +1033,7 @@ function blobsStoresTestBlock!(fg)
         mimeType = "mimetype1",
         metadata = "",
     )
-    de2 = BlobEntry(;
+    de2 = Blobentry(;
         id = uuid4(),
         blobId = uuid4(),
         originId = uuid4(),
@@ -1046,7 +1046,7 @@ function blobsStoresTestBlock!(fg)
         metadata = "",
         timestamp = ZonedDateTime("2020-08-12T12:00:00.000+00:00"),
     )
-    de2_update = BlobEntry(;
+    de2_update = Blobentry(;
         id = uuid4(),
         blobId = uuid4(),
         originId = uuid4(),
@@ -1067,65 +1067,65 @@ function blobsStoresTestBlock!(fg)
     #add
     var1 = getVariable(fg, :a)
     var2 = getVariable(fg, :b)
-    @test addBlobEntry!(var1, de1) == de1
+    @test addBlobentry!(var1, de1) == de1
     mergeVariable!(fg, var1)
-    @test addBlobEntry!(fg, :a, de2) == de2
-    @test_throws ErrorException addBlobEntry!(var1, de1)
-    @test de2 in getBlobEntries(fg, var1.label)
+    @test addBlobentry!(fg, :a, de2) == de2
+    @test_throws ErrorException addBlobentry!(var1, de1)
+    @test de2 in getBlobentries(fg, var1.label)
 
     #get
-    @test deepcopy(de1) == getBlobEntry(var1, :label1)
-    @test deepcopy(de2) == getBlobEntry(fg, :a, :label2)
-    @test_throws KeyError getBlobEntry(var2, :label1)
-    @test_throws KeyError getBlobEntry(fg, :b, :label1)
+    @test deepcopy(de1) == getBlobentry(var1, :label1)
+    @test deepcopy(de2) == getBlobentry(fg, :a, :label2)
+    @test_throws KeyError getBlobentry(var2, :label1)
+    @test_throws KeyError getBlobentry(fg, :b, :label1)
 
     #update
     @test mergeBlobentry!(fg, :a, de2_update) == 1
-    @test deepcopy(de2_update) == getBlobEntry(fg, :a, :label2)
+    @test deepcopy(de2_update) == getBlobentry(fg, :a, :label2)
     @test mergeBlobentry!(fg, :b, de2_update) == 1
 
     #list
-    entries = getBlobEntries(fg, :a)
+    entries = getBlobentries(fg, :a)
     @test length(entries) == 2
     @test issetequal(map(e -> e.label, entries), [:label1, :label2])
-    @test length(getBlobEntries(fg, :b)) == 1
+    @test length(getBlobentries(fg, :b)) == 1
 
-    @test issetequal(listBlobEntries(fg, :a), [:label1, :label2])
-    @test listBlobEntries(fg, :b) == Symbol[:label2]
+    @test issetequal(listBlobentries(fg, :a), [:label1, :label2])
+    @test listBlobentries(fg, :b) == Symbol[:label2]
 
     #delete
-    @test deleteBlobEntry!(fg, var1.label, de1.label) == 1
-    @test listBlobEntries(fg, var1.label) == Symbol[:label2]
+    @test deleteBlobentry!(fg, var1.label, de1.label) == 1
+    @test listBlobentries(fg, var1.label) == Symbol[:label2]
     #delete from dfg
-    @test deleteBlobEntry!(fg, :a, :label2) == 1
+    @test deleteBlobentry!(fg, :a, :label2) == 1
     var1 = getVariable(fg, :a)
-    @test listBlobEntries(var1) == Symbol[]
+    @test listBlobentries(var1) == Symbol[]
 
     # Blobstore functions
     fs = FolderStore("/tmp/$(string(uuid4())[1:8])")
     # Adding
-    addBlobStore!(fg, fs)
+    addBlobstore!(fg, fs)
     # Listing
-    @test listBlobStores(fg) == [fs.label]
+    @test listBlobstores(fg) == [fs.label]
     # Getting
-    @test getBlobStore(fg, fs.label) == fs
+    @test getBlobstore(fg, fs.label) == fs
     # Deleting
-    @test deleteBlobStore!(fg, fs.label) == 1
+    @test deleteBlobstore!(fg, fs.label) == 1
     # Updating
-    updateBlobStore!(fg, fs)
-    @test listBlobStores(fg) == [fs.label]
+    updateBlobstore!(fg, fs)
+    @test listBlobstores(fg) == [fs.label]
     # Emptying
-    emptyBlobStore!(fg)
-    @test listBlobStores(fg) == []
+    emptyBlobstore!(fg)
+    @test listBlobstores(fg) == []
     # Add it back
-    addBlobStore!(fg, fs)
+    addBlobstore!(fg, fs)
 
     # Data functions
     testData = rand(UInt8, 50)
     # Adding 
     newData = addData!(fg, fs.label, :a, :testing, testData) # convenience wrapper over addBlob!
     # Listing
-    @test :testing in listBlobEntries(fg, :a)
+    @test :testing in listBlobentries(fg, :a)
     # Getting
     data = getData(fg, fs, :a, :testing) # convenience wrapper over getBlob
     @test data[1].hash == newData.hash #[1]
@@ -1136,7 +1136,7 @@ function blobsStoresTestBlock!(fg)
     @test data[1].hash == newData.hash #[1]
     data = getData(fg, :a, r"testing") # convenience wrapper over getBlob
     @test data[1].hash == newData.hash #[1]
-    be = getBlobEntryFirst(fg, :a, r"testing")
+    be = getBlobentryFirst(fg, :a, r"testing")
     data = getData(fg, :a, be.originId) # convenience wrapper over getBlob
     @test data[1].hash == newData.hash #[1]
     # @test data[2] == newData[2]
@@ -1144,7 +1144,7 @@ function blobsStoresTestBlock!(fg)
     @test updateData!(fg, fs, :a, newData, rand(UInt8, 50)) == 2
     @show bllb = DistributedFactorGraphs.incrDataLabelSuffix(fg, :a, :testing)
     newData2 = addData!(fg, fs.label, :a, bllb, testData) # convenience wrapper over addBlob!
-    nbe = listBlobEntries(fg, :a)
+    nbe = listBlobentries(fg, :a)
     filter!(s -> occursin(r"testing", string(s)), nbe)
     @test 2 == length(nbe)
     # TODO: incrSuffix when adding repeat labels, e.g. :testing_1, :testing_2
@@ -1881,9 +1881,9 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
             @test getFactor(dfg, fact) == getFactor(retDFG, fact)
         end
 
-        # @test length(getBlobEntries(getVariable(retDFG, :x1))) == 1
-        # @test typeof(getBlobEntry(getVariable(retDFG, :x1),:testing)) == GeneralDataEntry
-        # @test length(getBlobEntries(getVariable(retDFG, :x2))) == 1
-        # @test typeof(getBlobEntry(getVariable(retDFG, :x2),:testing2)) == FileDataEntry
+        # @test length(getBlobentries(getVariable(retDFG, :x1))) == 1
+        # @test typeof(getBlobentry(getVariable(retDFG, :x1),:testing)) == GeneralDataEntry
+        # @test length(getBlobentries(getVariable(retDFG, :x2))) == 1
+        # @test typeof(getBlobentry(getVariable(retDFG, :x2),:testing2)) == FileDataEntry
     end
 end

@@ -11,7 +11,7 @@ function DistributedFactorGraphs.VariableSummary(label::Symbol)
         Set{Symbol}(),
         Dict{Symbol, MeanMaxPPE}(),
         :Pose2,
-        Dict{Symbol, BlobEntry}(),
+        Dict{Symbol, Blobentry}(),
     )
 end
 
@@ -26,7 +26,7 @@ function DistributedFactorGraphs.VariableSummary(
         Set{Symbol}(),
         Dict{Symbol, MeanMaxPPE}(),
         Symbol(T),
-        Dict{Symbol, BlobEntry}(),
+        Dict{Symbol, Blobentry}(),
     )
 end
 

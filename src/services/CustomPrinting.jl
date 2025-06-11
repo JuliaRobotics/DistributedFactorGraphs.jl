@@ -81,7 +81,7 @@ function printVariable(
             print(ioc, "    :$key ")
             println(ioc, "<-- .suggested:  ", round.(ppe.suggested, digits = 4))
         end
-        println(ioc, "  # BlobEntries:      (", length(listBlobEntries(vert)), ")")
+        println(ioc, "  # Blobentries:      (", length(listBlobentries(vert)), ")")
         printstyled(ioc, "  VariableType: "; color = :blue, bold = true)
         println(ioc, vari)
         # println(ioc, "kde max: $(round.(getKDEMax(getBelief(vnd)),digits=4))")

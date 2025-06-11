@@ -220,7 +220,7 @@ end
 end
 
 @testset "Data Entries" begin
-    de1 = BlobEntry(;
+    de1 = Blobentry(;
         originId = uuid4(),
         label = :key1,
         blobstore = :test,
@@ -230,7 +230,7 @@ end
         mimeType = "",
     )
 
-    de2 = BlobEntry(;
+    de2 = Blobentry(;
         originId = uuid4(),
         label = :key2,
         blobstore = :test,
@@ -240,7 +240,7 @@ end
         mimeType = "",
     )
 
-    de2_update = BlobEntry(;
+    de2_update = Blobentry(;
         originId = uuid4(),
         label = :key2,
         blobstore = :test,
@@ -252,37 +252,37 @@ end
 
     #add
     v1 = getVariable(dfg, :a)
-    @test addBlobEntry!(v1, de1) == de1
-    @test addBlobEntry!(dfg, :a, de2) == de2
-    @test_throws ErrorException addBlobEntry!(v1, de1)
-    @test de2 in getBlobEntries(v1)
+    @test addBlobentry!(v1, de1) == de1
+    @test addBlobentry!(dfg, :a, de2) == de2
+    @test_throws ErrorException addBlobentry!(v1, de1)
+    @test de2 in getBlobentries(v1)
 
     #get
-    @test deepcopy(de1) == getBlobEntry(v1, :key1)
-    @test deepcopy(de2) == getBlobEntry(dfg, :a, :key2)
-    @test_throws KeyError getBlobEntry(v2, :key1)
-    @test_throws KeyError getBlobEntry(dfg, :b, :key1)
+    @test deepcopy(de1) == getBlobentry(v1, :key1)
+    @test deepcopy(de2) == getBlobentry(dfg, :a, :key2)
+    @test_throws KeyError getBlobentry(v2, :key1)
+    @test_throws KeyError getBlobentry(dfg, :b, :key1)
 
     #update
     @test mergeBlobentry!(dfg, :a, de2_update) == 1
-    @test deepcopy(de2_update) == getBlobEntry(dfg, :a, :key2)
+    @test deepcopy(de2_update) == getBlobentry(dfg, :a, :key2)
     @test mergeBlobentry!(dfg, :b, de2_update) == 1
 
     #list
-    entries = getBlobEntries(dfg, :a)
+    entries = getBlobentries(dfg, :a)
     @test length(entries) == 2
     @test issetequal(map(e -> e.label, entries), [:key1, :key2])
-    @test length(getBlobEntries(dfg, :b)) == 1
+    @test length(getBlobentries(dfg, :b)) == 1
 
-    @test issetequal(listBlobEntries(dfg, :a), [:key1, :key2])
-    @test listBlobEntries(dfg, :b) == Symbol[:key2]
+    @test issetequal(listBlobentries(dfg, :a), [:key1, :key2])
+    @test listBlobentries(dfg, :b) == Symbol[:key2]
 
     #delete
-    @test deleteBlobEntry!(v1, :key1) == 1
-    @test listBlobEntries(v1) == Symbol[:key2]
+    @test deleteBlobentry!(v1, :key1) == 1
+    @test listBlobentries(v1) == Symbol[:key2]
     #delete from ddfg
-    @test deleteBlobEntry!(dfg, :a, :key2) == 1
-    @test listBlobEntries(v1) == Symbol[]
+    @test deleteBlobentry!(dfg, :a, :key2) == 1
+    @test listBlobentries(v1) == Symbol[]
 end
 
 @testset "Updating Nodes and Estimates" begin

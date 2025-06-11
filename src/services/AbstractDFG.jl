@@ -22,7 +22,7 @@ Base.Broadcast.broadcastable(dfg::AbstractDFG) = Ref(dfg)
 # - `sessionData::Dict{Symbol, String}`
 # - `solverParams::T<:AbstractParams`
 # - `addHistory::Vector{Symbol}`
-# - `blobStores::Dict{Symbol, AbstractBlobStore}`
+# - `blobStores::Dict{Symbol, AbstractBlobstore}`
 # AbstractDFG Accessors
 
 ##------------------------------------------------------------------------------
@@ -232,50 +232,50 @@ emptyGraphMetadata!(dfg::AbstractDFG) = empty!(dfg.graphMetadata)
 ## Agent/Graph/Model Blob Entries CRUD
 ##==============================================================================
 
-function getGraphBlobEntry end
-function getGraphBlobEntries end
-function addGraphBlobEntry! end
-function addGraphBlobEntries! end
+function getGraphBlobentry end
+function getGraphBlobentries end
+function addGraphBlobentry! end
+function addGraphBlobentries! end
 function mergeGraphBlobentry! end
-function deleteGraphBlobEntry! end
+function deleteGraphBlobentry! end
 
-function getAgentBlobEntry end
-function getAgentBlobEntries end
-function addAgentBlobEntry! end
-function addAgentBlobEntries! end
+function getAgentBlobentry end
+function getAgentBlobentries end
+function addAgentBlobentry! end
+function addAgentBlobentries! end
 function mergeAgentBlobentry! end
-function deleteAgentBlobEntry! end
+function deleteAgentBlobentry! end
 
-function getModelBlobEntry end
-function getModelBlobEntries end
-function addModelBlobEntry! end
-function addModelBlobEntries! end
-function updateModelBlobEntry! end
-function deleteModelBlobEntry! end
+function getModelBlobentry end
+function getModelBlobentries end
+function addModelBlobentry! end
+function addModelBlobentries! end
+function updateModelBlobentry! end
+function deleteModelBlobentry! end
 
-function listGraphBlobEntries end
-function listAgentBlobEntries end
-function listModelBlobEntries end
+function listGraphBlobentries end
+function listAgentBlobentries end
+function listModelBlobentries end
 
 ##==============================================================================
-## AbstractBlobStore  CRUD
+## AbstractBlobstore  CRUD
 ##==============================================================================
-# AbstractBlobStore should have label or overwrite getLabel
+# AbstractBlobstore should have label or overwrite getLabel
 
-getBlobStores(dfg::AbstractDFG) = dfg.blobStores
-getBlobStore(dfg::AbstractDFG, key::Symbol) = dfg.blobStores[key]
-function addBlobStore!(dfg::AbstractDFG, bs::AbstractBlobStore)
+getBlobstores(dfg::AbstractDFG) = dfg.blobStores
+getBlobstore(dfg::AbstractDFG, key::Symbol) = dfg.blobStores[key]
+function addBlobstore!(dfg::AbstractDFG, bs::AbstractBlobstore)
     return push!(dfg.blobStores, getLabel(bs) => bs)
 end
-function updateBlobStore!(dfg::AbstractDFG, bs::AbstractBlobStore)
+function updateBlobstore!(dfg::AbstractDFG, bs::AbstractBlobstore)
     return push!(dfg.blobStores, getLabel(bs) => bs)
 end
-function deleteBlobStore!(dfg::AbstractDFG, key::Symbol)
+function deleteBlobstore!(dfg::AbstractDFG, key::Symbol)
     pop!(dfg.blobStores, key)
     return 1
 end
-emptyBlobStore!(dfg::AbstractDFG) = empty!(dfg.blobStores)
-listBlobStores(dfg::AbstractDFG) = collect(keys(dfg.blobStores))
+emptyBlobstore!(dfg::AbstractDFG) = empty!(dfg.blobStores)
+listBlobstores(dfg::AbstractDFG) = collect(keys(dfg.blobStores))
 
 ##==============================================================================
 ## CRUD Interfaces

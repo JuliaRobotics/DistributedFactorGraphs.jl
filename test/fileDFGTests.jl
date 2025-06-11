@@ -24,9 +24,9 @@ using UUIDs
 
         # Add some data entries
         map(
-            v -> addBlobEntry!(
+            v -> addBlobentry!(
                 v,
-                BlobEntry(;
+                Blobentry(;
                     blobId = uuid4(),
                     label = :testing,
                     blobstore = :store,
@@ -40,9 +40,9 @@ using UUIDs
             verts,
         )
         map(
-            v -> addBlobEntry!(
+            v -> addBlobentry!(
                 v,
-                BlobEntry(;
+                Blobentry(;
                     blobId = uuid4(),
                     label = :testing2,
                     blobstore = :store,
@@ -95,7 +95,7 @@ using UUIDs
         #test user/robot/session metadata
 
         #test user/robot/session blob entries
-        be = BlobEntry(;
+        be = Blobentry(;
             blobId = uuid4(),
             label = :testing2,
             blobstore = :store,
@@ -106,8 +106,8 @@ using UUIDs
             timestamp = ZonedDateTime(2023, 2, 3, 20, tz"UTC+1"),
         )
 
-        addGraphBlobEntry!(dfg, be)
-        #TODO addAgentBlobEntry!(dfg, be)
+        addGraphBlobentry!(dfg, be)
+        #TODO addAgentBlobentry!(dfg, be)
         smallRobotData = Dict{Symbol, SmallDataTypes}(:a => "43", :b => "small_robot")
         smallSessionData = Dict{Symbol, SmallDataTypes}(:a => "44", :b => "small_session")
 
@@ -144,8 +144,8 @@ using UUIDs
 
         # Check data entries
         for v in ls(dfg)
-            @test getBlobEntries(getVariable(dfg, v)) ==
-                  getBlobEntries(getVariable(retDFG, v))
+            @test getBlobentries(getVariable(dfg, v)) ==
+                  getBlobentries(getVariable(retDFG, v))
             @test issetequal(listPPEs(dfg, v), listPPEs(retDFG, v))
             for ppe in listPPEs(dfg, v)
                 @test getPPE(dfg, v, ppe) == getPPE(retDFG, v, ppe)

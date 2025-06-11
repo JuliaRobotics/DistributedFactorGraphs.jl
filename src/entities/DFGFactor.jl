@@ -104,7 +104,7 @@ Base.@kwdef struct FactorDFG <: AbstractDFGFactor
     data::String
     metadata::String
     _version::String = string(_getDFGVersion())
-    # blobEntries::Vector{BlobEntry}#TODO should factor have blob entries?
+    # blobEntries::Vector{Blobentry}#TODO should factor have blob entries?
 end
 #TODO type not in DFG FactorDFG, should it be?
 # _type::String

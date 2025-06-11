@@ -3,12 +3,12 @@
 ##=================================================================================
 
 @deprecate getNeighborhood(args...; kwargs...) listNeighborhood(args...; kwargs...)
-@deprecate addBlob!(store::AbstractBlobStore, blobId::UUID, data, ::String) addBlob!(
+@deprecate addBlob!(store::AbstractBlobstore, blobId::UUID, data, ::String) addBlob!(
     store,
     blobId,
     data,
 )
-@deprecate addBlob!(store::AbstractBlobStore{T}, data::T, ::String) where {T} addBlob!(
+@deprecate addBlob!(store::AbstractBlobstore{T}, data::T, ::String) where {T} addBlob!(
     store,
     uuid4(),
     data,
@@ -20,6 +20,47 @@
 @deprecate updateBlobEntry!(args...) mergeBlobentry!(args...)
 @deprecate updateGraphBlobEntry!(args...) mergeGraphBlobentry!(args...)
 @deprecate updateAgentBlobEntry!(args...) mergeAgentBlobentry!(args...)
+
+@deprecate getBlobStore(args...) getBlobstore(args...)
+@deprecate addBlobStore!(args...) addBlobstore!(args...)
+@deprecate updateBlobStore!(args...) updateBlobstore!(args...)
+@deprecate deleteBlobStore!(args...) deleteBlobstore!(args...)
+@deprecate emptyBlobStore!(args...) emptyBlobstore!(args...)
+@deprecate listBlobStores(args...) listBlobstores(args...)
+
+@deprecate BlobEntry(args...; kwargs...) Blobentry(args...; kwargs...)
+@deprecate getGraphBlobEntry(args...; kwargs...) getGraphBlobentry(args...; kwargs...)
+@deprecate getGraphBlobEntries(args...; kwargs...) getGraphBlobentries(args...; kwargs...)
+@deprecate addGraphBlobEntry!(args...; kwargs...) addGraphBlobentry!(args...; kwargs...)
+@deprecate addGraphBlobEntries!(args...; kwargs...) addGraphBlobentries!(args...; kwargs...)
+@deprecate mergeGraphBlobEntry!(args...; kwargs...) mergeGraphBlobentry!(args...; kwargs...)
+@deprecate deleteGraphBlobEntry!(args...; kwargs...) deleteGraphBlobentry!(
+    args...;
+    kwargs...,
+)
+@deprecate getAgentBlobEntry(args...; kwargs...) getAgentBlobentry(args...; kwargs...)
+@deprecate getAgentBlobEntries(args...; kwargs...) getAgentBlobentries(args...; kwargs...)
+@deprecate addAgentBlobEntry!(args...; kwargs...) addAgentBlobentry!(args...; kwargs...)
+@deprecate addAgentBlobEntries!(args...; kwargs...) addAgentBlobentries!(args...; kwargs...)
+@deprecate mergeAgentBlobEntry!(args...; kwargs...) mergeAgentBlobentry!(args...; kwargs...)
+@deprecate deleteAgentBlobEntry!(args...; kwargs...) deleteAgentBlobentry!(
+    args...;
+    kwargs...,
+)
+@deprecate listGraphBlobEntries(args...; kwargs...) listGraphBlobentries(args...; kwargs...)
+@deprecate listAgentBlobEntries(args...; kwargs...) listAgentBlobentries(args...; kwargs...)
+@deprecate hasBlobEntry(args...; kwargs...) hasBlobentry(args...; kwargs...)
+@deprecate getBlobEntry(args...; kwargs...) getBlobentry(args...; kwargs...)
+@deprecate getBlobEntryFirst(args...; kwargs...) getBlobentryFirst(args...; kwargs...)
+@deprecate addBlobEntry!(args...; kwargs...) addBlobentry!(args...; kwargs...)
+@deprecate addBlobEntries!(args...; kwargs...) addBlobentries!(args...; kwargs...)
+@deprecate mergeBlobEntry!(args...; kwargs...) mergeBlobentry!(args...; kwargs...)
+@deprecate deleteBlobEntry!(args...; kwargs...) deleteBlobentry!(args...; kwargs...)
+@deprecate listBlobEntrySequence(args...; kwargs...) listBlobentrySequence(
+    args...;
+    kwargs...,
+)
+@deprecate mergeBlobEntries!(args...; kwargs...) mergeBlobentries!(args...; kwargs...)
 
 export updateVariableSolverData!
 
@@ -190,7 +231,7 @@ export DFGSummary
 DFGSummary(args) = error("DFGSummary is deprecated")
 @deprecate getSummary(dfg::AbstractDFG) getSummaryGraph(dfg)
 
-@deprecate getKey(store::AbstractBlobStore) getLabel(store)
+@deprecate getKey(store::AbstractBlobstore) getLabel(store)
 
 ##------------------------------------------------------------------------------
 ## smallData

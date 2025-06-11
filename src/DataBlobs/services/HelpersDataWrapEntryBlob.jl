@@ -7,16 +7,16 @@
 """
 Get the blob entry and blob for the specified blobstore or dfg retured as a tuple.
 Related
-[`getBlobEntry`](@ref)
+[`getBlobentry`](@ref)
 
 $(METHODLIST)
 """
 function getData end
 
 """
-Add both a BlobEntry and Blob to a distributed factor graph or BlobStore.
+Add both a Blobentry and Blob to a distributed factor graph or Blobstore.
 Related
-[`addBlobEntry!`](@ref)
+[`addBlobentry!`](@ref)
 
 $(METHODLIST)
 """
@@ -34,15 +34,15 @@ function updateData! end
 """
 Delete a blob entry and blob from the blob store or dfg.
 Related
-[`deleteBlobEntry!`](@ref)
+[`deleteBlobentry!`](@ref)
 
 $(METHODLIST)
 """
 function deleteData! end
 
-# construction helper from existing BlobEntry for user overriding via kwargs
-function BlobEntry(
-    entry::BlobEntry;
+# construction helper from existing Blobentry for user overriding via kwargs
+function Blobentry(
+    entry::Blobentry;
     id::Union{UUID, Nothing} = entry.id,
     blobId::Union{UUID, Nothing} = entry.blobId,
     originId::UUID = entry.originId,
@@ -59,7 +59,7 @@ function BlobEntry(
     lastUpdatedTimestamp = entry.lastUpdatedTimestamp,
     _version::String = entry._version,
 )
-    return BlobEntry(;
+    return Blobentry(;
         id,
         blobId,
         originId,
@@ -86,8 +86,8 @@ function getData(
     checkhash::Bool = true,
     getlast::Bool = true,
 )
-    _getblobentr(g, v, k) = getBlobEntries(g, v, k)
-    _getblobentr(g, v, k::UUID) = [getBlobEntry(g, v, k);]
+    _getblobentr(g, v, k) = getBlobentries(g, v, k)
+    _getblobentr(g, v, k::UUID) = [getBlobentry(g, v, k);]
     de_ = _getblobentr(dfg, vlabel, key)
     lbls = (s -> s.label).(de_)
     idx = sortperm(lbls; rev = getlast)
@@ -107,14 +107,14 @@ end
 # This is the normal one
 function getData(
     dfg::AbstractDFG,
-    blobstore::AbstractBlobStore,
+    blobstore::AbstractBlobstore,
     label::Symbol,
     key::Symbol;
     hashfunction = sha256,
     checkhash::Bool = true,
     getlast::Bool = true,
 )
-    de = getBlobEntry(dfg, label, key)
+    de = getBlobentry(dfg, label, key)
     db = getBlob(blobstore, de)
     checkhash && assertHash(de, db; hashfunction)
     return de => db
@@ -124,30 +124,30 @@ end
 function addData!(
     dfg::AbstractDFG,
     label::Symbol,
-    entry::BlobEntry,
+    entry::Blobentry,
     blob::Vector{UInt8};
     hashfunction = sha256,
     checkhash::Bool = false,
 )
     checkhash && assertHash(entry, blob; hashfunction)
     blobId = addBlob!(dfg, entry, blob) |> UUID
-    newEntry = BlobEntry(entry; blobId) #, size=length(blob))
-    return addBlobEntry!(dfg, label, newEntry)
+    newEntry = Blobentry(entry; blobId) #, size=length(blob))
+    return addBlobentry!(dfg, label, newEntry)
 end
 
 function addData!(
     dfg::AbstractDFG,
-    blobstore::AbstractBlobStore,
+    blobstore::AbstractBlobstore,
     label::Symbol,
-    entry::BlobEntry,
+    entry::Blobentry,
     blob::Vector{UInt8};
     hashfunction = sha256,
     checkhash::Bool = false,
 )
     checkhash && assertHash(entry, blob; hashfunction)
     blobId = addBlob!(blobstore, entry, blob) |> UUID
-    newEntry = BlobEntry(entry; blobId) #, size=length(blob))
-    return addBlobEntry!(dfg, label, newEntry)
+    newEntry = Blobentry(entry; blobId) #, size=length(blob))
+    return addBlobentry!(dfg, label, newEntry)
 end
 
 function addData!(
@@ -161,7 +161,7 @@ function addData!(
 )
     return addData!(
         dfg,
-        getBlobStore(dfg, blobstorekey),
+        getBlobstore(dfg, blobstorekey),
         vLbl,
         bLbl,
         blob,
@@ -172,7 +172,7 @@ end
 
 function addData!(
     dfg::AbstractDFG,
-    blobstore::AbstractBlobStore,
+    blobstore::AbstractBlobstore,
     vLbl::Symbol,
     bLbl::Symbol,
     blob::Vector{UInt8},
@@ -186,7 +186,7 @@ function addData!(
     hashfunction = sha256,
 )
     #
-    entry = BlobEntry(;
+    entry = Blobentry(;
         id,
         blobId,
         originId,
@@ -205,7 +205,7 @@ end
 
 function addData!(
     dfg::AbstractDFG,
-    blobstore::AbstractBlobStore{T},
+    blobstore::AbstractBlobstore{T},
     vLbl::Symbol,
     blobLabel::Symbol,
     blob::T,
@@ -220,7 +220,7 @@ function addData!(
     # checkhash && assertHash(entry, blob; hashfunction)
     blobId = addBlob!(blobstore, blob)
 
-    entry = BlobEntry(;
+    entry = Blobentry(;
         blobId,
         originId = blobId,
         label = blobLabel,
@@ -233,14 +233,14 @@ function addData!(
         metadata,
         timestamp,
     )
-    addBlobEntry!(dfg, vLbl, entry)
+    addBlobentry!(dfg, vLbl, entry)
     return entry => blob
 end
 
 function updateData!(
     dfg::AbstractDFG,
     label::Symbol,
-    entry::BlobEntry,
+    entry::Blobentry,
     blob::Vector{UInt8};
     hashfunction = sha256,
     checkhash::Bool = true,
@@ -254,15 +254,15 @@ end
 
 function updateData!(
     dfg::AbstractDFG,
-    blobstore::AbstractBlobStore,
+    blobstore::AbstractBlobstore,
     label::Symbol,
-    entry::BlobEntry,
+    entry::Blobentry,
     blob::Vector{UInt8};
     hashfunction = sha256,
 )
-    # Recalculate the hash - NOTE Assuming that this is going to be a BlobEntry. TBD.
+    # Recalculate the hash - NOTE Assuming that this is going to be a Blobentry. TBD.
     # order of operations with unknown new blobId not tested
-    newEntry = BlobEntry(
+    newEntry = Blobentry(
         entry; # and kwargs to override new values
         blobstore = getLabel(blobstore),
         hash = string(bytes2hex(hashfunction(blob))),
@@ -275,29 +275,29 @@ function updateData!(
 end
 
 function deleteData!(dfg::AbstractDFG, vLbl::Symbol, bLbl::Symbol)
-    de = getBlobEntry(dfg, vLbl, bLbl)
-    deleteBlobEntry!(dfg, vLbl, bLbl)
+    de = getBlobentry(dfg, vLbl, bLbl)
+    deleteBlobentry!(dfg, vLbl, bLbl)
     deleteBlob!(dfg, de)
     return 2
 end
 
 function deleteData!(
     dfg::AbstractDFG,
-    blobstore::AbstractBlobStore,
+    blobstore::AbstractBlobstore,
     vLbl::Symbol,
-    entry::BlobEntry,
+    entry::Blobentry,
 )
     return deleteData!(dfg, blobstore, vLbl, entry.label)
 end
 
 function deleteData!(
     dfg::AbstractDFG,
-    blobstore::AbstractBlobStore,
+    blobstore::AbstractBlobstore,
     vLbl::Symbol,
     bLbl::Symbol,
 )
-    de = getBlobEntry(dfg, vLbl, bLbl)
-    deleteBlobEntry!(dfg, vLbl, bLbl)
+    de = getBlobentry(dfg, vLbl, bLbl)
+    deleteBlobentry!(dfg, vLbl, bLbl)
     deleteBlob!(blobstore, de)
     return 2
 end

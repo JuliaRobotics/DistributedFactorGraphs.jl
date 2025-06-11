@@ -511,11 +511,11 @@ function traverseGraphTopologicalSort(fg::GraphsDFG, s::Symbol, fs_tree = bfs_tr
 end
 
 # FG blob entries 
-function getGraphBlobEntry(fg::GraphsDFG, label::Symbol)
+function getGraphBlobentry(fg::GraphsDFG, label::Symbol)
     return fg.graphBlobEntries[label]
 end
 
-function getGraphBlobEntries(
+function getGraphBlobentries(
     fg::GraphsDFG,
     filt::Union{Nothing, String, Base.Fix2} = nothing,
 )
@@ -529,26 +529,26 @@ function getGraphBlobEntries(
     return entries
 end
 
-function listGraphBlobEntries(fg::GraphsDFG)
+function listGraphBlobentries(fg::GraphsDFG)
     return collect(keys(fg.graphBlobEntries))
 end
 
-function listAgentBlobEntries(fg::GraphsDFG)
+function listAgentBlobentries(fg::GraphsDFG)
     return collect(keys(fg.agent.blobEntries))
 end
 
-function addGraphBlobEntry!(fg::GraphsDFG, entry::BlobEntry)
+function addGraphBlobentry!(fg::GraphsDFG, entry::Blobentry)
     if haskey(fg.graphBlobEntries, entry.label)
         error(
-            "BlobEntry '$(entry.label)' already exists in the factor graph's blob entries.",
+            "Blobentry '$(entry.label)' already exists in the factor graph's blob entries.",
         )
     end
     push!(fg.graphBlobEntries, entry.label => entry)
     return entry
 end
 
-function addGraphBlobEntries!(fg::GraphsDFG, entries::Vector{BlobEntry})
+function addGraphBlobentries!(fg::GraphsDFG, entries::Vector{Blobentry})
     return map(entries) do entry
-        return addGraphBlobEntry!(fg, entry)
+        return addGraphBlobentry!(fg, entry)
     end
 end

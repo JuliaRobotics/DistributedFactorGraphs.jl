@@ -18,7 +18,7 @@ dfg = Neo4jDFG{SolverParams}(
     Symbol[],
     SolverParams();
     createSessionNodes = false,
-    blobStores = Dict{Symbol, AbstractBlobStore}(),
+    blobStores = Dict{Symbol, AbstractBlobstore}(),
 )
 createDfgSessionIfNotExist(dfg)
 

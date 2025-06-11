@@ -180,10 +180,10 @@ you are working with an in-memory graph, the DFG structure contains the graph it
 Graphs reside inside a hierarchy made up in the following way:
 - Agent
   - Metadata
-  - BlobEntries
+  - Blobentries
 - Graph
   - Metadata
-  - BlobEntries
+  - Blobentries
 
 This data can be retrieved with the follow functions:
 
