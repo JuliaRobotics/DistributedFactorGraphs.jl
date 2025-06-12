@@ -32,7 +32,8 @@ Return user factor type from factor graph identified by label `::Symbol`.
 Notes
 - Replaces older `getfnctype`.
 """
-getFactorType(data::GenericFunctionNodeData) = data.fnc.usrfnc!
+getFactorType(data::GenericFunctionNodeData{<:FactorOperationalMemory}) = data.fnc.usrfnc!
+getFactorType(data::GenericFunctionNodeData{<:AbstractFactor}) = data.fnc
 getFactorType(fct::FactorCompute) = getFactorType(getSolverData(fct))
 getFactorType(f::FactorDFG) = getTypeFromSerializationModule(f.fnctype)() # TODO find a better way to do this that does not rely on empty constructor
 getFactorType(dfg::AbstractDFG, lbl::Symbol) = getFactorType(getFactor(dfg, lbl))

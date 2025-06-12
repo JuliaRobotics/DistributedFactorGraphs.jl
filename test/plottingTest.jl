@@ -17,9 +17,10 @@ map(v -> addVariable!(dfg, v), verts)
 map(
     n -> addFactor!(
         dfg,
-        FactorCompute{TestFunctorInferenceType1}(
+        FactorCompute(
             Symbol("x$(n)x$(n+1)f1"),
             [verts[n].label, verts[n + 1].label],
+            GenericFunctionNodeData(; fnc=TestFunctorInferenceType1())
         ),
     ),
     1:(numNodes - 1),

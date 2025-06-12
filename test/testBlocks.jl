@@ -395,13 +395,13 @@ function DFGFactorSCA()
 
     gfnd = GenericFunctionNodeData(; fnc = TestCCW(TestFunctorInferenceType1()))
 
-    f1 = FactorCompute{TestCCW{TestFunctorInferenceType1}}(f1_lbl, [:a, :b])
     f1 = FactorCompute(f1_lbl, [:a, :b], gfnd; tags = f1_tags, solvable = 0)
 
-    f2 = FactorCompute{TestCCW{TestFunctorInferenceType1}}(
+    f2 = FactorCompute(
         :bcf1,
         [:b, :c],
-        ZonedDateTime("2020-08-11T00:12:03.000-05:00"),
+        GenericFunctionNodeData(; fnc=TestCCW{TestFunctorInferenceType1}());
+        timestamp = ZonedDateTime("2020-08-11T00:12:03.000-05:00"),
     )
     #TODO add tests for mutating vos in updateFactor and orphan related checks.
     # we should perhaps prevent an empty vos
@@ -473,7 +473,7 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     @test getLabel(fg[getLabel(v1)]) == getLabel(v1)
 
     #TODO standardize this error and res also for that matter
-    fnope = FactorCompute{TestCCW{TestFunctorInferenceType1}}(:broken, [:a, :nope])
+    fnope = FactorCompute(:broken, [:a, :nope], GenericFunctionNodeData(; fnc=TestCCW{TestFunctorInferenceType1}()))
     @test_throws KeyError addFactor!(fg, fnope)
 
     @test addFactor!(fg, f1) == f1
@@ -1683,7 +1683,7 @@ function ProducingDotFiles(
     end
     if f1 === nothing
         if (FACTYPE == FactorCompute)
-            f1 = FactorCompute{TestFunctorInferenceType1}(:abf1, [:a, :b])
+            f1 = FactorCompute(:abf1, [:a, :b], GenericFunctionNodeData(;fnc = TestFunctorInferenceType1()))
         else
             f1 = FACTYPE(:abf1, [:a, :b])
         end

@@ -30,10 +30,11 @@ const GeneratedCompareUnion = Union{
     FactorDFG,
     FactorSummary,
     FactorSkeleton,
+    FactorState,
 }
 
 @generated function ==(x::T, y::T) where {T <: GeneratedCompareUnion}
-    ignored = []
+    ignored = [:computeMem]
     return mapreduce(
         n -> :(x.$n == y.$n),
         (a, b) -> :($a && $b),
@@ -315,7 +316,17 @@ function compareFactor(
     skipcompute::Bool = true,
 )
     #
-    skip_ = union([:attributes; :solverData; :_variableOrderSymbols; :_gradients], skip)
+    skip_ = union(
+        [
+            :attributes,
+            :solverData,
+            :observation,
+            :computeMem,
+            :_variableOrderSymbols,
+            :_gradients,
+        ],
+        skip,
+    )
     TP = compareAll(A, B; skip = skip_, show = show)
     @debug "compareFactor 1/5" TP
     TP =
