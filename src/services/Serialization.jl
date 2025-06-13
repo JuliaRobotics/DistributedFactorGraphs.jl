@@ -403,23 +403,23 @@ function unpackFactor(dfg::AbstractDFG, factor::FactorDFG; skipVersionCheck::Boo
     metadata = JSON3.read(base64decode(factor.metadata), Dict{Symbol, DFG.SmallDataTypes})
 
     if fullFactorData.fnc isa FactorOperationalMemory
-        computeMem = Ref(fullFactorData.fnc)
+        workmem = Ref(fullFactorData.fnc)
     else
-        computeMem = Ref{FactorOperationalMemory}()
+        workmem = Ref{FactorOperationalMemory}()
     end
     return FactorCompute(
         factor.label,
-        factor.timestamp,
-        Nanosecond(factor.nstime),
-        Set(factor.tags),
-        fullFactorData,
-        factor.solvable,
-        Tuple(factor._variableOrderSymbols);
+        Tuple(factor._variableOrderSymbols),
+        observation,
+        factor.state,
+        workmem;
+        solverData = fullFactorData,
+        nstime = Nanosecond(factor.nstime),
+        tags = Set(factor.tags),
+        solvable = factor.solvable,
+        timestamp = factor.timestamp,
         id = factor.id,
         smallData = metadata,
-        state = factor.state,
-        observation,
-        computeMem,
     )
 end
 

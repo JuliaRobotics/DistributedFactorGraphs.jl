@@ -190,6 +190,39 @@ function updateVariableSolverData!(
     end
 end
 
+function FactorCompute(
+    label::Symbol,
+    timestamp::Union{DateTime, ZonedDateTime},
+    nstime::Nanosecond,
+    tags::Set{Symbol},
+    solverData::GenericFunctionNodeData,
+    solvable::Int,
+    variableOrder::Union{Vector{Symbol}, Tuple};
+    observation = getFactorType(solverData),
+    state::FactorState = FactorState(),
+    workmem::Base.RefValue{<:FactorOperationalMemory} = Ref{FactorOperationalMemory}(),
+    id::Union{UUID, Nothing} = nothing,
+    smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
+)
+    error(
+        "This constructor is deprecated, use FactorCompute(label, variableOrder, solverData; ...) instead",
+    )
+    return FactorCompute(
+        id,
+        label,
+        tags,
+        Tuple(variableOrder),
+        timestamp,
+        nstime,
+        Ref(solverData),
+        Ref(solvable),
+        smallData,
+        observation,
+        state,
+        workmem,
+    )
+end
+
 ## ================================================================================
 ## Deprecated in v0.25
 ##=================================================================================

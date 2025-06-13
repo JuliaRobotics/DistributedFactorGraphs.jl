@@ -253,7 +253,7 @@ $(TYPEDFIELDS)
 """
 Base.@kwdef struct FactorCompute{FT <: AbstractFactor, N} <: AbstractDFGFactor
     """The ID for the factor"""
-    id::Union{UUID, Nothing} = nothing
+    id::Union{UUID, Nothing} = nothing #TODO deprecate id
     """Factor label, e.g. :x1f1.
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
@@ -279,38 +279,46 @@ Base.@kwdef struct FactorCompute{FT <: AbstractFactor, N} <: AbstractDFGFactor
     smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}()
 
     #refactor fields
+    """Observation function or measurement for this factor.
+    Accessors: [`getObservation`](@ref)(@ref)"""
     observation::FT
+    """Describes the current state of the factor. Persisted in serialization.
+    Accessors: [`getFactorState`](@ref)"""
     state::FactorState
-    computeMem::Base.RefValue{<:FactorOperationalMemory} #TODO easy of use vs. performance as container is abstract in any case.
+    """Temporary, non-persistent memory used internally by the solver for intermediate numerical computations and buffers.  
+    `workmem` is lazily allocated and only used during factor operations; it is not serialized or retained after solving.
+    Accessors: [`getWorkmem`](@ref), [`setWorkmem!`](@ref)"""
+    workmem::Base.RefValue{<:FactorOperationalMemory} #TODO easy of use vs. performance as container is abstract in any case.
 end
 
 ##------------------------------------------------------------------------------
 ## Constructors
 
-#TODO consolidate constructors, currently IIF calls only
-# DFGFactor(
-#     Symbol(namestring),
-#     varOrderLabels,
-#     solverData;
-#     tags = Set(union(tags, [:FACTOR])),
-#     solvable,
-#     timestamp = _zonedtime(timestamp),
-# )
-
+# TODO standardize new fields in kw constructors, .id
 function FactorCompute(
     label::Symbol,
-    timestamp::Union{DateTime, ZonedDateTime},
-    nstime::Nanosecond,
-    tags::Set{Symbol},
-    solverData::GenericFunctionNodeData,
-    solvable::Int,
-    variableOrder::Union{Vector{Symbol}, Tuple};
-    observation = getFactorType(solverData),
+    variableOrder::Union{Vector{Symbol}, Tuple},
+    observation::AbstractFactor,
     state::FactorState = FactorState(),
-    computeMem::Base.RefValue{<:FactorOperationalMemory} = Ref{FactorOperationalMemory}(),
+    workmem = Ref{FactorOperationalMemory}();
+    tags::Set{Symbol} = Set{Symbol}(),
+    timestamp::Union{DateTime, ZonedDateTime} = now(localzone()),
+    solvable::Int = 1,
+    nstime::Nanosecond = Nanosecond(0),
     id::Union{UUID, Nothing} = nothing,
     smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
+    solverData = nothing
 )
+    if isnothing(solverData)
+        refsolverData = Ref{GenericFunctionNodeData}() #TODO solverData deprecated in v0.27 WIP
+    else
+        Base.depwarn(
+            "`FactorCompute` solverData is deprecated",
+            :FactorCompute,
+        )
+        refsolverData = Ref(solverData)
+    end
+   
     return FactorCompute(
         id,
         label,
@@ -318,16 +326,15 @@ function FactorCompute(
         Tuple(variableOrder),
         timestamp,
         nstime,
-        Ref(solverData),
+        refsolverData,
         Ref(solvable),
         smallData,
         observation,
         state,
-        computeMem,
+        workmem,
     )
 end
 
-# TODO standardize new fields in kw constructors, .id
 function FactorCompute(
     label::Symbol,
     variableOrder::Union{Vector{Symbol}, Tuple},
@@ -339,6 +346,10 @@ function FactorCompute(
     id::Union{UUID, Nothing} = nothing,
     smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
 )
+    Base.depwarn(
+        "`FactorCompute` constructor with `GenericFunctionNodeData` is deprecated. observation, state, and workmem should be provided explicitly.",
+        :FactorCompute,
+    )
     observation = getFactorType(solverData)
     state = FactorState(
         solverData.eliminated,
@@ -351,24 +362,24 @@ function FactorCompute(
     )
 
     if solverData.fnc isa FactorOperationalMemory
-        computeMem = Ref(solverData.fnc)
+        workmem = Ref(solverData.fnc)
     else
-        computeMem = Ref{FactorOperationalMemory}()
+        workmem = Ref{FactorOperationalMemory}()
     end
 
     return FactorCompute(
         label,
+        Tuple(variableOrder),
+        observation,
+        state,
+        workmem;
+        id,
         timestamp,
         nstime,
         tags,
         solverData,
-        solvable,
-        Tuple(variableOrder);
-        observation,
-        computeMem,
-        id,
         smallData,
-        state,
+        solvable,
     )
 end
 

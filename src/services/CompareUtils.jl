@@ -34,7 +34,7 @@ const GeneratedCompareUnion = Union{
 }
 
 @generated function ==(x::T, y::T) where {T <: GeneratedCompareUnion}
-    ignored = [:computeMem]
+    ignored = [:workmem]
     return mapreduce(
         n -> :(x.$n == y.$n),
         (a, b) -> :($a && $b),
@@ -321,7 +321,7 @@ function compareFactor(
             :attributes,
             :solverData,
             :observation,
-            :computeMem,
+            :workmem,
             :_variableOrderSymbols,
             :_gradients,
         ],

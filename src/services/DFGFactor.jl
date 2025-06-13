@@ -39,12 +39,19 @@ getFactorType(f::FactorDFG) = getTypeFromSerializationModule(f.fnctype)() # TODO
 getFactorType(dfg::AbstractDFG, lbl::Symbol) = getFactorType(getFactor(dfg, lbl))
 
 getState(f::AbstractDFGFactor) = f.state
+
+getFactorState(f::AbstractDFGFactor) = f.state
+getFactorState(dfg::AbstractDFG, lbl::Symbol) = getFactorState(getFactor(dfg, lbl))
+
 getObservation(f::FactorCompute) = f.observation
 function getObservation(f::FactorDFG)
     #FIXME completely refactor to not need getTypeFromSerializationModule and just use StructTypes
     packtype = DFG.getTypeFromSerializationModule("Packed" * f.fnctype)
     return packtype(; JSON3.read(f.observJSON)...)
 end
+
+getWorkmem(f::FactorCompute) = f.workmem[]
+setWorkmem!(f::FactorCompute, workmem::FactorOperationalMemory) = f.workmem[] = workmem
 
 """
     $SIGNATURES
@@ -155,12 +162,12 @@ end
 function setTimestamp(f::FactorCompute, ts::ZonedDateTime)
     return FactorCompute(
         f.label,
-        ts,
-        f.nstime,
-        f.tags,
-        f.solverData,
-        f.solvable,
-        getfield(f, :_variableOrderSymbols);
+        getfield(f, :_variableOrderSymbols),
+        f.solverData;
+        timestamp = ts,
+        nstime = f.nstime,
+        tags = f.tags,
+        solvable = f.solvable,
         id = f.id,
     )
 end
