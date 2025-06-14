@@ -73,6 +73,10 @@ function updateVariableSolverData!(
     fields::Vector{Symbol} = Symbol[];
     warn_if_absent::Bool = true,
 )
+    Base.depwarn(
+        "updateVariableSolverData! is deprecated, use mergeVariableState! or copytoVariableState! instead",
+        :updateVariableSolverData!,
+    )
     #This is basically just setSolverData
     var = getVariable(dfg, variablekey)
     warn_if_absent &&

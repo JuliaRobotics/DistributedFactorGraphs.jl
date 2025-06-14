@@ -21,7 +21,7 @@ end
 Return reference to the user factor in `<:AbstractDFG` identified by `::Symbol`.
 """
 getFactorFunction(fcd::GenericFunctionNodeData) = fcd.fnc.usrfnc!
-getFactorFunction(fc::FactorCompute) = getFactorFunction(getSolverData(fc))
+getFactorFunction(fc::FactorCompute) = getObservation(fc)
 getFactorFunction(dfg::AbstractDFG, fsym::Symbol) = getFactorFunction(getFactor(dfg, fsym))
 
 """
@@ -32,9 +32,17 @@ Return user factor type from factor graph identified by label `::Symbol`.
 Notes
 - Replaces older `getfnctype`.
 """
-getFactorType(data::GenericFunctionNodeData{<:FactorOperationalMemory}) = data.fnc.usrfnc!
-getFactorType(data::GenericFunctionNodeData{<:AbstractFactor}) = data.fnc
-getFactorType(fct::FactorCompute) = getFactorType(getSolverData(fct))
+function getFactorType(data::GenericFunctionNodeData{<:FactorOperationalMemory})
+    #TODO deprecated in v0.27
+    Base.depwarn("getFactorType(::GenericFunctionNodeData) is deprecated", :getFactorType)
+    return data.fnc.usrfnc!
+end
+function getFactorType(data::GenericFunctionNodeData{<:AbstractFactor})
+    #TODO deprecated in v0.27
+    Base.depwarn("getFactorType(::GenericFunctionNodeData) is deprecated", :getFactorType)
+    return data.fnc
+end
+getFactorType(fct::FactorCompute) = getObservation(fct)
 getFactorType(f::FactorDFG) = getTypeFromSerializationModule(f.fnctype)() # TODO find a better way to do this that does not rely on empty constructor
 getFactorType(dfg::AbstractDFG, lbl::Symbol) = getFactorType(getFactor(dfg, lbl))
 
@@ -225,7 +233,12 @@ getVariableOrder(dfg::AbstractDFG, fct::Symbol) = getVariableOrder(getFactor(dfg
 Retrieve solver data structure stored in a factor.
 """
 function getSolverData(f::FactorCompute)
-    return f.solverData
+    Base.depwarn("getSolverData(f::FactorCompute) is deprecated", :getSolverData)
+    if isassigned(getfield(f, :solverData))
+        return getfield(f, :solverData)[]
+    else
+        return nothing
+    end
 end
 
 setSolverData!(f::FactorCompute, data::GenericFunctionNodeData) = f.solverData = data

@@ -253,9 +253,13 @@ VariableDFG(v::VariableCompute) = packVariable(v)
 
 function _packSolverData(f::FactorCompute, fnctype::AbstractFactor)
     #
+    Base.depwarn(
+        "_packSolverData is deprecated, use seperate packing of observation #TODO",
+        :_packSolverData,
+    )
     packtype = convertPackedType(fnctype)
     try
-        packed = convert(PackedFunctionNodeData{packtype}, getSolverData(f))
+        packed = convert(PackedFunctionNodeData{packtype}, getSolverData(f)) #TODO getSolverData 
         packedJson = packed
         return packedJson
     catch ex
@@ -269,7 +273,7 @@ end
 
 # returns FactorDFG
 function packFactor(f::FactorCompute)
-    fnctype = getSolverData(f).fnc.usrfnc!
+    fnctype = getObservation(f)
     return FactorDFG(;
         id = f.id,
         label = f.label,
@@ -281,7 +285,6 @@ function packFactor(f::FactorCompute)
         solvable = getSolvable(f),
         metadata = base64encode(JSON3.write(f.smallData)),
         # Pack the node data
-        data = JSON3.write(_packSolverData(f, fnctype)),
         _version = string(_getDFGVersion()),
         state = f.state,
         observJSON = JSON3.write(packObservation(f)),
@@ -383,15 +386,19 @@ function unpackFactor(dfg::AbstractDFG, factor::FactorDFG; skipVersionCheck::Boo
     local fullFactorData
     local observation
     try
-        if factor.data[1] == '{'
-            packedFnc = fncStringToData(factor.fnctype, factor.data)
-            observation = unpackObservation(factor)
+        observation = unpackObservation(factor)
+        if !isnothing(factor.data)
+            if factor.data[1] == '{'
+                packedFnc = fncStringToData(factor.fnctype, factor.data)
+            else
+                packedFnc = fncStringToData(factor.fnctype, String(base64decode(factor.data)))
+            end
+            decodeType = getFactorOperationalMemoryType(dfg)
+            fullFactorData =
+                decodePackedType(dfg, factor._variableOrderSymbols, decodeType, packedFnc)
         else
-            packedFnc = fncStringToData(factor.fnctype, String(base64decode(factor.data)))
+            fullFactorData = nothing
         end
-        decodeType = getFactorOperationalMemoryType(dfg)
-        fullFactorData =
-            decodePackedType(dfg, factor._variableOrderSymbols, decodeType, packedFnc)
     catch ex
         io = IOBuffer()
         showerror(io, ex, catch_backtrace())
@@ -402,10 +409,10 @@ function unpackFactor(dfg::AbstractDFG, factor::FactorDFG; skipVersionCheck::Boo
 
     metadata = JSON3.read(base64decode(factor.metadata), Dict{Symbol, DFG.SmallDataTypes})
 
-    if fullFactorData.fnc isa FactorOperationalMemory
-        workmem = Ref(fullFactorData.fnc)
+    if !isnothing(fullFactorData) && fullFactorData.fnc isa FactorOperationalMemory
+        workmem = fullFactorData.fnc
     else
-        workmem = Ref{FactorOperationalMemory}()
+        workmem = nothing
     end
     return FactorCompute(
         factor.label,

@@ -114,11 +114,11 @@ Base.@kwdef struct FactorDFG <: AbstractDFGFactor
     nstime::String
     fnctype::String
     solvable::Int
-    data::String
+    data::Union{String, Nothing} = nothing #TODO deprecated in v0.27 remove data completely, use state and observJSON
     metadata::String
     _version::String = string(_getDFGVersion())
     state::FactorState
-    observJSON::String # serialized opbservation
+    observJSON::String # serialized observation
     # blobEntries::Vector{Blobentry}#TODO should factor have blob entries?
 end
 
@@ -131,7 +131,7 @@ StructTypes.StructType(::Type{FactorDFG}) = StructTypes.UnorderedStruct()
 StructTypes.idproperty(::Type{FactorDFG}) = :id
 StructTypes.omitempties(::Type{FactorDFG}) = (:id,)
 
-#TODO deprecate, added in v0.26 as a bridge to new serialization structure
+#TODO deprecate, added in v0.27 as a bridge to new serialization structure
 function FactorDFG(
     id::Union{UUID, Nothing},
     label::Symbol,
@@ -141,7 +141,7 @@ function FactorDFG(
     nstime::String,
     fnctype::String,
     solvable::Int,
-    data::String,
+    data::Union{Nothing, String},
     metadata::String,
     _version::String,
     state::Union{Nothing, FactorState},
@@ -300,25 +300,28 @@ function FactorCompute(
     variableOrder::Union{Vector{Symbol}, Tuple},
     observation::AbstractFactor,
     state::FactorState = FactorState(),
-    workmem = Ref{FactorOperationalMemory}();
+    _workmem = nothing;
     tags::Set{Symbol} = Set{Symbol}(),
     timestamp::Union{DateTime, ZonedDateTime} = now(localzone()),
     solvable::Int = 1,
     nstime::Nanosecond = Nanosecond(0),
     id::Union{UUID, Nothing} = nothing,
     smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
-    solverData = nothing
+    solverData = nothing,
 )
     if isnothing(solverData)
         refsolverData = Ref{GenericFunctionNodeData}() #TODO solverData deprecated in v0.27 WIP
     else
-        Base.depwarn(
-            "`FactorCompute` solverData is deprecated",
-            :FactorCompute,
-        )
+        Base.depwarn("`FactorCompute` solverData is deprecated", :FactorCompute)
         refsolverData = Ref(solverData)
     end
-   
+
+    if isnothing(_workmem)
+        workmem = Ref{FactorOperationalMemory}()
+    else
+        workmem = Ref(_workmem)
+    end
+
     return FactorCompute(
         id,
         label,
@@ -362,9 +365,9 @@ function FactorCompute(
     )
 
     if solverData.fnc isa FactorOperationalMemory
-        workmem = Ref(solverData.fnc)
+        workmem = solverData.fnc
     else
-        workmem = Ref{FactorOperationalMemory}()
+        workmem = nothing
     end
 
     return FactorCompute(
@@ -383,9 +386,20 @@ function FactorCompute(
     )
 end
 
-Base.getproperty(x::FactorCompute, f::Symbol) = begin
-    if f == :solvable || f == :solverData
+function Base.getproperty(x::FactorCompute, f::Symbol)
+    if f == :solvable
         getfield(x, f)[]
+    elseif f == :solverData
+        Base.depwarn(
+            "`FactorCompute` field `$(f)` is deprecated, use `getObservation`, `getState` or `getWorkmem` instead.",
+            :getproperty,
+        )
+        # error("WIP removing direct access, breaking change in v0.27, use `state` or `Workmem` instead.")
+        if isassigned(getfield(x, f))
+            getfield(x, f)[]
+        else
+            nothing
+        end
     elseif f == :_variableOrderSymbols
         [getfield(x, f)...]
     else

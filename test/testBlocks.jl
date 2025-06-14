@@ -794,8 +794,7 @@ function VSDTestBlock!(fg, v1)
     # Delete it
     @test deleteVariableSolverData!(fg, :a, :parametric) == 1
     # Update add it
-    @test @test_logs (:warn, r"does not exist") updateVariableSolverData!(fg, :a, vnd) ==
-                                                vnd
+    @test mergeVariableState!(fg, :a, vnd) == 1
 
     # Update update it
     @test updateVariableSolverData!(fg, :a, vnd) == vnd

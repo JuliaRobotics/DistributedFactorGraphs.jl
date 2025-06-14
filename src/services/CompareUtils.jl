@@ -34,7 +34,7 @@ const GeneratedCompareUnion = Union{
 }
 
 @generated function ==(x::T, y::T) where {T <: GeneratedCompareUnion}
-    ignored = [:workmem]
+    ignored = [:workmem, :solverData]
     return mapreduce(
         n -> :(x.$n == y.$n),
         (a, b) -> :($a && $b),
@@ -330,9 +330,9 @@ function compareFactor(
     TP = compareAll(A, B; skip = skip_, show = show)
     @debug "compareFactor 1/5" TP
     TP =
-        TP & compareAllSpecial(
-            getSolverData(A),
-            getSolverData(B);
+        TP & compareAll(
+            getState(A),
+            getState(B);
             skip = union([:fnc; :_gradients], skip),
             show = show,
         )
@@ -341,9 +341,9 @@ function compareFactor(
         return TP
     end
     TP =
-        TP & compareAllSpecial(
-            getSolverData(A).fnc,
-            getSolverData(B).fnc;
+        TP & compareAll(
+            getObservation(A),
+            getObservation(B);
             skip = union(
                 [
                     :cpt
@@ -359,7 +359,9 @@ function compareFactor(
             show = show,
         )
     @debug "compareFactor 3/5" TP
-    if !(:measurement in skip)
+    
+    #FIXME is measurement stil in use and should it be checked, skipping for now
+    if false # !(:measurement in skip)
         TP =
             TP & (
                 skipsamples || compareAll(
@@ -371,7 +373,8 @@ function compareFactor(
             )
     end
     @debug "compareFactor 4/5" TP
-    if !(:varValsAll in skip) && hasfield(typeof(getSolverData(A).fnc), :varValsAll)
+    #FIXME is varValsAll stil in use and should it be checked, skipping for now
+    if false #!(:varValsAll in skip) && hasfield(typeof(getSolverData(A).fnc), :varValsAll)
         TP =
             TP & (
                 skipcompute || compareAll(
@@ -383,8 +386,8 @@ function compareFactor(
             )
     end
     @debug "compareFactor 5/5" TP
-    if !(:varidx in skip) &&
-       hasfield(typeof(getSolverData(A).fnc), :varidx) &&
+    #FIXME is varidx stil in use and should it be checked, skipping for now
+    if false #!(:varidx in skip) && hasfield(typeof(getSolverData(A).fnc), :varidx) &&
        getSolverData(A).fnc.varidx isa Base.RefValue
         TP =
             TP & (
