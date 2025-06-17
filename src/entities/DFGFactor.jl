@@ -2,21 +2,21 @@
 ## Abstract Types
 ##==============================================================================
 
-abstract type AbstractFactor end
-abstract type AbstractPackedFactor end
+abstract type AbstractPackedFactorObservation end
+abstract type AbstractFactorObservation end
 
-abstract type AbstractPrior <: AbstractFactor end
-abstract type AbstractRelative <: AbstractFactor end
+abstract type AbstractPrior <: AbstractFactorObservation end
+abstract type AbstractRelative <: AbstractFactorObservation end
 abstract type AbstractRelativeMinimize <: AbstractRelative end
 abstract type AbstractManifoldMinimize <: AbstractRelative end
 
-# NOTE DF, Convolution is IIF idea, but DFG should know about "FactorOperationalMemory"
-# DF, IIF.CommonConvWrapper <: FactorOperationalMemory #
+# NOTE DF, Convolution is IIF idea, but DFG should know about "FactorSolverCache"
+# DF, IIF.CommonConvWrapper <: FactorSolverCache #
 # NOTE was `<: Function` as unnecessary
-abstract type FactorOperationalMemory end
+abstract type FactorSolverCache end
 # TODO to be removed from DFG,
-# we can add to IIF or have IIF.CommonConvWrapper <: FactorOperationalMemory directly
-# abstract type ConvolutionObject <: FactorOperationalMemory end
+# we can add to IIF or have IIF.CommonConvWrapper <: FactorSolverCache directly
+# abstract type ConvolutionObject <: FactorSolverCache end
 
 ##==============================================================================
 ## GenericFunctionNodeData
@@ -29,13 +29,13 @@ Notes
 - S::Symbol
 
 Designing (WIP)
-- T <: Union{FactorOperationalMemory, AbstractPackedFactor}
-- in IIF.CCW{T <: DFG.AbstractFactor}
-- in DFG.AbstractRelativeMinimize <: AbstractFactor
+- T <: Union{FactorSolverCache, AbstractPackedFactorObservation}
+- in IIF.CCW{T <: DFG.AbstractFactorObservation}
+- in DFG.AbstractRelativeMinimize <: AbstractFactorObservation
 - in Main.SomeFactor <: AbstractRelativeMinimize
 """
 Base.@kwdef mutable struct GenericFunctionNodeData{
-    T <: Union{<:AbstractPackedFactor, <:AbstractFactor, <:FactorOperationalMemory},
+    T <: Union{<:AbstractPackedFactorObservation, <:AbstractFactorObservation, <:FactorSolverCache},
 }
     eliminated::Bool = false
     potentialused::Bool = false
@@ -59,9 +59,9 @@ end
     inflation::Float64 = 0.0
 end
 
-# TODO should we move non FactorOperationalMemory to FactorCompute: 
+# TODO should we move non FactorSolverCache to FactorCompute: 
 # fnc, multihypo, nullhypo, inflation ?
-# that way we split solverData <: FactorOperationalMemory and constants
+# that way we split solverData <: FactorSolverCache and constants
 # TODO see if above ever changes?
 
 ## Constructors
@@ -70,19 +70,19 @@ end
 ## PackedFunctionNodeData and FunctionNodeData
 
 const PackedFunctionNodeData{T} =
-    GenericFunctionNodeData{T} where {T <: AbstractPackedFactor}
+    GenericFunctionNodeData{T} where {T <: AbstractPackedFactorObservation}
 function PackedFunctionNodeData(args...; kw...)
     return PackedFunctionNodeData{typeof(args[4])}(args...; kw...)
 end
 
 const FunctionNodeData{T} = GenericFunctionNodeData{
     T,
-} where {T <: Union{<:AbstractFactor, <:FactorOperationalMemory}}
+} where {T <: Union{<:AbstractFactorObservation, <:FactorSolverCache}}
 FunctionNodeData(args...; kw...) = FunctionNodeData{typeof(args[4])}(args...; kw...)
 
-# PackedFunctionNodeData(x2, x3, x4, x6::T, multihypo::Vector{Float64}=[], certainhypo::Vector{Int}=Int[], x9::Int=0) where T <: AbstractPackedFactor =
+# PackedFunctionNodeData(x2, x3, x4, x6::T, multihypo::Vector{Float64}=[], certainhypo::Vector{Int}=Int[], x9::Int=0) where T <: AbstractPackedFactorObservation =
 #     GenericFunctionNodeData{T}(x2, x3, x4, x6, multihypo, certainhypo, x9)
-# FunctionNodeData(x2, x3, x4, x6::T, multihypo::Vector{Float64}=[], certainhypo::Vector{Int}=Int[], x9::Int=0) where T <: Union{AbstractFactor, FactorOperationalMemory} =
+# FunctionNodeData(x2, x3, x4, x6::T, multihypo::Vector{Float64}=[], certainhypo::Vector{Int}=Int[], x9::Int=0) where T <: Union{AbstractFactorObservation, FactorSolverCache} =
 #     GenericFunctionNodeData{T}(x2, x3, x4, x6, multihypo, certainhypo, x9)
 
 ##==============================================================================
@@ -183,24 +183,24 @@ $(TYPEDEF)
 Abstract parent type for all InferenceTypes, which are the
 observation functions inside of factors.
 """
-abstract type InferenceType <: AbstractPackedFactor end
+abstract type InferenceType <: AbstractPackedFactorObservation end
 
-#TODO deprecate InferenceType in favor of AbstractPackedFactor v0.26
+#TODO deprecate InferenceType in favor of AbstractPackedFactorObservation v0.26
 
 # this is the GenericFunctionNodeData for packed types
 #TODO deprecate FactorData in favor of FactorState (with no more distinction between packed and compute)
-const FactorData = PackedFunctionNodeData{AbstractPackedFactor}
+const FactorData = PackedFunctionNodeData{AbstractPackedFactorObservation}
 
 # Packed Factor constructor
 function assembleFactorName(xisyms::Union{Vector{String}, Vector{Symbol}})
     return Symbol(xisyms..., "_f", randstring(4))
 end
 
-getFncTypeName(fnc::AbstractPackedFactor) = split(string(typeof(fnc)), ".")[end]
+getFncTypeName(fnc::AbstractPackedFactorObservation) = split(string(typeof(fnc)), ".")[end]
 
 function FactorDFG(
     xisyms::Vector{Symbol},
-    fnc::AbstractPackedFactor;
+    fnc::AbstractPackedFactorObservation;
     multihypo::Vector{Float64} = Float64[],
     nullhypo::Float64 = 0.0,
     solvable::Int = 1,
@@ -249,7 +249,7 @@ DevNotes
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct FactorCompute{FT <: AbstractFactor, N} <: AbstractDFGFactor
+Base.@kwdef struct FactorCompute{FT <: AbstractFactorObservation, N} <: AbstractDFGFactor
     """The ID for the factor"""
     id::Union{UUID, Nothing} = nothing #TODO deprecate id
     """Factor label, e.g. :x1f1.
@@ -281,9 +281,9 @@ Base.@kwdef struct FactorCompute{FT <: AbstractFactor, N} <: AbstractDFGFactor
     Accessors: [`getFactorState`](@ref)"""
     state::FactorState
     """Temporary, non-persistent memory used internally by the solver for intermediate numerical computations and buffers.  
-    `workmem` is lazily allocated and only used during factor operations; it is not serialized or retained after solving.
-    Accessors: [`getWorkmem`](@ref), [`setWorkmem!`](@ref)"""
-    workmem::Base.RefValue{<:FactorOperationalMemory} #TODO easy of use vs. performance as container is abstract in any case.
+    `solvercache` is lazily allocated and only used during factor operations; it is not serialized or retained after solving.
+    Accessors: [`getCache`](@ref), [`setCache!`](@ref)"""
+    solvercache::Base.RefValue{<:FactorSolverCache} #TODO easy of use vs. performance as container is abstract in any case.
 end
 
 ##------------------------------------------------------------------------------
@@ -293,9 +293,9 @@ end
 function FactorCompute(
     label::Symbol,
     variableOrder::Union{Vector{Symbol}, Tuple},
-    observation::AbstractFactor,
+    observation::AbstractFactorObservation,
     state::FactorState = FactorState(),
-    _workmem = nothing;
+    cache = nothing;
     tags::Set{Symbol} = Set{Symbol}(),
     timestamp::Union{DateTime, ZonedDateTime} = now(localzone()),
     solvable::Int = 1,
@@ -308,10 +308,10 @@ function FactorCompute(
         Base.depwarn("`FactorCompute` solverData is deprecated", :FactorCompute)
     end
 
-    if isnothing(_workmem)
-        workmem = Ref{FactorOperationalMemory}()
+    if isnothing(cache)
+        solvercache = Ref{FactorSolverCache}()
     else
-        workmem = Ref(_workmem)
+        solvercache = Ref(cache)
     end
 
     return FactorCompute(
@@ -325,7 +325,7 @@ function FactorCompute(
         smallData,
         observation,
         state,
-        workmem,
+        solvercache,
     )
 end
 
@@ -341,7 +341,7 @@ function FactorCompute(
     smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
 )
     Base.depwarn(
-        "`FactorCompute` constructor with `GenericFunctionNodeData` is deprecated. observation, state, and workmem should be provided explicitly.",
+        "`FactorCompute` constructor with `GenericFunctionNodeData` is deprecated. observation, state, and solvercache should be provided explicitly.",
         :FactorCompute,
     )
     observation = getFactorType(solverData)
@@ -355,10 +355,10 @@ function FactorCompute(
         solverData.inflation,
     )
 
-    if solverData.fnc isa FactorOperationalMemory
-        workmem = solverData.fnc
+    if solverData.fnc isa FactorSolverCache
+        solvercache = solverData.fnc
     else
-        workmem = nothing
+        solvercache = nothing
     end
 
     return FactorCompute(
@@ -366,7 +366,7 @@ function FactorCompute(
         Tuple(variableOrder),
         observation,
         state,
-        workmem;
+        solvercache;
         id,
         timestamp,
         nstime,
@@ -381,7 +381,7 @@ function Base.getproperty(x::FactorCompute, f::Symbol)
         getfield(x, f)[]
     elseif f == :solverData
         error(
-            "`solverData` is obsolete in `FactorCompute`. Use `getObservation`, `getState` or `getWorkmem` instead.",
+            "`solverData` is obsolete in `FactorCompute`. Use `getObservation`, `getState` or `getCache` instead.",
         )
     elseif f == :_variableOrderSymbols
         [getfield(x, f)...]
@@ -395,7 +395,7 @@ function Base.setproperty!(x::FactorCompute, f::Symbol, val)
         getfield(x, f)[] = val
     elseif f == :solverData
         error(
-            "`solverData` is obsolete in `FactorCompute`. Use `Observation`, `State` or `Workmem` instead.",
+            "`solverData` is obsolete in `FactorCompute`. Use `Observation`, `State` or `Cache` instead.",
         )
     else
         setfield!(x, f, val)

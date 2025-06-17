@@ -1,6 +1,14 @@
 ## ================================================================================
 ## Deprecated in v0.27
 ##=================================================================================
+export AbstractFactor 
+const AbstractFactor = AbstractFactorObservation
+
+export AbstractPackedFactor
+const AbstractPackedFactor = AbstractPackedFactorObservation
+
+export FactorOperationalMemory
+const FactorOperationalMemory = FactorSolverCache
 
 @deprecate getNeighborhood(args...; kwargs...) listNeighborhood(args...; kwargs...)
 @deprecate addBlob!(store::AbstractBlobstore, blobId::UUID, data, ::String) addBlob!(
@@ -204,7 +212,7 @@ function FactorCompute(
     variableOrder::Union{Vector{Symbol}, Tuple};
     observation = getFactorType(solverData),
     state::FactorState = FactorState(),
-    workmem::Base.RefValue{<:FactorOperationalMemory} = Ref{FactorOperationalMemory}(),
+    solvercache::Base.RefValue{<:FactorSolverCache} = Ref{FactorSolverCache}(),
     id::Union{UUID, Nothing} = nothing,
     smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
 )
@@ -223,19 +231,19 @@ function FactorCompute(
         smallData,
         observation,
         state,
-        workmem,
+        solvercache,
     )
 end
 
 function getSolverData(f::FactorCompute)
     return error(
-        "getSolverData(f::FactorCompute) is obsolete, use getState, getObservation, or getWorkmem instead",
+        "getSolverData(f::FactorCompute) is obsolete, use getState, getObservation, or getCache instead",
     )
 end
 
 function setSolverData!(f::FactorCompute, data::GenericFunctionNodeData)
     return error(
-        "setSolverData!(f::FactorCompute, data::GenericFunctionNodeData) is obsolete, use setState!, or setWorkmem! instead",
+        "setSolverData!(f::FactorCompute, data::GenericFunctionNodeData) is obsolete, use setState!, or setCache! instead",
     )
 end
 
@@ -244,7 +252,7 @@ end
     skipVersionCheck,
 )
 
-@deprecate rebuildFactorMetadata!(args...; kwargs...) rebuildFactorWorkmem!(
+@deprecate rebuildFactorMetadata!(args...; kwargs...) rebuildFactorCache!(
     args...;
     kwargs...,
 )
@@ -257,7 +265,7 @@ function decodePackedType(
     varOrder::AbstractVector{Symbol},
     ::Type{T},
     packeddata::GenericFunctionNodeData{PT},
-) where {T <: FactorOperationalMemory, PT}
+) where {T <: FactorSolverCache, PT}
     error("decodePackedType is obsolete")
     #
     # TODO, to solve IIF 1424

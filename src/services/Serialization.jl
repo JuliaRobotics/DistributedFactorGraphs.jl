@@ -251,7 +251,7 @@ VariableDFG(v::VariableCompute) = packVariable(v)
 ## Factor Packing and unpacking
 ##==============================================================================
 
-function _packSolverData(f::FactorCompute, fnctype::AbstractFactor)
+function _packSolverData(f::FactorCompute, fnctype::AbstractFactorObservation)
     #
     Base.depwarn(
         "_packSolverData is deprecated, use seperate packing of observation #TODO",
@@ -294,7 +294,7 @@ end
 
 packFactor(f::FactorDFG) = f
 
-function fncStringToData(packtype::Type{<:AbstractPackedFactor}, data::String)
+function fncStringToData(packtype::Type{<:AbstractPackedFactorObservation}, data::String)
 
     # Read string as JSON object to use as kwargs
     fncData = JSON3.read(if data[1] == '{'
@@ -319,7 +319,7 @@ function fncStringToData(packtype::Type{<:AbstractPackedFactor}, data::String)
     return packed
 end
 
-function fncStringToData(packtype::Type{<:AbstractPackedFactor}, data::NamedTuple)
+function fncStringToData(packtype::Type{<:AbstractPackedFactorObservation}, data::NamedTuple)
     return error(
         "Who is calling deserialize factor with NamedTuple, likely JSON3 somewhere",
     )
@@ -328,13 +328,13 @@ end
 function fncStringToData(
     ::Type{T},
     data::PackedFunctionNodeData{T},
-) where {T <: AbstractPackedFactor}
+) where {T <: AbstractPackedFactorObservation}
     return data
 end
 function fncStringToData(
     fncType::String,
     data::PackedFunctionNodeData{T},
-) where {T <: AbstractPackedFactor}
+) where {T <: AbstractPackedFactorObservation}
     packtype = DFG.getTypeFromSerializationModule("Packed" * fncType)
     if packtype == T
         data
@@ -345,7 +345,7 @@ function fncStringToData(
     end
 end
 
-function fncStringToData(fncType::String, data::T) where {T <: AbstractPackedFactor}
+function fncStringToData(fncType::String, data::T) where {T <: AbstractPackedFactorObservation}
     packtype = DFG.getTypeFromSerializationModule("Packed" * fncType)
     if packtype == T # || T <: packtype
         data
@@ -381,7 +381,7 @@ function unpackObservation(factor::FactorDFG)
 end
 
 packObservation(f::FactorCompute) = packObservation(getObservation(f))
-function packObservation(observ::AbstractFactor)
+function packObservation(observ::AbstractFactorObservation)
     try
         return pack(observ)
     catch e
@@ -427,7 +427,7 @@ function unpackFactor(factor::FactorDFG; skipVersionCheck::Bool = false)
         getMetadata(factor),
         observation,
         factor.state,
-        Ref{FactorOperationalMemory}(),
+        Ref{FactorSolverCache}(),
     )
 end
 

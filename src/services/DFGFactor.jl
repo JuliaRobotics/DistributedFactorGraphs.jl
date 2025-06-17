@@ -32,12 +32,12 @@ Return user factor type from factor graph identified by label `::Symbol`.
 Notes
 - Replaces older `getfnctype`.
 """
-function getFactorType(data::GenericFunctionNodeData{<:FactorOperationalMemory})
+function getFactorType(data::GenericFunctionNodeData{<:FactorSolverCache})
     #TODO deprecated in v0.27
     Base.depwarn("getFactorType(::GenericFunctionNodeData) is deprecated", :getFactorType)
     return data.fnc.usrfnc!
 end
-function getFactorType(data::GenericFunctionNodeData{<:AbstractFactor})
+function getFactorType(data::GenericFunctionNodeData{<:AbstractFactorObservation})
     #TODO deprecated in v0.27
     Base.depwarn("getFactorType(::GenericFunctionNodeData) is deprecated", :getFactorType)
     return data.fnc
@@ -59,14 +59,14 @@ function getObservation(f::FactorDFG)
     # return packtype(JSON3.read(f.observJSON))
 end
 
-function getWorkmem(f::FactorCompute)
-    if isassigned(f.workmem)
-        return f.workmem[]
+function getCache(f::FactorCompute)
+    if isassigned(f.solvercache)
+        return f.solvercache[]
     else
         return nothing
     end
 end
-setWorkmem!(f::FactorCompute, workmem::FactorOperationalMemory) = f.workmem[] = workmem
+setCache!(f::FactorCompute, solvercache::FactorSolverCache) = f.solvercache[] = solvercache
 
 """
     $SIGNATURES
@@ -107,7 +107,7 @@ function Base.convert(::Type{<:PackedSamplableBelief}, nt::Union{NamedTuple, JSO
 end
 
 """
-    @defFactorType StructName factortype<:AbstractFactor manifolds<:AbstractManifold
+    @defFactorType StructName factortype<:AbstractFactorObservation manifolds<:AbstractManifold
 
 A macro to create a new factor function with name `StructName` and manifold. Note that
 the `manifold` is an object and *must* be a subtype of `ManifoldsBase.AbstractManifold`.
@@ -127,16 +127,16 @@ macro defFactorType(structname, factortype, manifold)
                                                      string($manifold) *
                                                      ") is not an `AbstractManifold`"
 
-            @assert ($factortype <: AbstractFactor) "@defFactorType factortype (" *
+            @assert ($factortype <: AbstractFactorObservation) "@defFactorType factortype (" *
                                                     string($factortype) *
-                                                    ") is not an `AbstractFactor`"
+                                                    ") is not an `AbstractFactorObservation`"
 
             Base.@__doc__ struct $structname{T} <: $factortype
                 Z::T
             end
 
             #TODO should this be $packedstructname{T <: PackedSamplableBelief}
-            Base.@__doc__ struct $packedstructname <: AbstractPackedFactor
+            Base.@__doc__ struct $packedstructname <: AbstractPackedFactorObservation
                 Z::PackedSamplableBelief
             end
 

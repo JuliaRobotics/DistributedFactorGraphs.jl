@@ -12,9 +12,9 @@ implement compare if needed.
 =#
 # ==(a::InferenceVariable,b::InferenceVariable) = typeof(a) == typeof(b) && a.dims == b.dims && a.manifolds == b.manifolds
 
-==(a::FactorOperationalMemory, b::FactorOperationalMemory) = typeof(a) == typeof(b)
+==(a::FactorSolverCache, b::FactorSolverCache) = typeof(a) == typeof(b)
 
-==(a::AbstractFactor, b::AbstractFactor) = typeof(a) == typeof(b)
+==(a::AbstractFactorObservation, b::AbstractFactorObservation) = typeof(a) == typeof(b)
 
 # Generate compares automatically for all in this union
 const GeneratedCompareUnion = Union{
@@ -34,7 +34,7 @@ const GeneratedCompareUnion = Union{
 }
 
 @generated function ==(x::T, y::T) where {T <: GeneratedCompareUnion}
-    ignored = [:workmem, :solverData]
+    ignored = [:solvercache, :solverData]
     return mapreduce(
         n -> :(x.$n == y.$n),
         (a, b) -> :($a && $b),
@@ -321,7 +321,7 @@ function compareFactor(
             :attributes,
             :solverData,
             :observation,
-            :workmem,
+            :solvercache,
             :_variableOrderSymbols,
             :_gradients,
         ],

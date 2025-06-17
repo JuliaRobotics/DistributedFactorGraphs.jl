@@ -123,7 +123,7 @@ Interface function to return the `<:ManifoldsBase.AbstractManifold` object of `v
 """
 getManifold(::T) where {T <: InferenceVariable} = getManifold(T)
 getManifold(vari::VariableCompute) = getVariableType(vari) |> getManifold
-# covers both <:InferenceVariable and <:AbstractFactor
+# covers both <:InferenceVariable and <:AbstractFactorObservation
 getManifold(dfg::AbstractDFG, lbl::Symbol) = getManifold(dfg[lbl])
 
 """

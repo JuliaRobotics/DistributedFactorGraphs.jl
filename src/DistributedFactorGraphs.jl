@@ -248,9 +248,9 @@ export @format_str
 ##------------------------------------------------------------------------------
 # Factor Data
 export GenericFunctionNodeData, PackedFunctionNodeData, FunctionNodeData
-export AbstractFactor, AbstractPackedFactor
+export AbstractFactorObservation, AbstractPackedFactorObservation
 export AbstractPrior, AbstractRelative, AbstractRelativeMinimize, AbstractManifoldMinimize
-export FactorOperationalMemory
+export FactorSolverCache
 
 # accessors
 export getVariableOrder
@@ -286,7 +286,7 @@ export findClosestTimestamp, findVariableNearTimestamp
 
 # Serialization
 export packVariable, unpackVariable, packFactor, unpackFactor
-export rebuildFactorWorkmem!
+export rebuildFactorCache!
 export @defVariable
 
 # File import and export

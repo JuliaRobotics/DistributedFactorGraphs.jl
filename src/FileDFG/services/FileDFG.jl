@@ -206,7 +206,7 @@ function loadDFG!(
         # NOTE CREATES A NEW FactorCompute IF  CCW TYPE CHANGES
         # @info "Rebuilding CCW's for the factors..."
         @showprogress 1 "Rebuilding factor working memory" for factor in factors
-            rebuildFactorWorkmem!(dfgLoadInto, factor)
+            rebuildFactorCache!(dfgLoadInto, factor)
         end
     end
 

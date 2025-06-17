@@ -32,7 +32,7 @@ struct TestAbstractPrior <: AbstractPrior end
 # struct TestAbstractRelativeFactor <: AbstractRelativeRoots end
 struct TestAbstractRelativeFactorMinimize <: AbstractRelativeMinimize end
 
-Base.@kwdef struct PackedTestFunctorInferenceType1 <: AbstractPackedFactor
+Base.@kwdef struct PackedTestFunctorInferenceType1 <: AbstractPackedFactorObservation
     s::String = ""
 end
 # PackedTestFunctorInferenceType1() = PackedTestFunctorInferenceType1("")
@@ -59,7 +59,7 @@ function Base.convert(::Type{TestFunctorInferenceType1}, d::PackedTestFunctorInf
     return TestFunctorInferenceType1()
 end
 
-Base.@kwdef struct PackedTestAbstractPrior <: AbstractPackedFactor
+Base.@kwdef struct PackedTestAbstractPrior <: AbstractPackedFactorObservation
     s::String = ""
 end
 # PackedTestAbstractPrior() = PackedTestAbstractPrior("")
@@ -74,7 +74,7 @@ function Base.convert(::Type{TestAbstractPrior}, d::PackedTestAbstractPrior)
     return TestAbstractPrior()
 end
 
-struct TestCCW{T <: AbstractFactor} <: FactorOperationalMemory
+struct TestCCW{T <: AbstractFactorObservation} <: FactorSolverCache
     usrfnc!::T
 end
 
@@ -83,14 +83,14 @@ TestCCW{T}() where {T} = TestCCW(T())
 Base.:(==)(a::TestCCW, b::TestCCW) = a.usrfnc! == b.usrfnc!
 
 DFG.getFactorOperationalMemoryType(par::NoSolverParams) = TestCCW
-DFG.rebuildFactorWorkmem!(dfg::AbstractDFG{NoSolverParams}, fac::FactorCompute) = fac
+DFG.rebuildFactorCache!(dfg::AbstractDFG{NoSolverParams}, fac::FactorCompute) = fac
 
 function DFG.reconstFactorData(
     dfg::AbstractDFG,
     vo::AbstractVector,
     ::Type{<:DFG.FunctionNodeData{TestCCW{F}}},
-    d::DFG.PackedFunctionNodeData{<:AbstractPackedFactor},
-) where {F <: DFG.AbstractFactor}
+    d::DFG.PackedFunctionNodeData{<:AbstractPackedFactorObservation},
+) where {F <: DFG.AbstractFactorObservation}
     error("obsolete, TODO remove")
     nF = convert(F, d.fnc)
     return DFG.FunctionNodeData(
@@ -108,8 +108,8 @@ end
 
 function Base.convert(
     ::Type{DFG.PackedFunctionNodeData{P}},
-    d::DFG.FunctionNodeData{<:FactorOperationalMemory},
-) where {P <: AbstractPackedFactor}
+    d::DFG.FunctionNodeData{<:FactorSolverCache},
+) where {P <: AbstractPackedFactorObservation}
     return DFG.PackedFunctionNodeData(
         d.eliminated,
         d.potentialused,
@@ -130,7 +130,7 @@ end
 #test Specific definitions
 # struct TestInferenceVariable1 <: InferenceVariable end
 # struct TestInferenceVariable2 <: InferenceVariable end
-# struct TestFunctorInferenceType1 <: AbstractFactor end
+# struct TestFunctorInferenceType1 <: AbstractFactorObservation end
 
 # NOTE see note in AbstractDFG.jl setSolverParams!
 struct GeenSolverParams <: AbstractParams end
