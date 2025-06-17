@@ -294,25 +294,6 @@ end
 
 packFactor(f::FactorDFG) = f
 
-function reconstFactorData end
-
-function decodePackedType(
-    dfg::AbstractDFG,
-    varOrder::AbstractVector{Symbol},
-    ::Type{T},
-    packeddata::GenericFunctionNodeData{PT},
-) where {T <: FactorOperationalMemory, PT}
-    #
-    # TODO, to solve IIF 1424
-    # variables = map(lb->getVariable(dfg, lb), varOrder)
-
-    # Also look at parentmodule
-    usrtyp = convertStructType(PT)
-    fulltype = DFG.FunctionNodeData{T{usrtyp}}
-    factordata = reconstFactorData(dfg, varOrder, fulltype, packeddata)
-    return factordata
-end
-
 function fncStringToData(packtype::Type{<:AbstractPackedFactor}, data::String)
 
     # Read string as JSON object to use as kwargs
@@ -378,71 +359,49 @@ function fncStringToData(fncType::String, data::Union{String, <:NamedTuple})
     return fncStringToData(packtype, data)
 end
 
-function unpackFactor(dfg::AbstractDFG, factor::FactorDFG; skipVersionCheck::Bool = false)
-    #
-    @debug "DECODING factor type = '$(factor.fnctype)' for factor '$(factor.label)'"
-    !skipVersionCheck && _versionCheck(factor)
-
-    local fullFactorData
-    local observation
-    try
-        observation = unpackObservation(factor)
-        if !isnothing(factor.data)
-            if factor.data[1] == '{'
-                packedFnc = fncStringToData(factor.fnctype, factor.data)
-            else
-                packedFnc = fncStringToData(factor.fnctype, String(base64decode(factor.data)))
-            end
-            decodeType = getFactorOperationalMemoryType(dfg)
-            fullFactorData =
-                decodePackedType(dfg, factor._variableOrderSymbols, decodeType, packedFnc)
-        else
-            fullFactorData = nothing
-        end
-    catch ex
-        io = IOBuffer()
-        showerror(io, ex, catch_backtrace())
-        err = String(take!(io))
-        msg = "Error while unpacking '$(factor.label)' as '$(factor.fnctype)', please check the unpacking/packing converters for this factor - \r\n$err"
-        error(msg)
-    end
-
-    metadata = JSON3.read(base64decode(factor.metadata), Dict{Symbol, DFG.SmallDataTypes})
-
-    if !isnothing(fullFactorData) && fullFactorData.fnc isa FactorOperationalMemory
-        workmem = fullFactorData.fnc
-    else
-        workmem = nothing
-    end
-    return FactorCompute(
-        factor.label,
-        Tuple(factor._variableOrderSymbols),
-        observation,
-        factor.state,
-        workmem;
-        solverData = fullFactorData,
-        nstime = Nanosecond(factor.nstime),
-        tags = Set(factor.tags),
-        solvable = factor.solvable,
-        timestamp = factor.timestamp,
-        id = factor.id,
-        smallData = metadata,
-    )
-end
-
 function unpackObservation(factor::FactorDFG)
-    #FIXME completely refactor to not need getTypeFromSerializationModule and just use StructTypes
-    observpacked = getObservation(factor)
-    #TODO change to unpack: observ = unpack(observpacked)        
-    packtype = DFG.getTypeFromSerializationModule("Packed" * factor.fnctype)
-    return convert(convertStructType(packtype), observpacked)
+    try
+        return unpack(getObservation(factor))
+    catch e
+        if e isa MethodError && e.f == unpack
+            Base.depwarn(
+                """$e\nPlease implement pack and unpack methods for the factor type '$(typeof(getObservation(factor)))'.
+                Falling back to deprecated convert method.""",
+                :unpackObservation,
+            )
+            #FIXME completely refactor to not need getTypeFromSerializationModule and just use StructTypes
+            #TODO change to unpack: observ = unpack(observpacked)
+            observpacked = getObservation(factor)
+            packtype = DFG.getTypeFromSerializationModule("Packed" * factor.fnctype)
+            return convert(convertStructType(packtype), observpacked)
+        else
+            rethrow()
+        end
+    end
 end
 
 packObservation(f::FactorCompute) = packObservation(getObservation(f))
 function packObservation(observ::AbstractFactor)
-    packtype = convertPackedType(observ)
-    return convert(packtype, observ)
+    try
+        return pack(observ)
+    catch e
+        if e isa MethodError
+            Base.depwarn(
+                "$e\nPlease implement pack and unpack methods for the factor type '$(typeof(observ))'.
+                \nFalling back to deprecated convert method.",
+                :packObservation,
+            )
+            packtype = convertPackedType(observ)
+            return convert(packtype, observ)
+        else
+            rethrow()
+        end
+    end
 end
+
+# Deprecated check usefull? # packedFnc = fncStringToData(factor.fnctype, factor.data)
+# Deprecated check usefull? # decodeType = getFactorOperationalMemoryType(dfg)
+# Deprecated check usefull? # fullFactorData = decodePackedType(dfg, factor._variableOrderSymbols, decodeType, packedFnc)
 
 function unpackFactor(factor::FactorDFG; skipVersionCheck::Bool = false)
     #
@@ -451,7 +410,7 @@ function unpackFactor(factor::FactorDFG; skipVersionCheck::Bool = false)
 
     local observation
     try
-        observation = unpackObservation(factor)
+        observation = unpackObservation(factor) #TODO maybe getObservation(factor)
     catch
         @error "Error while unpacking '$(factor.label)' as '$(factor.fnctype)', please check the unpacking/packing converters for this factor"
         rethrow()
@@ -464,7 +423,6 @@ function unpackFactor(factor::FactorDFG; skipVersionCheck::Bool = false)
         Tuple(factor._variableOrderSymbols),
         factor.timestamp,
         Nanosecond(factor.nstime),
-        Ref{GenericFunctionNodeData}(),
         Ref(factor.solvable),
         getMetadata(factor),
         observation,

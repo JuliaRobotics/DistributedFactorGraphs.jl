@@ -56,9 +56,16 @@ function getObservation(f::FactorDFG)
     #FIXME completely refactor to not need getTypeFromSerializationModule and just use StructTypes
     packtype = DFG.getTypeFromSerializationModule("Packed" * f.fnctype)
     return packtype(; JSON3.read(f.observJSON)...)
+    # return packtype(JSON3.read(f.observJSON))
 end
 
-getWorkmem(f::FactorCompute) = f.workmem[]
+function getWorkmem(f::FactorCompute)
+    if isassigned(f.workmem)
+        return f.workmem[]
+    else
+        return nothing
+    end
+end
 setWorkmem!(f::FactorCompute, workmem::FactorOperationalMemory) = f.workmem[] = workmem
 
 """
@@ -84,7 +91,6 @@ end
 ## Default Factors Function Macro
 ##==============================================================================
 export PackedSamplableBelief
-# export pack, unpack, packDistribution, unpackDistribution
 
 function pack end
 function unpack end
@@ -94,38 +100,48 @@ function unpackDistribution end
 abstract type PackedSamplableBelief end
 StructTypes.StructType(::Type{<:PackedSamplableBelief}) = StructTypes.UnorderedStruct()
 
-"""
-    @defFactorType StructName factortype<:AbstractFactor manifolds<:ManifoldsBase.AbstractManifold
+#TODO remove, rather use StructTypes.jl properly
+function Base.convert(::Type{<:PackedSamplableBelief}, nt::Union{NamedTuple, JSON3.Object})
+    distrType = getTypeFromSerializationModule(nt._type)
+    return distrType(; nt...)
+end
 
-A macro to create a new factor function with name `StructName` and manifolds.  Note that 
-the `manifolds` is an object and *must* be a subtype of `ManifoldsBase.AbstractManifold`.
+"""
+    @defFactorType StructName factortype<:AbstractFactor manifolds<:AbstractManifold
+
+A macro to create a new factor function with name `StructName` and manifold. Note that
+the `manifold` is an object and *must* be a subtype of `ManifoldsBase.AbstractManifold`.
 See documentation in [Manifolds.jl on making your own](https://juliamanifolds.github.io/Manifolds.jl/stable/examples/manifold.html). 
 
 Example:
 ```
-DFG.@defFactorType Pose2Pos2 AbstractManifoldMinimize SpecialEuclidean(2)
+DFG.@defFactorType Pose2Pose2 AbstractManifoldMinimize SpecialEuclidean(2)
 ```
 """
 macro defFactorType(structname, factortype, manifold)
     packedstructname = Symbol("Packed", structname)
     return esc(
         quote
+            # user manifold must be a <:Manifold
+            @assert ($manifold isa AbstractManifold) "@defFactorType manifold (" *
+                                                     string($manifold) *
+                                                     ") is not an `AbstractManifold`"
+
+            @assert ($factortype <: AbstractFactor) "@defFactorType factortype (" *
+                                                    string($factortype) *
+                                                    ") is not an `AbstractFactor`"
+
             Base.@__doc__ struct $structname{T} <: $factortype
                 Z::T
             end
 
-            Base.@__doc__ struct $packedstructname{T <: PackedSamplableBelief} <:
-                                 AbstractPackedFactor
-                Z::T
+            #TODO should this be $packedstructname{T <: PackedSamplableBelief}
+            Base.@__doc__ struct $packedstructname <: AbstractPackedFactor
+                Z::PackedSamplableBelief
             end
 
-            # user manifold must be a <:Manifold
-            @assert ($manifold isa AbstractManifold) "@defFactorType of " *
-                                                     string($structname) *
-                                                     " requires that the " *
-                                                     string($manifold) *
-                                                     " be a subtype of `ManifoldsBase.AbstractManifold`"
-
+            # $structname(; Z) = $structname(Z)                                                     
+            $packedstructname(; Z) = $packedstructname(Z)
             DFG.getManifold(::Type{$structname}) = $manifold
             DFG.pack(d::$structname) = $packedstructname(DFG.packDistribution(d.Z))
             DFG.unpack(d::$packedstructname) = $structname(DFG.unpackDistribution(d.Z))
@@ -222,26 +238,6 @@ Should be equivalent to listNeighbors unless something was deleted in the graph.
 getVariableOrder(fct::FactorCompute) = fct._variableOrderSymbols::Vector{Symbol}
 getVariableOrder(fct::FactorDFG) = fct._variableOrderSymbols::Vector{Symbol}
 getVariableOrder(dfg::AbstractDFG, fct::Symbol) = getVariableOrder(getFactor(dfg, fct))
-
-##------------------------------------------------------------------------------
-## solverData
-##------------------------------------------------------------------------------
-
-"""
-    $SIGNATURES
-
-Retrieve solver data structure stored in a factor.
-"""
-function getSolverData(f::FactorCompute)
-    Base.depwarn("getSolverData(f::FactorCompute) is deprecated", :getSolverData)
-    if isassigned(getfield(f, :solverData))
-        return getfield(f, :solverData)[]
-    else
-        return nothing
-    end
-end
-
-setSolverData!(f::FactorCompute, data::GenericFunctionNodeData) = f.solverData = data
 
 ##------------------------------------------------------------------------------
 ## utility

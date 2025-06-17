@@ -262,7 +262,7 @@ export mergeVariableData!, mergeGraphVariableData!
 # Serialization type conversion
 export convertPackedType, convertStructType
 
-export reconstFactorData
+export pack, unpack, packDistribution, unpackDistribution
 
 ##------------------------------------------------------------------------------
 ## Other utility functions
@@ -286,7 +286,7 @@ export findClosestTimestamp, findVariableNearTimestamp
 
 # Serialization
 export packVariable, unpackVariable, packFactor, unpackFactor
-export rebuildFactorMetadata!
+export rebuildFactorWorkmem!
 export @defVariable
 
 # File import and export

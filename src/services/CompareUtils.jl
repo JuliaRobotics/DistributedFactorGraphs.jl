@@ -359,7 +359,7 @@ function compareFactor(
             show = show,
         )
     @debug "compareFactor 3/5" TP
-    
+
     #FIXME is measurement stil in use and should it be checked, skipping for now
     if false # !(:measurement in skip)
         TP =
@@ -388,7 +388,7 @@ function compareFactor(
     @debug "compareFactor 5/5" TP
     #FIXME is varidx stil in use and should it be checked, skipping for now
     if false #!(:varidx in skip) && hasfield(typeof(getSolverData(A).fnc), :varidx) &&
-       getSolverData(A).fnc.varidx isa Base.RefValue
+        getSolverData(A).fnc.varidx isa Base.RefValue
         TP =
             TP & (
                 skipcompute || compareAll(

@@ -116,12 +116,12 @@ end
 
 Method must be overloaded by the user for Serialization to work.
 """
-function rebuildFactorMetadata!(
+function rebuildFactorWorkmem!(
     dfg::AbstractDFG{<:AbstractParams},
     factor::AbstractDFGFactor,
     neighbors = [],
 )
-    return error("rebuildFactorMetadata! is not implemented for $(typeof(dfg))")
+    return error("rebuildFactorWorkmem! is not implemented for $(typeof(dfg))")
 end
 
 """

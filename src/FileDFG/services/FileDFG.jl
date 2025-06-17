@@ -99,7 +99,6 @@ function loadDFG!(
     dst::AbstractString;
     overwriteDFGMetadata::Bool = true,
 )
-
     #
     # loaddir gets deleted so needs to be unique
     loaddir = split(joinpath("/", "tmp", "caesar", "random", string(uuid1())), '-')[1]
@@ -176,9 +175,10 @@ function loadDFG!(
     end
 
     @info "Loaded $(length(variables)) variables"#- $(map(v->v.label, variables))"
-    @info "Inserting variables into graph..."
-    # Adding variables
-    map(v -> addVariable!(dfgLoadInto, v), variables)
+    @showprogress 1 "Inserting variables into graph" map(
+        v -> addVariable!(dfgLoadInto, v),
+        variables,
+    )
 
     usePackedFactor =
         isa(dfgLoadInto, GraphsDFG) && getTypeDFGFactors(dfgLoadInto) == FactorDFG
@@ -190,21 +190,23 @@ function loadDFG!(
         if usePackedFactor
             return packedfact
         else
-            return unpackFactor(dfgLoadInto, packedfact)
+            return unpackFactor(packedfact)
         end
     end
 
     @info "Loaded $(length(factors)) factors"# - $(map(f->f.label, factors))"
-    @info "Inserting factors into graph..."
     # # Adding factors
-    map(f -> addFactor!(dfgLoadInto, f), factors)
+    @showprogress 1 "Inserting factors into graph" map(
+        f -> addFactor!(dfgLoadInto, f),
+        factors,
+    )
 
     if isa(dfgLoadInto, GraphsDFG) && getTypeDFGFactors(dfgLoadInto) != FactorDFG
         # Finally, rebuild the CCW's for the factors to completely reinflate them
         # NOTE CREATES A NEW FactorCompute IF  CCW TYPE CHANGES
-        @info "Rebuilding CCW's for the factors..."
-        @showprogress 1 "build factor operational memory" for factor in factors
-            rebuildFactorMetadata!(dfgLoadInto, factor)
+        # @info "Rebuilding CCW's for the factors..."
+        @showprogress 1 "Rebuilding factor working memory" for factor in factors
+            rebuildFactorWorkmem!(dfgLoadInto, factor)
         end
     end
 

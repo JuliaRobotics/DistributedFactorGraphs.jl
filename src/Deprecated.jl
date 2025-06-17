@@ -227,6 +227,49 @@ function FactorCompute(
     )
 end
 
+function getSolverData(f::FactorCompute)
+    return error(
+        "getSolverData(f::FactorCompute) is obsolete, use getState, getObservation, or getWorkmem instead",
+    )
+end
+
+function setSolverData!(f::FactorCompute, data::GenericFunctionNodeData)
+    return error(
+        "setSolverData!(f::FactorCompute, data::GenericFunctionNodeData) is obsolete, use setState!, or setWorkmem! instead",
+    )
+end
+
+@deprecate unpackFactor(dfg::AbstractDFG, factor::FactorDFG; skipVersionCheck::Bool = false) unpackFactor(
+    factor;
+    skipVersionCheck,
+)
+
+@deprecate rebuildFactorMetadata!(args...; kwargs...) rebuildFactorWorkmem!(
+    args...;
+    kwargs...,
+)
+
+export reconstFactorData
+function reconstFactorData end
+
+function decodePackedType(
+    dfg::AbstractDFG,
+    varOrder::AbstractVector{Symbol},
+    ::Type{T},
+    packeddata::GenericFunctionNodeData{PT},
+) where {T <: FactorOperationalMemory, PT}
+    error("decodePackedType is obsolete")
+    #
+    # TODO, to solve IIF 1424
+    # variables = map(lb->getVariable(dfg, lb), varOrder)
+
+    # Also look at parentmodule
+    usrtyp = convertStructType(PT)
+    fulltype = DFG.FunctionNodeData{T{usrtyp}}
+    factordata = reconstFactorData(dfg, varOrder, fulltype, packeddata)
+    return factordata
+end
+
 ## ================================================================================
 ## Deprecated in v0.25
 ##=================================================================================

@@ -4,7 +4,6 @@ using Dates
 using Manifolds
 
 import Base: convert
-import DistributedFactorGraphs: reconstFactorData
 # import DistributedFactorGraphs: getData, addData!, updateData!, deleteData!
 
 # Test InferenceVariable Types
@@ -43,13 +42,14 @@ function Base.convert(::Type{PackedTestFunctorInferenceType1}, d::TestFunctorInf
     return PackedTestFunctorInferenceType1()
 end
 
-function reconstFactorData(
+function DFG.reconstFactorData(
     dfg::AbstractDFG,
     vo::AbstractVector,
     ::Type{TestFunctorInferenceType1},
     d::PackedTestFunctorInferenceType1,
     ::String,
 )
+    error("obsolete, TODO remove")
     return TestFunctorInferenceType1()
 end
 
@@ -83,14 +83,15 @@ TestCCW{T}() where {T} = TestCCW(T())
 Base.:(==)(a::TestCCW, b::TestCCW) = a.usrfnc! == b.usrfnc!
 
 DFG.getFactorOperationalMemoryType(par::NoSolverParams) = TestCCW
-DFG.rebuildFactorMetadata!(dfg::AbstractDFG{NoSolverParams}, fac::FactorCompute) = fac
+DFG.rebuildFactorWorkmem!(dfg::AbstractDFG{NoSolverParams}, fac::FactorCompute) = fac
 
-function reconstFactorData(
+function DFG.reconstFactorData(
     dfg::AbstractDFG,
     vo::AbstractVector,
     ::Type{<:DFG.FunctionNodeData{TestCCW{F}}},
     d::DFG.PackedFunctionNodeData{<:AbstractPackedFactor},
 ) where {F <: DFG.AbstractFactor}
+    error("obsolete, TODO remove")
     nF = convert(F, d.fnc)
     return DFG.FunctionNodeData(
         d.eliminated,

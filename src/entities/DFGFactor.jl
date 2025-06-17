@@ -114,7 +114,6 @@ Base.@kwdef struct FactorDFG <: AbstractDFGFactor
     nstime::String
     fnctype::String
     solvable::Int
-    data::Union{String, Nothing} = nothing #TODO deprecated in v0.27 remove data completely, use state and observJSON
     metadata::String
     _version::String = string(_getDFGVersion())
     state::FactorState
@@ -169,7 +168,6 @@ function FactorDFG(
         nstime,
         fnctype,
         solvable,
-        data,
         metadata,
         _version,
         state,
@@ -268,9 +266,6 @@ Base.@kwdef struct FactorCompute{FT <: AbstractFactor, N} <: AbstractDFGFactor
     timestamp::ZonedDateTime
     """Nano second time"""
     nstime::Nanosecond
-    """Solver data.
-    Accessors: [`getSolverData`](@ref), [`setSolverData!`](@ref)"""
-    solverData::Base.RefValue{<:GenericFunctionNodeData}
     """Solvable flag for the factor.
     Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)"""
     solvable::Base.RefValue{Int}
@@ -309,11 +304,8 @@ function FactorCompute(
     smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
     solverData = nothing,
 )
-    if isnothing(solverData)
-        refsolverData = Ref{GenericFunctionNodeData}() #TODO solverData deprecated in v0.27 WIP
-    else
+    if !isnothing(solverData)
         Base.depwarn("`FactorCompute` solverData is deprecated", :FactorCompute)
-        refsolverData = Ref(solverData)
     end
 
     if isnothing(_workmem)
@@ -329,7 +321,6 @@ function FactorCompute(
         Tuple(variableOrder),
         timestamp,
         nstime,
-        refsolverData,
         Ref(solvable),
         smallData,
         observation,
@@ -380,7 +371,6 @@ function FactorCompute(
         timestamp,
         nstime,
         tags,
-        solverData,
         smallData,
         solvable,
     )
@@ -390,16 +380,9 @@ function Base.getproperty(x::FactorCompute, f::Symbol)
     if f == :solvable
         getfield(x, f)[]
     elseif f == :solverData
-        Base.depwarn(
-            "`FactorCompute` field `$(f)` is deprecated, use `getObservation`, `getState` or `getWorkmem` instead.",
-            :getproperty,
+        error(
+            "`solverData` is obsolete in `FactorCompute`. Use `getObservation`, `getState` or `getWorkmem` instead.",
         )
-        # error("WIP removing direct access, breaking change in v0.27, use `state` or `Workmem` instead.")
-        if isassigned(getfield(x, f))
-            getfield(x, f)[]
-        else
-            nothing
-        end
     elseif f == :_variableOrderSymbols
         [getfield(x, f)...]
     else
@@ -408,8 +391,12 @@ function Base.getproperty(x::FactorCompute, f::Symbol)
 end
 
 function Base.setproperty!(x::FactorCompute, f::Symbol, val)
-    if f == :solvable || f == :solverData
+    if f == :solvable
         getfield(x, f)[] = val
+    elseif f == :solverData
+        error(
+            "`solverData` is obsolete in `FactorCompute`. Use `Observation`, `State` or `Workmem` instead.",
+        )
     else
         setfield!(x, f, val)
     end
