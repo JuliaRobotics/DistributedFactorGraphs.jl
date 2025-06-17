@@ -168,7 +168,7 @@ function loadDFG!(
         jstr = read("$varFolder/$varFile", String)
         packedvar = JSON3.read(jstr, VariableDFG)
         v = usePackedVariable ? packedvar : unpackVariable(packedvar)
-        addVariable!(dfgLoadInto, v)
+        return addVariable!(dfgLoadInto, v)
     end
 
     @info "Loaded $(length(variables)) variables"#- $(map(v->v.label, variables))"
@@ -181,7 +181,7 @@ function loadDFG!(
         jstr = read("$factorFolder/$factorFile", String)
         packedfact = JSON3.read(jstr, FactorDFG)
         f = usePackedFactor ? packedfact : unpackFactor(packedfact)
-        addFactor!(dfgLoadInto, f)
+        return addFactor!(dfgLoadInto, f)
     end
 
     @info "Loaded $(length(factors)) factors"# - $(map(f->f.label, factors))"

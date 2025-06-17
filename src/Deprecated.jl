@@ -1,7 +1,7 @@
 ## ================================================================================
 ## Deprecated in v0.27
 ##=================================================================================
-export AbstractFactor 
+export AbstractFactor
 const AbstractFactor = AbstractFactorObservation
 
 export AbstractPackedFactor
@@ -202,6 +202,37 @@ function updateVariableSolverData!(
     end
 end
 
+## factor refactor deprecations
+"""
+$(TYPEDEF)
+
+Notes
+- S::Symbol
+
+Designing (WIP)
+- T <: Union{FactorSolverCache, AbstractPackedFactorObservation}
+- in IIF.CCW{T <: DFG.AbstractFactorObservation}
+- in DFG.AbstractRelativeMinimize <: AbstractFactorObservation
+- in Main.SomeFactor <: AbstractRelativeMinimize
+"""
+Base.@kwdef mutable struct GenericFunctionNodeData{
+    T <: Union{
+        <:AbstractPackedFactorObservation,
+        <:AbstractFactorObservation,
+        <:FactorSolverCache,
+    },
+}
+    eliminated::Bool = false
+    potentialused::Bool = false
+    edgeIDs::Vector{Int} = Int[]
+    fnc::T
+    multihypo::Vector{Float64} = Float64[] # TODO re-evaluate after refactoring w #477
+    certainhypo::Vector{Int} = Int[]
+    nullhypo::Float64 = 0.0
+    solveInProgress::Int = 0
+    inflation::Float64 = 0.0
+end
+
 function FactorCompute(
     label::Symbol,
     timestamp::Union{DateTime, ZonedDateTime},
@@ -297,6 +328,80 @@ function _packSolverData(f::FactorCompute, fnctype::AbstractFactorObservation)
         error(msg)
     end
 end
+
+export GenericFunctionNodeData, PackedFunctionNodeData, FunctionNodeData
+
+const PackedFunctionNodeData{T} =
+    GenericFunctionNodeData{T} where {T <: AbstractPackedFactorObservation}
+function PackedFunctionNodeData(args...; kw...)
+    error("PackedFunctionNodeData is obsolete")
+    return PackedFunctionNodeData{typeof(args[4])}(args...; kw...)
+end
+
+const FunctionNodeData{T} = GenericFunctionNodeData{
+    T,
+} where {T <: Union{<:AbstractFactorObservation, <:FactorSolverCache}}
+FunctionNodeData(args...; kw...) = FunctionNodeData{typeof(args[4])}(args...; kw...)
+
+# this is the GenericFunctionNodeData for packed types
+#TODO deprecate FactorData in favor of FactorState (with no more distinction between packed and compute)
+const FactorData = PackedFunctionNodeData{AbstractPackedFactorObservation}
+
+function FactorCompute(
+    label::Symbol,
+    variableOrder::Union{Vector{Symbol}, Tuple},
+    solverData::GenericFunctionNodeData;
+    tags::Set{Symbol} = Set{Symbol}(),
+    timestamp::Union{DateTime, ZonedDateTime} = now(localzone()),
+    solvable::Int = 1,
+    nstime::Nanosecond = Nanosecond(0),
+    id::Union{UUID, Nothing} = nothing,
+    smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
+)
+    Base.depwarn(
+        "`FactorCompute` constructor with `GenericFunctionNodeData` is deprecated. observation, state, and solvercache should be provided explicitly.",
+        :FactorCompute,
+    )
+    observation = getFactorType(solverData)
+    state = FactorState(
+        solverData.eliminated,
+        solverData.potentialused,
+        solverData.multihypo,
+        solverData.certainhypo,
+        solverData.nullhypo,
+        solverData.solveInProgress,
+        solverData.inflation,
+    )
+
+    if solverData.fnc isa FactorSolverCache
+        solvercache = solverData.fnc
+    else
+        solvercache = nothing
+    end
+
+    return FactorCompute(
+        label,
+        Tuple(variableOrder),
+        observation,
+        state,
+        solvercache;
+        id,
+        timestamp,
+        nstime,
+        tags,
+        smallData,
+        solvable,
+    )
+end
+
+# Deprecated check usefull? # packedFnc = fncStringToData(factor.fnctype, factor.data)
+# Deprecated check usefull? # decodeType = getFactorOperationalMemoryType(dfg)
+# Deprecated check usefull? # fullFactorData = decodePackedType(dfg, factor._variableOrderSymbols, decodeType, packedFnc)
+function fncStringToData(args...; kwargs...)
+    @warn "fncStringToData is obsolete, called with" args kwargs
+    return error("fncStringToData is obsolete.")
+end
+
 ## ================================================================================
 ## Deprecated in v0.25
 ##=================================================================================

@@ -248,7 +248,6 @@ export @format_str
 # Factors
 ##------------------------------------------------------------------------------
 # Factor Data
-export GenericFunctionNodeData, PackedFunctionNodeData, FunctionNodeData
 export AbstractFactorObservation, AbstractPackedFactorObservation
 export AbstractPrior, AbstractRelative, AbstractRelativeMinimize, AbstractManifoldMinimize
 export FactorSolverCache
@@ -303,7 +302,6 @@ export compare,
     compareField,
     compareFields,
     compareAll,
-    compareAllSpecial,
     compareVariable,
     compareFactor,
     compareAllVariables,

@@ -6,10 +6,6 @@ function getMetadata(f::FactorDFG)
     return JSON3.read(base64decode(f.metadata), Dict{Symbol, SmallDataTypes})
 end
 
-##==============================================================================
-## GenericFunctionNodeData
-##==============================================================================
-
 ## COMMON
 # getSolveInProgress
 # isSolveInProgress
@@ -20,7 +16,6 @@ end
 
 Return reference to the user factor in `<:AbstractDFG` identified by `::Symbol`.
 """
-getFactorFunction(fcd::GenericFunctionNodeData) = fcd.fnc.usrfnc!
 getFactorFunction(fc::FactorCompute) = getObservation(fc)
 getFactorFunction(dfg::AbstractDFG, fsym::Symbol) = getFactorFunction(getFactor(dfg, fsym))
 
@@ -32,16 +27,6 @@ Return user factor type from factor graph identified by label `::Symbol`.
 Notes
 - Replaces older `getfnctype`.
 """
-function getFactorType(data::GenericFunctionNodeData{<:FactorSolverCache})
-    #TODO deprecated in v0.27
-    Base.depwarn("getFactorType(::GenericFunctionNodeData) is deprecated", :getFactorType)
-    return data.fnc.usrfnc!
-end
-function getFactorType(data::GenericFunctionNodeData{<:AbstractFactorObservation})
-    #TODO deprecated in v0.27
-    Base.depwarn("getFactorType(::GenericFunctionNodeData) is deprecated", :getFactorType)
-    return data.fnc
-end
 getFactorType(fct::FactorCompute) = getObservation(fct)
 getFactorType(f::FactorDFG) = getTypeFromSerializationModule(f.fnctype)() # TODO find a better way to do this that does not rely on empty constructor
 getFactorType(dfg::AbstractDFG, lbl::Symbol) = getFactorType(getFactor(dfg, lbl))
@@ -130,8 +115,8 @@ macro defFactorType(structname, factortype, manifold)
                                                      ") is not an `AbstractManifold`"
 
             @assert ($factortype <: AbstractFactorObservation) "@defFactorType factortype (" *
-                                                    string($factortype) *
-                                                    ") is not an `AbstractFactorObservation`"
+                                                               string($factortype) *
+                                                               ") is not an `AbstractFactorObservation`"
 
             Base.@__doc__ struct $structname{T} <: $factortype
                 Z::T

@@ -270,71 +270,6 @@ end
 
 packFactor(f::FactorDFG) = f
 
-function fncStringToData(packtype::Type{<:AbstractPackedFactorObservation}, data::String)
-
-    # Read string as JSON object to use as kwargs
-    fncData = JSON3.read(if data[1] == '{'
-        data
-    else
-        String(base64decode(data))
-    end)
-    packT = packtype(; fncData.fnc...)
-
-    packed = GenericFunctionNodeData{packtype}(
-        fncData["eliminated"],
-        fncData["potentialused"],
-        fncData["edgeIDs"],
-        # NamedTuple args become kwargs with the splat
-        packT,
-        fncData["multihypo"],
-        fncData["certainhypo"],
-        fncData["nullhypo"],
-        fncData["solveInProgress"],
-        fncData["inflation"],
-    )
-    return packed
-end
-
-function fncStringToData(packtype::Type{<:AbstractPackedFactorObservation}, data::NamedTuple)
-    return error(
-        "Who is calling deserialize factor with NamedTuple, likely JSON3 somewhere",
-    )
-end
-
-function fncStringToData(
-    ::Type{T},
-    data::PackedFunctionNodeData{T},
-) where {T <: AbstractPackedFactorObservation}
-    return data
-end
-function fncStringToData(
-    fncType::String,
-    data::PackedFunctionNodeData{T},
-) where {T <: AbstractPackedFactorObservation}
-    packtype = DFG.getTypeFromSerializationModule("Packed" * fncType)
-    if packtype == T
-        data
-    else
-        error(
-            "Unknown type conversion\n$(fncType)\n$packtype\n$(PackedFunctionNodeData{T})",
-        )
-    end
-end
-
-function fncStringToData(fncType::String, data::T) where {T <: AbstractPackedFactorObservation}
-    packtype = DFG.getTypeFromSerializationModule("Packed" * fncType)
-    if packtype == T # || T <: packtype
-        data
-    else
-        fncStringToData(packtype, data)
-    end
-end
-function fncStringToData(fncType::String, data::Union{String, <:NamedTuple})
-    # FIXME, should rather just store the data as `PackedFactorX` rather than hard code the type change here???
-    packtype = DFG.getTypeFromSerializationModule("Packed" * fncType)
-    return fncStringToData(packtype, data)
-end
-
 function unpackObservation(factor::FactorDFG)
     try
         return unpack(getObservation(factor))
@@ -374,10 +309,6 @@ function packObservation(observ::AbstractFactorObservation)
         end
     end
 end
-
-# Deprecated check usefull? # packedFnc = fncStringToData(factor.fnctype, factor.data)
-# Deprecated check usefull? # decodeType = getFactorOperationalMemoryType(dfg)
-# Deprecated check usefull? # fullFactorData = decodePackedType(dfg, factor._variableOrderSymbols, decodeType, packedFnc)
 
 function unpackFactor(factor::FactorDFG; skipVersionCheck::Bool = false)
     #

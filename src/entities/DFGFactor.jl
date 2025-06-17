@@ -18,36 +18,6 @@ abstract type FactorSolverCache end
 # we can add to IIF or have IIF.CommonConvWrapper <: FactorSolverCache directly
 # abstract type ConvolutionObject <: FactorSolverCache end
 
-##==============================================================================
-## GenericFunctionNodeData
-##==============================================================================
-
-"""
-$(TYPEDEF)
-
-Notes
-- S::Symbol
-
-Designing (WIP)
-- T <: Union{FactorSolverCache, AbstractPackedFactorObservation}
-- in IIF.CCW{T <: DFG.AbstractFactorObservation}
-- in DFG.AbstractRelativeMinimize <: AbstractFactorObservation
-- in Main.SomeFactor <: AbstractRelativeMinimize
-"""
-Base.@kwdef mutable struct GenericFunctionNodeData{
-    T <: Union{<:AbstractPackedFactorObservation, <:AbstractFactorObservation, <:FactorSolverCache},
-}
-    eliminated::Bool = false
-    potentialused::Bool = false
-    edgeIDs::Vector{Int} = Int[]
-    fnc::T
-    multihypo::Vector{Float64} = Float64[] # TODO re-evaluate after refactoring w #477
-    certainhypo::Vector{Int} = Int[]
-    nullhypo::Float64 = 0.0
-    solveInProgress::Int = 0
-    inflation::Float64 = 0.0
-end
-
 #TODO is this mutable
 @kwdef mutable struct FactorState
     eliminated::Bool = false
@@ -65,25 +35,6 @@ end
 # TODO see if above ever changes?
 
 ## Constructors
-
-##------------------------------------------------------------------------------
-## PackedFunctionNodeData and FunctionNodeData
-
-const PackedFunctionNodeData{T} =
-    GenericFunctionNodeData{T} where {T <: AbstractPackedFactorObservation}
-function PackedFunctionNodeData(args...; kw...)
-    return PackedFunctionNodeData{typeof(args[4])}(args...; kw...)
-end
-
-const FunctionNodeData{T} = GenericFunctionNodeData{
-    T,
-} where {T <: Union{<:AbstractFactorObservation, <:FactorSolverCache}}
-FunctionNodeData(args...; kw...) = FunctionNodeData{typeof(args[4])}(args...; kw...)
-
-# PackedFunctionNodeData(x2, x3, x4, x6::T, multihypo::Vector{Float64}=[], certainhypo::Vector{Int}=Int[], x9::Int=0) where T <: AbstractPackedFactorObservation =
-#     GenericFunctionNodeData{T}(x2, x3, x4, x6, multihypo, certainhypo, x9)
-# FunctionNodeData(x2, x3, x4, x6::T, multihypo::Vector{Float64}=[], certainhypo::Vector{Int}=Int[], x9::Int=0) where T <: Union{AbstractFactorObservation, FactorSolverCache} =
-#     GenericFunctionNodeData{T}(x2, x3, x4, x6, multihypo, certainhypo, x9)
 
 ##==============================================================================
 ## Factors
@@ -114,7 +65,7 @@ Base.@kwdef struct FactorDFG <: AbstractDFGFactor
     nstime::String
     fnctype::String
     solvable::Int
-    data::Union{Nothing, String} #TODO deprecate data completely, left as a bridge to old serialization structure
+    data::Union{Nothing, String} = nothing #TODO deprecate data completely, left as a bridge to old serialization structure
     metadata::String
     _version::String = string(_getDFGVersion())
     state::FactorState
@@ -129,7 +80,7 @@ end
 
 StructTypes.StructType(::Type{FactorDFG}) = StructTypes.UnorderedStruct()
 StructTypes.idproperty(::Type{FactorDFG}) = :id
-StructTypes.omitempties(::Type{FactorDFG}) = (:id,)
+StructTypes.omitempties(::Type{FactorDFG}) = (:id, :data)
 
 #TODO deprecate, added in v0.27 as a bridge to new serialization structure
 function FactorDFG(
@@ -188,10 +139,6 @@ observation functions inside of factors.
 abstract type InferenceType <: AbstractPackedFactorObservation end
 
 #TODO deprecate InferenceType in favor of AbstractPackedFactorObservation v0.26
-
-# this is the GenericFunctionNodeData for packed types
-#TODO deprecate FactorData in favor of FactorState (with no more distinction between packed and compute)
-const FactorData = PackedFunctionNodeData{AbstractPackedFactorObservation}
 
 # Packed Factor constructor
 function assembleFactorName(xisyms::Union{Vector{String}, Vector{Symbol}})
@@ -331,57 +278,11 @@ function FactorCompute(
     )
 end
 
-function FactorCompute(
-    label::Symbol,
-    variableOrder::Union{Vector{Symbol}, Tuple},
-    solverData::GenericFunctionNodeData;
-    tags::Set{Symbol} = Set{Symbol}(),
-    timestamp::Union{DateTime, ZonedDateTime} = now(localzone()),
-    solvable::Int = 1,
-    nstime::Nanosecond = Nanosecond(0),
-    id::Union{UUID, Nothing} = nothing,
-    smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
-)
-    Base.depwarn(
-        "`FactorCompute` constructor with `GenericFunctionNodeData` is deprecated. observation, state, and solvercache should be provided explicitly.",
-        :FactorCompute,
-    )
-    observation = getFactorType(solverData)
-    state = FactorState(
-        solverData.eliminated,
-        solverData.potentialused,
-        solverData.multihypo,
-        solverData.certainhypo,
-        solverData.nullhypo,
-        solverData.solveInProgress,
-        solverData.inflation,
-    )
-
-    if solverData.fnc isa FactorSolverCache
-        solvercache = solverData.fnc
-    else
-        solvercache = nothing
-    end
-
-    return FactorCompute(
-        label,
-        Tuple(variableOrder),
-        observation,
-        state,
-        solvercache;
-        id,
-        timestamp,
-        nstime,
-        tags,
-        smallData,
-        solvable,
-    )
-end
-
 function Base.getproperty(x::FactorCompute, f::Symbol)
     if f == :solvable
         getfield(x, f)[]
     elseif f == :solverData
+        # TODO remove, deprecated in v0.27
         error(
             "`solverData` is obsolete in `FactorCompute`. Use `getObservation`, `getState` or `getCache` instead.",
         )

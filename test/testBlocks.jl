@@ -392,16 +392,16 @@ function DFGFactorSCA()
     f1_tags = Set([:FACTOR])
     testTimestamp = now(localzone())
 
-    gfnd_prior = GenericFunctionNodeData(; fnc = TestCCW(TestAbstractPrior()))
+    obs_prior = TestAbstractPrior()
 
-    gfnd = GenericFunctionNodeData(; fnc = TestCCW(TestFunctorInferenceType1()))
+    obs = TestFunctorInferenceType1()
 
-    f1 = FactorCompute(f1_lbl, [:a, :b], gfnd; tags = f1_tags, solvable = 0)
+    f1 = FactorCompute(f1_lbl, [:a, :b], obs; tags = f1_tags, solvable = 0)
 
     f2 = FactorCompute(
         :bcf1,
         [:b, :c],
-        GenericFunctionNodeData(; fnc=TestCCW{TestFunctorInferenceType1}());
+        TestFunctorInferenceType1();
         timestamp = ZonedDateTime("2020-08-11T00:12:03.000-05:00"),
     )
     #TODO add tests for mutating vos in updateFactor and orphan related checks.
@@ -445,7 +445,7 @@ function DFGFactorSCA()
     @test getSolvable(f1) == 1
 
     # create f0 here for a later timestamp
-    f0 = FactorCompute(:af1, [:a], gfnd_prior; tags = Set([:PRIOR]))
+    f0 = FactorCompute(:af1, [:a], obs_prior; tags = Set([:PRIOR]))
 
     #fill in undefined fields
     # f2.solverData.certainhypo = Int[]
@@ -471,7 +471,7 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     @test getLabel(fg[getLabel(v1)]) == getLabel(v1)
 
     #TODO standardize this error and res also for that matter
-    fnope = FactorCompute(:broken, [:a, :nope], GenericFunctionNodeData(; fnc=TestCCW{TestFunctorInferenceType1}()))
+    fnope = FactorCompute(:broken, [:a, :nope], TestFunctorInferenceType1())
     @test_throws KeyError addFactor!(fg, fnope)
 
     @test addFactor!(fg, f1) == f1
@@ -1375,12 +1375,6 @@ function testGroup!(fg, v1, v2, f0, f1)
     end
 end
 
-# Feed with graph a b solvable orphan not factor on a b
-# fg = testDFGAPI()
-# addVariable!(fg, VariableCompute(:a, TestVariableType1()))
-# addVariable!(fg, VariableCompute(:b, TestVariableType1()))
-# addFactor!(fg, FactorCompute(:abf1, [:a,:b], GenericFunctionNodeData{TestFunctorInferenceType1, Symbol}()))
-# addVariable!(fg, VariableCompute(:orphan, TestVariableType1(), solvable = 0))
 function AdjacencyMatricesTestBlock(fg)
     # Normal
     #deprecated
@@ -1452,17 +1446,15 @@ function connectivityTestGraph(
         setSolvable!(dfg, :x8, 0)
         setSolvable!(dfg, :x9, 0)
 
-        gfnd = GenericFunctionNodeData(;
+        facstate = DFG.FactorState(;
             eliminated = true,
             potentialused = true,
-            fnc = TestCCW(TestFunctorInferenceType1()),
             multihypo = Float64[],
             certainhypo = Int[],
             solveInProgress = 0,
             inflation = 1.0,
         )
         f_tags = Set([:FACTOR])
-        # f1 = FactorCompute(f1_lbl, [:a,:b], gfnd, tags = f_tags)
 
         facs = map(
             n -> addFactor!(
@@ -1470,7 +1462,8 @@ function connectivityTestGraph(
                 FactorCompute(
                     Symbol("x$(n)x$(n+1)f1"),
                     [vars[n].label, vars[n + 1].label],
-                    deepcopy(gfnd);
+                    TestFunctorInferenceType1(),
+                    facstate;
                     tags = deepcopy(f_tags),
                 ),
             ),
@@ -1681,7 +1674,7 @@ function ProducingDotFiles(
     end
     if f1 === nothing
         if (FACTYPE == FactorCompute)
-            f1 = FactorCompute(:abf1, [:a, :b], GenericFunctionNodeData(;fnc = TestFunctorInferenceType1()))
+            f1 = FactorCompute(:abf1, [:a, :b], TestFunctorInferenceType1())
         else
             f1 = FACTYPE(:abf1, [:a, :b])
         end

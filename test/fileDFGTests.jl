@@ -158,7 +158,10 @@ using UUIDs
 end
 
 ##
-
+# file = filter(f -> endswith(f, ".tar.gz"), readdir(joinpath(@__DIR__, "data")))[2]
+# loadFile = joinpath(@__DIR__, "data", file)
+# fg = loadDFG(loadFile)
+##
 @testset "FileDFG Regression Tests" begin
     @info "If any of these tests fail, we have breaking changes"
     for file in filter(f -> endswith(f, ".tar.gz"), readdir(joinpath(@__DIR__, "data")))

@@ -62,7 +62,9 @@ if get(ENV, "IIF_TEST", "true") == "true"
 
     # Switch to our upstream test branch.
     Pkg.add(
-        PackageSpec(; name = "IncrementalInference", rev = "upstream/dfg_integration_test"),
+        #FIXME This is a temporary fix to use the refactored factor branch.
+        # PackageSpec(; name = "IncrementalInference", rev = "upstream/dfg_integration_test"),
+        PackageSpec(; name = "IncrementalInference", rev = "refac/factor"),
     )
     @info "------------------------------------------------------------------------"
     @info "These tests are using IncrementalInference to do additional driver tests"

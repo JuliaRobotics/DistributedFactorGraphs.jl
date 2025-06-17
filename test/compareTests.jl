@@ -43,28 +43,23 @@ v2.solvable = 0
     VariableCompute(:x1, TestVariableType1()) == VariableCompute(:x1, TestVariableType2())
 )
 
-# GenericFunctionNodeData
-gfnd1 = GenericFunctionNodeData(;
+facstate1 = DFG.FactorState(;
     eliminated = true,
     potentialused = true,
-    edgeIDs = [1, 2],
-    fnc = TestFunctorInferenceType1(),
 )
-gfnd2 = deepcopy(gfnd1)
-gfnd3 = GenericFunctionNodeData(;
+facstate2 = deepcopy(facstate1)
+facstate3 = DFG.FactorState(;
     eliminated = true,
-    potentialused = true,
-    edgeIDs = [1, 2],
-    fnc = TestFunctorInferenceType2(),
+    potentialused = false,
 )
 
-@test gfnd1 == gfnd2
-@test !(gfnd1 == gfnd3)
+@test facstate1 == facstate2
+@test !(facstate1 == facstate3)
 
 # FactorCompute
-f1 = FactorCompute(:f1, [:a, :b], gfnd1)
+f1 = FactorCompute(:f1, [:a, :b], TestFunctorInferenceType1())
 f2 = deepcopy(f1)
-f3 = FactorCompute(:f1, [:b, :a], gfnd1)
+f3 = FactorCompute(:f1, [:b, :a], TestFunctorInferenceType1())
 
 @test f1 == f2
 @test !(f1 == f3)
@@ -84,19 +79,3 @@ vnd2.val[1][1] = 0.1
 @test !compare(vnd1, vnd2)
 @test !compare(vnd1, vnd3)
 
-gfnd1 = GenericFunctionNodeData(;
-    eliminated = true,
-    potentialused = true,
-    edgeIDs = [1, 2],
-    fnc = TestFunctorInferenceType1(),
-)
-gfnd2 = deepcopy(gfnd1)
-gfnd3 = GenericFunctionNodeData(;
-    eliminated = true,
-    potentialused = true,
-    edgeIDs = [1, 2],
-    fnc = PackedTestFunctorInferenceType1(),
-)
-
-@test compare(gfnd1, gfnd2)
-@test_broken !(compare(gfnd1, gfnd3))

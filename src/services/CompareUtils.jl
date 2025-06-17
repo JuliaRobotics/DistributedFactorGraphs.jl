@@ -25,7 +25,6 @@ const GeneratedCompareUnion = Union{
     VariableDFG,
     VariableSummary,
     VariableSkeleton,
-    GenericFunctionNodeData,
     FactorCompute,
     FactorDFG,
     FactorSummary,
@@ -267,38 +266,6 @@ function compareVariable(
     return TP::Bool
 end
 
-function compareAllSpecial(
-    A::T1,
-    B::T2;
-    skip = Symbol[],
-    show::Bool = true,
-) where {T1 <: GenericFunctionNodeData, T2 <: GenericFunctionNodeData}
-    if T1 != T2
-        @warn "compareAllSpecial is comparing different types" T1 T2
-        # return false
-        # else
-    end
-    return compareAll(A, B; skip = skip, show = show)
-end
-
-# Compare FunctionNodeData
-function compare(
-    a::GenericFunctionNodeData{T1},
-    b::GenericFunctionNodeData{T2},
-) where {T1, T2}
-    # TODO -- beef up this comparison to include the gwp
-    TP = true
-    TP = TP && a.eliminated == b.eliminated
-    TP = TP && a.potentialused == b.potentialused
-    TP = TP && a.edgeIDs == b.edgeIDs
-    # TP = TP && typeof(a.fnc) == typeof(b.fnc)
-    TP = TP && (a.multihypo - b.multihypo |> norm < 1e-10)
-    TP = TP && a.certainhypo == b.certainhypo
-    TP = TP && a.nullhypo == b.nullhypo
-    TP = TP && a.solveInProgress == b.solveInProgress
-    return TP
-end
-
 """
     $SIGNATURES
 
@@ -406,7 +373,6 @@ end
 # Bd = getSolverData(B)
 # TP =  compareAll(A, B, skip=[:attributes;:data], show=show)
 # TP &= compareAll(A.attributes, B.attributes, skip=[:data;], show=show)
-# TP &= compareAllSpecial(getSolverData(A).fnc, getSolverData(B).fnc, skip=[:cpt;], show=show)
 # TP &= compareAll(getSolverData(A).fnc.cpt, getSolverData(B).fnc.cpt, show=show)
 
 """
