@@ -73,7 +73,7 @@ if get(ENV, "IIF_TEST", "true") == "true"
     apis = Vector{AbstractDFG}()
     push!(
         apis,
-        GraphsDFG(; solverParams = SolverParams(), userLabel = "test@navability.io"),
+        GraphsDFG(; solverParams = SolverParams()),
     )
 
     for api in apis

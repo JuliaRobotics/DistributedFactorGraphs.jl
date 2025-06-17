@@ -414,11 +414,11 @@ function DFGFactorSCA()
 
     @test getSolvable(f1) == 0
 
-    @test getSolverData(f1) === f1.solverData
+    @test getObservation(f1) === f1.observation
 
     @test getVariableOrder(f1) == [:a, :b]
 
-    getSolverData(f1).solveInProgress = 1
+    getState(f1).solveInProgress = 1
     @test setSolvable!(f1, 1) == 1
 
     #TODO These 2 function are equivelent
@@ -443,9 +443,6 @@ function DFGFactorSCA()
 
     @test setSolvable!(f1, 1) == 1
     @test getSolvable(f1) == 1
-
-    #TODO don't know if this should be used, added for completeness, it just wastes the gc's time
-    @test setSolverData!(f1, deepcopy(gfnd)) == gfnd
 
     # create f0 here for a later timestamp
     f0 = FactorCompute(:af1, [:a], gfnd_prior; tags = Set([:PRIOR]))
@@ -495,7 +492,8 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
         f2_mod = FactorCompute(
             f2.label,
             (:a,),
-            f2.solverData;
+            f2.observation,
+            f2.state;
             timestamp = f2.timestamp,
             nstime = f2.nstime,
             tags = f2.tags,
@@ -1166,9 +1164,9 @@ function testGroup!(fg, v1, v2, f0, f1)
 
         # TODO Mabye implement IIF type here
         # Requires IIF or a type in IIF
-        @test getFactorType(f1.solverData) === f1.solverData.fnc.usrfnc!
-        @test getFactorType(f1) === f1.solverData.fnc.usrfnc!
-        @test getFactorType(fg, :abf1) === f1.solverData.fnc.usrfnc!
+        @test getObservation(f1) === f1.observation
+        @test getFactorType(f1) === f1.observation
+        @test getFactorType(fg, :abf1) === f1.observation
 
         @test isPrior(fg, :af1) # if f1 is prior
         @test lsfPriors(fg) == [:af1]
@@ -1850,10 +1848,9 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
         mergeVariable!(dfg, v4)
 
         f45 = getFactor(dfg, :x4x5f1)
-        fsd = f45.solverData
+        fsd = getState(f45)
         # set some factor solver data
         push!(fsd.certainhypo, 2)
-        push!(fsd.edgeIDs, 3)
         fsd.eliminated = true
         push!(fsd.multihypo, 4.0)
         fsd.nullhypo = 5.0

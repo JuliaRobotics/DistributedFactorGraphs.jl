@@ -114,6 +114,7 @@ Base.@kwdef struct FactorDFG <: AbstractDFGFactor
     nstime::String
     fnctype::String
     solvable::Int
+    data::Union{Nothing, String} #TODO deprecate data completely, left as a bridge to old serialization structure
     metadata::String
     _version::String = string(_getDFGVersion())
     state::FactorState
@@ -143,8 +144,8 @@ function FactorDFG(
     data::Union{Nothing, String},
     metadata::String,
     _version::String,
-    state::Union{Nothing, FactorState},
-    observJSON::Union{Nothing, String},
+    state::Union{Nothing, FactorState} = nothing,
+    observJSON::Union{Nothing, String} = nothing,
 )
     if isnothing(state) || isnothing(observJSON)
         fd = JSON3.read(data)
@@ -168,6 +169,7 @@ function FactorDFG(
         nstime,
         fnctype,
         solvable,
+        nothing, #TODO deprecate data completely
         metadata,
         _version,
         state,

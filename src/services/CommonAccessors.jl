@@ -165,7 +165,7 @@ function getSolveInProgress(
         end
     end
     # Factor
-    return getSolverData(var).solveInProgress
+    return getState(var).solveInProgress
 end
 
 #TODO missing set solveInProgress and graph level accessor

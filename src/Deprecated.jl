@@ -235,6 +235,8 @@ function FactorCompute(
     )
 end
 
+export getSolverData, setSolverData!
+
 function getSolverData(f::FactorCompute)
     return error(
         "getSolverData(f::FactorCompute) is obsolete, use getState, getObservation, or getCache instead",
@@ -278,6 +280,23 @@ function decodePackedType(
     return factordata
 end
 
+export _packSolverData
+function _packSolverData(f::FactorCompute, fnctype::AbstractFactorObservation)
+    #
+    error("_packSolverData is deprecated, use seperate packing of observation #TODO")
+    packtype = convertPackedType(fnctype)
+    try
+        packed = convert(PackedFunctionNodeData{packtype}, getSolverData(f)) #TODO getSolverData 
+        packedJson = packed
+        return packedJson
+    catch ex
+        io = IOBuffer()
+        showerror(io, ex, catch_backtrace())
+        err = String(take!(io))
+        msg = "Error while packing '$(f.label)' as '$fnctype', please check the unpacking/packing converters for this factor - \r\n$err"
+        error(msg)
+    end
+end
 ## ================================================================================
 ## Deprecated in v0.25
 ##=================================================================================

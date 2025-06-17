@@ -1,7 +1,3 @@
-
-# TODO dev and debugging, used by some of the DFG drivers
-export _packSolverData
-
 ## Version checking
 #NOTE fixed really bad function but kept similar as fallback #TODO upgrade to use pkgversion(m::Module)
 function _getDFGVersion()
@@ -250,26 +246,6 @@ VariableDFG(v::VariableCompute) = packVariable(v)
 ##==============================================================================
 ## Factor Packing and unpacking
 ##==============================================================================
-
-function _packSolverData(f::FactorCompute, fnctype::AbstractFactorObservation)
-    #
-    Base.depwarn(
-        "_packSolverData is deprecated, use seperate packing of observation #TODO",
-        :_packSolverData,
-    )
-    packtype = convertPackedType(fnctype)
-    try
-        packed = convert(PackedFunctionNodeData{packtype}, getSolverData(f)) #TODO getSolverData 
-        packedJson = packed
-        return packedJson
-    catch ex
-        io = IOBuffer()
-        showerror(io, ex, catch_backtrace())
-        err = String(take!(io))
-        msg = "Error while packing '$(f.label)' as '$fnctype', please check the unpacking/packing converters for this factor - \r\n$err"
-        error(msg)
-    end
-end
 
 # returns FactorDFG
 function packFactor(f::FactorCompute)

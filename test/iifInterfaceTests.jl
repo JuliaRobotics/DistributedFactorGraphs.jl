@@ -140,9 +140,10 @@ end
     # @test @test_deprecated getVariableIds(dfg) == listVariables(dfg)
     # @test @test_deprecated getFactorIds(dfg) == listFactors(dfg)
 
-    @test getFactorType(f1.solverData) === f1.solverData.fnc.usrfnc!
-    @test getFactorType(f1) === f1.solverData.fnc.usrfnc!
-    @test getFactorType(dfg, :abf1) === f1.solverData.fnc.usrfnc!
+    @test getObservation(dfg, :abf1) === f1.observation
+    @test getObservation(f1) === f1.observation
+    @test getFactorType(f1) === f1.observation
+    @test getFactorType(dfg, :abf1) === f1.observation
 
     @test !isPrior(dfg, :abf1) # f1 is not a prior
     @test lsfPriors(dfg) == []
@@ -199,7 +200,8 @@ end
 
     @test getLabel(f1) == f1.label
     @test getTags(f1) == f1.tags
-    @test getSolverData(f1) == f1.solverData
+    @test getState(f1) === f1.state
+    @test getObservation(f1) === f1.observation
 
     @test getSolverParams(dfg) !== nothing
     @test setSolverParams!(dfg, getSolverParams(dfg)) == getSolverParams(dfg)

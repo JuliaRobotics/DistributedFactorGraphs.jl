@@ -124,7 +124,7 @@ function loadDFG!(
     if unzip
         Base.mkpath(loaddir)
         folder = joinpath(loaddir, filename)
-        @info "loadDFG! detected a gzip $dstname -- unpacking via $loaddir now..."
+        @debug "loadDFG! detected a gzip $dstname -- unpacking via $loaddir now..."
         Base.rm(folder; recursive = true, force = true)
         # unzip the tar file
         tar_gz = open(dstname)
@@ -167,18 +167,11 @@ function loadDFG!(
     variables = @showprogress 1 "loading variables" asyncmap(varFiles) do varFile
         jstr = read("$varFolder/$varFile", String)
         packedvar = JSON3.read(jstr, VariableDFG)
-        if usePackedVariable
-            return packedvar
-        else
-            return unpackVariable(packedvar)
-        end
+        v = usePackedVariable ? packedvar : unpackVariable(packedvar)
+        addVariable!(dfgLoadInto, v)
     end
 
     @info "Loaded $(length(variables)) variables"#- $(map(v->v.label, variables))"
-    @showprogress 1 "Inserting variables into graph" map(
-        v -> addVariable!(dfgLoadInto, v),
-        variables,
-    )
 
     usePackedFactor =
         isa(dfgLoadInto, GraphsDFG) && getTypeDFGFactors(dfgLoadInto) == FactorDFG
@@ -187,25 +180,16 @@ function loadDFG!(
     factors = @showprogress 1 "loading factors" asyncmap(factorFiles) do factorFile
         jstr = read("$factorFolder/$factorFile", String)
         packedfact = JSON3.read(jstr, FactorDFG)
-        if usePackedFactor
-            return packedfact
-        else
-            return unpackFactor(packedfact)
-        end
+        f = usePackedFactor ? packedfact : unpackFactor(packedfact)
+        addFactor!(dfgLoadInto, f)
     end
 
     @info "Loaded $(length(factors)) factors"# - $(map(f->f.label, factors))"
-    # # Adding factors
-    @showprogress 1 "Inserting factors into graph" map(
-        f -> addFactor!(dfgLoadInto, f),
-        factors,
-    )
 
     if isa(dfgLoadInto, GraphsDFG) && getTypeDFGFactors(dfgLoadInto) != FactorDFG
         # Finally, rebuild the CCW's for the factors to completely reinflate them
-        # NOTE CREATES A NEW FactorCompute IF  CCW TYPE CHANGES
-        # @info "Rebuilding CCW's for the factors..."
-        @showprogress 1 "Rebuilding factor working memory" for factor in factors
+        # NOTE CREATES A NEW FactorCompute IF CCW TYPE CHANGES
+        @showprogress 1 "Rebuilding factor solver cache" for factor in factors
             rebuildFactorCache!(dfgLoadInto, factor)
         end
     end

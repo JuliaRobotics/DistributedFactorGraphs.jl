@@ -59,6 +59,8 @@ function getObservation(f::FactorDFG)
     # return packtype(JSON3.read(f.observJSON))
 end
 
+getObservation(dfg::AbstractDFG, lbl::Symbol) = getObservation(getFactor(dfg, lbl))
+
 function getCache(f::FactorCompute)
     if isassigned(f.solvercache)
         return f.solvercache[]
@@ -187,7 +189,8 @@ function setTimestamp(f::FactorCompute, ts::ZonedDateTime)
     return FactorCompute(
         f.label,
         getfield(f, :_variableOrderSymbols),
-        f.solverData;
+        f.observation,
+        f.state;
         timestamp = ts,
         nstime = f.nstime,
         tags = f.tags,

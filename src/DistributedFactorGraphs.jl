@@ -166,7 +166,8 @@ export InferenceVariable
 export getSolverDataDict, setSolverData!
 export getVariableType, getVariableTypeName
 
-export getSolverData
+export getObservation
+export getState
 
 export getVariableType
 
