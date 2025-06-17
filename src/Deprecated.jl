@@ -203,18 +203,6 @@ function updateVariableSolverData!(
 end
 
 ## factor refactor deprecations
-"""
-$(TYPEDEF)
-
-Notes
-- S::Symbol
-
-Designing (WIP)
-- T <: Union{FactorSolverCache, AbstractPackedFactorObservation}
-- in IIF.CCW{T <: DFG.AbstractFactorObservation}
-- in DFG.AbstractRelativeMinimize <: AbstractFactorObservation
-- in Main.SomeFactor <: AbstractRelativeMinimize
-"""
 Base.@kwdef mutable struct GenericFunctionNodeData{
     T <: Union{
         <:AbstractPackedFactorObservation,

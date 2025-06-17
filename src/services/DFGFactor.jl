@@ -33,9 +33,20 @@ getFactorType(dfg::AbstractDFG, lbl::Symbol) = getFactorType(getFactor(dfg, lbl)
 
 getState(f::AbstractDFGFactor) = f.state
 
+"""
+    $SIGNATURES
+
+Return factor state from factor graph.
+"""
 getFactorState(f::AbstractDFGFactor) = f.state
 getFactorState(dfg::AbstractDFG, lbl::Symbol) = getFactorState(getFactor(dfg, lbl))
 
+"""
+    $SIGNATURES
+
+Return the observation of a factor, which is the user-defined data structure
+that contains the information about the factor, such as the measurement, prior, or relative pose.
+"""
 getObservation(f::FactorCompute) = f.observation
 function getObservation(f::FactorDFG)
     #FIXME completely refactor to not need getTypeFromSerializationModule and just use StructTypes
@@ -46,6 +57,13 @@ end
 
 getObservation(dfg::AbstractDFG, lbl::Symbol) = getObservation(getFactor(dfg, lbl))
 
+"""
+    $SIGNATURES
+    
+Return the solver cache for a factor, which is used to store intermediate results
+during the solving process. This is useful for caching results that can be reused
+across multiple solves, such as Jacobians or other computed values.
+"""
 function getCache(f::FactorCompute)
     if isassigned(f.solvercache)
         return f.solvercache[]
@@ -53,6 +71,14 @@ function getCache(f::FactorCompute)
         return nothing
     end
 end
+
+"""
+    $SIGNATURES
+
+Set the solver cache for a factor, which is used to store intermediate results
+during the solving process. This is useful for caching results that can be reused
+across multiple solves, such as Jacobians or other computed values.
+"""
 setCache!(f::FactorCompute, solvercache::FactorSolverCache) = f.solvercache[] = solvercache
 
 """

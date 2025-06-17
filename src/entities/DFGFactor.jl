@@ -48,14 +48,13 @@ end
 # | FactorCompute     |   X   |   X  |     X     |     X    |      X     |
 # *not available without reconstruction
 
+#TODO is packed observation a abstract type, parameter, or is it already a string?
+#TODO Same with metadata?
 """
     $(TYPEDEF)
 
 The Factor information packed in a way that accomdates multi-lang using json.
 """
-
-#TODO do we have parameter for packed observation or is it already a string?
-#TODO Same with metadata?
 Base.@kwdef struct FactorDFG <: AbstractDFGFactor
     id::Union{UUID, Nothing} = nothing
     label::Symbol

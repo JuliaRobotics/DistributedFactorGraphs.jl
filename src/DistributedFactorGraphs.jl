@@ -43,7 +43,7 @@ using Tables
 
 # used for @defVariable
 import ManifoldsBase
-import ManifoldsBase: AbstractManifold, manifold_dimension
+using ManifoldsBase: AbstractManifold, manifold_dimension
 export AbstractManifold, manifold_dimension
 
 import RecursiveArrayTools: ArrayPartition
