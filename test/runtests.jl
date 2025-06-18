@@ -73,10 +73,7 @@ if get(ENV, "IIF_TEST", "true") == "true"
     using IncrementalInference
 
     apis = Vector{AbstractDFG}()
-    push!(
-        apis,
-        GraphsDFG(; solverParams = SolverParams()),
-    )
+    push!(apis, GraphsDFG(; solverParams = SolverParams()))
 
     for api in apis
         @testset "Testing Driver: $(typeof(api))" begin

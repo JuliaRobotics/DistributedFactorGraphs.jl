@@ -135,7 +135,7 @@ using UUIDs
             @test compareFactor(
                 getFactor(dfg, fact),
                 getFactor(retDFG, fact),
-                skip = [:timezone, :zone, :solverData,],
+                skip = [:timezone, :zone, :solverData],
             ) # Timezones
             # :hypotheses, :certainhypo, :multihypo, # Multihypo
             # :eliminated, 
