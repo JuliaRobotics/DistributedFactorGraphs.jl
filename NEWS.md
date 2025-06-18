@@ -6,6 +6,12 @@ Listing news on any major breaking changes in DFG.  For regular changes, see int
 - Deprecate `updateFactor!` for `mergeFactor!`, note `merege` returns number of nodes updated/added.
 - Rename BlobEntry to Blobentry, see #1123.
 - Rename BlobStore to Blobstore, see #1124.
+- Refactor the Factor solver data structure, see #1127:
+    - Deprecated GenericFunctionNodeData, PackedFunctionNodeData, FunctionNodeData, and all functions related factor.solverData.
+    - Replaced by 3 seperete types: Observation, State, and Cache
+    - This is used internally be the solver and should not affect the average user of DFG.
+    - Rename FactorOperationalMemory -> FactorSolverCache
+    - Rename AbstractFactor -> AbstractFactorObservation (keeping both around)
 
 # v0.26
 - Graph structure plotting now uses GraphMakie.jl instead of GraphPlot.jl. Update by replacing `using GraphPlot` with `using GraphMakie`.
