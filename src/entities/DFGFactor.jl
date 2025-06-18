@@ -2,78 +2,39 @@
 ## Abstract Types
 ##==============================================================================
 
-# TODO consider changing this to AbstractFactor
-abstract type AbstractFactor end
-abstract type AbstractPackedFactor end
+abstract type AbstractPackedFactorObservation end
+abstract type AbstractFactorObservation end
 
-abstract type AbstractPrior <: AbstractFactor end
-abstract type AbstractRelative <: AbstractFactor end
+abstract type AbstractPrior <: AbstractFactorObservation end
+abstract type AbstractRelative <: AbstractFactorObservation end
 abstract type AbstractRelativeMinimize <: AbstractRelative end
 abstract type AbstractManifoldMinimize <: AbstractRelative end
 
-# NOTE DF, Convolution is IIF idea, but DFG should know about "FactorOperationalMemory"
-# DF, IIF.CommonConvWrapper <: FactorOperationalMemory #
+# NOTE DF, Convolution is IIF idea, but DFG should know about "FactorSolverCache"
+# DF, IIF.CommonConvWrapper <: FactorSolverCache #
 # NOTE was `<: Function` as unnecessary
-abstract type FactorOperationalMemory end
+abstract type FactorSolverCache end
 # TODO to be removed from DFG,
-# we can add to IIF or have IIF.CommonConvWrapper <: FactorOperationalMemory directly
-# abstract type ConvolutionObject <: FactorOperationalMemory end
+# we can add to IIF or have IIF.CommonConvWrapper <: FactorSolverCache directly
+# abstract type ConvolutionObject <: FactorSolverCache end
 
-##==============================================================================
-## GenericFunctionNodeData
-##==============================================================================
-
-"""
-$(TYPEDEF)
-
-Notes
-- S::Symbol
-
-Designing (WIP)
-- T <: Union{FactorOperationalMemory, AbstractPackedFactor}
-- in IIF.CCW{T <: DFG.AbstractFactor}
-- in DFG.AbstractRelativeMinimize <: AbstractFactor
-- in Main.SomeFactor <: AbstractRelativeMinimize
-"""
-Base.@kwdef mutable struct GenericFunctionNodeData{
-    T <: Union{<:AbstractPackedFactor, <:AbstractFactor, <:FactorOperationalMemory},
-}
+#TODO is this mutable
+@kwdef mutable struct FactorState
     eliminated::Bool = false
     potentialused::Bool = false
-    edgeIDs::Vector{Int} = Int[]
-    fnc::T
     multihypo::Vector{Float64} = Float64[] # TODO re-evaluate after refactoring w #477
     certainhypo::Vector{Int} = Int[]
     nullhypo::Float64 = 0.0
-    solveInProgress::Int = 0
+    solveInProgress::Int = 0 #TODO maybe deprecated or move to operational memory, also why Int?
     inflation::Float64 = 0.0
 end
 
-# TODO should we move non FactorOperationalMemory to FactorCompute: 
+# TODO should we move non FactorSolverCache to FactorCompute: 
 # fnc, multihypo, nullhypo, inflation ?
-# that way we split solverData <: FactorOperationalMemory and constants
+# that way we split solverData <: FactorSolverCache and constants
 # TODO see if above ever changes?
 
 ## Constructors
-
-##------------------------------------------------------------------------------
-## PackedFunctionNodeData and FunctionNodeData
-
-const PackedFunctionNodeData{T} =
-    GenericFunctionNodeData{T} where {T <: AbstractPackedFactor}
-function PackedFunctionNodeData(args...; kw...)
-    return PackedFunctionNodeData{typeof(args[4])}(args...; kw...)
-end
-
-const FunctionNodeData{T} = GenericFunctionNodeData{
-    T,
-} where {T <: Union{<:AbstractFactor, <:FactorOperationalMemory}}
-FunctionNodeData(args...; kw...) = FunctionNodeData{typeof(args[4])}(args...; kw...)
-
-# PackedFunctionNodeData(x2, x3, x4, x6::T, multihypo::Vector{Float64}=[], certainhypo::Vector{Int}=Int[], x9::Int=0) where T <: AbstractPackedFactor =
-#     GenericFunctionNodeData{T}(x2, x3, x4, x6, multihypo, certainhypo, x9)
-# FunctionNodeData(x2, x3, x4, x6::T, multihypo::Vector{Float64}=[], certainhypo::Vector{Int}=Int[], x9::Int=0) where T <: Union{AbstractFactor, FactorOperationalMemory} =
-#     GenericFunctionNodeData{T}(x2, x3, x4, x6, multihypo, certainhypo, x9)
 
 ##==============================================================================
 ## Factors
@@ -81,12 +42,14 @@ FunctionNodeData(args...; kw...) = FunctionNodeData{typeof(args[4])}(args...; kw
 #
 # |                   | label | tags | timestamp | solvable | solverData |
 # |-------------------|:-----:|:----:|:---------:|:--------:|:----------:|
-# | FactorSkeleton |   X   |   x  |           |          |            |
-# | FactorSummary  |   X   |   X  |     X     |          |            |
-# | FactorDFG      |   X   |   X  |     X     |     X    |      X*    |
-# | FactorCompute         |   X   |   X  |     X     |     X    |      X     |
+# | FactorSkeleton    |   X   |   x  |           |          |            |
+# | FactorSummary     |   X   |   X  |     X     |          |            |
+# | FactorDFG         |   X   |   X  |     X     |     X    |      X*    |
+# | FactorCompute     |   X   |   X  |     X     |     X    |      X     |
 # *not available without reconstruction
 
+#TODO is packed observation a abstract type, parameter, or is it already a string?
+#TODO Same with metadata?
 """
     $(TYPEDEF)
 
@@ -95,21 +58,74 @@ The Factor information packed in a way that accomdates multi-lang using json.
 Base.@kwdef struct FactorDFG <: AbstractDFGFactor
     id::Union{UUID, Nothing} = nothing
     label::Symbol
-    tags::Vector{Symbol}
+    tags::Set{Symbol}
     _variableOrderSymbols::Vector{Symbol}
     timestamp::ZonedDateTime
     nstime::String
     fnctype::String
     solvable::Int
-    data::String
+    data::Union{Nothing, String} = nothing #TODO deprecate data completely, left as a bridge to old serialization structure
     metadata::String
     _version::String = string(_getDFGVersion())
+    state::FactorState
+    observJSON::String # serialized observation
     # blobEntries::Vector{Blobentry}#TODO should factor have blob entries?
 end
+
 #TODO type not in DFG FactorDFG, should it be?
 # _type::String
 # createdTimestamp::DateTime
 # lastUpdatedTimestamp::DateTime
+
+StructTypes.StructType(::Type{FactorDFG}) = StructTypes.UnorderedStruct()
+StructTypes.idproperty(::Type{FactorDFG}) = :id
+StructTypes.omitempties(::Type{FactorDFG}) = (:id, :data)
+
+#TODO deprecate, added in v0.27 as a bridge to new serialization structure
+function FactorDFG(
+    id::Union{UUID, Nothing},
+    label::Symbol,
+    tags::Set{Symbol},
+    _variableOrderSymbols::Vector{Symbol},
+    timestamp::ZonedDateTime,
+    nstime::String,
+    fnctype::String,
+    solvable::Int,
+    data::Union{Nothing, String},
+    metadata::String,
+    _version::String,
+    state::Union{Nothing, FactorState} = nothing,
+    observJSON::Union{Nothing, String} = nothing,
+)
+    if isnothing(state) || isnothing(observJSON)
+        fd = JSON3.read(data)
+        state = FactorState(
+            fd.eliminated,
+            fd.potentialused,
+            fd.multihypo,
+            fd.certainhypo,
+            fd.nullhypo,
+            fd.solveInProgress,
+            fd.inflation,
+        )
+        observJSON = JSON3.write(fd.fnc)
+    end
+    return FactorDFG(
+        id,
+        label,
+        tags,
+        _variableOrderSymbols,
+        timestamp,
+        nstime,
+        fnctype,
+        solvable,
+        nothing, #TODO deprecate data completely
+        metadata,
+        _version,
+        state,
+        observJSON,
+    )
+end
 
 FactorDFG(f::FactorDFG) = f
 
@@ -117,22 +133,22 @@ FactorDFG(f::FactorDFG) = f
 """
 $(TYPEDEF)
 Abstract parent type for all InferenceTypes, which are the
-functions inside of factors.
+observation functions inside of factors.
 """
-abstract type InferenceType <: DFG.AbstractPackedFactor end
-# this is the GenericFunctionNodeData for packed types
-const FactorData = PackedFunctionNodeData{InferenceType}
+abstract type InferenceType <: AbstractPackedFactorObservation end
+
+#TODO deprecate InferenceType in favor of AbstractPackedFactorObservation v0.26
 
 # Packed Factor constructor
 function assembleFactorName(xisyms::Union{Vector{String}, Vector{Symbol}})
-    return Symbol(xisyms..., "f_", string(uuid4())[1:4])
+    return Symbol(xisyms..., "_f", randstring(4))
 end
 
-getFncTypeName(fnc::InferenceType) = split(string(typeof(fnc)), ".")[end]
+getFncTypeName(fnc::AbstractPackedFactorObservation) = split(string(typeof(fnc)), ".")[end]
 
 function FactorDFG(
     xisyms::Vector{Symbol},
-    fnc::InferenceType;
+    fnc::AbstractPackedFactorObservation;
     multihypo::Vector{Float64} = Float64[],
     nullhypo::Float64 = 0.0,
     solvable::Int = 1,
@@ -144,7 +160,7 @@ function FactorDFG(
     metadata::Dict{Symbol, DFG.SmallDataTypes} = Dict{Symbol, DFG.SmallDataTypes}(),
 )
     # create factor data
-    factordata = FactorData(; fnc, multihypo, nullhypo, inflation)
+    state = FactorState(; multihypo, nullhypo, inflation)
 
     fnctype = getFncTypeName(fnc)
 
@@ -152,22 +168,20 @@ function FactorDFG(
     # create factor 
     factor = FactorDFG(;
         label,
-        tags,
+        tags = Set(tags),
         _variableOrderSymbols = xisyms,
         timestamp,
         nstime = string(nstime),
         fnctype,
         solvable,
-        data = JSON3.write(factordata),
         metadata = base64encode(JSON3.write(metadata)),
+        state,
+        observJSON = JSON3.write(fnc),
+        data = "", #TODO deprecate data completely
     )
 
     return factor
 end
-
-StructTypes.StructType(::Type{FactorDFG}) = StructTypes.UnorderedStruct()
-StructTypes.idproperty(::Type{FactorDFG}) = :id
-StructTypes.omitempties(::Type{FactorDFG}) = (:id,)
 
 ## FactorCompute lv2
 
@@ -183,9 +197,9 @@ DevNotes
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct FactorCompute{T, N} <: AbstractDFGFactor
+Base.@kwdef struct FactorCompute{FT <: AbstractFactorObservation, N} <: AbstractDFGFactor
     """The ID for the factor"""
-    id::Union{UUID, Nothing}
+    id::Union{UUID, Nothing} = nothing #TODO deprecate id
     """Factor label, e.g. :x1f1.
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
@@ -198,123 +212,79 @@ Base.@kwdef struct FactorCompute{T, N} <: AbstractDFGFactor
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref), [`setTimestamp`](@ref)"""
     timestamp::ZonedDateTime
-    """Nano second time, for more resolution on timestamp (only subsecond information)"""
+    """Nano second time"""
     nstime::Nanosecond
-    """Solver data.
-    Accessors: [`getSolverData`](@ref), [`setSolverData!`](@ref)"""
-    solverData::Base.RefValue{GenericFunctionNodeData{T}}
     """Solvable flag for the factor.
     Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)"""
     solvable::Base.RefValue{Int}
     """Dictionary of small data associated with this variable.
     Accessors: [`getMetadata`](@ref), [`setMetadata!`](@ref)"""
-    smallData::Dict{Symbol, SmallDataTypes}
-    # Inner constructor
-    function FactorCompute{T}(
-        label::Symbol,
-        timestamp::Union{DateTime, ZonedDateTime},
-        nstime::Nanosecond,
-        tags::Set{Symbol},
-        solverData::GenericFunctionNodeData{T},
-        solvable::Int,
-        _variableOrderSymbols::NTuple{N, Symbol};
-        id::Union{UUID, Nothing} = nothing,
-        smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
-    ) where {T, N}
-        return new{T, N}(
-            id,
-            label,
-            tags,
-            _variableOrderSymbols,
-            timestamp,
-            nstime,
-            Ref(solverData),
-            Ref(solvable),
-            smallData,
-        )
-    end
+    smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}()
+
+    #refactor fields
+    """Observation function or measurement for this factor.
+    Accessors: [`getObservation`](@ref)(@ref)"""
+    observation::FT
+    """Describes the current state of the factor. Persisted in serialization.
+    Accessors: [`getFactorState`](@ref)"""
+    state::FactorState
+    """Temporary, non-persistent memory used internally by the solver for intermediate numerical computations and buffers.  
+    `solvercache` is lazily allocated and only used during factor operations; it is not serialized or retained after solving.
+    Accessors: [`getCache`](@ref), [`setCache!`](@ref)"""
+    solvercache::Base.RefValue{<:FactorSolverCache} #TODO easy of use vs. performance as container is abstract in any case.
 end
 
 ##------------------------------------------------------------------------------
 ## Constructors
 
-"""
-$(SIGNATURES)
-
-Construct a DFG factor given a label.
-"""
-function FactorCompute(
-    label::Symbol,
-    timestamp::Union{DateTime, ZonedDateTime},
-    nstime::Nanosecond,
-    tags::Set{Symbol},
-    solverData::GenericFunctionNodeData{T},
-    solvable::Int,
-    _variableOrderSymbols::Tuple;
-    id::Union{UUID, Nothing} = nothing,
-    smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
-) where {T}
-    return FactorCompute{T}(
-        label,
-        timestamp,
-        nstime,
-        tags,
-        solverData,
-        solvable,
-        _variableOrderSymbols;
-        id = id,
-        smallData = smallData,
-    )
-end
-
-function FactorCompute{T}(
-    label::Symbol,
-    variableOrderSymbols::Vector{Symbol},
-    timestamp::Union{DateTime, ZonedDateTime} = now(localzone()),
-    data::GenericFunctionNodeData{T} = GenericFunctionNodeData(; fnc = T());
-    kw...,
-) where {T}
-    return FactorCompute(
-        label,
-        timestamp,
-        Nanosecond(0),
-        Set{Symbol}(),
-        data,
-        1,
-        Tuple(variableOrderSymbols);
-        kw...,
-    )
-end
-#
-
 # TODO standardize new fields in kw constructors, .id
 function FactorCompute(
     label::Symbol,
-    variableOrderSymbols::Vector{Symbol},
-    data::GenericFunctionNodeData{T};
+    variableOrder::Union{Vector{Symbol}, Tuple},
+    observation::AbstractFactorObservation,
+    state::FactorState = FactorState(),
+    cache = nothing;
     tags::Set{Symbol} = Set{Symbol}(),
     timestamp::Union{DateTime, ZonedDateTime} = now(localzone()),
     solvable::Int = 1,
     nstime::Nanosecond = Nanosecond(0),
     id::Union{UUID, Nothing} = nothing,
     smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
-) where {T}
-    return FactorCompute{T}(
+    solverData = nothing,
+)
+    if !isnothing(solverData)
+        Base.depwarn("`FactorCompute` solverData is deprecated", :FactorCompute)
+    end
+
+    if isnothing(cache)
+        solvercache = Ref{FactorSolverCache}()
+    else
+        solvercache = Ref(cache)
+    end
+
+    return FactorCompute(
+        id,
         label,
+        tags,
+        Tuple(variableOrder),
         timestamp,
         nstime,
-        tags,
-        data,
-        solvable,
-        Tuple(variableOrderSymbols);
-        id,
+        Ref(solvable),
         smallData,
+        observation,
+        state,
+        solvercache,
     )
 end
 
-Base.getproperty(x::FactorCompute, f::Symbol) = begin
-    if f == :solvable || f == :solverData
+function Base.getproperty(x::FactorCompute, f::Symbol)
+    if f == :solvable
         getfield(x, f)[]
+    elseif f == :solverData
+        # TODO remove, deprecated in v0.27
+        error(
+            "`solverData` is obsolete in `FactorCompute`. Use `getObservation`, `getState` or `getCache` instead.",
+        )
     elseif f == :_variableOrderSymbols
         [getfield(x, f)...]
     else
@@ -323,8 +293,12 @@ Base.getproperty(x::FactorCompute, f::Symbol) = begin
 end
 
 function Base.setproperty!(x::FactorCompute, f::Symbol, val)
-    if f == :solvable || f == :solverData
+    if f == :solvable
         getfield(x, f)[] = val
+    elseif f == :solverData
+        error(
+            "`solverData` is obsolete in `FactorCompute`. Use `Observation`, `State` or `Cache` instead.",
+        )
     else
         setfield!(x, f, val)
     end

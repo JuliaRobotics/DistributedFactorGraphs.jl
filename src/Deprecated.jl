@@ -1,6 +1,14 @@
 ## ================================================================================
 ## Deprecated in v0.27
 ##=================================================================================
+export AbstractFactor
+const AbstractFactor = AbstractFactorObservation
+
+export AbstractPackedFactor
+const AbstractPackedFactor = AbstractPackedFactorObservation
+
+export FactorOperationalMemory
+const FactorOperationalMemory = FactorSolverCache
 
 @deprecate getNeighborhood(args...; kwargs...) listNeighborhood(args...; kwargs...)
 @deprecate addBlob!(store::AbstractBlobstore, blobId::UUID, data, ::String) addBlob!(
@@ -73,6 +81,10 @@ function updateVariableSolverData!(
     fields::Vector{Symbol} = Symbol[];
     warn_if_absent::Bool = true,
 )
+    Base.depwarn(
+        "updateVariableSolverData! is deprecated, use mergeVariableState! or copytoVariableState! instead",
+        :updateVariableSolverData!,
+    )
     #This is basically just setSolverData
     var = getVariable(dfg, variablekey)
     warn_if_absent &&
@@ -188,6 +200,194 @@ function updateVariableSolverData!(
             warn_if_absent = warn_if_absent,
         )
     end
+end
+
+## factor refactor deprecations
+Base.@kwdef mutable struct GenericFunctionNodeData{
+    T <: Union{
+        <:AbstractPackedFactorObservation,
+        <:AbstractFactorObservation,
+        <:FactorSolverCache,
+    },
+}
+    eliminated::Bool = false
+    potentialused::Bool = false
+    edgeIDs::Vector{Int} = Int[]
+    fnc::T
+    multihypo::Vector{Float64} = Float64[] # TODO re-evaluate after refactoring w #477
+    certainhypo::Vector{Int} = Int[]
+    nullhypo::Float64 = 0.0
+    solveInProgress::Int = 0
+    inflation::Float64 = 0.0
+end
+
+function FactorCompute(
+    label::Symbol,
+    timestamp::Union{DateTime, ZonedDateTime},
+    nstime::Nanosecond,
+    tags::Set{Symbol},
+    solverData::GenericFunctionNodeData,
+    solvable::Int,
+    variableOrder::Union{Vector{Symbol}, Tuple};
+    observation = getFactorType(solverData),
+    state::FactorState = FactorState(),
+    solvercache::Base.RefValue{<:FactorSolverCache} = Ref{FactorSolverCache}(),
+    id::Union{UUID, Nothing} = nothing,
+    smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
+)
+    error(
+        "This constructor is deprecated, use FactorCompute(label, variableOrder, solverData; ...) instead",
+    )
+    return FactorCompute(
+        id,
+        label,
+        tags,
+        Tuple(variableOrder),
+        timestamp,
+        nstime,
+        Ref(solverData),
+        Ref(solvable),
+        smallData,
+        observation,
+        state,
+        solvercache,
+    )
+end
+
+export getSolverData, setSolverData!
+
+function getSolverData(f::FactorCompute)
+    return error(
+        "getSolverData(f::FactorCompute) is obsolete, use getState, getObservation, or getCache instead",
+    )
+end
+
+function setSolverData!(f::FactorCompute, data::GenericFunctionNodeData)
+    return error(
+        "setSolverData!(f::FactorCompute, data::GenericFunctionNodeData) is obsolete, use setState!, or setCache! instead",
+    )
+end
+
+@deprecate unpackFactor(dfg::AbstractDFG, factor::FactorDFG; skipVersionCheck::Bool = false) unpackFactor(
+    factor;
+    skipVersionCheck,
+)
+
+@deprecate rebuildFactorMetadata!(args...; kwargs...) rebuildFactorCache!(
+    args...;
+    kwargs...,
+)
+
+export reconstFactorData
+function reconstFactorData end
+
+function decodePackedType(
+    dfg::AbstractDFG,
+    varOrder::AbstractVector{Symbol},
+    ::Type{T},
+    packeddata::GenericFunctionNodeData{PT},
+) where {T <: FactorSolverCache, PT}
+    error("decodePackedType is obsolete")
+    #
+    # TODO, to solve IIF 1424
+    # variables = map(lb->getVariable(dfg, lb), varOrder)
+
+    # Also look at parentmodule
+    usrtyp = convertStructType(PT)
+    fulltype = DFG.FunctionNodeData{T{usrtyp}}
+    factordata = reconstFactorData(dfg, varOrder, fulltype, packeddata)
+    return factordata
+end
+
+export _packSolverData
+function _packSolverData(f::FactorCompute, fnctype::AbstractFactorObservation)
+    #
+    error("_packSolverData is deprecated, use seperate packing of observation #TODO")
+    packtype = convertPackedType(fnctype)
+    try
+        packed = convert(PackedFunctionNodeData{packtype}, getSolverData(f)) #TODO getSolverData 
+        packedJson = packed
+        return packedJson
+    catch ex
+        io = IOBuffer()
+        showerror(io, ex, catch_backtrace())
+        err = String(take!(io))
+        msg = "Error while packing '$(f.label)' as '$fnctype', please check the unpacking/packing converters for this factor - \r\n$err"
+        error(msg)
+    end
+end
+
+export GenericFunctionNodeData, PackedFunctionNodeData, FunctionNodeData
+
+const PackedFunctionNodeData{T} =
+    GenericFunctionNodeData{T} where {T <: AbstractPackedFactorObservation}
+function PackedFunctionNodeData(args...; kw...)
+    error("PackedFunctionNodeData is obsolete")
+    return PackedFunctionNodeData{typeof(args[4])}(args...; kw...)
+end
+
+const FunctionNodeData{T} = GenericFunctionNodeData{
+    T,
+} where {T <: Union{<:AbstractFactorObservation, <:FactorSolverCache}}
+FunctionNodeData(args...; kw...) = FunctionNodeData{typeof(args[4])}(args...; kw...)
+
+# this is the GenericFunctionNodeData for packed types
+#TODO deprecate FactorData in favor of FactorState (with no more distinction between packed and compute)
+const FactorData = PackedFunctionNodeData{AbstractPackedFactorObservation}
+
+function FactorCompute(
+    label::Symbol,
+    variableOrder::Union{Vector{Symbol}, Tuple},
+    solverData::GenericFunctionNodeData;
+    tags::Set{Symbol} = Set{Symbol}(),
+    timestamp::Union{DateTime, ZonedDateTime} = now(localzone()),
+    solvable::Int = 1,
+    nstime::Nanosecond = Nanosecond(0),
+    id::Union{UUID, Nothing} = nothing,
+    smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
+)
+    Base.depwarn(
+        "`FactorCompute` constructor with `GenericFunctionNodeData` is deprecated. observation, state, and solvercache should be provided explicitly.",
+        :FactorCompute,
+    )
+    observation = getFactorType(solverData)
+    state = FactorState(
+        solverData.eliminated,
+        solverData.potentialused,
+        solverData.multihypo,
+        solverData.certainhypo,
+        solverData.nullhypo,
+        solverData.solveInProgress,
+        solverData.inflation,
+    )
+
+    if solverData.fnc isa FactorSolverCache
+        solvercache = solverData.fnc
+    else
+        solvercache = nothing
+    end
+
+    return FactorCompute(
+        label,
+        Tuple(variableOrder),
+        observation,
+        state,
+        solvercache;
+        id,
+        timestamp,
+        nstime,
+        tags,
+        smallData,
+        solvable,
+    )
+end
+
+# Deprecated check usefull? # packedFnc = fncStringToData(factor.fnctype, factor.data)
+# Deprecated check usefull? # decodeType = getFactorOperationalMemoryType(dfg)
+# Deprecated check usefull? # fullFactorData = decodePackedType(dfg, factor._variableOrderSymbols, decodeType, packedFnc)
+function fncStringToData(args...; kwargs...)
+    @warn "fncStringToData is obsolete, called with" args kwargs
+    return error("fncStringToData is obsolete.")
 end
 
 ## ================================================================================

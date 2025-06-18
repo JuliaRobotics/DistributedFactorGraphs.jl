@@ -1,7 +1,3 @@
-
-# TODO dev and debugging, used by some of the DFG drivers
-export _packSolverData
-
 ## Version checking
 #NOTE fixed really bad function but kept similar as fallback #TODO upgrade to use pkgversion(m::Module)
 function _getDFGVersion()
@@ -251,29 +247,13 @@ VariableDFG(v::VariableCompute) = packVariable(v)
 ## Factor Packing and unpacking
 ##==============================================================================
 
-function _packSolverData(f::FactorCompute, fnctype::AbstractFactor)
-    #
-    packtype = convertPackedType(fnctype)
-    try
-        packed = convert(PackedFunctionNodeData{packtype}, getSolverData(f))
-        packedJson = packed
-        return packedJson
-    catch ex
-        io = IOBuffer()
-        showerror(io, ex, catch_backtrace())
-        err = String(take!(io))
-        msg = "Error while packing '$(f.label)' as '$fnctype', please check the unpacking/packing converters for this factor - \r\n$err"
-        error(msg)
-    end
-end
-
 # returns FactorDFG
 function packFactor(f::FactorCompute)
-    fnctype = getSolverData(f).fnc.usrfnc!
+    fnctype = getObservation(f)
     return FactorDFG(;
         id = f.id,
         label = f.label,
-        tags = collect(f.tags),
+        tags = f.tags,
         _variableOrderSymbols = f._variableOrderSymbols,
         timestamp = f.timestamp,
         nstime = string(f.nstime.value),
@@ -281,133 +261,81 @@ function packFactor(f::FactorCompute)
         solvable = getSolvable(f),
         metadata = base64encode(JSON3.write(f.smallData)),
         # Pack the node data
-        data = JSON3.write(_packSolverData(f, fnctype)),
         _version = string(_getDFGVersion()),
+        state = f.state,
+        observJSON = JSON3.write(packObservation(f)),
     )
     return props
 end
 
 packFactor(f::FactorDFG) = f
 
-function reconstFactorData end
-
-function decodePackedType(
-    dfg::AbstractDFG,
-    varOrder::AbstractVector{Symbol},
-    ::Type{T},
-    packeddata::GenericFunctionNodeData{PT},
-) where {T <: FactorOperationalMemory, PT}
-    #
-    # TODO, to solve IIF 1424
-    # variables = map(lb->getVariable(dfg, lb), varOrder)
-
-    # Also look at parentmodule
-    usrtyp = convertStructType(PT)
-    fulltype = DFG.FunctionNodeData{T{usrtyp}}
-    factordata = reconstFactorData(dfg, varOrder, fulltype, packeddata)
-    return factordata
-end
-
-function fncStringToData(packtype::Type{<:AbstractPackedFactor}, data::String)
-
-    # Read string as JSON object to use as kwargs
-    fncData = JSON3.read(if data[1] == '{'
-        data
-    else
-        String(base64decode(data))
-    end)
-    packT = packtype(; fncData.fnc...)
-
-    packed = GenericFunctionNodeData{packtype}(
-        fncData["eliminated"],
-        fncData["potentialused"],
-        fncData["edgeIDs"],
-        # NamedTuple args become kwargs with the splat
-        packT,
-        fncData["multihypo"],
-        fncData["certainhypo"],
-        fncData["nullhypo"],
-        fncData["solveInProgress"],
-        fncData["inflation"],
-    )
-    return packed
-end
-
-function fncStringToData(packtype::Type{<:AbstractPackedFactor}, data::NamedTuple)
-    return error(
-        "Who is calling deserialize factor with NamedTuple, likely JSON3 somewhere",
-    )
-end
-
-function fncStringToData(
-    ::Type{T},
-    data::PackedFunctionNodeData{T},
-) where {T <: AbstractPackedFactor}
-    return data
-end
-function fncStringToData(
-    fncType::String,
-    data::PackedFunctionNodeData{T},
-) where {T <: AbstractPackedFactor}
-    packtype = DFG.getTypeFromSerializationModule("Packed" * fncType)
-    if packtype == T
-        data
-    else
-        error(
-            "Unknown type conversion\n$(fncType)\n$packtype\n$(PackedFunctionNodeData{T})",
-        )
+function unpackObservation(factor::FactorDFG)
+    try
+        return unpack(getObservation(factor))
+    catch e
+        if e isa MethodError && e.f == unpack
+            Base.depwarn(
+                """$e\nPlease implement pack and unpack methods for the factor type '$(typeof(getObservation(factor)))'.
+                Falling back to deprecated convert method.""",
+                :unpackObservation,
+            )
+            #FIXME completely refactor to not need getTypeFromSerializationModule and just use StructTypes
+            #TODO change to unpack: observ = unpack(observpacked)
+            # currently the observation type is stored in the factor and this complicates unpacking of seperate observations
+            observpacked = getObservation(factor)
+            packtype = DFG.getTypeFromSerializationModule("Packed" * factor.fnctype)
+            return convert(convertStructType(packtype), observpacked)
+        else
+            rethrow()
+        end
     end
 end
 
-function fncStringToData(fncType::String, data::T) where {T <: AbstractPackedFactor}
-    packtype = DFG.getTypeFromSerializationModule("Packed" * fncType)
-    if packtype == T # || T <: packtype
-        data
-    else
-        fncStringToData(packtype, data)
+packObservation(f::FactorCompute) = packObservation(getObservation(f))
+function packObservation(observ::AbstractFactorObservation)
+    try
+        return pack(observ)
+    catch e
+        if e isa MethodError
+            Base.depwarn(
+                "$e\nPlease implement pack and unpack methods for the factor type '$(typeof(observ))'.
+                \nFalling back to deprecated convert method.",
+                :packObservation,
+            )
+            packtype = convertPackedType(observ)
+            return convert(packtype, observ)
+        else
+            rethrow()
+        end
     end
 end
-function fncStringToData(fncType::String, data::Union{String, <:NamedTuple})
-    # FIXME, should rather just store the data as `PackedFactorX` rather than hard code the type change here???
-    packtype = DFG.getTypeFromSerializationModule("Packed" * fncType)
-    return fncStringToData(packtype, data)
-end
 
-function unpackFactor(dfg::AbstractDFG, factor::FactorDFG; skipVersionCheck::Bool = false)
+function unpackFactor(factor::FactorDFG; skipVersionCheck::Bool = false)
     #
     @debug "DECODING factor type = '$(factor.fnctype)' for factor '$(factor.label)'"
     !skipVersionCheck && _versionCheck(factor)
 
-    fullFactorData = nothing
+    local observation
     try
-        if factor.data[1] == '{'
-            packedFnc = fncStringToData(factor.fnctype, factor.data)
-        else
-            packedFnc = fncStringToData(factor.fnctype, String(base64decode(factor.data)))
-        end
-        decodeType = getFactorOperationalMemoryType(dfg)
-        fullFactorData =
-            decodePackedType(dfg, factor._variableOrderSymbols, decodeType, packedFnc)
-    catch ex
-        io = IOBuffer()
-        showerror(io, ex, catch_backtrace())
-        err = String(take!(io))
-        msg = "Error while unpacking '$(factor.label)' as '$(factor.fnctype)', please check the unpacking/packing converters for this factor - \r\n$err"
-        error(msg)
+        observation = unpackObservation(factor) #TODO maybe getObservation(factor)
+    catch
+        @error "Error while unpacking '$(factor.label)' as '$(factor.fnctype)', please check the unpacking/packing converters for this factor"
+        rethrow()
     end
 
-    metadata = JSON3.read(base64decode(factor.metadata), Dict{Symbol, DFG.SmallDataTypes})
-
     return FactorCompute(
+        factor.id,
         factor.label,
+        factor.tags,
+        Tuple(factor._variableOrderSymbols),
         factor.timestamp,
         Nanosecond(factor.nstime),
-        Set(factor.tags),
-        fullFactorData,
-        factor.solvable,
-        Tuple(factor._variableOrderSymbols);
-        id = factor.id,
-        smallData = metadata,
+        Ref(factor.solvable),
+        getMetadata(factor),
+        observation,
+        factor.state,
+        Ref{FactorSolverCache}(),
     )
 end
 

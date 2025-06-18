@@ -18,6 +18,7 @@ using Base
 using Base64
 using DocStringExtensions
 using Dates
+using Random
 using TimeZones
 using Distributions
 using Reexport
@@ -42,7 +43,7 @@ using Tables
 
 # used for @defVariable
 import ManifoldsBase
-import ManifoldsBase: AbstractManifold, manifold_dimension
+using ManifoldsBase: AbstractManifold, manifold_dimension
 export AbstractManifold, manifold_dimension
 
 import RecursiveArrayTools: ArrayPartition
@@ -165,7 +166,8 @@ export InferenceVariable
 export getSolverDataDict, setSolverData!
 export getVariableType, getVariableTypeName
 
-export getSolverData
+export getObservation
+export getState, getFactorState
 
 export getVariableType
 
@@ -246,10 +248,9 @@ export @format_str
 # Factors
 ##------------------------------------------------------------------------------
 # Factor Data
-export GenericFunctionNodeData, PackedFunctionNodeData, FunctionNodeData
-export AbstractFactor, AbstractPackedFactor
+export AbstractFactorObservation, AbstractPackedFactorObservation
 export AbstractPrior, AbstractRelative, AbstractRelativeMinimize, AbstractManifoldMinimize
-export FactorOperationalMemory
+export FactorSolverCache
 
 # accessors
 export getVariableOrder
@@ -261,7 +262,7 @@ export mergeVariableData!, mergeGraphVariableData!
 # Serialization type conversion
 export convertPackedType, convertStructType
 
-export reconstFactorData
+export pack, unpack, packDistribution, unpackDistribution
 
 ##------------------------------------------------------------------------------
 ## Other utility functions
@@ -285,7 +286,7 @@ export findClosestTimestamp, findVariableNearTimestamp
 
 # Serialization
 export packVariable, unpackVariable, packFactor, unpackFactor
-export rebuildFactorMetadata!
+export rebuildFactorCache!
 export @defVariable
 
 # File import and export
@@ -301,7 +302,6 @@ export compare,
     compareField,
     compareFields,
     compareAll,
-    compareAllSpecial,
     compareVariable,
     compareFactor,
     compareAllVariables,

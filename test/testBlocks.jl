@@ -4,7 +4,6 @@ using Dates
 using Manifolds
 
 import Base: convert
-import DistributedFactorGraphs: reconstFactorData
 # import DistributedFactorGraphs: getData, addData!, updateData!, deleteData!
 
 # Test InferenceVariable Types
@@ -33,7 +32,7 @@ struct TestAbstractPrior <: AbstractPrior end
 # struct TestAbstractRelativeFactor <: AbstractRelativeRoots end
 struct TestAbstractRelativeFactorMinimize <: AbstractRelativeMinimize end
 
-Base.@kwdef struct PackedTestFunctorInferenceType1 <: AbstractPackedFactor
+Base.@kwdef struct PackedTestFunctorInferenceType1 <: AbstractPackedFactorObservation
     s::String = ""
 end
 # PackedTestFunctorInferenceType1() = PackedTestFunctorInferenceType1("")
@@ -43,13 +42,14 @@ function Base.convert(::Type{PackedTestFunctorInferenceType1}, d::TestFunctorInf
     return PackedTestFunctorInferenceType1()
 end
 
-function reconstFactorData(
+function DFG.reconstFactorData(
     dfg::AbstractDFG,
     vo::AbstractVector,
     ::Type{TestFunctorInferenceType1},
     d::PackedTestFunctorInferenceType1,
     ::String,
 )
+    error("obsolete, TODO remove")
     return TestFunctorInferenceType1()
 end
 
@@ -59,7 +59,7 @@ function Base.convert(::Type{TestFunctorInferenceType1}, d::PackedTestFunctorInf
     return TestFunctorInferenceType1()
 end
 
-Base.@kwdef struct PackedTestAbstractPrior <: AbstractPackedFactor
+Base.@kwdef struct PackedTestAbstractPrior <: AbstractPackedFactorObservation
     s::String = ""
 end
 # PackedTestAbstractPrior() = PackedTestAbstractPrior("")
@@ -74,7 +74,7 @@ function Base.convert(::Type{TestAbstractPrior}, d::PackedTestAbstractPrior)
     return TestAbstractPrior()
 end
 
-struct TestCCW{T <: AbstractFactor} <: FactorOperationalMemory
+struct TestCCW{T <: AbstractFactorObservation} <: FactorSolverCache
     usrfnc!::T
 end
 
@@ -83,14 +83,15 @@ TestCCW{T}() where {T} = TestCCW(T())
 Base.:(==)(a::TestCCW, b::TestCCW) = a.usrfnc! == b.usrfnc!
 
 DFG.getFactorOperationalMemoryType(par::NoSolverParams) = TestCCW
-DFG.rebuildFactorMetadata!(dfg::AbstractDFG{NoSolverParams}, fac::FactorCompute) = fac
+DFG.rebuildFactorCache!(dfg::AbstractDFG{NoSolverParams}, fac::FactorCompute) = fac
 
-function reconstFactorData(
+function DFG.reconstFactorData(
     dfg::AbstractDFG,
     vo::AbstractVector,
     ::Type{<:DFG.FunctionNodeData{TestCCW{F}}},
-    d::DFG.PackedFunctionNodeData{<:AbstractPackedFactor},
-) where {F <: DFG.AbstractFactor}
+    d::DFG.PackedFunctionNodeData{<:AbstractPackedFactorObservation},
+) where {F <: DFG.AbstractFactorObservation}
+    error("obsolete, TODO remove")
     nF = convert(F, d.fnc)
     return DFG.FunctionNodeData(
         d.eliminated,
@@ -107,8 +108,8 @@ end
 
 function Base.convert(
     ::Type{DFG.PackedFunctionNodeData{P}},
-    d::DFG.FunctionNodeData{<:FactorOperationalMemory},
-) where {P <: AbstractPackedFactor}
+    d::DFG.FunctionNodeData{<:FactorSolverCache},
+) where {P <: AbstractPackedFactorObservation}
     return DFG.PackedFunctionNodeData(
         d.eliminated,
         d.potentialused,
@@ -129,7 +130,7 @@ end
 #test Specific definitions
 # struct TestInferenceVariable1 <: InferenceVariable end
 # struct TestInferenceVariable2 <: InferenceVariable end
-# struct TestFunctorInferenceType1 <: AbstractFactor end
+# struct TestFunctorInferenceType1 <: AbstractFactorObservation end
 
 # NOTE see note in AbstractDFG.jl setSolverParams!
 struct GeenSolverParams <: AbstractParams end
@@ -391,17 +392,17 @@ function DFGFactorSCA()
     f1_tags = Set([:FACTOR])
     testTimestamp = now(localzone())
 
-    gfnd_prior = GenericFunctionNodeData(; fnc = TestCCW(TestAbstractPrior()))
+    obs_prior = TestAbstractPrior()
 
-    gfnd = GenericFunctionNodeData(; fnc = TestCCW(TestFunctorInferenceType1()))
+    obs = TestFunctorInferenceType1()
 
-    f1 = FactorCompute{TestCCW{TestFunctorInferenceType1}}(f1_lbl, [:a, :b])
-    f1 = FactorCompute(f1_lbl, [:a, :b], gfnd; tags = f1_tags, solvable = 0)
+    f1 = FactorCompute(f1_lbl, [:a, :b], obs; tags = f1_tags, solvable = 0)
 
-    f2 = FactorCompute{TestCCW{TestFunctorInferenceType1}}(
+    f2 = FactorCompute(
         :bcf1,
         [:b, :c],
-        ZonedDateTime("2020-08-11T00:12:03.000-05:00"),
+        TestFunctorInferenceType1();
+        timestamp = ZonedDateTime("2020-08-11T00:12:03.000-05:00"),
     )
     #TODO add tests for mutating vos in updateFactor and orphan related checks.
     # we should perhaps prevent an empty vos
@@ -413,11 +414,11 @@ function DFGFactorSCA()
 
     @test getSolvable(f1) == 0
 
-    @test getSolverData(f1) === f1.solverData
+    @test getObservation(f1) === f1.observation
 
     @test getVariableOrder(f1) == [:a, :b]
 
-    getSolverData(f1).solveInProgress = 1
+    getState(f1).solveInProgress = 1
     @test setSolvable!(f1, 1) == 1
 
     #TODO These 2 function are equivelent
@@ -443,11 +444,8 @@ function DFGFactorSCA()
     @test setSolvable!(f1, 1) == 1
     @test getSolvable(f1) == 1
 
-    #TODO don't know if this should be used, added for completeness, it just wastes the gc's time
-    @test setSolverData!(f1, deepcopy(gfnd)) == gfnd
-
     # create f0 here for a later timestamp
-    f0 = FactorCompute(:af1, [:a], gfnd_prior; tags = Set([:PRIOR]))
+    f0 = FactorCompute(:af1, [:a], obs_prior; tags = Set([:PRIOR]))
 
     #fill in undefined fields
     # f2.solverData.certainhypo = Int[]
@@ -473,7 +471,7 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     @test getLabel(fg[getLabel(v1)]) == getLabel(v1)
 
     #TODO standardize this error and res also for that matter
-    fnope = FactorCompute{TestCCW{TestFunctorInferenceType1}}(:broken, [:a, :nope])
+    fnope = FactorCompute(:broken, [:a, :nope], TestFunctorInferenceType1())
     @test_throws KeyError addFactor!(fg, fnope)
 
     @test addFactor!(fg, f1) == f1
@@ -493,12 +491,13 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     if f2 isa FactorCompute
         f2_mod = FactorCompute(
             f2.label,
-            f2.timestamp,
-            f2.nstime,
-            f2.tags,
-            f2.solverData,
-            f2.solvable,
             (:a,),
+            f2.observation,
+            f2.state;
+            timestamp = f2.timestamp,
+            nstime = f2.nstime,
+            tags = f2.tags,
+            solvable = f2.solvable,
         )
     else
         f2_mod = deepcopy(f2)
@@ -794,8 +793,7 @@ function VSDTestBlock!(fg, v1)
     # Delete it
     @test deleteVariableSolverData!(fg, :a, :parametric) == 1
     # Update add it
-    @test @test_logs (:warn, r"does not exist") updateVariableSolverData!(fg, :a, vnd) ==
-                                                vnd
+    @test mergeVariableState!(fg, :a, vnd) == 1
 
     # Update update it
     @test updateVariableSolverData!(fg, :a, vnd) == vnd
@@ -1166,9 +1164,9 @@ function testGroup!(fg, v1, v2, f0, f1)
 
         # TODO Mabye implement IIF type here
         # Requires IIF or a type in IIF
-        @test getFactorType(f1.solverData) === f1.solverData.fnc.usrfnc!
-        @test getFactorType(f1) === f1.solverData.fnc.usrfnc!
-        @test getFactorType(fg, :abf1) === f1.solverData.fnc.usrfnc!
+        @test getObservation(f1) === f1.observation
+        @test getFactorType(f1) === f1.observation
+        @test getFactorType(fg, :abf1) === f1.observation
 
         @test isPrior(fg, :af1) # if f1 is prior
         @test lsfPriors(fg) == [:af1]
@@ -1377,12 +1375,6 @@ function testGroup!(fg, v1, v2, f0, f1)
     end
 end
 
-# Feed with graph a b solvable orphan not factor on a b
-# fg = testDFGAPI()
-# addVariable!(fg, VariableCompute(:a, TestVariableType1()))
-# addVariable!(fg, VariableCompute(:b, TestVariableType1()))
-# addFactor!(fg, FactorCompute(:abf1, [:a,:b], GenericFunctionNodeData{TestFunctorInferenceType1, Symbol}()))
-# addVariable!(fg, VariableCompute(:orphan, TestVariableType1(), solvable = 0))
 function AdjacencyMatricesTestBlock(fg)
     # Normal
     #deprecated
@@ -1454,17 +1446,15 @@ function connectivityTestGraph(
         setSolvable!(dfg, :x8, 0)
         setSolvable!(dfg, :x9, 0)
 
-        gfnd = GenericFunctionNodeData(;
+        facstate = DFG.FactorState(;
             eliminated = true,
             potentialused = true,
-            fnc = TestCCW(TestFunctorInferenceType1()),
             multihypo = Float64[],
             certainhypo = Int[],
             solveInProgress = 0,
             inflation = 1.0,
         )
         f_tags = Set([:FACTOR])
-        # f1 = FactorCompute(f1_lbl, [:a,:b], gfnd, tags = f_tags)
 
         facs = map(
             n -> addFactor!(
@@ -1472,7 +1462,8 @@ function connectivityTestGraph(
                 FactorCompute(
                     Symbol("x$(n)x$(n+1)f1"),
                     [vars[n].label, vars[n + 1].label],
-                    deepcopy(gfnd);
+                    TestFunctorInferenceType1(),
+                    facstate;
                     tags = deepcopy(f_tags),
                 ),
             ),
@@ -1683,7 +1674,7 @@ function ProducingDotFiles(
     end
     if f1 === nothing
         if (FACTYPE == FactorCompute)
-            f1 = FactorCompute{TestFunctorInferenceType1}(:abf1, [:a, :b])
+            f1 = FactorCompute(:abf1, [:a, :b], TestFunctorInferenceType1())
         else
             f1 = FACTYPE(:abf1, [:a, :b])
         end
@@ -1850,10 +1841,9 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
         mergeVariable!(dfg, v4)
 
         f45 = getFactor(dfg, :x4x5f1)
-        fsd = f45.solverData
+        fsd = getState(f45)
         # set some factor solver data
         push!(fsd.certainhypo, 2)
-        push!(fsd.edgeIDs, 3)
         fsd.eliminated = true
         push!(fsd.multihypo, 4.0)
         fsd.nullhypo = 5.0

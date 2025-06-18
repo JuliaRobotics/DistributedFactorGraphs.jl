@@ -2,9 +2,9 @@
 ## Accessors
 ##==============================================================================
 
-##==============================================================================
-## GenericFunctionNodeData
-##==============================================================================
+function getMetadata(f::FactorDFG)
+    return JSON3.read(base64decode(f.metadata), Dict{Symbol, SmallDataTypes})
+end
 
 ## COMMON
 # getSolveInProgress
@@ -16,8 +16,7 @@
 
 Return reference to the user factor in `<:AbstractDFG` identified by `::Symbol`.
 """
-getFactorFunction(fcd::GenericFunctionNodeData) = fcd.fnc.usrfnc!
-getFactorFunction(fc::FactorCompute) = getFactorFunction(getSolverData(fc))
+getFactorFunction(fc::FactorCompute) = getObservation(fc)
 getFactorFunction(dfg::AbstractDFG, fsym::Symbol) = getFactorFunction(getFactor(dfg, fsym))
 
 """
@@ -28,10 +27,59 @@ Return user factor type from factor graph identified by label `::Symbol`.
 Notes
 - Replaces older `getfnctype`.
 """
-getFactorType(data::GenericFunctionNodeData) = data.fnc.usrfnc!
-getFactorType(fct::FactorCompute) = getFactorType(getSolverData(fct))
+getFactorType(fct::FactorCompute) = getObservation(fct)
 getFactorType(f::FactorDFG) = getTypeFromSerializationModule(f.fnctype)() # TODO find a better way to do this that does not rely on empty constructor
 getFactorType(dfg::AbstractDFG, lbl::Symbol) = getFactorType(getFactor(dfg, lbl))
+
+getState(f::AbstractDFGFactor) = f.state
+
+"""
+    $SIGNATURES
+
+Return factor state from factor graph.
+"""
+getFactorState(f::AbstractDFGFactor) = f.state
+getFactorState(dfg::AbstractDFG, lbl::Symbol) = getFactorState(getFactor(dfg, lbl))
+
+"""
+    $SIGNATURES
+
+Return the observation of a factor, which is the user-defined data structure
+that contains the information about the factor, such as the measurement, prior, or relative pose.
+"""
+getObservation(f::FactorCompute) = f.observation
+function getObservation(f::FactorDFG)
+    #FIXME completely refactor to not need getTypeFromSerializationModule and just use StructTypes
+    packtype = DFG.getTypeFromSerializationModule("Packed" * f.fnctype)
+    return packtype(; JSON3.read(f.observJSON)...)
+    # return packtype(JSON3.read(f.observJSON))
+end
+
+getObservation(dfg::AbstractDFG, lbl::Symbol) = getObservation(getFactor(dfg, lbl))
+
+"""
+    $SIGNATURES
+    
+Return the solver cache for a factor, which is used to store intermediate results
+during the solving process. This is useful for caching results that can be reused
+across multiple solves, such as Jacobians or other computed values.
+"""
+function getCache(f::FactorCompute)
+    if isassigned(f.solvercache)
+        return f.solvercache[]
+    else
+        return nothing
+    end
+end
+
+"""
+    $SIGNATURES
+
+Set the solver cache for a factor, which is used to store intermediate results
+during the solving process. This is useful for caching results that can be reused
+across multiple solves, such as Jacobians or other computed values.
+"""
+setCache!(f::FactorCompute, solvercache::FactorSolverCache) = f.solvercache[] = solvercache
 
 """
     $SIGNATURES
@@ -51,6 +99,70 @@ using RoME
 function _getPriorType(_type::Type{<:InferenceVariable})
     return getfield(_type.name.module, Symbol(:Prior, _type.name.name))
 end
+
+##==============================================================================
+## Default Factors Function Macro
+##==============================================================================
+export PackedSamplableBelief
+
+function pack end
+function unpack end
+function packDistribution end
+function unpackDistribution end
+
+abstract type PackedSamplableBelief end
+StructTypes.StructType(::Type{<:PackedSamplableBelief}) = StructTypes.UnorderedStruct()
+
+#TODO remove, rather use StructTypes.jl properly
+function Base.convert(::Type{<:PackedSamplableBelief}, nt::Union{NamedTuple, JSON3.Object})
+    distrType = getTypeFromSerializationModule(nt._type)
+    return distrType(; nt...)
+end
+
+"""
+    @defFactorType StructName factortype<:AbstractFactorObservation manifolds<:AbstractManifold
+
+A macro to create a new factor function with name `StructName` and manifold. Note that
+the `manifold` is an object and *must* be a subtype of `ManifoldsBase.AbstractManifold`.
+See documentation in [Manifolds.jl on making your own](https://juliamanifolds.github.io/Manifolds.jl/stable/examples/manifold.html). 
+
+Example:
+```
+DFG.@defFactorType Pose2Pose2 AbstractManifoldMinimize SpecialEuclidean(2)
+```
+"""
+macro defFactorType(structname, factortype, manifold)
+    packedstructname = Symbol("Packed", structname)
+    return esc(
+        quote
+            # user manifold must be a <:Manifold
+            @assert ($manifold isa AbstractManifold) "@defFactorType manifold (" *
+                                                     string($manifold) *
+                                                     ") is not an `AbstractManifold`"
+
+            @assert ($factortype <: AbstractFactorObservation) "@defFactorType factortype (" *
+                                                               string($factortype) *
+                                                               ") is not an `AbstractFactorObservation`"
+
+            Base.@__doc__ struct $structname{T} <: $factortype
+                Z::T
+            end
+
+            #TODO should this be $packedstructname{T <: PackedSamplableBelief}
+            Base.@__doc__ struct $packedstructname <: AbstractPackedFactorObservation
+                Z::PackedSamplableBelief
+            end
+
+            # $structname(; Z) = $structname(Z)                                                     
+            $packedstructname(; Z) = $packedstructname(Z)
+            DFG.getManifold(::Type{<:$structname}) = $manifold
+            DFG.pack(d::$structname) = $packedstructname(DFG.packDistribution(d.Z))
+            DFG.unpack(d::$packedstructname) = $structname(DFG.unpackDistribution(d.Z))
+        end,
+    )
+end
+
+getManifold(obs::AbstractFactorObservation) = getManifold(typeof(obs))
 
 ##==============================================================================
 ## Factors
@@ -89,12 +201,13 @@ end
 function setTimestamp(f::FactorCompute, ts::ZonedDateTime)
     return FactorCompute(
         f.label,
-        ts,
-        f.nstime,
-        f.tags,
-        f.solverData,
-        f.solvable,
-        getfield(f, :_variableOrderSymbols);
+        getfield(f, :_variableOrderSymbols),
+        f.observation,
+        f.state;
+        timestamp = ts,
+        nstime = f.nstime,
+        tags = f.tags,
+        solvable = f.solvable,
         id = f.id,
     )
 end
@@ -141,21 +254,6 @@ Should be equivalent to listNeighbors unless something was deleted in the graph.
 getVariableOrder(fct::FactorCompute) = fct._variableOrderSymbols::Vector{Symbol}
 getVariableOrder(fct::FactorDFG) = fct._variableOrderSymbols::Vector{Symbol}
 getVariableOrder(dfg::AbstractDFG, fct::Symbol) = getVariableOrder(getFactor(dfg, fct))
-
-##------------------------------------------------------------------------------
-## solverData
-##------------------------------------------------------------------------------
-
-"""
-    $SIGNATURES
-
-Retrieve solver data structure stored in a factor.
-"""
-function getSolverData(f::FactorCompute)
-    return f.solverData
-end
-
-setSolverData!(f::FactorCompute, data::GenericFunctionNodeData) = f.solverData = data
 
 ##------------------------------------------------------------------------------
 ## utility

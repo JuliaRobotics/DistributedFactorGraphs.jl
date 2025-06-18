@@ -100,11 +100,11 @@ getSolverParams(dfg::AbstractDFG) = dfg.solverParams
 """
     $(SIGNATURES)
 
-Method must be overloaded by the user for Serialization to work.  E.g. IncrementalInference uses `CommonConvWrapper <: FactorOperationalMemory`.
+Method must be overloaded by the user for Serialization to work.  E.g. IncrementalInference uses `CommonConvWrapper <: FactorSolverCache`.
 """
 function getFactorOperationalMemoryType(dummy)
     return error(
-        "Please extend your workspace with function getFactorOperationalMemoryType(<:AbstractParams) for your usecase, e.g. IncrementalInference uses `CommonConvWrapper <: FactorOperationalMemory`",
+        "Please extend your workspace with function getFactorOperationalMemoryType(<:AbstractParams) for your usecase, e.g. IncrementalInference uses `CommonConvWrapper <: FactorSolverCache`",
     )
 end
 function getFactorOperationalMemoryType(dfg::AbstractDFG)
@@ -116,12 +116,12 @@ end
 
 Method must be overloaded by the user for Serialization to work.
 """
-function rebuildFactorMetadata!(
+function rebuildFactorCache!(
     dfg::AbstractDFG{<:AbstractParams},
     factor::AbstractDFGFactor,
     neighbors = [],
 )
-    return error("rebuildFactorMetadata! is not implemented for $(typeof(dfg))")
+    return error("rebuildFactorCache! is not implemented for $(typeof(dfg))")
 end
 
 """
@@ -769,7 +769,7 @@ function ls(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: InferenceVariable}
     return map(x -> x.label, vxx)
 end
 
-function ls(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: AbstractFactor}
+function ls(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: AbstractFactorObservation}
     xx = getFactors(dfg)
     names = typeof.(getFactorType.(xx)) .|> nameof
     vxx = view(xx, names .== Symbol(T))
@@ -785,7 +785,7 @@ Example, list all the Point2Point2 factors in the factor graph `dfg`:
 Notes
 - Return `Vector{Symbol}`
 """
-function lsf(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: AbstractFactor}
+function lsf(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: AbstractFactorObservation}
     return ls(dfg, T)
 end
 
@@ -1283,7 +1283,7 @@ function existsPathOfFactorsType(
     dfg::AbstractDFG,
     from::Symbol,
     to::Symbol,
-    ftype::AbstractFactor,
+    ftype::AbstractFactorObservation,
 )
     return error("WIP")
 end

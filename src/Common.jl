@@ -3,10 +3,10 @@
 _getmodule(t::T) where {T} = T.name.module
 _getname(t::T) where {T} = T.name.name
 
-function convertPackedType(t::Union{T, Type{T}}) where {T <: AbstractFactor}
+function convertPackedType(t::Union{T, Type{T}}) where {T <: AbstractFactorObservation}
     return getfield(_getmodule(t), Symbol("Packed$(_getname(t))"))
 end
-function convertStructType(::Type{PT}) where {PT <: AbstractPackedFactor}
+function convertStructType(::Type{PT}) where {PT <: AbstractPackedFactorObservation}
     # see #668 for expanded reasoning.  PT may be ::UnionAll if the type is of template type.
     ptt = PT isa DataType ? PT.name.name : PT
     moduleName = PT isa DataType ? PT.name.module : Main

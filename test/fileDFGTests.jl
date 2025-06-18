@@ -80,8 +80,8 @@ using UUIDs
             1:(numNodes - 1),
         )
         map(f -> setSolvable!(f, Int(round(rand()))), facts)
-        map(f -> f.solverData.eliminated = rand() > 0.5, facts)
-        map(f -> f.solverData.potentialused = rand() > 0.5, facts)
+        map(f -> DFG.getState(f).eliminated = rand() > 0.5, facts)
+        map(f -> DFG.getState(f).potentialused = rand() > 0.5, facts)
         mergeFactor!.(dfg, facts)
 
         #test multihypo
@@ -135,7 +135,7 @@ using UUIDs
             @test compareFactor(
                 getFactor(dfg, fact),
                 getFactor(retDFG, fact),
-                skip = [:timezone, :zone],
+                skip = [:timezone, :zone, :solverData],
             ) # Timezones
             # :hypotheses, :certainhypo, :multihypo, # Multihypo
             # :eliminated, 
@@ -158,7 +158,10 @@ using UUIDs
 end
 
 ##
-
+# file = filter(f -> endswith(f, ".tar.gz"), readdir(joinpath(@__DIR__, "data")))[2]
+# loadFile = joinpath(@__DIR__, "data", file)
+# fg = loadDFG(loadFile)
+##
 @testset "FileDFG Regression Tests" begin
     @info "If any of these tests fail, we have breaking changes"
     for file in filter(f -> endswith(f, ".tar.gz"), readdir(joinpath(@__DIR__, "data")))

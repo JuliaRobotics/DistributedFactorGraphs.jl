@@ -119,13 +119,10 @@ function printFactor(
     ioc = IOContext(io, :limit => limit, :compact => compact)
 
     if short
-        opmemt = (getSolverData(vert).fnc |> typeof).name.name
-        fct = getFactorType(vert)
+        fct = getObservation(vert)
         fctt = fct |> typeof
-        printstyled(ioc, typeof(vert).name.name, "{", opmemt, "{"; bold = true)
-        printstyled(ioc, fctt.name.name; bold = true, color = :blue)
-        printstyled(ioc, "...}}"; bold = true)
-        println(ioc)
+        printstyled(ioc, summary(vert); bold = true)
+        println()
         println(ioc, "  ID:            ", vert.id)
         println(ioc, "  timestamp:     ", vert.timestamp)
         println(ioc, "   nstime:       ", vert.nstime)
@@ -134,16 +131,15 @@ function printFactor(
         println(ioc)
         println(ioc, "  solvable:      ", vert.solvable)
         println(ioc, "  VariableOrder: ", vert._variableOrderSymbols)
-        println(ioc, "  multihypo:     ", getSolverData(vert).multihypo) # FIXME #477
-        println(ioc, "  nullhypo:      ", getSolverData(vert).nullhypo)
+        println(ioc, "  multihypo:     ", getState(vert).multihypo) # FIXME #477
+        println(ioc, "  nullhypo:      ", getState(vert).nullhypo)
         println(ioc, "  tags:          ", vert.tags)
         printstyled(ioc, "  FactorType: "; bold = true, color = :blue)
         println(ioc, fctt)
         # show(ioc, fctt)
         for f in setdiff(fieldnames(fctt), skipfields)
-            printstyled(ioc, f, ":"; color = :magenta)
-            println(ioc)
-            show(ioc, typeof(getproperty(fct, f)).name.name)
+            printstyled(ioc, f, ": "; color = :magenta)
+            show(ioc, typeof(getproperty(fct, f)))
             println(ioc)
         end
     else

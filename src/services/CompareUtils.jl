@@ -12,9 +12,9 @@ implement compare if needed.
 =#
 # ==(a::InferenceVariable,b::InferenceVariable) = typeof(a) == typeof(b) && a.dims == b.dims && a.manifolds == b.manifolds
 
-==(a::FactorOperationalMemory, b::FactorOperationalMemory) = typeof(a) == typeof(b)
+==(a::FactorSolverCache, b::FactorSolverCache) = typeof(a) == typeof(b)
 
-==(a::AbstractFactor, b::AbstractFactor) = typeof(a) == typeof(b)
+==(a::AbstractFactorObservation, b::AbstractFactorObservation) = typeof(a) == typeof(b)
 
 # Generate compares automatically for all in this union
 const GeneratedCompareUnion = Union{
@@ -25,15 +25,15 @@ const GeneratedCompareUnion = Union{
     VariableDFG,
     VariableSummary,
     VariableSkeleton,
-    GenericFunctionNodeData,
     FactorCompute,
     FactorDFG,
     FactorSummary,
     FactorSkeleton,
+    FactorState,
 }
 
 @generated function ==(x::T, y::T) where {T <: GeneratedCompareUnion}
-    ignored = []
+    ignored = [:solvercache, :solverData]
     return mapreduce(
         n -> :(x.$n == y.$n),
         (a, b) -> :($a && $b),
@@ -266,38 +266,6 @@ function compareVariable(
     return TP::Bool
 end
 
-function compareAllSpecial(
-    A::T1,
-    B::T2;
-    skip = Symbol[],
-    show::Bool = true,
-) where {T1 <: GenericFunctionNodeData, T2 <: GenericFunctionNodeData}
-    if T1 != T2
-        @warn "compareAllSpecial is comparing different types" T1 T2
-        # return false
-        # else
-    end
-    return compareAll(A, B; skip = skip, show = show)
-end
-
-# Compare FunctionNodeData
-function compare(
-    a::GenericFunctionNodeData{T1},
-    b::GenericFunctionNodeData{T2},
-) where {T1, T2}
-    # TODO -- beef up this comparison to include the gwp
-    TP = true
-    TP = TP && a.eliminated == b.eliminated
-    TP = TP && a.potentialused == b.potentialused
-    TP = TP && a.edgeIDs == b.edgeIDs
-    # TP = TP && typeof(a.fnc) == typeof(b.fnc)
-    TP = TP && (a.multihypo - b.multihypo |> norm < 1e-10)
-    TP = TP && a.certainhypo == b.certainhypo
-    TP = TP && a.nullhypo == b.nullhypo
-    TP = TP && a.solveInProgress == b.solveInProgress
-    return TP
-end
-
 """
     $SIGNATURES
 
@@ -315,13 +283,23 @@ function compareFactor(
     skipcompute::Bool = true,
 )
     #
-    skip_ = union([:attributes; :solverData; :_variableOrderSymbols; :_gradients], skip)
+    skip_ = union(
+        [
+            :attributes,
+            :solverData,
+            :observation,
+            :solvercache,
+            :_variableOrderSymbols,
+            :_gradients,
+        ],
+        skip,
+    )
     TP = compareAll(A, B; skip = skip_, show = show)
     @debug "compareFactor 1/5" TP
     TP =
-        TP & compareAllSpecial(
-            getSolverData(A),
-            getSolverData(B);
+        TP & compareAll(
+            getState(A),
+            getState(B);
             skip = union([:fnc; :_gradients], skip),
             show = show,
         )
@@ -330,9 +308,9 @@ function compareFactor(
         return TP
     end
     TP =
-        TP & compareAllSpecial(
-            getSolverData(A).fnc,
-            getSolverData(B).fnc;
+        TP & compareAll(
+            getObservation(A),
+            getObservation(B);
             skip = union(
                 [
                     :cpt
@@ -348,7 +326,9 @@ function compareFactor(
             show = show,
         )
     @debug "compareFactor 3/5" TP
-    if !(:measurement in skip)
+
+    #FIXME is measurement stil in use and should it be checked, skipping for now
+    if false # !(:measurement in skip)
         TP =
             TP & (
                 skipsamples || compareAll(
@@ -360,7 +340,8 @@ function compareFactor(
             )
     end
     @debug "compareFactor 4/5" TP
-    if !(:varValsAll in skip) && hasfield(typeof(getSolverData(A).fnc), :varValsAll)
+    #FIXME is varValsAll stil in use and should it be checked, skipping for now
+    if false #!(:varValsAll in skip) && hasfield(typeof(getSolverData(A).fnc), :varValsAll)
         TP =
             TP & (
                 skipcompute || compareAll(
@@ -372,9 +353,9 @@ function compareFactor(
             )
     end
     @debug "compareFactor 5/5" TP
-    if !(:varidx in skip) &&
-       hasfield(typeof(getSolverData(A).fnc), :varidx) &&
-       getSolverData(A).fnc.varidx isa Base.RefValue
+    #FIXME is varidx stil in use and should it be checked, skipping for now
+    if false #!(:varidx in skip) && hasfield(typeof(getSolverData(A).fnc), :varidx) &&
+        getSolverData(A).fnc.varidx isa Base.RefValue
         TP =
             TP & (
                 skipcompute || compareAll(
@@ -392,7 +373,6 @@ end
 # Bd = getSolverData(B)
 # TP =  compareAll(A, B, skip=[:attributes;:data], show=show)
 # TP &= compareAll(A.attributes, B.attributes, skip=[:data;], show=show)
-# TP &= compareAllSpecial(getSolverData(A).fnc, getSolverData(B).fnc, skip=[:cpt;], show=show)
 # TP &= compareAll(getSolverData(A).fnc.cpt, getSolverData(B).fnc.cpt, show=show)
 
 """
