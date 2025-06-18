@@ -77,8 +77,8 @@ function getTypeFromSerializationModule(_typeString::AbstractString)
     return nothing
 end
 
-# returns a PackedVariableNodeData
-function packVariableNodeData(d::VariableNodeData{T}) where {T <: InferenceVariable}
+# returns a PackedVariableState
+function packVariableState(d::VariableState{T}) where {T <: InferenceVariable}
     @debug "Dispatching conversion variable -> packed variable for type $(string(getVariableType(d)))"
     castval = if 0 < length(d.val)
         precast = getCoordinates.(T, d.val)
@@ -93,7 +93,7 @@ function packVariableNodeData(d::VariableNodeData{T}) where {T <: InferenceVaria
         "Packing of more than one parametric covariance is NOT supported yet, only packing first."
     )
 
-    return PackedVariableNodeData(
+    return PackedVariableState(
         d.id,
         _val,
         size(castval, 1),
@@ -118,7 +118,7 @@ function packVariableNodeData(d::VariableNodeData{T}) where {T <: InferenceVaria
     )
 end
 
-function unpackVariableNodeData(d::PackedVariableNodeData)
+function unpackVariableState(d::PackedVariableState)
     @debug "Dispatching conversion packed variable -> variable for type $(string(d.variableType))"
     # Figuring out the variableType
     # TODO deprecated remove in v0.11 - for backward compatibility for saved variableTypes. 
@@ -144,7 +144,7 @@ function unpackVariableNodeData(d::PackedVariableNodeData)
 
     # 
     N = getDimension(T)
-    return VariableNodeData{T, getPointType(T), N}(;
+    return VariableState{T, getPointType(T), N}(;
         id = d.id,
         val = vals,
         bw = BW,
@@ -184,7 +184,7 @@ function packVariable(
         nstime = string(v.nstime.value),
         tags = collect(v.tags), # Symbol.()
         ppes = collect(values(v.ppeDict)),
-        solverData = packVariableNodeData.(collect(values(v.solverDataDict))),
+        solverData = packVariableState.(collect(values(v.solverDataDict))),
         metadata = base64encode(JSON3.write(v.smallData)),
         solvable = v.solvable,
         variableType = DFG.typeModuleName(DFG.getVariableType(v)),
@@ -214,9 +214,9 @@ function unpackVariable(variable::VariableDFG; skipVersionCheck::Bool = false)
 
     ppeDict =
         Dict{Symbol, MeanMaxPPE}(map(p -> p.solveKey, variable.ppes) .=> variable.ppes)
-    solverDict = Dict{Symbol, VariableNodeData{variableType, pointType}}(
+    solverDict = Dict{Symbol, VariableState{variableType, pointType}}(
         map(sd -> sd.solveKey, variable.solverData) .=>
-            map(sd -> DFG.unpackVariableNodeData(sd), variable.solverData),
+            map(sd -> DFG.unpackVariableState(sd), variable.solverData),
     )
     dataDict = Dict{Symbol, Blobentry}(
         map(de -> de.label, variable.blobEntries) .=> variable.blobEntries,

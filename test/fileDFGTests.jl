@@ -19,7 +19,7 @@ using UUIDs
             1:numNodes,
         )
         map(v -> setSolvable!(v, Int(round(rand()))), verts)
-        map(v -> getSolverData(verts[4]).solveInProgress = Int(round(rand())), verts)
+        map(v -> getVariableState(verts[4]).solveInProgress = Int(round(rand())), verts)
         map(v -> setSolvedCount!(v, Int(round(10 * rand()))), verts)
 
         # Add some data entries
@@ -80,8 +80,8 @@ using UUIDs
             1:(numNodes - 1),
         )
         map(f -> setSolvable!(f, Int(round(rand()))), facts)
-        map(f -> DFG.getState(f).eliminated = rand() > 0.5, facts)
-        map(f -> DFG.getState(f).potentialused = rand() > 0.5, facts)
+        map(f -> DFG.getFactorState(f).eliminated = rand() > 0.5, facts)
+        map(f -> DFG.getFactorState(f).potentialused = rand() > 0.5, facts)
         mergeFactor!.(dfg, facts)
 
         #test multihypo

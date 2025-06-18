@@ -12,6 +12,13 @@ Listing news on any major breaking changes in DFG.  For regular changes, see int
     - This is used internally be the solver and should not affect the average user of DFG.
     - Rename FactorOperationalMemory -> FactorSolverCache
     - Rename AbstractFactor -> AbstractFactorObservation (keeping both around)
+- Deprecate VariableNodeData -> VariableState
+- Deprecate getVariableSolverData -> getVariableState
+- Deprecate addVariableSolverData! -> addVariableState!
+- Deprecate deleteVariableSolverData! -> deleteVariableState!
+- Deprecate listVariableSolverData -> listVariableStates
+- Deprecate getVariableSolverDataAll -> getVariableStates
+- Deprecate getSolverData -> getVariableState/getFactorState
 
 # v0.26
 - Graph structure plotting now uses GraphMakie.jl instead of GraphPlot.jl. Update by replacing `using GraphPlot` with `using GraphMakie`.

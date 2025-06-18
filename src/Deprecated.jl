@@ -10,6 +10,9 @@ const AbstractPackedFactor = AbstractPackedFactorObservation
 export FactorOperationalMemory
 const FactorOperationalMemory = FactorSolverCache
 
+export VariableNodeData
+const VariableNodeData = VariableState
+
 @deprecate getNeighborhood(args...; kwargs...) listNeighborhood(args...; kwargs...)
 @deprecate addBlob!(store::AbstractBlobstore, blobId::UUID, data, ::String) addBlob!(
     store,
@@ -70,13 +73,30 @@ const FactorOperationalMemory = FactorSolverCache
 )
 @deprecate mergeBlobEntries!(args...; kwargs...) mergeBlobentries!(args...; kwargs...)
 
+@deprecate getVariableSolverData(args...; kwargs...) getVariableState(args...; kwargs...)
+@deprecate addVariableSolverData!(args...; kwargs...) addVariableState!(args...; kwargs...)
+@deprecate deleteVariableSolverData!(args...; kwargs...) deleteVariableState!(
+    args...;
+    kwargs...,
+)
+@deprecate listVariableSolverData(args...; kwargs...) listVariableStates(args...; kwargs...)
+@deprecate getVariableSolverDataAll(args...; kwargs...) getVariableStates(
+    args...;
+    kwargs...,
+)
+
+@deprecate getSolverData(v::VariableCompute, solveKey::Symbol = :default) getVariableState(
+    v,
+    solveKey,
+)
+
 export updateVariableSolverData!
 
 #TODO possibly completely deprecated or not exported until update verb is standardized
 function updateVariableSolverData!(
     dfg::AbstractDFG,
     variablekey::Symbol,
-    vnd::VariableNodeData,
+    vnd::VariableState,
     useCopy::Bool = false,
     fields::Vector{Symbol} = Symbol[];
     warn_if_absent::Bool = true,
@@ -89,14 +109,14 @@ function updateVariableSolverData!(
     var = getVariable(dfg, variablekey)
     warn_if_absent &&
         !haskey(var.solverDataDict, vnd.solveKey) &&
-        @warn "VariableNodeData '$(vnd.solveKey)' does not exist, adding"
+        @warn "VariableState '$(vnd.solveKey)' does not exist, adding"
 
     # for InMemoryDFGTypes do memory copy or repointing, for cloud this would be an different kind of update.
     usevnd = vnd # useCopy ? deepcopy(vnd) : vnd
     # should just one, or many pointers be updated?
     useExisting =
         haskey(var.solverDataDict, vnd.solveKey) &&
-        isa(var.solverDataDict[vnd.solveKey], VariableNodeData) &&
+        isa(var.solverDataDict[vnd.solveKey], VariableState) &&
         length(fields) != 0
     # @error useExisting vnd.solveKey
     if useExisting
@@ -123,7 +143,7 @@ end
 function updateVariableSolverData!(
     dfg::AbstractDFG,
     variablekey::Symbol,
-    vnd::VariableNodeData,
+    vnd::VariableState,
     solveKey::Symbol,
     useCopy::Bool = false,
     fields::Vector{Symbol} = Symbol[];
@@ -131,9 +151,9 @@ function updateVariableSolverData!(
 )
     # TODO not very clean
     if vnd.solveKey != solveKey
-        @warn(
-            "updateVariableSolverData with solveKey parameter might change in the future, see DFG #565. Future warnings are suppressed",
-            maxlog = 1
+        Base.depwarn(
+            "updateVariableSolverData with solveKey is deprecated use copytoVariableState! instead.",
+            :updateVariableSolverData!,
         )
         usevnd = useCopy ? deepcopy(vnd) : vnd
         usevnd.solveKey = solveKey
@@ -170,7 +190,7 @@ function updateVariableSolverData!(
     # toshow = listSolveKeys(sourceVariable) |> collect
     # @info "update DFGVar solveKey" solveKey vnd.solveKey 
     # @show toshow
-    @assert solveKey == vnd.solveKey "VariableNodeData's solveKey=:$(vnd.solveKey) does not match requested :$solveKey"
+    @assert solveKey == vnd.solveKey "VariableState's solveKey=:$(vnd.solveKey) does not match requested :$solveKey"
     return updateVariableSolverData!(
         dfg,
         sourceVariable.label,
@@ -258,7 +278,7 @@ export getSolverData, setSolverData!
 
 function getSolverData(f::FactorCompute)
     return error(
-        "getSolverData(f::FactorCompute) is obsolete, use getState, getObservation, or getCache instead",
+        "getSolverData(f::FactorCompute) is obsolete, use getFactorState, getObservation, or getCache instead",
     )
 end
 

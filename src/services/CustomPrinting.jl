@@ -30,8 +30,11 @@ function printVariable(
             println(ioc, "")
         catch e
         end
-        vnd =
-            haskey(vert.solverDataDict, :default) ? getSolverData(vert, :default) : nothing
+        vnd = if haskey(vert.solverDataDict, :default)
+            getVariableState(vert, :default)
+        else
+            nothing
+        end
         println(ioc, "  ID:         ", vert.id)
         println(ioc, "  timestamp:  ", vert.timestamp)
         println(ioc, "   nstime:    ", vert.nstime)
@@ -54,7 +57,7 @@ function printVariable(
         println(ioc, "(true=", sum(ismarg), ",false=", length(ismarg) - sum(ismarg), ")")
 
         if vnd !== nothing
-            println(ioc, "    :default <-- VariableNodeData")
+            println(ioc, "    :default <-- VariableState")
             println(ioc, "      initialized:        ", isInitialized(vert, :default))
             println(ioc, "      marginalized:      ", isMarginalized(vert, :default))
             println(ioc, "      size bel. samples: ", size(vnd.val))
@@ -131,8 +134,8 @@ function printFactor(
         println(ioc)
         println(ioc, "  solvable:      ", vert.solvable)
         println(ioc, "  VariableOrder: ", vert._variableOrderSymbols)
-        println(ioc, "  multihypo:     ", getState(vert).multihypo) # FIXME #477
-        println(ioc, "  nullhypo:      ", getState(vert).nullhypo)
+        println(ioc, "  multihypo:     ", getFactorState(vert).multihypo) # FIXME #477
+        println(ioc, "  nullhypo:      ", getFactorState(vert).nullhypo)
         println(ioc, "  tags:          ", vert.tags)
         printstyled(ioc, "  FactorType: "; bold = true, color = :blue)
         println(ioc, fctt)
@@ -174,7 +177,7 @@ end
 """
    $SIGNATURES
 
-Display the content of `VariableNodeData` to console for a given factor graph and variable tag`::Symbol`.
+Display the content of `VariableState` to console for a given factor graph and variable tag`::Symbol`.
 
 Dev Notes
 - TODO split as two show macros between AMP and DFG

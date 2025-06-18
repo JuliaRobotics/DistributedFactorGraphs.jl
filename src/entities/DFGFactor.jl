@@ -283,7 +283,7 @@ function Base.getproperty(x::FactorCompute, f::Symbol)
     elseif f == :solverData
         # TODO remove, deprecated in v0.27
         error(
-            "`solverData` is obsolete in `FactorCompute`. Use `getObservation`, `getState` or `getCache` instead.",
+            "`solverData` is obsolete in `FactorCompute`. Use `getObservation`, `getFactorState` or `getCache` instead.",
         )
     elseif f == :_variableOrderSymbols
         [getfield(x, f)...]

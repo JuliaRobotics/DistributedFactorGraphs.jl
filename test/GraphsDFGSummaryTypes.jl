@@ -17,7 +17,7 @@ end
 
 function DistributedFactorGraphs.VariableSummary(
     label::Symbol,
-    ::VariableNodeData{T},
+    ::VariableState{T},
 ) where {T}
     return VariableSummary(
         nothing,
@@ -36,7 +36,7 @@ end
 
 function DistributedFactorGraphs.VariableSkeleton(
     label::Symbol,
-    ::VariableNodeData{T},
+    ::VariableState{T},
 ) where {T}
     return VariableSkeleton(nothing, label, Set{Symbol}())
 end

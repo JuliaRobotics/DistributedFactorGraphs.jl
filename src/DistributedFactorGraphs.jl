@@ -167,7 +167,7 @@ export getSolverDataDict, setSolverData!
 export getVariableType, getVariableTypeName
 
 export getObservation
-export getState, getFactorState
+export getFactorState
 
 export getVariableType
 
@@ -186,11 +186,12 @@ export getMetadata,
     emptyMetadata!
 
 # CRUD & SET
-export getVariableSolverData,
-    addVariableSolverData!,
+export getVariableState,
+    getVariableStates,
+    addVariableState!,
     mergeVariableState!,
-    deleteVariableSolverData!,
-    listVariableSolverData,
+    deleteVariableState!,
+    listVariableStates,
     mergeVariableSolverData!,
     cloneSolveKey!
 
@@ -211,9 +212,9 @@ export getPPE,
 
 # Variable Node Data
 ##------------------------------------------------------------------------------
-export VariableNodeData, PackedVariableNodeData
+export VariableState, PackedVariableState
 
-export packVariableNodeData, unpackVariableNodeData
+export packVariableState, unpackVariableState
 
 export getSolvedCount,
     isSolved, setSolvedCount!, isInitialized, isMarginalized, setMarginalized!

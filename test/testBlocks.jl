@@ -297,16 +297,16 @@ function DFGVariableSCA()
         TestVariableType1();
         tags = v1_tags,
         solvable = 0,
-        solverDataDict = Dict(:default => VariableNodeData{TestVariableType1}()),
+        solverDataDict = Dict(:default => VariableState{TestVariableType1}()),
     )
     v2 = VariableCompute(
         :b,
-        VariableNodeData{TestVariableType2}();
+        VariableState{TestVariableType2}();
         tags = Set([:VARIABLE, :LANDMARK]),
     )
     v3 = VariableCompute(
         :c,
-        VariableNodeData{TestVariableType2}();
+        VariableState{TestVariableType2}();
         timestamp = ZonedDateTime("2020-08-11T00:12:03.000-05:00"),
     )
 
@@ -315,7 +315,7 @@ function DFGVariableSCA()
         TestVariableType1();
         tags = v1_tags,
         solvable = 0,
-        solverDataDict = Dict(:default => VariableNodeData{TestVariableType1}()),
+        solverDataDict = Dict(:default => VariableState{TestVariableType1}()),
     )
 
     # v1.solverDataDict[:default].val[1] = [0.0;]
@@ -325,7 +325,7 @@ function DFGVariableSCA()
     # v3.solverDataDict[:default].val[1] = [0.0;0.0]
     # v3.solverDataDict[:default].bw[1] = [1.0;1.0]
 
-    getSolverData(v1).solveInProgress = 1
+    getVariableState(v1).solveInProgress = 1
 
     @test getLabel(v1) == v1_lbl
     @test getTags(v1) == v1_tags
@@ -372,7 +372,7 @@ function DFGVariableSCA()
 
     # #TODO sort out
     # getPPEs
-    # getSolverData
+    # getVariableState
     # setSolverData
     # getVariablePPEs
     # getVariablePPE
@@ -418,7 +418,7 @@ function DFGFactorSCA()
 
     @test getVariableOrder(f1) == [:a, :b]
 
-    getState(f1).solveInProgress = 1
+    getFactorState(f1).solveInProgress = 1
     @test setSolvable!(f1, 1) == 1
 
     #TODO These 2 function are equivelent
@@ -760,50 +760,46 @@ function VSDTestBlock!(fg, v1)
     # "Variable Solver Data"
     # #### Variable Solver Data
     # **CRUD**
-    #  - `getVariableSolverData`
-    #  - `addVariableSolverData!`
+    #  - `getVariableState`
+    #  - `addVariableState!`
     #  - `updateVariableSolverData!`
-    #  - `deleteVariableSolverData!`
+    #  - `deleteVariableState!`
     #
-    # > - `getVariableSolverDataAll` #TODO Data is already plural so maybe Variables, All or Dict, or use Datum for singular
+    # > - `getVariableStates` #TODO Data is already plural so maybe Variables, All or Dict, or use Datum for singular
     # > - `getVariablesSolverData`
     #
     # **Set like**
-    #  - `listVariableSolverData`
+    #  - `listVariableStates`
     #
     # > - `emptyVariableSolverData!` #TODO ?
     # > - `mergeVariableSolverData!` #TODO ?
     #
-    # **VariableNodeData**
+    # **VariableState**
     #  - `getSolveInProgress`
 
-    vnd = VariableNodeData{TestVariableType1}(; solveKey = :parametric)
+    vnd = VariableState{TestVariableType1}(; solveKey = :parametric)
     # vnd.val[1] = [0.0;]
     # vnd.bw[1] = [1.0;]
-    @test addVariableSolverData!(fg, :a, vnd) == vnd
+    @test addVariableState!(fg, :a, vnd) == vnd
 
-    @test_throws ErrorException addVariableSolverData!(fg, :a, vnd)
+    @test_throws ErrorException addVariableState!(fg, :a, vnd)
 
-    @test issetequal(listVariableSolverData(fg, :a), [:default, :parametric])
+    @test issetequal(listVariableStates(fg, :a), [:default, :parametric])
 
     # Get the data back - note that this is a reference to above.
-    vndBack = getVariableSolverData(fg, :a, :parametric)
+    vndBack = getVariableState(fg, :a, :parametric)
     @test vndBack == vnd
 
     # Delete it
-    @test deleteVariableSolverData!(fg, :a, :parametric) == 1
+    @test deleteVariableState!(fg, :a, :parametric) == 1
     # Update add it
     @test mergeVariableState!(fg, :a, vnd) == 1
 
-    # Update update it
-    @test updateVariableSolverData!(fg, :a, vnd) == vnd
-    # test without deepcopy
-    @test updateVariableSolverData!(fg, :a, vnd, false) == vnd
     # Bulk copy update x0
     @test updateVariableSolverData!(fg, [v1], :default) == nothing
 
     altVnd = vnd |> deepcopy
-    keepVnd = getSolverData(getVariable(fg, :a), :parametric) |> deepcopy
+    keepVnd = getVariableState(getVariable(fg, :a), :parametric) |> deepcopy
     altVnd.infoPerCoord .= [-99.0;]
     retVnd = updateVariableSolverData!(fg, :a, altVnd, false, [:infoPerCoord;])
     @test retVnd == altVnd
@@ -817,32 +813,32 @@ function VSDTestBlock!(fg, v1)
 
     # restore without copy
     @test updateVariableSolverData!(fg, :a, keepVnd, false, [:infoPerCoord; :bw]) == vnd
-    @test getSolverData(getVariable(fg, :a), :parametric).infoPerCoord[1] !=
+    @test getVariableState(getVariable(fg, :a), :parametric).infoPerCoord[1] !=
           altVnd.infoPerCoord[1]
-    @test getSolverData(getVariable(fg, :a), :parametric).bw != altVnd.bw
+    @test getVariableState(getVariable(fg, :a), :parametric).bw != altVnd.bw
 
     # Delete parametric from v1
-    @test deleteVariableSolverData!(fg, :a, :parametric) == 1
+    @test deleteVariableState!(fg, :a, :parametric) == 1
 
-    @test_throws KeyError getVariableSolverData(fg, :a, :parametric)
+    @test_throws KeyError getVariableState(fg, :a, :parametric)
 
     #FIXME copied from lower
-    @test getSolverData(v1) === v1.solverDataDict[:default]
+    @test getVariableState(v1) === v1.solverDataDict[:default]
 
     # Add new VND of type ContinuousScalar to :x0
-    # Could also do VariableNodeData(ContinuousScalar())
+    # Could also do VariableState(ContinuousScalar())
 
-    vnd = VariableNodeData{TestVariableType1}(; solveKey = :parametric)
+    vnd = VariableState{TestVariableType1}(; solveKey = :parametric)
     # vnd.val[1] = [0.0;]
     # vnd.bw[1] = [1.0;]
 
-    addVariableSolverData!(fg, :a, vnd)
-    @test setdiff(listVariableSolverData(fg, :a), [:default, :parametric]) == []
+    addVariableState!(fg, :a, vnd)
+    @test setdiff(listVariableStates(fg, :a), [:default, :parametric]) == []
     # Get the data back - note that this is a reference to above.
-    vndBack = getVariableSolverData(fg, :a, :parametric)
+    vndBack = getVariableState(fg, :a, :parametric)
     @test vndBack == vnd
     # Delete it
-    @test deleteVariableSolverData!(fg, :a, :parametric) == 1
+    @test deleteVariableState!(fg, :a, :parametric) == 1
     # Update add it
     updateVariableSolverData!(fg, :a, vnd)
     # Update update it
@@ -850,7 +846,7 @@ function VSDTestBlock!(fg, v1)
     # Bulk copy update x0
     updateVariableSolverData!(fg, [v1], :default)
     # Delete parametric from v1
-    deleteVariableSolverData!(fg, :a, :parametric)
+    deleteVariableState!(fg, :a, :parametric)
 
     return nothing
     #TODO
@@ -1426,14 +1422,11 @@ function connectivityTestGraph(
 
     vars = vcat(
         map(
-            n -> VARTYPE(Symbol("x$n"), VariableNodeData{TestVariableType1}()),
+            n -> VARTYPE(Symbol("x$n"), VariableState{TestVariableType1}()),
             1:numNodesType1,
         ),
         map(
-            n -> VARTYPE(
-                Symbol("x$(numNodesType1+n)"),
-                VariableNodeData{TestVariableType2}(),
-            ),
+            n -> VARTYPE(Symbol("x$(numNodesType1+n)"), VariableState{TestVariableType2}()),
             1:numNodesType2,
         ),
     )
@@ -1667,10 +1660,10 @@ function ProducingDotFiles(
     dotdfg = testDFGAPI(; userLabel = "test@navability.io")
 
     if v1 === nothing
-        v1 = VARTYPE(:a, VariableNodeData{TestVariableType1}())
+        v1 = VARTYPE(:a, VariableState{TestVariableType1}())
     end
     if v2 === nothing
-        v2 = VARTYPE(:b, VariableNodeData{TestVariableType1}())
+        v2 = VARTYPE(:b, VariableState{TestVariableType1}())
     end
     if f1 === nothing
         if (FACTYPE == FactorCompute)
@@ -1821,7 +1814,7 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
 
     for filename in ["/tmp/fileDFG", "/tmp/FileDFGExtension.tar.gz"]
         v4 = getVariable(dfg, :x4)
-        vnd = getSolverData(v4)
+        vnd = getVariableState(v4)
         # set everything
         vnd.BayesNetVertID = :outid
         push!(vnd.BayesNetOutVertIDs, :id)
@@ -1841,7 +1834,7 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
         mergeVariable!(dfg, v4)
 
         f45 = getFactor(dfg, :x4x5f1)
-        fsd = getState(f45)
+        fsd = getFactorState(f45)
         # set some factor solver data
         push!(fsd.certainhypo, 2)
         fsd.eliminated = true

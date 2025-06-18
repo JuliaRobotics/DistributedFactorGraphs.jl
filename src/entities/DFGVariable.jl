@@ -5,7 +5,7 @@
 abstract type InferenceVariable end
 
 ##==============================================================================
-## VariableNodeData
+## VariableState
 ##==============================================================================
 
 """
@@ -19,7 +19,7 @@ N: Manifold dimension.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef mutable struct VariableNodeData{T <: InferenceVariable, P, N}
+Base.@kwdef mutable struct VariableState{T <: InferenceVariable, P, N}
     "DEPRECATED remove in DFG v0.22"
     variableType::T = T() #tricky deprecation, also change covar to using N and not variableType
     """
@@ -72,7 +72,7 @@ Base.@kwdef mutable struct VariableNodeData{T <: InferenceVariable, P, N}
     """
     solvedCount::Int = 0
     """
-    solveKey identifier associated with this VariableNodeData object.
+    solveKey identifier associated with this VariableState object.
     """
     solveKey::Symbol = :default
     """
@@ -84,26 +84,26 @@ end
 
 ##------------------------------------------------------------------------------
 ## Constructors
-function VariableNodeData{T}(; kwargs...) where {T <: InferenceVariable}
-    return VariableNodeData{T, getPointType(T), getDimension(T)}(; kwargs...)
+function VariableState{T}(; kwargs...) where {T <: InferenceVariable}
+    return VariableState{T, getPointType(T), getDimension(T)}(; kwargs...)
 end
-function VariableNodeData(variableType::InferenceVariable; kwargs...)
-    return VariableNodeData{typeof(variableType)}(; kwargs...)
+function VariableState(variableType::InferenceVariable; kwargs...)
+    return VariableState{typeof(variableType)}(; kwargs...)
 end
 
 ##==============================================================================
-## PackedVariableNodeData.jl
+## PackedVariableState.jl
 ##==============================================================================
 
 """
 $(TYPEDEF)
-Packed VariableNodeData structure for serializing DFGVariables.
+Packed VariableState structure for serializing DFGVariables.
 
   ---
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef mutable struct PackedVariableNodeData
+Base.@kwdef mutable struct PackedVariableState
     id::Union{UUID, Nothing} # If it's blank it doesn't exist in the DB.
     vecval::Vector{Float64}
     dimval::Int
@@ -130,9 +130,9 @@ end
 # createdTimestamp::DateTime#!
 # lastUpdatedTimestamp::DateTime#!
 
-StructTypes.StructType(::Type{PackedVariableNodeData}) = StructTypes.UnorderedStruct()
-StructTypes.idproperty(::Type{PackedVariableNodeData}) = :id
-StructTypes.omitempties(::Type{PackedVariableNodeData}) = (:id,)
+StructTypes.StructType(::Type{PackedVariableState}) = StructTypes.UnorderedStruct()
+StructTypes.idproperty(::Type{PackedVariableState}) = :id
+StructTypes.omitempties(::Type{PackedVariableState}) = (:id,)
 
 ##==============================================================================
 ## PointParametricEst
@@ -228,7 +228,7 @@ Base.@kwdef struct VariableDFG <: AbstractDFGVariable
     _version::String = string(_getDFGVersion())
     metadata::String = "e30="
     solvable::Int = 1
-    solverData::Vector{PackedVariableNodeData} = PackedVariableNodeData[]
+    solverData::Vector{PackedVariableState} = PackedVariableState[]
 end
 # maybe add to variable
 # createdTimestamp::DateTime
@@ -304,9 +304,9 @@ Base.@kwdef struct VariableCompute{T <: InferenceVariable, P, N} <: AbstractDFGV
     ppeDict::Dict{Symbol, AbstractPointParametricEst} =
         Dict{Symbol, AbstractPointParametricEst}()
     """Dictionary of solver data. May be a subset of all solutions if a solver label was specified in the get call.
-    Accessors: [`addVariableSolverData!`](@ref), [`mergeVariableState!`](@ref), and [`deleteVariableSolverData!`](@ref)"""
-    solverDataDict::Dict{Symbol, VariableNodeData{T, P, N}} =
-        Dict{Symbol, VariableNodeData{T, P, N}}()
+    Accessors: [`addVariableState!`](@ref), [`mergeVariableState!`](@ref), and [`deleteVariableState!`](@ref)"""
+    solverDataDict::Dict{Symbol, VariableState{T, P, N}} =
+        Dict{Symbol, VariableState{T, P, N}}()
     """Dictionary of small data associated with this variable.
     Accessors: [`getMetadata`](@ref), [`setMetadata!`](@ref)"""
     smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}()
@@ -343,7 +343,7 @@ function VariableCompute(label::Symbol, variableType::InferenceVariable; kwargs.
     return VariableCompute(label, typeof(variableType); kwargs...)
 end
 
-function VariableCompute(label::Symbol, solverData::VariableNodeData; kwargs...)
+function VariableCompute(label::Symbol, solverData::VariableState; kwargs...)
     return VariableCompute(;
         label,
         solverDataDict = Dict(:default => solverData),
