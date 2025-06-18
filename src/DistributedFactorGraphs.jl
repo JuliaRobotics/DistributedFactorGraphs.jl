@@ -167,7 +167,7 @@ export getSolverDataDict, setSolverData!
 export getVariableType, getVariableTypeName
 
 export getObservation
-export getState
+export getState, getFactorState
 
 export getVariableType
 

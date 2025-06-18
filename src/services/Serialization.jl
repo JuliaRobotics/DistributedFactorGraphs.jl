@@ -282,6 +282,7 @@ function unpackObservation(factor::FactorDFG)
             )
             #FIXME completely refactor to not need getTypeFromSerializationModule and just use StructTypes
             #TODO change to unpack: observ = unpack(observpacked)
+            # currently the observation type is stored in the factor and this complicates unpacking of seperate observations
             observpacked = getObservation(factor)
             packtype = DFG.getTypeFromSerializationModule("Packed" * factor.fnctype)
             return convert(convertStructType(packtype), observpacked)

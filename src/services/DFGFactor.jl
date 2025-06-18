@@ -155,12 +155,14 @@ macro defFactorType(structname, factortype, manifold)
 
             # $structname(; Z) = $structname(Z)                                                     
             $packedstructname(; Z) = $packedstructname(Z)
-            DFG.getManifold(::Type{$structname}) = $manifold
+            DFG.getManifold(::Type{<:$structname}) = $manifold
             DFG.pack(d::$structname) = $packedstructname(DFG.packDistribution(d.Z))
             DFG.unpack(d::$packedstructname) = $structname(DFG.unpackDistribution(d.Z))
         end,
     )
 end
+
+getManifold(obs::AbstractFactorObservation) = getManifold(typeof(obs))
 
 ##==============================================================================
 ## Factors
