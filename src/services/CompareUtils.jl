@@ -19,8 +19,8 @@ implement compare if needed.
 # Generate compares automatically for all in this union
 const GeneratedCompareUnion = Union{
     MeanMaxPPE,
-    VariableNodeData,
-    PackedVariableNodeData,
+    VariableState,
+    PackedVariableState,
     VariableCompute,
     VariableDFG,
     VariableSummary,
@@ -193,8 +193,8 @@ function compareAll(
     return true
 end
 
-#Compare VariableNodeData
-function compare(a::VariableNodeData, b::VariableNodeData)
+#Compare VariableState
+function compare(a::VariableState, b::VariableState)
     a.val != b.val && @debug("val is not equal") == nothing && return false
     a.bw != b.bw && @debug("bw is not equal") == nothing && return false
     a.BayesNetOutVertIDs != b.BayesNetOutVertIDs &&
@@ -253,8 +253,8 @@ function compareVariable(
     union!(skiplist, skip)
     TP = TP && compareAll(A.solverDataDict, B.solverDataDict; skip = skiplist, show = show)
 
-    Ad = getSolverData(A)
-    Bd = getSolverData(B)
+    Ad = getVariableState(A)
+    Bd = getVariableState(B)
 
     # TP = TP && compareAll(A.attributes, B.attributes, skip=[:variableType;], show=show)
     varskiplist = union(varskiplist, [:variableType])
@@ -298,8 +298,8 @@ function compareFactor(
     @debug "compareFactor 1/5" TP
     TP =
         TP & compareAll(
-            getState(A),
-            getState(B);
+            getFactorState(A),
+            getFactorState(B);
             skip = union([:fnc; :_gradients], skip),
             show = show,
         )

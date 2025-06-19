@@ -56,10 +56,10 @@ getVariableType
 """
 getVariableType(::VariableCompute{T}) where {T} = T()
 
-getVariableType(::VariableNodeData{T}) where {T} = T()
+getVariableType(::VariableState{T}) where {T} = T()
 
 # TODO: Confirm that we can switch this out, instead of retrieving the complete variable.
-# getVariableType(v::VariableCompute) = getVariableType(getSolverData(v))
+# getVariableType(v::VariableCompute) = getVariableType(getVariableState(v))
 
 # Optimized in CGDFG
 getVariableType(dfg::AbstractDFG, lbl::Symbol) = getVariableType(getVariable(dfg, lbl))
@@ -217,9 +217,9 @@ Related
 
 isSolved, setSolvedCount!
 """
-getSolvedCount(v::VariableNodeData) = v.solvedCount
+getSolvedCount(v::VariableState) = v.solvedCount
 function getSolvedCount(v::VariableDataLevel2, solveKey::Symbol = :default)
-    return getSolverData(v, solveKey) |> getSolvedCount
+    return getVariableState(v, solveKey) |> getSolvedCount
 end
 function getSolvedCount(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol = :default)
     return getSolvedCount(getVariable(dfg, sym), solveKey)
@@ -234,9 +234,9 @@ Related
 
 getSolved, isSolved
 """
-setSolvedCount!(v::VariableNodeData, val::Int) = v.solvedCount = val
+setSolvedCount!(v::VariableState, val::Int) = v.solvedCount = val
 function setSolvedCount!(v::VariableDataLevel2, val::Int, solveKey::Symbol = :default)
-    return setSolvedCount!(getSolverData(v, solveKey), val)
+    return setSolvedCount!(getVariableState(v, solveKey), val)
 end
 function setSolvedCount!(
     dfg::AbstractDFG,
@@ -256,9 +256,9 @@ Related
 
 getSolved, setSolved!
 """
-isSolved(v::VariableNodeData) = 0 < v.solvedCount
+isSolved(v::VariableState) = 0 < v.solvedCount
 function isSolved(v::VariableDataLevel2, solveKey::Symbol = :default)
-    return getSolverData(v, solveKey) |> isSolved
+    return getVariableState(v, solveKey) |> isSolved
 end
 function isSolved(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol = :default)
     return isSolved(getVariable(dfg, sym), solveKey)
@@ -276,7 +276,7 @@ Notes:
 - used by both factor graph variable and Bayes tree clique logic.
 """
 function isInitialized(var::VariableCompute, key::Symbol = :default)
-    data = getSolverData(var, key)
+    data = getVariableState(var, key)
     if data === nothing
         #TODO we still have a mixture of 2 error behaviours
         # DF, not sure I follow the error here?
@@ -296,10 +296,10 @@ end
 Return `::Bool` on whether this variable has been marginalized.
 
 Notes:
-- VariableNodeData default `solveKey=:default`
+- VariableState default `solveKey=:default`
 """
 function isMarginalized(vert::VariableCompute, solveKey::Symbol = :default)
-    return getSolverData(vert, solveKey).ismargin
+    return getVariableState(vert, solveKey).ismargin
 end
 function isMarginalized(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol = :default)
     return isMarginalized(DFG.getVariable(dfg, sym), solveKey)
@@ -310,11 +310,11 @@ end
 
 Mark a variable as marginalized `true` or `false`.
 """
-function setMarginalized!(vnd::VariableNodeData, val::Bool)
+function setMarginalized!(vnd::VariableState, val::Bool)
     return vnd.ismargin = val
 end
 function setMarginalized!(vari::VariableCompute, val::Bool, solveKey::Symbol = :default)
-    return setMarginalized!(getSolverData(vari, solveKey), val)
+    return setMarginalized!(getVariableState(vari, solveKey), val)
 end
 function setMarginalized!(
     dfg::AbstractDFG,
@@ -475,7 +475,7 @@ getVariablePPEDict(vari::VariableDataLevel1) = getPPEDict(vari)
 
 """
     getVariablePPE(::VariableCompute)
-    getVariablePPE(::VariableNodeData)
+    getVariablePPE(::VariableState)
 
 Get the Parametric Point Estimate of the given variable.
 """
@@ -498,7 +498,7 @@ getSolverDataDict(v::VariableCompute) = v.solverDataDict
 
 Retrieve solver data structure stored in a variable.
 """
-function getSolverData(v::VariableCompute, key::Symbol = :default)
+function getVariableState(v::VariableCompute, key::Symbol = :default)
     #TODO this does not fit in with some of the other error behaviour. but its used so added @error
     vnd = if haskey(getSolverDataDict(v), key)
         getSolverDataDict(v)[key]
@@ -513,8 +513,8 @@ end
     $SIGNATURES
 Set solver data structure stored in a variable.
 """
-function setSolverData!(v::VariableCompute, data::VariableNodeData, key::Symbol = :default)
-    @assert key == data.solveKey "VariableNodeData.solveKey=:$(data.solveKey) does not match requested :$(key)"
+function setSolverData!(v::VariableCompute, data::VariableState, key::Symbol = :default)
+    @assert key == data.solveKey "VariableState.solveKey=:$(data.solveKey) does not match requested :$(key)"
     return v.solverDataDict[key] = data
 end
 
@@ -642,7 +642,7 @@ end
     $(SIGNATURES)
 Get variable solverdata for a given solve key.
 """
-function getVariableSolverData(
+function getVariableState(
     dfg::AbstractDFG,
     variablekey::Symbol,
     solvekey::Symbol = :default,
@@ -653,7 +653,7 @@ function getVariableSolverData(
     return v.solverDataDict[solvekey]
 end
 
-function getVariableSolverDataAll(dfg::AbstractDFG, variablekey::Symbol)
+function getVariableStates(dfg::AbstractDFG, variablekey::Symbol)
     v = getVariable(dfg, variablekey)
     return collect(values(v.solverDataDict))
 end
@@ -662,14 +662,10 @@ end
     $(SIGNATURES)
 Add variable solver data, errors if it already exists.
 """
-function addVariableSolverData!(
-    dfg::AbstractDFG,
-    variablekey::Symbol,
-    vnd::VariableNodeData,
-)
+function addVariableState!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableState)
     var = getVariable(dfg, variablekey)
     if haskey(var.solverDataDict, vnd.solveKey)
-        error("VariableNodeData '$(vnd.solveKey)' already exists")
+        error("VariableState '$(vnd.solveKey)' already exists")
     end
     var.solverDataDict[vnd.solveKey] = vnd
     return vnd
@@ -680,15 +676,15 @@ end
 Add a new solver data  entry from a deepcopy of the source variable solver data.
 NOTE: Copies the solver data.
 """
-function addVariableSolverData!(
+function addVariableState!(
     dfg::AbstractDFG,
     sourceVariable::VariableCompute,
     solveKey::Symbol = :default,
 )
-    return addVariableSolverData!(
+    return addVariableState!(
         dfg,
         sourceVariable.label,
-        deepcopy(getSolverData(sourceVariable, solveKey)),
+        deepcopy(getVariableState(sourceVariable, solveKey)),
     )
 end
 
@@ -700,16 +696,30 @@ Related
 
 mergeVariableStates!
 """
-function mergeVariableState!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableNodeData)
+function mergeVariableState!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableState)
     v = getVariable(dfg, variablekey)
 
     if !haskey(v.solverDataDict, vnd.solveKey)
-        addVariableSolverData!(dfg, variablekey, vnd)
+        addVariableState!(dfg, variablekey, vnd)
     else
         v.solverDataDict[vnd.solveKey] = usevnd
     end
 
     return 1
+end
+
+function copytoVariableState!(
+    dfg::AbstractDFG,
+    variableLabel::Symbol,
+    stateLabel::Symbol,
+    state::VariableState,
+)
+    newstate = VariableState(;
+        (k => getproperty(state, k) for k in fieldnames(VariableState))...,
+        solveKey = stateLabel,
+    )
+    #TODO deepcopy to make extra sure we don't have any references, should be improved in future.
+    return mergeVariableState!(dfg, variableLabel, deepcopy(newstate))
 end
 
 """
@@ -730,7 +740,7 @@ function cloneSolveKey!(
 )
     #
     for x in labels
-        sd = deepcopy(getSolverData(getVariable(src_dfg, x), src))
+        sd = deepcopy(getVariableState(getVariable(src_dfg, x), src))
         sd.solveKey = dest
         updateVariableSolverData!(dest_dfg, x, sd, true, Symbol[]; warn_if_absent = verbose)
     end
@@ -750,7 +760,7 @@ end
     $(SIGNATURES)
 Delete variable solver data, returns the deleted element.
 """
-function deleteVariableSolverData!(
+function deleteVariableState!(
     dfg::AbstractDFG,
     variablekey::Symbol,
     solveKey::Symbol = :default,
@@ -758,7 +768,7 @@ function deleteVariableSolverData!(
     var = getVariable(dfg, variablekey)
 
     if !haskey(var.solverDataDict, solveKey)
-        throw(KeyError("VariableNodeData '$(solveKey)' does not exist"))
+        throw(KeyError("VariableState '$(solveKey)' does not exist"))
     end
     pop!(var.solverDataDict, solveKey)
     return 1
@@ -768,12 +778,12 @@ end
     $(SIGNATURES)
 Delete variable solver data, returns the deleted element.
 """
-function deleteVariableSolverData!(
+function deleteVariableState!(
     dfg::AbstractDFG,
     sourceVariable::VariableCompute,
     solveKey::Symbol = :default,
 )
-    return deleteVariableSolverData!(dfg, sourceVariable.label, solveKey)
+    return deleteVariableState!(dfg, sourceVariable.label, solveKey)
 end
 
 ##------------------------------------------------------------------------------
@@ -784,7 +794,7 @@ end
     $(SIGNATURES)
 List all the solver data keys in the variable.
 """
-function listVariableSolverData(dfg::AbstractDFG, variablekey::Symbol)
+function listVariableStates(dfg::AbstractDFG, variablekey::Symbol)
     v = getVariable(dfg, variablekey)
     return collect(keys(v.solverDataDict))
 end
@@ -954,7 +964,7 @@ function deletePPE!(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol = :def
     var = getVariable(dfg, variablekey)
 
     if !haskey(var.ppeDict, ppekey)
-        throw(KeyError("VariableNodeData '$(ppekey)' does not exist"))
+        throw(KeyError("VariableState '$(ppekey)' does not exist"))
     end
     pop!(var.ppeDict, ppekey)
     return 1

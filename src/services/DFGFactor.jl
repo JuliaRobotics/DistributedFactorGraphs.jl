@@ -31,8 +31,6 @@ getFactorType(fct::FactorCompute) = getObservation(fct)
 getFactorType(f::FactorDFG) = getTypeFromSerializationModule(f.fnctype)() # TODO find a better way to do this that does not rely on empty constructor
 getFactorType(dfg::AbstractDFG, lbl::Symbol) = getFactorType(getFactor(dfg, lbl))
 
-getState(f::AbstractDFGFactor) = f.state
-
 """
     $SIGNATURES
 

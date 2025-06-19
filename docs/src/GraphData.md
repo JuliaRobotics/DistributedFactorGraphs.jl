@@ -15,7 +15,7 @@ The following is a guideline to using these parameters.
 
 **NOTE**: Adds in general throw an error if the element already exists. Update will update the element if it exists, otherwise it will add it.
 
-**NOTE**: In general these functions will return an error if the respective element is not found. This is to avoid returning, say, nothing, which will be horribly confusing if you tried `getVariableSolverData(dfg, :a, :b)` and it returned nothing - which was missing, :a or :b, or was there a communication issue? We recommend coding defensively and trapping errors in critical portions of your user code.
+**NOTE**: In general these functions will return an error if the respective element is not found. This is to avoid returning, say, nothing, which will be horribly confusing if you tried `getVariableState(dfg, :a, :b)` and it returned nothing - which was missing, :a or :b, or was there a communication issue? We recommend coding defensively and trapping errors in critical portions of your user code.
 
 **NOTE**: All data is passed by reference, so if you update the returned structure it will update in the graph. The database driver is an exception, and once the variable or factor is updated you need to call update* to persist the changes to the graph.
 
@@ -125,26 +125,26 @@ Solver data is used by IncrementalInference/RoME/Caesar solver to produce the ab
 Related functions:
 
 
-- [`listVariableSolverData`](@ref)
-- [`getVariableSolverData`](@ref)
-- [`addVariableSolverData!`](@ref)
+- [`listVariableStates`](@ref)
+- [`getVariableState`](@ref)
+- [`addVariableState!`](@ref)
 - [`mergeVariableState!`](@ref)
-- [`deleteVariableSolverData!`](@ref)
-- [`mergeVariableSolverData!`](@ref)
+- [`deleteVariableState!`](@ref)
+- [`mergeVariableState!`](@ref)
 
 
 Example of solver data operations:
 
 ```julia
 # Add new VND of type ContinuousScalar to :x0
-# Could also do VariableNodeData(ContinuousScalar())
-vnd = VariableNodeData{ContinuousScalar}()
-addVariableSolverData!(dfg, :x0, vnd, :parametric)
-@show listVariableSolverData(dfg, :x0)
+# Could also do VariableState(ContinuousScalar())
+vnd = VariableState{ContinuousScalar}()
+addVariableState!(dfg, :x0, vnd, :parametric)
+@show listVariableStates(dfg, :x0)
 # Get the data back - note that this is a reference to above.
-vndBack = getVariableSolverData(dfg, :x0, :parametric)
+vndBack = getVariableState(dfg, :x0, :parametric)
 # Delete it
-deleteVariableSolverData!(dfg, :x0, :parametric)
+deleteVariableState!(dfg, :x0, :parametric)
 ```
 
 #### Small Data
