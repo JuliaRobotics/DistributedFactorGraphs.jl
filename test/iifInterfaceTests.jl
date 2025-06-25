@@ -223,7 +223,7 @@ end
 
 @testset "Data Entries" begin
     de1 = Blobentry(;
-        originId = uuid4(),
+        blobId = uuid4(),
         label = :key1,
         blobstore = :test,
         hash = "",
@@ -233,7 +233,7 @@ end
     )
 
     de2 = Blobentry(;
-        originId = uuid4(),
+        blobId = uuid4(),
         label = :key2,
         blobstore = :test,
         hash = "",
@@ -243,7 +243,7 @@ end
     )
 
     de2_update = Blobentry(;
-        originId = uuid4(),
+        blobId = uuid4(),
         label = :key2,
         blobstore = :test,
         hash = "",

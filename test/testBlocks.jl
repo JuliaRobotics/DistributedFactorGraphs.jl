@@ -258,7 +258,6 @@ function GraphAgentBlobentries!(fg::AbstractDFG)
     be = Blobentry(;
         id = uuid4(),
         blobId = uuid4(),
-        originId = uuid4(),
         label = :key1,
         blobstore = :b,
         hash = "",
@@ -909,7 +908,6 @@ function DataEntriesTestBlock!(fg, v2)
     storeEntry = Blobentry(;
         id = uuid4(),
         blobId = uuid4(),
-        originId = uuid4(),
         label = :a,
         blobstore = :b,
         hash = "",
@@ -928,7 +926,6 @@ function DataEntriesTestBlock!(fg, v2)
     de1 = Blobentry(;
         id = uuid4(),
         blobId = uuid4(),
-        originId = uuid4(),
         label = :key1,
         blobstore = :b,
         hash = "",
@@ -943,7 +940,6 @@ function DataEntriesTestBlock!(fg, v2)
     de2 = Blobentry(;
         id = uuid4(),
         blobId = uuid4(),
-        originId = uuid4(),
         label = :key2,
         blobstore = :b,
         hash = "",
@@ -958,7 +954,6 @@ function DataEntriesTestBlock!(fg, v2)
     de2_update = Blobentry(;
         id = uuid4(),
         blobId = uuid4(),
-        originId = uuid4(),
         label = :key2,
         blobstore = :b,
         hash = "",
@@ -1018,7 +1013,6 @@ function blobsStoresTestBlock!(fg)
     de1 = Blobentry(;
         id = uuid4(),
         blobId = uuid4(),
-        originId = uuid4(),
         label = :label1,
         blobstore = :store1,
         hash = "AAAA",
@@ -1030,7 +1024,6 @@ function blobsStoresTestBlock!(fg)
     de2 = Blobentry(;
         id = uuid4(),
         blobId = uuid4(),
-        originId = uuid4(),
         label = :label2,
         blobstore = :store2,
         hash = "FFFF",
@@ -1043,7 +1036,6 @@ function blobsStoresTestBlock!(fg)
     de2_update = Blobentry(;
         id = uuid4(),
         blobId = uuid4(),
-        originId = uuid4(),
         label = :label2,
         blobstore = :store2,
         hash = "0123",
@@ -1130,8 +1122,8 @@ function blobsStoresTestBlock!(fg)
     @test data[1].hash == newData.hash #[1]
     data = getData(fg, :a, r"testing") # convenience wrapper over getBlob
     @test data[1].hash == newData.hash #[1]
-    be = getBlobentryFirst(fg, :a, r"testing")
-    data = getData(fg, :a, be.originId) # convenience wrapper over getBlob
+    be = getfirstBlobentry(fg, :a, r"testing")
+    data = getData(fg, :a, be.blobId) # convenience wrapper over getBlob
     @test data[1].hash == newData.hash #[1]
     # @test data[2] == newData[2]
     # Updating

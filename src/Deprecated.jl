@@ -62,7 +62,11 @@ const VariableNodeData = VariableState
 @deprecate listAgentBlobEntries(args...; kwargs...) listAgentBlobentries(args...; kwargs...)
 @deprecate hasBlobEntry(args...; kwargs...) hasBlobentry(args...; kwargs...)
 @deprecate getBlobEntry(args...; kwargs...) getBlobentry(args...; kwargs...)
-@deprecate getBlobEntryFirst(args...; kwargs...) getBlobentryFirst(args...; kwargs...)
+@deprecate getBlobEntryFirst(args...; kwargs...) getfirstBlobentry(args...; kwargs...)
+@deprecate getBlobentry(var::AbstractDFGVariable, blobId::UUID) getfirstBlobentry(
+    var::AbstractDFGVariable,
+    blobId::UUID,
+)
 @deprecate addBlobEntry!(args...; kwargs...) addBlobentry!(args...; kwargs...)
 @deprecate addBlobEntries!(args...; kwargs...) addBlobentries!(args...; kwargs...)
 @deprecate mergeBlobEntry!(args...; kwargs...) mergeBlobentry!(args...; kwargs...)

@@ -8,6 +8,8 @@ using SHA
 using UUIDs
 using Aqua
 
+using DistributedFactorGraphs: ArrayPartition, OrderedDict
+
 # If you want to enable debugging logging (very verbose!)
 # using Logging
 # logger = SimpleLogger(stdout, Logging.Debug)

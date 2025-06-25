@@ -716,11 +716,10 @@ function copytoVariableState!(
 )
     newstate = VariableState(
         getVariableType(state);
-        (k => getproperty(state, k) for k in fieldnames(VariableState))...,
+        (k => deepcopy(getproperty(state, k)) for k in fieldnames(VariableState))...,
         solveKey = stateLabel,
     )
-    #TODO deepcopy to make extra sure we don't have any references, should be improved in future.
-    return mergeVariableState!(dfg, variableLabel, deepcopy(newstate))
+    return mergeVariableState!(dfg, variableLabel, newstate)
 end
 
 """

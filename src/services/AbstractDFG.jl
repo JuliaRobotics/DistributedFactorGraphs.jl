@@ -339,7 +339,7 @@ end
     $(SIGNATURES)
 Get a VariableCompute from a DFG using its label.
 """
-function getVariable(dfg::G, label::Union{Symbol, String}) where {G <: AbstractDFG}
+function getVariable(dfg::G, label::Symbol) where {G <: AbstractDFG}
     return error("getVariable not implemented for $(typeof(dfg))")
 end
 
@@ -371,7 +371,7 @@ function getVariablesSkeleton end
     $(SIGNATURES)
 Get a FactorCompute from a DFG using its label.
 """
-function getFactor(dfg::G, label::Union{Symbol, String}) where {G <: AbstractDFG}
+function getFactor(dfg::AbstractDFG, label::Symbol)
     return error("getFactor not implemented for $(typeof(dfg))")
 end
 
@@ -523,6 +523,7 @@ end
 ## CRUD Aliases
 ##------------------------------------------------------------------------------
 
+#TODO should this signiture be standardized or removed?
 """
     $(SIGNATURES)
 Get a VariableCompute with a specific solver key.

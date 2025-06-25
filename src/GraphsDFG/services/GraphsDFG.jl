@@ -129,6 +129,7 @@ end
 
 function getFactor(dfg::GraphsDFG, label::Symbol)
     if !haskey(dfg.g.factors, label)
+        #TODO throw a typed error
         error("Factor label '$(label)' does not exist in the factor graph")
     end
     return dfg.g.factors[label]
