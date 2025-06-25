@@ -714,7 +714,8 @@ function copytoVariableState!(
     stateLabel::Symbol,
     state::VariableState,
 )
-    newstate = VariableState(;
+    newstate = VariableState(
+        getVariableType(state);
         (k => getproperty(state, k) for k in fieldnames(VariableState))...,
         solveKey = stateLabel,
     )
