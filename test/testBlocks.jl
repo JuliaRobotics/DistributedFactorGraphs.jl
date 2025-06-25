@@ -787,7 +787,7 @@ function VSDTestBlock!(fg, v1)
     # Bulk copy update x0
     @test DFG.copytoState!(fg, v1.label, :default, getState(fg, v1.label, :default)) == 1
 
-    @test DFG.mergeStates!(fg, Vector{Pair{Symbol, VariableState}}([:a=>vnd])) == 1
+    @test DFG.mergeStates!(fg, Vector{Pair{Symbol, State}}([:a=>vnd])) == 1
     
     altVnd = vnd |> deepcopy
     keepVnd = getState(getVariable(fg, :a), :parametric) |> deepcopy
