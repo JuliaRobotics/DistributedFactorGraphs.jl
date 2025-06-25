@@ -90,6 +90,12 @@ const VariableNodeData = VariableState
     solveKey,
 )
 
+@deprecate packVariableNodeData(args...; kwargs...) packVariableState(args...; kwargs...)
+@deprecate unpackVariableNodeData(args...; kwargs...) unpackVariableState(
+    args...;
+    kwargs...,
+)
+
 export updateVariableSolverData!
 
 #TODO possibly completely deprecated or not exported until update verb is standardized

@@ -48,7 +48,15 @@ that contains the information about the factor, such as the measurement, prior, 
 getObservation(f::FactorCompute) = f.observation
 function getObservation(f::FactorDFG)
     #FIXME completely refactor to not need getTypeFromSerializationModule and just use StructTypes
-    packtype = DFG.getTypeFromSerializationModule("Packed" * f.fnctype)
+
+    if contains(f.fnctype, ".")
+        # packed factor contains a module name, just extracting type and ignoring module
+        fnctype = split(f.fnctype, ".")[end]
+    else
+        fnctype = f.fnctype
+    end
+
+    packtype = DFG.getTypeFromSerializationModule("Packed" * fnctype)
     return packtype(; JSON3.read(f.observJSON)...)
     # return packtype(JSON3.read(f.observJSON))
 end

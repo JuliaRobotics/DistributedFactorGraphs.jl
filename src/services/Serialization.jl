@@ -40,6 +40,34 @@ end
 
 typeModuleName(varT::Type{<:InferenceVariable}) = typeModuleName(varT())
 
+function parseVariableType(_typeString::AbstractString)
+    m = match(r"{(\d+)}", _typeString)
+    if !isnothing(m) #parameters in type
+        param = parse(Int, m[1])
+        typeString = _typeString[1:(m.offset - 1)]
+    else
+        param = nothing
+        typeString = _typeString
+    end
+
+    all_subtypes = Dict(map(s -> nameof(s) => s, subtypes(InferenceVariable)))
+
+    subtype = get(all_subtypes, Symbol(split(typeString, ".")[end]), nothing)
+
+    if isnothing(subtype)
+        error("Unable to deserialize type $(_typeString), not found")
+        return nothing
+    end
+
+    if isnothing(param)
+        # no parameters, just return the type
+        return subtype
+    else
+        # return the type with parameters
+        return subtype{param}
+    end
+end
+
 """
     $(SIGNATURES)
 Get a type from the serialization module.
@@ -123,7 +151,7 @@ function unpackVariableState(d::PackedVariableState)
     # Figuring out the variableType
     # TODO deprecated remove in v0.11 - for backward compatibility for saved variableTypes. 
     ststring = string(split(d.variableType, "(")[1])
-    T = getTypeFromSerializationModule(ststring)
+    T = parseVariableType(ststring)
     isnothing(T) && error(
         "The variable doesn't seem to have a variableType. It needs to set up with an InferenceVariable from IIF. This will happen if you use DFG to add serialized variables directly and try use them. Please use IncrementalInference.addVariable().",
     )
@@ -206,7 +234,7 @@ function unpackVariable(variable::VariableDFG; skipVersionCheck::Bool = false)
     !skipVersionCheck && _versionCheck(variable)
 
     # Variable and point type
-    variableType = DFG.getTypeFromSerializationModule(variable.variableType)
+    variableType = parseVariableType(variable.variableType)
     isnothing(variableType) && error(
         "Cannot deserialize variableType '$(variable.variableType)' in variable '$(variable.label)'",
     )
@@ -249,7 +277,9 @@ VariableDFG(v::VariableCompute) = packVariable(v)
 
 # returns FactorDFG
 function packFactor(f::FactorCompute)
-    fnctype = getObservation(f)
+    obstype = typeof(getObservation(f))
+    fnctype = string(parentmodule(obstype), ".", nameof(obstype))
+
     return FactorDFG(;
         id = f.id,
         label = f.label,
@@ -257,7 +287,9 @@ function packFactor(f::FactorCompute)
         _variableOrderSymbols = f._variableOrderSymbols,
         timestamp = f.timestamp,
         nstime = string(f.nstime.value),
-        fnctype = String(_getname(fnctype)),
+        #TODO fully test include module name in factor fnctype, see #1140
+        # fnctype = String(_getname(getObservation(f))),
+        fnctype,
         solvable = getSolvable(f),
         metadata = base64encode(JSON3.write(f.smallData)),
         # Pack the node data
@@ -284,8 +316,7 @@ function unpackObservation(factor::FactorDFG)
             #TODO change to unpack: observ = unpack(observpacked)
             # currently the observation type is stored in the factor and this complicates unpacking of seperate observations
             observpacked = getObservation(factor)
-            packtype = DFG.getTypeFromSerializationModule("Packed" * factor.fnctype)
-            return convert(convertStructType(packtype), observpacked)
+            return convert(convertStructType(typeof(observpacked)), observpacked)
         else
             rethrow()
         end
