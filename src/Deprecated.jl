@@ -458,24 +458,3 @@ DFGSummary(args) = error("DFGSummary is deprecated")
 @deprecate getSummary(dfg::AbstractDFG) getSummaryGraph(dfg)
 
 @deprecate getKey(store::AbstractBlobstore) getLabel(store)
-
-##------------------------------------------------------------------------------
-## smallData
-##------------------------------------------------------------------------------
-@deprecate getSmallData(args...) getMetadata(args...)
-@deprecate setSmallData!(args...) setMetadata!(args...)
-@deprecate addSmallData!(args...) addMetadata!(args...)
-@deprecate updateSmallData!(args...) updateMetadata!(args...)
-@deprecate deleteSmallData!(args...) deleteMetadata!(args...)
-@deprecate listSmallData(args...) listMetadata(args...)
-@deprecate emptySmallData!(args...) emptyMetadata!(args...)
-
-## ================================================================================
-## Deprecated in v0.24
-##=================================================================================
-@deprecate getBlobEntry(var::AbstractDFGVariable, key::AbstractString) getBlobEntryFirst(
-    var,
-    Regex(key),
-)
-
-@deprecate lsfWho(dfg::AbstractDFG, type::Symbol) lsf(dfg, getfield(Main, type))

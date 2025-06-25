@@ -20,8 +20,6 @@ Fields:
 $(TYPEDFIELDS)
 """
 Base.@kwdef mutable struct VariableState{T <: InferenceVariable, P, N}
-    "DEPRECATED remove in DFG v0.22"
-    variableType::T = T() #tricky deprecation, also change covar to using N and not variableType
     """
     Globally unique identifier.
     """
@@ -36,11 +34,11 @@ Base.@kwdef mutable struct VariableState{T <: InferenceVariable, P, N}
     bw::Matrix{Float64} = zeros(0, 0)
     "Parametric (Gaussian) covariance."
     covar::Vector{SMatrix{N, N, Float64}} =
-        SMatrix{getDimension(variableType), getDimension(variableType), Float64}[]
+        SMatrix{getDimension(T), getDimension(T), Float64}[]
     BayesNetOutVertIDs::Vector{Symbol} = Symbol[]
     dimIDs::Vector{Int} = Int[] # TODO Likely deprecate
 
-    dims::Int = getDimension(variableType) #TODO should we deprecate in favor of N
+    dims::Int = getDimension(T) #TODO should we deprecate in favor of N
     """
     Flag used by junction (Bayes) tree construction algorithm to know whether this variable has yet been included in the tree construction.
     """
@@ -54,7 +52,7 @@ Base.@kwdef mutable struct VariableState{T <: InferenceVariable, P, N}
     """
     Stores the amount information (per measurement dimension) captured in each coordinate dimension.
     """
-    infoPerCoord::Vector{Float64} = zeros(getDimension(variableType))
+    infoPerCoord::Vector{Float64} = zeros(getDimension(T))
     """
     Should this variable solveKey be treated as marginalized in inference computations.
     """

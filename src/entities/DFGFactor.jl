@@ -64,7 +64,7 @@ Base.@kwdef struct FactorDFG <: AbstractDFGFactor
     nstime::String
     fnctype::String
     solvable::Int
-    data::Union{Nothing, String} = nothing #TODO deprecate data completely, left as a bridge to old serialization structure
+    data::Union{Nothing, String} = nothing #TODO v0.27 deprecate data completely, left as a bridge to old serialization structure
     metadata::String
     _version::String = string(_getDFGVersion())
     state::FactorState
@@ -119,7 +119,7 @@ function FactorDFG(
         nstime,
         fnctype,
         solvable,
-        nothing, #TODO deprecate data completely
+        nothing, #TODO v0.27 deprecate data completely
         metadata,
         _version,
         state,
@@ -177,7 +177,7 @@ function FactorDFG(
         metadata = base64encode(JSON3.write(metadata)),
         state,
         observJSON = JSON3.write(fnc),
-        data = "", #TODO deprecate data completely
+        data = "", #TODO v0.27 deprecate data completely
     )
 
     return factor

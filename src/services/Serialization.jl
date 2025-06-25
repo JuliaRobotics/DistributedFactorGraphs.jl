@@ -242,7 +242,9 @@ function unpackVariable(variable::VariableDFG; skipVersionCheck::Bool = false)
 
     ppeDict =
         Dict{Symbol, MeanMaxPPE}(map(p -> p.solveKey, variable.ppes) .=> variable.ppes)
-    solverDict = Dict{Symbol, VariableState{variableType, pointType}}(
+
+    N = getDimension(variableType)
+    solverDict = Dict{Symbol, VariableState{variableType, pointType, N}}(
         map(sd -> sd.solveKey, variable.solverData) .=>
             map(sd -> DFG.unpackVariableState(sd), variable.solverData),
     )
