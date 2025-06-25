@@ -121,7 +121,8 @@ function rebuildFactorCache!(
     factor::AbstractDFGFactor,
     neighbors = [],
 )
-    return error("rebuildFactorCache! is not implemented for $(typeof(dfg))")
+    @warn("rebuildFactorCache! is not implemented for $(typeof(dfg))")
+    return nothing
 end
 
 """
