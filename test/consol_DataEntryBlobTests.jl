@@ -86,8 +86,7 @@ dataset2 = rand(UInt8, 1000)
 ##==============================================================================
 
 # Create a data store and add it to DFG
-mkpath("/tmp/dfgFolderStore")
-ds = FolderStore{Vector{UInt8}}(:filestore, "/tmp/dfgFolderStore")
+ds = FolderStore("/tmp/dfgFolderStore"; label = :filestore)
 addBlobstore!(dfg, ds)
 
 ade = addData!(dfg, :filestore, :x1, :random, dataset1)
@@ -122,7 +121,7 @@ deleteData!(dfg, :x2, :random)
 #test default folder store
 dfs = FolderStore("/tmp/defaultfolderstore")
 @test dfs.folder == "/tmp/defaultfolderstore"
-@test getLabel(dfs) == :default_folder_store
+@test getLabel(dfs) == :default
 @test dfs isa FolderStore{Vector{UInt8}}
 
 ##==============================================================================

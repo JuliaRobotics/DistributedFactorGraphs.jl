@@ -20,8 +20,6 @@ using DocStringExtensions
 using Dates
 using Random
 using TimeZones
-using Distributions
-using Reexport
 using JSON3
 using StructTypes
 using LinearAlgebra
@@ -32,11 +30,12 @@ using TensorCast
 using ProgressMeter
 using SHA
 using FileIO
+
+import Distributions
 import Tar
 import CodecZlib
 
-using OrderedCollections
-export OrderedDict
+using OrderedCollections: OrderedDict
 
 using CSV
 using Tables
@@ -46,7 +45,7 @@ import ManifoldsBase
 using ManifoldsBase: AbstractManifold, manifold_dimension
 export AbstractManifold, manifold_dimension
 
-import RecursiveArrayTools: ArrayPartition
+using RecursiveArrayTools: ArrayPartition
 export ArrayPartition
 using StaticArrays
 
@@ -57,8 +56,21 @@ using InteractiveUtils: subtypes
 ##==============================================================================
 # Exports
 ##==============================================================================
+
+# v1 name, signiture, return, and error checked
+
+# v1 name, signiture, and return
+export getFactor, getBlobentry, getGraphBlobentry, getVariableState, getFactorState
+
+# v1 name only
+export getVariable, getBlob, addBlob!
+
+##
 const DFG = DistributedFactorGraphs
 export DFG
+
+export GraphsDFGs, GraphsDFG
+
 ##------------------------------------------------------------------------------
 ## DFG
 ##------------------------------------------------------------------------------
@@ -78,8 +90,7 @@ export getDescription,
     setGraphMetadata!,
     getAddHistory
 
-export getGraphBlobentry,
-    getGraphBlobentries,
+export getGraphBlobentries,
     addGraphBlobentry!,
     addGraphBlobentries!,
     mergeGraphBlobentry!,
@@ -102,7 +113,7 @@ export getBlobstore,
 #     updateGraphMetadata!, deleteAgentMetadata!, deleteGraphMetadata!
 # export emptyAgentMetadata!, emptyGraphMetadata!
 
-# Graph Types: exported from modules or @reexport
+# Graph Types: exported from modules
 export InMemoryDFGTypes, LocalDFG
 
 # AbstractDFG Interface
@@ -111,8 +122,6 @@ export exists,
     addVariables!,
     addFactor!,
     addFactors!,
-    getVariable,
-    getFactor,
     mergeVariable!,
     mergeFactor!,
     deleteVariable!,
@@ -169,7 +178,6 @@ export getSolverDataDict, setSolverData!
 export getVariableType, getVariableTypeName
 
 export getObservation
-export getFactorState
 
 export getVariableType
 
@@ -188,8 +196,7 @@ export getMetadata,
     emptyMetadata!
 
 # CRUD & SET
-export getVariableState,
-    getVariableStates,
+export getVariableStates,
     addVariableState!,
     mergeVariableState!,
     deleteVariableState!,
@@ -229,8 +236,7 @@ export copyGraph!, deepcopyGraph, deepcopyGraph!, buildSubgraph, mergeGraph!
 ##------------------------------------------------------------------------------
 
 export hasBlobentry,
-    getBlobentry,
-    getBlobentryFirst,
+    getfirstBlobentry,
     addBlobentry!,
     addBlobentries!,
     mergeBlobentry!,
@@ -243,9 +249,8 @@ export getBlobentries
 export getBlobentriesVariables
 # convenience wrappers
 # aliases
-export addBlob!
 export packBlob, unpackBlob
-export @format_str
+export @format_str # exported from FileIO
 
 ##------------------------------------------------------------------------------
 # Factors
@@ -321,7 +326,7 @@ export printFactor, printVariable, printNode
 export InMemoryBlobstore
 export FolderStore
 export Blobentry
-export getBlob, addBlob!, updateBlob!, deleteBlob!, hasBlob, listBlobentries
+export updateBlob!, deleteBlob!, hasBlob, listBlobentries
 export listBlobs
 export Blobentry
 # export copyStore
@@ -372,7 +377,7 @@ include("DataBlobs/services/HelpersDataWrapEntryBlob.jl")
 
 # In Memory Types
 include("GraphsDFG/GraphsDFG.jl")
-@reexport using .GraphsDFGs
+using .GraphsDFGs
 
 #supported in Memory fg types
 const InMemoryDFGTypes = Union{GraphsDFG}

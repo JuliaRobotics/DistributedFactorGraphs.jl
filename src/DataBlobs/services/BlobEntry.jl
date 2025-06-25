@@ -44,7 +44,6 @@ function Base.show(io::IO, ::MIME"text/plain", entry::Blobentry)
     println(io, "Blobentry {")
     println(io, "  id:            ", entry.id)
     println(io, "  blobId:        ", entry.blobId)
-    println(io, "  originId:      ", entry.originId)
     println(io, "  label:         ", entry.label)
     println(io, "  blobstore:     ", entry.blobstore)
     println(io, "  hash:          ", entry.hash)
@@ -84,23 +83,26 @@ function getBlobentry(var::VariableDFG, key::Symbol)
     return var.blobEntries[findfirst(x -> x.label == key, var.blobEntries)]
 end
 
-#TODO maybe rename to getBlobentryFirst
-function getBlobentry(var::AbstractDFGVariable, blobId::UUID)
+"""
+    $(SIGNATURES)
+Finds and returns the first blob entry that matches the filter.
+
+Also see: [`getBlobentry`](@ref)
+"""
+function getfirstBlobentry(var::AbstractDFGVariable, blobId::UUID)
     for (k, v) in var.dataDict
-        if blobId in [v.originId, v.blobId]
+        if blobId == v.blobId
             return v
         end
     end
     throw(KeyError("No blobEntry with blobId $(blobId) found in variable $(getLabel(var))"))
 end
 
-"""
-    $(SIGNATURES)
-Finds and returns the first blob entry that matches the regex.
+function getfirstBlobentry(dfg::AbstractDFG, label::Symbol, blobId::UUID)
+    return getfirstBlobentry(getVariable(dfg, label), blobId)
+end
 
-Also see: [`getBlobentry`](@ref)
-"""
-function getBlobentryFirst(var::AbstractDFGVariable, key::Regex)
+function getfirstBlobentry(var::AbstractDFGVariable, key::Regex)
     for (k, v) in var.dataDict
         if occursin(key, string(v.label))
             return v
@@ -113,7 +115,7 @@ function getBlobentryFirst(var::AbstractDFGVariable, key::Regex)
     )
 end
 
-function getBlobentryFirst(var::VariableDFG, key::Regex)
+function getfirstBlobentry(var::VariableDFG, key::Regex)
     firstIdx = findfirst(x -> contains(string(x.label), key), var.blobEntries)
     if isnothing(firstIdx)
         throw(KeyError("$key"))
@@ -121,7 +123,7 @@ function getBlobentryFirst(var::VariableDFG, key::Regex)
     return var.blobEntries[firstIdx]
 end
 
-function getBlobentryFirst(dfg::AbstractDFG, label::Symbol, key::Regex)
+function getfirstBlobentry(dfg::AbstractDFG, label::Symbol, key::Regex)
     els = listBlobentries(dfg, label)
     firstIdx = findfirst(contains(key), string.(els))
     isnothing(firstIdx) && throw(
@@ -136,13 +138,13 @@ end
 # verbNoun(dfg::VariableCompute, label::Symbol, args...; kwargs...) = verbNoun(getVariable(dfg, label), args...; kwargs...)
 # with something like:
 # getvariablemethod = [
-#     :getBlobentryFirst,
+#     :getfirstBlobentry,
 # ]
 # for met in methodstooverload  
 #     @eval DistributedFactorGraphs $met(dfg::AbstractDFG, label::Symbol, args...; kwargs...) = $met(getVariable(dfg, label), args...; kwargs...)
 # end
 
-function getBlobentry(dfg::AbstractDFG, label::Symbol, key::Union{Symbol, UUID})
+function getBlobentry(dfg::AbstractDFG, label::Symbol, key::Symbol)
     return getBlobentry(getVariable(dfg, label), key)
 end
 # getBlobentry(dfg::AbstractDFG, label::Symbol, key::Symbol) = getBlobentry(getVariable(dfg, label), key)

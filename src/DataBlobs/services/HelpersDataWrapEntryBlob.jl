@@ -87,7 +87,7 @@ function getData(
     getlast::Bool = true,
 )
     _getblobentr(g, v, k) = getBlobentries(g, v, k)
-    _getblobentr(g, v, k::UUID) = [getBlobentry(g, v, k);]
+    _getblobentr(g, v, k::UUID) = [getfirstBlobentry(g, v, k);]
     de_ = _getblobentr(dfg, vlabel, key)
     lbls = (s -> s.label).(de_)
     idx = sortperm(lbls; rev = getlast)
@@ -181,8 +181,8 @@ function addData!(
     metadata = "",
     mimeType::String = "application/octet-stream",
     id::Union{UUID, Nothing} = nothing,
-    blobId::Union{UUID, Nothing} = nothing, #only assign if blobstore issued you an id
-    originId::UUID = uuid4(),
+    blobId::UUID = uuid4(),
+    originId::UUID = blobId,
     hashfunction = sha256,
 )
     #

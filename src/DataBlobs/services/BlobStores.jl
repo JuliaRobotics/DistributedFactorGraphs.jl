@@ -81,7 +81,8 @@ end
 ##==============================================================================
 ## AbstractBlobstore derived CRUD for Blob 
 ##==============================================================================
-
+#TODO looking in all the blobstores does not make sense since since there is a chance that the blobId is not unique across blobstores.
+# using the cached blobstore is the right way to go here.
 function getBlob(dfg::AbstractDFG, entry::Blobentry)
     stores = getBlobstores(dfg)
     storekeys = collect(keys(stores))
@@ -111,8 +112,7 @@ function getBlob(dfg::AbstractDFG, entry::Blobentry)
 end
 
 function getBlob(store::AbstractBlobstore, entry::Blobentry)
-    blobId = isnothing(entry.blobId) ? entry.originId : entry.blobId
-    return getBlob(store, blobId)
+    return getBlob(store, entry.blobId)
 end
 
 #add 
@@ -121,11 +121,10 @@ function addBlob!(dfg::AbstractDFG, entry::Blobentry, data)
 end
 
 function addBlob!(store::AbstractBlobstore{T}, entry::Blobentry, data::T) where {T}
-    blobId = isnothing(entry.blobId) ? entry.originId : entry.blobId
-    return addBlob!(store, blobId, data)
+    return addBlob!(store, entry.blobId, data)
 end
 
-# also creates an originId as uuid4
+# also creates an blobId as uuid4
 addBlob!(store::AbstractBlobstore, data) = addBlob!(store, uuid4(), data)
 
 #update
@@ -142,13 +141,15 @@ function deleteBlob!(dfg::AbstractDFG, entry::Blobentry)
 end
 
 function deleteBlob!(store::AbstractBlobstore, entry::Blobentry)
-    blobId = isnothing(entry.blobId) ? entry.originId : entry.blobId
-    return deleteBlob!(store, blobId)
+    return deleteBlob!(store, entry.blobId)
 end
 
 #has
+function hasBlob(store::AbstractBlobstore, entry::Blobentry)
+    return hasBlob(store, entry.blobId)
+end
 function hasBlob(dfg::AbstractDFG, entry::Blobentry)
-    return hasBlob(getBlobstore(dfg, entry.blobstore), entry.originId)
+    return hasBlob(getBlobstore(dfg, entry.blobstore), entry.blobId)
 end
 
 #TODO
@@ -182,19 +183,22 @@ end
 #TODO added in v0.25 to avoid a breaking change in deserialization old DFGs, remove.
 StructTypes.StructType(::Type{<:FolderStore}) = StructTypes.OrderedStruct()
 
-function FolderStore(foldername::String; label = :default_folder_store, createfolder = true)
-    if createfolder && !isdir(foldername)
-        @info "Folder '$foldername' doesn't exist - creating."
+function FolderStore(foldername::String; label::Symbol = :default, createfolder = true)
+    storepath = joinpath(foldername, string(label))
+    if createfolder && !isdir(storepath)
+        @info "Folder '$storepath' doesn't exist - creating."
         # create new folder
-        mkpath(foldername)
+        mkpath(storepath)
     end
     return FolderStore{Vector{UInt8}}(label, foldername)
 end
 
-blobfilename(store::FolderStore, blobId::UUID) = joinpath(store.folder, string(blobId))
+function blobfilename(store::FolderStore, blobId::UUID)
+    return joinpath(store.folder, string(store.label), string(blobId))
+end
 
 function getBlob(store::FolderStore{T}, blobId::UUID) where {T}
-    blobfilename = joinpath(store.folder, string(blobId))
+    blobfilename = joinpath(store.folder, string(store.label), string(blobId))
     if isfile(blobfilename)
         open(blobfilename) do f
             return read(f)
@@ -205,7 +209,7 @@ function getBlob(store::FolderStore{T}, blobId::UUID) where {T}
 end
 
 function addBlob!(store::FolderStore{T}, blobId::UUID, data::T) where {T}
-    blobfilename = joinpath(store.folder, string(blobId))
+    blobfilename = joinpath(store.folder, string(store.label), string(blobId))
     if isfile(blobfilename)
         throw(KeyError("Key '$blobId' blob already exists."))
     else
@@ -218,7 +222,7 @@ function addBlob!(store::FolderStore{T}, blobId::UUID, data::T) where {T}
 end
 
 function updateBlob!(store::FolderStore{T}, blobId::UUID, data::T) where {T}
-    blobfilename = joinpath(store.folder, string(blobId))
+    blobfilename = joinpath(store.folder, string(store.label), string(blobId))
     if !isfile(blobfilename)
         @warn "Key '$blobId' doesn't exist."
     else
@@ -230,18 +234,18 @@ function updateBlob!(store::FolderStore{T}, blobId::UUID, data::T) where {T}
 end
 
 function deleteBlob!(store::FolderStore{T}, blobId::UUID) where {T}
-    blobfilename = joinpath(store.folder, string(blobId))
+    blobfilename = joinpath(store.folder, string(store.label), string(blobId))
     rm(blobfilename)
     return 1
 end
 
 #hasBlob or existsBlob?
 function hasBlob(store::FolderStore, blobId::UUID)
-    blobfilename = joinpath(store.folder, string(blobId))
+    blobfilename = joinpath(store.folder, string(store.label), string(blobId))
     return isfile(blobfilename)
 end
 
-hasBlob(store::FolderStore, entry::Blobentry) = hasBlob(store, entry.originId)
+hasBlob(store::FolderStore, entry::Blobentry) = hasBlob(store, entry.blobId)
 
 listBlobs(store::FolderStore) = readdir(store.folder)
 ##==============================================================================
@@ -319,7 +323,7 @@ function getBlob(store::LinkStore, blobId::UUID)
 end
 
 function addBlob!(store::LinkStore, entry::Blobentry, linkfile::String)
-    return addBlob!(store, entry.originId, nothing, linkfile::String)
+    return addBlob!(store, entry.blobId, nothing, linkfile::String)
 end
 
 function addBlob!(store::LinkStore, blobId::UUID, blob::Any, linkfile::String)
