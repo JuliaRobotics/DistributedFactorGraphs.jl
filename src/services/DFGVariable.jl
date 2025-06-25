@@ -702,7 +702,7 @@ function mergeVariableState!(dfg::AbstractDFG, variablekey::Symbol, vnd::Variabl
     if !haskey(v.solverDataDict, vnd.solveKey)
         addVariableState!(dfg, variablekey, vnd)
     else
-        v.solverDataDict[vnd.solveKey] = usevnd
+        v.solverDataDict[vnd.solveKey] = vnd
     end
 
     return 1
