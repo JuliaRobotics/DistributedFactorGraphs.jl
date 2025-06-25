@@ -733,6 +733,13 @@ function mergeState!(v::VariableCompute, vnd::State)
     return 1
 end
 
+function mergeStates!(dfg::AbstractDFG, varLabel_state_pairs::Vector{Pair{Symbol, VariableState}})
+    cnt = asyncmap(varLabel_state_pairs) do (varLabel, state)
+        return mergeState!(dfg, varLabel, state)
+    end
+    return sum(cnt)
+end
+
 function copytoState!(
     dfg::AbstractDFG,
     variableLabel::Symbol,
