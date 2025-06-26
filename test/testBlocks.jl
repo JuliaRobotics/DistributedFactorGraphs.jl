@@ -789,6 +789,9 @@ function VSDTestBlock!(fg, v1)
 
     @test DFG.mergeStates!(fg, Vector{Pair{Symbol, State}}([:a=>vnd])) == 1
     
+    @test DFG.mergeStates!(fg, [:a=>vnd]) == 1
+    @test DFG.mergeStates!(fg, :a, [vnd]) == 1
+    
     altVnd = vnd |> deepcopy
     keepVnd = getState(getVariable(fg, :a), :parametric) |> deepcopy
 
