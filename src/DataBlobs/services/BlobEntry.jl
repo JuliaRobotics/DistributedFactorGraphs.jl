@@ -74,7 +74,7 @@ end
 
 function getBlobentry(var::VariableDFG, key::Symbol)
     if !hasBlobentry(var, key)
-        throw(DFGLabelError(key))
+        throw(DFGLabelNotFoundError(key))
     end
     return var.blobEntries[findfirst(x -> x.label == key, var.blobEntries)]
 end
