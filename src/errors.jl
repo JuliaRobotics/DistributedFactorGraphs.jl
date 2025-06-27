@@ -33,7 +33,14 @@ end
 LabelExistsError(label::Symbol) = LabelExistsError("Node", label)
 
 function Base.showerror(io::IO, ex::LabelExistsError)
-    return print(io, "LabelExistsError: ", ex.name, " label '", ex.label, "' already exists.")
+    return print(
+        io,
+        "LabelExistsError: ",
+        ex.name,
+        " label '",
+        ex.label,
+        "' already exists.",
+    )
 end
 
 """

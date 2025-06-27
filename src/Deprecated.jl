@@ -435,7 +435,6 @@ function getFactorOperationalMemoryType(dfg::AbstractDFG)
     return getFactorOperationalMemoryType(getSolverParams(dfg))
 end
 
-
 ## ================================================================================
 ## Deprecated in v0.25
 ##=================================================================================
