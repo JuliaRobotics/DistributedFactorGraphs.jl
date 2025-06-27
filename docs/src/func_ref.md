@@ -44,6 +44,12 @@ Modules = [DistributedFactorGraphs]
 Pages = ["entities/DFGFactor.jl"]
 ```
 
+### Error Types
+```@autodocs
+Modules = [DistributedFactorGraphs]
+Pages = ["errors.jl"]
+```
+
 ## DFG Plots [GraphMakie.jl]
 
 ```@autodocs

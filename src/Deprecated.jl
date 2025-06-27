@@ -421,11 +421,6 @@ function fncStringToData(args...; kwargs...)
 end
 
 #TODO make sure getFactorOperationalMemoryType is obsolete
-"""
-    $(SIGNATURES)
-
-Method must be overloaded by the user for Serialization to work.  E.g. IncrementalInference uses `CommonConvWrapper <: FactorSolverCache`.
-"""
 function getFactorOperationalMemoryType(dummy)
     return error(
         "Please extend your workspace with function getFactorOperationalMemoryType(<:AbstractParams) for your usecase, e.g. IncrementalInference uses `CommonConvWrapper <: FactorSolverCache`",
