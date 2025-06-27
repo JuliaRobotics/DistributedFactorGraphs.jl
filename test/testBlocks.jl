@@ -82,7 +82,6 @@ TestCCW{T}() where {T} = TestCCW(T())
 
 Base.:(==)(a::TestCCW, b::TestCCW) = a.usrfnc! == b.usrfnc!
 
-DFG.getFactorOperationalMemoryType(par::NoSolverParams) = TestCCW
 DFG.rebuildFactorCache!(dfg::AbstractDFG{NoSolverParams}, fac::FactorCompute) = fac
 
 function DFG.reconstFactorData(

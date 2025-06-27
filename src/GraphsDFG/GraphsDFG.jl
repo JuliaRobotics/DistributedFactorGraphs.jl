@@ -8,7 +8,10 @@ using OrderedCollections
 using StructTypes
 
 using ...DistributedFactorGraphs
-using ...DistributedFactorGraphs: Agent
+using ...DistributedFactorGraphs: 
+    Agent,
+    LabelNotFoundError,
+    LabelExistsError
 
 # import DFG functions to extend
 import ...DistributedFactorGraphs:

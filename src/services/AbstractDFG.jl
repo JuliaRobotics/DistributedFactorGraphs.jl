@@ -100,20 +100,6 @@ getSolverParams(dfg::AbstractDFG) = dfg.solverParams
 """
     $(SIGNATURES)
 
-Method must be overloaded by the user for Serialization to work.  E.g. IncrementalInference uses `CommonConvWrapper <: FactorSolverCache`.
-"""
-function getFactorOperationalMemoryType(dummy)
-    return error(
-        "Please extend your workspace with function getFactorOperationalMemoryType(<:AbstractParams) for your usecase, e.g. IncrementalInference uses `CommonConvWrapper <: FactorSolverCache`",
-    )
-end
-function getFactorOperationalMemoryType(dfg::AbstractDFG)
-    return getFactorOperationalMemoryType(getSolverParams(dfg))
-end
-
-"""
-    $(SIGNATURES)
-
 Method must be overloaded by the user for Serialization to work.
 """
 function rebuildFactorCache!(
@@ -121,7 +107,10 @@ function rebuildFactorCache!(
     factor::AbstractDFGFactor,
     neighbors = [],
 )
-    @warn("rebuildFactorCache! is not implemented for $(typeof(dfg))")
+    @warn(
+        "FactorCache not build, rebuildFactorCache! is not implemented for $(typeof(dfg)). Make sure to load IncrementalInference.",
+        maxlog = 1
+    )
     return nothing
 end
 

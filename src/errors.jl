@@ -1,21 +1,19 @@
 """
-    DFGLabelNotFoundError(label, available)
+    LabelNotFoundError(label, available)
 
 Error thrown when a requested label is not found in the factor graph.
-
-# Arguments
-- `label`: The label that was not found.
-- `available`: The list of available labels.
 """
-struct DFGLabelNotFoundError <: Exception
-    label::Any
-    available::Any
+struct LabelNotFoundError <: Exception
+    name::String
+    label::Symbol
+    available::Vector{Symbol}
 end
 
-DFGLabelNotFoundError(label::T) where {T} = DFGLabelNotFoundError(label, T[])
+LabelNotFoundError(name::String, label::Symbol) = LabelNotFoundError(name, label, Symbol[])
+LabelNotFoundError(label::Symbol) = LabelNotFoundError("Node", label, Symbol[])
 
-function Base.showerror(io::IO, ex::DFGLabelNotFoundError)
-    print(io, "DFGLabelNotFoundError: label ", ex.label, " not found.")
+function Base.showerror(io::IO, ex::LabelNotFoundError)
+    print(io, "LabelNotFoundError: ", ex.name, " label '", ex.label, "' not found.")
     if !isempty(ex.available)
         println(io, " Available labels:")
         show(io, ex.available)
@@ -23,38 +21,30 @@ function Base.showerror(io::IO, ex::DFGLabelNotFoundError)
 end
 
 """
-    DFGLabelExistsError(label)
+    LabelExistsError(label)
 
-Error thrown when attempting to add a label that already exists in the factor graph.
-
-# Arguments
-- `label`: The label that already exists.
+Error thrown when attempting to add a label that already exists in the collection.
 """
-struct DFGLabelExistsError <: Exception
-    label::Any
+struct LabelExistsError <: Exception
+    name::String
+    label::Symbol
 end
 
-function Base.showerror(io::IO, ex::DFGLabelExistsError)
-    return print(
-        io,
-        "DFGLabelExistsError: label ",
-        ex.label,
-        " already exists in the factor graph.",
-    )
+LabelExistsError(label::Symbol) = LabelExistsError("Node", label)
+
+function Base.showerror(io::IO, ex::LabelExistsError)
+    return print(io, "LabelExistsError: ", ex.name, " label '", ex.label, "' already exists.")
 end
 
 """
-    DFGSerializationError(msg)
+    SerializationError(msg)
 
 Error thrown when serialization or deserialization fails.
-
-# Arguments
-- `msg`: Description of the serialization error.
 """
-struct DFGSerializationError <: Exception
+struct SerializationError <: Exception
     msg::String
 end
 
-function Base.showerror(io::IO, ex::DFGSerializationError)
-    return print(io, "DFGSerializationError: ", ex.msg)
+function Base.showerror(io::IO, ex::SerializationError)
+    return print(io, "SerializationError: ", ex.msg)
 end
