@@ -107,7 +107,11 @@ function addFactor!(
     end
     # TODO
     # @assert FactorGraphs.addFactor!(dfg.g, getVariableOrder(factor), factor)
-    @assert FactorGraphs.addFactor!(dfg.g, Symbol[factor._variableOrderSymbols...], factor)
+    variableLabels = Symbol[factor._variableOrderSymbols...]
+    for vlabel in variableLabels
+        !exists(dfg, vlabel) && throw(LabelNotFoundError("Variable", vlabel))
+    end
+    @assert FactorGraphs.addFactor!(dfg.g, variableLabels, factor)
     return factor
 end
 

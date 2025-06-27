@@ -522,7 +522,7 @@ function getVariable(dfg::AbstractDFG, label::Symbol, solveKey::Symbol)
     var = getVariable(dfg, label)
 
     if isa(var, VariableCompute) && !haskey(var.solverDataDict, solveKey)
-        error("Solvekey '$solveKey' does not exists in the variable")
+        throw(LabelNotFoundError("VariableNode", solveKey))
     elseif !isa(var, VariableCompute)
         @warn "getVariable(dfg, label, solveKey) only supported for type VariableCompute."
     end
@@ -1085,7 +1085,7 @@ function copyGraph!(
         elseif overwriteDest
             mergeVariable!(destDFG, variableCopy)
         else
-            error("Variable $(variable.label) already exists in destination graph!")
+            throw(LabelExistsError("Variable", variable.label))
         end
     end
     # And then all factors to the destDFG.

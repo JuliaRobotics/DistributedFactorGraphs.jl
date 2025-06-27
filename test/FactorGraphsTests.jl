@@ -64,11 +64,11 @@ end
         [:a, :b],
         FactorSkeleton(:abf1, [:a, :b]),
     )
-    @test_throws KeyError FactorGraphs.addFactor!(
+    @test @test_logs (:error, r"not found") FactorGraphs.addFactor!(
         fg,
         [:a, :c],
         FactorSkeleton(:acf1, [:a, :c]),
-    )
+    ) == false
 
     @test eltype(fg) == Int
 

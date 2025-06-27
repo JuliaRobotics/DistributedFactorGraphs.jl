@@ -276,14 +276,7 @@ Notes:
 - used by both factor graph variable and Bayes tree clique logic.
 """
 function isInitialized(var::VariableCompute, key::Symbol = :default)
-    data = getVariableState(var, key)
-    if data === nothing
-        #TODO we still have a mixture of 2 error behaviours
-        # DF, not sure I follow the error here?
-        return false
-    else
-        return data.initialized
-    end
+    return getVariableState(var, key).initialized
 end
 
 function isInitialized(dfg::AbstractDFG, label::Symbol, key::Symbol = :default)
@@ -453,7 +446,11 @@ Related
 getMeanPPE, getMaxPPE, getKDEMean, getKDEFit, getPPEs, getVariablePPEs
 """
 function getPPE(vari::VariableDataLevel1, solveKey::Symbol = :default)
-    return getPPEDict(vari)[solveKey]
+    if haskey(getPPEDict(vari), solveKey)
+        return getPPEDict(vari)[solveKey]
+    else
+        throw(LabelNotFoundError("PPE", solveKey, collect(keys(getPPEDict(vari)))))
+    end
     # return haskey(ppeDict, solveKey) ? ppeDict[solveKey] : nothing
 end
 
@@ -501,9 +498,9 @@ Retrieve solver data structure stored in a variable.
 function getVariableState(v::VariableCompute, key::Symbol = :default)
     #TODO this does not fit in with some of the other error behaviour. but its used so added @error
     vnd = if haskey(getSolverDataDict(v), key)
-        getSolverDataDict(v)[key]
+        return getSolverDataDict(v)[key]
     else
-        (@error "Variable $(getLabel(v)) does not have solver data $(key)"; nothing)
+        throw(LabelNotFoundError("State", key))
     end
     return vnd
 end
@@ -539,7 +536,7 @@ Add a Metadata pair `key=>value` for variable `label` in `dfg`
 """
 function addMetadata!(dfg::AbstractDFG, label::Symbol, pair::Pair{Symbol, <:SmallDataTypes})
     v = getVariable(dfg, label)
-    haskey(v.smallData, pair.first) && error("$(pair.first) already exists.")
+    haskey(v.smallData, pair.first) && throw(LabelExistsError("Metadata", pair.first))
     push!(v.smallData, pair)
     mergeVariable!(dfg, v)
     return v.smallData #or pair TODO
@@ -648,8 +645,7 @@ function getVariableState(
     solvekey::Symbol = :default,
 )
     v = getVariable(dfg, variablekey)
-    !haskey(v.solverDataDict, solvekey) &&
-        throw(KeyError("Solve key '$solvekey' not found in variable '$variablekey'"))
+    !haskey(v.solverDataDict, solvekey) && throw(LabelNotFoundError("State", solvekey))
     return v.solverDataDict[solvekey]
 end
 
@@ -665,7 +661,7 @@ Add variable solver data, errors if it already exists.
 function addVariableState!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableState)
     var = getVariable(dfg, variablekey)
     if haskey(var.solverDataDict, vnd.solveKey)
-        error("VariableState '$(vnd.solveKey)' already exists")
+        throw(LabelExistsError("VariableState", vnd.solveKey))
     end
     var.solverDataDict[vnd.solveKey] = vnd
     return vnd
@@ -840,8 +836,7 @@ Related
 [`getPPEMean`](@ref), [`getPPEMax`](@ref), [`updatePPE!`](@ref), `mean(BeliefType)`
 """
 function getPPE(v::VariableCompute, ppekey::Symbol = :default)
-    !haskey(v.ppeDict, ppekey) &&
-        throw(KeyError("PPE key '$ppekey' not found in variable '$(getLabel(v))'"))
+    !haskey(v.ppeDict, ppekey) && throw(LabelNotFoundError("PPE", ppekey))
     return v.ppeDict[ppekey]
 end
 function getPPE(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol = :default)
@@ -867,7 +862,7 @@ function addPPE!(
 ) where {P <: AbstractPointParametricEst}
     var = getVariable(dfg, variablekey)
     if haskey(var.ppeDict, ppe.solveKey)
-        error("PPE '$(ppe.solveKey)' already exists")
+        throw(LabelExistsError("PPE", ppe.solveKey))
     end
     var.ppeDict[ppe.solveKey] = ppe
     return ppe
@@ -964,7 +959,7 @@ function deletePPE!(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol = :def
     var = getVariable(dfg, variablekey)
 
     if !haskey(var.ppeDict, ppekey)
-        throw(KeyError("VariableState '$(ppekey)' does not exist"))
+        throw(LabelNotFoundError("PPE", ppekey))
     end
     pop!(var.ppeDict, ppekey)
     return 1
