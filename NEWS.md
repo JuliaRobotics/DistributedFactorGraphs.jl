@@ -22,6 +22,7 @@ Listing news on any major breaking changes in DFG.  For regular changes, see int
 - Deprecate getBlobentryFirst -> getfirstBlobentry, see #1114
 - OrderedDict is no longer exported
 - FolderStore path now includes the store label.
+- Standardized error types and behaviour.
 
 # v0.26
 - Graph structure plotting now uses GraphMakie.jl instead of GraphPlot.jl. Update by replacing `using GraphPlot` with `using GraphMakie`.
