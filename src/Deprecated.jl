@@ -430,6 +430,16 @@ function getFactorOperationalMemoryType(dfg::AbstractDFG)
     return getFactorOperationalMemoryType(getSolverParams(dfg))
 end
 
+function typeModuleName(variableType::InferenceVariable)
+    Base.depwarn("typeModuleName is obsolete", :typeModuleName)
+    io = IOBuffer()
+    ioc = IOContext(io, :module => DistributedFactorGraphs)
+    show(ioc, typeof(variableType))
+    return String(take!(io))
+end
+
+typeModuleName(varT::Type{<:InferenceVariable}) = typeModuleName(varT())
+
 ## ================================================================================
 ## Deprecated in v0.25
 ##=================================================================================

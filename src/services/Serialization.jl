@@ -28,17 +28,22 @@ function _versionCheck(node::Union{<:VariableDFG, <:FactorDFG})
     end
 end
 
-## Utility functions for ZonedDateTime
-
-# variableType module.type string functions
-function typeModuleName(variableType::InferenceVariable)
-    io = IOBuffer()
-    ioc = IOContext(io, :module => DistributedFactorGraphs)
-    show(ioc, typeof(variableType))
-    return String(take!(io))
+function stringVariableType(varT::InferenceVariable)
+    T = typeof(varT)
+    #FIXME maybe don't use .parameters
+    Tparams = T.parameters
+    if length(Tparams) == 0
+        return string(parentmodule(T), ".", nameof(T))
+    elseif length(Tparams) == 1 && Tparams[1] isa Integer
+        return string(parentmodule(T), ".", nameof(T), "{", join(Tparams, ","), "}")
+    else
+        throw(
+            SerializationError(
+                "Serializing Variable State type only supports 1 integer parameter, got '$(T)'.",
+            ),
+        )
+    end
 end
-
-typeModuleName(varT::Type{<:InferenceVariable}) = typeModuleName(varT())
 
 function parseVariableType(_typeString::AbstractString)
     m = match(r"{(\d+)}", _typeString)
@@ -55,7 +60,7 @@ function parseVariableType(_typeString::AbstractString)
     subtype = get(all_subtypes, Symbol(split(typeString, ".")[end]), nothing)
 
     if isnothing(subtype)
-        error("Unable to deserialize type $(_typeString), not found")
+        throw(SerializationError("Unable to deserialize type $(_typeString), not found"))
         return nothing
     end
 
@@ -133,7 +138,7 @@ function packVariableState(d::VariableState{T}) where {T <: InferenceVariable}
         d.eliminated,
         d.BayesNetVertID,
         d.separator,
-        typeModuleName(getVariableType(d)),
+        stringVariableType(getVariableType(d)),
         d.initialized,
         d.infoPerCoord,
         d.ismargin,
@@ -215,7 +220,7 @@ function packVariable(
         solverData = packVariableState.(collect(values(v.solverDataDict))),
         metadata = base64encode(JSON3.write(v.smallData)),
         solvable = v.solvable,
-        variableType = DFG.typeModuleName(DFG.getVariableType(v)),
+        variableType = stringVariableType(DFG.getVariableType(v)),
         blobEntries = collect(values(v.dataDict)),
         _version = string(DFG._getDFGVersion()),
     )
