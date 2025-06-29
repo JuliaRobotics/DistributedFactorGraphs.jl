@@ -100,20 +100,6 @@ getSolverParams(dfg::AbstractDFG) = dfg.solverParams
 """
     $(SIGNATURES)
 
-Method must be overloaded by the user for Serialization to work.  E.g. IncrementalInference uses `CommonConvWrapper <: FactorSolverCache`.
-"""
-function getFactorOperationalMemoryType(dummy)
-    return error(
-        "Please extend your workspace with function getFactorOperationalMemoryType(<:AbstractParams) for your usecase, e.g. IncrementalInference uses `CommonConvWrapper <: FactorSolverCache`",
-    )
-end
-function getFactorOperationalMemoryType(dfg::AbstractDFG)
-    return getFactorOperationalMemoryType(getSolverParams(dfg))
-end
-
-"""
-    $(SIGNATURES)
-
 Method must be overloaded by the user for Serialization to work.
 """
 function rebuildFactorCache!(
@@ -121,7 +107,10 @@ function rebuildFactorCache!(
     factor::AbstractDFGFactor,
     neighbors = [],
 )
-    @warn("rebuildFactorCache! is not implemented for $(typeof(dfg))")
+    @warn(
+        "FactorCache not build, rebuildFactorCache! is not implemented for $(typeof(dfg)). Make sure to load IncrementalInference.",
+        maxlog = 1
+    )
     return nothing
 end
 
@@ -533,7 +522,7 @@ function getVariable(dfg::AbstractDFG, label::Symbol, solveKey::Symbol)
     var = getVariable(dfg, label)
 
     if isa(var, VariableCompute) && !haskey(var.solverDataDict, solveKey)
-        error("Solvekey '$solveKey' does not exists in the variable")
+        throw(LabelNotFoundError("VariableNode", solveKey))
     elseif !isa(var, VariableCompute)
         @warn "getVariable(dfg, label, solveKey) only supported for type VariableCompute."
     end
@@ -1096,7 +1085,7 @@ function copyGraph!(
         elseif overwriteDest
             mergeVariable!(destDFG, variableCopy)
         else
-            error("Variable $(variable.label) already exists in destination graph!")
+            throw(LabelExistsError("Variable", variable.label))
         end
     end
     # And then all factors to the destDFG.

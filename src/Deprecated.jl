@@ -420,6 +420,16 @@ function fncStringToData(args...; kwargs...)
     return error("fncStringToData is obsolete.")
 end
 
+#TODO make sure getFactorOperationalMemoryType is obsolete
+function getFactorOperationalMemoryType(dummy)
+    return error(
+        "Please extend your workspace with function getFactorOperationalMemoryType(<:AbstractParams) for your usecase, e.g. IncrementalInference uses `CommonConvWrapper <: FactorSolverCache`",
+    )
+end
+function getFactorOperationalMemoryType(dfg::AbstractDFG)
+    return getFactorOperationalMemoryType(getSolverParams(dfg))
+end
+
 ## ================================================================================
 ## Deprecated in v0.25
 ##=================================================================================

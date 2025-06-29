@@ -42,9 +42,8 @@ function addVariable!(
     dfg::GraphsDFG{<:AbstractParams, V, <:AbstractDFGFactor},
     variable::V,
 ) where {V <: AbstractDFGVariable}
-    #TODO should this be an error
     if haskey(dfg.g.variables, variable.label)
-        error("Variable '$(variable.label)' already exists in the factor graph")
+        throw(LabelExistsError("Variable", variable.label))
     end
 
     FactorGraphs.addVariable!(dfg.g, variable) || return false
@@ -104,11 +103,15 @@ function addFactor!(
     factor::F,
 ) where {F <: AbstractDFGFactor}
     if haskey(dfg.g.factors, factor.label)
-        error("Factor '$(factor.label)' already exists in the factor graph")
+        throw(LabelExistsError("Factor", factor.label))
     end
     # TODO
     # @assert FactorGraphs.addFactor!(dfg.g, getVariableOrder(factor), factor)
-    @assert FactorGraphs.addFactor!(dfg.g, Symbol[factor._variableOrderSymbols...], factor)
+    variableLabels = Symbol[factor._variableOrderSymbols...]
+    for vlabel in variableLabels
+        !exists(dfg, vlabel) && throw(LabelNotFoundError("Variable", vlabel))
+    end
+    @assert FactorGraphs.addFactor!(dfg.g, variableLabels, factor)
     return factor
 end
 
@@ -121,7 +124,7 @@ end
 
 function getVariable(dfg::GraphsDFG, label::Symbol)
     if !haskey(dfg.g.variables, label)
-        error("Variable label '$(label)' does not exist in the factor graph")
+        throw(LabelNotFoundError("Variable", label))
     end
 
     return dfg.g.variables[label]
@@ -129,8 +132,7 @@ end
 
 function getFactor(dfg::GraphsDFG, label::Symbol)
     if !haskey(dfg.g.factors, label)
-        #TODO throw a typed error
-        error("Factor label '$(label)' does not exist in the factor graph")
+        throw(LabelNotFoundError("Factor", label))
     end
     return dfg.g.factors[label]
 end
@@ -151,8 +153,8 @@ function mergeFactor!(dfg::GraphsDFG, factor::AbstractDFGFactor;)
         #TODO should we allow merging the factor neighbors or error as before?
         error("Cannot update the factor, the neighbors are not the same.")
         # We need to delete the factor if we are updating the neighbors
-        deleteFactor!(dfg, factor.label)
-        addFactor!(dfg, factor)
+        # deleteFactor!(dfg, factor.label)
+        # addFactor!(dfg, factor)
     else
         dfg.g.factors[factor.label] = factor
     end
@@ -162,7 +164,7 @@ end
 
 function deleteVariable!(dfg::GraphsDFG, label::Symbol)#::Tuple{AbstractDFGVariable, Vector{<:AbstractDFGFactor}}
     if !haskey(dfg.g.variables, label)
-        error("Variable label '$(label)' does not exist in the factor graph")
+        throw(LabelNotFoundError("Variable", label))
     end
 
     deleteNeighbors = true # reserved, orphaned factors are not supported at this time
@@ -175,7 +177,7 @@ end
 
 function deleteFactor!(dfg::GraphsDFG, label::Symbol; suppressGetFactor::Bool = false)
     if !haskey(dfg.g.factors, label)
-        error("Factor label '$(label)' does not exist in the factor graph")
+        throw(LabelNotFoundError("Factor", label))
     end
     rem_vertex!(dfg.g, dfg.g.labels[label])
     return 1
@@ -280,10 +282,7 @@ end
 function _isSolvable(dfg::GraphsDFG, label::Symbol, ready::Int)
     haskey(dfg.g.variables, label) && (return dfg.g.variables[label].solvable >= ready)
     haskey(dfg.g.factors, label) && (return dfg.g.factors[label].solvable >= ready)
-
-    #TODO should this be a breaking error?
-    @error "Node not in factor or variable"
-    return false
+    throw(LabelNotFoundError(label))
 end
 
 function listNeighbors(dfg::GraphsDFG, node::DFGNode; solvable::Int = 0)
@@ -292,7 +291,7 @@ end
 
 function listNeighbors(dfg::GraphsDFG, label::Symbol; solvable::Int = 0)
     if !exists(dfg, label)
-        error("Variable/factor with label '$(label)' does not exist in the factor graph")
+        throw(LabelNotFoundError(label))
     end
 
     neighbors_il = FactorGraphs.outneighbors(dfg.g, dfg.g.labels[label])
@@ -540,9 +539,7 @@ end
 
 function addGraphBlobentry!(fg::GraphsDFG, entry::Blobentry)
     if haskey(fg.graphBlobEntries, entry.label)
-        error(
-            "Blobentry '$(entry.label)' already exists in the factor graph's blob entries.",
-        )
+        throw(LabelExistsError("Blobentry", entry.label))
     end
     push!(fg.graphBlobEntries, entry.label => entry)
     return entry

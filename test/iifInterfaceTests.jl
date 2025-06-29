@@ -72,19 +72,19 @@ end
     @test addVariable!(dfg2, v1) == v1
     @test addVariable!(dfg2, v2) == v2
     @test mergeVariable!(dfg2, v3) == 1
-    @test_throws ErrorException addVariable!(dfg2, v3)
+    @test_throws LabelExistsError addVariable!(dfg2, v3)
     @test addFactor!(dfg2, f1) == f1
-    @test_throws ErrorException addFactor!(dfg2, f1)
+    @test_throws LabelExistsError addFactor!(dfg2, f1)
     # @test @test_logs (:warn, r"exist") mergeFactor!(dfg2, f2) == f2
     @test mergeFactor!(dfg2, f2) == 1
-    @test_throws ErrorException addFactor!(dfg2, f2)
+    @test_throws LabelExistsError addFactor!(dfg2, f2)
 
     dv3 = deleteVariable!(dfg2, v3)
     @test dv3 == 2
-    @test_throws ErrorException deleteVariable!(dfg2, v3)
+    @test_throws LabelNotFoundError deleteVariable!(dfg2, v3)
 
     @test issetequal(ls(dfg2), [:a, :b])
-    @test_throws ErrorException deleteFactor!(dfg2, f2)
+    @test_throws LabelNotFoundError deleteFactor!(dfg2, f2)
 
     @test lsf(dfg2) == [:abf1]
 end
@@ -170,10 +170,10 @@ end
     global dfg, v1, v2, f1
     @test getVariable(dfg, v1.label) == v1
     @test getFactor(dfg, f1.label) == f1
-    @test_throws Exception getVariable(dfg, :nope)
-    @test_throws Exception getVariable(dfg, "nope")
-    @test_throws Exception getFactor(dfg, :nope)
-    @test_throws Exception getFactor(dfg, "nope")
+    @test_throws LabelNotFoundError getVariable(dfg, :nope)
+    @test_throws MethodError getVariable(dfg, "nope")
+    @test_throws LabelNotFoundError getFactor(dfg, :nope)
+    @test_throws MethodError getFactor(dfg, "nope")
 
     # Sets
     v1Prime = deepcopy(v1)
@@ -186,7 +186,7 @@ end
     @test getTags(v1) == v1.tags
     @test getTimestamp(v1) == v1.timestamp
     @test getVariablePPEDict(v1) == v1.ppeDict
-    @test_throws Exception DistributedFactorGraphs.getVariablePPE(v1, :notfound)
+    @test_throws LabelNotFoundError DistributedFactorGraphs.getVariablePPE(v1, :notfound)
     @test getVariableState(v1) === v1.solverDataDict[:default]
     @test getVariableState(v1) === v1.solverDataDict[:default]
     @test getVariableState(v1, :default) === v1.solverDataDict[:default]
@@ -210,7 +210,7 @@ end
     @test !isInitialized(dfg, :a)
     @test !isInitialized(v2)
 
-    @test !isInitialized(v2, :second)
+    @test_throws LabelNotFoundError isInitialized(v2, :second)
 
     # Session, robot, and user small data tests
     smallRobotData = Dict{Symbol, SmallDataTypes}(:a => "43", :b => "Hello")
@@ -256,14 +256,14 @@ end
     v1 = getVariable(dfg, :a)
     @test addBlobentry!(v1, de1) == de1
     @test addBlobentry!(dfg, :a, de2) == de2
-    @test_throws ErrorException addBlobentry!(v1, de1)
+    @test_throws LabelExistsError addBlobentry!(v1, de1)
     @test de2 in getBlobentries(v1)
 
     #get
     @test deepcopy(de1) == getBlobentry(v1, :key1)
     @test deepcopy(de2) == getBlobentry(dfg, :a, :key2)
-    @test_throws KeyError getBlobentry(v2, :key1)
-    @test_throws KeyError getBlobentry(dfg, :b, :key1)
+    @test_throws LabelNotFoundError getBlobentry(v2, :key1)
+    @test_throws LabelNotFoundError getBlobentry(dfg, :b, :key1)
 
     #update
     @test mergeBlobentry!(dfg, :a, de2_update) == 1

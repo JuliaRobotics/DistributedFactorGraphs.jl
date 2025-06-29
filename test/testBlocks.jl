@@ -3,6 +3,8 @@ using Test
 using Dates
 using Manifolds
 
+using DistributedFactorGraphs: LabelExistsError, LabelNotFoundError
+
 import Base: convert
 # import DistributedFactorGraphs: getData, addData!, updateData!, deleteData!
 
@@ -82,7 +84,6 @@ TestCCW{T}() where {T} = TestCCW(T())
 
 Base.:(==)(a::TestCCW, b::TestCCW) = a.usrfnc! == b.usrfnc!
 
-DFG.getFactorOperationalMemoryType(par::NoSolverParams) = TestCCW
 DFG.rebuildFactorCache!(dfg::AbstractDFG{NoSolverParams}, fac::FactorCompute) = fac
 
 function DFG.reconstFactorData(
@@ -469,23 +470,22 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     # test getindex
     @test getLabel(fg[getLabel(v1)]) == getLabel(v1)
 
-    #TODO standardize this error and res also for that matter
     fnope = FactorCompute(:broken, [:a, :nope], TestFunctorInferenceType1())
-    @test_throws KeyError addFactor!(fg, fnope)
+    @test_throws LabelNotFoundError addFactor!(fg, fnope)
 
     @test addFactor!(fg, f1) == f1
-    @test_throws ErrorException addFactor!(fg, f1)
+    @test_throws LabelExistsError addFactor!(fg, f1)
 
     @test getLabel(fg[getLabel(f1)]) == getLabel(f1)
 
     @test mergeVariable!(fg, v3) == 1
     @test mergeVariable!(fg, v3) == 1
-    @test_throws ErrorException addVariable!(fg, v3)
+    @test_throws LabelExistsError addVariable!(fg, v3)
 
     @test mergeFactor!(fg, f2) == 1
     @test mergeFactor!(fg, f2) == 1
-    @test_throws ErrorException addFactor!(fg, f2)
-    #TODO Graphs.jl, but look at refactoring absract @test_throws ErrorException addFactor!(fg, f2)
+    @test_throws LabelExistsError addFactor!(fg, f2)
+    #TODO Graphs.jl, but look at refactoring absract @test_throws LabelExistsError addFactor!(fg, f2)
 
     if f2 isa FactorCompute
         f2_mod = FactorCompute(
@@ -522,14 +522,14 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     delfacCompare = getFactor(fg, :bcf1)
     ndel = deleteVariable!(fg, v3)
     @test ndel == 2
-    @test_throws ErrorException deleteVariable!(fg, v3)
+    @test_throws LabelNotFoundError deleteVariable!(fg, v3)
     @test setdiff(ls(fg), [:a, :b]) == []
 
     @test addVariable!(fg, v3) === v3
     @test addFactor!(fg, f2) === f2
 
     @test deleteFactor!(fg, f2) == 1
-    @test_throws ErrorException deleteFactor!(fg, f2)
+    @test_throws LabelNotFoundError deleteFactor!(fg, f2)
     @test lsf(fg) == [:abf1]
 
     delvarCompare = getVariable(fg, :c)
@@ -544,7 +544,7 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
 
     if isa(v1, VariableCompute)
         #TODO decide if this should be @error or other type
-        @test_throws ErrorException getVariable(fg, :a, :missingfoo)
+        @test_throws LabelNotFoundError getVariable(fg, :a, :missingfoo)
     else
         @test_logs (:warn, r"supported for type VariableCompute") getVariable(
             fg,
@@ -555,12 +555,12 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
 
     @test getFactor(fg, :abf1) == f1
 
-    @test_throws ErrorException getVariable(fg, :c)
-    @test_throws ErrorException getFactor(fg, :bcf1)
+    @test_throws LabelNotFoundError getVariable(fg, :c)
+    @test_throws LabelNotFoundError getFactor(fg, :bcf1)
 
     #test issue #375
-    @test_throws ErrorException getVariable(fg, :abf1)
-    @test_throws ErrorException getFactor(fg, :a)
+    @test_throws LabelNotFoundError getVariable(fg, :abf1)
+    @test_throws LabelNotFoundError getFactor(fg, :a)
 
     # Existence
     @test exists(fg, :a)
@@ -646,7 +646,7 @@ function PPETestBlock!(fg, v1)
     @test getLastUpdatedTimestamp(ppe) === ppe.lastUpdatedTimestamp
 
     @test addPPE!(fg, :a, ppe) == ppe
-    @test_throws ErrorException addPPE!(fg, :a, ppe)
+    @test_throws LabelExistsError addPPE!(fg, :a, ppe)
 
     @test listPPEs(fg, :a) == [:default]
 
@@ -660,7 +660,7 @@ function PPETestBlock!(fg, v1)
     # Delete it
     @test deletePPE!(fg, :a, :default) == 1
 
-    @test_throws KeyError getPPE(fg, :a, :default)
+    @test_throws LabelNotFoundError getPPE(fg, :a, :default)
     # Update add it
     @test @test_logs (:warn, Regex("'$(ppe.solveKey)' does not exist")) match_mode = :any updatePPE!(
         fg,
@@ -687,7 +687,7 @@ function PPETestBlock!(fg, v1)
 
     #FIXME copied from lower
     # @test @test_deprecated getVariablePPEs(v1) == v1.ppeDict
-    @test_throws KeyError getPPE(v1, :notfound)
+    @test_throws LabelNotFoundError getPPE(v1, :notfound)
     #TODO
     # @test_deprecated getVariablePPE(v1)
 
@@ -781,7 +781,7 @@ function VSDTestBlock!(fg, v1)
     # vnd.bw[1] = [1.0;]
     @test addVariableState!(fg, :a, vnd) == vnd
 
-    @test_throws ErrorException addVariableState!(fg, :a, vnd)
+    @test_throws LabelExistsError addVariableState!(fg, :a, vnd)
 
     @test issetequal(listVariableStates(fg, :a), [:default, :parametric])
 
@@ -819,7 +819,7 @@ function VSDTestBlock!(fg, v1)
     # Delete parametric from v1
     @test deleteVariableState!(fg, :a, :parametric) == 1
 
-    @test_throws KeyError getVariableState(fg, :a, :parametric)
+    @test_throws LabelNotFoundError getVariableState(fg, :a, :parametric)
 
     #FIXME copied from lower
     @test getVariableState(v1) === v1.solverDataDict[:default]
@@ -877,7 +877,7 @@ function smallDataTestBlock!(fg)
     @test addMetadata!(fg, :a, :g => ["yes", "maybe"]) == getVariable(fg, :a).smallData
     @test addMetadata!(fg, :a, :h => [true, false]) == getVariable(fg, :a).smallData
 
-    @test_throws ErrorException addMetadata!(fg, :a, :a => 3)
+    @test_throws LabelExistsError addMetadata!(fg, :a, :a => 3)
     @test updateMetadata!(fg, :a, :a => 3) == getVariable(fg, :a).smallData
 
     @test_throws MethodError addMetadata!(fg, :a, :no => 0x01)
@@ -967,14 +967,14 @@ function DataEntriesTestBlock!(fg, v2)
     v1 = getVariable(fg, :a)
     @test addBlobentry!(v1, de1) == de1
     @test addBlobentry!(fg, :a, de2) == de2
-    @test_throws ErrorException addBlobentry!(v1, de1)
+    @test_throws LabelExistsError addBlobentry!(v1, de1)
     @test de2 in getBlobentries(v1)
 
     #get
     @test deepcopy(de1) == getBlobentry(v1, :key1)
     @test deepcopy(de2) == getBlobentry(fg, :a, :key2)
-    @test_throws KeyError getBlobentry(v2, :key1)
-    @test_throws KeyError getBlobentry(fg, :b, :key1)
+    @test_throws LabelNotFoundError getBlobentry(v2, :key1)
+    @test_throws LabelNotFoundError getBlobentry(fg, :b, :key1)
 
     #update
     @test mergeBlobentry!(fg, :a, de2_update) == 1
@@ -1056,14 +1056,14 @@ function blobsStoresTestBlock!(fg)
     @test addBlobentry!(var1, de1) == de1
     mergeVariable!(fg, var1)
     @test addBlobentry!(fg, :a, de2) == de2
-    @test_throws ErrorException addBlobentry!(var1, de1)
+    @test_throws LabelExistsError addBlobentry!(var1, de1)
     @test de2 in getBlobentries(fg, var1.label)
 
     #get
     @test deepcopy(de1) == getBlobentry(var1, :label1)
     @test deepcopy(de2) == getBlobentry(fg, :a, :label2)
-    @test_throws KeyError getBlobentry(var2, :label1)
-    @test_throws KeyError getBlobentry(fg, :b, :label1)
+    @test_throws LabelNotFoundError getBlobentry(var2, :label1)
+    @test_throws LabelNotFoundError getBlobentry(fg, :b, :label1)
 
     #update
     @test mergeBlobentry!(fg, :a, de2_update) == 1
@@ -1316,7 +1316,7 @@ function testGroup!(fg, v1, v2, f0, f1)
         #solver data is initialized
         @test !isInitialized(fg, :a)
         @test !isInitialized(v2)
-        @test @test_logs (:error, r"does not have solver data") !isInitialized(v2, :second)
+        @test_throws LabelNotFoundError isInitialized(v2, :second)
 
         # solvables
         @test getSolvable(v1) == 0
@@ -1746,18 +1746,18 @@ function CopyFunctionsTest(testDFGAPI; kwargs...)
     @test issetequal(lsf(dcdfg_part), [:x2x3f1])
 
     # not found errors
-    @test_throws ErrorException deepcopyGraph(GraphsDFG, dfg, [:x1, :a])
-    @test_throws ErrorException deepcopyGraph(GraphsDFG, dfg, [:x1], [:f1])
+    @test_throws LabelNotFoundError deepcopyGraph(GraphsDFG, dfg, [:x1, :a])
+    @test_throws LabelNotFoundError deepcopyGraph(GraphsDFG, dfg, [:x1], [:f1])
 
     # already exists errors
     dcdfg_part = deepcopyGraph(GraphsDFG, dfg, [:x1, :x2, :x3], [:x1x2f1, :x2x3f1])
-    @test_throws ErrorException deepcopyGraph!(
+    @test_throws LabelExistsError deepcopyGraph!(
         dcdfg_part,
         dfg,
         [:x4, :x2, :x3],
         [:x1x2f1, :x2x3f1],
     )
-    @test_throws ErrorException deepcopyGraph!(dcdfg_part, dfg, [:x1x2f1])
+    @test_throws LabelNotFoundError deepcopyGraph!(dcdfg_part, dfg, [:x1x2f1])
 
     # same but overwrite destination
     deepcopyGraph!(

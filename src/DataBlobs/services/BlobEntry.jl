@@ -67,18 +67,14 @@ Also see: [`addBlobentry!`](@ref), [`getBlob`](@ref), [`listBlobentries`](@ref)
 """
 function getBlobentry(var::AbstractDFGVariable, key::Symbol)
     if !hasBlobentry(var, key)
-        throw(
-            KeyError(
-                "No dataEntry label $(key) found in variable $(getLabel(var)). Available keys: $(keys(var.dataDict))",
-            ),
-        )
+        throw(LabelNotFoundError("Blobentry", key, collect(keys(var.dataDict))))
     end
     return var.dataDict[key]
 end
 
 function getBlobentry(var::VariableDFG, key::Symbol)
     if !hasBlobentry(var, key)
-        throw(KeyError(key))
+        throw(LabelNotFoundError("Blobentry", key))
     end
     return var.blobEntries[findfirst(x -> x.label == key, var.blobEntries)]
 end
@@ -156,19 +152,18 @@ Should be extended if DFG variable is not returned by reference.
 
 Also see: [`getBlobentry`](@ref), [`addBlob!`](@ref), [`mergeBlobentries!`](@ref)
 """
-function addBlobentry!(var::AbstractDFGVariable, entry::Blobentry;)
+function addBlobentry!(var::AbstractDFGVariable, entry::Blobentry)
     # see https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/985
     # blobId::Union{UUID,Nothing} = (isnothing(entry.blobId) ? entry.id : entry.blobId),
     # blobSize::Int = (hasfield(Blobentry, :size) ? entry.size : -1)
-    haskey(var.dataDict, entry.label) &&
-        error("blobEntry $(entry.label) already exists on variable $(getLabel(var))")
+    haskey(var.dataDict, entry.label) && throw(LabelExistsError("Blobentry", entry.label))
     var.dataDict[entry.label] = entry
     return entry
 end
 
 function addBlobentry!(var::VariableDFG, entry::Blobentry)
     entry.label in getproperty.(var.blobEntries, :label) &&
-        error("blobEntry $(entry.label) already exists on variable $(getLabel(var))")
+        throw(LabelExistsError("Blobentry", entry.label))
     push!(var.blobEntries, entry)
     return entry
 end
