@@ -57,19 +57,10 @@ end
 function unpackDFGMetadata(packed::PackedGraphsDFG)
     commonfields = intersect(fieldnames(GraphsDFG), fieldnames(PackedGraphsDFG))
 
-    #FIXME Deprecate remove in DFG v0.24
-    # setdiff!(commonfields, [:blobStores])
-    # blobStores = Dict{Symbol, AbstractBlobstore}()
-    # !isnothing(packed.blobStores) && merge!(blobStores, packed.blobStores)
-
     setdiff!(commonfields, [:blobStores])
     blobStores = packed.blobStores
 
-    agent = packed.agent
-    graphBlobEntries = packed.graphBlobEntries
-    graphMetadata = packed.graphMetadata
-    graphLabel = packed.graphLabel
-
+    #TODO add 'CanSerialize' trait to blobstores and also serialize NvaBlobStores
     _isfolderstorepath(s) = false
     _isfolderstorepath(s::FolderStore) = ispath(s.folder)
     # FIXME escalate to keyword
@@ -101,10 +92,6 @@ function unpackDFGMetadata(packed::PackedGraphsDFG)
 
     return GraphsDFG{typeof(packed.solverParams), VT, FT}(;
         blobStores,
-        graphBlobEntries,
-        graphMetadata,
-        graphLabel,
-        agent,
         props...,
     )
 end
