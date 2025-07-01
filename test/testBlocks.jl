@@ -1410,7 +1410,7 @@ function connectivityTestGraph(
     numNodesType1 = 5
     numNodesType2 = 5
 
-    dfg = T(; userLabel = "test@navability.io")
+    dfg = T(; graphLabel = :testGraph)
 
     vars = vcat(
         map(
@@ -1649,7 +1649,7 @@ function ProducingDotFiles(
 )
     # "Producing Dot Files"
     # create a simpler graph for dot testing
-    dotdfg = testDFGAPI(; userLabel = "test@navability.io")
+    dotdfg = testDFGAPI(; graphLabel = :testGraph)
 
     if v1 === nothing
         v1 = VARTYPE(:a, VariableState{TestVariableType1}())
@@ -1775,7 +1775,7 @@ function CopyFunctionsTest(testDFGAPI; kwargs...)
     dcdfg_part1 = deepcopyGraph(GraphsDFG, dfg, vlbls1)
     dcdfg_part2 = deepcopyGraph(GraphsDFG, dfg, vlbls2)
 
-    mergedGraph = testDFGAPI(; userLabel = "test@navability.io")
+    mergedGraph = testDFGAPI(; graphLabel = :testGraph)
     mergeGraph!(mergedGraph, dcdfg_part1)
     mergeGraph!(mergedGraph, dcdfg_part2)
 
@@ -1840,7 +1840,7 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
         # Save and load the graph to test.
         saveDFG(dfg, filename)
 
-        retDFG = testDFGAPI(; userLabel = "test@navability.io")
+        retDFG = testDFGAPI(; graphLabel = :testGraph)
         @info "Going to load $filename"
 
         @test_throws AssertionError loadDFG!(retDFG, "badfilename")

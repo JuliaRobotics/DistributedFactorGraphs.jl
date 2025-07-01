@@ -11,15 +11,9 @@ Base.Broadcast.broadcastable(dfg::AbstractDFG) = Ref(dfg)
 ##==============================================================================
 ## Interface for an AbstractDFG
 ##==============================================================================
-# TODO update to remove URS
+# TODO update to include graph and agent extras.
 # Standard recommended fields to implement for AbstractDFG
 # - `description::String`
-# - `userLabel::String`
-# - `robotLabel::String`
-# - `sessionLabel::String`
-# - `userData::Dict{Symbol, String}`
-# - `robotData::Dict{Symbol, String}`
-# - `sessionData::Dict{Symbol, String}`
 # - `solverParams::T<:AbstractParams`
 # - `addHistory::Vector{Symbol}`
 # - `blobStores::Dict{Symbol, AbstractBlobstore}`
@@ -1582,9 +1576,8 @@ function getSummaryGraph(dfg::G) where {G <: AbstractDFG}
     #TODO fix deprecated constructor
     summaryDfg = GraphsDFG{NoSolverParams, VariableSummary, FactorSummary}(;
         description = "Summary of $(getDescription(dfg))",
-        userLabel = dfg.userLabel,
-        robotLabel = dfg.robotLabel,
-        sessionLabel = dfg.sessionLabel,
+        agent = dfg.agent,
+        graphLabel = Symbol(getGraphLabel(dfg), "_summary_$(string(uuid4())[1:6])"),
     )
     deepcopyGraph!(summaryDfg, dfg)
     # for v in getVariables(dfg)
