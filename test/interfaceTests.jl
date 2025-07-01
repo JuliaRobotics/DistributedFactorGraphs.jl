@@ -150,7 +150,7 @@ end
 # order up to here is important, TODO maybe make independant
 ##
 @testset "Adjacency Matrices" begin
-    fg = testDFGAPI(; userLabel = "test@navability.io")
+    fg = testDFGAPI(; graphLabel = :testGraph)
     addVariable!(fg, var1)
     setSolvable!(fg, :a, 1)
     addVariable!(fg, var2)
@@ -192,7 +192,7 @@ end
 
 @testset "Copy Functions" begin
     rand(6)
-    fg = testDFGAPI(; userLabel = "test@navability.io")
+    fg = testDFGAPI(; graphLabel = :testGraph)
     addVariable!(fg, var1)
     addVariable!(fg, var2)
     addVariable!(fg, var3)
@@ -203,7 +203,7 @@ end
     # @test getVariableOrder(fg,:f1) == getVariableOrder(fgcopy,:f1)
 
     #test copyGraph, deepcopyGraph[!]
-    fgcopy = testDFGAPI(; userLabel = "test@navability.io")
+    fgcopy = testDFGAPI(; graphLabel = :testGraph)
     DFG.deepcopyGraph!(fgcopy, fg)
     @test getVariableOrder(fg, :abf1) == getVariableOrder(fgcopy, :abf1)
 

@@ -13,17 +13,6 @@ mutable struct GraphsDFG{
 } <: AbstractDFG{T}
     g::FactorGraph{Int, V, F}
     description::String
-    # ------ deprecated fields ---------
-    userLabel::Union{Nothing, String}
-    robotLabel::Union{Nothing, String}
-    sessionLabel::Union{Nothing, String}
-    userData::Union{Nothing, Dict{Symbol, SmallDataTypes}}
-    robotData::Union{Nothing, Dict{Symbol, SmallDataTypes}}
-    sessionData::Union{Nothing, Dict{Symbol, SmallDataTypes}}
-    userBlobEntries::Union{Nothing, OrderedDict{Symbol, Blobentry}}
-    robotBlobEntries::Union{Nothing, OrderedDict{Symbol, Blobentry}}
-    sessionBlobEntries::Union{Nothing, OrderedDict{Symbol, Blobentry}}
-    # ---------------------------------
     addHistory::Vector{Symbol} #TODO: Discuss more - is this an audit trail?
     solverParams::T # Solver parameters
     blobStores::Dict{Symbol, AbstractBlobstore}
@@ -43,43 +32,6 @@ function DFG.setMetadata!(dfg::GraphsDFG, metadata::Dict{Symbol, SmallDataTypes}
     # with set old data should be removed, but care is taken to make sure its not the same object
     dfg.graphMetadata !== metadata && empty!(dfg.graphMetadata)
     return merge!(dfg.graphMetadata, metadata)
-end
-
-deprecatedDfgFields = [
-    :userLabel,
-    :robotLabel,
-    :sessionLabel,
-    :userData,
-    :robotData,
-    :sessionData,
-    :userBlobEntries,
-    :robotBlobEntries,
-    :sessionBlobEntries,
-]
-
-function Base.propertynames(x::GraphsDFG, private::Bool = false)
-    return setdiff(fieldnames(GraphsDFG), deprecatedDfgFields)
-end
-
-# deprected in v0.25
-function Base.getproperty(dfg::GraphsDFG, f::Symbol)
-    if f in deprecatedDfgFields
-        Base.depwarn(
-            "Field $f is deprecated as part of removing user/robot/session. Replace with Agent or Factorgraph [Label/Metadata/BlobEntries].",
-            :getproperty,
-        )
-    end
-    return getfield(dfg, f)
-end
-
-function Base.setproperty!(dfg::GraphsDFG, f::Symbol, val)
-    if f in deprecatedDfgFields
-        Base.depwarn(
-            "Field $f is deprecated as part of removing user/robot/session. Replace with Agent or Factorgraph [Label/Metadata/BlobEntries].",
-            :setproperty!,
-        )
-    end
-    return setfield!(dfg, f, val)
 end
 
 """
@@ -115,52 +67,15 @@ function GraphsDFG{T, V, F}(
         agentMetadata,
         agentBlobEntries,
     ),
-
-    #Deprecated fields
-    userLabel::Union{Nothing, String} = nothing,
-    robotLabel::Union{Nothing, String} = nothing,
-    sessionLabel::Union{Nothing, String} = nothing,
-    userData::Union{Nothing, Dict{Symbol, SmallDataTypes}} = nothing,
-    robotData::Union{Nothing, Dict{Symbol, SmallDataTypes}} = nothing,
-    sessionData::Union{Nothing, Dict{Symbol, SmallDataTypes}} = nothing,
-    userBlobEntries::Union{Nothing, OrderedDict{Symbol, Blobentry}} = nothing,
-    robotBlobEntries::Union{Nothing, OrderedDict{Symbol, Blobentry}} = nothing,
-    sessionBlobEntries::Union{Nothing, OrderedDict{Symbol, Blobentry}} = nothing,
 ) where {T <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
-    if any([
-        !isnothing(userLabel),
-        !isnothing(robotLabel),
-        !isnothing(sessionLabel),
-        !isnothing(userData),
-        !isnothing(robotData),
-        !isnothing(sessionData),
-        !isnothing(userBlobEntries),
-        !isnothing(robotBlobEntries),
-        !isnothing(sessionBlobEntries),
-    ])
-        #deprecated in v0.25
-        Base.depwarn(
-            "Kwargs with user/robot/session is deprecated. Replace with agent[Label/Metadata/BlobEntries] or graph[Label/Metadata/BlobEntries].",
-            :GraphsDFG,
-        )
-    end
 
-    # Validate the userLabel, robotLabel, and sessionLabel
+    # Validate the graphLabel and agentLabel
     !isValidLabel(graphLabel) && error("'$graphLabel' is not a valid label")
     !isValidLabel(agentLabel) && error("'$agentLabel' is not a valid label")
 
     return GraphsDFG{T, V, F}(
         g,
         graphDescription,
-        userLabel,
-        robotLabel,
-        sessionLabel,
-        userData,
-        robotData,
-        sessionData,
-        userBlobEntries,
-        robotBlobEntries,
-        sessionBlobEntries,
         addHistory,
         solverParams,
         blobStores,
@@ -195,65 +110,4 @@ function GraphsDFG(
     kwargs...,
 ) where {T}
     return GraphsDFG{T, VariableCompute, FactorCompute}(g; solverParams, kwargs...)
-end
-
-function GraphsDFG(
-    description::String,
-    userLabel::String,
-    robotLabel::String,
-    sessionLabel::String,
-    userData::Dict{Symbol, SmallDataTypes},
-    robotData::Dict{Symbol, SmallDataTypes},
-    sessionData::Dict{Symbol, SmallDataTypes},
-    solverParams::AbstractParams,
-    blobStores = Dict{Symbol, AbstractBlobstore}(),
-)
-    #deprecated in v0.25
-    Base.depwarn(
-        "user/robot/session is deprecated. Replace with agent[Label/Metadata/BlobEntries] or graph[Label/Metadata/BlobEntries].",
-        :GraphsDFG,
-    )
-    return GraphsDFG{typeof(solverParams), VariableCompute, FactorCompute}(
-        FactorGraph{Int, VariableCompute, FactorCompute}();
-        description,
-        userLabel,
-        robotLabel,
-        sessionLabel,
-        userData,
-        robotData,
-        sessionData,
-        solverParams,
-        blobStores,
-    )
-end
-
-function GraphsDFG{T, V, F}(
-    description::String,
-    userLabel::String,
-    robotLabel::String,
-    sessionLabel::String,
-    userData::Dict{Symbol, SmallDataTypes},
-    robotData::Dict{Symbol, SmallDataTypes},
-    sessionData::Dict{Symbol, SmallDataTypes},
-    solverParams::T,
-    blobStores = Dict{Symbol, AbstractBlobstore}(),
-) where {T <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
-
-    #deprecated in v0.25
-    Base.depwarn(
-        "user/robot/session is deprecated. Replace with agent[Label/Metadata/BlobEntries] or graph[Label/Metadata/BlobEntries].",
-        :GraphsDFG,
-    )
-    return GraphsDFG{T, V, F}(
-        FactorGraph{Int, V, F}();
-        description,
-        userLabel,
-        robotLabel,
-        sessionLabel,
-        userData,
-        robotData,
-        sessionData,
-        solverParams,
-        blobStores,
-    )
 end
