@@ -63,10 +63,22 @@ end
 if get(ENV, "IIF_TEST", "true") == "true"
 
     # Switch to our upstream test branch.
+    #FIXME This is a temporary fix to use the develop branch of IIF.
+    # Pkg.add(PackageSpec(; name = "IncrementalInference", rev = "upstream/dfg_integration_test"))
+    # Pkg.add(PackageSpec(; name = "IncrementalInference", rev = "develop"))
     Pkg.add(
-        #FIXME This is a temporary fix to use the refactored factor branch.
-        # PackageSpec(; name = "IncrementalInference", rev = "upstream/dfg_integration_test"),
-        PackageSpec(; name = "IncrementalInference", rev = "develop"),
+        PackageSpec(;
+            url = "https://github.com/JuliaRobotics/IncrementalInference.jl.git",
+            subdir = "IncrementalInferenceTypes",
+            rev = "develop",
+        ),
+    )
+    Pkg.add(
+        PackageSpec(;
+            url = "https://github.com/JuliaRobotics/IncrementalInference.jl.git",
+            subdir = "IncrementalInference",
+            rev = "develop",
+        ),
     )
     @info "------------------------------------------------------------------------"
     @info "These tests are using IncrementalInference to do additional driver tests"

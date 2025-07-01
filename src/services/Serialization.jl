@@ -55,9 +55,21 @@ function parseVariableType(_typeString::AbstractString)
         typeString = _typeString
     end
 
-    all_subtypes = Dict(map(s -> nameof(s) => s, subtypes(InferenceVariable)))
+    split_typeSyms = Symbol.(split(typeString, "."))
 
-    subtype = get(all_subtypes, Symbol(split(typeString, ".")[end]), nothing)
+    subtype = nothing
+
+    if length(split_typeSyms) == 1
+        @warn "Module not found in variable '$typeString'." maxlog = 1
+        subtype = getfield(Main, split_typeSyms[1]) # no module specified, use Main
+    #FIXME interm fallback for backwards compatibility in IIFTypes and RoMETypes
+    elseif split_typeSyms[1] in Symbol.(values(Base.loaded_modules))
+        m = getfield(Main, split_typeSyms[1])
+        subtype = getfield(m, split_typeSyms[end])
+    else
+        @warn "Module not found in Main, using Main for type '$typeString'." maxlog = 1
+        subtype = getfield(Main, split_typeSyms[end])
+    end
 
     if isnothing(subtype)
         throw(SerializationError("Unable to deserialize type $(_typeString), not found"))
