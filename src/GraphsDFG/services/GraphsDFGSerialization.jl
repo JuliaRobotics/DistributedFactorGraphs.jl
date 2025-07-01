@@ -90,10 +90,7 @@ function unpackDFGMetadata(packed::PackedGraphsDFG)
         return !isnothing(v)
     end
 
-    return GraphsDFG{typeof(packed.solverParams), VT, FT}(;
-        blobStores,
-        props...,
-    )
+    return GraphsDFG{typeof(packed.solverParams), VT, FT}(; blobStores, props...)
 end
 
 function unpackDFGMetadata!(dfg::GraphsDFG, packed::PackedGraphsDFG)
