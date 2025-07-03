@@ -171,7 +171,7 @@ export listTags, mergeTags!, removeTags!, emptyTags!
 # Variable
 ##------------------------------------------------------------------------------
 # Abstract Variable Data
-export InferenceVariable
+export VariableStateType
 
 # accessors
 export getSolverDataDict, setSolverData!
@@ -257,7 +257,7 @@ export @format_str # exported from FileIO
 ##------------------------------------------------------------------------------
 # Factor Data
 export AbstractFactorObservation, AbstractPackedFactorObservation
-export AbstractPrior, AbstractRelative, AbstractRelativeMinimize, AbstractManifoldMinimize
+export PriorObservation, RelativeObservation
 export FactorSolverCache
 
 # accessors

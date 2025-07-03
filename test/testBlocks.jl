@@ -8,8 +8,8 @@ using DistributedFactorGraphs: LabelExistsError, LabelNotFoundError
 import Base: convert
 # import DistributedFactorGraphs: getData, addData!, updateData!, deleteData!
 
-# Test InferenceVariable Types
-# struct TestVariableType1 <: InferenceVariable
+# Test VariableStateType Types
+# struct TestVariableType1 <: VariableStateType
 #     dims::Int
 #     manifolds::Tuple{Symbol}
 #     TestVariableType1() = new(1,(:Euclid,))
@@ -21,7 +21,7 @@ Base.convert(::Type{<:Tuple}, ::typeof(Euclidean(2))) = (:Euclid, :Euclid)
 @defVariable TestVariableType1 Euclidean(1) [0.0;]
 @defVariable TestVariableType2 Euclidean(2) [0; 0.0]
 
-# struct TestVariableType2 <: InferenceVariable
+# struct TestVariableType2 <: VariableStateType
 #     dims::Int
 #     manifolds::Tuple{Symbol, Symbol}
 #     TestVariableType2() = new(2,(:Euclid,:Circular,))
@@ -30,9 +30,9 @@ Base.convert(::Type{<:Tuple}, ::typeof(Euclidean(2))) = (:Euclid, :Euclid)
 struct TestFunctorInferenceType1 <: AbstractRelative end
 struct TestFunctorInferenceType2 <: AbstractRelative end
 
-struct TestAbstractPrior <: AbstractPrior end
+struct TestAbstractPrior <: PriorObservation end
 # struct TestAbstractRelativeFactor <: AbstractRelativeRoots end
-struct TestAbstractRelativeFactorMinimize <: AbstractRelativeMinimize end
+struct TestAbstractRelativeFactorMinimize <: RelativeObservation end
 
 Base.@kwdef struct PackedTestFunctorInferenceType1 <: AbstractPackedFactorObservation
     s::String = ""
@@ -129,8 +129,8 @@ end
 # T = testDFGAPI
 
 #test Specific definitions
-# struct TestInferenceVariable1 <: InferenceVariable end
-# struct TestInferenceVariable2 <: InferenceVariable end
+# struct TestInferenceVariable1 <: VariableStateType end
+# struct TestInferenceVariable2 <: VariableStateType end
 # struct TestFunctorInferenceType1 <: AbstractFactorObservation end
 
 # NOTE see note in AbstractDFG.jl setSolverParams!

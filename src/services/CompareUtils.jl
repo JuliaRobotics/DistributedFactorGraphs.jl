@@ -6,11 +6,11 @@ import Base.==
 # Reference https://github.com/JuliaLang/julia/issues/4648
 
 #=
-For now abstract `InferenceVariable`s are considered equal if they are the same type, dims, and manifolds (abels are deprecated)
+For now abstract `VariableStateType`s are considered equal if they are the same type, dims, and manifolds (abels are deprecated)
 If your implentation has aditional properties such as `DynPose2` with `ut::Int64` (microsecond time) or support different manifolds
 implement compare if needed.
 =#
-# ==(a::InferenceVariable,b::InferenceVariable) = typeof(a) == typeof(b) && a.dims == b.dims && a.manifolds == b.manifolds
+# ==(a::VariableStateType,b::VariableStateType) = typeof(a) == typeof(b) && a.dims == b.dims && a.manifolds == b.manifolds
 
 ==(a::FactorSolverCache, b::FactorSolverCache) = typeof(a) == typeof(b)
 

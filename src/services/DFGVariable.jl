@@ -45,7 +45,7 @@ getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimest
 Variable nodes `variableType` information holding a variety of meta data associated with the type of variable stored in that node of the factor graph.
 
 Notes
-- API Quirk in that this function returns and instance of `::T` not a `::Type{<:InferenceVariable}`.
+- API Quirk in that this function returns and instance of `::T` not a `::Type{<:VariableStateType}`.
 
 DevWork
 - TODO, see IncrementalInference.jl 1228
@@ -65,12 +65,12 @@ getVariableType(::VariableState{T}) where {T} = T()
 getVariableType(dfg::AbstractDFG, lbl::Symbol) = getVariableType(getVariable(dfg, lbl))
 
 ##------------------------------------------------------------------------------
-## InferenceVariable
+## VariableStateType
 ##------------------------------------------------------------------------------
 
 # """
 #     $SIGNATURES
-# Interface function to return the `variableType` manifolds of an InferenceVariable, extend this function for all Types<:InferenceVariable.
+# Interface function to return the `variableType` manifolds of an VariableStateType, extend this function for all Types<:VariableStateType.
 # """
 # function getManifolds end
 
@@ -78,21 +78,27 @@ getVariableType(dfg::AbstractDFG, lbl::Symbol) = getVariableType(getVariable(dfg
 # getManifolds(::T) where {T <: ManifoldsBase.AbstractManifold} = getManifolds(T)
 
 """
-    @defVariable StructName manifolds<:ManifoldsBase.AbstractManifold
+    @defVarstateType StructName manifold point_identity
 
-A macro to create a new variable with name `StructName` and manifolds.  Note that 
-the `manifolds` is an object and *must* be a subtype of `ManifoldsBase.AbstractManifold`.
-See documentation in [Manifolds.jl on making your own](https://juliamanifolds.github.io/Manifolds.jl/stable/examples/manifold.html). 
+A macro to create a new variable type with name `StructName` associated with a given manifold and identity point.
+
+- `StructName` is the name of the new variable type, which will be defined as a subtype of `VariableStateType`.
+- `manifold` is an object that must be a subtype of `ManifoldsBase.AbstractManifold`.
+- `point_identity` is the identity point on the manifold, used as a reference for operations.
+
+This macro is useful for defining variable types that are not parameterized by dimension, and for associating them with a specific manifold and identity point.
+
+See the [Manifolds.jl documentation on creating your own manifolds](https://juliamanifolds.github.io/Manifolds.jl/stable/examples/manifold.html) for more information.
 
 Example:
 ```
 DFG.@defVariable Pose2 SpecialEuclidean(2) ArrayPartition([0;0.0],[1 0; 0 1.0])
 ```
 """
-macro defVariable(structname, manifold, point_identity)
+macro defVarstateType(structname, manifold, point_identity)
     return esc(
         quote
-            Base.@__doc__ struct $structname <: InferenceVariable end
+            Base.@__doc__ struct $structname <: VariableStateType{Any} end
 
             # user manifold must be a <:Manifold
             @assert ($manifold isa AbstractManifold) "@defVariable of " *
@@ -110,50 +116,87 @@ macro defVariable(structname, manifold, point_identity)
     )
 end
 
+macro defVariable(args...)
+    return esc(:(DFG.@defVarstateType $(args...)))
+end
+
+"""
+    @defVarstateTypeN StructName manifold point_identity
+
+A macro to create a new variable type with name `StructName` that is parameterized by `N` and associated with a given manifold and identity point.
+
+- `StructName` is the name of the new variable type, which will be defined as a subtype of `VariableStateType{N}`.
+- `manifold` is an object that must be a subtype of `ManifoldsBase.AbstractManifold`.
+- `point_identity` is the identity point on the manifold, used as a reference for operations.
+
+This macro is useful for defining variable types that are parameterized by dimension or other type parameters (e.g., `Pose{N}`), and for associating them with a specific manifold and identity point.
+
+See the [Manifolds.jl documentation on creating your own manifolds](https://juliamanifolds.github.io/Manifolds.jl/stable/examples/manifold.html) for more information.
+
+Example:
+```
+DFG.@defVarstateTypeN Pose{N} SpecialEuclidean(N) ArrayPartition(zeros(SVector{N, Float64}), SMatrix{N, N, Float64}(I))
+```
+"""
+macro defVarstateTypeN(structname, manifold, point_identity)
+    return esc(
+        quote
+            Base.@__doc__ struct $structname <: VariableStateType{N} end
+
+            DFG.getManifold(::Type{$structname}) where {N} = $manifold
+
+            DFG.getPointType(::Type{$structname}) where {N} = typeof($point_identity)
+
+            DFG.getPointIdentity(::Type{$structname}) where {N} = $point_identity
+        end,
+    )
+end
+
 function Base.convert(
     ::Type{<:AbstractManifold},
     ::Union{<:T, Type{<:T}},
-) where {T <: InferenceVariable}
+) where {T <: VariableStateType}
     return getManifold(T)
 end
 
 """
     $SIGNATURES
-Interface function to return the `<:ManifoldsBase.AbstractManifold` object of `variableType<:InferenceVariable`.
+Interface function to return the `<:ManifoldsBase.AbstractManifold` object of `variableType<:VariableStateType`.
 """
-getManifold(::T) where {T <: InferenceVariable} = getManifold(T)
+getManifold(::T) where {T <: VariableStateType} = getManifold(T)
 getManifold(vari::VariableCompute) = getVariableType(vari) |> getManifold
-# covers both <:InferenceVariable and <:AbstractFactorObservation
+getManifold(state::VariableState) = getVariableType(state) |> getManifold
+# covers both <:VariableStateType and <:AbstractFactorObservation
 getManifold(dfg::AbstractDFG, lbl::Symbol) = getManifold(dfg[lbl])
 
 """
     $SIGNATURES
-Interface function to return the `variableType` dimension of an InferenceVariable, extend this function for all Types<:InferenceVariable.
+Interface function to return the `variableType` dimension of an VariableStateType, extend this function for all Types<:VariableStateType.
 """
 function getDimension end
 
-getDimension(::Type{T}) where {T <: InferenceVariable} = manifold_dimension(getManifold(T))
-getDimension(::T) where {T <: InferenceVariable} = manifold_dimension(getManifold(T))
+getDimension(::Type{T}) where {T <: VariableStateType} = manifold_dimension(getManifold(T))
+getDimension(::T) where {T <: VariableStateType} = manifold_dimension(getManifold(T))
 getDimension(M::ManifoldsBase.AbstractManifold) = manifold_dimension(M)
 getDimension(p::Distributions.Distribution) = length(p)
 getDimension(var::VariableCompute) = getDimension(getVariableType(var))
 
 """
     $SIGNATURES
-Interface function to return the manifold point type of an InferenceVariable, extend this function for all Types<:InferenceVariable.
+Interface function to return the manifold point type of an VariableStateType, extend this function for all Types<:VariableStateType.
 """
 function getPointType end
-getPointType(::T) where {T <: InferenceVariable} = getPointType(T)
+getPointType(::T) where {T <: VariableStateType} = getPointType(T)
 
 """
     $SIGNATURES
-Interface function to return the user provided identity point for this InferenceVariable manifold, extend this function for all Types<:InferenceVariable.
+Interface function to return the user provided identity point for this VariableStateType manifold, extend this function for all Types<:VariableStateType.
 
 Notes
 - Used in transition period for Serialization.  This function will likely be changed or deprecated entirely.
 """
 function getPointIdentity end
-getPointIdentity(::T) where {T <: InferenceVariable} = getPointIdentity(T)
+getPointIdentity(::T) where {T <: VariableStateType} = getPointIdentity(T)
 
 """
     $SIGNATURES
@@ -173,7 +216,7 @@ function getPoint(
     ::Type{T},
     v::AbstractVector,
     basis = ManifoldsBase.DefaultOrthogonalBasis(),
-) where {T <: InferenceVariable}
+) where {T <: VariableStateType}
     M = getManifold(T)
     p0 = getPointIdentity(T)
     X = ManifoldsBase.get_vector(M, p0, v, basis)
@@ -197,7 +240,7 @@ function getCoordinates(
     ::Type{T},
     p,
     basis = ManifoldsBase.DefaultOrthogonalBasis(),
-) where {T <: InferenceVariable}
+) where {T <: VariableStateType}
     M = getManifold(T)
     p0 = getPointIdentity(T)
     X = ManifoldsBase.log(M, p0, p)

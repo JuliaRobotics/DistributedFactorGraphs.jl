@@ -102,31 +102,31 @@ using RoME
 @assert RoME.PriorPose2 == DFG._getPriorType(Pose2)
 ```
 """
-function _getPriorType(_type::Type{<:InferenceVariable})
+function _getPriorType(_type::Type{<:VariableStateType})
     return getfield(_type.name.module, Symbol(:Prior, _type.name.name))
 end
 
 ##==============================================================================
 ## Default Factors Function Macro
 ##==============================================================================
-export PackedSamplableBelief
+export PackedBelief
 
 function pack end
 function unpack end
 function packDistribution end
 function unpackDistribution end
 
-abstract type PackedSamplableBelief end
-StructTypes.StructType(::Type{<:PackedSamplableBelief}) = StructTypes.UnorderedStruct()
+abstract type PackedBelief end
+StructTypes.StructType(::Type{<:PackedBelief}) = StructTypes.UnorderedStruct()
 
 #TODO remove, rather use StructTypes.jl properly
-function Base.convert(::Type{<:PackedSamplableBelief}, nt::Union{NamedTuple, JSON3.Object})
+function Base.convert(::Type{<:PackedBelief}, nt::Union{NamedTuple, JSON3.Object})
     distrType = getTypeFromSerializationModule(nt._type)
     return distrType(; nt...)
 end
 
 """
-    @defFactorType StructName factortype<:AbstractFactorObservation manifolds<:AbstractManifold
+    @defObservationType StructName factortype<:AbstractFactorObservation manifolds<:AbstractManifold
 
 A macro to create a new factor function with name `StructName` and manifold. Note that
 the `manifold` is an object and *must* be a subtype of `ManifoldsBase.AbstractManifold`.
@@ -134,19 +134,19 @@ See documentation in [Manifolds.jl on making your own](https://juliamanifolds.gi
 
 Example:
 ```
-DFG.@defFactorType Pose2Pose2 AbstractManifoldMinimize SpecialEuclidean(2)
+DFG.@defObservationType Pose2Pose2 RelativeObservation SpecialEuclidean(2)
 ```
 """
-macro defFactorType(structname, factortype, manifold)
+macro defObservationType(structname, factortype, manifold)
     packedstructname = Symbol("Packed", structname)
     return esc(
         quote
             # user manifold must be a <:Manifold
-            @assert ($manifold isa AbstractManifold) "@defFactorType manifold (" *
+            @assert ($manifold isa AbstractManifold) "@defObservationType manifold (" *
                                                      string($manifold) *
                                                      ") is not an `AbstractManifold`"
 
-            @assert ($factortype <: AbstractFactorObservation) "@defFactorType factortype (" *
+            @assert ($factortype <: AbstractFactorObservation) "@defObservationType factortype (" *
                                                                string($factortype) *
                                                                ") is not an `AbstractFactorObservation`"
 
@@ -154,9 +154,9 @@ macro defFactorType(structname, factortype, manifold)
                 Z::T
             end
 
-            #TODO should this be $packedstructname{T <: PackedSamplableBelief}
+            #TODO should this be $packedstructname{T <: PackedBelief}
             Base.@__doc__ struct $packedstructname <: AbstractPackedFactorObservation
-                Z::PackedSamplableBelief
+                Z::PackedBelief
             end
 
             # $structname(; Z) = $structname(Z)                                                     
@@ -275,11 +275,11 @@ function isPrior(dfg::AbstractDFG, fc::Symbol)
     return isPrior(getFactorType(fco))
 end
 
-function isPrior(::AbstractPrior)
+function isPrior(::PriorObservation)
     return true
 end
 
-function isPrior(::AbstractRelative)
+function isPrior(::RelativeObservation)
     return false
 end
 

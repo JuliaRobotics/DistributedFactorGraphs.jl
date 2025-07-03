@@ -2,7 +2,7 @@
 ## Abstract Types
 ##==============================================================================
 
-abstract type InferenceVariable end
+abstract type VariableStateType{N} end
 
 ##==============================================================================
 ## VariableState
@@ -19,7 +19,7 @@ N: Manifold dimension.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef mutable struct VariableState{T <: InferenceVariable, P, N}
+Base.@kwdef mutable struct VariableState{T <: VariableStateType, P, N}
     """
     Globally unique identifier.
     """
@@ -82,10 +82,10 @@ end
 
 ##------------------------------------------------------------------------------
 ## Constructors
-function VariableState{T}(; kwargs...) where {T <: InferenceVariable}
+function VariableState{T}(; kwargs...) where {T <: VariableStateType}
     return VariableState{T, getPointType(T), getDimension(T)}(; kwargs...)
 end
-function VariableState(variableType::InferenceVariable; kwargs...)
+function VariableState(variableType::VariableStateType; kwargs...)
     return VariableState{typeof(variableType)}(; kwargs...)
 end
 
@@ -283,7 +283,7 @@ Complete variable structure for a DistributedFactorGraph variable.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct VariableCompute{T <: InferenceVariable, P, N} <: AbstractDFGVariable
+Base.@kwdef struct VariableCompute{T <: VariableStateType, P, N} <: AbstractDFGVariable
     """The ID for the variable"""
     id::Union{UUID, Nothing} = nothing
     """Variable label, e.g. :x1.
@@ -325,7 +325,7 @@ The default VariableCompute constructor.
 """
 function VariableCompute(
     label::Symbol,
-    T::Type{<:InferenceVariable};
+    T::Type{<:VariableStateType};
     timestamp::ZonedDateTime = now(localzone()),
     solvable::Union{Int, Base.RefValue{Int}} = Ref(1),
     kwargs...,
@@ -337,7 +337,7 @@ function VariableCompute(
     return VariableCompute{T, P, N}(; label, timestamp, solvable, kwargs...)
 end
 
-function VariableCompute(label::Symbol, variableType::InferenceVariable; kwargs...)
+function VariableCompute(label::Symbol, variableType::VariableStateType; kwargs...)
     return VariableCompute(label, typeof(variableType); kwargs...)
 end
 
