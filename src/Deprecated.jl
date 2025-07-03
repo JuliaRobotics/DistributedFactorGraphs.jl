@@ -1,4 +1,26 @@
 ## ================================================================================
+## Deprecated in v0.28
+##=================================================================================
+export AbstractRelativeMinimize,
+    AbstractManifoldMinimize,
+    AbstractPrior,
+    AbstractRelative,
+    InferenceVariable,
+    InferenceType,
+    PackedSamplableBelief
+
+const AbstractPrior = PriorObservation
+const AbstractRelative = RelativeObservation
+
+abstract type AbstractRelativeMinimize <: RelativeObservation end
+abstract type AbstractManifoldMinimize <: RelativeObservation end
+
+const InferenceVariable = VariableStateType{Any}
+const InferenceType = AbstractPackedFactorObservation
+
+const PackedSamplableBelief = PackedBelief
+
+## ================================================================================
 ## Deprecated in v0.27
 ##=================================================================================
 export AbstractFactor
@@ -430,7 +452,7 @@ function getFactorOperationalMemoryType(dfg::AbstractDFG)
     return getFactorOperationalMemoryType(getSolverParams(dfg))
 end
 
-function typeModuleName(variableType::InferenceVariable)
+function typeModuleName(variableType::VariableStateType)
     Base.depwarn("typeModuleName is obsolete", :typeModuleName)
     io = IOBuffer()
     ioc = IOContext(io, :module => DistributedFactorGraphs)
@@ -438,7 +460,7 @@ function typeModuleName(variableType::InferenceVariable)
     return String(take!(io))
 end
 
-typeModuleName(varT::Type{<:InferenceVariable}) = typeModuleName(varT())
+typeModuleName(varT::Type{<:VariableStateType}) = typeModuleName(varT())
 
 ## ================================================================================
 ## Deprecated in v0.25

@@ -5,11 +5,9 @@
 abstract type AbstractPackedFactorObservation end
 abstract type AbstractFactorObservation end
 
-abstract type AbstractPrior <: AbstractFactorObservation end
-abstract type AbstractRelative <: AbstractFactorObservation end
-abstract type AbstractRelativeMinimize <: AbstractRelative end
-abstract type AbstractManifoldMinimize <: AbstractRelative end
-
+abstract type PriorObservation <: AbstractFactorObservation end
+abstract type RelativeObservation <: AbstractFactorObservation end
+abstract type PackedObservation <: AbstractFactorObservation end
 # NOTE DF, Convolution is IIF idea, but DFG should know about "FactorSolverCache"
 # DF, IIF.CommonConvWrapper <: FactorSolverCache #
 # NOTE was `<: Function` as unnecessary
@@ -128,16 +126,6 @@ function FactorDFG(
 end
 
 FactorDFG(f::FactorDFG) = f
-
-# TODO consolidate to just one type
-"""
-$(TYPEDEF)
-Abstract parent type for all InferenceTypes, which are the
-observation functions inside of factors.
-"""
-abstract type InferenceType <: AbstractPackedFactorObservation end
-
-#TODO deprecate InferenceType in favor of AbstractPackedFactorObservation v0.26
 
 # Packed Factor constructor
 function assembleFactorName(xisyms::Union{Vector{String}, Vector{Symbol}})

@@ -601,7 +601,7 @@ end
 # to be consolidated, see #612
 function listVariables(
     dfg::AbstractDFG,
-    typeFilter::Type{<:InferenceVariable};
+    typeFilter::Type{<:VariableStateType};
     tags::Vector{Symbol} = Symbol[],
     solvable::Int = 0,
 )
@@ -667,7 +667,7 @@ end
 
 function listSolveKeys(
     dfg::AbstractDFG,
-    filterVariables::Union{Type{<:InferenceVariable}, Regex, Nothing} = nothing;
+    filterVariables::Union{Type{<:VariableStateType}, Regex, Nothing} = nothing;
     filterSolveKeys::Union{Regex, Nothing} = nothing,
     tags::Vector{Symbol} = Symbol[],
     solvable::Int = 0,
@@ -747,7 +747,7 @@ end
 ## list by types
 ##--------------
 
-function ls(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: InferenceVariable}
+function ls(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: VariableStateType}
     xx = getVariables(dfg)
     mask = getVariableType.(xx) .|> typeof .== T
     vxx = view(xx, mask)

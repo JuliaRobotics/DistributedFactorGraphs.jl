@@ -28,7 +28,7 @@ function _versionCheck(node::Union{<:VariableDFG, <:FactorDFG})
     end
 end
 
-function stringVariableType(varT::InferenceVariable)
+function stringVariableType(varT::VariableStateType)
     T = typeof(varT)
     #FIXME maybe don't use .parameters
     Tparams = T.parameters
@@ -123,7 +123,7 @@ function getTypeFromSerializationModule(_typeString::AbstractString)
 end
 
 # returns a PackedVariableState
-function packVariableState(d::VariableState{T}) where {T <: InferenceVariable}
+function packVariableState(d::VariableState{T}) where {T <: VariableStateType}
     @debug "Dispatching conversion variable -> packed variable for type $(string(getVariableType(d)))"
     castval = if 0 < length(d.val)
         precast = getCoordinates.(T, d.val)
@@ -170,7 +170,7 @@ function unpackVariableState(d::PackedVariableState)
     ststring = string(split(d.variableType, "(")[1])
     T = parseVariableType(ststring)
     isnothing(T) && error(
-        "The variable doesn't seem to have a variableType. It needs to set up with an InferenceVariable from IIF. This will happen if you use DFG to add serialized variables directly and try use them. Please use IncrementalInference.addVariable().",
+        "The variable doesn't seem to have a variableType. It needs to set up with an VariableStateType from IIF. This will happen if you use DFG to add serialized variables directly and try use them. Please use IncrementalInference.addVariable().",
     )
 
     r3 = d.dimval
