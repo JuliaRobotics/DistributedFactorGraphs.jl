@@ -8,10 +8,6 @@ global dfg, v1, v2, f1
     v2 = addVariable!(dfg, :b, Position{1}; tags = [:LANDMARK], solvable = 1)
     f1 = addFactor!(dfg, [:a; :b], LinearRelative(Normal(50.0, 2.0)); solvable = 0)
 end
-
-println()
-println()
-
 #test before anything changes
 @testset "Producing Dot Files" begin
     global dfg
@@ -187,8 +183,6 @@ end
     @test getTimestamp(v1) == v1.timestamp
     @test getVariablePPEDict(v1) == v1.ppeDict
     @test_throws LabelNotFoundError DistributedFactorGraphs.getVariablePPE(v1, :notfound)
-    @test getVariableState(v1) === v1.solverDataDict[:default]
-    @test getVariableState(v1) === v1.solverDataDict[:default]
     @test getVariableState(v1, :default) === v1.solverDataDict[:default]
     @test getSolverDataDict(v1) == v1.solverDataDict
     # legacy compat test
@@ -287,50 +281,6 @@ end
     @test listBlobentries(v1) == Symbol[]
 end
 
-@testset "Updating Nodes and Estimates" begin
-    global dfg
-    #get the variable
-    var1 = getVariable(dfg, :a)
-    #make a copy and simulate external changes
-    newvar = deepcopy(var1)
-    getVariablePPEDict(newvar)[:default] = MeanMaxPPE(:default, [150.0], [100.0], [50.0])
-    mergeVariableData!(dfg, newvar)
-
-    #Check if variable is updated
-    var1 = getVariable(dfg, :a)
-    @test getVariablePPEDict(newvar) == getVariablePPEDict(var1)
-
-    # Add a new estimate.
-    getVariablePPEDict(newvar)[:second] = MeanMaxPPE(:second, [15.0], [10.0], [5.0])
-
-    # Confirm they're different
-    @test getVariablePPEDict(newvar) != getVariablePPEDict(var1)
-    # Persist it.
-    mergeVariableData!(dfg, newvar)
-    # Get the latest
-    var1 = getVariable(dfg, :a)
-    @test symdiff(collect(keys(getVariablePPEDict(var1))), [:default, :second]) == Symbol[]
-
-    #Check if variable is updated
-    @test getVariablePPEDict(newvar) == getVariablePPEDict(var1)
-
-    # Delete :default and replace to see if new ones can be added
-    delete!(getVariablePPEDict(newvar), :default)
-    #confirm delete
-    @test symdiff(collect(keys(getVariablePPEDict(newvar))), [:second]) == Symbol[]
-    # Persist it., and test
-    mergeVariableData!(dfg, newvar)  #357 #358
-
-    # Get the latest and confirm they're the same, :second
-    var1 = getVariable(dfg, :a)
-
-    # TODO issue #166
-    @test getVariablePPEDict(newvar) != getVariablePPEDict(var1)
-    @test collect(keys(getVariablePPEDict(var1))) == [:default, :second]
-
-    # @test symdiff(collect(keys(getVariablePPE(getVariable(dfg, :a)))), [:default, :second]) == Symbol[]
-end
-
 # Connectivity test
 @testset "Connectivity Test" begin
     global dfg, v1, v2, f1
@@ -395,7 +345,7 @@ verts = map(n -> addVariable!(dfg, Symbol("x$n"), Position{1}; tags = [:POSE]), 
 #TODO fix this to use accessors
 setSolvable!(verts[7], 1)
 setSolvable!(verts[8], 0)
-getVariableState(verts[8]).solveInProgress = 1
+getVariableState(verts[8], :default).solveInProgress = 1
 #call update to set it on cloud
 mergeVariable!(dfg, verts[7])
 mergeVariable!(dfg, verts[8])
