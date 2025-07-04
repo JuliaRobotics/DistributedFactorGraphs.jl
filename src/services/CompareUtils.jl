@@ -253,8 +253,8 @@ function compareVariable(
     union!(skiplist, skip)
     TP = TP && compareAll(A.solverDataDict, B.solverDataDict; skip = skiplist, show = show)
 
-    Ad = getVariableState(A)
-    Bd = getVariableState(B)
+    Ad = getVariableState(A, :default) #FIXME why onlly comparing default?
+    Bd = getVariableState(B, :default)
 
     # TP = TP && compareAll(A.attributes, B.attributes, skip=[:variableType;], show=show)
     varskiplist = union(varskiplist, [:variableType])

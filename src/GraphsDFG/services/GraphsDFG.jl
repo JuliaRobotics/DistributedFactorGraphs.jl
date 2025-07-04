@@ -512,6 +512,9 @@ end
 
 # FG blob entries 
 function getGraphBlobentry(fg::GraphsDFG, label::Symbol)
+    if !haskey(fg.graphBlobEntries, label)
+        throw(LabelNotFoundError("GraphBlobentry", label))
+    end
     return fg.graphBlobEntries[label]
 end
 

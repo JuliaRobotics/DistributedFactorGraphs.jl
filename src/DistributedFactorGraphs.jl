@@ -58,9 +58,9 @@ using InteractiveUtils: subtypes
 ##==============================================================================
 
 # v1 name, signiture, return, and error checked
+export getFactor, getBlobentry, getGraphBlobentry
 
 # v1 name, signiture, and return
-export getFactor, getBlobentry, getGraphBlobentry, getVariableState, getFactorState
 
 # v1 name only
 export getVariable, getBlob, addBlob!
@@ -70,6 +70,9 @@ const DFG = DistributedFactorGraphs
 export DFG
 
 export GraphsDFGs, GraphsDFG
+
+##
+export getVariableState, getFactorState # FIXME these were questioned and being reviewed again for name, other than that they are checked.
 
 ##------------------------------------------------------------------------------
 ## DFG
@@ -174,7 +177,7 @@ export listTags, mergeTags!, removeTags!, emptyTags!
 export VariableStateType
 
 # accessors
-export getSolverDataDict, setSolverData!
+export getSolverDataDict
 export getVariableType, getVariableTypeName
 
 export getObservation
@@ -201,7 +204,6 @@ export getVariableStates,
     mergeVariableState!,
     deleteVariableState!,
     listVariableStates,
-    mergeVariableSolverData!,
     cloneSolveKey!
 
 # PPE
@@ -263,9 +265,6 @@ export FactorSolverCache
 # accessors
 export getVariableOrder
 export getFactorType, getFactorFunction
-
-# Node Data
-export mergeVariableData!, mergeGraphVariableData!
 
 # Serialization type conversion
 export convertPackedType, convertStructType

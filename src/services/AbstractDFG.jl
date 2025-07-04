@@ -1419,52 +1419,6 @@ function mergeGraph!(
 end
 
 ##==============================================================================
-## Variable Data: VND and PPE
-##==============================================================================
-
-#TODO API
-"""
-    $(SIGNATURES)
-Merges and updates solver and estimate data for a variable (variable can be from another graph).
-Note: Makes a copy of the estimates and solver data so that there is no coupling between graphs.
-"""
-function mergeVariableData!(dfg::AbstractDFG, sourceVariable::AbstractDFGVariable)
-    var = getVariable(dfg, sourceVariable.label)
-
-    mergePPEs!(var, sourceVariable)
-    # If this variable has solverDataDict (summaries do not)
-    :solverDataDict in fieldnames(typeof(var)) &&
-        mergeVariableSolverData!(var, sourceVariable)
-
-    #update if its not a InMemoryDFGTypes, otherwise it was a reference
-    # if satelite nodes are used it can be updated separately
-    # !(isa(dfg, InMemoryDFGTypes)) && mergeVariable!(dfg, var)
-
-    return var
-end
-
-#TODO API
-"""
-    $(SIGNATURES)
-Common function to update all solver data and estimates from one graph to another.
-This should be used to push local solve data back into a cloud graph, for example.
-
-Notes
-- Returns `::Nothing`
-"""
-function mergeGraphVariableData!(
-    destDFG::H,
-    sourceDFG::G,
-    varSyms::Vector{Symbol},
-) where {G <: AbstractDFG, H <: AbstractDFG}
-    # Update all variables in the destination
-    # (For now... we may change this soon)
-    for variableId in varSyms
-        mergeVariableData!(destDFG, getVariable(sourceDFG, variableId))
-    end
-end
-
-##==============================================================================
 ## Graphs Structures (Abstract, overwrite for performance)
 ##==============================================================================
 """

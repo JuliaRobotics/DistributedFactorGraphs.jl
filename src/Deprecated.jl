@@ -20,6 +20,37 @@ const InferenceType = AbstractPackedFactorObservation
 
 const PackedSamplableBelief = PackedBelief
 
+export setSolverData!
+"""
+    $SIGNATURES
+Set solver data structure stored in a variable.
+"""
+function setSolverData!(v::VariableCompute, data::VariableState, key::Symbol = :default)
+    Base.depwarn(
+        "setSolverData!(v::VariableCompute, data::VariableState, key::Symbol = :default) is deprecated, use mergeVariableState! instead.",
+        :setSolverData!,
+    )
+    @assert key == data.solveKey "VariableState.solveKey=:$(data.solveKey) does not match requested :$(key)"
+    return v.solverDataDict[key] = data
+end
+
+@deprecate mergeVariableSolverData!(args...; kwargs...) mergeVariableState!(
+    args...;
+    kwargs...,
+)
+
+export mergeVariableData!, mergeGraphVariableData!
+function mergeVariableData!(args...)
+    return error(
+        "mergeVariableData! is obsolete, use mergeVariableState! for state, PPEs are obsolete",
+    )
+end
+function mergeGraphVariableData!(args...)
+    return error(
+        "mergeGraphVariableData! is obsolete, use mergeVariableState! for state, PPEs are obsolete",
+    )
+end
+
 ## ================================================================================
 ## Deprecated in v0.27
 ##=================================================================================

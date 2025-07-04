@@ -325,7 +325,7 @@ function DFGVariableSCA()
     # v3.solverDataDict[:default].val[1] = [0.0;0.0]
     # v3.solverDataDict[:default].bw[1] = [1.0;1.0]
 
-    getVariableState(v1).solveInProgress = 1
+    getVariableState(v1, :default).solveInProgress = 1
 
     @test getLabel(v1) == v1_lbl
     @test getTags(v1) == v1_tags
@@ -373,7 +373,6 @@ function DFGVariableSCA()
     # #TODO sort out
     # getPPEs
     # getVariableState
-    # setSolverData
     # getVariablePPEs
     # getVariablePPE
     # getSolvedCount
@@ -770,8 +769,6 @@ function VSDTestBlock!(fg, v1)
     # **Set like**
     #  - `listVariableStates`
     #
-    # > - `emptyVariableSolverData!` #TODO ?
-    # > - `mergeVariableSolverData!` #TODO ?
     #
     # **VariableState**
     #  - `getSolveInProgress`
@@ -822,7 +819,7 @@ function VSDTestBlock!(fg, v1)
     @test_throws LabelNotFoundError getVariableState(fg, :a, :parametric)
 
     #FIXME copied from lower
-    @test getVariableState(v1) === v1.solverDataDict[:default]
+    @test getVariableState(v1, :default) === v1.solverDataDict[:default]
 
     # Add new VND of type ContinuousScalar to :x0
     # Could also do VariableState(ContinuousScalar())
@@ -848,18 +845,11 @@ function VSDTestBlock!(fg, v1)
     deleteVariableState!(fg, :a, :parametric)
 
     return nothing
-    #TODO
-    # mergeVariableSolverData!(...)
 
     #TODO solverDataDict() not deprecated
     # @test getSolverDataDict(newvar) == getSolverDataDict(v1)
 
     # @test @test_deprecated mergeUpdateVariableSolverData!(fg, newvar)
-    # TODO
-    # mergeVariableSolverData!
-    # mergePPEs!
-    # mergeVariableData!
-    # mergeGraphVariableData!
 
 end
 
@@ -1806,7 +1796,7 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
 
     for filename in ["/tmp/fileDFG", "/tmp/FileDFGExtension.tar.gz"]
         v4 = getVariable(dfg, :x4)
-        vnd = getVariableState(v4)
+        vnd = getVariableState(v4, :default)
         # set everything
         vnd.BayesNetVertID = :outid
         push!(vnd.BayesNetOutVertIDs, :id)

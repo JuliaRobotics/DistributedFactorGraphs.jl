@@ -538,24 +538,13 @@ getSolverDataDict(v::VariableCompute) = v.solverDataDict
 
 Retrieve solver data structure stored in a variable.
 """
-function getVariableState(v::VariableCompute, key::Symbol = :default)
-    #TODO this does not fit in with some of the other error behaviour. but its used so added @error
-    vnd = if haskey(getSolverDataDict(v), key)
-        return getSolverDataDict(v)[key]
+function getVariableState(v::VariableCompute, label::Symbol)
+    vnd = if haskey(getSolverDataDict(v), label)
+        return getSolverDataDict(v)[label]
     else
-        throw(LabelNotFoundError("State", key))
+        throw(LabelNotFoundError("State", label))
     end
     return vnd
-end
-
-#TODO Repeated functionality? same as update
-"""
-    $SIGNATURES
-Set solver data structure stored in a variable.
-"""
-function setSolverData!(v::VariableCompute, data::VariableState, key::Symbol = :default)
-    @assert key == data.solveKey "VariableState.solveKey=:$(data.solveKey) does not match requested :$(key)"
-    return v.solverDataDict[key] = data
 end
 
 ##------------------------------------------------------------------------------
@@ -682,18 +671,14 @@ end
     $(SIGNATURES)
 Get variable solverdata for a given solve key.
 """
-function getVariableState(
-    dfg::AbstractDFG,
-    variablekey::Symbol,
-    solvekey::Symbol = :default,
-)
-    v = getVariable(dfg, variablekey)
-    !haskey(v.solverDataDict, solvekey) && throw(LabelNotFoundError("State", solvekey))
-    return v.solverDataDict[solvekey]
+function getVariableState(dfg::AbstractDFG, variableLabel::Symbol, label::Symbol)
+    v = getVariable(dfg, variableLabel)
+    !haskey(v.solverDataDict, label) && throw(LabelNotFoundError("State", label))
+    return v.solverDataDict[label]
 end
 
-function getVariableStates(dfg::AbstractDFG, variablekey::Symbol)
-    v = getVariable(dfg, variablekey)
+function getVariableStates(dfg::AbstractDFG, variableLabel::Symbol)
+    v = getVariable(dfg, variableLabel)
     return collect(values(v.solverDataDict))
 end
 
@@ -701,30 +686,21 @@ end
     $(SIGNATURES)
 Add variable solver data, errors if it already exists.
 """
-function addVariableState!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableState)
+function addVariableState!(dfg::AbstractDFG, variablekey::Symbol, state::VariableState)
     var = getVariable(dfg, variablekey)
-    if haskey(var.solverDataDict, vnd.solveKey)
-        throw(LabelExistsError("VariableState", vnd.solveKey))
+    if haskey(var.solverDataDict, state.solveKey)
+        throw(LabelExistsError("VariableState", state.solveKey))
     end
-    var.solverDataDict[vnd.solveKey] = vnd
-    return vnd
+    var.solverDataDict[state.solveKey] = state
+    return state
 end
 
-"""
-    $(SIGNATURES)
-Add a new solver data  entry from a deepcopy of the source variable solver data.
-NOTE: Copies the solver data.
-"""
-function addVariableState!(
-    dfg::AbstractDFG,
-    sourceVariable::VariableCompute,
-    solveKey::Symbol = :default,
-)
-    return addVariableState!(
-        dfg,
-        sourceVariable.label,
-        deepcopy(getVariableState(sourceVariable, solveKey)),
-    )
+function addVariableState!(v, state::VariableState)
+    if haskey(v.solverDataDict, state.solveKey)
+        throw(LabelExistsError("VariableState", state.solveKey))
+    end
+    v.solverDataDict[state.solveKey] = state
+    return state
 end
 
 """
@@ -740,6 +716,16 @@ function mergeVariableState!(dfg::AbstractDFG, variablekey::Symbol, vnd::Variabl
 
     if !haskey(v.solverDataDict, vnd.solveKey)
         addVariableState!(dfg, variablekey, vnd)
+    else
+        v.solverDataDict[vnd.solveKey] = vnd
+    end
+
+    return 1
+end
+
+function mergeVariableState!(v::VariableCompute, vnd::VariableState)
+    if !haskey(v.solverDataDict, vnd.solveKey)
+        addVariableState!(v, vnd)
     else
         v.solverDataDict[vnd.solveKey] = vnd
     end
@@ -797,13 +783,9 @@ end
 
 """
     $(SIGNATURES)
-Delete variable solver data, returns the deleted element.
+Delete variable solver data, returns the number of deleted elements.
 """
-function deleteVariableState!(
-    dfg::AbstractDFG,
-    variablekey::Symbol,
-    solveKey::Symbol = :default,
-)
+function deleteVariableState!(dfg::AbstractDFG, variablekey::Symbol, solveKey::Symbol)
     var = getVariable(dfg, variablekey)
 
     if !haskey(var.solverDataDict, solveKey)
@@ -815,12 +797,12 @@ end
 
 """
     $(SIGNATURES)
-Delete variable solver data, returns the deleted element.
+Delete variable solver data, returns the number of deleted elements.
 """
 function deleteVariableState!(
     dfg::AbstractDFG,
     sourceVariable::VariableCompute,
-    solveKey::Symbol = :default,
+    solveKey::Symbol,
 )
     return deleteVariableState!(dfg, sourceVariable.label, solveKey)
 end
@@ -836,28 +818,6 @@ List all the solver data keys in the variable.
 function listVariableStates(dfg::AbstractDFG, variablekey::Symbol)
     v = getVariable(dfg, variablekey)
     return collect(keys(v.solverDataDict))
-end
-
-"""
-    $(SIGNATURES)
-Merges and updates solver and estimate data for a variable (variable can be from another graph).
-If the same key is present in another collection, the value for that key will be the value it has in the last collection listed (updated).
-Note: Makes a copy of the estimates and solver data so that there is no coupling between graphs.
-"""
-function mergeVariableSolverData!(
-    destVariable::VariableCompute,
-    sourceVariable::VariableCompute,
-)
-    # We don't know which graph this came from, must be copied!
-    merge!(destVariable.solverDataDict, deepcopy(sourceVariable.solverDataDict))
-    return destVariable
-end
-
-function mergeVariableSolverData!(dfg::AbstractDFG, sourceVariable::VariableCompute)
-    return mergeVariableSolverData!(
-        getVariable(dfg, getLabel(sourceVariable)),
-        sourceVariable,
-    )
 end
 
 ##==============================================================================
