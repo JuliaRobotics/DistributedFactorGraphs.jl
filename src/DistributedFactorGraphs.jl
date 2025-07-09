@@ -60,10 +60,27 @@ using InteractiveUtils: subtypes
 # v1 name, signiture, return, and error checked
 export getFactor, getBlobentry, getGraphBlobentry
 
+export addVariable!, addFactor!, addBlobentry!
+
+export deleteVariable!
+
 # v1 name, signiture, and return
 
 # v1 name only
 export getVariable, getBlob, addBlob!
+
+export hasVariable, hasFactor
+
+# getBlob TODO do we want all of them easy portable vs convenience?
+# getBlob(::AbstractBlobstore, ::UUID)
+# getBlob(::AbstractBlobstore, ::Blobentry)
+# getBlob(::AbstractDFG, ::Blobentry)
+
+# TODO get,add,delete|Blob still needs immutability discussion. but errors checked, tests needs updating though.
+
+# TODO not yet implemented in DFG
+# addAgentBlobentry!
+# addGraphBlobentry!
 
 ##
 const DFG = DistributedFactorGraphs
@@ -121,9 +138,7 @@ export InMemoryDFGTypes, LocalDFG
 
 # AbstractDFG Interface
 export exists,
-    addVariable!,
     addVariables!,
-    addFactor!,
     addFactors!,
     mergeVariable!,
     mergeFactor!,

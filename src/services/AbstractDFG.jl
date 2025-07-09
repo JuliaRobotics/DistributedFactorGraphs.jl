@@ -247,7 +247,17 @@ function listModelBlobentries end
 # AbstractBlobstore should have label or overwrite getLabel
 
 getBlobstores(dfg::AbstractDFG) = dfg.blobStores
-getBlobstore(dfg::AbstractDFG, key::Symbol) = dfg.blobStores[key]
+
+function getBlobstore(dfg::AbstractDFG, storeLabel::Symbol)
+    store = get(dfg.blobStores, storeLabel, nothing)
+    if isnothing(store)
+        throw(
+            LabelNotFoundError("Blobstore", storeLabel, collect(keys(getBlobstores(dfg)))),
+        )
+    end
+    return store
+end
+
 function addBlobstore!(dfg::AbstractDFG, bs::AbstractBlobstore)
     return push!(dfg.blobStores, getLabel(bs) => bs)
 end
@@ -267,26 +277,28 @@ listBlobstores(dfg::AbstractDFG) = collect(keys(dfg.blobStores))
 ##------------------------------------------------------------------------------
 ## Variable And Factor CRUD
 ##------------------------------------------------------------------------------
+
 """
     $(SIGNATURES)
-True if the variable or factor exists in the graph.
+True if the variable exists in the graph.
 """
-function exists(dfg::AbstractDFG, node::DFGNode)
-    return error("exists not implemented for $(typeof(dfg))")
+function hasVariable(dfg::AbstractDFG, label::Symbol)
+    return error("hasVariable not implemented for $(typeof(dfg))")
 end
 
-function exists(dfg::AbstractDFG, label::Symbol)
-    return error("exists not implemented for $(typeof(dfg))")
+"""
+    $(SIGNATURES)
+True if the factor exists in the graph.
+"""
+function hasFactor(dfg::AbstractDFG, label::Symbol)
+    return error("hasFactor not implemented for $(typeof(dfg))")
 end
 
 """
     $(SIGNATURES)
 Add a VariableCompute to a DFG.
 """
-function addVariable!(
-    dfg::G,
-    variable::V,
-) where {G <: AbstractDFG, V <: AbstractDFGVariable}
+function addVariable!(dfg::AbstractDFG, ::AbstractDFGVariable)
     return error("addVariable! not implemented for $(typeof(dfg))")
 end
 
@@ -294,7 +306,7 @@ end
     $(SIGNATURES)
 Add a Vector{VariableCompute} to a DFG.
 """
-function addVariables!(dfg::AbstractDFG, variables::Vector{<:AbstractDFGVariable})
+function addVariables!(dfg::AbstractDFG, ::Vector{<:AbstractDFGVariable})
     return asyncmap(variables) do v
         return addVariable!(dfg, v)
     end
@@ -304,7 +316,7 @@ end
     $(SIGNATURES)
 Add a FactorCompute to a DFG.
 """
-function addFactor!(dfg::AbstractDFG, factor::F) where {F <: AbstractDFGFactor}
+function addFactor!(dfg::AbstractDFG, ::AbstractDFGFactor)
     return error("addFactor! not implemented for $(typeof(dfg))(dfg, factor)")
 end
 
@@ -513,6 +525,8 @@ Get a VariableCompute with a specific solver key.
 In memory types still return a reference, other types returns a variable with only solveKey.
 """
 function getVariable(dfg::AbstractDFG, label::Symbol, solveKey::Symbol)
+    # TODO maybe change solveKey param to stateLabelFilter 
+    # function getVariable(dfg::AbstractDFG, label::Symbol; stateLabelFilter::Union{Nothing, ...} = nothing) 
     var = getVariable(dfg, label)
 
     if isa(var, VariableCompute) && !haskey(var.solverDataDict, solveKey)
@@ -1039,6 +1053,25 @@ function findVariableNearTimestamp(
 end
 
 ##==============================================================================
+## exists - alias for hasVariable || hasFactor
+##==============================================================================
+# exists alone is ambiguous and only for variables and factors where there rest of the nouns use has,
+# TODO therefore, keep as internal or deprecate?
+# additionally - variables and factors can possibly have the same label in other drivers such as NvaSDK
+
+"""
+    $(SIGNATURES)
+True if a variable or factor with `label` exists in the graph.
+"""
+function exists(dfg::AbstractDFG, label::Symbol)
+    return hasVariable(dfg, label) || hasFactor(dfg, label)
+end
+
+function exists(dfg::AbstractDFG, node::DFGNode)
+    return exists(dfg, node.label)
+end
+
+##==============================================================================
 ## Copy Functions
 ##==============================================================================
 
@@ -1074,7 +1107,7 @@ function copyGraph!(
     @showprogress desc = "copy variables" enabled = showprogress for variable in
                                                                      sourceVariables
         variableCopy = deepcopyNodes ? deepcopy(variable) : variable
-        if !exists(destDFG, variable)
+        if !hasVariable(destDFG, variable.label)
             addVariable!(destDFG, variableCopy)
         elseif overwriteDest
             mergeVariable!(destDFG, variableCopy)
@@ -1089,14 +1122,14 @@ function copyGraph!(
         # Find the labels and associated variables in our new subgraph
         factVariableIds = Symbol[]
         for variable in sourceFactorVariableIds
-            if exists(destDFG, variable)
+            if hasVariable(destDFG, variable)
                 push!(factVariableIds, variable)
             end
         end
         # Only if we have all of them should we add it (otherwise strange things may happen on evaluation)
         if length(factVariableIds) == length(sourceFactorVariableIds)
             factorCopy = deepcopyNodes ? deepcopy(factor) : factor
-            if !exists(destDFG, factor)
+            if !hasFactor(destDFG, factor.label)
                 addFactor!(destDFG, factorCopy)
             elseif overwriteDest
                 mergeFactor!(destDFG, factorCopy)

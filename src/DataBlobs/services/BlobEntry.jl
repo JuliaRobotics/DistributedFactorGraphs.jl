@@ -168,7 +168,7 @@ function addBlobentry!(var::VariableDFG, entry::Blobentry)
     return entry
 end
 
-function addBlobentry!(dfg::AbstractDFG, vLbl::Symbol, entry::Blobentry;)
+function addBlobentry!(dfg::AbstractDFG, vLbl::Symbol, entry::Blobentry)
     return addBlobentry!(getVariable(dfg, vLbl), entry)
 end
 
@@ -238,7 +238,7 @@ end
 """
     $SIGNATURES
 
-Does a blob entry (element) exist with `blobLabel`.
+Does a blob entry exist with `blobLabel`.
 """
 hasBlobentry(var::AbstractDFGVariable, blobLabel::Symbol) = haskey(var.dataDict, blobLabel)
 

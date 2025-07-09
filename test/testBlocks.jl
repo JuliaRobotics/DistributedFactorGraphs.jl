@@ -562,8 +562,12 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     @test_throws LabelNotFoundError getFactor(fg, :a)
 
     # Existence
+    @test hasVariable(fg, :a)
+    @test !hasVariable(fg, :c)
     @test exists(fg, :a)
     @test !exists(fg, :c)
+    @test hasFactor(fg, :abf1)
+    @test !hasFactor(fg, :bcf1)
     @test exists(fg, :abf1)
     @test !exists(fg, :bcf1)
 

@@ -13,7 +13,7 @@ $(METHODLIST)
 function getBlob end
 
 """
-Adds a blob to the blob store or dfg with the given entry.
+Adds a blob to the blob store or dfg with the blobId.
 
 Related
 [`addBlobentry!`](@ref)
@@ -81,34 +81,11 @@ end
 ##==============================================================================
 ## AbstractBlobstore derived CRUD for Blob 
 ##==============================================================================
-#TODO looking in all the blobstores does not make sense since since there is a chance that the blobId is not unique across blobstores.
-# using the cached blobstore is the right way to go here.
+#TODO maybe we should generalize and move the cached blobstore to DFG.
 function getBlob(dfg::AbstractDFG, entry::Blobentry)
-    stores = getBlobstores(dfg)
-    storekeys = collect(keys(stores))
-    # first check the saved blobstore and then fall back to the rest
-    fidx = findfirst(==(entry.blobstore), storekeys)
-    if !isnothing(fidx)
-        skey = storekeys[fidx]
-        popat!(storekeys, fidx)
-        pushfirst!(storekeys, skey)
-    end
-    for k in storekeys
-        store = stores[k]
-        try
-            blob = getBlob(store, entry)
-            return blob
-        catch err
-            if !(err isa KeyError)
-                throw(err)
-            end
-        end
-    end
-    throw(
-        KeyError(
-            "could not find $(entry.label), uuid $(entry.blobId) in any of the listed blobstores:\n $([s->getLabel(s) for (s,v) in stores]))",
-        ),
-    )
+    storeLabel = entry.blobstore
+    store = getBlobstore(dfg, storeLabel)
+    return getBlob(store, entry.blobId)
 end
 
 function getBlob(store::AbstractBlobstore, entry::Blobentry)
@@ -204,19 +181,18 @@ function getBlob(store::FolderStore{T}, blobId::UUID) where {T}
             return read(f)
         end
     else
-        throw(KeyError("Could not find file '$(blobfilename)'."))
+        throw(IdNotFoundError("Blob", blobId))
     end
 end
 
 function addBlob!(store::FolderStore{T}, blobId::UUID, data::T) where {T}
     blobfilename = joinpath(store.folder, string(store.label), string(blobId))
     if isfile(blobfilename)
-        throw(KeyError("Key '$blobId' blob already exists."))
+        throw(IdExistsError("Blob", blobId))
     else
         open(blobfilename, "w") do f
             return write(f, data)
         end
-        # return data
         return blobId
     end
 end
@@ -235,11 +211,13 @@ end
 
 function deleteBlob!(store::FolderStore{T}, blobId::UUID) where {T}
     blobfilename = joinpath(store.folder, string(store.label), string(blobId))
+    if !isfile(blobfilename)
+        throw(IdNotFoundError("Blob", blobId))
+    end
     rm(blobfilename)
     return 1
 end
 
-#hasBlob or existsBlob?
 function hasBlob(store::FolderStore, blobId::UUID)
     blobfilename = joinpath(store.folder, string(store.label), string(blobId))
     return isfile(blobfilename)
@@ -265,12 +243,15 @@ function InMemoryBlobstore(storeKey::Symbol = :default_inmemory_store)
 end
 
 function getBlob(store::InMemoryBlobstore, blobId::UUID)
+    if !haskey(store.blobs, blobId)
+        throw(IdNotFoundError("Blob", blobId))
+    end
     return store.blobs[blobId]
 end
 
 function addBlob!(store::InMemoryBlobstore{T}, blobId::UUID, data::T) where {T}
     if haskey(store.blobs, blobId)
-        error("Key '$blobId' blob already exists.")
+        throw(IdExistsError("Blob", blobId))
     end
     store.blobs[blobId] = data
     return blobId
@@ -284,6 +265,9 @@ function updateBlob!(store::InMemoryBlobstore{T}, blobId::UUID, data::T) where {
 end
 
 function deleteBlob!(store::InMemoryBlobstore, blobId::UUID)
+    if !haskey(store.blobs, blobId)
+        throw(IdNotFoundError("Blob", blobId))
+    end
     pop!(store.blobs, blobId)
     return 1
 end
@@ -319,25 +303,28 @@ end
 
 function getBlob(store::LinkStore, blobId::UUID)
     fname = get(store.cache, blobId, nothing)
+    if isnothing(fname)
+        throw(IdNotFoundError("Blob", blobId))
+    end
     return read(fname)
 end
 
 function addBlob!(store::LinkStore, entry::Blobentry, linkfile::String)
-    return addBlob!(store, entry.blobId, nothing, linkfile::String)
+    return addBlob!(store, entry.blobId, linkfile)
 end
 
-function addBlob!(store::LinkStore, blobId::UUID, blob::Any, linkfile::String)
+function addBlob!(store::LinkStore, blobId::UUID, linkfile::String)
     if haskey(store.cache, blobId)
-        error("blobId $blobId already exists in the store")
+        throw(IdExistsError("Blob", blobId))
     end
     push!(store.cache, blobId => linkfile)
     open(store.csvfile, "a") do f
         return println(f, blobId, ",", linkfile)
     end
-    return getBlob(store, blobId)
+    return blobId
 end
 
-function deleteBlob!(store::LinkStore, args...)
+function deleteBlob!(store::LinkStore)
     return error("deleteDataBlob(::LinkStore) not supported")
 end
 
@@ -404,12 +391,15 @@ Tables.rows(store::RowBlobstore) = values(store.blobs)
 
 ##
 function getBlob(store::RowBlobstore, blobId::UUID)
+    if !haskey(store.blobs, blobId)
+        throw(IdNotFoundError("Blob", blobId))
+    end
     return getfield(store.blobs[blobId], :blob)
 end
 
 function addBlob!(store::RowBlobstore{T}, blobId::UUID, blob::T) where {T}
     if haskey(store.blobs, blobId)
-        error("Key '$blobId' blob already exists.")
+        throw(IdExistsError("Blob", blobId))
     end
     store.blobs[blobId] = RowBlob(blobId, blob)
     return blobId
@@ -423,7 +413,10 @@ function updateBlob!(store::RowBlobstore{T}, blobId::UUID, blob::T) where {T}
 end
 
 function deleteBlob!(store::RowBlobstore, blobId::UUID)
-    getfield(pop!(store.blobs, blobId), :blob)
+    if !haskey(store.blobs, blobId)
+        throw(IdNotFoundError("Blob", blobId))
+    end
+    pop!(store.blobs, blobId)
     return 1
 end
 
@@ -468,4 +461,5 @@ if false
 
     Tables.rowtable(sstore)
 end
+##
 ##

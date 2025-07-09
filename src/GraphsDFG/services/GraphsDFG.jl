@@ -6,23 +6,13 @@ function getDFGMetadata(fg::GraphsDFG)
     return metaprops
 end
 
-function exists(
-    dfg::GraphsDFG{P, V, F},
-    node::V,
-) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
-    return haskey(dfg.g.variables, node.label)
+function hasVariable(dfg::GraphsDFG, label::Symbol)
+    return haskey(dfg.g.variables, label)
 end
 
-function exists(
-    dfg::GraphsDFG{P, V, F},
-    node::F,
-) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
-    return haskey(dfg.g.factors, node.label)
+function hasFactor(dfg::GraphsDFG, label::Symbol)
+    return haskey(dfg.g.factors, label)
 end
-
-exists(dfg::GraphsDFG, nId::Symbol) = haskey(dfg.g.labels, nId)
-
-exists(dfg::GraphsDFG, node::DFGNode) = exists(dfg, node.label)
 
 function isVariable(
     dfg::GraphsDFG{P, V, F},
@@ -109,7 +99,7 @@ function addFactor!(
     # @assert FactorGraphs.addFactor!(dfg.g, getVariableOrder(factor), factor)
     variableLabels = Symbol[factor._variableOrderSymbols...]
     for vlabel in variableLabels
-        !exists(dfg, vlabel) && throw(LabelNotFoundError("Variable", vlabel))
+        !hasVariable(dfg, vlabel) && throw(LabelNotFoundError("Variable", vlabel))
     end
     @assert FactorGraphs.addFactor!(dfg.g, variableLabels, factor)
     return factor
@@ -290,7 +280,7 @@ function listNeighbors(dfg::GraphsDFG, node::DFGNode; solvable::Int = 0)
 end
 
 function listNeighbors(dfg::GraphsDFG, label::Symbol; solvable::Int = 0)
-    if !exists(dfg, label)
+    if !(hasVariable(dfg, label) || hasFactor(dfg, label))
         throw(LabelNotFoundError(label))
     end
 
@@ -468,7 +458,8 @@ function findShortestPathDijkstra(
         dfg
     end
 
-    if !exists(dfg_, from) || !exists(dfg_, to)
+    if !(hasVariable(dfg_, from) || hasFactor(dfg_, from)) ||
+       !(hasVariable(dfg_, to) || hasFactor(dfg_, to))
         # assume filters excluded either `to` or `from` and hence no shortest path
         return Symbol[]
     end
