@@ -89,7 +89,6 @@ function VariableState(variableType::VariableStateType; kwargs...)
     return VariableState{typeof(variableType)}(; kwargs...)
 end
 
-
 function VariableState(state::VariableState; kwargs...)
     return VariableState{typeof(getVariableType(state))}(;
         (key => deepcopy(getproperty(state, key)) for key in fieldnames(VariableState))...,

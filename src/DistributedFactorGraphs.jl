@@ -215,10 +215,7 @@ export getMetadata,
 
 # CRUD & SET
 export getVariableStates,
-    addVariableState!,
-    mergeVariableState!,
-    deleteVariableState!,
-    listVariableStates
+    addVariableState!, mergeVariableState!, deleteVariableState!, listVariableStates
 
 # PPE
 ##------------------------------------------------------------------------------
