@@ -21,10 +21,10 @@ const InferenceType = AbstractPackedFactorObservation
 const PackedSamplableBelief = PackedBelief
 
 export setSolverData!
-"""
-    $SIGNATURES
-Set solver data structure stored in a variable.
-"""
+# """
+#     $SIGNATURES
+# Set solver data structure stored in a variable.
+# """
 function setSolverData!(v::VariableCompute, data::VariableState, key::Symbol = :default)
     Base.depwarn(
         "setSolverData!(v::VariableCompute, data::VariableState, key::Symbol = :default) is deprecated, use mergeVariableState! instead.",
@@ -49,6 +49,104 @@ function mergeGraphVariableData!(args...)
     return error(
         "mergeGraphVariableData! is obsolete, use mergeVariableState! for state, PPEs are obsolete",
     )
+end
+
+#NOTE List types funcction do not fit verb noun and will be deprecated.
+# should return types
+
+# """
+#     $SIGNATURES
+
+# Return `Vector{Symbol}` of all unique variable types in factor graph.
+# """
+function lsTypes(dfg::AbstractDFG)
+    vars = getVariables(dfg)
+    alltypes = Set{Symbol}()
+    for v in vars
+        varType = Symbol(typeof(getVariableType(v)))
+        push!(alltypes, varType)
+    end
+    return collect(alltypes)
+end
+
+# """
+#     $SIGNATURES
+
+# Return `::Dict{Symbol, Vector{Symbol}}` of all unique variable types with labels in a factor graph.
+# """
+function lsTypesDict(dfg::AbstractDFG)
+    vars = getVariables(dfg)
+    alltypes = Dict{Symbol, Vector{Symbol}}()
+    for v in vars
+        varType = Symbol(typeof(getVariableType(v)))
+        d = get!(alltypes, varType, Symbol[])
+        push!(d, v.label)
+    end
+    return alltypes
+end
+
+# """
+#     $SIGNATURES
+
+# Return `Vector{Symbol}` of all unique factor types in factor graph.
+# """
+function lsfTypes(dfg::AbstractDFG)
+    facs = getFactors(dfg)
+    alltypes = Set{Symbol}()
+    for f in facs
+        facType = typeof(getFactorType(f)) |> nameof
+        push!(alltypes, facType)
+    end
+    return collect(alltypes)
+end
+
+# """
+#     $SIGNATURES
+
+# Return `::Dict{Symbol, Vector{Symbol}}` of all unique factors types with labels in a factor graph.
+# """
+function lsfTypesDict(dfg::AbstractDFG)
+    facs = getFactors(dfg)
+    alltypes = Dict{Symbol, Vector{Symbol}}()
+    for f in facs
+        facType = typeof(getFactorType(f)) |> nameof
+        d = get!(alltypes, facType, Symbol[])
+        push!(d, f.label)
+    end
+    return alltypes
+end
+
+# solvekey is deprecated and sync!/copyto! is the better verb.
+#TODO replace with syncVariableStates! or similar
+# """
+#     $SIGNATURES
+# Duplicate a `solveKey`` into a destination from a source.
+
+# Notes
+# - Can copy between graphs, or to different solveKeys within one graph.
+# """
+function cloneSolveKey!(
+    dest_dfg::AbstractDFG,
+    dest::Symbol,
+    src_dfg::AbstractDFG,
+    src::Symbol;
+    solvable::Int = 0,
+    labels = intersect(ls(dest_dfg; solvable = solvable), ls(src_dfg; solvable = solvable)),
+    verbose::Bool = false,
+)
+    #
+    for x in labels
+        sd = deepcopy(getVariableState(getVariable(src_dfg, x), src))
+        copytoVariableState!(dest_dfg, x, dest, sd)
+    end
+
+    return nothing
+end
+
+function cloneSolveKey!(dfg::AbstractDFG, dest::Symbol, src::Symbol; kw...)
+    #
+    @assert dest != src "Must copy to a different solveKey within the same graph, $dest."
+    return cloneSolveKey!(dfg, dest, dfg, src; kw...)
 end
 
 ## ================================================================================

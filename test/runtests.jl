@@ -151,7 +151,7 @@ struct NotImplementedDFG{T} <: AbstractDFG{T} end
     @test_throws ErrorException listNeighbors(dfg, v1)
     @test_throws ErrorException listNeighbors(dfg, :a)
 
-    @test_throws ErrorException _getDuplicatedEmptyDFG(dfg)
+    @test_throws ErrorException DFG._getDuplicatedEmptyDFG(dfg)
 
     @test_throws ErrorException isVariable(dfg, :a)
     @test_throws ErrorException isFactor(dfg, :a)

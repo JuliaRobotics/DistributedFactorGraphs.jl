@@ -64,7 +64,7 @@ Base.@kwdef struct FactorDFG <: AbstractDFGFactor
     solvable::Int
     data::Union{Nothing, String} = nothing #TODO v0.27 deprecate data completely, left as a bridge to old serialization structure
     metadata::String
-    _version::String = string(_getDFGVersion())
+    _version::VersionNumber = _getDFGVersion()
     state::FactorState
     observJSON::String # serialized observation
     # blobEntries::Vector{Blobentry}#TODO should factor have blob entries?
@@ -91,7 +91,7 @@ function FactorDFG(
     solvable::Int,
     data::Union{Nothing, String},
     metadata::String,
-    _version::String,
+    _version,
     state::Union{Nothing, FactorState} = nothing,
     observJSON::Union{Nothing, String} = nothing,
 )
@@ -359,15 +359,6 @@ end
 ##------------------------------------------------------------------------------
 ## Constructors
 
-#NOTE I feel like a want to force a variableOrderSymbols
-function FactorSkeleton(
-    id::Union{UUID, Nothing},
-    label::Symbol,
-    variableOrderSymbols::Vector{Symbol} = Symbol[],
-)
-    @warn "FactorSkeleton(id::Union{UUID, Nothing}...) is deprecated, use FactorSkeleton(label, variableOrderSymbols) instead"
-    return FactorSkeleton(id, label, Set{Symbol}(), variableOrderSymbols)
-end
 function FactorSkeleton(
     label::Symbol,
     variableOrderSymbols::Vector{Symbol};
@@ -376,10 +367,6 @@ function FactorSkeleton(
 )
     return FactorSkeleton(id, label, tags, variableOrderSymbols)
 end
-
-StructTypes.StructType(::Type{FactorSkeleton}) = StructTypes.OrderedStruct()
-StructTypes.idproperty(::Type{FactorSkeleton}) = :id
-StructTypes.omitempties(::Type{FactorSkeleton}) = (:id,)
 
 ##==============================================================================
 ## Define factor levels

@@ -41,12 +41,10 @@ Base.@kwdef struct Blobentry
     createdTimestamp::Union{ZonedDateTime, Nothing} = nothing
     """ Use carefully, but necessary to support advanced usage such as time synchronization over Blob data. """
     lastUpdatedTimestamp::Union{ZonedDateTime, Nothing} = nothing
-    """ Type version of this Blobentry. TBD.jl consider upgrading to `::VersionNumber`. """
-    _version::String = string(_getDFGVersion())
+    """ Type version of this Blobentry."""
+    _version::VersionNumber = _getDFGVersion()
 end
 
 StructTypes.StructType(::Type{Blobentry}) = StructTypes.UnorderedStruct()
 StructTypes.idproperty(::Type{Blobentry}) = :id
 StructTypes.omitempties(::Type{Blobentry}) = (:id,)
-
-_fixtimezone(cts::NamedTuple) = ZonedDateTime(cts.utc_datetime * "+00")

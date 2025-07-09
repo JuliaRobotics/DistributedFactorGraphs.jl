@@ -1,28 +1,10 @@
-
-function getDFGMetadata(fg::GraphsDFG)
-    metafields = Set(fieldnames(GraphsDFG))
-    setdiff!(metafields, [:g, :solverParams])
-    metaprops = NamedTuple(k => getproperty(fg, k) for k in metafields)
-    return metaprops
+function hasVariable(dfg::GraphsDFG, label::Symbol)
+    return haskey(dfg.g.variables, label)
 end
 
-function exists(
-    dfg::GraphsDFG{P, V, F},
-    node::V,
-) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
-    return haskey(dfg.g.variables, node.label)
+function hasFactor(dfg::GraphsDFG, label::Symbol)
+    return haskey(dfg.g.factors, label)
 end
-
-function exists(
-    dfg::GraphsDFG{P, V, F},
-    node::F,
-) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
-    return haskey(dfg.g.factors, node.label)
-end
-
-exists(dfg::GraphsDFG, nId::Symbol) = haskey(dfg.g.labels, nId)
-
-exists(dfg::GraphsDFG, node::DFGNode) = exists(dfg, node.label)
 
 function isVariable(
     dfg::GraphsDFG{P, V, F},
@@ -61,43 +43,6 @@ function addVariable!(
     return addVariable!(dfg, VD(variable))
 end
 
-#moved to abstract
-# function addFactor!(dfg::GraphsDFG{<:AbstractParams, V, F}, variables::Vector{<:V}, factor::F)::F where {V <: AbstractDFGVariable, F <: AbstractDFGFactor}
-#
-#     #TODO should this be an error
-#     if haskey(dfg.g.factors, factor.label)
-#         error("Factor '$(factor.label)' already exists in the factor graph")
-#     end
-#     # for v in variables
-#     #     if !(v.label in keys(dfg.g.metaindex[:label]))
-#     #         error("Variable '$(v.label)' not found in graph when creating Factor '$(factor.label)'")
-#     #     end
-#     # end
-#
-#     variableLabels = map(v->v.label, variables)
-#
-#     resize!(factor._variableOrderSymbols, length(variableLabels))
-#     factor._variableOrderSymbols .= variableLabels
-#     # factor._variableOrderSymbols = copy(variableLabels)
-#
-#     @assert FactorGraphs.addFactor!(dfg.g, variableLabels, factor)
-#     return factor
-# end
-#
-# function addFactor!(dfg::GraphsDFG{<:AbstractParams, <:AbstractDFGVariable, F}, variableLabels::Vector{Symbol}, factor::F)::F where F <: AbstractDFGFactor
-#     #TODO should this be an error
-#     if haskey(dfg.g.factors, factor.label)
-#         error("Factor '$(factor.label)' already exists in the factor graph")
-#     end
-#
-#     resize!(factor._variableOrderSymbols, length(variableLabels))
-#     factor._variableOrderSymbols .= variableLabels
-#
-#     @assert FactorGraphs.addFactor!(dfg.g, variableLabels, factor)
-#
-#     return factor
-# end
-
 function addFactor!(
     dfg::GraphsDFG{<:AbstractParams, <:AbstractDFGVariable, F},
     factor::F,
@@ -109,7 +54,7 @@ function addFactor!(
     # @assert FactorGraphs.addFactor!(dfg.g, getVariableOrder(factor), factor)
     variableLabels = Symbol[factor._variableOrderSymbols...]
     for vlabel in variableLabels
-        !exists(dfg, vlabel) && throw(LabelNotFoundError("Variable", vlabel))
+        !hasVariable(dfg, vlabel) && throw(LabelNotFoundError("Variable", vlabel))
     end
     @assert FactorGraphs.addFactor!(dfg.g, variableLabels, factor)
     return factor
@@ -290,7 +235,7 @@ function listNeighbors(dfg::GraphsDFG, node::DFGNode; solvable::Int = 0)
 end
 
 function listNeighbors(dfg::GraphsDFG, label::Symbol; solvable::Int = 0)
-    if !exists(dfg, label)
+    if !(hasVariable(dfg, label) || hasFactor(dfg, label))
         throw(LabelNotFoundError(label))
     end
 
@@ -468,7 +413,8 @@ function findShortestPathDijkstra(
         dfg
     end
 
-    if !exists(dfg_, from) || !exists(dfg_, to)
+    if !(hasVariable(dfg_, from) || hasFactor(dfg_, from)) ||
+       !(hasVariable(dfg_, to) || hasFactor(dfg_, to))
         # assume filters excluded either `to` or `from` and hence no shortest path
         return Symbol[]
     end

@@ -1,28 +1,11 @@
 ## Version checking
 #NOTE fixed really bad function but kept similar as fallback #TODO upgrade to use pkgversion(m::Module)
 function _getDFGVersion()
-    if VERSION >= v"1.9"
-        return pkgversion(DistributedFactorGraphs)
-    end
-    #TODO when we drop jl<1.9 remove the rest here
-    pkgorigin = get(Base.pkgorigins, Base.PkgId(DistributedFactorGraphs), nothing)
-    if !isnothing(pkgorigin) && !isnothing(pkgorigin.version)
-        return pkgorigin.version
-    end
-    dep =
-        get(Pkg.dependencies(), Base.UUID("b5cc3c7e-6572-11e9-2517-99fb8daf2f04"), nothing)
-    if !isnothing(dep)
-        return dep.version
-    else
-        # This is arguably slower, but needed for Travis.
-        return Pkg.TOML.parse(
-            read(joinpath(dirname(pathof(@__MODULE__)), "..", "Project.toml"), String),
-        )["version"] |> VersionNumber
-    end
+    return pkgversion(DistributedFactorGraphs)
 end
 
 function _versionCheck(node::Union{<:VariableDFG, <:FactorDFG})
-    if VersionNumber(node._version).minor < _getDFGVersion().minor
+    if node._version.minor < _getDFGVersion().minor
         @warn "This data was serialized using DFG $(node._version) but you have $(_getDFGVersion()) installed, there may be deserialization issues." maxlog =
             10
     end
@@ -159,7 +142,7 @@ function packVariableState(d::VariableState{T}) where {T <: VariableStateType}
         d.solvedCount,
         d.solveKey,
         isempty(d.covar) ? Float64[] : vec(d.covar[1]),
-        string(_getDFGVersion()),
+        _getDFGVersion(),
     )
 end
 
@@ -234,7 +217,7 @@ function packVariable(
         solvable = v.solvable,
         variableType = stringVariableType(DFG.getVariableType(v)),
         blobEntries = collect(values(v.dataDict)),
-        _version = string(DFG._getDFGVersion()),
+        _version = _getDFGVersion(),
     )
 end
 
@@ -312,7 +295,7 @@ function packFactor(f::FactorCompute)
         solvable = getSolvable(f),
         metadata = base64encode(JSON3.write(f.smallData)),
         # Pack the node data
-        _version = string(_getDFGVersion()),
+        _version = _getDFGVersion(),
         state = f.state,
         observJSON = JSON3.write(packObservation(f)),
     )

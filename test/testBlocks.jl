@@ -8,24 +8,12 @@ using DistributedFactorGraphs: LabelExistsError, LabelNotFoundError
 import Base: convert
 # import DistributedFactorGraphs: getData, addData!, updateData!, deleteData!
 
-# Test VariableStateType Types
-# struct TestVariableType1 <: VariableStateType
-#     dims::Int
-#     manifolds::Tuple{Symbol}
-#     TestVariableType1() = new(1,(:Euclid,))
-# end
-
 Base.convert(::Type{<:Tuple}, ::typeof(Euclidean(1))) = (:Euclid,)
 Base.convert(::Type{<:Tuple}, ::typeof(Euclidean(2))) = (:Euclid, :Euclid)
 
 @defVariable TestVariableType1 Euclidean(1) [0.0;]
-@defVariable TestVariableType2 Euclidean(2) [0; 0.0]
-
-# struct TestVariableType2 <: VariableStateType
-#     dims::Int
-#     manifolds::Tuple{Symbol, Symbol}
-#     TestVariableType2() = new(2,(:Euclid,:Circular,))
-# end
+DFG.@defVarstateTypeN TestVariableType{N} Euclidean(N) zeros(N)
+const TestVariableType2 = TestVariableType{2}
 
 struct TestFunctorInferenceType1 <: AbstractRelative end
 struct TestFunctorInferenceType2 <: AbstractRelative end
@@ -562,8 +550,12 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     @test_throws LabelNotFoundError getFactor(fg, :a)
 
     # Existence
+    @test hasVariable(fg, :a)
+    @test !hasVariable(fg, :c)
     @test exists(fg, :a)
     @test !exists(fg, :c)
+    @test hasFactor(fg, :abf1)
+    @test !hasFactor(fg, :bcf1)
     @test exists(fg, :abf1)
     @test !exists(fg, :bcf1)
 
@@ -792,26 +784,10 @@ function VSDTestBlock!(fg, v1)
     @test mergeVariableState!(fg, :a, vnd) == 1
 
     # Bulk copy update x0
-    @test updateVariableSolverData!(fg, [v1], :default) == nothing
+    @test DFG.copytoVariableState!(fg, v1.label, :default, getVariableState(fg, v1.label, :default)) == 1
 
     altVnd = vnd |> deepcopy
     keepVnd = getVariableState(getVariable(fg, :a), :parametric) |> deepcopy
-    altVnd.infoPerCoord .= [-99.0;]
-    retVnd = updateVariableSolverData!(fg, :a, altVnd, false, [:infoPerCoord;])
-    @test retVnd == altVnd
-
-    altVnd.bw = -ones(1, 1)
-    retVnd = updateVariableSolverData!(fg, :a, altVnd, false, [:bw;])
-    @test retVnd == altVnd
-
-    altVnd.infoPerCoord[1] = -98.0
-    @test retVnd != altVnd
-
-    # restore without copy
-    @test updateVariableSolverData!(fg, :a, keepVnd, false, [:infoPerCoord; :bw]) == vnd
-    @test getVariableState(getVariable(fg, :a), :parametric).infoPerCoord[1] !=
-          altVnd.infoPerCoord[1]
-    @test getVariableState(getVariable(fg, :a), :parametric).bw != altVnd.bw
 
     # Delete parametric from v1
     @test deleteVariableState!(fg, :a, :parametric) == 1
@@ -836,11 +812,9 @@ function VSDTestBlock!(fg, v1)
     # Delete it
     @test deleteVariableState!(fg, :a, :parametric) == 1
     # Update add it
-    updateVariableSolverData!(fg, :a, vnd)
+    mergeVariableState!(fg, :a, vnd)
     # Update update it
-    updateVariableSolverData!(fg, :a, vnd)
-    # Bulk copy update x0
-    updateVariableSolverData!(fg, [v1], :default)
+    mergeVariableState!(fg, :a, vnd)
     # Delete parametric from v1
     deleteVariableState!(fg, :a, :parametric)
 
@@ -1085,6 +1059,7 @@ function blobsStoresTestBlock!(fg)
     @test listBlobstores(fg) == [fs.label]
     # Getting
     @test getBlobstore(fg, fs.label) == fs
+    @test_throws LabelNotFoundError getBlobstore(fg, :notfound)
     # Deleting
     @test deleteBlobstore!(fg, fs.label) == 1
     # Updating
@@ -1096,8 +1071,19 @@ function blobsStoresTestBlock!(fg)
     # Add it back
     addBlobstore!(fg, fs)
 
-    # Data functions
+    # Blob 
     testData = rand(UInt8, 50)
+    blobId = addBlob!(fs, testData)
+    @test blobId isa UUID
+    @test hasBlob(fs, blobId)
+    @test_throws DFG.IdExistsError addBlob!(fs, blobId, testData)
+    @test getBlob(fs, blobId) == testData
+    @test_throws DFG.IdNotFoundError getBlob(fs, uuid4())
+    @test_throws DFG.IdNotFoundError deleteBlob!(fs, uuid4())
+    @test deleteBlob!(fs, blobId) == 1
+    @test_throws DFG.IdNotFoundError getBlob(fs, blobId)
+
+    # Data functions
     # Adding 
     newData = addData!(fg, fs.label, :a, :testing, testData) # convenience wrapper over addBlob!
     # Listing
@@ -1149,10 +1135,10 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test isPrior(fg, :af1) # if f1 is prior
         @test lsfPriors(fg) == [:af1]
 
-        @test issetequal([:TestFunctorInferenceType1, :TestAbstractPrior], lsfTypes(fg))
+        @test issetequal([:TestFunctorInferenceType1, :TestAbstractPrior], DFG.lsfTypes(fg))
 
-        facTypesDict = lsfTypesDict(fg)
-        @test issetequal(collect(keys(facTypesDict)), lsfTypes(fg))
+        facTypesDict = DFG.lsfTypesDict(fg)
+        @test issetequal(collect(keys(facTypesDict)), DFG.lsfTypes(fg))
         @test issetequal(facTypesDict[:TestFunctorInferenceType1], [:abf1])
         @test issetequal(facTypesDict[:TestAbstractPrior], [:af1])
 
@@ -1167,10 +1153,10 @@ function testGroup!(fg, v1, v2, f0, f1)
 
         @test ls2(fg, :a) == [:b]
 
-        @test issetequal([:TestVariableType1, :TestVariableType2], lsTypes(fg))
+        @test issetequal([:TestVariableType1, :TestVariableType2], DFG.lsTypes(fg))
 
-        varTypesDict = lsTypesDict(fg)
-        @test issetequal(collect(keys(varTypesDict)), lsTypes(fg))
+        varTypesDict = DFG.lsTypesDict(fg)
+        @test issetequal(collect(keys(varTypesDict)), DFG.lsTypes(fg))
         @test issetequal(varTypesDict[:TestVariableType1], [:a])
         @test issetequal(varTypesDict[:TestVariableType2], [:b])
 
@@ -1413,7 +1399,7 @@ function connectivityTestGraph(
         ),
     )
 
-    foreach(v -> addVariable!(dfg, v), vars)
+    addVariables!(dfg, vars)
 
     if FACTYPE == FactorCompute
         #change ready and solveInProgress for x7,x8 for improved tests on x7x8f1

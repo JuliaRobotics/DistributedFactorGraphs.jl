@@ -89,6 +89,12 @@ function VariableState(variableType::VariableStateType; kwargs...)
     return VariableState{typeof(variableType)}(; kwargs...)
 end
 
+function VariableState(state::VariableState; kwargs...)
+    return VariableState{typeof(getVariableType(state))}(;
+        (key => deepcopy(getproperty(state, key)) for key in fieldnames(VariableState))...,
+        kwargs...,
+    )
+end
 ##==============================================================================
 ## PackedVariableState.jl
 ##==============================================================================
@@ -122,7 +128,7 @@ Base.@kwdef mutable struct PackedVariableState
     solvedCount::Int
     solveKey::Symbol
     covar::Vector{Float64}
-    _version::String = string(_getDFGVersion())
+    _version::VersionNumber = _getDFGVersion()
 end
 # maybe add
 # createdTimestamp::DateTime#!
@@ -158,7 +164,7 @@ Base.@kwdef struct MeanMaxPPE <: AbstractPointParametricEst
     max::Vector{Float64}
     mean::Vector{Float64}
     _type::String = "MeanMaxPPE"
-    _version::String = string(_getDFGVersion())
+    _version::VersionNumber = _getDFGVersion()
     createdTimestamp::Union{ZonedDateTime, Nothing} = nothing
     lastUpdatedTimestamp::Union{ZonedDateTime, Nothing} = nothing
 end
@@ -185,7 +191,7 @@ function MeanMaxPPE(
         max,
         mean,
         "MeanMaxPPE",
-        string(_getDFGVersion()),
+        _getDFGVersion(),
         now(tz"UTC"),
         now(tz"UTC"),
     )
@@ -223,7 +229,7 @@ Base.@kwdef struct VariableDFG <: AbstractDFGVariable
     ppes::Vector{MeanMaxPPE} = MeanMaxPPE[]
     blobEntries::Vector{Blobentry} = Blobentry[]
     variableType::String
-    _version::String = string(_getDFGVersion())
+    _version::VersionNumber = _getDFGVersion()
     metadata::String = "e30="
     solvable::Int = 1
     solverData::Vector{PackedVariableState} = PackedVariableState[]
@@ -452,10 +458,6 @@ function VariableSkeleton(
     return VariableSkeleton(id, label, tags)
 end
 
-StructTypes.StructType(::Type{VariableSkeleton}) = StructTypes.UnorderedStruct()
-StructTypes.idproperty(::Type{VariableSkeleton}) = :id
-StructTypes.omitempties(::Type{VariableSkeleton}) = (:id,)
-
 ##==============================================================================
 # Define variable levels
 ##==============================================================================
@@ -473,7 +475,7 @@ function VariableSummary(v::VariableCompute)
         v.id,
         v.label,
         v.timestamp,
-        deepcopy(v.tags),
+        copy(v.tags),
         deepcopy(v.ppeDict),
         Symbol(typeof(getVariableType(v))),
         v.dataDict,
@@ -481,5 +483,5 @@ function VariableSummary(v::VariableCompute)
 end
 
 function VariableSkeleton(v::VariableDataLevel1)
-    return VariableSkeleton(v.id, v.label, deepcopy(v.tags))
+    return VariableSkeleton(v.id, v.label, copy(v.tags))
 end

@@ -144,7 +144,7 @@ end
     @test !isPrior(dfg, :abf1) # f1 is not a prior
     @test lsfPriors(dfg) == []
 
-    @test lsfTypes(dfg) == [:LinearRelative]
+    @test DFG.lsfTypes(dfg) == [:LinearRelative]
 
     @test ls(dfg, LinearRelative) == [:abf1]
     @test lsf(dfg, LinearRelative) == [:abf1]
@@ -152,7 +152,7 @@ end
     @test getVariableType(v1) isa Position{1}
     @test getVariableType(dfg, :a) isa Position{1}
 
-    @test lsTypes(dfg) == [:Position]
+    @test DFG.lsTypes(dfg) == [Symbol("Position{1}")]
 
     @test issetequal(ls(dfg, Position{1}), [:a, :b])
     @test issetequal(lsWho(dfg, :Position), [:a, :b])
