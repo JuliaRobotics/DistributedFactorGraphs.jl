@@ -1,11 +1,3 @@
-
-function getDFGMetadata(fg::GraphsDFG)
-    metafields = Set(fieldnames(GraphsDFG))
-    setdiff!(metafields, [:g, :solverParams])
-    metaprops = NamedTuple(k => getproperty(fg, k) for k in metafields)
-    return metaprops
-end
-
 function hasVariable(dfg::GraphsDFG, label::Symbol)
     return haskey(dfg.g.variables, label)
 end
@@ -50,43 +42,6 @@ function addVariable!(
 ) where {VD <: AbstractDFGVariable}
     return addVariable!(dfg, VD(variable))
 end
-
-#moved to abstract
-# function addFactor!(dfg::GraphsDFG{<:AbstractParams, V, F}, variables::Vector{<:V}, factor::F)::F where {V <: AbstractDFGVariable, F <: AbstractDFGFactor}
-#
-#     #TODO should this be an error
-#     if haskey(dfg.g.factors, factor.label)
-#         error("Factor '$(factor.label)' already exists in the factor graph")
-#     end
-#     # for v in variables
-#     #     if !(v.label in keys(dfg.g.metaindex[:label]))
-#     #         error("Variable '$(v.label)' not found in graph when creating Factor '$(factor.label)'")
-#     #     end
-#     # end
-#
-#     variableLabels = map(v->v.label, variables)
-#
-#     resize!(factor._variableOrderSymbols, length(variableLabels))
-#     factor._variableOrderSymbols .= variableLabels
-#     # factor._variableOrderSymbols = copy(variableLabels)
-#
-#     @assert FactorGraphs.addFactor!(dfg.g, variableLabels, factor)
-#     return factor
-# end
-#
-# function addFactor!(dfg::GraphsDFG{<:AbstractParams, <:AbstractDFGVariable, F}, variableLabels::Vector{Symbol}, factor::F)::F where F <: AbstractDFGFactor
-#     #TODO should this be an error
-#     if haskey(dfg.g.factors, factor.label)
-#         error("Factor '$(factor.label)' already exists in the factor graph")
-#     end
-#
-#     resize!(factor._variableOrderSymbols, length(variableLabels))
-#     factor._variableOrderSymbols .= variableLabels
-#
-#     @assert FactorGraphs.addFactor!(dfg.g, variableLabels, factor)
-#
-#     return factor
-# end
 
 function addFactor!(
     dfg::GraphsDFG{<:AbstractParams, <:AbstractDFGVariable, F},

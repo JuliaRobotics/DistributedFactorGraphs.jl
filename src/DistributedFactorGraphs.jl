@@ -218,8 +218,7 @@ export getVariableStates,
     addVariableState!,
     mergeVariableState!,
     deleteVariableState!,
-    listVariableStates,
-    cloneSolveKey!
+    listVariableStates
 
 # PPE
 ##------------------------------------------------------------------------------
@@ -245,7 +244,7 @@ export packVariableState, unpackVariableState
 export getSolvedCount,
     isSolved, setSolvedCount!, isInitialized, isMarginalized, setMarginalized!
 
-export getNeighborhood, listNeighbors, _getDuplicatedEmptyDFG
+export listNeighborhood, listNeighbors
 export findFactorsBetweenNaive
 export copyGraph!, deepcopyGraph, deepcopyGraph!, buildSubgraph, mergeGraph!
 
@@ -298,7 +297,6 @@ export isValidLabel
 
 ## List
 export ls, lsf, ls2
-export lsTypes, lsfTypes, lsTypesDict, lsfTypesDict
 export lsWho
 export isPrior, lsfPriors
 export hasTags, hasTagsNeighbors

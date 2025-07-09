@@ -747,38 +747,6 @@ function copytoVariableState!(
     return mergeVariableState!(dfg, variableLabel, newstate)
 end
 
-"""
-    $SIGNATURES
-Duplicate a `solveKey`` into a destination from a source.
-
-Notes
-- Can copy between graphs, or to different solveKeys within one graph.
-"""
-function cloneSolveKey!(
-    dest_dfg::AbstractDFG,
-    dest::Symbol,
-    src_dfg::AbstractDFG,
-    src::Symbol;
-    solvable::Int = 0,
-    labels = intersect(ls(dest_dfg; solvable = solvable), ls(src_dfg; solvable = solvable)),
-    verbose::Bool = false,
-)
-    #
-    for x in labels
-        sd = deepcopy(getVariableState(getVariable(src_dfg, x), src))
-        sd.solveKey = dest
-        updateVariableSolverData!(dest_dfg, x, sd, true, Symbol[]; warn_if_absent = verbose)
-    end
-
-    return nothing
-end
-
-function cloneSolveKey!(dfg::AbstractDFG, dest::Symbol, src::Symbol; kw...)
-    #
-    @assert dest != src "Must copy to a different solveKey within the same graph, $dest."
-    return cloneSolveKey!(dfg, dest, dfg, src; kw...)
-end
-
 #
 
 """

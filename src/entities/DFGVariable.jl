@@ -89,6 +89,13 @@ function VariableState(variableType::VariableStateType; kwargs...)
     return VariableState{typeof(variableType)}(; kwargs...)
 end
 
+
+function VariableState(state::VariableState; kwargs...)
+    return VariableState{typeof(getVariableType(state))}(;
+        (key => deepcopy(getproperty(state, key)) for key in fieldnames(VariableState))...,
+        kwargs...,
+    )
+end
 ##==============================================================================
 ## PackedVariableState.jl
 ##==============================================================================
@@ -452,10 +459,6 @@ function VariableSkeleton(
     return VariableSkeleton(id, label, tags)
 end
 
-StructTypes.StructType(::Type{VariableSkeleton}) = StructTypes.UnorderedStruct()
-StructTypes.idproperty(::Type{VariableSkeleton}) = :id
-StructTypes.omitempties(::Type{VariableSkeleton}) = (:id,)
-
 ##==============================================================================
 # Define variable levels
 ##==============================================================================
@@ -473,7 +476,7 @@ function VariableSummary(v::VariableCompute)
         v.id,
         v.label,
         v.timestamp,
-        deepcopy(v.tags),
+        copy(v.tags),
         deepcopy(v.ppeDict),
         Symbol(typeof(getVariableType(v))),
         v.dataDict,
@@ -481,5 +484,5 @@ function VariableSummary(v::VariableCompute)
 end
 
 function VariableSkeleton(v::VariableDataLevel1)
-    return VariableSkeleton(v.id, v.label, deepcopy(v.tags))
+    return VariableSkeleton(v.id, v.label, copy(v.tags))
 end

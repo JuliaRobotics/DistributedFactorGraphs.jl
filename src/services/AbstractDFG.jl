@@ -793,8 +793,8 @@ end
 Helper to return neighbors at distance 2 around a given node.
 """
 function ls2(dfg::AbstractDFG, label::Symbol)
-    l2 = getNeighborhood(dfg, label, 2)
-    l1 = getNeighborhood(dfg, label, 1)
+    l2 = listNeighborhood(dfg, label, 2)
+    l1 = listNeighborhood(dfg, label, 1)
     return setdiff(l2, l1)
 end
 ls2(dfg::AbstractDFG, v::AbstractDFGVariable) = ls(dfg, getLabel(v))
@@ -844,71 +844,6 @@ function lsWho(dfg::AbstractDFG, type::Symbol)
         varType == type && push!(labels, v.label)
     end
     return labels
-end
-
-## list types
-##-----------
-
-"""
-    $SIGNATURES
-
-Return `Vector{Symbol}` of all unique variable types in factor graph.
-"""
-function lsTypes(dfg::AbstractDFG)
-    vars = getVariables(dfg)
-    alltypes = Set{Symbol}()
-    for v in vars
-        varType = typeof(getVariableType(v)) |> nameof
-        push!(alltypes, varType)
-    end
-    return collect(alltypes)
-end
-
-"""
-    $SIGNATURES
-
-Return `::Dict{Symbol, Vector{Symbol}}` of all unique variable types with labels in a factor graph.
-"""
-function lsTypesDict(dfg::AbstractDFG)
-    vars = getVariables(dfg)
-    alltypes = Dict{Symbol, Vector{Symbol}}()
-    for v in vars
-        varType = typeof(getVariableType(v)) |> nameof
-        d = get!(alltypes, varType, Symbol[])
-        push!(d, v.label)
-    end
-    return alltypes
-end
-
-"""
-    $SIGNATURES
-
-Return `Vector{Symbol}` of all unique factor types in factor graph.
-"""
-function lsfTypes(dfg::AbstractDFG)
-    facs = getFactors(dfg)
-    alltypes = Set{Symbol}()
-    for f in facs
-        facType = typeof(getFactorType(f)) |> nameof
-        push!(alltypes, facType)
-    end
-    return collect(alltypes)
-end
-
-"""
-    $SIGNATURES
-
-Return `::Dict{Symbol, Vector{Symbol}}` of all unique factors types with labels in a factor graph.
-"""
-function lsfTypesDict(dfg::AbstractDFG)
-    facs = getFactors(dfg)
-    alltypes = Dict{Symbol, Vector{Symbol}}()
-    for f in facs
-        facType = typeof(getFactorType(f)) |> nameof
-        d = get!(alltypes, facType, Symbol[])
-        push!(d, f.label)
-    end
-    return alltypes
 end
 
 ##------------------------------------------------------------------------------
@@ -1086,7 +1021,7 @@ Related:
 - [`deepcopyGraph`](@ref)
 - [`deepcopyGraph!`](@ref)
 - [`buildSubgraph`](@ref)
-- [`getNeighborhood`](@ref)
+- [`listNeighborhood`](@ref)
 - [`mergeGraph!`](@ref)
 """
 function copyGraph!(
@@ -1155,7 +1090,7 @@ see [`copyGraph!`](@ref) for more detail.
 Related:
 - [`deepcopyGraph`](@ref)
 - [`buildSubgraph`](@ref)
-- [`getNeighborhood`](@ref)
+- [`listNeighborhood`](@ref)
 - [`mergeGraph!`](@ref)
 """
 function deepcopyGraph!(
@@ -1182,7 +1117,7 @@ see [`copyGraph!`](@ref) for more detail.
 Related:
 - [`deepcopyGraph!`](@ref)
 - [`buildSubgraph`](@ref)
-- [`getNeighborhood`](@ref)
+- [`listNeighborhood`](@ref)
 - [`mergeGraph!`](@ref)
 """
 function deepcopyGraph(
@@ -1323,7 +1258,7 @@ Related:
 - [`deepcopyGraph`](@ref)
 - [`mergeGraph!`](@ref)
 """
-function getNeighborhood(dfg::AbstractDFG, label::Symbol, distance::Int)
+function listNeighborhood(dfg::AbstractDFG, label::Symbol, distance::Int)
     neighborList = Set{Symbol}([label])
     curList = Set{Symbol}([label])
 
@@ -1341,7 +1276,7 @@ function getNeighborhood(dfg::AbstractDFG, label::Symbol, distance::Int)
     return collect(neighborList)
 end
 
-function getNeighborhood(
+function listNeighborhood(
     dfg::AbstractDFG,
     variableFactorLabels::Vector{Symbol},
     distance::Int;
@@ -1351,7 +1286,7 @@ function getNeighborhood(
     neighbors = Set{Symbol}()
     if distance > 0
         for l in variableFactorLabels
-            union!(neighbors, getNeighborhood(dfg, l, distance))
+            union!(neighbors, listNeighborhood(dfg, l, distance))
         end
     end
 
@@ -1368,7 +1303,7 @@ Build a deep subgraph copy from the DFG given a list of variables and factors an
 Note: Orphaned factors (where the subgraph does not contain all the related variables) are not returned.
 Related:
 - [`copyGraph!`](@ref)
-- [`getNeighborhood`](@ref)
+- [`listNeighborhood`](@ref)
 - [`deepcopyGraph`](@ref)
 - [`mergeGraph!`](@ref)
 Dev Notes
@@ -1387,7 +1322,7 @@ function buildSubgraph(
     !isnothing(sessionId) && @warn "sessionId is deprecated, use graphLabel instead"
 
     #build up the neighborhood from variableFactorLabels
-    allvarfacs = getNeighborhood(dfg, variableFactorLabels, distance; solvable = solvable)
+    allvarfacs = listNeighborhood(dfg, variableFactorLabels, distance; solvable = solvable)
 
     variableLabels = intersect(allvarfacs, listVariables(dfg))
     factorLabels = intersect(allvarfacs, listFactors(dfg))
@@ -1414,7 +1349,7 @@ Notes:
 Related:
 - [`copyGraph!`](@ref)
 - [`buildSubgraph`](@ref)
-- [`getNeighborhood`](@ref)
+- [`listNeighborhood`](@ref)
 - [`deepcopyGraph`](@ref)
 """
 function mergeGraph!(
@@ -1428,7 +1363,7 @@ function mergeGraph!(
 )
 
     # find neighbors at distance to add
-    allvarfacs = getNeighborhood(
+    allvarfacs = listNeighborhood(
         sourceDFG,
         union(variableLabels, factorLabels),
         distance;

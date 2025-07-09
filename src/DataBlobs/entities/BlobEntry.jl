@@ -48,5 +48,3 @@ end
 StructTypes.StructType(::Type{Blobentry}) = StructTypes.UnorderedStruct()
 StructTypes.idproperty(::Type{Blobentry}) = :id
 StructTypes.omitempties(::Type{Blobentry}) = (:id,)
-
-_fixtimezone(cts::NamedTuple) = ZonedDateTime(cts.utc_datetime * "+00")
