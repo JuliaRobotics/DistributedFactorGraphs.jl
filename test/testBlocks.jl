@@ -1089,6 +1089,7 @@ function blobsStoresTestBlock!(fg)
     @test listBlobstores(fg) == [fs.label]
     # Getting
     @test getBlobstore(fg, fs.label) == fs
+    @test_throws LabelNotFoundError getBlobstore(fg, :notfound)
     # Deleting
     @test deleteBlobstore!(fg, fs.label) == 1
     # Updating
@@ -1100,8 +1101,18 @@ function blobsStoresTestBlock!(fg)
     # Add it back
     addBlobstore!(fg, fs)
 
-    # Data functions
+    # Blob 
     testData = rand(UInt8, 50)
+    blobId = addBlob!(fs, testData)
+    @test blobId isa UUID
+    @test_throws DFG.IdExistsError addBlob!(fs, blobId, testData)
+    @test getBlob(fs, blobId) == testData
+    @test_throws DFG.IdNotFoundError getBlob(fs, uuid4())
+    @test_throws DFG.IdNotFoundError deleteBlob!(fs, uuid4())
+    @test deleteBlob!(fs, blobId) == 1
+    @test_throws DFG.IdNotFoundError getBlob(fs, blobId)
+
+    # Data functions
     # Adding 
     newData = addData!(fg, fs.label, :a, :testing, testData) # convenience wrapper over addBlob!
     # Listing

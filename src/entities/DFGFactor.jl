@@ -64,7 +64,7 @@ Base.@kwdef struct FactorDFG <: AbstractDFGFactor
     solvable::Int
     data::Union{Nothing, String} = nothing #TODO v0.27 deprecate data completely, left as a bridge to old serialization structure
     metadata::String
-    _version::String = string(_getDFGVersion())
+    _version::VersionNumber = _getDFGVersion()
     state::FactorState
     observJSON::String # serialized observation
     # blobEntries::Vector{Blobentry}#TODO should factor have blob entries?
@@ -91,7 +91,7 @@ function FactorDFG(
     solvable::Int,
     data::Union{Nothing, String},
     metadata::String,
-    _version::String,
+    _version,
     state::Union{Nothing, FactorState} = nothing,
     observJSON::Union{Nothing, String} = nothing,
 )

@@ -306,7 +306,7 @@ end
     $(SIGNATURES)
 Add a Vector{VariableCompute} to a DFG.
 """
-function addVariables!(dfg::AbstractDFG, ::Vector{<:AbstractDFGVariable})
+function addVariables!(dfg::AbstractDFG, variables::Vector{<:AbstractDFGVariable})
     return asyncmap(variables) do v
         return addVariable!(dfg, v)
     end

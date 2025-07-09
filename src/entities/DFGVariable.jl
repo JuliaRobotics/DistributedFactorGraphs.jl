@@ -122,7 +122,7 @@ Base.@kwdef mutable struct PackedVariableState
     solvedCount::Int
     solveKey::Symbol
     covar::Vector{Float64}
-    _version::String = string(_getDFGVersion())
+    _version::VersionNumber = _getDFGVersion()
 end
 # maybe add
 # createdTimestamp::DateTime#!
@@ -158,7 +158,7 @@ Base.@kwdef struct MeanMaxPPE <: AbstractPointParametricEst
     max::Vector{Float64}
     mean::Vector{Float64}
     _type::String = "MeanMaxPPE"
-    _version::String = string(_getDFGVersion())
+    _version::VersionNumber = _getDFGVersion()
     createdTimestamp::Union{ZonedDateTime, Nothing} = nothing
     lastUpdatedTimestamp::Union{ZonedDateTime, Nothing} = nothing
 end
@@ -185,7 +185,7 @@ function MeanMaxPPE(
         max,
         mean,
         "MeanMaxPPE",
-        string(_getDFGVersion()),
+        _getDFGVersion(),
         now(tz"UTC"),
         now(tz"UTC"),
     )
@@ -223,7 +223,7 @@ Base.@kwdef struct VariableDFG <: AbstractDFGVariable
     ppes::Vector{MeanMaxPPE} = MeanMaxPPE[]
     blobEntries::Vector{Blobentry} = Blobentry[]
     variableType::String
-    _version::String = string(_getDFGVersion())
+    _version::VersionNumber = _getDFGVersion()
     metadata::String = "e30="
     solvable::Int = 1
     solverData::Vector{PackedVariableState} = PackedVariableState[]
