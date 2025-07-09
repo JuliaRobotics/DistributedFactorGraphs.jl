@@ -147,7 +147,10 @@ end
 
 function getBlob(store::FolderStore{T}, blobid::UUID) where {T}
     blobfilename = joinpath(store.folder, string(store.label), string(blobid))
-    if isfile(blobfilename)
+    tombstonefile = blobfilename * ".deleted"
+    if isfile(tombstonefile)
+        throw(IdNotFoundError("Blob (deleted)", blobid))
+    elseif isfile(blobfilename)
         open(blobfilename) do f
             return read(f)
         end
@@ -169,24 +172,28 @@ function addBlob!(store::FolderStore{T}, blobid::UUID, data::T) where {T}
 end
 
 function updateBlob!(store::FolderStore{T}, blobid::UUID, data::T) where {T}
-    blobfilename = joinpath(store.folder, string(store.label), string(blobid))
-    if !isfile(blobfilename)
-        @warn "Key '$blobid' doesn't exist."
-    else
-        open(blobfilename, "w") do f
-            return write(f, data)
-        end
-        return data
-    end
+   error("updateBlob! is obsolete as blobsId=>Blob pairs are immutable.")
 end
 
 function deleteBlob!(store::FolderStore{T}, blobid::UUID) where {T}
+    # Tombstone pattern: instead of deleting the file, create a tombstone marker file
     blobfilename = joinpath(store.folder, string(store.label), string(blobid))
-    if !isfile(blobfilename)
-        throw(IdNotFoundError("Blob", blobid))
+    tombstonefile = blobfilename * ".deleted"
+    if isfile(blobfilename)
+        # Remove the actual blob file
+        rm(blobfilename)
+        # Create a tombstone marker
+        open(tombstonefile, "w") do f
+            write(f, "deleted")
+        end
+        return 1
+    elseif isfile(tombstonefile)
+        # Already deleted
+        return 0
+    else
+        # Not found
+        throw(IdNotFoundError("Blob", blobId))
     end
-    rm(blobfilename)
-    return 1
 end
 
 function hasBlob(store::FolderStore, blobid::UUID)
@@ -196,7 +203,15 @@ end
 
 hasBlob(store::FolderStore, entry::Blobentry) = hasBlob(store, entry.blobid)
 
-listBlobs(store::FolderStore) = readdir(store.folder)
+function listBlobs(store::FolderStore)
+    folder = joinpath(store.folder, string(store.label))
+    # Parse folder to only include UUIDs automatically excluding tombstone files this way.
+    blobIds = map(readdir(folder)) do filename
+        tryparse(UUID, filename)
+    end
+    return filter(!isnothing, blobIds)
+end
+
 ##==============================================================================
 ## InMemoryBlobstore
 ##==============================================================================
