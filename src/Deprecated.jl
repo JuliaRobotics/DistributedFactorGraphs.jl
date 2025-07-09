@@ -21,10 +21,10 @@ const InferenceType = AbstractPackedFactorObservation
 const PackedSamplableBelief = PackedBelief
 
 export setSolverData!
-"""
-    $SIGNATURES
-Set solver data structure stored in a variable.
-"""
+# """
+#     $SIGNATURES
+# Set solver data structure stored in a variable.
+# """
 function setSolverData!(v::VariableCompute, data::VariableState, key::Symbol = :default)
     Base.depwarn(
         "setSolverData!(v::VariableCompute, data::VariableState, key::Symbol = :default) is deprecated, use mergeVariableState! instead.",
@@ -54,11 +54,11 @@ end
 #NOTE List types funcction do not fit verb noun and will be deprecated.
 # should return types
 
-"""
-    $SIGNATURES
+# """
+#     $SIGNATURES
 
-Return `Vector{Symbol}` of all unique variable types in factor graph.
-"""
+# Return `Vector{Symbol}` of all unique variable types in factor graph.
+# """
 function lsTypes(dfg::AbstractDFG)
     vars = getVariables(dfg)
     alltypes = Set{Symbol}()
@@ -69,11 +69,11 @@ function lsTypes(dfg::AbstractDFG)
     return collect(alltypes)
 end
 
-"""
-    $SIGNATURES
+# """
+#     $SIGNATURES
 
-Return `::Dict{Symbol, Vector{Symbol}}` of all unique variable types with labels in a factor graph.
-"""
+# Return `::Dict{Symbol, Vector{Symbol}}` of all unique variable types with labels in a factor graph.
+# """
 function lsTypesDict(dfg::AbstractDFG)
     vars = getVariables(dfg)
     alltypes = Dict{Symbol, Vector{Symbol}}()
@@ -85,11 +85,11 @@ function lsTypesDict(dfg::AbstractDFG)
     return alltypes
 end
 
-"""
-    $SIGNATURES
+# """
+#     $SIGNATURES
 
-Return `Vector{Symbol}` of all unique factor types in factor graph.
-"""
+# Return `Vector{Symbol}` of all unique factor types in factor graph.
+# """
 function lsfTypes(dfg::AbstractDFG)
     facs = getFactors(dfg)
     alltypes = Set{Symbol}()
@@ -100,11 +100,11 @@ function lsfTypes(dfg::AbstractDFG)
     return collect(alltypes)
 end
 
-"""
-    $SIGNATURES
+# """
+#     $SIGNATURES
 
-Return `::Dict{Symbol, Vector{Symbol}}` of all unique factors types with labels in a factor graph.
-"""
+# Return `::Dict{Symbol, Vector{Symbol}}` of all unique factors types with labels in a factor graph.
+# """
 function lsfTypesDict(dfg::AbstractDFG)
     facs = getFactors(dfg)
     alltypes = Dict{Symbol, Vector{Symbol}}()
@@ -118,13 +118,13 @@ end
 
 # solvekey is deprecated and sync!/copyto! is the better verb.
 #TODO replace with syncVariableStates! or similar
-"""
-    $SIGNATURES
-Duplicate a `solveKey`` into a destination from a source.
+# """
+#     $SIGNATURES
+# Duplicate a `solveKey`` into a destination from a source.
 
-Notes
-- Can copy between graphs, or to different solveKeys within one graph.
-"""
+# Notes
+# - Can copy between graphs, or to different solveKeys within one graph.
+# """
 function cloneSolveKey!(
     dest_dfg::AbstractDFG,
     dest::Symbol,
