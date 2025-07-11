@@ -14,7 +14,7 @@ implement compare if needed.
 
 ==(a::FactorSolverCache, b::FactorSolverCache) = typeof(a) == typeof(b)
 
-==(a::AbstractFactorObservation, b::AbstractFactorObservation) = typeof(a) == typeof(b)
+==(a::AbstractObservation, b::AbstractObservation) = typeof(a) == typeof(b)
 
 # Generate compares automatically for all in this union
 const GeneratedCompareUnion = Union{
@@ -544,6 +544,7 @@ function compareFactorGraphs(
         :solverParams,
         :factorOperationalMemoryType,
         :agent,
+        :graph
     ]
     skiplist = union(skiplist, skip)
     @warn "compareFactorGraphs will skip comparisons on: $skiplist"

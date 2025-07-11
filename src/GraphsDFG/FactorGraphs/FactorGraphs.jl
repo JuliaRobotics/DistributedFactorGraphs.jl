@@ -46,11 +46,12 @@ export FactorGraph
 # filter_vertices,
 # reverse
 
-# import DistributedFactorGraphs: DFGNode
-# const AbstractNodeType = DFGNode
-import DistributedFactorGraphs: AbstractDFGVariable, AbstractDFGFactor
-const AbstractVariableType = AbstractDFGVariable
-const AbstractFactorType = AbstractDFGFactor
+# import DistributedFactorGraphs: AbstractGraphNode
+# const AbstractNodeType = AbstractGraphNode
+using DistributedFactorGraphs: AbstractGraphNode
+import DistributedFactorGraphs: AbstractGraphVariable, AbstractGraphFactor
+const AbstractVariableType = AbstractGraphVariable
+const AbstractFactorType = AbstractGraphFactor
 
 include("BiMaps.jl")
 

@@ -326,7 +326,7 @@ function unpackObservation(factor::FactorDFG)
 end
 
 packObservation(f::FactorCompute) = packObservation(getObservation(f))
-function packObservation(observ::AbstractFactorObservation)
+function packObservation(observ::AbstractObservation)
     try
         return pack(observ)
     catch e
@@ -372,4 +372,7 @@ function unpackFactor(factor::FactorDFG; skipVersionCheck::Bool = false)
     )
 end
 
-#
+FactorCompute(f::FactorCompute) = f
+FactorCompute(f::FactorDFG) = unpackFactor(f)
+FactorDFG(f::FactorDFG) = f
+FactorDFG(f::FactorCompute) = packFactor(f)

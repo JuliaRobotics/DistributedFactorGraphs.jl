@@ -3,7 +3,12 @@ using Test
 using Dates
 using Manifolds
 
-using DistributedFactorGraphs: LabelExistsError, LabelNotFoundError
+using DistributedFactorGraphs: 
+    LabelExistsError,
+    LabelNotFoundError,
+    NoSolverParams,
+    AbstractGraphVariable,
+    AbstractGraphFactor
 
 import Base: convert
 # import DistributedFactorGraphs: getData, addData!, updateData!, deleteData!
@@ -22,7 +27,7 @@ struct TestAbstractPrior <: PriorObservation end
 # struct TestAbstractRelativeFactor <: AbstractRelativeRoots end
 struct TestAbstractRelativeFactorMinimize <: RelativeObservation end
 
-Base.@kwdef struct PackedTestFunctorInferenceType1 <: AbstractPackedFactorObservation
+Base.@kwdef struct PackedTestFunctorInferenceType1 <: AbstractPackedObservation
     s::String = ""
 end
 # PackedTestFunctorInferenceType1() = PackedTestFunctorInferenceType1("")
@@ -49,7 +54,7 @@ function Base.convert(::Type{TestFunctorInferenceType1}, d::PackedTestFunctorInf
     return TestFunctorInferenceType1()
 end
 
-Base.@kwdef struct PackedTestAbstractPrior <: AbstractPackedFactorObservation
+Base.@kwdef struct PackedTestAbstractPrior <: AbstractPackedObservation
     s::String = ""
 end
 # PackedTestAbstractPrior() = PackedTestAbstractPrior("")
@@ -64,7 +69,7 @@ function Base.convert(::Type{TestAbstractPrior}, d::PackedTestAbstractPrior)
     return TestAbstractPrior()
 end
 
-struct TestCCW{T <: AbstractFactorObservation} <: FactorSolverCache
+struct TestCCW{T <: AbstractObservation} <: FactorSolverCache
     usrfnc!::T
 end
 
@@ -72,14 +77,14 @@ TestCCW{T}() where {T} = TestCCW(T())
 
 Base.:(==)(a::TestCCW, b::TestCCW) = a.usrfnc! == b.usrfnc!
 
-DFG.rebuildFactorCache!(dfg::AbstractDFG{NoSolverParams}, fac::FactorCompute) = fac
+# DFG.rebuildFactorCache!(dfg::AbstractDFG{NoSolverParams}, fac::FactorCompute) = fac
 
 function DFG.reconstFactorData(
     dfg::AbstractDFG,
     vo::AbstractVector,
     ::Type{<:DFG.FunctionNodeData{TestCCW{F}}},
-    d::DFG.PackedFunctionNodeData{<:AbstractPackedFactorObservation},
-) where {F <: DFG.AbstractFactorObservation}
+    d::DFG.PackedFunctionNodeData{<:AbstractPackedObservation},
+) where {F <: DFG.AbstractObservation}
     error("obsolete, TODO remove")
     nF = convert(F, d.fnc)
     return DFG.FunctionNodeData(
@@ -98,7 +103,7 @@ end
 function Base.convert(
     ::Type{DFG.PackedFunctionNodeData{P}},
     d::DFG.FunctionNodeData{<:FactorSolverCache},
-) where {P <: AbstractPackedFactorObservation}
+) where {P <: AbstractPackedObservation}
     return DFG.PackedFunctionNodeData(
         d.eliminated,
         d.potentialused,
@@ -119,16 +124,16 @@ end
 #test Specific definitions
 # struct TestInferenceVariable1 <: VariableStateType end
 # struct TestInferenceVariable2 <: VariableStateType end
-# struct TestFunctorInferenceType1 <: AbstractFactorObservation end
+# struct TestFunctorInferenceType1 <: AbstractObservation end
 
 # NOTE see note in AbstractDFG.jl setSolverParams!
-struct GeenSolverParams <: AbstractParams end
+struct GeenSolverParams <: AbstractDFGParams end
 
 solparams = NoSolverParams()
 # DFG Accessors
 function DFGStructureAndAccessors(
     ::Type{T},
-    solparams::AbstractParams = NoSolverParams(),
+    solparams::AbstractDFGParams = NoSolverParams(),
 ) where {T <: AbstractDFG}
     # "DFG Structure and Accessors"
     # Constructors
@@ -1305,8 +1310,8 @@ function testGroup!(fg, v1, v2, f0, f1)
         #solves in progress
         @test getSolveInProgress(v1) == 1
         @test getSolveInProgress(f1) == 1
-        @test !isSolveInProgress(v2) && v2.solverDataDict[:default].solveInProgress == 0
-        @test isSolveInProgress(v1) && v1.solverDataDict[:default].solveInProgress > 0
+        @test !isSolveInProgress(v2, :default) && v2.solverDataDict[:default].solveInProgress == 0
+        @test isSolveInProgress(v1, :default) && v1.solverDataDict[:default].solveInProgress > 0
 
         @test setSolvable!(v1, 1) == 1
         @test getSolvable(v1) == 1

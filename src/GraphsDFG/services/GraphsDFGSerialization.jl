@@ -1,6 +1,6 @@
 using InteractiveUtils
 
-@kwdef struct PackedGraphsDFG{T <: AbstractParams}
+@kwdef struct _OldPackedGraphsDFG{T <: AbstractDFGParams}
     description::String
     addHistory::Vector{Symbol}
     solverParams::T
@@ -14,18 +14,73 @@ using InteractiveUtils
     graphBlobEntries::OrderedDict{Symbol, Blobentry}
     agent::Agent
 end
+StructTypes.StructType(::Type{_OldPackedGraphsDFG}) = StructTypes.AbstractType()
+function StructTypes.StructType(
+    ::Type{_OldPackedGraphsDFG{T}},
+) where {T <: AbstractDFGParams}
+    return StructTypes.Struct()
+end
+StructTypes.subtypekey(::Type{_OldPackedGraphsDFG}) = :solverParams_type
+#TODO look at StructTypes.@register_struct_subtype when new StructTypes.jl is tagged (for type field)
+
+function StructTypes.subtypes(::Type{_OldPackedGraphsDFG})
+    subs = subtypes(AbstractDFGParams)
+    return NamedTuple(map(s -> nameof(s) => _OldPackedGraphsDFG{s}, subs))
+end
+
+@kwdef struct PackedGraphsDFG{T <: AbstractDFGParams}
+    addHistory::Vector{Symbol}
+    solverParams::T
+    solverParams_type::String = string(nameof(typeof(solverParams)))
+    typePackedVariable::Bool = false # Are variables packed or full
+    typePackedFactor::Bool = false # Are factors packed or full
+    blobStores::Union{Nothing, Dict{Symbol, FolderStore{Vector{UInt8}}}} #FIXME allow more types of blobstores
+    graph::FactorgraphRoot
+    agent::Agent
+end
+
+# TODO deprecate, constructor serialization backwards compatibility, v0.28
+function PackedGraphsDFG(old::_OldPackedGraphsDFG)
+    return PackedGraphsDFG{typeof(old.solverParams)}(
+        old.addHistory,
+        old.solverParams,
+        old.solverParams_type,
+        old.typePackedVariable,
+        old.typePackedFactor,
+        old.blobStores,
+        FactorgraphRoot(
+            old.graphLabel,
+            old.description,
+            old.graphTags,
+            old.graphMetadata,
+            old.graphBlobEntries,
+        ),
+        old.agent,
+    )
+end
 
 StructTypes.StructType(::Type{PackedGraphsDFG}) = StructTypes.AbstractType()
+function StructTypes.StructType(::Type{PackedGraphsDFG{T}}) where {T <: AbstractDFGParams}
+    return StructTypes.Struct()
+end
 StructTypes.subtypekey(::Type{PackedGraphsDFG}) = :solverParams_type
 #TODO look at StructTypes.@register_struct_subtype when new StructTypes.jl is tagged (for type field)
 
 function StructTypes.subtypes(::Type{PackedGraphsDFG})
-    subs = subtypes(AbstractParams)
+    subs = subtypes(AbstractDFGParams)
     return NamedTuple(map(s -> nameof(s) => PackedGraphsDFG{s}, subs))
 end
 
-getTypeDFGVariables(fg::GraphsDFG{<:AbstractParams, T, <:AbstractDFGFactor}) where {T} = T
-getTypeDFGFactors(fg::GraphsDFG{<:AbstractParams, <:AbstractDFGVariable, T}) where {T} = T
+function getTypeDFGVariables(
+    fg::GraphsDFG{<:AbstractDFGParams, T, <:AbstractGraphFactor},
+) where {T}
+    return T
+end
+function getTypeDFGFactors(
+    fg::GraphsDFG{<:AbstractDFGParams, <:AbstractGraphVariable, T},
+) where {T}
+    return T
+end
 
 ##
 """

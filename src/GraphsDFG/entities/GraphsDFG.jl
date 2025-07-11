@@ -7,32 +7,30 @@ An in-memory DistributedFactorGraph based on Graphs.jl with parameters:
 - F: Factor type
 """
 mutable struct GraphsDFG{
-    T <: AbstractParams,
-    V <: AbstractDFGVariable,
-    F <: AbstractDFGFactor,
-} <: AbstractDFG{T}
+    T <: AbstractDFGParams,
+    V <: AbstractGraphVariable,
+    F <: AbstractGraphFactor,
+} <: AbstractDFG{V, F}
     g::FactorGraph{Int, V, F}
-    description::String
     addHistory::Vector{Symbol} #TODO: Discuss more - is this an audit trail?
     solverParams::T # Solver parameters
     blobStores::Dict{Symbol, AbstractBlobstore}
-    # new structure to replace URS
-    graphLabel::Symbol # graph (session) label
-    graphTags::Vector{Symbol}
-    graphMetadata::Dict{Symbol, SmallDataTypes} # graph (session) metadata
-    graphBlobEntries::OrderedDict{Symbol, Blobentry} #graph (session) blob entries
-    agent::Agent # (robot)
+    graph::FactorgraphRoot
+    agent::Agent
 end
 
 DFG.getAgent(dfg::GraphsDFG) = dfg.agent
+DFG.getGraphLabel(dfg::GraphsDFG) = dfg.graph.label
+DFG.getMetadata(dfg::GraphsDFG) = dfg.graph.metadata
+DFG.getDescription(dfg::GraphsDFG) = dfg.graph.description
 
-DFG.getGraphLabel(dfg::GraphsDFG) = dfg.graphLabel
-DFG.getMetadata(dfg::GraphsDFG) = dfg.graphMetadata
 function DFG.setMetadata!(dfg::GraphsDFG, metadata::Dict{Symbol, SmallDataTypes})
     # with set old data should be removed, but care is taken to make sure its not the same object
-    dfg.graphMetadata !== metadata && empty!(dfg.graphMetadata)
-    return merge!(dfg.graphMetadata, metadata)
+    dfg.graph.metadata !== metadata && empty!(dfg.graph.metadata)
+    return merge!(dfg.graph.metadata, metadata)
 end
+
+DFG.setDescription!(dfg::GraphsDFG, description::String) = dfg.graph.description = description
 
 """
     $(SIGNATURES)
@@ -54,6 +52,13 @@ function GraphsDFG{T, V, F}(
     graphBlobEntries = OrderedDict{Symbol, Blobentry}(),
     description::String = "",
     graphDescription::String = description,
+    graph::FactorgraphRoot = FactorgraphRoot(
+        graphLabel,
+        graphDescription,
+        graphTags,
+        graphMetadata,
+        graphBlobEntries,
+    ),
     # agent
     agentLabel::Symbol = :DefaultAgent,
     agentDescription::String = "",
@@ -67,7 +72,7 @@ function GraphsDFG{T, V, F}(
         agentMetadata,
         agentBlobEntries,
     ),
-) where {T <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
+) where {T <: AbstractDFGParams, V <: AbstractGraphVariable, F <: AbstractGraphFactor}
 
     # Validate the graphLabel and agentLabel
     !isValidLabel(graphLabel) && error("'$graphLabel' is not a valid label")
@@ -75,20 +80,16 @@ function GraphsDFG{T, V, F}(
 
     return GraphsDFG{T, V, F}(
         g,
-        graphDescription,
         addHistory,
         solverParams,
         blobStores,
         # new fields
-        graphLabel,
-        graphTags,
-        graphMetadata,
-        graphBlobEntries,
+        graph,
         agent,
     )
 end
 
-# GraphsDFG{T}(; kwargs...) where T <: AbstractParams = GraphsDFG{T,VariableCompute,FactorCompute}(;kwargs...)
+# GraphsDFG{T}(; kwargs...) where T <: AbstractDFGParams = GraphsDFG{T,VariableCompute,FactorCompute}(;kwargs...)
 function GraphsDFG{T}(
     g::FactorGraph{Int, VariableCompute, FactorCompute} = FactorGraph{
         Int,
@@ -96,7 +97,7 @@ function GraphsDFG{T}(
         FactorCompute,
     }();
     kwargs...,
-) where {T <: AbstractParams}
+) where {T <: AbstractDFGParams}
     return GraphsDFG{T, VariableCompute, FactorCompute}(g; kwargs...)
 end
 

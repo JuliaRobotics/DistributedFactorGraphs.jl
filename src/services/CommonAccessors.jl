@@ -5,22 +5,6 @@
 
 # NOTE this could be reduced with macros and function generation to even less code.
 
-# Data levels
-const DataLevel0 = Union{VariableDataLevel0, FactorDataLevel0}
-const DataLevel1 = Union{VariableDataLevel1, FactorDataLevel1}
-const DataLevel2 = Union{VariableDataLevel2, FactorDataLevel2}
-
-##------------------------------------------------------------------------------
-## label
-##------------------------------------------------------------------------------
-
-"""
-$SIGNATURES
-
-Return the label for a DFGNode.
-"""
-getLabel(v::DataLevel0) = v.label
-
 ##------------------------------------------------------------------------------
 ## tags
 ##------------------------------------------------------------------------------
@@ -28,18 +12,18 @@ getLabel(v::DataLevel0) = v.label
 """
 $SIGNATURES
 
-Return the tags for a DFGNode.
+Return the tags for a Node.
 """
-getTags(v::DataLevel0) = v.tags
+getTags(node) = node.tags
 
 """
 $SIGNATURES
 
-Set the tags for a DFGNode.
+Set the tags for a Node.
 """
-function setTags!(f::DataLevel0, tags::Union{Vector{Symbol}, Set{Symbol}})
-    f.tags !== tags && empty!(f.tags)
-    return union!(f.tags, tags)
+function setTags!(node, tags::Union{Vector{Symbol}, Set{Symbol}})
+    node.tags !== tags && empty!(node.tags)
+    return union!(node.tags, tags)
 end
 
 ##------------------------------------------------------------------------------
@@ -49,9 +33,9 @@ end
 """
 $SIGNATURES
 
-Get the timestamp of a DFGNode.
+Get the timestamp of a AbstractGraphNode.
 """
-getTimestamp(v::DataLevel1) = v.timestamp
+getTimestamp(node) = node.timestamp
 
 """
     $SIGNATURES
@@ -86,7 +70,6 @@ Related:
 - isSolveInProgress
 """
 getSolvable(var::Union{VariableCompute, FactorCompute}) = var.solvable
-#TODO DataLevel2
 
 """
     $SIGNATURES
@@ -101,13 +84,12 @@ function getSolvable(dfg::AbstractDFG, sym::Symbol)
     end
 end
 
-#TODO data level2 for N
 """
     $SIGNATURES
 
 Set the `solvable` parameter for either a variable or factor.
 """
-function setSolvable!(node::N, solvable::Int) where {N <: DFGNode}
+function setSolvable!(node::N, solvable::Int) where {N <: AbstractGraphNode}
     node.solvable = solvable
     return solvable
 end
@@ -146,7 +128,7 @@ isSolvable(node::Union{VariableCompute, FactorCompute}) = getSolvable(node) > 0
 Which variables or factors are currently being used by an active solver.  Useful for ensuring atomic transactions.
 
 DevNotes:
-- Will be renamed to `data.solveinprogress` which will be in VND, not DFGNode -- see DFG #201
+- Will be renamed to `data.solveinprogress` which will be in VND, not AbstractGraphNode -- see DFG #201
 
 Related
 
@@ -189,12 +171,12 @@ $SIGNATURES
 
 Return the tags for a variable or factor.
 """
-function listTags(dfg::AbstractDFG, sym::Symbol)
+function getTags(dfg::AbstractDFG, sym::Symbol)
     getFnc = isVariable(dfg, sym) ? getVariable : getFactor
     return getTags(getFnc(dfg, sym))
 end
 #alias for completeness
-listTags(f::DataLevel0) = getTags(f)
+const listTags = getTags
 
 """
     $SIGNATURES
@@ -205,7 +187,7 @@ function mergeTags!(dfg::InMemoryDFGTypes, sym::Symbol, tags::Vector{Symbol})
     getFnc = isVariable(dfg, sym) ? getVariable : getFactor
     return union!(getTags(getFnc(dfg, sym)), tags)
 end
-mergeTags!(f::DataLevel0, tags::Vector{Symbol}) = union!(f.tags, tags)
+mergeTags!(node, tags::Vector{Symbol}) = union!(node.tags, tags)
 
 """
 $SIGNATURES
@@ -216,7 +198,7 @@ function removeTags!(dfg::InMemoryDFGTypes, sym::Symbol, tags::Vector{Symbol})
     getFnc = isVariable(dfg, sym) ? getVariable : getFactor
     return setdiff!(getTags(getFnc(dfg, sym)), tags)
 end
-removeTags!(f::DataLevel0, tags::Vector{Symbol}) = setdiff!(f.tags, tags)
+removeTags!(node, tags::Vector{Symbol}) = setdiff!(node.tags, tags)
 
 """
 $SIGNATURES
@@ -227,4 +209,4 @@ function emptyTags!(dfg::InMemoryDFGTypes, sym::Symbol)
     getFnc = isVariable(dfg, sym) ? getVariable : getFactor
     return empty!(getTags(getFnc(dfg, sym)))
 end
-emptyTags!(f::DataLevel0) = empty!(f.tags)
+emptyTags!(node) = empty!(node.tags)

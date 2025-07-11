@@ -2,7 +2,9 @@
 ## Abstract Types
 ##==============================================================================
 
-abstract type VariableStateType{N} end
+#TODO Varstate, Variablestate, VariableState #1145 
+abstract type AbstractVariableStateType{N} end
+const VariableStateType = AbstractVariableStateType
 
 ##==============================================================================
 ## VariableState
@@ -220,7 +222,7 @@ Notes:
 - nstime can be used as mission time, with the convention that the timestamp millis coincide with the mission start nstime
   - e.g. timestamp is `2020-01-01 06:30:01.250 UTC` and first nstime is `250_000_000`.
 """
-Base.@kwdef struct VariableDFG <: AbstractDFGVariable
+Base.@kwdef struct VariableDFG <: AbstractGraphVariable
     id::Union{UUID, Nothing} = nothing
     label::Symbol
     tags::Vector{Symbol} = Symbol[]
@@ -289,7 +291,7 @@ Complete variable structure for a DistributedFactorGraph variable.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct VariableCompute{T <: VariableStateType, P, N} <: AbstractDFGVariable
+Base.@kwdef struct VariableCompute{T <: VariableStateType, P, N} <: AbstractGraphVariable
     """The ID for the variable"""
     id::Union{UUID, Nothing} = nothing
     """Variable label, e.g. :x1.
@@ -390,7 +392,7 @@ Summary variable structure for a DistributedFactorGraph variable.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct VariableSummary <: AbstractDFGVariable
+Base.@kwdef struct VariableSummary <: AbstractGraphVariable
     """The ID for the variable"""
     id::Union{UUID, Nothing}
     """Variable label, e.g. :x1.
@@ -439,7 +441,7 @@ Skeleton variable structure for a DistributedFactorGraph variable.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct VariableSkeleton <: AbstractDFGVariable
+Base.@kwdef struct VariableSkeleton <: AbstractGraphVariable
     """The ID for the variable"""
     id::Union{UUID, Nothing} = nothing
     """Variable label, e.g. :x1.
@@ -459,14 +461,6 @@ function VariableSkeleton(
 end
 
 ##==============================================================================
-# Define variable levels
-##==============================================================================
-const VariableDataLevel0 =
-    Union{VariableCompute, VariableSummary, VariableDFG, VariableSkeleton}
-const VariableDataLevel1 = Union{VariableCompute, VariableSummary, VariableDFG}
-const VariableDataLevel2 = Union{VariableCompute}
-
-##==============================================================================
 ## Conversion constructors
 ##==============================================================================
 
@@ -482,6 +476,6 @@ function VariableSummary(v::VariableCompute)
     )
 end
 
-function VariableSkeleton(v::VariableDataLevel1)
+function VariableSkeleton(v::AbstractGraphVariable)
     return VariableSkeleton(v.id, v.label, copy(v.tags))
 end

@@ -91,15 +91,67 @@ export GraphsDFGs, GraphsDFG
 ##
 export getVariableState, getFactorState # FIXME these were questioned and being reviewed again for name, other than that they are checked.
 
+## CRUD Matrix
+# export addVariable!,          getVariable,          mergeVariable!,          deleteVariable!
+# export addVariables!,         getVariables,         mergeVariables!,         deleteVariables!
+# export addFactor!,            getFactor,            mergeFactor!,            deleteFactor!
+# export addFactors!,           getFactors,           mergeFactors!,           deleteFactors!
+
+# export addVariableState!,     getVariableState,     mergeVariableState!,     deleteVariableState!
+# export addVariableStates!,    getVariableStates,    mergeVariableStates!,    deleteVariableStates!
+
+# export addBlobentry!,         getBlobentry,         mergeBlobentry!,         deleteBlobentry! # historic for VariableBlobentry
+# export addBlobentries!,       getBlobentries,       mergeBlobentries!,       deleteBlobentries!
+# export addGraphBlobentry!,    getGraphBlobentry,    mergeGraphBlobentry!,    deleteGraphBlobentry!
+# export addGraphBlobentries!,  getGraphBlobentries,  mergeGraphBlobentries!,  deleteGraphBlobentries!
+# export addAgentBlobentry!,    getAgentBlobentry,    mergeAgentBlobentry!,    deleteAgentBlobentry!
+# export addAgentBlobentries!,  getAgentBlobentries,  mergeAgentBlobentries!,  deleteAgentBlobentries!
+# export addFactorBlobentry!,   getFactorBlobentry,   mergeFactorBlobentry!,   deleteFactorBlobentry!
+# export addFactorBlobentries!, getFactorBlobentries, mergeFactorBlobentries!, deleteFactorBlobentries!
+
+# export addVariableMetadata!,  getVariableMetadata,  mergeVariableMetadata!,  deleteVariableMetadata!
+# export addFactorMetadata!,    getFactorMetadata,    mergeFactorMetadata!,    deleteFactorMetadata!
+# export addAgentMetadata!,     getAgentMetadata,     mergeAgentMetadata!,     deleteAgentMetadata!
+# export addGraphMetadata!,     getGraphMetadata,     mergeGraphMetadata!,     deleteGraphMetadata!
+
+# export addVariableBlobentryMetadata!, getVariableBlobentryMetadata, mergeVariableBlobentryMetadata!, deleteVariableBlobentryMetadata!
+# export addFactorBlobentryMetadata!,   getFactorBlobentryMetadata,   mergeFactorBlobentryMetadata!,   deleteFactorBlobentryMetadata!
+# export addAgentBlobentryMetadata!,    getAgentBlobentryMetadata,    mergeAgentBlobentryMetadata!,    deleteAgentBlobentryMetadata!
+# export addGraphBlobentryMetadata!,    getGraphBlobentryMetadata,    mergeGraphBlobentryMetadata!,    deleteGraphBlobentryMetadata!
+
+## list
+# export listVariables, listFactors, listVariableStates, listBlobentries, listFactorBlobEntries, listGraphBlobentries, listAgentBlobentries
+# export listVariableMetadata, listFactorMetadata, listAgentMetadata, listGraphMetadata
+# export listVariableBlobentryMetadata, listFactorBlobentryMetadata, listAgentBlobentryMetadata, listGraphBlobentryMetadata
+
+##------------------------------------------------------------------------------
+## Abstract types
+##------------------------------------------------------------------------------
+
+export AbstractObservation, AbstractPackedObservation
+export PriorObservation, RelativeObservation
+export FactorSolverCache
+
+#TODO
+export PackedBelief
+
+# public AbstractGraphVariable, AbstractGraphFactor
+
+##==============================================================================
+## Internal or not yet ready
+##==============================================================================
+
 ##------------------------------------------------------------------------------
 ## DFG
 ##------------------------------------------------------------------------------
+export AbstractDFGParams, DFGParams
+
+# Abstract Nodes
+export AbstractGraphNode
 export AbstractDFG
-export AbstractParams, NoSolverParams
 export AbstractBlobstore
 
 # accessors & crud
-export getDFGInfo
 export getDescription,
     setDescription!,
     getSolverParams,
@@ -161,9 +213,6 @@ export getBiadjacencyMatrix
 
 export getSummaryGraph
 
-# Abstract Nodes
-export DFGNode, AbstractDFGVariable, AbstractDFGFactor
-
 # Variables
 export VariableCompute, VariableSummary, VariableSkeleton, VariableDFG
 
@@ -179,11 +228,12 @@ export getLabel, getTimestamp, setTimestamp, getTags, setTags!
 
 export getAgentLabel, getGraphLabel
 
-# Node Data
+#TODO these are currently unused, do we deprecate?
 export isSolveInProgress, getSolveInProgress
 
 # CRUD & SET
-export listTags, mergeTags!, removeTags!, emptyTags!
+export listTags, mergeTags!, emptyTags!
+export removeTags! #TODO do we want this one
 
 ##------------------------------------------------------------------------------
 # Variable
@@ -269,9 +319,6 @@ export @format_str # exported from FileIO
 # Factors
 ##------------------------------------------------------------------------------
 # Factor Data
-export AbstractFactorObservation, AbstractPackedFactorObservation
-export PriorObservation, RelativeObservation
-export FactorSolverCache
 
 # accessors
 export getVariableOrder
@@ -341,7 +388,6 @@ export Blobentry
 # export copyStore
 export getId, getHash, getTimestamp
 # convenience wrappers
-export getData, addData!, updateData!, deleteData!
 
 export plotDFG
 
@@ -375,7 +421,7 @@ include("entities/DFGFactor.jl")
 
 include("entities/DFGVariable.jl")
 
-include("entities/Agent.jl")
+include("entities/Agent_and_Graph.jl")
 
 include("services/AbstractDFG.jl")
 
@@ -419,9 +465,6 @@ const SkeletonDFGVariable = VariableSkeleton
 
 export DFGVariableSummary
 const DFGVariableSummary = VariableSummary
-
-export DFGVariable
-const DFGVariable = VariableCompute
 
 export PackedVariable
 const PackedVariable = VariableDFG

@@ -3,10 +3,10 @@
 _getmodule(t::T) where {T} = T.name.module
 _getname(t::T) where {T} = T.name.name
 
-function convertPackedType(t::Union{T, Type{T}}) where {T <: AbstractFactorObservation}
+function convertPackedType(t::Union{T, Type{T}}) where {T <: AbstractObservation}
     return getfield(_getmodule(t), Symbol("Packed$(_getname(t))"))
 end
-function convertStructType(::Type{PT}) where {PT <: AbstractPackedFactorObservation}
+function convertStructType(::Type{PT}) where {PT <: AbstractPackedObservation}
     # see #668 for expanded reasoning.  PT may be ::UnionAll if the type is of template type.
     ptt = PT isa DataType ? PT.name.name : PT
     moduleName = PT isa DataType ? PT.name.module : Main
@@ -64,7 +64,7 @@ Related
 
 ls, lsf
 """
-function sortDFG(vars::Vector{<:DFGNode}; by = getTimestamp, kwargs...)
+function sortDFG(vars::Vector{<:AbstractGraphNode}; by = getTimestamp, kwargs...)
     return sort(vars; by = by, kwargs...)
 end
 sortDFG(vars::Vector{Symbol}; lt = natural_lt, kwargs...) = sort(vars; lt = lt, kwargs...)

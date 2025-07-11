@@ -9,21 +9,21 @@ end
 function isVariable(
     dfg::GraphsDFG{P, V, F},
     sym::Symbol,
-) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
+) where {P <: AbstractDFGParams, V <: AbstractGraphVariable, F <: AbstractGraphFactor}
     return haskey(dfg.g.variables, sym)
 end
 
 function isFactor(
     dfg::GraphsDFG{P, V, F},
     sym::Symbol,
-) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
+) where {P <: AbstractDFGParams, V <: AbstractGraphVariable, F <: AbstractGraphFactor}
     return haskey(dfg.g.factors, sym)
 end
 
 function addVariable!(
-    dfg::GraphsDFG{<:AbstractParams, V, <:AbstractDFGFactor},
+    dfg::GraphsDFG{<:AbstractDFGParams, V, <:AbstractGraphFactor},
     variable::V,
-) where {V <: AbstractDFGVariable}
+) where {V <: AbstractGraphVariable}
     if haskey(dfg.g.variables, variable.label)
         throw(LabelExistsError("Variable", variable.label))
     end
@@ -37,16 +37,16 @@ function addVariable!(
 end
 
 function addVariable!(
-    dfg::GraphsDFG{<:AbstractParams, VD, <:AbstractDFGFactor},
-    variable::AbstractDFGVariable,
-) where {VD <: AbstractDFGVariable}
+    dfg::GraphsDFG{<:AbstractDFGParams, VD, <:AbstractGraphFactor},
+    variable::AbstractGraphVariable,
+) where {VD <: AbstractGraphVariable}
     return addVariable!(dfg, VD(variable))
 end
 
 function addFactor!(
-    dfg::GraphsDFG{<:AbstractParams, <:AbstractDFGVariable, F},
+    dfg::GraphsDFG{<:AbstractDFGParams, <:AbstractGraphVariable, F},
     factor::F,
-) where {F <: AbstractDFGFactor}
+) where {F <: AbstractGraphFactor}
     if haskey(dfg.g.factors, factor.label)
         throw(LabelExistsError("Factor", factor.label))
     end
@@ -61,9 +61,9 @@ function addFactor!(
 end
 
 function addFactor!(
-    dfg::GraphsDFG{<:AbstractParams, <:AbstractDFGVariable, F},
-    factor::AbstractDFGFactor,
-) where {F <: AbstractDFGFactor}
+    dfg::GraphsDFG{<:AbstractDFGParams, <:AbstractGraphVariable, F},
+    factor::AbstractGraphFactor,
+) where {F <: AbstractGraphFactor}
     return addFactor!(dfg, F(factor))
 end
 
@@ -82,7 +82,7 @@ function getFactor(dfg::GraphsDFG, label::Symbol)
     return dfg.g.factors[label]
 end
 
-function mergeVariable!(dfg::GraphsDFG, variable::AbstractDFGVariable)
+function mergeVariable!(dfg::GraphsDFG, variable::AbstractGraphVariable)
     if !haskey(dfg.g.variables, variable.label)
         addVariable!(dfg, variable)
     else
@@ -91,7 +91,7 @@ function mergeVariable!(dfg::GraphsDFG, variable::AbstractDFGVariable)
     return 1
 end
 
-function mergeFactor!(dfg::GraphsDFG, factor::AbstractDFGFactor;)
+function mergeFactor!(dfg::GraphsDFG, factor::AbstractGraphFactor;)
     if !haskey(dfg.g.factors, factor.label)
         addFactor!(dfg, factor)
     elseif dfg.g.factors[factor.label]._variableOrderSymbols != factor._variableOrderSymbols
@@ -107,7 +107,7 @@ function mergeFactor!(dfg::GraphsDFG, factor::AbstractDFGFactor;)
     return 1
 end
 
-function deleteVariable!(dfg::GraphsDFG, label::Symbol)#::Tuple{AbstractDFGVariable, Vector{<:AbstractDFGFactor}}
+function deleteVariable!(dfg::GraphsDFG, label::Symbol)#::Tuple{AbstractGraphVariable, Vector{<:AbstractGraphFactor}}
     if !haskey(dfg.g.variables, label)
         throw(LabelNotFoundError("Variable", label))
     end
@@ -230,7 +230,7 @@ function _isSolvable(dfg::GraphsDFG, label::Symbol, ready::Int)
     throw(LabelNotFoundError(label))
 end
 
-function listNeighbors(dfg::GraphsDFG, node::DFGNode; solvable::Int = 0)
+function listNeighbors(dfg::GraphsDFG, node::AbstractGraphNode; solvable::Int = 0)
     return listNeighbors(dfg, node.label; solvable)
 end
 
@@ -304,13 +304,13 @@ Gets an empty and unique GraphsDFG derived from an existing DFG.
 """
 function _getDuplicatedEmptyDFG(
     dfg::GraphsDFG{P, V, F},
-) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
+) where {P <: AbstractDFGParams, V <: AbstractGraphVariable, F <: AbstractGraphFactor}
     newDfg = GraphsDFG{P, V, F}(;
         agentLabel = getAgentLabel(dfg),
         graphLabel = getGraphLabel(dfg),
         solverParams = deepcopy(dfg.solverParams),
     )
-    newDfg.description = "(Copy of) $(dfg.description)"
+    DFG.setDescription!(newDfg, "(Copy of) $(DFG.getDescription(dfg))")
     return newDfg
 end
 
@@ -458,10 +458,10 @@ end
 
 # FG blob entries 
 function getGraphBlobentry(fg::GraphsDFG, label::Symbol)
-    if !haskey(fg.graphBlobEntries, label)
+    if !haskey(fg.graph.blobEntries, label)
         throw(LabelNotFoundError("GraphBlobentry", label))
     end
-    return fg.graphBlobEntries[label]
+    return fg.graph.blobEntries[label]
 end
 
 function getGraphBlobentries(
@@ -487,10 +487,10 @@ function listAgentBlobentries(fg::GraphsDFG)
 end
 
 function addGraphBlobentry!(fg::GraphsDFG, entry::Blobentry)
-    if haskey(fg.graphBlobEntries, entry.label)
+    if haskey(fg.graph.blobEntries, entry.label)
         throw(LabelExistsError("Blobentry", entry.label))
     end
-    push!(fg.graphBlobEntries, entry.label => entry)
+    push!(fg.graph.blobEntries, entry.label => entry)
     return entry
 end
 

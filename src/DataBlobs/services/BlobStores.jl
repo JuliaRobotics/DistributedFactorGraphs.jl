@@ -7,6 +7,8 @@ Get the data blob for the specified blobstore or dfg.
 
 Related
 [`getBlobentry`](@ref)
+Implement 
+`getBlob(store::AbstractBlobstore, blobId::UUID)`
 
 $(METHODLIST)
 """
@@ -17,66 +19,30 @@ Adds a blob to the blob store or dfg with the blobId.
 
 Related
 [`addBlobentry!`](@ref)
-
+Implement
+`addBlob!(store::AbstractBlobstore, blobId::UUID, data)`
 $(METHODLIST)
 """
 function addBlob! end
-
-"""
-Update a blob to the blob store or dfg with the given entry.
-Related
-[`mergeBlobentry!`](@ref)
-
-$(METHODLIST)
-
-DevNotes
-- TODO TBD update verb on data since data blobs and entries are restricted to immutable only.
-"""
-function updateBlob! end
 
 """
 Delete a blob from the blob store or dfg with the given entry.
 
 Related
 [`deleteBlobentry!`](@ref)
-
+Implement
+`deleteBlob!(store::AbstractBlobstore, blobId::UUID)`
 $(METHODLIST)
 """
 function deleteBlob! end
 
 """
     $(SIGNATURES)
-List all ids in the blob store.
+List all `blobId`s in the blob store.
+Implement
+`listBlobs(store::AbstractBlobstore)`
 """
 function listBlobs end
-
-##==============================================================================
-## AbstractBlobstore CRUD Interface
-##==============================================================================
-
-function getBlob(store::AbstractBlobstore, ::UUID)
-    return error("$(typeof(store)) doesn't override 'getBlob'.")
-end
-
-function addBlob!(store::AbstractBlobstore{T}, ::UUID, ::T) where {T}
-    return error("$(typeof(store)) doesn't override 'addBlob!'.")
-end
-
-function updateBlob!(store::AbstractBlobstore{T}, ::UUID, ::T) where {T}
-    return error("$(typeof(store)) doesn't override 'updateBlob!'.")
-end
-
-function deleteBlob!(store::AbstractBlobstore, ::UUID)
-    return error("$(typeof(store)) doesn't override 'deleteBlob!'.")
-end
-
-function listBlobs(store::AbstractBlobstore)
-    return error("$(typeof(store)) doesn't override 'listBlobs'.")
-end
-
-function hasBlob(store::AbstractBlobstore, ::UUID)
-    return error("$(typeof(store)) doesn't override 'hasBlob'.")
-end
 
 ##==============================================================================
 ## AbstractBlobstore derived CRUD for Blob 

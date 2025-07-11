@@ -36,7 +36,7 @@ getFactorType(dfg::AbstractDFG, lbl::Symbol) = getFactorType(getFactor(dfg, lbl)
 
 Return factor state from factor graph.
 """
-getFactorState(f::AbstractDFGFactor) = f.state
+getFactorState(f::AbstractGraphFactor) = f.state
 getFactorState(dfg::AbstractDFG, lbl::Symbol) = getFactorState(getFactor(dfg, lbl))
 
 """
@@ -109,14 +109,12 @@ end
 ##==============================================================================
 ## Default Factors Function Macro
 ##==============================================================================
-export PackedBelief
 
 function pack end
 function unpack end
 function packDistribution end
 function unpackDistribution end
 
-abstract type PackedBelief end
 StructTypes.StructType(::Type{<:PackedBelief}) = StructTypes.UnorderedStruct()
 
 #TODO remove, rather use StructTypes.jl properly
@@ -126,7 +124,7 @@ function Base.convert(::Type{<:PackedBelief}, nt::Union{NamedTuple, JSON3.Object
 end
 
 """
-    @defObservationType StructName factortype<:AbstractFactorObservation manifolds<:AbstractManifold
+    @defObservationType StructName factortype<:AbstractObservation manifolds<:AbstractManifold
 
 A macro to create a new factor function with name `StructName` and manifold. Note that
 the `manifold` is an object and *must* be a subtype of `ManifoldsBase.AbstractManifold`.
@@ -146,16 +144,16 @@ macro defObservationType(structname, factortype, manifold)
                                                      string($manifold) *
                                                      ") is not an `AbstractManifold`"
 
-            @assert ($factortype <: AbstractFactorObservation) "@defObservationType factortype (" *
-                                                               string($factortype) *
-                                                               ") is not an `AbstractFactorObservation`"
+            @assert ($factortype <: AbstractObservation) "@defObservationType factortype (" *
+                                                         string($factortype) *
+                                                         ") is not an `AbstractObservation`"
 
             Base.@__doc__ struct $structname{T} <: $factortype
                 Z::T
             end
 
             #TODO should this be $packedstructname{T <: PackedBelief}
-            Base.@__doc__ struct $packedstructname <: AbstractPackedFactorObservation
+            Base.@__doc__ struct $packedstructname <: AbstractPackedObservation
                 Z::PackedBelief
             end
 
@@ -168,7 +166,7 @@ macro defObservationType(structname, factortype, manifold)
     )
 end
 
-getManifold(obs::AbstractFactorObservation) = getManifold(typeof(obs))
+getManifold(obs::AbstractObservation) = getManifold(typeof(obs))
 
 ##==============================================================================
 ## Factors
@@ -201,7 +199,7 @@ getManifold(obs::AbstractFactorObservation) = getManifold(typeof(obs))
 ## COMMON
 # getTimestamp
 
-function setTimestamp(f::AbstractDFGFactor, ts::DateTime, timezone = localzone())
+function setTimestamp(f::AbstractGraphFactor, ts::DateTime, timezone = localzone())
     return setTimestamp(f, ZonedDateTime(ts, timezone))
 end
 function setTimestamp(f::FactorCompute, ts::ZonedDateTime)

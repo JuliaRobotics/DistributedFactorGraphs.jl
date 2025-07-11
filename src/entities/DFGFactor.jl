@@ -2,19 +2,27 @@
 ## Abstract Types
 ##==============================================================================
 
-abstract type AbstractPackedFactorObservation end
-abstract type AbstractFactorObservation end
+abstract type AbstractPackedObservation end #✅
+const PackedObservation = AbstractPackedObservation
 
-abstract type PriorObservation <: AbstractFactorObservation end
-abstract type RelativeObservation <: AbstractFactorObservation end
-abstract type PackedObservation <: AbstractFactorObservation end
-# NOTE DF, Convolution is IIF idea, but DFG should know about "FactorSolverCache"
-# DF, IIF.CommonConvWrapper <: FactorSolverCache #
-# NOTE was `<: Function` as unnecessary
-abstract type FactorSolverCache end
-# TODO to be removed from DFG,
-# we can add to IIF or have IIF.CommonConvWrapper <: FactorSolverCache directly
-# abstract type ConvolutionObject <: FactorSolverCache end
+abstract type AbstractObservation end #✅
+const Observation = AbstractObservation
+
+abstract type AbstractPriorObservation <: AbstractObservation end #✅
+const PriorObservation = AbstractPriorObservation
+
+abstract type AbstractRelativeObservation <: AbstractObservation end #✅
+const RelativeObservation = AbstractRelativeObservation
+
+abstract type AbstractPackedBelief end #✅
+const PackedBelief = AbstractPackedBelief
+
+# TODO https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/pull/1127#discussion_r2154672975
+# and #1138
+abstract type AbstractFactorSolverCache end #
+const FactorSolverCache = AbstractFactorSolverCache #
+
+##==============================================================================
 
 #TODO is this mutable
 @kwdef mutable struct FactorState
@@ -53,7 +61,7 @@ end
 
 The Factor information packed in a way that accomdates multi-lang using json.
 """
-Base.@kwdef struct FactorDFG <: AbstractDFGFactor
+Base.@kwdef struct FactorDFG <: AbstractGraphFactor
     id::Union{UUID, Nothing} = nothing
     label::Symbol
     tags::Set{Symbol}
@@ -125,18 +133,16 @@ function FactorDFG(
     )
 end
 
-FactorDFG(f::FactorDFG) = f
-
 # Packed Factor constructor
 function assembleFactorName(xisyms::Union{Vector{String}, Vector{Symbol}})
     return Symbol(xisyms..., "_f", randstring(4))
 end
 
-getFncTypeName(fnc::AbstractPackedFactorObservation) = split(string(typeof(fnc)), ".")[end]
+getFncTypeName(fnc::AbstractPackedObservation) = split(string(typeof(fnc)), ".")[end]
 
 function FactorDFG(
     xisyms::Vector{Symbol},
-    fnc::AbstractPackedFactorObservation;
+    fnc::AbstractPackedObservation;
     multihypo::Vector{Float64} = Float64[],
     nullhypo::Float64 = 0.0,
     solvable::Int = 1,
@@ -185,7 +191,7 @@ DevNotes
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct FactorCompute{FT <: AbstractFactorObservation, N} <: AbstractDFGFactor
+Base.@kwdef struct FactorCompute{FT <: AbstractObservation, N} <: AbstractGraphFactor
     """The ID for the factor"""
     id::Union{UUID, Nothing} = nothing #TODO deprecate id
     """Factor label, e.g. :x1f1.
@@ -229,7 +235,7 @@ end
 function FactorCompute(
     label::Symbol,
     variableOrder::Union{Vector{Symbol}, Tuple},
-    observation::AbstractFactorObservation,
+    observation::AbstractObservation,
     state::FactorState = FactorState(),
     cache = nothing;
     tags::Set{Symbol} = Set{Symbol}(),
@@ -303,7 +309,7 @@ Read-only summary factor structure for a DistributedFactorGraph factor.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct FactorSummary <: AbstractDFGFactor
+Base.@kwdef struct FactorSummary <: AbstractGraphFactor
     """The ID for the factor"""
     id::Union{UUID, Nothing}
     """Factor label, e.g. :x1f1.
@@ -342,7 +348,7 @@ Skeleton factor structure for a DistributedFactorGraph factor.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct FactorSkeleton <: AbstractDFGFactor
+Base.@kwdef struct FactorSkeleton <: AbstractGraphFactor
     """The ID for the factor"""
     id::Union{UUID, Nothing}
     """Factor label, e.g. :x1f1.
@@ -369,13 +375,6 @@ function FactorSkeleton(
 end
 
 ##==============================================================================
-## Define factor levels
-##==============================================================================
-const FactorDataLevel0 = Union{FactorCompute, FactorSummary, FactorDFG, FactorSkeleton}
-const FactorDataLevel1 = Union{FactorCompute, FactorSummary, FactorDFG}
-const FactorDataLevel2 = Union{FactorCompute}
-
-##==============================================================================
 ## Conversion constructors
 ##==============================================================================
 
@@ -389,7 +388,7 @@ function FactorSummary(f::FactorCompute)
     )
 end
 
-function FactorSkeleton(f::FactorDataLevel1)
+function FactorSkeleton(f::AbstractGraphFactor)
     return FactorSkeleton(
         f.id,
         f.label,

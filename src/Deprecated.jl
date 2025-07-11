@@ -9,14 +9,18 @@ export AbstractRelativeMinimize,
     InferenceType,
     PackedSamplableBelief
 
+#TODO: maybe just remove these
+export NoSolverParams
+
 const AbstractPrior = PriorObservation
 const AbstractRelative = RelativeObservation
+const AbstractParams = AbstractDFGParams
 
 abstract type AbstractRelativeMinimize <: RelativeObservation end
 abstract type AbstractManifoldMinimize <: RelativeObservation end
 
 const InferenceVariable = VariableStateType{Any}
-const InferenceType = AbstractPackedFactorObservation
+const InferenceType = AbstractPackedObservation
 
 const PackedSamplableBelief = PackedBelief
 
@@ -149,14 +153,36 @@ function cloneSolveKey!(dfg::AbstractDFG, dest::Symbol, src::Symbol; kw...)
     return cloneSolveKey!(dfg, dest, dfg, src; kw...)
 end
 
+export getData, addData!, updateData!, deleteData!
+
+#TODO not a good function, as it's not complete.
+# """
+#     $(SIGNATURES)
+# Convenience function to get all the metadata of a DFG
+# """
+# export getDFGInfo
+function getDFGInfo(dfg::AbstractDFG)
+    return (
+        description = getDescription(dfg),
+        agentLabel = getAgentLabel(dfg),
+        graphLabel = getGraphLabel(dfg),
+        agentMetadata = getAgentMetadata(dfg),
+        graphMetadata = getGraphMetadata(dfg),
+        solverParams = getSolverParams(dfg),
+    )
+end
+
+export DFGVariable
+const DFGVariable = VariableCompute
+
 ## ================================================================================
 ## Deprecated in v0.27
 ##=================================================================================
 export AbstractFactor
-const AbstractFactor = AbstractFactorObservation
+const AbstractFactor = AbstractObservation
 
 export AbstractPackedFactor
-const AbstractPackedFactor = AbstractPackedFactorObservation
+const AbstractPackedFactor = AbstractPackedObservation
 
 export FactorOperationalMemory
 const FactorOperationalMemory = FactorSolverCache
@@ -214,8 +240,8 @@ const VariableNodeData = VariableState
 @deprecate hasBlobEntry(args...; kwargs...) hasBlobentry(args...; kwargs...)
 @deprecate getBlobEntry(args...; kwargs...) getBlobentry(args...; kwargs...)
 @deprecate getBlobEntryFirst(args...; kwargs...) getfirstBlobentry(args...; kwargs...)
-@deprecate getBlobentry(var::AbstractDFGVariable, blobId::UUID) getfirstBlobentry(
-    var::AbstractDFGVariable,
+@deprecate getBlobentry(var::AbstractGraphVariable, blobId::UUID) getfirstBlobentry(
+    var::AbstractGraphVariable,
     blobId::UUID,
 )
 @deprecate addBlobEntry!(args...; kwargs...) addBlobentry!(args...; kwargs...)
@@ -385,11 +411,7 @@ end
 
 ## factor refactor deprecations
 Base.@kwdef mutable struct GenericFunctionNodeData{
-    T <: Union{
-        <:AbstractPackedFactorObservation,
-        <:AbstractFactorObservation,
-        <:FactorSolverCache,
-    },
+    T <: Union{<:AbstractPackedObservation, <:AbstractObservation, <:FactorSolverCache},
 }
     eliminated::Bool = false
     potentialused::Bool = false
@@ -481,7 +503,7 @@ function decodePackedType(
 end
 
 export _packSolverData
-function _packSolverData(f::FactorCompute, fnctype::AbstractFactorObservation)
+function _packSolverData(f::FactorCompute, fnctype::AbstractObservation)
     #
     error("_packSolverData is deprecated, use seperate packing of observation #TODO")
     packtype = convertPackedType(fnctype)
@@ -501,7 +523,7 @@ end
 export GenericFunctionNodeData, PackedFunctionNodeData, FunctionNodeData
 
 const PackedFunctionNodeData{T} =
-    GenericFunctionNodeData{T} where {T <: AbstractPackedFactorObservation}
+    GenericFunctionNodeData{T} where {T <: AbstractPackedObservation}
 function PackedFunctionNodeData(args...; kw...)
     error("PackedFunctionNodeData is obsolete")
     return PackedFunctionNodeData{typeof(args[4])}(args...; kw...)
@@ -509,12 +531,12 @@ end
 
 const FunctionNodeData{T} = GenericFunctionNodeData{
     T,
-} where {T <: Union{<:AbstractFactorObservation, <:FactorSolverCache}}
+} where {T <: Union{<:AbstractObservation, <:FactorSolverCache}}
 FunctionNodeData(args...; kw...) = FunctionNodeData{typeof(args[4])}(args...; kw...)
 
 # this is the GenericFunctionNodeData for packed types
 #TODO deprecate FactorData in favor of FactorState (with no more distinction between packed and compute)
-const FactorData = PackedFunctionNodeData{AbstractPackedFactorObservation}
+const FactorData = PackedFunctionNodeData{AbstractPackedObservation}
 
 function FactorCompute(
     label::Symbol,

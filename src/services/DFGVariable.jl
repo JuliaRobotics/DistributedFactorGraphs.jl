@@ -166,7 +166,7 @@ Interface function to return the `<:ManifoldsBase.AbstractManifold` object of `v
 getManifold(::T) where {T <: VariableStateType} = getManifold(T)
 getManifold(vari::VariableCompute) = getVariableType(vari) |> getManifold
 getManifold(state::VariableState) = getVariableType(state) |> getManifold
-# covers both <:VariableStateType and <:AbstractFactorObservation
+# covers both <:VariableStateType and <:AbstractObservation
 getManifold(dfg::AbstractDFG, lbl::Symbol) = getManifold(dfg[lbl])
 
 """
@@ -261,7 +261,7 @@ Related
 isSolved, setSolvedCount!
 """
 getSolvedCount(v::VariableState) = v.solvedCount
-function getSolvedCount(v::VariableDataLevel2, solveKey::Symbol = :default)
+function getSolvedCount(v::VariableCompute, solveKey::Symbol = :default)
     return getVariableState(v, solveKey) |> getSolvedCount
 end
 function getSolvedCount(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol = :default)
@@ -278,7 +278,7 @@ Related
 getSolved, isSolved
 """
 setSolvedCount!(v::VariableState, val::Int) = v.solvedCount = val
-function setSolvedCount!(v::VariableDataLevel2, val::Int, solveKey::Symbol = :default)
+function setSolvedCount!(v::VariableCompute, val::Int, solveKey::Symbol = :default)
     return setSolvedCount!(getVariableState(v, solveKey), val)
 end
 function setSolvedCount!(
@@ -300,7 +300,7 @@ Related
 getSolved, setSolved!
 """
 isSolved(v::VariableState) = 0 < v.solvedCount
-function isSolved(v::VariableDataLevel2, solveKey::Symbol = :default)
+function isSolved(v::VariableCompute, solveKey::Symbol = :default)
     return getVariableState(v, solveKey) |> isSolved
 end
 function isSolved(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol = :default)
@@ -423,7 +423,7 @@ function setTimestamp(v::VariableCompute, ts::ZonedDateTime; verbose::Bool = tru
 end
 
 function setTimestamp(
-    v::AbstractDFGVariable,
+    v::AbstractGraphVariable,
     ts::DateTime,
     timezone = localzone();
     verbose::Bool = true,
@@ -473,7 +473,7 @@ end
 
 Get the PPE dictionary for a variable.  Recommended to use CRUD operations instead, [`getPPE`](@ref), [`addPPE!`](@ref), [`updatePPE!`](@ref), [`deletePPE!`](@ref).
 """
-getPPEDict(v::VariableDataLevel1) = v.ppeDict
+getPPEDict(v::AbstractGraphVariable) = v.ppeDict
 
 #TODO FIXME don't know if this should exist, should rather always update with fg object to simplify inmem vs cloud
 """
@@ -488,7 +488,7 @@ Related
 
 getMeanPPE, getMaxPPE, getKDEMean, getKDEFit, getPPEs, getVariablePPEs
 """
-function getPPE(vari::VariableDataLevel1, solveKey::Symbol = :default)
+function getPPE(vari::AbstractGraphVariable, solveKey::Symbol = :default)
     if haskey(getPPEDict(vari), solveKey)
         return getPPEDict(vari)[solveKey]
     else
@@ -511,7 +511,7 @@ function getPPEs end
 
 Return full dictionary of PPEs in a variable, recommended to rather use CRUD: [`getPPE`](@ref),
 """
-getVariablePPEDict(vari::VariableDataLevel1) = getPPEDict(vari)
+getVariablePPEDict(vari::AbstractGraphVariable) = getPPEDict(vari)
 
 """
     getVariablePPE(::VariableCompute)
@@ -816,7 +816,7 @@ end
 # Not the most efficient call but it at least reuses above (in memory it's probably ok)
 function getPPE(
     dfg::AbstractDFG,
-    sourceVariable::VariableDataLevel1,
+    sourceVariable::AbstractGraphVariable,
     ppekey::Symbol = :default,
 )
     return getPPE(dfg, sourceVariable.label, ppekey)
@@ -889,7 +889,7 @@ NOTE: Copies the PPE data.
 """
 function updatePPE!(
     dfg::AbstractDFG,
-    sourceVariable::VariableDataLevel1,
+    sourceVariable::AbstractGraphVariable,
     ppekey::Symbol = :default;
     warn_if_absent::Bool = true,
 )
@@ -907,7 +907,7 @@ Update PPE data if it exists, otherwise add it.
 """
 function updatePPE!(
     dfg::AbstractDFG,
-    sourceVariables::Vector{<:VariableDataLevel1},
+    sourceVariables::Vector{<:AbstractGraphVariable},
     ppekey::Symbol = :default;
     warn_if_absent::Bool = true,
 )
@@ -967,7 +967,10 @@ end
 Merges and updates solver and estimate data for a variable (variable can be from another graph).
 Note: Makes a copy of the estimates and solver data so that there is no coupling between graphs.
 """
-function mergePPEs!(destVariable::AbstractDFGVariable, sourceVariable::AbstractDFGVariable)
+function mergePPEs!(
+    destVariable::AbstractGraphVariable,
+    sourceVariable::AbstractGraphVariable,
+)
     # We don't know which graph this came from, must be copied!
     merge!(destVariable.ppeDict, deepcopy(sourceVariable.ppeDict))
     return destVariable
