@@ -153,23 +153,23 @@ function getVariables(
         # NOTE that contains(regex::Regex) is not supported by the NvaDFG.
         Base.depwarn(
             "The regex filter argument is deprecated, use kwarg `labelFilter=contains(regex)` instead", #v0.28
-            :getVariable,
+            :getVariables,
         )
         filterDFG!(variables, contains(regex), (String ∘ getLabel))
     end
     if !isempty(tags)
         # NOTE that !isdisjoint is not supported by NvaDFG.
         Base.depwarn(
-            "tags kwarg is deprecated, use kwarg `tagsFilter = !isdisjoint(tags)`` instead", #v0.28
-            :getVariable,
+            "tags kwarg is deprecated, use kwarg `tagsFilter = !isdisjoint(tags)` instead", #v0.28
+            :getVariables,
         )
         filterDFG!(variables, !isdisjoint(tags), getTags)
     end
     if !isnothing(solvable)
         #TODO review. just one solvableFilter or keep solvable as well.
         Base.depwarn(
-            "solvable kwarg is deprecated, use kwarg `solvableFilter = (>=solvable)`` instead", #v0.28
-            :getVariable,
+            "solvable kwarg is deprecated, use kwarg `solvableFilter = (>=solvable)` instead", #v0.28
+            :getVariables,
         )
         filterDFG!(variables, >=(solvable), getSolvable)
     end
@@ -221,22 +221,44 @@ end
 
 function getFactors(
     dfg::GraphsDFG,
-    regexFilter::Union{Nothing, Regex} = nothing;
+    regex::Union{Nothing, Regex} = nothing;
     tags::Vector{Symbol} = Symbol[],
-    solvable::Int = 0,
+    solvable::Union{Nothing, Int} = nothing,
+    solvableFilter::Union{Nothing, Function} = nothing,
+    tagsFilter::Union{Nothing, Function} = nothing,
+    typeFilter::Union{Nothing, Function} = nothing,
+    labelFilter::Union{Nothing, Function} = nothing,
 )
-    # factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa FactorCompute, vertices(dfg.g)))
     factors = collect(values(dfg.g.factors))
-    if !isnothing(regexFilter)
-        factors = filter(f -> occursin(regexFilter, String(f.label)), factors)
+    if !isnothing(regex)
+        # NOTE that contains(regex::Regex) is not supported by the NvaDFG.
+        Base.depwarn(
+            "The regex filter argument is deprecated, use kwarg `labelFilter=contains(regex)` instead", #v0.28
+            :getFactors,
+        )
+        filterDFG!(factors, contains(regex), (String ∘ getLabel))
     end
-    if solvable != 0
-        factors = filter(f -> _isSolvable(dfg, f.label, solvable), factors)
+    if !isempty(tags)
+        # NOTE that !isdisjoint is not supported by NvaDFG.
+        Base.depwarn(
+            "tags kwarg is deprecated, use kwarg `tagsFilter = !isdisjoint(tags)` instead", #v0.28
+            :getFactors,
+        )
+        filterDFG!(factors, !isdisjoint(tags), getTags)
     end
-    if length(tags) > 0
-        mask = map(v -> length(intersect(v.tags, tags)) > 0, factors)
-        return factors[mask]
+    if !isnothing(solvable)
+        #TODO review. just one solvableFilter or keep solvable as well.
+        Base.depwarn(
+            "solvable kwarg is deprecated, use kwarg `solvableFilter = (>=solvable)` instead", #v0.28
+            :getFactors,
+        )
+        filterDFG!(factors, >=(solvable), getSolvable)
     end
+
+    filterDFG!(factors, labelFilter, (String ∘ getLabel))
+    filterDFG!(factors, solvableFilter, getSolvable)
+    filterDFG!(factors, tagsFilter, getTags)
+    filterDFG!(factors, typeFilter, getFactorType)
     return factors
 end
 
@@ -244,23 +266,37 @@ function listFactors(
     dfg::GraphsDFG,
     regexFilter::Union{Nothing, Regex} = nothing;
     tags::Vector{Symbol} = Symbol[],
-    solvable::Int = 0,
+    solvable::Union{Nothing, Int} = nothing,
+    solvableFilter::Union{Nothing, Function} = nothing,
+    tagsFilter::Union{Nothing, Function} = nothing,
+    typeFilter::Union{Nothing, Function} = nothing,
+    labelFilter::Union{Nothing, Function} = nothing,
 )
-    # factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa FactorCompute, vertices(dfg.g)))
-    if length(tags) > 0
+    if !isnothing(solvableFilter) ||
+       !isnothing(tagsFilter) ||
+       !isnothing(typeFilter) ||
+       !isnothing(regexFilter) ||  #TODO deprecated
+       !isempty(tags) ||           #TODO deprecated
+       !isnothing(solvable)        #TODO Maybe deprecated?
         return map(
-            v -> v.label,
-            getFactors(dfg, regexFilter; tags = tags, solvable = solvable),
+            getLabel,
+            getFactors(
+                dfg,
+                regexFilter;
+                tags,
+                solvable,
+                solvableFilter,
+                tagsFilter,
+                typeFilter,
+                labelFilter,
+            ),
         )
+    else
+        # Is it ok to continue using the internal keys property? collect(keys(dfg.g.factors)) allowcates a lot.
+        labels = copy(dfg.g.factors.keys)
+        filterDFG!(labels, labelFilter, string)
+        return labels
     end
-    factors = copy(dfg.g.factors.keys)
-    if !isnothing(regexFilter)
-        factors = filter(f -> occursin(regexFilter, String(f)), factors)
-    end
-    if solvable != 0
-        factors = filter(fId -> _isSolvable(dfg, fId, solvable), factors)
-    end
-    return factors::Vector{Symbol}
 end
 
 function isConnected(dfg::GraphsDFG)
