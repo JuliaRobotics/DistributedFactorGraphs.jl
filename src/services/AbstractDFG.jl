@@ -393,9 +393,22 @@ function deleteFactor! end
 
 """
     $(SIGNATURES)
-List the DFGVariables in the DFG.
-Optionally specify a label regular expression to retrieves a subset of the variables.
-Tags is a list of any tags that a node must have (at least one match).
+Get the variables in the DFG as a Vector, supporting various filters.
+
+Arguments
+- `regexFilt`: Optional Regex to filter variable labels (deprecated, use `labelFilter` instead).
+Keyword arguments
+- `tags`: Vector of tags; only variables with at least one matching tag are returned.
+- `solvable`: Optional Int; only variables with `solvable >= solvable` are returned.
+- `solvableFilter`: Optional function to filter on the `solvable` property, eg `>=(1)`.
+- `labelFilter`: Optional function to filter on label e.g., `contains(r"x1")`.
+- `tagsFilter`: Optional function to filter on tags, eg. `⊇([:x1])`.
+- `typeFilter`: Optional function to filter on the variable type.
+
+Returns
+- `Vector{<:AbstractGraphVariable}` matching the filters.
+
+See also: [`listVariables`](@ref), [`ls`](@ref)
 """
 function getVariables end
 
@@ -665,11 +678,11 @@ Notes:
 - Returns `Vector{Symbol}`
 """
 function ls(
-    dfg::G,
+    dfg::AbstractDFG,
     regexFilter::Union{Nothing, Regex} = nothing;
     tags::Vector{Symbol} = Symbol[],
     solvable::Int = 0,
-) where {G <: AbstractDFG}
+)
     return listVariables(dfg, regexFilter; tags = tags, solvable = solvable)
 end
 

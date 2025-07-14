@@ -337,7 +337,7 @@ export pack, unpack, packDistribution, unpackDistribution
 export natural_lt, sortDFG
 
 # Validation
-export isValidLabel
+# export isValidLabel
 
 ## List
 export ls, lsf, ls2
@@ -431,6 +431,9 @@ include("DataBlobs/services/BlobStores.jl")
 include("DataBlobs/services/BlobPacking.jl")
 include("DataBlobs/services/HelpersDataWrapEntryBlob.jl")
 
+# To be moved as necessary.
+include("Common.jl")
+
 # In Memory Types
 include("GraphsDFG/GraphsDFG.jl")
 using .GraphsDFGs
@@ -452,9 +455,6 @@ include("FileDFG/FileDFG.jl")
 
 # Custom show and printing for variable factor etc.
 include("services/CustomPrinting.jl")
-
-# To be moved as necessary.
-include("Common.jl")
 
 include("weakdeps_prototypes.jl")
 

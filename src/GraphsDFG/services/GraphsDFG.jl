@@ -128,25 +128,56 @@ function deleteFactor!(dfg::GraphsDFG, label::Symbol; suppressGetFactor::Bool = 
     return 1
 end
 
+# """
+# tagsFilter = ⊇([:x1])
+# tagsFilter([:x1, :x2])
+# true
+# tagsFilter = Base.Fix1(in, :x1)
+# tagsFilter([:x1, :x2])
+# true
+# """
+
 function getVariables(
     dfg::GraphsDFG,
-    regexFilter::Union{Nothing, Regex} = nothing;
+    regex::Union{Nothing, Regex} = nothing;
     tags::Vector{Symbol} = Symbol[],
-    solvable::Int = 0,
-    solvableFilter::Union{Nothing, Base.Fix2} = nothing,
+    solvable::Union{Nothing, Int} = nothing,
+    solvableFilter::Union{Nothing, Function} = nothing,
+    labelFilter::Union{Nothing, Function} = nothing,
+    tagsFilter::Union{Nothing, Function} = nothing,
+    typeFilter::Union{Nothing, Function} = nothing,
 )
-
-    # variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa VariableCompute, vertices(dfg.g)))
     variables = collect(values(dfg.g.variables))
 
-    !isnothing(regexFilter) &&
-        filter!(v -> occursin(regexFilter, String(v.label)), variables)
+    if !isnothing(regex)
+        # NOTE that contains(regex::Regex) is not supported by the NvaDFG.
+        Base.depwarn(
+            "The regex filter argument is deprecated, use kwarg `labelFilter=contains(regex)` instead", #v0.28
+            :getVariable,
+        )
+        filterDFG!(variables, contains(regex), (String ∘ getLabel))
+    end
+    if !isempty(tags)
+        # NOTE that !isdisjoint is not supported by NvaDFG.
+        Base.depwarn(
+            "tags kwarg is deprecated, use kwarg `tagsFilter = !isdisjoint(tags)`` instead", #v0.28
+            :getVariable,
+        )
+        filterDFG!(variables, !isdisjoint(tags), getTags)
+    end
+    if !isnothing(solvable)
+        #TODO review. just one solvableFilter or keep solvable as well.
+        Base.depwarn(
+            "solvable kwarg is deprecated, use kwarg `solvableFilter = (>=solvable)`` instead", #v0.28
+            :getVariable,
+        )
+        filterDFG!(variables, >=(solvable), getSolvable)
+    end
 
-    solvable != 0 && filter!(v -> _isSolvable(dfg, v.label, solvable), variables)
-
-    !isempty(tags) && filter!(v -> !isempty(intersect(v.tags, tags)), variables)
-
-    !isnothing(solvableFilter) && filter!(v -> solvableFilter(getSolvable(v)), variables)
+    filterDFG!(variables, labelFilter, (String ∘ getLabel))
+    filterDFG!(variables, solvableFilter, getSolvable)
+    filterDFG!(variables, tagsFilter, getTags)
+    filterDFG!(variables, typeFilter, getVariableType)
 
     return variables
 end
@@ -155,23 +186,36 @@ function listVariables(
     dfg::GraphsDFG,
     regexFilter::Union{Nothing, Regex} = nothing;
     tags::Vector{Symbol} = Symbol[],
-    solvable::Int = 0,
-    solvableFilter::Union{Nothing, Base.Fix2} = nothing,
+    solvable::Union{Nothing, Int} = nothing,
+    solvableFilter::Union{Nothing, Function} = nothing,
+    tagsFilter::Union{Nothing, Function} = nothing,
+    typeFilter::Union{Nothing, Function} = nothing,
+    labelFilter::Union{Nothing, Function} = nothing,
 )
-
-    # variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa VariableCompute, vertices(dfg.g)))
-    if length(tags) > 0
+    if !isnothing(solvableFilter) ||
+       !isnothing(tagsFilter) ||
+       !isnothing(typeFilter) ||
+       !isnothing(regexFilter) ||  #TODO deprecated
+       !isempty(tags) ||           #TODO deprecated
+       !isnothing(solvable)        #TODO Maybe deprecated?
         return map(
-            v -> v.label,
-            getVariables(dfg, regexFilter; tags = tags, solvable = solvable),
-        )::Vector{Symbol}
+            getLabel,
+            getVariables(
+                dfg,
+                regexFilter;
+                tags,
+                solvable,
+                solvableFilter,
+                tagsFilter,
+                typeFilter,
+                labelFilter,
+            ),
+        )
     else
-        variables = copy(dfg.g.variables.keys)
-        !isnothing(regexFilter) && filter!(v -> occursin(regexFilter, String(v)), variables)
-        solvable != 0 && filter!(vId -> _isSolvable(dfg, vId, solvable), variables)
-        !isnothing(solvableFilter) &&
-            filter!(v -> solvableFilter(getSolvable(dfg, v)), variables)
-        return variables::Vector{Symbol}
+        # Is it ok to continue using the internal keys property? collect(keys(dfg.g.variables)) allowcates a lot.
+        labels = copy(dfg.g.variables.keys)
+        filterDFG!(labels, labelFilter, string)
+        return labels
     end
 end
 

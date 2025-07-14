@@ -15,7 +15,8 @@ using ...DistributedFactorGraphs:
     FactorgraphRoot,
     AbstractGraphVariable,
     AbstractGraphFactor,
-    NoSolverParams
+    NoSolverParams,
+    filterDFG!
 
 # import DFG functions to extend
 import ...DistributedFactorGraphs:

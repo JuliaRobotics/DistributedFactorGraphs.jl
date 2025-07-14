@@ -30,7 +30,9 @@ function DFG.setMetadata!(dfg::GraphsDFG, metadata::Dict{Symbol, SmallDataTypes}
     return merge!(dfg.graph.metadata, metadata)
 end
 
-DFG.setDescription!(dfg::GraphsDFG, description::String) = dfg.graph.description = description
+function DFG.setDescription!(dfg::GraphsDFG, description::String)
+    return dfg.graph.description = description
+end
 
 """
     $(SIGNATURES)
@@ -75,8 +77,8 @@ function GraphsDFG{T, V, F}(
 ) where {T <: AbstractDFGParams, V <: AbstractGraphVariable, F <: AbstractGraphFactor}
 
     # Validate the graphLabel and agentLabel
-    !isValidLabel(graphLabel) && error("'$graphLabel' is not a valid label")
-    !isValidLabel(agentLabel) && error("'$agentLabel' is not a valid label")
+    !DFG.isValidLabel(graphLabel) && error("'$graphLabel' is not a valid label")
+    !DFG.isValidLabel(agentLabel) && error("'$agentLabel' is not a valid label")
 
     return GraphsDFG{T, V, F}(
         g,
