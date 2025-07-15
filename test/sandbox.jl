@@ -26,4 +26,3 @@ v1 = addVariable!(dfg, :a, Position{1}; tags = [:POSE], solvable = 0)
 v2 = addVariable!(dfg, :b, ContinuousScalar; tags = [:LANDMARK], solvable = 1)
 f1 = addFactor!(dfg, [:a; :b], LinearRelative(Normal(50.0, 2.0)); solvable = 0)
 
-lsWho(dfg, :Position)

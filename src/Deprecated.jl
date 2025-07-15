@@ -55,69 +55,31 @@ function mergeGraphVariableData!(args...)
     )
 end
 
-#NOTE List types funcction do not fit verb noun and will be deprecated.
-# should return types
-
 # """
-#     $SIGNATURES
+#     $(SIGNATURES)
+# Gives back all factor labels that fit the bill:
+#     lsWho(dfg, :Pose3)
 
-# Return `Vector{Symbol}` of all unique variable types in factor graph.
+# Notes
+# - Returns `Vector{Symbol}`
+
+# Dev Notes
+# - Cloud versions will benefit from less data transfer
+#  - `ls(dfg::C, ::T) where {C <: CloudDFG, T <: ..}`
+
+# Related
+
+# ls, lsf, lsfPriors
 # """
-function lsTypes(dfg::AbstractDFG)
+function lsWho(dfg::AbstractDFG, type::Symbol)
+    Base.depwarn("lsWho(dfg, type) is deprecated, use ls(dfg, type) instead.", :lsWho)
     vars = getVariables(dfg)
-    alltypes = Set{Symbol}()
+    labels = Symbol[]
     for v in vars
-        varType = Symbol(typeof(getVariableType(v)))
-        push!(alltypes, varType)
+        varType = typeof(getVariableType(v)) |> nameof
+        varType == type && push!(labels, v.label)
     end
-    return collect(alltypes)
-end
-
-# """
-#     $SIGNATURES
-
-# Return `::Dict{Symbol, Vector{Symbol}}` of all unique variable types with labels in a factor graph.
-# """
-function lsTypesDict(dfg::AbstractDFG)
-    vars = getVariables(dfg)
-    alltypes = Dict{Symbol, Vector{Symbol}}()
-    for v in vars
-        varType = Symbol(typeof(getVariableType(v)))
-        d = get!(alltypes, varType, Symbol[])
-        push!(d, v.label)
-    end
-    return alltypes
-end
-
-# """
-#     $SIGNATURES
-
-# Return `Vector{Symbol}` of all unique factor types in factor graph.
-# """
-function lsfTypes(dfg::AbstractDFG)
-    facs = getFactors(dfg)
-    alltypes = Set{Symbol}()
-    for f in facs
-        facType = typeof(getFactorType(f)) |> nameof
-        push!(alltypes, facType)
-    end
-    return collect(alltypes)
-end
-
-# """
-#     $SIGNATURES
-
-# Return `::Dict{Symbol, Vector{Symbol}}` of all unique factors types with labels in a factor graph.
-# """
-function lsfTypesDict(dfg::AbstractDFG)
-    facs = getFactors(dfg)
-    alltypes = Dict{Symbol, Vector{Symbol}}()
-    for f in facs
-        facType = typeof(getFactorType(f)) |> nameof
-        d = get!(alltypes, facType, Symbol[])
-        push!(d, f.label)
-    end
-    return alltypes
+    return labels
 end
 
 # solvekey is deprecated and sync!/copyto! is the better verb.
@@ -174,6 +136,67 @@ end
 
 export DFGVariable
 const DFGVariable = VariableCompute
+
+export listSolveKeys, listSupersolves
+# """
+#     $TYPEDSIGNATURES
+# List all the solvekeys used amongst all variables in the distributed factor graph object.
+
+# Related
+
+# [`listSolveKeys`](@ref), [`getSolverDataDict`](@ref), [`listVariables`](@ref)
+# """
+function listSolveKeys(
+    variable::VariableCompute,
+    filterSolveKeys::Union{Regex, Nothing} = nothing,
+    skeys = Set{Symbol}(),
+)
+    Base.depwarn(
+        "listSolveKeys is deprecated, use listVariableStates instead.",
+        :listSolveKeys,
+    )
+    #
+    for ky in keys(getSolverDataDict(variable))
+        push!(skeys, ky)
+    end
+
+    #filter the solveKey set with filterSolveKeys regex
+    !isnothing(filterSolveKeys) &&
+        return filter!(k -> occursin(filterSolveKeys, string(k)), skeys)
+    return skeys
+end
+
+function listSolveKeys(
+    dfg::AbstractDFG,
+    lbl::Symbol,
+    filterSolveKeys::Union{Regex, Nothing} = nothing,
+    skeys = Set{Symbol}(),
+)
+    return listSolveKeys(getVariable(dfg, lbl), filterSolveKeys, skeys)
+end
+#
+
+function listSolveKeys(
+    dfg::AbstractDFG,
+    filterVariables::Union{Type{<:VariableStateType}, Regex, Nothing} = nothing;
+    filterSolveKeys::Union{Regex, Nothing} = nothing,
+    tags::Vector{Symbol} = Symbol[],
+    solvable::Int = 0,
+)
+    #
+    skeys = Set{Symbol}()
+    varList = listVariables(dfg, filterVariables; tags = tags, solvable = solvable)
+    for vs in varList  #, ky in keys(getSolverDataDict(getVariable(dfg, vs)))
+        listSolveKeys(dfg, vs, filterSolveKeys, skeys)
+    end
+
+    # done inside the loop
+    # #filter the solveKey set with filterSolveKeys regex
+    # !isnothing(filterSolveKeys) && return filter!(k -> occursin(filterSolveKeys, string(k)), skeys)
+
+    return skeys
+end
+const listSupersolves = listSolveKeys
 
 ## ================================================================================
 ## Deprecated in v0.27

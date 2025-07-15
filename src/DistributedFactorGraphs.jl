@@ -49,8 +49,6 @@ using RecursiveArrayTools: ArrayPartition
 export ArrayPartition
 using StaticArrays
 
-import Base: getindex
-
 using InteractiveUtils: subtypes
 
 ##==============================================================================
@@ -198,8 +196,6 @@ export exists,
     deleteFactor!,
     listVariables,
     listFactors,
-    listSolveKeys,
-    listSupersolves,
     getVariables,
     getFactors,
     isVariable,
@@ -341,7 +337,6 @@ export natural_lt, sortDFG
 
 ## List
 export ls, lsf, ls2
-export lsWho
 export isPrior, lsfPriors
 export hasTags, hasTagsNeighbors
 
@@ -355,7 +350,8 @@ export @defVariable
 
 # File import and export
 export saveDFG, loadDFG!, loadDFG
-export toDot, toDotFile
+
+# export toDot, toDotFile
 
 # shortest path
 export findShortestPathDijkstra

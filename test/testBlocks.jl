@@ -592,9 +592,9 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     @test lsf(fg) == listFactors(fg)
 
     if getVariable(fg, ls(fg)[1]) isa VariableCompute
-        @test :default in listSolveKeys(fg)
-        @test :default in listSolveKeys(fg, r"a"; filterSolveKeys = r"default")
-        @test :default in listSupersolves(fg)
+        @test :default in DFG.listVariableStates(fg)
+        @test :default in DFG.listVariableStates(fg; labelFilter = contains("default") ∘ string)
+        @test :default in DFG.listVariableStates(fg)
     end
 
     # simple broadcast test
@@ -1140,12 +1140,12 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test isPrior(fg, :af1) # if f1 is prior
         @test lsfPriors(fg) == [:af1]
 
-        @test issetequal([:TestFunctorInferenceType1, :TestAbstractPrior], DFG.lsfTypes(fg))
+        @test issetequal([TestFunctorInferenceType1, TestAbstractPrior], DFG.lsfTypes(fg))
 
         facTypesDict = DFG.lsfTypesDict(fg)
         @test issetequal(collect(keys(facTypesDict)), DFG.lsfTypes(fg))
-        @test issetequal(facTypesDict[:TestFunctorInferenceType1], [:abf1])
-        @test issetequal(facTypesDict[:TestAbstractPrior], [:af1])
+        @test issetequal(facTypesDict[TestFunctorInferenceType1], [:abf1])
+        @test issetequal(facTypesDict[TestAbstractPrior], [:af1])
 
         @test ls(fg, TestFunctorInferenceType1) == [:abf1]
         @test lsf(fg, TestAbstractPrior) == [:af1]
@@ -1158,16 +1158,14 @@ function testGroup!(fg, v1, v2, f0, f1)
 
         @test ls2(fg, :a) == [:b]
 
-        @test issetequal([:TestVariableType1, :TestVariableType2], DFG.lsTypes(fg))
+        @test issetequal([TestVariableType1, TestVariableType2], DFG.lsTypes(fg))
 
         varTypesDict = DFG.lsTypesDict(fg)
         @test issetequal(collect(keys(varTypesDict)), DFG.lsTypes(fg))
-        @test issetequal(varTypesDict[:TestVariableType1], [:a])
-        @test issetequal(varTypesDict[:TestVariableType2], [:b])
+        @test issetequal(varTypesDict[TestVariableType1], [:a])
+        @test issetequal(varTypesDict[TestVariableType2], [:b])
 
         @test ls(fg, TestVariableType1) == [:a]
-
-        @test lsWho(fg, :TestVariableType1) == [:a]
 
         # FIXME return: Symbol[:b, :b] == Symbol[:b]
         varNearTs = findVariableNearTimestamp(fg, now())
@@ -1655,7 +1653,7 @@ function ProducingDotFiles(
     addFactor!(dotdfg, f1)
     #NOTE hardcoded toDot will have different results so test Graphs seperately
     if testDFGAPI <: GraphsDFG || testDFGAPI <: GraphsDFG
-        todotstr = toDot(dotdfg)
+        todotstr = DFG.toDot(dotdfg)
         todota =
             todotstr ==
             "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box, fontsize=8, fixedsize=false, height=0.1, width=0.1];\na -- abf1\nb -- abf1\n}\n"
@@ -1664,10 +1662,10 @@ function ProducingDotFiles(
             "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box, fontsize=8, fixedsize=false, height=0.1, width=0.1];\nb -- abf1\na -- abf1\n}\n"
         @test (todota || todotb)
     else
-        @test toDot(dotdfg) ==
+        @test DFG.toDot(dotdfg) ==
               "graph graphname {\n2 [\"label\"=\"b\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n2 -- 3\n3 [\"label\"=\"abf1\",\"shape\"=\"box\",\"fillcolor\"=\"blue\",\"color\"=\"blue\"]\n1 [\"label\"=\"a\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n1 -- 3\n}\n"
     end
-    @test toDotFile(dotdfg, "something.dot") == nothing
+    @test DFG.toDotFile(dotdfg, "something.dot") == nothing
     return Base.rm("something.dot")
 end
 

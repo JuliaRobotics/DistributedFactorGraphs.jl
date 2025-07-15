@@ -11,7 +11,7 @@ end
 #test before anything changes
 @testset "Producing Dot Files" begin
     global dfg
-    todotstr = toDot(dfg)
+    todotstr = DFG.toDot(dfg)
     #TODO consider using a regex, but for now test all orders
     todota =
         cmp(
@@ -45,7 +45,7 @@ end
         ) |> abs
     # @show todota, todotb, todotc, todotd, todote, todotf
     @test (todota < 1 || todotb < 1 || todotc < 1 || todotd < 1 || todote < 1 || todotf < 1)
-    @test toDotFile(dfg, "something.dot") === nothing
+    @test DFG.toDotFile(dfg, "something.dot") === nothing
     Base.rm("something.dot")
 end
 
@@ -119,7 +119,6 @@ end
     # Existence
     @test exists(dfg, :a) == true
     @test exists(dfg, v1) == true
-    @show exists(dfg, :nope)
     @test exists(dfg, :nope) == false
     # isFactor and isVariable
     @test isFactor(dfg, f1.label)
@@ -144,18 +143,17 @@ end
     @test !isPrior(dfg, :abf1) # f1 is not a prior
     @test lsfPriors(dfg) == []
 
-    @test DFG.lsfTypes(dfg) == [:LinearRelative]
+    @test DFG.lsfTypes(dfg)[1] <: LinearRelative
 
     @test ls(dfg, LinearRelative) == [:abf1]
-    @test lsf(dfg, LinearRelative) == [:abf1]
+    @test lsf(dfg, LinearRelative{1, Normal{Float64}}) == [:abf1]
 
     @test getVariableType(v1) isa Position{1}
     @test getVariableType(dfg, :a) isa Position{1}
 
-    @test DFG.lsTypes(dfg) == [Symbol("Position{1}")]
+    @test DFG.lsTypes(dfg) == [Position{1}]
 
     @test issetequal(ls(dfg, Position{1}), [:a, :b])
-    @test issetequal(lsWho(dfg, :Position), [:a, :b])
 
     varNearTs = findVariableNearTimestamp(dfg, now())
     @test_skip varNearTs[1][1] == [:b]

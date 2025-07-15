@@ -3,9 +3,7 @@ using Graphs
 
 using OrderedCollections
 
-import Base: eltype, show, ==, Pair, Tuple, copy, length, size, issubset, zero, getindex
-# import Random:
-#     randstring, seed!
+import Base
 
 import Graphs:
     AbstractGraph,
@@ -39,15 +37,7 @@ import Graphs.SimpleGraphs:
     AbstractSimpleGraph, SimpleGraph, SimpleDiGraph, SimpleEdge, fadj, badj
 
 export FactorGraph
-# addVariable!,
-# addFactor!,
-# GraphsBayesGraph,
-# filter_edges,
-# filter_vertices,
-# reverse
 
-# import DistributedFactorGraphs: AbstractGraphNode
-# const AbstractNodeType = AbstractGraphNode
 using DistributedFactorGraphs: AbstractGraphNode
 import DistributedFactorGraphs: AbstractGraphVariable, AbstractGraphFactor
 const AbstractVariableType = AbstractGraphVariable
@@ -83,7 +73,7 @@ end
 FactorGraph() = FactorGraph{Int, AbstractVariableType, AbstractFactorType}()
 # FactorGraph{V,F}() where {V <: AbstractVariableType, F <: AbstractFactorType} = FactorGraph{Int, V, F}()
 
-function show(io::IO, ::MIME"text/plain", g::FactorGraph)
+function Base.show(io::IO, ::MIME"text/plain", g::FactorGraph)
     dir = is_directed(g) ? "directed" : "undirected"
     return print(io, "{$(nv(g)), $(ne(g))} $dir $(eltype(g)) $(typeof(g))")
 end
@@ -91,7 +81,7 @@ end
 @inline fadj(g::FactorGraph, x...) = fadj(g.graph, x...)
 @inline badj(g::FactorGraph, x...) = badj(g.graph, x...)
 
-eltype(g::FactorGraph) = eltype(g.graph)
+Base.eltype(g::FactorGraph) = eltype(g.graph)
 edgetype(g::FactorGraph) = edgetype(g.graph)
 nv(g::FactorGraph) = nv(g.graph)
 vertices(g::FactorGraph) = vertices(g.graph)
@@ -109,7 +99,7 @@ is_directed(::Type{FactorGraph}) = false
 is_directed(::Type{FactorGraph{T, V, F}}) where {T, V, F} = false
 is_directed(g::FactorGraph) = false
 
-zero(g::FactorGraph{T, V, F}) where {T, V, F} = FactorGraph{T, V, F}(0, 0)
+Base.zero(g::FactorGraph{T, V, F}) where {T, V, F} = FactorGraph{T, V, F}(0, 0)
 
 # TODO issubset(g::T, h::T) where T <: FactorGraph = issubset(g.graph, h.graph)
 

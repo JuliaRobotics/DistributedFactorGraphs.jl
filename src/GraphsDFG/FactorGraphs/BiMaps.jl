@@ -1,4 +1,3 @@
-# import Base: getindex, setindex!, firstindex, lastindex, iterate, keys, isempty
 struct BiDictMap{T <: Integer}
     int_sym::Dict{T, Symbol}
     sym_int::Dict{Symbol, T}

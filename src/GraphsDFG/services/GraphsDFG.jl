@@ -258,7 +258,7 @@ function getFactors(
     filterDFG!(factors, labelFilter, (String ∘ getLabel))
     filterDFG!(factors, solvableFilter, getSolvable)
     filterDFG!(factors, tagsFilter, getTags)
-    filterDFG!(factors, typeFilter, getFactorType)
+    filterDFG!(factors, typeFilter, typeof ∘ getFactorType)
     return factors
 end
 
@@ -304,17 +304,27 @@ function isConnected(dfg::GraphsDFG)
     # return length(Graphs.connected_components(dfg.g)) == 1
 end
 
+_isSolvable(dfg::GraphsDFG, label::Symbol, ready::Nothing) = true
+
 function _isSolvable(dfg::GraphsDFG, label::Symbol, ready::Int)
     haskey(dfg.g.variables, label) && (return dfg.g.variables[label].solvable >= ready)
     haskey(dfg.g.factors, label) && (return dfg.g.factors[label].solvable >= ready)
     throw(LabelNotFoundError(label))
 end
 
-function listNeighbors(dfg::GraphsDFG, node::AbstractGraphNode; solvable::Int = 0)
+function listNeighbors(
+    dfg::GraphsDFG,
+    node::AbstractGraphNode;
+    solvable::Union{Nothing, Int} = nothing,
+)
     return listNeighbors(dfg, node.label; solvable)
 end
 
-function listNeighbors(dfg::GraphsDFG, label::Symbol; solvable::Int = 0)
+function listNeighbors(
+    dfg::GraphsDFG,
+    label::Symbol;
+    solvable::Union{Nothing, Int} = nothing,
+)
     if !(hasVariable(dfg, label) || hasFactor(dfg, label))
         throw(LabelNotFoundError(label))
     end
@@ -337,7 +347,7 @@ function listNeighborhood(
     dfg::GraphsDFG,
     variableFactorLabels::Vector{Symbol},
     distance::Int;
-    solvable::Int = 0,
+    solvable::Union{Nothing, Int} = nothing,
 )
     # find neighbors at distance to add
     nbhood = Int[]
@@ -348,7 +358,8 @@ function listNeighborhood(
 
     allvarfacs = [dfg.g.labels[id] for id in nbhood]
 
-    solvable != 0 && filter!(nlbl -> (getSolvable(dfg, nlbl) >= solvable), allvarfacs)
+    !isnothing(solvable) &&
+        filter!(nlbl -> (getSolvable(dfg, nlbl) >= solvable), allvarfacs)
 
     return allvarfacs
 end
@@ -365,9 +376,9 @@ end
 #  Biadjacency Matrix https://en.wikipedia.org/wiki/Adjacency_matrix#Of_a_bipartite_graph
 function getBiadjacencyMatrix(
     dfg::GraphsDFG;
-    solvable::Int = 0,
-    varLabels = listVariables(dfg; solvable = solvable),
-    factLabels = listFactors(dfg; solvable = solvable),
+    solvable::Union{Nothing, Int} = nothing,
+    varLabels = listVariables(dfg; solvable),
+    factLabels = listFactors(dfg; solvable),
 )
     varIndex = [dfg.g.labels[s] for s in varLabels]
     factIndex = [dfg.g.labels[s] for s in factLabels]
@@ -443,7 +454,7 @@ function findShortestPathDijkstra(
     tagsFactors::Vector{Symbol} = Symbol[],
     typeVariables::Union{Nothing, <:AbstractVector} = nothing,
     typeFactors::Union{Nothing, <:AbstractVector} = nothing,
-    solvable::Int = 0,
+    solvable::Union{Nothing, Int} = nothing,
     initialized::Union{Nothing, Bool} = nothing,
 )
     #
@@ -458,14 +469,14 @@ function findShortestPathDijkstra(
 
     #
     duplicate =
-        regexVariables !== nothing ||
-        regexFactors !== nothing ||
-        0 < length(tagsVariables) ||
-        0 < length(tagsFactors) ||
-        typeVariables !== nothing ||
-        typeFactors !== nothing ||
-        initialized !== nothing ||
-        solvable != 0
+        !isnothing(regexVariables) ||
+        !isnothing(regexFactors) ||
+        !isempty(tagsVariables) ||
+        !isempty(tagsFactors) ||
+        !isnothing(typeVariables) ||
+        !isnothing(typeFactors) ||
+        !isnothing(initialized) ||
+        !isnothing(solvable)
     #
     dfg_ = if duplicate
         # use copy if filter is being applied

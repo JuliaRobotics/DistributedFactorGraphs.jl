@@ -535,7 +535,11 @@ isFactor(dfg::AbstractDFG, node::AbstractGraphFactor) = true
 ## Connectivity Alias
 ##------------------------------------------------------------------------------
 
-function listNeighbors(dfg::AbstractDFG, node::AbstractGraphNode; solvable::Int = 0)
+function listNeighbors(
+    dfg::AbstractDFG,
+    node::AbstractGraphNode;
+    solvable::Union{Nothing, Int} = nothing,
+)
     return listNeighbors(dfg, node.label; solvable)
 end
 
@@ -562,31 +566,8 @@ listVariables(dfg, r"l", tags=[:APRILTAG;])
 
 See also: [`ls`](@ref)
 """
-function listVariables(
-    dfg::AbstractDFG,
-    regexFilter::Union{Nothing, Regex} = nothing;
-    tags::Vector{Symbol} = Symbol[],
-    solvable::Int = 0,
-)
-    #
-    vars = getVariables(dfg, regexFilter; tags = tags, solvable = solvable)
-    return map(v -> v.label, vars)::Vector{Symbol}
-end
-
-# to be consolidated, see #612
-function listVariables(
-    dfg::AbstractDFG,
-    typeFilter::Type{<:VariableStateType};
-    tags::Vector{Symbol} = Symbol[],
-    solvable::Int = 0,
-)
-    #
-    retlist::Vector{Symbol} = ls(dfg, typeFilter)
-    if 0 < length(tags) || solvable != 0
-        return intersect(retlist, ls(dfg; tags = tags, solvable = solvable))
-    else
-        return retlist
-    end
+function listVariables(dfg::AbstractDFG, args...; kwargs...)
+    return map(getLabel, getVariables(dfg, args...; kwargs...))::Vector{Symbol}
 end
 
 """
@@ -594,79 +575,15 @@ end
 Get a list of the labels of the DFGFactors in the DFG.
 Optionally specify a label regular expression to retrieves a subset of the factors.
 """
-function listFactors(
-    dfg::AbstractDFG,
-    regexFilter::Union{Nothing, Regex} = nothing;
-    tags::Vector{Symbol} = Symbol[],
-    solvable::Int = 0,
-)
-    return map(
-        f -> f.label,
-        getFactors(dfg, regexFilter; tags = tags, solvable = solvable),
-    )::Vector{Symbol}
+function listFactors(dfg::AbstractDFG, args...; kwargs...)
+    return map(getLabel, getFactors(dfg, args...; kwargs...))::Vector{Symbol}
 end
-
-"""
-    $TYPEDSIGNATURES
-List all the solvekeys used amongst all variables in the distributed factor graph object.
-
-Related
-
-[`listSolveKeys`](@ref), [`getSolverDataDict`](@ref), [`listVariables`](@ref)
-"""
-function listSolveKeys(
-    variable::VariableCompute,
-    filterSolveKeys::Union{Regex, Nothing} = nothing,
-    skeys = Set{Symbol}(),
-)
-    #
-    for ky in keys(getSolverDataDict(variable))
-        push!(skeys, ky)
-    end
-
-    #filter the solveKey set with filterSolveKeys regex
-    !isnothing(filterSolveKeys) &&
-        return filter!(k -> occursin(filterSolveKeys, string(k)), skeys)
-    return skeys
-end
-
-function listSolveKeys(
-    dfg::AbstractDFG,
-    lbl::Symbol,
-    filterSolveKeys::Union{Regex, Nothing} = nothing,
-    skeys = Set{Symbol}(),
-)
-    return listSolveKeys(getVariable(dfg, lbl), filterSolveKeys, skeys)
-end
-#
-
-function listSolveKeys(
-    dfg::AbstractDFG,
-    filterVariables::Union{Type{<:VariableStateType}, Regex, Nothing} = nothing;
-    filterSolveKeys::Union{Regex, Nothing} = nothing,
-    tags::Vector{Symbol} = Symbol[],
-    solvable::Int = 0,
-)
-    #
-    skeys = Set{Symbol}()
-    varList = listVariables(dfg, filterVariables; tags = tags, solvable = solvable)
-    for vs in varList  #, ky in keys(getSolverDataDict(getVariable(dfg, vs)))
-        listSolveKeys(dfg, vs, filterSolveKeys, skeys)
-    end
-
-    # done inside the loop
-    # #filter the solveKey set with filterSolveKeys regex
-    # !isnothing(filterSolveKeys) && return filter!(k -> occursin(filterSolveKeys, string(k)), skeys)
-
-    return skeys
-end
-const listSupersolves = listSolveKeys
 
 ##------------------------------------------------------------------------------
 ## Aliases and Other filtered lists
 ##------------------------------------------------------------------------------
 
-## Aliases
+## ls Shorthands
 ##--------
 """
     $(SIGNATURES)
@@ -681,9 +598,22 @@ function ls(
     dfg::AbstractDFG,
     regexFilter::Union{Nothing, Regex} = nothing;
     tags::Vector{Symbol} = Symbol[],
-    solvable::Int = 0,
+    solvable::Union{Nothing, Int} = nothing,
+    solvableFilter::Union{Nothing, Function} = nothing,
+    tagsFilter::Union{Nothing, Function} = nothing,
+    typeFilter::Union{Nothing, Function} = nothing,
+    labelFilter::Union{Nothing, Function} = nothing,
 )
-    return listVariables(dfg, regexFilter; tags = tags, solvable = solvable)
+    return listVariables(
+        dfg,
+        regexFilter;
+        tags,
+        solvable,
+        solvableFilter,
+        tagsFilter,
+        typeFilter,
+        labelFilter,
+    )
 end
 
 #TODO tags kwarg
@@ -696,44 +626,51 @@ Notes
 - Return `Vector{Symbol}`
 """
 function lsf(
-    dfg::G,
+    dfg::AbstractDFG,
     regexFilter::Union{Nothing, Regex} = nothing;
     tags::Vector{Symbol} = Symbol[],
-    solvable::Int = 0,
-) where {G <: AbstractDFG}
-    return listFactors(dfg, regexFilter; tags = tags, solvable = solvable)
+    solvable::Union{Nothing, Int} = nothing,
+    solvableFilter::Union{Nothing, Function} = nothing,
+    tagsFilter::Union{Nothing, Function} = nothing,
+    typeFilter::Union{Nothing, Function} = nothing,
+    labelFilter::Union{Nothing, Function} = nothing,
+)
+    return listFactors(
+        dfg,
+        regexFilter;
+        tags,
+        solvable,
+        solvableFilter,
+        tagsFilter,
+        typeFilter,
+        labelFilter,
+    )
 end
 
 """
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor.
 """
-function ls(dfg::AbstractDFG, node::AbstractGraphNode; solvable::Int = 0)
+function ls(
+    dfg::AbstractDFG,
+    node::AbstractGraphNode;
+    solvable::Union{Nothing, Int} = nothing,
+)
     return listNeighbors(dfg, node; solvable = solvable)
 end
-function ls(dfg::G, label::Symbol; solvable::Int = 0) where {G <: AbstractDFG}
+function ls(dfg::AbstractDFG, label::Symbol; solvable::Union{Nothing, Int} = nothing)
     return listNeighbors(dfg, label; solvable = solvable)
 end
 
-function lsf(dfg::G, label::Symbol; solvable::Int = 0) where {G <: AbstractDFG}
+function lsf(dfg::AbstractDFG, label::Symbol; solvable::Union{Nothing, Int} = nothing)
     return listNeighbors(dfg, label; solvable = solvable)
 end
 
 ## list by types
 ##--------------
 
-function ls(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: VariableStateType}
-    xx = getVariables(dfg)
-    mask = getVariableType.(xx) .|> typeof .== T
-    vxx = view(xx, mask)
-    return map(x -> x.label, vxx)
-end
-
-function ls(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: AbstractObservation}
-    xx = getFactors(dfg)
-    names = typeof.(getFactorType.(xx)) .|> nameof
-    vxx = view(xx, names .== Symbol(T))
-    return map(x -> x.label, vxx)
+function ls(dfg::AbstractDFG, ::Type{T}) where {T <: VariableStateType}
+    return listVariables(dfg; typeFilter = ==(T()))
 end
 
 """
@@ -745,8 +682,13 @@ Example, list all the Point2Point2 factors in the factor graph `dfg`:
 Notes
 - Return `Vector{Symbol}`
 """
-function lsf(dfg::G, ::Type{T}) where {G <: AbstractDFG, T <: AbstractObservation}
-    return ls(dfg, T)
+function lsf(dfg::AbstractDFG, ::Type{T}) where {T <: AbstractObservation}
+    typeFilter = isconcretetype(T) ? x -> x == T : x -> x <: T
+    return listFactors(dfg; typeFilter)
+end
+
+function ls(dfg::AbstractDFG, ::Type{T}) where {T <: AbstractObservation}
+    return lsf(dfg, T)
 end
 
 """
@@ -758,7 +700,7 @@ function ls2(dfg::AbstractDFG, label::Symbol)
     l1 = listNeighborhood(dfg, label, 1)
     return setdiff(l2, l1)
 end
-ls2(dfg::AbstractDFG, v::AbstractGraphVariable) = ls(dfg, getLabel(v))
+ls2(dfg::AbstractDFG, v::AbstractGraphNode) = ls2(dfg, getLabel(v))
 
 """
     $SIGNATURES
@@ -768,43 +710,72 @@ Return vector of prior factor symbol labels in factor graph `dfg`.
 Notes:
 - Returns `Vector{Symbol}`
 """
-function lsfPriors(dfg::G) where {G <: AbstractDFG}
-    priors = Symbol[]
-    fcts = lsf(dfg)
-    for fc in fcts
-        if isPrior(dfg, fc)
-            push!(priors, fc)
-        end
-    end
-    return priors
+function lsfPriors(dfg::AbstractDFG)
+    return listFactors(dfg; typeFilter = x -> x <: AbstractPriorObservation)
 end
 
-#TODO is this repeated functionality?
+## Listing DataTypes in a DFG
 
 """
-    $(SIGNATURES)
-Gives back all factor labels that fit the bill:
-    lsWho(dfg, :Pose3)
+    $SIGNATURES
 
-Notes
-- Returns `Vector{Symbol}`
-
-Dev Notes
-- Cloud versions will benefit from less data transfer
- - `ls(dfg::C, ::T) where {C <: CloudDFG, T <: ..}`
-
-Related
-
-ls, lsf, lsfPriors
+Return `Vector{DataType}` of all unique variable types in factor graph.
 """
-function lsWho(dfg::AbstractDFG, type::Symbol)
+function lsTypes(dfg::AbstractDFG)
     vars = getVariables(dfg)
-    labels = Symbol[]
+    alltypes = Set{DataType}()
     for v in vars
-        varType = typeof(getVariableType(v)) |> nameof
-        varType == type && push!(labels, v.label)
+        varType = typeof(getVariableType(v))
+        push!(alltypes, varType)
     end
-    return labels
+    return collect(alltypes)
+end
+
+"""
+    $SIGNATURES
+
+Return `::Dict{DataType, Vector{Symbol}}` of all unique variable types with labels in a factor graph.
+"""
+function lsTypesDict(dfg::AbstractDFG)
+    vars = getVariables(dfg)
+    alltypes = Dict{DataType, Vector{Symbol}}()
+    for v in vars
+        varType = typeof(getVariableType(v))
+        d = get!(alltypes, varType, Symbol[])
+        push!(d, v.label)
+    end
+    return alltypes
+end
+
+"""
+    $SIGNATURES
+
+Return `Vector{Symbol}` of all unique factor types in factor graph.
+"""
+function lsfTypes(dfg::AbstractDFG)
+    facs = getFactors(dfg)
+    alltypes = Set{DataType}()
+    for f in facs
+        facType = typeof(getFactorType(f))
+        push!(alltypes, facType)
+    end
+    return collect(alltypes)
+end
+
+"""
+    $SIGNATURES
+
+Return `::Dict{DataType, Vector{Symbol}}` of all unique factors types with labels in a factor graph.
+"""
+function lsfTypesDict(dfg::AbstractDFG)
+    facs = getFactors(dfg)
+    alltypes = Dict{DataType, Vector{Symbol}}()
+    for f in facs
+        facType = typeof(getFactorType(f))
+        d = get!(alltypes, facType, Symbol[])
+        push!(d, f.label)
+    end
+    return alltypes
 end
 
 ##------------------------------------------------------------------------------
@@ -1268,10 +1239,8 @@ function buildSubgraph(
     distance::Int = 0;
     solvable::Int = 0,
     graphLabel::Symbol = Symbol(getGraphLabel(dfg), "_sub_$(string(uuid4())[1:6])"),
-    sessionId = nothing,
     kwargs...,
 ) where {G <: AbstractDFG}
-    !isnothing(sessionId) && @warn "sessionId is deprecated, use graphLabel instead"
 
     #build up the neighborhood from variableFactorLabels
     allvarfacs = listNeighborhood(dfg, variableFactorLabels, distance; solvable = solvable)
@@ -1351,10 +1320,13 @@ Note:
 - rather use getBiadjacencyMatrix
 - Returns either of `::Matrix{Union{Nothing, Symbol}}`
 """
-function getAdjacencyMatrixSymbols(dfg::AbstractDFG; solvable::Int = 0)
+function getAdjacencyMatrixSymbols(
+    dfg::AbstractDFG;
+    solvable::Union{Int, Nothing} = nothing,
+)
     #
-    varLabels = sort(map(v -> v.label, getVariables(dfg; solvable = solvable)))
-    factLabels = sort(map(f -> f.label, getFactors(dfg; solvable = solvable)))
+    varLabels = sort(map(v -> v.label, getVariables(dfg; solvable)))
+    factLabels = sort(map(f -> f.label, getFactors(dfg; solvable)))
     vDict = Dict(varLabels .=> [1:length(varLabels)...] .+ 1)
 
     adjMat = Matrix{Union{Nothing, Symbol}}(
@@ -1366,7 +1338,7 @@ function getAdjacencyMatrixSymbols(dfg::AbstractDFG; solvable::Int = 0)
     adjMat[2:end, 1] = factLabels
     adjMat[1, 2:end] = varLabels
     for (fIndex, factLabel) in enumerate(factLabels)
-        factVars = listNeighbors(dfg, getFactor(dfg, factLabel); solvable = solvable)
+        factVars = listNeighbors(dfg, getFactor(dfg, factLabel); solvable)
         map(vLabel -> adjMat[fIndex + 1, vDict[vLabel]] = factLabel, factVars)
     end
     return adjMat

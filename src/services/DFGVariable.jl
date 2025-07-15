@@ -781,11 +781,44 @@ end
 
 """
     $(SIGNATURES)
-List all the solver data keys in the variable.
+List all the variable state labels.
 """
-function listVariableStates(dfg::AbstractDFG, variablekey::Symbol)
-    v = getVariable(dfg, variablekey)
-    return collect(keys(v.solverDataDict))
+function listVariableStates(
+    v::VariableCompute;
+    labelFilter::Union{Nothing, Function} = nothing,
+)
+    labels = collect(keys(v.solverDataDict))
+    return filterDFG!(labels, labelFilter)
+end
+
+function listVariableStates(
+    dfg::AbstractDFG,
+    lbl::Symbol;
+    labelFilter::Union{Nothing, Function} = nothing,
+)
+    return listVariableStates(getVariable(dfg, lbl); labelFilter)
+end
+
+function listVariableStates(
+    dfg::AbstractDFG;
+    labelFilter::Union{Nothing, Function} = nothing,
+    solvableFilter::Union{Nothing, Function} = nothing,
+    tagsFilter::Union{Nothing, Function} = nothing,
+    typeFilter::Union{Nothing, Function} = nothing,
+    variableLabelFilter::Union{Nothing, Function} = nothing,
+)
+    labels = Set{Symbol}()
+    vls = listVariables(
+        dfg;
+        solvableFilter,
+        tagsFilter,
+        typeFilter,
+        labelFilter = variableLabelFilter,
+    )
+    for vl in vls
+        union!(labels, listVariableStates(dfg, vl; labelFilter))
+    end
+    return labels
 end
 
 ##==============================================================================

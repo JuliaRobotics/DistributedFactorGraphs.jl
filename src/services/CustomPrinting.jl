@@ -43,7 +43,7 @@ function printVariable(
         println(ioc)
         println(ioc, "  solvable:   ", getSolvable(vert))
         println(ioc, "  tags:       ", getTags(vert))
-        solk = listSolveKeys(vert) |> collect
+        solk = listVariableStates(vert)
         lsolk = length(solk)
         smsk = lsolk > 0 ? (rand(1:lsolk, 100) |> unique)[1:minimum([4, lsolk])] : nothing
         # list the marginalization status
