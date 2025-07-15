@@ -163,7 +163,7 @@ function getVariables(
             "tags kwarg is deprecated, use kwarg `tagsFilter = !isdisjoint(tags)` instead", #v0.28
             :getVariables,
         )
-        filterDFG!(variables, !isdisjoint(tags), getTags)
+        filterDFG!(variables, x -> !isdisjoint(x, tags), getTags)
     end
     if !isnothing(solvable)
         #TODO review. just one solvableFilter or keep solvable as well.
@@ -244,7 +244,7 @@ function getFactors(
             "tags kwarg is deprecated, use kwarg `tagsFilter = !isdisjoint(tags)` instead", #v0.28
             :getFactors,
         )
-        filterDFG!(factors, !isdisjoint(tags), getTags)
+        filterDFG!(factors, x -> !isdisjoint(x, tags), getTags)
     end
     if !isnothing(solvable)
         #TODO review. just one solvableFilter or keep solvable as well.
