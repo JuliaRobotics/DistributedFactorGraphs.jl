@@ -172,7 +172,7 @@ function addBlob!(store::FolderStore{T}, blobid::UUID, data::T) where {T}
 end
 
 function updateBlob!(store::FolderStore{T}, blobid::UUID, data::T) where {T}
-   error("updateBlob! is obsolete as blobsId=>Blob pairs are immutable.")
+    return error("updateBlob! is obsolete as blobid=>Blob pairs are immutable.")
 end
 
 function deleteBlob!(store::FolderStore{T}, blobid::UUID) where {T}
@@ -184,7 +184,7 @@ function deleteBlob!(store::FolderStore{T}, blobid::UUID) where {T}
         rm(blobfilename)
         # Create a tombstone marker
         open(tombstonefile, "w") do f
-            write(f, "deleted")
+            return write(f, "deleted")
         end
         return 1
     elseif isfile(tombstonefile)
@@ -207,7 +207,7 @@ function listBlobs(store::FolderStore)
     folder = joinpath(store.folder, string(store.label))
     # Parse folder to only include UUIDs automatically excluding tombstone files this way.
     blobIds = map(readdir(folder)) do filename
-        tryparse(UUID, filename)
+        return tryparse(UUID, filename)
     end
     return filter(!isnothing, blobIds)
 end
