@@ -125,7 +125,7 @@ else
     @warn "Skipping IncrementalInference driver tests"
 end
 
-struct NotImplementedDFG{V,T} <: AbstractDFG{V,T} end
+struct NotImplementedDFG{V, T} <: AbstractDFG{V, T} end
 
 @testset "No Interface tests" begin
     dfg = NotImplementedDFG{VariableDFG, FactorDFG}()

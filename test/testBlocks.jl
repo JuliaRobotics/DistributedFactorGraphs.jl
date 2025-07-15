@@ -3,7 +3,7 @@ using Test
 using Dates
 using Manifolds
 
-using DistributedFactorGraphs: 
+using DistributedFactorGraphs:
     LabelExistsError,
     LabelNotFoundError,
     NoSolverParams,
@@ -292,11 +292,7 @@ function DFGVariableSCA()
         solvable = 0,
         solverDataDict = Dict(:default => State{TestVariableType1}()),
     )
-    v2 = VariableCompute(
-        :b,
-        State{TestVariableType2}();
-        tags = Set([:VARIABLE, :LANDMARK]),
-    )
+    v2 = VariableCompute(:b, State{TestVariableType2}(); tags = Set([:VARIABLE, :LANDMARK]))
     v3 = VariableCompute(
         :c,
         State{TestVariableType2}();
@@ -1308,8 +1304,10 @@ function testGroup!(fg, v1, v2, f0, f1)
         #solves in progress
         @test getSolveInProgress(v1) == 1
         @test getSolveInProgress(f1) == 1
-        @test !isSolveInProgress(v2, :default) && v2.solverDataDict[:default].solveInProgress == 0
-        @test isSolveInProgress(v1, :default) && v1.solverDataDict[:default].solveInProgress > 0
+        @test !isSolveInProgress(v2, :default) &&
+              v2.solverDataDict[:default].solveInProgress == 0
+        @test isSolveInProgress(v1, :default) &&
+              v1.solverDataDict[:default].solveInProgress > 0
 
         @test setSolvable!(v1, 1) == 1
         @test getSolvable(v1) == 1
@@ -1392,10 +1390,7 @@ function connectivityTestGraph(
     dfg = T(; graphLabel = :testGraph)
 
     vars = vcat(
-        map(
-            n -> VARTYPE(Symbol("x$n"), State{TestVariableType1}()),
-            1:numNodesType1,
-        ),
+        map(n -> VARTYPE(Symbol("x$n"), State{TestVariableType1}()), 1:numNodesType1),
         map(
             n -> VARTYPE(Symbol("x$(numNodesType1+n)"), State{TestVariableType2}()),
             1:numNodesType2,
