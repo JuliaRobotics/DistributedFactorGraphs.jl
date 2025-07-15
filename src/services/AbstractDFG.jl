@@ -669,7 +669,7 @@ end
 ## list by types
 ##--------------
 
-function ls(dfg::AbstractDFG, ::Type{T}) where {T <: VariableStateType}
+function ls(dfg::AbstractDFG, ::Type{T}) where {T <: StateType}
     return listVariables(dfg; typeFilter = ==(T()))
 end
 

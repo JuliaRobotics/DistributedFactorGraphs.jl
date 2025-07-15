@@ -6,21 +6,21 @@ import Base.==
 # Reference https://github.com/JuliaLang/julia/issues/4648
 
 #=
-For now abstract `VariableStateType`s are considered equal if they are the same type, dims, and manifolds (abels are deprecated)
+For now abstract `StateType`s are considered equal if they are the same type, dims, and manifolds (abels are deprecated)
 If your implentation has aditional properties such as `DynPose2` with `ut::Int64` (microsecond time) or support different manifolds
 implement compare if needed.
 =#
-# ==(a::VariableStateType,b::VariableStateType) = typeof(a) == typeof(b) && a.dims == b.dims && a.manifolds == b.manifolds
+# ==(a::StateType,b::StateType) = typeof(a) == typeof(b) && a.dims == b.dims && a.manifolds == b.manifolds
 
-==(a::FactorSolverCache, b::FactorSolverCache) = typeof(a) == typeof(b)
+==(a::FactorCache, b::FactorCache) = typeof(a) == typeof(b)
 
 ==(a::AbstractObservation, b::AbstractObservation) = typeof(a) == typeof(b)
 
 # Generate compares automatically for all in this union
 const GeneratedCompareUnion = Union{
     MeanMaxPPE,
-    VariableState,
-    PackedVariableState,
+    State,
+    PackedState,
     VariableCompute,
     VariableDFG,
     VariableSummary,
@@ -193,8 +193,8 @@ function compareAll(
     return true
 end
 
-#Compare VariableState
-function compare(a::VariableState, b::VariableState)
+#Compare State
+function compare(a::State, b::State)
     a.val != b.val && @debug("val is not equal") == nothing && return false
     a.bw != b.bw && @debug("bw is not equal") == nothing && return false
     a.BayesNetOutVertIDs != b.BayesNetOutVertIDs &&
@@ -253,8 +253,8 @@ function compareVariable(
     union!(skiplist, skip)
     TP = TP && compareAll(A.solverDataDict, B.solverDataDict; skip = skiplist, show = show)
 
-    Ad = getVariableState(A, :default) #FIXME why onlly comparing default?
-    Bd = getVariableState(B, :default)
+    Ad = getState(A, :default) #FIXME why onlly comparing default?
+    Bd = getState(B, :default)
 
     # TP = TP && compareAll(A.attributes, B.attributes, skip=[:variableType;], show=show)
     varskiplist = union(varskiplist, [:variableType])

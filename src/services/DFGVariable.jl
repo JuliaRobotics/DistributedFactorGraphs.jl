@@ -45,7 +45,7 @@ getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimest
 Variable nodes `variableType` information holding a variety of meta data associated with the type of variable stored in that node of the factor graph.
 
 Notes
-- API Quirk in that this function returns and instance of `::T` not a `::Type{<:VariableStateType}`.
+- API Quirk in that this function returns and instance of `::T` not a `::Type{<:StateType}`.
 
 DevWork
 - TODO, see IncrementalInference.jl 1228
@@ -56,21 +56,21 @@ getVariableType
 """
 getVariableType(::VariableCompute{T}) where {T} = T()
 
-getVariableType(::VariableState{T}) where {T} = T()
+getVariableType(::State{T}) where {T} = T()
 
 # TODO: Confirm that we can switch this out, instead of retrieving the complete variable.
-# getVariableType(v::VariableCompute) = getVariableType(getVariableState(v))
+# getVariableType(v::VariableCompute) = getVariableType(getState(v))
 
 # Optimized in CGDFG
 getVariableType(dfg::AbstractDFG, lbl::Symbol) = getVariableType(getVariable(dfg, lbl))
 
 ##------------------------------------------------------------------------------
-## VariableStateType
+## StateType
 ##------------------------------------------------------------------------------
 
 # """
 #     $SIGNATURES
-# Interface function to return the `variableType` manifolds of an VariableStateType, extend this function for all Types<:VariableStateType.
+# Interface function to return the `variableType` manifolds of an StateType, extend this function for all Types<:StateType.
 # """
 # function getManifolds end
 
@@ -82,7 +82,7 @@ getVariableType(dfg::AbstractDFG, lbl::Symbol) = getVariableType(getVariable(dfg
 
 A macro to create a new variable type with name `StructName` associated with a given manifold and identity point.
 
-- `StructName` is the name of the new variable type, which will be defined as a subtype of `VariableStateType`.
+- `StructName` is the name of the new variable type, which will be defined as a subtype of `StateType`.
 - `manifold` is an object that must be a subtype of `ManifoldsBase.AbstractManifold`.
 - `point_identity` is the identity point on the manifold, used as a reference for operations.
 
@@ -98,7 +98,7 @@ DFG.@defVariable Pose2 SpecialEuclidean(2) ArrayPartition([0;0.0],[1 0; 0 1.0])
 macro defVarstateType(structname, manifold, point_identity)
     return esc(
         quote
-            Base.@__doc__ struct $structname <: VariableStateType{Any} end
+            Base.@__doc__ struct $structname <: StateType{Any} end
 
             # user manifold must be a <:Manifold
             @assert ($manifold isa AbstractManifold) "@defVariable of " *
@@ -125,7 +125,7 @@ end
 
 A macro to create a new variable type with name `StructName` that is parameterized by `N` and associated with a given manifold and identity point.
 
-- `StructName` is the name of the new variable type, which will be defined as a subtype of `VariableStateType{N}`.
+- `StructName` is the name of the new variable type, which will be defined as a subtype of `StateType{N}`.
 - `manifold` is an object that must be a subtype of `ManifoldsBase.AbstractManifold`.
 - `point_identity` is the identity point on the manifold, used as a reference for operations.
 
@@ -141,7 +141,7 @@ DFG.@defVarstateTypeN Pose{N} SpecialEuclidean(N) ArrayPartition(zeros(SVector{N
 macro defVarstateTypeN(structname, manifold, point_identity)
     return esc(
         quote
-            Base.@__doc__ struct $structname <: VariableStateType{N} end
+            Base.@__doc__ struct $structname <: StateType{N} end
 
             DFG.getManifold(::Type{$structname}) where {N} = $manifold
 
@@ -155,48 +155,48 @@ end
 function Base.convert(
     ::Type{<:AbstractManifold},
     ::Union{<:T, Type{<:T}},
-) where {T <: VariableStateType}
+) where {T <: StateType}
     return getManifold(T)
 end
 
 """
     $SIGNATURES
-Interface function to return the `<:ManifoldsBase.AbstractManifold` object of `variableType<:VariableStateType`.
+Interface function to return the `<:ManifoldsBase.AbstractManifold` object of `variableType<:StateType`.
 """
-getManifold(::T) where {T <: VariableStateType} = getManifold(T)
+getManifold(::T) where {T <: StateType} = getManifold(T)
 getManifold(vari::VariableCompute) = getVariableType(vari) |> getManifold
-getManifold(state::VariableState) = getVariableType(state) |> getManifold
-# covers both <:VariableStateType and <:AbstractObservation
+getManifold(state::State) = getVariableType(state) |> getManifold
+# covers both <:StateType and <:AbstractObservation
 getManifold(dfg::AbstractDFG, lbl::Symbol) = getManifold(dfg[lbl])
 
 """
     $SIGNATURES
-Interface function to return the `variableType` dimension of an VariableStateType, extend this function for all Types<:VariableStateType.
+Interface function to return the `variableType` dimension of an StateType, extend this function for all Types<:StateType.
 """
 function getDimension end
 
-getDimension(::Type{T}) where {T <: VariableStateType} = manifold_dimension(getManifold(T))
-getDimension(::T) where {T <: VariableStateType} = manifold_dimension(getManifold(T))
+getDimension(::Type{T}) where {T <: StateType} = manifold_dimension(getManifold(T))
+getDimension(::T) where {T <: StateType} = manifold_dimension(getManifold(T))
 getDimension(M::ManifoldsBase.AbstractManifold) = manifold_dimension(M)
 getDimension(p::Distributions.Distribution) = length(p)
 getDimension(var::VariableCompute) = getDimension(getVariableType(var))
 
 """
     $SIGNATURES
-Interface function to return the manifold point type of an VariableStateType, extend this function for all Types<:VariableStateType.
+Interface function to return the manifold point type of an StateType, extend this function for all Types<:StateType.
 """
 function getPointType end
-getPointType(::T) where {T <: VariableStateType} = getPointType(T)
+getPointType(::T) where {T <: StateType} = getPointType(T)
 
 """
     $SIGNATURES
-Interface function to return the user provided identity point for this VariableStateType manifold, extend this function for all Types<:VariableStateType.
+Interface function to return the user provided identity point for this StateType manifold, extend this function for all Types<:StateType.
 
 Notes
 - Used in transition period for Serialization.  This function will likely be changed or deprecated entirely.
 """
 function getPointIdentity end
-getPointIdentity(::T) where {T <: VariableStateType} = getPointIdentity(T)
+getPointIdentity(::T) where {T <: StateType} = getPointIdentity(T)
 
 """
     $SIGNATURES
@@ -216,7 +216,7 @@ function getPoint(
     ::Type{T},
     v::AbstractVector,
     basis = ManifoldsBase.DefaultOrthogonalBasis(),
-) where {T <: VariableStateType}
+) where {T <: StateType}
     M = getManifold(T)
     p0 = getPointIdentity(T)
     X = ManifoldsBase.get_vector(M, p0, v, basis)
@@ -240,7 +240,7 @@ function getCoordinates(
     ::Type{T},
     p,
     basis = ManifoldsBase.DefaultOrthogonalBasis(),
-) where {T <: VariableStateType}
+) where {T <: StateType}
     M = getManifold(T)
     p0 = getPointIdentity(T)
     X = ManifoldsBase.log(M, p0, p)
@@ -260,9 +260,9 @@ Related
 
 isSolved, setSolvedCount!
 """
-getSolvedCount(v::VariableState) = v.solvedCount
+getSolvedCount(v::State) = v.solvedCount
 function getSolvedCount(v::VariableCompute, solveKey::Symbol = :default)
-    return getVariableState(v, solveKey) |> getSolvedCount
+    return getState(v, solveKey) |> getSolvedCount
 end
 function getSolvedCount(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol = :default)
     return getSolvedCount(getVariable(dfg, sym), solveKey)
@@ -277,9 +277,9 @@ Related
 
 getSolved, isSolved
 """
-setSolvedCount!(v::VariableState, val::Int) = v.solvedCount = val
+setSolvedCount!(v::State, val::Int) = v.solvedCount = val
 function setSolvedCount!(v::VariableCompute, val::Int, solveKey::Symbol = :default)
-    return setSolvedCount!(getVariableState(v, solveKey), val)
+    return setSolvedCount!(getState(v, solveKey), val)
 end
 function setSolvedCount!(
     dfg::AbstractDFG,
@@ -299,9 +299,9 @@ Related
 
 getSolved, setSolved!
 """
-isSolved(v::VariableState) = 0 < v.solvedCount
+isSolved(v::State) = 0 < v.solvedCount
 function isSolved(v::VariableCompute, solveKey::Symbol = :default)
-    return getVariableState(v, solveKey) |> isSolved
+    return getState(v, solveKey) |> isSolved
 end
 function isSolved(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol = :default)
     return isSolved(getVariable(dfg, sym), solveKey)
@@ -319,7 +319,7 @@ Notes:
 - used by both factor graph variable and Bayes tree clique logic.
 """
 function isInitialized(var::VariableCompute, key::Symbol = :default)
-    return getVariableState(var, key).initialized
+    return getState(var, key).initialized
 end
 
 function isInitialized(dfg::AbstractDFG, label::Symbol, key::Symbol = :default)
@@ -332,10 +332,10 @@ end
 Return `::Bool` on whether this variable has been marginalized.
 
 Notes:
-- VariableState default `solveKey=:default`
+- State default `solveKey=:default`
 """
 function isMarginalized(vert::VariableCompute, solveKey::Symbol = :default)
-    return getVariableState(vert, solveKey).ismargin
+    return getState(vert, solveKey).ismargin
 end
 function isMarginalized(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol = :default)
     return isMarginalized(DFG.getVariable(dfg, sym), solveKey)
@@ -346,11 +346,11 @@ end
 
 Mark a variable as marginalized `true` or `false`.
 """
-function setMarginalized!(vnd::VariableState, val::Bool)
+function setMarginalized!(vnd::State, val::Bool)
     return vnd.ismargin = val
 end
 function setMarginalized!(vari::VariableCompute, val::Bool, solveKey::Symbol = :default)
-    return setMarginalized!(getVariableState(vari, solveKey), val)
+    return setMarginalized!(getState(vari, solveKey), val)
 end
 function setMarginalized!(
     dfg::AbstractDFG,
@@ -515,7 +515,7 @@ getVariablePPEDict(vari::AbstractGraphVariable) = getPPEDict(vari)
 
 """
     getVariablePPE(::VariableCompute)
-    getVariablePPE(::VariableState)
+    getVariablePPE(::State)
 
 Get the Parametric Point Estimate of the given variable.
 """
@@ -538,7 +538,7 @@ getSolverDataDict(v::VariableCompute) = v.solverDataDict
 
 Retrieve solver data structure stored in a variable.
 """
-function getVariableState(v::VariableCompute, label::Symbol)
+function getState(v::VariableCompute, label::Symbol)
     vnd = if haskey(getSolverDataDict(v), label)
         return getSolverDataDict(v)[label]
     else
@@ -671,13 +671,13 @@ end
     $(SIGNATURES)
 Get variable solverdata for a given solve key.
 """
-function getVariableState(dfg::AbstractDFG, variableLabel::Symbol, label::Symbol)
+function getState(dfg::AbstractDFG, variableLabel::Symbol, label::Symbol)
     v = getVariable(dfg, variableLabel)
     !haskey(v.solverDataDict, label) && throw(LabelNotFoundError("State", label))
     return v.solverDataDict[label]
 end
 
-function getVariableStates(dfg::AbstractDFG, variableLabel::Symbol)
+function getStates(dfg::AbstractDFG, variableLabel::Symbol)
     v = getVariable(dfg, variableLabel)
     return collect(values(v.solverDataDict))
 end
@@ -686,18 +686,18 @@ end
     $(SIGNATURES)
 Add variable solver data, errors if it already exists.
 """
-function addVariableState!(dfg::AbstractDFG, variablekey::Symbol, state::VariableState)
+function addState!(dfg::AbstractDFG, variablekey::Symbol, state::State)
     var = getVariable(dfg, variablekey)
     if haskey(var.solverDataDict, state.solveKey)
-        throw(LabelExistsError("VariableState", state.solveKey))
+        throw(LabelExistsError("State", state.solveKey))
     end
     var.solverDataDict[state.solveKey] = state
     return state
 end
 
-function addVariableState!(v, state::VariableState)
+function addState!(v, state::State)
     if haskey(v.solverDataDict, state.solveKey)
-        throw(LabelExistsError("VariableState", state.solveKey))
+        throw(LabelExistsError("State", state.solveKey))
     end
     v.solverDataDict[state.solveKey] = state
     return state
@@ -709,13 +709,13 @@ Update the variable state if it exists, otherwise add it.
 
 Related
 
-mergeVariableStates!
+mergeStates!
 """
-function mergeVariableState!(dfg::AbstractDFG, variablekey::Symbol, vnd::VariableState)
+function mergeState!(dfg::AbstractDFG, variablekey::Symbol, vnd::State)
     v = getVariable(dfg, variablekey)
 
     if !haskey(v.solverDataDict, vnd.solveKey)
-        addVariableState!(dfg, variablekey, vnd)
+        addState!(dfg, variablekey, vnd)
     else
         v.solverDataDict[vnd.solveKey] = vnd
     end
@@ -723,9 +723,9 @@ function mergeVariableState!(dfg::AbstractDFG, variablekey::Symbol, vnd::Variabl
     return 1
 end
 
-function mergeVariableState!(v::VariableCompute, vnd::VariableState)
+function mergeState!(v::VariableCompute, vnd::State)
     if !haskey(v.solverDataDict, vnd.solveKey)
-        addVariableState!(v, vnd)
+        addState!(v, vnd)
     else
         v.solverDataDict[vnd.solveKey] = vnd
     end
@@ -733,18 +733,18 @@ function mergeVariableState!(v::VariableCompute, vnd::VariableState)
     return 1
 end
 
-function copytoVariableState!(
+function copytoState!(
     dfg::AbstractDFG,
     variableLabel::Symbol,
     stateLabel::Symbol,
-    state::VariableState,
+    state::State,
 )
-    newstate = VariableState(
+    newstate = State(
         getVariableType(state);
-        (k => deepcopy(getproperty(state, k)) for k in fieldnames(VariableState))...,
+        (k => deepcopy(getproperty(state, k)) for k in fieldnames(State))...,
         solveKey = stateLabel,
     )
-    return mergeVariableState!(dfg, variableLabel, newstate)
+    return mergeState!(dfg, variableLabel, newstate)
 end
 
 #
@@ -753,11 +753,11 @@ end
     $(SIGNATURES)
 Delete variable solver data, returns the number of deleted elements.
 """
-function deleteVariableState!(dfg::AbstractDFG, variablekey::Symbol, solveKey::Symbol)
+function deleteState!(dfg::AbstractDFG, variablekey::Symbol, solveKey::Symbol)
     var = getVariable(dfg, variablekey)
 
     if !haskey(var.solverDataDict, solveKey)
-        throw(KeyError("VariableState '$(solveKey)' does not exist"))
+        throw(KeyError("State '$(solveKey)' does not exist"))
     end
     pop!(var.solverDataDict, solveKey)
     return 1
@@ -767,12 +767,8 @@ end
     $(SIGNATURES)
 Delete variable solver data, returns the number of deleted elements.
 """
-function deleteVariableState!(
-    dfg::AbstractDFG,
-    sourceVariable::VariableCompute,
-    solveKey::Symbol,
-)
-    return deleteVariableState!(dfg, sourceVariable.label, solveKey)
+function deleteState!(dfg::AbstractDFG, sourceVariable::VariableCompute, solveKey::Symbol)
+    return deleteState!(dfg, sourceVariable.label, solveKey)
 end
 
 ##------------------------------------------------------------------------------
@@ -783,23 +779,20 @@ end
     $(SIGNATURES)
 List all the variable state labels.
 """
-function listVariableStates(
-    v::VariableCompute;
-    labelFilter::Union{Nothing, Function} = nothing,
-)
+function listStates(v::VariableCompute; labelFilter::Union{Nothing, Function} = nothing)
     labels = collect(keys(v.solverDataDict))
     return filterDFG!(labels, labelFilter)
 end
 
-function listVariableStates(
+function listStates(
     dfg::AbstractDFG,
     lbl::Symbol;
     labelFilter::Union{Nothing, Function} = nothing,
 )
-    return listVariableStates(getVariable(dfg, lbl); labelFilter)
+    return listStates(getVariable(dfg, lbl); labelFilter)
 end
 
-function listVariableStates(
+function listStates(
     dfg::AbstractDFG;
     labelFilter::Union{Nothing, Function} = nothing,
     solvableFilter::Union{Nothing, Function} = nothing,
@@ -816,7 +809,7 @@ function listVariableStates(
         labelFilter = variableLabelFilter,
     )
     for vl in vls
-        union!(labels, listVariableStates(dfg, vl; labelFilter))
+        union!(labels, listStates(dfg, vl; labelFilter))
     end
     return labels
 end

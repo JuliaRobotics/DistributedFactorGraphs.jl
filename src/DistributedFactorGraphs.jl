@@ -87,7 +87,7 @@ export DFG
 export GraphsDFGs, GraphsDFG
 
 ##
-export getVariableState, getFactorState # FIXME these were questioned and being reviewed again for name, other than that they are checked.
+export getState, getFactorState # FIXME these were questioned and being reviewed again for name, other than that they are checked.
 
 ## CRUD Matrix
 # export addVariable!,          getVariable,          mergeVariable!,          deleteVariable!
@@ -95,8 +95,8 @@ export getVariableState, getFactorState # FIXME these were questioned and being 
 # export addFactor!,            getFactor,            mergeFactor!,            deleteFactor!
 # export addFactors!,           getFactors,           mergeFactors!,           deleteFactors!
 
-# export addVariableState!,     getVariableState,     mergeVariableState!,     deleteVariableState!
-# export addVariableStates!,    getVariableStates,    mergeVariableStates!,    deleteVariableStates!
+# export addState!,     getState,     mergeState!,     deleteState!
+# export addStates!,    getStates,    mergeStates!,    deleteStates!
 
 # export addBlobentry!,         getBlobentry,         mergeBlobentry!,         deleteBlobentry! # historic for VariableBlobentry
 # export addBlobentries!,       getBlobentries,       mergeBlobentries!,       deleteBlobentries!
@@ -118,7 +118,7 @@ export getVariableState, getFactorState # FIXME these were questioned and being 
 # export addGraphBlobentryMetadata!,    getGraphBlobentryMetadata,    mergeGraphBlobentryMetadata!,    deleteGraphBlobentryMetadata!
 
 ## list
-# export listVariables, listFactors, listVariableStates, listBlobentries, listFactorBlobEntries, listGraphBlobentries, listAgentBlobentries
+# export listVariables, listFactors, listStates, listBlobentries, listFactorBlobEntries, listGraphBlobentries, listAgentBlobentries
 # export listVariableMetadata, listFactorMetadata, listAgentMetadata, listGraphMetadata
 # export listVariableBlobentryMetadata, listFactorBlobentryMetadata, listAgentBlobentryMetadata, listGraphBlobentryMetadata
 
@@ -128,7 +128,7 @@ export getVariableState, getFactorState # FIXME these were questioned and being 
 
 export AbstractObservation, AbstractPackedObservation
 export PriorObservation, RelativeObservation
-export FactorSolverCache
+export FactorCache
 
 #TODO
 export PackedBelief
@@ -235,7 +235,7 @@ export removeTags! #TODO do we want this one
 # Variable
 ##------------------------------------------------------------------------------
 # Abstract Variable Data
-export VariableStateType
+export StateType
 
 # accessors
 export getSolverDataDict
@@ -260,8 +260,7 @@ export getMetadata,
     emptyMetadata!
 
 # CRUD & SET
-export getVariableStates,
-    addVariableState!, mergeVariableState!, deleteVariableState!, listVariableStates
+export getStates, addState!, mergeState!, deleteState!, listStates
 
 # PPE
 ##------------------------------------------------------------------------------
@@ -280,9 +279,9 @@ export getPPE,
 
 # Variable Node Data
 ##------------------------------------------------------------------------------
-export VariableState, PackedVariableState
+export State, PackedState
 
-export packVariableState, unpackVariableState
+export packState, unpackState
 
 export getSolvedCount,
     isSolved, setSolvedCount!, isInitialized, isMarginalized, setMarginalized!

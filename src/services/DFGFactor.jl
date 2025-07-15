@@ -85,7 +85,7 @@ Set the solver cache for a factor, which is used to store intermediate results
 during the solving process. This is useful for caching results that can be reused
 across multiple solves, such as Jacobians or other computed values.
 """
-setCache!(f::FactorCompute, solvercache::FactorSolverCache) = f.solvercache[] = solvercache
+setCache!(f::FactorCompute, solvercache::FactorCache) = f.solvercache[] = solvercache
 
 """
     $SIGNATURES
@@ -102,7 +102,7 @@ using RoME
 @assert RoME.PriorPose2 == DFG._getPriorType(Pose2)
 ```
 """
-function _getPriorType(_type::Type{<:VariableStateType})
+function _getPriorType(_type::Type{<:StateType})
     return getfield(_type.name.module, Symbol(:Prior, _type.name.name))
 end
 

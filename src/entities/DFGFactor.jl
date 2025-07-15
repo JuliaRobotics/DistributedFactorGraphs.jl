@@ -19,8 +19,8 @@ const PackedBelief = AbstractPackedBelief
 
 # TODO https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/pull/1127#discussion_r2154672975
 # and #1138
-abstract type AbstractFactorSolverCache end #
-const FactorSolverCache = AbstractFactorSolverCache #
+abstract type AbstractFactorCache end #✅
+const FactorCache = AbstractFactorCache #
 
 ##==============================================================================
 
@@ -34,11 +34,6 @@ const FactorSolverCache = AbstractFactorSolverCache #
     solveInProgress::Int = 0 #TODO maybe deprecated or move to operational memory, also why Int?
     inflation::Float64 = 0.0
 end
-
-# TODO should we move non FactorSolverCache to FactorCompute: 
-# fnc, multihypo, nullhypo, inflation ?
-# that way we split solverData <: FactorSolverCache and constants
-# TODO see if above ever changes?
 
 ## Constructors
 
@@ -225,7 +220,7 @@ Base.@kwdef struct FactorCompute{FT <: AbstractObservation, N} <: AbstractGraphF
     """Temporary, non-persistent memory used internally by the solver for intermediate numerical computations and buffers.  
     `solvercache` is lazily allocated and only used during factor operations; it is not serialized or retained after solving.
     Accessors: [`getCache`](@ref), [`setCache!`](@ref)"""
-    solvercache::Base.RefValue{<:FactorSolverCache} #TODO easy of use vs. performance as container is abstract in any case.
+    solvercache::Base.RefValue{<:FactorCache} #TODO easy of use vs. performance as container is abstract in any case.
 end
 
 ##------------------------------------------------------------------------------
@@ -251,7 +246,7 @@ function FactorCompute(
     end
 
     if isnothing(cache)
-        solvercache = Ref{FactorSolverCache}()
+        solvercache = Ref{FactorCache}()
     else
         solvercache = Ref(cache)
     end

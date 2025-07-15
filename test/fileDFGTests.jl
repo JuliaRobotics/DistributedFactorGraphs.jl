@@ -20,7 +20,7 @@ using UUIDs
         )
         map(v -> setSolvable!(v, Int(round(rand()))), verts)
         map(
-            v -> getVariableState(verts[4], :default).solveInProgress = Int(round(rand())),
+            v -> getState(verts[4], :default).solveInProgress = Int(round(rand())),
             verts,
         )
         map(v -> setSolvedCount!(v, Int(round(10 * rand()))), verts)

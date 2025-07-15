@@ -181,7 +181,7 @@ end
     @test getTimestamp(v1) == v1.timestamp
     @test getVariablePPEDict(v1) == v1.ppeDict
     @test_throws LabelNotFoundError DistributedFactorGraphs.getVariablePPE(v1, :notfound)
-    @test getVariableState(v1, :default) === v1.solverDataDict[:default]
+    @test getState(v1, :default) === v1.solverDataDict[:default]
     @test getSolverDataDict(v1) == v1.solverDataDict
     # legacy compat test
     @test getVariablePPEDict(v1) == v1.ppeDict # changed to .ppeDict -- delete by DFG v0.7
@@ -343,7 +343,7 @@ verts = map(n -> addVariable!(dfg, Symbol("x$n"), Position{1}; tags = [:POSE]), 
 #TODO fix this to use accessors
 setSolvable!(verts[7], 1)
 setSolvable!(verts[8], 0)
-getVariableState(verts[8], :default).solveInProgress = 1
+getState(verts[8], :default).solveInProgress = 1
 #call update to set it on cloud
 mergeVariable!(dfg, verts[7])
 mergeVariable!(dfg, verts[8])
