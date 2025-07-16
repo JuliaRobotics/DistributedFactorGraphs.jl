@@ -64,8 +64,8 @@ More information at [GraphMakie.jl](https://github.com/MakieOrg/GraphMakie.jl)
 Dot files are a standard format for visualizing graphs and applications such as
 xdot are available to view the files. Dot plotting does not require `GraphMakie`
 and can be drawn by either:
-- Calling [`toDot`](@ref) on any graph to produce a string of the graph
-- Calling [`toDotFile`](@ref) on any graph to save it directly to a dotfile
+- Calling [`DFG.toDot`](@ref) on any graph to produce a string of the graph
+- Calling [`DFG.toDotFile`](@ref) on any graph to save it directly to a dotfile
 
 ```julia
 using DistributedFactorGraphs

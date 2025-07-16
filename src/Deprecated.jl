@@ -24,6 +24,23 @@ const InferenceType = AbstractPackedObservation
 
 const PackedSamplableBelief = PackedBelief
 
+export getVariableState
+export addVariableState!
+export mergeVariableState!
+export deleteVariableState!
+export listVariableStates
+export VariableState
+export VariableStateType
+export copytoVariableState!
+const getVariableState = getState
+const addVariableState! = addState!
+const mergeVariableState! = mergeState!
+const deleteVariableState! = deleteState!
+const listVariableStates = listStates
+const VariableState = State
+const VariableStateType = StateType
+const copytoVariableState! = copytoState!
+
 export setSolverData!
 # """
 #     $SIGNATURES

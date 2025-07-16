@@ -15,7 +15,7 @@ The following is a guideline to using these parameters.
 
 **NOTE**: Adds in general throw an error if the element already exists. Update will update the element if it exists, otherwise it will add it.
 
-**NOTE**: In general these functions will return an error if the respective element is not found. This is to avoid returning, say, nothing, which will be horribly confusing if you tried `getVariableState(dfg, :a, :b)` and it returned nothing - which was missing, :a or :b, or was there a communication issue? We recommend coding defensively and trapping errors in critical portions of your user code.
+**NOTE**: In general these functions will return an error if the respective element is not found. This is to avoid returning, say, nothing, which will be horribly confusing if you tried `getState(dfg, :a, :b)` and it returned nothing - which was missing, :a or :b, or was there a communication issue? We recommend coding defensively and trapping errors in critical portions of your user code.
 
 **NOTE**: All data is passed by reference, so if you update the returned structure it will update in the graph. The database driver is an exception, and once the variable or factor is updated you need to call update* to persist the changes to the graph.
 
@@ -53,7 +53,7 @@ Each variable or factor can have a timestamp associated with it.
 
 Tags are a set of symbols that contain identifiers for the variable or factor.
 
-- [`listTags`](@ref)
+- [`getTags`](@ref)
 - [`mergeTags!`](@ref)
 - [`removeTags!`](@ref)
 - [`emptyTags!`](@ref)
@@ -118,41 +118,41 @@ updatePPE!(dfg, :x0, ppe, :default)
 updatePPE!(dfg, [x0], :default)
 ```
 
-#### Solver Data
+#### Variable States (Solver Data)
 
-Solver data is used by IncrementalInference/RoME/Caesar solver to produce the above PPEs.
+Variable `State`s are used by the IncrementalInference/RoME/Caesar solver.
 
 Related functions:
 
 
-- [`listVariableStates`](@ref)
-- [`getVariableState`](@ref)
-- [`addVariableState!`](@ref)
-- [`mergeVariableState!`](@ref)
-- [`deleteVariableState!`](@ref)
-- [`mergeVariableState!`](@ref)
+- [`listStates`](@ref)
+- [`getState`](@ref)
+- [`addState!`](@ref)
+- [`mergeState!`](@ref)
+- [`deleteState!`](@ref)
+- [`mergeState!`](@ref)
 
 
-Example of solver data operations:
+Example of variable `State` operations:
 
 ```julia
 # Add new VND of type ContinuousScalar to :x0
-# Could also do VariableState(ContinuousScalar())
-vnd = VariableState{ContinuousScalar}()
-addVariableState!(dfg, :x0, vnd, :parametric)
-@show listVariableStates(dfg, :x0)
+# Could also do State(ContinuousScalar())
+state = State{ContinuousScalar}()
+addState!(dfg, :x0, state, :parametric)
+@show listStates(dfg, :x0)
 # Get the data back - note that this is a reference to above.
-vndBack = getVariableState(dfg, :x0, :parametric)
+stateBack = getState(dfg, :x0, :parametric)
 # Delete it
-deleteVariableState!(dfg, :x0, :parametric)
+deleteState!(dfg, :x0, :parametric)
 ```
 
-#### Small Data
+#### Metadata
 
-Small data allows you to assign a dictionary to variables. It is a useful way to
-keep small amounts of string data in a variable. As it is stored in the graph
+Metadata (small data) allows you to assign a dictionary to variables. It is a useful way to
+keep small amounts of primative (Strings, Integers, Floats, Bool) data in a variable. As it is stored in the graph
 itself, large entries will slow the graph down, so if data should exceed a
-few bytes/kb, it should rather be saved in bigData.
+few bytes/kb, it should rather be saved in Blobs.
 
 
 - [`getMetadata`](@ref)
