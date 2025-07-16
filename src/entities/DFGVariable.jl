@@ -2,10 +2,11 @@
 ## Abstract Types
 ##==============================================================================
 
-abstract type VariableStateType{N} end
+abstract type AbstractStateType{N} end
+const StateType = AbstractStateType
 
 ##==============================================================================
-## VariableState
+## State
 ##==============================================================================
 
 """
@@ -19,7 +20,7 @@ N: Manifold dimension.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef mutable struct VariableState{T <: VariableStateType, P, N}
+Base.@kwdef mutable struct State{T <: StateType, P, N}
     """
     Globally unique identifier.
     """
@@ -70,7 +71,7 @@ Base.@kwdef mutable struct VariableState{T <: VariableStateType, P, N}
     """
     solvedCount::Int = 0
     """
-    solveKey identifier associated with this VariableState object.
+    solveKey identifier associated with this State object.
     """
     solveKey::Symbol = :default
     """
@@ -82,32 +83,32 @@ end
 
 ##------------------------------------------------------------------------------
 ## Constructors
-function VariableState{T}(; kwargs...) where {T <: VariableStateType}
-    return VariableState{T, getPointType(T), getDimension(T)}(; kwargs...)
+function State{T}(; kwargs...) where {T <: StateType}
+    return State{T, getPointType(T), getDimension(T)}(; kwargs...)
 end
-function VariableState(variableType::VariableStateType; kwargs...)
-    return VariableState{typeof(variableType)}(; kwargs...)
+function State(variableType::StateType; kwargs...)
+    return State{typeof(variableType)}(; kwargs...)
 end
 
-function VariableState(state::VariableState; kwargs...)
-    return VariableState{typeof(getVariableType(state))}(;
-        (key => deepcopy(getproperty(state, key)) for key in fieldnames(VariableState))...,
+function State(state::State; kwargs...)
+    return State{typeof(getVariableType(state))}(;
+        (key => deepcopy(getproperty(state, key)) for key in fieldnames(State))...,
         kwargs...,
     )
 end
 ##==============================================================================
-## PackedVariableState.jl
+## PackedState.jl
 ##==============================================================================
 
 """
 $(TYPEDEF)
-Packed VariableState structure for serializing DFGVariables.
+Packed State structure for serializing DFGVariables.
 
   ---
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef mutable struct PackedVariableState
+Base.@kwdef mutable struct PackedState
     id::Union{UUID, Nothing} # If it's blank it doesn't exist in the DB.
     vecval::Vector{Float64}
     dimval::Int
@@ -134,9 +135,9 @@ end
 # createdTimestamp::DateTime#!
 # lastUpdatedTimestamp::DateTime#!
 
-StructTypes.StructType(::Type{PackedVariableState}) = StructTypes.UnorderedStruct()
-StructTypes.idproperty(::Type{PackedVariableState}) = :id
-StructTypes.omitempties(::Type{PackedVariableState}) = (:id,)
+StructTypes.StructType(::Type{PackedState}) = StructTypes.UnorderedStruct()
+StructTypes.idproperty(::Type{PackedState}) = :id
+StructTypes.omitempties(::Type{PackedState}) = (:id,)
 
 ##==============================================================================
 ## PointParametricEst
@@ -220,7 +221,7 @@ Notes:
 - nstime can be used as mission time, with the convention that the timestamp millis coincide with the mission start nstime
   - e.g. timestamp is `2020-01-01 06:30:01.250 UTC` and first nstime is `250_000_000`.
 """
-Base.@kwdef struct VariableDFG <: AbstractDFGVariable
+Base.@kwdef struct VariableDFG <: AbstractGraphVariable
     id::Union{UUID, Nothing} = nothing
     label::Symbol
     tags::Vector{Symbol} = Symbol[]
@@ -232,7 +233,7 @@ Base.@kwdef struct VariableDFG <: AbstractDFGVariable
     _version::VersionNumber = _getDFGVersion()
     metadata::String = "e30="
     solvable::Int = 1
-    solverData::Vector{PackedVariableState} = PackedVariableState[]
+    solverData::Vector{PackedState} = PackedState[]
 end
 # maybe add to variable
 # createdTimestamp::DateTime
@@ -289,7 +290,7 @@ Complete variable structure for a DistributedFactorGraph variable.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct VariableCompute{T <: VariableStateType, P, N} <: AbstractDFGVariable
+Base.@kwdef struct VariableCompute{T <: StateType, P, N} <: AbstractGraphVariable
     """The ID for the variable"""
     id::Union{UUID, Nothing} = nothing
     """Variable label, e.g. :x1.
@@ -308,9 +309,8 @@ Base.@kwdef struct VariableCompute{T <: VariableStateType, P, N} <: AbstractDFGV
     ppeDict::Dict{Symbol, AbstractPointParametricEst} =
         Dict{Symbol, AbstractPointParametricEst}()
     """Dictionary of solver data. May be a subset of all solutions if a solver label was specified in the get call.
-    Accessors: [`addVariableState!`](@ref), [`mergeVariableState!`](@ref), and [`deleteVariableState!`](@ref)"""
-    solverDataDict::Dict{Symbol, VariableState{T, P, N}} =
-        Dict{Symbol, VariableState{T, P, N}}()
+    Accessors: [`addState!`](@ref), [`mergeState!`](@ref), and [`deleteState!`](@ref)"""
+    solverDataDict::Dict{Symbol, State{T, P, N}} = Dict{Symbol, State{T, P, N}}()
     """Dictionary of small data associated with this variable.
     Accessors: [`getMetadata`](@ref), [`setMetadata!`](@ref)"""
     smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}()
@@ -331,7 +331,7 @@ The default VariableCompute constructor.
 """
 function VariableCompute(
     label::Symbol,
-    T::Type{<:VariableStateType};
+    T::Type{<:StateType};
     timestamp::ZonedDateTime = now(localzone()),
     solvable::Union{Int, Base.RefValue{Int}} = Ref(1),
     kwargs...,
@@ -343,11 +343,11 @@ function VariableCompute(
     return VariableCompute{T, P, N}(; label, timestamp, solvable, kwargs...)
 end
 
-function VariableCompute(label::Symbol, variableType::VariableStateType; kwargs...)
+function VariableCompute(label::Symbol, variableType::StateType; kwargs...)
     return VariableCompute(label, typeof(variableType); kwargs...)
 end
 
-function VariableCompute(label::Symbol, solverData::VariableState; kwargs...)
+function VariableCompute(label::Symbol, solverData::State; kwargs...)
     return VariableCompute(;
         label,
         solverDataDict = Dict(:default => solverData),
@@ -390,7 +390,7 @@ Summary variable structure for a DistributedFactorGraph variable.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct VariableSummary <: AbstractDFGVariable
+Base.@kwdef struct VariableSummary <: AbstractGraphVariable
     """The ID for the variable"""
     id::Union{UUID, Nothing}
     """Variable label, e.g. :x1.
@@ -439,7 +439,7 @@ Skeleton variable structure for a DistributedFactorGraph variable.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct VariableSkeleton <: AbstractDFGVariable
+Base.@kwdef struct VariableSkeleton <: AbstractGraphVariable
     """The ID for the variable"""
     id::Union{UUID, Nothing} = nothing
     """Variable label, e.g. :x1.
@@ -459,14 +459,6 @@ function VariableSkeleton(
 end
 
 ##==============================================================================
-# Define variable levels
-##==============================================================================
-const VariableDataLevel0 =
-    Union{VariableCompute, VariableSummary, VariableDFG, VariableSkeleton}
-const VariableDataLevel1 = Union{VariableCompute, VariableSummary, VariableDFG}
-const VariableDataLevel2 = Union{VariableCompute}
-
-##==============================================================================
 ## Conversion constructors
 ##==============================================================================
 
@@ -482,6 +474,6 @@ function VariableSummary(v::VariableCompute)
     )
 end
 
-function VariableSkeleton(v::VariableDataLevel1)
+function VariableSkeleton(v::AbstractGraphVariable)
     return VariableSkeleton(v.id, v.label, copy(v.tags))
 end

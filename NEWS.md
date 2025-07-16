@@ -2,13 +2,19 @@ Listing news on any major breaking changes in DFG.  For regular changes, see int
 # v0.28
 - Reading or deserialzing of factor graphs created prior to v0.25 are no longer suppoted with the complete removal of User/Robot/Session
 - Deprecated AbstractRelativeMinimize and AbstractManifoldsMinimize
+- Rename `VariableState` -> `State`
 
-#TODO pending: 
-- AbstractPrior -> AbstractPriorObservation/PriorObservation
-- AbstractRelative -> RelativeObservation/RelativeObservation
-- InferenceType -> AbstractPackedFactorObservation
-- InferenceVariable -> [Abstract]VariableStateType/AbstractVarstateType
-- PackedSamplableBelief -> [Abstract]PackedBelief
+Abstract Types Standardized, see #1153: 
+- AbstractParams -> [Abstract]DFGParams
+- DFGNode -> [Abstract]GraphNode
+- AbstractDFGVariable -> [Abstract]GraphVariable
+- AbstractDFGFactor -> [Abstract]GraphFactor
+- AbstractPackedFactorObservation -> [Abstract]PackedObservation
+- AbstractFactorObservation -> [Abstract]Observation
+- AbstractPrior -> [Abstract]PriorObservation
+- AbstractRelative -> [Abstract]RelativeObservation
+- FactorSolverCache -> [Abstract]FactorCache
+- VariableStateType -> [Abstract]StateType
 
 # v0.27
 - `delete` returns number of nodes deleted and no longer the object that was deleted.

@@ -31,7 +31,7 @@ function printVariable(
         catch e
         end
         vnd = if haskey(vert.solverDataDict, :default)
-            getVariableState(vert, :default)
+            getState(vert, :default)
         else
             nothing
         end
@@ -43,7 +43,7 @@ function printVariable(
         println(ioc)
         println(ioc, "  solvable:   ", getSolvable(vert))
         println(ioc, "  tags:       ", getTags(vert))
-        solk = listSolveKeys(vert) |> collect
+        solk = listStates(vert)
         lsolk = length(solk)
         smsk = lsolk > 0 ? (rand(1:lsolk, 100) |> unique)[1:minimum([4, lsolk])] : nothing
         # list the marginalization status
@@ -57,7 +57,7 @@ function printVariable(
         println(ioc, "(true=", sum(ismarg), ",false=", length(ismarg) - sum(ismarg), ")")
 
         if vnd !== nothing
-            println(ioc, "    :default <-- VariableState")
+            println(ioc, "    :default <-- State")
             println(ioc, "      initialized:        ", isInitialized(vert, :default))
             println(ioc, "      marginalized:      ", isMarginalized(vert, :default))
             println(ioc, "      size bel. samples: ", size(vnd.val))
@@ -177,7 +177,7 @@ end
 """
    $SIGNATURES
 
-Display the content of `VariableState` to console for a given factor graph and variable tag`::Symbol`.
+Display the content of `State` to console for a given factor graph and variable tag`::Symbol`.
 
 Dev Notes
 - TODO split as two show macros between AMP and DFG

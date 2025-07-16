@@ -3,7 +3,12 @@ using Test
 using Dates
 using Manifolds
 
-using DistributedFactorGraphs: LabelExistsError, LabelNotFoundError
+using DistributedFactorGraphs:
+    LabelExistsError,
+    LabelNotFoundError,
+    NoSolverParams,
+    AbstractGraphVariable,
+    AbstractGraphFactor
 
 import Base: convert
 # import DistributedFactorGraphs: getData, addData!, updateData!, deleteData!
@@ -22,7 +27,7 @@ struct TestAbstractPrior <: PriorObservation end
 # struct TestAbstractRelativeFactor <: AbstractRelativeRoots end
 struct TestAbstractRelativeFactorMinimize <: RelativeObservation end
 
-Base.@kwdef struct PackedTestFunctorInferenceType1 <: AbstractPackedFactorObservation
+Base.@kwdef struct PackedTestFunctorInferenceType1 <: AbstractPackedObservation
     s::String = ""
 end
 # PackedTestFunctorInferenceType1() = PackedTestFunctorInferenceType1("")
@@ -49,7 +54,7 @@ function Base.convert(::Type{TestFunctorInferenceType1}, d::PackedTestFunctorInf
     return TestFunctorInferenceType1()
 end
 
-Base.@kwdef struct PackedTestAbstractPrior <: AbstractPackedFactorObservation
+Base.@kwdef struct PackedTestAbstractPrior <: AbstractPackedObservation
     s::String = ""
 end
 # PackedTestAbstractPrior() = PackedTestAbstractPrior("")
@@ -64,7 +69,7 @@ function Base.convert(::Type{TestAbstractPrior}, d::PackedTestAbstractPrior)
     return TestAbstractPrior()
 end
 
-struct TestCCW{T <: AbstractFactorObservation} <: FactorSolverCache
+struct TestCCW{T <: AbstractObservation} <: FactorCache
     usrfnc!::T
 end
 
@@ -72,14 +77,14 @@ TestCCW{T}() where {T} = TestCCW(T())
 
 Base.:(==)(a::TestCCW, b::TestCCW) = a.usrfnc! == b.usrfnc!
 
-DFG.rebuildFactorCache!(dfg::AbstractDFG{NoSolverParams}, fac::FactorCompute) = fac
+# DFG.rebuildFactorCache!(dfg::AbstractDFG{NoSolverParams}, fac::FactorCompute) = fac
 
 function DFG.reconstFactorData(
     dfg::AbstractDFG,
     vo::AbstractVector,
     ::Type{<:DFG.FunctionNodeData{TestCCW{F}}},
-    d::DFG.PackedFunctionNodeData{<:AbstractPackedFactorObservation},
-) where {F <: DFG.AbstractFactorObservation}
+    d::DFG.PackedFunctionNodeData{<:AbstractPackedObservation},
+) where {F <: DFG.AbstractObservation}
     error("obsolete, TODO remove")
     nF = convert(F, d.fnc)
     return DFG.FunctionNodeData(
@@ -97,8 +102,8 @@ end
 
 function Base.convert(
     ::Type{DFG.PackedFunctionNodeData{P}},
-    d::DFG.FunctionNodeData{<:FactorSolverCache},
-) where {P <: AbstractPackedFactorObservation}
+    d::DFG.FunctionNodeData{<:FactorCache},
+) where {P <: AbstractPackedObservation}
     return DFG.PackedFunctionNodeData(
         d.eliminated,
         d.potentialused,
@@ -117,18 +122,18 @@ end
 # T = testDFGAPI
 
 #test Specific definitions
-# struct TestInferenceVariable1 <: VariableStateType end
-# struct TestInferenceVariable2 <: VariableStateType end
-# struct TestFunctorInferenceType1 <: AbstractFactorObservation end
+# struct TestInferenceVariable1 <: StateType end
+# struct TestInferenceVariable2 <: StateType end
+# struct TestFunctorInferenceType1 <: AbstractObservation end
 
 # NOTE see note in AbstractDFG.jl setSolverParams!
-struct GeenSolverParams <: AbstractParams end
+struct GeenSolverParams <: AbstractDFGParams end
 
 solparams = NoSolverParams()
 # DFG Accessors
 function DFGStructureAndAccessors(
     ::Type{T},
-    solparams::AbstractParams = NoSolverParams(),
+    solparams::AbstractDFGParams = NoSolverParams(),
 ) where {T <: AbstractDFG}
     # "DFG Structure and Accessors"
     # Constructors
@@ -285,16 +290,12 @@ function DFGVariableSCA()
         TestVariableType1();
         tags = v1_tags,
         solvable = 0,
-        solverDataDict = Dict(:default => VariableState{TestVariableType1}()),
+        solverDataDict = Dict(:default => State{TestVariableType1}()),
     )
-    v2 = VariableCompute(
-        :b,
-        VariableState{TestVariableType2}();
-        tags = Set([:VARIABLE, :LANDMARK]),
-    )
+    v2 = VariableCompute(:b, State{TestVariableType2}(); tags = Set([:VARIABLE, :LANDMARK]))
     v3 = VariableCompute(
         :c,
-        VariableState{TestVariableType2}();
+        State{TestVariableType2}();
         timestamp = ZonedDateTime("2020-08-11T00:12:03.000-05:00"),
     )
 
@@ -303,7 +304,7 @@ function DFGVariableSCA()
         TestVariableType1();
         tags = v1_tags,
         solvable = 0,
-        solverDataDict = Dict(:default => VariableState{TestVariableType1}()),
+        solverDataDict = Dict(:default => State{TestVariableType1}()),
     )
 
     # v1.solverDataDict[:default].val[1] = [0.0;]
@@ -313,7 +314,7 @@ function DFGVariableSCA()
     # v3.solverDataDict[:default].val[1] = [0.0;0.0]
     # v3.solverDataDict[:default].bw[1] = [1.0;1.0]
 
-    getVariableState(v1, :default).solveInProgress = 1
+    getState(v1, :default).solveInProgress = 1
 
     @test getLabel(v1) == v1_lbl
     @test getTags(v1) == v1_tags
@@ -360,7 +361,7 @@ function DFGVariableSCA()
 
     # #TODO sort out
     # getPPEs
-    # getVariableState
+    # getState
     # getVariablePPEs
     # getVariablePPE
     # getSolvedCount
@@ -587,9 +588,9 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     @test lsf(fg) == listFactors(fg)
 
     if getVariable(fg, ls(fg)[1]) isa VariableCompute
-        @test :default in listSolveKeys(fg)
-        @test :default in listSolveKeys(fg, r"a"; filterSolveKeys = r"default")
-        @test :default in listSupersolves(fg)
+        @test :default in DFG.listStates(fg)
+        @test :default in DFG.listStates(fg; labelFilter = contains("default") ∘ string)
+        @test :default in DFG.listStates(fg)
     end
 
     # simple broadcast test
@@ -750,73 +751,76 @@ function VSDTestBlock!(fg, v1)
     # "Variable Solver Data"
     # #### Variable Solver Data
     # **CRUD**
-    #  - `getVariableState`
-    #  - `addVariableState!`
+    #  - `getState`
+    #  - `addState!`
     #  - `updateVariableSolverData!`
-    #  - `deleteVariableState!`
+    #  - `deleteState!`
     #
-    # > - `getVariableStates` #TODO Data is already plural so maybe Variables, All or Dict, or use Datum for singular
+    # > - `getStates` #TODO Data is already plural so maybe Variables, All or Dict, or use Datum for singular
     # > - `getVariablesSolverData`
     #
     # **Set like**
-    #  - `listVariableStates`
+    #  - `listStates`
     #
     #
-    # **VariableState**
+    # **State**
     #  - `getSolveInProgress`
 
-    vnd = VariableState{TestVariableType1}(; solveKey = :parametric)
+    vnd = State{TestVariableType1}(; solveKey = :parametric)
     # vnd.val[1] = [0.0;]
     # vnd.bw[1] = [1.0;]
-    @test addVariableState!(fg, :a, vnd) == vnd
+    @test addState!(fg, :a, vnd) == vnd
 
-    @test_throws LabelExistsError addVariableState!(fg, :a, vnd)
+    @test_throws LabelExistsError addState!(fg, :a, vnd)
 
-    @test issetequal(listVariableStates(fg, :a), [:default, :parametric])
+    @test issetequal(listStates(fg, :a), [:default, :parametric])
 
     # Get the data back - note that this is a reference to above.
-    vndBack = getVariableState(fg, :a, :parametric)
+    vndBack = getState(fg, :a, :parametric)
     @test vndBack == vnd
 
     # Delete it
-    @test deleteVariableState!(fg, :a, :parametric) == 1
+    @test deleteState!(fg, :a, :parametric) == 1
     # Update add it
-    @test mergeVariableState!(fg, :a, vnd) == 1
+    @test mergeState!(fg, :a, vnd) == 1
 
     # Bulk copy update x0
-    @test DFG.copytoVariableState!(fg, v1.label, :default, getVariableState(fg, v1.label, :default)) == 1
+    @test DFG.copytoState!(fg, v1.label, :default, getState(fg, v1.label, :default)) == 1
 
+    @test DFG.mergeStates!(fg, Vector{Pair{Symbol, State}}([:a => vnd])) == 1
+    @test DFG.mergeStates!(fg, [:a => vnd]) == 1
+    @test DFG.mergeStates!(fg, :a, [vnd]) == 1
     altVnd = vnd |> deepcopy
-    keepVnd = getVariableState(getVariable(fg, :a), :parametric) |> deepcopy
+    keepVnd = getState(getVariable(fg, :a), :parametric) |> deepcopy
 
     # Delete parametric from v1
-    @test deleteVariableState!(fg, :a, :parametric) == 1
+    @test deleteState!(fg, :a, :parametric) == 1
 
-    @test_throws LabelNotFoundError getVariableState(fg, :a, :parametric)
+    @test_throws LabelNotFoundError getState(fg, :a, :parametric)
 
     #FIXME copied from lower
-    @test getVariableState(v1, :default) === v1.solverDataDict[:default]
+    @test getState(v1, :default) === v1.solverDataDict[:default]
 
     # Add new VND of type ContinuousScalar to :x0
-    # Could also do VariableState(ContinuousScalar())
+    # Could also do State(ContinuousScalar())
 
-    vnd = VariableState{TestVariableType1}(; solveKey = :parametric)
+    vnd = State{TestVariableType1}(; solveKey = :parametric)
     # vnd.val[1] = [0.0;]
     # vnd.bw[1] = [1.0;]
 
-    addVariableState!(fg, :a, vnd)
-    @test setdiff(listVariableStates(fg, :a), [:default, :parametric]) == []
+    addState!(fg, :a, vnd)
+    @test setdiff(listStates(fg, :a), [:default, :parametric]) == []
     # Get the data back - note that this is a reference to above.
-    vndBack = getVariableState(fg, :a, :parametric)
+    vndBack = getState(fg, :a, :parametric)
     @test vndBack == vnd
     # Delete it
-    @test deleteVariableState!(fg, :a, :parametric) == 1
+    @test deleteState!(fg, :a, :parametric) == 1
     # Update add it
-    mergeVariableState!(fg, :a, vnd)
+    mergeState!(fg, :a, vnd)
     # Update update it
-    mergeVariableState!(fg, :a, vnd)
+    mergeState!(fg, :a, vnd)
     # Delete parametric from v1
-    deleteVariableState!(fg, :a, :parametric)
+    deleteState!(fg, :a, :parametric)
 
     return nothing
 
@@ -1135,12 +1139,12 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test isPrior(fg, :af1) # if f1 is prior
         @test lsfPriors(fg) == [:af1]
 
-        @test issetequal([:TestFunctorInferenceType1, :TestAbstractPrior], DFG.lsfTypes(fg))
+        @test issetequal([TestFunctorInferenceType1, TestAbstractPrior], DFG.lsfTypes(fg))
 
         facTypesDict = DFG.lsfTypesDict(fg)
         @test issetequal(collect(keys(facTypesDict)), DFG.lsfTypes(fg))
-        @test issetequal(facTypesDict[:TestFunctorInferenceType1], [:abf1])
-        @test issetequal(facTypesDict[:TestAbstractPrior], [:af1])
+        @test issetequal(facTypesDict[TestFunctorInferenceType1], [:abf1])
+        @test issetequal(facTypesDict[TestAbstractPrior], [:af1])
 
         @test ls(fg, TestFunctorInferenceType1) == [:abf1]
         @test lsf(fg, TestAbstractPrior) == [:af1]
@@ -1153,16 +1157,14 @@ function testGroup!(fg, v1, v2, f0, f1)
 
         @test ls2(fg, :a) == [:b]
 
-        @test issetequal([:TestVariableType1, :TestVariableType2], DFG.lsTypes(fg))
+        @test issetequal([TestVariableType1, TestVariableType2], DFG.lsTypes(fg))
 
         varTypesDict = DFG.lsTypesDict(fg)
         @test issetequal(collect(keys(varTypesDict)), DFG.lsTypes(fg))
-        @test issetequal(varTypesDict[:TestVariableType1], [:a])
-        @test issetequal(varTypesDict[:TestVariableType2], [:b])
+        @test issetequal(varTypesDict[TestVariableType1], [:a])
+        @test issetequal(varTypesDict[TestVariableType2], [:b])
 
         @test ls(fg, TestVariableType1) == [:a]
-
-        @test lsWho(fg, :TestVariableType1) == [:a]
 
         # FIXME return: Symbol[:b, :b] == Symbol[:b]
         varNearTs = findVariableNearTimestamp(fg, now())
@@ -1305,8 +1307,10 @@ function testGroup!(fg, v1, v2, f0, f1)
         #solves in progress
         @test getSolveInProgress(v1) == 1
         @test getSolveInProgress(f1) == 1
-        @test !isSolveInProgress(v2) && v2.solverDataDict[:default].solveInProgress == 0
-        @test isSolveInProgress(v1) && v1.solverDataDict[:default].solveInProgress > 0
+        @test !isSolveInProgress(v2, :default) &&
+              v2.solverDataDict[:default].solveInProgress == 0
+        @test isSolveInProgress(v1, :default) &&
+              v1.solverDataDict[:default].solveInProgress > 0
 
         @test setSolvable!(v1, 1) == 1
         @test getSolvable(v1) == 1
@@ -1389,12 +1393,9 @@ function connectivityTestGraph(
     dfg = T(; graphLabel = :testGraph)
 
     vars = vcat(
+        map(n -> VARTYPE(Symbol("x$n"), State{TestVariableType1}()), 1:numNodesType1),
         map(
-            n -> VARTYPE(Symbol("x$n"), VariableState{TestVariableType1}()),
-            1:numNodesType1,
-        ),
-        map(
-            n -> VARTYPE(Symbol("x$(numNodesType1+n)"), VariableState{TestVariableType2}()),
+            n -> VARTYPE(Symbol("x$(numNodesType1+n)"), State{TestVariableType2}()),
             1:numNodesType2,
         ),
     )
@@ -1628,10 +1629,10 @@ function ProducingDotFiles(
     dotdfg = testDFGAPI(; graphLabel = :testGraph)
 
     if v1 === nothing
-        v1 = VARTYPE(:a, VariableState{TestVariableType1}())
+        v1 = VARTYPE(:a, State{TestVariableType1}())
     end
     if v2 === nothing
-        v2 = VARTYPE(:b, VariableState{TestVariableType1}())
+        v2 = VARTYPE(:b, State{TestVariableType1}())
     end
     if f1 === nothing
         if (FACTYPE == FactorCompute)
@@ -1650,7 +1651,7 @@ function ProducingDotFiles(
     addFactor!(dotdfg, f1)
     #NOTE hardcoded toDot will have different results so test Graphs seperately
     if testDFGAPI <: GraphsDFG || testDFGAPI <: GraphsDFG
-        todotstr = toDot(dotdfg)
+        todotstr = DFG.toDot(dotdfg)
         todota =
             todotstr ==
             "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box, fontsize=8, fixedsize=false, height=0.1, width=0.1];\na -- abf1\nb -- abf1\n}\n"
@@ -1659,10 +1660,10 @@ function ProducingDotFiles(
             "graph G {\na [color=red, shape=ellipse];\nb [color=red, shape=ellipse];\nabf1 [color=blue, shape=box, fontsize=8, fixedsize=false, height=0.1, width=0.1];\nb -- abf1\na -- abf1\n}\n"
         @test (todota || todotb)
     else
-        @test toDot(dotdfg) ==
+        @test DFG.toDot(dotdfg) ==
               "graph graphname {\n2 [\"label\"=\"b\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n2 -- 3\n3 [\"label\"=\"abf1\",\"shape\"=\"box\",\"fillcolor\"=\"blue\",\"color\"=\"blue\"]\n1 [\"label\"=\"a\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n1 -- 3\n}\n"
     end
-    @test toDotFile(dotdfg, "something.dot") == nothing
+    @test DFG.toDotFile(dotdfg, "something.dot") == nothing
     return Base.rm("something.dot")
 end
 
@@ -1782,7 +1783,7 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
 
     for filename in ["/tmp/fileDFG", "/tmp/FileDFGExtension.tar.gz"]
         v4 = getVariable(dfg, :x4)
-        vnd = getVariableState(v4, :default)
+        vnd = getState(v4, :default)
         # set everything
         vnd.BayesNetVertID = :outid
         push!(vnd.BayesNetOutVertIDs, :id)

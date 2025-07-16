@@ -40,7 +40,7 @@ end
 @testset "GraphsDFGs.FactorGraphs" begin
     @test isa(
         FactorGraphs.FactorGraph(),
-        FactorGraph{Int64, AbstractDFGVariable, AbstractDFGFactor},
+        FactorGraph{Int64, AbstractGraphVariable, AbstractGraphFactor},
     )
 
     fg = FactorGraphs.FactorGraph{Int, VariableSkeleton, FactorSkeleton}()

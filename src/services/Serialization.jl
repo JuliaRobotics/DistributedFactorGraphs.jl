@@ -11,7 +11,7 @@ function _versionCheck(node::Union{<:VariableDFG, <:FactorDFG})
     end
 end
 
-function stringVariableType(varT::VariableStateType)
+function stringVariableType(varT::StateType)
     T = typeof(varT)
     #FIXME maybe don't use .parameters
     Tparams = T.parameters
@@ -105,8 +105,8 @@ function getTypeFromSerializationModule(_typeString::AbstractString)
     return nothing
 end
 
-# returns a PackedVariableState
-function packVariableState(d::VariableState{T}) where {T <: VariableStateType}
+# returns a PackedState
+function packState(d::State{T}) where {T <: StateType}
     @debug "Dispatching conversion variable -> packed variable for type $(string(getVariableType(d)))"
     castval = if 0 < length(d.val)
         precast = getCoordinates.(T, d.val)
@@ -121,7 +121,7 @@ function packVariableState(d::VariableState{T}) where {T <: VariableStateType}
         "Packing of more than one parametric covariance is NOT supported yet, only packing first."
     )
 
-    return PackedVariableState(
+    return PackedState(
         d.id,
         _val,
         size(castval, 1),
@@ -146,14 +146,14 @@ function packVariableState(d::VariableState{T}) where {T <: VariableStateType}
     )
 end
 
-function unpackVariableState(d::PackedVariableState)
+function unpackState(d::PackedState)
     @debug "Dispatching conversion packed variable -> variable for type $(string(d.variableType))"
     # Figuring out the variableType
     # TODO deprecated remove in v0.11 - for backward compatibility for saved variableTypes. 
     ststring = string(split(d.variableType, "(")[1])
     T = parseVariableType(ststring)
     isnothing(T) && error(
-        "The variable doesn't seem to have a variableType. It needs to set up with an VariableStateType from IIF. This will happen if you use DFG to add serialized variables directly and try use them. Please use IncrementalInference.addVariable().",
+        "The variable doesn't seem to have a variableType. It needs to set up with an StateType from IIF. This will happen if you use DFG to add serialized variables directly and try use them. Please use IncrementalInference.addVariable().",
     )
 
     r3 = d.dimval
@@ -172,7 +172,7 @@ function unpackVariableState(d::PackedVariableState)
 
     # 
     N = getDimension(T)
-    return VariableState{T, getPointType(T), N}(;
+    return State{T, getPointType(T), N}(;
         id = d.id,
         val = vals,
         bw = BW,
@@ -212,7 +212,7 @@ function packVariable(
         nstime = string(v.nstime.value),
         tags = collect(v.tags), # Symbol.()
         ppes = collect(values(v.ppeDict)),
-        solverData = packVariableState.(collect(values(v.solverDataDict))),
+        solverData = packState.(collect(values(v.solverDataDict))),
         metadata = base64encode(JSON3.write(v.smallData)),
         solvable = v.solvable,
         variableType = stringVariableType(DFG.getVariableType(v)),
@@ -244,9 +244,9 @@ function unpackVariable(variable::VariableDFG; skipVersionCheck::Bool = false)
         Dict{Symbol, MeanMaxPPE}(map(p -> p.solveKey, variable.ppes) .=> variable.ppes)
 
     N = getDimension(variableType)
-    solverDict = Dict{Symbol, VariableState{variableType, pointType, N}}(
+    solverDict = Dict{Symbol, State{variableType, pointType, N}}(
         map(sd -> sd.solveKey, variable.solverData) .=>
-            map(sd -> DFG.unpackVariableState(sd), variable.solverData),
+            map(sd -> DFG.unpackState(sd), variable.solverData),
     )
     dataDict = Dict{Symbol, Blobentry}(
         map(de -> de.label, variable.blobEntries) .=> variable.blobEntries,
@@ -326,7 +326,7 @@ function unpackObservation(factor::FactorDFG)
 end
 
 packObservation(f::FactorCompute) = packObservation(getObservation(f))
-function packObservation(observ::AbstractFactorObservation)
+function packObservation(observ::AbstractObservation)
     try
         return pack(observ)
     catch e
@@ -368,8 +368,11 @@ function unpackFactor(factor::FactorDFG; skipVersionCheck::Bool = false)
         getMetadata(factor),
         observation,
         factor.state,
-        Ref{FactorSolverCache}(),
+        Ref{FactorCache}(),
     )
 end
 
-#
+FactorCompute(f::FactorCompute) = f
+FactorCompute(f::FactorDFG) = unpackFactor(f)
+FactorDFG(f::FactorDFG) = f
+FactorDFG(f::FactorCompute) = packFactor(f)

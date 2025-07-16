@@ -7,3 +7,4 @@ docs/build
 Manifest.toml
 dev
 test/sandbox.jl
+lcov.info

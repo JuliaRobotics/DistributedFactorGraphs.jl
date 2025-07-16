@@ -150,7 +150,7 @@ ade2 = addData!(dfg, :x2, deepcopy(ade), dataset1)
 @test ade == ade2# == ade3
 # @test adb == adb2# == adb3
 
-deleteData!(dfg, :x2, :random)
+@test deleteData!(dfg, :x2, :random) == 2
 
 ##==============================================================================
 ## Unimplemented store
@@ -159,9 +159,9 @@ struct TestStore{T} <: DFG.AbstractBlobstore{T} end
 
 store = TestStore{Int}()
 
-@test_throws ErrorException getBlob(store, ade)
-@test_throws ErrorException addBlob!(store, ade, 1)
-@test_throws ErrorException updateBlob!(store, ade, 1)
-@test_throws ErrorException deleteBlob!(store, ade)
-@test_throws ErrorException listBlobs(store)
-@test_throws ErrorException hasBlob(store, uuid4())
+@test_throws MethodError getBlob(store, ade)
+@test_throws MethodError addBlob!(store, ade, 1)
+@test_throws MethodError updateBlob!(store, ade, 1)
+@test_throws MethodError deleteBlob!(store, ade)
+@test_throws MethodError listBlobs(store)
+@test_throws MethodError hasBlob(store, uuid4())

@@ -65,7 +65,7 @@ Get data entry
 
 Also see: [`addBlobentry!`](@ref), [`getBlob`](@ref), [`listBlobentries`](@ref)
 """
-function getBlobentry(var::AbstractDFGVariable, key::Symbol)
+function getBlobentry(var::AbstractGraphVariable, key::Symbol)
     if !hasBlobentry(var, key)
         throw(LabelNotFoundError("Blobentry", key, collect(keys(var.dataDict))))
     end
@@ -85,7 +85,7 @@ Finds and returns the first blob entry that matches the filter.
 
 Also see: [`getBlobentry`](@ref)
 """
-function getfirstBlobentry(var::AbstractDFGVariable, blobId::UUID)
+function getfirstBlobentry(var::AbstractGraphVariable, blobId::UUID)
     for (k, v) in var.dataDict
         if blobId == v.blobId
             return v
@@ -98,7 +98,7 @@ function getfirstBlobentry(dfg::AbstractDFG, label::Symbol, blobId::UUID)
     return getfirstBlobentry(getVariable(dfg, label), blobId)
 end
 
-function getfirstBlobentry(var::AbstractDFGVariable, key::Regex)
+function getfirstBlobentry(var::AbstractGraphVariable, key::Regex)
     for (k, v) in var.dataDict
         if occursin(key, string(v.label))
             return v
@@ -152,7 +152,7 @@ Should be extended if DFG variable is not returned by reference.
 
 Also see: [`getBlobentry`](@ref), [`addBlob!`](@ref), [`mergeBlobentries!`](@ref)
 """
-function addBlobentry!(var::AbstractDFGVariable, entry::Blobentry)
+function addBlobentry!(var::AbstractGraphVariable, entry::Blobentry)
     # see https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/985
     # blobId::Union{UUID,Nothing} = (isnothing(entry.blobId) ? entry.id : entry.blobId),
     # blobSize::Int = (hasfield(Blobentry, :size) ? entry.size : -1)
@@ -182,7 +182,7 @@ Update a Blobentry in the factor graph.
 If the Blobentry does not exist, it will be added.
 Notes:
 """
-function mergeBlobentry!(var::AbstractDFGVariable, bde::Blobentry)
+function mergeBlobentry!(var::AbstractGraphVariable, bde::Blobentry)
     if !haskey(var.dataDict, bde.label)
         addBlobentry!(var, bde)
     else
@@ -203,7 +203,7 @@ Note this doesn't remove it from any data stores.
 Notes:
 - users responsibility to delete data in db before deleting entry
 """
-function deleteBlobentry!(var::AbstractDFGVariable, key::Symbol)
+function deleteBlobentry!(var::AbstractGraphVariable, key::Symbol)
     pop!(var.dataDict, key)
     return 1
 end
@@ -226,7 +226,7 @@ function deleteBlobentry!(dfg::AbstractDFG, label::Symbol, key::Symbol)
     return deleteBlobentry!(getVariable(dfg, label), key)
 end
 
-function deleteBlobentry!(var::AbstractDFGVariable, entry::Blobentry)
+function deleteBlobentry!(var::AbstractGraphVariable, entry::Blobentry)
     #users responsibility to delete data in db before deleting entry
     return deleteBlobentry!(var, entry.label)
 end
@@ -240,7 +240,8 @@ end
 
 Does a blob entry exist with `blobLabel`.
 """
-hasBlobentry(var::AbstractDFGVariable, blobLabel::Symbol) = haskey(var.dataDict, blobLabel)
+hasBlobentry(var::AbstractGraphVariable, blobLabel::Symbol) =
+    haskey(var.dataDict, blobLabel)
 
 function hasBlobentry(var::VariableDFG, label::Symbol)
     return label in getproperty.(var.blobEntries, :label)
@@ -251,7 +252,7 @@ end
 
 Get blob entries, Vector{Blobentry}
 """
-function getBlobentries(var::AbstractDFGVariable)
+function getBlobentries(var::AbstractGraphVariable)
     #or should we return the iterator, Base.ValueIterator{Dict{Symbol,Blobentry}}?
     return collect(values(var.dataDict))
 end
@@ -311,7 +312,7 @@ end
     $(SIGNATURES)
 List the blob entries associated with a particular variable.
 """
-function listBlobentries(var::AbstractDFGVariable)
+function listBlobentries(var::AbstractGraphVariable)
     return collect(keys(var.dataDict))
 end
 

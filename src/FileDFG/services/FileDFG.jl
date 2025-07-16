@@ -1,4 +1,3 @@
-
 """
     $(SIGNATURES)
 Save a DFG to a folder. Will create/overwrite folder if it exists.
@@ -228,7 +227,21 @@ function loadDFG(file::AbstractString)
 
     #Only GraphsDFG metadata supported
     jstr = read("$loaddir/dfg.json", String)
-    fgPacked = JSON3.read(jstr, GraphsDFGs.PackedGraphsDFG)
+    # ---------------------------------
+    #TODO deprecate old format, v0.28
+    local fgPacked
+    try
+        fgPacked = JSON3.read(jstr, GraphsDFGs.PackedGraphsDFG)
+    catch e
+        if e isa MethodError
+            @warn "Deprecated serialization: Failed to read DFG metadata. Attempting to load using the old format. Error:" e
+            fgPacked =
+                GraphsDFGs.PackedGraphsDFG(JSON3.read(jstr, GraphsDFGs._OldPackedGraphsDFG))
+        else
+            rethrow(e)
+        end
+    end
+    # ----------------------------------
     dfg = GraphsDFGs.unpackDFGMetadata(fgPacked)
 
     @debug "DFG.loadDFG is deleting a temp folder created during unzip, $loaddir"
