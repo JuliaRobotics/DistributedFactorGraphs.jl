@@ -91,7 +91,7 @@ function mergeVariable!(dfg::GraphsDFG, variable::AbstractGraphVariable)
     return 1
 end
 
-function mergeFactor!(dfg::GraphsDFG, factor::AbstractGraphFactor;)
+function mergeFactor!(dfg::GraphsDFG, factor::AbstractGraphFactor)
     if !haskey(dfg.g.factors, factor.label)
         addFactor!(dfg, factor)
     elseif dfg.g.factors[factor.label]._variableOrderSymbols != factor._variableOrderSymbols
@@ -120,7 +120,7 @@ function deleteVariable!(dfg::GraphsDFG, label::Symbol)#::Tuple{AbstractGraphVar
     return sum(del_facs) + 1
 end
 
-function deleteFactor!(dfg::GraphsDFG, label::Symbol; suppressGetFactor::Bool = false)
+function deleteFactor!(dfg::GraphsDFG, label::Symbol)
     if !haskey(dfg.g.factors, label)
         throw(LabelNotFoundError("Factor", label))
     end

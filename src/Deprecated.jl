@@ -209,6 +209,69 @@ function listSolveKeys(
 end
 const listSupersolves = listSolveKeys
 
+#TODO mergeBlobentries! does not fit with merge definition, should probably be updated to copyto or sync.
+# leaving here until it is done.
+
+# """
+#     $SIGNATURES
+
+# Add a blob entry into the destination variable which already exists 
+# in a source variable.
+
+# See also: [`addBlobentry!`](@ref), [`getBlobentry`](@ref), [`listBlobentries`](@ref), [`getBlob`](@ref)
+# """
+function mergeBlobentries!(
+    dst::AbstractDFG,
+    dlbl::Symbol,
+    src::AbstractDFG,
+    slbl::Symbol,
+    bllb::Union{Symbol, UUID, <:AbstractString, Regex},
+)
+    #
+    _makevec(s) = [s;]
+    _makevec(s::AbstractVector) = s
+    des_ = getBlobentry(src, slbl, bllb)
+    des = _makevec(des_)
+    # don't add data entries that already exist 
+    dde = listBlobentries(dst, dlbl)
+    # HACK, verb list should just return vector of Symbol. NCE36
+    _getid(s) = s
+    _getid(s::Blobentry) = s.id
+    uids = _getid.(dde) # (s->s.id).(dde)
+    filter!(s -> !(_getid(s) in uids), des)
+    # add any data entries not already in the destination variable, by uuid
+    return addBlobentry!.(dst, dlbl, des)
+end
+
+function mergeBlobentries!(
+    dst::AbstractDFG,
+    dlbl::Symbol,
+    src::AbstractDFG,
+    slbl::Symbol,
+    ::Colon = :,
+)
+    des = listBlobentries(src, slbl)
+    # don't add data entries that already exist 
+    uids = listBlobentries(dst, dlbl)
+    # verb list should just return vector of Symbol. NCE36
+    filter!(s -> !(s in uids), des)
+    if 0 < length(des)
+        union(((s -> mergeBlobentries!(dst, dlbl, src, slbl, s)).(des))...)
+    end
+end
+
+function mergeBlobentries!(
+    dest::AbstractDFG,
+    src::AbstractDFG,
+    w...;
+    varList::AbstractVector = listVariables(dest) |> sortDFG,
+)
+    @showprogress 1 "merging data entries" for vl in varList
+        mergeBlobentries!(dest, vl, src, vl, w...)
+    end
+    return varList
+end
+
 ## ================================================================================
 ## Deprecated in v0.27
 ##=================================================================================

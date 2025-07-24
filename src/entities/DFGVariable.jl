@@ -131,6 +131,10 @@ Base.@kwdef mutable struct PackedState
     covar::Vector{Float64}
     _version::VersionNumber = _getDFGVersion()
 end
+
+#FIXME remove once solveKey field is renamed to `label`
+getLabel(packedstate::PackedState) = packedstate.solveKey
+
 # maybe add
 # createdTimestamp::DateTime#!
 # lastUpdatedTimestamp::DateTime#!

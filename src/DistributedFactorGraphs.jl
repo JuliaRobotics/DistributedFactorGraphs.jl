@@ -56,11 +56,19 @@ using InteractiveUtils: subtypes
 ##==============================================================================
 
 # v1 name, signiture, return, and error checked
-export getFactor, getBlobentry, getGraphBlobentry
+export addVariable!, mergeVariable!, deleteVariable!
+export addVariables!, getVariables
+export addFactor!, getFactor, deleteFactor!
+export addFactors!, getFactors
 
-export addVariable!, addFactor!, addBlobentry!
+export addState!, getState, mergeState!, deleteState!
+export addStates!, mergeStates!, deleteStates!
 
-export deleteVariable!
+export addBlobentry!, getBlobentry, mergeBlobentry!, deleteBlobentry!
+export addBlobentries!
+
+export getGraphBlobentry
+export addFactor!
 
 # v1 name, signiture, and return
 
@@ -87,7 +95,7 @@ export DFG
 export GraphsDFGs, GraphsDFG
 
 ##
-export getState, getFactorState # FIXME these were questioned and being reviewed again for name, other than that they are checked.
+export getFactorState # FIXME getFactorState were questioned and being reviewed again for name, other than that they are checked.
 
 ## CRUD Matrix
 # export addVariable!,          getVariable,          mergeVariable!,          deleteVariable!
@@ -95,8 +103,8 @@ export getState, getFactorState # FIXME these were questioned and being reviewed
 # export addFactor!,            getFactor,            mergeFactor!,            deleteFactor!
 # export addFactors!,           getFactors,           mergeFactors!,           deleteFactors!
 
-# export addState!,     getState,     mergeState!,     deleteState!
-# export addStates!,    getStates,    mergeStates!,    deleteStates!
+# export addState!,             getState,             mergeState!,             deleteState!
+# export addStates!,            getStates,            mergeStates!,            deleteStates!
 
 # export addBlobentry!,         getBlobentry,         mergeBlobentry!,         deleteBlobentry! # historic for VariableBlobentry
 # export addBlobentries!,       getBlobentries,       mergeBlobentries!,       deleteBlobentries!
@@ -190,13 +198,11 @@ export InMemoryDFGTypes, LocalDFG
 export exists,
     addVariables!,
     addFactors!,
-    mergeVariable!,
     mergeFactor!,
     deleteVariable!,
     deleteFactor!,
     listVariables,
     listFactors,
-    getVariables,
     getFactors,
     isVariable,
     isFactor
@@ -260,7 +266,7 @@ export getMetadata,
     emptyMetadata!
 
 # CRUD & SET
-export getStates, addState!, mergeState!, deleteState!, listStates
+export getStates, listStates
 
 # PPE
 ##------------------------------------------------------------------------------
@@ -294,13 +300,7 @@ export copyGraph!, deepcopyGraph, deepcopyGraph!, buildSubgraph, mergeGraph!
 ##------------------------------------------------------------------------------
 
 export hasBlobentry,
-    getfirstBlobentry,
-    addBlobentry!,
-    addBlobentries!,
-    mergeBlobentry!,
-    deleteBlobentry!,
-    listBlobentrySequence,
-    mergeBlobentries!
+    getfirstBlobentry, addBlobentries!, listBlobentrySequence, mergeBlobentries!
 export incrDataLabelSuffix
 
 export getBlobentries

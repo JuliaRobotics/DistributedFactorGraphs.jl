@@ -275,10 +275,6 @@ function getBlob(store::LinkStore, blobId::UUID)
     return read(fname)
 end
 
-function addBlob!(store::LinkStore, entry::Blobentry, linkfile::String)
-    return addBlob!(store, entry.blobId, linkfile)
-end
-
 function addBlob!(store::LinkStore, blobId::UUID, linkfile::String)
     if haskey(store.cache, blobId)
         throw(IdExistsError("Blob", blobId))

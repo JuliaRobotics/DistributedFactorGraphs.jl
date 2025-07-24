@@ -6,8 +6,8 @@
 # any DFGNode shall have a label. 
 # abstract type AbstractGraphNode end <: AbstractDFGNode
 # the rest of the nodes are also AbstractDFGNodes, eg.
-# Agent <: AbstractGraphNode
-# FactorgraphRoot <: AbstractGraphNode
+# Agent <: AbstractDFGNode
+# FactorgraphRoot <: AbstractDFGNode
 
 """
 $(TYPEDEF)

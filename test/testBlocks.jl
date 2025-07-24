@@ -17,7 +17,7 @@ Base.convert(::Type{<:Tuple}, ::typeof(Euclidean(1))) = (:Euclid,)
 Base.convert(::Type{<:Tuple}, ::typeof(Euclidean(2))) = (:Euclid, :Euclid)
 
 @defVariable TestVariableType1 Euclidean(1) [0.0;]
-DFG.@defVarstateTypeN TestVariableType{N} Euclidean(N) zeros(N)
+DFG.@defStateTypeN TestVariableType{N} Euclidean(N) zeros(N)
 const TestVariableType2 = TestVariableType{2}
 
 struct TestFunctorInferenceType1 <: AbstractRelative end

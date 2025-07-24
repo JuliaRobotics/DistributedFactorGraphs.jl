@@ -380,7 +380,7 @@ function mergeFactor! end
 
 """
     $(SIGNATURES)
-Delete a VariableCompute from the DFG using its label.
+Delete a VariableCompute from the DFG.
 Implement `deleteVariable!(dfg::AbstractDFG, label::Symbol)`
 """
 function deleteVariable! end
@@ -504,27 +504,16 @@ function getVariable(dfg::AbstractDFG, label::Symbol, solveKey::Symbol)
     return var
 end
 
-"""
-    $(SIGNATURES)
-Delete a referenced VariableCompute from the DFG.
-
-Notes
-- Returns `Tuple{AbstractGraphVariable, Vector{<:AbstractGraphFactor}}`
-"""
 function deleteVariable!(dfg::AbstractDFG, variable::AbstractGraphVariable)
     return deleteVariable!(dfg, variable.label)
 end
 
 """
     $(SIGNATURES)
-Delete the referened FactorCompute from the DFG.
+Delete the referenced Factor from the DFG.
 """
-function deleteFactor!(
-    dfg::G,
-    factor::F;
-    suppressGetFactor::Bool = false,
-) where {G <: AbstractDFG, F <: AbstractGraphFactor}
-    return deleteFactor!(dfg, factor.label; suppressGetFactor = suppressGetFactor)
+function deleteFactor!(dfg::AbstractDFG, factor::AbstractGraphFactor)
+    return deleteFactor!(dfg, factor.label)
 end
 
 # rather use isa in code, but ok, here it is

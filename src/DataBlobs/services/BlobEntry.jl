@@ -140,22 +140,18 @@ end
 #     @eval DistributedFactorGraphs $met(dfg::AbstractDFG, label::Symbol, args...; kwargs...) = $met(getVariable(dfg, label), args...; kwargs...)
 # end
 
-function getBlobentry(dfg::AbstractDFG, label::Symbol, key::Symbol)
-    return getBlobentry(getVariable(dfg, label), key)
+function getBlobentry(dfg::AbstractDFG, varLabel::Symbol, label::Symbol)
+    return getBlobentry(getVariable(dfg, varLabel), label)
 end
-# getBlobentry(dfg::AbstractDFG, label::Symbol, key::Symbol) = getBlobentry(getVariable(dfg, label), key)
 
 """
     $(SIGNATURES)
-Add Data Entry to a DFG variable
+Add a `Blobentry` to a variable
 Should be extended if DFG variable is not returned by reference.
 
 Also see: [`getBlobentry`](@ref), [`addBlob!`](@ref), [`mergeBlobentries!`](@ref)
 """
-function addBlobentry!(var::AbstractGraphVariable, entry::Blobentry)
-    # see https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/985
-    # blobId::Union{UUID,Nothing} = (isnothing(entry.blobId) ? entry.id : entry.blobId),
-    # blobSize::Int = (hasfield(Blobentry, :size) ? entry.size : -1)
+function addBlobentry!(var::VariableCompute, entry::Blobentry)
     haskey(var.dataDict, entry.label) && throw(LabelExistsError("Blobentry", entry.label))
     var.dataDict[entry.label] = entry
     return entry
@@ -197,37 +193,28 @@ end
 
 """
     $(SIGNATURES)
-Delete a blob entry from the factor graph.
-Note this doesn't remove it from any data stores.
+Delete a `Blobentry` from the factor graph variable.
 
 Notes:
-- users responsibility to delete data in db before deleting entry
+- This doesn't remove the associated `Blob` from any Blobstores.
 """
-function deleteBlobentry!(var::AbstractGraphVariable, key::Symbol)
-    pop!(var.dataDict, key)
+function deleteBlobentry!(var::VariableCompute, key::Symbol)
+    !hasBlobentry(var, key) && throw(LabelNotFoundError("Blobentry", key))
+    delete!(var.dataDict, key)
     return 1
 end
 
 function deleteBlobentry!(var::VariableDFG, key::Symbol)
-    if !hasBlobentry(var, key)
-        throw(
-            KeyError(
-                "No dataEntry label $(key) found in variable $(getLabel(var)). Available keys: $(keys(var.dataDict))",
-            ),
-        )
-    end
+    !hasBlobentry(var, key) && throw(LabelNotFoundError("Blobentry", key))
     deleteat!(var.blobEntries, findfirst(x -> x.label == key, var.blobEntries))
     return 1
 end
 
 function deleteBlobentry!(dfg::AbstractDFG, label::Symbol, key::Symbol)
-    #users responsibility to delete data in db before deleting entry
-    # !isVariable(dfg, label) && return nothing
     return deleteBlobentry!(getVariable(dfg, label), key)
 end
 
 function deleteBlobentry!(var::AbstractGraphVariable, entry::Blobentry)
-    #users responsibility to delete data in db before deleting entry
     return deleteBlobentry!(var, entry.label)
 end
 
@@ -240,8 +227,7 @@ end
 
 Does a blob entry exist with `blobLabel`.
 """
-hasBlobentry(var::AbstractGraphVariable, blobLabel::Symbol) =
-    haskey(var.dataDict, blobLabel)
+hasBlobentry(var::VariableCompute, blobLabel::Symbol) = haskey(var.dataDict, blobLabel)
 
 function hasBlobentry(var::VariableDFG, label::Symbol)
     return label in getproperty.(var.blobEntries, :label)
@@ -250,10 +236,9 @@ end
 """
     $(SIGNATURES)
 
-Get blob entries, Vector{Blobentry}
+Get blob entries, returns a `Vector{Blobentry}`.
 """
-function getBlobentries(var::AbstractGraphVariable)
-    #or should we return the iterator, Base.ValueIterator{Dict{Symbol,Blobentry}}?
+function getBlobentries(var::VariableCompute)
     return collect(values(var.dataDict))
 end
 
@@ -262,8 +247,6 @@ function getBlobentries(var::VariableDFG)
 end
 
 function getBlobentries(dfg::AbstractDFG, label::Symbol)
-    # !isVariable(dfg, label) && return nothing
-    #or should we return the iterator, Base.ValueIterator{Dict{Symbol,Blobentry}}?
     return getBlobentries(getVariable(dfg, label))
 end
 
@@ -355,66 +338,6 @@ function listBlobentrySequence(
     entReg = map(l -> match(pattern, string(l)), ents_)
     entMsk = entReg .!== nothing
     return ents_[findall(entMsk)] |> _sort
-end
-
-"""
-    $SIGNATURES
-
-Add a blob entry into the destination variable which already exists 
-in a source variable.
-
-See also: [`addBlobentry!`](@ref), [`getBlobentry`](@ref), [`listBlobentries`](@ref), [`getBlob`](@ref)
-"""
-function mergeBlobentries!(
-    dst::AbstractDFG,
-    dlbl::Symbol,
-    src::AbstractDFG,
-    slbl::Symbol,
-    bllb::Union{Symbol, UUID, <:AbstractString, Regex},
-)
-    #
-    _makevec(s) = [s;]
-    _makevec(s::AbstractVector) = s
-    des_ = getBlobentry(src, slbl, bllb)
-    des = _makevec(des_)
-    # don't add data entries that already exist 
-    dde = listBlobentries(dst, dlbl)
-    # HACK, verb list should just return vector of Symbol. NCE36
-    _getid(s) = s
-    _getid(s::Blobentry) = s.id
-    uids = _getid.(dde) # (s->s.id).(dde)
-    filter!(s -> !(_getid(s) in uids), des)
-    # add any data entries not already in the destination variable, by uuid
-    return addBlobentry!.(dst, dlbl, des)
-end
-
-function mergeBlobentries!(
-    dst::AbstractDFG,
-    dlbl::Symbol,
-    src::AbstractDFG,
-    slbl::Symbol,
-    ::Colon = :,
-)
-    des = listBlobentries(src, slbl)
-    # don't add data entries that already exist 
-    uids = listBlobentries(dst, dlbl)
-    # verb list should just return vector of Symbol. NCE36
-    filter!(s -> !(s in uids), des)
-    if 0 < length(des)
-        union(((s -> mergeBlobentries!(dst, dlbl, src, slbl, s)).(des))...)
-    end
-end
-
-function mergeBlobentries!(
-    dest::AbstractDFG,
-    src::AbstractDFG,
-    w...;
-    varList::AbstractVector = listVariables(dest) |> sortDFG,
-)
-    @showprogress 1 "merging data entries" for vl in varList
-        mergeBlobentries!(dest, vl, src, vl, w...)
-    end
-    return varList
 end
 
 """
