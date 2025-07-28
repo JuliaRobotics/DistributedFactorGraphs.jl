@@ -777,7 +777,7 @@ end
 
 function deleteState!(v::VariableCompute, label::Symbol)
     if !haskey(v.solverDataDict, label)
-        throw(KeyError("State '$(label)' does not exist"))
+        throw(LabelNotFoundError("State", label))
     end
     delete!(v.solverDataDict, label)
     return 1
@@ -851,6 +851,7 @@ function listStates(
     return labels
 end
 
+#TODO deprecate PPEs
 ##==============================================================================
 ## Point Parametric Estimates
 ##==============================================================================

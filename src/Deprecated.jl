@@ -321,6 +321,39 @@ function getBlobentries(
     )
     return getBlobentries(dfg, label, Regex(string(skey)))
 end
+
+function getfirstBlobentry(var::AbstractGraphVariable, blobId::UUID)
+    Base.depwarn(
+        "getfirstBlobentry(var, blobId) is deprecated, use getfirstBlobentry(var; blobIdFilter = ==(string(blobId))) instead.",
+        :getfirstBlobentry,
+    )
+    return getfirstBlobentry(var; blobIdFilter = ==(string(blobId)))
+end
+
+function getfirstBlobentry(dfg::AbstractDFG, label::Symbol, blobId::UUID)
+    Base.depwarn(
+        "getfirstBlobentry(dfg, label, blobId) is deprecated, use getfirstBlobentry(dfg, label; blobIdFilter = ==(string(blobId))) instead.",
+        :getfirstBlobentry,
+    )
+    return getfirstBlobentry(dfg, label; blobIdFilter = ==(string(blobId)))
+end
+
+function getfirstBlobentry(var::AbstractGraphVariable, key::Regex)
+    Base.depwarn(
+        "getfirstBlobentry(var, key::Regex) is deprecated, use getfirstBlobentry(var; labelFilter=contains(key)) instead.",
+        :getfirstBlobentry,
+    )
+    return getfirstBlobentry(var; labelFilter = contains(key))
+end
+
+function getfirstBlobentry(dfg::AbstractDFG, label::Symbol, key::Regex)
+    Base.depwarn(
+        "getfirstBlobentry(dfg, label, key::Regex) is deprecated, use getfirstBlobentry(dfg, label; labelFilter=contains(key)) instead.",
+        :getfirstBlobentry,
+    )
+    return getfirstBlobentry(dfg, label; labelFilter = contains(key))
+end
+
 ## ================================================================================
 ## Deprecated in v0.27
 ##=================================================================================

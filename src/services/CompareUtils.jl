@@ -21,6 +21,7 @@ const GeneratedCompareUnion = Union{
     MeanMaxPPE,
     State,
     PackedState,
+    Blobentry,
     VariableCompute,
     VariableDFG,
     VariableSummary,

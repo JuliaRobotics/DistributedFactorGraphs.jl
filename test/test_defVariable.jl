@@ -1,3 +1,4 @@
+using LieGroups
 using Manifolds
 using Test
 using LinearAlgebra
@@ -14,14 +15,14 @@ using LinearAlgebra
     @defVariable(TestVarType1, Euclidean(3), zeros(3))
     @defVariable(
         TestVarType2,
-        SpecialEuclidean(3),
+        SpecialEuclideanGroup(3),
         ArrayPartition(zeros(3), diagm(ones(3)))
     )
 
     ##
 
     @test getManifold(TestVarType1) == Euclidean(3)
-    @test getManifold(TestVarType2) == SpecialEuclidean(3)
+    @test getManifold(TestVarType2) == SpecialEuclideanGroup(3)
 
     @test getDimension(TestVarType1) === 3
     @test getDimension(TestVarType2) === 6
@@ -39,7 +40,7 @@ using LinearAlgebra
     ##
 
     @test getManifold(TestVarType1()) == Euclidean(3)
-    @test getManifold(TestVarType2()) == SpecialEuclidean(3)
+    @test getManifold(TestVarType2()) == SpecialEuclideanGroup(3)
 
     @test getDimension(TestVarType1()) === 3
     @test getDimension(TestVarType2()) === 6

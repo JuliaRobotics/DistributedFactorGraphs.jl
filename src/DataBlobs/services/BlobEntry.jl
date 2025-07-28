@@ -1,14 +1,3 @@
-
-##==============================================================================
-## Blobentry - compare
-##==============================================================================
-
-import Base: ==
-
-@generated function ==(x::T, y::T) where {T <: Blobentry}
-    return mapreduce(n -> :(x.$n == y.$n), (a, b) -> :($a && $b), fieldnames(x))
-end
-
 ##==============================================================================
 ## Blobentry - common
 ##==============================================================================
@@ -85,49 +74,26 @@ Finds and returns the first blob entry that matches the filter.
 
 Also see: [`getBlobentry`](@ref)
 """
-function getfirstBlobentry(var::AbstractGraphVariable, blobId::UUID)
-    for (k, v) in var.dataDict
-        if blobId == v.blobId
-            return v
-        end
+function getfirstBlobentry(
+    v::AbstractGraphVariable;
+    labelFilter::Union{Nothing, Function} = nothing,
+    blobIdFilter::Union{Nothing, Function} = nothing,
+)
+    entries = getBlobentries(v; labelFilter, blobIdFilter)
+    if isempty(entries)
+        return nothing
+    else
+        return entries[1]
     end
-    throw(KeyError("No blobEntry with blobId $(blobId) found in variable $(getLabel(var))"))
 end
 
-function getfirstBlobentry(dfg::AbstractDFG, label::Symbol, blobId::UUID)
-    return getfirstBlobentry(getVariable(dfg, label), blobId)
-end
-
-function getfirstBlobentry(var::AbstractGraphVariable, key::Regex)
-    for (k, v) in var.dataDict
-        if occursin(key, string(v.label))
-            return v
-        end
-    end
-    throw(
-        KeyError(
-            "No blobEntry with label matching regex $(key) found in variable $(getLabel(var))",
-        ),
-    )
-end
-
-function getfirstBlobentry(var::VariableDFG, key::Regex)
-    firstIdx = findfirst(x -> contains(string(x.label), key), var.blobEntries)
-    if isnothing(firstIdx)
-        throw(KeyError("$key"))
-    end
-    return var.blobEntries[firstIdx]
-end
-
-function getfirstBlobentry(dfg::AbstractDFG, label::Symbol, key::Regex)
-    els = listBlobentries(dfg, label)
-    firstIdx = findfirst(contains(key), string.(els))
-    isnothing(firstIdx) && throw(
-        KeyError(
-            "No blobEntry with label matching regex $(key) found in variable $(label)",
-        ),
-    )
-    return getBlobentry(dfg, label, els[firstIdx])
+function getfirstBlobentry(
+    dfg::AbstractDFG,
+    label::Symbol;
+    labelFilter::Union{Nothing, Function} = nothing,
+    blobIdFilter::Union{Nothing, Function} = nothing,
+)
+    return getfirstBlobentry(getVariable(dfg, label); labelFilter, blobIdFilter)
 end
 
 # TODO Consider autogenerating all methods of the form:
@@ -227,10 +193,10 @@ end
 
 Does a blob entry exist with `blobLabel`.
 """
-hasBlobentry(var::VariableCompute, blobLabel::Symbol) = haskey(var.dataDict, blobLabel)
+hasBlobentry(v::VariableCompute, blobLabel::Symbol) = haskey(v.dataDict, blobLabel)
 
-function hasBlobentry(var::VariableDFG, label::Symbol)
-    return label in getproperty.(var.blobEntries, :label)
+function hasBlobentry(v::VariableDFG, label::Symbol)
+    return label in getproperty.(v.blobEntries, :label)
 end
 
 """
@@ -238,27 +204,38 @@ end
 
 Get blob entries, returns a `Vector{Blobentry}`.
 """
-function getBlobentries(var::VariableCompute)
-    return collect(values(var.dataDict))
+function getBlobentries(v::VariableCompute)
+    return collect(values(v.dataDict))
 end
 
-function getBlobentries(var::VariableDFG)
-    return var.blobEntries
+function getBlobentries(v::VariableDFG)
+    return copy(v.blobEntries)
+end
+
+function getBlobentries(
+    v::AbstractGraphVariable;
+    labelFilter::Union{Nothing, Function} = nothing,
+    blobIdFilter::Union{Nothing, Function} = nothing,
+)
+    entries = getBlobentries(v)
+    filterDFG!(entries, labelFilter, x -> string(x.label))
+    filterDFG!(entries, blobIdFilter, x -> string(x.blobId))
+    return entries
 end
 
 function getBlobentries(
     dfg::AbstractDFG,
     variableLabel::Symbol;
     labelFilter::Union{Nothing, Function} = nothing,
+    blobIdFilter::Union{Nothing, Function} = nothing,
 )
-    entries = getBlobentries(getVariable(dfg, variableLabel))
-    filterDFG!(entries, labelFilter)
-    return entries
+    return getBlobentries(getVariable(dfg, variableLabel); labelFilter, blobIdFilter)
 end
 
 function gatherBlobentries(
     dfg::AbstractDFG;
     labelFilter::Union{Nothing, Function} = nothing,
+    blobIdFilter::Union{Nothing, Function} = nothing,
     solvableFilter::Union{Nothing, Function} = nothing,
     tagsFilter::Union{Nothing, Function} = nothing,
     typeFilter::Union{Nothing, Function} = nothing,
@@ -272,9 +249,10 @@ function gatherBlobentries(
         labelFilter = variableLabelFilter,
     )
     return map(vls) do vl
-        return getBlobentries(dfg, vl; labelFilter)
+        return vl => getBlobentries(dfg, vl; labelFilter, blobIdFilter)
     end
 end
+const collectBlobentries = gatherBlobentries
 
 """
     $(SIGNATURES)

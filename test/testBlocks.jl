@@ -1047,6 +1047,15 @@ function blobsStoresTestBlock!(fg)
     @test issetequal(listBlobentries(fg, :a), [:label1, :label2])
     @test listBlobentries(fg, :b) == Symbol[:label2]
 
+    # test collecting blobentries with filters
+    gathered = DFG.gatherBlobentries(
+        fg;
+        variableLabelFilter = contains("a"),
+        labelFilter = contains("1"),
+    )
+    @test first(gathered[1]) == :a
+    @test last(gathered[1])[1] == getBlobentry(fg, :a, :label1)
+
     #delete
     @test deleteBlobentry!(fg, var1.label, de1.label) == 1
     @test listBlobentries(fg, var1.label) == Symbol[:label2]
@@ -1102,7 +1111,7 @@ function blobsStoresTestBlock!(fg)
     @test data[1].hash == newData.hash #[1]
     data = getData(fg, :a, r"testing") # convenience wrapper over getBlob
     @test data[1].hash == newData.hash #[1]
-    be = getfirstBlobentry(fg, :a, r"testing")
+    be = getfirstBlobentry(fg, :a; labelFilter = contains(r"testing"))
     data = getData(fg, :a, be.blobId) # convenience wrapper over getBlob
     @test data[1].hash == newData.hash #[1]
     # @test data[2] == newData[2]

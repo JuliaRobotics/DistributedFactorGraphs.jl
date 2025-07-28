@@ -29,3 +29,4 @@ Design goal: all `Blobstore`s with the same `label` can contain the same `blobId
 
 """
 abstract type AbstractBlobstore{T} end
+const Blobstore = AbstractBlobstore
