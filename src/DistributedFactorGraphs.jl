@@ -54,14 +54,46 @@ using InteractiveUtils: subtypes
 ##==============================================================================
 # Exports
 ##==============================================================================
+## Abstract types and their aliases
+export AbstractDFG
+export AbstractDFGParams, DFGParams
+export AbstractBlobstore, Blobstore
+export AbstractGraphNode, GraphNode
+export AbstractGraphVariable, GraphVariable
+export AbstractGraphFactor, GraphFactor
+export AbstractPackedObservation, PackedObservation
+export AbstractObservation, Observation
+export AbstractPriorObservation, PriorObservation
+export AbstractRelativeObservation, RelativeObservation
+export AbstractFactorCache, FactorCache
+export AbstractStateType, StateType
+export AbstractPackedBelief, PackedBelief
+
+## types
+# Variables
+export VariableCompute, VariableDFG, VariableSummary, VariableSkeleton
+# Factors
+export FactorCompute, FactorDFG, FactorSummary, FactorSkeleton
 
 # v1 name, signiture, return, and error checked
-export getFactor, getBlobentry, getGraphBlobentry
+export addVariable!, mergeVariable!, deleteVariable!
+export addVariables!, getVariables
+export addFactor!, getFactor, deleteFactor!
+export addFactors!, getFactors
 
-export addVariable!, addFactor!, addBlobentry!
+export addState!, getState, mergeState!, deleteState!
+export addStates!, mergeStates!, deleteStates!
 
-export deleteVariable!
+export addBlobentry!, getBlobentry, mergeBlobentry!, deleteBlobentry!
+export addBlobentries!
 
+## list
+export listVariables, listFactors, listStates
+
+##
+export getGraphBlobentry
+
+export getObservation
 # v1 name, signiture, and return
 
 # v1 name only
@@ -87,7 +119,7 @@ export DFG
 export GraphsDFGs, GraphsDFG
 
 ##
-export getState, getFactorState # FIXME these were questioned and being reviewed again for name, other than that they are checked.
+export getFactorState # FIXME getFactorState were questioned and being reviewed again for name, other than that they are checked.
 
 ## CRUD Matrix
 # export addVariable!,          getVariable,          mergeVariable!,          deleteVariable!
@@ -95,11 +127,12 @@ export getState, getFactorState # FIXME these were questioned and being reviewed
 # export addFactor!,            getFactor,            mergeFactor!,            deleteFactor!
 # export addFactors!,           getFactors,           mergeFactors!,           deleteFactors!
 
-# export addState!,     getState,     mergeState!,     deleteState!
-# export addStates!,    getStates,    mergeStates!,    deleteStates!
+# export addState!,             getState,             mergeState!,             deleteState!
+# export addStates!,            getStates,            mergeStates!,            deleteStates!
 
 # export addBlobentry!,         getBlobentry,         mergeBlobentry!,         deleteBlobentry! # historic for VariableBlobentry
 # export addBlobentries!,       getBlobentries,       mergeBlobentries!,       deleteBlobentries!
+# TODO first pass progress
 # export addGraphBlobentry!,    getGraphBlobentry,    mergeGraphBlobentry!,    deleteGraphBlobentry!
 # export addGraphBlobentries!,  getGraphBlobentries,  mergeGraphBlobentries!,  deleteGraphBlobentries!
 # export addAgentBlobentry!,    getAgentBlobentry,    mergeAgentBlobentry!,    deleteAgentBlobentry!
@@ -119,21 +152,9 @@ export getState, getFactorState # FIXME these were questioned and being reviewed
 
 ## list
 # export listVariables, listFactors, listStates, listBlobentries, listFactorBlobEntries, listGraphBlobentries, listAgentBlobentries
+# not implemented yet (maybe not for DFG v1.0 yet):
 # export listVariableMetadata, listFactorMetadata, listAgentMetadata, listGraphMetadata
 # export listVariableBlobentryMetadata, listFactorBlobentryMetadata, listAgentBlobentryMetadata, listGraphBlobentryMetadata
-
-##------------------------------------------------------------------------------
-## Abstract types
-##------------------------------------------------------------------------------
-
-export AbstractObservation, AbstractPackedObservation
-export PriorObservation, RelativeObservation
-export FactorCache
-
-#TODO
-export PackedBelief
-
-# public AbstractGraphVariable, AbstractGraphFactor
 
 ##==============================================================================
 ## Internal or not yet ready
@@ -142,12 +163,6 @@ export PackedBelief
 ##------------------------------------------------------------------------------
 ## DFG
 ##------------------------------------------------------------------------------
-export AbstractDFGParams, DFGParams
-
-# Abstract Nodes
-export AbstractGraphNode
-export AbstractDFG
-export AbstractBlobstore
 
 # accessors & crud
 export getDescription,
@@ -187,33 +202,13 @@ export getBlobstore,
 export InMemoryDFGTypes, LocalDFG
 
 # AbstractDFG Interface
-export exists,
-    addVariables!,
-    addFactors!,
-    mergeVariable!,
-    mergeFactor!,
-    deleteVariable!,
-    deleteFactor!,
-    listVariables,
-    listFactors,
-    getVariables,
-    getFactors,
-    isVariable,
-    isFactor
-
-export getindex
+export exists, mergeFactor!, isVariable, isFactor
 
 export isConnected
 
 export getBiadjacencyMatrix
 
 export getSummaryGraph
-
-# Variables
-export VariableCompute, VariableSummary, VariableSkeleton, VariableDFG
-
-# Factors
-export FactorCompute, FactorSummary, FactorSkeleton, FactorDFG
 
 # Common
 export getSolvable, setSolvable!, isSolvable
@@ -234,14 +229,9 @@ export removeTags! #TODO do we want this one
 ##------------------------------------------------------------------------------
 # Variable
 ##------------------------------------------------------------------------------
-# Abstract Variable Data
-export StateType
-
 # accessors
 export getSolverDataDict
 export getVariableType, getVariableTypeName
-
-export getObservation
 
 export getVariableType
 
@@ -260,7 +250,7 @@ export getMetadata,
     emptyMetadata!
 
 # CRUD & SET
-export getStates, addState!, mergeState!, deleteState!, listStates
+export getStates
 
 # PPE
 ##------------------------------------------------------------------------------
@@ -294,13 +284,7 @@ export copyGraph!, deepcopyGraph, deepcopyGraph!, buildSubgraph, mergeGraph!
 ##------------------------------------------------------------------------------
 
 export hasBlobentry,
-    getfirstBlobentry,
-    addBlobentry!,
-    addBlobentries!,
-    mergeBlobentry!,
-    deleteBlobentry!,
-    listBlobentrySequence,
-    mergeBlobentries!
+    getfirstBlobentry, addBlobentries!, listBlobentrySequence, mergeBlobentries!
 export incrDataLabelSuffix
 
 export getBlobentries

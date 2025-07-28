@@ -91,7 +91,7 @@ function mergeVariable!(dfg::GraphsDFG, variable::AbstractGraphVariable)
     return 1
 end
 
-function mergeFactor!(dfg::GraphsDFG, factor::AbstractGraphFactor;)
+function mergeFactor!(dfg::GraphsDFG, factor::AbstractGraphFactor)
     if !haskey(dfg.g.factors, factor.label)
         addFactor!(dfg, factor)
     elseif dfg.g.factors[factor.label]._variableOrderSymbols != factor._variableOrderSymbols
@@ -120,7 +120,7 @@ function deleteVariable!(dfg::GraphsDFG, label::Symbol)#::Tuple{AbstractGraphVar
     return sum(del_facs) + 1
 end
 
-function deleteFactor!(dfg::GraphsDFG, label::Symbol; suppressGetFactor::Bool = false)
+function deleteFactor!(dfg::GraphsDFG, label::Symbol)
     if !haskey(dfg.g.factors, label)
         throw(LabelNotFoundError("Factor", label))
     end
@@ -277,7 +277,7 @@ function listFactors(
        !isnothing(typeFilter) ||
        !isnothing(regexFilter) ||  #TODO deprecated
        !isempty(tags) ||           #TODO deprecated
-       !isnothing(solvable)        #TODO Maybe deprecated?
+       !isnothing(solvable)        #TODO deprecated
         return map(
             getLabel,
             getFactors(
@@ -555,22 +555,19 @@ function getGraphBlobentry(fg::GraphsDFG, label::Symbol)
     return fg.graph.blobEntries[label]
 end
 
-function getGraphBlobentries(
-    fg::GraphsDFG,
-    filt::Union{Nothing, String, Base.Fix2} = nothing,
-)
-    entries = collect(values(fg.graphBlobEntries))
-    if !isnothing(filt) && isa(filt, String)
-        @warn "String filter is deprecated, use startswith(filt_string) instead"
-        filter!(e -> startswith(string(e.label), filt), entries)
-    elseif !isnothing(filt)
-        filter!(e -> filt(string(e.label)), entries)
-    end
+function getGraphBlobentries(fg::GraphsDFG; labelFilter::Union{Nothing, Function} = nothing)
+    entries = collect(values(fg.graph.blobEntries))
+    filterDFG!(entries, labelFilter, (String ∘ getLabel))
     return entries
 end
 
-function listGraphBlobentries(fg::GraphsDFG)
-    return collect(keys(fg.graphBlobEntries))
+function listGraphBlobentries(
+    fg::GraphsDFG;
+    labelFilter::Union{Nothing, Function} = nothing,
+)
+    labels = collect(keys(fg.graph.blobEntries))
+    filterDFG!(labels, labelFilter, String)
+    return labels
 end
 
 function listAgentBlobentries(fg::GraphsDFG)

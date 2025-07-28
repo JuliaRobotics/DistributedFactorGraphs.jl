@@ -11,9 +11,9 @@ export AbstractRelativeMinimize,
 
 #TODO: maybe just remove these
 export NoSolverParams
-
 const AbstractPrior = PriorObservation
 const AbstractRelative = RelativeObservation
+export AbstractParams
 const AbstractParams = AbstractDFGParams
 
 abstract type AbstractRelativeMinimize <: RelativeObservation end
@@ -208,6 +208,151 @@ function listSolveKeys(
     return skeys
 end
 const listSupersolves = listSolveKeys
+
+#TODO mergeBlobentries! does not fit with merge definition, should probably be updated to copyto or sync.
+# leaving here until it is done.
+
+# """
+#     $SIGNATURES
+
+# Add a blob entry into the destination variable which already exists 
+# in a source variable.
+
+# See also: [`addBlobentry!`](@ref), [`getBlobentry`](@ref), [`listBlobentries`](@ref), [`getBlob`](@ref)
+# """
+function mergeBlobentries!(
+    dst::AbstractDFG,
+    dlbl::Symbol,
+    src::AbstractDFG,
+    slbl::Symbol,
+    bllb::Union{Symbol, UUID, <:AbstractString, Regex},
+)
+    #
+    _makevec(s) = [s;]
+    _makevec(s::AbstractVector) = s
+    des_ = getBlobentry(src, slbl, bllb)
+    des = _makevec(des_)
+    # don't add data entries that already exist 
+    dde = listBlobentries(dst, dlbl)
+    # HACK, verb list should just return vector of Symbol. NCE36
+    _getid(s) = s
+    _getid(s::Blobentry) = s.id
+    uids = _getid.(dde) # (s->s.id).(dde)
+    filter!(s -> !(_getid(s) in uids), des)
+    # add any data entries not already in the destination variable, by uuid
+    return addBlobentry!.(dst, dlbl, des)
+end
+
+function mergeBlobentries!(
+    dst::AbstractDFG,
+    dlbl::Symbol,
+    src::AbstractDFG,
+    slbl::Symbol,
+    ::Colon = :,
+)
+    des = listBlobentries(src, slbl)
+    # don't add data entries that already exist 
+    uids = listBlobentries(dst, dlbl)
+    # verb list should just return vector of Symbol. NCE36
+    filter!(s -> !(s in uids), des)
+    if 0 < length(des)
+        union(((s -> mergeBlobentries!(dst, dlbl, src, slbl, s)).(des))...)
+    end
+end
+
+function mergeBlobentries!(
+    dest::AbstractDFG,
+    src::AbstractDFG,
+    w...;
+    varList::AbstractVector = listVariables(dest) |> sortDFG,
+)
+    @showprogress 1 "merging data entries" for vl in varList
+        mergeBlobentries!(dest, vl, src, vl, w...)
+    end
+    return varList
+end
+
+# """
+#     $(SIGNATURES)
+
+# Get all blob entries matching a Regex pattern over variables
+
+# Notes
+# - Use `dropEmpties=true` to not include empty lists in result.
+# - Use keyword `varList` for which variables to search through.
+# """
+function getBlobentriesVariables(
+    dfg::AbstractDFG,
+    bLblPattern::Regex;
+    varList::AbstractVector{Symbol} = sort(listVariables(dfg); lt = natural_lt),
+    dropEmpties::Bool = false,
+)
+    Base.depwarn(
+        "getBlobentriesVariables is deprecated, use gatherBlobentries instead.",
+        :getBlobentriesVariables,
+    )
+    RETLIST = Vector{Vector{Blobentry}}()
+    @showprogress "Get entries matching $bLblPattern" for vl in varList
+        bes = filter(s -> occursin(bLblPattern, string(s.label)), listBlobentries(dfg, vl))
+        # only push to list if there are entries on this variable
+        (!dropEmpties || 0 < length(bes)) ? nothing : continue
+        push!(RETLIST, bes)
+    end
+
+    return RETLIST
+end
+
+function getBlobentries(dfg::AbstractDFG, label::Symbol, regex::Regex)
+    Base.depwarn(
+        "getBlobentries(dfg, label, ::Regex) is deprecated, use getBlobentries(dfg, label; labelFilter=contains(regex)) instead.",
+        :getBlobentries,
+    )
+    return entries = getBlobentries(dfg, label; labelFilter = contains(regex))
+end
+
+function getBlobentries(
+    dfg::AbstractDFG,
+    label::Symbol,
+    skey::Union{Symbol, <:AbstractString},
+)
+    Base.depwarn(
+        "getBlobentries(dfg, label, ::Union{Symbol, <:AbstractString}) is deprecated, use getBlobentries(dfg, label; labelFilter=contains(regex)) instead.",
+        :getBlobentries,
+    )
+    return getBlobentries(dfg, label, Regex(string(skey)))
+end
+
+function getfirstBlobentry(var::AbstractGraphVariable, blobId::UUID)
+    Base.depwarn(
+        "getfirstBlobentry(var, blobId) is deprecated, use getfirstBlobentry(var; blobIdFilter = ==(string(blobId))) instead.",
+        :getfirstBlobentry,
+    )
+    return getfirstBlobentry(var; blobIdFilter = ==(string(blobId)))
+end
+
+function getfirstBlobentry(dfg::AbstractDFG, label::Symbol, blobId::UUID)
+    Base.depwarn(
+        "getfirstBlobentry(dfg, label, blobId) is deprecated, use getfirstBlobentry(dfg, label; blobIdFilter = ==(string(blobId))) instead.",
+        :getfirstBlobentry,
+    )
+    return getfirstBlobentry(dfg, label; blobIdFilter = ==(string(blobId)))
+end
+
+function getfirstBlobentry(var::AbstractGraphVariable, key::Regex)
+    Base.depwarn(
+        "getfirstBlobentry(var, key::Regex) is deprecated, use getfirstBlobentry(var; labelFilter=contains(key)) instead.",
+        :getfirstBlobentry,
+    )
+    return getfirstBlobentry(var; labelFilter = contains(key))
+end
+
+function getfirstBlobentry(dfg::AbstractDFG, label::Symbol, key::Regex)
+    Base.depwarn(
+        "getfirstBlobentry(dfg, label, key::Regex) is deprecated, use getfirstBlobentry(dfg, label; labelFilter=contains(key)) instead.",
+        :getfirstBlobentry,
+    )
+    return getfirstBlobentry(dfg, label; labelFilter = contains(key))
+end
 
 ## ================================================================================
 ## Deprecated in v0.27

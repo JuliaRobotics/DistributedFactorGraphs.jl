@@ -6,42 +6,42 @@
 # any DFGNode shall have a label. 
 # abstract type AbstractGraphNode end <: AbstractDFGNode
 # the rest of the nodes are also AbstractDFGNodes, eg.
-# Agent <: AbstractGraphNode
-# FactorgraphRoot <: AbstractGraphNode
+# Agent <: AbstractDFGNode
+# FactorgraphRoot <: AbstractDFGNode
 
 """
 $(TYPEDEF)
 Abstract parent struct for DFG variables and factors.
 """
-abstract type AbstractGraphNode end #✅
+abstract type AbstractGraphNode end
 const GraphNode = AbstractGraphNode
 
 """
 $(TYPEDEF)
 An abstract DFG variable.
 """
-abstract type AbstractGraphVariable <: AbstractGraphNode end #✅
+abstract type AbstractGraphVariable <: AbstractGraphNode end
 const GraphVariable = AbstractGraphVariable
 
 """
 $(TYPEDEF)
 An abstract DFG factor.
 """
-abstract type AbstractGraphFactor <: AbstractGraphNode end #✅
+abstract type AbstractGraphFactor <: AbstractGraphNode end
 const GraphFactor = AbstractGraphFactor
 
 """
 $(TYPEDEF)
 Abstract parent struct for a DFG graph.
 """
-abstract type AbstractDFG{V <: AbstractGraphVariable, F <: AbstractGraphFactor} end #✅
+abstract type AbstractDFG{V <: AbstractGraphVariable, F <: AbstractGraphFactor} end
 #const DFG clashes with module DFG. 
 
 """
 $(TYPEDEF)
 Abstract parent struct for solver parameters.
 """
-abstract type AbstractDFGParams end #✅
+abstract type AbstractDFGParams end
 const DFGParams = AbstractDFGParams
 
 """

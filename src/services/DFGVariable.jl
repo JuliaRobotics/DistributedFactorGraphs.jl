@@ -78,7 +78,7 @@ getVariableType(dfg::AbstractDFG, lbl::Symbol) = getVariableType(getVariable(dfg
 # getManifolds(::T) where {T <: ManifoldsBase.AbstractManifold} = getManifolds(T)
 
 """
-    @defVarstateType StructName manifold point_identity
+    @defStateType StructName manifold point_identity
 
 A macro to create a new variable type with name `StructName` associated with a given manifold and identity point.
 
@@ -95,7 +95,7 @@ Example:
 DFG.@defVariable Pose2 SpecialEuclidean(2) ArrayPartition([0;0.0],[1 0; 0 1.0])
 ```
 """
-macro defVarstateType(structname, manifold, point_identity)
+macro defStateType(structname, manifold, point_identity)
     return esc(
         quote
             Base.@__doc__ struct $structname <: StateType{Any} end
@@ -117,11 +117,11 @@ macro defVarstateType(structname, manifold, point_identity)
 end
 
 macro defVariable(args...)
-    return esc(:(DFG.@defVarstateType $(args...)))
+    return esc(:(DFG.@defStateType $(args...)))
 end
 
 """
-    @defVarstateTypeN StructName manifold point_identity
+    @defStateTypeN StructName manifold point_identity
 
 A macro to create a new variable type with name `StructName` that is parameterized by `N` and associated with a given manifold and identity point.
 
@@ -135,10 +135,10 @@ See the [Manifolds.jl documentation on creating your own manifolds](https://juli
 
 Example:
 ```
-DFG.@defVarstateTypeN Pose{N} SpecialEuclidean(N) ArrayPartition(zeros(SVector{N, Float64}), SMatrix{N, N, Float64}(I))
+DFG.@defStateTypeN Pose{N} SpecialEuclidean(N) ArrayPartition(zeros(SVector{N, Float64}), SMatrix{N, N, Float64}(I))
 ```
 """
-macro defVarstateTypeN(structname, manifold, point_identity)
+macro defStateTypeN(structname, manifold, point_identity)
     return esc(
         quote
             Base.@__doc__ struct $structname <: StateType{N} end
@@ -532,21 +532,6 @@ Get solver data dictionary for a variable.  Advised to use graph CRUD operations
 """
 getSolverDataDict(v::VariableCompute) = v.solverDataDict
 
-# TODO move to crud, don't know if this should exist, should rather always update with fg object to simplify inmem vs cloud
-"""
-    $SIGNATURES
-
-Retrieve solver data structure stored in a variable.
-"""
-function getState(v::VariableCompute, label::Symbol)
-    vnd = if haskey(getSolverDataDict(v), label)
-        return getSolverDataDict(v)[label]
-    else
-        throw(LabelNotFoundError("State", label))
-    end
-    return vnd
-end
-
 ##------------------------------------------------------------------------------
 ## Variable Metadata
 ##------------------------------------------------------------------------------
@@ -667,14 +652,24 @@ end
 ## CRUD: get, add, update, delete
 ##------------------------------------------------------------------------------
 
+function getState(v::VariableCompute, label::Symbol)
+    !haskey(getSolverDataDict(v), label) && throw(LabelNotFoundError("State", label))
+    return getSolverDataDict(v)[label]
+end
+
+function getState(v::VariableDFG, label::Symbol)
+    stateidx = findfirst(==(label) ∘ getLabel, v.solverData)
+    isnothing(stateidx) && throw(LabelNotFoundError("State", label))
+    return unpackState(v.solverData[stateidx])
+end
+
 """
     $(SIGNATURES)
-Get variable solverdata for a given solve key.
+Get the variable `State` for a given state label.
 """
 function getState(dfg::AbstractDFG, variableLabel::Symbol, label::Symbol)
     v = getVariable(dfg, variableLabel)
-    !haskey(v.solverDataDict, label) && throw(LabelNotFoundError("State", label))
-    return v.solverDataDict[label]
+    return getState(v, label)
 end
 
 function getStates(dfg::AbstractDFG, variableLabel::Symbol)
@@ -686,21 +681,36 @@ end
     $(SIGNATURES)
 Add variable solver data, errors if it already exists.
 """
-function addState!(dfg::AbstractDFG, variablekey::Symbol, state::State)
-    var = getVariable(dfg, variablekey)
-    if haskey(var.solverDataDict, state.solveKey)
-        throw(LabelExistsError("State", state.solveKey))
-    end
-    var.solverDataDict[state.solveKey] = state
-    return state
+function addState!(dfg::GraphsDFG, variableLabel::Symbol, state::State)
+    var = getVariable(dfg, variableLabel)
+    return addState!(var, state)
 end
 
-function addState!(v, state::State)
+function addState!(v::VariableCompute, state::State)
     if haskey(v.solverDataDict, state.solveKey)
         throw(LabelExistsError("State", state.solveKey))
     end
     v.solverDataDict[state.solveKey] = state
     return state
+end
+
+"""
+    $(SIGNATURES)
+Add variable `State`s by calling `addState!`.
+NOTE: If an error occurs while adding one of the states, previously added states will not be rolled back.
+"""
+function addStates!(dfg::AbstractDFG, variableLabel::Symbol, states::Vector{<:State})
+    cnt = asyncmap(states) do state
+        return addState!(dfg, variableLabel, state)
+    end
+    return sum(cnt)
+end
+
+function addStates!(dfg::AbstractDFG, varLabel_state_pairs::Vector{<:Pair{Symbol, <:State}})
+    cnt = asyncmap(varLabel_state_pairs) do (varLabel, state)
+        return addState!(dfg, varLabel, state)
+    end
+    return sum(cnt)
 end
 
 """
@@ -711,16 +721,8 @@ Related
 
 mergeStates!
 """
-function mergeState!(dfg::AbstractDFG, variablekey::Symbol, vnd::State)
-    v = getVariable(dfg, variablekey)
-
-    if !haskey(v.solverDataDict, vnd.solveKey)
-        addState!(dfg, variablekey, vnd)
-    else
-        v.solverDataDict[vnd.solveKey] = vnd
-    end
-
-    return 1
+function mergeState!(dfg::GraphsDFG, variableLabel::Symbol, vnd::State)
+    return mergeState!(getVariable(dfg, variableLabel), vnd)
 end
 
 function mergeState!(v::VariableCompute, vnd::State)
@@ -729,11 +731,13 @@ function mergeState!(v::VariableCompute, vnd::State)
     else
         v.solverDataDict[vnd.solveKey] = vnd
     end
-
     return 1
 end
 
-function mergeStates!(dfg::AbstractDFG, varLabel_state_pairs::Vector{<:Pair{Symbol, <:State}})
+function mergeStates!(
+    dfg::AbstractDFG,
+    varLabel_state_pairs::Vector{<:Pair{Symbol, <:State}},
+)
     cnt = asyncmap(varLabel_state_pairs) do (varLabel, state)
         return mergeState!(dfg, varLabel, state)
     end
@@ -765,24 +769,43 @@ end
 
 """
     $(SIGNATURES)
-Delete variable solver data, returns the number of deleted elements.
+Delete the variable `State` by label, returns the number of deleted elements.
 """
-function deleteState!(dfg::AbstractDFG, variablekey::Symbol, solveKey::Symbol)
-    var = getVariable(dfg, variablekey)
+function deleteState!(dfg::GraphsDFG, variableLabel::Symbol, label::Symbol)
+    return deleteState!(getVariable(dfg, variableLabel), label)
+end
 
-    if !haskey(var.solverDataDict, solveKey)
-        throw(KeyError("State '$(solveKey)' does not exist"))
+function deleteState!(v::VariableCompute, label::Symbol)
+    if !haskey(v.solverDataDict, label)
+        throw(LabelNotFoundError("State", label))
     end
-    pop!(var.solverDataDict, solveKey)
+    delete!(v.solverDataDict, label)
     return 1
+end
+
+function deleteState!(dfg::AbstractDFG, sourceVariable::VariableCompute, label::Symbol)
+    return deleteState!(dfg, sourceVariable.label, label)
 end
 
 """
     $(SIGNATURES)
-Delete variable solver data, returns the number of deleted elements.
+Delete the variable `State`s by label, returns the number of deleted elements.
 """
-function deleteState!(dfg::AbstractDFG, sourceVariable::VariableCompute, solveKey::Symbol)
-    return deleteState!(dfg, sourceVariable.label, solveKey)
+function deleteStates!(dfg::AbstractDFG, variableLabel::Symbol, labels::Vector{Symbol})
+    cnt = asyncmap(labels) do label
+        return deleteState!(dfg, variableLabel, label)
+    end
+    return sum(cnt)
+end
+
+function deleteStates!(
+    dfg::AbstractDFG,
+    varLabel_stateLabel_pairs::Vector{Pair{Symbol, Symbol}},
+)
+    cnt = asyncmap(varLabel_stateLabel_pairs) do (varLabel, stateLabel)
+        return deleteState!(dfg, varLabel, stateLabel)
+    end
+    return sum(cnt)
 end
 
 ##------------------------------------------------------------------------------
@@ -828,6 +851,7 @@ function listStates(
     return labels
 end
 
+#TODO deprecate PPEs
 ##==============================================================================
 ## Point Parametric Estimates
 ##==============================================================================
@@ -850,8 +874,8 @@ function getPPE(v::VariableCompute, ppekey::Symbol = :default)
     !haskey(v.ppeDict, ppekey) && throw(LabelNotFoundError("PPE", ppekey))
     return v.ppeDict[ppekey]
 end
-function getPPE(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol = :default)
-    return getPPE(getVariable(dfg, variablekey), ppekey)
+function getPPE(dfg::AbstractDFG, variableLabel::Symbol, ppekey::Symbol = :default)
+    return getPPE(getVariable(dfg, variableLabel), ppekey)
 end
 # Not the most efficient call but it at least reuses above (in memory it's probably ok)
 function getPPE(
@@ -868,10 +892,10 @@ Add variable PPE, errors if it already exists.
 """
 function addPPE!(
     dfg::AbstractDFG,
-    variablekey::Symbol,
+    variableLabel::Symbol,
     ppe::P,
 ) where {P <: AbstractPointParametricEst}
-    var = getVariable(dfg, variablekey)
+    var = getVariable(dfg, variableLabel)
     if haskey(var.ppeDict, ppe.solveKey)
         throw(LabelExistsError("PPE", ppe.solveKey))
     end
@@ -909,11 +933,11 @@ Notes
 """
 function updatePPE!(
     dfg::AbstractDFG,
-    variablekey::Symbol,
+    variableLabel::Symbol,
     ppe::AbstractPointParametricEst;
     warn_if_absent::Bool = true,
 )
-    var = getVariable(dfg, variablekey)
+    var = getVariable(dfg, variableLabel)
     if warn_if_absent && !haskey(var.ppeDict, ppe.solveKey)
         @warn "PPE '$(ppe.solveKey)' does not exist, adding"
     end
@@ -966,8 +990,8 @@ end
     $(SIGNATURES)
 Delete PPE data, returns the deleted element.
 """
-function deletePPE!(dfg::AbstractDFG, variablekey::Symbol, ppekey::Symbol = :default)
-    var = getVariable(dfg, variablekey)
+function deletePPE!(dfg::AbstractDFG, variableLabel::Symbol, ppekey::Symbol = :default)
+    var = getVariable(dfg, variableLabel)
 
     if !haskey(var.ppeDict, ppekey)
         throw(LabelNotFoundError("PPE", ppekey))
@@ -996,8 +1020,8 @@ end
     $(SIGNATURES)
 List all the PPE data keys in the variable.
 """
-function listPPEs(dfg::AbstractDFG, variablekey::Symbol)
-    v = getVariable(dfg, variablekey)
+function listPPEs(dfg::AbstractDFG, variableLabel::Symbol)
+    v = getVariable(dfg, variableLabel)
     return collect(keys(v.ppeDict))::Vector{Symbol}
 end
 
