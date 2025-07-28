@@ -115,7 +115,7 @@ end
 Add a `Blobentry` to a variable
 Should be extended if DFG variable is not returned by reference.
 
-Also see: [`getBlobentry`](@ref), [`addBlob!`](@ref), [`mergeBlobentries!`](@ref)
+Also see: [`getBlobentry`](@ref), [`addBlob!`](@ref), [`mergeBlobentry!`](@ref)
 """
 function addBlobentry!(var::VariableCompute, entry::Blobentry)
     haskey(var.dataDict, entry.label) && throw(LabelExistsError("Blobentry", entry.label))
