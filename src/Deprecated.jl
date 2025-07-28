@@ -11,9 +11,9 @@ export AbstractRelativeMinimize,
 
 #TODO: maybe just remove these
 export NoSolverParams
-
 const AbstractPrior = PriorObservation
 const AbstractRelative = RelativeObservation
+export AbstractParams
 const AbstractParams = AbstractDFGParams
 
 abstract type AbstractRelativeMinimize <: RelativeObservation end
@@ -272,6 +272,55 @@ function mergeBlobentries!(
     return varList
 end
 
+# """
+#     $(SIGNATURES)
+
+# Get all blob entries matching a Regex pattern over variables
+
+# Notes
+# - Use `dropEmpties=true` to not include empty lists in result.
+# - Use keyword `varList` for which variables to search through.
+# """
+function getBlobentriesVariables(
+    dfg::AbstractDFG,
+    bLblPattern::Regex;
+    varList::AbstractVector{Symbol} = sort(listVariables(dfg); lt = natural_lt),
+    dropEmpties::Bool = false,
+)
+    Base.depwarn(
+        "getBlobentriesVariables is deprecated, use gatherBlobentries instead.",
+        :getBlobentriesVariables,
+    )
+    RETLIST = Vector{Vector{Blobentry}}()
+    @showprogress "Get entries matching $bLblPattern" for vl in varList
+        bes = filter(s -> occursin(bLblPattern, string(s.label)), listBlobentries(dfg, vl))
+        # only push to list if there are entries on this variable
+        (!dropEmpties || 0 < length(bes)) ? nothing : continue
+        push!(RETLIST, bes)
+    end
+
+    return RETLIST
+end
+
+function getBlobentries(dfg::AbstractDFG, label::Symbol, regex::Regex)
+    Base.depwarn(
+        "getBlobentries(dfg, label, ::Regex) is deprecated, use getBlobentries(dfg, label; labelFilter=contains(regex)) instead.",
+        :getBlobentries,
+    )
+    return entries = getBlobentries(dfg, label; labelFilter = contains(regex))
+end
+
+function getBlobentries(
+    dfg::AbstractDFG,
+    label::Symbol,
+    skey::Union{Symbol, <:AbstractString},
+)
+    Base.depwarn(
+        "getBlobentries(dfg, label, ::Union{Symbol, <:AbstractString}) is deprecated, use getBlobentries(dfg, label; labelFilter=contains(regex)) instead.",
+        :getBlobentries,
+    )
+    return getBlobentries(dfg, label, Regex(string(skey)))
+end
 ## ================================================================================
 ## Deprecated in v0.27
 ##=================================================================================

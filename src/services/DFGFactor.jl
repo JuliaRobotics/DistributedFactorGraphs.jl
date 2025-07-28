@@ -268,18 +268,16 @@ getVariableOrder(dfg::AbstractDFG, fct::Symbol) = getVariableOrder(getFactor(dfg
 
 Return `::Bool` on whether given factor `fc::Symbol` is a prior in factor graph `dfg`.
 """
-function isPrior(dfg::AbstractDFG, fc::Symbol)
-    fco = getFactor(dfg, fc)
-    return isPrior(getFactorType(fco))
+function isPrior(::Type{T}) where {T <: AbstractObservation}
+    return T <: AbstractPriorObservation
 end
 
-function isPrior(::PriorObservation)
-    return true
+function isPrior(::T) where {T <: AbstractObservation}
+    return isPrior(T)
 end
 
-function isPrior(::RelativeObservation)
-    return false
-end
+isPrior(f::AbstractGraphFactor) = isPrior(getObservation(f))
+isPrior(dfg::AbstractDFG, fl::Symbol) = isPrior(getFactor(dfg, fl))
 
 ##==============================================================================
 ## Layer 2 CRUD (none) and Sets

@@ -2,24 +2,24 @@
 ## Abstract Types
 ##==============================================================================
 
-abstract type AbstractPackedObservation end #✅
+abstract type AbstractPackedObservation end
 const PackedObservation = AbstractPackedObservation
 
-abstract type AbstractObservation end #✅
+abstract type AbstractObservation end
 const Observation = AbstractObservation
 
-abstract type AbstractPriorObservation <: AbstractObservation end #✅
+abstract type AbstractPriorObservation <: AbstractObservation end
 const PriorObservation = AbstractPriorObservation
 
-abstract type AbstractRelativeObservation <: AbstractObservation end #✅
+abstract type AbstractRelativeObservation <: AbstractObservation end
 const RelativeObservation = AbstractRelativeObservation
 
-abstract type AbstractPackedBelief end #✅
+abstract type AbstractPackedBelief end
 const PackedBelief = AbstractPackedBelief
 
 # TODO https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/pull/1127#discussion_r2154672975
 # and #1138
-abstract type AbstractFactorCache end #✅
+abstract type AbstractFactorCache end
 const FactorCache = AbstractFactorCache #
 
 ##==============================================================================

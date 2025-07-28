@@ -54,6 +54,26 @@ using InteractiveUtils: subtypes
 ##==============================================================================
 # Exports
 ##==============================================================================
+## Abstract types and their aliases
+export AbstractDFG
+export AbstractDFGParams, DFGParams
+export AbstractBlobstore, Blobstore
+export AbstractGraphNode, GraphNode
+export AbstractGraphVariable, GraphVariable
+export AbstractGraphFactor, GraphFactor
+export AbstractPackedObservation, PackedObservation
+export AbstractObservation, Observation
+export AbstractPriorObservation, PriorObservation
+export AbstractRelativeObservation, RelativeObservation
+export AbstractFactorCache, FactorCache
+export AbstractStateType, StateType
+export AbstractPackedBelief, PackedBelief
+
+## types
+# Variables
+export VariableCompute, VariableDFG, VariableSummary, VariableSkeleton
+# Factors
+export FactorCompute, FactorDFG, FactorSummary, FactorSkeleton
 
 # v1 name, signiture, return, and error checked
 export addVariable!, mergeVariable!, deleteVariable!
@@ -67,9 +87,13 @@ export addStates!, mergeStates!, deleteStates!
 export addBlobentry!, getBlobentry, mergeBlobentry!, deleteBlobentry!
 export addBlobentries!
 
-export getGraphBlobentry
-export addFactor!
+## list
+export listVariables, listFactors, listStates
 
+##
+export getGraphBlobentry
+
+export getObservation
 # v1 name, signiture, and return
 
 # v1 name only
@@ -108,6 +132,7 @@ export getFactorState # FIXME getFactorState were questioned and being reviewed 
 
 # export addBlobentry!,         getBlobentry,         mergeBlobentry!,         deleteBlobentry! # historic for VariableBlobentry
 # export addBlobentries!,       getBlobentries,       mergeBlobentries!,       deleteBlobentries!
+# TODO first pass progress
 # export addGraphBlobentry!,    getGraphBlobentry,    mergeGraphBlobentry!,    deleteGraphBlobentry!
 # export addGraphBlobentries!,  getGraphBlobentries,  mergeGraphBlobentries!,  deleteGraphBlobentries!
 # export addAgentBlobentry!,    getAgentBlobentry,    mergeAgentBlobentry!,    deleteAgentBlobentry!
@@ -127,21 +152,9 @@ export getFactorState # FIXME getFactorState were questioned and being reviewed 
 
 ## list
 # export listVariables, listFactors, listStates, listBlobentries, listFactorBlobEntries, listGraphBlobentries, listAgentBlobentries
+# not implemented yet (maybe not for DFG v1.0 yet):
 # export listVariableMetadata, listFactorMetadata, listAgentMetadata, listGraphMetadata
 # export listVariableBlobentryMetadata, listFactorBlobentryMetadata, listAgentBlobentryMetadata, listGraphBlobentryMetadata
-
-##------------------------------------------------------------------------------
-## Abstract types
-##------------------------------------------------------------------------------
-
-export AbstractObservation, AbstractPackedObservation
-export PriorObservation, RelativeObservation
-export FactorCache
-
-#TODO
-export PackedBelief
-
-# public AbstractGraphVariable, AbstractGraphFactor
 
 ##==============================================================================
 ## Internal or not yet ready
@@ -150,12 +163,6 @@ export PackedBelief
 ##------------------------------------------------------------------------------
 ## DFG
 ##------------------------------------------------------------------------------
-export AbstractDFGParams, DFGParams
-
-# Abstract Nodes
-export AbstractGraphNode
-export AbstractDFG
-export AbstractBlobstore
 
 # accessors & crud
 export getDescription,
@@ -195,31 +202,13 @@ export getBlobstore,
 export InMemoryDFGTypes, LocalDFG
 
 # AbstractDFG Interface
-export exists,
-    addVariables!,
-    addFactors!,
-    mergeFactor!,
-    deleteVariable!,
-    deleteFactor!,
-    listVariables,
-    listFactors,
-    getFactors,
-    isVariable,
-    isFactor
-
-export getindex
+export exists, mergeFactor!, isVariable, isFactor
 
 export isConnected
 
 export getBiadjacencyMatrix
 
 export getSummaryGraph
-
-# Variables
-export VariableCompute, VariableSummary, VariableSkeleton, VariableDFG
-
-# Factors
-export FactorCompute, FactorSummary, FactorSkeleton, FactorDFG
 
 # Common
 export getSolvable, setSolvable!, isSolvable
@@ -240,14 +229,9 @@ export removeTags! #TODO do we want this one
 ##------------------------------------------------------------------------------
 # Variable
 ##------------------------------------------------------------------------------
-# Abstract Variable Data
-export StateType
-
 # accessors
 export getSolverDataDict
 export getVariableType, getVariableTypeName
-
-export getObservation
 
 export getVariableType
 
@@ -266,7 +250,7 @@ export getMetadata,
     emptyMetadata!
 
 # CRUD & SET
-export getStates, listStates
+export getStates
 
 # PPE
 ##------------------------------------------------------------------------------

@@ -246,49 +246,34 @@ function getBlobentries(var::VariableDFG)
     return var.blobEntries
 end
 
-function getBlobentries(dfg::AbstractDFG, label::Symbol)
-    return getBlobentries(getVariable(dfg, label))
-end
-
-function getBlobentries(dfg::AbstractDFG, label::Symbol, regex::Regex)
-    entries = getBlobentries(dfg, label)
-    return filter(entries) do e
-        return occursin(regex, string(e.label))
-    end
-end
-
 function getBlobentries(
     dfg::AbstractDFG,
-    label::Symbol,
-    skey::Union{Symbol, <:AbstractString},
+    variableLabel::Symbol;
+    labelFilter::Union{Nothing, Function} = nothing,
 )
-    return getBlobentries(dfg, label, Regex(string(skey)))
+    entries = getBlobentries(getVariable(dfg, variableLabel))
+    filterDFG!(entries, labelFilter)
+    return entries
 end
 
-"""
-    $(SIGNATURES)
-
-Get all blob entries matching a Regex pattern over variables
-
-Notes
-- Use `dropEmpties=true` to not include empty lists in result.
-- Use keyword `varList` for which variables to search through.
-"""
-function getBlobentriesVariables(
-    dfg::AbstractDFG,
-    bLblPattern::Regex;
-    varList::AbstractVector{Symbol} = sort(listVariables(dfg); lt = natural_lt),
-    dropEmpties::Bool = false,
+function gatherBlobentries(
+    dfg::AbstractDFG;
+    labelFilter::Union{Nothing, Function} = nothing,
+    solvableFilter::Union{Nothing, Function} = nothing,
+    tagsFilter::Union{Nothing, Function} = nothing,
+    typeFilter::Union{Nothing, Function} = nothing,
+    variableLabelFilter::Union{Nothing, Function} = nothing,
 )
-    RETLIST = Vector{Vector{Blobentry}}()
-    @showprogress "Get entries matching $bLblPattern" for vl in varList
-        bes = filter(s -> occursin(bLblPattern, string(s.label)), listBlobentries(dfg, vl))
-        # only push to list if there are entries on this variable
-        (!dropEmpties || 0 < length(bes)) ? nothing : continue
-        push!(RETLIST, bes)
+    vls = listVariables(
+        dfg;
+        solvableFilter,
+        tagsFilter,
+        typeFilter,
+        labelFilter = variableLabelFilter,
+    )
+    return map(vls) do vl
+        return getBlobentries(dfg, vl; labelFilter)
     end
-
-    return RETLIST
 end
 
 """
@@ -304,7 +289,6 @@ function listBlobentries(var::VariableDFG)
 end
 
 function listBlobentries(dfg::AbstractDFG, label::Symbol)
-    # !isVariable(dfg, label) && return nothing
     return listBlobentries(getVariable(dfg, label))
 end
 

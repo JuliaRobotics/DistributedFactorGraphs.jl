@@ -700,7 +700,7 @@ Notes:
 - Returns `Vector{Symbol}`
 """
 function lsfPriors(dfg::AbstractDFG)
-    return listFactors(dfg; typeFilter = x -> x <: AbstractPriorObservation)
+    return listFactors(dfg; typeFilter = isPrior)
 end
 
 ## Listing DataTypes in a DFG
