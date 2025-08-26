@@ -218,7 +218,7 @@ function getBlobentries(
     blobIdFilter::Union{Nothing, Function} = nothing,
 )
     entries = getBlobentries(v)
-    filterDFG!(entries, labelFilter, x -> string(x.label))
+    filterDFG!(entries, labelFilter, getLabel)
     filterDFG!(entries, blobIdFilter, x -> string(x.blobId))
     return entries
 end

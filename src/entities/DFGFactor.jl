@@ -223,6 +223,9 @@ Base.@kwdef struct FactorCompute{FT <: AbstractObservation, N} <: AbstractGraphF
     solvercache::Base.RefValue{<:FactorCache} #TODO easy of use vs. performance as container is abstract in any case.
 end
 
+#FIXME rename smallData to metadata
+refMetadata(node::FactorCompute) = node.smallData
+
 ##------------------------------------------------------------------------------
 ## Constructors
 

@@ -92,7 +92,7 @@ See the [Manifolds.jl documentation on creating your own manifolds](https://juli
 
 Example:
 ```
-DFG.@defVariable Pose2 SpecialEuclidean(2) ArrayPartition([0;0.0],[1 0; 0 1.0])
+DFG.@defVariable Pose2 SpecialEuclideanGroup(2) ArrayPartition([0;0.0],[1 0; 0 1.0])
 ```
 """
 macro defStateType(structname, manifold, point_identity)
@@ -135,7 +135,7 @@ See the [Manifolds.jl documentation on creating your own manifolds](https://juli
 
 Example:
 ```
-DFG.@defStateTypeN Pose{N} SpecialEuclidean(N) ArrayPartition(zeros(SVector{N, Float64}), SMatrix{N, N, Float64}(I))
+DFG.@defStateTypeN Pose{N} SpecialEuclideanGroup(N) ArrayPartition(zeros(SVector{N, Float64}), SMatrix{N, N, Float64}(I))
 ```
 """
 macro defStateTypeN(structname, manifold, point_identity)

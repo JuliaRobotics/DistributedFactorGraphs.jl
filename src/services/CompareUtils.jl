@@ -196,37 +196,37 @@ end
 
 #Compare State
 function compare(a::State, b::State)
-    a.val != b.val && @debug("val is not equal") == nothing && return false
-    a.bw != b.bw && @debug("bw is not equal") == nothing && return false
+    a.val != b.val && @debug("val is not equal") === nothing && return false
+    a.bw != b.bw && @debug("bw is not equal") === nothing && return false
     a.BayesNetOutVertIDs != b.BayesNetOutVertIDs &&
-        @debug("BayesNetOutVertIDs is not equal") == nothing &&
+        @debug("BayesNetOutVertIDs is not equal") === nothing &&
         return false
-    a.dimIDs != b.dimIDs && @debug("dimIDs is not equal") == nothing && return false
-    a.dims != b.dims && @debug("dims is not equal") == nothing && return false
+    a.dimIDs != b.dimIDs && @debug("dimIDs is not equal") === nothing && return false
+    a.dims != b.dims && @debug("dims is not equal") === nothing && return false
     a.eliminated != b.eliminated &&
-        @debug("eliminated is not equal") == nothing &&
+        @debug("eliminated is not equal") === nothing &&
         return false
     a.BayesNetVertID != b.BayesNetVertID &&
-        @debug("BayesNetVertID is not equal") == nothing &&
+        @debug("BayesNetVertID is not equal") === nothing &&
         return false
     a.separator != b.separator &&
-        @debug("separator is not equal") == nothing &&
+        @debug("separator is not equal") === nothing &&
         return false
     a.initialized != b.initialized &&
-        @debug("initialized is not equal") == nothing &&
+        @debug("initialized is not equal") === nothing &&
         return false
     !isapprox(a.infoPerCoord, b.infoPerCoord; atol = 1e-13) &&
-        @debug("infoPerCoord is not equal") == nothing &&
+        @debug("infoPerCoord is not equal") === nothing &&
         return false
-    a.ismargin != b.ismargin && @debug("ismargin is not equal") == nothing && return false
+    a.ismargin != b.ismargin && @debug("ismargin is not equal") === nothing && return false
     a.dontmargin != b.dontmargin &&
-        @debug("dontmargin is not equal") == nothing &&
+        @debug("dontmargin is not equal") === nothing &&
         return false
     a.solveInProgress != b.solveInProgress &&
-        @debug("solveInProgress is not equal") == nothing &&
+        @debug("solveInProgress is not equal") === nothing &&
         return false
     getVariableType(a) != getVariableType(b) &&
-        @debug("variableType is not equal") == nothing &&
+        @debug("variableType is not equal") === nothing &&
         return false
     return true
 end

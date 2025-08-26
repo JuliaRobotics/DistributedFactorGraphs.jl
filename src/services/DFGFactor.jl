@@ -132,7 +132,7 @@ See documentation in [Manifolds.jl on making your own](https://juliamanifolds.gi
 
 Example:
 ```
-DFG.@defObservationType Pose2Pose2 RelativeObservation SpecialEuclidean(2)
+DFG.@defObservationType Pose2Pose2 RelativeObservation SpecialEuclideanGroup(2)
 ```
 """
 macro defObservationType(structname, factortype, manifold)
@@ -167,6 +167,7 @@ macro defObservationType(structname, factortype, manifold)
 end
 
 getManifold(obs::AbstractObservation) = getManifold(typeof(obs))
+getManifold(f::AbstractGraphFactor) = getManifold(getObservation(f))
 
 ##==============================================================================
 ## Factors

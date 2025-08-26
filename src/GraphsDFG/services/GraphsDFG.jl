@@ -91,6 +91,11 @@ function mergeVariable!(dfg::GraphsDFG, variable::AbstractGraphVariable)
     return 1
 end
 
+function mergeVariables!(dfg::GraphsDFG, variables)
+    cnts = map(mergeVariable!, variables)
+    return sum(cnts)
+end
+
 function mergeFactor!(dfg::GraphsDFG, factor::AbstractGraphFactor)
     if !haskey(dfg.g.factors, factor.label)
         addFactor!(dfg, factor)
@@ -174,7 +179,7 @@ function getVariables(
         filterDFG!(variables, >=(solvable), getSolvable)
     end
 
-    filterDFG!(variables, labelFilter, (String ∘ getLabel))
+    filterDFG!(variables, labelFilter, getLabel)
     filterDFG!(variables, solvableFilter, getSolvable)
     filterDFG!(variables, tagsFilter, getTags)
     filterDFG!(variables, typeFilter, getVariableType)
@@ -236,7 +241,7 @@ function getFactors(
             "The regex filter argument is deprecated, use kwarg `labelFilter=contains(regex)` instead", #v0.28
             :getFactors,
         )
-        filterDFG!(factors, contains(regex), (String ∘ getLabel))
+        filterDFG!(factors, contains(regex), getLabel)
     end
     if !isempty(tags)
         # NOTE that !isdisjoint is not supported by NvaDFG.
@@ -255,7 +260,7 @@ function getFactors(
         filterDFG!(factors, >=(solvable), getSolvable)
     end
 
-    filterDFG!(factors, labelFilter, (String ∘ getLabel))
+    filterDFG!(factors, labelFilter, getLabel)
     filterDFG!(factors, solvableFilter, getSolvable)
     filterDFG!(factors, tagsFilter, getTags)
     filterDFG!(factors, typeFilter, typeof ∘ getFactorType)
@@ -557,7 +562,7 @@ end
 
 function getGraphBlobentries(fg::GraphsDFG; labelFilter::Union{Nothing, Function} = nothing)
     entries = collect(values(fg.graph.blobEntries))
-    filterDFG!(entries, labelFilter, (String ∘ getLabel))
+    filterDFG!(entries, labelFilter, getLabel)
     return entries
 end
 
@@ -566,7 +571,7 @@ function listGraphBlobentries(
     labelFilter::Union{Nothing, Function} = nothing,
 )
     labels = collect(keys(fg.graph.blobEntries))
-    filterDFG!(labels, labelFilter, String)
+    filterDFG!(labels, labelFilter, string)
     return labels
 end
 

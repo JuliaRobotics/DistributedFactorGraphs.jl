@@ -1,6 +1,11 @@
 ##==============================================================================
 ## Common Accessors
 ##==============================================================================
+
+refTags(node) = node.tags
+refMetadata(node) = node.metadata
+refBlobentries(node) = node.blobEntries # FIXME rename blobEntries to blobentries to match noun
+
 # Common get and set methods
 
 # NOTE this could be reduced with macros and function generation to even less code.
