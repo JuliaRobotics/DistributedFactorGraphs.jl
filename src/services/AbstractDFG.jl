@@ -1099,6 +1099,7 @@ Related
 """
 function findShortestPathDijkstra end
 
+#TODO deprecate
 """
     $SIGNATURES
 

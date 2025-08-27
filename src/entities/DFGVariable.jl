@@ -44,7 +44,7 @@ Base.@kwdef mutable struct State{T <: StateType, P, N}
     Flag used by junction (Bayes) tree construction algorithm to know whether this variable has yet been included in the tree construction.
     """
     eliminated::Bool = false
-    BayesNetVertID::Symbol = :NOTHING #  Union{Nothing, }
+    BayesNetVertID::Symbol = :NOTHING #  Union{Nothing, } #TODO deprecate
     separator::Vector{Symbol} = Symbol[]
     """
     False if initial numerical values are not yet available or stored values are not ready for further processing yet.
@@ -118,7 +118,7 @@ Base.@kwdef mutable struct PackedState
     dimIDs::Vector{Int}
     dims::Int
     eliminated::Bool
-    BayesNetVertID::Symbol # Int
+    BayesNetVertID::Symbol # Int #TODO deprecate
     separator::Vector{Symbol} # Int
     variableType::String
     initialized::Bool
@@ -163,7 +163,6 @@ Data container to store Parameteric Point Estimate (PPE) for mean and max.
 """
 Base.@kwdef struct MeanMaxPPE <: AbstractPointParametricEst
     id::Union{UUID, Nothing} = nothing # If it's blank it doesn't exist in the DB.
-    # repeat key value internally (from a design request by Sam)
     solveKey::Symbol
     suggested::Vector{Float64}
     max::Vector{Float64}
@@ -325,6 +324,10 @@ Base.@kwdef struct VariableCompute{T <: StateType, P, N} <: AbstractGraphVariabl
     Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)"""
     solvable::Base.RefValue{Int} = Ref(1)
 end
+
+refStates(v::VariableCompute) = v.solverDataDict
+refMetadata(v::VariableCompute) = v.smallData
+refBlobentries(v::VariableCompute) = v.dataDict
 
 ##------------------------------------------------------------------------------
 ## Constructors

@@ -1,7 +1,7 @@
 
 # TODO consider enforcing the full structure.
 # This is not explicitly inforced, but surves as extra information of how the structure is put together.
-# AbstractDFGNode are all nodes that make up a DFG, including Agent, Graph, Variable, Factor, Blobstore, etc.
+# AbstractDFGNode are all nodes that make up a DFG, including Agent, Graph, Variable, Factor, Blobstore, Blobentry etc.
 # abstract type AbstractDFGNode end
 # any DFGNode shall have a label. 
 # abstract type AbstractGraphNode end <: AbstractDFGNode
