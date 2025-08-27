@@ -131,7 +131,8 @@ function filterDFG!(nodes, predicate::Function, by::typeof(getLabel))
     # TODO this is not as clean as it should be, revisit if any issues arise
     # Standard predicates that needs to be converted to string to work with Symbols
     # OR look for the type if predicate isa Base.Fix2 && (predicate.x isa AbstractString || predicate.x isa Regex)
-    if predicate isa Base.Fix2 && typeof(predicate.f) in [typeof(contains), typeof(startswith), typeof(endswith)]
+    if predicate isa Base.Fix2 &&
+       typeof(predicate.f) in [typeof(contains), typeof(startswith), typeof(endswith)]
         return filter!(predicate ∘ string ∘ by, nodes)
     else
         return filter!(predicate ∘ by, nodes)
