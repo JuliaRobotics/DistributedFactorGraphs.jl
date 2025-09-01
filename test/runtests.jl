@@ -63,6 +63,8 @@ end
 if get(ENV, "IIF_TEST", "true") == "true"
 
     # Switch to our upstream test branch.
+    #FIXME This is a temporary fix to use the develop branch of AMP.
+    Pkg.add(PackageSpec(; name = "ApproxManifoldProducts", rev = "develop"))
     #FIXME This is a temporary fix to use the develop branch of IIF.
     # Pkg.add(PackageSpec(; name = "IncrementalInference", rev = "upstream/dfg_integration_test"))
     # Pkg.add(PackageSpec(; name = "IncrementalInference", rev = "develop"))
