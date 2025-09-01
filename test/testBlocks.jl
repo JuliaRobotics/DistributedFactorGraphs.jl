@@ -1,7 +1,9 @@
 using DistributedFactorGraphs
 using Test
 using Dates
-using Manifolds
+using LieGroups
+using LieGroups: TranslationGroup
+# using Manifolds
 
 using DistributedFactorGraphs:
     LabelExistsError,
@@ -13,61 +15,30 @@ using DistributedFactorGraphs:
 import Base: convert
 # import DistributedFactorGraphs: getData, addData!, updateData!, deleteData!
 
-Base.convert(::Type{<:Tuple}, ::typeof(Euclidean(1))) = (:Euclid,)
-Base.convert(::Type{<:Tuple}, ::typeof(Euclidean(2))) = (:Euclid, :Euclid)
+# Base.convert(::Type{<:Tuple}, ::typeof(TranslationGroup(1))) = (:Euclid,)
+# Base.convert(::Type{<:Tuple}, ::typeof(TranslationGroup(2))) = (:Euclid, :Euclid)
 
-@defVariable TestVariableType1 Euclidean(1) [0.0;]
-DFG.@defStateTypeN TestVariableType{N} Euclidean(N) zeros(N)
+# define a few varaible to use
+@defVariable TestVariableType1 TranslationGroup(1) [0.0;]
+DFG.@defStateTypeN TestVariableType{N} TranslationGroup(N) zeros(N)
 const TestVariableType2 = TestVariableType{2}
 
-struct TestFunctorInferenceType1 <: AbstractRelative end
-struct TestFunctorInferenceType2 <: AbstractRelative end
+# define a few factor types to use
+DFG.@defObservationType TestFunctorInferenceType1 RelativeObservation TranslationGroup(1)
+DFG.@defObservationType TestFunctorInferenceType2 RelativeObservation TranslationGroup(1)
+DFG.@defObservationType TestAbstractPrior PriorObservation TranslationGroup(1)
 
-struct TestAbstractPrior <: PriorObservation end
-# struct TestAbstractRelativeFactor <: AbstractRelativeRoots end
-struct TestAbstractRelativeFactorMinimize <: RelativeObservation end
+TestFunctorInferenceType1() = TestFunctorInferenceType1(nothing)
+TestFunctorInferenceType2() = TestFunctorInferenceType2(nothing)
+TestAbstractPrior() = TestAbstractPrior(nothing)
 
-Base.@kwdef struct PackedTestFunctorInferenceType1 <: AbstractPackedObservation
-    s::String = ""
-end
-# PackedTestFunctorInferenceType1() = PackedTestFunctorInferenceType1("")
-
-function Base.convert(::Type{PackedTestFunctorInferenceType1}, d::TestFunctorInferenceType1)
-    # @info "convert(::Type{PackedTestFunctorInferenceType1}, d::TestFunctorInferenceType1)"
-    return PackedTestFunctorInferenceType1()
+struct PackedNothingDistribution <: AbstractPackedBelief
+    _type::Symbol
+    PackedNothingDistribution(; _type::String = "PackedNothingDistribution") = new(Symbol(_type))
 end
 
-function DFG.reconstFactorData(
-    dfg::AbstractDFG,
-    vo::AbstractVector,
-    ::Type{TestFunctorInferenceType1},
-    d::PackedTestFunctorInferenceType1,
-    ::String,
-)
-    error("obsolete, TODO remove")
-    return TestFunctorInferenceType1()
-end
-
-# overly simplified test requires both reconstitute and convert
-function Base.convert(::Type{TestFunctorInferenceType1}, d::PackedTestFunctorInferenceType1)
-    # @info "convert(::Type{TestFunctorInferenceType1}, d::PackedTestFunctorInferenceType1)"
-    return TestFunctorInferenceType1()
-end
-
-Base.@kwdef struct PackedTestAbstractPrior <: AbstractPackedObservation
-    s::String = ""
-end
-# PackedTestAbstractPrior() = PackedTestAbstractPrior("")
-
-function Base.convert(::Type{PackedTestAbstractPrior}, d::TestAbstractPrior)
-    # @info "convert(::Type{PackedTestAbstractPrior}, d::TestAbstractPrior)"
-    return PackedTestAbstractPrior()
-end
-
-function Base.convert(::Type{TestAbstractPrior}, d::PackedTestAbstractPrior)
-    # @info "onvert(::Type{TestAbstractPrior}, d::PackedTestAbstractPrior)"
-    return TestAbstractPrior()
-end
+DFG.packDistribution(::Nothing) = PackedNothingDistribution()
+DFG.unpackDistribution(::PackedNothingDistribution) = nothing
 
 struct TestCCW{T <: AbstractObservation} <: FactorCache
     usrfnc!::T
@@ -76,46 +47,6 @@ end
 TestCCW{T}() where {T} = TestCCW(T())
 
 Base.:(==)(a::TestCCW, b::TestCCW) = a.usrfnc! == b.usrfnc!
-
-# DFG.rebuildFactorCache!(dfg::AbstractDFG{NoSolverParams}, fac::FactorCompute) = fac
-
-function DFG.reconstFactorData(
-    dfg::AbstractDFG,
-    vo::AbstractVector,
-    ::Type{<:DFG.FunctionNodeData{TestCCW{F}}},
-    d::DFG.PackedFunctionNodeData{<:AbstractPackedObservation},
-) where {F <: DFG.AbstractObservation}
-    error("obsolete, TODO remove")
-    nF = convert(F, d.fnc)
-    return DFG.FunctionNodeData(
-        d.eliminated,
-        d.potentialused,
-        d.edgeIDs,
-        TestCCW(nF),
-        d.multihypo,
-        d.certainhypo,
-        d.nullhypo,
-        d.solveInProgress,
-        d.inflation,
-    )
-end
-
-function Base.convert(
-    ::Type{DFG.PackedFunctionNodeData{P}},
-    d::DFG.FunctionNodeData{<:FactorCache},
-) where {P <: AbstractPackedObservation}
-    return DFG.PackedFunctionNodeData(
-        d.eliminated,
-        d.potentialused,
-        d.edgeIDs,
-        convert(P, d.fnc.usrfnc!),
-        d.multihypo,
-        d.certainhypo,
-        d.nullhypo,
-        d.solveInProgress,
-        d.inflation,
-    )
-end
 
 ##
 # global testDFGAPI = GraphsDFG
@@ -357,7 +288,7 @@ function DFGVariableSCA()
     #variableType functions
     testvar = TestVariableType1()
     @test getDimension(testvar) == 1
-    @test getManifold(testvar) == Euclidean(1)
+    @test getManifold(testvar) == TranslationGroup(1)
 
     # #TODO sort out
     # getPPEs
@@ -410,8 +341,8 @@ function DFGFactorSCA()
     @test setSolvable!(f1, 1) == 1
 
     #TODO These 2 function are equivelent
-    @test typeof(getFactorType(f1)) == TestFunctorInferenceType1
-    @test typeof(getFactorFunction(f1)) == TestFunctorInferenceType1
+    @test typeof(getFactorType(f1)) == TestFunctorInferenceType1{Nothing}
+    @test typeof(getFactorFunction(f1)) == TestFunctorInferenceType1{Nothing}
 
     #TODO here for now, don't recommend usage.
     testTags = [:tag1, :tag2]
@@ -1148,12 +1079,12 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test isPrior(fg, :af1) # if f1 is prior
         @test lsfPriors(fg) == [:af1]
 
-        @test issetequal([TestFunctorInferenceType1, TestAbstractPrior], DFG.lsfTypes(fg))
+        @test issetequal([TestFunctorInferenceType1{Nothing}, TestAbstractPrior{Nothing}], DFG.lsfTypes(fg))
 
         facTypesDict = DFG.lsfTypesDict(fg)
         @test issetequal(collect(keys(facTypesDict)), DFG.lsfTypes(fg))
-        @test issetequal(facTypesDict[TestFunctorInferenceType1], [:abf1])
-        @test issetequal(facTypesDict[TestAbstractPrior], [:af1])
+        @test issetequal(facTypesDict[TestFunctorInferenceType1{Nothing}], [:abf1])
+        @test issetequal(facTypesDict[TestAbstractPrior{Nothing}], [:af1])
 
         @test ls(fg, TestFunctorInferenceType1) == [:abf1]
         @test lsf(fg, TestAbstractPrior) == [:af1]
@@ -1672,7 +1603,7 @@ function ProducingDotFiles(
         @test DFG.toDot(dotdfg) ==
               "graph graphname {\n2 [\"label\"=\"b\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n2 -- 3\n3 [\"label\"=\"abf1\",\"shape\"=\"box\",\"fillcolor\"=\"blue\",\"color\"=\"blue\"]\n1 [\"label\"=\"a\",\"shape\"=\"ellipse\",\"fillcolor\"=\"red\",\"color\"=\"red\"]\n1 -- 3\n}\n"
     end
-    @test DFG.toDotFile(dotdfg, "something.dot") == nothing
+    @test DFG.toDotFile(dotdfg, "something.dot") === nothing
     return Base.rm("something.dot")
 end
 
