@@ -34,7 +34,9 @@ TestAbstractPrior() = TestAbstractPrior(nothing)
 
 struct PackedNothingDistribution <: AbstractPackedBelief
     _type::Symbol
-    PackedNothingDistribution(; _type::String = "PackedNothingDistribution") = new(Symbol(_type))
+    function PackedNothingDistribution(; _type::String = "PackedNothingDistribution")
+        return new(Symbol(_type))
+    end
 end
 
 DFG.packDistribution(::Nothing) = PackedNothingDistribution()
@@ -1079,7 +1081,10 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test isPrior(fg, :af1) # if f1 is prior
         @test lsfPriors(fg) == [:af1]
 
-        @test issetequal([TestFunctorInferenceType1{Nothing}, TestAbstractPrior{Nothing}], DFG.lsfTypes(fg))
+        @test issetequal(
+            [TestFunctorInferenceType1{Nothing}, TestAbstractPrior{Nothing}],
+            DFG.lsfTypes(fg),
+        )
 
         facTypesDict = DFG.lsfTypesDict(fg)
         @test issetequal(collect(keys(facTypesDict)), DFG.lsfTypes(fg))
