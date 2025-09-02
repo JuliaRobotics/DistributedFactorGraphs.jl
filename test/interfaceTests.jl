@@ -219,6 +219,30 @@ end
     end
 end
 
+@testset "Mixing Compute and DFG graph nodes" begin
+    com_fg = testDFGAPI()
+    pac_fg = testDFGAPI{NoSolverParams, VariableDFG, FactorDFG}()
+
+    v = addVariable!(com_fg, var1)
+    @test v == var1
+    pv = addVariable!(pac_fg, v)
+    @test packVariable(v) == pv
+
+    pv = addVariable!(pac_fg, var2)
+    @test unpackVariable(pv) == var2
+    v = addVariable!(com_fg, pv)
+    @test v == var2
+
+    f = addFactor!(com_fg, fac0)
+    @test f == fac0
+    pf = addFactor!(pac_fg, f)
+    @test packFactor(f) == pf
+
+    pf = addFactor!(pac_fg, fac1)
+    @test unpackFactor(pf) == fac1
+    f = addFactor!(com_fg, pf)
+    @test f == fac1
+end
 #=
 fg = fg1
 v1 = var1

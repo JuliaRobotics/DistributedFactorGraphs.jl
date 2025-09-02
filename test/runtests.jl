@@ -63,6 +63,8 @@ end
 if get(ENV, "IIF_TEST", "true") == "true"
 
     # Switch to our upstream test branch.
+    #FIXME This is a temporary fix to use the develop branch of AMP.
+    Pkg.add(PackageSpec(; name = "ApproxManifoldProducts", rev = "develop"))
     #FIXME This is a temporary fix to use the develop branch of IIF.
     # Pkg.add(PackageSpec(; name = "IncrementalInference", rev = "upstream/dfg_integration_test"))
     # Pkg.add(PackageSpec(; name = "IncrementalInference", rev = "develop"))
@@ -125,36 +127,36 @@ else
     @warn "Skipping IncrementalInference driver tests"
 end
 
-struct NotImplementedDFG{T} <: AbstractDFG{T} end
+struct NotImplementedDFG{V, T} <: AbstractDFG{V, T} end
 
 @testset "No Interface tests" begin
-    dfg = NotImplementedDFG{NoSolverParams}()
+    dfg = NotImplementedDFG{VariableDFG, FactorDFG}()
     v1 = VariableSkeleton(:v1)
     f1 = FactorSkeleton(:f1, [:v1])
 
-    @test_throws ErrorException exists(dfg, v1)
-    @test_throws ErrorException exists(dfg, f1)
+    @test_throws MethodError exists(dfg, v1)
+    @test_throws MethodError exists(dfg, f1)
 
-    @test_throws ErrorException exists(dfg, :s)
-    @test_throws ErrorException addVariable!(dfg, v1)
+    @test_throws MethodError exists(dfg, :s)
+    @test_throws MethodError addVariable!(dfg, v1)
 
-    @test_throws ErrorException getVariable(dfg, :a)
-    @test_throws ErrorException getFactor(dfg, :a)
-    @test_throws ErrorException mergeVariable!(dfg, v1)
-    @test_throws ErrorException mergeFactor!(dfg, f1)
+    @test_throws MethodError getVariable(dfg, :a)
+    @test_throws MethodError getFactor(dfg, :a)
+    @test_throws MethodError mergeVariable!(dfg, v1)
+    @test_throws MethodError mergeFactor!(dfg, f1)
 
-    @test_throws ErrorException deleteVariable!(dfg, :a)
-    @test_throws ErrorException deleteFactor!(dfg, :a)
-    @test_throws ErrorException getVariables(dfg)
-    @test_throws ErrorException getFactors(dfg)
-    @test_throws ErrorException isConnected(dfg)
-    @test_throws ErrorException listNeighbors(dfg, v1)
-    @test_throws ErrorException listNeighbors(dfg, :a)
+    @test_throws MethodError deleteVariable!(dfg, :a)
+    @test_throws MethodError deleteFactor!(dfg, :a)
+    @test_throws MethodError getVariables(dfg)
+    @test_throws MethodError getFactors(dfg)
+    @test_throws MethodError isConnected(dfg)
+    @test_throws MethodError listNeighbors(dfg, v1)
+    @test_throws MethodError listNeighbors(dfg, :a)
 
-    @test_throws ErrorException _getDuplicatedEmptyDFG(dfg)
+    @test_throws MethodError DFG._getDuplicatedEmptyDFG(dfg)
 
-    @test_throws ErrorException isVariable(dfg, :a)
-    @test_throws ErrorException isFactor(dfg, :a)
+    @test_throws MethodError isVariable(dfg, :a)
+    @test_throws MethodError isFactor(dfg, :a)
 end
 
 @testset "Testing Code Quality with Aqua" begin

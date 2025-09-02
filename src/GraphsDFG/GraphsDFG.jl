@@ -8,7 +8,15 @@ using OrderedCollections
 using StructTypes
 
 using ...DistributedFactorGraphs
-using ...DistributedFactorGraphs: Agent, LabelNotFoundError, LabelExistsError
+using ...DistributedFactorGraphs:
+    Agent,
+    LabelNotFoundError,
+    LabelExistsError,
+    FactorgraphRoot,
+    AbstractGraphVariable,
+    AbstractGraphFactor,
+    NoSolverParams,
+    filterDFG!
 
 # import DFG functions to extend
 import ...DistributedFactorGraphs:
@@ -24,7 +32,8 @@ import ...DistributedFactorGraphs:
     getAddHistory,
     addFactor!,
     getSolverParams,
-    exists,
+    hasVariable,
+    hasFactor,
     isVariable,
     isFactor,
     mergeVariable!,

@@ -36,7 +36,7 @@ getFactorType(dfg::AbstractDFG, lbl::Symbol) = getFactorType(getFactor(dfg, lbl)
 
 Return factor state from factor graph.
 """
-getFactorState(f::AbstractDFGFactor) = f.state
+getFactorState(f::AbstractGraphFactor) = f.state
 getFactorState(dfg::AbstractDFG, lbl::Symbol) = getFactorState(getFactor(dfg, lbl))
 
 """
@@ -85,7 +85,7 @@ Set the solver cache for a factor, which is used to store intermediate results
 during the solving process. This is useful for caching results that can be reused
 across multiple solves, such as Jacobians or other computed values.
 """
-setCache!(f::FactorCompute, solvercache::FactorSolverCache) = f.solvercache[] = solvercache
+setCache!(f::FactorCompute, solvercache::FactorCache) = f.solvercache[] = solvercache
 
 """
     $SIGNATURES
@@ -102,21 +102,19 @@ using RoME
 @assert RoME.PriorPose2 == DFG._getPriorType(Pose2)
 ```
 """
-function _getPriorType(_type::Type{<:VariableStateType})
+function _getPriorType(_type::Type{<:StateType})
     return getfield(_type.name.module, Symbol(:Prior, _type.name.name))
 end
 
 ##==============================================================================
 ## Default Factors Function Macro
 ##==============================================================================
-export PackedBelief
 
 function pack end
 function unpack end
 function packDistribution end
 function unpackDistribution end
 
-abstract type PackedBelief end
 StructTypes.StructType(::Type{<:PackedBelief}) = StructTypes.UnorderedStruct()
 
 #TODO remove, rather use StructTypes.jl properly
@@ -126,7 +124,7 @@ function Base.convert(::Type{<:PackedBelief}, nt::Union{NamedTuple, JSON3.Object
 end
 
 """
-    @defObservationType StructName factortype<:AbstractFactorObservation manifolds<:AbstractManifold
+    @defObservationType StructName factortype<:AbstractObservation manifolds<:AbstractManifold
 
 A macro to create a new factor function with name `StructName` and manifold. Note that
 the `manifold` is an object and *must* be a subtype of `ManifoldsBase.AbstractManifold`.
@@ -134,7 +132,7 @@ See documentation in [Manifolds.jl on making your own](https://juliamanifolds.gi
 
 Example:
 ```
-DFG.@defObservationType Pose2Pose2 RelativeObservation SpecialEuclidean(2)
+DFG.@defObservationType Pose2Pose2 RelativeObservation SpecialEuclideanGroup(2)
 ```
 """
 macro defObservationType(structname, factortype, manifold)
@@ -146,16 +144,16 @@ macro defObservationType(structname, factortype, manifold)
                                                      string($manifold) *
                                                      ") is not an `AbstractManifold`"
 
-            @assert ($factortype <: AbstractFactorObservation) "@defObservationType factortype (" *
-                                                               string($factortype) *
-                                                               ") is not an `AbstractFactorObservation`"
+            @assert ($factortype <: AbstractObservation) "@defObservationType factortype (" *
+                                                         string($factortype) *
+                                                         ") is not an `AbstractObservation`"
 
             Base.@__doc__ struct $structname{T} <: $factortype
                 Z::T
             end
 
             #TODO should this be $packedstructname{T <: PackedBelief}
-            Base.@__doc__ struct $packedstructname <: AbstractPackedFactorObservation
+            Base.@__doc__ struct $packedstructname <: AbstractPackedObservation
                 Z::PackedBelief
             end
 
@@ -168,7 +166,8 @@ macro defObservationType(structname, factortype, manifold)
     )
 end
 
-getManifold(obs::AbstractFactorObservation) = getManifold(typeof(obs))
+getManifold(obs::AbstractObservation) = getManifold(typeof(obs))
+getManifold(f::AbstractGraphFactor) = getManifold(getObservation(f))
 
 ##==============================================================================
 ## Factors
@@ -201,7 +200,7 @@ getManifold(obs::AbstractFactorObservation) = getManifold(typeof(obs))
 ## COMMON
 # getTimestamp
 
-function setTimestamp(f::AbstractDFGFactor, ts::DateTime, timezone = localzone())
+function setTimestamp(f::AbstractGraphFactor, ts::DateTime, timezone = localzone())
     return setTimestamp(f, ZonedDateTime(ts, timezone))
 end
 function setTimestamp(f::FactorCompute, ts::ZonedDateTime)
@@ -270,18 +269,16 @@ getVariableOrder(dfg::AbstractDFG, fct::Symbol) = getVariableOrder(getFactor(dfg
 
 Return `::Bool` on whether given factor `fc::Symbol` is a prior in factor graph `dfg`.
 """
-function isPrior(dfg::AbstractDFG, fc::Symbol)
-    fco = getFactor(dfg, fc)
-    return isPrior(getFactorType(fco))
+function isPrior(::Type{T}) where {T <: AbstractObservation}
+    return T <: AbstractPriorObservation
 end
 
-function isPrior(::PriorObservation)
-    return true
+function isPrior(::T) where {T <: AbstractObservation}
+    return isPrior(T)
 end
 
-function isPrior(::RelativeObservation)
-    return false
-end
+isPrior(f::AbstractGraphFactor) = isPrior(getObservation(f))
+isPrior(dfg::AbstractDFG, fl::Symbol) = isPrior(getFactor(dfg, fl))
 
 ##==============================================================================
 ## Layer 2 CRUD (none) and Sets

@@ -1,47 +1,29 @@
-
-function getDFGMetadata(fg::GraphsDFG)
-    metafields = Set(fieldnames(GraphsDFG))
-    setdiff!(metafields, [:g, :solverParams])
-    metaprops = NamedTuple(k => getproperty(fg, k) for k in metafields)
-    return metaprops
+function hasVariable(dfg::GraphsDFG, label::Symbol)
+    return haskey(dfg.g.variables, label)
 end
 
-function exists(
-    dfg::GraphsDFG{P, V, F},
-    node::V,
-) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
-    return haskey(dfg.g.variables, node.label)
+function hasFactor(dfg::GraphsDFG, label::Symbol)
+    return haskey(dfg.g.factors, label)
 end
-
-function exists(
-    dfg::GraphsDFG{P, V, F},
-    node::F,
-) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
-    return haskey(dfg.g.factors, node.label)
-end
-
-exists(dfg::GraphsDFG, nId::Symbol) = haskey(dfg.g.labels, nId)
-
-exists(dfg::GraphsDFG, node::DFGNode) = exists(dfg, node.label)
 
 function isVariable(
     dfg::GraphsDFG{P, V, F},
     sym::Symbol,
-) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
+) where {P <: AbstractDFGParams, V <: AbstractGraphVariable, F <: AbstractGraphFactor}
     return haskey(dfg.g.variables, sym)
 end
 
 function isFactor(
     dfg::GraphsDFG{P, V, F},
     sym::Symbol,
-) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
+) where {P <: AbstractDFGParams, V <: AbstractGraphVariable, F <: AbstractGraphFactor}
     return haskey(dfg.g.factors, sym)
 end
 
 function addVariable!(
-    dfg::GraphsDFG{<:AbstractParams, V, <:AbstractDFGFactor},
+    dfg::GraphsDFG{<:AbstractDFGParams, V, <:AbstractGraphFactor},
     variable::V,
-) where {V <: AbstractDFGVariable}
+) where {V <: AbstractGraphVariable}
     if haskey(dfg.g.variables, variable.label)
         throw(LabelExistsError("Variable", variable.label))
     end
@@ -55,53 +37,16 @@ function addVariable!(
 end
 
 function addVariable!(
-    dfg::GraphsDFG{<:AbstractParams, VD, <:AbstractDFGFactor},
-    variable::AbstractDFGVariable,
-) where {VD <: AbstractDFGVariable}
+    dfg::GraphsDFG{<:AbstractDFGParams, VD, <:AbstractGraphFactor},
+    variable::AbstractGraphVariable,
+) where {VD <: AbstractGraphVariable}
     return addVariable!(dfg, VD(variable))
 end
 
-#moved to abstract
-# function addFactor!(dfg::GraphsDFG{<:AbstractParams, V, F}, variables::Vector{<:V}, factor::F)::F where {V <: AbstractDFGVariable, F <: AbstractDFGFactor}
-#
-#     #TODO should this be an error
-#     if haskey(dfg.g.factors, factor.label)
-#         error("Factor '$(factor.label)' already exists in the factor graph")
-#     end
-#     # for v in variables
-#     #     if !(v.label in keys(dfg.g.metaindex[:label]))
-#     #         error("Variable '$(v.label)' not found in graph when creating Factor '$(factor.label)'")
-#     #     end
-#     # end
-#
-#     variableLabels = map(v->v.label, variables)
-#
-#     resize!(factor._variableOrderSymbols, length(variableLabels))
-#     factor._variableOrderSymbols .= variableLabels
-#     # factor._variableOrderSymbols = copy(variableLabels)
-#
-#     @assert FactorGraphs.addFactor!(dfg.g, variableLabels, factor)
-#     return factor
-# end
-#
-# function addFactor!(dfg::GraphsDFG{<:AbstractParams, <:AbstractDFGVariable, F}, variableLabels::Vector{Symbol}, factor::F)::F where F <: AbstractDFGFactor
-#     #TODO should this be an error
-#     if haskey(dfg.g.factors, factor.label)
-#         error("Factor '$(factor.label)' already exists in the factor graph")
-#     end
-#
-#     resize!(factor._variableOrderSymbols, length(variableLabels))
-#     factor._variableOrderSymbols .= variableLabels
-#
-#     @assert FactorGraphs.addFactor!(dfg.g, variableLabels, factor)
-#
-#     return factor
-# end
-
 function addFactor!(
-    dfg::GraphsDFG{<:AbstractParams, <:AbstractDFGVariable, F},
+    dfg::GraphsDFG{<:AbstractDFGParams, <:AbstractGraphVariable, F},
     factor::F,
-) where {F <: AbstractDFGFactor}
+) where {F <: AbstractGraphFactor}
     if haskey(dfg.g.factors, factor.label)
         throw(LabelExistsError("Factor", factor.label))
     end
@@ -109,16 +54,16 @@ function addFactor!(
     # @assert FactorGraphs.addFactor!(dfg.g, getVariableOrder(factor), factor)
     variableLabels = Symbol[factor._variableOrderSymbols...]
     for vlabel in variableLabels
-        !exists(dfg, vlabel) && throw(LabelNotFoundError("Variable", vlabel))
+        !hasVariable(dfg, vlabel) && throw(LabelNotFoundError("Variable", vlabel))
     end
     @assert FactorGraphs.addFactor!(dfg.g, variableLabels, factor)
     return factor
 end
 
 function addFactor!(
-    dfg::GraphsDFG{<:AbstractParams, <:AbstractDFGVariable, F},
-    factor::AbstractDFGFactor,
-) where {F <: AbstractDFGFactor}
+    dfg::GraphsDFG{<:AbstractDFGParams, <:AbstractGraphVariable, F},
+    factor::AbstractGraphFactor,
+) where {F <: AbstractGraphFactor}
     return addFactor!(dfg, F(factor))
 end
 
@@ -137,7 +82,7 @@ function getFactor(dfg::GraphsDFG, label::Symbol)
     return dfg.g.factors[label]
 end
 
-function mergeVariable!(dfg::GraphsDFG, variable::AbstractDFGVariable)
+function mergeVariable!(dfg::GraphsDFG, variable::AbstractGraphVariable)
     if !haskey(dfg.g.variables, variable.label)
         addVariable!(dfg, variable)
     else
@@ -146,7 +91,12 @@ function mergeVariable!(dfg::GraphsDFG, variable::AbstractDFGVariable)
     return 1
 end
 
-function mergeFactor!(dfg::GraphsDFG, factor::AbstractDFGFactor;)
+function mergeVariables!(dfg::GraphsDFG, variables)
+    cnts = map(mergeVariable!, variables)
+    return sum(cnts)
+end
+
+function mergeFactor!(dfg::GraphsDFG, factor::AbstractGraphFactor)
     if !haskey(dfg.g.factors, factor.label)
         addFactor!(dfg, factor)
     elseif dfg.g.factors[factor.label]._variableOrderSymbols != factor._variableOrderSymbols
@@ -162,7 +112,7 @@ function mergeFactor!(dfg::GraphsDFG, factor::AbstractDFGFactor;)
     return 1
 end
 
-function deleteVariable!(dfg::GraphsDFG, label::Symbol)#::Tuple{AbstractDFGVariable, Vector{<:AbstractDFGFactor}}
+function deleteVariable!(dfg::GraphsDFG, label::Symbol)#::Tuple{AbstractGraphVariable, Vector{<:AbstractGraphFactor}}
     if !haskey(dfg.g.variables, label)
         throw(LabelNotFoundError("Variable", label))
     end
@@ -175,7 +125,7 @@ function deleteVariable!(dfg::GraphsDFG, label::Symbol)#::Tuple{AbstractDFGVaria
     return sum(del_facs) + 1
 end
 
-function deleteFactor!(dfg::GraphsDFG, label::Symbol; suppressGetFactor::Bool = false)
+function deleteFactor!(dfg::GraphsDFG, label::Symbol)
     if !haskey(dfg.g.factors, label)
         throw(LabelNotFoundError("Factor", label))
     end
@@ -183,25 +133,56 @@ function deleteFactor!(dfg::GraphsDFG, label::Symbol; suppressGetFactor::Bool = 
     return 1
 end
 
+# """
+# tagsFilter = ⊇([:x1])
+# tagsFilter([:x1, :x2])
+# true
+# tagsFilter = Base.Fix1(in, :x1)
+# tagsFilter([:x1, :x2])
+# true
+# """
+
 function getVariables(
     dfg::GraphsDFG,
-    regexFilter::Union{Nothing, Regex} = nothing;
+    regex::Union{Nothing, Regex} = nothing;
     tags::Vector{Symbol} = Symbol[],
-    solvable::Int = 0,
-    solvableFilter::Union{Nothing, Base.Fix2} = nothing,
+    solvable::Union{Nothing, Int} = nothing,
+    solvableFilter::Union{Nothing, Function} = nothing,
+    labelFilter::Union{Nothing, Function} = nothing,
+    tagsFilter::Union{Nothing, Function} = nothing,
+    typeFilter::Union{Nothing, Function} = nothing,
 )
-
-    # variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa VariableCompute, vertices(dfg.g)))
     variables = collect(values(dfg.g.variables))
 
-    !isnothing(regexFilter) &&
-        filter!(v -> occursin(regexFilter, String(v.label)), variables)
+    if !isnothing(regex)
+        # NOTE that contains(regex::Regex) is not supported by the NvaDFG.
+        Base.depwarn(
+            "The regex filter argument is deprecated, use kwarg `labelFilter=contains(regex)` instead", #v0.28
+            :getVariables,
+        )
+        filterDFG!(variables, contains(regex), (String ∘ getLabel))
+    end
+    if !isempty(tags)
+        # NOTE that !isdisjoint is not supported by NvaDFG.
+        Base.depwarn(
+            "tags kwarg is deprecated, use kwarg `tagsFilter = !isdisjoint(tags)` instead", #v0.28
+            :getVariables,
+        )
+        filterDFG!(variables, x -> !isdisjoint(x, tags), getTags)
+    end
+    if !isnothing(solvable)
+        #TODO review. just one solvableFilter or keep solvable as well.
+        Base.depwarn(
+            "solvable kwarg is deprecated, use kwarg `solvableFilter = (>=solvable)` instead", #v0.28
+            :getVariables,
+        )
+        filterDFG!(variables, >=(solvable), getSolvable)
+    end
 
-    solvable != 0 && filter!(v -> _isSolvable(dfg, v.label, solvable), variables)
-
-    !isempty(tags) && filter!(v -> !isempty(intersect(v.tags, tags)), variables)
-
-    !isnothing(solvableFilter) && filter!(v -> solvableFilter(getSolvable(v)), variables)
+    filterDFG!(variables, labelFilter, getLabel)
+    filterDFG!(variables, solvableFilter, getSolvable)
+    filterDFG!(variables, tagsFilter, getTags)
+    filterDFG!(variables, typeFilter, getVariableType)
 
     return variables
 end
@@ -210,44 +191,79 @@ function listVariables(
     dfg::GraphsDFG,
     regexFilter::Union{Nothing, Regex} = nothing;
     tags::Vector{Symbol} = Symbol[],
-    solvable::Int = 0,
-    solvableFilter::Union{Nothing, Base.Fix2} = nothing,
+    solvable::Union{Nothing, Int} = nothing,
+    solvableFilter::Union{Nothing, Function} = nothing,
+    tagsFilter::Union{Nothing, Function} = nothing,
+    typeFilter::Union{Nothing, Function} = nothing,
+    labelFilter::Union{Nothing, Function} = nothing,
 )
-
-    # variables = map(v -> v.dfgNode, filter(n -> n.dfgNode isa VariableCompute, vertices(dfg.g)))
-    if length(tags) > 0
+    if !isnothing(solvableFilter) ||
+       !isnothing(tagsFilter) ||
+       !isnothing(typeFilter) ||
+       !isnothing(regexFilter) ||  #TODO deprecated
+       !isempty(tags) ||           #TODO deprecated
+       !isnothing(solvable)        #TODO Maybe deprecated?
         return map(
-            v -> v.label,
-            getVariables(dfg, regexFilter; tags = tags, solvable = solvable),
-        )::Vector{Symbol}
+            getLabel,
+            getVariables(
+                dfg,
+                regexFilter;
+                tags,
+                solvable,
+                solvableFilter,
+                tagsFilter,
+                typeFilter,
+                labelFilter,
+            ),
+        )
     else
-        variables = copy(dfg.g.variables.keys)
-        !isnothing(regexFilter) && filter!(v -> occursin(regexFilter, String(v)), variables)
-        solvable != 0 && filter!(vId -> _isSolvable(dfg, vId, solvable), variables)
-        !isnothing(solvableFilter) &&
-            filter!(v -> solvableFilter(getSolvable(dfg, v)), variables)
-        return variables::Vector{Symbol}
+        # Is it ok to continue using the internal keys property? collect(keys(dfg.g.variables)) allowcates a lot.
+        labels = copy(dfg.g.variables.keys)
+        filterDFG!(labels, labelFilter, string)
+        return labels
     end
 end
 
 function getFactors(
     dfg::GraphsDFG,
-    regexFilter::Union{Nothing, Regex} = nothing;
+    regex::Union{Nothing, Regex} = nothing;
     tags::Vector{Symbol} = Symbol[],
-    solvable::Int = 0,
+    solvable::Union{Nothing, Int} = nothing,
+    solvableFilter::Union{Nothing, Function} = nothing,
+    tagsFilter::Union{Nothing, Function} = nothing,
+    typeFilter::Union{Nothing, Function} = nothing,
+    labelFilter::Union{Nothing, Function} = nothing,
 )
-    # factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa FactorCompute, vertices(dfg.g)))
     factors = collect(values(dfg.g.factors))
-    if !isnothing(regexFilter)
-        factors = filter(f -> occursin(regexFilter, String(f.label)), factors)
+    if !isnothing(regex)
+        # NOTE that contains(regex::Regex) is not supported by the NvaDFG.
+        Base.depwarn(
+            "The regex filter argument is deprecated, use kwarg `labelFilter=contains(regex)` instead", #v0.28
+            :getFactors,
+        )
+        filterDFG!(factors, contains(regex), getLabel)
     end
-    if solvable != 0
-        factors = filter(f -> _isSolvable(dfg, f.label, solvable), factors)
+    if !isempty(tags)
+        # NOTE that !isdisjoint is not supported by NvaDFG.
+        Base.depwarn(
+            "tags kwarg is deprecated, use kwarg `tagsFilter = !isdisjoint(tags)` instead", #v0.28
+            :getFactors,
+        )
+        filterDFG!(factors, x -> !isdisjoint(x, tags), getTags)
     end
-    if length(tags) > 0
-        mask = map(v -> length(intersect(v.tags, tags)) > 0, factors)
-        return factors[mask]
+    if !isnothing(solvable)
+        #TODO review. just one solvableFilter or keep solvable as well.
+        Base.depwarn(
+            "solvable kwarg is deprecated, use kwarg `solvableFilter = (>=solvable)` instead", #v0.28
+            :getFactors,
+        )
+        filterDFG!(factors, >=(solvable), getSolvable)
     end
+
+    filterDFG!(factors, labelFilter, getLabel)
+    filterDFG!(factors, solvableFilter, getSolvable)
+    filterDFG!(factors, tagsFilter, getTags)
+    filterDFG!(factors, typeFilter, typeof ∘ getFactorType)
     return factors
 end
 
@@ -255,23 +271,37 @@ function listFactors(
     dfg::GraphsDFG,
     regexFilter::Union{Nothing, Regex} = nothing;
     tags::Vector{Symbol} = Symbol[],
-    solvable::Int = 0,
+    solvable::Union{Nothing, Int} = nothing,
+    solvableFilter::Union{Nothing, Function} = nothing,
+    tagsFilter::Union{Nothing, Function} = nothing,
+    typeFilter::Union{Nothing, Function} = nothing,
+    labelFilter::Union{Nothing, Function} = nothing,
 )
-    # factors = map(v -> v.dfgNode, filter(n -> n.dfgNode isa FactorCompute, vertices(dfg.g)))
-    if length(tags) > 0
+    if !isnothing(solvableFilter) ||
+       !isnothing(tagsFilter) ||
+       !isnothing(typeFilter) ||
+       !isnothing(regexFilter) ||  #TODO deprecated
+       !isempty(tags) ||           #TODO deprecated
+       !isnothing(solvable)        #TODO deprecated
         return map(
-            v -> v.label,
-            getFactors(dfg, regexFilter; tags = tags, solvable = solvable),
+            getLabel,
+            getFactors(
+                dfg,
+                regexFilter;
+                tags,
+                solvable,
+                solvableFilter,
+                tagsFilter,
+                typeFilter,
+                labelFilter,
+            ),
         )
+    else
+        # Is it ok to continue using the internal keys property? collect(keys(dfg.g.factors)) allowcates a lot.
+        labels = copy(dfg.g.factors.keys)
+        filterDFG!(labels, labelFilter, string)
+        return labels
     end
-    factors = copy(dfg.g.factors.keys)
-    if !isnothing(regexFilter)
-        factors = filter(f -> occursin(regexFilter, String(f)), factors)
-    end
-    if solvable != 0
-        factors = filter(fId -> _isSolvable(dfg, fId, solvable), factors)
-    end
-    return factors::Vector{Symbol}
 end
 
 function isConnected(dfg::GraphsDFG)
@@ -279,18 +309,28 @@ function isConnected(dfg::GraphsDFG)
     # return length(Graphs.connected_components(dfg.g)) == 1
 end
 
+_isSolvable(dfg::GraphsDFG, label::Symbol, ready::Nothing) = true
+
 function _isSolvable(dfg::GraphsDFG, label::Symbol, ready::Int)
     haskey(dfg.g.variables, label) && (return dfg.g.variables[label].solvable >= ready)
     haskey(dfg.g.factors, label) && (return dfg.g.factors[label].solvable >= ready)
     throw(LabelNotFoundError(label))
 end
 
-function listNeighbors(dfg::GraphsDFG, node::DFGNode; solvable::Int = 0)
+function listNeighbors(
+    dfg::GraphsDFG,
+    node::AbstractGraphNode;
+    solvable::Union{Nothing, Int} = nothing,
+)
     return listNeighbors(dfg, node.label; solvable)
 end
 
-function listNeighbors(dfg::GraphsDFG, label::Symbol; solvable::Int = 0)
-    if !exists(dfg, label)
+function listNeighbors(
+    dfg::GraphsDFG,
+    label::Symbol;
+    solvable::Union{Nothing, Int} = nothing,
+)
+    if !(hasVariable(dfg, label) || hasFactor(dfg, label))
         throw(LabelNotFoundError(label))
     end
 
@@ -312,7 +352,7 @@ function listNeighborhood(
     dfg::GraphsDFG,
     variableFactorLabels::Vector{Symbol},
     distance::Int;
-    solvable::Int = 0,
+    solvable::Union{Nothing, Int} = nothing,
 )
     # find neighbors at distance to add
     nbhood = Int[]
@@ -323,7 +363,8 @@ function listNeighborhood(
 
     allvarfacs = [dfg.g.labels[id] for id in nbhood]
 
-    solvable != 0 && filter!(nlbl -> (getSolvable(dfg, nlbl) >= solvable), allvarfacs)
+    !isnothing(solvable) &&
+        filter!(nlbl -> (getSolvable(dfg, nlbl) >= solvable), allvarfacs)
 
     return allvarfacs
 end
@@ -340,9 +381,9 @@ end
 #  Biadjacency Matrix https://en.wikipedia.org/wiki/Adjacency_matrix#Of_a_bipartite_graph
 function getBiadjacencyMatrix(
     dfg::GraphsDFG;
-    solvable::Int = 0,
-    varLabels = listVariables(dfg; solvable = solvable),
-    factLabels = listFactors(dfg; solvable = solvable),
+    solvable::Union{Nothing, Int} = nothing,
+    varLabels = listVariables(dfg; solvable),
+    factLabels = listFactors(dfg; solvable),
 )
     varIndex = [dfg.g.labels[s] for s in varLabels]
     factIndex = [dfg.g.labels[s] for s in factLabels]
@@ -359,13 +400,13 @@ Gets an empty and unique GraphsDFG derived from an existing DFG.
 """
 function _getDuplicatedEmptyDFG(
     dfg::GraphsDFG{P, V, F},
-) where {P <: AbstractParams, V <: AbstractDFGVariable, F <: AbstractDFGFactor}
+) where {P <: AbstractDFGParams, V <: AbstractGraphVariable, F <: AbstractGraphFactor}
     newDfg = GraphsDFG{P, V, F}(;
         agentLabel = getAgentLabel(dfg),
         graphLabel = getGraphLabel(dfg),
         solverParams = deepcopy(dfg.solverParams),
     )
-    newDfg.description = "(Copy of) $(dfg.description)"
+    DFG.setDescription!(newDfg, "(Copy of) $(DFG.getDescription(dfg))")
     return newDfg
 end
 
@@ -418,7 +459,7 @@ function findShortestPathDijkstra(
     tagsFactors::Vector{Symbol} = Symbol[],
     typeVariables::Union{Nothing, <:AbstractVector} = nothing,
     typeFactors::Union{Nothing, <:AbstractVector} = nothing,
-    solvable::Int = 0,
+    solvable::Union{Nothing, Int} = nothing,
     initialized::Union{Nothing, Bool} = nothing,
 )
     #
@@ -433,14 +474,14 @@ function findShortestPathDijkstra(
 
     #
     duplicate =
-        regexVariables !== nothing ||
-        regexFactors !== nothing ||
-        0 < length(tagsVariables) ||
-        0 < length(tagsFactors) ||
-        typeVariables !== nothing ||
-        typeFactors !== nothing ||
-        initialized !== nothing ||
-        solvable != 0
+        !isnothing(regexVariables) ||
+        !isnothing(regexFactors) ||
+        !isempty(tagsVariables) ||
+        !isempty(tagsFactors) ||
+        !isnothing(typeVariables) ||
+        !isnothing(typeFactors) ||
+        !isnothing(initialized) ||
+        !isnothing(solvable)
     #
     dfg_ = if duplicate
         # use copy if filter is being applied
@@ -468,7 +509,8 @@ function findShortestPathDijkstra(
         dfg
     end
 
-    if !exists(dfg_, from) || !exists(dfg_, to)
+    if !(hasVariable(dfg_, from) || hasFactor(dfg_, from)) ||
+       !(hasVariable(dfg_, to) || hasFactor(dfg_, to))
         # assume filters excluded either `to` or `from` and hence no shortest path
         return Symbol[]
     end
@@ -512,28 +554,25 @@ end
 
 # FG blob entries 
 function getGraphBlobentry(fg::GraphsDFG, label::Symbol)
-    if !haskey(fg.graphBlobEntries, label)
+    if !haskey(fg.graph.blobEntries, label)
         throw(LabelNotFoundError("GraphBlobentry", label))
     end
-    return fg.graphBlobEntries[label]
+    return fg.graph.blobEntries[label]
 end
 
-function getGraphBlobentries(
-    fg::GraphsDFG,
-    filt::Union{Nothing, String, Base.Fix2} = nothing,
-)
-    entries = collect(values(fg.graphBlobEntries))
-    if !isnothing(filt) && isa(filt, String)
-        @warn "String filter is deprecated, use startswith(filt_string) instead"
-        filter!(e -> startswith(string(e.label), filt), entries)
-    elseif !isnothing(filt)
-        filter!(e -> filt(string(e.label)), entries)
-    end
+function getGraphBlobentries(fg::GraphsDFG; labelFilter::Union{Nothing, Function} = nothing)
+    entries = collect(values(fg.graph.blobEntries))
+    filterDFG!(entries, labelFilter, getLabel)
     return entries
 end
 
-function listGraphBlobentries(fg::GraphsDFG)
-    return collect(keys(fg.graphBlobEntries))
+function listGraphBlobentries(
+    fg::GraphsDFG;
+    labelFilter::Union{Nothing, Function} = nothing,
+)
+    labels = collect(keys(fg.graph.blobEntries))
+    filterDFG!(labels, labelFilter, string)
+    return labels
 end
 
 function listAgentBlobentries(fg::GraphsDFG)
@@ -541,10 +580,10 @@ function listAgentBlobentries(fg::GraphsDFG)
 end
 
 function addGraphBlobentry!(fg::GraphsDFG, entry::Blobentry)
-    if haskey(fg.graphBlobEntries, entry.label)
+    if haskey(fg.graph.blobEntries, entry.label)
         throw(LabelExistsError("Blobentry", entry.label))
     end
-    push!(fg.graphBlobEntries, entry.label => entry)
+    push!(fg.graph.blobEntries, entry.label => entry)
     return entry
 end
 

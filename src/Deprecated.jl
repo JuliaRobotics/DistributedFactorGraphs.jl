@@ -9,62 +9,365 @@ export AbstractRelativeMinimize,
     InferenceType,
     PackedSamplableBelief
 
+#TODO: maybe just remove these
+export NoSolverParams
 const AbstractPrior = PriorObservation
 const AbstractRelative = RelativeObservation
+export AbstractParams
+const AbstractParams = AbstractDFGParams
 
 abstract type AbstractRelativeMinimize <: RelativeObservation end
 abstract type AbstractManifoldMinimize <: RelativeObservation end
 
-const InferenceVariable = VariableStateType{Any}
-const InferenceType = AbstractPackedFactorObservation
+const InferenceVariable = StateType{Any}
+const InferenceType = AbstractPackedObservation
 
 const PackedSamplableBelief = PackedBelief
 
+export getVariableState
+export addVariableState!
+export mergeVariableState!
+export deleteVariableState!
+export listVariableStates
+export VariableState
+export VariableStateType
+export copytoVariableState!
+const getVariableState = getState
+const addVariableState! = addState!
+const mergeVariableState! = mergeState!
+const deleteVariableState! = deleteState!
+const listVariableStates = listStates
+const VariableState = State
+const VariableStateType = StateType
+const copytoVariableState! = copytoState!
+
 export setSolverData!
-"""
-    $SIGNATURES
-Set solver data structure stored in a variable.
-"""
-function setSolverData!(v::VariableCompute, data::VariableState, key::Symbol = :default)
+# """
+#     $SIGNATURES
+# Set solver data structure stored in a variable.
+# """
+function setSolverData!(v::VariableCompute, data::State, key::Symbol = :default)
     Base.depwarn(
-        "setSolverData!(v::VariableCompute, data::VariableState, key::Symbol = :default) is deprecated, use mergeVariableState! instead.",
+        "setSolverData!(v::VariableCompute, data::State, key::Symbol = :default) is deprecated, use mergeState! instead.",
         :setSolverData!,
     )
-    @assert key == data.solveKey "VariableState.solveKey=:$(data.solveKey) does not match requested :$(key)"
+    @assert key == data.solveKey "State.solveKey=:$(data.solveKey) does not match requested :$(key)"
     return v.solverDataDict[key] = data
 end
 
-@deprecate mergeVariableSolverData!(args...; kwargs...) mergeVariableState!(
-    args...;
-    kwargs...,
-)
+@deprecate mergeVariableSolverData!(args...; kwargs...) mergeState!(args...; kwargs...)
 
 export mergeVariableData!, mergeGraphVariableData!
 function mergeVariableData!(args...)
     return error(
-        "mergeVariableData! is obsolete, use mergeVariableState! for state, PPEs are obsolete",
+        "mergeVariableData! is obsolete, use mergeState! for state, PPEs are obsolete",
     )
 end
 function mergeGraphVariableData!(args...)
     return error(
-        "mergeGraphVariableData! is obsolete, use mergeVariableState! for state, PPEs are obsolete",
+        "mergeGraphVariableData! is obsolete, use mergeState! for state, PPEs are obsolete",
     )
+end
+
+# """
+#     $(SIGNATURES)
+# Gives back all factor labels that fit the bill:
+#     lsWho(dfg, :Pose3)
+
+# Notes
+# - Returns `Vector{Symbol}`
+
+# Dev Notes
+# - Cloud versions will benefit from less data transfer
+#  - `ls(dfg::C, ::T) where {C <: CloudDFG, T <: ..}`
+
+# Related
+
+# ls, lsf, lsfPriors
+# """
+function lsWho(dfg::AbstractDFG, type::Symbol)
+    Base.depwarn("lsWho(dfg, type) is deprecated, use ls(dfg, type) instead.", :lsWho)
+    vars = getVariables(dfg)
+    labels = Symbol[]
+    for v in vars
+        varType = typeof(getVariableType(v)) |> nameof
+        varType == type && push!(labels, v.label)
+    end
+    return labels
+end
+
+# solvekey is deprecated and sync!/copyto! is the better verb.
+#TODO replace with syncStates! or similar
+# """
+#     $SIGNATURES
+# Duplicate a `solveKey`` into a destination from a source.
+
+# Notes
+# - Can copy between graphs, or to different solveKeys within one graph.
+# """
+function cloneSolveKey!(
+    dest_dfg::AbstractDFG,
+    dest::Symbol,
+    src_dfg::AbstractDFG,
+    src::Symbol;
+    solvable::Int = 0,
+    labels = intersect(ls(dest_dfg; solvable = solvable), ls(src_dfg; solvable = solvable)),
+    verbose::Bool = false,
+)
+    #
+    for x in labels
+        sd = deepcopy(getState(getVariable(src_dfg, x), src))
+        copytoState!(dest_dfg, x, dest, sd)
+    end
+
+    return nothing
+end
+
+function cloneSolveKey!(dfg::AbstractDFG, dest::Symbol, src::Symbol; kw...)
+    #
+    @assert dest != src "Must copy to a different solveKey within the same graph, $dest."
+    return cloneSolveKey!(dfg, dest, dfg, src; kw...)
+end
+
+export getData, addData!, updateData!, deleteData!
+
+#TODO not a good function, as it's not complete.
+# """
+#     $(SIGNATURES)
+# Convenience function to get all the metadata of a DFG
+# """
+# export getDFGInfo
+function getDFGInfo(dfg::AbstractDFG)
+    return (
+        description = getDescription(dfg),
+        agentLabel = getAgentLabel(dfg),
+        graphLabel = getGraphLabel(dfg),
+        agentMetadata = getAgentMetadata(dfg),
+        graphMetadata = getGraphMetadata(dfg),
+        solverParams = getSolverParams(dfg),
+    )
+end
+
+export DFGVariable
+const DFGVariable = VariableCompute
+
+export listSolveKeys, listSupersolves
+# """
+#     $TYPEDSIGNATURES
+# List all the solvekeys used amongst all variables in the distributed factor graph object.
+
+# Related
+
+# [`listSolveKeys`](@ref), [`getSolverDataDict`](@ref), [`listVariables`](@ref)
+# """
+function listSolveKeys(
+    variable::VariableCompute,
+    filterSolveKeys::Union{Regex, Nothing} = nothing,
+    skeys = Set{Symbol}(),
+)
+    Base.depwarn("listSolveKeys is deprecated, use listStates instead.", :listSolveKeys)
+    #
+    for ky in keys(getSolverDataDict(variable))
+        push!(skeys, ky)
+    end
+
+    #filter the solveKey set with filterSolveKeys regex
+    !isnothing(filterSolveKeys) &&
+        return filter!(k -> occursin(filterSolveKeys, string(k)), skeys)
+    return skeys
+end
+
+function listSolveKeys(
+    dfg::AbstractDFG,
+    lbl::Symbol,
+    filterSolveKeys::Union{Regex, Nothing} = nothing,
+    skeys = Set{Symbol}(),
+)
+    return listSolveKeys(getVariable(dfg, lbl), filterSolveKeys, skeys)
+end
+#
+
+function listSolveKeys(
+    dfg::AbstractDFG,
+    filterVariables::Union{Type{<:StateType}, Regex, Nothing} = nothing;
+    filterSolveKeys::Union{Regex, Nothing} = nothing,
+    tags::Vector{Symbol} = Symbol[],
+    solvable::Int = 0,
+)
+    #
+    skeys = Set{Symbol}()
+    varList = listVariables(dfg, filterVariables; tags = tags, solvable = solvable)
+    for vs in varList  #, ky in keys(getSolverDataDict(getVariable(dfg, vs)))
+        listSolveKeys(dfg, vs, filterSolveKeys, skeys)
+    end
+
+    # done inside the loop
+    # #filter the solveKey set with filterSolveKeys regex
+    # !isnothing(filterSolveKeys) && return filter!(k -> occursin(filterSolveKeys, string(k)), skeys)
+
+    return skeys
+end
+const listSupersolves = listSolveKeys
+
+#TODO mergeBlobentries! does not fit with merge definition, should probably be updated to copyto or sync.
+# leaving here until it is done.
+
+# """
+#     $SIGNATURES
+
+# Add a blob entry into the destination variable which already exists 
+# in a source variable.
+
+# See also: [`addBlobentry!`](@ref), [`getBlobentry`](@ref), [`listBlobentries`](@ref), [`getBlob`](@ref)
+# """
+function mergeBlobentries!(
+    dst::AbstractDFG,
+    dlbl::Symbol,
+    src::AbstractDFG,
+    slbl::Symbol,
+    bllb::Union{Symbol, UUID, <:AbstractString, Regex},
+)
+    #
+    _makevec(s) = [s;]
+    _makevec(s::AbstractVector) = s
+    des_ = getBlobentry(src, slbl, bllb)
+    des = _makevec(des_)
+    # don't add data entries that already exist 
+    dde = listBlobentries(dst, dlbl)
+    # HACK, verb list should just return vector of Symbol. NCE36
+    _getid(s) = s
+    _getid(s::Blobentry) = s.id
+    uids = _getid.(dde) # (s->s.id).(dde)
+    filter!(s -> !(_getid(s) in uids), des)
+    # add any data entries not already in the destination variable, by uuid
+    return addBlobentry!.(dst, dlbl, des)
+end
+
+function mergeBlobentries!(
+    dst::AbstractDFG,
+    dlbl::Symbol,
+    src::AbstractDFG,
+    slbl::Symbol,
+    ::Colon = :,
+)
+    des = listBlobentries(src, slbl)
+    # don't add data entries that already exist 
+    uids = listBlobentries(dst, dlbl)
+    # verb list should just return vector of Symbol. NCE36
+    filter!(s -> !(s in uids), des)
+    if 0 < length(des)
+        union(((s -> mergeBlobentries!(dst, dlbl, src, slbl, s)).(des))...)
+    end
+end
+
+function mergeBlobentries!(
+    dest::AbstractDFG,
+    src::AbstractDFG,
+    w...;
+    varList::AbstractVector = listVariables(dest) |> sortDFG,
+)
+    @showprogress 1 "merging data entries" for vl in varList
+        mergeBlobentries!(dest, vl, src, vl, w...)
+    end
+    return varList
+end
+
+# """
+#     $(SIGNATURES)
+
+# Get all blob entries matching a Regex pattern over variables
+
+# Notes
+# - Use `dropEmpties=true` to not include empty lists in result.
+# - Use keyword `varList` for which variables to search through.
+# """
+function getBlobentriesVariables(
+    dfg::AbstractDFG,
+    bLblPattern::Regex;
+    varList::AbstractVector{Symbol} = sort(listVariables(dfg); lt = natural_lt),
+    dropEmpties::Bool = false,
+)
+    Base.depwarn(
+        "getBlobentriesVariables is deprecated, use gatherBlobentries instead.",
+        :getBlobentriesVariables,
+    )
+    RETLIST = Vector{Vector{Blobentry}}()
+    @showprogress "Get entries matching $bLblPattern" for vl in varList
+        bes = filter(s -> occursin(bLblPattern, string(s.label)), listBlobentries(dfg, vl))
+        # only push to list if there are entries on this variable
+        (!dropEmpties || 0 < length(bes)) ? nothing : continue
+        push!(RETLIST, bes)
+    end
+
+    return RETLIST
+end
+
+function getBlobentries(dfg::AbstractDFG, label::Symbol, regex::Regex)
+    Base.depwarn(
+        "getBlobentries(dfg, label, ::Regex) is deprecated, use getBlobentries(dfg, label; labelFilter=contains(regex)) instead.",
+        :getBlobentries,
+    )
+    return entries = getBlobentries(dfg, label; labelFilter = contains(regex))
+end
+
+function getBlobentries(
+    dfg::AbstractDFG,
+    label::Symbol,
+    skey::Union{Symbol, <:AbstractString},
+)
+    Base.depwarn(
+        "getBlobentries(dfg, label, ::Union{Symbol, <:AbstractString}) is deprecated, use getBlobentries(dfg, label; labelFilter=contains(regex)) instead.",
+        :getBlobentries,
+    )
+    return getBlobentries(dfg, label, Regex(string(skey)))
+end
+
+function getfirstBlobentry(var::AbstractGraphVariable, blobId::UUID)
+    Base.depwarn(
+        "getfirstBlobentry(var, blobId) is deprecated, use getfirstBlobentry(var; blobIdFilter = ==(string(blobId))) instead.",
+        :getfirstBlobentry,
+    )
+    return getfirstBlobentry(var; blobIdFilter = ==(string(blobId)))
+end
+
+function getfirstBlobentry(dfg::AbstractDFG, label::Symbol, blobId::UUID)
+    Base.depwarn(
+        "getfirstBlobentry(dfg, label, blobId) is deprecated, use getfirstBlobentry(dfg, label; blobIdFilter = ==(string(blobId))) instead.",
+        :getfirstBlobentry,
+    )
+    return getfirstBlobentry(dfg, label; blobIdFilter = ==(string(blobId)))
+end
+
+function getfirstBlobentry(var::AbstractGraphVariable, key::Regex)
+    Base.depwarn(
+        "getfirstBlobentry(var, key::Regex) is deprecated, use getfirstBlobentry(var; labelFilter=contains(key)) instead.",
+        :getfirstBlobentry,
+    )
+    return getfirstBlobentry(var; labelFilter = contains(key))
+end
+
+function getfirstBlobentry(dfg::AbstractDFG, label::Symbol, key::Regex)
+    Base.depwarn(
+        "getfirstBlobentry(dfg, label, key::Regex) is deprecated, use getfirstBlobentry(dfg, label; labelFilter=contains(key)) instead.",
+        :getfirstBlobentry,
+    )
+    return getfirstBlobentry(dfg, label; labelFilter = contains(key))
 end
 
 ## ================================================================================
 ## Deprecated in v0.27
 ##=================================================================================
 export AbstractFactor
-const AbstractFactor = AbstractFactorObservation
+const AbstractFactor = AbstractObservation
 
 export AbstractPackedFactor
-const AbstractPackedFactor = AbstractPackedFactorObservation
+const AbstractPackedFactor = AbstractPackedObservation
 
 export FactorOperationalMemory
-const FactorOperationalMemory = FactorSolverCache
+const FactorOperationalMemory = FactorCache
 
 export VariableNodeData
-const VariableNodeData = VariableState
+const VariableNodeData = State
 
 @deprecate getNeighborhood(args...; kwargs...) listNeighborhood(args...; kwargs...)
 @deprecate addBlob!(store::AbstractBlobstore, blobId::UUID, data, ::String) addBlob!(
@@ -116,8 +419,8 @@ const VariableNodeData = VariableState
 @deprecate hasBlobEntry(args...; kwargs...) hasBlobentry(args...; kwargs...)
 @deprecate getBlobEntry(args...; kwargs...) getBlobentry(args...; kwargs...)
 @deprecate getBlobEntryFirst(args...; kwargs...) getfirstBlobentry(args...; kwargs...)
-@deprecate getBlobentry(var::AbstractDFGVariable, blobId::UUID) getfirstBlobentry(
-    var::AbstractDFGVariable,
+@deprecate getBlobentry(var::AbstractGraphVariable, blobId::UUID) getfirstBlobentry(
+    var::AbstractGraphVariable,
     blobId::UUID,
 )
 @deprecate addBlobEntry!(args...; kwargs...) addBlobentry!(args...; kwargs...)
@@ -130,28 +433,19 @@ const VariableNodeData = VariableState
 )
 @deprecate mergeBlobEntries!(args...; kwargs...) mergeBlobentries!(args...; kwargs...)
 
-@deprecate getVariableSolverData(args...; kwargs...) getVariableState(args...; kwargs...)
-@deprecate addVariableSolverData!(args...; kwargs...) addVariableState!(args...; kwargs...)
-@deprecate deleteVariableSolverData!(args...; kwargs...) deleteVariableState!(
-    args...;
-    kwargs...,
-)
-@deprecate listVariableSolverData(args...; kwargs...) listVariableStates(args...; kwargs...)
-@deprecate getVariableSolverDataAll(args...; kwargs...) getVariableStates(
-    args...;
-    kwargs...,
-)
+@deprecate getVariableSolverData(args...; kwargs...) getState(args...; kwargs...)
+@deprecate addVariableSolverData!(args...; kwargs...) addState!(args...; kwargs...)
+@deprecate deleteVariableSolverData!(args...; kwargs...) deleteState!(args...; kwargs...)
+@deprecate listVariableSolverData(args...; kwargs...) listStates(args...; kwargs...)
+@deprecate getVariableSolverDataAll(args...; kwargs...) getStates(args...; kwargs...)
 
-@deprecate getSolverData(v::VariableCompute, solveKey::Symbol = :default) getVariableState(
+@deprecate getSolverData(v::VariableCompute, solveKey::Symbol = :default) getState(
     v,
     solveKey,
 )
 
-@deprecate packVariableNodeData(args...; kwargs...) packVariableState(args...; kwargs...)
-@deprecate unpackVariableNodeData(args...; kwargs...) unpackVariableState(
-    args...;
-    kwargs...,
-)
+@deprecate packVariableNodeData(args...; kwargs...) packState(args...; kwargs...)
+@deprecate unpackVariableNodeData(args...; kwargs...) unpackState(args...; kwargs...)
 
 export updateVariableSolverData!
 
@@ -159,27 +453,27 @@ export updateVariableSolverData!
 function updateVariableSolverData!(
     dfg::AbstractDFG,
     variablekey::Symbol,
-    vnd::VariableState,
+    vnd::State,
     useCopy::Bool = false,
     fields::Vector{Symbol} = Symbol[];
     warn_if_absent::Bool = true,
 )
     Base.depwarn(
-        "updateVariableSolverData! is deprecated, use mergeVariableState! or copytoVariableState! instead",
+        "updateVariableSolverData! is deprecated, use mergeState! or copytoState! instead",
         :updateVariableSolverData!,
     )
     #This is basically just setSolverData
     var = getVariable(dfg, variablekey)
     warn_if_absent &&
         !haskey(var.solverDataDict, vnd.solveKey) &&
-        @warn "VariableState '$(vnd.solveKey)' does not exist, adding"
+        @warn "State '$(vnd.solveKey)' does not exist, adding"
 
     # for InMemoryDFGTypes do memory copy or repointing, for cloud this would be an different kind of update.
     usevnd = vnd # useCopy ? deepcopy(vnd) : vnd
     # should just one, or many pointers be updated?
     useExisting =
         haskey(var.solverDataDict, vnd.solveKey) &&
-        isa(var.solverDataDict[vnd.solveKey], VariableState) &&
+        isa(var.solverDataDict[vnd.solveKey], State) &&
         length(fields) != 0
     # @error useExisting vnd.solveKey
     if useExisting
@@ -206,7 +500,7 @@ end
 function updateVariableSolverData!(
     dfg::AbstractDFG,
     variablekey::Symbol,
-    vnd::VariableState,
+    vnd::State,
     solveKey::Symbol,
     useCopy::Bool = false,
     fields::Vector{Symbol} = Symbol[];
@@ -215,7 +509,7 @@ function updateVariableSolverData!(
     # TODO not very clean
     if vnd.solveKey != solveKey
         Base.depwarn(
-            "updateVariableSolverData with solveKey is deprecated use copytoVariableState! instead.",
+            "updateVariableSolverData with solveKey is deprecated use copytoState! instead.",
             :updateVariableSolverData!,
         )
         usevnd = useCopy ? deepcopy(vnd) : vnd
@@ -253,7 +547,7 @@ function updateVariableSolverData!(
     # toshow = listSolveKeys(sourceVariable) |> collect
     # @info "update DFGVar solveKey" solveKey vnd.solveKey 
     # @show toshow
-    @assert solveKey == vnd.solveKey "VariableState's solveKey=:$(vnd.solveKey) does not match requested :$solveKey"
+    @assert solveKey == vnd.solveKey "State's solveKey=:$(vnd.solveKey) does not match requested :$solveKey"
     return updateVariableSolverData!(
         dfg,
         sourceVariable.label,
@@ -287,11 +581,7 @@ end
 
 ## factor refactor deprecations
 Base.@kwdef mutable struct GenericFunctionNodeData{
-    T <: Union{
-        <:AbstractPackedFactorObservation,
-        <:AbstractFactorObservation,
-        <:FactorSolverCache,
-    },
+    T <: Union{<:AbstractPackedObservation, <:AbstractObservation, <:FactorCache},
 }
     eliminated::Bool = false
     potentialused::Bool = false
@@ -314,7 +604,7 @@ function FactorCompute(
     variableOrder::Union{Vector{Symbol}, Tuple};
     observation = getFactorType(solverData),
     state::FactorState = FactorState(),
-    solvercache::Base.RefValue{<:FactorSolverCache} = Ref{FactorSolverCache}(),
+    solvercache::Base.RefValue{<:FactorCache} = Ref{FactorCache}(),
     id::Union{UUID, Nothing} = nothing,
     smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
 )
@@ -369,7 +659,7 @@ function decodePackedType(
     varOrder::AbstractVector{Symbol},
     ::Type{T},
     packeddata::GenericFunctionNodeData{PT},
-) where {T <: FactorSolverCache, PT}
+) where {T <: FactorCache, PT}
     error("decodePackedType is obsolete")
     #
     # TODO, to solve IIF 1424
@@ -383,7 +673,7 @@ function decodePackedType(
 end
 
 export _packSolverData
-function _packSolverData(f::FactorCompute, fnctype::AbstractFactorObservation)
+function _packSolverData(f::FactorCompute, fnctype::AbstractObservation)
     #
     error("_packSolverData is deprecated, use seperate packing of observation #TODO")
     packtype = convertPackedType(fnctype)
@@ -403,20 +693,19 @@ end
 export GenericFunctionNodeData, PackedFunctionNodeData, FunctionNodeData
 
 const PackedFunctionNodeData{T} =
-    GenericFunctionNodeData{T} where {T <: AbstractPackedFactorObservation}
+    GenericFunctionNodeData{T} where {T <: AbstractPackedObservation}
 function PackedFunctionNodeData(args...; kw...)
     error("PackedFunctionNodeData is obsolete")
     return PackedFunctionNodeData{typeof(args[4])}(args...; kw...)
 end
 
-const FunctionNodeData{T} = GenericFunctionNodeData{
-    T,
-} where {T <: Union{<:AbstractFactorObservation, <:FactorSolverCache}}
+const FunctionNodeData{T} =
+    GenericFunctionNodeData{T} where {T <: Union{<:AbstractObservation, <:FactorCache}}
 FunctionNodeData(args...; kw...) = FunctionNodeData{typeof(args[4])}(args...; kw...)
 
 # this is the GenericFunctionNodeData for packed types
 #TODO deprecate FactorData in favor of FactorState (with no more distinction between packed and compute)
-const FactorData = PackedFunctionNodeData{AbstractPackedFactorObservation}
+const FactorData = PackedFunctionNodeData{AbstractPackedObservation}
 
 function FactorCompute(
     label::Symbol,
@@ -444,7 +733,7 @@ function FactorCompute(
         solverData.inflation,
     )
 
-    if solverData.fnc isa FactorSolverCache
+    if solverData.fnc isa FactorCache
         solvercache = solverData.fnc
     else
         solvercache = nothing
@@ -476,14 +765,14 @@ end
 #TODO make sure getFactorOperationalMemoryType is obsolete
 function getFactorOperationalMemoryType(dummy)
     return error(
-        "Please extend your workspace with function getFactorOperationalMemoryType(<:AbstractParams) for your usecase, e.g. IncrementalInference uses `CommonConvWrapper <: FactorSolverCache`",
+        "Please extend your workspace with function getFactorOperationalMemoryType(<:AbstractParams) for your usecase, e.g. IncrementalInference uses `CommonConvWrapper <: FactorCache`",
     )
 end
 function getFactorOperationalMemoryType(dfg::AbstractDFG)
     return getFactorOperationalMemoryType(getSolverParams(dfg))
 end
 
-function typeModuleName(variableType::VariableStateType)
+function typeModuleName(variableType::StateType)
     Base.depwarn("typeModuleName is obsolete", :typeModuleName)
     io = IOBuffer()
     ioc = IOContext(io, :module => DistributedFactorGraphs)
@@ -491,7 +780,7 @@ function typeModuleName(variableType::VariableStateType)
     return String(take!(io))
 end
 
-typeModuleName(varT::Type{<:VariableStateType}) = typeModuleName(varT())
+typeModuleName(varT::Type{<:StateType}) = typeModuleName(varT())
 
 ## ================================================================================
 ## Deprecated in v0.25

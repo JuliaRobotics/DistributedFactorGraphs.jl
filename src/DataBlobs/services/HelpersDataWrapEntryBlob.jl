@@ -57,7 +57,7 @@ function Blobentry(
     timestamp::ZonedDateTime = entry.timestamp,
     createdTimestamp = entry.createdTimestamp,
     lastUpdatedTimestamp = entry.lastUpdatedTimestamp,
-    _version::String = entry._version,
+    _version = entry._version,
 )
     return Blobentry(;
         id,
@@ -267,7 +267,7 @@ function updateData!(
         blobstore = getLabel(blobstore),
         hash = string(bytes2hex(hashfunction(blob))),
         origin = buildSourceString(dfg, label),
-        _version = string(_getDFGVersion()),
+        _version = _getDFGVersion(),
     )
     mergeBlobentry!(dfg, label, newEntry)
     updateBlob!(blobstore, newEntry, blob)

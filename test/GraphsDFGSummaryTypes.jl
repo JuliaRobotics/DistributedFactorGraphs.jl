@@ -15,10 +15,7 @@ function DistributedFactorGraphs.VariableSummary(label::Symbol)
     )
 end
 
-function DistributedFactorGraphs.VariableSummary(
-    label::Symbol,
-    ::VariableState{T},
-) where {T}
+function DistributedFactorGraphs.VariableSummary(label::Symbol, ::State{T}) where {T}
     return VariableSummary(
         nothing,
         label,
@@ -34,10 +31,7 @@ function DistributedFactorGraphs.VariableSkeleton(label::Symbol, args...)
     return VariableSkeleton(label)
 end
 
-function DistributedFactorGraphs.VariableSkeleton(
-    label::Symbol,
-    ::VariableState{T},
-) where {T}
+function DistributedFactorGraphs.VariableSkeleton(label::Symbol, ::State{T}) where {T}
     return VariableSkeleton(nothing, label, Set{Symbol}())
 end
 

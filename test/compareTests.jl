@@ -7,10 +7,10 @@ using Dates
 # TestCCW1
 
 ## Generated compare functions
-# VariableState
-vnd1 = VariableState(TestVariableType1())
+# State
+vnd1 = State(TestVariableType1())
 vnd2 = deepcopy(vnd1)
-vnd3 = VariableState(TestVariableType2())
+vnd3 = State(TestVariableType2())
 
 @test vnd1 == vnd2
 push!(vnd1.val, [1.0;])
@@ -59,9 +59,9 @@ f3 = FactorCompute(:f1, [:b, :a], TestFunctorInferenceType1())
 @test !(f1 == f3)
 
 ## Compare functions
-vnd1 = VariableState(TestVariableType1())
+vnd1 = State(TestVariableType1())
 vnd2 = deepcopy(vnd1)
-vnd3 = VariableState(TestVariableType2())
+vnd3 = State(TestVariableType2())
 @test compare(vnd1, vnd2)
 @test !compare(vnd1, vnd3)
 
