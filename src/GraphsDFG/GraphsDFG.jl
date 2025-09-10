@@ -19,6 +19,8 @@ using ...DistributedFactorGraphs:
     filterDFG!,
     getSolvable,
     getVariableType,
+    getAgentLabel,
+    getGraphLabel,
     MetadataTypes
 
 # import DFG functions to extend
