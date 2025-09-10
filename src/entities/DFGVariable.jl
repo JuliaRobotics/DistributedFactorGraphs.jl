@@ -250,7 +250,7 @@ function VariableDFG(
     timestamp::ZonedDateTime = now(tz"UTC"),
     solvable::Int = 1,
     nanosecondtime::Int64 = 0,
-    smalldata::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
+    smalldata::Dict{Symbol, MetadataTypes} = Dict{Symbol, MetadataTypes}(),
     kwargs...,
 )
     union!(tags, [:VARIABLE])
@@ -274,12 +274,7 @@ StructTypes.idproperty(::Type{VariableDFG}) = :id
 StructTypes.omitempties(::Type{VariableDFG}) = (:id,)
 
 function getMetadata(v::VariableDFG)
-    return JSON3.read(base64decode(v.metadata), Dict{Symbol, SmallDataTypes})
-end
-
-function setMetadata!(v::VariableDFG, metadata::Dict{Symbol, SmallDataTypes})
-    return error("FIXME: Metadata is not currently mutable in a Variable")
-    # v.metadata = base64encode(JSON3.write(metadata))
+    return JSON3.read(base64decode(v.metadata), Dict{Symbol, MetadataTypes})
 end
 
 ##------------------------------------------------------------------------------
@@ -316,7 +311,7 @@ Base.@kwdef struct VariableCompute{T <: StateType, P, N} <: AbstractGraphVariabl
     solverDataDict::Dict{Symbol, State{T, P, N}} = Dict{Symbol, State{T, P, N}}()
     """Dictionary of small data associated with this variable.
     Accessors: [`getMetadata`](@ref), [`setMetadata!`](@ref)"""
-    smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}()
+    smallData::Dict{Symbol, MetadataTypes} = Dict{Symbol, MetadataTypes}()
     """Dictionary of large data associated with this variable.
     Accessors: [`addBlobentry!`](@ref), [`getBlobentry`](@ref), [`mergeBlobentry!`](@ref), and [`deleteBlobentry!`](@ref)"""
     dataDict::Dict{Symbol, Blobentry} = Dict{Symbol, Blobentry}()
@@ -379,11 +374,6 @@ Base.setproperty!(x::VariableCompute, f::Symbol, val) = begin
 end
 
 getMetadata(v::VariableCompute) = v.smallData
-
-function setMetadata!(v::VariableCompute, metadata::Dict{Symbol, SmallDataTypes})
-    v.smallData !== metadata && empty!(v.smallData)
-    return merge!(v.smallData, metadata)
-end
 
 ##------------------------------------------------------------------------------
 ## VariableSummary lv1

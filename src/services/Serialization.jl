@@ -251,7 +251,7 @@ function unpackVariable(variable::VariableDFG; skipVersionCheck::Bool = false)
     dataDict = Dict{Symbol, Blobentry}(
         map(de -> de.label, variable.blobEntries) .=> variable.blobEntries,
     )
-    metadata = JSON3.read(base64decode(variable.metadata), Dict{Symbol, DFG.SmallDataTypes})
+    metadata = JSON3.read(base64decode(variable.metadata), Dict{Symbol, DFG.MetadataTypes})
 
     return VariableCompute(
         variable.label,

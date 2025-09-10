@@ -57,7 +57,7 @@ StructTypes.StructType(::NoSolverParams) = StructTypes.Struct()
 """
 Types valid for small data.
 """
-const SmallDataTypes = Union{
+const MetadataTypes = Union{
     Int,
     Float64,
     String,

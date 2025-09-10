@@ -7,7 +7,7 @@ using Manifolds
 ##
 
 # struct TestInferenceVariable1 <: StateType end
-@defVariable TestInferenceVariable1 Euclidean(1) [0.0;]
+@defStateType TestInferenceVariable1 Euclidean(1) [0.0;]
 
 # Now make a complex graph for connectivity tests
 numNodes = 10

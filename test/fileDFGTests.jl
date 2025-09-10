@@ -108,8 +108,8 @@ using UUIDs
 
         addGraphBlobentry!(dfg, be)
         #TODO addAgentBlobentry!(dfg, be)
-        smallRobotData = Dict{Symbol, SmallDataTypes}(:a => "43", :b => "small_robot")
-        smallSessionData = Dict{Symbol, SmallDataTypes}(:a => "44", :b => "small_session")
+        smallRobotData = Dict{Symbol, MetadataTypes}(:a => "43", :b => "small_robot")
+        smallSessionData = Dict{Symbol, MetadataTypes}(:a => "44", :b => "small_session")
 
         setAgentMetadata!(dfg, smallRobotData)
         setGraphMetadata!(dfg, smallSessionData)

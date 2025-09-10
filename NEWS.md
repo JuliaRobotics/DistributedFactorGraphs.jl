@@ -3,6 +3,9 @@ Listing news on any major breaking changes in DFG.  For regular changes, see int
 - Reading or deserialzing of factor graphs created prior to v0.25 are no longer suppoted with the complete removal of User/Robot/Session
 - Deprecated AbstractRelativeMinimize and AbstractManifoldsMinimize
 - Rename `VariableState` -> `State`
+- @defVariable -> @defStateType
+- All deprecated and unstable function exports have been removed. Use the new macro `@usingDFG true` to import all exports. In the future, stable but non-exported functions will be marked as `public`.
+- Rename SmallDataTypes -> MetadataTypes
 
 Abstract Types Standardized, see #1153: 
 - AbstractParams -> [Abstract]DFGParams
@@ -18,8 +21,8 @@ Abstract Types Standardized, see #1153:
 
 # v0.27
 - `delete` returns number of nodes deleted and no longer the object that was deleted.
-- Deprecate `updateVariable!` for `mergeVariable!`, note `merege` returns number of nodes updated/added.
-- Deprecate `updateFactor!` for `mergeFactor!`, note `merege` returns number of nodes updated/added.
+- Deprecate `updateVariable!` for `mergeVariable!`, note `merge` returns number of nodes updated/added.
+- Deprecate `updateFactor!` for `mergeFactor!`, note `merge` returns number of nodes updated/added.
 - Rename BlobEntry to Blobentry, see #1123.
 - Rename BlobStore to Blobstore, see #1124.
 - Refactor the Factor solver data structure, see #1127:

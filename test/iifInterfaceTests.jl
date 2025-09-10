@@ -205,8 +205,8 @@ end
     @test_throws LabelNotFoundError isInitialized(v2, :second)
 
     # Session, robot, and user small data tests
-    smallRobotData = Dict{Symbol, SmallDataTypes}(:a => "43", :b => "Hello")
-    smallSessionData = Dict{Symbol, SmallDataTypes}(:a => "44", :b => "Hello")
+    smallRobotData = Dict{Symbol, MetadataTypes}(:a => "43", :b => "Hello")
+    smallSessionData = Dict{Symbol, MetadataTypes}(:a => "44", :b => "Hello")
     setAgentMetadata!(dfg, deepcopy(smallRobotData))
     setGraphMetadata!(dfg, deepcopy(smallSessionData))
     @test getAgentMetadata(dfg) == smallRobotData
