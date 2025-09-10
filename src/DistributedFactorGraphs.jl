@@ -529,6 +529,7 @@ include("Common.jl")
 
 function getSolvable end
 function getVariableType end
+function isInitialized end
 # In Memory Types
 include("GraphsDFG/GraphsDFG.jl")
 using .GraphsDFGs

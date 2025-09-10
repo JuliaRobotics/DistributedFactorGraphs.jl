@@ -21,6 +21,7 @@ using ...DistributedFactorGraphs:
     getVariableType,
     getAgentLabel,
     getGraphLabel,
+    isInitialized,
     MetadataTypes
 
 # import DFG functions to extend
