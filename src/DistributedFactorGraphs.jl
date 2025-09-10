@@ -40,7 +40,7 @@ using OrderedCollections: OrderedDict
 using CSV
 using Tables
 
-# used for @defVariable
+# used for @defStateType
 import ManifoldsBase
 using ManifoldsBase: AbstractManifold, manifold_dimension
 export AbstractManifold, manifold_dimension
@@ -54,7 +54,9 @@ using InteractiveUtils: subtypes
 ##==============================================================================
 # Exports
 ##==============================================================================
+##------------------------------------------------------------------------------
 ## Abstract types and their aliases
+##------------------------------------------------------------------------------
 export AbstractDFG
 export AbstractDFGParams, DFGParams
 export AbstractBlobstore, Blobstore
@@ -69,12 +71,22 @@ export AbstractFactorCache, FactorCache
 export AbstractStateType, StateType
 export AbstractPackedBelief, PackedBelief
 
-## types
+##------------------------------------------------------------------------------
+## Types
+##------------------------------------------------------------------------------
+#TODO types are not yet stable - also, we might not export types such as VariableCompute
 # Variables
 export VariableCompute, VariableDFG, VariableSummary, VariableSkeleton
 # Factors
 export FactorCompute, FactorDFG, FactorSummary, FactorSkeleton
 
+export Blobentry
+
+export State, PackedState
+
+##------------------------------------------------------------------------------
+## Functions
+##------------------------------------------------------------------------------
 # v1 name, signiture, return, and error checked
 export addVariable!, mergeVariable!, deleteVariable!
 export addVariables!, getVariables
@@ -94,33 +106,88 @@ export listVariables, listFactors, listStates
 export getGraphBlobentry
 
 export getObservation
-# v1 name, signiture, and return
 
-# v1 name only
-export getVariable, getBlob, addBlob!
+## v1 name, signiture, and return
 
-export hasVariable, hasFactor
+## v1 name only
 
-# getBlob TODO do we want all of them easy portable vs convenience?
-# getBlob(::AbstractBlobstore, ::UUID)
-# getBlob(::AbstractBlobstore, ::Blobentry)
-# getBlob(::AbstractDFG, ::Blobentry)
+##------------------------------------------------------------------------------
+# Variable
+##------------------------------------------------------------------------------
+export getVariable
+export hasVariable
 
-# TODO get,add,delete|Blob still needs immutability discussion. but errors checked, tests needs updating though.
+##------------------------------------------------------------------------------
+## State
+##------------------------------------------------------------------------------
+export getStates
+
+##------------------------------------------------------------------------------
+# Factor
+##------------------------------------------------------------------------------
+export mergeFactor!
+export hasFactor
+
+##------------------------------------------------------------------------------
+## Blobentries
+##------------------------------------------------------------------------------
+export addBlobentries!
+export addGraphBlobentry!
+export addGraphBlobentries!
+export addAgentBlobentry!
+export addAgentBlobentries!
+
+export getBlobentries
+export getGraphBlobentries
+export getAgentBlobentry
+export getAgentBlobentries
+
+export mergeBlobentries!
+export mergeGraphBlobentry!
+export mergeAgentBlobentry!
+
+export deleteGraphBlobentry!
+export deleteAgentBlobentry!
+
+export listBlobentries
+export listGraphBlobentries
+export listAgentBlobentries
+
+export hasBlobentry
 
 # TODO not yet implemented in DFG
 # addAgentBlobentry!
 # addGraphBlobentry!
 
+##------------------------------------------------------------------------------
+## Blobstores and Blobs
+##------------------------------------------------------------------------------
+export getBlobstore
+export addBlobstore!
+export deleteBlobstore!
+export listBlobstores
+
+# TODO get,add,delete|Blob still needs immutability discussion. but errors checked, tests needs updating though.
+export getBlob
+# getBlob TODO do we want all of them easy portable vs convenience?
+# getBlob(::AbstractBlobstore, ::UUID)
+# getBlob(::AbstractBlobstore, ::Blobentry)
+# getBlob(::AbstractDFG, ::Blobentry)
+export addBlob!
+export deleteBlob!
+export listBlobs
+export hasBlob
+
+##------------------------------------------------------------------------------
+
 ##
 const DFG = DistributedFactorGraphs
 export DFG
 
-export GraphsDFGs, GraphsDFG
+export GraphsDFGs
+export GraphsDFG
 
-##
-export getFactorState # FIXME getFactorState were questioned and being reviewed again for name, other than that they are checked.
-
+##==============================================================================
 ## CRUD Matrix
 # export addVariable!,          getVariable,          mergeVariable!,          deleteVariable!
 # export addVariables!,         getVariables,         mergeVariables!,         deleteVariables!
@@ -157,220 +224,70 @@ export getFactorState # FIXME getFactorState were questioned and being reviewed 
 # export listVariableBlobentryMetadata, listFactorBlobentryMetadata, listAgentBlobentryMetadata, listGraphBlobentryMetadata
 
 ##==============================================================================
+## Common Accessors 
+##==============================================================================
+export getLabel
+
+# might only be public
+export getId
+
+##==============================================================================
 ## Internal or not yet ready
 ##==============================================================================
+##------------------------------------------------------------------------------
+## Types
+##------------------------------------------------------------------------------
+export InMemoryDFGTypes
+export LocalDFG
+export FolderStore
 
 ##------------------------------------------------------------------------------
-## DFG
+## Tags
 ##------------------------------------------------------------------------------
-
-# accessors & crud
-export getDescription,
-    setDescription!,
-    getSolverParams,
-    setSolverParams!,
-    getAgentMetadata,
-    setAgentMetadata!,
-    getGraphMetadata,
-    setGraphMetadata!,
-    getAddHistory
-
-export getGraphBlobentries,
-    addGraphBlobentry!,
-    addGraphBlobentries!,
-    mergeGraphBlobentry!,
-    deleteGraphBlobentry!,
-    getAgentBlobentry,
-    getAgentBlobentries,
-    addAgentBlobentry!,
-    addAgentBlobentries!,
-    mergeAgentBlobentry!,
-    deleteAgentBlobentry!,
-    listGraphBlobentries,
-    listAgentBlobentries
-
-export getBlobstore,
-    addBlobstore!, updateBlobstore!, deleteBlobstore!, emptyBlobstore!, listBlobstores
-
-# TODO Not sure these are needed or should work everywhere, implement in cloud?
-# NOTE not exporiting these for now. For consistency `get` and `set` might work better.
-# export updateAgentMetadata!,
-#     updateGraphMetadata!, deleteAgentMetadata!, deleteGraphMetadata!
-# export emptyAgentMetadata!, emptyGraphMetadata!
-
-# Graph Types: exported from modules
-export InMemoryDFGTypes, LocalDFG
-
-# AbstractDFG Interface
-export exists, mergeFactor!, isVariable, isFactor
-
-export isConnected
-
-export getBiadjacencyMatrix
-
-export getSummaryGraph
-
-# Common
-export getSolvable, setSolvable!, isSolvable
-export getVariableLabelNumber
-
-# accessors
-export getLabel, getTimestamp, setTimestamp, getTags, setTags!
-
-export getAgentLabel, getGraphLabel
-
-#TODO these are currently unused, do we deprecate?
-export isSolveInProgress, getSolveInProgress
-
-# CRUD & SET
-export listTags, mergeTags!, emptyTags!
+# tags is a set: get/list, merge, empty, and remove (we don't have add but merge)
+export getTags
+export listTags
+export mergeTags!
+export emptyTags!
 export removeTags! #TODO do we want this one
+export hasTags
 
 ##------------------------------------------------------------------------------
-# Variable
+## Metadata
 ##------------------------------------------------------------------------------
-# accessors
-export getSolverDataDict
-export getVariableType, getVariableTypeName
+# currently these refer to variable metadata
+export getMetadata
+export addMetadata!
+export deleteMetadata!
+export listMetadata
 
-export getVariableType
-
-# VariableType functions
-export getDimension, getManifold, getPointType
-export getPointIdentity, getPoint, getCoordinates
-
-# Small Data CRUD
-export SmallDataTypes
-export getMetadata,
-    setMetadata!,
-    addMetadata!,
-    updateMetadata!,
-    deleteMetadata!,
-    listMetadata,
-    emptyMetadata!
-
-# CRUD & SET
-export getStates
-
-# PPE
-##------------------------------------------------------------------------------
-# PPE TYPES
-export AbstractPointParametricEst
-export MeanMaxPPE
-export getPPEMax, getPPEMean, getPPESuggested, getLastUpdatedTimestamp
-
-# accessors
-
-export getPPEDict, getVariablePPEDict, getVariablePPE
-
-# CRUD & SET
-export getPPE,
-    getPPEs, getVariablePPE, addPPE!, updatePPE!, deletePPE!, listPPEs, mergePPEs! #TODO look at rename to just mergePPE to match with cloud?
-
-# Variable Node Data
-##------------------------------------------------------------------------------
-export State, PackedState
-
-export packState, unpackState
-
-export getSolvedCount,
-    isSolved, setSolvedCount!, isInitialized, isMarginalized, setMarginalized!
-
-export listNeighborhood, listNeighbors
-export findFactorsBetweenNaive
-export copyGraph!, deepcopyGraph, deepcopyGraph!, buildSubgraph, mergeGraph!
-
-# Entry Blob Data
-##------------------------------------------------------------------------------
-
-export hasBlobentry,
-    getfirstBlobentry, addBlobentries!, listBlobentrySequence, mergeBlobentries!
-export incrDataLabelSuffix
-
-export getBlobentries
-export getBlobentriesVariables
-# convenience wrappers
-# aliases
-export packBlob, unpackBlob
-export @format_str # exported from FileIO
+export getAgentMetadata
+export getGraphMetadata
 
 ##------------------------------------------------------------------------------
-# Factors
+## FileDFG
 ##------------------------------------------------------------------------------
-# Factor Data
+# File import and export
+export saveDFG
+export loadDFG!
+export loadDFG
 
-# accessors
-export getVariableOrder
-export getFactorType, getFactorFunction
-
-# Serialization type conversion
-export convertPackedType, convertStructType
-
-export pack, unpack, packDistribution, unpackDistribution
+##------------------------------------------------------------------------------
+## Aliases
+##------------------------------------------------------------------------------
+#TODO is ls alias or more of a shorthand with extra functionality?
+# if shorthand kind of function it is likeley only DFG
+export ls # alias for listVariables
+export lsf # alias for listFactors
 
 ##------------------------------------------------------------------------------
 ## Other utility functions
 ##------------------------------------------------------------------------------
 
-# Sort
-export natural_lt, sortDFG
+export listNeighborhood
+export listNeighbors
 
-# Validation
-# export isValidLabel
-
-## List
-export ls, lsf, ls2
-export isPrior, lsfPriors
-export hasTags, hasTagsNeighbors
-
-## Finding
-export findClosestTimestamp, findVariableNearTimestamp
-
-# Serialization
-export packVariable, unpackVariable, packFactor, unpackFactor
-export rebuildFactorCache!
-export @defVariable
-
-# File import and export
-export saveDFG, loadDFG!, loadDFG
-
-# export toDot, toDotFile
-
-# shortest path
-export findShortestPathDijkstra
-export isPathFactorsHomogeneous
-
-# Comparisons
-export compare,
-    compareField,
-    compareFields,
-    compareAll,
-    compareVariable,
-    compareFactor,
-    compareAllVariables,
-    compareSimilarVariables,
-    compareSimilarFactors,
-    compareFactorGraphs
-
-## Deprecated exports should be listed in Deprecated.jl if possible, otherwise here
-
-## CustomPrinting.jl
-export printFactor, printVariable, printNode
-
-# Data Blobs
-export InMemoryBlobstore
-export FolderStore
-export Blobentry
-export updateBlob!, deleteBlob!, hasBlob, listBlobentries
-export listBlobs
-export Blobentry
-# export copyStore
-export getId, getHash, getTimestamp
-# convenience wrappers
-
-export plotDFG
-
-## TODO maybe move to DFG
+## TODO maybe move to DFG from SDK
 # addAgent!
 # deleteAgent!
 # listAgents
@@ -382,6 +299,203 @@ export plotDFG
 # getModels
 # addModel!
 # getGraphs
+
+##==============================================================================
+
+export getFactorState # FIXME getFactorState were questioned and being reviewed again for name, other than that they are checked.
+
+##==============================================================================
+export @format_str # exported from FileIO
+
+export @defStateType #TODO Should this be exported?
+
+# list of unstable functions not exported any more
+# will move to public or deprecate over time
+const unstable_functions::Vector{Symbol} = [
+    :InMemoryBlobstore,
+    :MetadataTypes, #maybe make public after metadata stable
+    :exists,
+    :emptyMetadata!, #TODO maybe deprecate for just deleteMetadata!
+    :emptyBlobstore!, #TODO maybe deprecate for just deleteBlobstore!
+    :compare,
+    :compareField,
+    :compareFields,
+    :compareAll,
+    :compareVariable,
+    :compareFactor,
+    :compareAllVariables,
+    :compareSimilarVariables,
+    :compareSimilarFactors,
+    :compareFactorGraphs,
+    :convertPackedType,
+    :convertStructType,
+    :copyGraph!,
+    :deepcopyGraph,
+    :deepcopyGraph!,
+    :findClosestTimestamp,
+    :findVariableNearTimestamp,
+    :findShortestPathDijkstra,
+    :findFactorsBetweenNaive,
+    :getAgentLabel,
+    :getGraphLabel,
+    :getVariableTypeName,
+    :getVariableType,
+    :getDescription,
+    :getAddHistory,
+    :getSolverParams,
+    :getHash,
+    :getTimestamp,
+    :getSolvable,
+    :getVariableOrder,
+    :getSolvedCount,
+    :getDimension,
+    :getManifold,
+    :getPointType,
+    :getSummaryGraph,
+    :getBiadjacencyMatrix,
+    :getPointIdentity,
+    :getPoint,
+    :getCoordinates,
+    :getVariableLabelNumber,# TODO somewhat used, do we deprecate?
+    :getfirstBlobentry,# TODO somewhat used, do we deprecate?
+    :getSolveInProgress,#TODO unused, do we deprecate?
+    :getSolverDataDict,## TODO deprecated or obsolete
+    :hasTagsNeighbors,
+    :isVariable,
+    :isFactor,
+    :isConnected,
+    :isPathFactorsHomogeneous,
+    :isSolvable,
+    :isSolved,
+    :isInitialized,
+    :isMarginalized,
+    :isPrior,
+    :isSolveInProgress,#TODO these are currently unused, do we deprecate?
+    :printFactor,
+    :printVariable,
+    :printNode,
+    :plotDFG,
+    :pack,
+    :packDistribution,
+    :packVariable,
+    :packFactor,
+    :packBlob,
+    :packState,
+    :unpack,
+    :unpackDistribution,
+    :unpackVariable,
+    :unpackFactor,
+    :unpackBlob,
+    :unpackState,
+    :ls2,
+    :lsfPriors,
+    :listBlobentrySequence,# TODO somewhat used, do we deprecate?
+    :natural_lt, #TODO do we  stable functions such as natural_lt or just mark as public
+    :sortDFG, #TODO do we  stable functions such as natural_lt or just mark as public
+    :mergeGraph!,
+    :buildSubgraph,
+    :incrDataLabelSuffix,# TODO somewhat used, do we deprecate?
+    :updateBlobstore!,## TODO deprecated or obsolete
+    :updateMetadata!,## TODO deprecated or obsolete
+    :updateBlob!,## TODO deprecated or obsolete
+
+    # set # TODO what to do here, maybe `ref` verb + setproperty.  
+    :setSolverParams!,
+    :setDescription!,
+    :setSolvable!,
+    :setTimestamp,
+    :setTags!,
+    :setSolvedCount!,
+    :setMarginalized!,
+    # no set on these
+    :setMetadata!, # no set, use add merge
+    :setAgentMetadata!,
+    :setGraphMetadata!,
+
+    #Deprecated in v0.28
+    :AbstractRelativeMinimize,
+    :AbstractManifoldMinimize,
+    :AbstractPrior,
+    :AbstractRelative,
+    :InferenceVariable,
+    :InferenceType,
+    :PackedSamplableBelief,
+    :getVariableState,
+    :addVariableState!,
+    :mergeVariableState!,
+    :deleteVariableState!,
+    :listVariableStates,
+    :VariableState,
+    :VariableStateType,
+    :copytoVariableState!,
+    :setSolverData!,
+    :getBlobentriesVariables,
+    :mergeVariableData!,
+    :mergeGraphVariableData!,
+    :getData,
+    :addData!,
+    :updateData!,
+    :deleteData!,
+    :SkeletonDFGVariable,
+    :DFGVariableSummary,
+    :PackedVariable,
+    :Variable,
+    :DFGVariable,
+    :SkeletonDFGFactor,
+    :DFGFactorSummary,
+    :DFGFactor,
+    :PackedFactor,
+    :Factor,
+    :AbstractPointParametricEst,
+    :MeanMaxPPE,
+    :getPPEMax,
+    :getPPEMean,
+    :getPPESuggested,
+    :getLastUpdatedTimestamp,
+    :getPPEDict,
+    :getVariablePPEDict,
+    :getVariablePPE,
+    :listSolveKeys,
+    :listSupersolves,
+    :getPPE,
+    :getPPEs,
+    :getVariablePPE,
+    :addPPE!,
+    :updatePPE!,
+    :deletePPE!,
+    :listPPEs,
+    :mergePPEs!,
+    Symbol("@defVariable"),
+    :SmallDataTypes,
+    :NoSolverParams,
+    :AbstractParams,
+    # Deprecated in v0.27
+    :AbstractFactor,
+    :AbstractPackedFactor,
+    :FactorOperationalMemory,
+    :VariableNodeData,
+    :updateVariableSolverData!,
+    :getSolverData,
+    :setSolverData!,
+    :reconstFactorData,
+    :_packSolverData,
+    :GenericFunctionNodeData,
+    :PackedFunctionNodeData,
+    :FunctionNodeData,
+    # Deprecated in v0.25
+    :DFGSummary,
+]
+
+macro usingDFG(unstable = false)
+    pub_names = names(DistributedFactorGraphs)
+    if unstable
+        pub_names = union(pub_names, DFG.unstable_functions)
+    end
+    syms = [Expr(:., Symbol(n)) for n in pub_names]
+    return Expr(:using, Expr(:(:), Expr(:(.), :DistributedFactorGraphs), syms...))
+end
+
+##==============================================================================
 
 ##==============================================================================
 ## Files Includes
@@ -413,6 +527,8 @@ include("DataBlobs/services/HelpersDataWrapEntryBlob.jl")
 # To be moved as necessary.
 include("Common.jl")
 
+function getSolvable end
+function getVariableType end
 # In Memory Types
 include("GraphsDFG/GraphsDFG.jl")
 using .GraphsDFGs
@@ -429,6 +545,33 @@ include("services/DFGFactor.jl")
 include("Deprecated.jl")
 include("services/CompareUtils.jl")
 
+#FIXME move 
+function mergeGraphBlobentry!(dfg::GraphsDFG, entry::Blobentry)
+    refBlobentries(dfg.graph)[getLabel(entry)] = entry
+    return 1
+end
+
+function mergeAgentBlobentry!(dfg::GraphsDFG, entry::Blobentry)
+    refBlobentries(dfg.agent)[getLabel(entry)] = entry
+    return 1
+end
+
+function mergeGraphBlobentries!(dfg::GraphsDFG, entries::Vector{Blobentry})
+    cnts = map(entries) do entry
+        return mergeGraphBlobentry!(dfg, entry)
+    end
+    return sum(cnts)
+end
+
+function mergeAgentBlobentries!(dfg::GraphsDFG, entries::Vector{Blobentry})
+    cnts = map(entries) do entry
+        return mergeAgentBlobentry!(dfg, entry)
+    end
+    return sum(cnts)
+end
+
+# include("services/Sync.jl")
+
 # Include the FilesDFG API.
 include("FileDFG/FileDFG.jl")
 
@@ -436,33 +579,5 @@ include("FileDFG/FileDFG.jl")
 include("services/CustomPrinting.jl")
 
 include("weakdeps_prototypes.jl")
-
-#TODO start off as just an alias before deprecating
-# Starting Variable-level nouns-adjective standardisation 
-export SkeletonDFGVariable
-const SkeletonDFGVariable = VariableSkeleton
-
-export DFGVariableSummary
-const DFGVariableSummary = VariableSummary
-
-export PackedVariable
-const PackedVariable = VariableDFG
-export Variable
-const Variable = VariableDFG
-
-# Starting Factor-level noun-adjective standardisation 
-export SkeletonDFGFactor
-const SkeletonDFGFactor = FactorSkeleton
-
-export DFGFactorSummary
-const DFGFactorSummary = FactorSummary
-
-export DFGFactor
-const DFGFactor = FactorCompute
-
-export PackedFactor
-const PackedFactor = FactorDFG
-export Factor
-const Factor = FactorDFG
 
 end

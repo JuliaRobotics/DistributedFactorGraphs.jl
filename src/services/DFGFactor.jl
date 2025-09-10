@@ -3,34 +3,14 @@
 ##==============================================================================
 
 function getMetadata(f::FactorDFG)
-    return JSON3.read(base64decode(f.metadata), Dict{Symbol, SmallDataTypes})
+    return JSON3.read(base64decode(f.metadata), Dict{Symbol, MetadataTypes})
 end
 
 ## COMMON
 # getSolveInProgress
 # isSolveInProgress
 
-#TODO  getFactorFunction = getFactorType
-"""
-    $SIGNATURES
-
-Return reference to the user factor in `<:AbstractDFG` identified by `::Symbol`.
-"""
-getFactorFunction(fc::FactorCompute) = getObservation(fc)
-getFactorFunction(dfg::AbstractDFG, fsym::Symbol) = getFactorFunction(getFactor(dfg, fsym))
-
-"""
-    $SIGNATURES
-
-Return user factor type from factor graph identified by label `::Symbol`.
-
-Notes
-- Replaces older `getfnctype`.
-"""
-getFactorType(fct::FactorCompute) = getObservation(fct)
-getFactorType(f::FactorDFG) = getTypeFromSerializationModule(f.fnctype)() # TODO find a better way to do this that does not rely on empty constructor
-getFactorType(dfg::AbstractDFG, lbl::Symbol) = getFactorType(getFactor(dfg, lbl))
-
+#TODO `FactorState` is no longer the correct noun, update getFactorState.
 """
     $SIGNATURES
 

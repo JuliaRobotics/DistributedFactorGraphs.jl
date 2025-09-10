@@ -1,37 +1,26 @@
 ## ================================================================================
 ## Deprecated in v0.28
 ##=================================================================================
-export AbstractRelativeMinimize,
-    AbstractManifoldMinimize,
-    AbstractPrior,
-    AbstractRelative,
-    InferenceVariable,
-    InferenceType,
-    PackedSamplableBelief
-
-#TODO: maybe just remove these
-export NoSolverParams
-const AbstractPrior = PriorObservation
-const AbstractRelative = RelativeObservation
-export AbstractParams
-const AbstractParams = AbstractDFGParams
-
 abstract type AbstractRelativeMinimize <: RelativeObservation end
 abstract type AbstractManifoldMinimize <: RelativeObservation end
 
+const SkeletonDFGVariable = VariableSkeleton
+const DFGVariableSummary = VariableSummary
+const PackedVariable = VariableDFG
+const Variable = VariableDFG
+const DFGVariable = VariableCompute
+const SkeletonDFGFactor = FactorSkeleton
+const DFGFactorSummary = FactorSummary
+const DFGFactor = FactorCompute
+const PackedFactor = FactorDFG
+const Factor = FactorDFG
+const SmallDataTypes = MetadataTypes
+const AbstractPrior = PriorObservation
+const AbstractRelative = RelativeObservation
+const AbstractParams = AbstractDFGParams
 const InferenceVariable = StateType{Any}
 const InferenceType = AbstractPackedObservation
-
 const PackedSamplableBelief = PackedBelief
-
-export getVariableState
-export addVariableState!
-export mergeVariableState!
-export deleteVariableState!
-export listVariableStates
-export VariableState
-export VariableStateType
-export copytoVariableState!
 const getVariableState = getState
 const addVariableState! = addState!
 const mergeVariableState! = mergeState!
@@ -41,7 +30,6 @@ const VariableState = State
 const VariableStateType = StateType
 const copytoVariableState! = copytoState!
 
-export setSolverData!
 # """
 #     $SIGNATURES
 # Set solver data structure stored in a variable.
@@ -57,7 +45,6 @@ end
 
 @deprecate mergeVariableSolverData!(args...; kwargs...) mergeState!(args...; kwargs...)
 
-export mergeVariableData!, mergeGraphVariableData!
 function mergeVariableData!(args...)
     return error(
         "mergeVariableData! is obsolete, use mergeState! for state, PPEs are obsolete",
@@ -129,14 +116,11 @@ function cloneSolveKey!(dfg::AbstractDFG, dest::Symbol, src::Symbol; kw...)
     return cloneSolveKey!(dfg, dest, dfg, src; kw...)
 end
 
-export getData, addData!, updateData!, deleteData!
-
 #TODO not a good function, as it's not complete.
 # """
 #     $(SIGNATURES)
 # Convenience function to get all the metadata of a DFG
 # """
-# export getDFGInfo
 function getDFGInfo(dfg::AbstractDFG)
     return (
         description = getDescription(dfg),
@@ -148,10 +132,6 @@ function getDFGInfo(dfg::AbstractDFG)
     )
 end
 
-export DFGVariable
-const DFGVariable = VariableCompute
-
-export listSolveKeys, listSupersolves
 # """
 #     $TYPEDSIGNATURES
 # List all the solvekeys used amongst all variables in the distributed factor graph object.
@@ -207,6 +187,7 @@ function listSolveKeys(
 
     return skeys
 end
+
 const listSupersolves = listSolveKeys
 
 #TODO mergeBlobentries! does not fit with merge definition, should probably be updated to copyto or sync.
@@ -354,19 +335,31 @@ function getfirstBlobentry(dfg::AbstractDFG, label::Symbol, key::Regex)
     return getfirstBlobentry(dfg, label; labelFilter = contains(key))
 end
 
+macro defVariable(args...)
+    return esc(:(DFG.@defStateType $(args...)))
+end
+
+@deprecate getFactorFunction(args...) getObservation(args...)
+@deprecate getFactorType(args...) getObservation(args...)
+
+#TODO maybe deprecate setMetadata!
+function setMetadata!(v::VariableDFG, metadata::Dict{Symbol, MetadataTypes})
+    return error("FIXME: Metadata is not currently mutable in a Variable")
+    # v.metadata = base64encode(JSON3.write(metadata))
+end
+
+function setMetadata!(v::VariableCompute, metadata::Dict{Symbol, MetadataTypes})
+    v.smallData !== metadata && empty!(v.smallData)
+    return merge!(v.smallData, metadata)
+end
+
 ## ================================================================================
 ## Deprecated in v0.27
 ##=================================================================================
-export AbstractFactor
+
 const AbstractFactor = AbstractObservation
-
-export AbstractPackedFactor
 const AbstractPackedFactor = AbstractPackedObservation
-
-export FactorOperationalMemory
 const FactorOperationalMemory = FactorCache
-
-export VariableNodeData
 const VariableNodeData = State
 
 @deprecate getNeighborhood(args...; kwargs...) listNeighborhood(args...; kwargs...)
@@ -442,12 +435,10 @@ const VariableNodeData = State
 @deprecate getSolverData(v::VariableCompute, solveKey::Symbol = :default) getState(
     v,
     solveKey,
-)
+) false
 
 @deprecate packVariableNodeData(args...; kwargs...) packState(args...; kwargs...)
 @deprecate unpackVariableNodeData(args...; kwargs...) unpackState(args...; kwargs...)
-
-export updateVariableSolverData!
 
 #TODO possibly completely deprecated or not exported until update verb is standardized
 function updateVariableSolverData!(
@@ -606,7 +597,7 @@ function FactorCompute(
     state::FactorState = FactorState(),
     solvercache::Base.RefValue{<:FactorCache} = Ref{FactorCache}(),
     id::Union{UUID, Nothing} = nothing,
-    smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
+    smallData::Dict{Symbol, MetadataTypes} = Dict{Symbol, MetadataTypes}(),
 )
     error(
         "This constructor is deprecated, use FactorCompute(label, variableOrder, solverData; ...) instead",
@@ -627,8 +618,6 @@ function FactorCompute(
     )
 end
 
-export getSolverData, setSolverData!
-
 function getSolverData(f::FactorCompute)
     return error(
         "getSolverData(f::FactorCompute) is obsolete, use getFactorState, getObservation, or getCache instead",
@@ -644,14 +633,13 @@ end
 @deprecate unpackFactor(dfg::AbstractDFG, factor::FactorDFG; skipVersionCheck::Bool = false) unpackFactor(
     factor;
     skipVersionCheck,
-)
+) false
 
 @deprecate rebuildFactorMetadata!(args...; kwargs...) rebuildFactorCache!(
     args...;
     kwargs...,
 )
 
-export reconstFactorData
 function reconstFactorData end
 
 function decodePackedType(
@@ -672,7 +660,6 @@ function decodePackedType(
     return factordata
 end
 
-export _packSolverData
 function _packSolverData(f::FactorCompute, fnctype::AbstractObservation)
     #
     error("_packSolverData is deprecated, use seperate packing of observation #TODO")
@@ -689,8 +676,6 @@ function _packSolverData(f::FactorCompute, fnctype::AbstractObservation)
         error(msg)
     end
 end
-
-export GenericFunctionNodeData, PackedFunctionNodeData, FunctionNodeData
 
 const PackedFunctionNodeData{T} =
     GenericFunctionNodeData{T} where {T <: AbstractPackedObservation}
@@ -716,7 +701,7 @@ function FactorCompute(
     solvable::Int = 1,
     nstime::Nanosecond = Nanosecond(0),
     id::Union{UUID, Nothing} = nothing,
-    smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
+    smallData::Dict{Symbol, MetadataTypes} = Dict{Symbol, MetadataTypes}(),
 )
     Base.depwarn(
         "`FactorCompute` constructor with `GenericFunctionNodeData` is deprecated. observation, state, and solvercache should be provided explicitly.",
@@ -819,7 +804,6 @@ typeModuleName(varT::Type{<:StateType}) = typeModuleName(varT())
 @deprecate getRobotLabel(dfg) getAgentLabel(dfg)
 @deprecate getSessionLabel(dfg) getGraphLabel(dfg)
 
-export DFGSummary
 DFGSummary(args) = error("DFGSummary is deprecated")
 @deprecate getSummary(dfg::AbstractDFG) getSummaryGraph(dfg)
 
