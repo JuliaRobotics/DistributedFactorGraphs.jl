@@ -503,7 +503,7 @@ function findShortestPathDijkstra(
         else
             varList
         end
-        deepcopyGraph(typeof(dfg), dfg, varList, fctList)
+        DFG.deepcopyGraph(typeof(dfg), dfg, varList, fctList)
     else
         # no filter can be used directly
         dfg

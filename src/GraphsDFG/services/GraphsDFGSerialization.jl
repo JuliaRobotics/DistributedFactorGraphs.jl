@@ -10,7 +10,7 @@ using InteractiveUtils
     blobStores::Union{Nothing, Dict{Symbol, FolderStore{Vector{UInt8}}}}
     graphLabel::Symbol
     graphTags::Vector{Symbol}
-    graphMetadata::Dict{Symbol, SmallDataTypes}
+    graphMetadata::Dict{Symbol, MetadataTypes}
     graphBlobEntries::OrderedDict{Symbol, Blobentry}
     agent::Agent
 end

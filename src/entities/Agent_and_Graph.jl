@@ -3,7 +3,7 @@
     label::Symbol = :DefaultAgent
     description::String = ""
     tags::Vector{Symbol} = Symbol[]
-    metadata::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}()
+    metadata::Dict{Symbol, MetadataTypes} = Dict{Symbol, MetadataTypes}()
     blobEntries::OrderedDict{Symbol, Blobentry} = OrderedDict{Symbol, Blobentry}()
 end
 
@@ -11,6 +11,6 @@ end
     label::Symbol = :DefaultFactorgraph
     description::String = ""
     tags::Vector{Symbol} = Symbol[]
-    metadata::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}()
+    metadata::Dict{Symbol, MetadataTypes} = Dict{Symbol, MetadataTypes}()
     blobEntries::OrderedDict{Symbol, Blobentry} = OrderedDict{Symbol, Blobentry}()
 end

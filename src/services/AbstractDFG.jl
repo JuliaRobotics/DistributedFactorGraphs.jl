@@ -108,7 +108,7 @@ function getTypeDFGFactors end
     $SIGNATURES
 Set the metadata of the node.
 """
-function setMetadata!(node, metadata::Dict{Symbol, SmallDataTypes})
+function setMetadata!(node, metadata::Dict{Symbol, MetadataTypes})
     # with set old data should be removed, but care is taken to make sure its not the same object
     node.metadata !== metadata && empty!(node.metadata)
     return merge!(node.metadata, metadata)
@@ -142,7 +142,7 @@ $SIGNATURES
 
 Set the metadata of the agent in the AbstractDFG.
 """
-function setAgentMetadata!(dfg::AbstractDFG, data::Dict{Symbol, SmallDataTypes})
+function setAgentMetadata!(dfg::AbstractDFG, data::Dict{Symbol, MetadataTypes})
     agent = getAgent(dfg)
     return setMetadata!(agent, data)
 end
@@ -159,7 +159,7 @@ $SIGNATURES
 
 Set the metadata of the factorgraph in the AbstractDFG.
 """
-function setGraphMetadata!(dfg::AbstractDFG, data::Dict{Symbol, SmallDataTypes})
+function setGraphMetadata!(dfg::AbstractDFG, data::Dict{Symbol, MetadataTypes})
     return setMetadata!(dfg, data)
 end
 

@@ -24,7 +24,7 @@ DFG.getGraphLabel(dfg::GraphsDFG) = dfg.graph.label
 DFG.getMetadata(dfg::GraphsDFG) = dfg.graph.metadata
 DFG.getDescription(dfg::GraphsDFG) = dfg.graph.description
 
-function DFG.setMetadata!(dfg::GraphsDFG, metadata::Dict{Symbol, SmallDataTypes})
+function DFG.setMetadata!(dfg::GraphsDFG, metadata::Dict{Symbol, MetadataTypes})
     # with set old data should be removed, but care is taken to make sure its not the same object
     dfg.graph.metadata !== metadata && empty!(dfg.graph.metadata)
     return merge!(dfg.graph.metadata, metadata)
@@ -50,7 +50,7 @@ function GraphsDFG{T, V, F}(
     # factor graph TODO maybe move to FactorGraph or make a new Graph struct to hold these (similar to Agent) 
     graphLabel::Symbol = Symbol("factorgraph_", string(uuid4())[1:6]),
     graphTags::Vector{Symbol} = Symbol[],
-    graphMetadata = Dict{Symbol, SmallDataTypes}(),
+    graphMetadata = Dict{Symbol, MetadataTypes}(),
     graphBlobEntries = OrderedDict{Symbol, Blobentry}(),
     description::String = "",
     graphDescription::String = description,
@@ -65,7 +65,7 @@ function GraphsDFG{T, V, F}(
     agentLabel::Symbol = :DefaultAgent,
     agentDescription::String = "",
     agentTags::Vector{Symbol} = Symbol[],
-    agentMetadata = Dict{Symbol, SmallDataTypes}(),
+    agentMetadata = Dict{Symbol, MetadataTypes}(),
     agentBlobEntries = OrderedDict{Symbol, Blobentry}(),
     agent::Agent = Agent(
         agentLabel,

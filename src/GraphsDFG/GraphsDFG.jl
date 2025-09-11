@@ -16,7 +16,13 @@ using ...DistributedFactorGraphs:
     AbstractGraphVariable,
     AbstractGraphFactor,
     NoSolverParams,
-    filterDFG!
+    filterDFG!,
+    getSolvable,
+    getVariableType,
+    getAgentLabel,
+    getGraphLabel,
+    isInitialized,
+    MetadataTypes
 
 # import DFG functions to extend
 import ...DistributedFactorGraphs:

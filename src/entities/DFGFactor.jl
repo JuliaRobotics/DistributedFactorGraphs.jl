@@ -146,7 +146,7 @@ function FactorDFG(
     inflation::Real = 3.0,
     label::Symbol = assembleFactorName(xisyms),
     nstime::Int = 0,
-    metadata::Dict{Symbol, DFG.SmallDataTypes} = Dict{Symbol, DFG.SmallDataTypes}(),
+    metadata::Dict{Symbol, DFG.MetadataTypes} = Dict{Symbol, DFG.MetadataTypes}(),
 )
     # create factor data
     state = FactorState(; multihypo, nullhypo, inflation)
@@ -208,7 +208,7 @@ Base.@kwdef struct FactorCompute{FT <: AbstractObservation, N} <: AbstractGraphF
     solvable::Base.RefValue{Int}
     """Dictionary of small data associated with this variable.
     Accessors: [`getMetadata`](@ref), [`setMetadata!`](@ref)"""
-    smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}()
+    smallData::Dict{Symbol, MetadataTypes} = Dict{Symbol, MetadataTypes}()
 
     #refactor fields
     """Observation function or measurement for this factor.
@@ -241,7 +241,7 @@ function FactorCompute(
     solvable::Int = 1,
     nstime::Nanosecond = Nanosecond(0),
     id::Union{UUID, Nothing} = nothing,
-    smallData::Dict{Symbol, SmallDataTypes} = Dict{Symbol, SmallDataTypes}(),
+    smallData::Dict{Symbol, MetadataTypes} = Dict{Symbol, MetadataTypes}(),
     solverData = nothing,
 )
     if !isnothing(solverData)

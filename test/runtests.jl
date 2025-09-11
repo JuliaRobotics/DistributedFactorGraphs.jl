@@ -10,6 +10,8 @@ using Aqua
 
 using DistributedFactorGraphs: ArrayPartition, OrderedDict
 
+DFG.@usingDFG true
+
 # If you want to enable debugging logging (very verbose!)
 # using Logging
 # logger = SimpleLogger(stdout, Logging.Debug)

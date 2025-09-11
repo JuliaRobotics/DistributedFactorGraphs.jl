@@ -92,7 +92,7 @@ See the [Manifolds.jl documentation on creating your own manifolds](https://juli
 
 Example:
 ```
-DFG.@defVariable Pose2 SpecialEuclideanGroup(2) ArrayPartition([0;0.0],[1 0; 0 1.0])
+DFG.@defStateType Pose2 SpecialEuclideanGroup(2) ArrayPartition([0;0.0],[1 0; 0 1.0])
 ```
 """
 macro defStateType(structname, manifold, point_identity)
@@ -101,7 +101,7 @@ macro defStateType(structname, manifold, point_identity)
             Base.@__doc__ struct $structname <: StateType{Any} end
 
             # user manifold must be a <:Manifold
-            @assert ($manifold isa AbstractManifold) "@defVariable of " *
+            @assert ($manifold isa AbstractManifold) "defStateType of " *
                                                      string($structname) *
                                                      " requires that the " *
                                                      string($manifold) *
@@ -114,10 +114,6 @@ macro defStateType(structname, manifold, point_identity)
             DFG.getPointIdentity(::Type{$structname}) = $point_identity
         end,
     )
-end
-
-macro defVariable(args...)
-    return esc(:(DFG.@defStateType $(args...)))
 end
 
 """
@@ -551,7 +547,7 @@ end
     $(SIGNATURES)
 Add a Metadata pair `key=>value` for variable `label` in `dfg`
 """
-function addMetadata!(dfg::AbstractDFG, label::Symbol, pair::Pair{Symbol, <:SmallDataTypes})
+function addMetadata!(dfg::AbstractDFG, label::Symbol, pair::Pair{Symbol, <:MetadataTypes})
     v = getVariable(dfg, label)
     haskey(v.smallData, pair.first) && throw(LabelExistsError("Metadata", pair.first))
     push!(v.smallData, pair)
@@ -566,7 +562,7 @@ Update a Metadata pair `key=>value` for variable `label` in `dfg`
 function updateMetadata!(
     dfg::AbstractDFG,
     label::Symbol,
-    pair::Pair{Symbol, <:SmallDataTypes};
+    pair::Pair{Symbol, <:MetadataTypes};
     warn_if_absent::Bool = true,
 )
     v = getVariable(dfg, label)

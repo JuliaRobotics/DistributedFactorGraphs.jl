@@ -3,17 +3,17 @@ using Manifolds
 using Test
 using LinearAlgebra
 
-@testset "Testing @defVariable" begin
+@testset "Testing @defStateType" begin
     ##
 
     struct NotAManifold end
 
-    @test_throws AssertionError @defVariable(MyVar, NotAManifold(), zeros(3, 3))
+    @test_throws AssertionError @defStateType(MyVar, NotAManifold(), zeros(3, 3))
 
     ##
 
-    @defVariable(TestVarType1, Euclidean(3), zeros(3))
-    @defVariable(
+    @defStateType(TestVarType1, Euclidean(3), zeros(3))
+    @defStateType(
         TestVarType2,
         SpecialEuclideanGroup(3),
         ArrayPartition(zeros(3), diagm(ones(3)))

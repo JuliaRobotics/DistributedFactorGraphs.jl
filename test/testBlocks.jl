@@ -19,7 +19,7 @@ import Base: convert
 # Base.convert(::Type{<:Tuple}, ::typeof(TranslationGroup(2))) = (:Euclid, :Euclid)
 
 # define a few varaible to use
-@defVariable TestVariableType1 TranslationGroup(1) [0.0;]
+@defStateType TestVariableType1 TranslationGroup(1) [0.0;]
 DFG.@defStateTypeN TestVariableType{N} TranslationGroup(N) zeros(N)
 const TestVariableType2 = TestVariableType{2}
 
@@ -98,8 +98,8 @@ function DFGStructureAndAccessors(
     des = "description for runtest"
     rId = :testRobotId
     sId = :testSessionId
-    rd = Dict{Symbol, SmallDataTypes}(:rd => "rdEntry")
-    sd = Dict{Symbol, SmallDataTypes}(:sd => "sdEntry")
+    rd = Dict{Symbol, MetadataTypes}(:rd => "rdEntry")
+    sd = Dict{Symbol, MetadataTypes}(:sd => "sdEntry")
     fg = T(;
         description = des,
         agentLabel = rId,
@@ -123,9 +123,9 @@ function DFGStructureAndAccessors(
 
     @test getSolverParams(fg) == NoSolverParams()
 
-    smallUserData = Dict{Symbol, SmallDataTypes}(:a => "42", :b => "Hello")
-    smallRobotData = Dict{Symbol, SmallDataTypes}(:a => "43", :b => "Hello")
-    smallSessionData = Dict{Symbol, SmallDataTypes}(:a => "44", :b => "Hello")
+    smallUserData = Dict{Symbol, MetadataTypes}(:a => "42", :b => "Hello")
+    smallRobotData = Dict{Symbol, MetadataTypes}(:a => "43", :b => "Hello")
+    smallSessionData = Dict{Symbol, MetadataTypes}(:a => "44", :b => "Hello")
 
     #TODO CRUD vs set
     @test setAgentMetadata!(fg, deepcopy(smallRobotData)) == smallRobotData
@@ -215,7 +215,7 @@ function DFGVariableSCA()
 
     v1_lbl = :a
     v1_tags = Set([:VARIABLE, :POSE])
-    small = Dict{Symbol, SmallDataTypes}(:small => "data")
+    small = Dict{Symbol, MetadataTypes}(:small => "data")
     testTimestamp = now(localzone())
     # Constructors
     v1 = VariableCompute(
@@ -262,7 +262,7 @@ function DFGVariableSCA()
 
     @test getPPEDict(v1) == v1.ppeDict
 
-    @test getMetadata(v1) == Dict{Symbol, SmallDataTypes}()
+    @test getMetadata(v1) == Dict{Symbol, MetadataTypes}()
 
     @test getVariableType(v1) == TestVariableType1()
 
