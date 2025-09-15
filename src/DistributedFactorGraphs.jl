@@ -116,7 +116,7 @@ export getObservation
 ##------------------------------------------------------------------------------
 export getVariable
 export hasVariable
-
+export mergeVariables!
 ##------------------------------------------------------------------------------
 ## State
 ##------------------------------------------------------------------------------
@@ -126,6 +126,7 @@ export getStates
 # Factor
 ##------------------------------------------------------------------------------
 export mergeFactor!
+export mergeFactors!
 export hasFactor
 
 ##------------------------------------------------------------------------------
@@ -144,7 +145,9 @@ export getAgentBlobentries
 
 export mergeBlobentries!
 export mergeGraphBlobentry!
+export mergeGraphBlobentries!
 export mergeAgentBlobentry!
+export mergeAgentBlobentries!
 
 export deleteGraphBlobentry!
 export deleteAgentBlobentry!
@@ -154,10 +157,8 @@ export listGraphBlobentries
 export listAgentBlobentries
 
 export hasBlobentry
-
-# TODO not yet implemented in DFG
-# addAgentBlobentry!
-# addGraphBlobentry!
+export hasGraphBlobentry
+export hasAgentBlobentry
 
 ##------------------------------------------------------------------------------
 ## Blobstores and Blobs
@@ -199,14 +200,15 @@ export GraphsDFG
 
 # export addBlobentry!,         getBlobentry,         mergeBlobentry!,         deleteBlobentry! # historic for VariableBlobentry
 # export addBlobentries!,       getBlobentries,       mergeBlobentries!,       deleteBlobentries!
-# TODO first pass progress
 # export addGraphBlobentry!,    getGraphBlobentry,    mergeGraphBlobentry!,    deleteGraphBlobentry!
 # export addGraphBlobentries!,  getGraphBlobentries,  mergeGraphBlobentries!,  deleteGraphBlobentries!
 # export addAgentBlobentry!,    getAgentBlobentry,    mergeAgentBlobentry!,    deleteAgentBlobentry!
 # export addAgentBlobentries!,  getAgentBlobentries,  mergeAgentBlobentries!,  deleteAgentBlobentries!
+#TODO blob entries not implemented on factors yet
 # export addFactorBlobentry!,   getFactorBlobentry,   mergeFactorBlobentry!,   deleteFactorBlobentry!
 # export addFactorBlobentries!, getFactorBlobentries, mergeFactorBlobentries!, deleteFactorBlobentries!
 
+# TODO first pass progress
 # export addVariableMetadata!,  getVariableMetadata,  mergeVariableMetadata!,  deleteVariableMetadata!
 # export addFactorMetadata!,    getFactorMetadata,    mergeFactorMetadata!,    deleteFactorMetadata!
 # export addAgentMetadata!,     getAgentMetadata,     mergeAgentMetadata!,     deleteAgentMetadata!
@@ -545,31 +547,6 @@ include("services/DFGVariable.jl")
 include("services/DFGFactor.jl")
 include("Deprecated.jl")
 include("services/CompareUtils.jl")
-
-#FIXME move 
-function mergeGraphBlobentry!(dfg::GraphsDFG, entry::Blobentry)
-    refBlobentries(dfg.graph)[getLabel(entry)] = entry
-    return 1
-end
-
-function mergeAgentBlobentry!(dfg::GraphsDFG, entry::Blobentry)
-    refBlobentries(dfg.agent)[getLabel(entry)] = entry
-    return 1
-end
-
-function mergeGraphBlobentries!(dfg::GraphsDFG, entries::Vector{Blobentry})
-    cnts = map(entries) do entry
-        return mergeGraphBlobentry!(dfg, entry)
-    end
-    return sum(cnts)
-end
-
-function mergeAgentBlobentries!(dfg::GraphsDFG, entries::Vector{Blobentry})
-    cnts = map(entries) do entry
-        return mergeAgentBlobentry!(dfg, entry)
-    end
-    return sum(cnts)
-end
 
 # include("services/Sync.jl")
 

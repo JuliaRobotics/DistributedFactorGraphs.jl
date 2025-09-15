@@ -202,6 +202,7 @@ function getGraphBlobentries end
 function addGraphBlobentry! end
 function addGraphBlobentries! end
 function mergeGraphBlobentry! end
+function mergeGraphBlobentries! end
 function deleteGraphBlobentry! end
 
 function getAgentBlobentry end
@@ -209,6 +210,7 @@ function getAgentBlobentries end
 function addAgentBlobentry! end
 function addAgentBlobentries! end
 function mergeAgentBlobentry! end
+function mergeAgentBlobentries! end
 function deleteAgentBlobentry! end
 
 function getModelBlobentry end
@@ -221,6 +223,10 @@ function deleteModelBlobentry! end
 function listGraphBlobentries end
 function listAgentBlobentries end
 function listModelBlobentries end
+
+function hasGraphBlobentry end
+function hasAgentBlobentry end
+function hasModelBlobentry end
 
 ##==============================================================================
 ## AbstractBlobstore  CRUD
@@ -369,6 +375,7 @@ otherwise, the variable will be added to the graph.
 Implement `mergeVariable!(dfg::AbstractDFG, variable::AbstractGraphVariable)`
 """
 function mergeVariable! end
+function mergeVariables! end
 
 """
     $(SIGNATURES)
@@ -377,6 +384,7 @@ otherwise, the factor will be added to the graph.
 Implement `mergeFactor!(dfg::AbstractDFG, factor::AbstractGraphFactor)`
 """
 function mergeFactor! end
+function mergeFactors! end
 
 """
     $(SIGNATURES)
