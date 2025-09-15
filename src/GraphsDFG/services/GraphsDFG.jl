@@ -92,7 +92,7 @@ function mergeVariable!(dfg::GraphsDFG, variable::AbstractGraphVariable)
 end
 
 function DFG.mergeVariables!(dfg::GraphsDFG, variables)
-    cnts = map(v->mergeVariable!(dfg, v), variables)
+    cnts = map(v -> mergeVariable!(dfg, v), variables)
     return sum(cnts)
 end
 
@@ -113,7 +113,7 @@ function mergeFactor!(dfg::GraphsDFG, factor::AbstractGraphFactor)
 end
 
 function DFG.mergeFactors!(dfg::GraphsDFG, factors)
-    cnts = map(f->mergeFactor!(dfg, f), factors)
+    cnts = map(f -> mergeFactor!(dfg, f), factors)
     return sum(cnts)
 end
 
@@ -619,7 +619,10 @@ function DFG.getAgentBlobentry(fg::GraphsDFG, label::Symbol)
     return fg.agent.blobEntries[label]
 end
 
-function DFG.getAgentBlobentries(fg::GraphsDFG; labelFilter::Union{Nothing, Function} = nothing)
+function DFG.getAgentBlobentries(
+    fg::GraphsDFG;
+    labelFilter::Union{Nothing, Function} = nothing,
+)
     entries = collect(values(fg.agent.blobEntries))
     filterDFG!(entries, labelFilter, getLabel)
     return entries

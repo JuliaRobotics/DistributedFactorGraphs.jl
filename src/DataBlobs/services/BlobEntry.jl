@@ -79,7 +79,7 @@ function getfirstBlobentry(
     labelFilter::Union{Nothing, Function} = nothing,
     blobIdFilter::Union{Nothing, Function} = nothing,
     sortby::Function = getLabel,
-    sortlt::Function = natural_lt
+    sortlt::Function = natural_lt,
 )
     entries = getBlobentries(v; labelFilter, blobIdFilter)
     if isempty(entries)
