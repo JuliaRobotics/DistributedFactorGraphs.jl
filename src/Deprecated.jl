@@ -353,6 +353,52 @@ function setMetadata!(v::VariableCompute, metadata::Dict{Symbol, MetadataTypes})
     return merge!(v.smallData, metadata)
 end
 
+function updateData!(
+    dfg::AbstractDFG,
+    label::Symbol,
+    entry::Blobentry,
+    blob::Vector{UInt8};
+    hashfunction = sha256,
+    checkhash::Bool = true,
+)
+    @warn "updateData! is obsolete."
+    checkhash && assertHash(entry, blob; hashfunction)
+    # order of ops with unknown new blobId not tested
+    mergeBlobentry!(dfg, label, entry)
+    db = updateBlob!(dfg, de, blob)
+    return 2
+end
+
+function updateData!(
+    dfg::AbstractDFG,
+    blobstore::AbstractBlobstore,
+    label::Symbol,
+    entry::Blobentry,
+    blob::Vector{UInt8};
+    hashfunction = sha256,
+)
+    @warn "updateData! is obsolete."
+    # Recalculate the hash - NOTE Assuming that this is going to be a Blobentry. TBD.
+    # order of operations with unknown new blobId not tested
+    newEntry = Blobentry(
+        entry; # and kwargs to override new values
+        blobstore = getLabel(blobstore),
+        hash = string(bytes2hex(hashfunction(blob))),
+        origin = buildSourceString(dfg, label),
+        _version = _getDFGVersion(),
+    )
+    mergeBlobentry!(dfg, label, newEntry)
+    updateBlob!(blobstore, newEntry, blob)
+    return 2
+end
+
+function updateBlob!(store::RowBlobstore{T}, blobId::UUID, blob::T) where {T}
+    @warn "updateBlob! is obsolete."
+    if haskey(store.blobs, blobId)
+        @warn "Key '$blobId' doesn't exist."
+    end
+    return store.blobs[blobId] = RowBlob(blobId, blob)
+end
 ## ================================================================================
 ## Deprecated in v0.27
 ##=================================================================================

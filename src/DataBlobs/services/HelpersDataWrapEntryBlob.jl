@@ -23,15 +23,6 @@ $(METHODLIST)
 function addData! end
 
 """
-Update a blob entry or blob to the blob store or dfg.
-Related
-[`mergeBlobentry!`](@ref)
-
-$(METHODLIST)
-"""
-function updateData! end
-
-"""
 Delete a blob entry and blob from the blob store or dfg.
 Related
 [`deleteBlobentry!`](@ref)
@@ -70,13 +61,13 @@ end
 function getData(
     dfg::AbstractDFG,
     blobstore::AbstractBlobstore,
-    label::Symbol,
-    key::Symbol;
+    var_label::Symbol,
+    entry_label::Symbol;
     hashfunction = sha256,
     checkhash::Bool = true,
     getlast::Bool = true,
 )
-    de = getBlobentry(dfg, label, key)
+    de = getBlobentry(dfg, var_label, entry_label)
     db = getBlob(blobstore, de)
     checkhash && assertHash(de, db; hashfunction)
     return de => db
@@ -194,43 +185,6 @@ function addData!(
     )
     addBlobentry!(dfg, vLbl, entry)
     return entry => blob
-end
-
-function updateData!(
-    dfg::AbstractDFG,
-    label::Symbol,
-    entry::Blobentry,
-    blob::Vector{UInt8};
-    hashfunction = sha256,
-    checkhash::Bool = true,
-)
-    checkhash && assertHash(entry, blob; hashfunction)
-    # order of ops with unknown new blobId not tested
-    mergeBlobentry!(dfg, label, entry)
-    db = updateBlob!(dfg, de, blob)
-    return 2
-end
-
-function updateData!(
-    dfg::AbstractDFG,
-    blobstore::AbstractBlobstore,
-    label::Symbol,
-    entry::Blobentry,
-    blob::Vector{UInt8};
-    hashfunction = sha256,
-)
-    # Recalculate the hash - NOTE Assuming that this is going to be a Blobentry. TBD.
-    # order of operations with unknown new blobId not tested
-    newEntry = Blobentry(
-        entry; # and kwargs to override new values
-        blobstore = getLabel(blobstore),
-        hash = string(bytes2hex(hashfunction(blob))),
-        origin = buildSourceString(dfg, label),
-        _version = _getDFGVersion(),
-    )
-    mergeBlobentry!(dfg, label, newEntry)
-    updateBlob!(blobstore, newEntry, blob)
-    return 2
 end
 
 function deleteData!(dfg::AbstractDFG, vLbl::Symbol, bLbl::Symbol)

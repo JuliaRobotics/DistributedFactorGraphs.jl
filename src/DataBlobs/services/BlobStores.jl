@@ -364,13 +364,6 @@ function addBlob!(store::RowBlobstore{T}, blobId::UUID, blob::T) where {T}
     return blobId
 end
 
-function updateBlob!(store::RowBlobstore{T}, blobId::UUID, blob::T) where {T}
-    if haskey(store.blobs, blobId)
-        @warn "Key '$blobId' doesn't exist."
-    end
-    return store.blobs[blobId] = RowBlob(blobId, blob)
-end
-
 function deleteBlob!(store::RowBlobstore, blobId::UUID)
     if !haskey(store.blobs, blobId)
         throw(IdNotFoundError("Blob", blobId))
