@@ -187,6 +187,23 @@ function deleteBlobentry!(var::AbstractGraphVariable, entry::Blobentry)
 end
 
 ##==============================================================================
+## Default bulk Agent and Graph Blobentry operations
+##==============================================================================
+function deleteAgentBlobentries!(dfg::AbstractDFG, labels::Vector{Symbol})
+    cnts = map(labels) do label
+        return deleteAgentBlobentry!(dfg, label)
+    end
+    return sum(cnts)
+end
+
+function deleteGraphBlobentries!(dfg::AbstractDFG, labels::Vector{Symbol})
+    cnts = map(labels) do label
+        return deleteGraphBlobentry!(dfg, label)
+    end
+    return sum(cnts)
+end
+
+##==============================================================================
 ## Blobentry - Helper functions, Lists, etc
 ##==============================================================================
 

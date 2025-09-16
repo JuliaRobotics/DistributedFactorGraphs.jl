@@ -151,6 +151,8 @@ export mergeAgentBlobentries!
 
 export deleteGraphBlobentry!
 export deleteAgentBlobentry!
+export deleteGraphBlobentries!
+export deleteAgentBlobentries!
 
 export listBlobentries
 export listGraphBlobentries

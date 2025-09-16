@@ -629,12 +629,12 @@ function DFG.getAgentBlobentries(
 end
 
 function DFG.mergeGraphBlobentry!(dfg::GraphsDFG, entry::Blobentry)
-    refBlobentries(dfg.graph)[getLabel(entry)] = entry
+    DFG.refBlobentries(dfg.graph)[getLabel(entry)] = entry
     return 1
 end
 
 function DFG.mergeAgentBlobentry!(dfg::GraphsDFG, entry::Blobentry)
-    refBlobentries(dfg.agent)[getLabel(entry)] = entry
+    DFG.refBlobentries(dfg.agent)[getLabel(entry)] = entry
     return 1
 end
 
