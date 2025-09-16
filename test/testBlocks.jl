@@ -200,10 +200,12 @@ function GraphAgentBlobentries!(fg::AbstractDFG)
     @test_throws DFG.LabelExistsError addAgentBlobentry!(fg, be)
     ge = getAgentBlobentry(fg, :key1)
     @test ge == be
+    @test hasAgentBlobentry(fg, :key1)
     me = mergeAgentBlobentry!(fg, be)
     @test me == 1
     de = deleteAgentBlobentry!(fg, :key1)
     @test de == 1
+    @test hasAgentBlobentry(fg, :key1) == false
     @test_throws DFG.LabelNotFoundError getAgentBlobentry(fg, :key1)
     @test_throws DFG.LabelNotFoundError deleteAgentBlobentry!(fg, :key1)
 
@@ -213,10 +215,12 @@ function GraphAgentBlobentries!(fg::AbstractDFG)
     @test_throws DFG.LabelExistsError addGraphBlobentry!(fg, be)
     ge = getGraphBlobentry(fg, :key1)
     @test ge == be
+    @test hasGraphBlobentry(fg, :key1)
     me = mergeGraphBlobentry!(fg, be)
     @test me == 1
     de = deleteGraphBlobentry!(fg, :key1)
     @test de == 1
+    @test hasGraphBlobentry(fg, :key1) == false
     @test_throws DFG.LabelNotFoundError getGraphBlobentry(fg, :key1)
     @test_throws DFG.LabelNotFoundError deleteGraphBlobentry!(fg, :key1)
 
@@ -439,11 +443,11 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     @test getLabel(fg[getLabel(f1)]) == getLabel(f1)
 
     @test mergeVariable!(fg, v3) == 1
-    @test mergeVariable!(fg, v3) == 1
+    @test mergeVariables!(fg, [v3]) == 1
     @test_throws LabelExistsError addVariable!(fg, v3)
 
     @test mergeFactor!(fg, f2) == 1
-    @test mergeFactor!(fg, f2) == 1
+    @test mergeFactors!(fg, [f2]) == 1
     @test_throws LabelExistsError addFactor!(fg, f2)
     #TODO Graphs.jl, but look at refactoring absract @test_throws LabelExistsError addFactor!(fg, f2)
 
