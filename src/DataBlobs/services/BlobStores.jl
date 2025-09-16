@@ -123,9 +123,6 @@ struct FolderStore{T} <: AbstractBlobstore{T}
     folder::String
 end
 
-#TODO added in v0.25 to avoid a breaking change in deserialization old DFGs, remove.
-StructTypes.StructType(::Type{<:FolderStore}) = StructTypes.OrderedStruct()
-
 function FolderStore(foldername::String; label::Symbol = :default, createfolder = true)
     storepath = joinpath(foldername, string(label))
     if createfolder && !isdir(storepath)

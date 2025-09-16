@@ -40,44 +40,6 @@ $(METHODLIST)
 """
 function deleteData! end
 
-# construction helper from existing Blobentry for user overriding via kwargs
-function Blobentry(
-    entry::Blobentry;
-    id::Union{UUID, Nothing} = entry.id,
-    blobId::Union{UUID, Nothing} = entry.blobId,
-    originId::UUID = entry.originId,
-    label::Symbol = entry.label,
-    blobstore::Symbol = entry.blobstore,
-    hash::String = entry.hash,
-    size::Union{String, Int, Nothing} = entry.size,
-    origin::String = entry.origin,
-    description::String = entry.description,
-    mimeType::String = entry.mimeType,
-    metadata::String = entry.metadata,
-    timestamp::ZonedDateTime = entry.timestamp,
-    createdTimestamp = entry.createdTimestamp,
-    lastUpdatedTimestamp = entry.lastUpdatedTimestamp,
-    _version = entry._version,
-)
-    return Blobentry(;
-        id,
-        blobId,
-        originId,
-        label,
-        blobstore,
-        hash,
-        origin,
-        size = string(size),
-        description,
-        mimeType,
-        metadata,
-        timestamp,
-        createdTimestamp,
-        lastUpdatedTimestamp,
-        _version,
-    )
-end
-
 function getData(
     dfg::AbstractDFG,
     vlabel::Symbol,
@@ -182,14 +144,12 @@ function addData!(
     mimeType::String = "application/octet-stream",
     id::Union{UUID, Nothing} = nothing,
     blobId::UUID = uuid4(),
-    originId::UUID = blobId,
     hashfunction = sha256,
 )
     #
     entry = Blobentry(;
         id,
         blobId,
-        originId,
         label = bLbl,
         blobstore = getLabel(blobstore),
         hash = string(bytes2hex(hashfunction(blob))),
@@ -222,7 +182,6 @@ function addData!(
 
     entry = Blobentry(;
         blobId,
-        originId = blobId,
         label = blobLabel,
         blobstore = getLabel(blobstore),
         # hash = string(bytes2hex(hashfunction(blob))),

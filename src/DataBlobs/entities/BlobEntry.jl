@@ -2,7 +2,10 @@
 ##==============================================================================
 ## Blobentry
 ##==============================================================================
-
+#TODO think origin and buildSourceString should be deprecated, description can be used instead
+#TODO hash - maybe use both crc32c for fast error check and sha256 for strong integrity check
+#            stored seperately as crc and sha or as a tuple `hash::Tuple{Symbol, String}` where Symbol is :crc32c or :sha256
+#            or an enum with suppored hash types
 """
     $(TYPEDEF)
 
@@ -16,9 +19,7 @@ Base.@kwdef struct Blobentry
     """ Remotely assigned and globally unique identifier for the `Blobentry` itself (not the `.blobId`). """
     id::Union{UUID, Nothing} = nothing
     """ Machine friendly and globally unique identifier of the 'Blob', usually assigned from a common point in the system.  This can be used to guarantee unique retrieval of the large data blob. """
-    blobId::Union{UUID, Nothing} = uuid4() #Deprecated in v0.25 TODO  remove union, blobId is mandatory
-    """ TBD if Deprecated. Machine friendly and locally assigned identifier of the 'Blob'."""
-    originId::Union{UUID, Nothing} = blobId #Deprecated in v0.25 TODO remove union or remove originId completely
+    blobId::UUID = uuid4()
     """ Human friendly label of the `Blob` and also used as unique identifier per node on which a `Blobentry` is added.  E.g. do "LEFTCAM_1", "LEFTCAM_2", ... of you need to repeat a label on the same variable. """
     label::Symbol
     """ A hint about where the `Blob` itself might be stored.  Remember that a Blob may be duplicated over multiple blobstores. """
@@ -28,7 +29,7 @@ Base.@kwdef struct Blobentry
     """ Context from which a Blobentry=>Blob was first created. E.g. agent|graph|varlabel. """
     origin::String = ""
     """ number of bytes in blob as a string"""
-    size::Union{String, Nothing} = "-1" #TODO remove union -> size::String = "-1"
+    size::String = "-1"
     """ Additional information that can help a different user of the Blob. """
     description::String = ""
     """ MIME description describing the format of binary data in the `Blob`, e.g. 'image/png' or 'application/json; _type=CameraModel'. """
@@ -48,3 +49,39 @@ end
 StructTypes.StructType(::Type{Blobentry}) = StructTypes.UnorderedStruct()
 StructTypes.idproperty(::Type{Blobentry}) = :id
 StructTypes.omitempties(::Type{Blobentry}) = (:id,)
+
+# construction helper from existing Blobentry for user overriding via kwargs
+function Blobentry(
+    entry::Blobentry;
+    id::Union{UUID, Nothing} = entry.id,
+    blobId::UUID = entry.blobId,
+    label::Symbol = entry.label,
+    blobstore::Symbol = entry.blobstore,
+    hash::String = entry.hash,
+    size::Union{String, Int, Nothing} = entry.size,
+    origin::String = entry.origin,
+    description::String = entry.description,
+    mimeType::String = entry.mimeType,
+    metadata::String = entry.metadata,
+    timestamp::ZonedDateTime = entry.timestamp,
+    createdTimestamp = entry.createdTimestamp,
+    lastUpdatedTimestamp = entry.lastUpdatedTimestamp,
+    _version = entry._version,
+)
+    return Blobentry(;
+        id,
+        blobId,
+        label,
+        blobstore,
+        hash,
+        origin,
+        size = string(size),
+        description,
+        mimeType,
+        metadata,
+        timestamp,
+        createdTimestamp,
+        lastUpdatedTimestamp,
+        _version,
+    )
+end

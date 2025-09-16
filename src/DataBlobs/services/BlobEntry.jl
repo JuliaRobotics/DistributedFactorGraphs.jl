@@ -1,7 +1,7 @@
 ##==============================================================================
 ## Blobentry - common
 ##==============================================================================
-
+#TODO think origin and buildSourceString should be deprecated, description can be used instead
 """
     $(SIGNATURES)
 Function to generate source string - agentLabel|graphLabel|varLabel
