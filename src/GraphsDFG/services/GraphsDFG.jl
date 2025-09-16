@@ -91,8 +91,8 @@ function mergeVariable!(dfg::GraphsDFG, variable::AbstractGraphVariable)
     return 1
 end
 
-function mergeVariables!(dfg::GraphsDFG, variables)
-    cnts = map(mergeVariable!, variables)
+function DFG.mergeVariables!(dfg::GraphsDFG, variables)
+    cnts = map(v -> mergeVariable!(dfg, v), variables)
     return sum(cnts)
 end
 
@@ -110,6 +110,11 @@ function mergeFactor!(dfg::GraphsDFG, factor::AbstractGraphFactor)
     end
 
     return 1
+end
+
+function DFG.mergeFactors!(dfg::GraphsDFG, factors)
+    cnts = map(f -> mergeFactor!(dfg, f), factors)
+    return sum(cnts)
 end
 
 function deleteVariable!(dfg::GraphsDFG, label::Symbol)#::Tuple{AbstractGraphVariable, Vector{<:AbstractGraphFactor}}
@@ -591,4 +596,82 @@ function addGraphBlobentries!(fg::GraphsDFG, entries::Vector{Blobentry})
     return map(entries) do entry
         return addGraphBlobentry!(fg, entry)
     end
+end
+
+function DFG.addAgentBlobentry!(fg::GraphsDFG, entry::Blobentry)
+    if haskey(fg.agent.blobEntries, entry.label)
+        throw(LabelExistsError("Blobentry", entry.label))
+    end
+    push!(fg.agent.blobEntries, entry.label => entry)
+    return entry
+end
+
+function DFG.addAgentBlobentries!(fg::GraphsDFG, entries::Vector{Blobentry})
+    return map(entries) do entry
+        return addAgentBlobentry!(fg, entry)
+    end
+end
+
+function DFG.getAgentBlobentry(fg::GraphsDFG, label::Symbol)
+    if !haskey(fg.agent.blobEntries, label)
+        throw(LabelNotFoundError("Blobentry", label))
+    end
+    return fg.agent.blobEntries[label]
+end
+
+function DFG.getAgentBlobentries(
+    fg::GraphsDFG;
+    labelFilter::Union{Nothing, Function} = nothing,
+)
+    entries = collect(values(fg.agent.blobEntries))
+    filterDFG!(entries, labelFilter, getLabel)
+    return entries
+end
+
+function DFG.mergeGraphBlobentry!(dfg::GraphsDFG, entry::Blobentry)
+    DFG.refBlobentries(dfg.graph)[getLabel(entry)] = entry
+    return 1
+end
+
+function DFG.mergeAgentBlobentry!(dfg::GraphsDFG, entry::Blobentry)
+    DFG.refBlobentries(dfg.agent)[getLabel(entry)] = entry
+    return 1
+end
+
+function DFG.mergeGraphBlobentries!(dfg::GraphsDFG, entries::Vector{Blobentry})
+    cnts = map(entries) do entry
+        return mergeGraphBlobentry!(dfg, entry)
+    end
+    return sum(cnts)
+end
+
+function DFG.mergeAgentBlobentries!(dfg::GraphsDFG, entries::Vector{Blobentry})
+    cnts = map(entries) do entry
+        return mergeAgentBlobentry!(dfg, entry)
+    end
+    return sum(cnts)
+end
+
+function DFG.deleteGraphBlobentry!(dfg::GraphsDFG, label::Symbol)
+    if !haskey(dfg.graph.blobEntries, label)
+        throw(LabelNotFoundError("Blobentry", label))
+    end
+    delete!(dfg.graph.blobEntries, label)
+    return 1
+end
+
+function DFG.deleteAgentBlobentry!(dfg::GraphsDFG, label::Symbol)
+    if !haskey(dfg.agent.blobEntries, label)
+        throw(LabelNotFoundError("Blobentry", label))
+    end
+    delete!(dfg.agent.blobEntries, label)
+    return 1
+end
+
+function DFG.hasGraphBlobentry(dfg::GraphsDFG, label::Symbol)
+    return haskey(dfg.graph.blobEntries, label)
+end
+
+function DFG.hasAgentBlobentry(dfg::GraphsDFG, label::Symbol)
+    return haskey(dfg.agent.blobEntries, label)
 end

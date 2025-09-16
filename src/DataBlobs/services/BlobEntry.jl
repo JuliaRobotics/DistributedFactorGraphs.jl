@@ -71,19 +71,21 @@ end
 """
     $(SIGNATURES)
 Finds and returns the first blob entry that matches the filter.
-
+The result is sorted by `sortby[=getLabel]` and `sortlt[=natural_lt]` before returning the first entry.
 Also see: [`getBlobentry`](@ref)
 """
 function getfirstBlobentry(
     v::AbstractGraphVariable;
     labelFilter::Union{Nothing, Function} = nothing,
     blobIdFilter::Union{Nothing, Function} = nothing,
+    sortby::Function = getLabel,
+    sortlt::Function = natural_lt,
 )
     entries = getBlobentries(v; labelFilter, blobIdFilter)
     if isempty(entries)
         return nothing
     else
-        return entries[1]
+        return sort(entries; by = sortby, lt = sortlt)[1]
     end
 end
 
@@ -182,6 +184,23 @@ end
 
 function deleteBlobentry!(var::AbstractGraphVariable, entry::Blobentry)
     return deleteBlobentry!(var, entry.label)
+end
+
+##==============================================================================
+## Default bulk Agent and Graph Blobentry operations
+##==============================================================================
+function deleteAgentBlobentries!(dfg::AbstractDFG, labels::Vector{Symbol})
+    cnts = map(labels) do label
+        return deleteAgentBlobentry!(dfg, label)
+    end
+    return sum(cnts)
+end
+
+function deleteGraphBlobentries!(dfg::AbstractDFG, labels::Vector{Symbol})
+    cnts = map(labels) do label
+        return deleteGraphBlobentry!(dfg, label)
+    end
+    return sum(cnts)
 end
 
 ##==============================================================================

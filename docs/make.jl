@@ -2,6 +2,8 @@ using Documenter
 using GraphMakie
 using DistributedFactorGraphs
 
+DFG.@usingDFG true
+
 makedocs(;
     modules = [DistributedFactorGraphs],
     format = Documenter.HTML(),
