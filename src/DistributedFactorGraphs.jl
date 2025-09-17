@@ -538,7 +538,7 @@ include("services/AbstractDFG.jl")
 include("DataBlobs/services/BlobEntry.jl")
 include("DataBlobs/services/BlobStores.jl")
 include("DataBlobs/services/BlobPacking.jl")
-include("DataBlobs/services/HelpersDataWrapEntryBlob.jl")
+include("DataBlobs/services/BlobWrappers.jl")
 
 # To be moved as necessary.
 include("Common.jl")

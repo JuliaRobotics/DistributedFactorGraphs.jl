@@ -50,6 +50,9 @@ StructTypes.StructType(::Type{Blobentry}) = StructTypes.UnorderedStruct()
 StructTypes.idproperty(::Type{Blobentry}) = :id
 StructTypes.omitempties(::Type{Blobentry}) = (:id,)
 
+function Blobentry(label::Symbol, blobstore = :default; kwargs...)
+    return Blobentry(; label, blobstore, kwargs...)
+end
 # construction helper from existing Blobentry for user overriding via kwargs
 function Blobentry(
     entry::Blobentry;

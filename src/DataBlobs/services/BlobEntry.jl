@@ -329,15 +329,16 @@ If the blob label `datalabel_1` already exists, then this function will return t
 """
 function incrDataLabelSuffix(
     dfg::AbstractDFG,
-    vla::Union{Symbol, <:AbstractString},
-    bllb::S;
+    vla::Symbol,
+    bllb::Union{Symbol, <:AbstractString};
     datalabel = Ref(""),
-) where {S <: Union{Symbol, <:AbstractString}}
+)
     count = 1
     hasund = false
     len = 0
     try
-        de, _ = getData(dfg, Symbol(vla), bllb)
+        de = getfirstBlobentry(dfg, vla; labelFilter = contains(string(bllb)))
+        isnothing(de) && return Symbol(bllb) # no match, return as is
         bllb = string(bllb)
         # bllb *= bllb[end] != '_' ? "_" : ""
         datalabel[] = string(de.label)
@@ -361,5 +362,5 @@ function incrDataLabelSuffix(
     end
     bllb *= string(count)
 
-    return S(bllb)
+    return Symbol(bllb)
 end
