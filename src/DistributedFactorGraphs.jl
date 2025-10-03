@@ -88,19 +88,36 @@ export State, PackedState
 ## Functions
 ##------------------------------------------------------------------------------
 # v1 name, signiture, return, and error checked
-export addVariable!, mergeVariable!, deleteVariable!
-export addVariables!, getVariables
-export addFactor!, getFactor, deleteFactor!
-export addFactors!, getFactors
+export addVariable!
+export mergeVariable!
+export deleteVariable!
+export addVariables!
+export getVariables
 
-export addState!, getState, mergeState!, deleteState!
-export addStates!, mergeStates!, deleteStates!
+export addFactor!
+export getFactor
+export deleteFactor!
+export addFactors!
+export getFactors
 
-export addBlobentry!, getBlobentry, mergeBlobentry!, deleteBlobentry!
+export addState!
+export getState
+export mergeState!
+export deleteState!
+export addStates!
+export mergeStates!
+export deleteStates!
+
+export addBlobentry!
+export getBlobentry
+export mergeBlobentry!
+export deleteBlobentry!
 export addBlobentries!
 
 ## list
-export listVariables, listFactors, listStates
+export listVariables
+export listFactors
+export listStates
 
 ##
 export getGraphBlobentry
@@ -305,10 +322,6 @@ export listNeighbors
 # getGraphs
 
 ##==============================================================================
-
-export getFactorState # FIXME getFactorState were questioned and being reviewed again for name, other than that they are checked.
-
-##==============================================================================
 export @format_str # exported from FileIO
 
 export @defStateType #TODO Should this be exported?
@@ -318,6 +331,7 @@ export @defStateType #TODO Should this be exported?
 const unstable_functions::Vector{Symbol} = [
     :InMemoryBlobstore,
     :MetadataTypes, #maybe make public after metadata stable
+    :getFactorState, # FIXME getFactorState were questioned and being reviewed again for name, other than that they are checked.
     :exists,
     :emptyMetadata!, #TODO maybe deprecate for just deleteMetadata!
     :emptyBlobstore!, #TODO maybe deprecate for just deleteBlobstore!
@@ -486,8 +500,6 @@ const unstable_functions::Vector{Symbol} = [
     :GenericFunctionNodeData,
     :PackedFunctionNodeData,
     :FunctionNodeData,
-    # Deprecated in v0.25
-    :DFGSummary,
 ]
 
 macro usingDFG(unstable = false)
@@ -526,7 +538,7 @@ include("services/AbstractDFG.jl")
 include("DataBlobs/services/BlobEntry.jl")
 include("DataBlobs/services/BlobStores.jl")
 include("DataBlobs/services/BlobPacking.jl")
-include("DataBlobs/services/HelpersDataWrapEntryBlob.jl")
+include("DataBlobs/services/BlobWrappers.jl")
 
 # To be moved as necessary.
 include("Common.jl")

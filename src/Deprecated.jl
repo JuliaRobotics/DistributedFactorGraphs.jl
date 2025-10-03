@@ -353,6 +353,256 @@ function setMetadata!(v::VariableCompute, metadata::Dict{Symbol, MetadataTypes})
     return merge!(v.smallData, metadata)
 end
 
+function updateData!(
+    dfg::AbstractDFG,
+    label::Symbol,
+    entry::Blobentry,
+    blob::Vector{UInt8};
+    hashfunction = sha256,
+    checkhash::Bool = true,
+)
+    @warn "updateData! is obsolete."
+    checkhash && assertHash(entry, blob; hashfunction)
+    # order of ops with unknown new blobId not tested
+    mergeBlobentry!(dfg, label, entry)
+    db = updateBlob!(dfg, de, blob)
+    return 2
+end
+
+function updateData!(
+    dfg::AbstractDFG,
+    blobstore::AbstractBlobstore,
+    label::Symbol,
+    entry::Blobentry,
+    blob::Vector{UInt8};
+    hashfunction = sha256,
+)
+    @warn "updateData! is obsolete."
+    # Recalculate the hash - NOTE Assuming that this is going to be a Blobentry. TBD.
+    # order of operations with unknown new blobId not tested
+    newEntry = Blobentry(
+        entry; # and kwargs to override new values
+        blobstore = getLabel(blobstore),
+        hash = string(bytes2hex(hashfunction(blob))),
+        origin = buildSourceString(dfg, label),
+        _version = _getDFGVersion(),
+    )
+    mergeBlobentry!(dfg, label, newEntry)
+    updateBlob!(blobstore, newEntry, blob)
+    return 2
+end
+
+function updateBlob!(store::RowBlobstore{T}, blobId::UUID, blob::T) where {T}
+    @warn "updateBlob! is obsolete."
+    if haskey(store.blobs, blobId)
+        @warn "Key '$blobId' doesn't exist."
+    end
+    return store.blobs[blobId] = RowBlob(blobId, blob)
+end
+
+function getData(
+    dfg::AbstractDFG,
+    vlabel::Symbol,
+    key::Union{Symbol, UUID, <:AbstractString, Regex};
+    hashfunction = sha256,
+    checkhash::Bool = true,
+    getlast::Bool = true,
+)
+    Base.depwarn("getData is deprecated, use loadBlob_Variable instead.", :getData)
+    _getblobentr(g, v, k) = getBlobentries(g, v, k)
+    _getblobentr(g, v, k::UUID) = [getfirstBlobentry(g, v, k);]
+    de_ = _getblobentr(dfg, vlabel, key)
+    lbls = (s -> s.label).(de_)
+    idx = sortperm(lbls; rev = getlast)
+    _first(s) = s
+    _first(s::AbstractVector) = 0 < length(s) ? s[1] : nothing
+    de = _first(de_[idx])
+    if isnothing(de)
+        @error "Could not find in $vlabel the key $key"
+        return nothing
+    end
+    db = getBlob(dfg, de)
+
+    checkhash && assertHash(de, db; hashfunction = hashfunction)
+    return de => db
+end
+
+# This is the normal one
+function getData(
+    dfg::AbstractDFG,
+    blobstore::AbstractBlobstore,
+    var_label::Symbol,
+    entry_label::Symbol;
+    hashfunction = sha256,
+    checkhash::Bool = true,
+    getlast::Bool = true,
+)
+    Base.depwarn("getData is deprecated, use loadBlob_Variable instead.", :getData)
+    de = getBlobentry(dfg, var_label, entry_label)
+    db = getBlob(blobstore, de)
+    checkhash && assertHash(de, db; hashfunction)
+    return de => db
+end
+
+#FIXME Should `addData!`` not return entry=>blob pair?
+function addData!(
+    dfg::AbstractDFG,
+    label::Symbol,
+    entry::Blobentry,
+    blob::Vector{UInt8};
+    hashfunction = sha256,
+    checkhash::Bool = false,
+)
+    Base.depwarn("addData! is obsolete, use saveBlob_Variable! instead.", :addData!)
+    checkhash && assertHash(entry, blob; hashfunction)
+    blobId = addBlob!(dfg, entry, blob) |> UUID
+    newEntry = Blobentry(entry; blobId) #, size=length(blob))
+    return addBlobentry!(dfg, label, newEntry)
+end
+
+function addData!(
+    dfg::AbstractDFG,
+    blobstore::AbstractBlobstore,
+    label::Symbol,
+    entry::Blobentry,
+    blob::Vector{UInt8};
+    hashfunction = sha256,
+    checkhash::Bool = false,
+)
+    Base.depwarn("addData! is obsolete, use saveBlob_Variable! instead.", :addData!)
+    checkhash && assertHash(entry, blob; hashfunction)
+    blobId = addBlob!(blobstore, entry, blob) |> UUID
+    newEntry = Blobentry(entry; blobId) #, size=length(blob))
+    return addBlobentry!(dfg, label, newEntry)
+end
+
+function addData!(
+    dfg::AbstractDFG,
+    blobstorekey::Symbol,
+    vLbl::Symbol,
+    bLbl::Symbol,
+    blob::Vector{UInt8},
+    timestamp = now(localzone());
+    kwargs...,
+)
+    Base.depwarn("addData! is obsolete, use saveBlob_Variable! instead.", :addData!)
+    return addData!(
+        dfg,
+        getBlobstore(dfg, blobstorekey),
+        vLbl,
+        bLbl,
+        blob,
+        timestamp;
+        kwargs...,
+    )
+end
+
+function addData!(
+    dfg::AbstractDFG,
+    blobstore::AbstractBlobstore,
+    vLbl::Symbol,
+    bLbl::Symbol,
+    blob::Vector{UInt8},
+    timestamp = now(localzone());
+    description = "",
+    metadata = "",
+    mimeType::String = "application/octet-stream",
+    id::Union{UUID, Nothing} = nothing,
+    blobId::UUID = uuid4(),
+    hashfunction = sha256,
+)
+    Base.depwarn("addData! is obsolete, use saveBlob_Variable! instead.", :addData!)
+    #
+    entry = Blobentry(;
+        id,
+        blobId,
+        label = bLbl,
+        blobstore = getLabel(blobstore),
+        hash = string(bytes2hex(hashfunction(blob))),
+        origin = buildSourceString(dfg, vLbl),
+        description,
+        mimeType,
+        metadata,
+        timestamp,
+    )
+
+    return addData!(dfg, blobstore, vLbl, entry, blob; hashfunction)
+end
+
+function addData!(
+    dfg::AbstractDFG,
+    blobstore::AbstractBlobstore{T},
+    vLbl::Symbol,
+    blobLabel::Symbol,
+    blob::T,
+    timestamp = now(localzone());
+    description = "",
+    metadata = "",
+    mimeType::String = "application/octet-stream",
+    origin = buildSourceString(dfg, vLbl),
+    # hashfunction = sha256,
+) where {T}
+    Base.depwarn("addData! is obsolete, use saveBlob_Variable! instead.", :addData!)
+    #
+    # checkhash && assertHash(entry, blob; hashfunction)
+    blobId = addBlob!(blobstore, blob)
+
+    entry = Blobentry(;
+        blobId,
+        label = blobLabel,
+        blobstore = getLabel(blobstore),
+        # hash = string(bytes2hex(hashfunction(blob))),
+        hash = "",
+        origin,
+        description,
+        mimeType,
+        metadata,
+        timestamp,
+    )
+    addBlobentry!(dfg, vLbl, entry)
+    return entry => blob
+end
+
+function deleteData!(dfg::AbstractDFG, vLbl::Symbol, bLbl::Symbol)
+    Base.depwarn(
+        "deleteData! is deprecated, use deleteBlob_Variable! instead.",
+        :deleteData!,
+    )
+    de = getBlobentry(dfg, vLbl, bLbl)
+    deleteBlobentry!(dfg, vLbl, bLbl)
+    deleteBlob!(dfg, de)
+    return 2
+end
+
+function deleteData!(
+    dfg::AbstractDFG,
+    blobstore::AbstractBlobstore,
+    vLbl::Symbol,
+    entry::Blobentry,
+)
+    Base.depwarn(
+        "deleteData! is deprecated, use deleteBlob_Variable! instead.",
+        :deleteData!,
+    )
+    return deleteData!(dfg, blobstore, vLbl, entry.label)
+end
+
+function deleteData!(
+    dfg::AbstractDFG,
+    blobstore::AbstractBlobstore,
+    vLbl::Symbol,
+    bLbl::Symbol,
+)
+    Base.depwarn(
+        "deleteData! is deprecated, use deleteBlob_Variable! instead.",
+        :deleteData!,
+    )
+    de = getBlobentry(dfg, vLbl, bLbl)
+    deleteBlobentry!(dfg, vLbl, bLbl)
+    deleteBlob!(blobstore, de)
+    return 2
+end
+
 ## ================================================================================
 ## Deprecated in v0.27
 ##=================================================================================
@@ -766,45 +1016,3 @@ function typeModuleName(variableType::StateType)
 end
 
 typeModuleName(varT::Type{<:StateType}) = typeModuleName(varT())
-
-## ================================================================================
-## Deprecated in v0.25
-##=================================================================================
-@deprecate getSessionBlobEntry(args...) getGraphBlobEntry(args...)
-@deprecate getSessionBlobEntries(args...) getGraphBlobEntries(args...)
-@deprecate addSessionBlobEntry!(args...) addGraphBlobEntry!(args...)
-@deprecate addSessionBlobEntries!(args...) addGraphBlobEntries!(args...)
-@deprecate updateSessionBlobEntry!(args...) updateGraphBlobEntry!(args...)
-@deprecate deleteSessionBlobEntry!(args...) deleteGraphBlobEntry!(args...)
-@deprecate getRobotBlobEntry(args...) getAgentBlobEntry(args...)
-@deprecate getRobotBlobEntries(args...) getAgentBlobEntries(args...)
-@deprecate addRobotBlobEntry!(args...) addAgentBlobEntry!(args...)
-@deprecate addRobotBlobEntries!(args...) addAgentBlobEntries!(args...)
-@deprecate updateRobotBlobEntry!(args...) updateAgentBlobEntry!(args...)
-@deprecate deleteRobotBlobEntry!(args...) deleteAgentBlobEntry!(args...)
-@deprecate getUserBlobEntry(args...) getAgentBlobEntry(args...)
-@deprecate getUserBlobEntries(args...) getAgentBlobEntries(args...)
-@deprecate addUserBlobEntry!(args...) addAgentBlobEntry!(args...)
-@deprecate addUserBlobEntries!(args...) addAgentBlobEntries!(args...)
-@deprecate updateUserBlobEntry!(args...) updateAgentBlobEntry!(args...)
-@deprecate deleteUserBlobEntry!(args...) deleteAgentBlobEntry!(args...)
-@deprecate listSessionBlobEntries(args...) listGraphBlobEntries(args...)
-@deprecate listRobotBlobEntries(args...) listAgentBlobEntries(args...)
-@deprecate listUserBlobEntries(args...) listAgentBlobEntries(args...)
-
-@deprecate getUserData(args...) getAgentMetadata(args...)
-@deprecate getRobotData(args...) getAgentMetadata(args...)
-@deprecate getSessionData(args...) getGraphMetadata(args...)
-
-@deprecate setUserData!(args...) setAgentMetadata!(args...)
-@deprecate setRobotData!(args...) setAgentMetadata!(args...)
-@deprecate setSessionData!(args...) setGraphMetadata!(args...)
-
-@deprecate getUserLabel(dfg) getAgentLabel(dfg)
-@deprecate getRobotLabel(dfg) getAgentLabel(dfg)
-@deprecate getSessionLabel(dfg) getGraphLabel(dfg)
-
-DFGSummary(args) = error("DFGSummary is deprecated")
-@deprecate getSummary(dfg::AbstractDFG) getSummaryGraph(dfg)
-
-@deprecate getKey(store::AbstractBlobstore) getLabel(store)

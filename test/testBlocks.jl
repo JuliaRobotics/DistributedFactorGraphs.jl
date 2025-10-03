@@ -13,7 +13,6 @@ using DistributedFactorGraphs:
     AbstractGraphFactor
 
 import Base: convert
-# import DistributedFactorGraphs: getData, addData!, updateData!, deleteData!
 
 # Base.convert(::Type{<:Tuple}, ::typeof(TranslationGroup(1))) = (:Euclid,)
 # Base.convert(::Type{<:Tuple}, ::typeof(TranslationGroup(2))) = (:Euclid, :Euclid)
@@ -1072,37 +1071,37 @@ function blobsStoresTestBlock!(fg)
     @test deleteBlob!(fs, blobId) == 1
     @test_throws DFG.IdNotFoundError getBlob(fs, blobId)
 
-    # Data functions
-    # Adding 
-    newData = addData!(fg, fs.label, :a, :testing, testData) # convenience wrapper over addBlob!
-    # Listing
+    # Blob Wrappers
+    # on Variable
+    newentry = DFG.saveBlob_Variable!(fg, :a, testData, :testing, fs.label)
+    @test_throws DFG.LabelExistsError DFG.saveBlob_Variable!(fg, :a, testData, :testing)
     @test :testing in listBlobentries(fg, :a)
-    # Getting
-    data = getData(fg, fs, :a, :testing) # convenience wrapper over getBlob
-    @test data[1].hash == newData.hash #[1]
-    # more dispatches
-    data = getData(fg, :a, :testing) # convenience wrapper over getBlob
-    @test data[1].hash == newData.hash #[1]
-    data = getData(fg, :a, "testing") # convenience wrapper over getBlob
-    @test data[1].hash == newData.hash #[1]
-    data = getData(fg, :a, r"testing") # convenience wrapper over getBlob
-    @test data[1].hash == newData.hash #[1]
-    be = getfirstBlobentry(fg, :a; labelFilter = contains(r"testing"))
-    data = getData(fg, :a, be.blobId) # convenience wrapper over getBlob
-    @test data[1].hash == newData.hash #[1]
-    # @test data[2] == newData[2]
-    # Updating
-    @test updateData!(fg, fs, :a, newData, rand(UInt8, 50)) == 2
-    @show bllb = DistributedFactorGraphs.incrDataLabelSuffix(fg, :a, :testing)
-    newData2 = addData!(fg, fs.label, :a, bllb, testData) # convenience wrapper over addBlob!
-    nbe = listBlobentries(fg, :a)
-    filter!(s -> occursin(r"testing", string(s)), nbe)
-    @test 2 == length(nbe)
-    # TODO: incrSuffix when adding repeat labels, e.g. :testing_1, :testing_2
-    data2 = getData(fg, :a, :testing)
-    data3 = getData(fg, :a, bllb)
-    # Deleting
-    return retData = deleteData!(fg, :a, :testing) # convenience wrapper around deleteBlob!
+    be, blob = DFG.loadBlob_Variable(fg, :a, :testing)
+    @test newentry == be
+    @test blob == testData
+    @test DFG.deleteBlob_Variable!(fg, :a, :testing) == 2
+    @test_throws DFG.LabelNotFoundError DFG.loadBlob_Variable(fg, :a, :testing)
+
+    # on Graph
+    newentry = DFG.saveBlob_Graph!(fg, testData, :testing, fs.label)
+    @test_throws DFG.LabelExistsError DFG.saveBlob_Graph!(fg, testData, :testing, fs.label)
+    @test :testing in listGraphBlobentries(fg)
+    be, blob = DFG.loadBlob_Graph(fg, :testing)
+    @test newentry == be
+    @test blob == testData
+    @test DFG.deleteBlob_Graph!(fg, :testing) == 2
+    @test_throws DFG.LabelNotFoundError DFG.loadBlob_Graph(fg, :testing)
+
+    # on Agent
+    newentry = DFG.saveBlob_Agent!(fg, testData, :testing, fs.label)
+    @test_throws DFG.LabelExistsError DFG.saveBlob_Agent!(fg, testData, :testing, fs.label)
+    @test :testing in listAgentBlobentries(fg)
+    be, blob = DFG.loadBlob_Agent(fg, :testing)
+    @test newentry == be
+    @test blob == testData
+    @test DFG.deleteBlob_Agent!(fg, :testing) == 2
+    @test_throws DFG.LabelNotFoundError DFG.loadBlob_Agent(fg, :testing)
+    return nothing
 end
 
 function testGroup!(fg, v1, v2, f0, f1)

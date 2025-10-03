@@ -26,7 +26,7 @@ Pages = [
     "DataBlobs/services/BlobEntry.jl",
     "DataBlobs/services/BlobStores.jl",
     "DataBlobs/services/BlobPacking.jl",
-    "DataBlobs/services/HelpersDataWrapEntryBlob.jl",
+    "DataBlobs/services/BlobWrappers.jl",
 ]
 
 ```
