@@ -9,7 +9,6 @@ if false
     using SHA
 
     include("testBlocks.jl")
-
 end
 
 # Build a basic graph.
