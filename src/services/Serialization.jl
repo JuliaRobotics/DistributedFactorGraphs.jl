@@ -213,7 +213,7 @@ function packVariable(
         tags = collect(v.tags), # Symbol.()
         ppes = collect(values(v.ppeDict)),
         solverData = packState.(collect(values(v.solverDataDict))),
-        metadata = base64encode(JSON3.write(v.smallData)),
+        metadata = base64encode(JSON.json(v.smallData)),
         solvable = v.solvable,
         variableType = stringVariableType(DFG.getVariableType(v)),
         blobEntries = collect(values(v.dataDict)),
@@ -251,7 +251,7 @@ function unpackVariable(variable::VariableDFG; skipVersionCheck::Bool = false)
     dataDict = Dict{Symbol, Blobentry}(
         map(de -> de.label, variable.blobEntries) .=> variable.blobEntries,
     )
-    metadata = JSON3.read(base64decode(variable.metadata), Dict{Symbol, DFG.MetadataTypes})
+    metadata = JSON.parse(base64decode(variable.metadata), Dict{Symbol, DFG.MetadataTypes})
 
     return VariableCompute(
         variable.label,
@@ -293,11 +293,11 @@ function packFactor(f::FactorCompute)
         # fnctype = String(_getname(getObservation(f))),
         fnctype,
         solvable = getSolvable(f),
-        metadata = base64encode(JSON3.write(f.smallData)),
+        metadata = base64encode(JSON.json(f.smallData)),
         # Pack the node data
         _version = _getDFGVersion(),
         state = f.state,
-        observJSON = JSON3.write(packObservation(f)),
+        observJSON = JSON.json(packObservation(f)),
     )
     return props
 end
@@ -314,7 +314,7 @@ function unpackObservation(factor::FactorDFG)
                 Falling back to deprecated convert method.""",
                 :unpackObservation,
             )
-            #FIXME completely refactor to not need getTypeFromSerializationModule and just use StructTypes
+            #FIXME completely refactor to not need getTypeFromSerializationModule and just use StructUtils
             #TODO change to unpack: observ = unpack(observpacked)
             # currently the observation type is stored in the factor and this complicates unpacking of seperate observations
             observpacked = getObservation(factor)

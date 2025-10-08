@@ -20,8 +20,7 @@ using DocStringExtensions
 using Dates
 using Random
 using TimeZones
-using JSON3
-using StructTypes
+using JSON
 using LinearAlgebra
 using SparseArrays
 using UUIDs
@@ -488,18 +487,18 @@ const unstable_functions::Vector{Symbol} = [
     :NoSolverParams,
     :AbstractParams,
     # Deprecated in v0.27
-    :AbstractFactor,
-    :AbstractPackedFactor,
-    :FactorOperationalMemory,
-    :VariableNodeData,
-    :updateVariableSolverData!,
-    :getSolverData,
-    :setSolverData!,
-    :reconstFactorData,
-    :_packSolverData,
-    :GenericFunctionNodeData,
-    :PackedFunctionNodeData,
-    :FunctionNodeData,
+    # :AbstractFactor,
+    # :AbstractPackedFactor,
+    # :FactorOperationalMemory,
+    # :VariableNodeData,
+    # :updateVariableSolverData!,
+    # :getSolverData,
+    # :setSolverData!,
+    # :reconstFactorData,
+    # :_packSolverData,
+    # :GenericFunctionNodeData,
+    # :PackedFunctionNodeData,
+    # :FunctionNodeData,
 ]
 
 macro usingDFG(unstable = false)

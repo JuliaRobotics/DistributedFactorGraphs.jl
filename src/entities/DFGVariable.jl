@@ -139,10 +139,6 @@ getLabel(packedstate::PackedState) = packedstate.solveKey
 # createdTimestamp::DateTime#!
 # lastUpdatedTimestamp::DateTime#!
 
-StructTypes.StructType(::Type{PackedState}) = StructTypes.UnorderedStruct()
-StructTypes.idproperty(::Type{PackedState}) = :id
-StructTypes.omitempties(::Type{PackedState}) = (:id,)
-
 ##==============================================================================
 ## PointParametricEst
 ##==============================================================================
@@ -171,12 +167,6 @@ Base.@kwdef struct MeanMaxPPE <: AbstractPointParametricEst
     _version::VersionNumber = _getDFGVersion()
     createdTimestamp::Union{ZonedDateTime, Nothing} = nothing
     lastUpdatedTimestamp::Union{ZonedDateTime, Nothing} = nothing
-end
-
-StructTypes.StructType(::Type{MeanMaxPPE}) = StructTypes.UnorderedStruct()
-StructTypes.idproperty(::Type{MeanMaxPPE}) = :id
-function StructTypes.omitempties(::Type{MeanMaxPPE})
-    return (:id, :createdTimestamp, :lastUpdatedTimestamp)
 end
 
 ##------------------------------------------------------------------------------
@@ -261,7 +251,7 @@ function VariableDFG(
         nstime = string(nanosecondtime),
         solvable,
         tags,
-        metadata = base64encode(JSON3.write(smalldata)),
+        metadata = base64encode(JSON.json(smalldata)),
         timestamp,
         kwargs...,
     )
@@ -269,12 +259,8 @@ function VariableDFG(
     return pacvar
 end
 
-StructTypes.StructType(::Type{VariableDFG}) = StructTypes.UnorderedStruct()
-StructTypes.idproperty(::Type{VariableDFG}) = :id
-StructTypes.omitempties(::Type{VariableDFG}) = (:id,)
-
 function getMetadata(v::VariableDFG)
-    return JSON3.read(base64decode(v.metadata), Dict{Symbol, MetadataTypes})
+    return JSON.parse(base64decode(v.metadata), Dict{Symbol, MetadataTypes})
 end
 
 ##------------------------------------------------------------------------------
@@ -387,7 +373,7 @@ Summary variable structure for a DistributedFactorGraph variable.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct VariableSummary <: AbstractGraphVariable
+@tags struct VariableSummary <: AbstractGraphVariable
     """The ID for the variable"""
     id::Union{UUID, Nothing}
     """Variable label, e.g. :x1.
@@ -404,7 +390,7 @@ Base.@kwdef struct VariableSummary <: AbstractGraphVariable
     ppeDict::Dict{Symbol, <:AbstractPointParametricEst}
     """Symbol for the variableType for the underlying variable.
     Accessor: [`getVariableType`](@ref)"""
-    variableTypeName::Symbol
+    variableTypeName::Symbol & (json = (name = "variableType",)) # TODO check from StructTypes.names(::Type{VariableSummary}) = ((:variableTypeName, :variableType),)
     """Dictionary of large data associated with this variable.
     Accessors: [`addBlobentry!`](@ref), [`getBlobentry`](@ref), [`mergeBlobentry!`](@ref), and [`deleteBlobentry!`](@ref)"""
     dataDict::Dict{Symbol, Blobentry}
@@ -421,8 +407,6 @@ function VariableSummary(id, label, timestamp, tags, ::Nothing, variableTypeName
         Dict{Symbol, Blobentry}(),
     )
 end
-
-StructTypes.names(::Type{VariableSummary}) = ((:variableTypeName, :variableType),)
 
 ##------------------------------------------------------------------------------
 ## VariableSkeleton.jl
