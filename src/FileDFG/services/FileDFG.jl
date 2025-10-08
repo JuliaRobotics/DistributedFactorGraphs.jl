@@ -41,19 +41,19 @@ function saveDFG(folder::AbstractString, dfg::AbstractDFG; saveMetadata::Bool = 
     # Variables
     @showprogress "saving variables" for v in variables
         vPacked = packVariable(v)
-        JSON3.write("$varFolder/$(v.label).json", vPacked)
+        JSON.json("$varFolder/$(v.label).json", vPacked)
     end
     # Factors
     @showprogress "saving factors" for f in factors
         fPacked = packFactor(f)
-        JSON3.write("$factorFolder/$(f.label).json", fPacked)
+        JSON.json("$factorFolder/$(f.label).json", fPacked)
     end
     #GraphsDFG metadata
     if saveMetadata
         @assert isa(dfg, GraphsDFG) "only metadata for GraphsDFG are supported"
         @info "saving dfg metadata"
         fgPacked = GraphsDFGs.packDFGMetadata(dfg)
-        JSON3.write("$savepath/dfg.json", fgPacked)
+        JSON.json("$savepath/dfg.json", fgPacked)
     end
 
     savedir = dirname(savepath) # is this a path of just local name? #344 -- workaround with unique names
@@ -139,7 +139,7 @@ function loadDFG!(
         @assert isa(dfgLoadInto, GraphsDFG) "Only GraphsDFG metadata are supported"
         @info "loading dfg metadata"
         jstr = read("$folder/dfg.json", String)
-        fgPacked = JSON3.read(jstr, GraphsDFGs.PackedGraphsDFG)
+        fgPacked = JSON.parse(jstr, GraphsDFGs.PackedGraphsDFG)
         GraphsDFGs.unpackDFGMetadata!(dfgLoadInto, fgPacked)
     end
 
@@ -165,7 +165,7 @@ function loadDFG!(
     # type instability on `variables` as either `::Vector{Variable}` or `::Vector{VariableCompute{<:}}` (vector of abstract)
     variables = @showprogress 1 "loading variables" asyncmap(varFiles) do varFile
         jstr = read("$varFolder/$varFile", String)
-        packedvar = JSON3.read(jstr, VariableDFG)
+        packedvar = JSON.parse(jstr, VariableDFG)
         v = usePackedVariable ? packedvar : unpackVariable(packedvar)
         return addVariable!(dfgLoadInto, v)
     end
@@ -178,7 +178,7 @@ function loadDFG!(
     # `factors` is not type stable `::Vector{Factor}` or `::Vector{FactorCompute{<:}}` (vector of abstract)
     factors = @showprogress 1 "loading factors" asyncmap(factorFiles) do factorFile
         jstr = read("$factorFolder/$factorFile", String)
-        packedfact = JSON3.read(jstr, FactorDFG)
+        packedfact = JSON.parse(jstr, FactorDFG)
         f = usePackedFactor ? packedfact : unpackFactor(packedfact)
         return addFactor!(dfgLoadInto, f)
     end
@@ -231,12 +231,12 @@ function loadDFG(file::AbstractString)
     #TODO deprecate old format, v0.28
     local fgPacked
     try
-        fgPacked = JSON3.read(jstr, GraphsDFGs.PackedGraphsDFG)
+        fgPacked = JSON.parse(jstr, GraphsDFGs.PackedGraphsDFG)
     catch e
         if e isa MethodError
             @warn "Deprecated serialization: Failed to read DFG metadata. Attempting to load using the old format. Error:" e
             fgPacked =
-                GraphsDFGs.PackedGraphsDFG(JSON3.read(jstr, GraphsDFGs._OldPackedGraphsDFG))
+                GraphsDFGs.PackedGraphsDFG(JSON.parse(jstr, GraphsDFGs._OldPackedGraphsDFG))
         else
             rethrow(e)
         end

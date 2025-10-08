@@ -16,6 +16,7 @@ DFG.@usingDFG true
 # using Logging
 # logger = SimpleLogger(stdout, Logging.Debug)
 # global_logger(logger)
+@testset "DFG Tests" begin
 
 include("test_defVariable.jl")
 
@@ -62,7 +63,7 @@ end
     end
 end
 
-if get(ENV, "IIF_TEST", "true") == "true"
+if get(ENV, "IIF_TEST", "false") == "true"
 
     # Switch to our upstream test branch.
     #FIXME This is a temporary fix to use the develop branch of AMP.
@@ -70,20 +71,26 @@ if get(ENV, "IIF_TEST", "true") == "true"
     #FIXME This is a temporary fix to use the develop branch of IIF.
     # Pkg.add(PackageSpec(; name = "IncrementalInference", rev = "upstream/dfg_integration_test"))
     # Pkg.add(PackageSpec(; name = "IncrementalInference", rev = "develop"))
-    Pkg.add(
-        PackageSpec(;
-            url = "https://github.com/JuliaRobotics/IncrementalInference.jl.git",
-            subdir = "IncrementalInferenceTypes",
-            rev = "develop",
-        ),
-    )
-    Pkg.add(
-        PackageSpec(;
+    if get(ENV, "IIF_TEST_DEV", "true") == "true"
+        Pkg.add(
+            PackageSpec(;
+                url = "https://github.com/JuliaRobotics/IncrementalInference.jl.git",
+                subdir = "IncrementalInferenceTypes",
+                rev = "develop",
+            ),
+        )
+        Pkg.add(
+            PackageSpec(;
             url = "https://github.com/JuliaRobotics/IncrementalInference.jl.git",
             subdir = "IncrementalInference",
             rev = "develop",
-        ),
-    )
+            ),
+        )
+    else
+        Pkg.develop(path=joinpath(DEPOT_PATH[1],"dev","IncrementalInference","IncrementalInferenceTypes"))
+        Pkg.develop(path=joinpath(DEPOT_PATH[1],"dev","IncrementalInference","IncrementalInference"))
+    end
+
     @info "------------------------------------------------------------------------"
     @info "These tests are using IncrementalInference to do additional driver tests"
     @info "------------------------------------------------------------------------"
@@ -170,4 +177,6 @@ end
     Aqua.test_stale_deps(DistributedFactorGraphs; ignore = [:Colors])
     Aqua.test_deps_compat(DistributedFactorGraphs)
     # Aqua.test_project_toml_formatting(DistributedFactorGraphs) # deprecated in Aqua.jl v0.8
+end
+
 end

@@ -3,9 +3,8 @@ module GraphsDFGs
 using Graphs
 using DocStringExtensions
 using UUIDs
-using JSON3
+using JSON
 using OrderedCollections
-using StructTypes
 
 using ...DistributedFactorGraphs
 using ...DistributedFactorGraphs:

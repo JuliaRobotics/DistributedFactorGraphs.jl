@@ -14,19 +14,6 @@ using InteractiveUtils
     graphBlobEntries::OrderedDict{Symbol, Blobentry}
     agent::Agent
 end
-StructTypes.StructType(::Type{_OldPackedGraphsDFG}) = StructTypes.AbstractType()
-function StructTypes.StructType(
-    ::Type{_OldPackedGraphsDFG{T}},
-) where {T <: AbstractDFGParams}
-    return StructTypes.Struct()
-end
-StructTypes.subtypekey(::Type{_OldPackedGraphsDFG}) = :solverParams_type
-#TODO look at StructTypes.@register_struct_subtype when new StructTypes.jl is tagged (for type field)
-
-function StructTypes.subtypes(::Type{_OldPackedGraphsDFG})
-    subs = subtypes(AbstractDFGParams)
-    return NamedTuple(map(s -> nameof(s) => _OldPackedGraphsDFG{s}, subs))
-end
 
 @kwdef struct PackedGraphsDFG{T <: AbstractDFGParams}
     addHistory::Vector{Symbol}
@@ -59,17 +46,20 @@ function PackedGraphsDFG(old::_OldPackedGraphsDFG)
     )
 end
 
-StructTypes.StructType(::Type{PackedGraphsDFG}) = StructTypes.AbstractType()
-function StructTypes.StructType(::Type{PackedGraphsDFG{T}}) where {T <: AbstractDFGParams}
-    return StructTypes.Struct()
-end
-StructTypes.subtypekey(::Type{PackedGraphsDFG}) = :solverParams_type
-#TODO look at StructTypes.@register_struct_subtype when new StructTypes.jl is tagged (for type field)
-
-function StructTypes.subtypes(::Type{PackedGraphsDFG})
+function getPackedGraphsDFGSubtype(s)
     subs = subtypes(AbstractDFGParams)
-    return NamedTuple(map(s -> nameof(s) => PackedGraphsDFG{s}, subs))
+    idx = findfirst(x -> nameof(x) == Symbol(s.solverParams_type[]), subs)
+    isnothing(idx) && throw(DFG.SerializationError("Unknown solver parameters type `$(s.solverParams_type[])`"))
+    return PackedGraphsDFG{subs[idx]}
 end
+function getOldPackedGraphsDFGSubtype(s)
+    subs = subtypes(AbstractDFGParams)
+    idx = findfirst(x -> nameof(x) == Symbol(s.solverParams_type[]), subs)
+    isnothing(idx) && throw(DFG.SerializationError("Unknown solver parameters type `$(s.solverParams_type[])`"))
+    return _OldPackedGraphsDFG{subs[idx]}
+end
+JSON.@choosetype PackedGraphsDFG getPackedGraphsDFGSubtype
+JSON.@choosetype _OldPackedGraphsDFG getOldPackedGraphsDFGSubtype
 
 function getTypeDFGVariables(
     fg::GraphsDFG{<:AbstractDFGParams, T, <:AbstractGraphFactor},

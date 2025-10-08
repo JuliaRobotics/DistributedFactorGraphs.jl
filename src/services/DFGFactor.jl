@@ -3,7 +3,7 @@
 ##==============================================================================
 
 function getMetadata(f::FactorDFG)
-    return JSON3.read(base64decode(f.metadata), Dict{Symbol, MetadataTypes})
+    return JSON.parse(base64decode(f.metadata), Dict{Symbol, MetadataTypes})
 end
 
 ## COMMON
@@ -27,7 +27,7 @@ that contains the information about the factor, such as the measurement, prior, 
 """
 getObservation(f::FactorCompute) = f.observation
 function getObservation(f::FactorDFG)
-    #FIXME completely refactor to not need getTypeFromSerializationModule and just use StructTypes
+    #FIXME completely refactor to not need getTypeFromSerializationModule and just use StructUtils
 
     if contains(f.fnctype, ".")
         # packed factor contains a module name, just extracting type and ignoring module
@@ -37,7 +37,7 @@ function getObservation(f::FactorDFG)
     end
 
     packtype = DFG.getTypeFromSerializationModule("Packed" * fnctype)
-    return packtype(; JSON3.read(f.observJSON)...)
+    return packtype(; JSON.parse(f.observJSON)...)
     # return packtype(JSON3.read(f.observJSON))
 end
 
@@ -95,10 +95,8 @@ function unpack end
 function packDistribution end
 function unpackDistribution end
 
-StructTypes.StructType(::Type{<:PackedBelief}) = StructTypes.UnorderedStruct()
-
 #TODO remove, rather use StructTypes.jl properly
-function Base.convert(::Type{<:PackedBelief}, nt::Union{NamedTuple, JSON3.Object})
+function Base.convert(::Type{<:PackedBelief}, nt::Union{NamedTuple, JSON.Object})
     distrType = getTypeFromSerializationModule(nt._type)
     return distrType(; nt...)
 end
