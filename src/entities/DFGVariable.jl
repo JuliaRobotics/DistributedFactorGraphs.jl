@@ -169,8 +169,6 @@ Base.@kwdef struct MeanMaxPPE <: AbstractPointParametricEst
     lastUpdatedTimestamp::Union{ZonedDateTime, Nothing} = nothing
 end
 
-
-
 ##------------------------------------------------------------------------------
 ## Constructors
 
@@ -392,7 +390,7 @@ $(TYPEDFIELDS)
     ppeDict::Dict{Symbol, <:AbstractPointParametricEst}
     """Symbol for the variableType for the underlying variable.
     Accessor: [`getVariableType`](@ref)"""
-    variableTypeName::Symbol &(json=(name="variableType",)) # TODO check from StructTypes.names(::Type{VariableSummary}) = ((:variableTypeName, :variableType),)
+    variableTypeName::Symbol & (json = (name = "variableType",)) # TODO check from StructTypes.names(::Type{VariableSummary}) = ((:variableTypeName, :variableType),)
     """Dictionary of large data associated with this variable.
     Accessors: [`addBlobentry!`](@ref), [`getBlobentry`](@ref), [`mergeBlobentry!`](@ref), and [`deleteBlobentry!`](@ref)"""
     dataDict::Dict{Symbol, Blobentry}

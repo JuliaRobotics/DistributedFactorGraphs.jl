@@ -17,166 +17,178 @@ DFG.@usingDFG true
 # logger = SimpleLogger(stdout, Logging.Debug)
 # global_logger(logger)
 @testset "DFG Tests" begin
+    include("test_defVariable.jl")
 
-include("test_defVariable.jl")
+    include("testBlocks.jl")
 
-include("testBlocks.jl")
-
-@testset "Test generated ==" begin
-    include("compareTests.jl")
-end
-
-@testset "Testing GraphsDFG.FactorGraphs functions" begin
-    include("FactorGraphsTests.jl")
-end
-
-apis = [GraphsDFG]
-
-for api in apis
-    @testset "Testing Driver: $(api)" begin
-        @info "Testing Driver: $(api)"
-        global testDFGAPI = api
-        include("interfaceTests.jl")
-    end
-end
-
-# Test special cases
-@testset "Plotting Tests" begin
-    include("plottingTest.jl")
-end
-
-@testset "Data Store Tests" begin
-    include("consol_DataEntryBlobTests.jl")
-end
-
-@testset "GraphsDFG subtype tests" begin
-    for type in [
-        (var = VariableSummary, fac = FactorSummary),
-        (var = VariableSkeleton, fac = FactorSkeleton),
-    ]
-        @testset "$(type.var) and $(type.fac) tests" begin
-            @info "Testing $(type.var) and $(type.fac)"
-            global VARTYPE = type.var
-            global FACTYPE = type.fac
-            include("GraphsDFGSummaryTypes.jl")
-        end
-    end
-end
-
-if get(ENV, "IIF_TEST", "false") == "true"
-
-    # Switch to our upstream test branch.
-    #FIXME This is a temporary fix to use the develop branch of AMP.
-    Pkg.add(PackageSpec(; name = "ApproxManifoldProducts", rev = "develop"))
-    #FIXME This is a temporary fix to use the develop branch of IIF.
-    # Pkg.add(PackageSpec(; name = "IncrementalInference", rev = "upstream/dfg_integration_test"))
-    # Pkg.add(PackageSpec(; name = "IncrementalInference", rev = "develop"))
-    if get(ENV, "IIF_TEST_DEV", "true") == "true"
-        Pkg.add(
-            PackageSpec(;
-                url = "https://github.com/JuliaRobotics/IncrementalInference.jl.git",
-                subdir = "IncrementalInferenceTypes",
-                rev = "develop",
-            ),
-        )
-        Pkg.add(
-            PackageSpec(;
-            url = "https://github.com/JuliaRobotics/IncrementalInference.jl.git",
-            subdir = "IncrementalInference",
-            rev = "develop",
-            ),
-        )
-    else
-        Pkg.develop(path=joinpath(DEPOT_PATH[1],"dev","IncrementalInference","IncrementalInferenceTypes"))
-        Pkg.develop(path=joinpath(DEPOT_PATH[1],"dev","IncrementalInference","IncrementalInference"))
+    @testset "Test generated ==" begin
+        include("compareTests.jl")
     end
 
-    @info "------------------------------------------------------------------------"
-    @info "These tests are using IncrementalInference to do additional driver tests"
-    @info "------------------------------------------------------------------------"
+    @testset "Testing GraphsDFG.FactorGraphs functions" begin
+        include("FactorGraphsTests.jl")
+    end
 
-    using IncrementalInference
-
-    apis = Vector{AbstractDFG}()
-    push!(apis, GraphsDFG(; solverParams = SolverParams()))
+    apis = [GraphsDFG]
 
     for api in apis
-        @testset "Testing Driver: $(typeof(api))" begin
+        @testset "Testing Driver: $(api)" begin
             @info "Testing Driver: $(api)"
-            global dfg = deepcopy(api)
-            include("iifInterfaceTests.jl")
-        end
-
-        @testset "FileDFG Testing Driver: $(typeof(api))" begin
-            @info "FileDFG Testing Driver: $(typeof(api))"
-            global dfg = deepcopy(api)
-            include("fileDFGTests.jl")
+            global testDFGAPI = api
+            include("interfaceTests.jl")
         end
     end
 
-    @testset "IIF Compare Tests" begin
-        #run a copy of compare tests from IIF
-        include("iifCompareTests.jl")
+    # Test special cases
+    @testset "Plotting Tests" begin
+        include("plottingTest.jl")
     end
 
-    # Simple graph solving test
-    @testset "Simple graph solving test" begin
-        # This is just to validate we're not going to blow up downstream.
-        apis = [
-            # GraphsDFG{SolverParams}(),
-            GraphsDFG(; solverParams = SolverParams()),
+    @testset "Data Store Tests" begin
+        include("consol_DataEntryBlobTests.jl")
+    end
+
+    @testset "GraphsDFG subtype tests" begin
+        for type in [
+            (var = VariableSummary, fac = FactorSummary),
+            (var = VariableSkeleton, fac = FactorSkeleton),
         ]
-        for api in apis
-            @info "Running simple solver test: $(typeof(api))"
-            global dfg = deepcopy(api)
-            include("solveTest.jl")
+            @testset "$(type.var) and $(type.fac) tests" begin
+                @info "Testing $(type.var) and $(type.fac)"
+                global VARTYPE = type.var
+                global FACTYPE = type.fac
+                include("GraphsDFGSummaryTypes.jl")
+            end
         end
     end
-else
-    @warn "Skipping IncrementalInference driver tests"
-end
 
-struct NotImplementedDFG{V, T} <: AbstractDFG{V, T} end
+    if get(ENV, "IIF_TEST", "false") == "true"
 
-@testset "No Interface tests" begin
-    dfg = NotImplementedDFG{VariableDFG, FactorDFG}()
-    v1 = VariableSkeleton(:v1)
-    f1 = FactorSkeleton(:f1, [:v1])
+        # Switch to our upstream test branch.
+        #FIXME This is a temporary fix to use the develop branch of AMP.
+        Pkg.add(PackageSpec(; name = "ApproxManifoldProducts", rev = "develop"))
+        #FIXME This is a temporary fix to use the develop branch of IIF.
+        # Pkg.add(PackageSpec(; name = "IncrementalInference", rev = "upstream/dfg_integration_test"))
+        # Pkg.add(PackageSpec(; name = "IncrementalInference", rev = "develop"))
+        if get(ENV, "IIF_TEST_DEV", "true") == "true"
+            Pkg.add(
+                PackageSpec(;
+                    url = "https://github.com/JuliaRobotics/IncrementalInference.jl.git",
+                    subdir = "IncrementalInferenceTypes",
+                    rev = "develop",
+                ),
+            )
+            Pkg.add(
+                PackageSpec(;
+                    url = "https://github.com/JuliaRobotics/IncrementalInference.jl.git",
+                    subdir = "IncrementalInference",
+                    rev = "develop",
+                ),
+            )
+        else
+            Pkg.develop(;
+                path = joinpath(
+                    DEPOT_PATH[1],
+                    "dev",
+                    "IncrementalInference",
+                    "IncrementalInferenceTypes",
+                ),
+            )
+            Pkg.develop(;
+                path = joinpath(
+                    DEPOT_PATH[1],
+                    "dev",
+                    "IncrementalInference",
+                    "IncrementalInference",
+                ),
+            )
+        end
 
-    @test_throws MethodError exists(dfg, v1)
-    @test_throws MethodError exists(dfg, f1)
+        @info "------------------------------------------------------------------------"
+        @info "These tests are using IncrementalInference to do additional driver tests"
+        @info "------------------------------------------------------------------------"
 
-    @test_throws MethodError exists(dfg, :s)
-    @test_throws MethodError addVariable!(dfg, v1)
+        using IncrementalInference
 
-    @test_throws MethodError getVariable(dfg, :a)
-    @test_throws MethodError getFactor(dfg, :a)
-    @test_throws MethodError mergeVariable!(dfg, v1)
-    @test_throws MethodError mergeFactor!(dfg, f1)
+        apis = Vector{AbstractDFG}()
+        push!(apis, GraphsDFG(; solverParams = SolverParams()))
 
-    @test_throws MethodError deleteVariable!(dfg, :a)
-    @test_throws MethodError deleteFactor!(dfg, :a)
-    @test_throws MethodError getVariables(dfg)
-    @test_throws MethodError getFactors(dfg)
-    @test_throws MethodError isConnected(dfg)
-    @test_throws MethodError listNeighbors(dfg, v1)
-    @test_throws MethodError listNeighbors(dfg, :a)
+        for api in apis
+            @testset "Testing Driver: $(typeof(api))" begin
+                @info "Testing Driver: $(api)"
+                global dfg = deepcopy(api)
+                include("iifInterfaceTests.jl")
+            end
 
-    @test_throws MethodError DFG._getDuplicatedEmptyDFG(dfg)
+            @testset "FileDFG Testing Driver: $(typeof(api))" begin
+                @info "FileDFG Testing Driver: $(typeof(api))"
+                global dfg = deepcopy(api)
+                include("fileDFGTests.jl")
+            end
+        end
 
-    @test_throws MethodError isVariable(dfg, :a)
-    @test_throws MethodError isFactor(dfg, :a)
-end
+        @testset "IIF Compare Tests" begin
+            #run a copy of compare tests from IIF
+            include("iifCompareTests.jl")
+        end
 
-@testset "Testing Code Quality with Aqua" begin
-    Aqua.test_ambiguities([DistributedFactorGraphs])
-    Aqua.test_unbound_args(DistributedFactorGraphs)
-    Aqua.test_undefined_exports(DistributedFactorGraphs)
-    Aqua.test_piracies(DistributedFactorGraphs)
-    Aqua.test_project_extras(DistributedFactorGraphs)
-    Aqua.test_stale_deps(DistributedFactorGraphs; ignore = [:Colors])
-    Aqua.test_deps_compat(DistributedFactorGraphs)
-    # Aqua.test_project_toml_formatting(DistributedFactorGraphs) # deprecated in Aqua.jl v0.8
-end
+        # Simple graph solving test
+        @testset "Simple graph solving test" begin
+            # This is just to validate we're not going to blow up downstream.
+            apis = [
+                # GraphsDFG{SolverParams}(),
+                GraphsDFG(; solverParams = SolverParams()),
+            ]
+            for api in apis
+                @info "Running simple solver test: $(typeof(api))"
+                global dfg = deepcopy(api)
+                include("solveTest.jl")
+            end
+        end
+    else
+        @warn "Skipping IncrementalInference driver tests"
+    end
 
+    struct NotImplementedDFG{V, T} <: AbstractDFG{V, T} end
+
+    @testset "No Interface tests" begin
+        dfg = NotImplementedDFG{VariableDFG, FactorDFG}()
+        v1 = VariableSkeleton(:v1)
+        f1 = FactorSkeleton(:f1, [:v1])
+
+        @test_throws MethodError exists(dfg, v1)
+        @test_throws MethodError exists(dfg, f1)
+
+        @test_throws MethodError exists(dfg, :s)
+        @test_throws MethodError addVariable!(dfg, v1)
+
+        @test_throws MethodError getVariable(dfg, :a)
+        @test_throws MethodError getFactor(dfg, :a)
+        @test_throws MethodError mergeVariable!(dfg, v1)
+        @test_throws MethodError mergeFactor!(dfg, f1)
+
+        @test_throws MethodError deleteVariable!(dfg, :a)
+        @test_throws MethodError deleteFactor!(dfg, :a)
+        @test_throws MethodError getVariables(dfg)
+        @test_throws MethodError getFactors(dfg)
+        @test_throws MethodError isConnected(dfg)
+        @test_throws MethodError listNeighbors(dfg, v1)
+        @test_throws MethodError listNeighbors(dfg, :a)
+
+        @test_throws MethodError DFG._getDuplicatedEmptyDFG(dfg)
+
+        @test_throws MethodError isVariable(dfg, :a)
+        @test_throws MethodError isFactor(dfg, :a)
+    end
+
+    @testset "Testing Code Quality with Aqua" begin
+        Aqua.test_ambiguities([DistributedFactorGraphs])
+        Aqua.test_unbound_args(DistributedFactorGraphs)
+        Aqua.test_undefined_exports(DistributedFactorGraphs)
+        Aqua.test_piracies(DistributedFactorGraphs)
+        Aqua.test_project_extras(DistributedFactorGraphs)
+        Aqua.test_stale_deps(DistributedFactorGraphs; ignore = [:Colors])
+        Aqua.test_deps_compat(DistributedFactorGraphs)
+        # Aqua.test_project_toml_formatting(DistributedFactorGraphs) # deprecated in Aqua.jl v0.8
+    end
 end

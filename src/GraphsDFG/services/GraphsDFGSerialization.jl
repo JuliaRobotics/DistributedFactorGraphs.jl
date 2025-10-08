@@ -49,13 +49,17 @@ end
 function getPackedGraphsDFGSubtype(s)
     subs = subtypes(AbstractDFGParams)
     idx = findfirst(x -> nameof(x) == Symbol(s.solverParams_type[]), subs)
-    isnothing(idx) && throw(DFG.SerializationError("Unknown solver parameters type `$(s.solverParams_type[])`"))
+    isnothing(idx) && throw(
+        DFG.SerializationError("Unknown solver parameters type `$(s.solverParams_type[])`"),
+    )
     return PackedGraphsDFG{subs[idx]}
 end
 function getOldPackedGraphsDFGSubtype(s)
     subs = subtypes(AbstractDFGParams)
     idx = findfirst(x -> nameof(x) == Symbol(s.solverParams_type[]), subs)
-    isnothing(idx) && throw(DFG.SerializationError("Unknown solver parameters type `$(s.solverParams_type[])`"))
+    isnothing(idx) && throw(
+        DFG.SerializationError("Unknown solver parameters type `$(s.solverParams_type[])`"),
+    )
     return _OldPackedGraphsDFG{subs[idx]}
 end
 JSON.@choosetype PackedGraphsDFG getPackedGraphsDFGSubtype
