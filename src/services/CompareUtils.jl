@@ -18,7 +18,6 @@ implement compare if needed.
 
 # Generate compares automatically for all in this union
 const GeneratedCompareUnion = Union{
-    MeanMaxPPE,
     State,
     PackedState,
     Blobentry,

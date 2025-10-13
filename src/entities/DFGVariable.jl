@@ -140,67 +140,6 @@ getLabel(packedstate::PackedState) = packedstate.solveKey
 # lastUpdatedTimestamp::DateTime#!
 
 ##==============================================================================
-## PointParametricEst
-##==============================================================================
-
-##------------------------------------------------------------------------------
-## AbstractPointParametricEst interface
-##------------------------------------------------------------------------------
-
-abstract type AbstractPointParametricEst end
-
-##------------------------------------------------------------------------------
-## MeanMaxPPE
-##------------------------------------------------------------------------------
-"""
-    $TYPEDEF
-
-Data container to store Parameteric Point Estimate (PPE) for mean and max.
-"""
-Base.@kwdef struct MeanMaxPPE <: AbstractPointParametricEst
-    id::Union{UUID, Nothing} = nothing # If it's blank it doesn't exist in the DB.
-    solveKey::Symbol
-    suggested::Vector{Float64}
-    max::Vector{Float64}
-    mean::Vector{Float64}
-    _type::String = "MeanMaxPPE"
-    _version::VersionNumber = _getDFGVersion()
-    createdTimestamp::Union{ZonedDateTime, Nothing} = nothing
-    lastUpdatedTimestamp::Union{ZonedDateTime, Nothing} = nothing
-end
-
-##------------------------------------------------------------------------------
-## Constructors
-
-function MeanMaxPPE(
-    solveKey::Symbol,
-    suggested::Vector{Float64},
-    max::Vector{Float64},
-    mean::Vector{Float64},
-)
-    return MeanMaxPPE(
-        nothing,
-        solveKey,
-        suggested,
-        max,
-        mean,
-        "MeanMaxPPE",
-        _getDFGVersion(),
-        now(tz"UTC"),
-        now(tz"UTC"),
-    )
-end
-
-## Metadata
-"""
-    $SIGNATURES
-Return the fields of MeanMaxPPE that are estimates.
-NOTE: This is needed for each AbstractPointParametricEst.
-Closest we can get to a decorator pattern.
-"""
-getEstimateFields(::MeanMaxPPE) = [:suggested, :max, :mean]
-
-##==============================================================================
 ## DFG Variables
 ##==============================================================================
 
@@ -220,7 +159,6 @@ Base.@kwdef struct VariableDFG <: AbstractGraphVariable
     tags::Vector{Symbol} = Symbol[]
     timestamp::ZonedDateTime = now(tz"UTC")
     nstime::String = "0"
-    ppes::Vector{MeanMaxPPE} = MeanMaxPPE[]
     blobEntries::Vector{Blobentry} = Blobentry[]
     variableType::String
     _version::VersionNumber = _getDFGVersion()
@@ -288,10 +226,6 @@ Base.@kwdef struct VariableCompute{T <: StateType, P, N} <: AbstractGraphVariabl
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
     Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
     tags::Set{Symbol} = Set{Symbol}()
-    """Dictionary of parametric point estimates keyed by solverDataDict keys
-    Accessors: [`addPPE!`](@ref), [`updatePPE!`](@ref), and [`deletePPE!`](@ref)"""
-    ppeDict::Dict{Symbol, AbstractPointParametricEst} =
-        Dict{Symbol, AbstractPointParametricEst}()
     """Dictionary of solver data. May be a subset of all solutions if a solver label was specified in the get call.
     Accessors: [`addState!`](@ref), [`mergeState!`](@ref), and [`deleteState!`](@ref)"""
     solverDataDict::Dict{Symbol, State{T, P, N}} = Dict{Symbol, State{T, P, N}}()
@@ -385,9 +319,6 @@ $(TYPEDFIELDS)
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
     Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
     tags::Set{Symbol}
-    """Dictionary of parametric point estimates keyed by solverDataDict keys
-    Accessors: [`addPPE!`](@ref), [`updatePPE!`](@ref), and [`deletePPE!`](@ref)"""
-    ppeDict::Dict{Symbol, <:AbstractPointParametricEst}
     """Symbol for the variableType for the underlying variable.
     Accessor: [`getVariableType`](@ref)"""
     variableTypeName::Symbol & (json = (name = "variableType",)) # TODO check from StructTypes.names(::Type{VariableSummary}) = ((:variableTypeName, :variableType),)
@@ -402,7 +333,6 @@ function VariableSummary(id, label, timestamp, tags, ::Nothing, variableTypeName
         label,
         timestamp,
         tags,
-        Dict{Symbol, MeanMaxPPE}(),
         variableTypeName,
         Dict{Symbol, Blobentry}(),
     )
@@ -449,7 +379,6 @@ function VariableSummary(v::VariableCompute)
         v.label,
         v.timestamp,
         copy(v.tags),
-        deepcopy(v.ppeDict),
         Symbol(typeof(getVariableType(v))),
         v.dataDict,
     )

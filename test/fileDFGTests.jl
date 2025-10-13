@@ -56,18 +56,6 @@ using UUIDs
             verts,
         )
 
-        # Add some PPEs
-        ppe1 = MeanMaxPPE(:default, [1.0], [0.2], [3.456])
-        ppe2 = MeanMaxPPE(;
-            solveKey = :other,
-            suggested = [1.0],
-            mean = [0.2],
-            max = [3.456],
-            createdTimestamp = ZonedDateTime(2014, 5, 30, 21, tz"UTC-4"),
-        )
-        map(v -> addPPE!(dfg, getLabel(v), deepcopy(ppe1)), verts)
-        map(v -> addPPE!(dfg, getLabel(v), deepcopy(ppe2)), verts)
-
         #call update to set it on cloud
         mergeVariable!.(dfg, verts)
 
@@ -146,10 +134,6 @@ using UUIDs
         for v in ls(dfg)
             @test getBlobentries(getVariable(dfg, v)) ==
                   getBlobentries(getVariable(retDFG, v))
-            @test issetequal(listPPEs(dfg, v), listPPEs(retDFG, v))
-            for ppe in listPPEs(dfg, v)
-                @test getPPE(dfg, v, ppe) == getPPE(retDFG, v, ppe)
-            end
         end
 
         # test the duplicate order #581

@@ -1,6 +1,26 @@
 ## ================================================================================
 ## Deprecated in v0.29
 ##=================================================================================
+#Obsolete PPEs
+abstract type AbstractPointParametricEst end
+_ppe_obsolete() = error("PPEs are obsolete and will be replaced soon (IIF.calcMeanMaxSuggested can be used in some cases), see #1133.")
+getPPEMax(args...) = _ppe_obsolete()
+getPPEMean(args...) = _ppe_obsolete()
+getPPESuggested(args...) = _ppe_obsolete()
+getLastUpdatedTimestamp(est::AbstractPointParametricEst) = _ppe_obsolete()
+getPPE(args...) = _ppe_obsolete()
+addPPE!(args...) = _ppe_obsolete()
+addPPEs!(args...) = _ppe_obsolete()
+updatePPE!(args...) = _ppe_obsolete()
+deletePPE!(args...) = _ppe_obsolete()
+listPPEs(args...) = _ppe_obsolete()
+mergePPEs!(args...) = _ppe_obsolete()
+getPPEDict(args...) = _ppe_obsolete()
+getPPEs(args...) = _ppe_obsolete()
+getVariablePPEDict(args...) = _ppe_obsolete()
+getVariablePPE(args...) = _ppe_obsolete()
+MeanMaxPPE(args...; kwargs...) = _ppe_obsolete()
+getEstimateFields(args...) = _ppe_obsolete()
 
 ## ================================================================================
 ## Deprecated in v0.28

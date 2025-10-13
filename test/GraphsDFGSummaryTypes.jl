@@ -9,7 +9,6 @@ function DistributedFactorGraphs.VariableSummary(label::Symbol)
         label,
         DistributedFactorGraphs.now(localzone()),
         Set{Symbol}(),
-        Dict{Symbol, MeanMaxPPE}(),
         :Pose2,
         Dict{Symbol, Blobentry}(),
     )
@@ -21,7 +20,6 @@ function DistributedFactorGraphs.VariableSummary(label::Symbol, ::State{T}) wher
         label,
         DistributedFactorGraphs.now(localzone()),
         Set{Symbol}(),
-        Dict{Symbol, MeanMaxPPE}(),
         Symbol(T),
         Dict{Symbol, Blobentry}(),
     )
@@ -107,8 +105,6 @@ end
 
     if VARTYPE == VariableSummary
         @test getTimestamp(v1) == v1.timestamp
-        @test getVariablePPEDict(v1) == v1.ppeDict
-        @test_throws LabelNotFoundError getVariablePPE(v1, :notfound)
         @test getVariableTypeName(v1) == :Pose2
 
         # FACTYPE == FactorSummary
@@ -124,10 +120,6 @@ end
         @test getTimestamp(f1ts) == testTimestamp
         @test_throws MethodError DFG.setTimestamp!(v1, testTimestamp)
     end
-end
-
-@testset "Updating Nodes" begin
-    VARTYPE == VariableSummary && PPETestBlock!(dfg, v1)
 end
 
 @testset "Adjacency Matrices" begin

@@ -199,19 +199,13 @@ end
 ## Variable Packing and unpacking
 ##==============================================================================
 
-function packVariable(
-    v::VariableCompute;
-    includePPEs::Bool = true,
-    includeSolveData::Bool = true,
-    includeDataEntries::Bool = true,
-)
+function packVariable(v::VariableCompute)
     return VariableDFG(;
         id = v.id,
         label = v.label,
         timestamp = v.timestamp,
         nstime = string(v.nstime.value),
         tags = collect(v.tags), # Symbol.()
-        ppes = collect(values(v.ppeDict)),
         solverData = packState.(collect(values(v.solverDataDict))),
         metadata = base64encode(JSON.json(v.smallData)),
         solvable = v.solvable,
@@ -221,14 +215,7 @@ function packVariable(
     )
 end
 
-function packVariable(
-    v::VariableDFG;
-    includePPEs::Bool = true,
-    includeSolveData::Bool = true,
-    includeDataEntries::Bool = true,
-)
-    return v
-end
+packVariable(v::VariableDFG) = v
 
 function unpackVariable(variable::VariableDFG; skipVersionCheck::Bool = false)
     !skipVersionCheck && _versionCheck(variable)
@@ -239,9 +226,6 @@ function unpackVariable(variable::VariableDFG; skipVersionCheck::Bool = false)
         "Cannot deserialize variableType '$(variable.variableType)' in variable '$(variable.label)'",
     )
     pointType = DFG.getPointType(variableType)
-
-    ppeDict =
-        Dict{Symbol, MeanMaxPPE}(map(p -> p.solveKey, variable.ppes) .=> variable.ppes)
 
     N = getDimension(variableType)
     solverDict = Dict{Symbol, State{variableType, pointType, N}}(
@@ -260,7 +244,6 @@ function unpackVariable(variable::VariableDFG; skipVersionCheck::Bool = false)
         timestamp = variable.timestamp,
         nstime = Nanosecond(variable.nstime),
         tags = Set(variable.tags),
-        ppeDict = ppeDict,
         solverDataDict = solverDict,
         smallData = metadata,
         dataDict = dataDict,

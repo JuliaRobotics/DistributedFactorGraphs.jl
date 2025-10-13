@@ -78,7 +78,7 @@ end
     @test occursin(r"timestamp", varstr)
     @test occursin(r"label", varstr)
     @test occursin(r"bandwidths", varstr)
-    #  == "VariableCompute{TestVariableType1}\nlabel: a\ntags: Set([:VARIABLE, :POSE])\nsize marginal samples: (1, 1)\nkde bandwidths: [0.0]\nNo PPEs\n"
+    #  == "VariableCompute{TestVariableType1}\nlabel: a\ntags: Set([:VARIABLE, :POSE])\nsize marginal samples: (1, 1)\nkde bandwidths: [0.0]\nNo \n"
 
     @test printFactor(iobuf, fac1; skipfields = [:timestamp, :solver, :nstime]) === nothing
     @test occursin(r"FactorCompute.*\nid:\nnothing\nlabel:\n:abf1", String(take!(iobuf)))
@@ -116,10 +116,6 @@ end
 
 @testset "tags" begin
     tagsTestBlock!(fg1, var1, v1_tags)
-end
-
-@testset "Parametric Point Estimates" begin
-    PPETestBlock!(fg1, var1)
 end
 
 @testset "Variable Solver Data" begin
