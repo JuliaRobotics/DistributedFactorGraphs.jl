@@ -3,7 +3,6 @@ using Test
 using Dates
 using LieGroups
 using LieGroups: TranslationGroup
-# using Manifolds
 
 using DistributedFactorGraphs:
     LabelExistsError,
