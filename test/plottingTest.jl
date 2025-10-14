@@ -2,12 +2,11 @@ using GraphMakie
 using DistributedFactorGraphs
 # using DistributedFactorGraphs.DFGPlots
 using Test
-using Manifolds
-
+using LieGroups
 ##
 
 # struct TestInferenceVariable1 <: StateType end
-@defStateType TestInferenceVariable1 Euclidean(1) [0.0;]
+@defStateType TestInferenceVariable1 TranslationGroup(1) [0.0;]
 
 # Now make a complex graph for connectivity tests
 numNodes = 10
