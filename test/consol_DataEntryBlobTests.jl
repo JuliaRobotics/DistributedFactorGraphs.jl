@@ -9,9 +9,6 @@ if false
     using SHA
 
     include("testBlocks.jl")
-
-    # import DistributedFactorGraphs: addData!, updateData!, getData, deleteData!
-
 end
 
 # Build a basic graph.
@@ -89,34 +86,27 @@ dataset2 = rand(UInt8, 1000)
 ds = FolderStore("/tmp/dfgFolderStore"; label = :filestore)
 addBlobstore!(dfg, ds)
 
-ade = addData!(dfg, :filestore, :x1, :random, dataset1)
-_ = addData!(dfg, :filestore, :x1, :another_1, dataset1)
-_, _ = getData(dfg, :x1, "random")
-_, _ = getData(dfg, :x1, r"rando")
-gde, gdb = getData(dfg, :x1, :random)
+ade = DFG.saveBlob_Variable!(dfg, :x1, dataset1, :random, :filestore)
+_ = DFG.saveBlob_Variable!(dfg, :x1, dataset1, :another_1, :filestore)
+gde, gdb = DFG.loadBlob_Variable(dfg, :x1, :random)
 
 @test hasBlob(dfg, ade)
 
-@show gde
-
 @test incrDataLabelSuffix(dfg, :x1, :random) == :random_1
 @test incrDataLabelSuffix(dfg, :x1, :another_1) == :another_2
-# @test incrDataLabelSuffix(dfg,:x1,:another) == :another_2 # TODO exand support for Regex likely search on labels
-# @test incrDataLabelSuffix(dfg,:x1,"random") == "random_1" # TODO expand support for label::String
+@test incrDataLabelSuffix(dfg, :x1, :another) == :another_2
+@test incrDataLabelSuffix(dfg, :x1, "random") == :random_1
 
-@test deleteData!(dfg, :x1, :random) == 2
-@test deleteData!(dfg, :x1, :another_1) == 2
+@test DFG.deleteBlob_Variable!(dfg, :x1, :random) == 2
+@test DFG.deleteBlob_Variable!(dfg, :x1, :another_1) == 2
 
 @test ade == gde
 @test dataset1 == gdb
 
-ade2 = addData!(dfg, :x2, deepcopy(ade), dataset1)
+ade2 = DFG.saveBlob_Variable!(dfg, :x2, dataset1, :random, :filestore)
 # ade3,adb3 = updateBlob!(dfg, :x2, deepcopy(ade), dataset1)
 
-@test ade == ade2# == ade3
-# @test adb == adb2# == adb3
-
-deleteData!(dfg, :x2, :random)
+DFG.deleteBlob_Variable!(dfg, :x2, :random)
 
 #test default folder store
 dfs = FolderStore("/tmp/defaultfolderstore")
@@ -132,14 +122,14 @@ dfs = FolderStore("/tmp/defaultfolderstore")
 ds = InMemoryBlobstore()
 addBlobstore!(dfg, ds)
 
-ade = addData!(dfg, :default_inmemory_store, :x1, :random, dataset1)
-gde, gdb = getData(dfg, :x1, :random)
-@test deleteData!(dfg, :x1, :random) == 2
+ade = DFG.saveBlob_Variable!(dfg, :x1, dataset1, :random, :default_inmemory_store)
+gde, gdb = DFG.loadBlob_Variable(dfg, :x1, :random)
+@test DFG.deleteBlob_Variable!(dfg, :x1, :random) == 2
 
 @test ade == gde
 @test dataset1 == gdb
 
-ade2 = addData!(dfg, :x2, deepcopy(ade), dataset1)
+ade2 = DFG.saveBlob_Variable!(dfg, :x2, dataset1, :random, :default_inmemory_store)
 # ade3,adb3 = updateBlob!(dfg, :x2, deepcopy(ade), dataset1)
 
 @test hasBlob(dfg, ade2)
@@ -147,10 +137,7 @@ ade2 = addData!(dfg, :x2, deepcopy(ade), dataset1)
 
 @test length(listBlobs(ds)) == 1
 
-@test ade == ade2# == ade3
-# @test adb == adb2# == adb3
-
-@test deleteData!(dfg, :x2, :random) == 2
+@test DFG.deleteBlob_Variable!(dfg, :x2, :random) == 2
 
 ##==============================================================================
 ## Unimplemented store
@@ -161,7 +148,6 @@ store = TestStore{Int}()
 
 @test_throws MethodError getBlob(store, ade)
 @test_throws MethodError addBlob!(store, ade, 1)
-@test_throws MethodError updateBlob!(store, ade, 1)
 @test_throws MethodError deleteBlob!(store, ade)
 @test_throws MethodError listBlobs(store)
 @test_throws MethodError hasBlob(store, uuid4())

@@ -56,7 +56,7 @@ end
 
 The Factor information packed in a way that accomdates multi-lang using json.
 """
-Base.@kwdef struct FactorDFG <: AbstractGraphFactor
+StructUtils.@kwarg struct FactorDFG <: AbstractGraphFactor
     id::Union{UUID, Nothing} = nothing
     label::Symbol
     tags::Set{Symbol}
@@ -65,7 +65,6 @@ Base.@kwdef struct FactorDFG <: AbstractGraphFactor
     nstime::String
     fnctype::String
     solvable::Int
-    data::Union{Nothing, String} = nothing #TODO v0.27 deprecate data completely, left as a bridge to old serialization structure
     metadata::String
     _version::VersionNumber = _getDFGVersion()
     state::FactorState
@@ -77,56 +76,6 @@ end
 # _type::String
 # createdTimestamp::DateTime
 # lastUpdatedTimestamp::DateTime
-
-StructTypes.StructType(::Type{FactorDFG}) = StructTypes.UnorderedStruct()
-StructTypes.idproperty(::Type{FactorDFG}) = :id
-StructTypes.omitempties(::Type{FactorDFG}) = (:id, :data)
-
-#TODO deprecate, added in v0.27 as a bridge to new serialization structure
-function FactorDFG(
-    id::Union{UUID, Nothing},
-    label::Symbol,
-    tags::Set{Symbol},
-    _variableOrderSymbols::Vector{Symbol},
-    timestamp::ZonedDateTime,
-    nstime::String,
-    fnctype::String,
-    solvable::Int,
-    data::Union{Nothing, String},
-    metadata::String,
-    _version,
-    state::Union{Nothing, FactorState} = nothing,
-    observJSON::Union{Nothing, String} = nothing,
-)
-    if isnothing(state) || isnothing(observJSON)
-        fd = JSON3.read(data)
-        state = FactorState(
-            fd.eliminated,
-            fd.potentialused,
-            fd.multihypo,
-            fd.certainhypo,
-            fd.nullhypo,
-            fd.solveInProgress,
-            fd.inflation,
-        )
-        observJSON = JSON3.write(fd.fnc)
-    end
-    return FactorDFG(
-        id,
-        label,
-        tags,
-        _variableOrderSymbols,
-        timestamp,
-        nstime,
-        fnctype,
-        solvable,
-        nothing, #TODO v0.27 deprecate data completely
-        metadata,
-        _version,
-        state,
-        observJSON,
-    )
-end
 
 # Packed Factor constructor
 function assembleFactorName(xisyms::Union{Vector{String}, Vector{Symbol}})
@@ -163,10 +112,9 @@ function FactorDFG(
         nstime = string(nstime),
         fnctype,
         solvable,
-        metadata = base64encode(JSON3.write(metadata)),
+        metadata = base64encode(JSON.json(metadata)),
         state,
-        observJSON = JSON3.write(fnc),
-        data = "", #TODO v0.27 deprecate data completely
+        observJSON = JSON.json(fnc),
     )
 
     return factor
@@ -272,11 +220,6 @@ end
 function Base.getproperty(x::FactorCompute, f::Symbol)
     if f == :solvable
         getfield(x, f)[]
-    elseif f == :solverData
-        # TODO remove, deprecated in v0.27
-        error(
-            "`solverData` is obsolete in `FactorCompute`. Use `getObservation`, `getFactorState` or `getCache` instead.",
-        )
     elseif f == :_variableOrderSymbols
         [getfield(x, f)...]
     else
@@ -287,10 +230,6 @@ end
 function Base.setproperty!(x::FactorCompute, f::Symbol, val)
     if f == :solvable
         getfield(x, f)[] = val
-    elseif f == :solverData
-        error(
-            "`solverData` is obsolete in `FactorCompute`. Use `Observation`, `State` or `Cache` instead.",
-        )
     else
         setfield!(x, f, val)
     end

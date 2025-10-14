@@ -123,9 +123,6 @@ struct FolderStore{T} <: AbstractBlobstore{T}
     folder::String
 end
 
-#TODO added in v0.25 to avoid a breaking change in deserialization old DFGs, remove.
-StructTypes.StructType(::Type{<:FolderStore}) = StructTypes.OrderedStruct()
-
 function FolderStore(foldername::String; label::Symbol = :default, createfolder = true)
     storepath = joinpath(foldername, string(label))
     if createfolder && !isdir(storepath)
@@ -365,13 +362,6 @@ function addBlob!(store::RowBlobstore{T}, blobId::UUID, blob::T) where {T}
     end
     store.blobs[blobId] = RowBlob(blobId, blob)
     return blobId
-end
-
-function updateBlob!(store::RowBlobstore{T}, blobId::UUID, blob::T) where {T}
-    if haskey(store.blobs, blobId)
-        @warn "Key '$blobId' doesn't exist."
-    end
-    return store.blobs[blobId] = RowBlob(blobId, blob)
 end
 
 function deleteBlob!(store::RowBlobstore, blobId::UUID)
