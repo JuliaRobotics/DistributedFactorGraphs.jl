@@ -69,14 +69,7 @@ if get(ENV, "IIF_TEST", "true") == "true"
     Pkg.add(PackageSpec(; name = "ApproxManifoldProducts", rev = "develop"))
     #FIXME This is a temporary fix to use the develop branch of IIF.
     # Pkg.add(PackageSpec(; name = "IncrementalInference", rev = "upstream/dfg_integration_test"))
-    # Pkg.add(PackageSpec(; name = "IncrementalInference", rev = "develop"))
-    Pkg.add(
-        PackageSpec(;
-            url = "https://github.com/JuliaRobotics/IncrementalInference.jl.git",
-            subdir = "IncrementalInferenceTypes",
-            rev = "develop",
-        ),
-    )
+    Pkg.add(PackageSpec(; name = "IncrementalInferenceTypes", rev = "develop"))
     Pkg.add(
         PackageSpec(;
             url = "https://github.com/JuliaRobotics/IncrementalInference.jl.git",
