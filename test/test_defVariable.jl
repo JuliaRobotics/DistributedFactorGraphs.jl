@@ -1,5 +1,4 @@
 using LieGroups
-using Manifolds
 using Test
 using LinearAlgebra
 
@@ -12,7 +11,7 @@ using LinearAlgebra
 
     ##
 
-    @defStateType(TestVarType1, Euclidean(3), zeros(3))
+    @defStateType(TestVarType1, TranslationGroup(3), zeros(3))
     @defStateType(
         TestVarType2,
         SpecialEuclideanGroup(3),
@@ -21,7 +20,7 @@ using LinearAlgebra
 
     ##
 
-    @test getManifold(TestVarType1) == Euclidean(3)
+    @test getManifold(TestVarType1) == TranslationGroup(3)
     @test getManifold(TestVarType2) == SpecialEuclideanGroup(3)
 
     @test getDimension(TestVarType1) === 3
@@ -39,7 +38,7 @@ using LinearAlgebra
 
     ##
 
-    @test getManifold(TestVarType1()) == Euclidean(3)
+    @test getManifold(TestVarType1()) == TranslationGroup(3)
     @test getManifold(TestVarType2()) == SpecialEuclideanGroup(3)
 
     @test getDimension(TestVarType1()) === 3
