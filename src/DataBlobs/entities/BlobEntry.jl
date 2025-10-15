@@ -1,11 +1,6 @@
-
 ##==============================================================================
 ## Blobentry
 ##==============================================================================
-#TODO think origin and buildSourceString should be deprecated, description can be used instead
-#TODO hash - maybe use both crc32c for fast error check and sha256 for strong integrity check
-#            stored seperately as crc and sha or as a tuple `hash::Tuple{Symbol, String}` where Symbol is :crc32c or :sha256
-#            or an enum with suppored hash types
 """
     $(TYPEDEF)
 
@@ -15,35 +10,31 @@ can exist on different graph nodes spanning Agents and Factor Graphs which can a
 Notes:
 - `blobId`s should be unique within a blobstore and are immutable.
 """
-Base.@kwdef struct Blobentry
-    """ Remotely assigned and globally unique identifier for the `Blobentry` itself (not the `.blobId`). """
-    id::Union{UUID, Nothing} = nothing
-    """ Machine friendly and globally unique identifier of the 'Blob', usually assigned from a common point in the system.  This can be used to guarantee unique retrieval of the large data blob. """
-    blobId::UUID = uuid4()
+StructUtils.@kwarg struct Blobentry
     """ Human friendly label of the `Blob` and also used as unique identifier per node on which a `Blobentry` is added.  E.g. do "LEFTCAM_1", "LEFTCAM_2", ... of you need to repeat a label on the same variable. """
     label::Symbol
-    """ A hint about where the `Blob` itself might be stored.  Remember that a Blob may be duplicated over multiple blobstores. """
+    """ The label of the `Blobstore` in which the `Blob` is stored.  Default is `:default`."""
     blobstore::Symbol = :default
-    """ A hash value to ensure data consistency which must correspond to the stored hash upon retrieval.  Use `bytes2hex(sha256(blob))`. [Legacy: some usage functions allow the check to be skipped if needed.] """
-    hash::String = ""# Probably https://docs.julialang.org/en/v1/stdlib/SHA
-    """ Context from which a Blobentry=>Blob was first created. E.g. agent|graph|varlabel. """
+    """ Machine friendly and unique within a `Blobstore` identifier of the 'Blob'."""
+    blobid::UUID = uuid4() # was blobId
+    """ (Optional) crc32c hash value to ensure data consistency which must correspond to the stored hash upon retrieval."""
+    crchash::String = ""
+    """ (Optional) sha256 hash value to ensure data consistency which must correspond to the stored hash upon retrieval."""
+    shahash::String = ""
+    """ Source system or application where the blob was created (e.g., webapp, sdk, robot)"""
     origin::String = ""
-    """ number of bytes in blob as a string"""
-    size::String = "-1"
+    """Number of bytes in blob serialized as a string"""
+    size::Int64 = -1 &(json=(lower=string, lift=x->parse(Int64, x)))   
     """ Additional information that can help a different user of the Blob. """
     description::String = ""
     """ MIME description describing the format of binary data in the `Blob`, e.g. 'image/png' or 'application/json; _type=CameraModel'. """
-    mimeType::String = "application/octet-stream"
+    mimetype::String = "application/octet-stream" #FIXME ::MIME = MIME("application/octet-stream")
     """ Additional storage for functional metadata used in some scenarios, e.g. to support advanced features such as `parsejson(base64decode(entry.metadata))['time_sync']`. """
-    metadata::String = "e30="
+    metadata::OrderedDict{Symbol, String} = OrderedDict{Symbol, String}()
     """ When the Blob itself was first created. """
     timestamp::ZonedDateTime = now(localzone())
-    """ When the Blobentry was created. """
-    createdTimestamp::Union{ZonedDateTime, Nothing} = nothing
-    """ Use carefully, but necessary to support advanced usage such as time synchronization over Blob data. """
-    lastUpdatedTimestamp::Union{ZonedDateTime, Nothing} = nothing
     """ Type version of this Blobentry."""
-    _version::VersionNumber = _getDFGVersion()
+    version::VersionNumber = _getDFGVersion()
 end
 
 function Blobentry(label::Symbol, blobstore = :default; kwargs...)
@@ -52,35 +43,31 @@ end
 # construction helper from existing Blobentry for user overriding via kwargs
 function Blobentry(
     entry::Blobentry;
-    id::Union{UUID, Nothing} = entry.id,
-    blobId::UUID = entry.blobId,
+    blobid::UUID = entry.blobid,
     label::Symbol = entry.label,
     blobstore::Symbol = entry.blobstore,
-    hash::String = entry.hash,
-    size::Union{String, Int, Nothing} = entry.size,
+    crchash::String = entry.crchash,
+    shahash::String = entry.shahash,
+    size::Int64 = entry.size,
     origin::String = entry.origin,
     description::String = entry.description,
-    mimeType::String = entry.mimeType,
+    mimetype::String = entry.mimetype,
     metadata::String = entry.metadata,
     timestamp::ZonedDateTime = entry.timestamp,
-    createdTimestamp = entry.createdTimestamp,
-    lastUpdatedTimestamp = entry.lastUpdatedTimestamp,
-    _version = entry._version,
+    version = entry.version,
 )
     return Blobentry(;
-        id,
-        blobId,
         label,
+        blobid,
         blobstore,
-        hash,
+        crchash,
+        shahash,
         origin,
-        size = string(size),
+        size,
         description,
-        mimeType,
+        mimetype,
         metadata,
         timestamp,
-        createdTimestamp,
-        lastUpdatedTimestamp,
-        _version,
+        version,
     )
 end

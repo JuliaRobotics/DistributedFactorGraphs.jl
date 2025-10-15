@@ -1,7 +1,7 @@
 ##==============================================================================
 ## Blobentry - common
 ##==============================================================================
-#TODO think origin and buildSourceString should be deprecated, description can be used instead
+#TODO think buildSourceString should be deprecated.
 """
     $(SIGNATURES)
 Function to generate source string - agentLabel|graphLabel|varLabel
@@ -29,20 +29,20 @@ function assertHash(de::Blobentry, db; hashfunction::Function = sha256)
     end
 end
 
-function Base.show(io::IO, ::MIME"text/plain", entry::Blobentry)
-    println(io, "Blobentry {")
-    println(io, "  id:            ", entry.id)
-    println(io, "  blobId:        ", entry.blobId)
-    println(io, "  label:         ", entry.label)
-    println(io, "  blobstore:     ", entry.blobstore)
-    println(io, "  hash:          ", entry.hash)
-    println(io, "  origin:        ", entry.origin)
-    println(io, "  description:   ", entry.description)
-    println(io, "  mimeType:      ", entry.mimeType)
-    println(io, "  timestamp      ", entry.timestamp)
-    println(io, "  _version:      ", entry._version)
-    return println(io, "}")
-end
+# function Base.show(io::IO, ::MIME"text/plain", entry::Blobentry)
+#     println(io, "Blobentry {")
+#     println(io, "  id:            ", entry.id)
+#     println(io, "  blobId:        ", entry.blobId)
+#     println(io, "  label:         ", entry.label)
+#     println(io, "  blobstore:     ", entry.blobstore)
+#     println(io, "  hash:          ", entry.hash)
+#     println(io, "  origin:        ", entry.origin)
+#     println(io, "  description:   ", entry.description)
+#     println(io, "  mimeType:      ", entry.mimeType)
+#     println(io, "  timestamp      ", entry.timestamp)
+#     println(io, "  _version:      ", entry._version)
+#     return println(io, "}")
+# end
 
 ##==============================================================================
 ## Blobentry - CRUD
