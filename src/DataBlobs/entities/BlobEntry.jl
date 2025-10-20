@@ -18,20 +18,20 @@ StructUtils.@kwarg struct Blobentry
     """ Machine friendly and unique within a `Blobstore` identifier of the 'Blob'."""
     blobid::UUID = uuid4() # was blobId
     """ (Optional) crc32c hash value to ensure data consistency which must correspond to the stored hash upon retrieval."""
-    crchash::String = ""
+    crchash::Union{UInt32,Nothing} = nothing &(json=(lower=h->isnothing(h) ? nothing : string(h, base=16), lift=s->isnothing(s) ? nothing : parse(UInt32, s; base=16)))
     """ (Optional) sha256 hash value to ensure data consistency which must correspond to the stored hash upon retrieval."""
     shahash::String = ""
     """ Source system or application where the blob was created (e.g., webapp, sdk, robot)"""
     origin::String = ""
     """Number of bytes in blob serialized as a string"""
-    size::Int64 = -1 &(json=(lower=string, lift=x->parse(Int64, x)))   
+    size::Int64 = -1 &(json=(lower=string, lift=x->parse(Int64, x)))
     """ Additional information that can help a different user of the Blob. """
     description::String = ""
     """ MIME description describing the format of binary data in the `Blob`, e.g. 'image/png' or 'application/json; _type=CameraModel'. """
     mimetype::String = "application/octet-stream" #FIXME ::MIME = MIME("application/octet-stream")
-    """ Additional storage for functional metadata used in some scenarios, e.g. to support advanced features such as `parsejson(base64decode(entry.metadata))['time_sync']`. """
-    metadata::OrderedDict{Symbol, String} = OrderedDict{Symbol, String}()
-    """ When the Blob itself was first created. """
+    """ Storage for a couple of bytes directly in the graph. Use with caution and keep it small and simple."""
+    metadata::LittleDict{Symbol, String} = LittleDict{Symbol, String}()
+    """ When the Blob itself was first created. Serialized as an ISO 8601 string."""
     timestamp::ZonedDateTime = now(localzone())
     """ Type version of this Blobentry."""
     version::VersionNumber = _getDFGVersion()
@@ -52,7 +52,7 @@ function Blobentry(
     origin::String = entry.origin,
     description::String = entry.description,
     mimetype::String = entry.mimetype,
-    metadata::String = entry.metadata,
+    metadata::LittleDict{Symbol, String} = entry.metadata,
     timestamp::ZonedDateTime = entry.timestamp,
     version = entry.version,
 )

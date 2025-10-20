@@ -17,16 +17,28 @@ end
 # label
 # id
 
-getHash(entry::Blobentry) = hex2bytes(entry.hash)
 getTimestamp(entry::Blobentry) = entry.timestamp
 
-function assertHash(de::Blobentry, db; hashfunction::Function = sha256)
-    getHash(de) === nothing && @warn "Missing hash?" && return true
-    if hashfunction(db) == getHash(de)
-        return true #or nothing?
-    else
-        error("Stored hash and data blob hash do not match")
+"""
+    checkHash(entry::Blobentry, blob) -> Union{Bool,Nothing}
+
+Checks the integrity of a blob against the hashes (crc32c, sha256) stored in the given `Blobentry`.
+
+- Returns `true` if all present hashes (`crchash`, `shahash`) match the computed values from `blob`.
+- Returns `false` if any present hash does not match.
+- Returns `nothing` if no hashes are stored in the `Blobentry` to check against.
+"""
+function checkHash(entry::Blobentry, blob)
+    if !isnothing(entry.crchash)
+        crc32c(blob) != entry.crchash && return false
     end
+    if entry.shahash != ""
+        sha256(blob) != entry.shahash && return false
+    end
+    if isnothing(entry.crchash) && entry.shahash == ""
+        return nothing
+    end
+    return true
 end
 
 # function Base.show(io::IO, ::MIME"text/plain", entry::Blobentry)
@@ -35,12 +47,11 @@ end
 #     println(io, "  blobid:        ", entry.blobid)
 #     println(io, "  label:         ", entry.label)
 #     println(io, "  blobstore:     ", entry.blobstore)
-#     println(io, "  hash:          ", entry.hash)
 #     println(io, "  origin:        ", entry.origin)
 #     println(io, "  description:   ", entry.description)
-#     println(io, "  mimeType:      ", entry.mimeType)
+#     println(io, "  mimetype:      ", entry.mimetype)
 #     println(io, "  timestamp      ", entry.timestamp)
-#     println(io, "  _version:      ", entry._version)
+#     println(io, "  version:      ", entry.version)
 #     return println(io, "}")
 # end
 

@@ -852,14 +852,12 @@ function DataEntriesTestBlock!(fg, v2)
         blobid = uuid4(),
         label = :a,
         blobstore = :b,
-        hash = "",
         origin = "",
         description = "",
-        mimeType = "",
+        mimetype = "",
         metadata = "",
     )
     @test getLabel(storeEntry) == storeEntry.label
-    @test getHash(storeEntry) == hex2bytes(storeEntry.hash)
     @test getTimestamp(storeEntry) == storeEntry.timestamp
 
     # oid = zeros(UInt8,12); oid[12] = 0x01
@@ -869,7 +867,6 @@ function DataEntriesTestBlock!(fg, v2)
         blobid = uuid4(),
         label = :key1,
         blobstore = :b,
-        hash = "",
         origin = "",
         description = "",
         mimeType = "",
@@ -883,7 +880,6 @@ function DataEntriesTestBlock!(fg, v2)
         blobid = uuid4(),
         label = :key2,
         blobstore = :b,
-        hash = "",
         origin = "",
         description = "",
         mimeType = "",
@@ -897,7 +893,6 @@ function DataEntriesTestBlock!(fg, v2)
         blobid = uuid4(),
         label = :key2,
         blobstore = :b,
-        hash = "",
         origin = "",
         description = "Yay",
         mimeType = "",
@@ -987,7 +982,6 @@ function blobsStoresTestBlock!(fg)
         timestamp = ZonedDateTime("2020-08-12T12:00:00.000+00:00"),
     )
     @test getLabel(de1) == de1.label
-    @test getHash(de1) == hex2bytes(de1.hash)
     @test getTimestamp(de1) == de1.timestamp
 
     #add

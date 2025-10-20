@@ -52,7 +52,7 @@ function unpackBlob(::Type{format"JSON"}, blob::Vector{UInt8})
     return String(copy(blob))
 end
 
-unpackBlob(entry::Blobentry, blob::Vector{UInt8}) = unpackBlob(entry.mimeType, blob)
+unpackBlob(entry::Blobentry, blob::Vector{UInt8}) = unpackBlob(entry.mimetype, blob)
 unpackBlob(eb::Pair{<:Blobentry, Vector{UInt8}}) = unpackBlob(eb[1], eb[2])
 
 # 2/ FileIO

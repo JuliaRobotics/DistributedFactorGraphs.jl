@@ -34,7 +34,7 @@ import Distributions
 import Tar
 import CodecZlib
 
-using OrderedCollections: OrderedDict
+using OrderedCollections: OrderedDict, LittleDict
 
 using CSV
 using Tables
