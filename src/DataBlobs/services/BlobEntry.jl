@@ -32,7 +32,7 @@ end
 # function Base.show(io::IO, ::MIME"text/plain", entry::Blobentry)
 #     println(io, "Blobentry {")
 #     println(io, "  id:            ", entry.id)
-#     println(io, "  blobId:        ", entry.blobId)
+#     println(io, "  blobid:        ", entry.blobid)
 #     println(io, "  label:         ", entry.label)
 #     println(io, "  blobstore:     ", entry.blobstore)
 #     println(io, "  hash:          ", entry.hash)
@@ -238,7 +238,7 @@ function getBlobentries(
 )
     entries = getBlobentries(v)
     filterDFG!(entries, labelFilter, getLabel)
-    filterDFG!(entries, blobIdFilter, x -> string(x.blobId))
+    filterDFG!(entries, blobIdFilter, x -> string(x.blobid))
     return entries
 end
 

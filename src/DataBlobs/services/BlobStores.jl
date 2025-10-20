@@ -8,19 +8,19 @@ Get the data blob for the specified blobstore or dfg.
 Related
 [`getBlobentry`](@ref)
 Implement 
-`getBlob(store::AbstractBlobstore, blobId::UUID)`
+`getBlob(store::AbstractBlobstore, blobid::UUID)`
 
 $(METHODLIST)
 """
 function getBlob end
 
 """
-Adds a blob to the blob store or dfg with the blobId.
+Adds a blob to the blob store or dfg with the blobid.
 
 Related
 [`addBlobentry!`](@ref)
 Implement
-`addBlob!(store::AbstractBlobstore, blobId::UUID, data)`
+`addBlob!(store::AbstractBlobstore, blobid::UUID, data)`
 $(METHODLIST)
 """
 function addBlob! end
@@ -31,14 +31,14 @@ Delete a blob from the blob store or dfg with the given entry.
 Related
 [`deleteBlobentry!`](@ref)
 Implement
-`deleteBlob!(store::AbstractBlobstore, blobId::UUID)`
+`deleteBlob!(store::AbstractBlobstore, blobid::UUID)`
 $(METHODLIST)
 """
 function deleteBlob! end
 
 """
     $(SIGNATURES)
-List all `blobId`s in the blob store.
+List all `blobid`s in the blob store.
 Implement
 `listBlobs(store::AbstractBlobstore)`
 """
@@ -51,11 +51,11 @@ function listBlobs end
 function getBlob(dfg::AbstractDFG, entry::Blobentry)
     storeLabel = entry.blobstore
     store = getBlobstore(dfg, storeLabel)
-    return getBlob(store, entry.blobId)
+    return getBlob(store, entry.blobid)
 end
 
 function getBlob(store::AbstractBlobstore, entry::Blobentry)
-    return getBlob(store, entry.blobId)
+    return getBlob(store, entry.blobid)
 end
 
 #add 
@@ -64,19 +64,19 @@ function addBlob!(dfg::AbstractDFG, entry::Blobentry, data)
 end
 
 function addBlob!(store::AbstractBlobstore{T}, entry::Blobentry, data::T) where {T}
-    return addBlob!(store, entry.blobId, data)
+    return addBlob!(store, entry.blobid, data)
 end
 
-# also creates an blobId as uuid4
+# also creates an blobid as uuid4
 addBlob!(store::AbstractBlobstore, data) = addBlob!(store, uuid4(), data)
 
 #update
 function updateBlob!(dfg::AbstractDFG, entry::Blobentry, data)
-    return updateBlob!(getBlobstore(dfg, entry.blobstore), entry.blobId, data)
+    return updateBlob!(getBlobstore(dfg, entry.blobstore), entry.blobid, data)
 end
 
 function updateBlob!(store::AbstractBlobstore, entry::Blobentry, data)
-    return updateBlob!(store, entry.blobId, data)
+    return updateBlob!(store, entry.blobid, data)
 end
 #delete
 function deleteBlob!(dfg::AbstractDFG, entry::Blobentry)
@@ -84,15 +84,15 @@ function deleteBlob!(dfg::AbstractDFG, entry::Blobentry)
 end
 
 function deleteBlob!(store::AbstractBlobstore, entry::Blobentry)
-    return deleteBlob!(store, entry.blobId)
+    return deleteBlob!(store, entry.blobid)
 end
 
 #has
 function hasBlob(store::AbstractBlobstore, entry::Blobentry)
-    return hasBlob(store, entry.blobId)
+    return hasBlob(store, entry.blobid)
 end
 function hasBlob(dfg::AbstractDFG, entry::Blobentry)
-    return hasBlob(getBlobstore(dfg, entry.blobstore), entry.blobId)
+    return hasBlob(getBlobstore(dfg, entry.blobstore), entry.blobid)
 end
 
 #TODO
@@ -133,37 +133,37 @@ function FolderStore(foldername::String; label::Symbol = :default, createfolder 
     return FolderStore{Vector{UInt8}}(label, foldername)
 end
 
-function blobfilename(store::FolderStore, blobId::UUID)
-    return joinpath(store.folder, string(store.label), string(blobId))
+function blobfilename(store::FolderStore, blobid::UUID)
+    return joinpath(store.folder, string(store.label), string(blobid))
 end
 
-function getBlob(store::FolderStore{T}, blobId::UUID) where {T}
-    blobfilename = joinpath(store.folder, string(store.label), string(blobId))
+function getBlob(store::FolderStore{T}, blobid::UUID) where {T}
+    blobfilename = joinpath(store.folder, string(store.label), string(blobid))
     if isfile(blobfilename)
         open(blobfilename) do f
             return read(f)
         end
     else
-        throw(IdNotFoundError("Blob", blobId))
+        throw(IdNotFoundError("Blob", blobid))
     end
 end
 
-function addBlob!(store::FolderStore{T}, blobId::UUID, data::T) where {T}
-    blobfilename = joinpath(store.folder, string(store.label), string(blobId))
+function addBlob!(store::FolderStore{T}, blobid::UUID, data::T) where {T}
+    blobfilename = joinpath(store.folder, string(store.label), string(blobid))
     if isfile(blobfilename)
-        throw(IdExistsError("Blob", blobId))
+        throw(IdExistsError("Blob", blobid))
     else
         open(blobfilename, "w") do f
             return write(f, data)
         end
-        return blobId
+        return blobid
     end
 end
 
-function updateBlob!(store::FolderStore{T}, blobId::UUID, data::T) where {T}
-    blobfilename = joinpath(store.folder, string(store.label), string(blobId))
+function updateBlob!(store::FolderStore{T}, blobid::UUID, data::T) where {T}
+    blobfilename = joinpath(store.folder, string(store.label), string(blobid))
     if !isfile(blobfilename)
-        @warn "Key '$blobId' doesn't exist."
+        @warn "Key '$blobid' doesn't exist."
     else
         open(blobfilename, "w") do f
             return write(f, data)
@@ -172,21 +172,21 @@ function updateBlob!(store::FolderStore{T}, blobId::UUID, data::T) where {T}
     end
 end
 
-function deleteBlob!(store::FolderStore{T}, blobId::UUID) where {T}
-    blobfilename = joinpath(store.folder, string(store.label), string(blobId))
+function deleteBlob!(store::FolderStore{T}, blobid::UUID) where {T}
+    blobfilename = joinpath(store.folder, string(store.label), string(blobid))
     if !isfile(blobfilename)
-        throw(IdNotFoundError("Blob", blobId))
+        throw(IdNotFoundError("Blob", blobid))
     end
     rm(blobfilename)
     return 1
 end
 
-function hasBlob(store::FolderStore, blobId::UUID)
-    blobfilename = joinpath(store.folder, string(store.label), string(blobId))
+function hasBlob(store::FolderStore, blobid::UUID)
+    blobfilename = joinpath(store.folder, string(store.label), string(blobid))
     return isfile(blobfilename)
 end
 
-hasBlob(store::FolderStore, entry::Blobentry) = hasBlob(store, entry.blobId)
+hasBlob(store::FolderStore, entry::Blobentry) = hasBlob(store, entry.blobid)
 
 listBlobs(store::FolderStore) = readdir(store.folder)
 ##==============================================================================
@@ -205,42 +205,42 @@ function InMemoryBlobstore(storeKey::Symbol = :default_inmemory_store)
     return InMemoryBlobstore{Vector{UInt8}}(storeKey)
 end
 
-function getBlob(store::InMemoryBlobstore, blobId::UUID)
-    if !haskey(store.blobs, blobId)
-        throw(IdNotFoundError("Blob", blobId))
+function getBlob(store::InMemoryBlobstore, blobid::UUID)
+    if !haskey(store.blobs, blobid)
+        throw(IdNotFoundError("Blob", blobid))
     end
-    return store.blobs[blobId]
+    return store.blobs[blobid]
 end
 
-function addBlob!(store::InMemoryBlobstore{T}, blobId::UUID, data::T) where {T}
-    if haskey(store.blobs, blobId)
-        throw(IdExistsError("Blob", blobId))
+function addBlob!(store::InMemoryBlobstore{T}, blobid::UUID, data::T) where {T}
+    if haskey(store.blobs, blobid)
+        throw(IdExistsError("Blob", blobid))
     end
-    store.blobs[blobId] = data
-    return blobId
+    store.blobs[blobid] = data
+    return blobid
 end
 
-function updateBlob!(store::InMemoryBlobstore{T}, blobId::UUID, data::T) where {T}
-    if haskey(store.blobs, blobId)
-        @warn "Key '$blobId' doesn't exist."
+function updateBlob!(store::InMemoryBlobstore{T}, blobid::UUID, data::T) where {T}
+    if haskey(store.blobs, blobid)
+        @warn "Key '$blobid' doesn't exist."
     end
-    return store.blobs[blobId] = data
+    return store.blobs[blobid] = data
 end
 
-function deleteBlob!(store::InMemoryBlobstore, blobId::UUID)
-    if !haskey(store.blobs, blobId)
-        throw(IdNotFoundError("Blob", blobId))
+function deleteBlob!(store::InMemoryBlobstore, blobid::UUID)
+    if !haskey(store.blobs, blobid)
+        throw(IdNotFoundError("Blob", blobid))
     end
-    pop!(store.blobs, blobId)
+    pop!(store.blobs, blobid)
     return 1
 end
 
-hasBlob(store::InMemoryBlobstore, blobId::UUID) = haskey(store.blobs, blobId)
+hasBlob(store::InMemoryBlobstore, blobid::UUID) = haskey(store.blobs, blobid)
 
 listBlobs(store::InMemoryBlobstore) = collect(keys(store.blobs))
 
 ##==============================================================================
-## LinkStore Link blobId to a existing local folder
+## LinkStore Link blobid to a existing local folder
 ##==============================================================================
 
 struct LinkStore <: AbstractBlobstore{String}
@@ -264,23 +264,23 @@ struct LinkStore <: AbstractBlobstore{String}
     end
 end
 
-function getBlob(store::LinkStore, blobId::UUID)
-    fname = get(store.cache, blobId, nothing)
+function getBlob(store::LinkStore, blobid::UUID)
+    fname = get(store.cache, blobid, nothing)
     if isnothing(fname)
-        throw(IdNotFoundError("Blob", blobId))
+        throw(IdNotFoundError("Blob", blobid))
     end
     return read(fname)
 end
 
-function addBlob!(store::LinkStore, blobId::UUID, linkfile::String)
-    if haskey(store.cache, blobId)
-        throw(IdExistsError("Blob", blobId))
+function addBlob!(store::LinkStore, blobid::UUID, linkfile::String)
+    if haskey(store.cache, blobid)
+        throw(IdExistsError("Blob", blobid))
     end
-    push!(store.cache, blobId => linkfile)
+    push!(store.cache, blobid => linkfile)
     open(store.csvfile, "a") do f
-        return println(f, blobId, ",", linkfile)
+        return println(f, blobid, ",", linkfile)
     end
-    return blobId
+    return blobid
 end
 
 function deleteBlob!(store::LinkStore)
@@ -349,30 +349,30 @@ Tables.rows(store::RowBlobstore) = values(store.blobs)
 # Tables.materializer(::Type{RowBlobstore{T}}) where T = Tables.rowtable
 
 ##
-function getBlob(store::RowBlobstore, blobId::UUID)
-    if !haskey(store.blobs, blobId)
-        throw(IdNotFoundError("Blob", blobId))
+function getBlob(store::RowBlobstore, blobid::UUID)
+    if !haskey(store.blobs, blobid)
+        throw(IdNotFoundError("Blob", blobid))
     end
-    return getfield(store.blobs[blobId], :blob)
+    return getfield(store.blobs[blobid], :blob)
 end
 
-function addBlob!(store::RowBlobstore{T}, blobId::UUID, blob::T) where {T}
-    if haskey(store.blobs, blobId)
-        throw(IdExistsError("Blob", blobId))
+function addBlob!(store::RowBlobstore{T}, blobid::UUID, blob::T) where {T}
+    if haskey(store.blobs, blobid)
+        throw(IdExistsError("Blob", blobid))
     end
-    store.blobs[blobId] = RowBlob(blobId, blob)
-    return blobId
+    store.blobs[blobid] = RowBlob(blobid, blob)
+    return blobid
 end
 
-function deleteBlob!(store::RowBlobstore, blobId::UUID)
-    if !haskey(store.blobs, blobId)
-        throw(IdNotFoundError("Blob", blobId))
+function deleteBlob!(store::RowBlobstore, blobid::UUID)
+    if !haskey(store.blobs, blobid)
+        throw(IdNotFoundError("Blob", blobid))
     end
-    pop!(store.blobs, blobId)
+    pop!(store.blobs, blobid)
     return 1
 end
 
-hasBlob(store::RowBlobstore, blobId::UUID) = haskey(store.blobs, blobId)
+hasBlob(store::RowBlobstore, blobid::UUID) = haskey(store.blobs, blobid)
 
 listBlobs(store::RowBlobstore) = collect(keys(store.blobs))
 

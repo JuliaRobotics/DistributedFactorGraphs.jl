@@ -8,7 +8,7 @@ A `Blobentry` is a small about of structured data that holds reference informati
 can exist on different graph nodes spanning Agents and Factor Graphs which can all reference the same `Blob`.
 
 Notes:
-- `blobId`s should be unique within a blobstore and are immutable.
+- `blobid`s should be unique within a blobstore and are immutable.
 """
 StructUtils.@kwarg struct Blobentry
     """ Human friendly label of the `Blob` and also used as unique identifier per node on which a `Blobentry` is added.  E.g. do "LEFTCAM_1", "LEFTCAM_2", ... of you need to repeat a label on the same variable. """
@@ -58,8 +58,8 @@ function Blobentry(
 )
     return Blobentry(;
         label,
-        blobid,
         blobstore,
+        blobid,
         crchash,
         shahash,
         origin,
@@ -70,4 +70,41 @@ function Blobentry(
         timestamp,
         version,
     )
+end
+
+#TODO deprecated in v0.29
+function Base.getproperty(x::Blobentry, f::Symbol)
+    if f in [:id, :createdTimestamp, :lastUpdatedTimestamp]
+        error("Blobentry field $f has been deprecated")
+    elseif f == :hash
+        error("Blobentry field :hash has been deprecated; use :crchash or :shahash instead")
+    elseif f == :blobId
+        @warn "Blobentry field :blobId has been renamed to :blobid"
+        return getfield(x, :blobid)
+    elseif f == :mimeType
+        @warn "Blobentry field :mimeType has been renamed to :mimetype"
+        return getfield(x, :mimetype)
+    elseif f == :_version
+        @warn "Blobentry field :_version has been renamed to :version"
+        return getfield(x, :version)
+    else
+        getfield(x, f)
+    end
+end
+
+function Base.setproperty!(x::Blobentry, f::Symbol, val)
+    if f == :blobId
+        @warn "Blobentry field :blobId has been renamed to :blobid"
+        setfield!(x, :blobid, val)
+    elseif f == :mimeType
+        @warn "Blobentry field :mimeType has been renamed to :mimetype"
+        setfield!(x, :mimetype, val)
+    elseif f == :_version
+        @warn "Blobentry field :_version has been renamed to :version"
+        setfield!(x, :version, val)
+    elseif f in [:id, :createdTimestamp, :lastUpdatedTimestamp, :hash]
+        error("Blobentry field $f has been deprecated")
+    else
+        setfield!(x, f, val)
+    end
 end

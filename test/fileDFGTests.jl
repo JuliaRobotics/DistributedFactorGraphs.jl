@@ -27,7 +27,7 @@ using UUIDs
             v -> addBlobentry!(
                 v,
                 Blobentry(;
-                    blobId = uuid4(),
+                    blobid = uuid4(),
                     label = :testing,
                     blobstore = :store,
                     hash = "",
@@ -43,7 +43,7 @@ using UUIDs
             v -> addBlobentry!(
                 v,
                 Blobentry(;
-                    blobId = uuid4(),
+                    blobid = uuid4(),
                     label = :testing2,
                     blobstore = :store,
                     hash = "",
@@ -96,7 +96,7 @@ using UUIDs
 
         #test user/robot/session blob entries
         be = Blobentry(;
-            blobId = uuid4(),
+            blobid = uuid4(),
             label = :testing2,
             blobstore = :store,
             hash = "",
