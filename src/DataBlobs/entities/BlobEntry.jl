@@ -20,7 +20,7 @@ StructUtils.@kwarg struct Blobentry
     """ (Optional) crc32c hash value to ensure data consistency which must correspond to the stored hash upon retrieval."""
     crchash::Union{UInt32,Nothing} = nothing &(json=(lower=h->isnothing(h) ? nothing : string(h, base=16), lift=s->isnothing(s) ? nothing : parse(UInt32, s; base=16)))
     """ (Optional) sha256 hash value to ensure data consistency which must correspond to the stored hash upon retrieval."""
-    shahash::String = ""
+    shahash::Union{Vector{UInt8}, Nothing} = nothing &(json=(lower=h->isnothing(h) ? nothing : bytes2hex(h), lift=s->isnothing(s) ? nothing : hex2bytes(s)))
     """ Source system or application where the blob was created (e.g., webapp, sdk, robot)"""
     origin::String = ""
     """Number of bytes in blob serialized as a string"""
@@ -30,7 +30,7 @@ StructUtils.@kwarg struct Blobentry
     """ MIME description describing the format of binary data in the `Blob`, e.g. 'image/png' or 'application/json; _type=CameraModel'. """
     mimetype::String = "application/octet-stream" #FIXME ::MIME = MIME("application/octet-stream")
     """ Storage for a couple of bytes directly in the graph. Use with caution and keep it small and simple."""
-    metadata::LittleDict{Symbol, String} = LittleDict{Symbol, String}()
+    metadata::JSONText = JSONText("")
     """ When the Blob itself was first created. Serialized as an ISO 8601 string."""
     timestamp::ZonedDateTime = now(localzone())
     """ Type version of this Blobentry."""
@@ -46,13 +46,13 @@ function Blobentry(
     blobid::UUID = entry.blobid,
     label::Symbol = entry.label,
     blobstore::Symbol = entry.blobstore,
-    crchash::String = entry.crchash,
-    shahash::String = entry.shahash,
+    crchash = entry.crchash,
+    shahash = entry.shahash,
     size::Int64 = entry.size,
     origin::String = entry.origin,
     description::String = entry.description,
     mimetype::String = entry.mimetype,
-    metadata::LittleDict{Symbol, String} = entry.metadata,
+    metadata::JSONText = entry.metadata,
     timestamp::ZonedDateTime = entry.timestamp,
     version = entry.version,
 )
