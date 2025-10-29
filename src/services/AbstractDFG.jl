@@ -970,6 +970,7 @@ function copyGraph!(
     # Now we have to add all variables first,
     @showprogress desc = "copy variables" enabled = showprogress for variable in
                                                                      sourceVariables
+
         variableCopy = deepcopyNodes ? deepcopy(variable) : variable
         if !hasVariable(destDFG, variable.label)
             addVariable!(destDFG, variableCopy)

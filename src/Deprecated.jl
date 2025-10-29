@@ -1,7 +1,11 @@
 ## ================================================================================
 ## Deprecated in v0.29
 ##=================================================================================
-getHash(entry::Blobentry) = error("Blobentry field :hash has been deprecated; use :crchash or :shahash instead")
+function getHash(entry::Blobentry)
+    return error(
+        "Blobentry field :hash has been deprecated; use :crchash or :shahash instead",
+    )
+end
 ## ================================================================================
 ## Deprecated in v0.28
 ##=================================================================================

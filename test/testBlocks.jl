@@ -1263,7 +1263,7 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test getLabel.(sort(getFactors(fg); by = getTimestamp)) == [:abf1, :af1]
 
         @test getLabel.(
-            sortDFG(vcat(getVariables(fg), getFactors(fg)); lt = natural_lt, by = getLabel)
+            sortDFG(vcat(getVariables(fg), getFactors(fg)); lt = natural_lt, by = getLabel),
         ) == [:a, :abf1, :af1, :b]
     end
 
