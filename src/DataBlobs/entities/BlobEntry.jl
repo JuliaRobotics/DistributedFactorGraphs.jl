@@ -39,15 +39,17 @@ StructUtils.@kwarg struct Blobentry
     size::Int64 = -1 & (json=(lower = string, lift = x->parse(Int64, x)))
     """ Additional information that can help a different user of the Blob. """
     description::String = ""
-    """ MIME description describing the format of binary data in the `Blob`, e.g. 'image/png' or 'application/json; _type=CameraModel'. """
+    """ MIME description describing the format of binary data in the `Blob`, e.g. 'image/png' or 'application/json'. """
     mimetype::String = "application/octet-stream" #FIXME ::MIME = MIME("application/octet-stream")
     """ Storage for a couple of bytes directly in the graph. Use with caution and keep it small and simple."""
     metadata::JSONText = JSONText("")
     """ When the Blob itself was first created. Serialized as an ISO 8601 string."""
-    timestamp::ZonedDateTime = now(localzone())
+    timestamp::NanoDate = ndnow(UTC) & (json = (lower = timestamp,),)
     """ Type version of this Blobentry."""
-    version::VersionNumber = _getDFGVersion()
+    version::VersionNumber = version(Blobentry)
 end
+version(::Type{Blobentry}) = v"0.1.0"
+version(node) = node.version
 
 function Blobentry(label::Symbol, blobstore = :default; kwargs...)
     return Blobentry(; label, blobstore, kwargs...)
