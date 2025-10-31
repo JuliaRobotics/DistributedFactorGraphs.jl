@@ -214,34 +214,15 @@ end
 end
 
 @testset "Data Entries" begin
-    de1 = Blobentry(;
-        blobid = uuid4(),
-        label = :key1,
-        blobstore = :test,
-        hash = "",
-        origin = "",
-        description = "",
-        mimeType = "",
-    )
+    de1 = Blobentry(; blobid = uuid4(), label = :key1, blobstore = :test)
 
-    de2 = Blobentry(;
-        blobid = uuid4(),
-        label = :key2,
-        blobstore = :test,
-        hash = "",
-        origin = "",
-        description = "",
-        mimeType = "",
-    )
+    de2 = Blobentry(; blobid = uuid4(), label = :key2, blobstore = :test)
 
     de2_update = Blobentry(;
         blobid = uuid4(),
         label = :key2,
         blobstore = :test,
-        hash = "",
-        origin = "",
-        description = "",
-        mimeType = "image/jpg",
+        mimetype = "image/jpg",
     )
 
     #add

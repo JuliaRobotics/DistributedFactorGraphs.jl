@@ -42,7 +42,7 @@ StructUtils.@kwarg struct Blobentry
     """ MIME description describing the format of binary data in the `Blob`, e.g. 'image/png' or 'application/json'. """
     mimetype::String = "application/octet-stream" #FIXME ::MIME = MIME("application/octet-stream")
     """ Storage for a couple of bytes directly in the graph. Use with caution and keep it small and simple."""
-    metadata::JSONText = JSONText("")
+    metadata::JSONText = JSONText("{}")
     """ When the Blob itself was first created. Serialized as an ISO 8601 string."""
     timestamp::NanoDate = ndnow(UTC) & (json = (lower = timestamp,),)
     """ Type version of this Blobentry."""

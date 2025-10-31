@@ -180,17 +180,7 @@ end
 
 # User, Robot, Session Data Blob Entries
 function GraphAgentBlobentries!(fg::AbstractDFG)
-    be = Blobentry(;
-        id = uuid4(),
-        blobid = uuid4(),
-        label = :key1,
-        blobstore = :b,
-        hash = "",
-        origin = "",
-        description = "",
-        mimeType = "",
-        metadata = "",
-    )
+    be = Blobentry(; label = :key1, blobstore = :b)
 
     # Agent Blob Entries
     ae = addAgentBlobentry!(fg, be)
@@ -847,57 +837,22 @@ function DataEntriesTestBlock!(fg, v2)
     # listBlobentries
     # emptyDataEntries
     # mergeDataEntries
-    storeEntry = Blobentry(;
-        id = uuid4(),
-        blobid = uuid4(),
-        label = :a,
-        blobstore = :b,
-        origin = "",
-        description = "",
-        mimetype = "",
-        metadata = "",
-    )
+    storeEntry = Blobentry(; blobid = uuid4(), label = :a, blobstore = :b)
     @test getLabel(storeEntry) == storeEntry.label
     @test getTimestamp(storeEntry) == storeEntry.timestamp
 
     # oid = zeros(UInt8,12); oid[12] = 0x01
     # de1 = MongodbDataEntry(:key1, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
-    de1 = Blobentry(;
-        id = uuid4(),
-        blobid = uuid4(),
-        label = :key1,
-        blobstore = :b,
-        origin = "",
-        description = "",
-        mimeType = "",
-        metadata = "",
-    )
+    de1 = Blobentry(; blobid = uuid4(), label = :key1, blobstore = :b)
 
     # oid = zeros(UInt8,12); oid[12] = 0x02
     # de2 = MongodbDataEntry(:key2, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
-    de2 = Blobentry(;
-        id = uuid4(),
-        blobid = uuid4(),
-        label = :key2,
-        blobstore = :b,
-        origin = "",
-        description = "",
-        mimeType = "",
-        metadata = "",
-    )
+    de2 = Blobentry(; blobid = uuid4(), label = :key2, blobstore = :b)
 
     # oid = zeros(UInt8,12); oid[12] = 0x03
     # de2_update = MongodbDataEntry(:key2, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
-    de2_update = Blobentry(;
-        id = uuid4(),
-        blobid = uuid4(),
-        label = :key2,
-        blobstore = :b,
-        origin = "",
-        description = "Yay",
-        mimeType = "",
-        metadata = "",
-    )
+    de2_update =
+        Blobentry(; blobid = uuid4(), label = :key2, blobstore = :b, description = "Yay")
 
     #add
     v1 = getVariable(fg, :a)
@@ -947,39 +902,33 @@ end
 
 function blobsStoresTestBlock!(fg)
     de1 = Blobentry(;
-        id = uuid4(),
         blobid = uuid4(),
         label = :label1,
         blobstore = :store1,
-        hash = "AAAA",
+        crchash = 0xAAAA,
         origin = "origin1",
         description = "description1",
-        mimeType = "mimetype1",
-        metadata = "",
+        mimetype = "mimetype1",
     )
     de2 = Blobentry(;
-        id = uuid4(),
         blobid = uuid4(),
         label = :label2,
         blobstore = :store2,
-        hash = "FFFF",
+        crchash = 0xFFFF,
         origin = "origin2",
         description = "description2",
-        mimeType = "mimetype2",
-        metadata = "",
-        timestamp = ZonedDateTime("2020-08-12T12:00:00.000+00:00"),
+        mimetype = "mimetype2",
+        timestamp = DFG.NanoDate("2020-08-12T12:00:00.000"),
     )
     de2_update = Blobentry(;
-        id = uuid4(),
         blobid = uuid4(),
         label = :label2,
         blobstore = :store2,
-        hash = "0123",
+        crchash = 0x0123,
         origin = "origin2",
         description = "description2",
-        mimeType = "mimetype2",
-        metadata = "",
-        timestamp = ZonedDateTime("2020-08-12T12:00:00.000+00:00"),
+        mimetype = "mimetype2",
+        timestamp = DFG.NanoDate("2020-08-12T12:00:00.000"),
     )
     @test getLabel(de1) == de1.label
     @test getTimestamp(de1) == de1.timestamp
