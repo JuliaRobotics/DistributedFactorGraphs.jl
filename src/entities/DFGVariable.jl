@@ -36,7 +36,7 @@ Base.@kwdef mutable struct State{T <: StateType, P, N}
     "Parametric (Gaussian) covariance."
     covar::Vector{SMatrix{N, N, Float64}} =
         SMatrix{getDimension(T), getDimension(T), Float64}[]
-    BayesNetOutVertIDs::Vector{Symbol} = Symbol[]
+    BayesNetOutVertIDs::Vector{Symbol} = Symbol[] #TODO looks unused?
     dimIDs::Vector{Int} = Int[] # TODO Likely deprecate
 
     dims::Int = getDimension(T) #TODO should we deprecate in favor of N

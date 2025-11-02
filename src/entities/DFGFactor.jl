@@ -26,8 +26,8 @@ const FactorCache = AbstractFactorCache #
 
 #TODO is this mutable
 @kwdef mutable struct FactorState
-    eliminated::Bool = false
-    potentialused::Bool = false
+    eliminated::Bool = false    # TODO should eliminated and potentialused be moved outside of FactorState?
+    potentialused::Bool = false # TODO ^
     multihypo::Vector{Float64} = Float64[] # TODO re-evaluate after refactoring w #477
     certainhypo::Vector{Int} = Int[]
     nullhypo::Float64 = 0.0

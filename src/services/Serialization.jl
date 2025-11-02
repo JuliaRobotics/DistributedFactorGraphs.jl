@@ -105,6 +105,10 @@ function getTypeFromSerializationModule(_typeString::AbstractString)
     return nothing
 end
 
+##==============================================================================
+## State Packing and unpacking
+##==============================================================================
+
 # returns a PackedState
 function packState(d::State{T}) where {T <: StateType}
     @debug "Dispatching conversion variable -> packed variable for type $(string(getVariableType(d)))"

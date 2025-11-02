@@ -62,7 +62,7 @@ function printVariable(
             println(ioc, "      marginalized:      ", isMarginalized(vert, :default))
             println(ioc, "      size bel. samples: ", size(vnd.val))
             print(ioc, "      kde bandwidths:    ")
-            0 < length(vnd.bw) ? println(ioc, round.(vnd.bw[1], digits = 4)) : nothing
+            0 < length(vnd.bw) ? println(ioc, round.(vnd.bw[1]; digits = 4)) : nothing
             printstyled(ioc, "     VNDs: "; bold = true)
             println(ioc, solk[smsk], 4 < lsolk ? "..." : "")
         end
@@ -73,7 +73,7 @@ function printVariable(
             println(
                 ioc,
                 "<-- .suggested:    ",
-                round.(getPPE(vert, :default).suggested, digits = 4),
+                round.(getPPE(vert, :default).suggested; digits = 4),
             )
         end
         maxkeys = 4
@@ -82,7 +82,7 @@ function printVariable(
             maxkeys -= 1
             maxkeys == 0 && break
             print(ioc, "    :$key ")
-            println(ioc, "<-- .suggested:  ", round.(ppe.suggested, digits = 4))
+            println(ioc, "<-- .suggested:  ", round.(ppe.suggested; digits = 4))
         end
         println(ioc, "  # Blobentries:      (", length(listBlobentries(vert)), ")")
         printstyled(ioc, "  VariableType: "; color = :blue, bold = true)

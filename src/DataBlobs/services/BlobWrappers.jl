@@ -183,7 +183,7 @@ function saveImage_Variable!(
     entry = Blobentry(
         entry_label,
         blobstore;
-        blobId = uuid4(),
+        blobid = uuid4(),
         entry_kwargs...,
         size,
         mimeType = string(mimeType),

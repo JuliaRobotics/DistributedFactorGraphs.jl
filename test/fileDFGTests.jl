@@ -27,14 +27,11 @@ using UUIDs
             v -> addBlobentry!(
                 v,
                 Blobentry(;
-                    blobId = uuid4(),
+                    blobid = uuid4(),
                     label = :testing,
                     blobstore = :store,
-                    hash = "",
-                    origin = "",
-                    description = "",
-                    mimeType = "",
-                    timestamp = now(localzone()),
+                    # timestamp = now(localzone()),
+                    timestamp = DFG.ndnow(UTC),
                 ),
             ),
             verts,
@@ -43,14 +40,11 @@ using UUIDs
             v -> addBlobentry!(
                 v,
                 Blobentry(;
-                    blobId = uuid4(),
+                    blobid = uuid4(),
                     label = :testing2,
                     blobstore = :store,
-                    hash = "",
-                    origin = "",
-                    description = "",
-                    mimeType = "",
-                    timestamp = ZonedDateTime(2014, 5, 30, 21, tz"UTC-4"),
+                    # timestamp = ZonedDateTime(2014, 5, 30, 21, tz"UTC-4"),
+                    timestamp = DFG.NanoDate(2014, 5, 30, 21),
                 ),
             ),
             verts,
@@ -96,14 +90,11 @@ using UUIDs
 
         #test user/robot/session blob entries
         be = Blobentry(;
-            blobId = uuid4(),
+            blobid = uuid4(),
             label = :testing2,
             blobstore = :store,
-            hash = "",
-            origin = "",
-            description = "",
-            mimeType = "",
-            timestamp = ZonedDateTime(2023, 2, 3, 20, tz"UTC+1"),
+            # timestamp = NanoDate(2023, 2, 3, 20, tz"UTC+1"),
+            timestamp = DFG.NanoDate(2023, 2, 3, 20),
         )
 
         addGraphBlobentry!(dfg, be)

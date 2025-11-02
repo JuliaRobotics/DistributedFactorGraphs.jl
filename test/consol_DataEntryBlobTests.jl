@@ -133,7 +133,7 @@ ade2 = DFG.saveBlob_Variable!(dfg, :x2, dataset1, :random, :default_inmemory_sto
 # ade3,adb3 = updateBlob!(dfg, :x2, deepcopy(ade), dataset1)
 
 @test hasBlob(dfg, ade2)
-@test hasBlob(ds, ade2.blobId)
+@test hasBlob(ds, ade2.blobid)
 
 @test length(listBlobs(ds)) == 1
 
