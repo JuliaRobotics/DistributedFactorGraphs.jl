@@ -11,7 +11,7 @@ using ...DistributedFactorGraphs:
     Agent,
     LabelNotFoundError,
     LabelExistsError,
-    FactorgraphRoot,
+    GraphRoot,
     AbstractGraphVariable,
     AbstractGraphFactor,
     NoSolverParams,

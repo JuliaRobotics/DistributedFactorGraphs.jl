@@ -15,7 +15,7 @@ mutable struct GraphsDFG{
     addHistory::Vector{Symbol} #TODO: Discuss more - is this an audit trail?
     solverParams::T # Solver parameters
     blobStores::Dict{Symbol, AbstractBlobstore}
-    graph::FactorgraphRoot
+    graph::GraphRoot
     agent::Agent
 end
 
@@ -54,7 +54,7 @@ function GraphsDFG{T, V, F}(
     graphBlobEntries = OrderedDict{Symbol, Blobentry}(),
     description::String = "",
     graphDescription::String = description,
-    graph::FactorgraphRoot = FactorgraphRoot(
+    graph::GraphRoot = GraphRoot(
         graphLabel,
         graphDescription,
         graphTags,

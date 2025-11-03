@@ -7,7 +7,7 @@
 # abstract type AbstractGraphNode end <: AbstractDFGNode
 # the rest of the nodes are also AbstractDFGNodes, eg.
 # Agent <: AbstractDFGNode
-# FactorgraphRoot <: AbstractDFGNode
+# GraphRoot <: AbstractDFGNode
 
 """
 $(TYPEDEF)

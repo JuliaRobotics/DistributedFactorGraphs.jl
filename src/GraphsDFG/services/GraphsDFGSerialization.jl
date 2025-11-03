@@ -22,7 +22,7 @@ end
     typePackedVariable::Bool = false # Are variables packed or full
     typePackedFactor::Bool = false # Are factors packed or full
     blobStores::Union{Nothing, Dict{Symbol, FolderStore{Vector{UInt8}}}} #FIXME allow more types of blobstores
-    graph::FactorgraphRoot
+    graph::GraphRoot
     agent::Agent
 end
 
@@ -35,7 +35,7 @@ function PackedGraphsDFG(old::_OldPackedGraphsDFG)
         old.typePackedVariable,
         old.typePackedFactor,
         old.blobStores,
-        FactorgraphRoot(
+        GraphRoot(
             old.graphLabel,
             old.description,
             old.graphTags,
