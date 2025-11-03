@@ -521,6 +521,7 @@ end
 include("errors.jl")
 
 include("entities/AbstractDFG.jl")
+include("entities/Bloblet.jl")
 
 # Data Blob extensions
 include("DataBlobs/entities/BlobEntry.jl")
