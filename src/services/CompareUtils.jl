@@ -241,7 +241,14 @@ function compareVariable(
 )
     #
     skiplist = union(
-        [:attributes; :solverDataDict; :createdTimestamp; :lastUpdatedTimestamp; :timezone; :zone],
+        [
+            :attributes;
+            :solverDataDict;
+            :createdTimestamp;
+            :lastUpdatedTimestamp;
+            :timezone;
+            :zone
+        ],
         skip,
     )
     TP = compareAll(A, B; skip = skiplist, show = show)
@@ -281,14 +288,7 @@ function compareFactor(
 )
     #
     skip_ = union(
-        [
-            :attributes,
-            :solverData,
-            :observation,
-            :solvercache,
-            :variableorder,
-            :_gradients,
-        ],
+        [:attributes, :solverData, :observation, :solvercache, :variableorder, :_gradients],
         skip,
     )
     TP = compareAll(A, B; skip = skip_, show = show)

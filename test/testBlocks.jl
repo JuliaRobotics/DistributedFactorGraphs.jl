@@ -1459,8 +1459,7 @@ function BuildingSubgraphs(testDFGAPI; VARTYPE = VariableCompute, FACTYPE = Fact
         dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [fId], 2)
         # For each factor check that the order the copied graph == original
         for fact in getFactors(dfgSubgraph)
-            @test fact.variableorder ==
-                  getFactor(dfg, fact.label).variableorder
+            @test fact.variableorder == getFactor(dfg, fact.label).variableorder
         end
     end
 

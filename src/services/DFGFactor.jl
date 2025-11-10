@@ -97,11 +97,10 @@ macro defObservationType(structname, factortype, manifold)
                                                          ") is not an `AbstractObservation`"
 
             Base.@__doc__ DFG.@tags struct $structname{T} <: $factortype
-                Z::T &(lower = DFG.Packed, choosetype=DFG.resolvePackedType)
+                Z::T & (lower = DFG.Packed, choosetype = DFG.resolvePackedType)
             end
 
             DFG.getManifold(::Type{<:$structname}) = $manifold
-
         end,
     )
 end
@@ -138,7 +137,6 @@ getManifold(f::AbstractGraphFactor) = getManifold(getObservation(f))
 ##------------------------------------------------------------------------------
 
 ## COMMON
-
 
 ##------------------------------------------------------------------------------
 ## solvable

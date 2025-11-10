@@ -1,7 +1,7 @@
 function pack end
 function unpack end
 
-version(::Type{T}) where T = pkgversion(parentmodule(T))
+version(::Type{T}) where {T} = pkgversion(parentmodule(T))
 # version(node) = node.version
 
 # Type for storing packed type information
@@ -11,8 +11,8 @@ struct TypeMetadata
     version::Union{Nothing, VersionNumber}
 end
 
-function TypeMetadata(::Type{T}) where T 
-    TypeMetadata(fullname(parentmodule(T))[1], nameof(T), version(T))
+function TypeMetadata(::Type{T}) where {T}
+    return TypeMetadata(fullname(parentmodule(T))[1], nameof(T), version(T))
 end
 
 StructUtils.@nonstruct struct Packed{T}
@@ -20,9 +20,9 @@ StructUtils.@nonstruct struct Packed{T}
     packed::T
 end
 
-function Packed(x) 
+function Packed(x)
     packedx = pack(x)
-    Packed(TypeMetadata(typeof(packedx)), packedx)
+    return Packed(TypeMetadata(typeof(packedx)), packedx)
 end
 
 function StructUtils.lower(x::Packed)
@@ -31,12 +31,12 @@ function StructUtils.lower(x::Packed)
     return d
 end
 
-function StructUtils.lift(::Type{<:Packed{T}}, x) where T
+function StructUtils.lift(::Type{<:Packed{T}}, x) where {T}
     r = unpack(StructUtils.make(T, x))
     return r
 end
 
-function pack_lower(x) 
+function pack_lower(x)
     px = Packed(x)
     d = StructUtils.make(OrderedDict{Symbol, Any}, px.packed)
     push!(d, :type => px.type)
@@ -68,7 +68,6 @@ function resolvePackedType(obj::JSON.Object)
 end
 
 @choosetype Packed resolvePackedType
-
 
 # Stash optional TypeMetadata expansion function.
 # function expandTypeMetadata(;kwargs...)

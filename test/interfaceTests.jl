@@ -65,8 +65,8 @@ end
           nothing
 
     @test String(take!(iobuf)) ==
-        "VariableCompute{TestVariableType1, Vector{Float64}, 1}\nid:\nnothing\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol, Union{Bool, Float64, Int64, Vector{Bool}, Vector{Float64}, Vector{Int64}, Vector{String}, String}}()\ndataDict:\nDict{Symbol, Blobentry}()\nsolvable:\nRefValue{Int64}(0)\n"
-        # "VariableCompute{TestVariableType1, Vector{Float64}, 1}\nid:\nnothing\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol, Union{Bool, Float64, Int64, Vector{Bool}, Vector{Float64}, Vector{Int64}, Vector{String}, String}}(:small=>\"data\")\ndataDict:\nDict{Symbol, Blobentry}()\nsolvable:\n0\n"
+          "VariableCompute{TestVariableType1, Vector{Float64}, 1}\nid:\nnothing\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol, Union{Bool, Float64, Int64, Vector{Bool}, Vector{Float64}, Vector{Int64}, Vector{String}, String}}()\ndataDict:\nDict{Symbol, Blobentry}()\nsolvable:\nRefValue{Int64}(0)\n"
+    # "VariableCompute{TestVariableType1, Vector{Float64}, 1}\nid:\nnothing\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol, Union{Bool, Float64, Int64, Vector{Bool}, Vector{Float64}, Vector{Int64}, Vector{String}, String}}(:small=>\"data\")\ndataDict:\nDict{Symbol, Blobentry}()\nsolvable:\n0\n"
 
     @test printVariable(iobuf, var1; short = true) === nothing
     varstr = String(take!(iobuf))

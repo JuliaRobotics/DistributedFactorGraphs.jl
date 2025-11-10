@@ -426,7 +426,7 @@ const unstable_functions::Vector{Symbol} = [
     :setSolvedCount!,
     :setMarginalized!,
     # no set on these
-    
+
     #deprecated in v0.29
     :setTimestamp,
     :setMetadata!, # no set, use add merge

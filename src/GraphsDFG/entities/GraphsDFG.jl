@@ -74,17 +74,12 @@ function GraphsDFG{T, V, F}(
     end
 
     # Validate the graphLabel and agentLabel
-    !DFG.isValidLabel(graphLabel) && throw(ArgumentError("'$graphLabel' is not a valid label"))
-    !DFG.isValidLabel(agentLabel) && throw(ArgumentError("'$agentLabel' is not a valid label"))
+    !DFG.isValidLabel(graphLabel) &&
+        throw(ArgumentError("'$graphLabel' is not a valid label"))
+    !DFG.isValidLabel(agentLabel) &&
+        throw(ArgumentError("'$agentLabel' is not a valid label"))
 
-    return GraphsDFG{T, V, F}(
-        g,
-        addHistory,
-        solverParams,
-        blobStores,
-        graph,
-        agent,
-    )
+    return GraphsDFG{T, V, F}(g, addHistory, solverParams, blobStores, graph, agent)
 end
 
 # GraphsDFG{T}(; kwargs...) where T <: AbstractDFGParams = GraphsDFG{T,VariableCompute,FactorDFG}(;kwargs...)

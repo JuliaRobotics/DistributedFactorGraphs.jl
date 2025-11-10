@@ -71,33 +71,33 @@ StructUtils.@kwarg struct FactorDFG{T <: AbstractObservation, N} <: AbstractGrap
     tags::Set{Symbol} = Set{Symbol}([:FACTOR])
     """Ordered list of the neighbor variables.
     Accessors: [`getVariableOrder`](@ref)"""
-    variableorder::NTuple{N, Symbol} &(choosetype=x->NTuple{length(x), Symbol},) # NOTE v0.29 renamed from _variableOrderSymbols
+    variableorder::NTuple{N, Symbol} & (choosetype = x->NTuple{length(x), Symbol},) # NOTE v0.29 renamed from _variableOrderSymbols
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref)"""
-    timestamp::NanoDate = ndnow(UTC) &(lower = timestamp,) # NOTE v0.29 changed from ZonedDateTime
+    timestamp::NanoDate = ndnow(UTC) & (lower = timestamp,) # NOTE v0.29 changed from ZonedDateTime
     # TODO
     # """(Optional) Steady (monotonic) time in nanoseconds `Nanosecond` (`Int64``)"""
     # nstime::Nanosecond #NOTE v0.29 REMOVED as not used, add when needed, or now as steadytime.
     """Solvable flag for the factor.
     Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)"""
-    solvable::Base.RefValue{Int} = Ref(1) &(lower = getindex, lift = Ref)
+    solvable::Base.RefValue{Int} = Ref(1) & (lower = getindex, lift = Ref)
     """Dictionary of small data associated with this variable.
     Accessors: [`getBloblet`](@ref), [`addBloblet!`](@ref)"""
     bloblets::Bloblets = Bloblets() #NOTE v0.29 changed from smallData::Dict{Symbol, MetadataTypes} = Dict{Symbol, MetadataTypes}()
     """Observation function or measurement for this factor.
     Accessors: [`getObservation`](@ref)(@ref)"""
-    observation::T &(lower = pack_lower, choosetype=DFG.resolvePackedType)#TODO finalise serializd type
+    observation::T & (lower = pack_lower, choosetype = DFG.resolvePackedType)#TODO finalise serializd type
     """Describes the current state of the factor. Persisted in serialization.
     Accessors: [`getFactorState`](@ref)"""
     state::FactorState = FactorState()
     """Temporary, non-persistent memory used internally by the solver for intermediate numerical computations and buffers.  
     `solvercache` is lazily allocated and only used during factor operations; it is not serialized or retained after solving.
     Accessors: [`getCache`](@ref), [`setCache!`](@ref)"""
-    solvercache::Base.RefValue{<:FactorCache} = Ref{FactorCache}() &(ignore = true, )#TODO easy of use vs. performance as container is abstract in any case.
+    solvercache::Base.RefValue{<:FactorCache} = Ref{FactorCache}() & (ignore = true,)#TODO easy of use vs. performance as container is abstract in any case.
     """Blobentries associated with this factor."""
     blobentries::Blobentries = Blobentries() #NOTE v0.29 added
     """Internal: used for automatic type metadata generation."""
-    _autotype::Nothing = nothing &(name = :type, lower = _ -> TypeMetadata(FactorDFG), )
+    _autotype::Nothing = nothing & (name = :type, lower = _ -> TypeMetadata(FactorDFG))
 end
 
 version(::Type{<:FactorDFG}) = v"0.29.0"
@@ -131,7 +131,10 @@ function FactorDFG(
     end
 
     if timestamp isa ZonedDateTime
-        Base.depwarn("`FactorDFG` timestamp as `ZonedDateTime` is deprecated, use `NanoDate` instead", :FactorDFG)
+        Base.depwarn(
+            "`FactorDFG` timestamp as `ZonedDateTime` is deprecated, use `NanoDate` instead",
+            :FactorDFG,
+        )
         timestamp = NanoDate(timestamp.utc_datetime)
     end
 
@@ -174,7 +177,10 @@ function FactorDFG(
         Base.depwarn("`FactorDFG` nstime is deprecated", :FactorDFG)
     end
     if !isnothing(smallData)
-        Base.depwarn("`FactorDFG` smallData is deprecated, use bloblets instead", :FactorDFG)
+        Base.depwarn(
+            "`FactorDFG` smallData is deprecated, use bloblets instead",
+            :FactorDFG,
+        )
     end
 
     if isnothing(cache)
@@ -185,7 +191,10 @@ function FactorDFG(
 
     # deprecated in v0.29
     if timestamp isa ZonedDateTime
-        Base.depwarn("`FactorDFG` timestamp as `ZonedDateTime` is deprecated, use `NanoDate(timestamp.utc_datetime)` instead", :FactorDFG)
+        Base.depwarn(
+            "`FactorDFG` timestamp as `ZonedDateTime` is deprecated, use `NanoDate(timestamp.utc_datetime)` instead",
+            :FactorDFG,
+        )
         nd_timestamp = NanoDate(timestamp.utc_datetime)
     else
         nd_timestamp = timestamp
@@ -282,18 +291,9 @@ end
 ##==============================================================================
 
 function FactorSummary(f::FactorDFG)
-    return FactorSummary(
-        f.label,
-        copy(f.tags),
-        f.variableorder,
-        f.timestamp,
-    )
+    return FactorSummary(f.label, copy(f.tags), f.variableorder, f.timestamp)
 end
 
 function FactorSkeleton(f::AbstractGraphFactor)
-    return FactorSkeleton(
-        f.label,
-        copy(f.tags),
-        f.variableorder,
-    )
+    return FactorSkeleton(f.label, copy(f.tags), f.variableorder)
 end

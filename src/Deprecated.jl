@@ -11,7 +11,7 @@ function getHash(entry::Blobentry)
 end
 
 function getMetadata(node)
-    error(
+    return error(
         "getMetadata(node::$(typeof(node))) is deprecated; metadata is now stored in bloblets. Use getBloblets instead.",
     )
     # return JSON.parse(base64decode(f.metadata), Dict{Symbol, MetadataTypes})
@@ -20,8 +20,14 @@ end
 # getTimestamp
 
 # setTimestamp is deprecated for now we can implement setTimestamp!(dfg, lbl, ts) later.
-setTimestamp(args...; kwargs...) = error("setTimestamp is obsolete, use addVariable!(..., timestamp=...) instead.")
-setTimestamp!(args...; kwargs...) = error("setTimestamp! is not implemented, use addVariable!(..., timestamp=...) instead.")
+function setTimestamp(args...; kwargs...)
+    return error("setTimestamp is obsolete, use addVariable!(..., timestamp=...) instead.")
+end
+function setTimestamp!(args...; kwargs...)
+    return error(
+        "setTimestamp! is not implemented, use addVariable!(..., timestamp=...) instead.",
+    )
+end
 
 ##------------------------------------------------------------------------------
 ## solveInProgress
@@ -125,16 +131,15 @@ setAgentMetadata!(args...) = error("setAgentMetadata! is obsolete, use Bloblets 
 getGraphMetadata(args...) = error("getGraphMetadata is obsolete, use Bloblets instead.")
 setGraphMetadata!(args...) = error("setGraphMetadata! is obsolete, use Bloblets instead.")
 
-setDescription!(args...) = error("setDescription! was removed and may be implemented later.")
+function setDescription!(args...)
+    return error("setDescription! was removed and may be implemented later.")
+end
 
 # TODO find replacement.
 function _getDuplicatedEmptyDFG(
     dfg::GraphsDFG{P, V, F},
 ) where {P <: AbstractDFGParams, V <: AbstractGraphVariable, F <: AbstractGraphFactor}
-    Base.depwarn(
-        "_getDuplicatedEmptyDFG is deprecated.",
-        :_getDuplicatedEmptyDFG,
-    )
+    Base.depwarn("_getDuplicatedEmptyDFG is deprecated.", :_getDuplicatedEmptyDFG)
     newDfg = GraphsDFG{P, V, F}(;
         agentLabel = getAgentLabel(dfg),
         graphLabel = getGraphLabel(dfg),
