@@ -110,10 +110,10 @@ function printVariable(
     return nothing
 end
 
-printFactor(vert::FactorCompute; kwargs...) = printFactor(stdout::IO, vert; kwargs...)
+printFactor(vert::FactorDFG; kwargs...) = printFactor(stdout::IO, vert; kwargs...)
 function printFactor(
     io::IO,
-    vert::FactorCompute;
+    vert::FactorDFG;
     short::Bool = false,
     compact::Bool = true,
     limit::Bool = true,
@@ -126,14 +126,12 @@ function printFactor(
         fctt = fct |> typeof
         printstyled(ioc, summary(vert); bold = true)
         println()
-        println(ioc, "  ID:            ", vert.id)
         println(ioc, "  timestamp:     ", vert.timestamp)
-        println(ioc, "   nstime:       ", vert.nstime)
         print(ioc, "  label:         ")
         printstyled(ioc, vert.label; bold = true)
         println(ioc)
-        println(ioc, "  solvable:      ", vert.solvable)
-        println(ioc, "  VariableOrder: ", vert._variableOrderSymbols)
+        println(ioc, "  solvable:      ", getSolvable(vert))
+        println(ioc, "  VariableOrder: ", vert.variableorder)
         println(ioc, "  multihypo:     ", getFactorState(vert).multihypo) # FIXME #477
         println(ioc, "  nullhypo:      ", getFactorState(vert).nullhypo)
         println(ioc, "  tags:          ", vert.tags)
@@ -202,7 +200,7 @@ function Base.show(io::IO, ::MIME"text/plain", v::VariableCompute)
     return printVariable(io, v; short = true, limit = false)
 end
 
-function Base.show(io::IO, ::MIME"text/plain", f::FactorCompute)
+function Base.show(io::IO, ::MIME"text/plain", f::FactorDFG)
     return printFactor(io, f; short = true, limit = false)
 end
 
@@ -213,8 +211,8 @@ function Base.show(io::IO, ::MIME"text/plain", dfg::AbstractDFG)
     println(io, "  Description: ", getDescription(dfg))
     println(io, "  Nr variables: ", length(ls(dfg)))
     println(io, "  Nr factors: ", length(lsf(dfg)))
-    println(io, "  Agent Metadata: ", keys(getAgentMetadata(dfg)))
-    println(io, "  Graph Metadata: ", keys(getGraphMetadata(dfg)))
+    # println(io, "  Agent Metadata: ", keys(getAgentMetadata(dfg)))#FIXME use Bloblets
+    # println(io, "  Graph Metadata: ", keys(getGraphMetadata(dfg)))#FIXME use Bloblets
     return
 end
 
@@ -222,7 +220,7 @@ end
 function Base.show(
     io::IO,
     ::MIME"application/prs.juno.inline",
-    x::Union{AbstractDFG, VariableCompute, FactorCompute},
+    x::Union{AbstractDFG, VariableCompute, FactorDFG},
 )
     return show(io, x)
 end

@@ -22,6 +22,7 @@ using Random
 using TimeZones
 using NanoDates
 using JSON
+export StructUtils # export for use in macros
 using LinearAlgebra
 using SparseArrays
 using UUIDs
@@ -31,7 +32,7 @@ using ProgressMeter
 using SHA
 using FileIO
 
-import Distributions
+import Distributions #TODO this was unused before (if we move SerializingDistributions.jl out we can maybe remove the Distributions dependency?)
 import Tar
 import CodecZlib
 
@@ -78,7 +79,7 @@ export AbstractPackedBelief, PackedBelief
 # Variables
 export VariableCompute, VariableDFG, VariableSummary, VariableSkeleton
 # Factors
-export FactorCompute, FactorDFG, FactorSummary, FactorSkeleton
+export FactorDFG, FactorSummary, FactorSkeleton
 
 export Blobentry
 
@@ -274,16 +275,17 @@ export removeTags! #TODO do we want this one
 export hasTags
 
 ##------------------------------------------------------------------------------
-## Metadata
+## Bloblets
 ##------------------------------------------------------------------------------
-# currently these refer to variable metadata
-export getMetadata
-export addMetadata!
-export deleteMetadata!
-export listMetadata
+# currently these refer to variable Bloblets
+#TODO Bloblet CRUD
+# export getVariableBloblet
+# export addVariableBloblet!
+# export deleteVariableBloblet!
+# export listVariableBloblets
 
-export getAgentMetadata
-export getGraphMetadata
+# export getAgentBloblet
+# export getGraphBloblet
 
 ##------------------------------------------------------------------------------
 ## FileDFG
@@ -396,13 +398,13 @@ const unstable_functions::Vector{Symbol} = [
     :pack,
     :packDistribution,
     :packVariable,
-    :packFactor,
+    # :packFactor,
     :packBlob,
     :packState,
     :unpack,
     :unpackDistribution,
     :unpackVariable,
-    :unpackFactor,
+    # :unpackFactor,
     :unpackBlob,
     :unpackState,
     :ls2,
@@ -421,11 +423,13 @@ const unstable_functions::Vector{Symbol} = [
     :setSolverParams!,
     :setDescription!,
     :setSolvable!,
-    :setTimestamp,
     :setTags!,
     :setSolvedCount!,
     :setMarginalized!,
     # no set on these
+
+    #deprecated in v0.29
+    :setTimestamp,
     :setMetadata!, # no set, use add merge
     :setAgentMetadata!,
     :setGraphMetadata!,
@@ -527,7 +531,11 @@ include("entities/Bloblet.jl")
 include("DataBlobs/entities/BlobEntry.jl")
 include("DataBlobs/entities/BlobStores.jl")
 
+include("serialization/PackedSerialization.jl")
+include("serialization/DistributionSerialization.jl")
+
 include("entities/DFGFactor.jl")
+# include("serialization/FactorSerialization.jl")
 
 include("entities/DFGVariable.jl")
 

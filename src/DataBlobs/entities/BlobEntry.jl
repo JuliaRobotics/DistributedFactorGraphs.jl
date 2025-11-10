@@ -49,7 +49,6 @@ StructUtils.@kwarg struct Blobentry
     version::VersionNumber = version(Blobentry)
 end
 version(::Type{Blobentry}) = v"0.1.0"
-version(node) = node.version
 
 function Blobentry(label::Symbol, blobstore = :default; kwargs...)
     return Blobentry(; label, blobstore, kwargs...)
@@ -122,3 +121,5 @@ function Base.setproperty!(x::Blobentry, f::Symbol, val)
         setfield!(x, f, val)
     end
 end
+
+const Blobentries = OrderedDict{Symbol, Blobentry}

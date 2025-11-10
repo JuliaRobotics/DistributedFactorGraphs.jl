@@ -4,7 +4,7 @@
     description::String = ""
     tags::Set{Symbol} = Set{Symbol}()
     bloblets::Bloblets = Bloblets()
-    blobentries::OrderedDict{Symbol, Blobentry} = OrderedDict{Symbol, Blobentry}()
+    blobentries::Blobentries = Blobentries()
 end
 
 @kwdef mutable struct GraphRoot
@@ -12,5 +12,5 @@ end
     description::String = ""
     tags::Set{Symbol} = Set{Symbol}()
     bloblets::Bloblets = Bloblets()
-    blobentries::OrderedDict{Symbol, Blobentry} = OrderedDict{Symbol, Blobentry}()
+    blobentries::Blobentries = Blobentries()
 end

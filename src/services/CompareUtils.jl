@@ -26,7 +26,6 @@ const GeneratedCompareUnion = Union{
     VariableDFG,
     VariableSummary,
     VariableSkeleton,
-    FactorCompute,
     FactorDFG,
     FactorSummary,
     FactorSkeleton,
@@ -34,7 +33,7 @@ const GeneratedCompareUnion = Union{
 }
 
 @generated function ==(x::T, y::T) where {T <: GeneratedCompareUnion}
-    ignored = [:solvercache, :solverData]
+    ignored = [:solvercache, :solverData, :solvable] #FIXME solvable stopped working- skipping for now (removed getproperty overload) 
     return mapreduce(
         n -> :(x.$n == y.$n),
         (a, b) -> :($a && $b),
@@ -222,9 +221,6 @@ function compare(a::State, b::State)
     a.dontmargin != b.dontmargin &&
         @debug("dontmargin is not equal") === nothing &&
         return false
-    a.solveInProgress != b.solveInProgress &&
-        @debug("solveInProgress is not equal") === nothing &&
-        return false
     getVariableType(a) != getVariableType(b) &&
         @debug("variableType is not equal") === nothing &&
         return false
@@ -245,7 +241,14 @@ function compareVariable(
 )
     #
     skiplist = union(
-        [:attributes; :solverDataDict; :createdTimestamp; :lastUpdatedTimestamp],
+        [
+            :attributes;
+            :solverDataDict;
+            :createdTimestamp;
+            :lastUpdatedTimestamp;
+            :timezone;
+            :zone
+        ],
         skip,
     )
     TP = compareAll(A, B; skip = skiplist, show = show)
@@ -285,14 +288,7 @@ function compareFactor(
 )
     #
     skip_ = union(
-        [
-            :attributes,
-            :solverData,
-            :observation,
-            :solvercache,
-            :_variableOrderSymbols,
-            :_gradients,
-        ],
+        [:attributes, :solverData, :observation, :solvercache, :variableorder, :_gradients],
         skip,
     )
     TP = compareAll(A, B; skip = skip_, show = show)

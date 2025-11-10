@@ -2,10 +2,6 @@
 ## Accessors
 ##==============================================================================
 
-function getMetadata(f::FactorDFG)
-    return JSON.parse(base64decode(f.metadata), Dict{Symbol, MetadataTypes})
-end
-
 ## COMMON
 # getSolveInProgress
 # isSolveInProgress
@@ -25,22 +21,7 @@ getFactorState(dfg::AbstractDFG, lbl::Symbol) = getFactorState(getFactor(dfg, lb
 Return the observation of a factor, which is the user-defined data structure
 that contains the information about the factor, such as the measurement, prior, or relative pose.
 """
-getObservation(f::FactorCompute) = f.observation
-function getObservation(f::FactorDFG)
-    #FIXME completely refactor to not need getTypeFromSerializationModule and just use StructUtils
-
-    if contains(f.fnctype, ".")
-        # packed factor contains a module name, just extracting type and ignoring module
-        fnctype = split(f.fnctype, ".")[end]
-    else
-        fnctype = f.fnctype
-    end
-
-    packtype = DFG.getTypeFromSerializationModule("Packed" * fnctype)
-    return packtype(; JSON.parse(f.observJSON)...)
-    # return packtype(JSON3.read(f.observJSON))
-end
-
+getObservation(f::FactorDFG) = f.observation
 getObservation(dfg::AbstractDFG, lbl::Symbol) = getObservation(getFactor(dfg, lbl))
 
 """
@@ -50,7 +31,7 @@ Return the solver cache for a factor, which is used to store intermediate result
 during the solving process. This is useful for caching results that can be reused
 across multiple solves, such as Jacobians or other computed values.
 """
-function getCache(f::FactorCompute)
+function getCache(f::FactorDFG)
     if isassigned(f.solvercache)
         return f.solvercache[]
     else
@@ -65,7 +46,7 @@ Set the solver cache for a factor, which is used to store intermediate results
 during the solving process. This is useful for caching results that can be reused
 across multiple solves, such as Jacobians or other computed values.
 """
-setCache!(f::FactorCompute, solvercache::FactorCache) = f.solvercache[] = solvercache
+setCache!(f::FactorDFG, solvercache::FactorCache) = f.solvercache[] = solvercache
 
 """
     $SIGNATURES
@@ -90,17 +71,6 @@ end
 ## Default Factors Function Macro
 ##==============================================================================
 
-function pack end
-function unpack end
-function packDistribution end
-function unpackDistribution end
-
-#TODO remove, rather use StructTypes.jl properly
-function Base.convert(::Type{<:PackedBelief}, nt::Union{NamedTuple, JSON.Object})
-    distrType = getTypeFromSerializationModule(nt._type)
-    return distrType(; nt...)
-end
-
 """
     @defObservationType StructName factortype<:AbstractObservation manifolds<:AbstractManifold
 
@@ -114,7 +84,7 @@ DFG.@defObservationType Pose2Pose2 RelativeObservation SpecialEuclideanGroup(2)
 ```
 """
 macro defObservationType(structname, factortype, manifold)
-    packedstructname = Symbol("Packed", structname)
+    # packedstructname = Symbol("Packed", structname)
     return esc(
         quote
             # user manifold must be a <:Manifold
@@ -126,20 +96,11 @@ macro defObservationType(structname, factortype, manifold)
                                                          string($factortype) *
                                                          ") is not an `AbstractObservation`"
 
-            Base.@__doc__ struct $structname{T} <: $factortype
-                Z::T
+            Base.@__doc__ DFG.@tags struct $structname{T} <: $factortype
+                Z::T & (lower = DFG.Packed, choosetype = DFG.resolvePackedType)
             end
 
-            #TODO should this be $packedstructname{T <: PackedBelief}
-            Base.@__doc__ struct $packedstructname <: AbstractPackedObservation
-                Z::PackedBelief
-            end
-
-            # $structname(; Z) = $structname(Z)                                                     
-            $packedstructname(; Z) = $packedstructname(Z)
             DFG.getManifold(::Type{<:$structname}) = $manifold
-            DFG.pack(d::$structname) = $packedstructname(DFG.packDistribution(d.Z))
-            DFG.unpack(d::$packedstructname) = $structname(DFG.unpackDistribution(d.Z))
         end,
     )
 end
@@ -154,7 +115,7 @@ getManifold(f::AbstractGraphFactor) = getManifold(getObservation(f))
 # |-------------------|:-----:|:----:|:---------:|:--------:|:----------:|
 # | FactorSkeleton |   X   |   x  |           |          |            |
 # | FactorSummary  |   X   |   X  |     X     |          |            |
-# | FactorCompute         |   X   |   X  |     X     |     X    |      X     |
+# | FactorDFG         |   X   |   X  |     X     |     X    |      X     |
 
 ##------------------------------------------------------------------------------
 ## label
@@ -176,37 +137,6 @@ getManifold(f::AbstractGraphFactor) = getManifold(getObservation(f))
 ##------------------------------------------------------------------------------
 
 ## COMMON
-# getTimestamp
-
-function setTimestamp(f::AbstractGraphFactor, ts::DateTime, timezone = localzone())
-    return setTimestamp(f, ZonedDateTime(ts, timezone))
-end
-function setTimestamp(f::FactorCompute, ts::ZonedDateTime)
-    return FactorCompute(
-        f.label,
-        getfield(f, :_variableOrderSymbols),
-        f.observation,
-        f.state;
-        timestamp = ts,
-        nstime = f.nstime,
-        tags = f.tags,
-        solvable = f.solvable,
-        id = f.id,
-    )
-end
-function setTimestamp(f::FactorSummary, ts::ZonedDateTime)
-    return FactorSummary(f.id, f.label, f.tags, f._variableOrderSymbols, ts)
-end
-function setTimestamp(f::FactorSummary, ts::DateTime)
-    return FactorSummary(f, ZonedDateTime(ts, localzone()))
-end
-
-function setTimestamp(v::FactorDFG, timestamp::ZonedDateTime)
-    return FactorDFG(;
-        (key => getproperty(v, key) for key in fieldnames(FactorDFG))...,
-        timestamp,
-    )
-end
 
 ##------------------------------------------------------------------------------
 ## solvable
@@ -224,18 +154,17 @@ end
 ## COMMON
 
 ##------------------------------------------------------------------------------
-## _variableOrderSymbols
+## variableorder
 ##------------------------------------------------------------------------------
 
-#TODO perhaps making _variableOrderSymbols imutable (NTuple) will be a save option
+#TODO perhaps making variableorder imutable (NTuple) will be a save option
 """
 $SIGNATURES
 
 Get the variable ordering for this factor.
 Should be equivalent to listNeighbors unless something was deleted in the graph.
 """
-getVariableOrder(fct::FactorCompute) = fct._variableOrderSymbols::Vector{Symbol}
-getVariableOrder(fct::FactorDFG) = fct._variableOrderSymbols::Vector{Symbol}
+getVariableOrder(fct::FactorDFG) = fct.variableorder
 getVariableOrder(dfg::AbstractDFG, fct::Symbol) = getVariableOrder(getFactor(dfg, fct))
 
 ##------------------------------------------------------------------------------

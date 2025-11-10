@@ -1640,7 +1640,7 @@
       <text:p>x</text:p>
      </table:table-cell>
      <table:table-cell table:style-name="ce51" office:value-type="string" calcext:value-type="string">
-      <text:p>_variableOrderSymbols</text:p>
+      <text:p>variableorder</text:p>
      </table:table-cell>
      <table:table-cell/>
      <table:table-cell table:style-name="ce101"/>

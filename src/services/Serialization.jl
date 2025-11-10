@@ -1,28 +1,14 @@
-## Version checking
-#NOTE fixed really bad function but kept similar as fallback #TODO upgrade to use pkgversion(m::Module)
-function _getDFGVersion()
-    return pkgversion(DistributedFactorGraphs)
-end
 
-function _versionCheck(node::Union{<:VariableDFG, <:FactorDFG})
-    if node._version.minor < _getDFGVersion().minor
-        @warn "This data was serialized using DFG $(node._version) but you have $(_getDFGVersion()) installed, there may be deserialization issues." maxlog =
-            10
-    end
-end
-
-function stringVariableType(varT::StateType)
+function stringVariableType(varT::AbstractStateType{N}) where {N}
     T = typeof(varT)
-    #FIXME maybe don't use .parameters
-    Tparams = T.parameters
-    if length(Tparams) == 0
+    if N == Any
         return string(parentmodule(T), ".", nameof(T))
-    elseif length(Tparams) == 1 && Tparams[1] isa Integer
-        return string(parentmodule(T), ".", nameof(T), "{", join(Tparams, ","), "}")
+    elseif N isa Integer
+        return string(parentmodule(T), ".", nameof(T), "{", join(N, ","), "}")
     else
         throw(
             SerializationError(
-                "Serializing Variable State type only supports 1 integer parameter, got '$(T)'.",
+                "Serializing Variable State type only supports an integer parameter, got '$(T)'.",
             ),
         )
     end
@@ -68,43 +54,6 @@ function parseVariableType(_typeString::AbstractString)
     end
 end
 
-"""
-    $(SIGNATURES)
-Get a type from the serialization module.
-"""
-function getTypeFromSerializationModule(_typeString::AbstractString)
-    @debug "DFG converting type string to Julia type" _typeString
-    try
-        # split the type at last `.`
-        split_st = split(_typeString, r"\.(?!.*\.)")
-        #if module is specified look for the module in main, otherwise use Main        
-        if length(split_st) == 2
-            m = getfield(Main, Symbol(split_st[1]))
-        else
-            m = Main
-        end
-        noparams = split(split_st[end], r"{")
-        ret = if 1 < length(noparams)
-            # fix #671, but does not work with specific module yet
-            bidx = findfirst(r"{", split_st[end])[1]
-            Core.eval(m, Base.Meta.parse("$(noparams[1])$(split_st[end][bidx:end])"))
-            # eval(Base.Meta.parse("Main.$(noparams[1])$(split_st[end][bidx:end])"))
-        else
-            getfield(m, Symbol(split_st[end]))
-        end
-
-        return ret
-
-    catch ex
-        @error "Unable to deserialize type $(_typeString)"
-        io = IOBuffer()
-        showerror(io, ex, catch_backtrace())
-        err = String(take!(io))
-        @error(err)
-    end
-    return nothing
-end
-
 ##==============================================================================
 ## State Packing and unpacking
 ##==============================================================================
@@ -142,7 +91,7 @@ function packState(d::State{T}) where {T <: StateType}
         d.infoPerCoord,
         d.ismargin,
         d.dontmargin,
-        d.solveInProgress,
+        # d.solveInProgress,
         d.solvedCount,
         d.solveKey,
         isempty(d.covar) ? Float64[] : vec(d.covar[1]),
@@ -192,7 +141,7 @@ function unpackState(d::PackedState)
         infoPerCoord = d.infoPerCoord,
         ismargin = d.ismargin,
         dontmargin = d.dontmargin,
-        solveInProgress = d.solveInProgress,
+        # solveInProgress = d.solveInProgress,
         solvedCount = d.solvedCount,
         solveKey = Symbol(d.solveKey),
         events = Dict{Symbol, Threads.Condition}(),
@@ -218,7 +167,7 @@ function packVariable(
         ppes = collect(values(v.ppeDict)),
         solverData = packState.(collect(values(v.solverDataDict))),
         metadata = base64encode(JSON.json(v.smallData)),
-        solvable = v.solvable,
+        solvable = getSolvable(v),
         variableType = stringVariableType(DFG.getVariableType(v)),
         blobEntries = collect(values(v.dataDict)),
         _version = _getDFGVersion(),
@@ -276,107 +225,3 @@ VariableCompute(v::VariableCompute) = v
 VariableCompute(v::VariableDFG) = unpackVariable(v)
 VariableDFG(v::VariableDFG) = v
 VariableDFG(v::VariableCompute) = packVariable(v)
-
-##==============================================================================
-## Factor Packing and unpacking
-##==============================================================================
-
-# returns FactorDFG
-function packFactor(f::FactorCompute)
-    obstype = typeof(getObservation(f))
-    fnctype = string(parentmodule(obstype), ".", nameof(obstype))
-
-    return FactorDFG(;
-        id = f.id,
-        label = f.label,
-        tags = f.tags,
-        _variableOrderSymbols = f._variableOrderSymbols,
-        timestamp = f.timestamp,
-        nstime = string(f.nstime.value),
-        #TODO fully test include module name in factor fnctype, see #1140
-        # fnctype = String(_getname(getObservation(f))),
-        fnctype,
-        solvable = getSolvable(f),
-        metadata = base64encode(JSON.json(f.smallData)),
-        # Pack the node data
-        _version = _getDFGVersion(),
-        state = f.state,
-        observJSON = JSON.json(packObservation(f)),
-    )
-    return props
-end
-
-packFactor(f::FactorDFG) = f
-
-function unpackObservation(factor::FactorDFG)
-    try
-        return unpack(getObservation(factor))
-    catch e
-        if e isa MethodError && e.f == unpack
-            Base.depwarn(
-                """$e\nPlease implement pack and unpack methods for the factor type '$(typeof(getObservation(factor)))'.
-                Falling back to deprecated convert method.""",
-                :unpackObservation,
-            )
-            #FIXME completely refactor to not need getTypeFromSerializationModule and just use StructUtils
-            #TODO change to unpack: observ = unpack(observpacked)
-            # currently the observation type is stored in the factor and this complicates unpacking of seperate observations
-            observpacked = getObservation(factor)
-            return convert(convertStructType(typeof(observpacked)), observpacked)
-        else
-            rethrow()
-        end
-    end
-end
-
-packObservation(f::FactorCompute) = packObservation(getObservation(f))
-function packObservation(observ::AbstractObservation)
-    try
-        return pack(observ)
-    catch e
-        if e isa MethodError
-            Base.depwarn(
-                "$e\nPlease implement pack and unpack methods for the factor type '$(typeof(observ))'.
-                \nFalling back to deprecated convert method.",
-                :packObservation,
-            )
-            packtype = convertPackedType(observ)
-            return convert(packtype, observ)
-        else
-            rethrow()
-        end
-    end
-end
-
-function unpackFactor(factor::FactorDFG; skipVersionCheck::Bool = false)
-    #
-    @debug "DECODING factor type = '$(factor.fnctype)' for factor '$(factor.label)'"
-    !skipVersionCheck && _versionCheck(factor)
-
-    local observation
-    try
-        observation = unpackObservation(factor) #TODO maybe getObservation(factor)
-    catch
-        @error "Error while unpacking '$(factor.label)' as '$(factor.fnctype)', please check the unpacking/packing converters for this factor"
-        rethrow()
-    end
-
-    return FactorCompute(
-        factor.id,
-        factor.label,
-        factor.tags,
-        Tuple(factor._variableOrderSymbols),
-        factor.timestamp,
-        Nanosecond(factor.nstime),
-        Ref(factor.solvable),
-        getMetadata(factor),
-        observation,
-        factor.state,
-        Ref{FactorCache}(),
-    )
-end
-
-FactorCompute(f::FactorCompute) = f
-FactorCompute(f::FactorDFG) = unpackFactor(f)
-FactorDFG(f::FactorDFG) = f
-FactorDFG(f::FactorCompute) = packFactor(f)

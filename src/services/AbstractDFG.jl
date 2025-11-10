@@ -4,7 +4,7 @@
 ##------------------------------------------------------------------------------
 ## Broadcasting
 ##------------------------------------------------------------------------------
-# to allow stuff like `getFactorType.(dfg, [:x1x2f1;:x10l3f2])`
+# to allow stuff like `getObservation.(dfg, [:x1x2f1;:x10l3f2])`
 # https://docs.julialang.org/en/v1/manual/interfaces/#
 Base.Broadcast.broadcastable(dfg::AbstractDFG) = Ref(dfg)
 
@@ -33,13 +33,6 @@ getId(node) = node.id
 Get the label of the node.
 """
 getLabel(node) = node.label
-
-"""
-$SIGNATURES
-
-Get the metadata of the node.
-"""
-getMetadata(node) = node.metadata
 
 """
     $(SIGNATURES)
@@ -104,20 +97,6 @@ function getTypeDFGFactors end
 ##------------------------------------------------------------------------------
 ## Setters
 ##------------------------------------------------------------------------------
-"""
-    $SIGNATURES
-Set the metadata of the node.
-"""
-function setMetadata!(node, metadata::Dict{Symbol, MetadataTypes})
-    # with set old data should be removed, but care is taken to make sure its not the same object
-    node.metadata !== metadata && empty!(node.metadata)
-    return merge!(node.metadata, metadata)
-end
-
-"""
-    $(SIGNATURES)
-"""
-setDescription!(dfg::AbstractDFG, description::String) = dfg.description = description
 
 """
     $(SIGNATURES)
@@ -129,39 +108,6 @@ function setSolverParams!(dfg::AbstractDFG, solverParams::AbstractDFGParams)
 end
 
 # Accessors and CRUD for user/robot/session Data
-
-"""
-$SIGNATURES
-
-Get the metadata from the agent in the AbstractDFG.
-"""
-getAgentMetadata(dfg::AbstractDFG) = getMetadata(getAgent(dfg))
-
-"""
-$SIGNATURES
-
-Set the metadata of the agent in the AbstractDFG.
-"""
-function setAgentMetadata!(dfg::AbstractDFG, data::Dict{Symbol, MetadataTypes})
-    agent = getAgent(dfg)
-    return setMetadata!(agent, data)
-end
-
-"""
-$SIGNATURES
-
-Get the metadata from the factorgraph in the AbstractDFG.
-"""
-getGraphMetadata(dfg::AbstractDFG) = getMetadata(dfg)
-
-"""
-$SIGNATURES
-
-Set the metadata of the factorgraph in the AbstractDFG.
-"""
-function setGraphMetadata!(dfg::AbstractDFG, data::Dict{Symbol, MetadataTypes})
-    return setMetadata!(dfg, data)
-end
 
 ##==============================================================================
 ## Agent/Graph Data CRUD
@@ -299,14 +245,14 @@ end
 
 """
     $(SIGNATURES)
-Add a FactorCompute to a DFG.
+Add a FactorDFG to a DFG.
 Implement `addFactor!(dfg::AbstractDFG, factor::AbstractGraphFactor)`
 """
 function addFactor! end
 
 """
     $(SIGNATURES)
-Add a Vector{FactorCompute} to a DFG.
+Add a Vector{FactorDFG} to a DFG.
 """
 function addFactors!(dfg::AbstractDFG, factors::Vector{<:AbstractGraphFactor})
     return asyncmap(factors) do f
@@ -347,7 +293,7 @@ function getVariablesSkeleton end
 
 """
     $(SIGNATURES)
-Get a FactorCompute from a DFG using its label.
+Get a FactorDFG from a DFG using its label.
 Implement `getFactor(dfg::AbstractDFG, label::Symbol)`
 """
 function getFactor end
@@ -394,7 +340,7 @@ Implement `deleteVariable!(dfg::AbstractDFG, label::Symbol)`
 function deleteVariable! end
 """
     $(SIGNATURES)
-Delete a FactorCompute from the DFG using its label.
+Delete a FactorDFG from the DFG using its label.
 Implement `deleteFactor!(dfg::AbstractDFG, label::Symbol)`
 """
 function deleteFactor! end
@@ -454,7 +400,7 @@ function isVariable end
 
 Return whether `sym::Symbol` represents a factor vertex in the graph DFG.
 Checks whether it both exists in the graph and is a factor.
-(If you rather want a quicker for type, just do node isa FactorCompute)
+(If you rather want a quicker for type, just do node isa FactorDFG)
 Implement `isFactor(dfg::AbstractDFG, label::Symbol)`
 """
 function isFactor end
@@ -479,14 +425,6 @@ function listNeighbors end
 ##------------------------------------------------------------------------------
 ## copy and duplication
 ##------------------------------------------------------------------------------
-
-#TODO use copy functions currently in attic
-"""
-    $(SIGNATURES)
-Gets an empty and unique DFG derived from an existing DFG.
-Implement `_getDuplicatedEmptyDFG(dfg::AbstractDFG)`
-"""
-function _getDuplicatedEmptyDFG end
 
 ##------------------------------------------------------------------------------
 ## CRUD Aliases
@@ -753,7 +691,7 @@ function lsfTypes(dfg::AbstractDFG)
     facs = getFactors(dfg)
     alltypes = Set{DataType}()
     for f in facs
-        facType = typeof(getFactorType(f))
+        facType = typeof(getObservation(f))
         push!(alltypes, facType)
     end
     return collect(alltypes)
@@ -768,7 +706,7 @@ function lsfTypesDict(dfg::AbstractDFG)
     facs = getFactors(dfg)
     alltypes = Dict{DataType, Vector{Symbol}}()
     for f in facs
-        facType = typeof(getFactorType(f))
+        facType = typeof(getObservation(f))
         d = get!(alltypes, facType, Symbol[])
         push!(d, f.label)
     end
@@ -983,7 +921,7 @@ function copyGraph!(
     # And then all factors to the destDFG.
     @showprogress desc = "copy factors" enabled = showprogress for factor in sourceFactors
         # Get the original factor variables (we need them to create it)
-        sourceFactorVariableIds = collect(factor._variableOrderSymbols)
+        sourceFactorVariableIds = collect(factor.variableorder)
         # Find the labels and associated variables in our new subgraph
         factVariableIds = Symbol[]
         for variable in sourceFactorVariableIds
@@ -1056,12 +994,9 @@ function deepcopyGraph(
     variableLabels::Vector{Symbol} = ls(sourceDFG),
     factorLabels::Vector{Symbol} = lsf(sourceDFG);
     graphLabel::Symbol = Symbol(getGraphLabel(sourceDFG), "_cp_$(string(uuid4())[1:6])"),
-    sessionId = nothing,
     kwargs...,
 ) where {T <: AbstractDFG}
     ginfo = getDFGInfo(sourceDFG)
-
-    !isnothing(sessionId) && @warn "sessionId is deprecated, use graphLabel instead"
 
     destDFG = T(; ginfo..., graphLabel)
     copyGraph!(
@@ -1158,7 +1093,7 @@ Related
 function isPathFactorsHomogeneous(dfg::AbstractDFG, from::Symbol, to::Symbol)
     # FIXME, must consider all paths, not just shortest...
     pth = intersect(findShortestPathDijkstra(dfg, from, to), lsf(dfg))
-    types = getFactorType.(dfg, pth) .|> typeof .|> x -> (x).name #TODO this might not be correct in julia 1.6
+    types = getObservation.(dfg, pth) .|> typeof .|> x -> (x).name #TODO this might not be correct in julia 1.6
     utyp = unique(types)
     return (length(utyp) == 1), utyp
 end
@@ -1420,7 +1355,7 @@ Notes
 function getSummaryGraph(dfg::G) where {G <: AbstractDFG}
     #TODO fix deprecated constructor
     summaryDfg = GraphsDFG{NoSolverParams, VariableSummary, FactorSummary}(;
-        description = "Summary of $(getDescription(dfg))",
+        graphDescription = "Summary of $(getDescription(dfg))",
         agent = dfg.agent,
         graphLabel = Symbol(getGraphLabel(dfg), "_summary_$(string(uuid4())[1:6])"),
     )

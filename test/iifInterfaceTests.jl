@@ -137,8 +137,6 @@ end
 
     @test getObservation(dfg, :abf1) === f1.observation
     @test getObservation(f1) === f1.observation
-    @test getFactorType(f1) === f1.observation
-    @test getFactorType(dfg, :abf1) === f1.observation
 
     @test !isPrior(dfg, :abf1) # f1 is not a prior
     @test lsfPriors(dfg) == []
@@ -205,12 +203,13 @@ end
     @test_throws LabelNotFoundError isInitialized(v2, :second)
 
     # Session, robot, and user small data tests
-    smallRobotData = Dict{Symbol, MetadataTypes}(:a => "43", :b => "Hello")
-    smallSessionData = Dict{Symbol, MetadataTypes}(:a => "44", :b => "Hello")
-    setAgentMetadata!(dfg, deepcopy(smallRobotData))
-    setGraphMetadata!(dfg, deepcopy(smallSessionData))
-    @test getAgentMetadata(dfg) == smallRobotData
-    @test getGraphMetadata(dfg) == smallSessionData
+    #FIXME change to Bloblets
+    # smallRobotData = Dict{Symbol, MetadataTypes}(:a => "43", :b => "Hello")
+    # smallSessionData = Dict{Symbol, MetadataTypes}(:a => "44", :b => "Hello")
+    # setAgentMetadata!(dfg, deepcopy(smallRobotData))
+    # setGraphMetadata!(dfg, deepcopy(smallSessionData))
+    # @test getAgentMetadata(dfg) == smallRobotData
+    # @test getGraphMetadata(dfg) == smallSessionData
 end
 
 @testset "Data Entries" begin
@@ -324,7 +323,6 @@ verts = map(n -> addVariable!(dfg, Symbol("x$n"), Position{1}; tags = [:POSE]), 
 #TODO fix this to use accessors
 setSolvable!(verts[7], 1)
 setSolvable!(verts[8], 0)
-getState(verts[8], :default).solveInProgress = 1
 #call update to set it on cloud
 mergeVariable!(dfg, verts[7])
 mergeVariable!(dfg, verts[8])
@@ -395,7 +393,7 @@ end
 #         dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
 #         # For each factor check that the order the copied graph == original
 #         for fact in getFactors(dfgSubgraph)
-#             @test fact._variableOrderSymbols == getFactor(dfg, fact.label)._variableOrderSymbols
+#             @test fact.variableorder == getFactor(dfg, fact.label).variableorder
 #         end
 #     end
 # end

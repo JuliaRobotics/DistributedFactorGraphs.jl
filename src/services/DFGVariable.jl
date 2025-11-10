@@ -391,64 +391,6 @@ end
 ## COMMON
 # getTimestamp
 
-"""
-    $SIGNATURES
-
-Set the timestamp of a VariableCompute object returning a new VariableCompute.
-Note:
-Since the `timestamp` field is not mutable `setTimestamp` returns a new variable with the updated timestamp (note the absence of `!`).
-Use [`mergeVariable!`](@ref) on the returened variable to update it in the factor graph if needed. Alternatively use [`setTimestamp!`](@ref).
-See issue #315.
-"""
-function setTimestamp(v::VariableCompute, ts::ZonedDateTime; verbose::Bool = true)
-    if verbose
-        @warn "verbose=true: setTimestamp(::VariableCompute,...) creates a returns a new immutable VariableCompute object (and didn't change a distributed factor graph object), make sure you are using the right pointers: getVariable(...).  See setTimestamp!(...) and note suggested use is at addVariable!(..., [timestamp=...]).  See DFG #315 for explanation."
-    end
-    return VariableCompute(
-        v.id,
-        v.label,
-        ts,
-        v.nstime,
-        v.tags,
-        v.ppeDict,
-        v.solverDataDict,
-        v.smallData,
-        v.dataDict,
-        Ref(v.solvable),
-    )
-end
-
-function setTimestamp(
-    v::AbstractGraphVariable,
-    ts::DateTime,
-    timezone = localzone();
-    verbose::Bool = true,
-)
-    return setTimestamp(v, ZonedDateTime(ts, timezone); verbose)
-end
-
-function setTimestamp(v::VariableSummary, ts::ZonedDateTime; verbose::Bool = true)
-    if verbose
-        @warn "verbose=true: setTimestamp(::VariableSummary,...) creates and returns a new immutable VariableCompute object (and didn't change a distributed factor graph object), make sure you are using the right pointers: getVariable(...).  See setTimestamp!(...) and note suggested use is at addVariable!(..., [timestamp=...]).  See DFG #315 for explanation."
-    end
-    return VariableSummary(
-        v.id,
-        v.label,
-        ts,
-        v.tags,
-        v.ppeDict,
-        v.variableTypeName,
-        v.dataDict,
-    )
-end
-
-function setTimestamp(v::VariableDFG, timestamp::ZonedDateTime; verbose::Bool = true)
-    return VariableDFG(;
-        (key => getproperty(v, key) for key in fieldnames(VariableDFG))...,
-        timestamp,
-    )
-end
-
 ##------------------------------------------------------------------------------
 ## solvable
 ##------------------------------------------------------------------------------

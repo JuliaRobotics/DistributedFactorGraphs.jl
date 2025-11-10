@@ -1,10 +1,152 @@
 ## ================================================================================
 ## Deprecated in v0.29
 ##=================================================================================
+export FactorCompute
+const FactorCompute = FactorDFG
+
 function getHash(entry::Blobentry)
     return error(
         "Blobentry field :hash has been deprecated; use :crchash or :shahash instead",
     )
+end
+
+function getMetadata(node)
+    return error(
+        "getMetadata(node::$(typeof(node))) is deprecated; metadata is now stored in bloblets. Use getBloblets instead.",
+    )
+    # return JSON.parse(base64decode(f.metadata), Dict{Symbol, MetadataTypes})
+end
+
+# getTimestamp
+
+# setTimestamp is deprecated for now we can implement setTimestamp!(dfg, lbl, ts) later.
+function setTimestamp(args...; kwargs...)
+    return error("setTimestamp is obsolete, use addVariable!(..., timestamp=...) instead.")
+end
+function setTimestamp!(args...; kwargs...)
+    return error(
+        "setTimestamp! is not implemented, use addVariable!(..., timestamp=...) instead.",
+    )
+end
+
+##------------------------------------------------------------------------------
+## solveInProgress
+##------------------------------------------------------------------------------
+
+# getSolveInProgress and isSolveInProgress is deprecated for DFG v1.0, we can bring it back fully implemented when needed.
+# """
+#     $SIGNATURES
+
+# Which variables or factors are currently being used by an active solver.  Useful for ensuring atomic transactions.
+
+# DevNotes:
+# - Will be renamed to `data.solveinprogress` which will be in VND, not AbstractGraphNode -- see DFG #201
+
+# Related
+
+# isSolvable
+# """
+function getSolveInProgress(
+    var::Union{VariableCompute, FactorCompute},
+    solveKey::Symbol = :default,
+)
+    # Variable
+    if var isa VariableCompute
+        if haskey(getSolverDataDict(var), solveKey)
+            return getSolverDataDict(var)[solveKey].solveInProgress
+        else
+            return 0
+        end
+    end
+    # Factor
+    return getFactorState(var).solveInProgress
+end
+
+#TODO missing set solveInProgress and graph level accessor
+
+function isSolveInProgress(
+    node::Union{VariableCompute, FactorCompute},
+    solvekey::Symbol = :default,
+)
+    return getSolveInProgress(node, solvekey) > 0
+end
+
+"""
+    $(SIGNATURES)
+Get a type from the serialization module.
+"""
+function getTypeFromSerializationModule(_typeString::AbstractString)
+    @debug "DFG converting type string to Julia type" _typeString
+    try
+        # split the type at last `.`
+        split_st = split(_typeString, r"\.(?!.*\.)")
+        #if module is specified look for the module in main, otherwise use Main        
+        if length(split_st) == 2
+            m = getfield(Main, Symbol(split_st[1]))
+        else
+            m = Main
+        end
+        noparams = split(split_st[end], r"{")
+        ret = if 1 < length(noparams)
+            # fix #671, but does not work with specific module yet
+            bidx = findfirst(r"{", split_st[end])[1]
+            error("getTypeFromSerializationModule eval obsolete")
+            # Core.eval(m, Base.Meta.parse("$(noparams[1])$(split_st[end][bidx:end])"))
+        else
+            getfield(m, Symbol(split_st[end]))
+        end
+
+        return ret
+
+    catch ex
+        @error "Unable to deserialize type $(_typeString)"
+        io = IOBuffer()
+        showerror(io, ex, catch_backtrace())
+        err = String(take!(io))
+        @error(err)
+    end
+    return nothing
+end
+
+## Version checking
+#NOTE fixed really bad function but kept similar as fallback #TODO upgrade to use pkgversion(m::Module)
+function _getDFGVersion()
+    return pkgversion(DistributedFactorGraphs)
+end
+
+function _versionCheck(node::Union{<:VariableDFG, <:FactorDFG})
+    if node._version.minor < _getDFGVersion().minor
+        @warn "This data was serialized using DFG $(node._version) but you have $(_getDFGVersion()) installed, there may be deserialization issues." maxlog =
+            10
+    end
+end
+
+refMetadata(node) = node.metadata
+
+function packDistribution end
+function unpackDistribution end
+
+getAgentMetadata(args...) = error("getAgentMetadata is obsolete, use Bloblets instead.")
+setAgentMetadata!(args...) = error("setAgentMetadata! is obsolete, use Bloblets instead.")
+getGraphMetadata(args...) = error("getGraphMetadata is obsolete, use Bloblets instead.")
+setGraphMetadata!(args...) = error("setGraphMetadata! is obsolete, use Bloblets instead.")
+
+function setDescription!(args...)
+    return error("setDescription! was removed and may be implemented later.")
+end
+
+# TODO find replacement.
+function _getDuplicatedEmptyDFG(
+    dfg::GraphsDFG{P, V, F},
+) where {P <: AbstractDFGParams, V <: AbstractGraphVariable, F <: AbstractGraphFactor}
+    Base.depwarn("_getDuplicatedEmptyDFG is deprecated.", :_getDuplicatedEmptyDFG)
+    newDfg = GraphsDFG{P, V, F}(;
+        agentLabel = getAgentLabel(dfg),
+        graphLabel = getGraphLabel(dfg),
+        solverParams = deepcopy(dfg.solverParams),
+    )
+    # DFG.setDescription!(newDfg, "(Copy of) $(DFG.getDescription(dfg))")
+    return newDfg
 end
 ## ================================================================================
 ## Deprecated in v0.28
@@ -124,18 +266,19 @@ function cloneSolveKey!(dfg::AbstractDFG, dest::Symbol, src::Symbol; kw...)
     return cloneSolveKey!(dfg, dest, dfg, src; kw...)
 end
 
-#TODO not a good function, as it's not complete.
+#TODO make a replacement if used a lot... not a good function, as it's not complete.
 # """
 #     $(SIGNATURES)
 # Convenience function to get all the metadata of a DFG
 # """
 function getDFGInfo(dfg::AbstractDFG)
+    Base.depwarn("getDFGInfo is deprecated and needs a replacement.", :getDFGInfo)
     return (
-        description = getDescription(dfg),
+        graphDescription = getDescription(dfg),
         agentLabel = getAgentLabel(dfg),
         graphLabel = getGraphLabel(dfg),
-        agentMetadata = getAgentMetadata(dfg),
-        graphMetadata = getGraphMetadata(dfg),
+        # agentBloblets = getAgentBloblets(dfg),
+        # graphBloblets = getGraphBloblets(dfg),
         solverParams = getSolverParams(dfg),
     )
 end
@@ -350,16 +493,7 @@ end
 @deprecate getFactorFunction(args...) getObservation(args...)
 @deprecate getFactorType(args...) getObservation(args...)
 
-#TODO maybe deprecate setMetadata!
-function setMetadata!(v::VariableDFG, metadata::Dict{Symbol, MetadataTypes})
-    return error("FIXME: Metadata is not currently mutable in a Variable")
-    # v.metadata = base64encode(JSON3.write(metadata))
-end
-
-function setMetadata!(v::VariableCompute, metadata::Dict{Symbol, MetadataTypes})
-    v.smallData !== metadata && empty!(v.smallData)
-    return merge!(v.smallData, metadata)
-end
+setMetadata!(args...) = error("setMetadata is obsolete, use Bloblets instead.")
 
 function updateData!(
     dfg::AbstractDFG,
@@ -999,7 +1133,7 @@ end
 
 # # Deprecated check usefull? # packedFnc = fncStringToData(factor.fnctype, factor.data)
 # # Deprecated check usefull? # decodeType = getFactorOperationalMemoryType(dfg)
-# # Deprecated check usefull? # fullFactorData = decodePackedType(dfg, factor._variableOrderSymbols, decodeType, packedFnc)
+# # Deprecated check usefull? # fullFactorData = decodePackedType(dfg, factor.variableorder, decodeType, packedFnc)
 # function fncStringToData(args...; kwargs...)
 #     @warn "fncStringToData is obsolete, called with" args kwargs
 #     return error("fncStringToData is obsolete.")

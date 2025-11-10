@@ -26,9 +26,14 @@ DFG.@defObservationType TestFunctorInferenceType1 RelativeObservation Translatio
 DFG.@defObservationType TestFunctorInferenceType2 RelativeObservation TranslationGroup(1)
 DFG.@defObservationType TestAbstractPrior PriorObservation TranslationGroup(1)
 
-TestFunctorInferenceType1() = TestFunctorInferenceType1(nothing)
-TestFunctorInferenceType2() = TestFunctorInferenceType2(nothing)
-TestAbstractPrior() = TestAbstractPrior(nothing)
+@kwdef struct TestBelief
+    a::Float64 = 1.0
+    b::Float64 = 3.0
+end
+
+TestFunctorInferenceType1() = TestFunctorInferenceType1(TestBelief())
+TestFunctorInferenceType2() = TestFunctorInferenceType2(TestBelief())
+TestAbstractPrior() = TestAbstractPrior(TestBelief())
 
 struct PackedNothingDistribution <: AbstractPackedBelief
     _type::Symbol
@@ -73,7 +78,7 @@ function DFGStructureAndAccessors(
     #TODO test something better
     @test isa(fg, T)
     @test getAgentLabel(fg) == :DefaultAgent
-    @test string(getGraphLabel(fg))[1:12] == "factorgraph_"
+    @test string(getGraphLabel(fg))[1:6] == "graph_"
 
     # Test the validation of the robot, session, and user IDs.
     notAllowedList = [
@@ -89,21 +94,21 @@ function DFGStructureAndAccessors(
     ]
 
     for s in notAllowedList
-        @test_throws ErrorException T(solverParams = solparams, graphLabel = s)
-        @test_throws ErrorException T(solverParams = solparams, agentLabel = s)
+        @test_throws ArgumentError T(solverParams = solparams, graphLabel = s)
+        @test_throws ArgumentError T(solverParams = solparams, agentLabel = s)
     end
 
     des = "description for runtest"
     rId = :testRobotId
     sId = :testSessionId
-    rd = Dict{Symbol, MetadataTypes}(:rd => "rdEntry")
-    sd = Dict{Symbol, MetadataTypes}(:sd => "sdEntry")
+    rd = DFG.Bloblets(:rd=>DFG.Bloblet(:rd, "rdEntry"))
+    sd = DFG.Bloblets(:sd=>DFG.Bloblet(:sd, "sdEntry"))
     fg = T(;
-        description = des,
+        graphDescription = des,
         agentLabel = rId,
         graphLabel = sId,
-        agentMetadata = rd,
-        graphMetadata = sd,
+        agentBloblets = rd,
+        graphBloblets = sd,
         solverParams = solparams,
     )
 
@@ -114,30 +119,29 @@ function DFGStructureAndAccessors(
     @test getGraphLabel(fg) == sId
     @test getAddHistory(fg) === fg.addHistory
 
-    @test setAgentMetadata!(fg, rd) == rd
-    @test setGraphMetadata!(fg, sd) == sd
-    @test getAgentMetadata(fg) == rd
-    @test getGraphMetadata(fg) == sd
-
     @test getSolverParams(fg) == NoSolverParams()
 
-    smallUserData = Dict{Symbol, MetadataTypes}(:a => "42", :b => "Hello")
-    smallRobotData = Dict{Symbol, MetadataTypes}(:a => "43", :b => "Hello")
-    smallSessionData = Dict{Symbol, MetadataTypes}(:a => "44", :b => "Hello")
+    #FIXME test bloblets
+    # @test setAgentMetadata!(fg, rd) == rd
+    # @test setGraphMetadata!(fg, sd) == sd
+    # @test getAgentMetadata(fg) == rd
+    # @test getGraphMetadata(fg) == sd
+
+    # smallUserData = Dict{Symbol, MetadataTypes}(:a => "42", :b => "Hello")
+    # smallRobotData = Dict{Symbol, MetadataTypes}(:a => "43", :b => "Hello")
+    # smallSessionData = Dict{Symbol, MetadataTypes}(:a => "44", :b => "Hello")
 
     #TODO CRUD vs set
-    @test setAgentMetadata!(fg, deepcopy(smallRobotData)) == smallRobotData
-    @test setGraphMetadata!(fg, deepcopy(smallSessionData)) == smallSessionData
+    # @test setAgentMetadata!(fg, deepcopy(smallRobotData)) == smallRobotData
+    # @test setGraphMetadata!(fg, deepcopy(smallSessionData)) == smallSessionData
 
-    @test getAgentMetadata(fg) == smallRobotData
-    @test getGraphMetadata(fg) == smallSessionData
+    # @test getAgentMetadata(fg) == smallRobotData
+    # @test getGraphMetadata(fg) == smallSessionData
 
     # NOTE see note in AbstractDFG.jl setSolverParams!
     @test_throws Exception setSolverParams!(fg, GeenSolverParams()) == GeenSolverParams()
 
     @test setSolverParams!(fg, typeof(solparams)()) == typeof(solparams)()
-
-    @test setDescription!(fg, des * "_1") == des * "_1"
 
     #TODO
     # duplicateEmptyDFG
@@ -278,8 +282,6 @@ function DFGVariableSCA()
     # v3.solverDataDict[:default].val[1] = [0.0;0.0]
     # v3.solverDataDict[:default].bw[1] = [1.0;1.0]
 
-    getState(v1, :default).solveInProgress = 1
-
     @test getLabel(v1) == v1_lbl
     @test getTags(v1) == v1_tags
 
@@ -293,7 +295,7 @@ function DFGVariableSCA()
 
     @test getPPEDict(v1) == v1.ppeDict
 
-    @test getMetadata(v1) == Dict{Symbol, MetadataTypes}()
+    # @test getMetadata(v1) == Dict{Symbol, MetadataTypes}()
 
     @test getVariableType(v1) == TestVariableType1()
 
@@ -303,18 +305,12 @@ function DFGVariableSCA()
     @test setTags!(v3, Set(testTags)) == Set(testTags)
 
     #NOTE  a variable's timestamp is considered similar to its label.  setTimestamp! (not implemented) would create a new variable and call mergeVariable!
-    v1ts = DFG.setTimestamp(v1, testTimestamp)
-    @test getTimestamp(v1ts) == testTimestamp
+    # @test getTimestamp(v1ts) == testTimestamp
     #follow with mergeVariable!(fg, v1ts)
-
-    @test_throws MethodError DFG.setTimestamp!(v1, testTimestamp)
 
     @test setSolvable!(v1, 1) == 1
     @test getSolvable(v1) == 1
     @test setSolvable!(v1, 0) == 0
-
-    @test setMetadata!(v1, small) == small
-    @test getMetadata(v1) == small
 
     #no accessors on dataDict, only CRUD
 
@@ -368,24 +364,17 @@ function DFGFactorSCA()
 
     @test getObservation(f1) === f1.observation
 
-    @test getVariableOrder(f1) == [:a, :b]
+    @test getVariableOrder(f1) == (:a, :b)
 
-    getFactorState(f1).solveInProgress = 1
     @test setSolvable!(f1, 1) == 1
 
-    #TODO These 2 function are equivelent
-    @test typeof(getFactorType(f1)) == TestFunctorInferenceType1{Nothing}
-    @test typeof(getFactorFunction(f1)) == TestFunctorInferenceType1{Nothing}
+    @test typeof(getObservation(f1)) == TestFunctorInferenceType1{TestBelief}
 
     #TODO here for now, don't recommend usage.
     testTags = [:tag1, :tag2]
     @test setTags!(f1, testTags) == Set(testTags)
     @test setTags!(f1, Set(testTags)) == Set(testTags)
 
-    #TODO Handle same way as variable
-    f1ts = setTimestamp(f1, testTimestamp)
-    @test !(f1ts === f1)
-    @test getTimestamp(f1ts) == testTimestamp
     #follow with mergeFactor!(fg, v1ts)
 
     #TODO Should throw method error
@@ -446,13 +435,11 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
             f2.observation,
             f2.state;
             timestamp = f2.timestamp,
-            nstime = f2.nstime,
             tags = f2.tags,
-            solvable = f2.solvable,
+            solvable = f2.solvable[],
         )
     else
-        f2_mod = deepcopy(f2)
-        pop!(f2_mod._variableOrderSymbols)
+        f2_mod = typeof(f2)(f2.label, (:a,))
     end
 
     @test_throws ErrorException mergeFactor!(fg, f2_mod)
@@ -461,14 +448,7 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     @test getAddHistory(fg) == [:a, :b, :c]
 
     # Extra timestamp functions https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/315
-    if !(v1 isa VariableSkeleton)
-        newtimestamp = now(localzone())
-        @test !(DFG.setTimestamp!(fg, :c, newtimestamp) === v3)
-        @test getVariable(fg, :c) |> getTimestamp == newtimestamp
 
-        @test !(DFG.setTimestamp!(fg, :bcf1, newtimestamp) === f2)
-        @test getFactor(fg, :bcf1) |> getTimestamp == newtimestamp
-    end
     #deletions
     delvarCompare = getVariable(fg, :c)
     delfacCompare = getFactor(fg, :bcf1)
@@ -560,7 +540,7 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     # simple broadcast test
     if f0 isa FactorCompute
         @test issetequal(
-            getFactorType.(fg, lsf(fg)),
+            getObservation.(fg, lsf(fg)),
             [TestFunctorInferenceType1(), TestAbstractPrior()],
         )
     end
@@ -1054,24 +1034,21 @@ function testGroup!(fg, v1, v2, f0, f1)
         # @test @test_deprecated getVariableIds(fg) == listVariables(fg)
         # @test @test_deprecated getFactorIds(fg) == listFactors(fg)
 
-        # TODO Mabye implement IIF type here
-        # Requires IIF or a type in IIF
         @test getObservation(f1) === f1.observation
-        @test getFactorType(f1) === f1.observation
-        @test getFactorType(fg, :abf1) === f1.observation
+        @test getObservation(fg, :abf1) === f1.observation
 
         @test isPrior(fg, :af1) # if f1 is prior
         @test lsfPriors(fg) == [:af1]
 
         @test issetequal(
-            [TestFunctorInferenceType1{Nothing}, TestAbstractPrior{Nothing}],
+            [TestFunctorInferenceType1{TestBelief}, TestAbstractPrior{TestBelief}],
             DFG.lsfTypes(fg),
         )
 
         facTypesDict = DFG.lsfTypesDict(fg)
         @test issetequal(collect(keys(facTypesDict)), DFG.lsfTypes(fg))
-        @test issetequal(facTypesDict[TestFunctorInferenceType1{Nothing}], [:abf1])
-        @test issetequal(facTypesDict[TestAbstractPrior{Nothing}], [:af1])
+        @test issetequal(facTypesDict[TestFunctorInferenceType1{TestBelief}], [:abf1])
+        @test issetequal(facTypesDict[TestAbstractPrior{TestBelief}], [:af1])
 
         @test ls(fg, TestFunctorInferenceType1) == [:abf1]
         @test lsf(fg, TestAbstractPrior) == [:af1]
@@ -1231,14 +1208,6 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test !isSolvable(v1)
         @test isSolvable(v2)
 
-        #solves in progress
-        @test getSolveInProgress(v1) == 1
-        @test getSolveInProgress(f1) == 1
-        @test !isSolveInProgress(v2, :default) &&
-              v2.solverDataDict[:default].solveInProgress == 0
-        @test isSolveInProgress(v1, :default) &&
-              v1.solverDataDict[:default].solveInProgress > 0
-
         @test setSolvable!(v1, 1) == 1
         @test getSolvable(v1) == 1
         @test setSolvable!(fg, v1.label, 0) == 0
@@ -1340,7 +1309,6 @@ function connectivityTestGraph(
             potentialused = true,
             multihypo = Float64[],
             certainhypo = Int[],
-            solveInProgress = 0,
             inflation = 1.0,
         )
         f_tags = Set([:FACTOR])
@@ -1448,7 +1416,7 @@ end
 #         dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
 #         # For each factor check that the order the copied graph == original
 #         for fact in getFactors(dfgSubgraph)
-#             @test fact._variableOrderSymbols == getFactor(dfg, fact.label)._variableOrderSymbols
+#             @test fact.variableorder == getFactor(dfg, fact.label).variableorder
 #         end
 #     end
 #
@@ -1485,8 +1453,7 @@ function BuildingSubgraphs(testDFGAPI; VARTYPE = VariableCompute, FACTYPE = Fact
         dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [fId], 2)
         # For each factor check that the order the copied graph == original
         for fact in getFactors(dfgSubgraph)
-            @test fact._variableOrderSymbols ==
-                  getFactor(dfg, fact.label)._variableOrderSymbols
+            @test fact.variableorder == getFactor(dfg, fact.label).variableorder
         end
     end
 
@@ -1723,7 +1690,6 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
         vnd.initialized = true
         vnd.ismargin = true
         push!(vnd.separator, :sep)
-        vnd.solveInProgress = 1
         vnd.solvedCount = 2
         # vnd.val[1] = [2.0;]
         #update
@@ -1737,7 +1703,6 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
         push!(fsd.multihypo, 4.0)
         fsd.nullhypo = 5.0
         fsd.potentialused = true
-        fsd.solveInProgress = true
         #update factor
         mergeFactor!(dfg, f45)
 

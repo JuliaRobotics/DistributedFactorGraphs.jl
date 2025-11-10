@@ -19,7 +19,6 @@ using UUIDs
             1:numNodes,
         )
         map(v -> setSolvable!(v, Int(round(rand()))), verts)
-        map(v -> getState(verts[4], :default).solveInProgress = Int(round(rand())), verts)
         map(v -> setSolvedCount!(v, Int(round(10 * rand()))), verts)
 
         # Add some data entries
@@ -102,8 +101,8 @@ using UUIDs
         smallRobotData = Dict{Symbol, MetadataTypes}(:a => "43", :b => "small_robot")
         smallSessionData = Dict{Symbol, MetadataTypes}(:a => "44", :b => "small_session")
 
-        setAgentMetadata!(dfg, smallRobotData)
-        setGraphMetadata!(dfg, smallSessionData)
+        # setAgentMetadata!(dfg, smallRobotData) #FIXME change to Bloblets
+        # setGraphMetadata!(dfg, smallSessionData) #FIXME change to Bloblets
 
         # Save and load the graph to test.
         saveDFG(filename, dfg)
