@@ -324,7 +324,6 @@ verts = map(n -> addVariable!(dfg, Symbol("x$n"), Position{1}; tags = [:POSE]), 
 #TODO fix this to use accessors
 setSolvable!(verts[7], 1)
 setSolvable!(verts[8], 0)
-getState(verts[8], :default).solveInProgress = 1
 #call update to set it on cloud
 mergeVariable!(dfg, verts[7])
 mergeVariable!(dfg, verts[8])
@@ -395,7 +394,7 @@ end
 #         dfgSubgraph = getSubgraphAroundNode(dfg, verts[1], 2)
 #         # For each factor check that the order the copied graph == original
 #         for fact in getFactors(dfgSubgraph)
-#             @test fact._variableOrderSymbols == getFactor(dfg, fact.label)._variableOrderSymbols
+#             @test fact.variableorder == getFactor(dfg, fact.label).variableorder
 #         end
 #     end
 # end

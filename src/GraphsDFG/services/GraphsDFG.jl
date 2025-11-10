@@ -52,7 +52,7 @@ function addFactor!(
     end
     # TODO
     # @assert FactorGraphs.addFactor!(dfg.g, getVariableOrder(factor), factor)
-    variableLabels = Symbol[factor._variableOrderSymbols...]
+    variableLabels = Symbol[factor.variableorder...]
     for vlabel in variableLabels
         !hasVariable(dfg, vlabel) && throw(LabelNotFoundError("Variable", vlabel))
     end
@@ -99,7 +99,7 @@ end
 function mergeFactor!(dfg::GraphsDFG, factor::AbstractGraphFactor)
     if !haskey(dfg.g.factors, factor.label)
         addFactor!(dfg, factor)
-    elseif dfg.g.factors[factor.label]._variableOrderSymbols != factor._variableOrderSymbols
+    elseif dfg.g.factors[factor.label].variableorder != factor.variableorder
         #TODO should we allow merging the factor neighbors or error as before?
         error("Cannot update the factor, the neighbors are not the same.")
         # We need to delete the factor if we are updating the neighbors
@@ -317,8 +317,8 @@ end
 _isSolvable(dfg::GraphsDFG, label::Symbol, ready::Nothing) = true
 
 function _isSolvable(dfg::GraphsDFG, label::Symbol, ready::Int)
-    haskey(dfg.g.variables, label) && (return dfg.g.variables[label].solvable >= ready)
-    haskey(dfg.g.factors, label) && (return dfg.g.factors[label].solvable >= ready)
+    haskey(dfg.g.variables, label) && (return dfg.g.variables[label].solvable[] >= ready)
+    haskey(dfg.g.factors, label) && (return dfg.g.factors[label].solvable[] >= ready)
     throw(LabelNotFoundError(label))
 end
 
@@ -346,7 +346,7 @@ function listNeighbors(
 
     # Variable sorting (order is important)
     if haskey(dfg.g.factors, label)
-        order = intersect(dfg.g.factors[label]._variableOrderSymbols, neighbors_ll)#map(v->v.dfgNode.label, neighbors))
+        order = intersect(dfg.g.factors[label].variableorder, neighbors_ll)#map(v->v.dfgNode.label, neighbors))
         return order::Vector{Symbol}
     end
 
@@ -397,22 +397,6 @@ function getBiadjacencyMatrix(
 
     adjvf = adj[factIndex, varIndex]
     return (B = adjvf, varLabels = varLabels, facLabels = factLabels)
-end
-
-"""
-    $(SIGNATURES)
-Gets an empty and unique GraphsDFG derived from an existing DFG.
-"""
-function _getDuplicatedEmptyDFG(
-    dfg::GraphsDFG{P, V, F},
-) where {P <: AbstractDFGParams, V <: AbstractGraphVariable, F <: AbstractGraphFactor}
-    newDfg = GraphsDFG{P, V, F}(;
-        agentLabel = getAgentLabel(dfg),
-        graphLabel = getGraphLabel(dfg),
-        solverParams = deepcopy(dfg.solverParams),
-    )
-    DFG.setDescription!(newDfg, "(Copy of) $(DFG.getDescription(dfg))")
-    return newDfg
 end
 
 #TODO JT test.
@@ -559,14 +543,14 @@ end
 
 # FG blob entries 
 function getGraphBlobentry(fg::GraphsDFG, label::Symbol)
-    if !haskey(fg.graph.blobEntries, label)
+    if !haskey(fg.graph.blobentries, label)
         throw(LabelNotFoundError("GraphBlobentry", label))
     end
-    return fg.graph.blobEntries[label]
+    return fg.graph.blobentries[label]
 end
 
 function getGraphBlobentries(fg::GraphsDFG; labelFilter::Union{Nothing, Function} = nothing)
-    entries = collect(values(fg.graph.blobEntries))
+    entries = collect(values(fg.graph.blobentries))
     filterDFG!(entries, labelFilter, getLabel)
     return entries
 end
@@ -575,20 +559,20 @@ function listGraphBlobentries(
     fg::GraphsDFG;
     labelFilter::Union{Nothing, Function} = nothing,
 )
-    labels = collect(keys(fg.graph.blobEntries))
+    labels = collect(keys(fg.graph.blobentries))
     filterDFG!(labels, labelFilter, string)
     return labels
 end
 
 function listAgentBlobentries(fg::GraphsDFG)
-    return collect(keys(fg.agent.blobEntries))
+    return collect(keys(fg.agent.blobentries))
 end
 
 function addGraphBlobentry!(fg::GraphsDFG, entry::Blobentry)
-    if haskey(fg.graph.blobEntries, entry.label)
+    if haskey(fg.graph.blobentries, entry.label)
         throw(LabelExistsError("Blobentry", entry.label))
     end
-    push!(fg.graph.blobEntries, entry.label => entry)
+    push!(fg.graph.blobentries, entry.label => entry)
     return entry
 end
 
@@ -599,10 +583,10 @@ function addGraphBlobentries!(fg::GraphsDFG, entries::Vector{Blobentry})
 end
 
 function DFG.addAgentBlobentry!(fg::GraphsDFG, entry::Blobentry)
-    if haskey(fg.agent.blobEntries, entry.label)
+    if haskey(fg.agent.blobentries, entry.label)
         throw(LabelExistsError("Blobentry", entry.label))
     end
-    push!(fg.agent.blobEntries, entry.label => entry)
+    push!(fg.agent.blobentries, entry.label => entry)
     return entry
 end
 
@@ -613,17 +597,17 @@ function DFG.addAgentBlobentries!(fg::GraphsDFG, entries::Vector{Blobentry})
 end
 
 function DFG.getAgentBlobentry(fg::GraphsDFG, label::Symbol)
-    if !haskey(fg.agent.blobEntries, label)
+    if !haskey(fg.agent.blobentries, label)
         throw(LabelNotFoundError("Blobentry", label))
     end
-    return fg.agent.blobEntries[label]
+    return fg.agent.blobentries[label]
 end
 
 function DFG.getAgentBlobentries(
     fg::GraphsDFG;
     labelFilter::Union{Nothing, Function} = nothing,
 )
-    entries = collect(values(fg.agent.blobEntries))
+    entries = collect(values(fg.agent.blobentries))
     filterDFG!(entries, labelFilter, getLabel)
     return entries
 end
@@ -653,25 +637,25 @@ function DFG.mergeAgentBlobentries!(dfg::GraphsDFG, entries::Vector{Blobentry})
 end
 
 function DFG.deleteGraphBlobentry!(dfg::GraphsDFG, label::Symbol)
-    if !haskey(dfg.graph.blobEntries, label)
+    if !haskey(dfg.graph.blobentries, label)
         throw(LabelNotFoundError("Blobentry", label))
     end
-    delete!(dfg.graph.blobEntries, label)
+    delete!(dfg.graph.blobentries, label)
     return 1
 end
 
 function DFG.deleteAgentBlobentry!(dfg::GraphsDFG, label::Symbol)
-    if !haskey(dfg.agent.blobEntries, label)
+    if !haskey(dfg.agent.blobentries, label)
         throw(LabelNotFoundError("Blobentry", label))
     end
-    delete!(dfg.agent.blobEntries, label)
+    delete!(dfg.agent.blobentries, label)
     return 1
 end
 
 function DFG.hasGraphBlobentry(dfg::GraphsDFG, label::Symbol)
-    return haskey(dfg.graph.blobEntries, label)
+    return haskey(dfg.graph.blobentries, label)
 end
 
 function DFG.hasAgentBlobentry(dfg::GraphsDFG, label::Symbol)
-    return haskey(dfg.agent.blobEntries, label)
+    return haskey(dfg.agent.blobentries, label)
 end

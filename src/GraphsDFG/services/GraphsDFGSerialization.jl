@@ -11,7 +11,7 @@ using InteractiveUtils
     graphLabel::Symbol
     graphTags::Vector{Symbol}
     graphMetadata::Dict{Symbol, MetadataTypes}
-    graphBlobEntries::OrderedDict{Symbol, Blobentry}
+    graphBlobEntries::Blobentries
     agent::Agent
 end
 

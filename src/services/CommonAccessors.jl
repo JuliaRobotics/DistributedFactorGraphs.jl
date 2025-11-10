@@ -3,8 +3,8 @@
 ##==============================================================================
 
 refTags(node) = node.tags
-refMetadata(node) = node.metadata
-refBlobentries(node) = node.blobEntries # FIXME rename blobEntries to blobentries to match noun
+refBlobentries(node) = node.blobentries
+refBloblets(node) = node.bloblets
 
 # Common get and set methods
 
@@ -42,26 +42,6 @@ Get the timestamp of a AbstractGraphNode.
 """
 getTimestamp(node) = node.timestamp
 
-"""
-    $SIGNATURES
-
-Set the timestamp of a Variable/Factor object in a factor graph.
-Note:
-Since `timestamp` is not mutable `setTimestamp!` calls `mergeVariable!` internally.
-See also [`setTimestamp`](@ref)
-"""
-function setTimestamp!(dfg::AbstractDFG, lbl::Symbol, ts::ZonedDateTime)
-    if isVariable(dfg, lbl)
-        return mergeVariable!(dfg, setTimestamp(getVariable(dfg, lbl), ts; verbose = false))
-    else
-        return mergeFactor!(dfg, setTimestamp(getFactor(dfg, lbl), ts))
-    end
-end
-
-function setTimestamp!(dfg::AbstractDFG, lbl::Symbol, ts::DateTime, timezone = localzone())
-    return setTimestamp!(dfg, lbl, ZonedDateTime(ts, timezone))
-end
-
 ##------------------------------------------------------------------------------
 ## solvable
 ##------------------------------------------------------------------------------
@@ -74,7 +54,7 @@ Variables or factors may or may not be 'solvable', depending on a user definitio
 Related:
 - isSolveInProgress
 """
-getSolvable(var::Union{VariableCompute, FactorCompute}) = var.solvable
+getSolvable(var::Union{VariableCompute, FactorDFG}) = var.solvable[]
 
 """
     $SIGNATURES
@@ -83,9 +63,9 @@ Get 'solvable' parameter for either a variable or factor.
 """
 function getSolvable(dfg::AbstractDFG, sym::Symbol)
     if isVariable(dfg, sym)
-        return getVariable(dfg, sym).solvable
+        return getVariable(dfg, sym).solvable[]
     elseif isFactor(dfg, sym)
-        return getFactor(dfg, sym).solvable
+        return getFactor(dfg, sym).solvable[]
     end
 end
 
@@ -95,7 +75,7 @@ end
 Set the `solvable` parameter for either a variable or factor.
 """
 function setSolvable!(node::N, solvable::Int) where {N <: AbstractGraphNode}
-    node.solvable = solvable
+    node.solvable[] = solvable
     return solvable
 end
 
@@ -106,9 +86,9 @@ Set the `solvable` parameter for either a variable or factor.
 """
 function setSolvable!(dfg::AbstractDFG, sym::Symbol, solvable::Int)
     if isVariable(dfg, sym)
-        getVariable(dfg, sym).solvable = solvable
+        getVariable(dfg, sym).solvable[] = solvable
     elseif isFactor(dfg, sym)
-        getFactor(dfg, sym).solvable = solvable
+        getFactor(dfg, sym).solvable[] = solvable
     end
     return solvable
 end
@@ -121,48 +101,7 @@ returns true if `getSolvable` > 0
 Related:
 - `getSolvable`(@ref)
 """
-isSolvable(node::Union{VariableCompute, FactorCompute}) = getSolvable(node) > 0
-
-##------------------------------------------------------------------------------
-## solveInProgress
-##------------------------------------------------------------------------------
-
-"""
-    $SIGNATURES
-
-Which variables or factors are currently being used by an active solver.  Useful for ensuring atomic transactions.
-
-DevNotes:
-- Will be renamed to `data.solveinprogress` which will be in VND, not AbstractGraphNode -- see DFG #201
-
-Related
-
-isSolvable
-"""
-function getSolveInProgress(
-    var::Union{VariableCompute, FactorCompute},
-    solveKey::Symbol = :default,
-)
-    # Variable
-    if var isa VariableCompute
-        if haskey(getSolverDataDict(var), solveKey)
-            return getSolverDataDict(var)[solveKey].solveInProgress
-        else
-            return 0
-        end
-    end
-    # Factor
-    return getFactorState(var).solveInProgress
-end
-
-#TODO missing set solveInProgress and graph level accessor
-
-function isSolveInProgress(
-    node::Union{VariableCompute, FactorCompute},
-    solvekey::Symbol = :default,
-)
-    return getSolveInProgress(node, solvekey) > 0
-end
+isSolvable(node::Union{VariableCompute, FactorDFG}) = getSolvable(node) > 0
 
 ##==============================================================================
 ## Common Layer 2 CRUD and SET

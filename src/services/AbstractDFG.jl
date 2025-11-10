@@ -104,20 +104,6 @@ function getTypeDFGFactors end
 ##------------------------------------------------------------------------------
 ## Setters
 ##------------------------------------------------------------------------------
-"""
-    $SIGNATURES
-Set the metadata of the node.
-"""
-function setMetadata!(node, metadata::Dict{Symbol, MetadataTypes})
-    # with set old data should be removed, but care is taken to make sure its not the same object
-    node.metadata !== metadata && empty!(node.metadata)
-    return merge!(node.metadata, metadata)
-end
-
-"""
-    $(SIGNATURES)
-"""
-setDescription!(dfg::AbstractDFG, description::String) = dfg.description = description
 
 """
     $(SIGNATURES)
@@ -129,39 +115,6 @@ function setSolverParams!(dfg::AbstractDFG, solverParams::AbstractDFGParams)
 end
 
 # Accessors and CRUD for user/robot/session Data
-
-"""
-$SIGNATURES
-
-Get the metadata from the agent in the AbstractDFG.
-"""
-getAgentMetadata(dfg::AbstractDFG) = getMetadata(getAgent(dfg))
-
-"""
-$SIGNATURES
-
-Set the metadata of the agent in the AbstractDFG.
-"""
-function setAgentMetadata!(dfg::AbstractDFG, data::Dict{Symbol, MetadataTypes})
-    agent = getAgent(dfg)
-    return setMetadata!(agent, data)
-end
-
-"""
-$SIGNATURES
-
-Get the metadata from the factorgraph in the AbstractDFG.
-"""
-getGraphMetadata(dfg::AbstractDFG) = getMetadata(dfg)
-
-"""
-$SIGNATURES
-
-Set the metadata of the factorgraph in the AbstractDFG.
-"""
-function setGraphMetadata!(dfg::AbstractDFG, data::Dict{Symbol, MetadataTypes})
-    return setMetadata!(dfg, data)
-end
 
 ##==============================================================================
 ## Agent/Graph Data CRUD
@@ -299,14 +252,14 @@ end
 
 """
     $(SIGNATURES)
-Add a FactorCompute to a DFG.
+Add a FactorDFG to a DFG.
 Implement `addFactor!(dfg::AbstractDFG, factor::AbstractGraphFactor)`
 """
 function addFactor! end
 
 """
     $(SIGNATURES)
-Add a Vector{FactorCompute} to a DFG.
+Add a Vector{FactorDFG} to a DFG.
 """
 function addFactors!(dfg::AbstractDFG, factors::Vector{<:AbstractGraphFactor})
     return asyncmap(factors) do f
@@ -347,7 +300,7 @@ function getVariablesSkeleton end
 
 """
     $(SIGNATURES)
-Get a FactorCompute from a DFG using its label.
+Get a FactorDFG from a DFG using its label.
 Implement `getFactor(dfg::AbstractDFG, label::Symbol)`
 """
 function getFactor end
@@ -394,7 +347,7 @@ Implement `deleteVariable!(dfg::AbstractDFG, label::Symbol)`
 function deleteVariable! end
 """
     $(SIGNATURES)
-Delete a FactorCompute from the DFG using its label.
+Delete a FactorDFG from the DFG using its label.
 Implement `deleteFactor!(dfg::AbstractDFG, label::Symbol)`
 """
 function deleteFactor! end
@@ -454,7 +407,7 @@ function isVariable end
 
 Return whether `sym::Symbol` represents a factor vertex in the graph DFG.
 Checks whether it both exists in the graph and is a factor.
-(If you rather want a quicker for type, just do node isa FactorCompute)
+(If you rather want a quicker for type, just do node isa FactorDFG)
 Implement `isFactor(dfg::AbstractDFG, label::Symbol)`
 """
 function isFactor end
@@ -480,13 +433,6 @@ function listNeighbors end
 ## copy and duplication
 ##------------------------------------------------------------------------------
 
-#TODO use copy functions currently in attic
-"""
-    $(SIGNATURES)
-Gets an empty and unique DFG derived from an existing DFG.
-Implement `_getDuplicatedEmptyDFG(dfg::AbstractDFG)`
-"""
-function _getDuplicatedEmptyDFG end
 
 ##------------------------------------------------------------------------------
 ## CRUD Aliases
@@ -983,7 +929,7 @@ function copyGraph!(
     # And then all factors to the destDFG.
     @showprogress desc = "copy factors" enabled = showprogress for factor in sourceFactors
         # Get the original factor variables (we need them to create it)
-        sourceFactorVariableIds = collect(factor._variableOrderSymbols)
+        sourceFactorVariableIds = collect(factor.variableorder)
         # Find the labels and associated variables in our new subgraph
         factVariableIds = Symbol[]
         for variable in sourceFactorVariableIds
@@ -1056,12 +1002,9 @@ function deepcopyGraph(
     variableLabels::Vector{Symbol} = ls(sourceDFG),
     factorLabels::Vector{Symbol} = lsf(sourceDFG);
     graphLabel::Symbol = Symbol(getGraphLabel(sourceDFG), "_cp_$(string(uuid4())[1:6])"),
-    sessionId = nothing,
     kwargs...,
 ) where {T <: AbstractDFG}
     ginfo = getDFGInfo(sourceDFG)
-
-    !isnothing(sessionId) && @warn "sessionId is deprecated, use graphLabel instead"
 
     destDFG = T(; ginfo..., graphLabel)
     copyGraph!(
@@ -1420,7 +1363,7 @@ Notes
 function getSummaryGraph(dfg::G) where {G <: AbstractDFG}
     #TODO fix deprecated constructor
     summaryDfg = GraphsDFG{NoSolverParams, VariableSummary, FactorSummary}(;
-        description = "Summary of $(getDescription(dfg))",
+        graphDescription = "Summary of $(getDescription(dfg))",
         agent = dfg.agent,
         graphLabel = Symbol(getGraphLabel(dfg), "_summary_$(string(uuid4())[1:6])"),
     )

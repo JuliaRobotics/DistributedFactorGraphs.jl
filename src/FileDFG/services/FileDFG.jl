@@ -144,7 +144,7 @@ function loadDFG!(
     end
 
     # extract the factor graph from fileDFG folder
-    factors = FactorCompute[]
+    factors = FactorDFG[]
     varFolder = "$folder/variables"
     factorFolder = "$folder/factors"
     # Folder preparations

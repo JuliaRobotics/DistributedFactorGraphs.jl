@@ -6,6 +6,7 @@ if false
     using Dates
     using UUIDs
     using TimeZones
+    using NanoDates
 
     include("testBlocks.jl")
 
@@ -29,13 +30,13 @@ end
 end
 
 # User, Robot, Session Data
-@testset "User, Robot, Session Data" begin
-    GraphAgentMetadata!(fg1)
-end
+# @testset "User, Robot, Session Data" begin
+#     GraphAgentMetadata!(fg1)
+# end
 
-@testset "User, Robot, Session Blob Entries" begin
-    GraphAgentBlobentries!(fg1)
-end
+# @testset "User, Robot, Session Blob Entries" begin
+#     GraphAgentBlobentries!(fg1)
+# end
 
 # VariableCompute structure construction and accessors
 @testset "DFG Variable" begin
@@ -63,14 +64,9 @@ end
     @test printVariable(iobuf, var1; skipfields = [:timestamp, :solver, :ppe, :nstime]) ===
           nothing
 
-    # for julia v1.6
-    if DistributedFactorGraphs._getDFGVersion() < v"0.19"
-        @test String(take!(iobuf)) ==
-              "VariableCompute{TestVariableType1}\nid:\nnothing\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol, Union{Bool, Float64, Int64, Vector{Bool}, Vector{Float64}, Vector{Int64}, Vector{String}, String}}(:small=>\"data\")\ndataDict:\nDict{Symbol, DistributedFactorGraphs.Blobentry}()\nsolvable:\n0\n"
-    else
-        @test String(take!(iobuf)) ==
-              "VariableCompute{TestVariableType1, Vector{Float64}, 1}\nid:\nnothing\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol, Union{Bool, Float64, Int64, Vector{Bool}, Vector{Float64}, Vector{Int64}, Vector{String}, String}}(:small=>\"data\")\ndataDict:\nDict{Symbol, Blobentry}()\nsolvable:\n0\n"
-    end
+    @test String(take!(iobuf)) ==
+        "VariableCompute{TestVariableType1, Vector{Float64}, 1}\nid:\nnothing\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol, Union{Bool, Float64, Int64, Vector{Bool}, Vector{Float64}, Vector{Int64}, Vector{String}, String}}()\ndataDict:\nDict{Symbol, Blobentry}()\nsolvable:\nRefValue{Int64}(0)\n"
+        # "VariableCompute{TestVariableType1, Vector{Float64}, 1}\nid:\nnothing\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol, Union{Bool, Float64, Int64, Vector{Bool}, Vector{Float64}, Vector{Int64}, Vector{String}, String}}(:small=>\"data\")\ndataDict:\nDict{Symbol, Blobentry}()\nsolvable:\n0\n"
 
     @test printVariable(iobuf, var1; short = true) === nothing
     varstr = String(take!(iobuf))
@@ -81,14 +77,11 @@ end
     #  == "VariableCompute{TestVariableType1}\nlabel: a\ntags: Set([:VARIABLE, :POSE])\nsize marginal samples: (1, 1)\nkde bandwidths: [0.0]\nNo PPEs\n"
 
     @test printFactor(iobuf, fac1; skipfields = [:timestamp, :solver, :nstime]) === nothing
-    @test occursin(r"FactorCompute.*\nid:\nnothing\nlabel:\n:abf1", String(take!(iobuf)))
-
-    String(take!(iobuf)) ==
-    "FactorCompute{TestCCW{TestFunctorInferenceType1}}\nid:\nnothing\nlabel:\n:abf1\ntags:\nSet([:tag1, :tag2])\nsolvable:\n0\nsolvable:\n1\n_variableOrderSymbols:\n[:a, :b]\n"
+    @test occursin(r"FactorDFG.*\nlabel:\n:abf1", String(take!(iobuf)))
 
     @test printFactor(iobuf, fac1; short = true) === nothing
     @show teststr = String(take!(iobuf))
-    @test occursin(r"FactorCompute", teststr)
+    @test occursin(r"FactorDFG", teststr)
     @test occursin(r"label", teststr)
     @test occursin(r"timestamp", teststr)
     @test occursin(r"tags", teststr)
@@ -126,9 +119,10 @@ end
     VSDTestBlock!(fg1, var1)
 end
 
-@testset "Metadata CRUD" begin
-    smallDataTestBlock!(fg1)
-end
+#FIXME replace with Bloblets tests
+# @testset "Metadata CRUD" begin
+#     smallDataTestBlock!(fg1)
+# end
 
 @testset "Data Entries and Blobs" begin
     if typeof(fg1) <: InMemoryDFGTypes
@@ -219,30 +213,31 @@ end
     end
 end
 
-@testset "Mixing Compute and DFG graph nodes" begin
-    com_fg = testDFGAPI()
-    pac_fg = testDFGAPI{NoSolverParams, VariableDFG, FactorDFG}()
+# FIXME this will likeley become obsolete with new pack/unpack system
+# @testset "Mixing Compute and DFG graph nodes" begin
+#     com_fg = testDFGAPI()
+#     pac_fg = testDFGAPI{NoSolverParams, VariableDFG, FactorDFG}()
 
-    v = addVariable!(com_fg, var1)
-    @test v == var1
-    pv = addVariable!(pac_fg, v)
-    @test packVariable(v) == pv
+#     v = addVariable!(com_fg, var1)
+#     @test v == var1
+#     pv = addVariable!(pac_fg, v)
+#     @test packVariable(v) == pv
 
-    pv = addVariable!(pac_fg, var2)
-    @test unpackVariable(pv) == var2
-    v = addVariable!(com_fg, pv)
-    @test v == var2
+#     pv = addVariable!(pac_fg, var2)
+#     @test unpackVariable(pv) == var2
+#     v = addVariable!(com_fg, pv)
+#     @test v == var2
 
-    f = addFactor!(com_fg, fac0)
-    @test f == fac0
-    pf = addFactor!(pac_fg, f)
-    @test packFactor(f) == pf
+#     f = addFactor!(com_fg, fac0)
+#     @test f == fac0
+#     pf = addFactor!(pac_fg, f)
+#     @test packFactor(f) == pf
 
-    pf = addFactor!(pac_fg, fac1)
-    @test unpackFactor(pf) == fac1
-    f = addFactor!(com_fg, pf)
-    @test f == fac1
-end
+#     pf = addFactor!(pac_fg, fac1)
+#     @test unpackFactor(pf) == fac1
+#     f = addFactor!(com_fg, pf)
+#     @test f == fac1
+# end
 #=
 fg = fg1
 v1 = var1

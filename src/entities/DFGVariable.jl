@@ -62,10 +62,10 @@ Base.@kwdef mutable struct State{T <: StateType, P, N}
     Should this variable solveKey always be kept fluid and not be automatically marginalized.
     """
     dontmargin::Bool = false
-    """
-    Convenience flag on whether a solver is currently busy working on this variable solveKey.
-    """
-    solveInProgress::Int = 0
+    # """
+    # Convenience flag on whether a solver is currently busy working on this variable solveKey.
+    # """
+    # solveInProgress::Int = 0
     """
     How many times has a solver updated this variable solveKey estimte.
     """
@@ -117,15 +117,14 @@ Base.@kwdef mutable struct PackedState
     BayesNetOutVertIDs::Vector{Symbol} # Int
     dimIDs::Vector{Int}
     dims::Int
-    eliminated::Bool
+    eliminated::Bool # TODO Questionable usage, set but never read?
     BayesNetVertID::Symbol # Int #TODO deprecate
-    separator::Vector{Symbol} # Int
+    separator::Vector{Symbol} # Int #TODO maybe remove from State and have in variable only.
     variableType::String
     initialized::Bool
     infoPerCoord::Vector{Float64}
     ismargin::Bool
     dontmargin::Bool
-    solveInProgress::Int
     solvedCount::Int
     solveKey::Symbol
     covar::Vector{Float64}
@@ -281,7 +280,7 @@ Base.@kwdef struct VariableCompute{T <: StateType, P, N} <: AbstractGraphVariabl
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
     """Variable timestamp.
-    Accessors: [`getTimestamp`](@ref), [`setTimestamp`](@ref)"""
+    Accessors: [`getTimestamp`](@ref)"""
     timestamp::ZonedDateTime = now(localzone())
     """Nanoseconds since a user-understood epoch (i.e unix epoch, robot boot time, etc.)"""
     nstime::Nanosecond = Nanosecond(0)
@@ -296,7 +295,7 @@ Base.@kwdef struct VariableCompute{T <: StateType, P, N} <: AbstractGraphVariabl
     Accessors: [`addState!`](@ref), [`mergeState!`](@ref), and [`deleteState!`](@ref)"""
     solverDataDict::Dict{Symbol, State{T, P, N}} = Dict{Symbol, State{T, P, N}}()
     """Dictionary of small data associated with this variable.
-    Accessors: [`getMetadata`](@ref), [`setMetadata!`](@ref)"""
+    Accessors: [`getBloblet`](@ref), [`setBloblet!`](@ref)"""
     smallData::Dict{Symbol, MetadataTypes} = Dict{Symbol, MetadataTypes}()
     """Dictionary of large data associated with this variable.
     Accessors: [`addBlobentry!`](@ref), [`getBlobentry`](@ref), [`mergeBlobentry!`](@ref), and [`deleteBlobentry!`](@ref)"""
@@ -343,21 +342,21 @@ function VariableCompute(label::Symbol, solverData::State; kwargs...)
     )
 end
 
-Base.getproperty(x::VariableCompute, f::Symbol) = begin
-    if f == :solvable
-        getfield(x, f)[]
-    else
-        getfield(x, f)
-    end
-end
+# Base.getproperty(x::VariableCompute, f::Symbol) = begin
+#     if f == :solvable
+#         getfield(x, f)[]
+#     else
+#         getfield(x, f)
+#     end
+# end
 
-Base.setproperty!(x::VariableCompute, f::Symbol, val) = begin
-    if f == :solvable
-        getfield(x, f)[] = val
-    else
-        setfield!(x, f, val)
-    end
-end
+# Base.setproperty!(x::VariableCompute, f::Symbol, val) = begin
+#     if f == :solvable
+#         getfield(x, f)[] = val
+#     else
+#         setfield!(x, f, val)
+#     end
+# end
 
 getMetadata(v::VariableCompute) = v.smallData
 
@@ -380,7 +379,7 @@ $(TYPEDFIELDS)
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
     """Variable timestamp.
-    Accessors: [`getTimestamp`](@ref), [`setTimestamp`](@ref)"""
+    Accessors: [`getTimestamp`](@ref)"""
     timestamp::ZonedDateTime
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
     Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""

@@ -22,6 +22,7 @@ using Random
 using TimeZones
 using NanoDates
 using JSON
+export StructUtils # export for use in macros
 using LinearAlgebra
 using SparseArrays
 using UUIDs
@@ -31,7 +32,7 @@ using ProgressMeter
 using SHA
 using FileIO
 
-import Distributions
+import Distributions #TODO this was unused before (if we move SerializingDistributions.jl out we can maybe remove the Distributions dependency?)
 import Tar
 import CodecZlib
 
@@ -78,7 +79,7 @@ export AbstractPackedBelief, PackedBelief
 # Variables
 export VariableCompute, VariableDFG, VariableSummary, VariableSkeleton
 # Factors
-export FactorCompute, FactorDFG, FactorSummary, FactorSkeleton
+export FactorDFG, FactorSummary, FactorSkeleton
 
 export Blobentry
 
@@ -421,11 +422,13 @@ const unstable_functions::Vector{Symbol} = [
     :setSolverParams!,
     :setDescription!,
     :setSolvable!,
-    :setTimestamp,
     :setTags!,
     :setSolvedCount!,
     :setMarginalized!,
     # no set on these
+    
+    #deprecated in v0.29
+    :setTimestamp,
     :setMetadata!, # no set, use add merge
     :setAgentMetadata!,
     :setGraphMetadata!,
@@ -526,6 +529,9 @@ include("entities/Bloblet.jl")
 # Data Blob extensions
 include("DataBlobs/entities/BlobEntry.jl")
 include("DataBlobs/entities/BlobStores.jl")
+
+include("serialization/PackedSerialization.jl")
+include("serialization/DistributionSerialization.jl")
 
 include("entities/DFGFactor.jl")
 

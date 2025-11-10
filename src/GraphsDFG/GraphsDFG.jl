@@ -21,7 +21,9 @@ using ...DistributedFactorGraphs:
     getAgentLabel,
     getGraphLabel,
     isInitialized,
-    MetadataTypes
+    MetadataTypes,
+    Bloblets,
+    Blobentries
 
 # import DFG functions to extend
 import ...DistributedFactorGraphs:

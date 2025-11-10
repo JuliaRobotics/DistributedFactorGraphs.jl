@@ -36,7 +36,7 @@ v2 = deepcopy(v1)
 v3 = VariableCompute(:x2, TestVariableType2())
 
 @test v1 == v2
-v2.solvable = 0
+setSolvable!(v2, 0)
 @test !(v1 == v2)
 @test !(v1 == v3)
 @test !(

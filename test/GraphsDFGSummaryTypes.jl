@@ -59,7 +59,7 @@ if false
     f0 = FactorDFG(;
         label = :af1,
         tags = [:FACTOR],
-        _variableOrderSymbols = [:a],
+        variableorder = [:a],
         timestamp = DFG.Dates.now(DFG.tz"Z"),
         nstime = 0,
         fnctype = "PriorPose2",
@@ -70,7 +70,7 @@ if false
     f1 = FactorDFG(;
         label = :abf1,
         tags = [:FACTOR],
-        _variableOrderSymbols = [:a, :b],
+        variableorder = [:a, :b],
         timestamp = DFG.Dates.now(DFG.tz"Z"),
         nstime = 0,
         fnctype = "Pose2Pose2",
@@ -81,7 +81,7 @@ if false
     f2 = FactorDFG(;
         label = :bcf1,
         tags = [:FACTOR],
-        _variableOrderSymbols = [:b, :c],
+        variableorder = [:b, :c],
         timestamp = DFG.Dates.now(DFG.tz"Z"),
         nstime = 0,
         fnctype = "Pose2Pose2",
@@ -107,22 +107,7 @@ end
 
     if VARTYPE == VariableSummary
         @test getTimestamp(v1) == v1.timestamp
-        @test getVariablePPEDict(v1) == v1.ppeDict
-        @test_throws LabelNotFoundError getVariablePPE(v1, :notfound)
         @test getVariableTypeName(v1) == :Pose2
-
-        # FACTYPE == FactorSummary
-        testTimestamp = now(localzone())
-        v1ts = setTimestamp(v1, testTimestamp)
-        @test getTimestamp(v1ts) == testTimestamp
-        #follow with mergeVariable!(fg, v1ts)
-        # setTimestamp!(v1, testTimestamp) not implemented, we can do an setTimestamp() mergeVariable!() for a setTimestamp!(dfg, v1, testTimestamp)
-        @test_throws MethodError DFG.setTimestamp!(v1, testTimestamp)
-
-        f1ts = setTimestamp(f1, testTimestamp)
-        @test !(f1ts === f1)
-        @test getTimestamp(f1ts) == testTimestamp
-        @test_throws MethodError DFG.setTimestamp!(v1, testTimestamp)
     end
 end
 
