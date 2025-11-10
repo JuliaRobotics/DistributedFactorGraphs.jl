@@ -258,10 +258,6 @@ function VariableDFG(
     return pacvar
 end
 
-function getMetadata(v::VariableDFG)
-    return JSON.parse(base64decode(v.metadata), Dict{Symbol, MetadataTypes})
-end
-
 ##------------------------------------------------------------------------------
 ## VariableCompute lv2
 ##------------------------------------------------------------------------------
@@ -357,8 +353,6 @@ end
 #         setfield!(x, f, val)
 #     end
 # end
-
-getMetadata(v::VariableCompute) = v.smallData
 
 ##------------------------------------------------------------------------------
 ## VariableSummary lv1

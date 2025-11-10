@@ -45,8 +45,7 @@ function saveDFG(folder::AbstractString, dfg::AbstractDFG; saveMetadata::Bool = 
     end
     # Factors
     @showprogress "saving factors" for f in factors
-        fPacked = packFactor(f)
-        JSON.json("$factorFolder/$(f.label).json", fPacked)
+        JSON.json("$factorFolder/$(f.label).json", f)
     end
     #GraphsDFG metadata
     if saveMetadata
@@ -177,9 +176,7 @@ function loadDFG!(
 
     # `factors` is not type stable `::Vector{Factor}` or `::Vector{FactorCompute{<:}}` (vector of abstract)
     factors = @showprogress 1 "loading factors" asyncmap(factorFiles) do factorFile
-        jstr = read("$factorFolder/$factorFile", String)
-        packedfact = JSON.parse(jstr, FactorDFG)
-        f = usePackedFactor ? packedfact : unpackFactor(packedfact)
+        f = JSON.parsefile("$factorFolder/$factorFile", FactorDFG)
         return addFactor!(dfgLoadInto, f)
     end
 

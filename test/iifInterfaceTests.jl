@@ -137,8 +137,6 @@ end
 
     @test getObservation(dfg, :abf1) === f1.observation
     @test getObservation(f1) === f1.observation
-    @test getFactorType(f1) === f1.observation
-    @test getFactorType(dfg, :abf1) === f1.observation
 
     @test !isPrior(dfg, :abf1) # f1 is not a prior
     @test lsfPriors(dfg) == []
@@ -205,12 +203,13 @@ end
     @test_throws LabelNotFoundError isInitialized(v2, :second)
 
     # Session, robot, and user small data tests
-    smallRobotData = Dict{Symbol, MetadataTypes}(:a => "43", :b => "Hello")
-    smallSessionData = Dict{Symbol, MetadataTypes}(:a => "44", :b => "Hello")
-    setAgentMetadata!(dfg, deepcopy(smallRobotData))
-    setGraphMetadata!(dfg, deepcopy(smallSessionData))
-    @test getAgentMetadata(dfg) == smallRobotData
-    @test getGraphMetadata(dfg) == smallSessionData
+    #FIXME change to Bloblets
+    # smallRobotData = Dict{Symbol, MetadataTypes}(:a => "43", :b => "Hello")
+    # smallSessionData = Dict{Symbol, MetadataTypes}(:a => "44", :b => "Hello")
+    # setAgentMetadata!(dfg, deepcopy(smallRobotData))
+    # setGraphMetadata!(dfg, deepcopy(smallSessionData))
+    # @test getAgentMetadata(dfg) == smallRobotData
+    # @test getGraphMetadata(dfg) == smallSessionData
 end
 
 @testset "Data Entries" begin

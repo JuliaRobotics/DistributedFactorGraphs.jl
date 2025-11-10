@@ -4,7 +4,7 @@
 ##------------------------------------------------------------------------------
 ## Broadcasting
 ##------------------------------------------------------------------------------
-# to allow stuff like `getFactorType.(dfg, [:x1x2f1;:x10l3f2])`
+# to allow stuff like `getObservation.(dfg, [:x1x2f1;:x10l3f2])`
 # https://docs.julialang.org/en/v1/manual/interfaces/#
 Base.Broadcast.broadcastable(dfg::AbstractDFG) = Ref(dfg)
 
@@ -33,13 +33,6 @@ getId(node) = node.id
 Get the label of the node.
 """
 getLabel(node) = node.label
-
-"""
-$SIGNATURES
-
-Get the metadata of the node.
-"""
-getMetadata(node) = node.metadata
 
 """
     $(SIGNATURES)
@@ -698,7 +691,7 @@ function lsfTypes(dfg::AbstractDFG)
     facs = getFactors(dfg)
     alltypes = Set{DataType}()
     for f in facs
-        facType = typeof(getFactorType(f))
+        facType = typeof(getObservation(f))
         push!(alltypes, facType)
     end
     return collect(alltypes)
@@ -713,7 +706,7 @@ function lsfTypesDict(dfg::AbstractDFG)
     facs = getFactors(dfg)
     alltypes = Dict{DataType, Vector{Symbol}}()
     for f in facs
-        facType = typeof(getFactorType(f))
+        facType = typeof(getObservation(f))
         d = get!(alltypes, facType, Symbol[])
         push!(d, f.label)
     end
@@ -1100,7 +1093,7 @@ Related
 function isPathFactorsHomogeneous(dfg::AbstractDFG, from::Symbol, to::Symbol)
     # FIXME, must consider all paths, not just shortest...
     pth = intersect(findShortestPathDijkstra(dfg, from, to), lsf(dfg))
-    types = getFactorType.(dfg, pth) .|> typeof .|> x -> (x).name #TODO this might not be correct in julia 1.6
+    types = getObservation.(dfg, pth) .|> typeof .|> x -> (x).name #TODO this might not be correct in julia 1.6
     utyp = unique(types)
     return (length(utyp) == 1), utyp
 end

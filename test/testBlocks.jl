@@ -295,7 +295,7 @@ function DFGVariableSCA()
 
     @test getPPEDict(v1) == v1.ppeDict
 
-    @test getMetadata(v1) == Dict{Symbol, MetadataTypes}()
+    # @test getMetadata(v1) == Dict{Symbol, MetadataTypes}()
 
     @test getVariableType(v1) == TestVariableType1()
 
@@ -368,9 +368,7 @@ function DFGFactorSCA()
 
     @test setSolvable!(f1, 1) == 1
 
-    #TODO These 2 function are equivelent
-    @test typeof(getFactorType(f1)) == TestFunctorInferenceType1{TestBelief}
-    @test typeof(getFactorFunction(f1)) == TestFunctorInferenceType1{TestBelief}
+    @test typeof(getObservation(f1)) == TestFunctorInferenceType1{TestBelief}
 
     #TODO here for now, don't recommend usage.
     testTags = [:tag1, :tag2]
@@ -441,8 +439,7 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
             solvable = f2.solvable[],
         )
     else
-        f2_mod = deepcopy(f2)
-        pop!(f2_mod.variableorder)
+        f2_mod = typeof(f2)(f2.label, (:a,))
     end
 
     @test_throws ErrorException mergeFactor!(fg, f2_mod)
@@ -543,7 +540,7 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     # simple broadcast test
     if f0 isa FactorCompute
         @test issetequal(
-            getFactorType.(fg, lsf(fg)),
+            getObservation.(fg, lsf(fg)),
             [TestFunctorInferenceType1(), TestAbstractPrior()],
         )
     end
@@ -1037,11 +1034,8 @@ function testGroup!(fg, v1, v2, f0, f1)
         # @test @test_deprecated getVariableIds(fg) == listVariables(fg)
         # @test @test_deprecated getFactorIds(fg) == listFactors(fg)
 
-        # TODO Mabye implement IIF type here
-        # Requires IIF or a type in IIF
         @test getObservation(f1) === f1.observation
-        @test getFactorType(f1) === f1.observation
-        @test getFactorType(fg, :abf1) === f1.observation
+        @test getObservation(fg, :abf1) === f1.observation
 
         @test isPrior(fg, :af1) # if f1 is prior
         @test lsfPriors(fg) == [:af1]

@@ -268,7 +268,7 @@ function getFactors(
     filterDFG!(factors, labelFilter, getLabel)
     filterDFG!(factors, solvableFilter, getSolvable)
     filterDFG!(factors, tagsFilter, getTags)
-    filterDFG!(factors, typeFilter, typeof ∘ getFactorType)
+    filterDFG!(factors, typeFilter, typeof ∘ getObservation)
     return factors
 end
 

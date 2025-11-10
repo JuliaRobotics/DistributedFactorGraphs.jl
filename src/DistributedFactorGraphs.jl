@@ -275,16 +275,17 @@ export removeTags! #TODO do we want this one
 export hasTags
 
 ##------------------------------------------------------------------------------
-## Metadata
+## Bloblets
 ##------------------------------------------------------------------------------
-# currently these refer to variable metadata
-export getMetadata
-export addMetadata!
-export deleteMetadata!
-export listMetadata
+# currently these refer to variable Bloblets
+#TODO Bloblet CRUD
+# export getVariableBloblet
+# export addVariableBloblet!
+# export deleteVariableBloblet!
+# export listVariableBloblets
 
-export getAgentMetadata
-export getGraphMetadata
+# export getAgentBloblet
+# export getGraphBloblet
 
 ##------------------------------------------------------------------------------
 ## FileDFG
@@ -397,13 +398,13 @@ const unstable_functions::Vector{Symbol} = [
     :pack,
     :packDistribution,
     :packVariable,
-    :packFactor,
+    # :packFactor,
     :packBlob,
     :packState,
     :unpack,
     :unpackDistribution,
     :unpackVariable,
-    :unpackFactor,
+    # :unpackFactor,
     :unpackBlob,
     :unpackState,
     :ls2,
@@ -534,6 +535,7 @@ include("serialization/PackedSerialization.jl")
 include("serialization/DistributionSerialization.jl")
 
 include("entities/DFGFactor.jl")
+# include("serialization/FactorSerialization.jl")
 
 include("entities/DFGVariable.jl")
 
