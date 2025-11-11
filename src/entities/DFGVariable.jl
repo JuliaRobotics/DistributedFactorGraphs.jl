@@ -33,14 +33,14 @@ Base.@kwdef mutable struct State{T <: StateType, P, N}
     "Parametric (Gaussian) covariance."
     covar::Vector{SMatrix{N, N, Float64}} =
         SMatrix{getDimension(T), getDimension(T), Float64}[]
-    BayesNetOutVertIDs::Vector{Symbol} = Symbol[] #TODO looks unused?
+    # BayesNetOutVertIDs::Vector{Symbol} = Symbol[] #TODO looks unused?
 
     dims::Int = getDimension(T) #TODO should we deprecate in favor of N
-    """
-    Flag used by junction (Bayes) tree construction algorithm to know whether this variable has yet been included in the tree construction.
-    """
-    eliminated::Bool = false
-    BayesNetVertID::Symbol = :NOTHING #  Union{Nothing, } #TODO deprecate
+    # """
+    # Flag used by junction (Bayes) tree construction algorithm to know whether this variable has yet been included in the tree construction.
+    # """
+    # eliminated::Bool = false
+    # BayesNetVertID::Symbol = :NOTHING #  Union{Nothing, } #TODO deprecate
     separator::Vector{Symbol} = Symbol[]
     """
     False if initial numerical values are not yet available or stored values are not ready for further processing yet.
@@ -106,10 +106,10 @@ Base.@kwdef mutable struct PackedState
     dimval::Int
     vecbw::Vector{Float64}
     dimbw::Int
-    BayesNetOutVertIDs::Vector{Symbol} # Int
+    # BayesNetOutVertIDs::Vector{Symbol} # Int
     dims::Int
-    eliminated::Bool # TODO Questionable usage, set but never read?
-    BayesNetVertID::Symbol # Int #TODO deprecate
+    # eliminated::Bool # TODO Questionable usage, set but never read?
+    # BayesNetVertID::Symbol # Int #TODO deprecate
     separator::Vector{Symbol} # Int #TODO maybe remove from State and have in variable only.
     variableType::String
     initialized::Bool
@@ -187,7 +187,7 @@ StructUtils.@kwarg struct VariableDFG{T <: StateType, P, N} <: AbstractGraphVari
     _autotype::Nothing = nothing & (name = :type, lower = _ -> TypeMetadata(VariableDFG))
 end
 
-refStates(v::VariableCompute) = v.states
+refStates(v::VariableDFG) = v.states
 
 const VariableCompute = VariableDFG
 ##------------------------------------------------------------------------------
@@ -213,10 +213,6 @@ function VariableCompute(
     N = getDimension(T)
     P = getPointType(T)
     return VariableCompute{T, P, N}(; label, timestamp, solvable, kwargs...)
-end
-
-function VariableCompute(label::Symbol, variableType::StateType; kwargs...)
-    return VariableCompute(label, typeof(variableType); kwargs...)
 end
 
 function VariableCompute(label::Symbol, state::State; kwargs...)

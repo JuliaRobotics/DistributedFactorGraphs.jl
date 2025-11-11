@@ -1547,11 +1547,11 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
         v4 = getVariable(dfg, :x4)
         vnd = getState(v4, :default)
         # set everything
-        vnd.BayesNetVertID = :outid
-        push!(vnd.BayesNetOutVertIDs, :id)
+        # vnd.BayesNetVertID = :outid
+        # push!(vnd.BayesNetOutVertIDs, :id)
         # vnd.bw[1] = [1.0;]
         vnd.dontmargin = true
-        vnd.eliminated = true
+        # vnd.eliminated = true
         vnd.infoPerCoord .= Float64[1.5;]
         vnd.initialized = true
         vnd.ismargin = true

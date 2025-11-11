@@ -196,15 +196,15 @@ end
 function compare(a::State, b::State)
     a.val != b.val && @debug("val is not equal") === nothing && return false
     a.bw != b.bw && @debug("bw is not equal") === nothing && return false
-    a.BayesNetOutVertIDs != b.BayesNetOutVertIDs &&
-        @debug("BayesNetOutVertIDs is not equal") === nothing &&
-        return false
-    a.eliminated != b.eliminated &&
-        @debug("eliminated is not equal") === nothing &&
-        return false
-    a.BayesNetVertID != b.BayesNetVertID &&
-        @debug("BayesNetVertID is not equal") === nothing &&
-        return false
+    # a.BayesNetOutVertIDs != b.BayesNetOutVertIDs &&
+    #     @debug("BayesNetOutVertIDs is not equal") === nothing &&
+    #     return false
+    # a.eliminated != b.eliminated &&
+    #     @debug("eliminated is not equal") === nothing &&
+    #     return false
+    # a.BayesNetVertID != b.BayesNetVertID &&
+    #     @debug("BayesNetVertID is not equal") === nothing &&
+    #     return false
     a.separator != b.separator &&
         @debug("separator is not equal") === nothing &&
         return false
