@@ -379,7 +379,6 @@ const unstable_functions::Vector{Symbol} = [
     :getVariableLabelNumber,# TODO somewhat used, do we deprecate?
     :getfirstBlobentry,# TODO somewhat used, do we deprecate?
     :getSolveInProgress,#TODO unused, do we deprecate?
-    :getSolverDataDict,## TODO deprecated or obsolete
     :hasTagsNeighbors,
     :isVariable,
     :isFactor,
@@ -433,6 +432,7 @@ const unstable_functions::Vector{Symbol} = [
     :setMetadata!, # no set, use add merge
     :setAgentMetadata!,
     :setGraphMetadata!,
+    # :getSolverDataDict,# obsolete
 
     #Deprecated in v0.28
     :AbstractRelativeMinimize,
@@ -469,24 +469,24 @@ const unstable_functions::Vector{Symbol} = [
     :PackedFactor,
     :Factor,
     :AbstractPointParametricEst,
-    :MeanMaxPPE,
-    :getPPEMax,
-    :getPPEMean,
-    :getPPESuggested,
-    :getLastUpdatedTimestamp,
-    :getPPEDict,
-    :getVariablePPEDict,
-    :getVariablePPE,
+    # :MeanMaxPPE,
+    # :getPPEMax,
+    # :getPPEMean,
+    # :getPPESuggested,
+    # :getLastUpdatedTimestamp,
+    # :getPPEDict,
+    # :getVariablePPEDict,
+    # :getVariablePPE,
     :listSolveKeys,
     :listSupersolves,
-    :getPPE,
-    :getPPEs,
-    :getVariablePPE,
-    :addPPE!,
-    :updatePPE!,
-    :deletePPE!,
-    :listPPEs,
-    :mergePPEs!,
+    # :getPPE,
+    # :getPPEs,
+    # :getVariablePPE,
+    # :addPPE!,
+    # :updatePPE!,
+    # :deletePPE!,
+    # :listPPEs,
+    # :mergePPEs!,
     Symbol("@defVariable"),
     :SmallDataTypes,
     :NoSolverParams,

@@ -9,7 +9,6 @@ function DistributedFactorGraphs.VariableSummary(label::Symbol)
         label,
         DistributedFactorGraphs.now(localzone()),
         Set{Symbol}(),
-        Dict{Symbol, MeanMaxPPE}(),
         :Pose2,
         Dict{Symbol, Blobentry}(),
     )
@@ -21,7 +20,6 @@ function DistributedFactorGraphs.VariableSummary(label::Symbol, ::State{T}) wher
         label,
         DistributedFactorGraphs.now(localzone()),
         Set{Symbol}(),
-        Dict{Symbol, MeanMaxPPE}(),
         Symbol(T),
         Dict{Symbol, Blobentry}(),
     )
@@ -109,10 +107,6 @@ end
         @test getTimestamp(v1) == v1.timestamp
         @test getVariableTypeName(v1) == :Pose2
     end
-end
-
-@testset "Updating Nodes" begin
-    VARTYPE == VariableSummary && PPETestBlock!(dfg, v1)
 end
 
 @testset "Adjacency Matrices" begin

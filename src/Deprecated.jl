@@ -52,8 +52,8 @@ function getSolveInProgress(
 )
     # Variable
     if var isa VariableCompute
-        if haskey(getSolverDataDict(var), solveKey)
-            return getSolverDataDict(var)[solveKey].solveInProgress
+        if haskey(refStates(var), solveKey)
+            return refStates(var)[solveKey].solveInProgress
         else
             return 0
         end
@@ -148,6 +148,9 @@ function _getDuplicatedEmptyDFG(
     # DFG.setDescription!(newDfg, "(Copy of) $(DFG.getDescription(dfg))")
     return newDfg
 end
+
+#TODO is Type correct
+@deprecate getVariableType(args...) getStateType(args...)
 ## ================================================================================
 ## Deprecated in v0.28
 ##=================================================================================
@@ -289,7 +292,7 @@ end
 
 # Related
 
-# [`listSolveKeys`](@ref), [`getSolverDataDict`](@ref), [`listVariables`](@ref)
+# [`listSolveKeys`](@ref), [`refStates`](@ref), [`listVariables`](@ref)
 # """
 function listSolveKeys(
     variable::VariableCompute,
@@ -298,7 +301,7 @@ function listSolveKeys(
 )
     Base.depwarn("listSolveKeys is deprecated, use listStates instead.", :listSolveKeys)
     #
-    for ky in keys(getSolverDataDict(variable))
+    for ky in keys(refStates(variable))
         push!(skeys, ky)
     end
 
@@ -328,7 +331,7 @@ function listSolveKeys(
     #
     skeys = Set{Symbol}()
     varList = listVariables(dfg, filterVariables; tags = tags, solvable = solvable)
-    for vs in varList  #, ky in keys(getSolverDataDict(getVariable(dfg, vs)))
+    for vs in varList  #, ky in keys(refStates(getVariable(dfg, vs)))
         listSolveKeys(dfg, vs, filterSolveKeys, skeys)
     end
 

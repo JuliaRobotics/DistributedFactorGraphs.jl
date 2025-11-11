@@ -1,40 +1,10 @@
 ##==============================================================================
 ## Accessors
 ##==============================================================================
-##==============================================================================
-## PointParametricEst
-##==============================================================================
-"$(SIGNATURES)"
-getPPEMax(est::AbstractPointParametricEst) = est.max
-function getPPEMax(fg::AbstractDFG, varlabel::Symbol, solveKey::Symbol = :default)
-    return getPPE(fg, varlabel, solveKey) |> getPPEMax
-end
-
-"$(SIGNATURES)"
-getPPEMean(est::AbstractPointParametricEst) = est.mean
-function getPPEMean(fg::AbstractDFG, varlabel::Symbol, solveKey::Symbol = :default)
-    return getPPE(fg, varlabel, solveKey) |> getPPEMean
-end
-
-"$(SIGNATURES)"
-getPPESuggested(est::AbstractPointParametricEst) = est.suggested
-function getPPESuggested(var::VariableCompute, solveKey::Symbol = :default)
-    return getPPE(var, solveKey) |> getPPESuggested
-end
-function getPPESuggested(dfg::AbstractDFG, varlabel::Symbol, solveKey::Symbol = :default)
-    return getPPE(getVariable(dfg, varlabel), solveKey) |> getPPESuggested
-end
-
-"$(SIGNATURES)"
-getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimestamp
 
 ##==============================================================================
 ## Variable Node Data
 ##==============================================================================
-
-## COMMON
-# getSolveInProgress
-# isSolveInProgress
 
 ##------------------------------------------------------------------------------
 ## variableType
@@ -42,27 +12,13 @@ getLastUpdatedTimestamp(est::AbstractPointParametricEst) = est.lastUpdatedTimest
 """
     $(SIGNATURES)
 
-Variable nodes `variableType` information holding a variety of meta data associated with the type of variable stored in that node of the factor graph.
-
-Notes
-- API Quirk in that this function returns and instance of `::T` not a `::Type{<:StateType}`.
-
-DevWork
-- TODO, see IncrementalInference.jl 1228
-
-Related
-
-getVariableType
+Get the type of the variable's state, eg. `Pose2`, `Point3`, etc. as an instance of `StateType`.
 """
-getVariableType(::VariableCompute{T}) where {T} = T()
+getStateType(::VariableCompute{T}) where {T} = T()
 
-getVariableType(::State{T}) where {T} = T()
+getStateType(::State{T}) where {T} = T()
 
-# TODO: Confirm that we can switch this out, instead of retrieving the complete variable.
-# getVariableType(v::VariableCompute) = getVariableType(getState(v))
-
-# Optimized in CGDFG
-getVariableType(dfg::AbstractDFG, lbl::Symbol) = getVariableType(getVariable(dfg, lbl))
+getStateType(dfg::AbstractDFG, lbl::Symbol) = getStateType(getVariable(dfg, lbl))
 
 ##------------------------------------------------------------------------------
 ## StateType
@@ -361,11 +317,11 @@ end
 ## Variables
 ##==============================================================================
 #
-# |                     | label | tags | timestamp | ppe | variableTypeName | solvable | solverData | smallData | dataEntries |
-# |---------------------|:-----:|:----:|:---------:|:---:|:----------------:|:--------:|:----------:|:---------:|:-----------:|
-# | VariableSkeleton |   X   |   X  |           |     |                  |          |            |           |             |
-# | VariableSummary  |   X   |   X  |     X     |  X  |         X        |          |            |           |       X     |
-# | VariableCompute         |   X   |   X  |     x     |  X  |                  |     X    |      X     |     X     |       X     |
+# |                     | label | tags | timestamp | variableTypeName | solvable | solverData | smallData | dataEntries |
+# |---------------------|:-----:|:----:|:---------:|:----------------:|:--------:|:----------:|:---------:|:-----------:|
+# | VariableSkeleton |   X   |   X  |           |                  |          |            |           |             |
+# | VariableSummary  |   X   |   X  |     X     |         X        |          |            |           |       X     |
+# | VariableCompute  |   X   |   X  |     x     |                  |     X    |      X     |     X     |       X     |
 #
 ##------------------------------------------------------------------------------
 
@@ -401,74 +357,6 @@ end
 # isSolvable
 
 ## COMMON:
-
-##------------------------------------------------------------------------------
-## ppeDict
-##------------------------------------------------------------------------------
-
-"""
-    $SIGNATURES
-
-Get the PPE dictionary for a variable.  Recommended to use CRUD operations instead, [`getPPE`](@ref), [`addPPE!`](@ref), [`updatePPE!`](@ref), [`deletePPE!`](@ref).
-"""
-getPPEDict(v::AbstractGraphVariable) = v.ppeDict
-
-#TODO FIXME don't know if this should exist, should rather always update with fg object to simplify inmem vs cloud
-"""
-    $SIGNATURES
-
-Get the parametric point estimate (PPE) for a variable in the factor graph.
-
-Notes
-- Defaults on keywords `solveKey` and `method`
-
-Related
-
-getMeanPPE, getMaxPPE, getKDEMean, getKDEFit, getPPEs, getVariablePPEs
-"""
-function getPPE(vari::AbstractGraphVariable, solveKey::Symbol = :default)
-    if haskey(getPPEDict(vari), solveKey)
-        return getPPEDict(vari)[solveKey]
-    else
-        throw(LabelNotFoundError("PPE", solveKey, collect(keys(getPPEDict(vari)))))
-    end
-    # return haskey(ppeDict, solveKey) ? ppeDict[solveKey] : nothing
-end
-
-"""
-    $SIGNATURES
-
-Get all the parametric point estimate (PPE) for a variable in the factor graph.
-"""
-function getPPEs end
-
-# afew more aliases on PPE, brought back from deprecated DF
-
-"""
-    $SIGNATURES
-
-Return full dictionary of PPEs in a variable, recommended to rather use CRUD: [`getPPE`](@ref),
-"""
-getVariablePPEDict(vari::AbstractGraphVariable) = getPPEDict(vari)
-
-"""
-    getVariablePPE(::VariableCompute)
-    getVariablePPE(::State)
-
-Get the Parametric Point Estimate of the given variable.
-"""
-getVariablePPE(args...) = getPPE(args...)
-
-##------------------------------------------------------------------------------
-## solverDataDict
-##------------------------------------------------------------------------------
-
-"""
-    $SIGNATURES
-
-Get solver data dictionary for a variable.  Advised to use graph CRUD operations instead.
-"""
-getSolverDataDict(v::VariableCompute) = v.solverDataDict
 
 ##------------------------------------------------------------------------------
 ## Variable Metadata
@@ -591,14 +479,8 @@ end
 ##------------------------------------------------------------------------------
 
 function getState(v::VariableCompute, label::Symbol)
-    !haskey(getSolverDataDict(v), label) && throw(LabelNotFoundError("State", label))
-    return getSolverDataDict(v)[label]
-end
-
-function getState(v::VariableDFG, label::Symbol)
-    stateidx = findfirst(==(label) ∘ getLabel, v.solverData)
-    isnothing(stateidx) && throw(LabelNotFoundError("State", label))
-    return unpackState(v.solverData[stateidx])
+    !haskey(refStates(v), label) && throw(LabelNotFoundError("State", label))
+    return refStates(v)[label]
 end
 
 """
@@ -789,191 +671,3 @@ function listStates(
     return labels
 end
 
-#TODO deprecate PPEs
-##==============================================================================
-## Point Parametric Estimates
-##==============================================================================
-
-##------------------------------------------------------------------------------
-## CRUD: get, add, update, delete
-##------------------------------------------------------------------------------
-
-"""
-    $(SIGNATURES)
-Get the parametric point estimate (PPE) for a variable in the factor graph for a given solve key.
-
-Notes
-- Defaults on keywords `solveKey` and `method`
-
-Related
-[`getPPEMean`](@ref), [`getPPEMax`](@ref), [`updatePPE!`](@ref), `mean(BeliefType)`
-"""
-function getPPE(v::VariableCompute, ppekey::Symbol = :default)
-    !haskey(v.ppeDict, ppekey) && throw(LabelNotFoundError("PPE", ppekey))
-    return v.ppeDict[ppekey]
-end
-function getPPE(dfg::AbstractDFG, variableLabel::Symbol, ppekey::Symbol = :default)
-    return getPPE(getVariable(dfg, variableLabel), ppekey)
-end
-# Not the most efficient call but it at least reuses above (in memory it's probably ok)
-function getPPE(
-    dfg::AbstractDFG,
-    sourceVariable::AbstractGraphVariable,
-    ppekey::Symbol = :default,
-)
-    return getPPE(dfg, sourceVariable.label, ppekey)
-end
-
-"""
-    $(SIGNATURES)
-Add variable PPE, errors if it already exists.
-"""
-function addPPE!(
-    dfg::AbstractDFG,
-    variableLabel::Symbol,
-    ppe::P,
-) where {P <: AbstractPointParametricEst}
-    var = getVariable(dfg, variableLabel)
-    if haskey(var.ppeDict, ppe.solveKey)
-        throw(LabelExistsError("PPE", ppe.solveKey))
-    end
-    var.ppeDict[ppe.solveKey] = ppe
-    return ppe
-end
-
-"""
-    $(SIGNATURES)
-Add a new PPE entry from a deepcopy of the source variable PPE.
-NOTE: Copies the PPE.
-"""
-function addPPE!(
-    dfg::AbstractDFG,
-    sourceVariable::VariableCompute,
-    ppekey::Symbol = :default,
-)
-    return addPPE!(dfg, sourceVariable.label, deepcopy(getPPE(sourceVariable, ppekey)))
-end
-
-function addPPEs!(
-    dfg::AbstractDFG,
-    sourceVariables::Vector{VariableCompute},
-    ppekey::Symbol = :default,
-)
-    return addPPE!.(dfg, sourceVariables, ppekey)
-end
-
-"""
-    $(SIGNATURES)
-Update PPE data if it exists, otherwise add it -- one call per `key::Symbol=:default`.
-
-Notes
-- uses `ppe.solveKey` as solveKey.
-"""
-function updatePPE!(
-    dfg::AbstractDFG,
-    variableLabel::Symbol,
-    ppe::AbstractPointParametricEst;
-    warn_if_absent::Bool = true,
-)
-    var = getVariable(dfg, variableLabel)
-    if warn_if_absent && !haskey(var.ppeDict, ppe.solveKey)
-        @warn "PPE '$(ppe.solveKey)' does not exist, adding"
-    end
-    #for InMemoryDFGTypes, cloud would update here
-    var.ppeDict[ppe.solveKey] = ppe
-    return ppe
-end
-
-"""
-    $(SIGNATURES)
-Update PPE data if it exists, otherwise add it.
-NOTE: Copies the PPE data.
-"""
-function updatePPE!(
-    dfg::AbstractDFG,
-    sourceVariable::AbstractGraphVariable,
-    ppekey::Symbol = :default;
-    warn_if_absent::Bool = true,
-)
-    return updatePPE!(
-        dfg,
-        sourceVariable.label,
-        deepcopy(getPPE(sourceVariable, ppekey));
-        warn_if_absent = warn_if_absent,
-    )
-end
-
-"""
-    $(SIGNATURES)
-Update PPE data if it exists, otherwise add it.
-"""
-function updatePPE!(
-    dfg::AbstractDFG,
-    sourceVariables::Vector{<:AbstractGraphVariable},
-    ppekey::Symbol = :default;
-    warn_if_absent::Bool = true,
-)
-    #I think cloud would do this in bulk for speed
-    for var in sourceVariables
-        updatePPE!(
-            dfg,
-            var.label,
-            getPPE(dfg, var, ppekey);
-            warn_if_absent = warn_if_absent,
-        )
-    end
-end
-
-"""
-    $(SIGNATURES)
-Delete PPE data, returns the deleted element.
-"""
-function deletePPE!(dfg::AbstractDFG, variableLabel::Symbol, ppekey::Symbol = :default)
-    var = getVariable(dfg, variableLabel)
-
-    if !haskey(var.ppeDict, ppekey)
-        throw(LabelNotFoundError("PPE", ppekey))
-    end
-    pop!(var.ppeDict, ppekey)
-    return 1
-end
-
-"""
-    $(SIGNATURES)
-Delete PPE data, returns the deleted element.
-"""
-function deletePPE!(
-    dfg::AbstractDFG,
-    sourceVariable::VariableCompute,
-    ppekey::Symbol = :default,
-)
-    return deletePPE!(dfg, sourceVariable.label, ppekey)
-end
-
-##------------------------------------------------------------------------------
-## SET: list, merge
-##------------------------------------------------------------------------------
-
-"""
-    $(SIGNATURES)
-List all the PPE data keys in the variable.
-"""
-function listPPEs(dfg::AbstractDFG, variableLabel::Symbol)
-    v = getVariable(dfg, variableLabel)
-    return collect(keys(v.ppeDict))::Vector{Symbol}
-end
-
-#TODO API and only correct level
-"""
-    $(SIGNATURES)
-Merges and updates solver and estimate data for a variable (variable can be from another graph).
-Note: Makes a copy of the estimates and solver data so that there is no coupling between graphs.
-"""
-function mergePPEs!(
-    destVariable::AbstractGraphVariable,
-    sourceVariable::AbstractGraphVariable,
-)
-    # We don't know which graph this came from, must be copied!
-    merge!(destVariable.ppeDict, deepcopy(sourceVariable.ppeDict))
-    return destVariable
-end

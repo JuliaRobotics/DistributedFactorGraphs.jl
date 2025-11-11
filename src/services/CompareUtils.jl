@@ -18,7 +18,6 @@ implement compare if needed.
 
 # Generate compares automatically for all in this union
 const GeneratedCompareUnion = Union{
-    MeanMaxPPE,
     State,
     PackedState,
     Blobentry,
@@ -200,8 +199,6 @@ function compare(a::State, b::State)
     a.BayesNetOutVertIDs != b.BayesNetOutVertIDs &&
         @debug("BayesNetOutVertIDs is not equal") === nothing &&
         return false
-    a.dimIDs != b.dimIDs && @debug("dimIDs is not equal") === nothing && return false
-    a.dims != b.dims && @debug("dims is not equal") === nothing && return false
     a.eliminated != b.eliminated &&
         @debug("eliminated is not equal") === nothing &&
         return false

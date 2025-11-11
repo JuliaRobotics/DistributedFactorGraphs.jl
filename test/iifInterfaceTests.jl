@@ -177,12 +177,8 @@ end
     @test getLabel(v1) == v1.label
     @test getTags(v1) == v1.tags
     @test getTimestamp(v1) == v1.timestamp
-    @test getVariablePPEDict(v1) == v1.ppeDict
-    @test_throws LabelNotFoundError DistributedFactorGraphs.getVariablePPE(v1, :notfound)
     @test getState(v1, :default) === v1.solverDataDict[:default]
-    @test getSolverDataDict(v1) == v1.solverDataDict
-    # legacy compat test
-    @test getVariablePPEDict(v1) == v1.ppeDict # changed to .ppeDict -- delete by DFG v0.7
+    @test refStates(v1) == v1.solverDataDict
 
     @test typeof(getVariableType(v1)) == Position{1}
     @test typeof(getVariableType(v2)) == Position{1}

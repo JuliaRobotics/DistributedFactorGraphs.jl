@@ -81,8 +81,6 @@ function packState(d::State{T}) where {T <: StateType}
         d.bw[:],
         size(d.bw, 1),
         d.BayesNetOutVertIDs,
-        d.dimIDs,
-        d.dims,
         d.eliminated,
         d.BayesNetVertID,
         d.separator,
@@ -132,8 +130,6 @@ function unpackState(d::PackedState)
         #TODO only one covar is currently supported in packed VND
         covar = isempty(d.covar) ? SMatrix{N, N, Float64}[] : [d.covar],
         BayesNetOutVertIDs = Symbol.(d.BayesNetOutVertIDs),
-        dimIDs = d.dimIDs,
-        dims = d.dims,
         eliminated = d.eliminated,
         BayesNetVertID = Symbol(d.BayesNetVertID),
         separator = Symbol.(d.separator),
@@ -154,7 +150,6 @@ end
 
 function packVariable(
     v::VariableCompute;
-    includePPEs::Bool = true,
     includeSolveData::Bool = true,
     includeDataEntries::Bool = true,
 )
@@ -164,7 +159,6 @@ function packVariable(
         timestamp = v.timestamp,
         nstime = string(v.nstime.value),
         tags = collect(v.tags), # Symbol.()
-        ppes = collect(values(v.ppeDict)),
         solverData = packState.(collect(values(v.solverDataDict))),
         metadata = base64encode(JSON.json(v.smallData)),
         solvable = getSolvable(v),
@@ -176,7 +170,6 @@ end
 
 function packVariable(
     v::VariableDFG;
-    includePPEs::Bool = true,
     includeSolveData::Bool = true,
     includeDataEntries::Bool = true,
 )
@@ -192,9 +185,6 @@ function unpackVariable(variable::VariableDFG; skipVersionCheck::Bool = false)
         "Cannot deserialize variableType '$(variable.variableType)' in variable '$(variable.label)'",
     )
     pointType = DFG.getPointType(variableType)
-
-    ppeDict =
-        Dict{Symbol, MeanMaxPPE}(map(p -> p.solveKey, variable.ppes) .=> variable.ppes)
 
     N = getDimension(variableType)
     solverDict = Dict{Symbol, State{variableType, pointType, N}}(
@@ -213,7 +203,6 @@ function unpackVariable(variable::VariableDFG; skipVersionCheck::Bool = false)
         timestamp = variable.timestamp,
         nstime = Nanosecond(variable.nstime),
         tags = Set(variable.tags),
-        ppeDict = ppeDict,
         solverDataDict = solverDict,
         smallData = metadata,
         dataDict = dataDict,

@@ -88,7 +88,6 @@ function DFGStructureAndAccessors(
         :AGENT,
         :VARIABLE,
         :FACTOR,
-        :PPE,
         :BLOB_ENTRY,
         :FACTORGRAPH,
     ]
@@ -291,9 +290,7 @@ function DFGVariableSCA()
     @test getSolvable(v2) == 1
 
     # TODO direct use is not recommended, use accessors, maybe not export or deprecate
-    @test getSolverDataDict(v1) == v1.solverDataDict
-
-    @test getPPEDict(v1) == v1.ppeDict
+    @test refStates(v1) == v1.solverDataDict
 
     # @test getMetadata(v1) == Dict{Symbol, MetadataTypes}()
 
@@ -320,10 +317,7 @@ function DFGVariableSCA()
     @test getManifold(testvar) == TranslationGroup(1)
 
     # #TODO sort out
-    # getPPEs
     # getState
-    # getVariablePPEs
-    # getVariablePPE
     # getSolvedCount
     # isSolved
     # setSolvedCount
@@ -565,132 +559,6 @@ function tagsTestBlock!(fg, v1, v1_tags)
     @test !hasTagsNeighbors(fg, :abf1, [:LANDMARK, :TAG])
 end
 
-function PPETestBlock!(fg, v1)
-    # "Parametric Point Estimates"
-
-    #  - `getPPEs`
-    # **Set**
-    # > - `emptyPPE!`
-    # > - `mergePPE!`
-
-    # Add a new PPE of type MeanMaxPPE to :x0
-    ppe = MeanMaxPPE(:default, [0.0], [0.0], [0.0])
-
-    @test getPPEMax(ppe) === ppe.max
-    @test getPPEMean(ppe) === ppe.mean
-    @test getPPESuggested(ppe) === ppe.suggested
-    @test getLastUpdatedTimestamp(ppe) === ppe.lastUpdatedTimestamp
-
-    @test addPPE!(fg, :a, ppe) == ppe
-    @test_throws LabelExistsError addPPE!(fg, :a, ppe)
-
-    @test listPPEs(fg, :a) == [:default]
-
-    # Get the data back - note that this is a reference to above.
-    @test getPPE(getVariable(fg, :a), :default) == ppe
-    @test getPPE(fg, :a, :default) == ppe
-    @test getPPEMean(fg, :a, :default) == ppe.mean
-    @test getPPEMax(fg, :a, :default) == ppe.max
-    @test getPPESuggested(fg, :a, :default) == ppe.suggested
-
-    # Delete it
-    @test deletePPE!(fg, :a, :default) == 1
-
-    @test_throws LabelNotFoundError getPPE(fg, :a, :default)
-    # Update add it
-    @test @test_logs (:warn, Regex("'$(ppe.solveKey)' does not exist")) match_mode = :any updatePPE!(
-        fg,
-        :a,
-        ppe,
-    ) == ppe
-    # Update update it
-    @test updatePPE!(fg, :a, ppe) == ppe
-    @test deletePPE!(fg, :a, :default) == 1
-
-    # manually add ppe to v1 for tests
-    v1.ppeDict[:default] = deepcopy(ppe)
-    # Bulk copy PPE's for :x1
-    @test updatePPE!(fg, [v1], :default) == nothing
-    # Delete it
-    @test deletePPE!(fg, :a, :default) == 1
-
-    # New interface
-    @test addPPE!(fg, :a, ppe) == ppe
-    # Update update it
-    @test updatePPE!(fg, :a, ppe) == ppe
-    # Delete it
-    @test deletePPE!(fg, :a, :default) == 1
-
-    #FIXME copied from lower
-    # @test @test_deprecated getVariablePPEs(v1) == v1.ppeDict
-    @test_throws LabelNotFoundError getPPE(v1, :notfound)
-    #TODO
-    # @test_deprecated getVariablePPE(v1)
-
-    # Add a new PPE of type MeanMaxPPE to :x0
-    ppe = MeanMaxPPE(:default, [0.0], [0.0], [0.0])
-    addPPE!(fg, :a, ppe)
-    @test listPPEs(fg, :a) == [:default]
-    # Get the data back - note that this is a reference to above.
-    @test getPPE(fg, :a, :default) == ppe
-
-    # Delete it
-    @test deletePPE!(fg, :a, :default) == 1
-    # Update add it
-    updatePPE!(fg, :a, ppe) #, :default)
-    # Update update it
-    updatePPE!(fg, :a, ppe) #, :default)
-
-    v1.ppeDict[:default] = deepcopy(ppe)
-    # Bulk copy PPE's for x0 and x1
-    updatePPE!(fg, [v1], :default)
-    # Delete it
-    @test deletePPE!(fg, :a, :default) == 1
-
-    #TODO DEPRECATE
-    # getEstimates
-    # estimates
-    # getVariablePPEs
-    # getVariablePPE
-
-    # newvar = deepcopy(v1)
-    # getPPEDict(newvar)[:default] = MeanMaxPPE(:default, [150.0], [100.0], [50.0])
-    # @test !(getPPEDict(newvar) == getPPEDict(v1))
-    # delete!(getVariablePPEs(newvar), :default)
-    # getVariablePPEs(newvar)[:second] = MeanMaxPPE(:second, [15.0], [10.0], [5.0])
-    # @test symdiff(collect(keys(getVariablePPEs(v1))), [:default, :second]) == Symbol[]
-    # @test symdiff(collect(keys(getVariablePPEs(newvar))), [:second]) == Symbol[]
-    # # Get the source too.
-    # @test symdiff(collect(keys(getVariablePPEs(getVariable(dfg, :a)))), [:default, :second]) == Symbol[]
-    #update
-
-    ## TODO make sure these are covered
-    # global dfg
-    # #get the variable
-    # var1 = getVariable(dfg, :a)
-    # #make a copy and simulate external changes
-    # newvar = deepcopy(var1)
-    # getVariablePPEs(newvar)[:default] = MeanMaxPPE(:default, [150.0], [100.0], [50.0])
-    # #update
-    # mergeUpdateVariableSolverData!(dfg, newvar)
-    # #For now spot check
-    # # @test solverDataDict(newvar) == solverDataDict(var1)
-    # @test getVariablePPEs(newvar) == getVariablePPEs(var1)
-    #
-    # # Delete :default and replace to see if new ones can be added
-    # delete!(getVariablePPEs(newvar), :default)
-    # getVariablePPEs(newvar)[:second] = MeanMaxPPE(:second, [15.0], [10.0], [5.0])
-    #
-    # # Persist to the original variable.
-    # mergeUpdateVariableSolverData!(dfg, newvar)
-    # # At this point newvar will have only :second, and var1 should have both (it is the reference)
-    # @test symdiff(collect(keys(getVariablePPEs(var1))), [:default, :second]) == Symbol[]
-    # @test symdiff(collect(keys(getVariablePPEs(newvar))), [:second]) == Symbol[]
-    # # Get the source too.
-    # @test symdiff(collect(keys(getVariablePPEs(getVariable(dfg, :a)))), [:default, :second]) == Symbol[]
-    ##
-end
-
 function VSDTestBlock!(fg, v1)
     # "Variable Solver Data"
     # #### Variable Solver Data
@@ -769,7 +637,7 @@ function VSDTestBlock!(fg, v1)
     return nothing
 
     #TODO solverDataDict() not deprecated
-    # @test getSolverDataDict(newvar) == getSolverDataDict(v1)
+    # @test refStates(newvar) == refStates(v1)
 
     # @test @test_deprecated mergeUpdateVariableSolverData!(fg, newvar)
 
@@ -1682,8 +1550,6 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
         vnd.BayesNetVertID = :outid
         push!(vnd.BayesNetOutVertIDs, :id)
         # vnd.bw[1] = [1.0;]
-        push!(vnd.dimIDs, 1)
-        vnd.dims = 1
         vnd.dontmargin = true
         vnd.eliminated = true
         vnd.infoPerCoord .= Float64[1.5;]

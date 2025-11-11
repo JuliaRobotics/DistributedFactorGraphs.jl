@@ -66,24 +66,6 @@ function printVariable(
             printstyled(ioc, "     VNDs: "; bold = true)
             println(ioc, solk[smsk], 4 < lsolk ? "..." : "")
         end
-        printstyled(ioc, "  # PPE solveKeys=    ($(length(getPPEDict(vert))))"; bold = true)
-        println(ioc, "")
-        if haskey(getPPEDict(vert), :default)
-            print(ioc, "    :default ")
-            println(
-                ioc,
-                "<-- .suggested:    ",
-                round.(getPPE(vert, :default).suggested; digits = 4),
-            )
-        end
-        maxkeys = 4
-        for (key, ppe) in getPPEDict(vert)
-            key == :default && continue # skip as default is done separately
-            maxkeys -= 1
-            maxkeys == 0 && break
-            print(ioc, "    :$key ")
-            println(ioc, "<-- .suggested:  ", round.(ppe.suggested; digits = 4))
-        end
         println(ioc, "  # Blobentries:      (", length(listBlobentries(vert)), ")")
         printstyled(ioc, "  VariableType: "; color = :blue, bold = true)
         println(ioc, vari)
@@ -94,7 +76,6 @@ function printVariable(
         println(ioc, "")
 
         :solver in skipfields && push!(skipfields, :solverDataDict)
-        :ppe in skipfields && push!(skipfields, :ppeDict)
 
         t = typeof(vert)
         fields = setdiff(fieldnames(t), skipfields)
