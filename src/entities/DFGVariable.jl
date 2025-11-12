@@ -20,8 +20,11 @@ N: Manifold dimension.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef mutable struct State{T <: StateType, P, N}
-    label::Symbol
+@kwdef mutable struct State{T <: StateType, P, N}
+    """
+    Identifier associated with this State object.
+    """
+    label::Symbol # TODO renamed from solveKey
     """
     Vector of on-manifold points used to represent a ManifoldKernelDensity (or parametric) belief.
     """
@@ -35,7 +38,7 @@ Base.@kwdef mutable struct State{T <: StateType, P, N}
         SMatrix{getDimension(T), getDimension(T), Float64}[]
     # BayesNetOutVertIDs::Vector{Symbol} = Symbol[] #TODO looks unused?
 
-    dims::Int = getDimension(T) #TODO should we deprecate in favor of N
+    # dims::Int = getDimension(T) #TODO should we deprecate in favor of N
     # """
     # Flag used by junction (Bayes) tree construction algorithm to know whether this variable has yet been included in the tree construction.
     # """
@@ -49,28 +52,25 @@ Base.@kwdef mutable struct State{T <: StateType, P, N}
     """
     Stores the amount information (per measurement dimension) captured in each coordinate dimension.
     """
-    observability::Vector{Float64} = zeros(getDimension(T)) #TODO renamed from infoPerCoord
+    observability::Vector{Float64} = Float64[]#zeros(getDimension(T)) #TODO renamed from infoPerCoord
     """
     Should this variable solveKey be treated as marginalized in inference computations.
     """
     marginalized::Bool = false #TODO renamed from ismargin 
-    """
-    Should this variable solveKey always be kept fluid and not be automatically marginalized.
-    """
-    dontmargin::Bool = false
+    # """
+    # Should this variable solveKey always be kept fluid and not be automatically marginalized.
+    # """
+    # dontmargin::Bool = false
     """
     How many times has a solver updated this variable solveKey estimte.
     """
     solves::Int = 0 # TODO renamed from solvedCount
-    """
-    solveKey identifier associated with this State object.
-    """
-    solveKey::Symbol = :default # TODO replaced by label
-    """
-    Future proofing field for when more multithreading operations on graph nodes are implemented, these conditions are meant to be used for atomic write transactions to this VND.
-    """
-    events::Dict{Symbol, Threads.Condition} = Dict{Symbol, Threads.Condition}()
+    # """
+    # Future proofing field for when more multithreading operations on graph nodes are implemented, these conditions are meant to be used for atomic write transactions to this VND.
+    # """
+    # events::Dict{Symbol, Threads.Condition} = Dict{Symbol, Threads.Condition}()
     #
+    statetype::Symbol = Symbol(stringVariableType(T()))
 end
 
 ##------------------------------------------------------------------------------
@@ -78,8 +78,8 @@ end
 function State{T}(; kwargs...) where {T <: StateType}
     return State{T, getPointType(T), getDimension(T)}(; kwargs...)
 end
-function State(variableType::StateType; kwargs...)
-    return State{typeof(variableType)}(; kwargs...)
+function State(label, variableType::StateType; kwargs...)
+    return State{typeof(variableType)}(; label, kwargs...)
 end
 
 function State(state::State; kwargs...)
@@ -88,47 +88,32 @@ function State(state::State; kwargs...)
         kwargs...,
     )
 end
-##==============================================================================
-## PackedState.jl
-##==============================================================================
 
-"""
-$(TYPEDEF)
-Packed State structure for serializing DFGVariables.
+StructUtils.structlike(::Type{<:State}) = false
+StructUtils.lower(state::State) = DFG.packState(state)
+StructUtils.lift(::Type{<:State}, obj) = DFG.unpackState(obj)
 
-  ---
-Fields:
-$(TYPEDFIELDS)
-"""
-Base.@kwdef mutable struct PackedState
-    label::Symbol
-    vecval::Vector{Float64}
-    dimval::Int
-    vecbw::Vector{Float64}
-    dimbw::Int
-    # BayesNetOutVertIDs::Vector{Symbol} # Int
-    dims::Int
-    # eliminated::Bool # TODO Questionable usage, set but never read?
-    # BayesNetVertID::Symbol # Int #TODO deprecate
-    separator::Vector{Symbol} # Int #TODO maybe remove from State and have in variable only.
-    variableType::String
-    initialized::Bool
-    observability::Vector{Float64} # TODO renamed from infoPerCoord
-    marginalized::Bool # TODO renamed from ismargin 
-    dontmargin::Bool
-    solves::Int # TODO renamed from solvedCount
-    solveKey::Symbol #TODO replaced by label
-    covar::Vector{Float64}
-    _version::VersionNumber = _getDFGVersion()
+##------------------------------------------------------------------------------
+## States - OrderedDict{Symbol, State}
+const States = OrderedDict{Symbol, State{T, P, N}} where {T<:AbstractStateType,P,N}
+
+StructUtils.dictlike(::Type{<:States}) = false
+StructUtils.structlike(::Type{<:States}) = false
+StructUtils.arraylike(::Type{<:States}) = false
+
+function StructUtils.lower(states::States)
+    return map(collect(values(states))) do (state)
+        return StructUtils.lower(state)
+    end
 end
 
-#FIXME remove once solveKey field is renamed to `label`
-getLabel(packedstate::PackedState) = packedstate.solveKey
-
-# maybe add
-# createdTimestamp::DateTime#!
-# lastUpdatedTimestamp::DateTime#!
-
+function StructUtils.lift(::StructUtils.StructStyle, S::Type{<:States{T}}, json_vector) where T
+    states = S()
+    foreach(json_vector) do obj
+        return push!(states, Symbol(obj.label) => StructUtils.make(State{T}, obj))
+    end
+    return states, nothing
+end
 
 ##==============================================================================
 ## DFG Variables
@@ -152,25 +137,19 @@ Complete variable structure for a DistributedFactorGraph variable.
 Fields:
 $(TYPEDFIELDS)
 """
-StructUtils.@kwarg struct VariableDFG{T <: StateType, P, N} <: AbstractGraphVariable
-    # """The ID for the variable"""
-    # id::Union{UUID, Nothing} = nothing #NOTE removed in v0.29
+@kwdef struct VariableDFG{T <: StateType, P, N} <: AbstractGraphVariable
     """Variable label, e.g. :x1.
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref)"""
-    timestamp::NanoDate = ndnow(UTC) #NOTE changed to NanoDate in v0.29
+    timestamp::TimeDateZone = TimeDateZone(now(localzone())) #NOTE changed to TimeDateZone in v0.29
     """Nanoseconds since a user-understood epoch (i.e unix epoch, robot boot time, etc.)"""
-    steadytime::Union{Nothing, Nanosecond} = nothing #NOTE changed to NanoDate in v0.29
+    steadytime::Union{Nothing, Nanosecond} = nothing #NOTE changed to TimeDateZone in v0.29
     #nstime::String = "0" #NOTE different uses, as 0-999_999 nanosecond part of timestamp now in timestamp, as steady timestamp now in steadytime
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
     Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
     tags::Set{Symbol} = Set{Symbol}()
-    # """Dictionary of parametric point estimates keyed by solverDataDict keys
-    # Accessors: [`addPPE!`](@ref), [`updatePPE!`](@ref), and [`deletePPE!`](@ref)"""
-    # ppeDict::Dict{Symbol, AbstractPointParametricEst} = 
-    #     Dict{Symbol, AbstractPointParametricEst}() #NOTE removed in v0.29
     """Dictionary of state data. May be a subset of all solutions if a solver label was specified in the get call.
     Accessors: [`addState!`](@ref), [`mergeState!`](@ref), and [`deleteState!`](@ref)"""
     states::OrderedDict{Symbol, State{T, P, N}} = OrderedDict{Symbol, State{T, P, N}}() #NOTE field renamed from solverDataDict in v0.29
@@ -182,12 +161,42 @@ StructUtils.@kwarg struct VariableDFG{T <: StateType, P, N} <: AbstractGraphVari
     blobentries::Blobentries = Blobentries() #NOTE renamed from dataDict in v0.29
     """Solvable flag for the variable.
     Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)"""
-    solvable::Base.RefValue{Int} = Ref(1)
+    solvable::Base.RefValue{Int} = Ref(1) #& (lower = getindex,)
+    statetype::Symbol = Symbol(stringVariableType(T()))
     # TODO autotype or version and statetype
-    _autotype::Nothing = nothing & (name = :type, lower = _ -> TypeMetadata(VariableDFG))
+    _autotype::Nothing = nothing #& (name = :type, lower = _ -> TypeMetadata(VariableDFG))
+end
+version(::Type{<:VariableDFG}) = v"0.29"
+refStates(v::VariableDFG) = v.states
+
+#NOTE fielddefaults and fieldtags not through @kwarg macro due to error with State{T, P, N}
+function StructUtils.fielddefaults(::StructUtils.StructStyle, ::Type{VariableDFG{T,P,N}}) where {T,P,N} 
+    return (
+        timestamp = TimeDateZone(now(localzone())),
+        tags = Set{Symbol}(),
+        # states = OrderedDict{Symbol, State{T, P, N}}(),
+        bloblets = Bloblets(),
+        blobentries = Blobentries(),
+        solvable = Ref(1),
+        _autotype = nothing,
+    )
 end
 
-refStates(v::VariableDFG) = v.states
+function StructUtils.fieldtags(::StructUtils.StructStyle, ::Type{<:VariableDFG})
+    return (
+        _autotype = (name = :type, lower = _ -> TypeMetadata(VariableDFG)),
+        # solvable = (lower = getindex,),
+    )
+end
+
+function resolveVariableType(lazyobj)
+    T = parseVariableType(lazyobj.statetype[])
+    return VariableDFG{T, getPointType(T), getDimension(T)}
+end
+
+@choosetype VariableDFG resolveVariableType
+
+# JSON.omit_empty(::DistributedFactorGraphs.DFGJSONStyle, ::Type{<:VariableDFG}) = true
 
 const VariableCompute = VariableDFG
 ##------------------------------------------------------------------------------
@@ -195,50 +204,26 @@ const VariableCompute = VariableDFG
 
 """
     $SIGNATURES
-The default VariableCompute constructor.
+The default VariableDFG constructor.
 """
-function VariableCompute(
-    label::Symbol,
-    T::Type{<:StateType};
-    timestamp::Union{NanoDate, ZonedDateTime} = ndnow(UTC),
-    solvable::Union{Int, Base.RefValue{Int}} = Ref(1),
-    kwargs...,
-)
-    if timestamp isa ZonedDateTime
-        # TODO @warn
-        timestamp = NanoDate(timestamp)
-    end
-    solvable isa Int && (solvable = Ref(solvable))
-
-    N = getDimension(T)
-    P = getPointType(T)
-    return VariableCompute{T, P, N}(; label, timestamp, solvable, kwargs...)
-end
-
-function VariableCompute(label::Symbol, state::State; kwargs...)
-    return VariableCompute(;
-        label,
-        states = OrderedDict(state.label => state),
-        kwargs...,
-    )
-end
-
 #IIF like contruction helper for VariableDFG
 function VariableDFG(
     label::Symbol,
-    stateType::StateType;
-    tags::Vector{Symbol} = Symbol[],
-    timestamp::Union{NanoDate, ZonedDateTime} = ndnow(UTC),
+    stateType::Union{T, Type{T}};
+    tags::Union{Set{Symbol}, Vector{Symbol}} = Set{Symbol}(),
+    timestamp::Union{TimeDateZone, ZonedDateTime} = TimeDateZone(now(localzone())),
     solvable::Union{Int, Base.RefValue{Int}} = Ref(1),
+    steadytime::Union{Nothing, Nanosecond} = nothing,
     nanosecondtime = nothing,
     smalldata = nothing,
     kwargs...,
-)
+) where {T <: StateType}
     if timestamp isa ZonedDateTime
         # TODO @warn
-        timestamp = NanoDate(timestamp)
+        timestamp = TimeDateZone(timestamp)
     end
     if !isnothing(nanosecondtime)
+        @assert isnothing(steadytime), "nanosecondtime is replaced by steadytime. Cannot specify both steadytime and nanosecondtime"
         Base.depwarn("nanosecondtime kwarg is deprecated, use steadytime instead", :VariableDFG)
         steadytime = Nanosecond(nanosecondtime)
     end
@@ -248,13 +233,22 @@ function VariableDFG(
     end
     union!(tags, [:VARIABLE])
 
-    return VariableDFG(
+    N = getDimension(T)
+    P = getPointType(T)
+    return VariableDFG{T, P, N}(;
         label,
-        stateType;
         steadytime,
         solvable,
         tags,
         timestamp,
+        kwargs...,
+    )
+end
+
+function VariableDFG(label::Symbol, state::State; kwargs...)
+    return VariableCompute(;
+        label,
+        states = OrderedDict(state.label => state),
         kwargs...,
     )
 end
@@ -294,7 +288,7 @@ $(TYPEDFIELDS)
     label::Symbol
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref)"""
-    timestamp::NanoDate
+    timestamp::TimeDateZone
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
     Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
     tags::Set{Symbol}

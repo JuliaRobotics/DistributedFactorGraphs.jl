@@ -441,7 +441,7 @@ function getVariable(dfg::AbstractDFG, label::Symbol, solveKey::Symbol)
     # function getVariable(dfg::AbstractDFG, label::Symbol; stateLabelFilter::Union{Nothing, ...} = nothing) 
     var = getVariable(dfg, label)
 
-    if isa(var, VariableCompute) && !haskey(var.solverDataDict, solveKey)
+    if isa(var, VariableCompute) && !haskey(var.states, solveKey)
         throw(LabelNotFoundError("VariableNode", solveKey))
     elseif !isa(var, VariableCompute)
         @warn "getVariable(dfg, label, solveKey) only supported for type VariableCompute."

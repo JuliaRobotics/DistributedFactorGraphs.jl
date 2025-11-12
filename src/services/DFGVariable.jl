@@ -116,8 +116,8 @@ end
 Interface function to return the `<:ManifoldsBase.AbstractManifold` object of `variableType<:StateType`.
 """
 getManifold(::T) where {T <: StateType} = getManifold(T)
-getManifold(vari::VariableCompute) = getVariableType(vari) |> getManifold
-getManifold(state::State) = getVariableType(state) |> getManifold
+getManifold(vari::VariableCompute) = getStateType(vari) |> getManifold
+getManifold(state::State) = getStateType(state) |> getManifold
 # covers both <:StateType and <:AbstractObservation
 getManifold(dfg::AbstractDFG, lbl::Symbol) = getManifold(dfg[lbl])
 
@@ -212,7 +212,7 @@ Related
 
 isSolved, setSolvedCount!
 """
-getSolvedCount(v::State) = v.solvedCount
+getSolvedCount(v::State) = v.solves
 function getSolvedCount(v::VariableCompute, solveKey::Symbol = :default)
     return getState(v, solveKey) |> getSolvedCount
 end
@@ -229,7 +229,7 @@ Related
 
 getSolved, isSolved
 """
-setSolvedCount!(v::State, val::Int) = v.solvedCount = val
+setSolvedCount!(v::State, val::Int) = v.solves = val
 function setSolvedCount!(v::VariableCompute, val::Int, solveKey::Symbol = :default)
     return setSolvedCount!(getState(v, solveKey), val)
 end
@@ -251,7 +251,7 @@ Related
 
 getSolved, setSolved!
 """
-isSolved(v::State) = 0 < v.solvedCount
+isSolved(v::State) = 0 < v.solves
 function isSolved(v::VariableCompute, solveKey::Symbol = :default)
     return getState(v, solveKey) |> isSolved
 end
@@ -287,7 +287,7 @@ Notes:
 - State default `solveKey=:default`
 """
 function isMarginalized(vert::VariableCompute, solveKey::Symbol = :default)
-    return getState(vert, solveKey).ismargin
+    return getState(vert, solveKey).marginalized
 end
 function isMarginalized(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol = :default)
     return isMarginalized(DFG.getVariable(dfg, sym), solveKey)
@@ -299,7 +299,7 @@ end
 Mark a variable as marginalized `true` or `false`.
 """
 function setMarginalized!(vnd::State, val::Bool)
-    return vnd.ismargin = val
+    return vnd.marginalized = val
 end
 function setMarginalized!(vari::VariableCompute, val::Bool, solveKey::Symbol = :default)
     return setMarginalized!(getState(vari, solveKey), val)
@@ -477,6 +477,7 @@ end
 ##------------------------------------------------------------------------------
 ## CRUD: get, add, update, delete
 ##------------------------------------------------------------------------------
+hasState(v::VariableCompute, label::Symbol) = haskey(v.states, label)
 
 function getState(v::VariableCompute, label::Symbol)
     !haskey(refStates(v), label) && throw(LabelNotFoundError("State", label))
@@ -494,7 +495,7 @@ end
 
 function getStates(dfg::AbstractDFG, variableLabel::Symbol)
     v = getVariable(dfg, variableLabel)
-    return collect(values(v.solverDataDict))
+    return collect(values(v.states))
 end
 
 """
@@ -507,10 +508,10 @@ function addState!(dfg::GraphsDFG, variableLabel::Symbol, state::State)
 end
 
 function addState!(v::VariableCompute, state::State)
-    if haskey(v.solverDataDict, state.solveKey)
-        throw(LabelExistsError("State", state.solveKey))
+    if haskey(v.states, state.label)
+        throw(LabelExistsError("State", state.label))
     end
-    v.solverDataDict[state.solveKey] = state
+    v.states[state.label] = state
     return state
 end
 
@@ -546,10 +547,10 @@ function mergeState!(dfg::GraphsDFG, variableLabel::Symbol, vnd::State)
 end
 
 function mergeState!(v::VariableCompute, vnd::State)
-    if !haskey(v.solverDataDict, vnd.solveKey)
+    if !haskey(v.states, vnd.label)
         addState!(v, vnd)
     else
-        v.solverDataDict[vnd.solveKey] = vnd
+        v.states[vnd.label] = vnd
     end
     return 1
 end
@@ -596,10 +597,10 @@ function deleteState!(dfg::GraphsDFG, variableLabel::Symbol, label::Symbol)
 end
 
 function deleteState!(v::VariableCompute, label::Symbol)
-    if !haskey(v.solverDataDict, label)
+    if !haskey(v.states, label)
         throw(LabelNotFoundError("State", label))
     end
-    delete!(v.solverDataDict, label)
+    delete!(v.states, label)
     return 1
 end
 
@@ -637,7 +638,7 @@ end
 List all the variable state labels.
 """
 function listStates(v::VariableCompute; labelFilter::Union{Nothing, Function} = nothing)
-    labels = collect(keys(v.solverDataDict))
+    labels = collect(keys(v.states))
     return filterDFG!(labels, labelFilter)
 end
 

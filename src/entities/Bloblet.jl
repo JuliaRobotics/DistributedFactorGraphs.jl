@@ -21,3 +21,46 @@ function StructUtils.lift(::Type{Bloblets}, json_vector::Vector)
         Symbol(x["label"]) => Bloblet(Symbol(x["label"]), x["val"]) for x in json_vector
     )
 end
+
+"""
+    $(SIGNATURES)
+"""
+function getBloblet(node, label::Symbol)
+    !haskey(refBloblets(node), label) && throw(LabelNotFoundError("Bloblet", label))
+    return refBloblets(node)[label]
+end
+
+"""
+    $(SIGNATURES)
+"""
+function addBloblet!(node, bloblet::Bloblet)
+    label = getLabel(bloblet)
+    haskey(refBloblets(node), label) && throw(LabelExistsError("Bloblet", label))
+    refBloblets(node)[label] = bloblet
+    return bloblet
+end
+
+"""
+    $(SIGNATURES)
+"""
+function mergeBloblet!(node, bloblet::Bloblet)
+    refBloblets(node)[getLabel(bloblet)] = bloblet
+    return 1
+end
+
+"""
+    $(SIGNATURES)
+"""
+function deleteBloblet!(node, label::Symbol)
+    !haskey(refBloblets(node), label) && throw(LabelNotFoundError("Bloblet", label))
+    pop!(refBloblets(node), label)
+    return 1
+end
+
+"""
+    $(SIGNATURES)
+List all Bloblet keys for a variable `label` in `dfg`
+"""
+function listBloblets(node)
+    return collect(keys(refBloblets(node)))
+end

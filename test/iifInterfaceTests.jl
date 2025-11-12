@@ -177,8 +177,8 @@ end
     @test getLabel(v1) == v1.label
     @test getTags(v1) == v1.tags
     @test getTimestamp(v1) == v1.timestamp
-    @test getState(v1, :default) === v1.solverDataDict[:default]
-    @test refStates(v1) == v1.solverDataDict
+    @test getState(v1, :default) === v1.states[:default]
+    @test refStates(v1) == v1.states
 
     @test typeof(getVariableType(v1)) == Position{1}
     @test typeof(getVariableType(v2)) == Position{1}

@@ -274,12 +274,12 @@ function DFGVariableSCA()
         solverDataDict = Dict(:default => State{TestVariableType1}()),
     )
 
-    # v1.solverDataDict[:default].val[1] = [0.0;]
-    # v1.solverDataDict[:default].bw[1] = [1.0;]
-    # v2.solverDataDict[:default].val[1] = [0.0;0.0]
-    # v2.solverDataDict[:default].bw[1] = [1.0;1.0]
-    # v3.solverDataDict[:default].val[1] = [0.0;0.0]
-    # v3.solverDataDict[:default].bw[1] = [1.0;1.0]
+    # v1.states[:default].val[1] = [0.0;]
+    # v1.states[:default].bw[1] = [1.0;]
+    # v2.states[:default].val[1] = [0.0;0.0]
+    # v2.states[:default].bw[1] = [1.0;1.0]
+    # v3.states[:default].val[1] = [0.0;0.0]
+    # v3.states[:default].bw[1] = [1.0;1.0]
 
     @test getLabel(v1) == v1_lbl
     @test getTags(v1) == v1_tags
@@ -290,7 +290,7 @@ function DFGVariableSCA()
     @test getSolvable(v2) == 1
 
     # TODO direct use is not recommended, use accessors, maybe not export or deprecate
-    @test refStates(v1) == v1.solverDataDict
+    @test refStates(v1) == v1.states
 
     # @test getMetadata(v1) == Dict{Symbol, MetadataTypes}()
 
@@ -611,7 +611,7 @@ function VSDTestBlock!(fg, v1)
     @test_throws LabelNotFoundError getState(fg, :a, :parametric)
 
     #FIXME copied from lower
-    @test getState(v1, :default) === v1.solverDataDict[:default]
+    @test getState(v1, :default) === v1.states[:default]
 
     # Add new VND of type ContinuousScalar to :x0
     # Could also do State(ContinuousScalar())
@@ -766,7 +766,7 @@ function blobsStoresTestBlock!(fg)
         origin = "origin2",
         description = "description2",
         mimetype = "mimetype2",
-        timestamp = DFG.NanoDate("2020-08-12T12:00:00.000"),
+        timestamp = DFG.TimeDateZone("2020-08-12T12:00:00.000Z"),
     )
     de2_update = Blobentry(;
         blobid = uuid4(),
@@ -776,7 +776,7 @@ function blobsStoresTestBlock!(fg)
         origin = "origin2",
         description = "description2",
         mimetype = "mimetype2",
-        timestamp = DFG.NanoDate("2020-08-12T12:00:00.000"),
+        timestamp = DFG.TimeDateZone("2020-08-12T12:00:00.000Z"),
     )
     @test getLabel(de1) == de1.label
     @test getTimestamp(de1) == de1.timestamp
@@ -1550,13 +1550,13 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
         # vnd.BayesNetVertID = :outid
         # push!(vnd.BayesNetOutVertIDs, :id)
         # vnd.bw[1] = [1.0;]
-        vnd.dontmargin = true
+        # vnd.dontmargin = true
         # vnd.eliminated = true
-        vnd.infoPerCoord .= Float64[1.5;]
+        vnd.observability .= Float64[1.5;]
         vnd.initialized = true
-        vnd.ismargin = true
+        vnd.marginalized = true
         push!(vnd.separator, :sep)
-        vnd.solvedCount = 2
+        vnd.solves = 2
         # vnd.val[1] = [2.0;]
         #update
         mergeVariable!(dfg, v4)

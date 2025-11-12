@@ -193,7 +193,7 @@ function setSolverData!(v::VariableCompute, data::State, key::Symbol = :default)
         :setSolverData!,
     )
     @assert key == data.solveKey "State.solveKey=:$(data.solveKey) does not match requested :$(key)"
-    return v.solverDataDict[key] = data
+    return v.states[key] = data
 end
 
 @deprecate mergeVariableSolverData!(args...; kwargs...) mergeState!(args...; kwargs...)

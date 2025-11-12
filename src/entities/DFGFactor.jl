@@ -74,13 +74,13 @@ StructUtils.@kwarg struct FactorDFG{T <: AbstractObservation, N} <: AbstractGrap
     variableorder::NTuple{N, Symbol} & (choosetype = x->NTuple{length(x), Symbol},) # NOTE v0.29 renamed from _variableOrderSymbols
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref)"""
-    timestamp::NanoDate = ndnow(UTC) & (lower = timestamp,) # NOTE v0.29 changed from ZonedDateTime
+    timestamp::TimeDateZone = TimeDateZone(now(localzone())) # NOTE v0.29 changed from ZonedDateTime
     # TODO
     # """(Optional) Steady (monotonic) time in nanoseconds `Nanosecond` (`Int64``)"""
     # nstime::Nanosecond #NOTE v0.29 REMOVED as not used, add when needed, or now as steadytime.
     """Solvable flag for the factor.
     Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)"""
-    solvable::Base.RefValue{Int} = Ref(1) & (lower = getindex, lift = Ref)
+    solvable::Base.RefValue{Int} = Ref(1) #& (lower = getindex, lift = Ref)
     """Dictionary of small data associated with this variable.
     Accessors: [`getBloblet`](@ref), [`addBloblet!`](@ref)"""
     bloblets::Bloblets = Bloblets() #NOTE v0.29 changed from smallData::Dict{Symbol, MetadataTypes} = Dict{Symbol, MetadataTypes}()
@@ -102,16 +102,13 @@ end
 
 version(::Type{<:FactorDFG}) = v"0.29.0"
 
-#FIXME use style to avoid type piracy
-StructUtils.structlike(::JSON.JSONStyle, ::Type{Base.RefValue{Int64}}) = false
-
 ##------------------------------------------------------------------------------
 ## Constructors
 function FactorDFG(
     variableorder::Union{<:Tuple, Vector{Symbol}},
     observation::AbstractObservation;
     label::Symbol = assembleFactorName(variableorder),
-    timestamp::Union{NanoDate, ZonedDateTime} = ndnow(UTC),
+    timestamp::Union{TimeDateZone, ZonedDateTime} = TimeDateZone(now(localzone())),
     tags::Union{Set{Symbol}, Vector{Symbol}} = Set{Symbol}([:FACTOR]),
     bloblets::Bloblets = Bloblets(),
     multihypo::Vector{Float64} = Float64[],
@@ -132,10 +129,10 @@ function FactorDFG(
 
     if timestamp isa ZonedDateTime
         Base.depwarn(
-            "`FactorDFG` timestamp as `ZonedDateTime` is deprecated, use `NanoDate` instead",
+            "`FactorDFG` timestamp as `ZonedDateTime` is deprecated, use `TimeDateZone` instead",
             :FactorDFG,
         )
-        timestamp = NanoDate(timestamp.utc_datetime)
+        timestamp = TimeDateZone(timestamp.utc_datetime)
     end
 
     # create factor data
@@ -165,7 +162,7 @@ function FactorDFG(
     state::FactorState = FactorState(),
     cache = nothing;
     tags::Set{Symbol} = Set{Symbol}([:FACTOR]),
-    timestamp::Union{DateTime, ZonedDateTime, NanoDate} = ndnow(UTC),
+    timestamp::Union{DateTime, ZonedDateTime, TimeDateZone} = TimeDateZone(now(localzone())),
     solvable::Int = 1,
     bloblets::Bloblets = Bloblets(),
     blobentries::Blobentries = Blobentries(),
@@ -192,10 +189,10 @@ function FactorDFG(
     # deprecated in v0.29
     if timestamp isa ZonedDateTime
         Base.depwarn(
-            "`FactorDFG` timestamp as `ZonedDateTime` is deprecated, use `NanoDate(timestamp.utc_datetime)` instead",
+            "`FactorDFG` timestamp as `ZonedDateTime` is deprecated, use `TimeDateZone(timestamp.utc_datetime)` instead",
             :FactorDFG,
         )
-        nd_timestamp = NanoDate(timestamp.utc_datetime)
+        nd_timestamp = TimeDateZone(timestamp.utc_datetime)
     else
         nd_timestamp = timestamp
     end
@@ -239,13 +236,13 @@ Base.@kwdef struct FactorSummary <: AbstractGraphFactor
     variableorder::Tuple{Vararg{Symbol}} #TODO changed to NTuple
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref)"""
-    timestamp::NanoDate
+    timestamp::TimeDateZone
 end
 
 function FactorSummary(
     label::Symbol,
     variableorder::Union{Vector{Symbol}, Tuple};
-    timestamp::NanoDate = ndnow(UTC),
+    timestamp::TimeDateZone = TimeDateZone(now(localzone())),
     tags::Set{Symbol} = Set{Symbol}(),
 )
     return FactorSummary(label, tags, Tuple(variableorder), timestamp)

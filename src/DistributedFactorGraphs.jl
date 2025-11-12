@@ -20,7 +20,7 @@ using DocStringExtensions
 using Dates
 using Random
 using TimeZones
-using NanoDates
+using TimesDates
 using JSON
 export StructUtils # export for use in macros
 using LinearAlgebra
@@ -83,7 +83,7 @@ export FactorDFG, FactorSummary, FactorSkeleton
 
 export Blobentry
 
-export State, PackedState
+export State
 
 ##------------------------------------------------------------------------------
 ## Functions
@@ -531,6 +531,7 @@ include("entities/Bloblet.jl")
 include("DataBlobs/entities/BlobEntry.jl")
 include("DataBlobs/entities/BlobStores.jl")
 
+include("serialization/DFGStructStyles.jl")
 include("serialization/PackedSerialization.jl")
 include("serialization/DistributionSerialization.jl")
 

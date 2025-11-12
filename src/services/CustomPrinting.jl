@@ -17,9 +17,9 @@ function printVariable(
 
     if short
         # opmemt = (getVariableType(vert) |> typeof ).name
-        vari = getVariableType(vert) |> typeof
-        printstyled(ioc, typeof(vert).name.name, "{"; bold = true)
-        printstyled(ioc, vari.name.name; bold = true, color = :blue)
+        vari = getStateType(vert) |> typeof
+        printstyled(ioc, nameof((typeof(vert))), "{"; bold = true)
+        printstyled(ioc, vari; bold = true, color = :blue)
         printstyled(ioc, "...}"; bold = true)
         println(ioc, "")
         # printstyled(ioc, summary(vert),"\n", bold=true)
@@ -30,14 +30,13 @@ function printVariable(
             println(ioc, "")
         catch e
         end
-        vnd = if haskey(vert.solverDataDict, :default)
+        vnd = if hasState(vert, :default)
             getState(vert, :default)
         else
             nothing
         end
-        println(ioc, "  ID:         ", vert.id)
         println(ioc, "  timestamp:  ", vert.timestamp)
-        println(ioc, "   nstime:    ", vert.nstime)
+        isnothing(vert.steadytime) || println(ioc, "  steadytime: ", vert.steadytime)
         print(ioc, "  label:      ")
         printstyled(ioc, vert.label; bold = true)
         println(ioc)
@@ -49,7 +48,7 @@ function printVariable(
         # list the marginalization status
         ismarg = solk .|> x -> isMarginalized(vert, x)
         isinit = solk .|> x -> isInitialized(vert, x)
-        printstyled(ioc, "  # VND solveKeys=    ($(lsolk))"; bold = true)
+        printstyled(ioc, "  # states:    ($(lsolk))"; bold = true)
         println(ioc, "")
         printstyled(ioc, "  # initialized:      "; bold = true)
         println(ioc, "(true=", sum(isinit), ",false=", length(isinit) - sum(isinit), ")")
