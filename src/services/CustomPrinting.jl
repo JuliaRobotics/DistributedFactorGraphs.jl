@@ -74,7 +74,7 @@ function printVariable(
         printstyled(ioc, summary(vert); bold = true, color = :blue)
         println(ioc, "")
 
-        :solver in skipfields && push!(skipfields, :solverDataDict)
+        :solver in skipfields && push!(skipfields, :states)
 
         t = typeof(vert)
         fields = setdiff(fieldnames(t), skipfields)

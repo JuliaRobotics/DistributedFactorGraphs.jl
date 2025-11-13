@@ -331,6 +331,7 @@ export @defStateType #TODO Should this be exported?
 # list of unstable functions not exported any more
 # will move to public or deprecate over time
 const unstable_functions::Vector{Symbol} = [
+    :refStates, #internal maybe make public
     :InMemoryBlobstore,
     :MetadataTypes, #maybe make public after metadata stable
     :getFactorState, # FIXME getFactorState were questioned and being reviewed again for name, other than that they are checked.
@@ -396,7 +397,7 @@ const unstable_functions::Vector{Symbol} = [
     :plotDFG,
     :pack,
     :packDistribution,
-    :packVariable,
+    # :packVariable,
     # :packFactor,
     :packBlob,
     :packState,
@@ -468,7 +469,7 @@ const unstable_functions::Vector{Symbol} = [
     :DFGFactor,
     :PackedFactor,
     :Factor,
-    :AbstractPointParametricEst,
+    # :AbstractPointParametricEst,
     # :MeanMaxPPE,
     # :getPPEMax,
     # :getPPEMean,

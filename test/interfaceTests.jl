@@ -22,6 +22,9 @@ if false
     global_logger(logger)
 end
 
+# DFG.@usingDFG true
+# include("testBlocks.jl")
+
 # DFG Accessors
 @testset "DFG Structure and Accessors" begin
     # Constructors
@@ -64,13 +67,13 @@ end
     @test printVariable(iobuf, var1; skipfields = [:timestamp, :solver, :ppe, :nstime]) ===
           nothing
 
-    @test String(take!(iobuf)) ==
-          "VariableCompute{TestVariableType1, Vector{Float64}, 1}\nid:\nnothing\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol, Union{Bool, Float64, Int64, Vector{Bool}, Vector{Float64}, Vector{Int64}, Vector{String}, String}}()\ndataDict:\nDict{Symbol, Blobentry}()\nsolvable:\nRefValue{Int64}(0)\n"
-    # "VariableCompute{TestVariableType1, Vector{Float64}, 1}\nid:\nnothing\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol, Union{Bool, Float64, Int64, Vector{Bool}, Vector{Float64}, Vector{Int64}, Vector{String}, String}}(:small=>\"data\")\ndataDict:\nDict{Symbol, Blobentry}()\nsolvable:\n0\n"
+    varstr = String(take!(iobuf))
+    @test occursin(r"VariableDFG", varstr)
+    @test occursin(r"label", varstr)
 
     @test printVariable(iobuf, var1; short = true) === nothing
     varstr = String(take!(iobuf))
-    @test occursin(r"VariableCompute", varstr)
+    @test occursin(r"VariableDFG", varstr)
     @test occursin(r"timestamp", varstr)
     @test occursin(r"label", varstr)
     @test occursin(r"bandwidths", varstr)

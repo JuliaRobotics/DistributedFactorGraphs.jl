@@ -50,7 +50,12 @@ StructUtils.@kwarg struct Blobentry
 end
 version(::Type{Blobentry}) = v"0.1.0"
 
-function Blobentry(label::Symbol, blobstore = :default; metadata, kwargs...)
+function Blobentry(
+    label::Symbol,
+    blobstore = :default;
+    metadata = JSONText("{}"),
+    kwargs...,
+)
     if !(metadata isa JSONText)
         metadata = JSONText(JSON.json(metadata))
     end

@@ -241,7 +241,7 @@ function compareVariable(
     skiplist = union(
         [
             :attributes;
-            :solverDataDict;
+            :states;
             :createdTimestamp;
             :lastUpdatedTimestamp;
             :timezone;

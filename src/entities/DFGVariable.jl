@@ -54,7 +54,7 @@ $(TYPEDFIELDS)
     """
     observability::Vector{Float64} = Float64[]#zeros(getDimension(T)) #TODO renamed from infoPerCoord
     """
-    Should this variable solveKey be treated as marginalized in inference computations.
+    Should this state be treated as marginalized in inference computations.
     """
     marginalized::Bool = false #TODO renamed from ismargin 
     # """
@@ -62,7 +62,7 @@ $(TYPEDFIELDS)
     # """
     # dontmargin::Bool = false
     """
-    How many times has a solver updated this variable solveKey estimte.
+    How many times has a solver updated this state estimate.
     """
     solves::Int = 0 # TODO renamed from solvedCount
     # """
@@ -242,6 +242,9 @@ function VariableDFG(
         Base.depwarn("smalldata kwarg is deprecated, use bloblets instead", :VariableDFG)
         #TODO convert smalldata to bloblets
     end
+    if solvable isa Int
+        solvable = Ref(solvable)
+    end
     union!(tags, [:VARIABLE])
 
     N = getDimension(T)
@@ -250,7 +253,12 @@ function VariableDFG(
 end
 
 function VariableDFG(label::Symbol, state::State; kwargs...)
-    return VariableCompute(; label, states = OrderedDict(state.label => state), kwargs...)
+    return VariableDFG(
+        label,
+        getStateType(state);
+        states = OrderedDict(state.label => state),
+        kwargs...,
+    )
 end
 
 # Base.getproperty(x::VariableCompute, f::Symbol) = begin

@@ -188,22 +188,16 @@ function FactorDFG(
         solvercache = Ref(cache)
     end
 
-    # deprecated in v0.29
+    # TODO v0.29 deprecate ZonedDateTime or convert internally
     if timestamp isa ZonedDateTime
-        Base.depwarn(
-            "`FactorDFG` timestamp as `ZonedDateTime` is deprecated, use `TimeDateZone(timestamp.utc_datetime)` instead",
-            :FactorDFG,
-        )
-        nd_timestamp = TimeDateZone(timestamp.utc_datetime)
-    else
-        nd_timestamp = timestamp
+        timestamp = TimeDateZone(timestamp)
     end
 
     return FactorDFG(
         label,
         tags,
         Tuple(variableorder),
-        nd_timestamp,
+        timestamp,
         Ref(solvable),
         bloblets,
         observation,

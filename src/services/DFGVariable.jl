@@ -578,15 +578,9 @@ function copytoState!(
     stateLabel::Symbol,
     state::State,
 )
-    newstate = State(
-        getVariableType(state);
-        (k => deepcopy(getproperty(state, k)) for k in fieldnames(State))...,
-        solveKey = stateLabel,
-    )
+    newstate = State(state; label = stateLabel)
     return mergeState!(dfg, variableLabel, newstate)
 end
-
-#
 
 """
     $(SIGNATURES)

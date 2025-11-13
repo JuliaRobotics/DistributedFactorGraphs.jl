@@ -257,12 +257,16 @@ function DFGVariableSCA()
         TestVariableType1();
         tags = v1_tags,
         solvable = 0,
-        solverDataDict = Dict(:default => State{TestVariableType1}()),
+        states = Dict(:default => State{TestVariableType1}(; label = :default)),
     )
-    v2 = VariableCompute(:b, State{TestVariableType2}(); tags = Set([:VARIABLE, :LANDMARK]))
+    v2 = VariableCompute(
+        :b,
+        State{TestVariableType2}(; label = :default);
+        tags = Set([:VARIABLE, :LANDMARK]),
+    )
     v3 = VariableCompute(
         :c,
-        State{TestVariableType2}();
+        State{TestVariableType2}(; label = :default);
         timestamp = ZonedDateTime("2020-08-11T00:12:03.000-05:00"),
     )
 
@@ -271,7 +275,7 @@ function DFGVariableSCA()
         TestVariableType1();
         tags = v1_tags,
         solvable = 0,
-        solverDataDict = Dict(:default => State{TestVariableType1}()),
+        states = Dict(:default => State{TestVariableType1}(; label = :default)),
     )
 
     # v1.states[:default].val[1] = [0.0;]
@@ -290,7 +294,7 @@ function DFGVariableSCA()
     @test getSolvable(v2) == 1
 
     # TODO direct use is not recommended, use accessors, maybe not export or deprecate
-    @test refStates(v1) == v1.states
+    @test DFG.refStates(v1) == v1.states
 
     # @test getMetadata(v1) == Dict{Symbol, MetadataTypes}()
 
@@ -578,7 +582,7 @@ function VSDTestBlock!(fg, v1)
     # **State**
     #  - `getSolveInProgress`
 
-    vnd = State{TestVariableType1}(; solveKey = :parametric)
+    vnd = State{TestVariableType1}(; label = :parametric)
     # vnd.val[1] = [0.0;]
     # vnd.bw[1] = [1.0;]
     @test addState!(fg, :a, vnd) == vnd
@@ -616,7 +620,7 @@ function VSDTestBlock!(fg, v1)
     # Add new VND of type ContinuousScalar to :x0
     # Could also do State(ContinuousScalar())
 
-    vnd = State{TestVariableType1}(; solveKey = :parametric)
+    vnd = State{TestVariableType1}(; label = :parametric)
     # vnd.val[1] = [0.0;]
     # vnd.bw[1] = [1.0;]
 
@@ -636,7 +640,6 @@ function VSDTestBlock!(fg, v1)
 
     return nothing
 
-    #TODO solverDataDict() not deprecated
     # @test refStates(newvar) == refStates(v1)
 
     # @test @test_deprecated mergeUpdateVariableSolverData!(fg, newvar)
@@ -735,17 +738,7 @@ function DataEntriesTestBlock!(fg, v2)
     #delete from dfg
     @test deleteBlobentry!(fg, :a, :key2) == 1
     @test listBlobentries(v1) == Symbol[]
-    deleteBlobentry!(fg, :b, :key2)
-
-    # packed variable data entries
-    pacv = packVariable(v1)
-    @test addBlobentry!(pacv, de1) == de1
-    @test hasBlobentry(pacv, :key1)
-    @test deepcopy(de1) == getBlobentry(pacv, :key1)
-    @test getBlobentries(pacv) == [deepcopy(de1)]
-    @test issetequal(listBlobentries(pacv), [:key1])
-    # @test deleteBlobentry!(pacv, de1) == de1
-
+    return deleteBlobentry!(fg, :b, :key2)
 end
 
 function blobsStoresTestBlock!(fg)
@@ -756,7 +749,7 @@ function blobsStoresTestBlock!(fg)
         crchash = 0xAAAA,
         origin = "origin1",
         description = "description1",
-        mimetype = "mimetype1",
+        mimetype = MIME("mimetype1"),
     )
     de2 = Blobentry(;
         blobid = uuid4(),
@@ -765,7 +758,7 @@ function blobsStoresTestBlock!(fg)
         crchash = 0xFFFF,
         origin = "origin2",
         description = "description2",
-        mimetype = "mimetype2",
+        mimetype = MIME("mimetype2"),
         timestamp = DFG.TimeDateZone("2020-08-12T12:00:00.000Z"),
     )
     de2_update = Blobentry(;
@@ -775,7 +768,7 @@ function blobsStoresTestBlock!(fg)
         crchash = 0x0123,
         origin = "origin2",
         description = "description2",
-        mimetype = "mimetype2",
+        mimetype = MIME("mimetype2"),
         timestamp = DFG.TimeDateZone("2020-08-12T12:00:00.000Z"),
     )
     @test getLabel(de1) == de1.label
@@ -1157,9 +1150,15 @@ function connectivityTestGraph(
     dfg = T(; graphLabel = :testGraph)
 
     vars = vcat(
-        map(n -> VARTYPE(Symbol("x$n"), State{TestVariableType1}()), 1:numNodesType1),
         map(
-            n -> VARTYPE(Symbol("x$(numNodesType1+n)"), State{TestVariableType2}()),
+            n -> VARTYPE(Symbol("x$n"), State{TestVariableType1}(; label = :default)),
+            1:numNodesType1,
+        ),
+        map(
+            n -> VARTYPE(
+                Symbol("x$(numNodesType1+n)"),
+                State{TestVariableType2}(; label = :default),
+            ),
             1:numNodesType2,
         ),
     )
@@ -1391,10 +1390,10 @@ function ProducingDotFiles(
     dotdfg = testDFGAPI(; graphLabel = :testGraph)
 
     if v1 === nothing
-        v1 = VARTYPE(:a, State{TestVariableType1}())
+        v1 = VARTYPE(:a, State{TestVariableType1}(; label = :default))
     end
     if v2 === nothing
-        v2 = VARTYPE(:b, State{TestVariableType1}())
+        v2 = VARTYPE(:b, State{TestVariableType1}(; label = :default))
     end
     if f1 === nothing
         if (FACTYPE == FactorCompute)
