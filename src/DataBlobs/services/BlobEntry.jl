@@ -131,7 +131,8 @@ Should be extended if DFG variable is not returned by reference.
 Also see: [`getBlobentry`](@ref), [`addBlob!`](@ref), [`mergeBlobentry!`](@ref)
 """
 function addBlobentry!(var::VariableCompute, entry::Blobentry)
-    haskey(var.blobentries, entry.label) && throw(LabelExistsError("Blobentry", entry.label))
+    haskey(var.blobentries, entry.label) &&
+        throw(LabelExistsError("Blobentry", entry.label))
     var.blobentries[entry.label] = entry
     return entry
 end

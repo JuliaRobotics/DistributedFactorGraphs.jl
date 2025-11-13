@@ -43,7 +43,7 @@ using UUIDs
                     label = :testing2,
                     blobstore = :store,
                     # timestamp = ZonedDateTime(2014, 5, 30, 21, tz"UTC-4"),
-                    timestamp = DFG.TimeDateZone( ZonedDateTime(2014, 5, 30, 21, tz"UTC-4")),
+                    timestamp = DFG.TimeDateZone(ZonedDateTime(2014, 5, 30, 21, tz"UTC-4")),
                 ),
             ),
             verts,

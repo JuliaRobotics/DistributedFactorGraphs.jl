@@ -213,10 +213,12 @@ function compare(a::State, b::State)
     !isapprox(a.observability, b.observability; atol = 1e-13) &&
         @debug("infoPerCoord is not equal") === nothing &&
         return false
-    a.marginalized != b.marginalized && @debug("ismargin is not equal") === nothing && return false
+    a.marginalized != b.marginalized &&
+        @debug("ismargin is not equal") === nothing &&
+        return false
     # a.dontmargin != b.dontmargin &&
-        # @debug("dontmargin is not equal") === nothing &&
-        # return false
+    # @debug("dontmargin is not equal") === nothing &&
+    # return false
     getVariableType(a) != getVariableType(b) &&
         @debug("variableType is not equal") === nothing &&
         return false

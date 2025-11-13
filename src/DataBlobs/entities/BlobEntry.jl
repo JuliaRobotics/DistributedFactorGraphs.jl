@@ -141,4 +141,3 @@ function StructUtils.makedict(s::StructUtils.StructStyle, T::Type{Blobentries}, 
     end
     return entries, nothing
 end
-

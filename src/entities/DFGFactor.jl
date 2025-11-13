@@ -162,7 +162,9 @@ function FactorDFG(
     state::FactorState = FactorState(),
     cache = nothing;
     tags::Set{Symbol} = Set{Symbol}([:FACTOR]),
-    timestamp::Union{DateTime, ZonedDateTime, TimeDateZone} = TimeDateZone(now(localzone())),
+    timestamp::Union{DateTime, ZonedDateTime, TimeDateZone} = TimeDateZone(
+        now(localzone()),
+    ),
     solvable::Int = 1,
     bloblets::Bloblets = Bloblets(),
     blobentries::Blobentries = Blobentries(),

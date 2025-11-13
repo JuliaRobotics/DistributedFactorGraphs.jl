@@ -232,8 +232,9 @@ function loadDFG(file::AbstractString)
     catch e
         if e isa MethodError
             @warn "Deprecated serialization: Failed to read DFG metadata. Attempting to load using the old format. Error:" e
-            fgPacked =
-                GraphsDFGs.PackedGraphsDFG(JSON.parse(jstr, GraphsDFGs._OldPackedGraphsDFG; style = DFGJSONStyle()))
+            fgPacked = GraphsDFGs.PackedGraphsDFG(
+                JSON.parse(jstr, GraphsDFGs._OldPackedGraphsDFG; style = DFGJSONStyle()),
+            )
         else
             rethrow(e)
         end

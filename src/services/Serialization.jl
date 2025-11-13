@@ -93,10 +93,10 @@ function packState(d::State{T}) where {T <: StateType}
     length(d.covar) > 1 && @warn(
         "Packing of more than one parametric covariance is NOT supported yet, only packing first."
     )
-    
+
     return (
         label = d.label,
-        vecval =_val,
+        vecval = _val,
         dimval = size(castval, 1),
         vecbw = d.bw[:],
         dimbw = size(d.bw, 1),

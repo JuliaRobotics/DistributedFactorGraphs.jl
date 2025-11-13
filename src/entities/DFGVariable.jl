@@ -95,7 +95,7 @@ StructUtils.lift(::Type{<:State}, obj) = DFG.unpackState(obj)
 
 ##------------------------------------------------------------------------------
 ## States - OrderedDict{Symbol, State}
-const States = OrderedDict{Symbol, State{T, P, N}} where {T<:AbstractStateType,P,N}
+const States = OrderedDict{Symbol, State{T, P, N}} where {T <: AbstractStateType, P, N}
 
 StructUtils.dictlike(::Type{<:States}) = false
 StructUtils.structlike(::Type{<:States}) = false
@@ -107,7 +107,11 @@ function StructUtils.lower(states::States)
     end
 end
 
-function StructUtils.lift(::StructUtils.StructStyle, S::Type{<:States{T}}, json_vector) where T
+function StructUtils.lift(
+    ::StructUtils.StructStyle,
+    S::Type{<:States{T}},
+    json_vector,
+) where {T}
     states = S()
     foreach(json_vector) do obj
         return push!(states, Symbol(obj.label) => StructUtils.make(State{T}, obj))
@@ -170,7 +174,10 @@ version(::Type{<:VariableDFG}) = v"0.29"
 refStates(v::VariableDFG) = v.states
 
 #NOTE fielddefaults and fieldtags not through @kwarg macro due to error with State{T, P, N}
-function StructUtils.fielddefaults(::StructUtils.StructStyle, ::Type{VariableDFG{T,P,N}}) where {T,P,N} 
+function StructUtils.fielddefaults(
+    ::StructUtils.StructStyle,
+    ::Type{VariableDFG{T, P, N}},
+) where {T, P, N}
     return (
         timestamp = TimeDateZone(now(localzone())),
         tags = Set{Symbol}(),
@@ -223,8 +230,12 @@ function VariableDFG(
         timestamp = TimeDateZone(timestamp)
     end
     if !isnothing(nanosecondtime)
-        @assert isnothing(steadytime), "nanosecondtime is replaced by steadytime. Cannot specify both steadytime and nanosecondtime"
-        Base.depwarn("nanosecondtime kwarg is deprecated, use steadytime instead", :VariableDFG)
+        @assert isnothing(steadytime),
+        "nanosecondtime is replaced by steadytime. Cannot specify both steadytime and nanosecondtime"
+        Base.depwarn(
+            "nanosecondtime kwarg is deprecated, use steadytime instead",
+            :VariableDFG,
+        )
         steadytime = Nanosecond(nanosecondtime)
     end
     if !isnothing(smalldata)
@@ -235,24 +246,12 @@ function VariableDFG(
 
     N = getDimension(T)
     P = getPointType(T)
-    return VariableDFG{T, P, N}(;
-        label,
-        steadytime,
-        solvable,
-        tags,
-        timestamp,
-        kwargs...,
-    )
+    return VariableDFG{T, P, N}(; label, steadytime, solvable, tags, timestamp, kwargs...)
 end
 
 function VariableDFG(label::Symbol, state::State; kwargs...)
-    return VariableCompute(;
-        label,
-        states = OrderedDict(state.label => state),
-        kwargs...,
-    )
+    return VariableCompute(; label, states = OrderedDict(state.label => state), kwargs...)
 end
-
 
 # Base.getproperty(x::VariableCompute, f::Symbol) = begin
 #     if f == :solvable
@@ -321,10 +320,7 @@ Base.@kwdef struct VariableSkeleton <: AbstractGraphVariable
     tags::Set{Symbol} = Set{Symbol}()
 end
 
-function VariableSkeleton(
-    label::Symbol,
-    tags = Set{Symbol}();
-)
+function VariableSkeleton(label::Symbol, tags = Set{Symbol}();)
     return VariableSkeleton(label, tags)
 end
 
