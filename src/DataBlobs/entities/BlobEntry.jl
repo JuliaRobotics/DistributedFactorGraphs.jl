@@ -127,24 +127,18 @@ end
 
 const Blobentries = OrderedDict{Symbol, Blobentry}
 
-#TODO write Blobentries as array
-# StructUtils.dictlike(::Type{Blobentries}) = false
-# StructUtils.structlike(::Type{Blobentries}) = false
-# StructUtils.arraylike(::Type{Blobentries}) = false
+function StructUtils.lower(entries::Blobentries)
+    return map(collect(values(entries))) do (entry)
+        return StructUtils.lower(entry)
+    end
+end
 
-# function StructUtils.lower(entries::Blobentries)
-#     return map(collect(values(entries))) do (entry)
-#         return StructUtils.lower(entry)
-#     end
-# end
+function StructUtils.makedict(s::StructUtils.StructStyle, T::Type{Blobentries}, json_vector)
+    entries = T()
+    foreach(json_vector) do obj
+        entry, _ = StructUtils.make(s, Blobentry, obj)
+        return push!(entries, Symbol(obj.label[]) => entry)
+    end
+    return entries, nothing
+end
 
-# function StructUtils.lift(s::StructUtils.StructStyle, T::Type{Blobentries}, json_vector)
-#     entries = T()
-#     @warn "lifting" s T json_vector
-#     foreach(json_vector) do obj
-#         global gobj = obj
-#         return push!(entries, Symbol(obj.label) => StructUtils.make(s, Blobentry, obj))
-#     end
-#     @warn "lifted Blobentries" entries
-#     return entries, nothing
-# end
