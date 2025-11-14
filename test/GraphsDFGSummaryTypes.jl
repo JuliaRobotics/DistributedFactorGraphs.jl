@@ -5,9 +5,8 @@
 dfg = GraphsDFG{NoSolverParams, VARTYPE, FACTYPE}()
 function DistributedFactorGraphs.VariableSummary(label::Symbol)
     return VariableSummary(
-        nothing,
         label,
-        DistributedFactorGraphs.now(localzone()),
+        TimeDateZone("2025-11-13T15:21:57.474125421+01:00"),
         Set{Symbol}(),
         :Pose2,
         Dict{Symbol, Blobentry}(),
@@ -16,9 +15,8 @@ end
 
 function DistributedFactorGraphs.VariableSummary(label::Symbol, ::State{T}) where {T}
     return VariableSummary(
-        nothing,
         label,
-        DistributedFactorGraphs.now(localzone()),
+        TimeDateZone("2025-11-13T15:21:57.474125421+01:00"),
         Set{Symbol}(),
         Symbol(T),
         Dict{Symbol, Blobentry}(),
@@ -30,7 +28,7 @@ function DistributedFactorGraphs.VariableSkeleton(label::Symbol, args...)
 end
 
 function DistributedFactorGraphs.VariableSkeleton(label::Symbol, ::State{T}) where {T}
-    return VariableSkeleton(nothing, label, Set{Symbol}())
+    return VariableSkeleton(label, Set{Symbol}())
 end
 
 dfg = GraphsDFG{NoSolverParams, VARTYPE, FACTYPE}()
@@ -105,7 +103,6 @@ end
 
     if VARTYPE == VariableSummary
         @test getTimestamp(v1) == v1.timestamp
-        @test getVariableTypeName(v1) == :Pose2
     end
 end
 

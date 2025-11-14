@@ -151,6 +151,12 @@ end
 
 #TODO is Type correct
 @deprecate getVariableType(args...) getStateType(args...)
+
+function getVariableTypeName(v::VariableSummary)
+    Base.depwarn("getVariableTypeName is deprecated.", :getVariableTypeName)
+    return v.statetype
+end
+
 ## ================================================================================
 ## Deprecated in v0.28
 ##=================================================================================

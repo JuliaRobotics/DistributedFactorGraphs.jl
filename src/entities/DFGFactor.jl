@@ -80,7 +80,7 @@ StructUtils.@kwarg struct FactorDFG{T <: AbstractObservation, N} <: AbstractGrap
     # nstime::Nanosecond #NOTE v0.29 REMOVED as not used, add when needed, or now as steadytime.
     """Solvable flag for the factor.
     Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)"""
-    solvable::Base.RefValue{Int} = Ref(1) #& (lower = getindex, lift = Ref)
+    solvable::Base.RefValue{Int} = Ref{Int}(1) #& (lower = getindex, lift = Ref)
     """Dictionary of small data associated with this variable.
     Accessors: [`getBloblet`](@ref), [`addBloblet!`](@ref)"""
     bloblets::Bloblets = Bloblets() #NOTE v0.29 changed from smallData::Dict{Symbol, MetadataTypes} = Dict{Symbol, MetadataTypes}()

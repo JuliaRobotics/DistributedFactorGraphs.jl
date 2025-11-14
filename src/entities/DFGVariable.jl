@@ -110,7 +110,7 @@ end
 function StructUtils.lift(
     ::StructUtils.StructStyle,
     S::Type{<:States{T}},
-    json_vector,
+    json_vector::Vector,
 ) where {T}
     states = S()
     foreach(json_vector) do obj
@@ -165,7 +165,7 @@ $(TYPEDFIELDS)
     blobentries::Blobentries = Blobentries() #NOTE renamed from dataDict in v0.29
     """Solvable flag for the variable.
     Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)"""
-    solvable::Base.RefValue{Int} = Ref(1) #& (lower = getindex,)
+    solvable::Base.RefValue{Int} = Ref{Int}(1) #& (lower = getindex,)
     statetype::Symbol = Symbol(stringVariableType(T()))
     # TODO autotype or version and statetype
     _autotype::Nothing = nothing #& (name = :type, lower = _ -> TypeMetadata(VariableDFG))
@@ -216,10 +216,10 @@ The default VariableDFG constructor.
 #IIF like contruction helper for VariableDFG
 function VariableDFG(
     label::Symbol,
-    stateType::Union{T, Type{T}};
+    statetype::Union{T, Type{T}};
     tags::Union{Set{Symbol}, Vector{Symbol}} = Set{Symbol}(),
     timestamp::Union{TimeDateZone, ZonedDateTime} = TimeDateZone(now(localzone())),
-    solvable::Union{Int, Base.RefValue{Int}} = Ref(1),
+    solvable::Union{Int, Base.RefValue{Int}} = Ref{Int}(1),
     steadytime::Union{Nothing, Nanosecond} = nothing,
     nanosecondtime = nothing,
     smalldata = nothing,
@@ -299,9 +299,9 @@ $(TYPEDFIELDS)
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
     Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
     tags::Set{Symbol}
-    """Symbol for the variableType for the underlying variable.
-    Accessor: [`getVariableType`](@ref)"""
-    variableTypeName::Symbol & (json = (name = "variableType",)) # TODO check from StructTypes.names(::Type{VariableSummary}) = ((:variableTypeName, :variableType),)
+    """Symbol for the state type for the underlying variable.
+    Accessor: [`getStateType`](@ref)"""
+    statetype::Symbol
     """Dictionary of large data associated with this variable.
     Accessors: [`addBlobentry!`](@ref), [`getBlobentry`](@ref), [`mergeBlobentry!`](@ref), and [`deleteBlobentry!`](@ref)"""
     blobentries::Blobentries
@@ -336,12 +336,12 @@ end
 ## Conversion constructors
 ##==============================================================================
 
-function VariableSummary(v::VariableCompute)
+function VariableSummary(v::VariableCompute{T}) where {T}
     return VariableSummary(
         v.label,
         v.timestamp,
         copy(v.tags),
-        Symbol(typeof(getVariableType(v))),
+        Symbol(stringVariableType(T())),
         copy(v.blobentries),
     )
 end

@@ -359,8 +359,6 @@ const unstable_functions::Vector{Symbol} = [
     :findFactorsBetweenNaive,
     :getAgentLabel,
     :getGraphLabel,
-    :getVariableTypeName,
-    :getVariableType,
     :getDescription,
     :getAddHistory,
     :getSolverParams,
@@ -403,7 +401,7 @@ const unstable_functions::Vector{Symbol} = [
     :packState,
     :unpack,
     :unpackDistribution,
-    :unpackVariable,
+    # :unpackVariable,
     # :unpackFactor,
     :unpackBlob,
     :unpackState,
@@ -429,6 +427,8 @@ const unstable_functions::Vector{Symbol} = [
     # no set on these
 
     #deprecated in v0.29
+    :getVariableTypeName,
+    :getVariableType,
     :setTimestamp,
     :setMetadata!, # no set, use add merge
     :setAgentMetadata!,

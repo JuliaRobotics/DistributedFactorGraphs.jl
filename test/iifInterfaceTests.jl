@@ -404,14 +404,8 @@ end
     # Check all fields are equal for all variables
     for v in ls(summaryGraph)
         for field in variableFields
-            if field != :variableTypeName
-                @test getproperty(getVariable(dfg, v), field) ==
-                      getfield(getVariable(summaryGraph, v), field)
-            else
-                # Special case to check the symbol variableType is equal to the full variableType.
-                @test Symbol(typeof(getVariableType(getVariable(dfg, v)))) ==
-                      getVariableTypeName(getVariable(summaryGraph, v))
-            end
+            @test getproperty(getVariable(dfg, v), field) ==
+                  getfield(getVariable(summaryGraph, v), field)
         end
     end
     for f in lsf(summaryGraph)

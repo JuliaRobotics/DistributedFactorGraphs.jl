@@ -35,15 +35,15 @@ TestFunctorInferenceType1() = TestFunctorInferenceType1(TestBelief())
 TestFunctorInferenceType2() = TestFunctorInferenceType2(TestBelief())
 TestAbstractPrior() = TestAbstractPrior(TestBelief())
 
-struct PackedNothingDistribution <: AbstractPackedBelief
-    _type::Symbol
-    function PackedNothingDistribution(; _type::String = "PackedNothingDistribution")
-        return new(Symbol(_type))
-    end
-end
+# struct PackedNothingDistribution <: AbstractPackedBelief
+#     _type::Symbol
+#     function PackedNothingDistribution(; _type::String = "PackedNothingDistribution")
+#         return new(Symbol(_type))
+#     end
+# end
 
-DFG.packDistribution(::Nothing) = PackedNothingDistribution()
-DFG.unpackDistribution(::PackedNothingDistribution) = nothing
+# DFG.packDistribution(::Nothing) = PackedNothingDistribution()
+# DFG.unpackDistribution(::PackedNothingDistribution) = nothing
 
 struct TestCCW{T <: AbstractObservation} <: FactorCache
     usrfnc!::T
@@ -1357,16 +1357,8 @@ function Summaries(testDFGAPI)
     # Check all fields are equal for all variables
     for v in ls(summaryGraph)
         for field in variableFields
-            if field != :variableTypeName
-                @test getproperty(getVariable(dfg, v), field) ==
-                      getproperty(getVariable(summaryGraph, v), field)
-            else
-                # Special case to check the symbol variableType is equal to the full variableType.
-                @test Symbol(typeof(getVariableType(getVariable(dfg, v)))) ==
-                      getVariableTypeName(getVariable(summaryGraph, v))
-                @test getVariableType(getVariable(dfg, v)) ==
-                      getVariableType(getVariable(summaryGraph, v))
-            end
+            @test getproperty(getVariable(dfg, v), field) ==
+                  getproperty(getVariable(summaryGraph, v), field)
         end
     end
     for f in lsf(summaryGraph)

@@ -1,10 +1,9 @@
 module DFGPlots
 
-using Colors
 using Graphs
 using DocStringExtensions
 using GraphMakie
-
+using GraphMakie.Makie: @colorant_str, RGB
 using DistributedFactorGraphs
 
 import DistributedFactorGraphs: plotDFG

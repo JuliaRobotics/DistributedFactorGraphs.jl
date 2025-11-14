@@ -436,32 +436,9 @@ function emptyMetadata!(dfg::AbstractDFG, label::Symbol)
 end
 
 ##------------------------------------------------------------------------------
-## Data Entries and Blobs
+## Blobentries and Blobs
 ##------------------------------------------------------------------------------
-
 ## see DataEntryBlob Folder
-
-##------------------------------------------------------------------------------
-## variableTypeName
-##------------------------------------------------------------------------------
-## getter in VariableSummary only
-## can be utility function for others
-## TODO this should return the variableType object, or try to. it should be getVariableTypeName for the accessor
-## TODO Consider parameter N in variableType for dims, and storing constructor in variableTypeName
-## TODO or just not having this function at all
-# getVariableType(v::VariableSummary) = v.softypename()
-##------------------------------------------------------------------------------
-
-"""
-    $SIGNATURES
-Retrieve the soft type name symbol for a VariableSummary. ie :Point2, Pose2, etc.
-"""
-getVariableTypeName(v::VariableSummary) = v.variableTypeName::Symbol
-
-function getVariableType(v::VariableSummary)
-    @warn "Looking for type in `Main`. Only use if `variableType` has only one implementation, ie. Pose2. Otherwise use the full variable."
-    return getfield(Main, v.variableTypeName)()
-end
 
 ##==============================================================================
 ## Layer 2 CRUD and SET
