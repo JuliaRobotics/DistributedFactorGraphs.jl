@@ -177,12 +177,8 @@ end
     @test getLabel(v1) == v1.label
     @test getTags(v1) == v1.tags
     @test getTimestamp(v1) == v1.timestamp
-    @test getVariablePPEDict(v1) == v1.ppeDict
-    @test_throws LabelNotFoundError DistributedFactorGraphs.getVariablePPE(v1, :notfound)
-    @test getState(v1, :default) === v1.solverDataDict[:default]
-    @test getSolverDataDict(v1) == v1.solverDataDict
-    # legacy compat test
-    @test getVariablePPEDict(v1) == v1.ppeDict # changed to .ppeDict -- delete by DFG v0.7
+    @test getState(v1, :default) === v1.states[:default]
+    @test refStates(v1) == v1.states
 
     @test typeof(getVariableType(v1)) == Position{1}
     @test typeof(getVariableType(v2)) == Position{1}
@@ -408,14 +404,8 @@ end
     # Check all fields are equal for all variables
     for v in ls(summaryGraph)
         for field in variableFields
-            if field != :variableTypeName
-                @test getproperty(getVariable(dfg, v), field) ==
-                      getfield(getVariable(summaryGraph, v), field)
-            else
-                # Special case to check the symbol variableType is equal to the full variableType.
-                @test Symbol(typeof(getVariableType(getVariable(dfg, v)))) ==
-                      getVariableTypeName(getVariable(summaryGraph, v))
-            end
+            @test getproperty(getVariable(dfg, v), field) ==
+                  getfield(getVariable(summaryGraph, v), field)
         end
     end
     for f in lsf(summaryGraph)

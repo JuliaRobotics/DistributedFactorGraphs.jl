@@ -42,7 +42,6 @@ function parseVariableType(_typeString::AbstractString)
 
     if isnothing(subtype)
         throw(SerializationError("Unable to deserialize type $(_typeString), not found"))
-        return nothing
     end
 
     if isnothing(param)
@@ -57,10 +56,31 @@ end
 ##==============================================================================
 ## State Packing and unpacking
 ##==============================================================================
+# Old PackedState struct fields
+# id::Union{UUID, Nothing}
+# vecval::Vector{Float64}
+# dimval::Int
+# vecbw::Vector{Float64}
+# dimbw::Int
+# BayesNetOutVertIDs::Vector{Symbol}
+# dimIDs::Vector{Int}
+# dims::Int
+# eliminated::Bool
+# BayesNetVertID::Symbol
+# separator::Vector{Symbol}
+# variableType::String
+# initialized::Bool
+# infoPerCoord::Vector{Float64}
+# ismargin::Bool
+# dontmargin::Bool
+# solvedCount::Int
+# solveKey::Symbol
+# covar::Vector{Float64}
+# _version::VersionNumber = _getDFGVersion()
 
-# returns a PackedState
+# returns a named tuple until State serialization is fully consolidated
 function packState(d::State{T}) where {T <: StateType}
-    @debug "Dispatching conversion variable -> packed variable for type $(string(getVariableType(d)))"
+    @debug "Dispatching conversion variable -> packed variable for type $(string(getStateType(d)))"
     castval = if 0 < length(d.val)
         precast = getCoordinates.(T, d.val)
         @cast castval[i, j] := precast[j][i]
@@ -74,40 +94,27 @@ function packState(d::State{T}) where {T <: StateType}
         "Packing of more than one parametric covariance is NOT supported yet, only packing first."
     )
 
-    return PackedState(
-        d.id,
-        _val,
-        size(castval, 1),
-        d.bw[:],
-        size(d.bw, 1),
-        d.BayesNetOutVertIDs,
-        d.dimIDs,
-        d.dims,
-        d.eliminated,
-        d.BayesNetVertID,
-        d.separator,
-        stringVariableType(getVariableType(d)),
-        d.initialized,
-        d.infoPerCoord,
-        d.ismargin,
-        d.dontmargin,
-        # d.solveInProgress,
-        d.solvedCount,
-        d.solveKey,
-        isempty(d.covar) ? Float64[] : vec(d.covar[1]),
-        _getDFGVersion(),
+    return (
+        label = d.label,
+        vecval = _val,
+        dimval = size(castval, 1),
+        vecbw = d.bw[:],
+        dimbw = size(d.bw, 1),
+        separator = d.separator,
+        statetype = stringVariableType(getStateType(d)),
+        initialized = d.initialized,
+        observability = d.observability,
+        marginalized = d.marginalized,
+        solves = d.solves,
+        covar = isempty(d.covar) ? Float64[] : vec(d.covar[1]),
+        version = version(State),
     )
 end
 
-function unpackState(d::PackedState)
+function unpackOldState(d)
     @debug "Dispatching conversion packed variable -> variable for type $(string(d.variableType))"
     # Figuring out the variableType
-    # TODO deprecated remove in v0.11 - for backward compatibility for saved variableTypes. 
-    ststring = string(split(d.variableType, "(")[1])
-    T = parseVariableType(ststring)
-    isnothing(T) && error(
-        "The variable doesn't seem to have a variableType. It needs to set up with an StateType from IIF. This will happen if you use DFG to add serialized variables directly and try use them. Please use IncrementalInference.addVariable().",
-    )
+    T = parseVariableType(d.variableType)
 
     r3 = d.dimval
     c3 = r3 > 0 ? floor(Int, length(d.vecval) / r3) : 0
@@ -126,102 +133,48 @@ function unpackState(d::PackedState)
     # 
     N = getDimension(T)
     return State{T, getPointType(T), N}(;
-        id = d.id,
+        label = Symbol(d.label),
         val = vals,
         bw = BW,
         #TODO only one covar is currently supported in packed VND
         covar = isempty(d.covar) ? SMatrix{N, N, Float64}[] : [d.covar],
-        BayesNetOutVertIDs = Symbol.(d.BayesNetOutVertIDs),
-        dimIDs = d.dimIDs,
-        dims = d.dims,
-        eliminated = d.eliminated,
-        BayesNetVertID = Symbol(d.BayesNetVertID),
         separator = Symbol.(d.separator),
         initialized = d.initialized,
-        infoPerCoord = d.infoPerCoord,
-        ismargin = d.ismargin,
-        dontmargin = d.dontmargin,
-        # solveInProgress = d.solveInProgress,
-        solvedCount = d.solvedCount,
-        solveKey = Symbol(d.solveKey),
-        events = Dict{Symbol, Threads.Condition}(),
+        observability = d.infoPerCoord,
+        marginalized = d.ismargin,
+        solves = d.solvedCount,
     )
 end
 
-##==============================================================================
-## Variable Packing and unpacking
-##==============================================================================
+function unpackState(d)
+    @debug "Dispatching conversion packed variable -> variable for type $(string(d.statetype))"
+    T = parseVariableType(d.statetype)
+    r3 = d.dimval
+    c3 = r3 > 0 ? floor(Int, length(d.vecval) / r3) : 0
+    M3 = reshape(d.vecval, r3, c3)
+    @cast val_[j][i] := M3[i, j]
+    vals = Vector{getPointType(T)}(undef, length(val_))
+    # vals = getPoint.(T, val_)
+    for (i, v) in enumerate(val_)
+        vals[i] = getPoint(T, v)
+    end
 
-function packVariable(
-    v::VariableCompute;
-    includePPEs::Bool = true,
-    includeSolveData::Bool = true,
-    includeDataEntries::Bool = true,
-)
-    return VariableDFG(;
-        id = v.id,
-        label = v.label,
-        timestamp = v.timestamp,
-        nstime = string(v.nstime.value),
-        tags = collect(v.tags), # Symbol.()
-        ppes = collect(values(v.ppeDict)),
-        solverData = packState.(collect(values(v.solverDataDict))),
-        metadata = base64encode(JSON.json(v.smallData)),
-        solvable = getSolvable(v),
-        variableType = stringVariableType(DFG.getVariableType(v)),
-        blobEntries = collect(values(v.dataDict)),
-        _version = _getDFGVersion(),
+    r4 = d.dimbw
+    c4 = r4 > 0 ? floor(Int, length(d.vecbw) / r4) : 0
+    BW = reshape(d.vecbw, r4, c4)
+
+    # 
+    N = getDimension(T)
+    return State{T, getPointType(T), N}(;
+        label = Symbol(d.label),
+        val = vals,
+        bw = BW,
+        #TODO only one covar is currently supported in packed VND
+        covar = isempty(d.covar) ? SMatrix{N, N, Float64}[] : [d.covar],
+        separator = Symbol.(d.separator),
+        initialized = d.initialized,
+        observability = d.observability,
+        marginalized = d.marginalized,
+        solves = d.solves,
     )
 end
-
-function packVariable(
-    v::VariableDFG;
-    includePPEs::Bool = true,
-    includeSolveData::Bool = true,
-    includeDataEntries::Bool = true,
-)
-    return v
-end
-
-function unpackVariable(variable::VariableDFG; skipVersionCheck::Bool = false)
-    !skipVersionCheck && _versionCheck(variable)
-
-    # Variable and point type
-    variableType = parseVariableType(variable.variableType)
-    isnothing(variableType) && error(
-        "Cannot deserialize variableType '$(variable.variableType)' in variable '$(variable.label)'",
-    )
-    pointType = DFG.getPointType(variableType)
-
-    ppeDict =
-        Dict{Symbol, MeanMaxPPE}(map(p -> p.solveKey, variable.ppes) .=> variable.ppes)
-
-    N = getDimension(variableType)
-    solverDict = Dict{Symbol, State{variableType, pointType, N}}(
-        map(sd -> sd.solveKey, variable.solverData) .=>
-            map(sd -> DFG.unpackState(sd), variable.solverData),
-    )
-    dataDict = Dict{Symbol, Blobentry}(
-        map(de -> de.label, variable.blobEntries) .=> variable.blobEntries,
-    )
-    metadata = JSON.parse(base64decode(variable.metadata), Dict{Symbol, DFG.MetadataTypes})
-
-    return VariableCompute(
-        variable.label,
-        variableType;
-        id = variable.id,
-        timestamp = variable.timestamp,
-        nstime = Nanosecond(variable.nstime),
-        tags = Set(variable.tags),
-        ppeDict = ppeDict,
-        solverDataDict = solverDict,
-        smallData = metadata,
-        dataDict = dataDict,
-        solvable = variable.solvable,
-    )
-end
-
-VariableCompute(v::VariableCompute) = v
-VariableCompute(v::VariableDFG) = unpackVariable(v)
-VariableDFG(v::VariableDFG) = v
-VariableDFG(v::VariableCompute) = packVariable(v)

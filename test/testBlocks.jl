@@ -35,15 +35,15 @@ TestFunctorInferenceType1() = TestFunctorInferenceType1(TestBelief())
 TestFunctorInferenceType2() = TestFunctorInferenceType2(TestBelief())
 TestAbstractPrior() = TestAbstractPrior(TestBelief())
 
-struct PackedNothingDistribution <: AbstractPackedBelief
-    _type::Symbol
-    function PackedNothingDistribution(; _type::String = "PackedNothingDistribution")
-        return new(Symbol(_type))
-    end
-end
+# struct PackedNothingDistribution <: AbstractPackedBelief
+#     _type::Symbol
+#     function PackedNothingDistribution(; _type::String = "PackedNothingDistribution")
+#         return new(Symbol(_type))
+#     end
+# end
 
-DFG.packDistribution(::Nothing) = PackedNothingDistribution()
-DFG.unpackDistribution(::PackedNothingDistribution) = nothing
+# DFG.packDistribution(::Nothing) = PackedNothingDistribution()
+# DFG.unpackDistribution(::PackedNothingDistribution) = nothing
 
 struct TestCCW{T <: AbstractObservation} <: FactorCache
     usrfnc!::T
@@ -88,7 +88,6 @@ function DFGStructureAndAccessors(
         :AGENT,
         :VARIABLE,
         :FACTOR,
-        :PPE,
         :BLOB_ENTRY,
         :FACTORGRAPH,
     ]
@@ -258,12 +257,16 @@ function DFGVariableSCA()
         TestVariableType1();
         tags = v1_tags,
         solvable = 0,
-        solverDataDict = Dict(:default => State{TestVariableType1}()),
+        states = Dict(:default => State{TestVariableType1}(; label = :default)),
     )
-    v2 = VariableCompute(:b, State{TestVariableType2}(); tags = Set([:VARIABLE, :LANDMARK]))
+    v2 = VariableCompute(
+        :b,
+        State{TestVariableType2}(; label = :default);
+        tags = Set([:VARIABLE, :LANDMARK]),
+    )
     v3 = VariableCompute(
         :c,
-        State{TestVariableType2}();
+        State{TestVariableType2}(; label = :default);
         timestamp = ZonedDateTime("2020-08-11T00:12:03.000-05:00"),
     )
 
@@ -272,15 +275,15 @@ function DFGVariableSCA()
         TestVariableType1();
         tags = v1_tags,
         solvable = 0,
-        solverDataDict = Dict(:default => State{TestVariableType1}()),
+        states = Dict(:default => State{TestVariableType1}(; label = :default)),
     )
 
-    # v1.solverDataDict[:default].val[1] = [0.0;]
-    # v1.solverDataDict[:default].bw[1] = [1.0;]
-    # v2.solverDataDict[:default].val[1] = [0.0;0.0]
-    # v2.solverDataDict[:default].bw[1] = [1.0;1.0]
-    # v3.solverDataDict[:default].val[1] = [0.0;0.0]
-    # v3.solverDataDict[:default].bw[1] = [1.0;1.0]
+    # v1.states[:default].val[1] = [0.0;]
+    # v1.states[:default].bw[1] = [1.0;]
+    # v2.states[:default].val[1] = [0.0;0.0]
+    # v2.states[:default].bw[1] = [1.0;1.0]
+    # v3.states[:default].val[1] = [0.0;0.0]
+    # v3.states[:default].bw[1] = [1.0;1.0]
 
     @test getLabel(v1) == v1_lbl
     @test getTags(v1) == v1_tags
@@ -291,9 +294,7 @@ function DFGVariableSCA()
     @test getSolvable(v2) == 1
 
     # TODO direct use is not recommended, use accessors, maybe not export or deprecate
-    @test getSolverDataDict(v1) == v1.solverDataDict
-
-    @test getPPEDict(v1) == v1.ppeDict
+    @test DFG.refStates(v1) == v1.states
 
     # @test getMetadata(v1) == Dict{Symbol, MetadataTypes}()
 
@@ -320,10 +321,7 @@ function DFGVariableSCA()
     @test getManifold(testvar) == TranslationGroup(1)
 
     # #TODO sort out
-    # getPPEs
     # getState
-    # getVariablePPEs
-    # getVariablePPE
     # getSolvedCount
     # isSolved
     # setSolvedCount
@@ -565,132 +563,6 @@ function tagsTestBlock!(fg, v1, v1_tags)
     @test !hasTagsNeighbors(fg, :abf1, [:LANDMARK, :TAG])
 end
 
-function PPETestBlock!(fg, v1)
-    # "Parametric Point Estimates"
-
-    #  - `getPPEs`
-    # **Set**
-    # > - `emptyPPE!`
-    # > - `mergePPE!`
-
-    # Add a new PPE of type MeanMaxPPE to :x0
-    ppe = MeanMaxPPE(:default, [0.0], [0.0], [0.0])
-
-    @test getPPEMax(ppe) === ppe.max
-    @test getPPEMean(ppe) === ppe.mean
-    @test getPPESuggested(ppe) === ppe.suggested
-    @test getLastUpdatedTimestamp(ppe) === ppe.lastUpdatedTimestamp
-
-    @test addPPE!(fg, :a, ppe) == ppe
-    @test_throws LabelExistsError addPPE!(fg, :a, ppe)
-
-    @test listPPEs(fg, :a) == [:default]
-
-    # Get the data back - note that this is a reference to above.
-    @test getPPE(getVariable(fg, :a), :default) == ppe
-    @test getPPE(fg, :a, :default) == ppe
-    @test getPPEMean(fg, :a, :default) == ppe.mean
-    @test getPPEMax(fg, :a, :default) == ppe.max
-    @test getPPESuggested(fg, :a, :default) == ppe.suggested
-
-    # Delete it
-    @test deletePPE!(fg, :a, :default) == 1
-
-    @test_throws LabelNotFoundError getPPE(fg, :a, :default)
-    # Update add it
-    @test @test_logs (:warn, Regex("'$(ppe.solveKey)' does not exist")) match_mode = :any updatePPE!(
-        fg,
-        :a,
-        ppe,
-    ) == ppe
-    # Update update it
-    @test updatePPE!(fg, :a, ppe) == ppe
-    @test deletePPE!(fg, :a, :default) == 1
-
-    # manually add ppe to v1 for tests
-    v1.ppeDict[:default] = deepcopy(ppe)
-    # Bulk copy PPE's for :x1
-    @test updatePPE!(fg, [v1], :default) == nothing
-    # Delete it
-    @test deletePPE!(fg, :a, :default) == 1
-
-    # New interface
-    @test addPPE!(fg, :a, ppe) == ppe
-    # Update update it
-    @test updatePPE!(fg, :a, ppe) == ppe
-    # Delete it
-    @test deletePPE!(fg, :a, :default) == 1
-
-    #FIXME copied from lower
-    # @test @test_deprecated getVariablePPEs(v1) == v1.ppeDict
-    @test_throws LabelNotFoundError getPPE(v1, :notfound)
-    #TODO
-    # @test_deprecated getVariablePPE(v1)
-
-    # Add a new PPE of type MeanMaxPPE to :x0
-    ppe = MeanMaxPPE(:default, [0.0], [0.0], [0.0])
-    addPPE!(fg, :a, ppe)
-    @test listPPEs(fg, :a) == [:default]
-    # Get the data back - note that this is a reference to above.
-    @test getPPE(fg, :a, :default) == ppe
-
-    # Delete it
-    @test deletePPE!(fg, :a, :default) == 1
-    # Update add it
-    updatePPE!(fg, :a, ppe) #, :default)
-    # Update update it
-    updatePPE!(fg, :a, ppe) #, :default)
-
-    v1.ppeDict[:default] = deepcopy(ppe)
-    # Bulk copy PPE's for x0 and x1
-    updatePPE!(fg, [v1], :default)
-    # Delete it
-    @test deletePPE!(fg, :a, :default) == 1
-
-    #TODO DEPRECATE
-    # getEstimates
-    # estimates
-    # getVariablePPEs
-    # getVariablePPE
-
-    # newvar = deepcopy(v1)
-    # getPPEDict(newvar)[:default] = MeanMaxPPE(:default, [150.0], [100.0], [50.0])
-    # @test !(getPPEDict(newvar) == getPPEDict(v1))
-    # delete!(getVariablePPEs(newvar), :default)
-    # getVariablePPEs(newvar)[:second] = MeanMaxPPE(:second, [15.0], [10.0], [5.0])
-    # @test symdiff(collect(keys(getVariablePPEs(v1))), [:default, :second]) == Symbol[]
-    # @test symdiff(collect(keys(getVariablePPEs(newvar))), [:second]) == Symbol[]
-    # # Get the source too.
-    # @test symdiff(collect(keys(getVariablePPEs(getVariable(dfg, :a)))), [:default, :second]) == Symbol[]
-    #update
-
-    ## TODO make sure these are covered
-    # global dfg
-    # #get the variable
-    # var1 = getVariable(dfg, :a)
-    # #make a copy and simulate external changes
-    # newvar = deepcopy(var1)
-    # getVariablePPEs(newvar)[:default] = MeanMaxPPE(:default, [150.0], [100.0], [50.0])
-    # #update
-    # mergeUpdateVariableSolverData!(dfg, newvar)
-    # #For now spot check
-    # # @test solverDataDict(newvar) == solverDataDict(var1)
-    # @test getVariablePPEs(newvar) == getVariablePPEs(var1)
-    #
-    # # Delete :default and replace to see if new ones can be added
-    # delete!(getVariablePPEs(newvar), :default)
-    # getVariablePPEs(newvar)[:second] = MeanMaxPPE(:second, [15.0], [10.0], [5.0])
-    #
-    # # Persist to the original variable.
-    # mergeUpdateVariableSolverData!(dfg, newvar)
-    # # At this point newvar will have only :second, and var1 should have both (it is the reference)
-    # @test symdiff(collect(keys(getVariablePPEs(var1))), [:default, :second]) == Symbol[]
-    # @test symdiff(collect(keys(getVariablePPEs(newvar))), [:second]) == Symbol[]
-    # # Get the source too.
-    # @test symdiff(collect(keys(getVariablePPEs(getVariable(dfg, :a)))), [:default, :second]) == Symbol[]
-    ##
-end
-
 function VSDTestBlock!(fg, v1)
     # "Variable Solver Data"
     # #### Variable Solver Data
@@ -710,7 +582,7 @@ function VSDTestBlock!(fg, v1)
     # **State**
     #  - `getSolveInProgress`
 
-    vnd = State{TestVariableType1}(; solveKey = :parametric)
+    vnd = State{TestVariableType1}(; label = :parametric)
     # vnd.val[1] = [0.0;]
     # vnd.bw[1] = [1.0;]
     @test addState!(fg, :a, vnd) == vnd
@@ -743,12 +615,12 @@ function VSDTestBlock!(fg, v1)
     @test_throws LabelNotFoundError getState(fg, :a, :parametric)
 
     #FIXME copied from lower
-    @test getState(v1, :default) === v1.solverDataDict[:default]
+    @test getState(v1, :default) === v1.states[:default]
 
     # Add new VND of type ContinuousScalar to :x0
     # Could also do State(ContinuousScalar())
 
-    vnd = State{TestVariableType1}(; solveKey = :parametric)
+    vnd = State{TestVariableType1}(; label = :parametric)
     # vnd.val[1] = [0.0;]
     # vnd.bw[1] = [1.0;]
 
@@ -768,8 +640,7 @@ function VSDTestBlock!(fg, v1)
 
     return nothing
 
-    #TODO solverDataDict() not deprecated
-    # @test getSolverDataDict(newvar) == getSolverDataDict(v1)
+    # @test refStates(newvar) == refStates(v1)
 
     # @test @test_deprecated mergeUpdateVariableSolverData!(fg, newvar)
 
@@ -867,17 +738,7 @@ function DataEntriesTestBlock!(fg, v2)
     #delete from dfg
     @test deleteBlobentry!(fg, :a, :key2) == 1
     @test listBlobentries(v1) == Symbol[]
-    deleteBlobentry!(fg, :b, :key2)
-
-    # packed variable data entries
-    pacv = packVariable(v1)
-    @test addBlobentry!(pacv, de1) == de1
-    @test hasBlobentry(pacv, :key1)
-    @test deepcopy(de1) == getBlobentry(pacv, :key1)
-    @test getBlobentries(pacv) == [deepcopy(de1)]
-    @test issetequal(listBlobentries(pacv), [:key1])
-    # @test deleteBlobentry!(pacv, de1) == de1
-
+    return deleteBlobentry!(fg, :b, :key2)
 end
 
 function blobsStoresTestBlock!(fg)
@@ -888,7 +749,7 @@ function blobsStoresTestBlock!(fg)
         crchash = 0xAAAA,
         origin = "origin1",
         description = "description1",
-        mimetype = "mimetype1",
+        mimetype = MIME("mimetype1"),
     )
     de2 = Blobentry(;
         blobid = uuid4(),
@@ -897,8 +758,8 @@ function blobsStoresTestBlock!(fg)
         crchash = 0xFFFF,
         origin = "origin2",
         description = "description2",
-        mimetype = "mimetype2",
-        timestamp = DFG.NanoDate("2020-08-12T12:00:00.000"),
+        mimetype = MIME("mimetype2"),
+        timestamp = DFG.TimeDateZone("2020-08-12T12:00:00.000Z"),
     )
     de2_update = Blobentry(;
         blobid = uuid4(),
@@ -907,8 +768,8 @@ function blobsStoresTestBlock!(fg)
         crchash = 0x0123,
         origin = "origin2",
         description = "description2",
-        mimetype = "mimetype2",
-        timestamp = DFG.NanoDate("2020-08-12T12:00:00.000"),
+        mimetype = MIME("mimetype2"),
+        timestamp = DFG.TimeDateZone("2020-08-12T12:00:00.000Z"),
     )
     @test getLabel(de1) == de1.label
     @test getTimestamp(de1) == de1.timestamp
@@ -1289,9 +1150,15 @@ function connectivityTestGraph(
     dfg = T(; graphLabel = :testGraph)
 
     vars = vcat(
-        map(n -> VARTYPE(Symbol("x$n"), State{TestVariableType1}()), 1:numNodesType1),
         map(
-            n -> VARTYPE(Symbol("x$(numNodesType1+n)"), State{TestVariableType2}()),
+            n -> VARTYPE(Symbol("x$n"), State{TestVariableType1}(; label = :default)),
+            1:numNodesType1,
+        ),
+        map(
+            n -> VARTYPE(
+                Symbol("x$(numNodesType1+n)"),
+                State{TestVariableType2}(; label = :default),
+            ),
             1:numNodesType2,
         ),
     )
@@ -1490,16 +1357,8 @@ function Summaries(testDFGAPI)
     # Check all fields are equal for all variables
     for v in ls(summaryGraph)
         for field in variableFields
-            if field != :variableTypeName
-                @test getproperty(getVariable(dfg, v), field) ==
-                      getproperty(getVariable(summaryGraph, v), field)
-            else
-                # Special case to check the symbol variableType is equal to the full variableType.
-                @test Symbol(typeof(getVariableType(getVariable(dfg, v)))) ==
-                      getVariableTypeName(getVariable(summaryGraph, v))
-                @test getVariableType(getVariable(dfg, v)) ==
-                      getVariableType(getVariable(summaryGraph, v))
-            end
+            @test getproperty(getVariable(dfg, v), field) ==
+                  getproperty(getVariable(summaryGraph, v), field)
         end
     end
     for f in lsf(summaryGraph)
@@ -1523,10 +1382,10 @@ function ProducingDotFiles(
     dotdfg = testDFGAPI(; graphLabel = :testGraph)
 
     if v1 === nothing
-        v1 = VARTYPE(:a, State{TestVariableType1}())
+        v1 = VARTYPE(:a, State{TestVariableType1}(; label = :default))
     end
     if v2 === nothing
-        v2 = VARTYPE(:b, State{TestVariableType1}())
+        v2 = VARTYPE(:b, State{TestVariableType1}(; label = :default))
     end
     if f1 === nothing
         if (FACTYPE == FactorCompute)
@@ -1679,18 +1538,16 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
         v4 = getVariable(dfg, :x4)
         vnd = getState(v4, :default)
         # set everything
-        vnd.BayesNetVertID = :outid
-        push!(vnd.BayesNetOutVertIDs, :id)
+        # vnd.BayesNetVertID = :outid
+        # push!(vnd.BayesNetOutVertIDs, :id)
         # vnd.bw[1] = [1.0;]
-        push!(vnd.dimIDs, 1)
-        vnd.dims = 1
-        vnd.dontmargin = true
-        vnd.eliminated = true
-        vnd.infoPerCoord .= Float64[1.5;]
+        # vnd.dontmargin = true
+        # vnd.eliminated = true
+        vnd.observability .= Float64[1.5;]
         vnd.initialized = true
-        vnd.ismargin = true
+        vnd.marginalized = true
         push!(vnd.separator, :sep)
-        vnd.solvedCount = 2
+        vnd.solves = 2
         # vnd.val[1] = [2.0;]
         #update
         mergeVariable!(dfg, v4)

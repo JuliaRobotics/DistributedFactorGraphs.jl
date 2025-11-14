@@ -8,9 +8,9 @@ using Dates
 
 ## Generated compare functions
 # State
-vnd1 = State(TestVariableType1())
+vnd1 = State(:default, TestVariableType1())
 vnd2 = deepcopy(vnd1)
-vnd3 = State(TestVariableType2())
+vnd3 = State(:default, TestVariableType2())
 
 @test vnd1 == vnd2
 push!(vnd1.val, [1.0;])
@@ -19,16 +19,6 @@ push!(vnd2.val, [1.0;])
 vnd2.val[1] = [0.1;]
 @test !(vnd1 == vnd2)
 @test !(vnd1 == vnd3)
-
-# MeanMaxPPE
-ppe1 = MeanMaxPPE(:default, [1.0], [2.0], [3.0])
-ppe2 = deepcopy(ppe1)
-ppe3 = MeanMaxPPE(:default, [2.0], [3.0], [4.0])
-
-@test ppe1 == ppe2
-ppe2.max[1] = 0.1
-@test !(ppe1 == ppe2)
-@test !(ppe1 == ppe3)
 
 # VariableCompute
 v1 = VariableCompute(:x1, TestVariableType1())
@@ -59,9 +49,9 @@ f3 = FactorCompute(:f1, [:b, :a], TestFunctorInferenceType1())
 @test !(f1 == f3)
 
 ## Compare functions
-vnd1 = State(TestVariableType1())
+vnd1 = State(:default, TestVariableType1())
 vnd2 = deepcopy(vnd1)
-vnd3 = State(TestVariableType2())
+vnd3 = State(:default, TestVariableType2())
 @test compare(vnd1, vnd2)
 @test !compare(vnd1, vnd3)
 

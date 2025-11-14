@@ -20,7 +20,7 @@ using DocStringExtensions
 using Dates
 using Random
 using TimeZones
-using NanoDates
+using TimesDates
 using JSON
 export StructUtils # export for use in macros
 using LinearAlgebra
@@ -83,7 +83,7 @@ export FactorDFG, FactorSummary, FactorSkeleton
 
 export Blobentry
 
-export State, PackedState
+export State
 
 ##------------------------------------------------------------------------------
 ## Functions
@@ -331,6 +331,7 @@ export @defStateType #TODO Should this be exported?
 # list of unstable functions not exported any more
 # will move to public or deprecate over time
 const unstable_functions::Vector{Symbol} = [
+    :refStates, #internal maybe make public
     :InMemoryBlobstore,
     :MetadataTypes, #maybe make public after metadata stable
     :getFactorState, # FIXME getFactorState were questioned and being reviewed again for name, other than that they are checked.
@@ -358,8 +359,6 @@ const unstable_functions::Vector{Symbol} = [
     :findFactorsBetweenNaive,
     :getAgentLabel,
     :getGraphLabel,
-    :getVariableTypeName,
-    :getVariableType,
     :getDescription,
     :getAddHistory,
     :getSolverParams,
@@ -379,7 +378,6 @@ const unstable_functions::Vector{Symbol} = [
     :getVariableLabelNumber,# TODO somewhat used, do we deprecate?
     :getfirstBlobentry,# TODO somewhat used, do we deprecate?
     :getSolveInProgress,#TODO unused, do we deprecate?
-    :getSolverDataDict,## TODO deprecated or obsolete
     :hasTagsNeighbors,
     :isVariable,
     :isFactor,
@@ -397,13 +395,13 @@ const unstable_functions::Vector{Symbol} = [
     :plotDFG,
     :pack,
     :packDistribution,
-    :packVariable,
+    # :packVariable,
     # :packFactor,
     :packBlob,
     :packState,
     :unpack,
     :unpackDistribution,
-    :unpackVariable,
+    # :unpackVariable,
     # :unpackFactor,
     :unpackBlob,
     :unpackState,
@@ -429,10 +427,13 @@ const unstable_functions::Vector{Symbol} = [
     # no set on these
 
     #deprecated in v0.29
+    :getVariableTypeName,
+    :getVariableType,
     :setTimestamp,
     :setMetadata!, # no set, use add merge
     :setAgentMetadata!,
     :setGraphMetadata!,
+    # :getSolverDataDict,# obsolete
 
     #Deprecated in v0.28
     :AbstractRelativeMinimize,
@@ -468,25 +469,25 @@ const unstable_functions::Vector{Symbol} = [
     :DFGFactor,
     :PackedFactor,
     :Factor,
-    :AbstractPointParametricEst,
-    :MeanMaxPPE,
-    :getPPEMax,
-    :getPPEMean,
-    :getPPESuggested,
-    :getLastUpdatedTimestamp,
-    :getPPEDict,
-    :getVariablePPEDict,
-    :getVariablePPE,
+    # :AbstractPointParametricEst,
+    # :MeanMaxPPE,
+    # :getPPEMax,
+    # :getPPEMean,
+    # :getPPESuggested,
+    # :getLastUpdatedTimestamp,
+    # :getPPEDict,
+    # :getVariablePPEDict,
+    # :getVariablePPE,
     :listSolveKeys,
     :listSupersolves,
-    :getPPE,
-    :getPPEs,
-    :getVariablePPE,
-    :addPPE!,
-    :updatePPE!,
-    :deletePPE!,
-    :listPPEs,
-    :mergePPEs!,
+    # :getPPE,
+    # :getPPEs,
+    # :getVariablePPE,
+    # :addPPE!,
+    # :updatePPE!,
+    # :deletePPE!,
+    # :listPPEs,
+    # :mergePPEs!,
     Symbol("@defVariable"),
     :SmallDataTypes,
     :NoSolverParams,
@@ -531,6 +532,7 @@ include("entities/Bloblet.jl")
 include("DataBlobs/entities/BlobEntry.jl")
 include("DataBlobs/entities/BlobStores.jl")
 
+include("serialization/DFGStructStyles.jl")
 include("serialization/PackedSerialization.jl")
 include("serialization/DistributionSerialization.jl")
 

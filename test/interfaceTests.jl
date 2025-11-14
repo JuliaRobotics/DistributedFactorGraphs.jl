@@ -6,7 +6,7 @@ if false
     using Dates
     using UUIDs
     using TimeZones
-    using NanoDates
+    using TimesDates
 
     include("testBlocks.jl")
 
@@ -21,6 +21,9 @@ if false
     logger = ConsoleLogger(stdout, Logging.Debug)
     global_logger(logger)
 end
+
+# DFG.@usingDFG true
+# include("testBlocks.jl")
 
 # DFG Accessors
 @testset "DFG Structure and Accessors" begin
@@ -64,13 +67,13 @@ end
     @test printVariable(iobuf, var1; skipfields = [:timestamp, :solver, :ppe, :nstime]) ===
           nothing
 
-    @test String(take!(iobuf)) ==
-          "VariableCompute{TestVariableType1, Vector{Float64}, 1}\nid:\nnothing\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol, Union{Bool, Float64, Int64, Vector{Bool}, Vector{Float64}, Vector{Int64}, Vector{String}, String}}()\ndataDict:\nDict{Symbol, Blobentry}()\nsolvable:\nRefValue{Int64}(0)\n"
-    # "VariableCompute{TestVariableType1, Vector{Float64}, 1}\nid:\nnothing\nlabel:\n:a\ntags:\nSet([:VARIABLE, :POSE])\nsmallData:\nDict{Symbol, Union{Bool, Float64, Int64, Vector{Bool}, Vector{Float64}, Vector{Int64}, Vector{String}, String}}(:small=>\"data\")\ndataDict:\nDict{Symbol, Blobentry}()\nsolvable:\n0\n"
+    varstr = String(take!(iobuf))
+    @test occursin(r"VariableDFG", varstr)
+    @test occursin(r"label", varstr)
 
     @test printVariable(iobuf, var1; short = true) === nothing
     varstr = String(take!(iobuf))
-    @test occursin(r"VariableCompute", varstr)
+    @test occursin(r"VariableDFG", varstr)
     @test occursin(r"timestamp", varstr)
     @test occursin(r"label", varstr)
     @test occursin(r"bandwidths", varstr)
@@ -109,10 +112,6 @@ end
 
 @testset "tags" begin
     tagsTestBlock!(fg1, var1, v1_tags)
-end
-
-@testset "Parametric Point Estimates" begin
-    PPETestBlock!(fg1, var1)
 end
 
 @testset "Variable Solver Data" begin

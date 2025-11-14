@@ -67,17 +67,17 @@ Also see: [`addBlobentry!`](@ref), [`getBlob`](@ref), [`listBlobentries`](@ref)
 """
 function getBlobentry(var::AbstractGraphVariable, key::Symbol)
     if !hasBlobentry(var, key)
-        throw(LabelNotFoundError("Blobentry", key, collect(keys(var.dataDict))))
+        throw(LabelNotFoundError("Blobentry", key, collect(keys(var.blobentries))))
     end
-    return var.dataDict[key]
+    return var.blobentries[key]
 end
 
-function getBlobentry(var::VariableDFG, key::Symbol)
-    if !hasBlobentry(var, key)
-        throw(LabelNotFoundError("Blobentry", key))
-    end
-    return var.blobEntries[findfirst(x -> x.label == key, var.blobEntries)]
-end
+# function getBlobentry(var::VariableDFG, key::Symbol)
+#     if !hasBlobentry(var, key)
+#         throw(LabelNotFoundError("Blobentry", key))
+#     end
+#     return var.blobEntries[findfirst(x -> x.label == key, var.blobEntries)]
+# end
 
 """
     $(SIGNATURES)
@@ -131,17 +131,18 @@ Should be extended if DFG variable is not returned by reference.
 Also see: [`getBlobentry`](@ref), [`addBlob!`](@ref), [`mergeBlobentry!`](@ref)
 """
 function addBlobentry!(var::VariableCompute, entry::Blobentry)
-    haskey(var.dataDict, entry.label) && throw(LabelExistsError("Blobentry", entry.label))
-    var.dataDict[entry.label] = entry
+    haskey(var.blobentries, entry.label) &&
+        throw(LabelExistsError("Blobentry", entry.label))
+    var.blobentries[entry.label] = entry
     return entry
 end
 
-function addBlobentry!(var::VariableDFG, entry::Blobentry)
-    entry.label in getproperty.(var.blobEntries, :label) &&
-        throw(LabelExistsError("Blobentry", entry.label))
-    push!(var.blobEntries, entry)
-    return entry
-end
+# function addBlobentry!(var::VariableDFG, entry::Blobentry)
+#     entry.label in getproperty.(var.blobEntries, :label) &&
+#         throw(LabelExistsError("Blobentry", entry.label))
+#     push!(var.blobEntries, entry)
+#     return entry
+# end
 
 function addBlobentry!(dfg::AbstractDFG, vLbl::Symbol, entry::Blobentry)
     return addBlobentry!(getVariable(dfg, vLbl), entry)
@@ -158,10 +159,10 @@ If the Blobentry does not exist, it will be added.
 Notes:
 """
 function mergeBlobentry!(var::AbstractGraphVariable, bde::Blobentry)
-    if !haskey(var.dataDict, bde.label)
+    if !haskey(var.blobentries, bde.label)
         addBlobentry!(var, bde)
     else
-        var.dataDict[bde.label] = bde
+        var.blobentries[bde.label] = bde
     end
     return 1
 end
@@ -179,15 +180,15 @@ Notes:
 """
 function deleteBlobentry!(var::VariableCompute, key::Symbol)
     !hasBlobentry(var, key) && throw(LabelNotFoundError("Blobentry", key))
-    delete!(var.dataDict, key)
+    delete!(var.blobentries, key)
     return 1
 end
 
-function deleteBlobentry!(var::VariableDFG, key::Symbol)
-    !hasBlobentry(var, key) && throw(LabelNotFoundError("Blobentry", key))
-    deleteat!(var.blobEntries, findfirst(x -> x.label == key, var.blobEntries))
-    return 1
-end
+# function deleteBlobentry!(var::VariableDFG, key::Symbol)
+#     !hasBlobentry(var, key) && throw(LabelNotFoundError("Blobentry", key))
+#     deleteat!(var.blobEntries, findfirst(x -> x.label == key, var.blobEntries))
+#     return 1
+# end
 
 function deleteBlobentry!(dfg::AbstractDFG, label::Symbol, key::Symbol)
     return deleteBlobentry!(getVariable(dfg, label), key)
@@ -223,11 +224,11 @@ end
 
 Does a blob entry exist with `blobLabel`.
 """
-hasBlobentry(v::VariableCompute, blobLabel::Symbol) = haskey(v.dataDict, blobLabel)
+hasBlobentry(v::VariableCompute, blobLabel::Symbol) = haskey(v.blobentries, blobLabel)
 
-function hasBlobentry(v::VariableDFG, label::Symbol)
-    return label in getproperty.(v.blobEntries, :label)
-end
+# function hasBlobentry(v::VariableDFG, label::Symbol)
+#     return label in getproperty.(v.blobEntries, :label)
+# end
 
 """
     $(SIGNATURES)
@@ -235,12 +236,12 @@ end
 Get blob entries, returns a `Vector{Blobentry}`.
 """
 function getBlobentries(v::VariableCompute)
-    return collect(values(v.dataDict))
+    return collect(values(v.blobentries))
 end
 
-function getBlobentries(v::VariableDFG)
-    return copy(v.blobEntries)
-end
+# function getBlobentries(v::VariableDFG)
+#     return copy(v.blobEntries)
+# end
 
 function getBlobentries(
     v::AbstractGraphVariable;
@@ -289,12 +290,12 @@ const collectBlobentries = gatherBlobentries
 List the blob entries associated with a particular variable.
 """
 function listBlobentries(var::AbstractGraphVariable)
-    return collect(keys(var.dataDict))
+    return collect(keys(var.blobentries))
 end
 
-function listBlobentries(var::VariableDFG)
-    return getproperty.(var.blobEntries, :label)
-end
+# function listBlobentries(var::VariableDFG)
+#     return getproperty.(var.blobEntries, :label)
+# end
 
 function listBlobentries(dfg::AbstractDFG, label::Symbol)
     return listBlobentries(getVariable(dfg, label))

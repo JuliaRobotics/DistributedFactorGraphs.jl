@@ -142,8 +142,7 @@ end
 ##==============================================================================
 ## Validation of session, robot, and user labels.
 ##==============================================================================
-global _invalidIds =
-    ["GRAPH", "AGENT", "VARIABLE", "FACTOR", "PPE", "BLOB_ENTRY", "FACTORGRAPH"]
+global _invalidIds = ["GRAPH", "AGENT", "VARIABLE", "FACTOR", "BLOB_ENTRY", "FACTORGRAPH"]
 
 const global _validLabelRegex::Regex = r"^[a-zA-Z][-\w\.\@]*$"
 

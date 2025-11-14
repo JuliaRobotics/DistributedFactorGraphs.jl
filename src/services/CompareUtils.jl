@@ -18,9 +18,7 @@ implement compare if needed.
 
 # Generate compares automatically for all in this union
 const GeneratedCompareUnion = Union{
-    MeanMaxPPE,
     State,
-    PackedState,
     Blobentry,
     VariableCompute,
     VariableDFG,
@@ -197,30 +195,30 @@ end
 function compare(a::State, b::State)
     a.val != b.val && @debug("val is not equal") === nothing && return false
     a.bw != b.bw && @debug("bw is not equal") === nothing && return false
-    a.BayesNetOutVertIDs != b.BayesNetOutVertIDs &&
-        @debug("BayesNetOutVertIDs is not equal") === nothing &&
-        return false
-    a.dimIDs != b.dimIDs && @debug("dimIDs is not equal") === nothing && return false
-    a.dims != b.dims && @debug("dims is not equal") === nothing && return false
-    a.eliminated != b.eliminated &&
-        @debug("eliminated is not equal") === nothing &&
-        return false
-    a.BayesNetVertID != b.BayesNetVertID &&
-        @debug("BayesNetVertID is not equal") === nothing &&
-        return false
+    # a.BayesNetOutVertIDs != b.BayesNetOutVertIDs &&
+    #     @debug("BayesNetOutVertIDs is not equal") === nothing &&
+    #     return false
+    # a.eliminated != b.eliminated &&
+    #     @debug("eliminated is not equal") === nothing &&
+    #     return false
+    # a.BayesNetVertID != b.BayesNetVertID &&
+    #     @debug("BayesNetVertID is not equal") === nothing &&
+    #     return false
     a.separator != b.separator &&
         @debug("separator is not equal") === nothing &&
         return false
     a.initialized != b.initialized &&
         @debug("initialized is not equal") === nothing &&
         return false
-    !isapprox(a.infoPerCoord, b.infoPerCoord; atol = 1e-13) &&
+    !isapprox(a.observability, b.observability; atol = 1e-13) &&
         @debug("infoPerCoord is not equal") === nothing &&
         return false
-    a.ismargin != b.ismargin && @debug("ismargin is not equal") === nothing && return false
-    a.dontmargin != b.dontmargin &&
-        @debug("dontmargin is not equal") === nothing &&
+    a.marginalized != b.marginalized &&
+        @debug("ismargin is not equal") === nothing &&
         return false
+    # a.dontmargin != b.dontmargin &&
+    # @debug("dontmargin is not equal") === nothing &&
+    # return false
     getVariableType(a) != getVariableType(b) &&
         @debug("variableType is not equal") === nothing &&
         return false
@@ -243,7 +241,7 @@ function compareVariable(
     skiplist = union(
         [
             :attributes;
-            :solverDataDict;
+            :states;
             :createdTimestamp;
             :lastUpdatedTimestamp;
             :timezone;
@@ -255,7 +253,7 @@ function compareVariable(
     varskiplist = skipsamples ? [:val; :bw] : Symbol[]
     skiplist = union([:variableType;], varskiplist)
     union!(skiplist, skip)
-    TP = TP && compareAll(A.solverDataDict, B.solverDataDict; skip = skiplist, show = show)
+    TP = TP && compareAll(A.states, B.states; skip = skiplist, show = show)
 
     Ad = getState(A, :default) #FIXME why onlly comparing default?
     Bd = getState(B, :default)

@@ -52,8 +52,8 @@ function getSolveInProgress(
 )
     # Variable
     if var isa VariableCompute
-        if haskey(getSolverDataDict(var), solveKey)
-            return getSolverDataDict(var)[solveKey].solveInProgress
+        if haskey(refStates(var), solveKey)
+            return refStates(var)[solveKey].solveInProgress
         else
             return 0
         end
@@ -148,6 +148,15 @@ function _getDuplicatedEmptyDFG(
     # DFG.setDescription!(newDfg, "(Copy of) $(DFG.getDescription(dfg))")
     return newDfg
 end
+
+#TODO is Type correct
+@deprecate getVariableType(args...) getStateType(args...)
+
+function getVariableTypeName(v::VariableSummary)
+    Base.depwarn("getVariableTypeName is deprecated.", :getVariableTypeName)
+    return v.statetype
+end
+
 ## ================================================================================
 ## Deprecated in v0.28
 ##=================================================================================
@@ -190,7 +199,7 @@ function setSolverData!(v::VariableCompute, data::State, key::Symbol = :default)
         :setSolverData!,
     )
     @assert key == data.solveKey "State.solveKey=:$(data.solveKey) does not match requested :$(key)"
-    return v.solverDataDict[key] = data
+    return v.states[key] = data
 end
 
 @deprecate mergeVariableSolverData!(args...; kwargs...) mergeState!(args...; kwargs...)
@@ -289,7 +298,7 @@ end
 
 # Related
 
-# [`listSolveKeys`](@ref), [`getSolverDataDict`](@ref), [`listVariables`](@ref)
+# [`listSolveKeys`](@ref), [`refStates`](@ref), [`listVariables`](@ref)
 # """
 function listSolveKeys(
     variable::VariableCompute,
@@ -298,7 +307,7 @@ function listSolveKeys(
 )
     Base.depwarn("listSolveKeys is deprecated, use listStates instead.", :listSolveKeys)
     #
-    for ky in keys(getSolverDataDict(variable))
+    for ky in keys(refStates(variable))
         push!(skeys, ky)
     end
 
@@ -328,7 +337,7 @@ function listSolveKeys(
     #
     skeys = Set{Symbol}()
     varList = listVariables(dfg, filterVariables; tags = tags, solvable = solvable)
-    for vs in varList  #, ky in keys(getSolverDataDict(getVariable(dfg, vs)))
+    for vs in varList  #, ky in keys(refStates(getVariable(dfg, vs)))
         listSolveKeys(dfg, vs, filterSolveKeys, skeys)
     end
 

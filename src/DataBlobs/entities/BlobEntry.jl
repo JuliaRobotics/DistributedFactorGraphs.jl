@@ -40,18 +40,26 @@ StructUtils.@kwarg struct Blobentry
     """ Additional information that can help a different user of the Blob. """
     description::String = ""
     """ MIME description describing the format of binary data in the `Blob`, e.g. 'image/png' or 'application/json'. """
-    mimetype::String = "application/octet-stream" #FIXME ::MIME = MIME("application/octet-stream")
+    mimetype::MIME = MIME("application/octet-stream")
     """ Storage for a couple of bytes directly in the graph. Use with caution and keep it small and simple."""
     metadata::JSONText = JSONText("{}")
     """ When the Blob itself was first created. Serialized as an ISO 8601 string."""
-    timestamp::NanoDate = ndnow(UTC) & (json = (lower = timestamp,),)
+    timestamp::TimeDateZone = TimeDateZone(now(localzone()))
     """ Type version of this Blobentry."""
-    version::VersionNumber = version(Blobentry)
+    version::VersionNumber = DFG.version(Blobentry)
 end
 version(::Type{Blobentry}) = v"0.1.0"
 
-function Blobentry(label::Symbol, blobstore = :default; kwargs...)
-    return Blobentry(; label, blobstore, kwargs...)
+function Blobentry(
+    label::Symbol,
+    blobstore = :default;
+    metadata = JSONText("{}"),
+    kwargs...,
+)
+    if !(metadata isa JSONText)
+        metadata = JSONText(JSON.json(metadata))
+    end
+    return Blobentry(; label, blobstore, metadata, kwargs...)
 end
 # construction helper from existing Blobentry for user overriding via kwargs
 function Blobentry(
@@ -123,3 +131,18 @@ function Base.setproperty!(x::Blobentry, f::Symbol, val)
 end
 
 const Blobentries = OrderedDict{Symbol, Blobentry}
+
+function StructUtils.lower(entries::Blobentries)
+    return map(collect(values(entries))) do (entry)
+        return StructUtils.lower(entry)
+    end
+end
+
+function StructUtils.makedict(s::StructUtils.StructStyle, T::Type{Blobentries}, json_vector)
+    entries = T()
+    foreach(json_vector) do obj
+        entry, _ = StructUtils.make(s, Blobentry, obj)
+        return push!(entries, Symbol(obj.label[]) => entry)
+    end
+    return entries, nothing
+end
