@@ -60,7 +60,7 @@ StructUtils.@kwarg struct FactorDFG{T <: AbstractObservation, N} <: AbstractGrap
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
     """Factor tags, e.g [:FACTOR].
-    Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
+    Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`deleteTags!`](@ref)"""
     tags::Set{Symbol} = Set{Symbol}([:FACTOR])
     """Ordered list of the neighbor variables.
     Accessors: [`getVariableOrder`](@ref)"""
@@ -218,7 +218,7 @@ Base.@kwdef struct FactorSummary <: AbstractGraphFactor
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
     """Factor tags, e.g [:FACTOR].
-    Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
+    Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`deleteTags!`](@ref)"""
     tags::Set{Symbol}
     """Ordered list of the neighbor variables.
     Accessors: [`getVariableOrder`](@ref)"""
@@ -254,7 +254,7 @@ Base.@kwdef struct FactorSkeleton <: AbstractGraphFactor
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
     """Factor tags, e.g [:FACTOR].
-    Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
+    Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`deleteTags!`](@ref)"""
     tags::Set{Symbol}
     """Ordered list of the neighbor variables.
     Accessors: [`getVariableOrder`](@ref)"""

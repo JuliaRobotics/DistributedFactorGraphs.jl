@@ -22,7 +22,10 @@ using ...DistributedFactorGraphs:
     getGraphLabel,
     isInitialized,
     Bloblets,
-    Blobentries
+    Blobentries,
+    FolderStore,
+    refTags,
+    listTags
 
 # import DFG functions to extend
 import ...DistributedFactorGraphs:

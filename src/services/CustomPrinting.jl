@@ -41,7 +41,7 @@ function printVariable(
         printstyled(ioc, vert.label; bold = true)
         println(ioc)
         println(ioc, "  solvable:   ", getSolvable(vert))
-        println(ioc, "  tags:       ", getTags(vert))
+        println(ioc, "  tags:       ", listTags(vert))
         solk = listStates(vert)
         lsolk = length(solk)
         smsk = lsolk > 0 ? (rand(1:lsolk, 100) |> unique)[1:minimum([4, lsolk])] : nothing

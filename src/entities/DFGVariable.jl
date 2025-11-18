@@ -152,7 +152,7 @@ $(TYPEDFIELDS)
     steadytime::Union{Nothing, Nanosecond} = nothing #NOTE changed to TimeDateZone in v0.29
     #nstime::String = "0" #NOTE different uses, as 0-999_999 nanosecond part of timestamp now in timestamp, as steady timestamp now in steadytime
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
-    Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
+    Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`deleteTags!`](@ref)"""
     tags::Set{Symbol} = Set{Symbol}()
     """Dictionary of state data. May be a subset of all solutions if a solver label was specified in the get call.
     Accessors: [`addState!`](@ref), [`mergeState!`](@ref), and [`deleteState!`](@ref)"""
@@ -297,7 +297,7 @@ $(TYPEDFIELDS)
     Accessors: [`getTimestamp`](@ref)"""
     timestamp::TimeDateZone
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
-    Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
+    Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`deleteTags!`](@ref)"""
     tags::Set{Symbol}
     """Symbol for the state type for the underlying variable.
     Accessor: [`getStateType`](@ref)"""
@@ -324,7 +324,7 @@ Base.@kwdef struct VariableSkeleton <: AbstractGraphVariable
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
-    Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`removeTags!`](@ref)"""
+    Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`deleteTags!`](@ref)"""
     tags::Set{Symbol} = Set{Symbol}()
 end
 

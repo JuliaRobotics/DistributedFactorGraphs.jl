@@ -3,6 +3,23 @@ struct Bloblet
     val::String
 end
 
+function Bloblet(
+    label::Symbol,
+    val::Union{
+        Int,
+        Float64,
+        Bool,
+        Vector{Int},
+        Vector{Float64},
+        Vector{String},
+        Vector{Bool},
+        Missing, 
+        Nothing,
+    },
+)
+    return Bloblet(label, JSON.json(val))
+end
+
 const Bloblets = LittleDict{Symbol, Bloblet}
 
 StructUtils.structlike(::Type{Bloblets}) = false

@@ -173,7 +173,7 @@ function getVariables(
             "tags kwarg is deprecated, use kwarg `tagsFilter = !isdisjoint(tags)` instead", #v0.28
             :getVariables,
         )
-        filterDFG!(variables, x -> !isdisjoint(x, tags), getTags)
+        filterDFG!(variables, x -> !isdisjoint(x, tags), refTags)
     end
     if !isnothing(solvable)
         #TODO review. just one solvableFilter or keep solvable as well.
@@ -186,7 +186,7 @@ function getVariables(
 
     filterDFG!(variables, labelFilter, getLabel)
     filterDFG!(variables, solvableFilter, getSolvable)
-    filterDFG!(variables, tagsFilter, getTags)
+    filterDFG!(variables, tagsFilter, refTags)
     filterDFG!(variables, typeFilter, getVariableType)
 
     return variables
@@ -254,7 +254,7 @@ function getFactors(
             "tags kwarg is deprecated, use kwarg `tagsFilter = !isdisjoint(tags)` instead", #v0.28
             :getFactors,
         )
-        filterDFG!(factors, x -> !isdisjoint(x, tags), getTags)
+        filterDFG!(factors, x -> !isdisjoint(x, tags), refTags)
     end
     if !isnothing(solvable)
         #TODO review. just one solvableFilter or keep solvable as well.
@@ -267,7 +267,7 @@ function getFactors(
 
     filterDFG!(factors, labelFilter, getLabel)
     filterDFG!(factors, solvableFilter, getSolvable)
-    filterDFG!(factors, tagsFilter, getTags)
+    filterDFG!(factors, tagsFilter, refTags)
     filterDFG!(factors, typeFilter, typeof ∘ getObservation)
     return factors
 end
@@ -357,7 +357,7 @@ function listNeighbors(
     # Additional filtering
     # solvable != 0 && filter!(lbl -> _isSolvable(dfg, lbl, solvable), neighbors_ll)
     filterDFG!(neighbors_ll, solvableFilter, l->getSolvable(dfg, l))
-    filterDFG!(neighbors_ll, tagsFilter, l->getTags(dfg, l))
+    filterDFG!(neighbors_ll, tagsFilter, l->listTags(dfg, l))
 
     # Variable sorting (order is important)
     if haskey(dfg.g.factors, label)

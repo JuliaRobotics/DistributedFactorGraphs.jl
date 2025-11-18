@@ -263,32 +263,44 @@ export getId
 ##------------------------------------------------------------------------------
 ## Types
 ##------------------------------------------------------------------------------
-export InMemoryDFGTypes
-export LocalDFG
-export FolderStore
+public InMemoryDFGTypes
+public LocalDFG
+public FolderStore
 
 ##------------------------------------------------------------------------------
 ## Tags
 ##------------------------------------------------------------------------------
 # tags is a set: get/list, merge, empty, and remove (we don't have add but merge)
-export getTags
-export listTags
-export mergeTags!
-export emptyTags!
-export removeTags! #TODO do we want this one
+
+export listVariableTags
+export listFactorTags
+export listGraphTags
+export listAgentTags
+
+export mergeVariableTags!
+export mergeFactorTags!
+export mergeGraphTags!
+export mergeAgentTags!
+
+public listTags
+public mergeTags!
+public emptyTags!
+public deleteTags! #TODO do we want this one
 
 ##------------------------------------------------------------------------------
 ## Bloblets
 ##------------------------------------------------------------------------------
 # currently these refer to variable Bloblets
 #TODO Bloblet CRUD
-# export getVariableBloblet
-# export addVariableBloblet!
-# export deleteVariableBloblet!
-# export listVariableBloblets
+export Bloblet
+export getVariableBloblet
+export addVariableBloblet!
+export mergeVariableBloblet!
+export deleteVariableBloblet!
+export listVariableBloblets
 
-# export getAgentBloblet
-# export getGraphBloblet
+export getAgentBloblet
+export getGraphBloblet
 
 ##------------------------------------------------------------------------------
 ## FileDFG
@@ -331,10 +343,12 @@ export @format_str # exported from FileIO
 
 export @defStateType #TODO Should this be exported?
 
+public refStates
+
 # list of unstable functions not exported any more
 # will move to public or deprecate over time
 const unstable_functions::Vector{Symbol} = [
-    :refStates, #internal maybe make public
+    :getTags,
     :InMemoryBlobstore,
     :getFactorState, # FIXME getFactorState were questioned and being reviewed again for name, other than that they are checked.
     :exists,

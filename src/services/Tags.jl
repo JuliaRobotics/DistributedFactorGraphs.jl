@@ -16,25 +16,33 @@ end
 ## TAGS as a set, list, merge, remove, empty
 ##==============================================================================
 
-listTags(node) = node.tags
+listTags(node) = collect(refTags(node))
+
 """
     $SIGNATURES
 
 Merge add tags to a variable or factor (union)
 """
-mergeTags!(node, tags::Vector{Symbol}) = union!(node.tags, tags)
+function mergeTags!(node, tags)
+    union!(refTags(node), tags)
+    return length(tags)
+end
 """
 $SIGNATURES
 
 Remove the tags from the node (setdiff)
 """
-removeTags!(node, tags::Vector{Symbol}) = setdiff!(node.tags, tags)
+function deleteTags!(node, tags)
+    setdiff!(refTags(node), tags)
+    return length(tags)
+end
+
 """
 $SIGNATURES
 
 Empty all tags from the node (empty)
 """
-emptyTags!(node) = empty!(node.tags)
+emptyTags!(node) = empty!(refTags(node))
 
 """
 $SIGNATURES
@@ -43,7 +51,7 @@ Return the tags for a variable or factor.
 """
 
 #alias for completeness #TODO keep or remove getTags?
-const getTags = listTags
+const getTags = refTags
 
 function listVariableTags(dfg::AbstractDFG, sym::Symbol)
     return listTags(getVariable(dfg, sym))
@@ -105,7 +113,7 @@ function mergeTags!(dfg::InMemoryDFGTypes, sym::Symbol, tags)
     return union!(refTags(getFnc(dfg, sym)), tags)
 end
 
-function removeTags!(dfg::InMemoryDFGTypes, sym::Symbol, tags)
+function deleteTags!(dfg::InMemoryDFGTypes, sym::Symbol, tags)
     getFnc = isVariable(dfg, sym) ? getVariable : getFactor
     return setdiff!(refTags(getFnc(dfg, sym)), tags)
 end

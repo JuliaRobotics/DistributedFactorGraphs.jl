@@ -248,7 +248,6 @@ function DFGVariableSCA()
 
     v1_lbl = :a
     v1_tags = Set([:VARIABLE, :POSE])
-    small = Dict{Symbol, MetadataTypes}(:small => "data")
     testTimestamp = now(localzone())
     # Constructors
     v1 = VariableCompute(
@@ -257,6 +256,7 @@ function DFGVariableSCA()
         tags = v1_tags,
         solvable = 0,
         states = Dict(:default => State{TestVariableType1}(; label = :default)),
+        bloblets = DFG.Bloblets(:small => DFG.Bloblet(:small, "data")),
     )
     v2 = VariableCompute(
         :b,
@@ -549,21 +549,40 @@ function tagsTestBlock!(fg, v1, v1_tags)
     @test issetequal(v1Tags, v1_tags)
     @test issetequal(listTags(fg, :a), v1Tags)
     @test issetequal(mergeTags!(fg, :a, [:TAG]), v1Tags ∪ [:TAG])
-    @test issetequal(removeTags!(fg, :a, [:TAG]), v1Tags)
+    @test issetequal(deleteTags!(fg, :a, [:TAG]), v1Tags)
     @test emptyTags!(fg, :a) == Set{Symbol}()
 
     v2Tags = [listTags(fg, :b)...]
     @test hasTags(fg, :b, [v2Tags...])
     @test hasTags(fg, :b, [:LANDMARK, :TAG], matchAll = false)
 
-    #TODO can be simplified but require julia v1.11
-    # @test listNeighbors(fg, :abf1; tagsFilter = ⊇([:LANDMARK])) == [:b]
-    # @test isempty(listNeighbors(fg, :abf1; tagsFilter = ⊇([:LANDMARK, :TAG])))
+    @test listNeighbors(fg, :abf1; tagsFilter = ⊇([:LANDMARK])) == [:b]
+    @test isempty(listNeighbors(fg, :abf1; tagsFilter = ⊇([:LANDMARK, :TAG])))
+    
+    # Test specific type tag accessors
+    @test issetequal(listVariableTags(fg, :a), listTags(fg, :a))
+    @test issetequal(listFactorTags(fg, :abf1), listTags(fg, :abf1))
+    
+    # Test mergeVariableTags! and mergeFactorTags!
+    initialVarTags = listVariableTags(fg, :a)
+    @test mergeVariableTags!(fg, :a, [:NEW_VAR_TAG]) == 1
+    @test :NEW_VAR_TAG ∈ listVariableTags(fg, :a)
+    
+    initialFactorTags = listFactorTags(fg, :abf1)
+    @test mergeFactorTags!(fg, :abf1, [:NEW_FACTOR_TAG]) == 1
+    @test :NEW_FACTOR_TAG ∈ listFactorTags(fg, :abf1)
 
-    @test listNeighbors(fg, :abf1; tagsFilter = Base.Fix1(issubset, [:LANDMARK])) == [:b]
-    @test isempty(
-        listNeighbors(fg, :abf1; tagsFilter = Base.Fix1(issubset, [:LANDMARK, :TAG])),
-    )
+    # @test listGraphTags(fg) isa Vector{Symbol}
+    # @test listAgentTags(fg) isa Vector{Symbol}
+    
+    initialGraphTags = length(listGraphTags(fg))
+    @test mergeGraphTags!(fg, [:GRAPH_TAG]) == 1
+    @test :GRAPH_TAG ∈ listGraphTags(fg)
+    
+    initialAgentTags = length(listAgentTags(fg))
+    @test mergeAgentTags!(fg, [:AGENT_TAG]) == 1
+    @test :AGENT_TAG ∈ listAgentTags(fg)
+
 end
 
 function VSDTestBlock!(fg, v1)
@@ -649,35 +668,35 @@ function VSDTestBlock!(fg, v1)
 
 end
 
-function smallDataTestBlock!(fg)
-    @test listMetadata(fg, :a) == Symbol[:small]
-    @test listMetadata(fg, :b) == Symbol[]
-    @test small = getMetadata(fg, :a, :small) == "data"
+function blobletTestBlock!(fg)
+    @test listVariableBloblets(fg, :a) == Symbol[:small]
+    @test listVariableBloblets(fg, :b) == Symbol[]
+    @test getVariableBloblet(fg, :a, :small) == DFG.Bloblet(:small, "data")
 
-    @test addMetadata!(fg, :a, :a => 5) == getVariable(fg, :a).smallData
-    @test addMetadata!(fg, :a, :b => 10.0) == getVariable(fg, :a).smallData
-    @test addMetadata!(fg, :a, :c => true) == getVariable(fg, :a).smallData
-    @test addMetadata!(fg, :a, :d => "yes") == getVariable(fg, :a).smallData
-    @test addMetadata!(fg, :a, :e => [1, 2, 3]) == getVariable(fg, :a).smallData
-    @test addMetadata!(fg, :a, :f => [1.4, 2.5, 3.6]) == getVariable(fg, :a).smallData
-    @test addMetadata!(fg, :a, :g => ["yes", "maybe"]) == getVariable(fg, :a).smallData
-    @test addMetadata!(fg, :a, :h => [true, false]) == getVariable(fg, :a).smallData
+    @test addVariableBloblet!(fg, :a, Bloblet(:a, 5)) == Bloblet(:a, 5)
+    @test addVariableBloblet!(fg, :a, Bloblet(:b, 10.0)) == Bloblet(:b, 10.0)
+    @test addVariableBloblet!(fg, :a, Bloblet(:c, true)) == Bloblet(:c, true)
+    @test addVariableBloblet!(fg, :a, Bloblet(:d, "yes")) == Bloblet(:d, "yes")
+    @test addVariableBloblet!(fg, :a, Bloblet(:e, [1, 2, 3])) == Bloblet(:e, [1, 2, 3])
+    @test addVariableBloblet!(fg, :a, Bloblet(:f, [1.4, 2.5, 3.6])) == Bloblet(:f, [1.4, 2.5, 3.6])
+    @test addVariableBloblet!(fg, :a, Bloblet(:g, ["yes", "maybe"])) == Bloblet(:g, ["yes", "maybe"])
+    @test addVariableBloblet!(fg, :a, Bloblet(:h, [true, false])) == Bloblet(:h, [true, false])
 
-    @test_throws LabelExistsError addMetadata!(fg, :a, :a => 3)
-    @test updateMetadata!(fg, :a, :a => 3) == getVariable(fg, :a).smallData
+    @test_throws LabelExistsError addVariableBloblet!(fg, :a, Bloblet(:a, 3))
+    @test mergeVariableBloblet!(fg, :a, Bloblet(:a, 3)) == 1
 
-    @test_throws MethodError addMetadata!(fg, :a, :no => 0x01)
-    @test_throws MethodError addMetadata!(fg, :a, :no => 1.0f0)
-    @test_throws MethodError addMetadata!(fg, :a, :no => Nanosecond(3))
-    @test_throws MethodError addMetadata!(fg, :a, :no => [0x01])
-    @test_throws MethodError addMetadata!(fg, :a, :no => [1.0f0])
-    @test_throws MethodError addMetadata!(fg, :a, :no => [Nanosecond(3)])
+    @test_throws MethodError addVariableBloblet!(fg, :a, Bloblet(:no => 0x01))
+    @test_throws MethodError addVariableBloblet!(fg, :a, Bloblet(:no => 1.0f0))
+    @test_throws MethodError addVariableBloblet!(fg, :a, Bloblet(:no => Nanosecond(3)))
+    @test_throws MethodError addVariableBloblet!(fg, :a, Bloblet(:no => [0x01]))
+    @test_throws MethodError addVariableBloblet!(fg, :a, Bloblet(:no => [1.0f0]))
+    @test_throws MethodError addVariableBloblet!(fg, :a, Bloblet(:no => [Nanosecond(3)]))
 
-    @test deleteMetadata!(fg, :a, :a) == 1
-    @test updateMetadata!(fg, :a, :a => 3) == getVariable(fg, :a).smallData
-    @test length(listMetadata(fg, :a)) == 9
-    emptyMetadata!(fg, :a)
-    @test length(listMetadata(fg, :a)) == 0
+    @test deleteVariableBloblet!(fg, :a, :a) == 1
+    @test mergeVariableBloblet!(fg, :a, Bloblet(:a, 3)) == 1
+    @test length(listVariableBloblets(fg, :a)) == 9
+    # emptyVariableBloblets!(fg, :a)
+    # @test length(listVariableBloblets(fg, :a)) == 0
 end
 
 function DataEntriesTestBlock!(fg, v2)
@@ -1345,8 +1364,8 @@ function Summaries(testDFGAPI)
     # if VARTYPE == VariableSummary
     # factorFields = fieldnames(FACTYPE)
     # variableFields = fieldnames(VARTYPE)
-    factorFields = fieldnames(FactorSummary)
-    variableFields = fieldnames(VariableSummary)
+    factorFields = fieldnames(DFG.FactorSummary)
+    variableFields = fieldnames(DFG.VariableSummary)
 
     summaryGraph = getSummaryGraph(dfg)
     @test symdiff(ls(summaryGraph), ls(dfg)) == Symbol[]

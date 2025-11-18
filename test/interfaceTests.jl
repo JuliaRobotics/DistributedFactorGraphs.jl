@@ -116,9 +116,9 @@ end
 end
 
 #FIXME replace with Bloblets tests
-# @testset "Metadata CRUD" begin
-#     smallDataTestBlock!(fg1)
-# end
+@testset "Bloblet CRUD" begin
+    blobletTestBlock!(fg1)
+end
 
 @testset "Data Entries and Blobs" begin
     if typeof(fg1) <: InMemoryDFGTypes
