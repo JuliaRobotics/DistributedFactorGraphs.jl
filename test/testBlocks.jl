@@ -349,6 +349,10 @@ function DFGFactorSCA()
         TestFunctorInferenceType1();
         timestamp = ZonedDateTime("2020-08-11T00:12:03.000-05:00"),
     )
+
+    #test IIF like constructor
+    f3 = FactorDFG([:a, :b], TestFunctorInferenceType1())
+
     #TODO add tests for mutating vos in updateFactor and orphan related checks.
     # we should perhaps prevent an empty vos
 
@@ -558,31 +562,30 @@ function tagsTestBlock!(fg, v1, v1_tags)
 
     @test listNeighbors(fg, :abf1; tagsFilter = ⊇([:LANDMARK])) == [:b]
     @test isempty(listNeighbors(fg, :abf1; tagsFilter = ⊇([:LANDMARK, :TAG])))
-    
+
     # Test specific type tag accessors
     @test issetequal(listVariableTags(fg, :a), listTags(fg, :a))
     @test issetequal(listFactorTags(fg, :abf1), listTags(fg, :abf1))
-    
+
     # Test mergeVariableTags! and mergeFactorTags!
     initialVarTags = listVariableTags(fg, :a)
     @test mergeVariableTags!(fg, :a, [:NEW_VAR_TAG]) == 1
     @test :NEW_VAR_TAG ∈ listVariableTags(fg, :a)
-    
+
     initialFactorTags = listFactorTags(fg, :abf1)
     @test mergeFactorTags!(fg, :abf1, [:NEW_FACTOR_TAG]) == 1
     @test :NEW_FACTOR_TAG ∈ listFactorTags(fg, :abf1)
 
     # @test listGraphTags(fg) isa Vector{Symbol}
     # @test listAgentTags(fg) isa Vector{Symbol}
-    
+
     initialGraphTags = length(listGraphTags(fg))
     @test mergeGraphTags!(fg, [:GRAPH_TAG]) == 1
     @test :GRAPH_TAG ∈ listGraphTags(fg)
-    
+
     initialAgentTags = length(listAgentTags(fg))
     @test mergeAgentTags!(fg, [:AGENT_TAG]) == 1
     @test :AGENT_TAG ∈ listAgentTags(fg)
-
 end
 
 function VSDTestBlock!(fg, v1)
@@ -678,9 +681,12 @@ function blobletTestBlock!(fg)
     @test addVariableBloblet!(fg, :a, Bloblet(:c, true)) == Bloblet(:c, true)
     @test addVariableBloblet!(fg, :a, Bloblet(:d, "yes")) == Bloblet(:d, "yes")
     @test addVariableBloblet!(fg, :a, Bloblet(:e, [1, 2, 3])) == Bloblet(:e, [1, 2, 3])
-    @test addVariableBloblet!(fg, :a, Bloblet(:f, [1.4, 2.5, 3.6])) == Bloblet(:f, [1.4, 2.5, 3.6])
-    @test addVariableBloblet!(fg, :a, Bloblet(:g, ["yes", "maybe"])) == Bloblet(:g, ["yes", "maybe"])
-    @test addVariableBloblet!(fg, :a, Bloblet(:h, [true, false])) == Bloblet(:h, [true, false])
+    @test addVariableBloblet!(fg, :a, Bloblet(:f, [1.4, 2.5, 3.6])) ==
+          Bloblet(:f, [1.4, 2.5, 3.6])
+    @test addVariableBloblet!(fg, :a, Bloblet(:g, ["yes", "maybe"])) ==
+          Bloblet(:g, ["yes", "maybe"])
+    @test addVariableBloblet!(fg, :a, Bloblet(:h, [true, false])) ==
+          Bloblet(:h, [true, false])
 
     @test_throws LabelExistsError addVariableBloblet!(fg, :a, Bloblet(:a, 3))
     @test mergeVariableBloblet!(fg, :a, Bloblet(:a, 3)) == 1

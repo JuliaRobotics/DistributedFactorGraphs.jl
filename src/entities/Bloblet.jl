@@ -13,7 +13,7 @@ function Bloblet(
         Vector{Float64},
         Vector{String},
         Vector{Bool},
-        Missing, 
+        Missing,
         Nothing,
     },
 )
