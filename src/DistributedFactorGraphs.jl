@@ -109,12 +109,6 @@ export addStates!
 export mergeStates!
 export deleteStates!
 
-export addBlobentry!
-export getBlobentry
-export mergeBlobentry!
-export deleteBlobentry!
-export addBlobentries!
-
 ## list
 export listVariables
 export listFactors
@@ -150,18 +144,27 @@ export hasFactor
 ##------------------------------------------------------------------------------
 ## Blobentries
 ##------------------------------------------------------------------------------
-export addBlobentries!
+export addVariableBlobentry!
+export addVariableBlobentries!
+
+export getVariableBlobentry
+export getVariableBlobentries
+
+export mergeVariableBlobentry!
+export mergeVariableBlobentries!
+
+export deleteVariableBlobentry!
+export deleteVariableBlobentries!
+
 export addGraphBlobentry!
 export addGraphBlobentries!
 export addAgentBlobentry!
 export addAgentBlobentries!
 
-export getBlobentries
 export getGraphBlobentries
 export getAgentBlobentry
 export getAgentBlobentries
 
-export mergeBlobentries!
 export mergeGraphBlobentry!
 export mergeGraphBlobentries!
 export mergeAgentBlobentry!
@@ -172,11 +175,11 @@ export deleteAgentBlobentry!
 export deleteGraphBlobentries!
 export deleteAgentBlobentries!
 
-export listBlobentries
+export listVariableBlobentries
 export listGraphBlobentries
 export listAgentBlobentries
 
-export hasBlobentry
+export hasVariableBlobentry
 export hasGraphBlobentry
 export hasAgentBlobentry
 
@@ -220,6 +223,8 @@ export GraphsDFG
 
 # export addBlobentry!,         getBlobentry,         mergeBlobentry!,         deleteBlobentry! # historic for VariableBlobentry
 # export addBlobentries!,       getBlobentries,       mergeBlobentries!,       deleteBlobentries!
+# export addVariableBlobentry!,   getVariableBlobentry,   mergeVariableBlobentry!,   deleteVariableBlobentry!
+# export addVariableBlobentries!, getVariableBlobentries, mergeVariableBlobentries!, deleteVariableBlobentries!
 # export addGraphBlobentry!,    getGraphBlobentry,    mergeGraphBlobentry!,    deleteGraphBlobentry!
 # export addGraphBlobentries!,  getGraphBlobentries,  mergeGraphBlobentries!,  deleteGraphBlobentries!
 # export addAgentBlobentry!,    getAgentBlobentry,    mergeAgentBlobentry!,    deleteAgentBlobentry!
@@ -229,15 +234,14 @@ export GraphsDFG
 # export addFactorBlobentries!, getFactorBlobentries, mergeFactorBlobentries!, deleteFactorBlobentries!
 
 # TODO first pass progress
-# export addVariableMetadata!,  getVariableMetadata,  mergeVariableMetadata!,  deleteVariableMetadata!
-# export addFactorMetadata!,    getFactorMetadata,    mergeFactorMetadata!,    deleteFactorMetadata!
-# export addAgentMetadata!,     getAgentMetadata,     mergeAgentMetadata!,     deleteAgentMetadata!
-# export addGraphMetadata!,     getGraphMetadata,     mergeGraphMetadata!,     deleteGraphMetadata!
-
-# export addVariableBlobentryMetadata!, getVariableBlobentryMetadata, mergeVariableBlobentryMetadata!, deleteVariableBlobentryMetadata!
-# export addFactorBlobentryMetadata!,   getFactorBlobentryMetadata,   mergeFactorBlobentryMetadata!,   deleteFactorBlobentryMetadata!
-# export addAgentBlobentryMetadata!,    getAgentBlobentryMetadata,    mergeAgentBlobentryMetadata!,    deleteAgentBlobentryMetadata!
-# export addGraphBlobentryMetadata!,    getGraphBlobentryMetadata,    mergeGraphBlobentryMetadata!,    deleteGraphBlobentryMetadata!
+# export addVariableBloblet!,  getVariableBloblet,  mergeVariableBloblet!,  deleteVariableBloblet!
+# export addVariableBloblets!, getVariableBloblets, mergeVariableBloblets!, deleteVariableBloblets!
+# export addFactorBloblet!,    getFactorBloblet,    mergeFactorBloblet!,    deleteFactorBloblet!
+# export addFactorBloblets!,  getFactorBloblets,  mergeFactorBloblets!,  deleteFactorBloblets!
+# export addAgentBloblet!,     getAgentBloblet,     mergeAgentBloblet!,     deleteAgentBloblet!
+# export addAgentBloblets!,    getAgentBloblets,    mergeAgentBloblets!,    deleteAgentBloblets!
+# export addGraphBloblet!,     getGraphBloblet,     mergeGraphBloblet!,     deleteGraphBloblet!
+# export addGraphBloblets!,    getGraphBloblets,    mergeGraphBloblets!,    deleteGraphBloblets!
 
 ## list
 # export listVariables, listFactors, listStates, listBlobentries, listFactorBlobEntries, listGraphBlobentries, listAgentBlobentries
@@ -259,33 +263,44 @@ export getId
 ##------------------------------------------------------------------------------
 ## Types
 ##------------------------------------------------------------------------------
-export InMemoryDFGTypes
-export LocalDFG
-export FolderStore
+public InMemoryDFGTypes
+public LocalDFG
+public FolderStore
 
 ##------------------------------------------------------------------------------
 ## Tags
 ##------------------------------------------------------------------------------
 # tags is a set: get/list, merge, empty, and remove (we don't have add but merge)
-export getTags
-export listTags
-export mergeTags!
-export emptyTags!
-export removeTags! #TODO do we want this one
-export hasTags
+
+export listVariableTags
+export listFactorTags
+export listGraphTags
+export listAgentTags
+
+export mergeVariableTags!
+export mergeFactorTags!
+export mergeGraphTags!
+export mergeAgentTags!
+
+public listTags
+public mergeTags!
+public emptyTags!
+public deleteTags! #TODO do we want this one
 
 ##------------------------------------------------------------------------------
 ## Bloblets
 ##------------------------------------------------------------------------------
 # currently these refer to variable Bloblets
 #TODO Bloblet CRUD
-# export getVariableBloblet
-# export addVariableBloblet!
-# export deleteVariableBloblet!
-# export listVariableBloblets
+export Bloblet
+export getVariableBloblet
+export addVariableBloblet!
+export mergeVariableBloblet!
+export deleteVariableBloblet!
+export listVariableBloblets
 
-# export getAgentBloblet
-# export getGraphBloblet
+export getAgentBloblet
+export getGraphBloblet
 
 ##------------------------------------------------------------------------------
 ## FileDFG
@@ -328,16 +343,15 @@ export @format_str # exported from FileIO
 
 export @defStateType #TODO Should this be exported?
 
+public refStates
+
 # list of unstable functions not exported any more
 # will move to public or deprecate over time
 const unstable_functions::Vector{Symbol} = [
-    :refStates, #internal maybe make public
+    :getTags,
     :InMemoryBlobstore,
-    :MetadataTypes, #maybe make public after metadata stable
     :getFactorState, # FIXME getFactorState were questioned and being reviewed again for name, other than that they are checked.
     :exists,
-    :emptyMetadata!, #TODO maybe deprecate for just deleteMetadata!
-    :emptyBlobstore!, #TODO maybe deprecate for just deleteBlobstore!
     :compare,
     :compareField,
     :compareFields,
@@ -360,7 +374,6 @@ const unstable_functions::Vector{Symbol} = [
     :getAgentLabel,
     :getGraphLabel,
     :getDescription,
-    :getAddHistory,
     :getSolverParams,
     :getHash,
     :getTimestamp,
@@ -378,7 +391,6 @@ const unstable_functions::Vector{Symbol} = [
     :getVariableLabelNumber,# TODO somewhat used, do we deprecate?
     :getfirstBlobentry,# TODO somewhat used, do we deprecate?
     :getSolveInProgress,#TODO unused, do we deprecate?
-    :hasTagsNeighbors,
     :isVariable,
     :isFactor,
     :isConnected,
@@ -401,6 +413,7 @@ const unstable_functions::Vector{Symbol} = [
     :packState,
     :unpack,
     :unpackDistribution,
+    :hasTags,
     # :unpackVariable,
     # :unpackFactor,
     :unpackBlob,
@@ -413,7 +426,6 @@ const unstable_functions::Vector{Symbol} = [
     :mergeGraph!,
     :buildSubgraph,
     :incrDataLabelSuffix,# TODO somewhat used, do we deprecate?
-    :updateBlobstore!,## TODO deprecated or obsolete
     :updateMetadata!,## TODO deprecated or obsolete
     :updateBlob!,## TODO deprecated or obsolete
 
@@ -427,6 +439,11 @@ const unstable_functions::Vector{Symbol} = [
     # no set on these
 
     #deprecated in v0.29
+    :hasTagsNeighbors,
+    # :updateBlobstore!,## TODO deprecated or obsolete
+    :emptyMetadata!, #TODO maybe deprecate for just deleteMetadata!
+    # :emptyBlobstore!, #TODO maybe deprecate for just deleteBlobstore!
+    :MetadataTypes, #maybe make public after metadata stable
     :getVariableTypeName,
     :getVariableType,
     :setTimestamp,
@@ -434,6 +451,7 @@ const unstable_functions::Vector{Symbol} = [
     :setAgentMetadata!,
     :setGraphMetadata!,
     # :getSolverDataDict,# obsolete
+    :getAddHistory,
 
     #Deprecated in v0.28
     :AbstractRelativeMinimize,
@@ -540,19 +558,21 @@ include("entities/DFGFactor.jl")
 # include("serialization/FactorSerialization.jl")
 
 include("entities/DFGVariable.jl")
+include("serialization/StateSerialization.jl")
 
 include("entities/Agent_and_Graph.jl")
 
 include("services/AbstractDFG.jl")
+include("services/list.jl")
+include("services/find.jl")
+include("services/CommonAccessors.jl")
+include("Common.jl")
 
 #Blobs
 include("DataBlobs/services/BlobEntry.jl")
 include("DataBlobs/services/BlobStores.jl")
 include("DataBlobs/services/BlobPacking.jl")
 include("DataBlobs/services/BlobWrappers.jl")
-
-# To be moved as necessary.
-include("Common.jl")
 
 function getSolvable end
 function getVariableType end
@@ -565,9 +585,11 @@ using .GraphsDFGs
 const InMemoryDFGTypes = Union{GraphsDFG}
 const LocalDFG = GraphsDFG
 
+include("services/Tags.jl")
+include("services/Bloblet.jl")
+include("services/Blobentry.jl")
+
 # Common includes
-include("services/CommonAccessors.jl")
-include("services/Serialization.jl")
 include("services/DFGVariable.jl")
 include("services/DFGFactor.jl")
 include("Deprecated.jl")

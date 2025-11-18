@@ -31,7 +31,7 @@ function addVariable!(
     FactorGraphs.addVariable!(dfg.g, variable) || return false
 
     # Track insertion
-    push!(dfg.addHistory, variable.label)
+    # push!(dfg.addHistory, variable.label)
 
     return variable
 end
@@ -173,7 +173,7 @@ function getVariables(
             "tags kwarg is deprecated, use kwarg `tagsFilter = !isdisjoint(tags)` instead", #v0.28
             :getVariables,
         )
-        filterDFG!(variables, x -> !isdisjoint(x, tags), getTags)
+        filterDFG!(variables, x -> !isdisjoint(x, tags), refTags)
     end
     if !isnothing(solvable)
         #TODO review. just one solvableFilter or keep solvable as well.
@@ -186,7 +186,7 @@ function getVariables(
 
     filterDFG!(variables, labelFilter, getLabel)
     filterDFG!(variables, solvableFilter, getSolvable)
-    filterDFG!(variables, tagsFilter, getTags)
+    filterDFG!(variables, tagsFilter, refTags)
     filterDFG!(variables, typeFilter, getVariableType)
 
     return variables
@@ -205,8 +205,8 @@ function listVariables(
     if !isnothing(solvableFilter) ||
        !isnothing(tagsFilter) ||
        !isnothing(typeFilter) ||
-       !isnothing(regexFilter) ||  #TODO deprecated
-       !isempty(tags) ||           #TODO deprecated
+       !isnothing(regexFilter) ||  #TODO deprecated v0.28
+       !isempty(tags) ||           #TODO deprecated v0.28
        !isnothing(solvable)        #TODO Maybe deprecated?
         return map(
             getLabel,
@@ -254,7 +254,7 @@ function getFactors(
             "tags kwarg is deprecated, use kwarg `tagsFilter = !isdisjoint(tags)` instead", #v0.28
             :getFactors,
         )
-        filterDFG!(factors, x -> !isdisjoint(x, tags), getTags)
+        filterDFG!(factors, x -> !isdisjoint(x, tags), refTags)
     end
     if !isnothing(solvable)
         #TODO review. just one solvableFilter or keep solvable as well.
@@ -267,7 +267,7 @@ function getFactors(
 
     filterDFG!(factors, labelFilter, getLabel)
     filterDFG!(factors, solvableFilter, getSolvable)
-    filterDFG!(factors, tagsFilter, getTags)
+    filterDFG!(factors, tagsFilter, refTags)
     filterDFG!(factors, typeFilter, typeof ∘ getObservation)
     return factors
 end
@@ -333,16 +333,31 @@ end
 function listNeighbors(
     dfg::GraphsDFG,
     label::Symbol;
-    solvable::Union{Nothing, Int} = nothing,
+    solvableFilter::Union{Nothing, Function} = nothing,
+    tagsFilter::Union{Nothing, Function} = nothing,
+    solvable::Union{Nothing, Int} = nothing, #TODO deprecated for solvableFilter v0.29
 )
+    if !isnothing(solvable)
+        Base.depwarn(
+            "solvable kwarg is deprecated, use kwarg `solvableFilter = (>=solvable)` instead", #v0.29
+            :listNeighbors,
+        )
+        !isnothing(solvableFilter) &&
+            error("Cannot use both solvable and solvableFilter kwargs.")
+        solvableFilter = >=(solvable)
+    end
+
     if !(hasVariable(dfg, label) || hasFactor(dfg, label))
         throw(LabelNotFoundError(label))
     end
 
     neighbors_il = FactorGraphs.outneighbors(dfg.g, dfg.g.labels[label])
     neighbors_ll = [dfg.g.labels[i] for i in neighbors_il]
+
     # Additional filtering
-    solvable != 0 && filter!(lbl -> _isSolvable(dfg, lbl, solvable), neighbors_ll)
+    # solvable != 0 && filter!(lbl -> _isSolvable(dfg, lbl, solvable), neighbors_ll)
+    filterDFG!(neighbors_ll, solvableFilter, l->getSolvable(dfg, l))
+    filterDFG!(neighbors_ll, tagsFilter, l->listTags(dfg, l))
 
     # Variable sorting (order is important)
     if haskey(dfg.g.factors, label)

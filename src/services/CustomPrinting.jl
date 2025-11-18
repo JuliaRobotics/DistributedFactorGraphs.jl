@@ -41,7 +41,7 @@ function printVariable(
         printstyled(ioc, vert.label; bold = true)
         println(ioc)
         println(ioc, "  solvable:   ", getSolvable(vert))
-        println(ioc, "  tags:       ", getTags(vert))
+        println(ioc, "  tags:       ", listTags(vert))
         solk = listStates(vert)
         lsolk = length(solk)
         smsk = lsolk > 0 ? (rand(1:lsolk, 100) |> unique)[1:minimum([4, lsolk])] : nothing
@@ -191,16 +191,7 @@ function Base.show(io::IO, ::MIME"text/plain", dfg::AbstractDFG)
     println(io, "  Description: ", getDescription(dfg))
     println(io, "  Nr variables: ", length(ls(dfg)))
     println(io, "  Nr factors: ", length(lsf(dfg)))
-    # println(io, "  Agent Metadata: ", keys(getAgentMetadata(dfg)))#FIXME use Bloblets
-    # println(io, "  Graph Metadata: ", keys(getGraphMetadata(dfg)))#FIXME use Bloblets
+    println(io, "  Agent Metadata: ", listAgentBloblets(dfg))
+    println(io, "  Graph Metadata: ", listGraphBloblets(dfg))
     return
-end
-
-#default for Atom/Juno
-function Base.show(
-    io::IO,
-    ::MIME"application/prs.juno.inline",
-    x::Union{AbstractDFG, VariableCompute, FactorDFG},
-)
-    return show(io, x)
 end

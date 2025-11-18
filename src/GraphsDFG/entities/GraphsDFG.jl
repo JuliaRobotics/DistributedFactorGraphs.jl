@@ -12,10 +12,10 @@ mutable struct GraphsDFG{
     F <: AbstractGraphFactor,
 } <: AbstractDFG{V, F}
     g::FactorGraph{Int, V, F}
-    addHistory::Vector{Symbol} #TODO: Discuss more - is this an audit trail?
+    # addHistory::Vector{Symbol} #TODO: Discuss more - is this an audit trail?
     solverParams::T # Solver parameters
     blobStores::Dict{Symbol, AbstractBlobstore}
-    graph::GraphRoot
+    graph::Graphroot
     agent::Agent
 end
 
@@ -33,7 +33,7 @@ Create an in-memory GraphsDFG with the following parameters:
 """
 function GraphsDFG{T, V, F}(
     g::FactorGraph{Int, V, F} = FactorGraph{Int, V, F}();
-    addHistory::Vector{Symbol} = Symbol[],
+    # addHistory::Vector{Symbol} = Symbol[],
     solverParams::T = T(),
     blobStores = Dict{Symbol, AbstractBlobstore}(),
     # graph
@@ -42,7 +42,7 @@ function GraphsDFG{T, V, F}(
     graphTags::Union{Set{Symbol}, Vector{Symbol}} = Set{Symbol}(),
     graphBloblets::Bloblets = Bloblets(),
     graphBlobEntries = Blobentries(),
-    graph::GraphRoot = GraphRoot(
+    graph::Graphroot = Graphroot(
         graphLabel,
         graphDescription,
         graphTags,
@@ -79,7 +79,7 @@ function GraphsDFG{T, V, F}(
     !DFG.isValidLabel(agentLabel) &&
         throw(ArgumentError("'$agentLabel' is not a valid label"))
 
-    return GraphsDFG{T, V, F}(g, addHistory, solverParams, blobStores, graph, agent)
+    return GraphsDFG{T, V, F}(g, solverParams, blobStores, graph, agent)
 end
 
 # GraphsDFG{T}(; kwargs...) where T <: AbstractDFGParams = GraphsDFG{T,VariableCompute,FactorDFG}(;kwargs...)

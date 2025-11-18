@@ -7,7 +7,7 @@
 # abstract type AbstractGraphNode end <: AbstractDFGNode
 # the rest of the nodes are also AbstractDFGNodes, eg.
 # Agent <: AbstractDFGNode
-# GraphRoot <: AbstractDFGNode
+# Graphroot <: AbstractDFGNode
 
 """
 $(TYPEDEF)
@@ -48,20 +48,4 @@ const DFGParams = AbstractDFGParams
 $(TYPEDEF)
 Empty structure for solver parameters.
 """
-@kwdef struct NoSolverParams <: AbstractDFGParams
-    d::Int = 0#FIXME JSON3.jl error MethodError: no method matching read(::StructTypes.SingletonType, ...
-end
-
-"""
-Types valid for small data.
-"""
-const MetadataTypes = Union{
-    Int,
-    Float64,
-    String,
-    Bool,
-    Vector{Int},
-    Vector{Float64},
-    Vector{String},
-    Vector{Bool},
-}
+struct NoSolverParams <: AbstractDFGParams end

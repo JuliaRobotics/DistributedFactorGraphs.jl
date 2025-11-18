@@ -1,19 +1,4 @@
 
-## Utility functions for getting type names and modules (from IncrementalInference)
-_getmodule(t::T) where {T} = T.name.module
-_getname(t::T) where {T} = T.name.name
-
-function convertPackedType(t::Union{T, Type{T}}) where {T <: AbstractObservation}
-    return getfield(_getmodule(t), Symbol("Packed$(_getname(t))"))
-end
-function convertStructType(::Type{PT}) where {PT <: AbstractPackedObservation}
-    # see #668 for expanded reasoning.  PT may be ::UnionAll if the type is of template type.
-    ptt = PT isa DataType ? PT.name.name : PT
-    moduleName = PT isa DataType ? PT.name.module : Main
-    symbolName = Symbol(string(ptt)[7:end])
-    return getfield(moduleName, symbolName)
-end
-
 ##==============================================================================
 ## Sorting
 ##==============================================================================

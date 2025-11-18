@@ -112,7 +112,6 @@ end
     @test lsf(dfg, r"abf.*") == [f1.label]
 
     # Accessors
-    @test getAddHistory(dfg) == [:a, :b] #, :abf1
     @test getDescription(dfg) !== nothing
     #TODO Deprecate
     # @test_throws ErrorException getLabelDict(dfg)

@@ -25,7 +25,8 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - 'lts' # long term support
+          - '1.11'
+          # - 'lts' # long term support
           - '1'   # stable
           # - 'pre' # pre-release
         os:

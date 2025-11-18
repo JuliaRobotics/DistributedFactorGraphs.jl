@@ -4,6 +4,20 @@
 export FactorCompute
 const FactorCompute = FactorDFG
 
+"""
+Types valid for small data.
+"""
+const MetadataTypes = Union{
+    Int,
+    Float64,
+    String,
+    Bool,
+    Vector{Int},
+    Vector{Float64},
+    Vector{String},
+    Vector{Bool},
+}
+
 function getHash(entry::Blobentry)
     return error(
         "Blobentry field :hash has been deprecated; use :crchash or :shahash instead",
@@ -126,11 +140,6 @@ refMetadata(node) = node.metadata
 function packDistribution end
 function unpackDistribution end
 
-getAgentMetadata(args...) = error("getAgentMetadata is obsolete, use Bloblets instead.")
-setAgentMetadata!(args...) = error("setAgentMetadata! is obsolete, use Bloblets instead.")
-getGraphMetadata(args...) = error("getGraphMetadata is obsolete, use Bloblets instead.")
-setGraphMetadata!(args...) = error("setGraphMetadata! is obsolete, use Bloblets instead.")
-
 function setDescription!(args...)
     return error("setDescription! was removed and may be implemented later.")
 end
@@ -155,6 +164,182 @@ end
 function getVariableTypeName(v::VariableSummary)
     Base.depwarn("getVariableTypeName is deprecated.", :getVariableTypeName)
     return v.statetype
+end
+
+"""
+    $(SIGNATURES)
+Get the Metadata entry at `key` for variable `label` in `dfg`
+"""
+function getMetadata(dfg::AbstractDFG, label::Symbol, key::Symbol)
+    return getVariable(dfg, label).smallData[key]
+end
+
+"""
+    $(SIGNATURES)
+Add a Metadata pair `key=>value` for variable `label` in `dfg`
+"""
+function addMetadata!(dfg::AbstractDFG, label::Symbol, pair::Pair{Symbol, <:MetadataTypes})
+    v = getVariable(dfg, label)
+    haskey(v.smallData, pair.first) && throw(LabelExistsError("Metadata", pair.first))
+    push!(v.smallData, pair)
+    mergeVariable!(dfg, v)
+    return v.smallData #or pair TODO
+end
+
+"""
+    $(SIGNATURES)
+Update a Metadata pair `key=>value` for variable `label` in `dfg`
+"""
+function updateMetadata!(
+    dfg::AbstractDFG,
+    label::Symbol,
+    pair::Pair{Symbol, <:MetadataTypes};
+    warn_if_absent::Bool = true,
+)
+    v = getVariable(dfg, label)
+    warn_if_absent &&
+        !haskey(v.smallData, pair.first) &&
+        @warn("$(pair.first) does not exist, adding.")
+    push!(v.smallData, pair)
+    mergeVariable!(dfg, v)
+    return v.smallData #or pair TODO
+end
+
+"""
+    $(SIGNATURES)
+Delete a Metadata entry at `key` for variable `label` in `dfg`
+"""
+function deleteMetadata!(dfg::AbstractDFG, label::Symbol, key::Symbol)
+    v = getVariable(dfg, label)
+    pop!(v.smallData, key)
+    mergeVariable!(dfg, v)
+    return 1
+end
+
+"""
+    $(SIGNATURES)
+List all Metadata keys for a variable `label` in `dfg`
+"""
+function listMetadata(dfg::AbstractDFG, label::Symbol)
+    v = getVariable(dfg, label)
+    return collect(keys(v.smallData)) #or pair TODO
+end
+
+"""
+    $(SIGNATURES)
+Empty all Metadata from variable `label` in `dfg`
+"""
+function emptyMetadata!(dfg::AbstractDFG, label::Symbol)
+    v = getVariable(dfg, label)
+    empty!(v.smallData)
+    mergeVariable!(dfg, v)
+    return v.smallData #or pair TODO
+end
+
+# """
+# $(SIGNATURES)
+# Function to generate source string - agentLabel|graphLabel|varLabel
+# """
+function buildSourceString(dfg::AbstractDFG, label::Symbol)
+    return "$(getAgentLabel(dfg))|$(getGraphLabel(dfg))|$label"
+end
+
+getAgentMetadata(args...) = error("getAgentMetadata is obsolete, use Bloblets instead.")
+setAgentMetadata!(args...) = error("setAgentMetadata! is obsolete, use Bloblets instead.")
+getGraphMetadata(args...) = error("getGraphMetadata is obsolete, use Bloblets instead.")
+setGraphMetadata!(args...) = error("setGraphMetadata! is obsolete, use Bloblets instead.")
+function updateAgentMetadata!(args...)
+    return error("updateAgentMetadata! is obsolete, use Bloblets instead.")
+end
+function updateGraphMetadata!(args...)
+    return error("updateGraphMetadata! is obsolete, use Bloblets instead.")
+end
+function deleteAgentMetadata!(args...)
+    return error("deleteAgentMetadata! is obsolete, use Bloblets instead.")
+end
+function deleteGraphMetadata!(args...)
+    return error("deleteGraphMetadata! is obsolete, use Bloblets instead.")
+end
+function emptyAgentMetadata!(args...)
+    return error("emptyAgentMetadata! is obsolete, use Bloblets instead.")
+end
+function emptyGraphMetadata!(args...)
+    return error("emptyGraphMetadata! is obsolete, use Bloblets instead.")
+end
+
+#TODO deprecate AbstractPackedObservation
+abstract type AbstractPackedObservation end
+const PackedObservation = AbstractPackedObservation
+#TODO deprecate AbstractPackedBelief
+abstract type AbstractPackedBelief end
+const PackedBelief = AbstractPackedBelief
+
+getAddHistory(dfg::AbstractDFG) = error("getAddHistory is obsolete.")
+
+## Utility functions for getting type names and modules (from IncrementalInference)
+_getmodule(t::T) where {T} = T.name.module
+_getname(t::T) where {T} = T.name.name
+
+function convertPackedType(t::Union{T, Type{T}}) where {T <: AbstractObservation}
+    return getfield(_getmodule(t), Symbol("Packed$(_getname(t))"))
+end
+function convertStructType(::Type{PT}) where {PT <: AbstractPackedObservation}
+    # see #668 for expanded reasoning.  PT may be ::UnionAll if the type is of template type.
+    ptt = PT isa DataType ? PT.name.name : PT
+    moduleName = PT isa DataType ? PT.name.module : Main
+    symbolName = Symbol(string(ptt)[7:end])
+    return getfield(moduleName, symbolName)
+end
+
+@deprecate getBlobentry(fg::AbstractDFG, varlabel::Symbol, key::Symbol) getVariableBlobentry(
+    fg,
+    varlabel,
+    key,
+)
+@deprecate getBlobentries(fg::AbstractDFG, varlabel::Symbol; kwargs...) getVariableBlobentries(
+    fg,
+    varlabel;
+    kwargs...,
+)
+@deprecate addBlobentry!(fg::AbstractDFG, varlabel::Symbol, entry::Blobentry) addVariableBlobentry!(
+    fg,
+    varlabel,
+    entry,
+)
+@deprecate mergeBlobentry!(fg::AbstractDFG, varlabel::Symbol, entry::Blobentry) mergeVariableBlobentry!(
+    fg,
+    varlabel,
+    entry,
+)
+@deprecate deleteBlobentry!(fg::AbstractDFG, varlabel::Symbol, key::Symbol) deleteVariableBlobentry!(
+    fg,
+    varlabel,
+    key,
+)
+@deprecate listBlobentries(fg::AbstractDFG, varlabel::Symbol) listVariableBlobentries(
+    fg,
+    varlabel,
+)
+
+# """
+#     $SIGNATURES
+
+# Determine if the variable or factor neighbors have the `tags:;Vector{Symbol}`, and `matchAll::Bool`.
+# """
+function hasTagsNeighbors(
+    dfg::AbstractDFG,
+    node_label::Symbol,
+    tags::Vector{Symbol};
+    matchAll::Bool = true,
+)
+    #
+    Base.depwarn(
+        "hasTagsNeighbors is deprecated, use listNeighbors with tagsFilter instead",
+        :hasTagsNeighbors,
+    )
+    # assume only variables or factors are neighbors
+    alltags = union((listNeighbors(dfg, node_label) .|> x -> listTags(dfg, x))...)
+    return length(filter(x -> x in alltags, tags)) >= (matchAll ? length(tags) : 1)
 end
 
 ## ================================================================================

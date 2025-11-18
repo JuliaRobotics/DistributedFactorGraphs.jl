@@ -365,76 +365,6 @@ end
 # Generic Metadata CRUD
 # TODO optimize for difference in in-memory by extending in other drivers. 
 
-"""
-    $(SIGNATURES)
-Get the Metadata entry at `key` for variable `label` in `dfg`
-"""
-function getMetadata(dfg::AbstractDFG, label::Symbol, key::Symbol)
-    return getVariable(dfg, label).smallData[key]
-end
-
-"""
-    $(SIGNATURES)
-Add a Metadata pair `key=>value` for variable `label` in `dfg`
-"""
-function addMetadata!(dfg::AbstractDFG, label::Symbol, pair::Pair{Symbol, <:MetadataTypes})
-    v = getVariable(dfg, label)
-    haskey(v.smallData, pair.first) && throw(LabelExistsError("Metadata", pair.first))
-    push!(v.smallData, pair)
-    mergeVariable!(dfg, v)
-    return v.smallData #or pair TODO
-end
-
-"""
-    $(SIGNATURES)
-Update a Metadata pair `key=>value` for variable `label` in `dfg`
-"""
-function updateMetadata!(
-    dfg::AbstractDFG,
-    label::Symbol,
-    pair::Pair{Symbol, <:MetadataTypes};
-    warn_if_absent::Bool = true,
-)
-    v = getVariable(dfg, label)
-    warn_if_absent &&
-        !haskey(v.smallData, pair.first) &&
-        @warn("$(pair.first) does not exist, adding.")
-    push!(v.smallData, pair)
-    mergeVariable!(dfg, v)
-    return v.smallData #or pair TODO
-end
-
-"""
-    $(SIGNATURES)
-Delete a Metadata entry at `key` for variable `label` in `dfg`
-"""
-function deleteMetadata!(dfg::AbstractDFG, label::Symbol, key::Symbol)
-    v = getVariable(dfg, label)
-    pop!(v.smallData, key)
-    mergeVariable!(dfg, v)
-    return 1
-end
-
-"""
-    $(SIGNATURES)
-List all Metadata keys for a variable `label` in `dfg`
-"""
-function listMetadata(dfg::AbstractDFG, label::Symbol)
-    v = getVariable(dfg, label)
-    return collect(keys(v.smallData)) #or pair TODO
-end
-
-"""
-    $(SIGNATURES)
-Empty all Metadata from variable `label` in `dfg`
-"""
-function emptyMetadata!(dfg::AbstractDFG, label::Symbol)
-    v = getVariable(dfg, label)
-    empty!(v.smallData)
-    mergeVariable!(dfg, v)
-    return v.smallData #or pair TODO
-end
-
 ##------------------------------------------------------------------------------
 ## Blobentries and Blobs
 ##------------------------------------------------------------------------------
@@ -472,7 +402,7 @@ end
 
 function getStates(dfg::AbstractDFG, variableLabel::Symbol)
     v = getVariable(dfg, variableLabel)
-    return collect(values(v.states))
+    return collect(values(refStates(v)))
 end
 
 """
@@ -485,10 +415,10 @@ function addState!(dfg::GraphsDFG, variableLabel::Symbol, state::State)
 end
 
 function addState!(v::VariableCompute, state::State)
-    if haskey(v.states, state.label)
+    if haskey(refStates(v), state.label)
         throw(LabelExistsError("State", state.label))
     end
-    v.states[state.label] = state
+    refStates(v)[state.label] = state
     return state
 end
 

@@ -1,49 +1,14 @@
 using InteractiveUtils
 
-@kwdef struct _OldPackedGraphsDFG{T <: AbstractDFGParams}
-    description::String
-    addHistory::Vector{Symbol}
-    solverParams::T
-    solverParams_type::String = string(nameof(typeof(solverParams)))
-    typePackedVariable::Bool = false # Are variables packed or full
-    typePackedFactor::Bool = false # Are factors packed or full
-    blobStores::Union{Nothing, Dict{Symbol, FolderStore{Vector{UInt8}}}}
-    graphLabel::Symbol
-    graphTags::Vector{Symbol}
-    graphMetadata::Dict{Symbol, MetadataTypes}
-    graphBlobEntries::Blobentries
-    agent::Agent
-end
-
 @kwdef struct PackedGraphsDFG{T <: AbstractDFGParams}
-    addHistory::Vector{Symbol}
+    # addHistory::Vector{Symbol}
     solverParams::T
     solverParams_type::String = string(nameof(typeof(solverParams)))
     typePackedVariable::Bool = false # Are variables packed or full
     typePackedFactor::Bool = false # Are factors packed or full
     blobStores::Union{Nothing, Dict{Symbol, FolderStore{Vector{UInt8}}}} #FIXME allow more types of blobstores
-    graph::GraphRoot
+    graph::Graphroot
     agent::Agent
-end
-
-# TODO deprecate, constructor serialization backwards compatibility, v0.28
-function PackedGraphsDFG(old::_OldPackedGraphsDFG)
-    return PackedGraphsDFG{typeof(old.solverParams)}(
-        old.addHistory,
-        old.solverParams,
-        old.solverParams_type,
-        old.typePackedVariable,
-        old.typePackedFactor,
-        old.blobStores,
-        GraphRoot(
-            old.graphLabel,
-            old.description,
-            old.graphTags,
-            old.graphMetadata,
-            old.graphBlobEntries,
-        ),
-        old.agent,
-    )
 end
 
 function getPackedGraphsDFGSubtype(s)
@@ -54,16 +19,7 @@ function getPackedGraphsDFGSubtype(s)
     )
     return PackedGraphsDFG{subs[idx]}
 end
-function getOldPackedGraphsDFGSubtype(s)
-    subs = subtypes(AbstractDFGParams)
-    idx = findfirst(x -> nameof(x) == Symbol(s.solverParams_type[]), subs)
-    isnothing(idx) && throw(
-        DFG.SerializationError("Unknown solver parameters type `$(s.solverParams_type[])`"),
-    )
-    return _OldPackedGraphsDFG{subs[idx]}
-end
 JSON.@choosetype PackedGraphsDFG getPackedGraphsDFGSubtype
-JSON.@choosetype _OldPackedGraphsDFG getOldPackedGraphsDFGSubtype
 
 function getTypeDFGVariables(
     fg::GraphsDFG{<:AbstractDFGParams, T, <:AbstractGraphFactor},

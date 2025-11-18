@@ -63,8 +63,8 @@ using RoME
 @assert RoME.PriorPose2 == DFG._getPriorType(Pose2)
 ```
 """
-function _getPriorType(_type::Type{<:StateType})
-    return getfield(_type.name.module, Symbol(:Prior, _type.name.name))
+function _getPriorType(T::Type{<:StateType})
+    return getfield(T.name.module, Symbol(:Prior, T.name.name))
 end
 
 ##==============================================================================

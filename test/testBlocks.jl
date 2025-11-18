@@ -116,7 +116,6 @@ function DFGStructureAndAccessors(
     @test getDescription(fg) == des
     @test getAgentLabel(fg) == rId
     @test getGraphLabel(fg) == sId
-    @test getAddHistory(fg) === fg.addHistory
 
     @test getSolverParams(fg) == NoSolverParams()
 
@@ -249,7 +248,6 @@ function DFGVariableSCA()
 
     v1_lbl = :a
     v1_tags = Set([:VARIABLE, :POSE])
-    small = Dict{Symbol, MetadataTypes}(:small => "data")
     testTimestamp = now(localzone())
     # Constructors
     v1 = VariableCompute(
@@ -258,6 +256,7 @@ function DFGVariableSCA()
         tags = v1_tags,
         solvable = 0,
         states = Dict(:default => State{TestVariableType1}(; label = :default)),
+        bloblets = DFG.Bloblets(:small => DFG.Bloblet(:small, "data")),
     )
     v2 = VariableCompute(
         :b,
@@ -350,6 +349,10 @@ function DFGFactorSCA()
         TestFunctorInferenceType1();
         timestamp = ZonedDateTime("2020-08-11T00:12:03.000-05:00"),
     )
+
+    #test IIF like constructor
+    f3 = FactorDFG([:a, :b], TestFunctorInferenceType1())
+
     #TODO add tests for mutating vos in updateFactor and orphan related checks.
     # we should perhaps prevent an empty vos
 
@@ -442,8 +445,6 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
 
     @test_throws ErrorException mergeFactor!(fg, f2_mod)
     @test issetequal(lsf(fg), [:bcf1, :abf1])
-
-    @test getAddHistory(fg) == [:a, :b, :c]
 
     # Extra timestamp functions https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/315
 
@@ -552,15 +553,39 @@ function tagsTestBlock!(fg, v1, v1_tags)
     @test issetequal(v1Tags, v1_tags)
     @test issetequal(listTags(fg, :a), v1Tags)
     @test issetequal(mergeTags!(fg, :a, [:TAG]), v1Tags ∪ [:TAG])
-    @test issetequal(removeTags!(fg, :a, [:TAG]), v1Tags)
+    @test issetequal(deleteTags!(fg, :a, [:TAG]), v1Tags)
     @test emptyTags!(fg, :a) == Set{Symbol}()
 
     v2Tags = [listTags(fg, :b)...]
     @test hasTags(fg, :b, [v2Tags...])
     @test hasTags(fg, :b, [:LANDMARK, :TAG], matchAll = false)
 
-    @test hasTagsNeighbors(fg, :abf1, [:LANDMARK])
-    @test !hasTagsNeighbors(fg, :abf1, [:LANDMARK, :TAG])
+    @test listNeighbors(fg, :abf1; tagsFilter = ⊇([:LANDMARK])) == [:b]
+    @test isempty(listNeighbors(fg, :abf1; tagsFilter = ⊇([:LANDMARK, :TAG])))
+
+    # Test specific type tag accessors
+    @test issetequal(listVariableTags(fg, :a), listTags(fg, :a))
+    @test issetequal(listFactorTags(fg, :abf1), listTags(fg, :abf1))
+
+    # Test mergeVariableTags! and mergeFactorTags!
+    initialVarTags = listVariableTags(fg, :a)
+    @test mergeVariableTags!(fg, :a, [:NEW_VAR_TAG]) == 1
+    @test :NEW_VAR_TAG ∈ listVariableTags(fg, :a)
+
+    initialFactorTags = listFactorTags(fg, :abf1)
+    @test mergeFactorTags!(fg, :abf1, [:NEW_FACTOR_TAG]) == 1
+    @test :NEW_FACTOR_TAG ∈ listFactorTags(fg, :abf1)
+
+    # @test listGraphTags(fg) isa Vector{Symbol}
+    # @test listAgentTags(fg) isa Vector{Symbol}
+
+    initialGraphTags = length(listGraphTags(fg))
+    @test mergeGraphTags!(fg, [:GRAPH_TAG]) == 1
+    @test :GRAPH_TAG ∈ listGraphTags(fg)
+
+    initialAgentTags = length(listAgentTags(fg))
+    @test mergeAgentTags!(fg, [:AGENT_TAG]) == 1
+    @test :AGENT_TAG ∈ listAgentTags(fg)
 end
 
 function VSDTestBlock!(fg, v1)
@@ -646,35 +671,38 @@ function VSDTestBlock!(fg, v1)
 
 end
 
-function smallDataTestBlock!(fg)
-    @test listMetadata(fg, :a) == Symbol[:small]
-    @test listMetadata(fg, :b) == Symbol[]
-    @test small = getMetadata(fg, :a, :small) == "data"
+function blobletTestBlock!(fg)
+    @test listVariableBloblets(fg, :a) == Symbol[:small]
+    @test listVariableBloblets(fg, :b) == Symbol[]
+    @test getVariableBloblet(fg, :a, :small) == DFG.Bloblet(:small, "data")
 
-    @test addMetadata!(fg, :a, :a => 5) == getVariable(fg, :a).smallData
-    @test addMetadata!(fg, :a, :b => 10.0) == getVariable(fg, :a).smallData
-    @test addMetadata!(fg, :a, :c => true) == getVariable(fg, :a).smallData
-    @test addMetadata!(fg, :a, :d => "yes") == getVariable(fg, :a).smallData
-    @test addMetadata!(fg, :a, :e => [1, 2, 3]) == getVariable(fg, :a).smallData
-    @test addMetadata!(fg, :a, :f => [1.4, 2.5, 3.6]) == getVariable(fg, :a).smallData
-    @test addMetadata!(fg, :a, :g => ["yes", "maybe"]) == getVariable(fg, :a).smallData
-    @test addMetadata!(fg, :a, :h => [true, false]) == getVariable(fg, :a).smallData
+    @test addVariableBloblet!(fg, :a, Bloblet(:a, 5)) == Bloblet(:a, 5)
+    @test addVariableBloblet!(fg, :a, Bloblet(:b, 10.0)) == Bloblet(:b, 10.0)
+    @test addVariableBloblet!(fg, :a, Bloblet(:c, true)) == Bloblet(:c, true)
+    @test addVariableBloblet!(fg, :a, Bloblet(:d, "yes")) == Bloblet(:d, "yes")
+    @test addVariableBloblet!(fg, :a, Bloblet(:e, [1, 2, 3])) == Bloblet(:e, [1, 2, 3])
+    @test addVariableBloblet!(fg, :a, Bloblet(:f, [1.4, 2.5, 3.6])) ==
+          Bloblet(:f, [1.4, 2.5, 3.6])
+    @test addVariableBloblet!(fg, :a, Bloblet(:g, ["yes", "maybe"])) ==
+          Bloblet(:g, ["yes", "maybe"])
+    @test addVariableBloblet!(fg, :a, Bloblet(:h, [true, false])) ==
+          Bloblet(:h, [true, false])
 
-    @test_throws LabelExistsError addMetadata!(fg, :a, :a => 3)
-    @test updateMetadata!(fg, :a, :a => 3) == getVariable(fg, :a).smallData
+    @test_throws LabelExistsError addVariableBloblet!(fg, :a, Bloblet(:a, 3))
+    @test mergeVariableBloblet!(fg, :a, Bloblet(:a, 3)) == 1
 
-    @test_throws MethodError addMetadata!(fg, :a, :no => 0x01)
-    @test_throws MethodError addMetadata!(fg, :a, :no => 1.0f0)
-    @test_throws MethodError addMetadata!(fg, :a, :no => Nanosecond(3))
-    @test_throws MethodError addMetadata!(fg, :a, :no => [0x01])
-    @test_throws MethodError addMetadata!(fg, :a, :no => [1.0f0])
-    @test_throws MethodError addMetadata!(fg, :a, :no => [Nanosecond(3)])
+    @test_throws MethodError addVariableBloblet!(fg, :a, Bloblet(:no => 0x01))
+    @test_throws MethodError addVariableBloblet!(fg, :a, Bloblet(:no => 1.0f0))
+    @test_throws MethodError addVariableBloblet!(fg, :a, Bloblet(:no => Nanosecond(3)))
+    @test_throws MethodError addVariableBloblet!(fg, :a, Bloblet(:no => [0x01]))
+    @test_throws MethodError addVariableBloblet!(fg, :a, Bloblet(:no => [1.0f0]))
+    @test_throws MethodError addVariableBloblet!(fg, :a, Bloblet(:no => [Nanosecond(3)]))
 
-    @test deleteMetadata!(fg, :a, :a) == 1
-    @test updateMetadata!(fg, :a, :a => 3) == getVariable(fg, :a).smallData
-    @test length(listMetadata(fg, :a)) == 9
-    emptyMetadata!(fg, :a)
-    @test length(listMetadata(fg, :a)) == 0
+    @test deleteVariableBloblet!(fg, :a, :a) == 1
+    @test mergeVariableBloblet!(fg, :a, Bloblet(:a, 3)) == 1
+    @test length(listVariableBloblets(fg, :a)) == 9
+    # emptyVariableBloblets!(fg, :a)
+    # @test length(listVariableBloblets(fg, :a)) == 0
 end
 
 function DataEntriesTestBlock!(fg, v2)
@@ -708,37 +736,80 @@ function DataEntriesTestBlock!(fg, v2)
     #add
     v1 = getVariable(fg, :a)
     @test addBlobentry!(v1, de1) == de1
-    @test addBlobentry!(fg, :a, de2) == de2
+    @test addVariableBlobentry!(fg, :a, de2) == de2
     @test_throws LabelExistsError addBlobentry!(v1, de1)
     @test de2 in getBlobentries(v1)
 
     #get
     @test deepcopy(de1) == getBlobentry(v1, :key1)
-    @test deepcopy(de2) == getBlobentry(fg, :a, :key2)
+    @test deepcopy(de2) == getVariableBlobentry(fg, :a, :key2)
     @test_throws LabelNotFoundError getBlobentry(v2, :key1)
-    @test_throws LabelNotFoundError getBlobentry(fg, :b, :key1)
+    @test_throws LabelNotFoundError getVariableBlobentry(fg, :b, :key1)
 
-    #update
-    @test mergeBlobentry!(fg, :a, de2_update) == 1
-    @test deepcopy(de2_update) == getBlobentry(fg, :a, :key2)
-    @test mergeBlobentry!(fg, :b, de2_update) == 1
+    #merge
+    @test mergeVariableBlobentry!(fg, :a, de2_update) == 1
+    @test deepcopy(de2_update) == getVariableBlobentry(fg, :a, :key2)
+    @test mergeVariableBlobentry!(fg, :b, de2_update) == 1
 
     #list
-    entries = getBlobentries(fg, :a)
+    entries = getVariableBlobentries(fg, :a)
     @test length(entries) == 2
     @test issetequal(map(e -> e.label, entries), [:key1, :key2])
-    @test length(getBlobentries(fg, :b)) == 1
+    @test length(getVariableBlobentries(fg, :b)) == 1
 
-    @test issetequal(listBlobentries(fg, :a), [:key1, :key2])
-    @test listBlobentries(fg, :b) == Symbol[:key2]
+    @test issetequal(listVariableBlobentries(fg, :a), [:key1, :key2])
+    @test listVariableBlobentries(fg, :b) == Symbol[:key2]
 
     #delete
-    @test deleteBlobentry!(v1, de1) == 1
-    @test listBlobentries(v1) == Symbol[:key2]
+    @test deleteBlobentry!(v1, :key1) == 1
+    @test listVariableBlobentries(fg, getLabel(v1)) == Symbol[:key2]
     #delete from dfg
-    @test deleteBlobentry!(fg, :a, :key2) == 1
-    @test listBlobentries(v1) == Symbol[]
-    return deleteBlobentry!(fg, :b, :key2)
+    @test deleteVariableBlobentry!(fg, :a, :key2) == 1
+    @test listVariableBlobentries(fg, :a) == Symbol[]
+    deleteVariableBlobentry!(fg, :b, :key2)
+    @test listVariableBlobentries(fg, :b) == Symbol[]
+
+    @test getLabel.(addVariableBlobentries!(fg, :a, [de1, de2])) == [:key1, :key2]
+    @test deleteVariableBlobentries!(fg, :a, [:key1, :key2]) == 2
+    @test listVariableBlobentries(fg, :a) == Symbol[]
+    @test mergeVariableBlobentries!(fg, :a, [de1, de2]) == 2
+    @test getLabel.(getVariableBlobentries(fg, :a)) == [:key1, :key2]
+    @test mergeVariableBlobentries!(fg, :a, [de1, de2]) == 2
+    @test deleteVariableBlobentries!(fg, :a, [:key1]) == 1
+
+    @test_throws LabelNotFoundError deleteVariableBlobentries!(fg, :a, [:key1])
+    @test_throws LabelExistsError addVariableBlobentries!(fg, :a, [de2])
+    @test deleteVariableBlobentries!(fg, :a, [:key2]) == 1
+
+    #graph blobentries
+    @test addGraphBlobentry!(fg, de1) == de1
+    @test_throws LabelExistsError addGraphBlobentry!(fg, de1)
+    @test de1 == getGraphBlobentry(fg, getLabel(de1))
+    @test_throws LabelNotFoundError getGraphBlobentry(fg, :nope)
+    @test mergeGraphBlobentry!(fg, de2_update) == 1
+    @test listGraphBlobentries(fg) == [getLabel(de1), getLabel(de2_update)]
+    @test deleteGraphBlobentry!(fg, getLabel(de2_update)) == 1
+    @test_throws LabelNotFoundError deleteGraphBlobentry!(fg, getLabel(de2_update))
+    @test getGraphBlobentries(fg) == [de1]
+    @test addGraphBlobentries!(fg, [de2]) == [de2]
+    @test mergeGraphBlobentries!(fg, [de1, de2_update]) == 2
+    @test deleteGraphBlobentries!(fg, [getLabel(de1), getLabel(de2_update)]) == 2
+    @test listGraphBlobentries(fg) == Symbol[]
+
+    # agent blobentries
+    @test addAgentBlobentry!(fg, de1) == de1
+    @test_throws LabelExistsError addAgentBlobentry!(fg, de1)
+    @test de1 == getAgentBlobentry(fg, getLabel(de1))
+    @test_throws LabelNotFoundError getAgentBlobentry(fg, :nope)
+    @test mergeAgentBlobentry!(fg, de2_update) == 1
+    @test listAgentBlobentries(fg) == [getLabel(de1), getLabel(de2_update)]
+    @test deleteAgentBlobentry!(fg, getLabel(de2_update)) == 1
+    @test_throws LabelNotFoundError deleteAgentBlobentry!(fg, getLabel(de2_update))
+    @test getAgentBlobentries(fg) == [de1]
+    @test addAgentBlobentries!(fg, [de2]) == [de2]
+    @test mergeAgentBlobentries!(fg, [de1, de2_update]) == 2
+    @test deleteAgentBlobentries!(fg, [getLabel(de1), getLabel(de2_update)]) == 2
+    @test listAgentBlobentries(fg) == Symbol[]
 end
 
 function blobsStoresTestBlock!(fg)
@@ -795,7 +866,7 @@ function blobsStoresTestBlock!(fg)
     @test mergeBlobentry!(fg, :b, de2_update) == 1
 
     #list
-    entries = getBlobentries(fg, :a)
+    entries = getVariableBlobentries(fg, :a)
     @test length(entries) == 2
     @test issetequal(map(e -> e.label, entries), [:label1, :label2])
     @test length(getBlobentries(fg, :b)) == 1
@@ -831,12 +902,6 @@ function blobsStoresTestBlock!(fg)
     @test_throws LabelNotFoundError getBlobstore(fg, :notfound)
     # Deleting
     @test deleteBlobstore!(fg, fs.label) == 1
-    # Updating
-    updateBlobstore!(fg, fs)
-    @test listBlobstores(fg) == [fs.label]
-    # Emptying
-    emptyBlobstore!(fg)
-    @test listBlobstores(fg) == []
     # Add it back
     addBlobstore!(fg, fs)
 
@@ -1348,8 +1413,8 @@ function Summaries(testDFGAPI)
     # if VARTYPE == VariableSummary
     # factorFields = fieldnames(FACTYPE)
     # variableFields = fieldnames(VARTYPE)
-    factorFields = fieldnames(FactorSummary)
-    variableFields = fieldnames(VariableSummary)
+    factorFields = fieldnames(DFG.FactorSummary)
+    variableFields = fieldnames(DFG.VariableSummary)
 
     summaryGraph = getSummaryGraph(dfg)
     @test symdiff(ls(summaryGraph), ls(dfg)) == Symbol[]

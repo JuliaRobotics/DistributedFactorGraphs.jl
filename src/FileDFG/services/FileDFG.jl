@@ -184,7 +184,6 @@ function loadDFG!(
 
     if isa(dfgLoadInto, GraphsDFG) && getTypeDFGFactors(dfgLoadInto) != FactorDFG
         # Finally, rebuild the CCW's for the factors to completely reinflate them
-        # NOTE CREATES A NEW FactorCompute IF CCW TYPE CHANGES
         @showprogress 1 "Rebuilding factor solver cache" for factor in factors
             rebuildFactorCache!(dfgLoadInto, factor)
         end

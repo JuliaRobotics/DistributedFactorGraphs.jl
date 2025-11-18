@@ -106,8 +106,12 @@ end
     @test printNode(fg1, :a) === nothing
     @test printNode(fg1, :abf1) === nothing
 
-    show(stdout, MIME("application/prs.juno.inline"), var1) == var1
-    show(stdout, MIME("application/prs.juno.inline"), fac1) == fac1
+    #Blobentry
+    be = DFG.Blobentry(:testbe; metadata = Dict("key1" => "value1", "key2" => 42))
+    @test show(iobuf, MIME("text/plain"), be) === nothing
+    disp_entry = String(take!(iobuf))
+    @test occursin(r"Blobentry", disp_entry)
+    @test occursin(r"testbe", disp_entry)
 end
 
 @testset "tags" begin
@@ -119,9 +123,9 @@ end
 end
 
 #FIXME replace with Bloblets tests
-# @testset "Metadata CRUD" begin
-#     smallDataTestBlock!(fg1)
-# end
+@testset "Bloblet CRUD" begin
+    blobletTestBlock!(fg1)
+end
 
 @testset "Data Entries and Blobs" begin
     if typeof(fg1) <: InMemoryDFGTypes

@@ -44,6 +44,12 @@ Implement
 """
 function listBlobs end
 
+"""
+    $(SIGNATURES)
+Check if the blob store has a blob with the given `blobid`.
+"""
+function hasBlob end
+
 ##==============================================================================
 ## AbstractBlobstore derived CRUD for Blob 
 ##==============================================================================

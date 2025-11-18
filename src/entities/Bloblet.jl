@@ -3,6 +3,23 @@ struct Bloblet
     val::String
 end
 
+function Bloblet(
+    label::Symbol,
+    val::Union{
+        Int,
+        Float64,
+        Bool,
+        Vector{Int},
+        Vector{Float64},
+        Vector{String},
+        Vector{Bool},
+        Missing,
+        Nothing,
+    },
+)
+    return Bloblet(label, JSON.json(val))
+end
+
 const Bloblets = LittleDict{Symbol, Bloblet}
 
 StructUtils.structlike(::Type{Bloblets}) = false
@@ -22,12 +39,19 @@ function StructUtils.lift(::Type{Bloblets}, json_vector::Vector)
     )
 end
 
+##==============================================================================
+## Node Bloblets
+##==============================================================================
 """
     $(SIGNATURES)
 """
 function getBloblet(node, label::Symbol)
     !haskey(refBloblets(node), label) && throw(LabelNotFoundError("Bloblet", label))
     return refBloblets(node)[label]
+end
+
+function getBloblets(node)
+    return collect(values(refBloblets(node)))
 end
 
 """
@@ -40,12 +64,22 @@ function addBloblet!(node, bloblet::Bloblet)
     return bloblet
 end
 
+function addBloblets!(node, bloblets::Vector{Bloblet})
+    addBloblet!.(node, bloblets)
+    return bloblets
+end
+
 """
     $(SIGNATURES)
 """
 function mergeBloblet!(node, bloblet::Bloblet)
     refBloblets(node)[getLabel(bloblet)] = bloblet
     return 1
+end
+
+function mergeBloblets!(node, bloblets::Vector{Bloblet})
+    mergeBloblet!.(node, bloblets)
+    return length(bloblets)
 end
 
 """
@@ -55,6 +89,11 @@ function deleteBloblet!(node, label::Symbol)
     !haskey(refBloblets(node), label) && throw(LabelNotFoundError("Bloblet", label))
     pop!(refBloblets(node), label)
     return 1
+end
+
+function deleteBloblets!(node, labels::Vector{Symbol})
+    deleteBloblet!.(node, labels)
+    return length(labels)
 end
 
 """
