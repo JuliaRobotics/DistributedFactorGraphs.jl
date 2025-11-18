@@ -7,7 +7,7 @@
     blobentries::Blobentries = Blobentries()
 end
 
-@kwdef mutable struct GraphRoot
+@kwdef mutable struct Graphroot
     label::Symbol = :DefaultFactorgraph
     description::String = ""
     tags::Set{Symbol} = Set{Symbol}()

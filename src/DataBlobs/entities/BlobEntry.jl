@@ -53,7 +53,7 @@ version(::Type{Blobentry}) = v"0.1.0"
 function Blobentry(
     label::Symbol,
     blobstore = :default;
-    metadata = JSONText("{}"),
+    metadata::Union{JSONText, AbstractDict, NamedTuple} = JSONText("{}"),
     kwargs...,
 )
     if !(metadata isa JSONText)

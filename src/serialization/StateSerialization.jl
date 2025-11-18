@@ -79,35 +79,65 @@ end
 # _version::VersionNumber = _getDFGVersion()
 
 # returns a named tuple until State serialization is fully consolidated
-function packState(d::State{T}) where {T <: StateType}
-    @debug "Dispatching conversion variable -> packed variable for type $(string(getStateType(d)))"
-    castval = if 0 < length(d.val)
-        precast = getCoordinates.(T, d.val)
+function packState(state::State{T}) where {T <: StateType}
+    castval = if 0 < length(state.val)
+        precast = getCoordinates.(T, state.val)
         @cast castval[i, j] := precast[j][i]
         castval
     else
         zeros(1, 0)
     end
-    _val = castval[:]
 
-    length(d.covar) > 1 && @warn(
+    length(state.covar) > 1 && @warn(
         "Packing of more than one parametric covariance is NOT supported yet, only packing first."
     )
 
     return (
-        label = d.label,
-        vecval = _val,
+        label = state.label,
+        vecval = castval[:],
         dimval = size(castval, 1),
-        vecbw = d.bw[:],
-        dimbw = size(d.bw, 1),
-        separator = d.separator,
-        statetype = stringVariableType(getStateType(d)),
-        initialized = d.initialized,
-        observability = d.observability,
-        marginalized = d.marginalized,
-        solves = d.solves,
-        covar = isempty(d.covar) ? Float64[] : vec(d.covar[1]),
+        vecbw = state.bw[:],
+        dimbw = size(state.bw, 1),
+        separator = state.separator,
+        statetype = stringVariableType(getStateType(state)),
+        initialized = state.initialized,
+        observability = state.observability,
+        marginalized = state.marginalized,
+        solves = state.solves,
+        covar = isempty(state.covar) ? Float64[] : vec(state.covar[1]),
         version = version(State),
+    )
+end
+
+function unpackState(obj)
+    T = parseVariableType(obj.statetype)
+    r3 = obj.dimval
+    c3 = r3 > 0 ? floor(Int, length(obj.vecval) / r3) : 0
+    M3 = reshape(obj.vecval, r3, c3)
+    @cast val_[j][i] := M3[i, j]
+    vals = Vector{getPointType(T)}(undef, length(val_))
+    # vals = getPoint.(T, val_)
+    for (i, v) in enumerate(val_)
+        vals[i] = getPoint(T, v)
+    end
+
+    r4 = obj.dimbw
+    c4 = r4 > 0 ? floor(Int, length(obj.vecbw) / r4) : 0
+    BW = reshape(obj.vecbw, r4, c4)
+
+    # 
+    N = getDimension(T)
+    return State{T, getPointType(T), N}(;
+        label = Symbol(obj.label),
+        val = vals,
+        bw = BW,
+        #TODO only one covar is currently supported in packed VND
+        covar = isempty(obj.covar) ? SMatrix{N, N, Float64}[] : [obj.covar],
+        separator = Symbol.(obj.separator),
+        initialized = obj.initialized,
+        observability = obj.observability,
+        marginalized = obj.marginalized,
+        solves = obj.solves,
     )
 end
 
@@ -143,38 +173,5 @@ function unpackOldState(d)
         observability = d.infoPerCoord,
         marginalized = d.ismargin,
         solves = d.solvedCount,
-    )
-end
-
-function unpackState(d)
-    @debug "Dispatching conversion packed variable -> variable for type $(string(d.statetype))"
-    T = parseVariableType(d.statetype)
-    r3 = d.dimval
-    c3 = r3 > 0 ? floor(Int, length(d.vecval) / r3) : 0
-    M3 = reshape(d.vecval, r3, c3)
-    @cast val_[j][i] := M3[i, j]
-    vals = Vector{getPointType(T)}(undef, length(val_))
-    # vals = getPoint.(T, val_)
-    for (i, v) in enumerate(val_)
-        vals[i] = getPoint(T, v)
-    end
-
-    r4 = d.dimbw
-    c4 = r4 > 0 ? floor(Int, length(d.vecbw) / r4) : 0
-    BW = reshape(d.vecbw, r4, c4)
-
-    # 
-    N = getDimension(T)
-    return State{T, getPointType(T), N}(;
-        label = Symbol(d.label),
-        val = vals,
-        bw = BW,
-        #TODO only one covar is currently supported in packed VND
-        covar = isempty(d.covar) ? SMatrix{N, N, Float64}[] : [d.covar],
-        separator = Symbol.(d.separator),
-        initialized = d.initialized,
-        observability = d.observability,
-        marginalized = d.marginalized,
-        solves = d.solves,
     )
 end

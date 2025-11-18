@@ -2,38 +2,28 @@
 ## Common Accessors
 ##==============================================================================
 
+##------------------------------------------------------------------------------
+## References to containers
+##------------------------------------------------------------------------------
+
 refTags(node) = node.tags
 refBlobentries(node) = node.blobentries
 refBloblets(node) = node.bloblets
+
+##------------------------------------------------------------------------------
+## By value accessors
+##------------------------------------------------------------------------------
 
 # Common get and set methods
 
 # NOTE this could be reduced with macros and function generation to even less code.
 
-##------------------------------------------------------------------------------
-## tags
-##------------------------------------------------------------------------------
-
 """
-$SIGNATURES
-
-Return the tags for a Node.
+    $(SIGNATURES)
+Get the label of the node.
 """
-getTags(node) = node.tags
+getLabel(node) = node.label
 
-"""
-$SIGNATURES
-
-Set the tags for a Node.
-"""
-function setTags!(node, tags::Union{Vector{Symbol}, Set{Symbol}})
-    node.tags !== tags && empty!(node.tags)
-    return union!(node.tags, tags)
-end
-
-##------------------------------------------------------------------------------
-## timestamp
-##------------------------------------------------------------------------------
 
 """
 $SIGNATURES
@@ -41,6 +31,11 @@ $SIGNATURES
 Get the timestamp of a AbstractGraphNode.
 """
 getTimestamp(node) = node.timestamp
+
+"""
+    $(SIGNATURES)
+"""
+getDescription(node) = node.description
 
 ##------------------------------------------------------------------------------
 ## solvable
@@ -54,7 +49,7 @@ Variables or factors may or may not be 'solvable', depending on a user definitio
 Related:
 - isSolveInProgress
 """
-getSolvable(var::Union{VariableCompute, FactorDFG}) = var.solvable[]
+getSolvable(node::Union{VariableDFG, FactorDFG}) = node.solvable[]
 
 """
     $SIGNATURES
@@ -74,16 +69,12 @@ end
 
 Set the `solvable` parameter for either a variable or factor.
 """
-function setSolvable!(node::N, solvable::Int) where {N <: AbstractGraphNode}
+function setSolvable!(node::Union{VariableDFG, FactorDFG}, solvable::Int)
     node.solvable[] = solvable
     return solvable
 end
 
-"""
-    $SIGNATURES
-
-Set the `solvable` parameter for either a variable or factor.
-"""
+#FIXME this is only for in memory DFGs
 function setSolvable!(dfg::AbstractDFG, sym::Symbol, solvable::Int)
     if isVariable(dfg, sym)
         getVariable(dfg, sym).solvable[] = solvable
@@ -101,56 +92,4 @@ returns true if `getSolvable` > 0
 Related:
 - `getSolvable`(@ref)
 """
-isSolvable(node::Union{VariableCompute, FactorDFG}) = getSolvable(node) > 0
-
-##==============================================================================
-## Common Layer 2 CRUD and SET
-##==============================================================================
-
-##==============================================================================
-## TAGS as a set, list, merge, remove, empty
-##==============================================================================
-"""
-$SIGNATURES
-
-Return the tags for a variable or factor.
-"""
-function getTags(dfg::AbstractDFG, sym::Symbol)
-    getFnc = isVariable(dfg, sym) ? getVariable : getFactor
-    return getTags(getFnc(dfg, sym))
-end
-#alias for completeness
-const listTags = getTags
-
-"""
-    $SIGNATURES
-
-Merge add tags to a variable or factor (union)
-"""
-function mergeTags!(dfg::InMemoryDFGTypes, sym::Symbol, tags::Vector{Symbol})
-    getFnc = isVariable(dfg, sym) ? getVariable : getFactor
-    return union!(getTags(getFnc(dfg, sym)), tags)
-end
-mergeTags!(node, tags::Vector{Symbol}) = union!(node.tags, tags)
-
-"""
-$SIGNATURES
-
-Remove the tags from the node (setdiff)
-"""
-function removeTags!(dfg::InMemoryDFGTypes, sym::Symbol, tags::Vector{Symbol})
-    getFnc = isVariable(dfg, sym) ? getVariable : getFactor
-    return setdiff!(getTags(getFnc(dfg, sym)), tags)
-end
-removeTags!(node, tags::Vector{Symbol}) = setdiff!(node.tags, tags)
-
-"""
-$SIGNATURES
-
-Empty all tags from the node (empty)
-"""
-function emptyTags!(dfg::InMemoryDFGTypes, sym::Symbol)
-    getFnc = isVariable(dfg, sym) ? getVariable : getFactor
-    return empty!(getTags(getFnc(dfg, sym)))
-end
-emptyTags!(node) = empty!(node.tags)
+isSolvable(node::Union{VariableDFG, FactorDFG}) = getSolvable(node) > 0

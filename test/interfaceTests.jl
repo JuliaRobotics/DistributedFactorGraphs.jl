@@ -106,8 +106,6 @@ end
     @test printNode(fg1, :a) === nothing
     @test printNode(fg1, :abf1) === nothing
 
-    show(stdout, MIME("application/prs.juno.inline"), var1) == var1
-    show(stdout, MIME("application/prs.juno.inline"), fac1) == fac1
 end
 
 @testset "tags" begin

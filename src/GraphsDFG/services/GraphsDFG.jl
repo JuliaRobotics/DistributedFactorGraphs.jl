@@ -31,7 +31,7 @@ function addVariable!(
     FactorGraphs.addVariable!(dfg.g, variable) || return false
 
     # Track insertion
-    push!(dfg.addHistory, variable.label)
+    # push!(dfg.addHistory, variable.label)
 
     return variable
 end

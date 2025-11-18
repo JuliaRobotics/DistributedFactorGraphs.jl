@@ -116,7 +116,6 @@ function DFGStructureAndAccessors(
     @test getDescription(fg) == des
     @test getAgentLabel(fg) == rId
     @test getGraphLabel(fg) == sId
-    @test getAddHistory(fg) === fg.addHistory
 
     @test getSolverParams(fg) == NoSolverParams()
 
@@ -443,7 +442,6 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     @test_throws ErrorException mergeFactor!(fg, f2_mod)
     @test issetequal(lsf(fg), [:bcf1, :abf1])
 
-    @test getAddHistory(fg) == [:a, :b, :c]
 
     # Extra timestamp functions https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/315
 
@@ -708,37 +706,37 @@ function DataEntriesTestBlock!(fg, v2)
     #add
     v1 = getVariable(fg, :a)
     @test addBlobentry!(v1, de1) == de1
-    @test addBlobentry!(fg, :a, de2) == de2
+    @test addVariableBlobentry!(fg, :a, de2) == de2
     @test_throws LabelExistsError addBlobentry!(v1, de1)
     @test de2 in getBlobentries(v1)
 
     #get
     @test deepcopy(de1) == getBlobentry(v1, :key1)
-    @test deepcopy(de2) == getBlobentry(fg, :a, :key2)
+    @test deepcopy(de2) == getVariableBlobentry(fg, :a, :key2)
     @test_throws LabelNotFoundError getBlobentry(v2, :key1)
-    @test_throws LabelNotFoundError getBlobentry(fg, :b, :key1)
+    @test_throws LabelNotFoundError getVariableBlobentry(fg, :b, :key1)
 
     #update
-    @test mergeBlobentry!(fg, :a, de2_update) == 1
+    @test mergeVariableBlobentry!(fg, :a, de2_update) == 1
     @test deepcopy(de2_update) == getBlobentry(fg, :a, :key2)
-    @test mergeBlobentry!(fg, :b, de2_update) == 1
+    @test mergeVariableBlobentry!(fg, :b, de2_update) == 1
 
     #list
-    entries = getBlobentries(fg, :a)
+    entries = getVariableBlobentries(fg, :a)
     @test length(entries) == 2
     @test issetequal(map(e -> e.label, entries), [:key1, :key2])
-    @test length(getBlobentries(fg, :b)) == 1
+    @test length(getVariableBlobentries(fg, :b)) == 1
 
-    @test issetequal(listBlobentries(fg, :a), [:key1, :key2])
-    @test listBlobentries(fg, :b) == Symbol[:key2]
+    @test issetequal(listVariableBlobentries(fg, :a), [:key1, :key2])
+    @test listVariableBlobentries(fg, :b) == Symbol[:key2]
 
     #delete
     @test deleteBlobentry!(v1, de1) == 1
     @test listBlobentries(v1) == Symbol[:key2]
     #delete from dfg
-    @test deleteBlobentry!(fg, :a, :key2) == 1
+    @test deleteVariableBlobentry!(fg, :a, :key2) == 1
     @test listBlobentries(v1) == Symbol[]
-    return deleteBlobentry!(fg, :b, :key2)
+    return deleteVariableBlobentry!(fg, :b, :key2)
 end
 
 function blobsStoresTestBlock!(fg)
@@ -795,7 +793,7 @@ function blobsStoresTestBlock!(fg)
     @test mergeBlobentry!(fg, :b, de2_update) == 1
 
     #list
-    entries = getBlobentries(fg, :a)
+    entries = getVariableBlobentries(fg, :a)
     @test length(entries) == 2
     @test issetequal(map(e -> e.label, entries), [:label1, :label2])
     @test length(getBlobentries(fg, :b)) == 1
@@ -831,12 +829,6 @@ function blobsStoresTestBlock!(fg)
     @test_throws LabelNotFoundError getBlobstore(fg, :notfound)
     # Deleting
     @test deleteBlobstore!(fg, fs.label) == 1
-    # Updating
-    updateBlobstore!(fg, fs)
-    @test listBlobstores(fg) == [fs.label]
-    # Emptying
-    emptyBlobstore!(fg)
-    @test listBlobstores(fg) == []
     # Add it back
     addBlobstore!(fg, fs)
 

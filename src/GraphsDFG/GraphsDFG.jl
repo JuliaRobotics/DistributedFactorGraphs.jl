@@ -11,7 +11,7 @@ using ...DistributedFactorGraphs:
     Agent,
     LabelNotFoundError,
     LabelExistsError,
-    GraphRoot,
+    Graphroot,
     AbstractGraphVariable,
     AbstractGraphFactor,
     NoSolverParams,
@@ -21,7 +21,6 @@ using ...DistributedFactorGraphs:
     getAgentLabel,
     getGraphLabel,
     isInitialized,
-    MetadataTypes,
     Bloblets,
     Blobentries
 
@@ -32,7 +31,6 @@ import ...DistributedFactorGraphs:
     # getLabelDict,
     addVariable!,
     getVariable,
-    getAddHistory,
     addFactor!,
     getSolverParams,
     hasVariable,

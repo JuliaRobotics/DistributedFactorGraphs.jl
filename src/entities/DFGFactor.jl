@@ -1,10 +1,6 @@
 ##==============================================================================
 ## Abstract Types
 ##==============================================================================
-#TODO deprecate AbstractPackedObservation
-abstract type AbstractPackedObservation end
-const PackedObservation = AbstractPackedObservation
-
 abstract type AbstractObservation end
 const Observation = AbstractObservation
 
@@ -14,16 +10,13 @@ const PriorObservation = AbstractPriorObservation
 abstract type AbstractRelativeObservation <: AbstractObservation end
 const RelativeObservation = AbstractRelativeObservation
 
-#TODO deprecate AbstractPackedBelief
-abstract type AbstractPackedBelief end
-const PackedBelief = AbstractPackedBelief
-
-# TODO https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/pull/1127#discussion_r2154672975
-# and #1138
+# TODO https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/pull/1127#discussion_r2154672975 and #1138
 abstract type AbstractFactorCache end
 const FactorCache = AbstractFactorCache #
 #TODO consider making AbstractFactorCache{T <: AbstractObservation}
 
+##==============================================================================
+## Factor State
 ##==============================================================================
 
 #TODO is this mutable
