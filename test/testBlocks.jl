@@ -746,9 +746,9 @@ function DataEntriesTestBlock!(fg, v2)
     @test_throws LabelNotFoundError getBlobentry(v2, :key1)
     @test_throws LabelNotFoundError getVariableBlobentry(fg, :b, :key1)
 
-    #update
+    #merge
     @test mergeVariableBlobentry!(fg, :a, de2_update) == 1
-    @test deepcopy(de2_update) == getBlobentry(fg, :a, :key2)
+    @test deepcopy(de2_update) == getVariableBlobentry(fg, :a, :key2)
     @test mergeVariableBlobentry!(fg, :b, de2_update) == 1
 
     #list
@@ -761,12 +761,55 @@ function DataEntriesTestBlock!(fg, v2)
     @test listVariableBlobentries(fg, :b) == Symbol[:key2]
 
     #delete
-    @test deleteBlobentry!(v1, de1) == 1
-    @test listBlobentries(v1) == Symbol[:key2]
+    @test deleteBlobentry!(v1, :key1) == 1
+    @test listVariableBlobentries(fg, getLabel(v1)) == Symbol[:key2]
     #delete from dfg
     @test deleteVariableBlobentry!(fg, :a, :key2) == 1
-    @test listBlobentries(v1) == Symbol[]
-    return deleteVariableBlobentry!(fg, :b, :key2)
+    @test listVariableBlobentries(fg, :a) == Symbol[]
+    deleteVariableBlobentry!(fg, :b, :key2)
+    @test listVariableBlobentries(fg, :b) == Symbol[]
+
+    @test getLabel.(addVariableBlobentries!(fg, :a, [de1, de2])) == [:key1, :key2]
+    @test deleteVariableBlobentries!(fg, :a, [:key1, :key2]) == 2
+    @test listVariableBlobentries(fg, :a) == Symbol[]
+    @test mergeVariableBlobentries!(fg, :a, [de1, de2]) == 2
+    @test getLabel.(getVariableBlobentries(fg, :a)) == [:key1, :key2]
+    @test mergeVariableBlobentries!(fg, :a, [de1, de2]) == 2
+    @test deleteVariableBlobentries!(fg, :a, [:key1]) == 1
+
+    @test_throws LabelNotFoundError deleteVariableBlobentries!(fg, :a, [:key1])
+    @test_throws LabelExistsError addVariableBlobentries!(fg, :a, [de2])
+    @test deleteVariableBlobentries!(fg, :a, [:key2]) == 1
+
+    #graph blobentries
+    @test addGraphBlobentry!(fg, de1) == de1
+    @test_throws LabelExistsError addGraphBlobentry!(fg, de1)
+    @test de1 == getGraphBlobentry(fg, getLabel(de1))
+    @test_throws LabelNotFoundError getGraphBlobentry(fg, :nope)
+    @test mergeGraphBlobentry!(fg, de2_update) == 1
+    @test listGraphBlobentries(fg) == [getLabel(de1), getLabel(de2_update)]
+    @test deleteGraphBlobentry!(fg, getLabel(de2_update)) == 1
+    @test_throws LabelNotFoundError deleteGraphBlobentry!(fg, getLabel(de2_update))
+    @test getGraphBlobentries(fg) == [de1]
+    @test addGraphBlobentries!(fg, [de2]) == [de2]
+    @test mergeGraphBlobentries!(fg, [de1, de2_update]) == 2
+    @test deleteGraphBlobentries!(fg, [getLabel(de1), getLabel(de2_update)]) == 2
+    @test listGraphBlobentries(fg) == Symbol[]
+
+    # agent blobentries
+    @test addAgentBlobentry!(fg, de1) == de1
+    @test_throws LabelExistsError addAgentBlobentry!(fg, de1)
+    @test de1 == getAgentBlobentry(fg, getLabel(de1))
+    @test_throws LabelNotFoundError getAgentBlobentry(fg, :nope)
+    @test mergeAgentBlobentry!(fg, de2_update) == 1
+    @test listAgentBlobentries(fg) == [getLabel(de1), getLabel(de2_update)]
+    @test deleteAgentBlobentry!(fg, getLabel(de2_update)) == 1
+    @test_throws LabelNotFoundError deleteAgentBlobentry!(fg, getLabel(de2_update))
+    @test getAgentBlobentries(fg) == [de1]
+    @test addAgentBlobentries!(fg, [de2]) == [de2]
+    @test mergeAgentBlobentries!(fg, [de1, de2_update]) == 2
+    @test deleteAgentBlobentries!(fg, [getLabel(de1), getLabel(de2_update)]) == 2
+    @test listAgentBlobentries(fg) == Symbol[]
 end
 
 function blobsStoresTestBlock!(fg)

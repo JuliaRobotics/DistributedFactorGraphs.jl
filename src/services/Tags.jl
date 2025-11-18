@@ -69,19 +69,19 @@ function listAgentTags(dfg::InMemoryDFGTypes)
     return listTags(dfg.agent)
 end
 
-function mergeVariableTags!(dfg::AbstractDFG, sym::Symbol, tags)
-    v = getVariable(dfg, sym)
-    mergeTags!(v, tags)
-    mergeVariable!(dfg, v)
-    return length(tags)
-end
+# function mergeVariableTags!(dfg::AbstractDFG, sym::Symbol, tags)
+#     v = getVariable(dfg, sym)
+#     mergeTags!(v, tags)
+#     mergeVariable!(dfg, v)
+#     return length(tags)
+# end
 
-function mergeFactorTags!(dfg::AbstractDFG, sym::Symbol, tags)
-    f = getFactor(dfg, sym)
-    mergeTags!(f, tags)
-    mergeFactor!(dfg, f)
-    return length(tags)
-end
+# function mergeFactorTags!(dfg::AbstractDFG, sym::Symbol, tags)
+#     f = getFactor(dfg, sym)
+#     mergeTags!(f, tags)
+#     mergeFactor!(dfg, f)
+#     return length(tags)
+# end
 
 function mergeVariableTags!(dfg::InMemoryDFGTypes, label::Symbol, tags)
     return mergeTags!(getVariable(dfg, label), tags)

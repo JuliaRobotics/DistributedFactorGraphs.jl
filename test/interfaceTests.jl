@@ -105,6 +105,13 @@ end
 
     @test printNode(fg1, :a) === nothing
     @test printNode(fg1, :abf1) === nothing
+
+    #Blobentry
+    be = DFG.Blobentry(:testbe; metadata = Dict("key1" => "value1", "key2" => 42))
+    @test show(iobuf, MIME("text/plain"), be) === nothing
+    disp_entry = String(take!(iobuf))
+    @test occursin(r"Blobentry", disp_entry)
+    @test occursin(r"testbe", disp_entry)
 end
 
 @testset "tags" begin
