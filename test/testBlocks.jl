@@ -556,8 +556,14 @@ function tagsTestBlock!(fg, v1, v1_tags)
     @test hasTags(fg, :b, [v2Tags...])
     @test hasTags(fg, :b, [:LANDMARK, :TAG], matchAll = false)
 
-    @test hasTagsNeighbors(fg, :abf1, [:LANDMARK])
-    @test !hasTagsNeighbors(fg, :abf1, [:LANDMARK, :TAG])
+    #TODO can be simplified but require julia v1.11
+    # @test listNeighbors(fg, :abf1; tagsFilter = ⊇([:LANDMARK])) == [:b]
+    # @test isempty(listNeighbors(fg, :abf1; tagsFilter = ⊇([:LANDMARK, :TAG])))
+
+    @test listNeighbors(fg, :abf1; tagsFilter = Base.Fix1(issubset, [:LANDMARK])) == [:b]
+    @test isempty(
+        listNeighbors(fg, :abf1; tagsFilter = Base.Fix1(issubset, [:LANDMARK, :TAG])),
+    )
 end
 
 function VSDTestBlock!(fg, v1)

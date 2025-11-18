@@ -205,8 +205,8 @@ function listVariables(
     if !isnothing(solvableFilter) ||
        !isnothing(tagsFilter) ||
        !isnothing(typeFilter) ||
-       !isnothing(regexFilter) ||  #TODO deprecated
-       !isempty(tags) ||           #TODO deprecated
+       !isnothing(regexFilter) ||  #TODO deprecated v0.28
+       !isempty(tags) ||           #TODO deprecated v0.28
        !isnothing(solvable)        #TODO Maybe deprecated?
         return map(
             getLabel,
@@ -333,16 +333,31 @@ end
 function listNeighbors(
     dfg::GraphsDFG,
     label::Symbol;
-    solvable::Union{Nothing, Int} = nothing,
+    solvableFilter::Union{Nothing, Function} = nothing,
+    tagsFilter::Union{Nothing, Function} = nothing,
+    solvable::Union{Nothing, Int} = nothing, #TODO deprecated for solvableFilter v0.29
 )
+    if !isnothing(solvable)
+        Base.depwarn(
+            "solvable kwarg is deprecated, use kwarg `solvableFilter = (>=solvable)` instead", #v0.29
+            :listNeighbors,
+        )
+        !isnothing(solvableFilter) &&
+            error("Cannot use both solvable and solvableFilter kwargs.")
+        solvableFilter = >=(solvable)
+    end
+
     if !(hasVariable(dfg, label) || hasFactor(dfg, label))
         throw(LabelNotFoundError(label))
     end
 
     neighbors_il = FactorGraphs.outneighbors(dfg.g, dfg.g.labels[label])
     neighbors_ll = [dfg.g.labels[i] for i in neighbors_il]
+
     # Additional filtering
-    solvable != 0 && filter!(lbl -> _isSolvable(dfg, lbl, solvable), neighbors_ll)
+    # solvable != 0 && filter!(lbl -> _isSolvable(dfg, lbl, solvable), neighbors_ll)
+    filterDFG!(neighbors_ll, solvableFilter, l->getSolvable(dfg, l))
+    filterDFG!(neighbors_ll, tagsFilter, l->getTags(dfg, l))
 
     # Variable sorting (order is important)
     if haskey(dfg.g.factors, label)

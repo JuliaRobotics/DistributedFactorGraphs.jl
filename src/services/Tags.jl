@@ -2,14 +2,6 @@
 ##------------------------------------------------------------------------------
 ## tags
 ##------------------------------------------------------------------------------
-
-"""
-$SIGNATURES
-
-Return the tags for a Node.
-"""
-getTags(node) = node.tags
-
 """
 $SIGNATURES
 
@@ -105,22 +97,22 @@ end
 
 function listTags(dfg::AbstractDFG, sym::Symbol)
     getFnc = isVariable(dfg, sym) ? getVariable : getFactor
-    return getTags(getFnc(dfg, sym))
+    return refTags(getFnc(dfg, sym))
 end
 
 function mergeTags!(dfg::InMemoryDFGTypes, sym::Symbol, tags)
     getFnc = isVariable(dfg, sym) ? getVariable : getFactor
-    return union!(getTags(getFnc(dfg, sym)), tags)
+    return union!(refTags(getFnc(dfg, sym)), tags)
 end
 
 function removeTags!(dfg::InMemoryDFGTypes, sym::Symbol, tags)
     getFnc = isVariable(dfg, sym) ? getVariable : getFactor
-    return setdiff!(getTags(getFnc(dfg, sym)), tags)
+    return setdiff!(refTags(getFnc(dfg, sym)), tags)
 end
 
 function emptyTags!(dfg::InMemoryDFGTypes, sym::Symbol)
     getFnc = isVariable(dfg, sym) ? getVariable : getFactor
-    return empty!(getTags(getFnc(dfg, sym)))
+    return empty!(refTags(getFnc(dfg, sym)))
 end
 
 ##------------------------------------------------------------------------------
@@ -134,23 +126,5 @@ Determine if the variable or factor neighbors have the `tags:;Vector{Symbol}`, a
 function hasTags(dfg::AbstractDFG, sym::Symbol, tags::Vector{Symbol}; matchAll::Bool = true)
     #
     alltags = listTags(dfg, sym)
-    return length(filter(x -> x in alltags, tags)) >= (matchAll ? length(tags) : 1)
-end
-
-"""
-    $SIGNATURES
-
-Determine if the variable or factor neighbors have the `tags:;Vector{Symbol}`, and `matchAll::Bool`.
-"""
-function hasTagsNeighbors(
-    dfg::AbstractDFG,
-    sym::Symbol,
-    tags::Vector{Symbol};
-    matchAll::Bool = true,
-)
-    #
-    # assume only variables or factors are neighbors
-    getNeiFnc = isVariable(dfg, sym) ? getFactor : getVariable
-    alltags = union((ls(dfg, sym) .|> x -> getTags(getNeiFnc(dfg, x)))...)
-    return length(filter(x -> x in alltags, tags)) >= (matchAll ? length(tags) : 1)
+    return length(alltags ∩ tags) >= (matchAll ? length(tags) : 1)
 end

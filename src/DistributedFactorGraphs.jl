@@ -276,7 +276,6 @@ export listTags
 export mergeTags!
 export emptyTags!
 export removeTags! #TODO do we want this one
-export hasTags
 
 ##------------------------------------------------------------------------------
 ## Bloblets
@@ -378,7 +377,6 @@ const unstable_functions::Vector{Symbol} = [
     :getVariableLabelNumber,# TODO somewhat used, do we deprecate?
     :getfirstBlobentry,# TODO somewhat used, do we deprecate?
     :getSolveInProgress,#TODO unused, do we deprecate?
-    :hasTagsNeighbors,
     :isVariable,
     :isFactor,
     :isConnected,
@@ -401,6 +399,7 @@ const unstable_functions::Vector{Symbol} = [
     :packState,
     :unpack,
     :unpackDistribution,
+    :hasTags,
     # :unpackVariable,
     # :unpackFactor,
     :unpackBlob,
@@ -426,6 +425,7 @@ const unstable_functions::Vector{Symbol} = [
     # no set on these
 
     #deprecated in v0.29
+    :hasTagsNeighbors,
     # :updateBlobstore!,## TODO deprecated or obsolete
     :emptyMetadata!, #TODO maybe deprecate for just deleteMetadata!
     # :emptyBlobstore!, #TODO maybe deprecate for just deleteBlobstore!

@@ -321,6 +321,27 @@ end
     varlabel,
 )
 
+# """
+#     $SIGNATURES
+
+# Determine if the variable or factor neighbors have the `tags:;Vector{Symbol}`, and `matchAll::Bool`.
+# """
+function hasTagsNeighbors(
+    dfg::AbstractDFG,
+    node_label::Symbol,
+    tags::Vector{Symbol};
+    matchAll::Bool = true,
+)
+    #
+    Base.depwarn(
+        "hasTagsNeighbors is deprecated, use listNeighbors with tagsFilter instead",
+        :hasTagsNeighbors,
+    )
+    # assume only variables or factors are neighbors
+    alltags = union((listNeighbors(dfg, node_label) .|> x -> listTags(dfg, x))...)
+    return length(filter(x -> x in alltags, tags)) >= (matchAll ? length(tags) : 1)
+end
+
 ## ================================================================================
 ## Deprecated in v0.28
 ##=================================================================================
