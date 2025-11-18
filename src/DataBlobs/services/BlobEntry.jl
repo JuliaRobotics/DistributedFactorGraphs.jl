@@ -397,7 +397,7 @@ function incrDataLabelSuffix(
     hasund = false
     len = 0
     try
-        de = getfirstBlobentry(dfg, vla; labelFilter = contains(string(bllb)))
+        de = getfirstVariableBlobentry(dfg, vla; labelFilter = contains(string(bllb)))
         isnothing(de) && return Symbol(bllb) # no match, return as is
         bllb = string(bllb)
         # bllb *= bllb[end] != '_' ? "_" : ""
