@@ -24,7 +24,6 @@ Get the label of the node.
 """
 getLabel(node) = node.label
 
-
 """
 $SIGNATURES
 

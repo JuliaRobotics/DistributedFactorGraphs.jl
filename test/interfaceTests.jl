@@ -105,7 +105,6 @@ end
 
     @test printNode(fg1, :a) === nothing
     @test printNode(fg1, :abf1) === nothing
-
 end
 
 @testset "tags" begin

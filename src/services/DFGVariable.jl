@@ -365,7 +365,6 @@ end
 # Generic Metadata CRUD
 # TODO optimize for difference in in-memory by extending in other drivers. 
 
-
 ##------------------------------------------------------------------------------
 ## Blobentries and Blobs
 ##------------------------------------------------------------------------------

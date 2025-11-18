@@ -219,7 +219,11 @@ function addGraphBlobentries!(dfg::AbstractDFG, entries::Vector{Blobentry})
     return entries
 end
 
-function mergeVariableBlobentries!(dfg::AbstractDFG, vLbl::Symbol, entries::Vector{Blobentry})
+function mergeVariableBlobentries!(
+    dfg::AbstractDFG,
+    vLbl::Symbol,
+    entries::Vector{Blobentry},
+)
     mergeVariableBlobentry!.(dfg, vLbl, entries)
     return length(entries)
 end
@@ -233,17 +237,25 @@ function mergeAgentBlobentries!(dfg::AbstractDFG, entries::Vector{Blobentry})
 end
 function mergeGraphBlobentries!(dfg::AbstractDFG, entries::Vector{Blobentry})
     mergeGraphBlobentry!.(dfg, entries)
-    return length(entries)  
+    return length(entries)
 end
 
-function deleteVariableBlobentries!(dfg::AbstractDFG, varLabel::Symbol, labels::Vector{Symbol})
+function deleteVariableBlobentries!(
+    dfg::AbstractDFG,
+    varLabel::Symbol,
+    labels::Vector{Symbol},
+)
     cnts = map(labels) do label
         return deleteVariableBlobentry!(dfg, varLabel, label)
     end
     return sum(cnts)
 end
 
-function deleteFactorBlobentries!(dfg::AbstractDFG, facLabel::Symbol, labels::Vector{Symbol})
+function deleteFactorBlobentries!(
+    dfg::AbstractDFG,
+    facLabel::Symbol,
+    labels::Vector{Symbol},
+)
     cnts = map(labels) do label
         return deleteFactorBlobentry!(dfg, facLabel, label)
     end
@@ -302,7 +314,6 @@ const collectBlobentries = gatherBlobentries
 function listVariableBlobentries(dfg::AbstractDFG, label::Symbol)
     return listBlobentries(getVariable(dfg, label))
 end
-
 
 """
     $(SIGNATURES)

@@ -43,7 +43,6 @@ getAgentLabel(dfg::AbstractDFG) = getLabel(getAgent(dfg))
 """
 getGraphLabel(dfg::AbstractDFG) = getLabel(getGraph(dfg))
 
-
 """
     $(SIGNATURES)
 """

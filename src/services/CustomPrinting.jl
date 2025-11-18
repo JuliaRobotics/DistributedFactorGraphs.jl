@@ -195,4 +195,3 @@ function Base.show(io::IO, ::MIME"text/plain", dfg::AbstractDFG)
     println(io, "  Graph Metadata: ", listGraphBloblets(dfg))
     return
 end
-

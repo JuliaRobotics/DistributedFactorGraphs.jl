@@ -18,7 +18,6 @@ const MetadataTypes = Union{
     Vector{Bool},
 }
 
-
 function getHash(entry::Blobentry)
     return error(
         "Blobentry field :hash has been deprecated; use :crchash or :shahash instead",
@@ -238,7 +237,7 @@ function emptyMetadata!(dfg::AbstractDFG, label::Symbol)
 end
 
 # """
-    # $(SIGNATURES)
+# $(SIGNATURES)
 # Function to generate source string - agentLabel|graphLabel|varLabel
 # """
 function buildSourceString(dfg::AbstractDFG, label::Symbol)
@@ -249,12 +248,24 @@ getAgentMetadata(args...) = error("getAgentMetadata is obsolete, use Bloblets in
 setAgentMetadata!(args...) = error("setAgentMetadata! is obsolete, use Bloblets instead.")
 getGraphMetadata(args...) = error("getGraphMetadata is obsolete, use Bloblets instead.")
 setGraphMetadata!(args...) = error("setGraphMetadata! is obsolete, use Bloblets instead.")
-updateAgentMetadata!(args...) = error("updateAgentMetadata! is obsolete, use Bloblets instead.")
-updateGraphMetadata!(args...) = error("updateGraphMetadata! is obsolete, use Bloblets instead.")
-deleteAgentMetadata!(args...) = error("deleteAgentMetadata! is obsolete, use Bloblets instead.")
-deleteGraphMetadata!(args...) = error("deleteGraphMetadata! is obsolete, use Bloblets instead.")
-emptyAgentMetadata!(args...) = error("emptyAgentMetadata! is obsolete, use Bloblets instead.")
-emptyGraphMetadata!(args...) = error("emptyGraphMetadata! is obsolete, use Bloblets instead.")
+function updateAgentMetadata!(args...)
+    return error("updateAgentMetadata! is obsolete, use Bloblets instead.")
+end
+function updateGraphMetadata!(args...)
+    return error("updateGraphMetadata! is obsolete, use Bloblets instead.")
+end
+function deleteAgentMetadata!(args...)
+    return error("deleteAgentMetadata! is obsolete, use Bloblets instead.")
+end
+function deleteGraphMetadata!(args...)
+    return error("deleteGraphMetadata! is obsolete, use Bloblets instead.")
+end
+function emptyAgentMetadata!(args...)
+    return error("emptyAgentMetadata! is obsolete, use Bloblets instead.")
+end
+function emptyGraphMetadata!(args...)
+    return error("emptyGraphMetadata! is obsolete, use Bloblets instead.")
+end
 
 #TODO deprecate AbstractPackedObservation
 abstract type AbstractPackedObservation end
@@ -280,12 +291,35 @@ function convertStructType(::Type{PT}) where {PT <: AbstractPackedObservation}
     return getfield(moduleName, symbolName)
 end
 
-@deprecate getBlobentry(fg::AbstractDFG, varlabel::Symbol, key::Symbol) getVariableBlobentry(fg, varlabel, key)
-@deprecate getBlobentries(fg::AbstractDFG, varlabel::Symbol; kwargs...) getVariableBlobentries(fg, varlabel; kwargs...)
-@deprecate addBlobentry!(fg::AbstractDFG, varlabel::Symbol, entry::Blobentry) addVariableBlobentry!(fg, varlabel, entry)
-@deprecate mergeBlobentry!(fg::AbstractDFG, varlabel::Symbol, entry::Blobentry) mergeVariableBlobentry!(fg, varlabel, entry)
-@deprecate deleteBlobentry!(fg::AbstractDFG, varlabel::Symbol, key::Symbol) deleteVariableBlobentry!(fg, varlabel, key)
-@deprecate listBlobentries(fg::AbstractDFG, varlabel::Symbol) listVariableBlobentries(fg, varlabel)
+@deprecate getBlobentry(fg::AbstractDFG, varlabel::Symbol, key::Symbol) getVariableBlobentry(
+    fg,
+    varlabel,
+    key,
+)
+@deprecate getBlobentries(fg::AbstractDFG, varlabel::Symbol; kwargs...) getVariableBlobentries(
+    fg,
+    varlabel;
+    kwargs...,
+)
+@deprecate addBlobentry!(fg::AbstractDFG, varlabel::Symbol, entry::Blobentry) addVariableBlobentry!(
+    fg,
+    varlabel,
+    entry,
+)
+@deprecate mergeBlobentry!(fg::AbstractDFG, varlabel::Symbol, entry::Blobentry) mergeVariableBlobentry!(
+    fg,
+    varlabel,
+    entry,
+)
+@deprecate deleteBlobentry!(fg::AbstractDFG, varlabel::Symbol, key::Symbol) deleteVariableBlobentry!(
+    fg,
+    varlabel,
+    key,
+)
+@deprecate listBlobentries(fg::AbstractDFG, varlabel::Symbol) listVariableBlobentries(
+    fg,
+    varlabel,
+)
 
 ## ================================================================================
 ## Deprecated in v0.28
