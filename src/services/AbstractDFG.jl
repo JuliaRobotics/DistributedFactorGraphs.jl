@@ -55,7 +55,7 @@ Method must be overloaded by the user for Serialization to work.
 """
 function rebuildFactorCache!(dfg::AbstractDFG, factor::AbstractGraphFactor, neighbors = [])
     @warn(
-        "FactorCache not build, rebuildFactorCache! is not implemented for $(typeof(dfg)). Make sure to load IncrementalInference.",
+        "FactorCache not build, rebuildFactorCache! is not implemented for $(typeof(dfg)). `rebuildFactorCache!` is available in IncrementalInference.",
         maxlog = 1
     )
     return nothing
@@ -65,13 +65,13 @@ end
     $(SIGNATURES)
 Function to get the type of the variables in the DFG.
 """
-function getTypeDFGVariables end
+getTypeDFGVariables(::AbstractDFG{V, F}) where {V,F} = V
 
 """
     $(SIGNATURES)
 Function to get the type of the factors in the DFG.
 """
-function getTypeDFGFactors end
+getTypeDFGFactors(::AbstractDFG{V, F}) where {V,F} = F
 
 ##------------------------------------------------------------------------------
 ## Setters
@@ -371,12 +371,36 @@ function deleteVariable!(dfg::AbstractDFG, variable::AbstractGraphVariable)
     return deleteVariable!(dfg, variable.label)
 end
 
+function deleteVariables!(dfg::AbstractDFG, labels::Vector{Symbol})
+    counts = asyncmap(labels) do l
+        return deleteVariable!(dfg, l)
+    end
+    return sum(counts)
+end
+
+function deleteVariables!(dfg::AbstractDFG; kwargs...)
+    labels = listVariables(dfg; kwargs...)
+    return deleteVariables!(dfg, labels)
+end
+
 """
     $(SIGNATURES)
 Delete the referenced Factor from the DFG.
 """
 function deleteFactor!(dfg::AbstractDFG, factor::AbstractGraphFactor)
     return deleteFactor!(dfg, factor.label)
+end
+
+function deleteFactors!(dfg::AbstractDFG, labels::Vector{Symbol})
+    counts = asyncmap(labels) do l
+        return deleteFactor!(dfg, l)
+    end
+    return sum(counts)
+end
+
+function deleteFactors!(dfg::AbstractDFG; kwargs...)
+    labels = listFactors(dfg; kwargs...)
+    return deleteFactors!(dfg, labels)
 end
 
 # rather use isa in code, but ok, here it is

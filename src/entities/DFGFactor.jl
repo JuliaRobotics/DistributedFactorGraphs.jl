@@ -213,7 +213,7 @@ Read-only summary factor structure for a DistributedFactorGraph factor.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct FactorSummary <: AbstractGraphFactor
+@tags struct FactorSummary <: AbstractGraphFactor
     """Factor label, e.g. :x1f1.
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
@@ -222,7 +222,7 @@ Base.@kwdef struct FactorSummary <: AbstractGraphFactor
     tags::Set{Symbol}
     """Ordered list of the neighbor variables.
     Accessors: [`getVariableOrder`](@ref)"""
-    variableorder::Tuple{Vararg{Symbol}} #TODO changed to NTuple
+    variableorder::Tuple{Vararg{Symbol}} & (choosetype = x->NTuple{length(x), Symbol},) #TODO changed to NTuple
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref)"""
     timestamp::TimeDateZone
@@ -249,7 +249,7 @@ Skeleton factor structure for a DistributedFactorGraph factor.
 Fields:
 $(TYPEDFIELDS)
 """
-Base.@kwdef struct FactorSkeleton <: AbstractGraphFactor
+@tags struct FactorSkeleton <: AbstractGraphFactor
     """Factor label, e.g. :x1f1.
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
@@ -258,7 +258,7 @@ Base.@kwdef struct FactorSkeleton <: AbstractGraphFactor
     tags::Set{Symbol}
     """Ordered list of the neighbor variables.
     Accessors: [`getVariableOrder`](@ref)"""
-    variableorder::Tuple{Vararg{Symbol}}
+    variableorder::Tuple{Vararg{Symbol}} & (choosetype = x->NTuple{length(x), Symbol},)
 end
 
 ##------------------------------------------------------------------------------

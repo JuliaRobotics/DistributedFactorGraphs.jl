@@ -30,3 +30,8 @@ Design goal: all `Blobstore`s with the same `label` can contain the same `blobid
 """
 abstract type AbstractBlobstore{T} end
 const Blobstore = AbstractBlobstore
+
+function StructUtils.lower(::StructUtils.StructStyle, store::AbstractBlobstore)
+    return StructUtils.lower(Packed(store))
+end
+@choosetype AbstractBlobstore resolvePackedType

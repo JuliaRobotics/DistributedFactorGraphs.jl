@@ -249,13 +249,14 @@ export GraphsDFG
 # export listVariableMetadata, listFactorMetadata, listAgentMetadata, listGraphMetadata
 # export listVariableBlobentryMetadata, listFactorBlobentryMetadata, listAgentBlobentryMetadata, listGraphBlobentryMetadata
 
+export deleteVariables!
+export deleteFactors!
 ##==============================================================================
 ## Common Accessors 
 ##==============================================================================
 export getLabel
 
-# might only be public
-export getId
+public getId
 
 ##==============================================================================
 ## Internal or not yet ready
@@ -285,7 +286,7 @@ export mergeAgentTags!
 public listTags
 public mergeTags!
 public emptyTags!
-public deleteTags! #TODO do we want this one
+public deleteTags!
 
 ##------------------------------------------------------------------------------
 ## Bloblets
@@ -574,9 +575,11 @@ include("DataBlobs/services/BlobStores.jl")
 include("DataBlobs/services/BlobPacking.jl")
 include("DataBlobs/services/BlobWrappers.jl")
 
+#FIXME
 function getSolvable end
 function getVariableType end
 function isInitialized end
+function listTags end
 # In Memory Types
 include("GraphsDFG/GraphsDFG.jl")
 using .GraphsDFGs

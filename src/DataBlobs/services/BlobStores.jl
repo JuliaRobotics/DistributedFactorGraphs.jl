@@ -129,6 +129,8 @@ struct FolderStore{T} <: AbstractBlobstore{T}
     folder::String
 end
 
+FolderStore(label::Symbol, folder::String) = FolderStore{Vector{UInt8}}(label, folder)
+
 function FolderStore(foldername::String; label::Symbol = :default, createfolder = true)
     storepath = joinpath(foldername, string(label))
     if createfolder && !isdir(storepath)
