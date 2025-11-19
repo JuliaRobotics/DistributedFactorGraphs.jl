@@ -100,7 +100,6 @@ See also: [`loadDFG`](@ref), [`saveDFG`](@ref)
 function loadDFG!(
     dfgLoadInto::AbstractDFG{V, F},
     file::AbstractString;
-    # overwriteDFGMetadata::Bool = true,
 ) where {V <: AbstractGraphVariable, F <: AbstractGraphFactor}
     # add if doesn't have .tar.gz extension
     if !contains(basename(file), ".tar.gz")
@@ -125,7 +124,7 @@ function loadDFG!(
         return addVariable!(dfgLoadInto, v)
     end
 
-    @info "Loaded $(length(variables)) variables"
+    @debug "Loaded $(length(variables)) variables"
 
     factorfiles = readdir(joinpath(loaddir, "factors"); sort = false, join = true)
 
@@ -134,9 +133,9 @@ function loadDFG!(
         return addFactor!(dfgLoadInto, f)
     end
 
-    @info "Loaded $(length(factors)) factors"
+    @debug "Loaded $(length(factors)) factors"
 
-    if isa(dfgLoadInto, GraphsDFG) && getTypeDFGFactors(dfgLoadInto) != FactorDFG
+    if isa(dfgLoadInto, GraphsDFG) && getTypeDFGFactors(dfgLoadInto) <: FactorDFG
         # Finally, rebuild the CCW's for the factors to completely reinflate them
         @showprogress 1 "Rebuilding factor solver cache" for factor in factors
             rebuildFactorCache!(dfgLoadInto, factor)
