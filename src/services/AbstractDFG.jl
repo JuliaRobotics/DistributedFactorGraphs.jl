@@ -65,13 +65,13 @@ end
     $(SIGNATURES)
 Function to get the type of the variables in the DFG.
 """
-getTypeDFGVariables(::AbstractDFG{V, F}) where {V,F} = V
+getTypeDFGVariables(::AbstractDFG{V, F}) where {V, F} = V
 
 """
     $(SIGNATURES)
 Function to get the type of the factors in the DFG.
 """
-getTypeDFGFactors(::AbstractDFG{V, F}) where {V,F} = F
+getTypeDFGFactors(::AbstractDFG{V, F}) where {V, F} = F
 
 ##------------------------------------------------------------------------------
 ## Setters
