@@ -49,3 +49,8 @@ $(TYPEDEF)
 Empty structure for solver parameters.
 """
 struct NoSolverParams <: AbstractDFGParams end
+
+function StructUtils.lower(::StructUtils.StructStyle, p::AbstractDFGParams)
+    return StructUtils.lower(Packed(p))
+end
+@choosetype AbstractDFGParams resolvePackedType

@@ -16,7 +16,7 @@ v1 = addVariable!(dfg, :a, ContinuousScalar, tags = [:POSE], solvable=0)
 saveDFG(dfg, "/tmp/saveDFG.tar.gz")
 ```
 """
-function saveDFG(folder::AbstractString, dfg::AbstractDFG; saveMetadata::Bool = true)
+function saveDFG(folder::AbstractString, dfg::AbstractDFG)
 
     # TODO: Deprecate the folder functionality
 
@@ -47,13 +47,18 @@ function saveDFG(folder::AbstractString, dfg::AbstractDFG; saveMetadata::Bool = 
     @showprogress "saving factors" for f in factors
         JSON.json("$factorFolder/$(f.label).json", f; style = DFGJSONStyle())
     end
-    #GraphsDFG metadata
-    if saveMetadata
-        @assert isa(dfg, GraphsDFG) "only metadata for GraphsDFG are supported"
-        @info "saving dfg metadata"
-        fgPacked = GraphsDFGs.packDFGMetadata(dfg)
-        JSON.json("$savepath/dfg.json", fgPacked; style = DFGJSONStyle())
-    end
+
+    #GraphsDFG nodes
+    @assert isa(dfg, GraphsDFG) "only metadata for GraphsDFG are supported"
+    p = Progress(4, "Saving DFG Nodes")
+    JSON.json("$savepath/graphroot.json", dfg.graph; style = DFGJSONStyle())
+    next!(p)
+    JSON.json("$savepath/agent.json", dfg.agent; style = DFGJSONStyle())
+    next!(p)
+    JSON.json("$savepath/solverparams.json", dfg.solverParams; style = DFGJSONStyle())
+    next!(p)
+    JSON.json("$savepath/blobstores.json", dfg.blobStores; style = DFGJSONStyle())
+    next!(p)
 
     savedir = dirname(savepath) # is this a path of just local name? #344 -- workaround with unique names
     savename = basename(string(savepath))
@@ -93,108 +98,51 @@ ls(dfg)
 See also: [`loadDFG`](@ref), [`saveDFG`](@ref)
 """
 function loadDFG!(
-    dfgLoadInto::AbstractDFG,
-    dst::AbstractString;
-    overwriteDFGMetadata::Bool = true,
-)
-    #
-    # loaddir gets deleted so needs to be unique
-    loaddir = split(joinpath("/", "tmp", "caesar", "random", string(uuid1())), '-')[1]
-    # Check if zipped destination (dst) by first doing fuzzy search from user supplied dst
-    folder = dst  # working directory for fileDFG variable and factor operations
-    dstname = dst # path name could either be legacy FileDFG dir or .tar.gz file of FileDFG files.
-    unzip = false
+    dfgLoadInto::AbstractDFG{V, F},
+    file::AbstractString;
+) where {V <: AbstractGraphVariable, F <: AbstractGraphFactor}
     # add if doesn't have .tar.gz extension
-    lastdirname = splitpath(dstname)[end]
-    if !isdir(dst)
-        unzip = true
-        sdst = split(lastdirname, '.')
-        if sdst[end] != "gz" #  length(sdst) == 1 &&
-            dstname *= ".tar.gz"
-            lastdirname *= ".tar.gz"
-        end
+    if !contains(basename(file), ".tar.gz")
+        file *= ".tar.gz"
     end
     # check the file actually exists
-    @assert isfile(dstname) "cannot find file $dstname"
-    # TODO -- what if it is not a tar.gz but classic folder instead?
-    # do actual unzipping
-    filename = lastdirname[1:(end - length(".tar.gz"))] |> string
-    if unzip
-        Base.mkpath(loaddir)
-        folder = joinpath(loaddir, filename)
-        @debug "loadDFG! detected a gzip $dstname -- unpacking via $loaddir now..."
-        Base.rm(folder; recursive = true, force = true)
-        # unzip the tar file
-        tar_gz = open(dstname)
-        tar = CodecZlib.GzipDecompressorStream(tar_gz)
-        Tar.extract(tar, folder)
-        close(tar)
-        #or for non-compressed
-        # Tar.extract(dstname, folder)
-    end
+    @assert isfile(file) "cannot find file $file"
 
-    #GraphsDFG metadata
-    if overwriteDFGMetadata
-        @assert isa(dfgLoadInto, GraphsDFG) "Only GraphsDFG metadata are supported"
-        @info "loading dfg metadata"
-        jstr = read("$folder/dfg.json", String)
-        fgPacked = JSON.parse(jstr, GraphsDFGs.PackedGraphsDFG; style = DFGJSONStyle())
-        GraphsDFGs.unpackDFGMetadata!(dfgLoadInto, fgPacked)
-    end
+    # only extract the json files needed for the variables and factors
+    tar_gz = open(file)
+    tar = CodecZlib.GzipDecompressorStream(tar_gz)
+    dfgnodenames = r"^(factors|variables)"
+    loaddir = Tar.extract(hdr -> contains(hdr.path, dfgnodenames), tar)
+    close(tar)
 
     # extract the factor graph from fileDFG folder
-    factors = FactorDFG[]
-    varFolder = "$folder/variables"
-    factorFolder = "$folder/factors"
-    # Folder preparations
-    !isdir(folder) && error("Can't load DFG graph - folder '$folder' doesn't exist")
-    !isdir(varFolder) && error("Can't load DFG graph - folder '$varFolder' doesn't exist")
-    !isdir(factorFolder) &&
-        error("Can't load DFG graph - folder '$factorFolder' doesn't exist")
+    variablefiles = readdir(joinpath(loaddir, "variables"); sort = false, join = true)
 
-    # varFiles = sort(readdir(varFolder; sort = false); lt = natural_lt)
-    # factorFiles = sort(readdir(factorFolder; sort = false); lt = natural_lt)
-    varFiles = readdir(varFolder; sort = false)
-    factorFiles = readdir(factorFolder; sort = false)
-
-    # FIXME, why is this treated different from VariableSkeleton, VariableSummary?
-
-    usePackedVariable =
-        isa(dfgLoadInto, GraphsDFG) && getTypeDFGVariables(dfgLoadInto) == VariableDFG
     # type instability on `variables` as either `::Vector{Variable}` or `::Vector{VariableCompute{<:}}` (vector of abstract)
-    variables = @showprogress 1 "loading variables" asyncmap(varFiles) do varFile
-        jstr = read("$varFolder/$varFile", String)
-        packedvar = JSON.parse(jstr, VariableDFG; style = DFGJSONStyle())
-        v = usePackedVariable ? packedvar : unpackVariable(packedvar)
+    variables = @showprogress 1 "loading variables" asyncmap(variablefiles) do file
+        v = JSON.parsefile(file, V; style = DFGJSONStyle())
         return addVariable!(dfgLoadInto, v)
     end
 
-    @info "Loaded $(length(variables)) variables"#- $(map(v->v.label, variables))"
+    @debug "Loaded $(length(variables)) variables"
 
-    usePackedFactor =
-        isa(dfgLoadInto, GraphsDFG) && getTypeDFGFactors(dfgLoadInto) == FactorDFG
+    factorfiles = readdir(joinpath(loaddir, "factors"); sort = false, join = true)
 
-    # `factors` is not type stable `::Vector{Factor}` or `::Vector{FactorCompute{<:}}` (vector of abstract)
-    factors = @showprogress 1 "loading factors" asyncmap(factorFiles) do factorFile
-        f = JSON.parsefile("$factorFolder/$factorFile", FactorDFG; style = DFGJSONStyle())
+    factors = @showprogress 1 "loading factors" asyncmap(factorfiles) do file
+        f = JSON.parsefile(file, F; style = DFGJSONStyle())
         return addFactor!(dfgLoadInto, f)
     end
 
-    @info "Loaded $(length(factors)) factors"# - $(map(f->f.label, factors))"
+    @debug "Loaded $(length(factors)) factors"
 
-    if isa(dfgLoadInto, GraphsDFG) && getTypeDFGFactors(dfgLoadInto) != FactorDFG
+    if isa(dfgLoadInto, GraphsDFG) && getTypeDFGFactors(dfgLoadInto) <: FactorDFG
         # Finally, rebuild the CCW's for the factors to completely reinflate them
         @showprogress 1 "Rebuilding factor solver cache" for factor in factors
             rebuildFactorCache!(dfgLoadInto, factor)
         end
     end
 
-    # remove the temporary unzipped file
-    if unzip
-        @info "DFG.loadDFG! is deleting a temp folder created during unzip, $loaddir"
-        # need this because the number of files created in /tmp/caesar/random is becoming redonkulous.
-        Base.rm(loaddir; recursive = true, force = true)
-    end
+    Base.rm(loaddir; recursive = true, force = true)
 
     return dfgLoadInto
 end
@@ -215,35 +163,40 @@ function loadDFG(file::AbstractString)
     # check the file actually exists
     @assert isfile(file) "cannot find file $file"
 
-    # only extract dfg.json to rebuild DFG object
+    # only extract the json files needed to rebuild DFG object
     tar_gz = open(file)
     tar = CodecZlib.GzipDecompressorStream(tar_gz)
-    loaddir = Tar.extract(hdr -> contains(hdr.path, "dfg.json"), tar)
+    dfgnodenames = r"^(agent\.json|blobstores\.json|graphroot\.json|solverparams\.json)$"
+    loaddir = Tar.extract(hdr -> contains(hdr.path, dfgnodenames), tar)
     close(tar)
 
-    #Only GraphsDFG metadata supported
-    jstr = read("$loaddir/dfg.json", String)
-    # ---------------------------------
-    #TODO deprecate old format, v0.28
-    local fgPacked
-    try
-        fgPacked = JSON.parse(jstr, GraphsDFGs.PackedGraphsDFG; style = DFGJSONStyle())
-    catch e
-        if e isa MethodError
-            @warn "Deprecated serialization: Failed to read DFG metadata. Attempting to load using the old format. Error:" e
-            fgPacked = GraphsDFGs.PackedGraphsDFG(
-                JSON.parse(jstr, GraphsDFGs._OldPackedGraphsDFG; style = DFGJSONStyle()),
-            )
-        else
-            rethrow(e)
-        end
-    end
-    # ----------------------------------
-    dfg = GraphsDFGs.unpackDFGMetadata(fgPacked)
+    progess = Progress(4, "Loading DFG Nodes")
+    agent = JSON.parsefile(joinpath(loaddir, "agent.json"), Agent; style = DFGJSONStyle())
+    next!(progess)
+    graph = JSON.parsefile(
+        joinpath(loaddir, "graphroot.json"),
+        Graphroot;
+        style = DFGJSONStyle(),
+    )
+    next!(progess)
+    solverParams = JSON.parsefile(
+        joinpath(loaddir, "solverparams.json"),
+        AbstractDFGParams;
+        style = DFGJSONStyle(),
+    )
+    next!(progess)
+    blobStores = JSON.parsefile(
+        joinpath(loaddir, "blobstores.json"),
+        Dict{Symbol, AbstractBlobstore};
+        style = DFGJSONStyle(),
+    )
+    next!(progess)
+
+    dfg = GraphsDFG(; agent, graph, solverParams, blobStores)
 
     @debug "DFG.loadDFG is deleting a temp folder created during unzip, $loaddir"
     # cleanup temporary folder
     Base.rm(loaddir; recursive = true, force = true)
 
-    return loadDFG!(dfg, file; overwriteDFGMetadata = false)
+    return loadDFG!(dfg, file)
 end

@@ -1598,36 +1598,35 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
     # kwargs = ()
     # filename = "/tmp/fileDFG"
     dfg, verts, facs = connectivityTestGraph(testDFGAPI; kwargs...)
+    v4 = getVariable(dfg, :x4)
+    vnd = getState(v4, :default)
+    # set everything
+    # vnd.BayesNetVertID = :outid
+    # push!(vnd.BayesNetOutVertIDs, :id)
+    # vnd.bw[1] = [1.0;]
+    # vnd.dontmargin = true
+    # vnd.eliminated = true
+    vnd.observability .= Float64[1.5;]
+    vnd.initialized = true
+    vnd.marginalized = true
+    push!(vnd.separator, :sep)
+    vnd.solves = 2
+    # vnd.val[1] = [2.0;]
+    #update
+    mergeVariable!(dfg, v4)
+
+    f45 = getFactor(dfg, :x4x5f1)
+    fsd = getFactorState(f45)
+    # set some factor solver data
+    push!(fsd.certainhypo, 2)
+    fsd.eliminated = true
+    push!(fsd.multihypo, 4.0)
+    fsd.nullhypo = 5.0
+    fsd.potentialused = true
+    #update factor
+    mergeFactor!(dfg, f45)
 
     for filename in ["/tmp/fileDFG", "/tmp/FileDFGExtension.tar.gz"]
-        v4 = getVariable(dfg, :x4)
-        vnd = getState(v4, :default)
-        # set everything
-        # vnd.BayesNetVertID = :outid
-        # push!(vnd.BayesNetOutVertIDs, :id)
-        # vnd.bw[1] = [1.0;]
-        # vnd.dontmargin = true
-        # vnd.eliminated = true
-        vnd.observability .= Float64[1.5;]
-        vnd.initialized = true
-        vnd.marginalized = true
-        push!(vnd.separator, :sep)
-        vnd.solves = 2
-        # vnd.val[1] = [2.0;]
-        #update
-        mergeVariable!(dfg, v4)
-
-        f45 = getFactor(dfg, :x4x5f1)
-        fsd = getFactorState(f45)
-        # set some factor solver data
-        push!(fsd.certainhypo, 2)
-        fsd.eliminated = true
-        push!(fsd.multihypo, 4.0)
-        fsd.nullhypo = 5.0
-        fsd.potentialused = true
-        #update factor
-        mergeFactor!(dfg, f45)
-
         # Save and load the graph to test.
         saveDFG(dfg, filename)
 
@@ -1647,9 +1646,38 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
             @test getFactor(dfg, fact) == getFactor(retDFG, fact)
         end
 
+        dfg2 = loadDFG(filename)
+
+        @test issetequal(ls(dfg), ls(dfg2))
+        @test issetequal(lsf(dfg), lsf(dfg2))
+        for var in ls(dfg)
+            @test getVariable(dfg, var) == getVariable(dfg2, var)
+        end
+        for fact in lsf(dfg)
+            @test getFactor(dfg, fact) == getFactor(dfg2, fact)
+        end
+        #TODO test graph, agent, blob stores, solverdata.
+
         # @test length(getBlobentries(getVariable(retDFG, :x1))) == 1
         # @test typeof(getBlobentry(getVariable(retDFG, :x1),:testing)) == GeneralDataEntry
         # @test length(getBlobentries(getVariable(retDFG, :x2))) == 1
         # @test typeof(getBlobentry(getVariable(retDFG, :x2),:testing2)) == FileDataEntry
     end
+
+    filename = "/tmp/fileDFG"
+    summarydfg = testDFGAPI{NoSolverParams, VariableSummary, FactorSummary}(;
+        graphLabel = :testGraph,
+    )
+    loadDFG!(summarydfg, filename)
+
+    @test issetequal(ls(dfg), ls(summarydfg))
+    @test issetequal(lsf(dfg), lsf(summarydfg))
+
+    skeletondfg = testDFGAPI{NoSolverParams, VariableSkeleton, FactorSkeleton}(;
+        graphLabel = :testGraph,
+    )
+    loadDFG!(skeletondfg, filename)
+
+    @test issetequal(ls(dfg), ls(skeletondfg))
+    @test issetequal(lsf(dfg), lsf(skeletondfg))
 end

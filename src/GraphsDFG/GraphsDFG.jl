@@ -63,9 +63,7 @@ import ...DistributedFactorGraphs:
     addGraphBlobentry!,
     addGraphBlobentries!,
     listGraphBlobentries,
-    listAgentBlobentries,
-    getTypeDFGVariables,
-    getTypeDFGFactors
+    listAgentBlobentries
 
 include("FactorGraphs/FactorGraphs.jl")
 using .FactorGraphs
@@ -74,7 +72,6 @@ using .FactorGraphs
 # Imports
 include("entities/GraphsDFG.jl")
 include("services/GraphsDFG.jl")
-include("services/GraphsDFGSerialization.jl")
 
 # Exports
 export GraphsDFG
