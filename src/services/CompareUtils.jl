@@ -26,7 +26,8 @@ const GeneratedCompareUnion = Union{
     VariableSkeleton,
     FactorSummary,
     FactorSkeleton,
-    FactorState,
+    Recipehyper,
+    Recipestate,
 }
 
 @generated function ==(x::T, y::T) where {T <: GeneratedCompareUnion}
@@ -252,16 +253,7 @@ function compareVariable(
     skipsamples::Bool = true,
 )
     #
-    skiplist = union(
-        [
-            :states;
-            :atzone;
-            :inzone;
-            :blobentries;
-            :bloblets
-        ],
-        skip,
-    )
+    skiplist = union([:states, :atzone, :inzone, :blobentries, :bloblets], skip)
     TP = compareAll(A, B; skip = skiplist, show = show)
     varskiplist = skipsamples ? [:val; :bw] : Symbol[]
     skiplist = union([:variableType;], varskiplist)
@@ -303,13 +295,8 @@ function compareFactor(
     )
     TP = compareAll(A, B; skip = skip_, show = show)
     @debug "compareFactor 1/5" TP
-    TP =
-        TP & compareAll(
-            getFactorState(A),
-            getFactorState(B);
-            skip = union([:fnc; :_gradients], skip),
-            show = show,
-        )
+    TP &= compareAll(A.state, B.state; skip, show)
+    TP &= compareAll(A.hyper, B.hyper; skip, show)
     @debug "compareFactor 2/5" TP
     if !TP || :fnc in skip
         return TP

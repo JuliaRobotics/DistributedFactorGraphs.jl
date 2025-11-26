@@ -112,8 +112,8 @@ function printFactor(
         println(ioc)
         println(ioc, "  solvable:      ", getSolvable(vert))
         println(ioc, "  VariableOrder: ", vert.variableorder)
-        println(ioc, "  multihypo:     ", getFactorState(vert).multihypo) # FIXME #477
-        println(ioc, "  nullhypo:      ", getFactorState(vert).nullhypo)
+        println(ioc, "  multihypo:     ", vert.hyper.multihypo) # FIXME #477
+        println(ioc, "  nullhypo:      ", vert.hyper.nullhypo)
         println(ioc, "  tags:          ", vert.tags)
         printstyled(ioc, "  FactorType: "; bold = true, color = :blue)
         println(ioc, fctt)

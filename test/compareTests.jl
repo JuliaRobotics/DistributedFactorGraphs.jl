@@ -33,9 +33,9 @@ setSolvable!(v2, 0)
     VariableCompute(:x1, TestVariableType1()) == VariableCompute(:x1, TestVariableType2())
 )
 
-facstate1 = DFG.FactorState(; eliminated = true, potentialused = true)
+facstate1 = DFG.Recipestate(; eliminated = true, potentialused = true)
 facstate2 = deepcopy(facstate1)
-facstate3 = DFG.FactorState(; eliminated = true, potentialused = false)
+facstate3 = DFG.Recipestate(; eliminated = true, potentialused = false)
 
 @test facstate1 == facstate2
 @test !(facstate1 == facstate3)

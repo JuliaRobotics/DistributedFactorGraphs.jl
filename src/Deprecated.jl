@@ -338,6 +338,12 @@ getVariablePPE(args...) = _ppe_obsolete()
 MeanMaxPPE(args...; kwargs...) = _ppe_obsolete()
 getEstimateFields(args...) = _ppe_obsolete()
 
+function getFactorState(args...)
+    return error(
+        "getFactorState is deprecated, use DFG.getRecipehyper or DFG.getRecipestate instead.",
+    )
+end
+
 ## ================================================================================
 ## Deprecated in v0.28
 ##=================================================================================
