@@ -67,6 +67,15 @@ function resolvePackedType(obj::JSON.Object)
     return Packed{getfield(pkg, Symbol(type.name))}
 end
 
+function resolveType(obj::DFG.JSON.Object)
+    type = obj.type
+    pkg = Base.require(Main, Symbol(type.pkg))
+    if !isdefined(Main, Symbol(type.pkg))
+        throw(SerializationError("Module $(pkg) is available, but not loaded in `Main`."))
+    end
+    return getfield(pkg, Symbol(type.name))
+end
+
 @choosetype Packed resolvePackedType
 
 # Stash optional TypeMetadata expansion function.

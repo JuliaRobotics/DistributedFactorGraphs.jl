@@ -55,7 +55,7 @@ using Test
         fg,
         fg2,
         skipsamples = true,
-        skip = Symbol[:infoPerCoord; :initialized; :inferdim; :solvedCount],
+        skip = Symbol[:observability; :initialized; :solves],
     )
     # fg2 has been solved, so it should fail on the estimate dictionary
     @test !compareSimilarVariables(
@@ -84,10 +84,10 @@ using Test
         skipcompute = true,
         skip = [
             :fullvariables
-            :infoPerCoord
+            :observability
             :initialized
             :inferdim
-            :solvedCount
+            :solves
         ],
     )
 end

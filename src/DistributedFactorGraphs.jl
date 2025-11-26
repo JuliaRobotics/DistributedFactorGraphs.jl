@@ -109,6 +109,8 @@ export addStates!
 export mergeStates!
 export deleteStates!
 
+export hasState
+
 ## list
 export listVariables
 export listFactors
@@ -345,6 +347,7 @@ export @format_str # exported from FileIO
 export @defStateType #TODO Should this be exported?
 
 public refStates
+public getStateKind
 
 # list of unstable functions not exported any more
 # will move to public or deprecate over time
@@ -407,13 +410,11 @@ const unstable_functions::Vector{Symbol} = [
     :printNode,
     :plotDFG,
     :pack,
-    :packDistribution,
     # :packVariable,
     # :packFactor,
     :packBlob,
     :packState,
     :unpack,
-    :unpackDistribution,
     :hasTags,
     # :unpackVariable,
     # :unpackFactor,
@@ -440,13 +441,15 @@ const unstable_functions::Vector{Symbol} = [
     # no set on these
 
     #deprecated in v0.29
+    :packDistribution,
+    :unpackDistribution,
     :hasTagsNeighbors,
     # :updateBlobstore!,## TODO deprecated or obsolete
     :emptyMetadata!, #TODO maybe deprecate for just deleteMetadata!
     # :emptyBlobstore!, #TODO maybe deprecate for just deleteBlobstore!
     :MetadataTypes, #maybe make public after metadata stable
     :getVariableTypeName,
-    :getVariableType,
+    :getStateKind,
     :setTimestamp,
     :setMetadata!, # no set, use add merge
     :setAgentMetadata!,
@@ -577,7 +580,7 @@ include("DataBlobs/services/BlobWrappers.jl")
 
 #FIXME
 function getSolvable end
-function getVariableType end
+function getStateKind end
 function isInitialized end
 function listTags end
 # In Memory Types

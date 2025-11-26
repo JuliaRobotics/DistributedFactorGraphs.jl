@@ -85,41 +85,10 @@ function isSolveInProgress(
     return getSolveInProgress(node, solvekey) > 0
 end
 
-"""
-    $(SIGNATURES)
-Get a type from the serialization module.
-"""
-function getTypeFromSerializationModule(_typeString::AbstractString)
-    @debug "DFG converting type string to Julia type" _typeString
-    try
-        # split the type at last `.`
-        split_st = split(_typeString, r"\.(?!.*\.)")
-        #if module is specified look for the module in main, otherwise use Main        
-        if length(split_st) == 2
-            m = getfield(Main, Symbol(split_st[1]))
-        else
-            m = Main
-        end
-        noparams = split(split_st[end], r"{")
-        ret = if 1 < length(noparams)
-            # fix #671, but does not work with specific module yet
-            bidx = findfirst(r"{", split_st[end])[1]
-            error("getTypeFromSerializationModule eval obsolete")
-            # Core.eval(m, Base.Meta.parse("$(noparams[1])$(split_st[end][bidx:end])"))
-        else
-            getfield(m, Symbol(split_st[end]))
-        end
-
-        return ret
-
-    catch ex
-        @error "Unable to deserialize type $(_typeString)"
-        io = IOBuffer()
-        showerror(io, ex, catch_backtrace())
-        err = String(take!(io))
-        @error(err)
-    end
-    return nothing
+function getTypeFromSerializationModule(::AbstractString)
+    return error(
+        "getTypeFromSerializationModule is obsolete, use DFG.parseVariableType or IIF.getTypeFromSerializationModule.",
+    )
 end
 
 ## Version checking
@@ -137,8 +106,8 @@ end
 
 refMetadata(node) = node.metadata
 
-function packDistribution end
-function unpackDistribution end
+@deprecate packDistribution(d) pack(d)
+@deprecate unpackDistribution(d) unpack(d)
 
 function setDescription!(args...)
     return error("setDescription! was removed and may be implemented later.")
@@ -158,8 +127,8 @@ function _getDuplicatedEmptyDFG(
     return newDfg
 end
 
-#TODO is Type correct
-@deprecate getVariableType(args...) getStateType(args...)
+#Type gets confused with returning a DataType, Kind is an instance of StateType
+@deprecate getVariableType(args...) getStateKind(args...)
 
 function getVariableTypeName(v::VariableSummary)
     Base.depwarn("getVariableTypeName is deprecated.", :getVariableTypeName)
@@ -274,7 +243,9 @@ const PackedObservation = AbstractPackedObservation
 abstract type AbstractPackedBelief end
 const PackedBelief = AbstractPackedBelief
 
-getAddHistory(dfg::AbstractDFG) = error("getAddHistory is obsolete.")
+#TODO maybe replace with `listVariablesAddOrder` or using sort on `listVariables`
+getAddHistory(dfg::AbstractDFG) = error("getAddHistory is deprecated.")
+getAddHistory(dfg::GraphsDFG) = listVariables(dfg) #default listVariables on GraphsDFG is ordered
 
 ## Utility functions for getting type names and modules (from IncrementalInference)
 _getmodule(t::T) where {T} = T.name.module
@@ -341,6 +312,31 @@ function hasTagsNeighbors(
     alltags = union((listNeighbors(dfg, node_label) .|> x -> listTags(dfg, x))...)
     return length(filter(x -> x in alltags, tags)) >= (matchAll ? length(tags) : 1)
 end
+
+#Obsolete PPEs
+abstract type AbstractPointParametricEst end
+function _ppe_obsolete()
+    return error(
+        "PPEs are obsolete and will be replaced soon (IIF.calcMeanMaxSuggested can be used in some cases), see #1133.",
+    )
+end
+getPPEMax(args...) = _ppe_obsolete()
+getPPEMean(args...) = _ppe_obsolete()
+getPPESuggested(args...) = _ppe_obsolete()
+getLastUpdatedTimestamp(est::AbstractPointParametricEst) = _ppe_obsolete()
+getPPE(args...) = _ppe_obsolete()
+addPPE!(args...) = _ppe_obsolete()
+addPPEs!(args...) = _ppe_obsolete()
+updatePPE!(args...) = _ppe_obsolete()
+deletePPE!(args...) = _ppe_obsolete()
+listPPEs(args...) = _ppe_obsolete()
+mergePPEs!(args...) = _ppe_obsolete()
+getPPEDict(args...) = _ppe_obsolete()
+getPPEs(args...) = _ppe_obsolete()
+getVariablePPEDict(args...) = _ppe_obsolete()
+getVariablePPE(args...) = _ppe_obsolete()
+MeanMaxPPE(args...; kwargs...) = _ppe_obsolete()
+getEstimateFields(args...) = _ppe_obsolete()
 
 ## ================================================================================
 ## Deprecated in v0.28
@@ -421,7 +417,7 @@ function lsWho(dfg::AbstractDFG, type::Symbol)
     vars = getVariables(dfg)
     labels = Symbol[]
     for v in vars
-        varType = typeof(getVariableType(v)) |> nameof
+        varType = typeof(getStateKind(v)) |> nameof
         varType == type && push!(labels, v.label)
     end
     return labels

@@ -297,7 +297,7 @@ function DFGVariableSCA()
 
     # @test getMetadata(v1) == Dict{Symbol, MetadataTypes}()
 
-    @test getVariableType(v1) == TestVariableType1()
+    @test getStateKind(v1) == TestVariableType1()
 
     #TODO here for now, don't reccomend usage.
     testTags = [:tag1, :tag2]
@@ -979,11 +979,11 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test ls(fg, TestFunctorInferenceType1) == [:abf1]
         @test lsf(fg, TestAbstractPrior) == [:af1]
 
-        @test getVariableType(v1) == TestVariableType1()
-        @test getVariableType(fg, :a) == TestVariableType1()
+        @test getStateKind(v1) == TestVariableType1()
+        @test getStateKind(fg, :a) == TestVariableType1()
 
-        @test getVariableType(v1) == TestVariableType1()
-        @test getVariableType(fg, :a) == TestVariableType1()
+        @test getStateKind(v1) == TestVariableType1()
+        @test getStateKind(fg, :a) == TestVariableType1()
 
         @test ls2(fg, :a) == [:b]
 

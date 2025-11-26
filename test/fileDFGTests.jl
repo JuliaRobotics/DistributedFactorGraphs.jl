@@ -85,12 +85,12 @@ using UUIDs
         )
 
         addGraphBlobentry!(dfg, be)
-        #TODO addAgentBlobentry!(dfg, be)
-        smallRobotData = Dict{Symbol, MetadataTypes}(:a => "43", :b => "small_robot")
-        smallSessionData = Dict{Symbol, MetadataTypes}(:a => "44", :b => "small_session")
 
-        # setAgentMetadata!(dfg, smallRobotData) #FIXME change to Bloblets
-        # setGraphMetadata!(dfg, smallSessionData) #FIXME change to Bloblets
+        agentBloblets = [Bloblet(:a, "43"), Bloblet(:b, "small_robot")]
+        graphBloblets = [Bloblet(:a, "44"), Bloblet(:b, "small_session")]
+
+        DFG.addAgentBloblets!(dfg, agentBloblets)
+        DFG.addGraphBloblets!(dfg, graphBloblets)
 
         # Save and load the graph to test.
         saveDFG(filename, dfg)
@@ -113,7 +113,7 @@ using UUIDs
             @test compareFactor(
                 getFactor(dfg, fact),
                 getFactor(retDFG, fact),
-                skip = [:timezone, :zone, :solverData],
+                skip = [:timezone, :inzone, :atzone],
             ) # Timezones
             # :hypotheses, :certainhypo, :multihypo, # Multihypo
             # :eliminated, 

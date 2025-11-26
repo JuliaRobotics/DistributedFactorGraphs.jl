@@ -1,4 +1,8 @@
 Listing news on any major breaking changes in DFG.  For regular changes, see integrated Github.com project milestones for DFG.
+
+# v0.29
+- `AbstractPointParametricEst` (`MeanMaxPPE`) and related `PPE` functions are obsolete, see #1133.
+
 # v0.28
 - Reading or deserialzing of factor graphs created prior to v0.25 are no longer suppoted with the complete removal of User/Robot/Session
 - Deprecated AbstractRelativeMinimize and AbstractManifoldsMinimize

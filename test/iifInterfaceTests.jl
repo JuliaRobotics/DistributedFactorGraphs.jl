@@ -1,5 +1,5 @@
 global dfg, v1, v2, f1
-
+# dfg = GraphsDFG(; solverParams = SolverParams())
 # Building simple graph...
 @testset "Building a simple Graph" begin
     global dfg, v1, v2, f1
@@ -145,8 +145,8 @@ end
     @test ls(dfg, LinearRelative) == [:abf1]
     @test lsf(dfg, LinearRelative{1, Normal{Float64}}) == [:abf1]
 
-    @test getVariableType(v1) isa Position{1}
-    @test getVariableType(dfg, :a) isa Position{1}
+    @test getStateKind(v1) isa Position{1}
+    @test getStateKind(dfg, :a) isa Position{1}
 
     @test DFG.lsTypes(dfg) == [Position{1}]
 
@@ -179,9 +179,9 @@ end
     @test getState(v1, :default) === v1.states[:default]
     @test refStates(v1) == v1.states
 
-    @test typeof(getVariableType(v1)) == Position{1}
-    @test typeof(getVariableType(v2)) == Position{1}
-    @test typeof(getVariableType(v1)) == Position{1}
+    @test typeof(getStateKind(v1)) == Position{1}
+    @test typeof(getStateKind(v2)) == Position{1}
+    @test typeof(getStateKind(v1)) == Position{1}
 
     @test getLabel(f1) == f1.label
     @test getTags(f1) == f1.tags
@@ -216,41 +216,41 @@ end
         blobid = uuid4(),
         label = :key2,
         blobstore = :test,
-        mimetype = "image/jpg",
+        mimetype = MIME("image/jpg"),
     )
 
     #add
     v1 = getVariable(dfg, :a)
     @test addBlobentry!(v1, de1) == de1
-    @test addBlobentry!(dfg, :a, de2) == de2
+    @test addVariableBlobentry!(dfg, :a, de2) == de2
     @test_throws LabelExistsError addBlobentry!(v1, de1)
     @test de2 in getBlobentries(v1)
 
     #get
     @test deepcopy(de1) == getBlobentry(v1, :key1)
-    @test deepcopy(de2) == getBlobentry(dfg, :a, :key2)
+    @test deepcopy(de2) == getVariableBlobentry(dfg, :a, :key2)
     @test_throws LabelNotFoundError getBlobentry(v2, :key1)
-    @test_throws LabelNotFoundError getBlobentry(dfg, :b, :key1)
+    @test_throws LabelNotFoundError getVariableBlobentry(dfg, :b, :key1)
 
     #update
-    @test mergeBlobentry!(dfg, :a, de2_update) == 1
-    @test deepcopy(de2_update) == getBlobentry(dfg, :a, :key2)
-    @test mergeBlobentry!(dfg, :b, de2_update) == 1
+    @test mergeVariableBlobentry!(dfg, :a, de2_update) == 1
+    @test deepcopy(de2_update) == getVariableBlobentry(dfg, :a, :key2)
+    @test mergeVariableBlobentry!(dfg, :b, de2_update) == 1
 
     #list
-    entries = getBlobentries(dfg, :a)
+    entries = getVariableBlobentries(dfg, :a)
     @test length(entries) == 2
     @test issetequal(map(e -> e.label, entries), [:key1, :key2])
-    @test length(getBlobentries(dfg, :b)) == 1
+    @test length(getVariableBlobentries(dfg, :b)) == 1
 
-    @test issetequal(listBlobentries(dfg, :a), [:key1, :key2])
-    @test listBlobentries(dfg, :b) == Symbol[:key2]
+    @test issetequal(listVariableBlobentries(dfg, :a), [:key1, :key2])
+    @test listVariableBlobentries(dfg, :b) == Symbol[:key2]
 
     #delete
     @test deleteBlobentry!(v1, :key1) == 1
     @test listBlobentries(v1) == Symbol[:key2]
     #delete from ddfg
-    @test deleteBlobentry!(dfg, :a, :key2) == 1
+    @test deleteVariableBlobentry!(dfg, :a, :key2) == 1
     @test listBlobentries(v1) == Symbol[]
 end
 

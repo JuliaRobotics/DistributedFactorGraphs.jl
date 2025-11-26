@@ -12,13 +12,13 @@
 """
     $(SIGNATURES)
 
-Get the type of the variable's state, eg. `Pose2`, `Point3`, etc. as an instance of `StateType`.
+Get the kind of the variable's state, eg. `Pose2`, `Point3`, etc. as an instance of `StateType`.
 """
-getStateType(::VariableCompute{T}) where {T} = T()
+getStateKind(::VariableCompute{T}) where {T} = T()
 
-getStateType(::State{T}) where {T} = T()
+getStateKind(::State{T}) where {T} = T()
 
-getStateType(dfg::AbstractDFG, lbl::Symbol) = getStateType(getVariable(dfg, lbl))
+getStateKind(dfg::AbstractDFG, lbl::Symbol) = getStateKind(getVariable(dfg, lbl))
 
 ##------------------------------------------------------------------------------
 ## StateType
@@ -116,8 +116,8 @@ end
 Interface function to return the `<:ManifoldsBase.AbstractManifold` object of `variableType<:StateType`.
 """
 getManifold(::T) where {T <: StateType} = getManifold(T)
-getManifold(vari::VariableCompute) = getStateType(vari) |> getManifold
-getManifold(state::State) = getStateType(state) |> getManifold
+getManifold(vari::VariableCompute) = getStateKind(vari) |> getManifold
+getManifold(state::State) = getStateKind(state) |> getManifold
 # covers both <:StateType and <:AbstractObservation
 getManifold(dfg::AbstractDFG, lbl::Symbol) = getManifold(dfg[lbl])
 
@@ -131,7 +131,7 @@ getDimension(::Type{T}) where {T <: StateType} = manifold_dimension(getManifold(
 getDimension(::T) where {T <: StateType} = manifold_dimension(getManifold(T))
 getDimension(M::ManifoldsBase.AbstractManifold) = manifold_dimension(M)
 getDimension(p::Distributions.Distribution) = length(p)
-getDimension(var::VariableCompute) = getDimension(getVariableType(var))
+getDimension(var::VariableCompute) = getDimension(getStateKind(var))
 
 """
     $SIGNATURES
