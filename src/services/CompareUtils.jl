@@ -253,16 +253,7 @@ function compareVariable(
     skipsamples::Bool = true,
 )
     #
-    skiplist = union(
-        [
-            :states,
-            :atzone,
-            :inzone,
-            :blobentries,
-            :bloblets
-        ],
-        skip,
-    )
+    skiplist = union([:states, :atzone, :inzone, :blobentries, :bloblets], skip)
     TP = compareAll(A, B; skip = skiplist, show = show)
     varskiplist = skipsamples ? [:val; :bw] : Symbol[]
     skiplist = union([:variableType;], varskiplist)
