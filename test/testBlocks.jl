@@ -100,8 +100,8 @@ function DFGStructureAndAccessors(
     des = "description for runtest"
     rId = :testRobotId
     sId = :testSessionId
-    rd = DFG.Bloblets(:rd=>DFG.Bloblet(:rd, "rdEntry"))
-    sd = DFG.Bloblets(:sd=>DFG.Bloblet(:sd, "sdEntry"))
+    rd = DFG.Bloblets(:rd => DFG.Bloblet(:rd, "rdEntry"))
+    sd = DFG.Bloblets(:sd => DFG.Bloblet(:sd, "sdEntry"))
     fg = T(;
         graphDescription = des,
         agentLabel = rId,
@@ -434,6 +434,7 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
             f2.label,
             (:a,),
             f2.observation,
+            f2.hyper,
             f2.state;
             timestamp = f2.timestamp,
             tags = f2.tags,
@@ -1236,13 +1237,8 @@ function connectivityTestGraph(
         setSolvable!(dfg, :x8, 0)
         setSolvable!(dfg, :x9, 0)
 
-        facstate = DFG.FactorState(;
-            eliminated = true,
-            potentialused = true,
-            multihypo = Float64[],
-            certainhypo = Int[],
-            inflation = 1.0,
-        )
+        state = DFG.Recipestate(; eliminated = true, potentialused = true)
+        hyper = DFG.Recipehyper(; multihypo = Float64[], inflation = 1.0)
         f_tags = Set([:FACTOR])
 
         facs = map(
@@ -1252,8 +1248,9 @@ function connectivityTestGraph(
                     Symbol("x$(n)x$(n+1)f1"),
                     [vars[n].label, vars[n + 1].label],
                     TestFunctorInferenceType1(),
-                    facstate;
-                    tags = deepcopy(f_tags),
+                    deepcopy(hyper),
+                    deepcopy(state);
+                    tags = copy(f_tags),
                 ),
             ),
             1:(length(vars) - 1),
@@ -1616,13 +1613,11 @@ function FileDFGTestBlock(testDFGAPI; kwargs...)
     mergeVariable!(dfg, v4)
 
     f45 = getFactor(dfg, :x4x5f1)
-    fsd = getFactorState(f45)
     # set some factor solver data
-    push!(fsd.certainhypo, 2)
-    fsd.eliminated = true
-    push!(fsd.multihypo, 4.0)
-    fsd.nullhypo = 5.0
-    fsd.potentialused = true
+    f45.state.eliminated = true
+    push!(f45.hyper.multihypo, 4.0)
+    f45.hyper.nullhypo = 5.0
+    f45.state.potentialused = true
     #update factor
     mergeFactor!(dfg, f45)
 

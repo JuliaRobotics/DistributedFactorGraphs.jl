@@ -6,14 +6,22 @@
 # getSolveInProgress
 # isSolveInProgress
 
-#TODO `FactorState` is no longer the correct noun, update getFactorState.
 """
     $SIGNATURES
 
-Return factor state from factor graph.
+Return factor recipe state from factor graph.
 """
-getFactorState(f::AbstractGraphFactor) = f.state
-getFactorState(dfg::AbstractDFG, lbl::Symbol) = getFactorState(getFactor(dfg, lbl))
+getRecipestate(f::AbstractGraphFactor) = f.state
+getRecipestate(dfg::AbstractDFG, lbl::Symbol) = getRecipestate(getFactor(dfg, lbl))
+
+"""
+    $SIGNATURES
+Return the hyperparameters associated with a factor in the factor graph.
+These hyperparameters may include settings such as multi-hypothesis handling,
+null hypothesis thresholds, and inflation factors that influence the behavior of the factor during optimization.
+"""
+getRecipehyper(f::AbstractGraphFactor) = f.hyper
+getRecipehyper(dfg::AbstractDFG, lbl::Symbol) = getRecipehyper(getFactor(dfg, lbl))
 
 """
     $SIGNATURES

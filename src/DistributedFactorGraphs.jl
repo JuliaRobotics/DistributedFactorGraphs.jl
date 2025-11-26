@@ -354,7 +354,6 @@ public getStateKind
 const unstable_functions::Vector{Symbol} = [
     :getTags,
     :InMemoryBlobstore,
-    :getFactorState, # FIXME getFactorState were questioned and being reviewed again for name, other than that they are checked.
     :exists,
     :compare,
     :compareField,
@@ -441,6 +440,7 @@ const unstable_functions::Vector{Symbol} = [
     # no set on these
 
     #deprecated in v0.29
+    :getFactorState, # FIXME getFactorState were questioned and being reviewed again for name, other than that they are checked.
     :packDistribution,
     :unpackDistribution,
     :hasTagsNeighbors,

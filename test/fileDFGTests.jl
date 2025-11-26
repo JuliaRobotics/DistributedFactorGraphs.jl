@@ -61,8 +61,8 @@ using UUIDs
             1:(numNodes - 1),
         )
         map(f -> setSolvable!(f, Int(round(rand()))), facts)
-        map(f -> DFG.getFactorState(f).eliminated = rand() > 0.5, facts)
-        map(f -> DFG.getFactorState(f).potentialused = rand() > 0.5, facts)
+        map(f -> f.state.eliminated = rand() > 0.5, facts)
+        map(f -> f.state.potentialused = rand() > 0.5, facts)
         mergeFactor!.(dfg, facts)
 
         #test multihypo

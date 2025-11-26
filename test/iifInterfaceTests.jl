@@ -185,7 +185,7 @@ end
 
     @test getLabel(f1) == f1.label
     @test getTags(f1) == f1.tags
-    @test getFactorState(f1) === f1.state
+    @test DFG.getRecipestate(f1) === f1.state
     @test getObservation(f1) === f1.observation
 
     @test getSolverParams(dfg) !== nothing

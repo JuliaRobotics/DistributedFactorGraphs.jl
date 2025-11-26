@@ -20,14 +20,15 @@ const FactorCache = AbstractFactorCache #
 ##==============================================================================
 
 #TODO is this mutable
-@kwdef mutable struct FactorState
-    eliminated::Bool = false    # TODO should eliminated and potentialused be moved outside of FactorState?
-    potentialused::Bool = false # TODO ^
+@kwdef mutable struct Recipehyper
     multihypo::Vector{Float64} = Float64[] # TODO re-evaluate after refactoring w #477
-    certainhypo::Vector{Int} = Int[] #TODO mihgt be dead code?
     nullhypo::Float64 = 0.0
-    # solveInProgress::Int = 0 #TODO maybe deprecated or move to operational memory, also why Int?
     inflation::Float64 = 0.0
+end
+
+@kwdef mutable struct Recipestate
+    eliminated::Bool = false
+    potentialused::Bool = false
 end
 
 ##==============================================================================
@@ -80,9 +81,10 @@ StructUtils.@kwarg struct FactorDFG{T <: AbstractObservation, N} <: AbstractGrap
     """Observation function or measurement for this factor.
     Accessors: [`getObservation`](@ref)(@ref)"""
     observation::T & (lower = pack_lower, choosetype = DFG.resolvePackedType)#TODO finalise serializd type
-    """Describes the current state of the factor. Persisted in serialization.
-    Accessors: [`getFactorState`](@ref)"""
-    state::FactorState = FactorState()
+    """Hyperparameters associated with this factor."""
+    hyper::Recipehyper = Recipehyper()
+    """Describes the current state of the factor. Persisted in serialization."""
+    state::Recipestate = Recipestate()
     """Temporary, non-persistent memory used internally by the solver for intermediate numerical computations and buffers.  
     `solvercache` is lazily allocated and only used during factor operations; it is not serialized or retained after solving.
     Accessors: [`getCache`](@ref), [`setCache!`](@ref)"""
@@ -96,7 +98,7 @@ end
 version(::Type{<:FactorDFG}) = v"0.29.0"
 
 ##------------------------------------------------------------------------------
-## Constructors
+## Constructors - IIF like
 function FactorDFG(
     variableorder::Union{<:Tuple, Vector{Symbol}},
     observation::AbstractObservation;
@@ -129,7 +131,8 @@ function FactorDFG(
     end
 
     # create factor data
-    state = FactorState(; multihypo, nullhypo, inflation)
+    hyper = Recipehyper(; multihypo, nullhypo, inflation)
+    state = Recipestate()
 
     union!(tags, [:FACTOR])
     # create factor 
@@ -140,6 +143,7 @@ function FactorDFG(
         timestamp,
         solvable = Ref(solvable),
         bloblets,
+        hyper,
         state,
         observation,
     )
@@ -152,7 +156,8 @@ function FactorDFG(
     label::Symbol,
     variableorder::Union{Vector{Symbol}, Tuple},
     observation::AbstractObservation,
-    state::FactorState = FactorState(),
+    hyper::Recipehyper = Recipehyper(),
+    state::Recipestate = Recipestate(),
     cache = nothing;
     tags::Set{Symbol} = Set{Symbol}([:FACTOR]),
     timestamp::Union{DateTime, ZonedDateTime, TimeDateZone} = TimeDateZone(
@@ -194,6 +199,7 @@ function FactorDFG(
         Ref(solvable),
         bloblets,
         observation,
+        hyper,
         state,
         solvercache,
         blobentries,
