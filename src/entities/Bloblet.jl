@@ -65,7 +65,7 @@ function addBloblet!(node, bloblet::Bloblet)
 end
 
 function addBloblets!(node, bloblets::Vector{Bloblet})
-    addBloblet!.(node, bloblets)
+    foreach(bl -> addBloblet!(node, bl), bloblets)
     return bloblets
 end
 

@@ -99,7 +99,7 @@ function packState(state::State{T}) where {T <: StateType}
         vecbw = state.bw[:],
         dimbw = size(state.bw, 1),
         separator = state.separator,
-        statetype = stringVariableType(getStateType(state)),
+        statetype = stringVariableType(getStateKind(state)),
         initialized = state.initialized,
         observability = state.observability,
         marginalized = state.marginalized,

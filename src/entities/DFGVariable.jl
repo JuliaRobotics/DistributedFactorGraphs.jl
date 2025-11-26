@@ -78,12 +78,12 @@ end
 function State{T}(; kwargs...) where {T <: StateType}
     return State{T, getPointType(T), getDimension(T)}(; kwargs...)
 end
-function State(label, variableType::StateType; kwargs...)
+function State(label::Symbol, variableType::StateType; kwargs...)
     return State{typeof(variableType)}(; label, kwargs...)
 end
 
 function State(state::State; kwargs...)
-    return State{typeof(getVariableType(state))}(;
+    return State{typeof(getStateKind(state))}(;
         (key => deepcopy(getproperty(state, key)) for key in fieldnames(State))...,
         kwargs...,
     )
@@ -255,7 +255,7 @@ end
 function VariableDFG(label::Symbol, state::State; kwargs...)
     return VariableDFG(
         label,
-        getStateType(state);
+        getStateKind(state);
         states = OrderedDict(state.label => state),
         kwargs...,
     )
@@ -299,8 +299,7 @@ $(TYPEDFIELDS)
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
     Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`deleteTags!`](@ref)"""
     tags::Set{Symbol}
-    """Symbol for the state type for the underlying variable.
-    Accessor: [`getStateType`](@ref)"""
+    """Symbol for the state type for the underlying variable."""
     statetype::Symbol
     """Dictionary of large data associated with this variable.
     Accessors: [`addBlobentry!`](@ref), [`getBlobentry`](@ref), [`mergeBlobentry!`](@ref), and [`deleteBlobentry!`](@ref)"""

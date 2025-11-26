@@ -16,8 +16,8 @@ function printVariable(
     ioc = IOContext(io, :limit => limit, :compact => compact)
 
     if short
-        # opmemt = (getVariableType(vert) |> typeof ).name
-        vari = getStateType(vert) |> typeof
+        # opmemt = (getStateKind(vert) |> typeof ).name
+        vari = getStateKind(vert) |> typeof
         printstyled(ioc, nameof((typeof(vert))), "{"; bold = true)
         printstyled(ioc, vari; bold = true, color = :blue)
         printstyled(ioc, "...}"; bold = true)

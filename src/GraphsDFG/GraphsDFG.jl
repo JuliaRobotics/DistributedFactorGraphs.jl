@@ -17,7 +17,7 @@ using ...DistributedFactorGraphs:
     NoSolverParams,
     filterDFG!,
     getSolvable,
-    getVariableType,
+    getStateKind,
     getAgentLabel,
     getGraphLabel,
     isInitialized,

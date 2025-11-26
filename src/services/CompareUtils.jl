@@ -21,23 +21,40 @@ implement compare if needed.
 const GeneratedCompareUnion = Union{
     State,
     Blobentry,
-    VariableCompute,
-    VariableDFG,
+    Bloblet,
     VariableSummary,
     VariableSkeleton,
-    FactorDFG,
     FactorSummary,
     FactorSkeleton,
     FactorState,
 }
 
 @generated function ==(x::T, y::T) where {T <: GeneratedCompareUnion}
-    ignored = [:solvercache, :solverData, :solvable] #FIXME solvable stopped working- skipping for now (removed getproperty overload) 
     return mapreduce(
         n -> :(x.$n == y.$n),
         (a, b) -> :($a && $b),
-        setdiff(fieldnames(x), ignored),
+        fieldnames(x),
     )
+end
+
+function ==(x::FactorDFG, y::FactorDFG)
+    ignored = [:solvercache, :solvable]
+    tp = mapreduce(
+        n -> getproperty(x, n) == getproperty(y, n),
+        (a, b) -> a && b,
+        setdiff(propertynames(x), ignored),    
+    )
+    return tp && getSolvable(x) == getSolvable(y)
+end
+
+function ==(x::VariableDFG, y::VariableDFG)
+    ignored = [:solvable]
+    tp = mapreduce(
+        n -> getproperty(x, n) == getproperty(y, n),
+        (a, b) -> a && b,
+        setdiff(propertynames(x), ignored),    
+    )
+    return tp && getSolvable(x) == getSolvable(y)
 end
 
 ##==============================================================================
@@ -76,7 +93,7 @@ function compareFields(
     for field in fieldnames(T1)
         (field in skip) && continue
         tp = compareField(Al, Bl, field)
-        show && @debug("  $tp : $field") === nothing
+        show && !tp && @debug("  $tp : $field")
         show &&
             !tp &&
             (@debug "  $field" a = getproperty(Al, field) b = getproperty(Bl, field))
@@ -220,7 +237,7 @@ function compare(a::State, b::State)
     # a.dontmargin != b.dontmargin &&
     # @debug("dontmargin is not equal") === nothing &&
     # return false
-    getVariableType(a) != getVariableType(b) &&
+    getStateKind(a) != getStateKind(b) &&
         @debug("variableType is not equal") === nothing &&
         return false
     return true
@@ -241,12 +258,11 @@ function compareVariable(
     #
     skiplist = union(
         [
-            :attributes;
             :states;
-            :createdTimestamp;
-            :lastUpdatedTimestamp;
-            :timezone;
-            :zone
+            :atzone;
+            :inzone;
+            :blobentries;
+            :bloblets
         ],
         skip,
     )
@@ -254,7 +270,7 @@ function compareVariable(
     varskiplist = skipsamples ? [:val; :bw] : Symbol[]
     skiplist = union([:variableType;], varskiplist)
     union!(skiplist, skip)
-    TP = TP && compareAll(A.states, B.states; skip = skiplist, show = show)
+    # TP = TP && compareAll(A.states, B.states; skip = skiplist, show = show)
 
     Ad = getState(A, :default) #FIXME why onlly comparing default?
     Bd = getState(B, :default)
@@ -263,9 +279,9 @@ function compareVariable(
     varskiplist = union(varskiplist, [:variableType])
     union!(varskiplist, skip)
     TP = TP && compareAll(Ad, Bd; skip = varskiplist, show = show)
-    TP = TP && typeof(getVariableType(Ad)) == typeof(getVariableType(Bd))
+    TP = TP && typeof(getStateKind(Ad)) == typeof(getStateKind(Bd))
     TP =
-        TP && compareAll(getVariableType(Ad), getVariableType(Bd); show = show, skip = skip)
+        TP && compareAll(getStateKind(Ad), getStateKind(Bd); show = show, skip = skip)
     return TP::Bool
 end
 

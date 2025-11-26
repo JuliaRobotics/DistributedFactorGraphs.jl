@@ -180,7 +180,7 @@ function lsTypes(dfg::AbstractDFG)
     vars = getVariables(dfg)
     alltypes = Set{DataType}()
     for v in vars
-        varType = typeof(getVariableType(v))
+        varType = typeof(getStateKind(v))
         push!(alltypes, varType)
     end
     return collect(alltypes)
@@ -195,7 +195,7 @@ function lsTypesDict(dfg::AbstractDFG)
     vars = getVariables(dfg)
     alltypes = Dict{DataType, Vector{Symbol}}()
     for v in vars
-        varType = typeof(getVariableType(v))
+        varType = typeof(getStateKind(v))
         d = get!(alltypes, varType, Symbol[])
         push!(d, v.label)
     end

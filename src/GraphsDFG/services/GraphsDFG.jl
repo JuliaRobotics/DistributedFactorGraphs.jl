@@ -187,7 +187,7 @@ function getVariables(
     filterDFG!(variables, labelFilter, getLabel)
     filterDFG!(variables, solvableFilter, getSolvable)
     filterDFG!(variables, tagsFilter, refTags)
-    filterDFG!(variables, typeFilter, getVariableType)
+    filterDFG!(variables, typeFilter, getStateKind)
 
     return variables
 end

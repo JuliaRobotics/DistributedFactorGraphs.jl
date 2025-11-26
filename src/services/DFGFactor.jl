@@ -88,7 +88,7 @@ macro defObservationType(structname, factortype, manifold)
     return esc(
         quote
             # user manifold must be a <:Manifold
-            @assert ($manifold isa AbstractManifold) "@defObservationType manifold (" *
+            @assert ($manifold isa AbstractManifold) || ($manifold isa Function) "@defObservationType manifold (" *
                                                      string($manifold) *
                                                      ") is not an `AbstractManifold`"
 
@@ -100,7 +100,11 @@ macro defObservationType(structname, factortype, manifold)
                 Z::T & (lower = DFG.Packed, choosetype = DFG.resolvePackedType)
             end
 
-            DFG.getManifold(::Type{<:$structname}) = $manifold
+            if $manifold isa AbstractManifold
+                DFG.getManifold(::Type{<:$structname}) = $manifold
+            elseif $manifold isa Function
+                DFG.getManifold(obs::$structname) = $manifold(obs)
+            end
         end,
     )
 end
