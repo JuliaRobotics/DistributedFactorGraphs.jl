@@ -30,11 +30,7 @@ const GeneratedCompareUnion = Union{
 }
 
 @generated function ==(x::T, y::T) where {T <: GeneratedCompareUnion}
-    return mapreduce(
-        n -> :(x.$n == y.$n),
-        (a, b) -> :($a && $b),
-        fieldnames(x),
-    )
+    return mapreduce(n -> :(x.$n == y.$n), (a, b) -> :($a && $b), fieldnames(x))
 end
 
 function ==(x::FactorDFG, y::FactorDFG)
@@ -42,7 +38,7 @@ function ==(x::FactorDFG, y::FactorDFG)
     tp = mapreduce(
         n -> getproperty(x, n) == getproperty(y, n),
         (a, b) -> a && b,
-        setdiff(propertynames(x), ignored),    
+        setdiff(propertynames(x), ignored),
     )
     return tp && getSolvable(x) == getSolvable(y)
 end
@@ -52,7 +48,7 @@ function ==(x::VariableDFG, y::VariableDFG)
     tp = mapreduce(
         n -> getproperty(x, n) == getproperty(y, n),
         (a, b) -> a && b,
-        setdiff(propertynames(x), ignored),    
+        setdiff(propertynames(x), ignored),
     )
     return tp && getSolvable(x) == getSolvable(y)
 end
@@ -280,8 +276,7 @@ function compareVariable(
     union!(varskiplist, skip)
     TP = TP && compareAll(Ad, Bd; skip = varskiplist, show = show)
     TP = TP && typeof(getStateKind(Ad)) == typeof(getStateKind(Bd))
-    TP =
-        TP && compareAll(getStateKind(Ad), getStateKind(Bd); show = show, skip = skip)
+    TP = TP && compareAll(getStateKind(Ad), getStateKind(Bd); show = show, skip = skip)
     return TP::Bool
 end
 

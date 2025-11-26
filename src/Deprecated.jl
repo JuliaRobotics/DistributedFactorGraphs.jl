@@ -85,9 +85,11 @@ function isSolveInProgress(
     return getSolveInProgress(node, solvekey) > 0
 end
 
-getTypeFromSerializationModule(::AbstractString) = error(
-    "getTypeFromSerializationModule is obsolete, use DFG.parseVariableType or IIF.getTypeFromSerializationModule.",
-)
+function getTypeFromSerializationModule(::AbstractString)
+    return error(
+        "getTypeFromSerializationModule is obsolete, use DFG.parseVariableType or IIF.getTypeFromSerializationModule.",
+    )
+end
 
 ## Version checking
 #NOTE fixed really bad function but kept similar as fallback #TODO upgrade to use pkgversion(m::Module)
@@ -313,7 +315,11 @@ end
 
 #Obsolete PPEs
 abstract type AbstractPointParametricEst end
-_ppe_obsolete() = error("PPEs are obsolete and will be replaced soon (IIF.calcMeanMaxSuggested can be used in some cases), see #1133.")
+function _ppe_obsolete()
+    return error(
+        "PPEs are obsolete and will be replaced soon (IIF.calcMeanMaxSuggested can be used in some cases), see #1133.",
+    )
+end
 getPPEMax(args...) = _ppe_obsolete()
 getPPEMean(args...) = _ppe_obsolete()
 getPPESuggested(args...) = _ppe_obsolete()

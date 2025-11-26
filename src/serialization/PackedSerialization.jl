@@ -76,7 +76,6 @@ function resolveType(obj::DFG.JSON.Object)
     return getfield(pkg, Symbol(type.name))
 end
 
-
 @choosetype Packed resolvePackedType
 
 # Stash optional TypeMetadata expansion function.
