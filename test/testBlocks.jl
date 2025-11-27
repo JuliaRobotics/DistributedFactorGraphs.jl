@@ -319,6 +319,8 @@ function DFGVariableSCA()
     @test getDimension(testvar) == 1
     @test getManifold(testvar) == TranslationGroup(1)
 
+    @test DFG.calcDeltatime(v1, v2) isa Real
+
     # #TODO sort out
     # getState
     # getSolvedCount
@@ -389,6 +391,7 @@ function DFGFactorSCA()
     # create f0 here for a later timestamp
     f0 = FactorCompute(:af1, [:a], obs_prior; tags = Set([:PRIOR]))
 
+    @test DFG.calcDeltatime(f1, f2) isa Real
     #fill in undefined fields
     # f2.solverData.certainhypo = Int[]
     # f2.solverData.multihypo = Float64[]
