@@ -64,8 +64,7 @@ end
     @test printVariable(var1) === nothing
     @test printFactor(fac1) === nothing
 
-    @test printVariable(iobuf, var1; skipfields = [:timestamp, :solver, :ppe, :nstime]) ===
-          nothing
+    @test printVariable(iobuf, var1; skipfields = [:timestamp]) === nothing
 
     varstr = String(take!(iobuf))
     @test occursin(r"VariableDFG", varstr)
@@ -79,7 +78,7 @@ end
     @test occursin(r"bandwidths", varstr)
     #  == "VariableCompute{TestVariableType1}\nlabel: a\ntags: Set([:VARIABLE, :POSE])\nsize marginal samples: (1, 1)\nkde bandwidths: [0.0]\nNo PPEs\n"
 
-    @test printFactor(iobuf, fac1; skipfields = [:timestamp, :solver, :nstime]) === nothing
+    @test printFactor(iobuf, fac1; skipfields = [:timestamp]) === nothing
     @test occursin(r"FactorDFG.*\nlabel:\n:abf1", String(take!(iobuf)))
 
     @test printFactor(iobuf, fac1; short = true) === nothing

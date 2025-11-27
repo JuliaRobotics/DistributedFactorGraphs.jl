@@ -179,3 +179,15 @@ function solveGraph! end
 Standard parametric graph solution (Experimental).
 """
 function solveGraphParametric! end
+
+# delta timestamps
+calcDeltatime(from::Nanosecond, to::Nanosecond) = Dates.value(to - from) / 10^9
+function calcDeltatime(from::TimeDateZone, to::TimeDateZone)
+    return Dates.value(convert(Nanosecond, to - from)) / 10^9
+end
+calcDeltatime(from_node, to_node) = calcDeltatime(from_node.timestamp, to_node.timestamp)
+
+function tdz_now(zone = tz"UTC") #TODO or default to slower localzone()? 
+    t = time()
+    return TimeDateZone(TimeDate(1970) + Nanosecond(t * 10^9), zone)
+end

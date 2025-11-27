@@ -36,7 +36,6 @@ function printVariable(
             nothing
         end
         println(ioc, "  timestamp:  ", vert.timestamp)
-        isnothing(vert.steadytime) || println(ioc, "  steadytime: ", vert.steadytime)
         print(ioc, "  label:      ")
         printstyled(ioc, vert.label; bold = true)
         println(ioc)

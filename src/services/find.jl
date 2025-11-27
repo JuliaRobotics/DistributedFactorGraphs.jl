@@ -6,7 +6,7 @@
 """
     $SIGNATURES
 
-Find and return the closest timestamp from two sets of Tuples.  Also return the minimum delta-time (`::Millisecond`) and how many elements match from the two sets are separated by the minimum delta-time.
+Find and return the closest timestamp from two sets of Tuples.  Also return the minimum delta-time (`::Nanosecond`) and how many elements match from the two sets are separated by the minimum delta-time.
 """
 function findClosestTimestamp(
     setA::Vector{Tuple{TimeDateZone, T}},
@@ -14,7 +14,7 @@ function findClosestTimestamp(
 ) where {S, T}
     #
     # build matrix of delta times, ranges on rows x vars on columns
-    DT = Array{Millisecond, 2}(undef, length(setA), length(setB))
+    DT = Array{Nanosecond, 2}(undef, length(setA), length(setB))
     for i = 1:length(setA), j = 1:length(setB)
         DT[i, j] = setB[j][1] - setA[i][1]
     end
@@ -38,7 +38,7 @@ end
 Find and return nearest variable labels per delta time.  Function will filter on `regexFilter`, `tags`, and `solvable`.
 
 Notes
-- Returns `Vector{Tuple{Vector{Symbol}, Millisecond}}`
+- Returns `Vector{Tuple{Vector{Symbol}, Nanosecond}}`
 
 DevNotes:
 - TODO `number` should allow returning more than one for k-nearest matches.
@@ -68,7 +68,7 @@ function findVariableNearTimestamp(
     mask = BitArray{1}(undef, length(syms))
     fill!(mask, true)
 
-    RET = Vector{Tuple{Vector{Symbol}, Millisecond}}()
+    RET = Vector{Tuple{Vector{Symbol}, Nanosecond}}()
     SYMS = Symbol[]
     CORRS = 1
     NUMBER = number
