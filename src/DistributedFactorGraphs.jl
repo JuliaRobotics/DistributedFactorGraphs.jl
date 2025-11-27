@@ -427,8 +427,6 @@ const unstable_functions::Vector{Symbol} = [
     :mergeGraph!,
     :buildSubgraph,
     :incrDataLabelSuffix,# TODO somewhat used, do we deprecate?
-    :updateMetadata!,## TODO deprecated or obsolete
-    :updateBlob!,## TODO deprecated or obsolete
 
     # set # TODO what to do here, maybe `ref` verb + setproperty.  
     :setSolverParams!,
@@ -440,6 +438,8 @@ const unstable_functions::Vector{Symbol} = [
     # no set on these
 
     #deprecated in v0.29
+    :updateMetadata!,## TODO deprecated or obsolete
+    :updateBlob!,## TODO deprecated or obsolete
     :getFactorState, # FIXME getFactorState were questioned and being reviewed again for name, other than that they are checked.
     :packDistribution,
     :unpackDistribution,

@@ -344,6 +344,10 @@ function getFactorState(args...)
     )
 end
 
+function updateBlob!(args...)
+    return error("updateBlob! is obsolete as blobid=>Blob pairs are immutable.")
+end
+
 ## ================================================================================
 ## Deprecated in v0.28
 ##=================================================================================

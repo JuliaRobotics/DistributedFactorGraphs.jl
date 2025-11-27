@@ -76,14 +76,6 @@ end
 # also creates an blobid as uuid4
 addBlob!(store::AbstractBlobstore, data) = addBlob!(store, uuid4(), data)
 
-#update
-function updateBlob!(dfg::AbstractDFG, entry::Blobentry, data)
-    return updateBlob!(getBlobstore(dfg, entry.blobstore), entry.blobid, data)
-end
-
-function updateBlob!(store::AbstractBlobstore, entry::Blobentry, data)
-    return updateBlob!(store, entry.blobid, data)
-end
 #delete
 function deleteBlob!(dfg::AbstractDFG, entry::Blobentry)
     return deleteBlob!(getBlobstore(dfg, entry.blobstore), entry)
@@ -147,7 +139,10 @@ end
 
 function getBlob(store::FolderStore{T}, blobid::UUID) where {T}
     blobfilename = joinpath(store.folder, string(store.label), string(blobid))
-    if isfile(blobfilename)
+    tombstonefile = blobfilename * ".deleted"
+    if isfile(tombstonefile)
+        throw(IdNotFoundError("Blob (deleted)", blobid))
+    elseif isfile(blobfilename)
         open(blobfilename) do f
             return read(f)
         end
@@ -168,25 +163,25 @@ function addBlob!(store::FolderStore{T}, blobid::UUID, data::T) where {T}
     end
 end
 
-function updateBlob!(store::FolderStore{T}, blobid::UUID, data::T) where {T}
-    blobfilename = joinpath(store.folder, string(store.label), string(blobid))
-    if !isfile(blobfilename)
-        @warn "Key '$blobid' doesn't exist."
-    else
-        open(blobfilename, "w") do f
-            return write(f, data)
-        end
-        return data
-    end
-end
-
 function deleteBlob!(store::FolderStore{T}, blobid::UUID) where {T}
+    # Tombstone pattern: instead of deleting the file, create a tombstone marker file
     blobfilename = joinpath(store.folder, string(store.label), string(blobid))
-    if !isfile(blobfilename)
+    tombstonefile = blobfilename * ".deleted"
+    if isfile(blobfilename)
+        # Remove the actual blob file
+        rm(blobfilename)
+        # Create a tombstone marker
+        open(tombstonefile, "w") do f
+            return write(f, "deleted")
+        end
+        return 1
+    elseif isfile(tombstonefile)
+        # Already deleted
+        return 0
+    else
+        # Not found
         throw(IdNotFoundError("Blob", blobid))
     end
-    rm(blobfilename)
-    return 1
 end
 
 function hasBlob(store::FolderStore, blobid::UUID)
@@ -196,7 +191,18 @@ end
 
 hasBlob(store::FolderStore, entry::Blobentry) = hasBlob(store, entry.blobid)
 
-listBlobs(store::FolderStore) = readdir(store.folder)
+function listBlobs(store::FolderStore)
+    folder = joinpath(store.folder, string(store.label))
+    # Parse folder to only include UUIDs automatically excluding tombstone files this way.
+    blobids = UUID[]
+    for filename in readdir(folder)
+        id = tryparse(UUID, filename)
+        isnothing(id) && continue
+        push!(blobids, id)
+    end
+    return blobids
+end
+
 ##==============================================================================
 ## InMemoryBlobstore
 ##==============================================================================
@@ -226,13 +232,6 @@ function addBlob!(store::InMemoryBlobstore{T}, blobid::UUID, data::T) where {T}
     end
     store.blobs[blobid] = data
     return blobid
-end
-
-function updateBlob!(store::InMemoryBlobstore{T}, blobid::UUID, data::T) where {T}
-    if haskey(store.blobs, blobid)
-        @warn "Key '$blobid' doesn't exist."
-    end
-    return store.blobs[blobid] = data
 end
 
 function deleteBlob!(store::InMemoryBlobstore, blobid::UUID)
