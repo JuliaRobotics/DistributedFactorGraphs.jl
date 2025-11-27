@@ -194,10 +194,13 @@ hasBlob(store::FolderStore, entry::Blobentry) = hasBlob(store, entry.blobid)
 function listBlobs(store::FolderStore)
     folder = joinpath(store.folder, string(store.label))
     # Parse folder to only include UUIDs automatically excluding tombstone files this way.
-    blobIds = map(readdir(folder)) do filename
-        return tryparse(UUID, filename)
+    blobids = UUID[]
+    for filename in readdir(folder)
+        id = tryparse(UUID, filename)
+        isnothing(id) && continue
+        push!(blobids, id)
     end
-    return filter(!isnothing, blobIds)
+    return blobids
 end
 
 ##==============================================================================

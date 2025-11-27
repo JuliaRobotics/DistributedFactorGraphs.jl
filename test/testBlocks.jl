@@ -911,12 +911,15 @@ function blobsStoresTestBlock!(fg)
     blobid = addBlob!(fs, testData)
     @test blobid isa UUID
     @test hasBlob(fs, blobid)
+    @test listBlobs(fs) == [blobid]
     @test_throws DFG.IdExistsError addBlob!(fs, blobid, testData)
     @test getBlob(fs, blobid) == testData
     @test_throws DFG.IdNotFoundError getBlob(fs, uuid4())
     @test_throws DFG.IdNotFoundError deleteBlob!(fs, uuid4())
     @test deleteBlob!(fs, blobid) == 1
     @test_throws DFG.IdNotFoundError getBlob(fs, blobid)
+    @test deleteBlob!(fs, blobid) == 0
+    @test listBlobs(fs) == UUID[]
 
     # Blob Wrappers
     # on Variable
