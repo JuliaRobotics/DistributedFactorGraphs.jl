@@ -128,11 +128,6 @@ end
 ##------------------------------------------------------------------------------
 # The Variable information packed in a way that accomdates multi-lang using json.
 
-# Notes:
-# - timestamp is a `ZonedDateTime` in UTC.
-# - nstime can be used as mission time, with the convention that the timestamp millis coincide with the mission start nstime
-#   - e.g. timestamp is `2020-01-01 06:30:01.250 UTC` and first nstime is `250_000_000`.
-
 """
 $(TYPEDEF)
 Complete variable structure for a DistributedFactorGraph variable.
@@ -147,9 +142,9 @@ $(TYPEDFIELDS)
     label::Symbol
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref)"""
-    timestamp::TimeDateZone = TimeDateZone(now(localzone())) #NOTE changed to TimeDateZone in v0.29
-    """Nanoseconds since a user-understood epoch (i.e unix epoch, robot boot time, etc.)"""
-    steadytime::Union{Nothing, Nanosecond} = nothing #NOTE changed to TimeDateZone in v0.29
+    timestamp::TimeDateZone = tdz_now() #NOTE changed to TimeDateZone in v0.29
+    # """Nanoseconds since a user-understood epoch (i.e unix epoch, robot boot time, etc.)"""
+    # steadytime::Union{Nothing, Nanosecond} = nothing #NOTE changed to TimeDateZone in v0.29
     #nstime::String = "0" #NOTE different uses, as 0-999_999 nanosecond part of timestamp now in timestamp, as steady timestamp now in steadytime
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
     Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`deleteTags!`](@ref)"""
@@ -179,7 +174,7 @@ function StructUtils.fielddefaults(
     ::Type{VariableDFG{T, P, N}},
 ) where {T, P, N}
     return (
-        timestamp = TimeDateZone(now(localzone())),
+        timestamp = tdz_now(),
         tags = Set{Symbol}(),
         # states = OrderedDict{Symbol, State{T, P, N}}(),
         bloblets = Bloblets(),
@@ -218,9 +213,9 @@ function VariableDFG(
     label::Symbol,
     statetype::Union{T, Type{T}};
     tags::Union{Set{Symbol}, Vector{Symbol}} = Set{Symbol}(),
-    timestamp::Union{TimeDateZone, ZonedDateTime} = TimeDateZone(now(localzone())),
+    timestamp::Union{TimeDateZone, ZonedDateTime} = tdz_now(),
     solvable::Union{Int, Base.RefValue{Int}} = Ref{Int}(1),
-    steadytime::Union{Nothing, Nanosecond} = nothing,
+    # steadytime::Union{Nothing, Nanosecond} = nothing,
     nanosecondtime = nothing,
     smalldata = nothing,
     kwargs...,
@@ -230,13 +225,10 @@ function VariableDFG(
         timestamp = TimeDateZone(timestamp)
     end
     if !isnothing(nanosecondtime)
-        @assert isnothing(steadytime),
-        "nanosecondtime is replaced by steadytime. Cannot specify both steadytime and nanosecondtime"
         Base.depwarn(
-            "nanosecondtime kwarg is deprecated, use steadytime instead",
+            "nanosecondtime kwarg is deprecated, use `timestamp` or `bloblets` instead",
             :VariableDFG,
         )
-        steadytime = Nanosecond(nanosecondtime)
     end
     if !isnothing(smalldata)
         Base.depwarn("smalldata kwarg is deprecated, use bloblets instead", :VariableDFG)
@@ -249,7 +241,7 @@ function VariableDFG(
 
     N = getDimension(T)
     P = getPointType(T)
-    return VariableDFG{T, P, N}(; label, steadytime, solvable, tags, timestamp, kwargs...)
+    return VariableDFG{T, P, N}(; label, solvable, tags, timestamp, kwargs...)
 end
 
 function VariableDFG(label::Symbol, state::State; kwargs...)
