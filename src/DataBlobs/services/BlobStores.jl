@@ -192,7 +192,7 @@ function deleteBlob!(store::FolderStore{T}, blobid::UUID) where {T}
         return 0
     else
         # Not found
-        throw(IdNotFoundError("Blob", blobId))
+        throw(IdNotFoundError("Blob", blobid))
     end
 end
 
