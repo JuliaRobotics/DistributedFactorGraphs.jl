@@ -348,8 +348,9 @@ function compareFactor(
     end
     @debug "compareFactor 5/5" TP
     #FIXME is varidx stil in use and should it be checked
-    if !(:varidx in skip) && hasfield(typeof(getCache(A)), :varidx) &&
-        getCache(A).varidx isa Base.RefValue
+    if !(:varidx in skip) &&
+       hasfield(typeof(getCache(A)), :varidx) &&
+       getCache(A).varidx isa Base.RefValue
         TP =
             TP & (
                 skipcompute || compareAll(

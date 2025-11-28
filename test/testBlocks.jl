@@ -1008,7 +1008,9 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test_skip varNearTs[1][1] == [:b]
 
         ## SORT copied from CRUD
-        @test all(getVariables(fg; labelFilter = contains(r"a")) .== [getVariable(fg, v1.label)])
+        @test all(
+            getVariables(fg; labelFilter = contains(r"a")) .== [getVariable(fg, v1.label)],
+        )
         @test all(getVariables(fg; solvableFilter = >=(1)) .== [getVariable(fg, v2.label)])
         @test getVariables(fg; labelFilter = contains(r"a"), solvableFilter = >=(1)) == []
         @test getVariables(fg; tagsFilter = ⊇([:LANDMARK]))[1] == getVariable(fg, v2.label)
@@ -1033,7 +1035,10 @@ function testGroup!(fg, v1, v2, f0, f1)
 
         # Tags
         @test ls(fg; tagsFilter = ⊇([:POSE])) == []
-        @test issetequal(ls(fg; tagsFilter = !isdisjoint([:POSE, :LANDMARK])), ls(fg; tagsFilter = ⊇([:VARIABLE])))
+        @test issetequal(
+            ls(fg; tagsFilter = !isdisjoint([:POSE, :LANDMARK])),
+            ls(fg; tagsFilter = ⊇([:VARIABLE])),
+        )
 
         @test lsf(fg; tagsFilter = !isdisjoint([:NONE])) == []
         @test lsf(fg; tagsFilter = ⊇([:NONE])) == []
@@ -1297,7 +1302,10 @@ function GettingNeighbors(testDFGAPI; VARTYPE = VariableCompute, FACTYPE = Facto
     #TODO if not a GraphsDFG with and summary or skeleton
     if VARTYPE == VariableCompute
         @test listNeighbors(dfg, :x5; solvableFilter = >=(2)) == Symbol[]
-        @test issetequal(listNeighbors(dfg, :x5; solvableFilter = >=(0)), [:x4x5f1, :x5x6f1])
+        @test issetequal(
+            listNeighbors(dfg, :x5; solvableFilter = >=(0)),
+            [:x4x5f1, :x5x6f1],
+        )
         @test issetequal(listNeighbors(dfg, :x5), [:x4x5f1, :x5x6f1])
         @test listNeighbors(dfg, :x7x8f1; solvableFilter = >=(0)) == [:x7, :x8]
         @test listNeighbors(dfg, :x7x8f1; solvableFilter = >=(1)) == [:x7]

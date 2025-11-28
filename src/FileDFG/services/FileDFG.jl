@@ -119,7 +119,9 @@ function loadDFG!(
     variablefiles = readdir(joinpath(loaddir, "variables"); sort = false, join = true)
 
     # type instability on `variables` as either `::Vector{Variable}` or `::Vector{VariableCompute{<:}}` (vector of abstract)
-    variables = @showprogress dt=1 desc = "loading variables" asyncmap(variablefiles) do file
+    variables = @showprogress dt=1 desc = "loading variables" asyncmap(
+        variablefiles,
+    ) do file
         v = JSON.parsefile(file, V; style = DFGJSONStyle())
         return addVariable!(dfgLoadInto, v)
     end
@@ -170,7 +172,7 @@ function loadDFG(file::AbstractString)
     loaddir = Tar.extract(hdr -> contains(hdr.path, dfgnodenames), tar)
     close(tar)
 
-    progess = Progress(4; desc="Loading DFG Nodes")
+    progess = Progress(4; desc = "Loading DFG Nodes")
     agent = JSON.parsefile(joinpath(loaddir, "agent.json"), Agent; style = DFGJSONStyle())
     next!(progess)
     graph = JSON.parsefile(
