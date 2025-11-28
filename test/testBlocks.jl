@@ -255,7 +255,7 @@ function DFGVariableSCA()
         TestVariableType1();
         tags = v1_tags,
         solvable = 0,
-        states = Dict(:default => State{TestVariableType1}(; label = :default)),
+        states = OrderedDict(:default => State{TestVariableType1}(; label = :default)),
         bloblets = DFG.Bloblets(:small => DFG.Bloblet(:small, "data")),
     )
     v2 = VariableCompute(
@@ -274,7 +274,7 @@ function DFGVariableSCA()
         TestVariableType1();
         tags = v1_tags,
         solvable = 0,
-        states = Dict(:default => State{TestVariableType1}(; label = :default)),
+        states = OrderedDict(:default => State{TestVariableType1}(; label = :default)),
     )
 
     # v1.states[:default].val[1] = [0.0;]
@@ -481,7 +481,7 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
         #TODO decide if this should be @error or other type
         @test_throws LabelNotFoundError getVariable(fg, :a, :missingfoo)
     else
-        @test_logs (:warn, r"supported for type VariableCompute") getVariable(
+        @test_logs (:warn, r"supported for type VariableDFG") getVariable(
             fg,
             :a,
             :missingfoo,
@@ -854,29 +854,29 @@ function blobsStoresTestBlock!(fg)
     var2 = getVariable(fg, :b)
     @test addBlobentry!(var1, de1) == de1
     mergeVariable!(fg, var1)
-    @test addBlobentry!(fg, :a, de2) == de2
+    @test addVariableBlobentry!(fg, :a, de2) == de2
     @test_throws LabelExistsError addBlobentry!(var1, de1)
-    @test de2 in getBlobentries(fg, var1.label)
+    @test de2 in getVariableBlobentries(fg, var1.label)
 
     #get
     @test deepcopy(de1) == getBlobentry(var1, :label1)
-    @test deepcopy(de2) == getBlobentry(fg, :a, :label2)
+    @test deepcopy(de2) == getVariableBlobentry(fg, :a, :label2)
     @test_throws LabelNotFoundError getBlobentry(var2, :label1)
-    @test_throws LabelNotFoundError getBlobentry(fg, :b, :label1)
+    @test_throws LabelNotFoundError getVariableBlobentry(fg, :b, :label1)
 
     #update
-    @test mergeBlobentry!(fg, :a, de2_update) == 1
-    @test deepcopy(de2_update) == getBlobentry(fg, :a, :label2)
-    @test mergeBlobentry!(fg, :b, de2_update) == 1
+    @test mergeVariableBlobentry!(fg, :a, de2_update) == 1
+    @test deepcopy(de2_update) == getVariableBlobentry(fg, :a, :label2)
+    @test mergeVariableBlobentry!(fg, :b, de2_update) == 1
 
     #list
     entries = getVariableBlobentries(fg, :a)
     @test length(entries) == 2
     @test issetequal(map(e -> e.label, entries), [:label1, :label2])
-    @test length(getBlobentries(fg, :b)) == 1
+    @test length(getVariableBlobentries(fg, :b)) == 1
 
-    @test issetequal(listBlobentries(fg, :a), [:label1, :label2])
-    @test listBlobentries(fg, :b) == Symbol[:label2]
+    @test issetequal(listVariableBlobentries(fg, :a), [:label1, :label2])
+    @test listVariableBlobentries(fg, :b) == Symbol[:label2]
 
     # test collecting blobentries with filters
     gathered = DFG.gatherBlobentries(
@@ -885,13 +885,13 @@ function blobsStoresTestBlock!(fg)
         labelFilter = contains("1"),
     )
     @test first(gathered[1]) == :a
-    @test last(gathered[1])[1] == getBlobentry(fg, :a, :label1)
+    @test last(gathered[1])[1] == getVariableBlobentry(fg, :a, :label1)
 
     #delete
-    @test deleteBlobentry!(fg, var1.label, de1.label) == 1
-    @test listBlobentries(fg, var1.label) == Symbol[:label2]
+    @test deleteVariableBlobentry!(fg, var1.label, de1.label) == 1
+    @test listVariableBlobentries(fg, var1.label) == Symbol[:label2]
     #delete from dfg
-    @test deleteBlobentry!(fg, :a, :label2) == 1
+    @test deleteVariableBlobentry!(fg, :a, :label2) == 1
     var1 = getVariable(fg, :a)
     @test listBlobentries(var1) == Symbol[]
 
@@ -928,7 +928,7 @@ function blobsStoresTestBlock!(fg)
     # on Variable
     newentry = DFG.saveBlob_Variable!(fg, :a, testData, :testing, fs.label)
     @test_throws DFG.LabelExistsError DFG.saveBlob_Variable!(fg, :a, testData, :testing)
-    @test :testing in listBlobentries(fg, :a)
+    @test :testing in listVariableBlobentries(fg, :a)
     be, blob = DFG.loadBlob_Variable(fg, :a, :testing)
     @test newentry == be
     @test blob == testData
@@ -1008,39 +1008,40 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test_skip varNearTs[1][1] == [:b]
 
         ## SORT copied from CRUD
-        @test all(getVariables(fg, r"a") .== [getVariable(fg, v1.label)])
-        @test all(getVariables(fg; solvable = 1) .== [getVariable(fg, v2.label)])
-        @test getVariables(fg, r"a"; solvable = 1) == []
-        @test getVariables(fg; tags = [:LANDMARK])[1] == getVariable(fg, v2.label)
+        @test all(getVariables(fg; labelFilter = contains(r"a")) .== [getVariable(fg, v1.label)])
+        @test all(getVariables(fg; solvableFilter = >=(1)) .== [getVariable(fg, v2.label)])
+        @test getVariables(fg; labelFilter = contains(r"a"), solvableFilter = >=(1)) == []
+        @test getVariables(fg; tagsFilter = ⊇([:LANDMARK]))[1] == getVariable(fg, v2.label)
 
-        @test getFactors(fg, r"nope") == []
-        @test issetequal(getLabel.(getFactors(fg; solvable = 1)), [:af1, :abf1])
-        @test getFactors(fg; solvable = 2) == []
-        @test getFactors(fg; tags = [:tag1])[1] == f1
-        @test getFactors(fg; tags = [:PRIOR])[1] == f0
+        @test getFactors(fg; labelFilter = contains(r"nope")) == []
+        @test issetequal(getLabel.(getFactors(fg; solvableFilter = >=(1))), [:af1, :abf1])
+        @test getFactors(fg; solvableFilter = >=(2)) == []
+        @test getFactors(fg; tagsFilter = ⊇([:tag1]))[1] == f1
+        @test getFactors(fg; tagsFilter = ⊇([:PRIOR]))[1] == f0
         ##/SORT
 
         # Additional testing for https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/201
         # list solvable
-        @test symdiff([:a, :b], listVariables(fg; solvable = 0)) == []
-        @test listVariables(fg; solvable = 1) == [:b]
+        @test symdiff([:a, :b], listVariables(fg; solvableFilter = >=(0))) == []
+        @test listVariables(fg; solvableFilter = >=(1)) == [:b]
 
-        @test issetequal(listFactors(fg; solvable = 1), [:af1, :abf1])
-        @test issetequal(listFactors(fg; solvable = 0), [:af1, :abf1])
-        @test all([f in [f0, f1] for f in getFactors(fg; solvable = 1)])
+        @test issetequal(listFactors(fg; solvableFilter = >=(1)), [:af1, :abf1])
+        @test issetequal(listFactors(fg; solvableFilter = >=(0)), [:af1, :abf1])
+        @test all([f in [f0, f1] for f in getFactors(fg; solvableFilter = >=(1))])
 
         @test lsf(fg, :b) == [f1.label]
 
         # Tags
-        @test ls(fg; tags = [:POSE]) == []
-        @test issetequal(ls(fg; tags = [:POSE, :LANDMARK]), ls(fg; tags = [:VARIABLE]))
+        @test ls(fg; tagsFilter = ⊇([:POSE])) == []
+        @test issetequal(ls(fg; tagsFilter = !isdisjoint([:POSE, :LANDMARK])), ls(fg; tagsFilter = ⊇([:VARIABLE])))
 
-        @test lsf(fg; tags = [:NONE]) == []
-        @test lsf(fg; tags = [:PRIOR]) == [:af1]
+        @test lsf(fg; tagsFilter = !isdisjoint([:NONE])) == []
+        @test lsf(fg; tagsFilter = ⊇([:NONE])) == []
+        @test lsf(fg; tagsFilter = ⊇([:PRIOR])) == [:af1]
 
         # Regexes
-        @test ls(fg, r"a") == [v1.label]
-        @test lsf(fg, r"abf*") == [f1.label]
+        @test ls(fg, labelFilter = contains(r"a")) == [v1.label]
+        @test lsf(fg, labelFilter = contains(r"abf*")) == [f1.label]
 
         #TODO test filters and options
         # regexFilter::Union{Nothing, Regex}=nothing;
@@ -1196,13 +1197,13 @@ function AdjacencyMatricesTestBlock(fg)
     # Only do solvable tests on VariableCompute
     if isa(getVariable(fg, :a), VariableCompute)
         # Filtered - REF DFG #201
-        adjMat, v_ll, f_ll = getBiadjacencyMatrix(fg; solvable = 0)
+        adjMat, v_ll, f_ll = getBiadjacencyMatrix(fg; solvableFilter = >=(0))
         @test size(adjMat) == (1, 3)
         @test symdiff(v_ll, [:a, :b, :orphan]) == Symbol[]
         @test symdiff(f_ll, [:abf1]) == Symbol[]
 
         # sparse
-        adjMat, v_ll, f_ll = getBiadjacencyMatrix(fg; solvable = 1)
+        adjMat, v_ll, f_ll = getBiadjacencyMatrix(fg; solvableFilter = >=(1))
         @test size(adjMat) == (1, 2)
         @test issetequal(v_ll, [:a, :b])
         @test f_ll == [:abf1]
@@ -1295,13 +1296,13 @@ function GettingNeighbors(testDFGAPI; VARTYPE = VariableCompute, FACTYPE = Facto
     # Solvable
     #TODO if not a GraphsDFG with and summary or skeleton
     if VARTYPE == VariableCompute
-        @test listNeighbors(dfg, :x5; solvable = 2) == Symbol[]
-        @test issetequal(listNeighbors(dfg, :x5; solvable = 0), [:x4x5f1, :x5x6f1])
+        @test listNeighbors(dfg, :x5; solvableFilter = >=(2)) == Symbol[]
+        @test issetequal(listNeighbors(dfg, :x5; solvableFilter = >=(0)), [:x4x5f1, :x5x6f1])
         @test issetequal(listNeighbors(dfg, :x5), [:x4x5f1, :x5x6f1])
-        @test listNeighbors(dfg, :x7x8f1; solvable = 0) == [:x7, :x8]
-        @test listNeighbors(dfg, :x7x8f1; solvable = 1) == [:x7]
-        @test listNeighbors(dfg, verts[1]; solvable = 0) == [:x1x2f1]
-        @test listNeighbors(dfg, verts[1]; solvable = 2) == Symbol[]
+        @test listNeighbors(dfg, :x7x8f1; solvableFilter = >=(0)) == [:x7, :x8]
+        @test listNeighbors(dfg, :x7x8f1; solvableFilter = >=(1)) == [:x7]
+        @test listNeighbors(dfg, verts[1]; solvableFilter = >=(0)) == [:x1x2f1]
+        @test listNeighbors(dfg, verts[1]; solvableFilter = >=(2)) == Symbol[]
         @test listNeighbors(dfg, verts[1]) == [:x1x2f1]
     end
 end

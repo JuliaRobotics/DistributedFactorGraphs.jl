@@ -326,8 +326,9 @@ function listNeighbors(
     dfg::GraphsDFG,
     node::AbstractGraphNode;
     solvable::Union{Nothing, Int} = nothing,
+    kwargs...,
 )
-    return listNeighbors(dfg, node.label; solvable)
+    return listNeighbors(dfg, node.label; solvable, kwargs...)
 end
 
 function listNeighbors(
@@ -402,8 +403,9 @@ end
 function getBiadjacencyMatrix(
     dfg::GraphsDFG;
     solvable::Union{Nothing, Int} = nothing,
-    varLabels = listVariables(dfg; solvable),
-    factLabels = listFactors(dfg; solvable),
+    solvableFilter = isnothing(solvable) ? nothing : >=(solvable),
+    varLabels = listVariables(dfg; solvableFilter),
+    factLabels = listFactors(dfg; solvableFilter),
 )
     varIndex = [dfg.g.labels[s] for s in varLabels]
     factIndex = [dfg.g.labels[s] for s in factLabels]

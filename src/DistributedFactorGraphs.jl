@@ -451,13 +451,13 @@ const unstable_functions::Vector{Symbol} = [
     :getVariableTypeName,
     :getStateKind,
     :setTimestamp,
-    :setMetadata!, # no set, use add merge
     :setAgentMetadata!,
     :setGraphMetadata!,
     # :getSolverDataDict,# obsolete
     :getAddHistory,
 
     #Deprecated in v0.28
+    :setMetadata!, # no set, use add merge
     :AbstractRelativeMinimize,
     :AbstractManifoldMinimize,
     :AbstractPrior,

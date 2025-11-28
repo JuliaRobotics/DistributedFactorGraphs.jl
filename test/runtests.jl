@@ -63,7 +63,7 @@ DFG.@usingDFG true
         end
     end
 
-    if get(ENV, "IIF_TEST", "false") == "true"
+    if get(ENV, "IIF_TEST", "true") == "true"
 
         # Switch to our upstream test branch.
         #FIXME This is a temporary fix to use the develop branch of AMP.

@@ -321,13 +321,13 @@ function compareFactor(
         )
     @debug "compareFactor 3/5" TP
 
-    #FIXME is measurement stil in use and should it be checked, skipping for now
-    if false # !(:measurement in skip)
+    #FIXME is measurement stil in use
+    if !(:measurement in skip)
         TP =
             TP & (
                 skipsamples || compareAll(
-                    getSolverData(A).fnc.measurement,
-                    getSolverData(B).fnc.measurement;
+                    getCache(A).measurement,
+                    getCache(B).measurement;
                     show = show,
                     skip = skip,
                 )
@@ -335,26 +335,26 @@ function compareFactor(
     end
     @debug "compareFactor 4/5" TP
     #FIXME is varValsAll stil in use and should it be checked, skipping for now
-    if false #!(:varValsAll in skip) && hasfield(typeof(getSolverData(A).fnc), :varValsAll)
+    if !(:varValsAll in skip) && hasfield(typeof(getCache(A)), :varValsAll)
         TP =
             TP & (
                 skipcompute || compareAll(
-                    getSolverData(A).fnc.varValsAll,
-                    getSolverData(B).fnc.varValsAll;
+                    getCache(A).varValsAll,
+                    getCache(B).varValsAll;
                     show = show,
                     skip = skip,
                 )
             )
     end
     @debug "compareFactor 5/5" TP
-    #FIXME is varidx stil in use and should it be checked, skipping for now
-    if false #!(:varidx in skip) && hasfield(typeof(getSolverData(A).fnc), :varidx) &&
-        getSolverData(A).fnc.varidx isa Base.RefValue
+    #FIXME is varidx stil in use and should it be checked
+    if !(:varidx in skip) && hasfield(typeof(getCache(A)), :varidx) &&
+        getCache(A).varidx isa Base.RefValue
         TP =
             TP & (
                 skipcompute || compareAll(
-                    getSolverData(A).fnc.varidx[],
-                    getSolverData(B).fnc.varidx[];
+                    getCache(A).varidx[],
+                    getCache(B).varidx[];
                     show = show,
                     skip = skip,
                 )
