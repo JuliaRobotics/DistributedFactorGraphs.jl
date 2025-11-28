@@ -4,9 +4,6 @@
 export FactorCompute
 const FactorCompute = FactorDFG
 
-"""
-Types valid for small data.
-"""
 const MetadataTypes = Union{
     Int,
     Float64,
@@ -135,18 +132,10 @@ function getVariableTypeName(v::VariableSummary)
     return v.statetype
 end
 
-"""
-    $(SIGNATURES)
-Get the Metadata entry at `key` for variable `label` in `dfg`
-"""
 function getMetadata(dfg::AbstractDFG, label::Symbol, key::Symbol)
     return getVariable(dfg, label).smallData[key]
 end
 
-"""
-    $(SIGNATURES)
-Add a Metadata pair `key=>value` for variable `label` in `dfg`
-"""
 function addMetadata!(dfg::AbstractDFG, label::Symbol, pair::Pair{Symbol, <:MetadataTypes})
     v = getVariable(dfg, label)
     haskey(v.smallData, pair.first) && throw(LabelExistsError("Metadata", pair.first))
@@ -155,10 +144,6 @@ function addMetadata!(dfg::AbstractDFG, label::Symbol, pair::Pair{Symbol, <:Meta
     return v.smallData #or pair TODO
 end
 
-"""
-    $(SIGNATURES)
-Update a Metadata pair `key=>value` for variable `label` in `dfg`
-"""
 function updateMetadata!(
     dfg::AbstractDFG,
     label::Symbol,
@@ -174,10 +159,6 @@ function updateMetadata!(
     return v.smallData #or pair TODO
 end
 
-"""
-    $(SIGNATURES)
-Delete a Metadata entry at `key` for variable `label` in `dfg`
-"""
 function deleteMetadata!(dfg::AbstractDFG, label::Symbol, key::Symbol)
     v = getVariable(dfg, label)
     pop!(v.smallData, key)
@@ -185,19 +166,11 @@ function deleteMetadata!(dfg::AbstractDFG, label::Symbol, key::Symbol)
     return 1
 end
 
-"""
-    $(SIGNATURES)
-List all Metadata keys for a variable `label` in `dfg`
-"""
 function listMetadata(dfg::AbstractDFG, label::Symbol)
     v = getVariable(dfg, label)
     return collect(keys(v.smallData)) #or pair TODO
 end
 
-"""
-    $(SIGNATURES)
-Empty all Metadata from variable `label` in `dfg`
-"""
 function emptyMetadata!(dfg::AbstractDFG, label::Symbol)
     v = getVariable(dfg, label)
     empty!(v.smallData)

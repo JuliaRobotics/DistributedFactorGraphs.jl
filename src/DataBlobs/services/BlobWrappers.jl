@@ -70,7 +70,7 @@ function loadBlob_Variable(
     # hashfunction = sha256,
     # checkhash::Bool = true,
 )
-    entry = getBlobentry(dfg, variable_label, entry_label)
+    entry = getVariableBlobentry(dfg, variable_label, entry_label)
     blob = getBlob(dfg, entry)
     # checkhash && assertHash(de, db; hashfunction)
     return entry, blob
@@ -82,7 +82,7 @@ function saveBlob_Variable!(
     blob::Vector{UInt8},
     entry::Blobentry,
 )
-    addBlobentry!(dfg, variable_label, entry)
+    addVariableBlobentry!(dfg, variable_label, entry)
     addBlob!(dfg, entry, blob)
     return entry
 end
@@ -100,8 +100,8 @@ function saveBlob_Variable!(
 end
 
 function deleteBlob_Variable!(dfg::AbstractDFG, variable_label::Symbol, entry_label::Symbol)
-    entry = getBlobentry(dfg, variable_label, entry_label)
-    deleteBlobentry!(dfg, variable_label, entry_label)
+    entry = getVariableBlobentry(dfg, variable_label, entry_label)
+    deleteVariableBlobentry!(dfg, variable_label, entry_label)
     deleteBlob!(dfg, entry)
     return 2
 end

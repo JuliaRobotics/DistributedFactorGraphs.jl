@@ -303,8 +303,16 @@ export deleteVariableBloblet!
 export listVariableBloblets
 
 export getAgentBloblet
-export getGraphBloblet
+export addAgentBloblet!
+export mergeAgentBloblet!
+export deleteAgentBloblet!
+export listAgentBloblets
 
+export getGraphBloblet
+export addGraphBloblet!
+export mergeGraphBloblet!
+export deleteGraphBloblet!
+export listGraphBloblets
 ##------------------------------------------------------------------------------
 ## FileDFG
 ##------------------------------------------------------------------------------
@@ -451,13 +459,13 @@ const unstable_functions::Vector{Symbol} = [
     :getVariableTypeName,
     :getStateKind,
     :setTimestamp,
-    :setMetadata!, # no set, use add merge
     :setAgentMetadata!,
     :setGraphMetadata!,
     # :getSolverDataDict,# obsolete
     :getAddHistory,
 
     #Deprecated in v0.28
+    :setMetadata!, # no set, use add merge
     :AbstractRelativeMinimize,
     :AbstractManifoldMinimize,
     :AbstractPrior,

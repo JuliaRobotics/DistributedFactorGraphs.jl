@@ -48,7 +48,9 @@ Variables or factors may or may not be 'solvable', depending on a user definitio
 Related:
 - isSolveInProgress
 """
-getSolvable(node::Union{VariableDFG, FactorDFG}) = node.solvable[]
+function getSolvable(node::Union{VariableDFG, VariableSummary, FactorDFG, FactorSummary})
+    return node.solvable[]
+end
 
 """
     $SIGNATURES

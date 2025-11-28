@@ -306,7 +306,7 @@ function gatherBlobentries(
         labelFilter = variableLabelFilter,
     )
     return map(vls) do vl
-        return vl => getBlobentries(dfg, vl; labelFilter, blobIdFilter)
+        return vl => getVariableBlobentries(dfg, vl; labelFilter, blobIdFilter)
     end
 end
 const collectBlobentries = gatherBlobentries

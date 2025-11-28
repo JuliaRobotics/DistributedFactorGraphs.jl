@@ -39,18 +39,18 @@ function saveDFG(folder::AbstractString, dfg::AbstractDFG)
     map(f -> rm("$varFolder/$f"), readdir(varFolder))
     map(f -> rm("$factorFolder/$f"), readdir(factorFolder))
     # Variables
-    @showprogress "saving variables" for v in variables
+    @showprogress desc = "saving variables" for v in variables
         # vPacked = packVariable(v)
         JSON.json("$varFolder/$(v.label).json", v; style = DFGJSONStyle())
     end
     # Factors
-    @showprogress "saving factors" for f in factors
+    @showprogress desc = "saving factors" for f in factors
         JSON.json("$factorFolder/$(f.label).json", f; style = DFGJSONStyle())
     end
 
     #GraphsDFG nodes
     @assert isa(dfg, GraphsDFG) "only metadata for GraphsDFG are supported"
-    p = Progress(4, "Saving DFG Nodes")
+    p = Progress(4; desc = "Saving DFG Nodes")
     JSON.json("$savepath/graphroot.json", dfg.graph; style = DFGJSONStyle())
     next!(p)
     JSON.json("$savepath/agent.json", dfg.agent; style = DFGJSONStyle())
@@ -119,7 +119,9 @@ function loadDFG!(
     variablefiles = readdir(joinpath(loaddir, "variables"); sort = false, join = true)
 
     # type instability on `variables` as either `::Vector{Variable}` or `::Vector{VariableCompute{<:}}` (vector of abstract)
-    variables = @showprogress 1 "loading variables" asyncmap(variablefiles) do file
+    variables = @showprogress dt=1 desc = "loading variables" asyncmap(
+        variablefiles,
+    ) do file
         v = JSON.parsefile(file, V; style = DFGJSONStyle())
         return addVariable!(dfgLoadInto, v)
     end
@@ -128,7 +130,7 @@ function loadDFG!(
 
     factorfiles = readdir(joinpath(loaddir, "factors"); sort = false, join = true)
 
-    factors = @showprogress 1 "loading factors" asyncmap(factorfiles) do file
+    factors = @showprogress dt=1 desc = "loading factors" asyncmap(factorfiles) do file
         f = JSON.parsefile(file, F; style = DFGJSONStyle())
         return addFactor!(dfgLoadInto, f)
     end
@@ -137,7 +139,7 @@ function loadDFG!(
 
     if isa(dfgLoadInto, GraphsDFG) && getTypeDFGFactors(dfgLoadInto) <: FactorDFG
         # Finally, rebuild the CCW's for the factors to completely reinflate them
-        @showprogress 1 "Rebuilding factor solver cache" for factor in factors
+        @showprogress dt=1 desc = "Rebuilding factor solver cache" for factor in factors
             rebuildFactorCache!(dfgLoadInto, factor)
         end
     end
@@ -170,7 +172,7 @@ function loadDFG(file::AbstractString)
     loaddir = Tar.extract(hdr -> contains(hdr.path, dfgnodenames), tar)
     close(tar)
 
-    progess = Progress(4, "Loading DFG Nodes")
+    progess = Progress(4; desc = "Loading DFG Nodes")
     agent = JSON.parsefile(joinpath(loaddir, "agent.json"), Agent; style = DFGJSONStyle())
     next!(progess)
     graph = JSON.parsefile(

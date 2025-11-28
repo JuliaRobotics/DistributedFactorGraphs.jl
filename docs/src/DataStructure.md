@@ -37,15 +37,10 @@ Accessible properties for each of the factor structures:
 - [`VariableSummary`](@ref)
 - [`FactorSummary`](@ref)
 
-## DFG Portable and Storeable types
+## DFG full types (solvable, portable and storeable)
 
 - [`VariableDFG`](@ref)
 - [`FactorDFG`](@ref)
-
-## DFG Full solvable types
-
-- [`VariableCompute`](@ref)
-- [`FactorCompute`](@ref)
 
 ## Additional Offloaded Data
 

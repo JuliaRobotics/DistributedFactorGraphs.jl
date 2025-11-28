@@ -61,7 +61,7 @@ function findVariableNearTimestamp(
     #
     # get the variable labels based on filters
     # syms = listVariables(dfg, regexFilter, tags=tags, solvable=solvable)
-    syms = listVariables(dfg, regexFilter; tags = tags, solvable = solvable)
+    syms = listVariables(dfg, regexFilter; tags = tags, solvableFilter = >=(solvable))
     # compile timestamps with label
     # vars = map( x->getVariable(dfg, x), syms )
     timeset = map(x -> (getTimestamp(getVariable(dfg, x)), x), syms)

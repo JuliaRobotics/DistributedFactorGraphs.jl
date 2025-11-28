@@ -358,10 +358,10 @@ function getVariable(dfg::AbstractDFG, label::Symbol, solveKey::Symbol)
     # function getVariable(dfg::AbstractDFG, label::Symbol; stateLabelFilter::Union{Nothing, ...} = nothing) 
     var = getVariable(dfg, label)
 
-    if isa(var, VariableCompute) && !haskey(var.states, solveKey)
+    if isa(var, VariableDFG) && !haskey(var.states, solveKey)
         throw(LabelNotFoundError("VariableNode", solveKey))
-    elseif !isa(var, VariableCompute)
-        @warn "getVariable(dfg, label, solveKey) only supported for type VariableCompute."
+    elseif !isa(var, VariableDFG)
+        @warn "getVariable(dfg, label, solveKey) only supported for type VariableDFG."
     end
 
     return var
@@ -549,9 +549,7 @@ function deepcopyGraph(
     graphLabel::Symbol = Symbol(getGraphLabel(sourceDFG), "_cp_$(string(uuid4())[1:6])"),
     kwargs...,
 ) where {T <: AbstractDFG}
-    ginfo = getDFGInfo(sourceDFG)
-
-    destDFG = T(; ginfo..., graphLabel)
+    destDFG = T(; graph = sourceDFG.graph, agent = sourceDFG.agent, graphLabel)
     copyGraph!(
         destDFG,
         sourceDFG,
