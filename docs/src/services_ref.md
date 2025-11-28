@@ -23,6 +23,18 @@ Modules = [DistributedFactorGraphs]
 Pages = ["services/CommonAccessors.jl"]
 ```
 
+## Common
+```@autodocs
+Modules = [DistributedFactorGraphs]
+Pages = [
+    "services/list.jl",
+    "services/find.jl",
+    "services/Tags.jl",
+    "entities/Bloblet.jl",
+    "services/Bloblet.jl",
+]
+```
+
 ## DFG Variable Accessors CRUD and SET opperations
 
 ```@autodocs

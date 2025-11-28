@@ -147,13 +147,13 @@ $(TYPEDFIELDS)
     # steadytime::Union{Nothing, Nanosecond} = nothing #NOTE changed to TimeDateZone in v0.29
     #nstime::String = "0" #NOTE different uses, as 0-999_999 nanosecond part of timestamp now in timestamp, as steady timestamp now in steadytime
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
-    Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`deleteTags!`](@ref)"""
+    Accessors: [`listTags`](@ref), [`mergeTags!`](@ref), and [`deleteTags!`](@ref)"""
     tags::Set{Symbol} = Set{Symbol}()
     """Dictionary of state data. May be a subset of all solutions if a solver label was specified in the get call.
     Accessors: [`addState!`](@ref), [`mergeState!`](@ref), and [`deleteState!`](@ref)"""
     states::OrderedDict{Symbol, State{T, P, N}} = OrderedDict{Symbol, State{T, P, N}}() #NOTE field renamed from solverDataDict in v0.29
     """Dictionary of small data associated with this variable.
-    Accessors: [`getBloblet`](@ref), [`setBloblet!`](@ref)"""
+    Accessors: [`getBloblet`](@ref), [`addBloblet!`](@ref)"""
     bloblets::Bloblets = Bloblets() #NOTE changed from smallData in v0.29
     """Dictionary of large data associated with this variable.
     Accessors: [`addBlobentry!`](@ref), [`getBlobentry`](@ref), [`mergeBlobentry!`](@ref), and [`deleteBlobentry!`](@ref)"""
@@ -289,7 +289,7 @@ $(TYPEDFIELDS)
     Accessors: [`getTimestamp`](@ref)"""
     timestamp::TimeDateZone
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
-    Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`deleteTags!`](@ref)"""
+    Accessors: [`listTags`](@ref), [`mergeTags!`](@ref), and [`deleteTags!`](@ref)"""
     tags::Set{Symbol}
     """Symbol for the state type for the underlying variable."""
     statetype::Symbol
@@ -315,7 +315,7 @@ Base.@kwdef struct VariableSkeleton <: AbstractGraphVariable
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
-    Accessors: [`getTags`](@ref), [`mergeTags!`](@ref), and [`deleteTags!`](@ref)"""
+    Accessors: [`listTags`](@ref), [`mergeTags!`](@ref), and [`deleteTags!`](@ref)"""
     tags::Set{Symbol} = Set{Symbol}()
 end
 

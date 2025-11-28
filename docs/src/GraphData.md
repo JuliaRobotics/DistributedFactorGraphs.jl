@@ -53,9 +53,9 @@ Each variable or factor can have a timestamp associated with it.
 
 Tags are a set of symbols that contain identifiers for the variable or factor.
 
-- [`getTags`](@ref)
+- [`listTags`](@ref)
 - [`mergeTags!`](@ref)
-- [`removeTags!`](@ref)
+- [`deleteTags!`](@ref)
 - [`emptyTags!`](@ref)
 
 
@@ -72,51 +72,10 @@ The solvable flag indicates whether the solver should make use of the variable o
 
 #### Variable Type
 
-The `variableType` is the underlying inference variable type, such as a Pose2.
+The `AbstractStateType` is the underlying inference variable type, such as a Pose2.
 
-- [`getVariableType`](@ref)
+- [`getStateKind`](@ref)
 
-
-#### Packed Parametric Estimates
-
-Solved graphs contain packed parametric estimates for the variables, which are keyed by the solution (the default is saved as :default).
-
-For each PPE structure, there are accessors for getting individual values:
-
-- [`getPPEMax`](@ref)
-- [`getPPEMean`](@ref)
-- [`getPPESuggested`](@ref)
-
-
-Related functions for getting, adding/updating, and deleting PPE structures:
-
-
-- [`listPPEs`](@ref)
-- [`getPPE`](@ref)
-- [`addPPE!`](@ref)
-- [`updatePPE!`](@ref)
-- [`deletePPE!`](@ref)
-- [`mergePPEs!`](@ref)
-
-
-Example of PPE operations:
-
-```julia
-# Add a new PPE of type MeanMaxPPE to :x0
-ppe = MeanMaxPPE(:default, [0.0], [0.0], [0.0])
-addPPE!(dfg, :x0, ppe)
-@show listPPEs(dfg, :x0)
-# Get the data back - note that this is a reference to above.
-v = getPPE(dfg, :x0, :default)
-# Delete it
-deletePPE!(dfg, :x0, :default)
-# Update add it
-updatePPE!(dfg, :x0, ppe, :default)
-# Update update it
-updatePPE!(dfg, :x0, ppe, :default)
-# Bulk copy PPE's for x0 and x1
-updatePPE!(dfg, [x0], :default)
-```
 
 #### Variable States (Solver Data)
 
@@ -147,23 +106,23 @@ stateBack = getState(dfg, :x0, :parametric)
 deleteState!(dfg, :x0, :parametric)
 ```
 
-#### Metadata
+#### Bloblets
 
-Metadata (small data) allows you to assign a dictionary to variables. It is a useful way to
-keep small amounts of primative (Strings, Integers, Floats, Bool) data in a variable. As it is stored in the graph
+Bloblets allow you to assign a dictionary of key-value [Symbol-String] pairs to nodes. It is a useful way to
+keep small amounts of primitive (Strings, Integers, Floats, Bool) data that is stored as a string in a node. As it is stored in the graph
 itself, large entries will slow the graph down, so if data should exceed a
 few bytes/kb, it should rather be saved in Blobs.
 
 
-- [`getMetadata`](@ref)
-- [`setMetadata!`](@ref)
+- [`getVariableBloblet`](@ref)
+- [`addVariableBloblet!`](@ref)
 
 
 Example:
 
 ```julia
-setMetadata!(x0, Dict("entry"=>"entry value"))
-getMetadata(x0)
+addVariableBloblet!(dfg, :x0, Bloblet(:bloblet_label,"bloblet value"))
+getVariableBloblet(dfg, :x0)
 ```
 
 #### Big Data
@@ -179,23 +138,25 @@ you are working with an in-memory graph, the DFG structure contains the graph it
 
 Graphs reside inside a hierarchy made up in the following way:
 - Agent
-  - Metadata
+  - Bloblets
   - Blobentries
 - Graph
-  - Metadata
+  - Bloblets
   - Blobentries
 
-This data can be retrieved with the follow functions:
+Agent and Graph bloblets are useful for storing data that is related to the entire graph, and support CRUD operations:
 
-- [`getAgentMetadata`](@ref)
-- [`getGraphMetadata`](@ref)
+- [`getAgentBloblet`](@ref)
+- [`getGraphBloblet`](@ref)
 
+- [`addAgentBloblet!`](@ref)
+- [`addGraphBloblet!`](@ref)
 
-It can be set using the following functions:
+- [`mergeAgentBloblet!`](@ref)
+- [`mergeGraphBloblet!`](@ref)
 
-- [`setAgentMetadata!`](@ref)
-- [`setGraphMetadata!`](@ref)
-
+- [`deleteAgentBloblet!`](@ref)
+- [`deleteGraphBloblet!`](@ref)
 
 Example of using graph-level data:
 

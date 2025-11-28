@@ -1,6 +1,4 @@
 [deps]
-Cairo = "159f3aea-2a34-519c-b102-8c37f9878175"
-Compose = "a81c6b42-2e10-5240-aca2-a61377ecd94b"
 DistributedFactorGraphs = "b5cc3c7e-6572-11e9-2517-99fb8daf2f04"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 GraphMakie = "1ecd5474-83a3-4783-bb4f-06765db800d2"

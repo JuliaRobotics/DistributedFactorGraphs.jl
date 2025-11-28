@@ -303,8 +303,16 @@ export deleteVariableBloblet!
 export listVariableBloblets
 
 export getAgentBloblet
-export getGraphBloblet
+export addAgentBloblet!
+export mergeAgentBloblet!
+export deleteAgentBloblet!
+export listAgentBloblets
 
+export getGraphBloblet
+export addGraphBloblet!
+export mergeGraphBloblet!
+export deleteGraphBloblet!
+export listGraphBloblets
 ##------------------------------------------------------------------------------
 ## FileDFG
 ##------------------------------------------------------------------------------

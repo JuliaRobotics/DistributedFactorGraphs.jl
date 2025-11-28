@@ -50,6 +50,9 @@ function getBloblet(node, label::Symbol)
     return refBloblets(node)[label]
 end
 
+"""
+    $(SIGNATURES)
+"""
 function getBloblets(node)
     return collect(values(refBloblets(node)))
 end
