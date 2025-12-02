@@ -13,11 +13,11 @@ end
 function getBlobentries(
     node;
     labelFilter::Union{Nothing, Function} = nothing,
-    blobIdFilter::Union{Nothing, Function} = nothing,
+    blobidFilter::Union{Nothing, Function} = nothing,
 )
     entries = collect(values(refBlobentries(node)))
     filterDFG!(entries, labelFilter, getLabel)
-    filterDFG!(entries, blobIdFilter, x -> string(x.blobid))
+    filterDFG!(entries, blobidFilter, x -> string(x.blobid))
     return entries
 end
 
@@ -195,6 +195,52 @@ function listModelBlobentries end
 function hasGraphBlobentry end
 function hasAgentBlobentry end
 function hasModelBlobentry end
+
+##==============================================================================
+## Default Variable/Factor implementations
+##==============================================================================
+
+function getVariableBlobentry(dfg::AbstractDFG, variableLabel::Symbol, label::Symbol)
+    return getBlobentry(getVariable(dfg, variableLabel), label)
+end
+
+function getVariableBlobentries(
+    dfg::AbstractDFG,
+    variableLabel::Symbol;
+    labelFilter::Union{Nothing, Function} = nothing,
+    blobidFilter::Union{Nothing, Function} = nothing,
+)
+    return getBlobentries(getVariable(dfg, variableLabel); labelFilter, blobidFilter)
+end
+
+function listVariableBlobentries(dfg::AbstractDFG, variableLabel::Symbol)
+    return listBlobentries(getVariable(dfg, variableLabel))
+end
+
+function hasVariableBlobentry(dfg::AbstractDFG, variableLabel::Symbol, label::Symbol)
+    return hasBlobentry(getVariable(dfg, variableLabel), label)
+end
+
+function getFactorBlobentry(dfg::AbstractDFG, factorLabel::Symbol, label::Symbol)
+    return getBlobentry(getFactor(dfg, factorLabel), label)
+end
+
+function getFactorBlobentries(
+    dfg::AbstractDFG,
+    factorLabel::Symbol;
+    labelFilter::Union{Nothing, Function} = nothing,
+    blobidFilter::Union{Nothing, Function} = nothing,
+)
+    return getBlobentries(getFactor(dfg, factorLabel); labelFilter, blobidFilter)
+end
+
+function listFactorBlobentries(dfg::AbstractDFG, factorLabel::Symbol)
+    return listBlobentries(getFactor(dfg, factorLabel))
+end
+
+function hasFactorBlobentry(dfg::AbstractDFG, factorLabel::Symbol, label::Symbol)
+    return hasBlobentry(getFactor(dfg, factorLabel), label)
+end
 ##==============================================================================
 ## Blobentry [default] bulk operations
 ##==============================================================================
@@ -280,19 +326,10 @@ end
 ## Blobentry - Helper functions, Lists, etc
 ##==============================================================================
 
-function getVariableBlobentries(
-    dfg::AbstractDFG,
-    variableLabel::Symbol;
-    labelFilter::Union{Nothing, Function} = nothing,
-    blobIdFilter::Union{Nothing, Function} = nothing,
-)
-    return getBlobentries(getVariable(dfg, variableLabel); labelFilter, blobIdFilter)
-end
-
 function gatherBlobentries(
     dfg::AbstractDFG;
     labelFilter::Union{Nothing, Function} = nothing,
-    blobIdFilter::Union{Nothing, Function} = nothing,
+    blobidFilter::Union{Nothing, Function} = nothing,
     solvableFilter::Union{Nothing, Function} = nothing,
     tagsFilter::Union{Nothing, Function} = nothing,
     typeFilter::Union{Nothing, Function} = nothing,
@@ -306,14 +343,10 @@ function gatherBlobentries(
         labelFilter = variableLabelFilter,
     )
     return map(vls) do vl
-        return vl => getVariableBlobentries(dfg, vl; labelFilter, blobIdFilter)
+        return vl => getVariableBlobentries(dfg, vl; labelFilter, blobidFilter)
     end
 end
 const collectBlobentries = gatherBlobentries
-
-function listVariableBlobentries(dfg::AbstractDFG, label::Symbol)
-    return listBlobentries(getVariable(dfg, label))
-end
 
 """
     $(SIGNATURES)
@@ -324,11 +357,11 @@ Also see: [`getBlobentry`](@ref)
 function getfirstBlobentry(
     node;
     labelFilter::Union{Nothing, Function} = nothing,
-    blobIdFilter::Union{Nothing, Function} = nothing,
+    blobidFilter::Union{Nothing, Function} = nothing,
     sortby::Function = getLabel,
     sortlt::Function = natural_lt,
 )
-    entries = getBlobentries(node; labelFilter, blobIdFilter)
+    entries = getBlobentries(node; labelFilter, blobidFilter)
     if isempty(entries)
         return nothing
     else
@@ -340,9 +373,9 @@ function getfirstVariableBlobentry(
     dfg::AbstractDFG,
     label::Symbol;
     labelFilter::Union{Nothing, Function} = nothing,
-    blobIdFilter::Union{Nothing, Function} = nothing,
+    blobidFilter::Union{Nothing, Function} = nothing,
 )
-    return getfirstBlobentry(getVariable(dfg, label); labelFilter, blobIdFilter)
+    return getfirstBlobentry(getVariable(dfg, label); labelFilter, blobidFilter)
 end
 
 ## =============================================================================

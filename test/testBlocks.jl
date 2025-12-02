@@ -120,21 +120,8 @@ function DFGStructureAndAccessors(
     @test getSolverParams(fg) == NoSolverParams()
 
     #FIXME test bloblets
-    # @test setAgentMetadata!(fg, rd) == rd
-    # @test setGraphMetadata!(fg, sd) == sd
-    # @test getAgentMetadata(fg) == rd
-    # @test getGraphMetadata(fg) == sd
-
-    # smallUserData = Dict{Symbol, MetadataTypes}(:a => "42", :b => "Hello")
-    # smallRobotData = Dict{Symbol, MetadataTypes}(:a => "43", :b => "Hello")
-    # smallSessionData = Dict{Symbol, MetadataTypes}(:a => "44", :b => "Hello")
-
-    #TODO CRUD vs set
-    # @test setAgentMetadata!(fg, deepcopy(smallRobotData)) == smallRobotData
-    # @test setGraphMetadata!(fg, deepcopy(smallSessionData)) == smallSessionData
-
-    # @test getAgentMetadata(fg) == smallRobotData
-    # @test getGraphMetadata(fg) == smallSessionData
+    @test DFG.getAgentBloblet(fg, :rd) == rd[:rd]
+    @test DFG.getGraphBloblet(fg, :sd) == sd[:sd]
 
     # NOTE see note in AbstractDFG.jl setSolverParams!
     @test_throws Exception setSolverParams!(fg, GeenSolverParams()) == GeenSolverParams()
@@ -153,31 +140,30 @@ function DFGStructureAndAccessors(
 end
 
 # User, Robot, Session Data
-function GraphAgentMetadata!(fg::AbstractDFG)
-    # "User, Robot, Session Data"
+function GraphAgentBloblets!(fg::AbstractDFG)
+    # Agent-level bloblets
+    agent_blob = Bloblet(:agent_blob, "ready")
+    @test addAgentBloblet!(fg, agent_blob) == agent_blob
+    @test getAgentBloblet(fg, agent_blob.label) == agent_blob
+    updated_agent_blob = Bloblet(agent_blob.label, "updated")
+    @test mergeAgentBloblet!(fg, updated_agent_blob) == 1
+    @test getAgentBloblet(fg, agent_blob.label) == updated_agent_blob
+    @test agent_blob.label in listAgentBloblets(fg)
+    @test deleteAgentBloblet!(fg, agent_blob.label) == 1
+    @test_throws DFG.LabelNotFoundError getAgentBloblet(fg, agent_blob.label)
+    @test_throws DFG.LabelNotFoundError deleteAgentBloblet!(fg, agent_blob.label)
 
-    # Robot Data
-    @test getAgentMetadata(fg, :a) == "43"
-    #TODO
-    @test_broken addAgentMetadata!
-    @test DFG.updateAgentMetadata!(fg, :b => "2") == getAgentMetadata(fg)
-    @test DFG.deleteAgentMetadata!(fg, :b) == 1
-    @test DFG.emptyAgentMetadata!(fg) == Dict{Symbol, String}()
-
-    # SessionData
-    @test getGraphMetadata(fg, :a) == "44"
-    #TODO
-    @test_broken addGraphMetadata!
-    @test DFG.updateGraphMetadata!(fg, :b => "3") == getGraphMetadata(fg)
-    @test DFG.deleteGraphMetadata!(fg, :b) == 1
-    @test DFG.emptyGraphMetadata!(fg) == Dict{Symbol, String}()
-
-    # TODO Set-like if we want eg. list, merge, etc
-    # listAgentMetadata
-    # listGraphMetadata
-    # mergeAgentData
-    # mergeGraphData
-
+    # Graph-level bloblets
+    graph_blob = Bloblet(:graph_blob, "running")
+    @test addGraphBloblet!(fg, graph_blob) == graph_blob
+    @test getGraphBloblet(fg, graph_blob.label) == graph_blob
+    updated_graph_blob = Bloblet(graph_blob.label, "complete")
+    @test mergeGraphBloblet!(fg, updated_graph_blob) == 1
+    @test getGraphBloblet(fg, graph_blob.label) == updated_graph_blob
+    @test graph_blob.label in listGraphBloblets(fg)
+    @test deleteGraphBloblet!(fg, graph_blob.label) == 1
+    @test_throws DFG.LabelNotFoundError getGraphBloblet(fg, graph_blob.label)
+    @test_throws DFG.LabelNotFoundError deleteGraphBloblet!(fg, graph_blob.label)
 end
 
 # User, Robot, Session Data Blob Entries

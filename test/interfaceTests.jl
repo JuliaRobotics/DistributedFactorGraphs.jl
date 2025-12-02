@@ -7,6 +7,7 @@ if false
     using UUIDs
     using TimeZones
     using TimesDates
+    using DistributedFactorGraphs: OrderedDict
 
     include("testBlocks.jl")
 
@@ -33,13 +34,13 @@ end
 end
 
 # User, Robot, Session Data
-# @testset "User, Robot, Session Data" begin
-#     GraphAgentMetadata!(fg1)
-# end
+@testset "User, Robot, Session Data" begin
+    GraphAgentBloblets!(fg1)
+end
 
-# @testset "User, Robot, Session Blob Entries" begin
-#     GraphAgentBlobentries!(fg1)
-# end
+@testset "User, Robot, Session Blob Entries" begin
+    GraphAgentBlobentries!(fg1)
+end
 
 # VariableCompute structure construction and accessors
 @testset "DFG Variable" begin

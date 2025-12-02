@@ -197,14 +197,13 @@ end
 
     @test_throws LabelNotFoundError isInitialized(v2, :second)
 
-    # Session, robot, and user small data tests
-    #FIXME change to Bloblets
-    # smallRobotData = Dict{Symbol, MetadataTypes}(:a => "43", :b => "Hello")
-    # smallSessionData = Dict{Symbol, MetadataTypes}(:a => "44", :b => "Hello")
-    # setAgentMetadata!(dfg, deepcopy(smallRobotData))
-    # setGraphMetadata!(dfg, deepcopy(smallSessionData))
-    # @test getAgentMetadata(dfg) == smallRobotData
-    # @test getGraphMetadata(dfg) == smallSessionData
+    # Graph and Agent small data tests
+    agentBloblets = [Bloblet(:a, "43"), Bloblet(:b, "Hello")]
+    graphBloblets = [Bloblet(:c, "44"), Bloblet(:d, "Hello")]
+    DFG.addAgentBloblets!(dfg, agentBloblets)
+    DFG.addGraphBloblets!(dfg, graphBloblets)
+    @test DFG.listAgentBloblets(dfg) == [:a, :b]
+    @test DFG.listGraphBloblets(dfg) == [:c, :d]
 end
 
 @testset "Data Entries" begin

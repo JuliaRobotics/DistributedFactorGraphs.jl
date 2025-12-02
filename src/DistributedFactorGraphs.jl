@@ -601,7 +601,6 @@ const LocalDFG = GraphsDFG
 
 include("services/Tags.jl")
 include("services/Bloblet.jl")
-include("services/Blobentry.jl")
 
 # Common includes
 include("services/DFGVariable.jl")

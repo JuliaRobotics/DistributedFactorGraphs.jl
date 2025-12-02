@@ -238,7 +238,11 @@ otherwise, the variable will be added to the graph.
 Implement `mergeVariable!(dfg::AbstractDFG, variable::AbstractGraphVariable)`
 """
 function mergeVariable! end
-function mergeVariables! end
+
+function mergeVariables!(dfg::AbstractDFG, variables::Vector{<:AbstractGraphVariable})
+    counts = asyncmap(v->mergeVariable!(dfg, v), variables)
+    return sum(counts)
+end
 
 """
     $(SIGNATURES)
@@ -247,7 +251,11 @@ otherwise, the factor will be added to the graph.
 Implement `mergeFactor!(dfg::AbstractDFG, factor::AbstractGraphFactor)`
 """
 function mergeFactor! end
-function mergeFactors! end
+
+function mergeFactors!(dfg::AbstractDFG, factors::Vector{<:AbstractGraphFactor})
+    counts = asyncmap(f->mergeFactor!(dfg, f), factors)
+    return sum(counts)
+end
 
 """
     $(SIGNATURES)
@@ -436,7 +444,7 @@ Common function for copying nodes from one graph into another graph.
 This is overridden in specialized implementations for performance.
 Orphaned factors are not added, with a warning if verbose.
 Set `overwriteDest` to overwrite existing variables and factors in the destination DFG.
-NOTE: copyGraphMetadata not supported yet.
+NOTE: `copyGraphMetadata` is deprecated – use agent/graph Bloblets instead.
 Related:
 - [`deepcopyGraph`](@ref)
 - [`deepcopyGraph!`](@ref)
@@ -498,8 +506,10 @@ function copyGraph!(
     end
 
     if copyGraphMetadata
-        setAgentMetadata(destDFG, getAgentMetadata(sourceDFG))
-        setGraphMetadata(destDFG, getGraphMetadata(sourceDFG))
+        error(
+            "copyGraphMetadata keyword has been removed – metadata APIs were replaced by Bloblets. " *
+            "Copy agent/graph Bloblets manually before calling copyGraph!",
+        )
     end
     return nothing
 end

@@ -161,6 +161,6 @@ Agent and Graph bloblets are useful for storing data that is related to the enti
 Example of using graph-level data:
 
 ```julia
-setAgentMetadata!(dfg, Dict(:a => "Hello"))
-getAgentMetadata(dfg)
+addAgentBloblet!(dfg, Bloblet(:status, "ready"))
+getAgentBloblet(dfg, :status)
 ```

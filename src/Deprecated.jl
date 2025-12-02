@@ -629,18 +629,18 @@ end
 
 function getfirstBlobentry(var::AbstractGraphVariable, blobId::UUID)
     Base.depwarn(
-        "getfirstBlobentry(var, blobId) is deprecated, use getfirstBlobentry(var; blobIdFilter = ==(string(blobId))) instead.",
+        "getfirstBlobentry(var, blobId) is deprecated, use getfirstBlobentry(var; blobidFilter = ==(string(blobId))) instead.",
         :getfirstBlobentry,
     )
-    return getfirstBlobentry(var; blobIdFilter = ==(string(blobId)))
+    return getfirstBlobentry(var; blobidFilter = ==(string(blobId)))
 end
 
 function getfirstBlobentry(dfg::AbstractDFG, label::Symbol, blobId::UUID)
     Base.depwarn(
-        "getfirstBlobentry(dfg, label, blobId) is deprecated, use getfirstBlobentry(dfg, label; blobIdFilter = ==(string(blobId))) instead.",
+        "getfirstBlobentry(dfg, label, blobId) is deprecated, use getfirstBlobentry(dfg, label; blobidFilter = ==(string(blobId))) instead.",
         :getfirstBlobentry,
     )
-    return getfirstBlobentry(dfg, label; blobIdFilter = ==(string(blobId)))
+    return getfirstBlobentry(dfg, label; blobidFilter = ==(string(blobId)))
 end
 
 function getfirstBlobentry(var::AbstractGraphVariable, key::Regex)
