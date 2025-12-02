@@ -304,14 +304,6 @@ function isConnected(dfg::GraphsDFG)
     # return length(Graphs.connected_components(dfg.g)) == 1
 end
 
-_isSolvable(dfg::GraphsDFG, label::Symbol, ready::Nothing) = true
-
-function _isSolvable(dfg::GraphsDFG, label::Symbol, ready::Int)
-    haskey(dfg.g.variables, label) && (return dfg.g.variables[label].solvable[] >= ready)
-    haskey(dfg.g.factors, label) && (return dfg.g.factors[label].solvable[] >= ready)
-    throw(LabelNotFoundError(label))
-end
-
 function listNeighbors(
     dfg::GraphsDFG,
     node::AbstractGraphNode;

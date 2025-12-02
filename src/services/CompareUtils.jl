@@ -246,8 +246,8 @@ end
 Compare that all fields are the same in a `::FactorGraph` variable.
 """
 function compareVariable(
-    A::VariableCompute,
-    B::VariableCompute;
+    A::VariableDFG,
+    B::VariableDFG;
     skip::Vector{Symbol} = Symbol[],
     show::Bool = true,
     skipsamples::Bool = true,

@@ -144,14 +144,14 @@ function hasFactor end
 
 """
     $(SIGNATURES)
-Add a VariableCompute to a DFG.
+Add a VariableDFG to a DFG.
 Implement `addVariable!(dfg::AbstractDFG, variable::AbstractGraphVariable)`
 """
 function addVariable! end
 
 """
     $(SIGNATURES)
-Add a Vector{VariableCompute} to a DFG.
+Add a Vector{VariableDFG} to a DFG.
 Implement `addVariables!(dfg::AbstractDFG, variables::Vector{<:AbstractGraphVariable})`
 """
 function addVariables!(dfg::AbstractDFG, variables::Vector{<:AbstractGraphVariable})
@@ -179,7 +179,7 @@ end
 
 """
     $(SIGNATURES)
-Get a VariableCompute from a DFG using its label.
+Get a VariableDFG from a DFG using its label.
 Implement `getVariable(dfg::AbstractDFG, label::Symbol)`
 """
 function getVariable end
@@ -259,7 +259,7 @@ end
 
 """
     $(SIGNATURES)
-Delete a VariableCompute from the DFG.
+Delete a VariableDFG from the DFG.
 Implement `deleteVariable!(dfg::AbstractDFG, label::Symbol)`
 """
 function deleteVariable! end
@@ -315,7 +315,7 @@ end
 
 Return whether `sym::Symbol` represents a variable vertex in the graph DFG.
 Checks whether it both exists in the graph and is a variable.
-(If you rather want a quick for type, just do node isa VariableCompute)
+(If you rather want a quick for type, just do node isa VariableDFG)
 Implement `isVariable(dfg::AbstractDFG, label::Symbol)`
 """
 function isVariable end
@@ -358,7 +358,7 @@ function listNeighbors end
 #TODO should this signiture be standardized or removed?
 """
     $(SIGNATURES)
-Get a VariableCompute with a specific solver key.
+Get a VariableDFG with a specific solver key.
 In memory types still return a reference, other types returns a variable with only solveKey.
 """
 function getVariable(dfg::AbstractDFG, label::Symbol, solveKey::Symbol)

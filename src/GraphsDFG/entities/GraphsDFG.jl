@@ -82,26 +82,18 @@ function GraphsDFG{T, V, F}(
     return GraphsDFG{T, V, F}(g, solverParams, blobStores, graph, agent)
 end
 
-# GraphsDFG{T}(; kwargs...) where T <: AbstractDFGParams = GraphsDFG{T,VariableCompute,FactorDFG}(;kwargs...)
+# GraphsDFG{T}(; kwargs...) where T <: AbstractDFGParams = GraphsDFG{T,VariableDFG,FactorDFG}(;kwargs...)
 function GraphsDFG{T}(
-    g::FactorGraph{Int, VariableCompute, FactorDFG} = FactorGraph{
-        Int,
-        VariableCompute,
-        FactorDFG,
-    }();
+    g::FactorGraph{Int, VariableDFG, FactorDFG} = FactorGraph{Int, VariableDFG, FactorDFG}();
     kwargs...,
 ) where {T <: AbstractDFGParams}
-    return GraphsDFG{T, VariableCompute, FactorDFG}(g; kwargs...)
+    return GraphsDFG{T, VariableDFG, FactorDFG}(g; kwargs...)
 end
 
 function GraphsDFG(
-    g::FactorGraph{Int, VariableCompute, FactorDFG} = FactorGraph{
-        Int,
-        VariableCompute,
-        FactorDFG,
-    }();
+    g::FactorGraph{Int, VariableDFG, FactorDFG} = FactorGraph{Int, VariableDFG, FactorDFG}();
     solverParams::T = NoSolverParams(),
     kwargs...,
 ) where {T}
-    return GraphsDFG{T, VariableCompute, FactorDFG}(g; solverParams, kwargs...)
+    return GraphsDFG{T, VariableDFG, FactorDFG}(g; solverParams, kwargs...)
 end

@@ -17,7 +17,7 @@ Accessible properties for each of the variable structures:
 |---------------------|-------|-----------|------|-----------|-----------|----------|-------------|----------|--------------|
 | VariableSkeleton | X     |           | X    |           |           |          |             |          |              |
 | VariableSummary  | X     | X         | X    | X         | Symbol    |          |             |          | X            |
-| VariableCompute         | X     | X         | X    | X         | X         | X        | X           | X        | X            |
+| VariableDFG         | X     | X         | X    | X         | X         | X        | X           | X        | X            |
 
 Accessible properties for each of the factor structures:
 

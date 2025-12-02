@@ -236,7 +236,7 @@ function DFGVariableSCA()
     v1_tags = Set([:VARIABLE, :POSE])
     testTimestamp = now(localzone())
     # Constructors
-    v1 = VariableCompute(
+    v1 = VariableDFG(
         v1_lbl,
         TestVariableType1();
         tags = v1_tags,
@@ -244,18 +244,18 @@ function DFGVariableSCA()
         states = OrderedDict(:default => State{TestVariableType1}(; label = :default)),
         bloblets = DFG.Bloblets(:small => DFG.Bloblet(:small, "data")),
     )
-    v2 = VariableCompute(
+    v2 = VariableDFG(
         :b,
         State{TestVariableType2}(; label = :default);
         tags = Set([:VARIABLE, :LANDMARK]),
     )
-    v3 = VariableCompute(
+    v3 = VariableDFG(
         :c,
         State{TestVariableType2}(; label = :default);
         timestamp = ZonedDateTime("2020-08-11T00:12:03.000-05:00"),
     )
 
-    vorphan = VariableCompute(
+    vorphan = VariableDFG(
         :orphan,
         TestVariableType1();
         tags = v1_tags,
@@ -271,7 +271,7 @@ function DFGVariableSCA()
     # v3.states[:default].bw[1] = [1.0;1.0]
 
     @test getLabel(v1) == v1_lbl
-    @test getTags(v1) == v1_tags
+    @test DFG.refTags(v1) === v1_tags
 
     @test getTimestamp(v1) == v1.timestamp
 
@@ -287,8 +287,8 @@ function DFGVariableSCA()
 
     #TODO here for now, don't reccomend usage.
     testTags = [:tag1, :tag2]
-    @test setTags!(v3, testTags) == Set(testTags)
-    @test setTags!(v3, Set(testTags)) == Set(testTags)
+    @test DFG.mergeTags!(v3, testTags) == 2
+    @test DFG.mergeTags!(v3, Set(testTags)) == 2
 
     #NOTE  a variable's timestamp is considered similar to its label.  setTimestamp! (not implemented) would create a new variable and call mergeVariable!
     # @test getTimestamp(v1ts) == testTimestamp
@@ -320,7 +320,7 @@ function DFGFactorSCA()
     # "DFG Factor"
 
     # Constructors
-    #VariableCompute solvable default to 1, but Factor to 0, is that correct
+    #VariableDFG solvable default to 1, but Factor to 0, is that correct
     f1_lbl = :abf1
     f1_tags = Set([:FACTOR])
     testTimestamp = now(localzone())
@@ -345,7 +345,7 @@ function DFGFactorSCA()
     # we should perhaps prevent an empty vos
 
     @test getLabel(f1) == f1_lbl
-    @test getTags(f1) == f1_tags
+    @test DFG.refTags(f1) === f1_tags
 
     @test getTimestamp(f1) == f1.timestamp
 
@@ -359,10 +359,9 @@ function DFGFactorSCA()
 
     @test typeof(getObservation(f1)) == TestFunctorInferenceType1{TestBelief}
 
-    #TODO here for now, don't recommend usage.
     testTags = [:tag1, :tag2]
-    @test setTags!(f1, testTags) == Set(testTags)
-    @test setTags!(f1, Set(testTags)) == Set(testTags)
+    @test DFG.mergeTags!(f1, testTags) == 2
+    @test DFG.mergeTags!(f1, Set(testTags)) == 2
 
     #follow with mergeFactor!(fg, v1ts)
 
@@ -401,7 +400,7 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     # test getindex
     @test getLabel(fg[getLabel(v1)]) == getLabel(v1)
 
-    fnope = FactorCompute(:broken, [:a, :nope], TestFunctorInferenceType1())
+    fnope = FactorDFG(:broken, [:a, :nope], TestFunctorInferenceType1())
     @test_throws LabelNotFoundError addFactor!(fg, fnope)
 
     @test addFactor!(fg, f1) == f1
@@ -463,7 +462,7 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
 
     @test addFactor!(fg, f0) == f0
 
-    if isa(v1, VariableCompute)
+    if isa(v1, VariableDFG)
         #TODO decide if this should be @error or other type
         @test_throws LabelNotFoundError getVariable(fg, :a, :missingfoo)
     else
@@ -520,7 +519,7 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     @test ls(fg) == listVariables(fg)
     @test lsf(fg) == listFactors(fg)
 
-    if getVariable(fg, ls(fg)[1]) isa VariableCompute
+    if getVariable(fg, ls(fg)[1]) isa VariableDFG
         @test :default in DFG.listStates(fg)
         @test :default in DFG.listStates(fg; labelFilter = contains("default") ∘ string)
         @test :default in DFG.listStates(fg)
@@ -539,16 +538,17 @@ end
 function tagsTestBlock!(fg, v1, v1_tags)
     # "tags"
     #
-    v1Tags = deepcopy(getTags(v1))
+    v1Tags = deepcopy(DFG.refTags(v1))
     @test issetequal(v1Tags, v1_tags)
     @test issetequal(listTags(fg, :a), v1Tags)
     @test issetequal(mergeTags!(fg, :a, [:TAG]), v1Tags ∪ [:TAG])
     @test issetequal(deleteTags!(fg, :a, [:TAG]), v1Tags)
     @test emptyTags!(fg, :a) == Set{Symbol}()
 
-    v2Tags = [listTags(fg, :b)...]
-    @test hasTags(fg, :b, [v2Tags...])
-    @test hasTags(fg, :b, [:LANDMARK, :TAG], matchAll = false)
+    v2Tags = listTags(fg, :b)
+    @test hasTags(fg, :b, v2Tags)
+    @test hasTags(fg, :b, [:LANDMARK])
+    @test !hasTags(fg, :b, [:LANDMARK, :TAG])
 
     @test listNeighbors(fg, :abf1; tagsFilter = ⊇([:LANDMARK])) == [:b]
     @test isempty(listNeighbors(fg, :abf1; tagsFilter = ⊇([:LANDMARK, :TAG])))
@@ -558,24 +558,28 @@ function tagsTestBlock!(fg, v1, v1_tags)
     @test issetequal(listFactorTags(fg, :abf1), listTags(fg, :abf1))
 
     # Test mergeVariableTags! and mergeFactorTags!
-    initialVarTags = listVariableTags(fg, :a)
     @test mergeVariableTags!(fg, :a, [:NEW_VAR_TAG]) == 1
     @test :NEW_VAR_TAG ∈ listVariableTags(fg, :a)
+    @test hasVariableTags(fg, :a, [:NEW_VAR_TAG])
+    @test deleteVariableTags!(fg, :a, [:NEW_VAR_TAG]) == 1
+    @test !hasVariableTags(fg, :a, [:NEW_VAR_TAG])
 
-    initialFactorTags = listFactorTags(fg, :abf1)
     @test mergeFactorTags!(fg, :abf1, [:NEW_FACTOR_TAG]) == 1
     @test :NEW_FACTOR_TAG ∈ listFactorTags(fg, :abf1)
+    @test hasFactorTags(fg, :abf1, [:NEW_FACTOR_TAG])
 
-    # @test listGraphTags(fg) isa Vector{Symbol}
-    # @test listAgentTags(fg) isa Vector{Symbol}
-
-    initialGraphTags = length(listGraphTags(fg))
     @test mergeGraphTags!(fg, [:GRAPH_TAG]) == 1
     @test :GRAPH_TAG ∈ listGraphTags(fg)
+    @test hasGraphTags(fg, [:GRAPH_TAG])
 
-    initialAgentTags = length(listAgentTags(fg))
     @test mergeAgentTags!(fg, [:AGENT_TAG]) == 1
     @test :AGENT_TAG ∈ listAgentTags(fg)
+    @test hasAgentTags(fg, [:AGENT_TAG])
+
+    @test listVariableTags(fg, :a) isa Vector{Symbol}
+    @test listFactorTags(fg, :abf1) isa Vector{Symbol}
+    @test listGraphTags(fg) isa Vector{Symbol}
+    @test listAgentTags(fg) isa Vector{Symbol}
 end
 
 function VSDTestBlock!(fg, v1)
@@ -1012,7 +1016,7 @@ function testGroup!(fg, v1, v2, f0, f1)
 
         # FIXME return: Symbol[:b, :b] == Symbol[:b]
         varNearTs = findVariableNearTimestamp(fg, now())
-        @test_skip varNearTs[1][1] == [:b]
+        @test varNearTs[1][1] == [:b]
 
         ## SORT copied from CRUD
         @test all(
@@ -1206,8 +1210,8 @@ function AdjacencyMatricesTestBlock(fg)
     @test symdiff(v_ll, [:a, :b, :orphan]) == Symbol[]
     @test symdiff(f_ll, [:abf1]) == Symbol[]
 
-    # Only do solvable tests on VariableCompute
-    if isa(getVariable(fg, :a), VariableCompute)
+    # Only do solvable tests on VariableDFG
+    if isa(getVariable(fg, :a), VariableDFG)
         # Filtered - REF DFG #201
         adjMat, v_ll, f_ll = getBiadjacencyMatrix(fg; solvableFilter = >=(0))
         @test size(adjMat) == (1, 3)
@@ -1225,7 +1229,7 @@ end
 # Now make a complex graph for connectivity tests
 function connectivityTestGraph(
     ::Type{T};
-    VARTYPE = VariableCompute,
+    VARTYPE = VariableDFG,
     FACTYPE = FactorCompute,
 ) where {T <: AbstractDFG}#InMemoryDFGTypes
     #settings
@@ -1291,7 +1295,7 @@ end
 
 # dfg, verts, facs = connectivityTestGraph(testDFGAPI)
 
-function GettingNeighbors(testDFGAPI; VARTYPE = VariableCompute, FACTYPE = FactorCompute)
+function GettingNeighbors(testDFGAPI; VARTYPE = VariableDFG, FACTYPE = FactorCompute)
     # "Getting Neighbors"
     dfg, verts, facs =
         connectivityTestGraph(testDFGAPI; VARTYPE = VARTYPE, FACTYPE = FACTYPE)
@@ -1307,7 +1311,7 @@ function GettingNeighbors(testDFGAPI; VARTYPE = VariableCompute, FACTYPE = Facto
 
     # Solvable
     #TODO if not a GraphsDFG with and summary or skeleton
-    if VARTYPE == VariableCompute
+    if VARTYPE == VariableDFG
         @test listNeighbors(dfg, :x5; solvableFilter = >=(2)) == Symbol[]
         @test issetequal(
             listNeighbors(dfg, :x5; solvableFilter = >=(0)),
@@ -1323,7 +1327,7 @@ function GettingNeighbors(testDFGAPI; VARTYPE = VariableCompute, FACTYPE = Facto
 end
 
 #TODO confirm these tests are covered somewhere then delete
-# function  GettingSubgraphs(testDFGAPI; VARTYPE=VariableCompute, FACTYPE=FactorCompute)
+# function  GettingSubgraphs(testDFGAPI; VARTYPE=VariableDFG, FACTYPE=FactorCompute)
 #
 #     # "Getting Subgraphs"
 #     dfg, verts, facs = connectivityTestGraph(testDFGAPI, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
@@ -1345,7 +1349,7 @@ end
 #     @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
 #
 #     #TODO if not a GraphsDFG with and summary or skeleton
-#     if VARTYPE == VariableCompute
+#     if VARTYPE == VariableDFG
 #         # DFG issue #201 Test include orphan factors with filtering - should only return x7 with solvable=1
 #         @test_broken begin
 #             dfgSubgraph = getSubgraphAroundNode(dfg, getFactor(dfg, :x7x8f1), 1, true, solvable=0)
@@ -1373,7 +1377,7 @@ end
 #
 # end
 
-function BuildingSubgraphs(testDFGAPI; VARTYPE = VariableCompute, FACTYPE = FactorCompute)
+function BuildingSubgraphs(testDFGAPI; VARTYPE = VariableDFG, FACTYPE = FactorCompute)
 
     # "Getting Subgraphs"
     dfg, verts, facs =
@@ -1392,7 +1396,7 @@ function BuildingSubgraphs(testDFGAPI; VARTYPE = VariableCompute, FACTYPE = Fact
     @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
 
     #TODO if not a GraphsDFG with and summary or skeleton
-    if VARTYPE == VariableCompute
+    if VARTYPE == VariableDFG
         dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [:x8], 2; solvable = 1)
         @test issetequal([:x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
         #end if not a GraphsDFG with and summary or skeleton
@@ -1409,7 +1413,7 @@ function BuildingSubgraphs(testDFGAPI; VARTYPE = VariableCompute, FACTYPE = Fact
     end
 
     #TODO buildSubgraph default constructors for skeleton and summary
-    if VARTYPE == VariableCompute
+    if VARTYPE == VariableDFG
         dfgSubgraph = buildSubgraph(dfg, [:x1, :x2, :x1x2f1])
         @test issetequal([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
 
@@ -1458,7 +1462,7 @@ function ProducingDotFiles(
     v1 = nothing,
     v2 = nothing,
     f1 = nothing;
-    VARTYPE = VariableCompute,
+    VARTYPE = VariableDFG,
     FACTYPE = FactorCompute,
 )
     # "Producing Dot Files"
@@ -1483,7 +1487,7 @@ function ProducingDotFiles(
     addVariable!(dotdfg, v2)
     # FIXME, fix deprecation
     # ┌ Warning: addFactor!(dfg, variables, factor) is deprecated, use addFactor!(dfg, factor)
-    # │   caller = ProducingDotFiles(testDFGAPI::Type{GraphsDFG}, v1::Nothing, v2::Nothing, f1::Nothing; VARTYPE::Type{VariableCompute}, FACTYPE::Type{FactorCompute}) at testBlocks.jl:1440
+    # │   caller = ProducingDotFiles(testDFGAPI::Type{GraphsDFG}, v1::Nothing, v2::Nothing, f1::Nothing; VARTYPE::Type{VariableDFG}, FACTYPE::Type{FactorCompute}) at testBlocks.jl:1440
     # └ @ Main ~/.julia/dev/DistributedFactorGraphs/test/testBlocks.jl:1440
     addFactor!(dotdfg, f1)
     #NOTE hardcoded toDot will have different results so test Graphs seperately

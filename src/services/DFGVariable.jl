@@ -14,7 +14,7 @@
 
 Get the kind of the variable's state, eg. `Pose2`, `Point3`, etc. as an instance of `StateType`.
 """
-getStateKind(::VariableCompute{T}) where {T} = T()
+getStateKind(::VariableDFG{T}) where {T} = T()
 
 getStateKind(::State{T}) where {T} = T()
 
@@ -116,7 +116,7 @@ end
 Interface function to return the `<:ManifoldsBase.AbstractManifold` object of `variableType<:StateType`.
 """
 getManifold(::T) where {T <: StateType} = getManifold(T)
-getManifold(vari::VariableCompute) = getStateKind(vari) |> getManifold
+getManifold(vari::VariableDFG) = getStateKind(vari) |> getManifold
 getManifold(state::State) = getStateKind(state) |> getManifold
 # covers both <:StateType and <:AbstractObservation
 getManifold(dfg::AbstractDFG, lbl::Symbol) = getManifold(dfg[lbl])
@@ -131,7 +131,7 @@ getDimension(::Type{T}) where {T <: StateType} = manifold_dimension(getManifold(
 getDimension(::T) where {T <: StateType} = manifold_dimension(getManifold(T))
 getDimension(M::ManifoldsBase.AbstractManifold) = manifold_dimension(M)
 getDimension(p::Distributions.Distribution) = length(p)
-getDimension(var::VariableCompute) = getDimension(getStateKind(var))
+getDimension(var::VariableDFG) = getDimension(getStateKind(var))
 
 """
     $SIGNATURES
@@ -213,7 +213,7 @@ Related
 isSolved, setSolvedCount!
 """
 getSolvedCount(v::State) = v.solves
-function getSolvedCount(v::VariableCompute, solveKey::Symbol = :default)
+function getSolvedCount(v::VariableDFG, solveKey::Symbol = :default)
     return getState(v, solveKey) |> getSolvedCount
 end
 function getSolvedCount(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol = :default)
@@ -230,7 +230,7 @@ Related
 getSolved, isSolved
 """
 setSolvedCount!(v::State, val::Int) = v.solves = val
-function setSolvedCount!(v::VariableCompute, val::Int, solveKey::Symbol = :default)
+function setSolvedCount!(v::VariableDFG, val::Int, solveKey::Symbol = :default)
     return setSolvedCount!(getState(v, solveKey), val)
 end
 function setSolvedCount!(
@@ -252,7 +252,7 @@ Related
 getSolved, setSolved!
 """
 isSolved(v::State) = 0 < v.solves
-function isSolved(v::VariableCompute, solveKey::Symbol = :default)
+function isSolved(v::VariableDFG, solveKey::Symbol = :default)
     return getState(v, solveKey) |> isSolved
 end
 function isSolved(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol = :default)
@@ -270,7 +270,7 @@ Returns state of variable data `.initialized` flag.
 Notes:
 - used by both factor graph variable and Bayes tree clique logic.
 """
-function isInitialized(var::VariableCompute, key::Symbol = :default)
+function isInitialized(var::VariableDFG, key::Symbol = :default)
     return getState(var, key).initialized
 end
 
@@ -286,7 +286,7 @@ Return `::Bool` on whether this variable has been marginalized.
 Notes:
 - State default `solveKey=:default`
 """
-function isMarginalized(vert::VariableCompute, solveKey::Symbol = :default)
+function isMarginalized(vert::VariableDFG, solveKey::Symbol = :default)
     return getState(vert, solveKey).marginalized
 end
 function isMarginalized(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol = :default)
@@ -301,7 +301,7 @@ Mark a variable as marginalized `true` or `false`.
 function setMarginalized!(vnd::State, val::Bool)
     return vnd.marginalized = val
 end
-function setMarginalized!(vari::VariableCompute, val::Bool, solveKey::Symbol = :default)
+function setMarginalized!(vari::VariableDFG, val::Bool, solveKey::Symbol = :default)
     return setMarginalized!(getState(vari, solveKey), val)
 end
 function setMarginalized!(
@@ -321,7 +321,7 @@ end
 # |---------------------|:-----:|:----:|:---------:|:----------------:|:--------:|:----------:|:---------:|:-----------:|
 # | VariableSkeleton |   X   |   X  |           |                  |          |            |           |             |
 # | VariableSummary  |   X   |   X  |     X     |         X        |          |            |           |       X     |
-# | VariableCompute  |   X   |   X  |     x     |                  |     X    |      X     |     X     |       X     |
+# | VariableDFG  |   X   |   X  |     x     |                  |     X    |      X     |     X     |       X     |
 #
 ##------------------------------------------------------------------------------
 
@@ -337,8 +337,6 @@ end
 ##------------------------------------------------------------------------------
 
 ## COMMON
-# getTags
-# setTags!
 
 ##------------------------------------------------------------------------------
 ## timestamp
@@ -384,9 +382,9 @@ end
 ##------------------------------------------------------------------------------
 ## CRUD: get, add, update, delete
 ##------------------------------------------------------------------------------
-hasState(v::VariableCompute, label::Symbol) = haskey(v.states, label)
+hasState(v::VariableDFG, label::Symbol) = haskey(v.states, label)
 
-function getState(v::VariableCompute, label::Symbol)
+function getState(v::VariableDFG, label::Symbol)
     !haskey(refStates(v), label) && throw(LabelNotFoundError("State", label))
     return refStates(v)[label]
 end
@@ -414,7 +412,7 @@ function addState!(dfg::GraphsDFG, variableLabel::Symbol, state::State)
     return addState!(var, state)
 end
 
-function addState!(v::VariableCompute, state::State)
+function addState!(v::VariableDFG, state::State)
     if haskey(refStates(v), state.label)
         throw(LabelExistsError("State", state.label))
     end
@@ -453,7 +451,7 @@ function mergeState!(dfg::GraphsDFG, variableLabel::Symbol, vnd::State)
     return mergeState!(getVariable(dfg, variableLabel), vnd)
 end
 
-function mergeState!(v::VariableCompute, vnd::State)
+function mergeState!(v::VariableDFG, vnd::State)
     if !haskey(v.states, vnd.label)
         addState!(v, vnd)
     else
@@ -497,7 +495,7 @@ function deleteState!(dfg::GraphsDFG, variableLabel::Symbol, label::Symbol)
     return deleteState!(getVariable(dfg, variableLabel), label)
 end
 
-function deleteState!(v::VariableCompute, label::Symbol)
+function deleteState!(v::VariableDFG, label::Symbol)
     if !haskey(v.states, label)
         throw(LabelNotFoundError("State", label))
     end
@@ -505,7 +503,7 @@ function deleteState!(v::VariableCompute, label::Symbol)
     return 1
 end
 
-function deleteState!(dfg::AbstractDFG, sourceVariable::VariableCompute, label::Symbol)
+function deleteState!(dfg::AbstractDFG, sourceVariable::VariableDFG, label::Symbol)
     return deleteState!(dfg, sourceVariable.label, label)
 end
 
@@ -538,7 +536,7 @@ end
     $(SIGNATURES)
 List all the variable state labels.
 """
-function listStates(v::VariableCompute; labelFilter::Union{Nothing, Function} = nothing)
+function listStates(v::VariableDFG; labelFilter::Union{Nothing, Function} = nothing)
     labels = collect(keys(v.states))
     return filterDFG!(labels, labelFilter)
 end

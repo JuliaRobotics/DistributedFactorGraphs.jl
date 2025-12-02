@@ -2,11 +2,11 @@
 ## Printing Variables and Factors
 ##==============================================================================
 
-printVariable(vert::VariableCompute; kwargs...) = printVariable(stdout::IO, vert; kwargs...)
+printVariable(vert::VariableDFG; kwargs...) = printVariable(stdout::IO, vert; kwargs...)
 
 function printVariable(
     io::IO,
-    vert::VariableCompute;
+    vert::VariableDFG;
     short::Bool = false,
     compact::Bool = true,
     limit::Bool = true,
@@ -175,7 +175,7 @@ end
 ## Overloading show
 ##==============================================================================
 # Base.show_default(io, v)
-function Base.show(io::IO, ::MIME"text/plain", v::VariableCompute)
+function Base.show(io::IO, ::MIME"text/plain", v::VariableDFG)
     return printVariable(io, v; short = true, limit = false)
 end
 
