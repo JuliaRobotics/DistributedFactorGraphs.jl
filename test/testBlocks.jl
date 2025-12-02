@@ -750,6 +750,10 @@ function DataEntriesTestBlock!(fg, v2)
     @test issetequal(listVariableBlobentries(fg, :a), [:key1, :key2])
     @test listVariableBlobentries(fg, :b) == Symbol[:key2]
 
+    @test hasVariableBlobentry(fg, :a, :key1)
+    @test !hasVariableBlobentry(fg, :a, :nope)
+    @test_throws LabelNotFoundError hasVariableBlobentry(fg, :nope, :nope)
+
     #delete
     @test deleteBlobentry!(v1, :key1) == 1
     @test listVariableBlobentries(fg, getLabel(v1)) == Symbol[:key2]
@@ -770,6 +774,23 @@ function DataEntriesTestBlock!(fg, v2)
     @test_throws LabelNotFoundError deleteVariableBlobentries!(fg, :a, [:key1])
     @test_throws LabelExistsError addVariableBlobentries!(fg, :a, [de2])
     @test deleteVariableBlobentries!(fg, :a, [:key2]) == 1
+
+    #Factor blobentries
+    @test addFactorBlobentry!(fg, :abf1, de1) == de1
+    @test_throws LabelExistsError addFactorBlobentry!(fg, :abf1, de1)
+    @test de1 == getFactorBlobentry(fg, :abf1, getLabel(de1))
+    @test_throws LabelNotFoundError getFactorBlobentry(fg, :abf1, :nope)
+    @test hasFactorBlobentry(fg, :abf1, getLabel(de1))
+    @test !hasFactorBlobentry(fg, :abf1, :nope)
+    @test mergeFactorBlobentry!(fg, :abf1, de2_update) == 1
+    @test listFactorBlobentries(fg, :abf1) == [getLabel(de1), getLabel(de2_update)]
+    @test deleteFactorBlobentry!(fg, :abf1, getLabel(de2_update)) == 1
+    @test_throws LabelNotFoundError deleteFactorBlobentry!(fg, :abf1, getLabel(de2_update))
+    @test getFactorBlobentries(fg, :abf1) == [de1]
+    @test getLabel.(addFactorBlobentries!(fg, :abf1, [de2])) == [getLabel(de2)]
+    @test mergeFactorBlobentries!(fg, :abf1, [de1, de2_update]) == 2
+    @test deleteFactorBlobentries!(fg, :abf1, [getLabel(de1), getLabel(de2_update)]) == 2
+    @test listFactorBlobentries(fg, :abf1) == Symbol[]
 
     #graph blobentries
     @test addGraphBlobentry!(fg, de1) == de1

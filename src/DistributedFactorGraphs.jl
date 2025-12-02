@@ -185,6 +185,17 @@ export hasVariableBlobentry
 export hasGraphBlobentry
 export hasAgentBlobentry
 
+export addFactorBlobentry!
+export addFactorBlobentries!
+export getFactorBlobentry
+export getFactorBlobentries
+export mergeFactorBlobentry!
+export mergeFactorBlobentries!
+export deleteFactorBlobentry!
+export deleteFactorBlobentries!
+export listFactorBlobentries
+export hasFactorBlobentry
+
 ##------------------------------------------------------------------------------
 ## Blobstores and Blobs
 ##------------------------------------------------------------------------------
