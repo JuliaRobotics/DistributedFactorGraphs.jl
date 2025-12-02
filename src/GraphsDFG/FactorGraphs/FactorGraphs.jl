@@ -95,8 +95,7 @@ has_vertex(g::FactorGraph, x...) = has_vertex(g.graph, x...)
 inneighbors(g::FactorGraph, v::Integer) = inneighbors(g.graph, v)
 outneighbors(g::FactorGraph, v::Integer) = fadj(g.graph, v)
 
-is_directed(::Type{FactorGraph}) = false
-is_directed(::Type{FactorGraph{T, V, F}}) where {T, V, F} = false
+is_directed(::Type{<:FactorGraph}) = false
 is_directed(g::FactorGraph) = false
 
 Base.zero(g::FactorGraph{T, V, F}) where {T, V, F} = FactorGraph{T, V, F}(0, 0)

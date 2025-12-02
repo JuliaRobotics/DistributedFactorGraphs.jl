@@ -184,6 +184,10 @@ function GraphAgentBlobentries!(fg::AbstractDFG)
     @test hasAgentBlobentry(fg, :key1) == false
     @test_throws DFG.LabelNotFoundError getAgentBlobentry(fg, :key1)
     @test_throws DFG.LabelNotFoundError deleteAgentBlobentry!(fg, :key1)
+    @test addAgentBlobentries!(fg, [be]) == [be]
+    @test deleteAgentBlobentries!(fg, [:key1]) == 1
+    @test mergeAgentBlobentries!(fg, [be]) == 1
+    @test deleteAgentBlobentries!(fg, [:key1]) == 1
 
     # Graph Blob Entries
     ae = addGraphBlobentry!(fg, be)
@@ -199,6 +203,10 @@ function GraphAgentBlobentries!(fg::AbstractDFG)
     @test hasGraphBlobentry(fg, :key1) == false
     @test_throws DFG.LabelNotFoundError getGraphBlobentry(fg, :key1)
     @test_throws DFG.LabelNotFoundError deleteGraphBlobentry!(fg, :key1)
+    @test addGraphBlobentries!(fg, [be]) == [be]
+    @test deleteGraphBlobentries!(fg, [:key1]) == 1
+    @test mergeGraphBlobentries!(fg, [be]) == 1
+    @test deleteGraphBlobentries!(fg, [:key1]) == 1
 
     be2 = Blobentry(; blobid = uuid4(), label = :key2, blobstore = :b)
 
