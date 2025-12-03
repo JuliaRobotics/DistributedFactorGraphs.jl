@@ -144,14 +144,14 @@ function hasFactor end
 
 """
     $(SIGNATURES)
-Add a VariableCompute to a DFG.
+Add a VariableDFG to a DFG.
 Implement `addVariable!(dfg::AbstractDFG, variable::AbstractGraphVariable)`
 """
 function addVariable! end
 
 """
     $(SIGNATURES)
-Add a Vector{VariableCompute} to a DFG.
+Add a Vector{VariableDFG} to a DFG.
 Implement `addVariables!(dfg::AbstractDFG, variables::Vector{<:AbstractGraphVariable})`
 """
 function addVariables!(dfg::AbstractDFG, variables::Vector{<:AbstractGraphVariable})
@@ -179,7 +179,7 @@ end
 
 """
     $(SIGNATURES)
-Get a VariableCompute from a DFG using its label.
+Get a VariableDFG from a DFG using its label.
 Implement `getVariable(dfg::AbstractDFG, label::Symbol)`
 """
 function getVariable end
@@ -238,7 +238,11 @@ otherwise, the variable will be added to the graph.
 Implement `mergeVariable!(dfg::AbstractDFG, variable::AbstractGraphVariable)`
 """
 function mergeVariable! end
-function mergeVariables! end
+
+function mergeVariables!(dfg::AbstractDFG, variables::Vector{<:AbstractGraphVariable})
+    counts = asyncmap(v->mergeVariable!(dfg, v), variables)
+    return sum(counts)
+end
 
 """
     $(SIGNATURES)
@@ -247,11 +251,15 @@ otherwise, the factor will be added to the graph.
 Implement `mergeFactor!(dfg::AbstractDFG, factor::AbstractGraphFactor)`
 """
 function mergeFactor! end
-function mergeFactors! end
+
+function mergeFactors!(dfg::AbstractDFG, factors::Vector{<:AbstractGraphFactor})
+    counts = asyncmap(f->mergeFactor!(dfg, f), factors)
+    return sum(counts)
+end
 
 """
     $(SIGNATURES)
-Delete a VariableCompute from the DFG.
+Delete a VariableDFG from the DFG.
 Implement `deleteVariable!(dfg::AbstractDFG, label::Symbol)`
 """
 function deleteVariable! end
@@ -307,7 +315,7 @@ end
 
 Return whether `sym::Symbol` represents a variable vertex in the graph DFG.
 Checks whether it both exists in the graph and is a variable.
-(If you rather want a quick for type, just do node isa VariableCompute)
+(If you rather want a quick for type, just do node isa VariableDFG)
 Implement `isVariable(dfg::AbstractDFG, label::Symbol)`
 """
 function isVariable end
@@ -350,7 +358,7 @@ function listNeighbors end
 #TODO should this signiture be standardized or removed?
 """
     $(SIGNATURES)
-Get a VariableCompute with a specific solver key.
+Get a VariableDFG with a specific solver key.
 In memory types still return a reference, other types returns a variable with only solveKey.
 """
 function getVariable(dfg::AbstractDFG, label::Symbol, solveKey::Symbol)
@@ -436,7 +444,7 @@ Common function for copying nodes from one graph into another graph.
 This is overridden in specialized implementations for performance.
 Orphaned factors are not added, with a warning if verbose.
 Set `overwriteDest` to overwrite existing variables and factors in the destination DFG.
-NOTE: copyGraphMetadata not supported yet.
+NOTE: `copyGraphMetadata` is deprecated – use agent/graph Bloblets instead.
 Related:
 - [`deepcopyGraph`](@ref)
 - [`deepcopyGraph!`](@ref)
@@ -498,8 +506,10 @@ function copyGraph!(
     end
 
     if copyGraphMetadata
-        setAgentMetadata(destDFG, getAgentMetadata(sourceDFG))
-        setGraphMetadata(destDFG, getGraphMetadata(sourceDFG))
+        error(
+            "copyGraphMetadata keyword has been removed – metadata APIs were replaced by Bloblets. " *
+            "Copy agent/graph Bloblets manually before calling copyGraph!",
+        )
     end
     return nothing
 end

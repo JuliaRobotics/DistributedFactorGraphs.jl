@@ -153,6 +153,7 @@ end
     @test issetequal(ls(dfg, Position{1}), [:a, :b])
 
     varNearTs = findVariableNearTimestamp(dfg, now())
+    # TODO
     @test_skip varNearTs[1][1] == [:b]
 end
 
@@ -174,7 +175,7 @@ end
 
     # Accessors
     @test getLabel(v1) == v1.label
-    @test getTags(v1) == v1.tags
+    @test DFG.refTags(v1) === v1.tags
     @test getTimestamp(v1) == v1.timestamp
     @test getState(v1, :default) === v1.states[:default]
     @test refStates(v1) == v1.states
@@ -184,7 +185,7 @@ end
     @test typeof(getStateKind(v1)) == Position{1}
 
     @test getLabel(f1) == f1.label
-    @test getTags(f1) == f1.tags
+    @test DFG.refTags(f1) === f1.tags
     @test DFG.getRecipestate(f1) === f1.state
     @test getObservation(f1) === f1.observation
 
@@ -197,14 +198,13 @@ end
 
     @test_throws LabelNotFoundError isInitialized(v2, :second)
 
-    # Session, robot, and user small data tests
-    #FIXME change to Bloblets
-    # smallRobotData = Dict{Symbol, MetadataTypes}(:a => "43", :b => "Hello")
-    # smallSessionData = Dict{Symbol, MetadataTypes}(:a => "44", :b => "Hello")
-    # setAgentMetadata!(dfg, deepcopy(smallRobotData))
-    # setGraphMetadata!(dfg, deepcopy(smallSessionData))
-    # @test getAgentMetadata(dfg) == smallRobotData
-    # @test getGraphMetadata(dfg) == smallSessionData
+    # Graph and Agent small data tests
+    agentBloblets = [Bloblet(:a, "43"), Bloblet(:b, "Hello")]
+    graphBloblets = [Bloblet(:c, "44"), Bloblet(:d, "Hello")]
+    DFG.addAgentBloblets!(dfg, agentBloblets)
+    DFG.addGraphBloblets!(dfg, graphBloblets)
+    @test DFG.listAgentBloblets(dfg) == [:a, :b]
+    @test DFG.listGraphBloblets(dfg) == [:c, :d]
 end
 
 @testset "Data Entries" begin

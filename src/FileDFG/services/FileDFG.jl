@@ -118,7 +118,7 @@ function loadDFG!(
     # extract the factor graph from fileDFG folder
     variablefiles = readdir(joinpath(loaddir, "variables"); sort = false, join = true)
 
-    # type instability on `variables` as either `::Vector{Variable}` or `::Vector{VariableCompute{<:}}` (vector of abstract)
+    # type instability on `variables` as either `::Vector{Variable}` or `::Vector{VariableDFG{<:}}` (vector of abstract)
     variables = @showprogress dt=1 desc = "loading variables" asyncmap(
         variablefiles,
     ) do file

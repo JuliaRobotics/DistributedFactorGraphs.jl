@@ -7,6 +7,7 @@ if false
     using UUIDs
     using TimeZones
     using TimesDates
+    using DistributedFactorGraphs: OrderedDict
 
     include("testBlocks.jl")
 
@@ -33,15 +34,15 @@ end
 end
 
 # User, Robot, Session Data
-# @testset "User, Robot, Session Data" begin
-#     GraphAgentMetadata!(fg1)
-# end
+@testset "User, Robot, Session Data" begin
+    GraphAgentBloblets!(fg1)
+end
 
-# @testset "User, Robot, Session Blob Entries" begin
-#     GraphAgentBlobentries!(fg1)
-# end
+@testset "User, Robot, Session Blob Entries" begin
+    GraphAgentBlobentries!(fg1)
+end
 
-# VariableCompute structure construction and accessors
+# VariableDFG structure construction and accessors
 @testset "DFG Variable" begin
     global var1, var2, var3, v1_tags, vorphan
     var1, var2, var3, vorphan, v1_tags = DFGVariableSCA()
@@ -76,7 +77,7 @@ end
     @test occursin(r"timestamp", varstr)
     @test occursin(r"label", varstr)
     @test occursin(r"bandwidths", varstr)
-    #  == "VariableCompute{TestVariableType1}\nlabel: a\ntags: Set([:VARIABLE, :POSE])\nsize marginal samples: (1, 1)\nkde bandwidths: [0.0]\nNo PPEs\n"
+    #  == "VariableDFG{TestVariableType1}\nlabel: a\ntags: Set([:VARIABLE, :POSE])\nsize marginal samples: (1, 1)\nkde bandwidths: [0.0]\nNo PPEs\n"
 
     @test printFactor(iobuf, fac1; skipfields = [:timestamp]) === nothing
     @test occursin(r"FactorDFG.*\nlabel:\n:abf1", String(take!(iobuf)))

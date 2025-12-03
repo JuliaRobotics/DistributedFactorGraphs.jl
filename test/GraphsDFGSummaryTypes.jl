@@ -9,7 +9,7 @@ function DistributedFactorGraphs.VariableSummary(label::Symbol)
         TimeDateZone("2025-11-13T15:21:57.474125421+01:00"),
         Set{Symbol}(),
         :Pose2,
-        Dict{Symbol, Blobentry}(),
+        DFG.Blobentries(),
     )
 end
 
@@ -19,7 +19,7 @@ function DistributedFactorGraphs.VariableSummary(label::Symbol, ::State{T}) wher
         TimeDateZone("2025-11-13T15:21:57.474125421+01:00"),
         Set{Symbol}(),
         Symbol(T),
-        Dict{Symbol, Blobentry}(),
+        DFG.Blobentries(),
     )
 end
 
@@ -93,10 +93,10 @@ end
     global dfg, v1, v2, f1
 
     @test getLabel(v1) == v1.label
-    @test getTags(v1) == v1.tags
+    @test DFG.refTags(v1) === v1.tags
 
     @test getLabel(f1) == f1.label
-    @test getTags(f1) == f1.tags
+    @test DFG.refTags(f1) === f1.tags
 
     if VARTYPE == VariableSummary
         @test getTimestamp(v1) == v1.timestamp

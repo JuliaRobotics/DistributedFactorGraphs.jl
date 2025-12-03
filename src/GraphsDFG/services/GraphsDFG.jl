@@ -91,11 +91,6 @@ function mergeVariable!(dfg::GraphsDFG, variable::AbstractGraphVariable)
     return 1
 end
 
-function DFG.mergeVariables!(dfg::GraphsDFG, variables)
-    cnts = map(v -> mergeVariable!(dfg, v), variables)
-    return sum(cnts)
-end
-
 function mergeFactor!(dfg::GraphsDFG, factor::AbstractGraphFactor)
     if !haskey(dfg.g.factors, factor.label)
         addFactor!(dfg, factor)
@@ -110,11 +105,6 @@ function mergeFactor!(dfg::GraphsDFG, factor::AbstractGraphFactor)
     end
 
     return 1
-end
-
-function DFG.mergeFactors!(dfg::GraphsDFG, factors)
-    cnts = map(f -> mergeFactor!(dfg, f), factors)
-    return sum(cnts)
 end
 
 function deleteVariable!(dfg::GraphsDFG, label::Symbol)#::Tuple{AbstractGraphVariable, Vector{<:AbstractGraphFactor}}
@@ -312,14 +302,6 @@ end
 function isConnected(dfg::GraphsDFG)
     return Graphs.is_connected(dfg.g)
     # return length(Graphs.connected_components(dfg.g)) == 1
-end
-
-_isSolvable(dfg::GraphsDFG, label::Symbol, ready::Nothing) = true
-
-function _isSolvable(dfg::GraphsDFG, label::Symbol, ready::Int)
-    haskey(dfg.g.variables, label) && (return dfg.g.variables[label].solvable[] >= ready)
-    haskey(dfg.g.factors, label) && (return dfg.g.factors[label].solvable[] >= ready)
-    throw(LabelNotFoundError(label))
 end
 
 function listNeighbors(
@@ -651,6 +633,42 @@ function DFG.mergeAgentBlobentries!(dfg::GraphsDFG, entries::Vector{Blobentry})
         return mergeAgentBlobentry!(dfg, entry)
     end
     return sum(cnts)
+end
+
+##=============================================================================
+## Variable Blobentries
+##=============================================================================
+
+function DFG.addVariableBlobentry!(dfg::GraphsDFG, label::Symbol, entry::Blobentry)
+    variable = getVariable(dfg, label)
+    addBlobentry!(variable, entry)
+    return entry
+end
+
+function DFG.mergeVariableBlobentry!(dfg::GraphsDFG, label::Symbol, entry::Blobentry)
+    return mergeBlobentry!(getVariable(dfg, label), entry)
+end
+
+function DFG.deleteVariableBlobentry!(dfg::GraphsDFG, label::Symbol, entryLabel::Symbol)
+    return deleteBlobentry!(getVariable(dfg, label), entryLabel)
+end
+
+##=============================================================================
+## Factor Blobentries
+##=============================================================================
+
+function DFG.addFactorBlobentry!(dfg::GraphsDFG, label::Symbol, entry::Blobentry)
+    factor = getFactor(dfg, label)
+    addBlobentry!(factor, entry)
+    return entry
+end
+
+function DFG.mergeFactorBlobentry!(dfg::GraphsDFG, label::Symbol, entry::Blobentry)
+    return mergeBlobentry!(getFactor(dfg, label), entry)
+end
+
+function DFG.deleteFactorBlobentry!(dfg::GraphsDFG, label::Symbol, entryLabel::Symbol)
+    return deleteBlobentry!(getFactor(dfg, label), entryLabel)
 end
 
 function DFG.deleteGraphBlobentry!(dfg::GraphsDFG, label::Symbol)

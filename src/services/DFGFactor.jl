@@ -141,8 +141,6 @@ getManifold(f::AbstractGraphFactor) = getManifold(getObservation(f))
 ##------------------------------------------------------------------------------
 
 ## COMMON
-# getTags
-# setTags!
 
 ##------------------------------------------------------------------------------
 ## timestamp

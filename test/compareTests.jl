@@ -20,18 +20,16 @@ vnd2.val[1] = [0.1;]
 @test !(vnd1 == vnd2)
 @test !(vnd1 == vnd3)
 
-# VariableCompute
-v1 = VariableCompute(:x1, TestVariableType1())
+# VariableDFG
+v1 = VariableDFG(:x1, TestVariableType1())
 v2 = deepcopy(v1)
-v3 = VariableCompute(:x2, TestVariableType2())
+v3 = VariableDFG(:x2, TestVariableType2())
 
 @test v1 == v2
 setSolvable!(v2, 0)
 @test !(v1 == v2)
 @test !(v1 == v3)
-@test !(
-    VariableCompute(:x1, TestVariableType1()) == VariableCompute(:x1, TestVariableType2())
-)
+@test !(VariableDFG(:x1, TestVariableType1()) == VariableDFG(:x1, TestVariableType2()))
 
 facstate1 = DFG.Recipestate(; eliminated = true, potentialused = true)
 facstate2 = deepcopy(facstate1)

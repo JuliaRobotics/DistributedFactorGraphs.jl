@@ -113,23 +113,6 @@ function Base.getproperty(x::Blobentry, f::Symbol)
     end
 end
 
-function Base.setproperty!(x::Blobentry, f::Symbol, val)
-    if f == :blobId
-        @warn "Blobentry field :blobId has been renamed to :blobid"
-        setfield!(x, :blobid, val)
-    elseif f == :mimeType
-        @warn "Blobentry field :mimeType has been renamed to :mimetype"
-        setfield!(x, :mimetype, val)
-    elseif f == :_version
-        @warn "Blobentry field :_version has been renamed to :version"
-        setfield!(x, :version, val)
-    elseif f in [:id, :createdTimestamp, :lastUpdatedTimestamp, :hash]
-        error("Blobentry field $f has been deprecated")
-    else
-        setfield!(x, f, val)
-    end
-end
-
 const Blobentries = OrderedDict{Symbol, Blobentry}
 
 function StructUtils.lower(entries::Blobentries)

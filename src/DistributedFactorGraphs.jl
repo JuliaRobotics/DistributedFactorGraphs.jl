@@ -44,7 +44,7 @@ using Tables
 # used for @defStateType
 import ManifoldsBase
 using ManifoldsBase: AbstractManifold, manifold_dimension
-export AbstractManifold, manifold_dimension
+export AbstractManifold
 
 using RecursiveArrayTools: ArrayPartition
 export ArrayPartition
@@ -64,26 +64,30 @@ export AbstractBlobstore, Blobstore
 export AbstractGraphNode, GraphNode
 export AbstractGraphVariable, GraphVariable
 export AbstractGraphFactor, GraphFactor
-export AbstractPackedObservation, PackedObservation
 export AbstractObservation, Observation
 export AbstractPriorObservation, PriorObservation
 export AbstractRelativeObservation, RelativeObservation
 export AbstractFactorCache, FactorCache
 export AbstractStateType, StateType
-export AbstractPackedBelief, PackedBelief
 
 ##------------------------------------------------------------------------------
 ## Types
 ##------------------------------------------------------------------------------
 #TODO types are not yet stable - also, we might not export types such as VariableCompute
 # Variables
-export VariableCompute, VariableDFG, VariableSummary, VariableSkeleton
+export VariableDFG
+export VariableSummary
+export VariableSkeleton
 # Factors
-export FactorDFG, FactorSummary, FactorSkeleton
+export FactorDFG
+export FactorSummary
+export FactorSkeleton
 
+#TODO Still pending timestamp field name decision
 export Blobentry
 
 export State
+export Agent
 
 ##------------------------------------------------------------------------------
 ## Functions
@@ -185,6 +189,17 @@ export hasVariableBlobentry
 export hasGraphBlobentry
 export hasAgentBlobentry
 
+export addFactorBlobentry!
+export addFactorBlobentries!
+export getFactorBlobentry
+export getFactorBlobentries
+export mergeFactorBlobentry!
+export mergeFactorBlobentries!
+export deleteFactorBlobentry!
+export deleteFactorBlobentries!
+export listFactorBlobentries
+export hasFactorBlobentry
+
 ##------------------------------------------------------------------------------
 ## Blobstores and Blobs
 ##------------------------------------------------------------------------------
@@ -223,19 +238,15 @@ export GraphsDFG
 # export addState!,             getState,             mergeState!,             deleteState!
 # export addStates!,            getStates,            mergeStates!,            deleteStates!
 
-# export addBlobentry!,         getBlobentry,         mergeBlobentry!,         deleteBlobentry! # historic for VariableBlobentry
-# export addBlobentries!,       getBlobentries,       mergeBlobentries!,       deleteBlobentries!
 # export addVariableBlobentry!,   getVariableBlobentry,   mergeVariableBlobentry!,   deleteVariableBlobentry!
 # export addVariableBlobentries!, getVariableBlobentries, mergeVariableBlobentries!, deleteVariableBlobentries!
 # export addGraphBlobentry!,    getGraphBlobentry,    mergeGraphBlobentry!,    deleteGraphBlobentry!
 # export addGraphBlobentries!,  getGraphBlobentries,  mergeGraphBlobentries!,  deleteGraphBlobentries!
 # export addAgentBlobentry!,    getAgentBlobentry,    mergeAgentBlobentry!,    deleteAgentBlobentry!
 # export addAgentBlobentries!,  getAgentBlobentries,  mergeAgentBlobentries!,  deleteAgentBlobentries!
-#TODO blob entries not implemented on factors yet
 # export addFactorBlobentry!,   getFactorBlobentry,   mergeFactorBlobentry!,   deleteFactorBlobentry!
 # export addFactorBlobentries!, getFactorBlobentries, mergeFactorBlobentries!, deleteFactorBlobentries!
 
-# TODO first pass progress
 # export addVariableBloblet!,  getVariableBloblet,  mergeVariableBloblet!,  deleteVariableBloblet!
 # export addVariableBloblets!, getVariableBloblets, mergeVariableBloblets!, deleteVariableBloblets!
 # export addFactorBloblet!,    getFactorBloblet,    mergeFactorBloblet!,    deleteFactorBloblet!
@@ -246,13 +257,45 @@ export GraphsDFG
 # export addGraphBloblets!,    getGraphBloblets,    mergeGraphBloblets!,    deleteGraphBloblets!
 
 ## list
-# export listVariables, listFactors, listStates, listBlobentries, listFactorBlobEntries, listGraphBlobentries, listAgentBlobentries
-# not implemented yet (maybe not for DFG v1.0 yet):
-# export listVariableMetadata, listFactorMetadata, listAgentMetadata, listGraphMetadata
-# export listVariableBlobentryMetadata, listFactorBlobentryMetadata, listAgentBlobentryMetadata, listGraphBlobentryMetadata
+# export listVariables, listFactors, listStates, listVariableBlobentries, listFactorBlobEntries, listGraphBlobentries, listAgentBlobentries
+# export listVariableBloblets, listFactorBloblets, listAgentBloblets, listGraphBloblets
+
+# tags
+# export listVariableTags, mergeVariableTags!, deleteVariableTags!
+# export listFactorTags, mergeFactorTags!, deleteFactorTags!
+# export listGraphTags, mergeGraphTags!, deleteGraphTags!
+# export listAgentTags, mergeAgentTags!, deleteAgentTags!
+
+# has
+# export hasVariable, hasFactor, hasState
+# export hasVariableBlobentry, hasFactorBlobentry, hasGraphBlobentry, hasAgentBlobentry
+# export hasVariableBloblet, hasFactorBloblet, hasGraphBloblet, hasAgentBloblet
+# export hasVariableTags, hasFactorTags, hasGraphTags, hasAgentTags
 
 export deleteVariables!
 export deleteFactors!
+
+# Tags
+export listVariableTags
+export mergeVariableTags!
+export deleteVariableTags!
+export hasVariableTags
+
+export listFactorTags
+export mergeFactorTags!
+export deleteFactorTags!
+export hasFactorTags
+
+export listGraphTags
+export mergeGraphTags!
+export deleteGraphTags!
+export hasGraphTags
+
+export listAgentTags
+export mergeAgentTags!
+export deleteAgentTags!
+export hasAgentTags
+
 ##==============================================================================
 ## Common Accessors 
 ##==============================================================================
@@ -275,16 +318,6 @@ public FolderStore
 ##------------------------------------------------------------------------------
 # tags is a set: get/list, merge, empty, and remove (we don't have add but merge)
 
-export listVariableTags
-export listFactorTags
-export listGraphTags
-export listAgentTags
-
-export mergeVariableTags!
-export mergeFactorTags!
-export mergeGraphTags!
-export mergeAgentTags!
-
 public listTags
 public mergeTags!
 public emptyTags!
@@ -302,17 +335,44 @@ export mergeVariableBloblet!
 export deleteVariableBloblet!
 export listVariableBloblets
 
+export addVariableBloblets!
+export getVariableBloblets
+export mergeVariableBloblets!
+export deleteVariableBloblets!
+
 export getAgentBloblet
 export addAgentBloblet!
 export mergeAgentBloblet!
 export deleteAgentBloblet!
 export listAgentBloblets
 
+export addAgentBloblets!
+export getAgentBloblets
+export mergeAgentBloblets!
+export deleteAgentBloblets!
+
 export getGraphBloblet
 export addGraphBloblet!
 export mergeGraphBloblet!
 export deleteGraphBloblet!
 export listGraphBloblets
+
+export addGraphBloblets!
+export getGraphBloblets
+export mergeGraphBloblets!
+export deleteGraphBloblets!
+
+export addFactorBloblet!
+export getFactorBloblet
+export mergeFactorBloblet!
+export deleteFactorBloblet!
+export listFactorBloblets
+
+export addFactorBloblets!
+export getFactorBloblets
+export mergeFactorBloblets!
+export deleteFactorBloblets!
+
 ##------------------------------------------------------------------------------
 ## FileDFG
 ##------------------------------------------------------------------------------
@@ -332,9 +392,6 @@ export lsf # alias for listFactors
 ##------------------------------------------------------------------------------
 ## Other utility functions
 ##------------------------------------------------------------------------------
-
-export listNeighborhood
-export listNeighbors
 
 ## TODO maybe move to DFG from SDK
 # addAgent!
@@ -360,7 +417,8 @@ public getStateKind
 # list of unstable functions not exported any more
 # will move to public or deprecate over time
 const unstable_functions::Vector{Symbol} = [
-    :getTags,
+    :listNeighborhood,
+    :listNeighbors,
     :InMemoryBlobstore,
     :exists,
     :compare,
@@ -440,12 +498,17 @@ const unstable_functions::Vector{Symbol} = [
     :setSolverParams!,
     :setDescription!,
     :setSolvable!,
-    :setTags!,
     :setSolvedCount!,
     :setMarginalized!,
     # no set on these
 
     #deprecated in v0.29
+    :setTags!,
+    :VariableCompute,
+    :AbstractPackedBelief,
+    :PackedBelief,
+    :AbstractPackedObservation,
+    :PackedObservation,
     :updateMetadata!,## TODO deprecated or obsolete
     :updateBlob!,## TODO deprecated or obsolete
     :getFactorState, # FIXME getFactorState were questioned and being reviewed again for name, other than that they are checked.
@@ -601,7 +664,6 @@ const LocalDFG = GraphsDFG
 
 include("services/Tags.jl")
 include("services/Bloblet.jl")
-include("services/Blobentry.jl")
 
 # Common includes
 include("services/DFGVariable.jl")

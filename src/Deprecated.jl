@@ -58,11 +58,11 @@ end
 # isSolvable
 # """
 function getSolveInProgress(
-    var::Union{VariableCompute, FactorCompute},
+    var::Union{VariableDFG, FactorCompute},
     solveKey::Symbol = :default,
 )
     # Variable
-    if var isa VariableCompute
+    if var isa VariableDFG
         if haskey(refStates(var), solveKey)
             return refStates(var)[solveKey].solveInProgress
         else
@@ -76,7 +76,7 @@ end
 #TODO missing set solveInProgress and graph level accessor
 
 function isSolveInProgress(
-    node::Union{VariableCompute, FactorCompute},
+    node::Union{VariableDFG, FactorCompute},
     solvekey::Symbol = :default,
 )
     return getSolveInProgress(node, solvekey) > 0
@@ -319,6 +319,12 @@ end
 
 function updateBlob!(args...)
     return error("updateBlob! is obsolete as blobid=>Blob pairs are immutable.")
+end
+
+function setTags!(node, tags::Union{Vector{Symbol}, Set{Symbol}})
+    Base.depwarn("setTags! is deprecated, use mergeTags! or addTags! instead.", :setTags!)
+    node.tags !== tags && empty!(node.tags)
+    return union!(node.tags, tags)
 end
 
 ## ================================================================================
@@ -629,18 +635,18 @@ end
 
 function getfirstBlobentry(var::AbstractGraphVariable, blobId::UUID)
     Base.depwarn(
-        "getfirstBlobentry(var, blobId) is deprecated, use getfirstBlobentry(var; blobIdFilter = ==(string(blobId))) instead.",
+        "getfirstBlobentry(var, blobId) is deprecated, use getfirstBlobentry(var; blobidFilter = ==(string(blobId))) instead.",
         :getfirstBlobentry,
     )
-    return getfirstBlobentry(var; blobIdFilter = ==(string(blobId)))
+    return getfirstBlobentry(var; blobidFilter = ==(string(blobId)))
 end
 
 function getfirstBlobentry(dfg::AbstractDFG, label::Symbol, blobId::UUID)
     Base.depwarn(
-        "getfirstBlobentry(dfg, label, blobId) is deprecated, use getfirstBlobentry(dfg, label; blobIdFilter = ==(string(blobId))) instead.",
+        "getfirstBlobentry(dfg, label, blobId) is deprecated, use getfirstBlobentry(dfg, label; blobidFilter = ==(string(blobId))) instead.",
         :getfirstBlobentry,
     )
-    return getfirstBlobentry(dfg, label; blobIdFilter = ==(string(blobId)))
+    return getfirstBlobentry(dfg, label; blobidFilter = ==(string(blobId)))
 end
 
 function getfirstBlobentry(var::AbstractGraphVariable, key::Regex)

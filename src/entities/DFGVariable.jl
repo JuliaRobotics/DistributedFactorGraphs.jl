@@ -327,7 +327,7 @@ end
 ## Conversion constructors
 ##==============================================================================
 
-function VariableSummary(v::VariableCompute{T}) where {T}
+function VariableSummary(v::VariableDFG{T}) where {T}
     return VariableSummary(
         v.label,
         v.timestamp,
