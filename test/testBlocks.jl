@@ -575,14 +575,20 @@ function tagsTestBlock!(fg, v1, v1_tags)
     @test mergeFactorTags!(fg, :abf1, [:NEW_FACTOR_TAG]) == 1
     @test :NEW_FACTOR_TAG ∈ listFactorTags(fg, :abf1)
     @test hasFactorTags(fg, :abf1, [:NEW_FACTOR_TAG])
+    @test deleteFactorTags!(fg, :abf1, [:NEW_FACTOR_TAG]) == 1
+    @test !hasFactorTags(fg, :abf1, [:NEW_FACTOR_TAG])
 
     @test mergeGraphTags!(fg, [:GRAPH_TAG]) == 1
     @test :GRAPH_TAG ∈ listGraphTags(fg)
     @test hasGraphTags(fg, [:GRAPH_TAG])
+    @test deleteGraphTags!(fg, [:GRAPH_TAG]) == 1
+    @test !hasGraphTags(fg, [:GRAPH_TAG])
 
     @test mergeAgentTags!(fg, [:AGENT_TAG]) == 1
     @test :AGENT_TAG ∈ listAgentTags(fg)
     @test hasAgentTags(fg, [:AGENT_TAG])
+    @test deleteAgentTags!(fg, [:AGENT_TAG]) == 1
+    @test !hasAgentTags(fg, [:AGENT_TAG])
 
     @test listVariableTags(fg, :a) isa Vector{Symbol}
     @test listFactorTags(fg, :abf1) isa Vector{Symbol}
