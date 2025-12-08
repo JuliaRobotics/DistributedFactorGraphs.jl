@@ -84,3 +84,38 @@ end
 #     push!(md, kwargs...)
 #     return md
 # end 
+
+"""
+    @packed
+
+Macro annotation for DFG serialization metadata on struct fields.
+Expands to `(lower = DFG.Packed, choosetype = DFG.resolvePackedType)` for use with 
+StructTypes.jl field annotations.
+
+Used to mark belief fields in factor types for serialization through 
+the DFG packing system. The `lower` function converts the field to a `Packed` wrapper 
+during serialization, and `choosetype` resolves the correct type during deserialization.
+
+# Usage
+Use with the `&` operator in `@kwarg` or `@tags` struct definitions:
+
+```julia
+@kwarg struct Pose2Point2Range{T} <: AbstractRelativeObservation
+    Z::T & DFG.@packed
+    partial::Tuple{Int, Int} = (1, 2)
+end
+```
+
+This is equivalent to writing:
+```julia
+@kwarg struct Pose2Point2Range{T} <: AbstractRelativeObservation
+    Z::T & (lower = DFG.Packed, choosetype = DFG.resolvePackedType)
+    partial::Tuple{Int, Int} = (1, 2)
+end
+```
+
+See also: [`Packed`](@ref), [`pack`](@ref), [`unpack`](@ref), [`resolvePackedType`](@ref)
+"""
+macro packed()
+    return esc(:(lower = DFG.Packed, choosetype = DFG.resolvePackedType))
+end

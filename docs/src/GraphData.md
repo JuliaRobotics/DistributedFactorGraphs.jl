@@ -44,7 +44,17 @@ Labels are the principle identifier of a variable or factor.
 
 #### Timestamps
 
-Each variable or factor can have a timestamp associated with it.
+Each variable or factor can have a timestamp associated with it representing when the physical event/observation occurred.
+
+**Time Standard**: Timestamps use UTC-based time (Coordinated Universal Time) via the `TimeDateZone` type, not TAI (International Atomic Time). The key difference is that UTC includes leap seconds to keep synchronized with Earth's rotation, while TAI is a continuous monotonic time scale without leap seconds.
+
+**Timezone Support**: While timestamps default to UTC (`tz"UTC"`), `TimeDateZone` supports any timezone (e.g., `tz"America/New_York"`, `tz"Europe/London"`). The timezone offset is preserved when stored and retrieved.
+
+**Event Time vs Database Time**: The timestamp represents the physical event time (when a sensor measurement was taken, when a robot was at a pose, etc.), not when the variable was added to the database. Database metadata timestamps may be tracked separately by specific backend implementations.
+
+**Temporal Uncertainty**: This single timestamp value is metadata and does not represent temporal uncertainty in non-parametric beliefs. For problems where time itself is a state variable requiring inference (e.g., using `SGal3` which includes temporal components), include time as part of your state type rather than relying on this metadata field.
+
+Related functions:
 
 - [`getTimestamp`](@ref)
 

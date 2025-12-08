@@ -187,7 +187,13 @@ function calcDeltatime(from::TimeDateZone, to::TimeDateZone)
 end
 calcDeltatime(from_node, to_node) = calcDeltatime(from_node.timestamp, to_node.timestamp)
 
-function tdz_now(zone = tz"UTC") #TODO or default to slower localzone()? 
+Timestamp(args...) = TimeDateZone(args...)
+Timestamp(epoch::Val{:unix}, t::Nanosecond, zone = tz"UTC") = TimeDateZone(TimeDate(1970) + t, zone)
+Timestamp(epoch::Val{:unix}, t::Float64, zone = tz"UTC") = Timestamp(epoch, Nanosecond(t * 10^9), zone)
+Timestamp(t::Float64, zone = tz"UTC") = Timestamp(Val(:unix), t, zone)
+Timestamp(epoch::Val{:rata}, t::Float64, zone = tz"UTC") = TimeDateZone(convert(DateTime,Millisecond(t*10^3)), zone)
+
+function now_tdz(zone = tz"UTC")
     t = time()
-    return TimeDateZone(TimeDate(1970) + Nanosecond(t * 10^9), zone)
+    return Timestamp(t, zone)
 end

@@ -11,7 +11,6 @@ function printVariable(
     compact::Bool = true,
     limit::Bool = true,
     skipfields::Vector{Symbol} = Symbol[],
-    solveKeys::Vector{Symbol} = Symbol[],
 )
     ioc = IOContext(io, :limit => limit, :compact => compact)
 

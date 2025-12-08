@@ -582,7 +582,7 @@ const unstable_functions::Vector{Symbol} = [
     # :listPPEs,
     # :mergePPEs!,
     Symbol("@defVariable"),
-    :SmallDataTypes,
+    # :SmallDataTypes,
     :NoSolverParams,
     :AbstractParams,
     # Deprecated in v0.27

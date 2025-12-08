@@ -359,17 +359,17 @@ function listNeighbors end
 """
     $(SIGNATURES)
 Get a VariableDFG with a specific solver key.
-In memory types still return a reference, other types returns a variable with only solveKey.
+In memory types still return a reference, other types returns a variable with only stateLabel.
 """
-function getVariable(dfg::AbstractDFG, label::Symbol, solveKey::Symbol)
-    # TODO maybe change solveKey param to stateLabelFilter 
+function getVariable(dfg::AbstractDFG, label::Symbol, stateLabel::Symbol)
+    # TODO maybe change stateLabel param to stateLabelFilter 
     # function getVariable(dfg::AbstractDFG, label::Symbol; stateLabelFilter::Union{Nothing, ...} = nothing) 
     var = getVariable(dfg, label)
 
-    if isa(var, VariableDFG) && !haskey(var.states, solveKey)
-        throw(LabelNotFoundError("VariableNode", solveKey))
+    if isa(var, VariableDFG) && !haskey(var.states, stateLabel)
+        throw(LabelNotFoundError("VariableNode", stateLabel))
     elseif !isa(var, VariableDFG)
-        @warn "getVariable(dfg, label, solveKey) only supported for type VariableDFG."
+        @warn "getVariable(dfg, label, stateLabel) only supported for type VariableDFG."
     end
 
     return var
@@ -559,7 +559,7 @@ function deepcopyGraph(
     graphLabel::Symbol = Symbol(getGraphLabel(sourceDFG), "_cp_$(string(uuid4())[1:6])"),
     kwargs...,
 ) where {T <: AbstractDFG}
-    destDFG = T(; graph = sourceDFG.graph, agent = sourceDFG.agent, graphLabel)
+    destDFG = T(; solverParams = getSolverParams(sourceDFG), graph = sourceDFG.graph, agent = sourceDFG.agent, graphLabel)
     copyGraph!(
         destDFG,
         sourceDFG,

@@ -43,7 +43,7 @@ end
 # *not available without reconstruction
 
 # Packed Factor constructor
-function assembleFactorName(xisyms::Union{Vector{String}, Vector{Symbol}})
+function assembleFactorName(xisyms)
     return Symbol(xisyms..., "_f", randstring(4))
 end
 
@@ -68,7 +68,7 @@ StructUtils.@kwarg struct FactorDFG{T <: AbstractObservation, N} <: AbstractGrap
     variableorder::NTuple{N, Symbol} & (choosetype = x->NTuple{length(x), Symbol},) # NOTE v0.29 renamed from _variableOrderSymbols
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref)"""
-    timestamp::TimeDateZone = tdz_now() # NOTE v0.29 changed from ZonedDateTime
+    timestamp::TimeDateZone = now_tdz() # NOTE v0.29 changed from ZonedDateTime
     # TODO
     # """(Optional) Steady (monotonic) time in nanoseconds `Nanosecond` (`Int64``)"""
     # nstime::Nanosecond #NOTE v0.29 REMOVED as not used, add when needed, or now as steadytime.
@@ -103,7 +103,7 @@ function FactorDFG(
     variableorder::Union{<:Tuple, Vector{Symbol}},
     observation::AbstractObservation;
     label::Symbol = assembleFactorName(variableorder),
-    timestamp::Union{TimeDateZone, ZonedDateTime} = tdz_now(),
+    timestamp::Union{TimeDateZone, ZonedDateTime} = now_tdz(),
     tags::Union{Set{Symbol}, Vector{Symbol}} = Set{Symbol}([:FACTOR]),
     bloblets::Bloblets = Bloblets(),
     multihypo::Vector{Float64} = Float64[],
@@ -160,7 +160,7 @@ function FactorDFG(
     state::Recipestate = Recipestate(),
     cache = nothing;
     tags::Set{Symbol} = Set{Symbol}([:FACTOR]),
-    timestamp::Union{DateTime, ZonedDateTime, TimeDateZone} = tdz_now(),
+    timestamp::Union{DateTime, ZonedDateTime, TimeDateZone} = now_tdz(),
     solvable::Int = 1,
     bloblets::Bloblets = Bloblets(),
     blobentries::Blobentries = Blobentries(),
@@ -235,7 +235,7 @@ end
 function FactorSummary(
     label::Symbol,
     variableorder::Union{Vector{Symbol}, Tuple};
-    timestamp::TimeDateZone = tdz_now(),
+    timestamp::TimeDateZone = now_tdz(),
     tags::Set{Symbol} = Set{Symbol}(),
 )
     return FactorSummary(label, tags, Tuple(variableorder), timestamp)

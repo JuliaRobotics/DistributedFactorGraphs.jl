@@ -128,6 +128,15 @@ end
 ##------------------------------------------------------------------------------
 # The Variable information packed in a way that accomdates multi-lang using json.
 
+variable_timestamp_note = """
+!!! note    
+    This single timestamp does not represent the temporal uncertainty of non-parametric beliefs.
+    A single timestamp value cannot capture the distribution of temporal 
+    information across all particles/points in a belief. For problems where time is a state variable 
+    requiring inference (e.g., `SGal3` which includes temporal components), include time as part of 
+    your state type rather than relying on this metadata field.
+"""
+
 """
 $(TYPEDEF)
 Complete variable structure for a DistributedFactorGraph variable.
@@ -140,12 +149,12 @@ $(TYPEDFIELDS)
     """Variable label, e.g. :x1.
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
-    """Variable timestamp.
+    """Variable event timestamp (UTC-based) with timezone support.    
+    $variable_timestamp_note
     Accessors: [`getTimestamp`](@ref)"""
-    timestamp::TimeDateZone = tdz_now() #NOTE changed to TimeDateZone in v0.29
+    timestamp::TimeDateZone = now_tdz() #NOTE changed to TimeDateZone in v0.29
     # """Nanoseconds since a user-understood epoch (i.e unix epoch, robot boot time, etc.)"""
-    # steadytime::Union{Nothing, Nanosecond} = nothing #NOTE changed to TimeDateZone in v0.29
-    #nstime::String = "0" #NOTE different uses, as 0-999_999 nanosecond part of timestamp now in timestamp, as steady timestamp now in steadytime
+    # nstime::String = "0" #NOTE deprecated field in v0.29
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
     Accessors: [`listTags`](@ref), [`mergeTags!`](@ref), and [`deleteTags!`](@ref)"""
     tags::Set{Symbol} = Set{Symbol}()
@@ -174,7 +183,7 @@ function StructUtils.fielddefaults(
     ::Type{VariableDFG{T, P, N}},
 ) where {T, P, N}
     return (
-        timestamp = tdz_now(),
+        timestamp = now_tdz(),
         tags = Set{Symbol}(),
         # states = OrderedDict{Symbol, State{T, P, N}}(),
         bloblets = Bloblets(),
@@ -213,9 +222,8 @@ function VariableDFG(
     label::Symbol,
     statetype::Union{T, Type{T}};
     tags::Union{Set{Symbol}, Vector{Symbol}} = Set{Symbol}(),
-    timestamp::Union{TimeDateZone, ZonedDateTime} = tdz_now(),
+    timestamp::Union{TimeDateZone, ZonedDateTime} = now_tdz(),
     solvable::Union{Int, Base.RefValue{Int}} = Ref{Int}(1),
-    # steadytime::Union{Nothing, Nanosecond} = nothing,
     nanosecondtime = nothing,
     smalldata = nothing,
     kwargs...,
@@ -285,7 +293,8 @@ $(TYPEDFIELDS)
     """Variable label, e.g. :x1.
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
-    """Variable timestamp.
+    """Variable event timestamp.
+    $variable_timestamp_note
     Accessors: [`getTimestamp`](@ref)"""
     timestamp::TimeDateZone
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
