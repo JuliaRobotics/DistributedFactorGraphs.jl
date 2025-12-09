@@ -559,7 +559,12 @@ function deepcopyGraph(
     graphLabel::Symbol = Symbol(getGraphLabel(sourceDFG), "_cp_$(string(uuid4())[1:6])"),
     kwargs...,
 ) where {T <: AbstractDFG}
-    destDFG = T(; solverParams = getSolverParams(sourceDFG), graph = sourceDFG.graph, agent = sourceDFG.agent, graphLabel)
+    destDFG = T(;
+        solverParams = getSolverParams(sourceDFG),
+        graph = sourceDFG.graph,
+        agent = sourceDFG.agent,
+        graphLabel,
+    )
     copyGraph!(
         destDFG,
         sourceDFG,

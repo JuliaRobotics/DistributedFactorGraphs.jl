@@ -188,10 +188,16 @@ end
 calcDeltatime(from_node, to_node) = calcDeltatime(from_node.timestamp, to_node.timestamp)
 
 Timestamp(args...) = TimeDateZone(args...)
-Timestamp(epoch::Val{:unix}, t::Nanosecond, zone = tz"UTC") = TimeDateZone(TimeDate(1970) + t, zone)
-Timestamp(epoch::Val{:unix}, t::Float64, zone = tz"UTC") = Timestamp(epoch, Nanosecond(t * 10^9), zone)
+function Timestamp(epoch::Val{:unix}, t::Nanosecond, zone = tz"UTC")
+    return TimeDateZone(TimeDate(1970) + t, zone)
+end
+function Timestamp(epoch::Val{:unix}, t::Float64, zone = tz"UTC")
+    return Timestamp(epoch, Nanosecond(t * 10^9), zone)
+end
 Timestamp(t::Float64, zone = tz"UTC") = Timestamp(Val(:unix), t, zone)
-Timestamp(epoch::Val{:rata}, t::Float64, zone = tz"UTC") = TimeDateZone(convert(DateTime,Millisecond(t*10^3)), zone)
+function Timestamp(epoch::Val{:rata}, t::Float64, zone = tz"UTC")
+    return TimeDateZone(convert(DateTime, Millisecond(t*10^3)), zone)
+end
 
 function now_tdz(zone = tz"UTC")
     t = time()

@@ -591,11 +591,7 @@ function getBlobentries(dfg::AbstractDFG, label::Symbol, regex::Regex)
     return entries = getBlobentries(dfg, label; labelFilter = contains(regex))
 end
 
-function getBlobentries(
-    dfg::AbstractDFG,
-    label::Symbol,
-    skey::AbstractString,
-)
+function getBlobentries(dfg::AbstractDFG, label::Symbol, skey::AbstractString)
     Base.depwarn(
         "getBlobentries(dfg, label, regex::AbstractString) is deprecated, use getBlobentries(dfg, label; labelFilter=contains(regex)) instead.",
         :getBlobentries,
