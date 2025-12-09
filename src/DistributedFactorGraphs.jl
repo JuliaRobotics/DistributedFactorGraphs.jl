@@ -52,6 +52,10 @@ using StaticArrays
 
 using InteractiveUtils: subtypes
 
+using StructUtils: @kwarg, @tags
+public @tags
+public @kwarg
+
 ##==============================================================================
 # Exports
 ##==============================================================================
