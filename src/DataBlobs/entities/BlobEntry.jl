@@ -44,7 +44,7 @@ StructUtils.@kwarg struct Blobentry
     """ Storage for a couple of bytes directly in the graph. Use with caution and keep it small and simple."""
     metadata::JSONText = JSONText("{}")
     """ When the Blob itself was first created. Serialized as an ISO 8601 string."""
-    timestamp::TimeDateZone = tdz_now()
+    timestamp::TimeDateZone = now_tdz()
     """ Type version of this Blobentry."""
     version::VersionNumber = DFG.version(Blobentry)
 end

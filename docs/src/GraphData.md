@@ -44,7 +44,19 @@ Labels are the principle identifier of a variable or factor.
 
 #### Timestamps
 
-Each variable or factor can have a timestamp associated with it.
+Each variable or factor can have a timestamp associated with it representing when the physical event/observation occurred.
+
+**Time Standard**: Timestamps use UTC-based time (Coordinated Universal Time) via the `TimeDateZone` type, not TAI (International Atomic Time). The key difference is that UTC includes leap seconds to keep synchronized with Earth's rotation, while TAI is a continuous monotonic time scale without leap seconds.
+
+**Timezone Support**: While timestamps default to UTC (`tz"UTC"`), `TimeDateZone` supports any timezone (e.g., `tz"America/New_York"`, `tz"Europe/London"`). The timezone offset is preserved when stored and retrieved.
+
+**Event Time vs Database Time**: The timestamp represents the physical event time (when a sensor measurement was taken, when a robot was at a pose, etc.), not when the variable was added to the database. Database metadata timestamps may be tracked separately by specific backend implementations.
+
+**Temporal Uncertainty**: This single timestamp value is metadata and does not represent temporal uncertainty. For problems where time itself is a state variable requiring inference (e.g., using `SGal3` which includes temporal components), include time as part of your state type rather than relying on this metadata field.  Furthermore, the concept of "ClockPriors" is also at play for the API design changes relating to v2.
+
+**Future**:  changing away from field name `timestamp` was deferred from v1.0 owing to resolution of older complexity of other fields being standardized; however, the desire for a better name exists and should be revisited in the v2 API.  At time of writing, the best summary of the naming debate is captured here: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/1087#issuecomment-3582252305.  In the lead up to a new long term release (a.k.a semver major), a deprecation cycle will be used via semver minors to ensure users have an easy and macro-aided transition in the API.
+
+Related functions:
 
 - [`getTimestamp`](@ref)
 

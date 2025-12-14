@@ -242,7 +242,13 @@ function DFGVariableSCA()
 
     v1_lbl = :a
     v1_tags = Set([:VARIABLE, :POSE])
-    testTimestamp = now(localzone())
+    #test some Timestamp helpers
+    ts1 = DFG.Timestamp(Nanosecond(1760700359563000064), localzone())
+    ts2 = DFG.Timestamp(1760700359.563000064, localzone())
+    @test ts1 == ts2
+    ts3 = DFG.Timestamp("2020-08-11T00:12:03.000-05:00")
+    ts4 = DFG.Timestamp(Val(:rata), 63732787923.0, FixedTimeZone("UTC-05:00"))
+    @test ts3 == ts4
     # Constructors
     v1 = VariableDFG(
         v1_lbl,
@@ -260,7 +266,7 @@ function DFGVariableSCA()
     v3 = VariableDFG(
         :c,
         State{TestVariableType2}(; label = :default);
-        timestamp = ZonedDateTime("2020-08-11T00:12:03.000-05:00"),
+        timestamp = DFG.Timestamp("2020-08-11T00:12:03.000-05:00"),
     )
 
     vorphan = VariableDFG(

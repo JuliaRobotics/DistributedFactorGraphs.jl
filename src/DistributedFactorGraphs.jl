@@ -52,6 +52,10 @@ using StaticArrays
 
 using InteractiveUtils: subtypes
 
+using StructUtils: @kwarg, @tags
+public @tags
+public @kwarg
+
 ##==============================================================================
 # Exports
 ##==============================================================================
@@ -582,7 +586,7 @@ const unstable_functions::Vector{Symbol} = [
     # :listPPEs,
     # :mergePPEs!,
     Symbol("@defVariable"),
-    :SmallDataTypes,
+    # :SmallDataTypes,
     :NoSolverParams,
     :AbstractParams,
     # Deprecated in v0.27
