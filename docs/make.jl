@@ -19,7 +19,7 @@ makedocs(;
         ],
         "Reference" => ["func_ref.md", "services_ref.md", "blob_ref.md"],
     ],
-    checkdocs=:public,
+    checkdocs = :public,
     # warnonly=[:doctest],
     # html_prettyurls = !("local" in ARGS),
 )
