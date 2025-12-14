@@ -188,6 +188,7 @@ end
 calcDeltatime(from_node, to_node) = calcDeltatime(from_node.timestamp, to_node.timestamp)
 
 Timestamp(args...) = TimeDateZone(args...)
+Timestamp(t::Nanosecond, zone = tz"UTC") = Timestamp(Val(:unix), t, zone)
 function Timestamp(epoch::Val{:unix}, t::Nanosecond, zone = tz"UTC")
     return TimeDateZone(TimeDate(1970) + t, zone)
 end
