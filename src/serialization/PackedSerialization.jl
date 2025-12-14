@@ -86,7 +86,7 @@ end
 # end 
 
 """
-    @packed
+    DFG.@packed
 
 Macro annotation for DFG serialization metadata on struct fields.
 Expands to `(lower = DFG.Packed, choosetype = DFG.resolvePackedType)` for use with 
