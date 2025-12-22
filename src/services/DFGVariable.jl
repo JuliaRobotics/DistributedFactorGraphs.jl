@@ -398,6 +398,7 @@ function getState(dfg::AbstractDFG, variableLabel::Symbol, label::Symbol)
     return getState(v, label)
 end
 
+#TODO add filters
 function getStates(dfg::AbstractDFG, variableLabel::Symbol)
     v = getVariable(dfg, variableLabel)
     return collect(values(refStates(v)))

@@ -138,41 +138,13 @@ end
 # """
 
 function getVariables(
-    dfg::GraphsDFG,
-    regex::Union{Nothing, Regex} = nothing;
-    tags::Vector{Symbol} = Symbol[],
-    solvable::Union{Nothing, Int} = nothing,
+    dfg::GraphsDFG;
     solvableFilter::Union{Nothing, Function} = nothing,
     labelFilter::Union{Nothing, Function} = nothing,
     tagsFilter::Union{Nothing, Function} = nothing,
     typeFilter::Union{Nothing, Function} = nothing,
 )
     variables = collect(values(dfg.g.variables))
-
-    if !isnothing(regex)
-        # NOTE that contains(regex::Regex) is not supported by the NvaDFG.
-        Base.depwarn(
-            "The regex filter argument is deprecated, use kwarg `labelFilter=contains(regex)` instead", #v0.28
-            :getVariables,
-        )
-        filterDFG!(variables, contains(regex), (String ∘ getLabel))
-    end
-    if !isempty(tags)
-        # NOTE that !isdisjoint is not supported by NvaDFG.
-        Base.depwarn(
-            "tags kwarg is deprecated, use kwarg `tagsFilter = !isdisjoint(tags)` instead", #v0.28
-            :getVariables,
-        )
-        filterDFG!(variables, x -> !isdisjoint(x, tags), refTags)
-    end
-    if !isnothing(solvable)
-        #TODO review. just one solvableFilter or keep solvable as well.
-        Base.depwarn(
-            "solvable kwarg is deprecated, use kwarg `solvableFilter = (>=solvable)` instead", #v0.28
-            :getVariables,
-        )
-        filterDFG!(variables, >=(solvable), getSolvable)
-    end
 
     filterDFG!(variables, labelFilter, getLabel)
     filterDFG!(variables, solvableFilter, getSolvable)
@@ -183,34 +155,17 @@ function getVariables(
 end
 
 function listVariables(
-    dfg::GraphsDFG,
-    regexFilter::Union{Nothing, Regex} = nothing;
-    tags::Vector{Symbol} = Symbol[],
-    solvable::Union{Nothing, Int} = nothing,
+    dfg::GraphsDFG;
     solvableFilter::Union{Nothing, Function} = nothing,
     tagsFilter::Union{Nothing, Function} = nothing,
     typeFilter::Union{Nothing, Function} = nothing,
     labelFilter::Union{Nothing, Function} = nothing,
 )
-    if !isnothing(solvableFilter) ||
-       !isnothing(tagsFilter) ||
-       !isnothing(typeFilter) ||
-       !isnothing(regexFilter) ||  #TODO deprecated v0.28
-       !isempty(tags) ||           #TODO deprecated v0.28
-       !isnothing(solvable)        #TODO Maybe deprecated?
+    if !isnothing(solvableFilter) || !isnothing(tagsFilter) || !isnothing(typeFilter)
         return map(
             getLabel,
-            getVariables(
-                dfg,
-                regexFilter;
-                tags,
-                solvable,
-                solvableFilter,
-                tagsFilter,
-                typeFilter,
-                labelFilter,
-            ),
-        )
+            getVariables(dfg; solvableFilter, tagsFilter, typeFilter, labelFilter),
+        )::Vector{Symbol}
     else
         # Is it ok to continue using the internal keys property? collect(keys(dfg.g.variables)) allowcates a lot.
         labels = copy(dfg.g.variables.keys)
@@ -220,41 +175,13 @@ function listVariables(
 end
 
 function getFactors(
-    dfg::GraphsDFG,
-    regex::Union{Nothing, Regex} = nothing;
-    tags::Vector{Symbol} = Symbol[],
-    solvable::Union{Nothing, Int} = nothing,
+    dfg::GraphsDFG;
     solvableFilter::Union{Nothing, Function} = nothing,
     tagsFilter::Union{Nothing, Function} = nothing,
     typeFilter::Union{Nothing, Function} = nothing,
     labelFilter::Union{Nothing, Function} = nothing,
 )
     factors = collect(values(dfg.g.factors))
-    if !isnothing(regex)
-        # NOTE that contains(regex::Regex) is not supported by the NvaDFG.
-        Base.depwarn(
-            "The regex filter argument is deprecated, use kwarg `labelFilter=contains(regex)` instead", #v0.28
-            :getFactors,
-        )
-        filterDFG!(factors, contains(regex), getLabel)
-    end
-    if !isempty(tags)
-        # NOTE that !isdisjoint is not supported by NvaDFG.
-        Base.depwarn(
-            "tags kwarg is deprecated, use kwarg `tagsFilter = !isdisjoint(tags)` instead", #v0.28
-            :getFactors,
-        )
-        filterDFG!(factors, x -> !isdisjoint(x, tags), refTags)
-    end
-    if !isnothing(solvable)
-        #TODO review. just one solvableFilter or keep solvable as well.
-        Base.depwarn(
-            "solvable kwarg is deprecated, use kwarg `solvableFilter = (>=solvable)` instead", #v0.28
-            :getFactors,
-        )
-        filterDFG!(factors, >=(solvable), getSolvable)
-    end
-
     filterDFG!(factors, labelFilter, getLabel)
     filterDFG!(factors, solvableFilter, getSolvable)
     filterDFG!(factors, tagsFilter, refTags)
@@ -263,34 +190,17 @@ function getFactors(
 end
 
 function listFactors(
-    dfg::GraphsDFG,
-    regexFilter::Union{Nothing, Regex} = nothing;
-    tags::Vector{Symbol} = Symbol[],
-    solvable::Union{Nothing, Int} = nothing,
+    dfg::GraphsDFG;
     solvableFilter::Union{Nothing, Function} = nothing,
     tagsFilter::Union{Nothing, Function} = nothing,
     typeFilter::Union{Nothing, Function} = nothing,
     labelFilter::Union{Nothing, Function} = nothing,
 )
-    if !isnothing(solvableFilter) ||
-       !isnothing(tagsFilter) ||
-       !isnothing(typeFilter) ||
-       !isnothing(regexFilter) ||  #TODO deprecated
-       !isempty(tags) ||           #TODO deprecated
-       !isnothing(solvable)        #TODO deprecated
+    if !isnothing(solvableFilter) || !isnothing(tagsFilter) || !isnothing(typeFilter)
         return map(
             getLabel,
-            getFactors(
-                dfg,
-                regexFilter;
-                tags,
-                solvable,
-                solvableFilter,
-                tagsFilter,
-                typeFilter,
-                labelFilter,
-            ),
-        )
+            getFactors(dfg; solvableFilter, tagsFilter, typeFilter, labelFilter),
+        )::Vector{Symbol}
     else
         # Is it ok to continue using the internal keys property? collect(keys(dfg.g.factors)) allowcates a lot.
         labels = copy(dfg.g.factors.keys)
@@ -441,50 +351,42 @@ function findShortestPathDijkstra(
     dfg::GraphsDFG,
     from::Symbol,
     to::Symbol;
-    regexVariables::Union{Nothing, Regex} = nothing,
-    regexFactors::Union{Nothing, Regex} = nothing,
-    tagsVariables::Vector{Symbol} = Symbol[],
-    tagsFactors::Vector{Symbol} = Symbol[],
-    typeVariables::Union{Nothing, <:AbstractVector} = nothing,
-    typeFactors::Union{Nothing, <:AbstractVector} = nothing,
-    solvable::Union{Nothing, Int} = nothing,
+    labelFilterVariables::Union{Function, Nothing} = nothing,
+    labelFilterFactors::Union{Function, Nothing} = nothing,
+    tagsFilterVariables::Union{Function, Nothing} = nothing,
+    tagsFilterFactors::Union{Function, Nothing} = nothing,
+    typeFilterVariables::Union{Function, Nothing} = nothing,
+    typeFilterFactors::Union{Function, Nothing} = nothing,
+    solvableFilter::Union{Function, Nothing} = nothing,
     initialized::Union{Nothing, Bool} = nothing,
 )
-    #
-    # helper function to filter on vector of types
-    function _filterTypeList(thelist::Vector{Symbol}, typeList, listfnc = x -> ls(dfg, x))
-        thelist_ = Symbol[]
-        for type_ in typeList
-            union!(thelist_, listfnc(type_))
-        end
-        return intersect(thelist, thelist_)
-    end
-
-    #
     duplicate =
-        !isnothing(regexVariables) ||
-        !isnothing(regexFactors) ||
-        !isempty(tagsVariables) ||
-        !isempty(tagsFactors) ||
-        !isnothing(typeVariables) ||
-        !isnothing(typeFactors) ||
+        !isnothing(labelFilterVariables) ||
+        !isnothing(labelFilterFactors) ||
+        !isnothing(tagsFilterVariables) ||
+        !isnothing(tagsFilterFactors) ||
+        !isnothing(typeFilterVariables) ||
+        !isnothing(typeFilterFactors) ||
         !isnothing(initialized) ||
-        !isnothing(solvable)
-    #
+        !isnothing(solvableFilter)
+
     dfg_ = if duplicate
         # use copy if filter is being applied
-        varList = ls(dfg, regexVariables; tags = tagsVariables, solvable = solvable)
-        fctList = lsf(dfg, regexFactors; tags = tagsFactors, solvable = solvable)
-        varList = if typeVariables !== nothing
-            _filterTypeList(varList, typeVariables)
-        else
-            varList
-        end
-        fctList = if typeFactors !== nothing
-            _filterTypeList(fctList, typeFactors, x -> lsf(dfg, x))
-        else
-            fctList
-        end
+        varList = ls(
+            dfg;
+            labelFilter = labelFilterVariables,
+            tagsFilter = tagsFilterVariables,
+            typeFilter = typeFilterVariables,
+            solvableFilter,
+        )
+        fctList = lsf(
+            dfg;
+            labelFilter = labelFilterFactors,
+            tagsFilter = tagsFilterFactors,
+            typeFilter = typeFilterFactors,
+            solvableFilter,
+        )
+
         varList = if initialized !== nothing
             initmask = isInitialized.(dfg, varList) .== initialized
             varList[initmask]

@@ -163,7 +163,7 @@ function unpackOldState(d)
     # 
     N = getDimension(T)
     return State{T, getPointType(T), N}(;
-        label = Symbol(d.label),
+        label = Symbol(d.solveKey),
         val = vals,
         bw = BW,
         #TODO only one covar is currently supported in packed VND

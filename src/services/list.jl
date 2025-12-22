@@ -8,15 +8,14 @@
 """
     $(SIGNATURES)
 Get a list of labels of the DFGVariables in the graph.
-Optionally specify a label regular expression to retrieves a subset of the variables.
-Tags is a list of any tags that a node must have (at least one match).
+Supports optional arguments to filter the variables returned.
 
 Notes
 - Returns `::Vector{Symbol}`
 
 Example
 ```julia
-listVariables(dfg, r"l", tags=[:APRILTAG;])
+listVariables(dfg)
 ```
 
 See also: [`ls`](@ref)
@@ -50,25 +49,13 @@ Notes:
 - Returns `Vector{Symbol}`
 """
 function ls(
-    dfg::AbstractDFG,
-    regexFilter::Union{Nothing, Regex} = nothing;
-    tags::Vector{Symbol} = Symbol[],
-    solvable::Union{Nothing, Int} = nothing,
+    dfg::AbstractDFG;
     solvableFilter::Union{Nothing, Function} = nothing,
     tagsFilter::Union{Nothing, Function} = nothing,
     typeFilter::Union{Nothing, Function} = nothing,
     labelFilter::Union{Nothing, Function} = nothing,
 )
-    return listVariables(
-        dfg,
-        regexFilter;
-        tags,
-        solvable,
-        solvableFilter,
-        tagsFilter,
-        typeFilter,
-        labelFilter,
-    )
+    return listVariables(dfg; solvableFilter, tagsFilter, typeFilter, labelFilter)
 end
 
 #TODO tags kwarg
@@ -81,25 +68,13 @@ Notes
 - Return `Vector{Symbol}`
 """
 function lsf(
-    dfg::AbstractDFG,
-    regexFilter::Union{Nothing, Regex} = nothing;
-    tags::Vector{Symbol} = Symbol[],
-    solvable::Union{Nothing, Int} = nothing,
+    dfg::AbstractDFG;
     solvableFilter::Union{Nothing, Function} = nothing,
     tagsFilter::Union{Nothing, Function} = nothing,
     typeFilter::Union{Nothing, Function} = nothing,
     labelFilter::Union{Nothing, Function} = nothing,
 )
-    return listFactors(
-        dfg,
-        regexFilter;
-        tags,
-        solvable,
-        solvableFilter,
-        tagsFilter,
-        typeFilter,
-        labelFilter,
-    )
+    return listFactors(dfg; solvableFilter, tagsFilter, typeFilter, labelFilter)
 end
 
 """

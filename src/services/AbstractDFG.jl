@@ -749,39 +749,6 @@ end
 ##==============================================================================
 ## Graphs Structures (Abstract, overwrite for performance)
 ##==============================================================================
-"""
-    $(SIGNATURES)
-Get a matrix indicating relationships between variables and factors. Rows are
-all factors, columns are all variables, and each cell contains either nothing or
-the symbol of the relating factor. The first row and first column are factor and
-variable headings respectively.
-Note:
-- rather use getBiadjacencyMatrix
-- Returns either of `::Matrix{Union{Nothing, Symbol}}`
-"""
-function getAdjacencyMatrixSymbols(
-    dfg::AbstractDFG;
-    solvable::Union{Int, Nothing} = nothing,
-)
-    #
-    varLabels = sort(map(v -> v.label, getVariables(dfg; solvable)))
-    factLabels = sort(map(f -> f.label, getFactors(dfg; solvable)))
-    vDict = Dict(varLabels .=> [1:length(varLabels)...] .+ 1)
-
-    adjMat = Matrix{Union{Nothing, Symbol}}(
-        nothing,
-        length(factLabels) + 1,
-        length(varLabels) + 1,
-    )
-    # Set row/col headings
-    adjMat[2:end, 1] = factLabels
-    adjMat[1, 2:end] = varLabels
-    for (fIndex, factLabel) in enumerate(factLabels)
-        factVars = listNeighbors(dfg, getFactor(dfg, factLabel); solvable)
-        map(vLabel -> adjMat[fIndex + 1, vDict[vLabel]] = factLabel, factVars)
-    end
-    return adjMat
-end
 
 # TODO API name get seems wrong maybe just biadjacencyMatrix
 """
@@ -795,15 +762,16 @@ Notes
 -  Returns `::NamedTuple{(:B, :varLabels, :facLabels), Tuple{SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}}`
 """
 function getBiadjacencyMatrix(dfg::AbstractDFG; solvable::Int = 0)
-    varLabels = map(v -> v.label, getVariables(dfg; solvable = solvable))
-    factLabels = map(f -> f.label, getFactors(dfg; solvable = solvable))
+    solvableFilter = >=(solvable) #FIXME solvableFilter should be kwarg
+    varLabels = map(v -> v.label, getVariables(dfg; solvableFilter))
+    factLabels = map(f -> f.label, getFactors(dfg; solvableFilter))
 
     vDict = Dict(varLabels .=> [1:length(varLabels)...])
 
     adjMat = spzeros(Int, length(factLabels), length(varLabels))
 
     for (fIndex, factLabel) in enumerate(factLabels)
-        factVars = listNeighbors(dfg, getFactor(dfg, factLabel); solvable = solvable)
+        factVars = listNeighbors(dfg, getFactor(dfg, factLabel); solvableFilter)
         map(vLabel -> adjMat[fIndex, vDict[vLabel]] = 1, factVars)
     end
     return (B = adjMat, varLabels = varLabels, facLabels = factLabels)

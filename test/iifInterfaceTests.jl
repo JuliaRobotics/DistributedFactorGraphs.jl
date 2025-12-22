@@ -92,24 +92,25 @@ end
     @test symdiff([:a, :b], listVariables(dfg)) == []
     @test listFactors(dfg) == [:abf1] # Unless we add the prior!
     # Additional testing for https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/201
-    @test symdiff([:a, :b], listVariables(dfg; solvable = 0)) == []
-    @test listVariables(dfg; solvable = 1) == [:b]
-    @test map(v -> v.label, getVariables(dfg; solvable = 1)) == [:b]
+    @test symdiff([:a, :b], listVariables(dfg; solvableFilter = >=(0))) == []
+    @test listVariables(dfg; solvableFilter = >=(1)) == [:b]
+    @test map(v -> v.label, getVariables(dfg; solvableFilter = >=(1))) == [:b]
     @test listFactors(dfg) == [:abf1]
-    @test listFactors(dfg; solvable = 1) == []
-    @test listFactors(dfg; solvable = 0) == [:abf1]
-    @test map(f -> f.label, getFactors(dfg; solvable = 0)) == [:abf1]
-    @test map(f -> f.label, getFactors(dfg; solvable = 1)) == []
+    @test listFactors(dfg; solvableFilter = >=(1)) == []
+    @test listFactors(dfg; solvableFilter = >=(0)) == [:abf1]
+    @test map(f -> f.label, getFactors(dfg; solvableFilter = >=(0))) == [:abf1]
+    @test map(f -> f.label, getFactors(dfg; solvableFilter = >=(1))) == []
     #
     @test lsf(dfg, :a) == [f1.label]
     # Tags
-    @test ls(dfg; tags = [:POSE]) == [:a]
-    @test symdiff(ls(dfg; tags = [:POSE, :LANDMARK]), ls(dfg; tags = [:VARIABLE])) == []
+    @test ls(dfg; tagsFilter = ⊇([:POSE])) == [:a]
+    @test symdiff(
+        ls(dfg; tagsFilter = !isdisjoint([:POSE, :LANDMARK])),
+        ls(dfg; tagsFilter = ⊇([:VARIABLE])),
+    ) == []
     # Regexes
-    @test ls(dfg, r"a") == [v1.label]
-    # TODO: Check that this regular expression works on everything else!
-    # it works with the .
-    @test lsf(dfg, r"abf.*") == [f1.label]
+    @test ls(dfg; labelFilter = contains(r"a")) == [v1.label]
+    @test lsf(dfg; labelFilter = contains(r"abf.*")) == [f1.label]
 
     # Accessors
     @test getDescription(dfg) !== nothing
@@ -152,7 +153,7 @@ end
 
     @test issetequal(ls(dfg, Position{1}), [:a, :b])
 
-    varNearTs = findVariableNearTimestamp(dfg, now())
+    varNearTs = findVariablesNearTimestamp(dfg, now())
     # TODO
     @test_skip varNearTs[1][1] == [:b]
 end
@@ -268,12 +269,6 @@ end
 @testset "Adjacency Matrices" begin
     global dfg, v1, v2, f1
 
-    # Normal
-    adjMat = DistributedFactorGraphs.getAdjacencyMatrixSymbols(dfg)
-    @test size(adjMat) == (2, 4)
-    @test symdiff(adjMat[1, :], [nothing, :a, :b, :orphan]) == Symbol[]
-    @test symdiff(adjMat[2, :], [:abf1, :abf1, :abf1, nothing]) == Symbol[]
-
     #sparse
     adjMat, v_ll, f_ll = getBiadjacencyMatrix(dfg)
     @test size(adjMat) == (1, 3)
@@ -287,11 +282,11 @@ end
     @test symdiff(f_ll, [:abf1, :abf1, :abf1]) == Symbol[]
 
     # Filtered - REF DFG #201
-    adjMat, v_ll, f_ll = getBiadjacencyMatrix(dfg; solvable = 1)
+    adjMat, v_ll, f_ll = getBiadjacencyMatrix(dfg; solvableFilter = >=(1))
     @test size(adjMat) == (0, 1)
 
     # sparse
-    adjMat, v_ll, f_ll = getBiadjacencyMatrix(dfg; solvable = 1)
+    adjMat, v_ll, f_ll = getBiadjacencyMatrix(dfg; solvableFilter = >=(1))
     @test size(adjMat) == (0, 1)
     @test issetequal(v_ll, [:b])
     @test f_ll == []
@@ -345,13 +340,13 @@ facts = map(
     @test listNeighbors(dfg, :x1x2f1) == ls(dfg, :x1x2f1)
 
     # solvable checks
-    @test listNeighbors(dfg, :x5; solvable = 1) == Symbol[]
-    @test symdiff(listNeighbors(dfg, :x5; solvable = 0), [:x4x5f1, :x5x6f1]) == []
+    @test listNeighbors(dfg, :x5; solvableFilter = >=(1)) == Symbol[]
+    @test symdiff(listNeighbors(dfg, :x5; solvableFilter = >=(0)), [:x4x5f1, :x5x6f1]) == []
     @test symdiff(listNeighbors(dfg, :x5), [:x4x5f1, :x5x6f1]) == []
-    @test listNeighbors(dfg, :x7x8f1; solvable = 0) == [:x7, :x8]
-    @test listNeighbors(dfg, :x7x8f1; solvable = 1) == [:x7]
-    @test listNeighbors(dfg, verts[1]; solvable = 0) == [:x1x2f1]
-    @test listNeighbors(dfg, verts[1]; solvable = 1) == Symbol[]
+    @test listNeighbors(dfg, :x7x8f1; solvableFilter = >=(0)) == [:x7, :x8]
+    @test listNeighbors(dfg, :x7x8f1; solvableFilter = >=(1)) == [:x7]
+    @test listNeighbors(dfg, verts[1]; solvableFilter = >=(0)) == [:x1x2f1]
+    @test listNeighbors(dfg, verts[1]; solvableFilter = >=(1)) == Symbol[]
     @test listNeighbors(dfg, verts[1]) == [:x1x2f1]
 end
 
