@@ -1035,7 +1035,7 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test ls(fg, TestVariableType1) == [:a]
 
         # FIXME return: Symbol[:b, :b] == Symbol[:b]
-        varNearTs = findVariableNearTimestamp(fg, now())
+        varNearTs = findVariablesNearTimestamp(fg, now())
         @test varNearTs[1][1] == [:b]
 
         ## SORT copied from CRUD
@@ -1210,14 +1210,6 @@ function testGroup!(fg, v1, v2, f0, f1)
 end
 
 function AdjacencyMatricesTestBlock(fg)
-    # Normal
-    #deprecated
-    # @test_throws ErrorException getAdjacencyMatrix(fg)
-    adjMat = DistributedFactorGraphs.getAdjacencyMatrixSymbols(fg)
-    @test size(adjMat) == (2, 4)
-    @test issetequal(adjMat[1, :], [nothing, :a, :b, :orphan])
-    @test issetequal(adjMat[2, :], [:abf1, :abf1, :abf1, nothing])
-    #
     #sparse
     adjMat, v_ll, f_ll = getBiadjacencyMatrix(fg)
     @test size(adjMat) == (1, 3)

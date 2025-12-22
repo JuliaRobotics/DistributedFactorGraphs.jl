@@ -323,325 +323,42 @@ function setTags!(node, tags::Union{Vector{Symbol}, Set{Symbol}})
     return union!(node.tags, tags)
 end
 
-## ================================================================================
-## Deprecated in v0.28
-##=================================================================================
-abstract type AbstractRelativeMinimize <: RelativeObservation end
-abstract type AbstractManifoldMinimize <: RelativeObservation end
-
-const SkeletonDFGVariable = VariableSkeleton
-const DFGVariableSummary = VariableSummary
-const PackedVariable = VariableDFG
-const Variable = VariableDFG
-const DFGVariable = VariableCompute
-const SkeletonDFGFactor = FactorSkeleton
-const DFGFactorSummary = FactorSummary
-const DFGFactor = FactorCompute
-const PackedFactor = FactorDFG
-const Factor = FactorDFG
-const AbstractPrior = PriorObservation
-const AbstractRelative = RelativeObservation
-const AbstractParams = AbstractDFGParams
-const InferenceVariable = StateType{Any}
-const InferenceType = AbstractPackedObservation
-const PackedSamplableBelief = PackedBelief
-const getVariableState = getState
-const addVariableState! = addState!
-const mergeVariableState! = mergeState!
-const deleteVariableState! = deleteState!
-const listVariableStates = listStates
-const VariableState = State
-const VariableStateType = StateType
-const copytoVariableState! = copytoState!
-
-# """
-#     $SIGNATURES
-# Set solver data structure stored in a variable.
-# """
-function setSolverData!(v::VariableCompute, data::State, key::Symbol = :default)
-    Base.depwarn(
-        "setSolverData!(v::VariableCompute, data::State, key::Symbol = :default) is deprecated, use mergeState! instead.",
-        :setSolverData!,
-    )
-    @assert key == data.solveKey "State.solveKey=:$(data.solveKey) does not match requested :$(key)"
-    return v.states[key] = data
-end
-
-@deprecate mergeVariableSolverData!(args...; kwargs...) mergeState!(args...; kwargs...)
-
-function mergeVariableData!(args...)
-    return error(
-        "mergeVariableData! is obsolete, use mergeState! for state, PPEs are obsolete",
-    )
-end
-function mergeGraphVariableData!(args...)
-    return error(
-        "mergeGraphVariableData! is obsolete, use mergeState! for state, PPEs are obsolete",
-    )
-end
-
 # """
 #     $(SIGNATURES)
-# Gives back all factor labels that fit the bill:
-#     lsWho(dfg, :Pose3)
-
-# Notes
-# - Returns `Vector{Symbol}`
-
-# Dev Notes
-# - Cloud versions will benefit from less data transfer
-#  - `ls(dfg::C, ::T) where {C <: CloudDFG, T <: ..}`
-
-# Related
-
-# ls, lsf, lsfPriors
+# Get a matrix indicating relationships between variables and factors. Rows are
+# all factors, columns are all variables, and each cell contains either nothing or
+# the symbol of the relating factor. The first row and first column are factor and
+# variable headings respectively.
+# Note:
+# - rather use getBiadjacencyMatrix
+# - Returns either of `::Matrix{Union{Nothing, Symbol}}`
 # """
-function lsWho(dfg::AbstractDFG, type::Symbol)
-    Base.depwarn("lsWho(dfg, type) is deprecated, use ls(dfg, type) instead.", :lsWho)
-    vars = getVariables(dfg)
-    labels = Symbol[]
-    for v in vars
-        varType = typeof(getStateKind(v)) |> nameof
-        varType == type && push!(labels, v.label)
-    end
-    return labels
-end
-
-# solvekey is deprecated and sync!/copyto! is the better verb.
-#TODO replace with syncStates! or similar
-# """
-#     $SIGNATURES
-# Duplicate a `solveKey`` into a destination from a source.
-
-# Notes
-# - Can copy between graphs, or to different solveKeys within one graph.
-# """
-function cloneSolveKey!(
-    dest_dfg::AbstractDFG,
-    dest::Symbol,
-    src_dfg::AbstractDFG,
-    src::Symbol;
-    solvable::Int = 0,
-    labels = intersect(ls(dest_dfg; solvable = solvable), ls(src_dfg; solvable = solvable)),
-    verbose::Bool = false,
+# Deprecated in favor of getBiadjacencyMatrix as it is not efficient for large graphs.
+function getAdjacencyMatrixSymbols(
+    dfg::AbstractDFG;
+    solvableFilter::Union{Nothing, Function} = nothing,
 )
     #
-    for x in labels
-        sd = deepcopy(getState(getVariable(src_dfg, x), src))
-        copytoState!(dest_dfg, x, dest, sd)
+    varLabels = sort(map(v -> v.label, getVariables(dfg; solvableFilter)))
+    factLabels = sort(map(f -> f.label, getFactors(dfg; solvableFilter)))
+    vDict = Dict(varLabels .=> [1:length(varLabels)...] .+ 1)
+
+    adjMat = Matrix{Union{Nothing, Symbol}}(
+        nothing,
+        length(factLabels) + 1,
+        length(varLabels) + 1,
+    )
+    # Set row/col headings
+    adjMat[2:end, 1] = factLabels
+    adjMat[1, 2:end] = varLabels
+    for (fIndex, factLabel) in enumerate(factLabels)
+        factVars = listNeighbors(dfg, getFactor(dfg, factLabel); solvable)
+        map(vLabel -> adjMat[fIndex + 1, vDict[vLabel]] = factLabel, factVars)
     end
-
-    return nothing
+    return adjMat
 end
 
-function cloneSolveKey!(dfg::AbstractDFG, dest::Symbol, src::Symbol; kw...)
-    #
-    @assert dest != src "Must copy to a different solveKey within the same graph, $dest."
-    return cloneSolveKey!(dfg, dest, dfg, src; kw...)
-end
-
-#TODO make a replacement if used a lot... not a good function, as it's not complete.
-# """
-#     $(SIGNATURES)
-# Convenience function to get all the metadata of a DFG
-# """
-function getDFGInfo(dfg::AbstractDFG)
-    Base.depwarn("getDFGInfo is deprecated and needs a replacement.", :getDFGInfo)
-    return (
-        graphDescription = getDescription(dfg),
-        agentLabel = getAgentLabel(dfg),
-        graphLabel = getGraphLabel(dfg),
-        # agentBloblets = getAgentBloblets(dfg),
-        # graphBloblets = getGraphBloblets(dfg),
-        solverParams = getSolverParams(dfg),
-    )
-end
-
-function listSolveKeys(
-    variable::VariableCompute,
-    filterSolveKeys::Union{Regex, Nothing} = nothing,
-    skeys = Set{Symbol}(),
+@deprecate findVariableNearTimestamp(args...; kwargs...) findVariablesNearTimestamp(
+    args...;
+    kwargs...,
 )
-    Base.depwarn("listSolveKeys is deprecated, use listStates instead.", :listSolveKeys)
-    #
-    for ky in keys(refStates(variable))
-        push!(skeys, ky)
-    end
-
-    #filter the solveKey set with filterSolveKeys regex
-    !isnothing(filterSolveKeys) &&
-        return filter!(k -> occursin(filterSolveKeys, string(k)), skeys)
-    return skeys
-end
-
-function listSolveKeys(
-    dfg::AbstractDFG,
-    lbl::Symbol,
-    filterSolveKeys::Union{Regex, Nothing} = nothing,
-    skeys = Set{Symbol}(),
-)
-    return listSolveKeys(getVariable(dfg, lbl), filterSolveKeys, skeys)
-end
-#
-
-function listSolveKeys(
-    dfg::AbstractDFG,
-    filterVariables::Union{Type{<:StateType}, Regex, Nothing} = nothing;
-    filterSolveKeys::Union{Regex, Nothing} = nothing,
-    tags::Vector{Symbol} = Symbol[],
-    solvable::Int = 0,
-)
-    #
-    skeys = Set{Symbol}()
-    varList = listVariables(dfg, filterVariables; tags = tags, solvable = solvable)
-    for vs in varList  #, ky in keys(refStates(getVariable(dfg, vs)))
-        listSolveKeys(dfg, vs, filterSolveKeys, skeys)
-    end
-
-    # done inside the loop
-    # #filter the solveKey set with filterSolveKeys regex
-    # !isnothing(filterSolveKeys) && return filter!(k -> occursin(filterSolveKeys, string(k)), skeys)
-
-    return skeys
-end
-
-const listSupersolves = listSolveKeys
-
-#TODO mergeBlobentries! does not fit with merge definition, should probably be updated to copyto or sync.
-# leaving here until it is done.
-# Add a blob entry into the destination variable which already exists in a source variable.
-function mergeBlobentries!(
-    dst::AbstractDFG,
-    dlbl::Symbol,
-    src::AbstractDFG,
-    slbl::Symbol,
-    bllb::Union{Symbol, UUID, <:AbstractString, Regex},
-)
-    #
-    _makevec(s) = [s;]
-    _makevec(s::AbstractVector) = s
-    des_ = getBlobentry(src, slbl, bllb)
-    des = _makevec(des_)
-    # don't add data entries that already exist 
-    dde = listBlobentries(dst, dlbl)
-    # HACK, verb list should just return vector of Symbol. NCE36
-    _getid(s) = s
-    _getid(s::Blobentry) = s.id
-    uids = _getid.(dde) # (s->s.id).(dde)
-    filter!(s -> !(_getid(s) in uids), des)
-    # add any data entries not already in the destination variable, by uuid
-    return addBlobentry!.(dst, dlbl, des)
-end
-
-function mergeBlobentries!(
-    dst::AbstractDFG,
-    dlbl::Symbol,
-    src::AbstractDFG,
-    slbl::Symbol,
-    ::Colon = :,
-)
-    des = listBlobentries(src, slbl)
-    # don't add data entries that already exist 
-    uids = listBlobentries(dst, dlbl)
-    # verb list should just return vector of Symbol. NCE36
-    filter!(s -> !(s in uids), des)
-    if 0 < length(des)
-        union(((s -> mergeBlobentries!(dst, dlbl, src, slbl, s)).(des))...)
-    end
-end
-
-function mergeBlobentries!(
-    dest::AbstractDFG,
-    src::AbstractDFG,
-    w...;
-    varList::AbstractVector = listVariables(dest) |> sortDFG,
-)
-    @showprogress 1 "merging data entries" for vl in varList
-        mergeBlobentries!(dest, vl, src, vl, w...)
-    end
-    return varList
-end
-
-function getBlobentriesVariables(
-    dfg::AbstractDFG,
-    bLblPattern::Regex;
-    varList::AbstractVector{Symbol} = sort(listVariables(dfg); lt = natural_lt),
-    dropEmpties::Bool = false,
-)
-    Base.depwarn(
-        "getBlobentriesVariables is deprecated, use gatherBlobentries instead.",
-        :getBlobentriesVariables,
-    )
-    RETLIST = Vector{Vector{Blobentry}}()
-    @showprogress "Get entries matching $bLblPattern" for vl in varList
-        bes = filter(s -> occursin(bLblPattern, string(s.label)), listBlobentries(dfg, vl))
-        # only push to list if there are entries on this variable
-        (!dropEmpties || 0 < length(bes)) ? nothing : continue
-        push!(RETLIST, bes)
-    end
-
-    return RETLIST
-end
-
-function getBlobentries(dfg::AbstractDFG, label::Symbol, regex::Regex)
-    Base.depwarn(
-        "getBlobentries(dfg, label, ::Regex) is deprecated, use getBlobentries(dfg, label; labelFilter=contains(regex)) instead.",
-        :getBlobentries,
-    )
-    return entries = getBlobentries(dfg, label; labelFilter = contains(regex))
-end
-
-function getBlobentries(dfg::AbstractDFG, label::Symbol, skey::AbstractString)
-    Base.depwarn(
-        "getBlobentries(dfg, label, regex::AbstractString) is deprecated, use getBlobentries(dfg, label; labelFilter=contains(regex)) instead.",
-        :getBlobentries,
-    )
-    return getBlobentries(dfg, label, Regex(string(skey)))
-end
-
-function getfirstBlobentry(var::AbstractGraphVariable, blobId::UUID)
-    Base.depwarn(
-        "getfirstBlobentry(var, blobId) is deprecated, use getfirstBlobentry(var; blobidFilter = ==(string(blobId))) instead.",
-        :getfirstBlobentry,
-    )
-    return getfirstBlobentry(var; blobidFilter = ==(string(blobId)))
-end
-
-function getfirstBlobentry(dfg::AbstractDFG, label::Symbol, blobId::UUID)
-    Base.depwarn(
-        "getfirstBlobentry(dfg, label, blobId) is deprecated, use getfirstBlobentry(dfg, label; blobidFilter = ==(string(blobId))) instead.",
-        :getfirstBlobentry,
-    )
-    return getfirstBlobentry(dfg, label; blobidFilter = ==(string(blobId)))
-end
-
-function getfirstBlobentry(var::AbstractGraphVariable, key::Regex)
-    Base.depwarn(
-        "getfirstBlobentry(var, key::Regex) is deprecated, use getfirstBlobentry(var; labelFilter=contains(key)) instead.",
-        :getfirstBlobentry,
-    )
-    return getfirstBlobentry(var; labelFilter = contains(key))
-end
-
-function getfirstBlobentry(dfg::AbstractDFG, label::Symbol, key::Regex)
-    Base.depwarn(
-        "getfirstBlobentry(dfg, label, key::Regex) is deprecated, use getfirstBlobentry(dfg, label; labelFilter=contains(key)) instead.",
-        :getfirstBlobentry,
-    )
-    return getfirstBlobentry(dfg, label; labelFilter = contains(key))
-end
-
-macro defVariable(args...)
-    return esc(:(DFG.@defStateType $(args...)))
-end
-
-@deprecate getFactorFunction(args...) getObservation(args...)
-@deprecate getFactorType(args...) getObservation(args...)
-
-setMetadata!(args...) = error("setMetadata is obsolete, use Bloblets instead.")
-
-updateData!(args...; kwargs...) = error("updateData! is obsolete.")
-updateBlob!(args...; kwargs...) = error("updateBlob! is obsolete.")
-getData(args...; kwargs...) = error("getData is obsolete, use loadBlob_Variable")
-addData!(args...; kwargs...) = error("addData! is obsolete, use saveBlob_Variable!")
-deleteData!(args...; kwargs...) = error("deleteData! is obsolete, use deleteBlob_Variable!")

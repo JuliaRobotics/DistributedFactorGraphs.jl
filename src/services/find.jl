@@ -49,19 +49,17 @@ Related
 
 ls, listVariables, findClosestTimestamp
 """
-function findVariableNearTimestamp(
+function findVariablesNearTimestamp(
     dfg::AbstractDFG,
-    timest::TimeDateZone,#ZonedDateTime,
-    regexFilter::Union{Nothing, Regex} = nothing;
-    tags::Vector{Symbol} = Symbol[],
-    solvable::Int = 0,
-    warnDuplicate::Bool = true,
+    timest::TimeDateZone;
+    labelFilter::Union{Nothing, Function} = nothing,
+    tagsFilter::Union{Nothing, Function} = nothing,
+    solvableFilter::Union{Nothing, Function} = nothing,
     number::Int = 1,
 )
     #
     # get the variable labels based on filters
-    # syms = listVariables(dfg, regexFilter, tags=tags, solvable=solvable)
-    syms = listVariables(dfg, regexFilter; tags = tags, solvableFilter = >=(solvable))
+    syms = listVariables(dfg; labelFilter, tagsFilter, solvableFilter)
     # compile timestamps with label
     # vars = map( x->getVariable(dfg, x), syms )
     timeset = map(x -> (getTimestamp(getVariable(dfg, x)), x), syms)
@@ -86,25 +84,17 @@ function findVariableNearTimestamp(
             SYMS = Symbol[]
         end
     end
-    # warn if duplicates found
-    # warnDuplicate && 1 < corrs ? @warn("getVariableNearTimestamp found more than one variable at $timestamp") :   nothing
 
     return RET
 end
 
-function findVariableNearTimestamp(
+function findVariablesNearTimestamp(
     dfg::AbstractDFG,
-    timest::DateTime,
-    regexFilter::Union{Nothing, Regex} = nothing;
+    timest::DateTime;
     timezone = tz"UTC",
     kwargs...,
 )
-    return findVariableNearTimestamp(
-        dfg,
-        TimeDateZone(timest, timezone),
-        regexFilter;
-        kwargs...,
-    )
+    return findVariablesNearTimestamp(dfg, TimeDateZone(timest, timezone); kwargs...)
 end
 
 ##==============================================================================
