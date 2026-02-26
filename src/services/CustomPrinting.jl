@@ -184,12 +184,13 @@ end
 
 function Base.show(io::IO, ::MIME"text/plain", dfg::AbstractDFG)
     summary(io, dfg)
+    println(io)
     println(io, "  AgentLabel: ", getAgentLabel(dfg))
-    println(io, "  FactorgraphLabel: ", getGraphLabel(dfg))
+    println(io, "  GraphLabel: ", getGraphLabel(dfg))
     println(io, "  Description: ", getDescription(dfg))
     println(io, "  Nr variables: ", length(ls(dfg)))
     println(io, "  Nr factors: ", length(lsf(dfg)))
-    println(io, "  Agent Metadata: ", listAgentBloblets(dfg))
-    println(io, "  Graph Metadata: ", listGraphBloblets(dfg))
+    println(io, "  Agent Bloblets: ", listAgentBloblets(dfg))
+    println(io, "  Graph Bloblets: ", listGraphBloblets(dfg))
     return
 end

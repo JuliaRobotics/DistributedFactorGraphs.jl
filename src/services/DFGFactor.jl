@@ -167,14 +167,13 @@ getManifold(f::AbstractGraphFactor) = getManifold(getObservation(f))
 ## variableorder
 ##------------------------------------------------------------------------------
 
-#TODO perhaps making variableorder imutable (NTuple) will be a save option
 """
 $SIGNATURES
 
 Get the variable ordering for this factor.
 Should be equivalent to listNeighbors unless something was deleted in the graph.
 """
-getVariableOrder(fct::FactorDFG) = fct.variableorder
+getVariableOrder(fct::AbstractGraphFactor) = fct.variableorder
 getVariableOrder(dfg::AbstractDFG, fct::Symbol) = getVariableOrder(getFactor(dfg, fct))
 
 ##------------------------------------------------------------------------------

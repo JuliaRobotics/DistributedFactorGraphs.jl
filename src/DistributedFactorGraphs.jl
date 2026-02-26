@@ -87,7 +87,6 @@ export FactorDFG
 export FactorSummary
 export FactorSkeleton
 
-#TODO Still pending timestamp field name decision
 export Blobentry
 
 export State
@@ -96,28 +95,85 @@ export Agent
 ##------------------------------------------------------------------------------
 ## Functions
 ##------------------------------------------------------------------------------
+##==============================================================================
+## CRUD Matrix
+# export addVariable!,          getVariable,          mergeVariable!,          deleteVariable!
+# export addVariables!,         getVariables,         mergeVariables!,         deleteVariables!
+# export addFactor!,            getFactor,            mergeFactor!,            deleteFactor!
+# export addFactors!,           getFactors,           mergeFactors!,           deleteFactors!
+
+# export addState!,             getState,             mergeState!,             deleteState!
+# export addStates!,            getStates,            mergeStates!,            deleteStates!
+
+# export addVariableBlobentry!,   getVariableBlobentry,   mergeVariableBlobentry!,   deleteVariableBlobentry!
+# export addVariableBlobentries!, getVariableBlobentries, mergeVariableBlobentries!, deleteVariableBlobentries!
+# export addGraphBlobentry!,    getGraphBlobentry,    mergeGraphBlobentry!,    deleteGraphBlobentry!
+# export addGraphBlobentries!,  getGraphBlobentries,  mergeGraphBlobentries!,  deleteGraphBlobentries!
+# export addAgentBlobentry!,    getAgentBlobentry,    mergeAgentBlobentry!,    deleteAgentBlobentry!
+# export addAgentBlobentries!,  getAgentBlobentries,  mergeAgentBlobentries!,  deleteAgentBlobentries!
+# export addFactorBlobentry!,   getFactorBlobentry,   mergeFactorBlobentry!,   deleteFactorBlobentry!
+# export addFactorBlobentries!, getFactorBlobentries, mergeFactorBlobentries!, deleteFactorBlobentries!
+
+# export addVariableBloblet!,  getVariableBloblet,  mergeVariableBloblet!,  deleteVariableBloblet!
+# export addVariableBloblets!, getVariableBloblets, mergeVariableBloblets!, deleteVariableBloblets!
+# export addFactorBloblet!,    getFactorBloblet,    mergeFactorBloblet!,    deleteFactorBloblet!
+# export addFactorBloblets!,   getFactorBloblets,   mergeFactorBloblets!,   deleteFactorBloblets!
+# export addAgentBloblet!,     getAgentBloblet,     mergeAgentBloblet!,     deleteAgentBloblet!
+# export addAgentBloblets!,    getAgentBloblets,    mergeAgentBloblets!,    deleteAgentBloblets!
+# export addGraphBloblet!,     getGraphBloblet,     mergeGraphBloblet!,     deleteGraphBloblet!
+# export addGraphBloblets!,    getGraphBloblets,    mergeGraphBloblets!,    deleteGraphBloblets!
+
+# list
+# export listVariables, listFactors, listStates, listVariableBlobentries, listFactorBlobEntries, listGraphBlobentries, listAgentBlobentries
+# export listVariableBloblets, listFactorBloblets, listAgentBloblets, listGraphBloblets
+
+# tags
+# export listVariableTags, mergeVariableTags!, deleteVariableTags!
+# export listFactorTags, mergeFactorTags!, deleteFactorTags!
+# export listGraphTags, mergeGraphTags!, deleteGraphTags!
+# export listAgentTags, mergeAgentTags!, deleteAgentTags!
+
+# has
+# export hasVariable, hasFactor, hasState
+# export hasVariableBlobentry, hasFactorBlobentry, hasGraphBlobentry, hasAgentBlobentry
+# export hasVariableBloblet, hasFactorBloblet, hasGraphBloblet, hasAgentBloblet
+# export hasVariableTags, hasFactorTags, hasGraphTags, hasAgentTags
+
 # v1 name, signiture, return, and error checked
 export addVariable!
+export getVariable
 export mergeVariable!
 export deleteVariable!
+
 export addVariables!
 export getVariables
+export mergeVariables!
+export deleteVariables!
 
 export addFactor!
 export getFactor
 export deleteFactor!
+export mergeFactor!
+
 export addFactors!
 export getFactors
+export mergeFactors!
+export deleteFactors!
 
 export addState!
 export getState
 export mergeState!
 export deleteState!
+
 export addStates!
+export getStates # TODO state filters not implemented yet
 export mergeStates!
 export deleteStates!
 
+# has
+export hasVariable
 export hasState
+export hasFactor
 
 ## list
 export listVariables
@@ -125,84 +181,140 @@ export listFactors
 export listStates
 
 ##
-export getGraphBlobentry
-
 export getObservation
 
-## v1 name, signiture, and return
+##------------------------------------------------------------------------------
+# Tags
+export listVariableTags
+export mergeVariableTags!
+export deleteVariableTags!
+export hasVariableTags
 
-## v1 name only
+export listFactorTags
+export mergeFactorTags!
+export deleteFactorTags!
+export hasFactorTags
 
-##------------------------------------------------------------------------------
-# Variable
-##------------------------------------------------------------------------------
-export getVariable
-export hasVariable
-export mergeVariables!
-##------------------------------------------------------------------------------
-## State
-##------------------------------------------------------------------------------
-export getStates
+export listGraphTags
+export mergeGraphTags!
+export deleteGraphTags!
+export hasGraphTags
 
-##------------------------------------------------------------------------------
-# Factor
-##------------------------------------------------------------------------------
-export mergeFactor!
-export mergeFactors!
-export hasFactor
+export listAgentTags
+export mergeAgentTags!
+export deleteAgentTags!
+export hasAgentTags
 
 ##------------------------------------------------------------------------------
 ## Blobentries
 ##------------------------------------------------------------------------------
 export addVariableBlobentry!
-export addVariableBlobentries!
-
 export getVariableBlobentry
-export getVariableBlobentries
-
 export mergeVariableBlobentry!
-export mergeVariableBlobentries!
-
 export deleteVariableBlobentry!
+
+export addVariableBlobentries!
+export getVariableBlobentries
+export mergeVariableBlobentries!
 export deleteVariableBlobentries!
 
+export addFactorBlobentry!
+export getFactorBlobentry
+export mergeFactorBlobentry!
+export deleteFactorBlobentry!
+
+export addFactorBlobentries!
+export getFactorBlobentries
+export mergeFactorBlobentries!
+export deleteFactorBlobentries!
+
 export addGraphBlobentry!
-export addGraphBlobentries!
-export addAgentBlobentry!
-export addAgentBlobentries!
-
-export getGraphBlobentries
-export getAgentBlobentry
-export getAgentBlobentries
-
+export getGraphBlobentry
 export mergeGraphBlobentry!
-export mergeGraphBlobentries!
-export mergeAgentBlobentry!
-export mergeAgentBlobentries!
-
 export deleteGraphBlobentry!
-export deleteAgentBlobentry!
+
+export addGraphBlobentries!
+export getGraphBlobentries
+export mergeGraphBlobentries!
 export deleteGraphBlobentries!
+
+export addAgentBlobentry!
+export getAgentBlobentry
+export mergeAgentBlobentry!
+export deleteAgentBlobentry!
+
+export addAgentBlobentries!
+export getAgentBlobentries
+export mergeAgentBlobentries!
 export deleteAgentBlobentries!
 
 export listVariableBlobentries
+export listFactorBlobentries
 export listGraphBlobentries
 export listAgentBlobentries
 
 export hasVariableBlobentry
+export hasFactorBlobentry
 export hasGraphBlobentry
 export hasAgentBlobentry
 
-export addFactorBlobentry!
-export addFactorBlobentries!
-export getFactorBlobentry
-export getFactorBlobentries
-export mergeFactorBlobentry!
-export mergeFactorBlobentries!
-export deleteFactorBlobentry!
-export deleteFactorBlobentries!
-export listFactorBlobentries
-export hasFactorBlobentry
+##------------------------------------------------------------------------------
+## Bloblets
+##------------------------------------------------------------------------------
+export Bloblet
+export getVariableBloblet
+export addVariableBloblet!
+export mergeVariableBloblet!
+export deleteVariableBloblet!
+
+export addVariableBloblets!
+export getVariableBloblets
+export mergeVariableBloblets!
+export deleteVariableBloblets!
+
+export addFactorBloblet!
+export getFactorBloblet
+export mergeFactorBloblet!
+export deleteFactorBloblet!
+
+export addFactorBloblets!
+export getFactorBloblets
+export mergeFactorBloblets!
+export deleteFactorBloblets!
+
+export getGraphBloblet
+export addGraphBloblet!
+export mergeGraphBloblet!
+export deleteGraphBloblet!
+
+export addGraphBloblets!
+export getGraphBloblets
+export mergeGraphBloblets!
+export deleteGraphBloblets!
+
+export getAgentBloblet
+export addAgentBloblet!
+export mergeAgentBloblet!
+export deleteAgentBloblet!
+
+export addAgentBloblets!
+export getAgentBloblets
+export mergeAgentBloblets!
+export deleteAgentBloblets!
+
+export listVariableBloblets
+export listFactorBloblets
+export listGraphBloblets
+export listAgentBloblets
+
+# export hasVariableBloblet
+# export hasFactorBloblet
+# export hasGraphBloblet
+# export hasAgentBloblet
+
+## v1 name, signiture, and return
+
+## v1 name only
 
 ##------------------------------------------------------------------------------
 ## Blobstores and Blobs
@@ -233,74 +345,6 @@ export GraphsDFGs
 export GraphsDFG
 
 ##==============================================================================
-## CRUD Matrix
-# export addVariable!,          getVariable,          mergeVariable!,          deleteVariable!
-# export addVariables!,         getVariables,         mergeVariables!,         deleteVariables!
-# export addFactor!,            getFactor,            mergeFactor!,            deleteFactor!
-# export addFactors!,           getFactors,           mergeFactors!,           deleteFactors!
-
-# export addState!,             getState,             mergeState!,             deleteState!
-# export addStates!,            getStates,            mergeStates!,            deleteStates!
-
-# export addVariableBlobentry!,   getVariableBlobentry,   mergeVariableBlobentry!,   deleteVariableBlobentry!
-# export addVariableBlobentries!, getVariableBlobentries, mergeVariableBlobentries!, deleteVariableBlobentries!
-# export addGraphBlobentry!,    getGraphBlobentry,    mergeGraphBlobentry!,    deleteGraphBlobentry!
-# export addGraphBlobentries!,  getGraphBlobentries,  mergeGraphBlobentries!,  deleteGraphBlobentries!
-# export addAgentBlobentry!,    getAgentBlobentry,    mergeAgentBlobentry!,    deleteAgentBlobentry!
-# export addAgentBlobentries!,  getAgentBlobentries,  mergeAgentBlobentries!,  deleteAgentBlobentries!
-# export addFactorBlobentry!,   getFactorBlobentry,   mergeFactorBlobentry!,   deleteFactorBlobentry!
-# export addFactorBlobentries!, getFactorBlobentries, mergeFactorBlobentries!, deleteFactorBlobentries!
-
-# export addVariableBloblet!,  getVariableBloblet,  mergeVariableBloblet!,  deleteVariableBloblet!
-# export addVariableBloblets!, getVariableBloblets, mergeVariableBloblets!, deleteVariableBloblets!
-# export addFactorBloblet!,    getFactorBloblet,    mergeFactorBloblet!,    deleteFactorBloblet!
-# export addFactorBloblets!,  getFactorBloblets,  mergeFactorBloblets!,  deleteFactorBloblets!
-# export addAgentBloblet!,     getAgentBloblet,     mergeAgentBloblet!,     deleteAgentBloblet!
-# export addAgentBloblets!,    getAgentBloblets,    mergeAgentBloblets!,    deleteAgentBloblets!
-# export addGraphBloblet!,     getGraphBloblet,     mergeGraphBloblet!,     deleteGraphBloblet!
-# export addGraphBloblets!,    getGraphBloblets,    mergeGraphBloblets!,    deleteGraphBloblets!
-
-## list
-# export listVariables, listFactors, listStates, listVariableBlobentries, listFactorBlobEntries, listGraphBlobentries, listAgentBlobentries
-# export listVariableBloblets, listFactorBloblets, listAgentBloblets, listGraphBloblets
-
-# tags
-# export listVariableTags, mergeVariableTags!, deleteVariableTags!
-# export listFactorTags, mergeFactorTags!, deleteFactorTags!
-# export listGraphTags, mergeGraphTags!, deleteGraphTags!
-# export listAgentTags, mergeAgentTags!, deleteAgentTags!
-
-# has
-# export hasVariable, hasFactor, hasState
-# export hasVariableBlobentry, hasFactorBlobentry, hasGraphBlobentry, hasAgentBlobentry
-# export hasVariableBloblet, hasFactorBloblet, hasGraphBloblet, hasAgentBloblet
-# export hasVariableTags, hasFactorTags, hasGraphTags, hasAgentTags
-
-export deleteVariables!
-export deleteFactors!
-
-# Tags
-export listVariableTags
-export mergeVariableTags!
-export deleteVariableTags!
-export hasVariableTags
-
-export listFactorTags
-export mergeFactorTags!
-export deleteFactorTags!
-export hasFactorTags
-
-export listGraphTags
-export mergeGraphTags!
-export deleteGraphTags!
-export hasGraphTags
-
-export listAgentTags
-export mergeAgentTags!
-export deleteAgentTags!
-export hasAgentTags
-
-##==============================================================================
 ## Common Accessors 
 ##==============================================================================
 export getLabel
@@ -320,62 +364,12 @@ public FolderStore
 ##------------------------------------------------------------------------------
 ## Tags
 ##------------------------------------------------------------------------------
-# tags is a set: get/list, merge, empty, and remove (we don't have add but merge)
+# tags is a set: get/list, merge, delete (we don't have add but merge)
 
 public listTags
 public mergeTags!
-public emptyTags!
 public deleteTags!
-
-##------------------------------------------------------------------------------
-## Bloblets
-##------------------------------------------------------------------------------
-# currently these refer to variable Bloblets
-#TODO Bloblet CRUD
-export Bloblet
-export getVariableBloblet
-export addVariableBloblet!
-export mergeVariableBloblet!
-export deleteVariableBloblet!
-export listVariableBloblets
-
-export addVariableBloblets!
-export getVariableBloblets
-export mergeVariableBloblets!
-export deleteVariableBloblets!
-
-export getAgentBloblet
-export addAgentBloblet!
-export mergeAgentBloblet!
-export deleteAgentBloblet!
-export listAgentBloblets
-
-export addAgentBloblets!
-export getAgentBloblets
-export mergeAgentBloblets!
-export deleteAgentBloblets!
-
-export getGraphBloblet
-export addGraphBloblet!
-export mergeGraphBloblet!
-export deleteGraphBloblet!
-export listGraphBloblets
-
-export addGraphBloblets!
-export getGraphBloblets
-export mergeGraphBloblets!
-export deleteGraphBloblets!
-
-export addFactorBloblet!
-export getFactorBloblet
-export mergeFactorBloblet!
-export deleteFactorBloblet!
-export listFactorBloblets
-
-export addFactorBloblets!
-export getFactorBloblets
-export mergeFactorBloblets!
-export deleteFactorBloblets!
+# public emptyTags!
 
 ##------------------------------------------------------------------------------
 ## FileDFG
@@ -390,8 +384,8 @@ export loadDFG
 ##------------------------------------------------------------------------------
 #TODO is ls alias or more of a shorthand with extra functionality?
 # if shorthand kind of function it is likeley only DFG
-export ls # alias for listVariables
-export lsf # alias for listFactors
+# public ls # alias for listVariables
+# public lsf # alias for listFactors
 
 ##------------------------------------------------------------------------------
 ## Other utility functions
@@ -401,14 +395,14 @@ export lsf # alias for listFactors
 # addAgent!
 # deleteAgent!
 # listAgents
+# getAgents
 # addGraph!
 # deleteGraph!
 # listGraphs
-# getAgents
+# getGraphs
 # getModel
 # getModels
 # addModel!
-# getGraphs
 
 ##==============================================================================
 export @format_str # exported from FileIO
@@ -417,6 +411,8 @@ export @defStateType #TODO Should this be exported?
 
 public refStates
 public getStateKind
+
+public pack, unpack
 
 # list of unstable functions not exported any more
 # will move to public or deprecate over time
@@ -444,8 +440,8 @@ const unstable_functions::Vector{Symbol} = [
     :findVariablesNearTimestamp,
     :findShortestPathDijkstra,
     :findFactorsBetweenNaive,
-    :getAgentLabel,
-    :getGraphLabel,
+    :getAgentLabel, #TODO check and mark as public
+    :getGraphLabel, #TODO check and mark as public
     :getDescription,
     :getSolverParams,
     :getHash,
@@ -463,7 +459,6 @@ const unstable_functions::Vector{Symbol} = [
     :getCoordinates,
     :getVariableLabelNumber,# TODO somewhat used, do we deprecate?
     :getfirstBlobentry,# TODO somewhat used, do we deprecate?
-    :getSolveInProgress,#TODO unused, do we deprecate?
     :isVariable,
     :isFactor,
     :isConnected,
@@ -478,22 +473,19 @@ const unstable_functions::Vector{Symbol} = [
     :printVariable,
     :printNode,
     :plotDFG,
-    :pack,
-    # :packVariable,
-    # :packFactor,
     :packBlob,
     :packState,
-    :unpack,
     :hasTags,
-    # :unpackVariable,
-    # :unpackFactor,
     :unpackBlob,
     :unpackState,
+    :emptyTags!,
+    :ls,
+    :lsf,
     :ls2,
     :lsfPriors,
     :listBlobentrySequence,# TODO somewhat used, do we deprecate?
-    :natural_lt, #TODO do we  stable functions such as natural_lt or just mark as public
-    :sortDFG, #TODO do we  stable functions such as natural_lt or just mark as public
+    :natural_lt, #TODO do we export stable functions such as natural_lt or just mark as public
+    :sortDFG, #TODO do we export stable functions such as natural_lt or just mark as public
     :mergeGraph!,
     :buildSubgraph,
     :incrDataLabelSuffix,# TODO somewhat used, do we deprecate?
@@ -529,6 +521,7 @@ const unstable_functions::Vector{Symbol} = [
     :setGraphMetadata!,
     # :getSolverDataDict,# obsolete
     :getAddHistory,
+    :getSolveInProgress,#deprecated
 ]
 
 macro usingDFG(unstable = false)

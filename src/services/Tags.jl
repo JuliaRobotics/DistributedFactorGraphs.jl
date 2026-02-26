@@ -129,12 +129,12 @@ function hasAgentTags(dfg::AbstractDFG, tags::Vector{Symbol})
 end
 
 ##
-
 function listTags(dfg::AbstractDFG, sym::Symbol)
     getFnc = isVariable(dfg, sym) ? getVariable : getFactor
     return listTags(getFnc(dfg, sym))
 end
 
+#TODO FIXME for DFGv1, merge and delete should return the number of tags added/removed.
 function mergeTags!(dfg::InMemoryDFGTypes, sym::Symbol, tags)
     getFnc = isVariable(dfg, sym) ? getVariable : getFactor
     return union!(refTags(getFnc(dfg, sym)), tags)

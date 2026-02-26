@@ -124,7 +124,7 @@ end
 FolderStore(label::Symbol, folder::String) = FolderStore{Vector{UInt8}}(label, folder)
 
 function FolderStore(foldername::String; label::Symbol = :default, createfolder = true)
-    storepath = joinpath(foldername, string(label))
+    storepath = expanduser(joinpath(foldername, string(label)))
     if createfolder && !isdir(storepath)
         @info "Folder '$storepath' doesn't exist - creating."
         # create new folder
@@ -134,11 +134,11 @@ function FolderStore(foldername::String; label::Symbol = :default, createfolder 
 end
 
 function blobfilename(store::FolderStore, blobid::UUID)
-    return joinpath(store.folder, string(store.label), string(blobid))
+    return expanduser(joinpath(store.folder, string(store.label), string(blobid)))
 end
 
 function getBlob(store::FolderStore{T}, blobid::UUID) where {T}
-    blobfilename = joinpath(store.folder, string(store.label), string(blobid))
+    blobfilename = expanduser(joinpath(store.folder, string(store.label), string(blobid)))
     tombstonefile = blobfilename * ".deleted"
     if isfile(tombstonefile)
         throw(IdNotFoundError("Blob (deleted)", blobid))
@@ -152,7 +152,7 @@ function getBlob(store::FolderStore{T}, blobid::UUID) where {T}
 end
 
 function addBlob!(store::FolderStore{T}, blobid::UUID, data::T) where {T}
-    blobfilename = joinpath(store.folder, string(store.label), string(blobid))
+    blobfilename = expanduser(joinpath(store.folder, string(store.label), string(blobid)))
     if isfile(blobfilename)
         throw(IdExistsError("Blob", blobid))
     else
@@ -165,7 +165,7 @@ end
 
 function deleteBlob!(store::FolderStore{T}, blobid::UUID) where {T}
     # Tombstone pattern: instead of deleting the file, create a tombstone marker file
-    blobfilename = joinpath(store.folder, string(store.label), string(blobid))
+    blobfilename = expanduser(joinpath(store.folder, string(store.label), string(blobid)))
     tombstonefile = blobfilename * ".deleted"
     if isfile(blobfilename)
         # Remove the actual blob file
@@ -185,14 +185,14 @@ function deleteBlob!(store::FolderStore{T}, blobid::UUID) where {T}
 end
 
 function hasBlob(store::FolderStore, blobid::UUID)
-    blobfilename = joinpath(store.folder, string(store.label), string(blobid))
+    blobfilename = expanduser(joinpath(store.folder, string(store.label), string(blobid)))
     return isfile(blobfilename)
 end
 
 hasBlob(store::FolderStore, entry::Blobentry) = hasBlob(store, entry.blobid)
 
 function listBlobs(store::FolderStore)
-    folder = joinpath(store.folder, string(store.label))
+    folder = expanduser(joinpath(store.folder, string(store.label)))
     # Parse folder to only include UUIDs automatically excluding tombstone files this way.
     blobids = UUID[]
     for filename in readdir(folder)
@@ -249,11 +249,11 @@ listBlobs(store::InMemoryBlobstore) = collect(keys(store.blobs))
 ##==============================================================================
 ## LinkStore Link blobid to a existing local folder
 ##==============================================================================
-
-struct LinkStore <: AbstractBlobstore{String}
+#TODO consider using a deterministic blobid (uuid5) with ns stored in the csv?
+@tags struct LinkStore <: AbstractBlobstore{String}
     label::Symbol
     csvfile::String
-    cache::Dict{UUID, String}
+    cache::Dict{UUID, String} & (json = (ignore = true,),)
 
     function LinkStore(label, csvfile)
         if !isfile(csvfile)

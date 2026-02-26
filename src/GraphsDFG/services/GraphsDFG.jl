@@ -92,16 +92,21 @@ function mergeVariable!(dfg::GraphsDFG, variable::AbstractGraphVariable)
 end
 
 function mergeFactor!(dfg::GraphsDFG, factor::AbstractGraphFactor)
-    if !haskey(dfg.g.factors, factor.label)
+    label = getLabel(factor)
+    if !haskey(dfg.g.factors, label)
         addFactor!(dfg, factor)
-    elseif dfg.g.factors[factor.label].variableorder != factor.variableorder
-        #TODO should we allow merging the factor neighbors or error as before?
-        error("Cannot update the factor, the neighbors are not the same.")
-        # We need to delete the factor if we are updating the neighbors
-        # deleteFactor!(dfg, factor.label)
-        # addFactor!(dfg, factor)
+    elseif DFG.getVariableOrder(dfg, label) != DFG.getVariableOrder(factor)
+        throw(
+            DomainError(
+                factor.variableorder,
+                "Cannot merge factor with label $(label): factor neighbors differ. " *
+                "Existing neighbors: $(DFG.getVariableOrder(dfg, label)), " *
+                "new neighbors: $(DFG.getVariableOrder(factor)), " *
+                "To mutate factor neighbors, delete and re-add the factor.",
+            ),
+        )
     else
-        dfg.g.factors[factor.label] = factor
+        dfg.g.factors[label] = factor
     end
 
     return 1
@@ -216,15 +221,6 @@ end
 
 function listNeighbors(
     dfg::GraphsDFG,
-    node::AbstractGraphNode;
-    solvable::Union{Nothing, Int} = nothing,
-    kwargs...,
-)
-    return listNeighbors(dfg, node.label; solvable, kwargs...)
-end
-
-function listNeighbors(
-    dfg::GraphsDFG,
     label::Symbol;
     solvableFilter::Union{Nothing, Function} = nothing,
     tagsFilter::Union{Nothing, Function} = nothing,
@@ -265,8 +261,20 @@ function listNeighborhood(
     dfg::GraphsDFG,
     variableFactorLabels::Vector{Symbol},
     distance::Int;
-    solvable::Union{Nothing, Int} = nothing,
+    solvableFilter::Union{Nothing, Function} = nothing,
+    tagsFilter::Union{Nothing, Function} = nothing,
+    solvable::Union{Nothing, Int} = nothing, #TODO deprecated for solvableFilter v0.29
 )
+    if !isnothing(solvable)
+        Base.depwarn(
+            "solvable kwarg is deprecated, use kwarg `solvableFilter = (>=solvable)` instead", #v0.29
+            :listNeighborhood,
+        )
+        !isnothing(solvableFilter) &&
+            error("Cannot use both solvable and solvableFilter kwargs.")
+        solvableFilter = >=(solvable)
+    end
+
     # find neighbors at distance to add
     nbhood = Int[]
 
@@ -276,10 +284,19 @@ function listNeighborhood(
 
     allvarfacs = [dfg.g.labels[id] for id in nbhood]
 
-    !isnothing(solvable) &&
-        filter!(nlbl -> (getSolvable(dfg, nlbl) >= solvable), allvarfacs)
+    filterDFG!(allvarfacs, solvableFilter, l->getSolvable(dfg, l))
+    filterDFG!(allvarfacs, tagsFilter, l->listTags(dfg, l))
 
-    return allvarfacs
+    variableLabels = intersect(listVariables(dfg), allvarfacs)
+    factorLabels = intersect(listFactors(dfg), allvarfacs)
+
+    # if filterOrphans
+    #     filter!(factorLabels) do lbl
+    #         issubset(getVariableOrder(fg, lbl), variableLabels)
+    #     end
+    # end
+
+    return variableLabels, factorLabels
 end
 
 # TODO copy GraphsDFG to GraphsDFG overwrite
@@ -294,7 +311,7 @@ end
 #  Biadjacency Matrix https://en.wikipedia.org/wiki/Adjacency_matrix#Of_a_bipartite_graph
 function getBiadjacencyMatrix(
     dfg::GraphsDFG;
-    solvable::Union{Nothing, Int} = nothing,
+    solvable::Union{Nothing, Int} = nothing, #TODO deprecated for solvableFilter v0.29
     solvableFilter = isnothing(solvable) ? nothing : >=(solvable),
     varLabels = listVariables(dfg; solvableFilter),
     factLabels = listFactors(dfg; solvableFilter),
