@@ -346,7 +346,7 @@ Implement `listNeighbors(dfg::AbstractDFG, label::Symbol; solvableFilter, tagsFi
 function listNeighbors end
 
 function listNeighbors(dfg::AbstractDFG, node::AbstractGraphNode; kwargs...)
-    return listNeighbors(dfg, node.label; kwargs...)
+    return listNeighbors(dfg, getLabel(node); kwargs...)
 end
 ##------------------------------------------------------------------------------
 ## copy and duplication
@@ -587,7 +587,7 @@ Build a list of all unique neighbors inside 'distance'. Neighbors can be filtere
 Filters are applied to final neighborhood result.
 
 Notes
-- Returns `Vector{Symbol}`
+- Returns a tuple `(variableLabels, factorLabels)`, where each element is a `Vector{Symbol}`.
 
 Related:
 - [`copyGraph!`](@ref)
@@ -663,7 +663,7 @@ function buildSubgraph(
     if !isnothing(solvable)
         Base.depwarn(
             "solvable kwarg is deprecated, use kwarg `solvableFilter = (>=solvable)` instead", #v0.29
-            :listNeighbors,
+            :buildSubgraph,
         )
         !isnothing(solvableFilter) &&
             error("Cannot use both solvable and solvableFilter kwargs.")

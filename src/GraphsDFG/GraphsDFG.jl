@@ -83,7 +83,7 @@ function DFG.rebuildFactorCache!(
     neighbors = [],
 )
     @warn(
-        "FactorCache not build, rebuildFactorCache! is not implemented for $(typeof(dfg)). `rebuildFactorCache!` is available in IncrementalInference.",
+        "FactorCache not built, rebuildFactorCache! is not implemented for $(typeof(dfg)). `rebuildFactorCache!` is available in IncrementalInference.",
         maxlog = 1
     )
     return nothing
