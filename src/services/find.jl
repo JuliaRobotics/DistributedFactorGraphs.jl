@@ -14,12 +14,9 @@ function findClosestTimestamp(
 ) where {S, T}
     #
     # build matrix of delta times, ranges on rows x vars on columns
-    DT = Array{Nanosecond, 2}(undef, length(setA), length(setB))
-    for i = 1:length(setA), j = 1:length(setB)
-        DT[i, j] = setB[j][1] - setA[i][1]
+    DT = map(Iterators.product(setA, setB)) do (a, b)
+        return abs(DFG.calcDeltatime_ns(a[1], b[1]))
     end
-
-    DT .= abs.(DT)
 
     # absolute time differences
     # DTi = (x->x.value).(DT) .|> abs
@@ -51,7 +48,7 @@ ls, listVariables, findClosestTimestamp
 """
 function findVariablesNearTimestamp(
     dfg::AbstractDFG,
-    timest::TimeDateZone;
+    query_timestamp::TimeDateZone;
     labelFilter::Union{Nothing, Function} = nothing,
     tagsFilter::Union{Nothing, Function} = nothing,
     solvableFilter::Union{Nothing, Function} = nothing,
@@ -59,11 +56,11 @@ function findVariablesNearTimestamp(
 )
     #
     # get the variable labels based on filters
-    syms = listVariables(dfg; labelFilter, tagsFilter, solvableFilter)
+    vls = listVariables(dfg; labelFilter, tagsFilter, solvableFilter)
     # compile timestamps with label
-    # vars = map( x->getVariable(dfg, x), syms )
-    timeset = map(x -> (getTimestamp(getVariable(dfg, x)), x), syms)
-    mask = BitArray{1}(undef, length(syms))
+    # vars = map( x->getVariable(dfg, x), vls )
+    timeset = map(x -> (getTimestamp(getVariable(dfg, x)), x), vls)
+    mask = BitArray{1}(undef, length(vls))
     fill!(mask, true)
 
     RET = Vector{Tuple{Vector{Symbol}, Nanosecond}}()
@@ -72,8 +69,8 @@ function findVariablesNearTimestamp(
     NUMBER = number
     while 0 < CORRS + NUMBER
         # get closest
-        link, mdt, corrs = findClosestTimestamp([(timest, 0)], timeset[mask])
-        newsym = syms[link[2]]
+        link, mdt, corrs = findClosestTimestamp([(query_timestamp, 0)], timeset[mask])
+        newsym = vls[link[2]]
         union!(SYMS, !isa(newsym, Vector) ? [newsym] : newsym)
         mask[link[2]] = false
         CORRS = corrs - 1
@@ -90,11 +87,15 @@ end
 
 function findVariablesNearTimestamp(
     dfg::AbstractDFG,
-    timest::DateTime;
+    query_timestamp::DateTime;
     timezone = tz"UTC",
     kwargs...,
 )
-    return findVariablesNearTimestamp(dfg, TimeDateZone(timest, timezone); kwargs...)
+    return findVariablesNearTimestamp(
+        dfg,
+        TimeDateZone(query_timestamp, timezone);
+        kwargs...,
+    )
 end
 
 ##==============================================================================

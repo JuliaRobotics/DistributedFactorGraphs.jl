@@ -91,7 +91,7 @@ end
 ##==============================================================================
 # AbstractBlobstore should have label or overwrite getLabel
 
-refBlobstores(dfg::AbstractDFG) = dfg.blobStores
+refBlobstores(dfg::AbstractDFG) = dfg.blobstores
 
 function getBlobstore(dfg::AbstractDFG, storeLabel::Symbol)
     store = get(refBlobstores(dfg), storeLabel, nothing)
@@ -277,11 +277,9 @@ Get the variables in the DFG as a Vector, supporting various filters.
 Arguments
 - `regexFilt`: Optional Regex to filter variable labels (deprecated, use `labelFilter` instead).
 Keyword arguments
-- `tags`: Vector of tags; only variables with at least one matching tag are returned.
-- `solvable`: Optional Int; only variables with `solvable >= solvable` are returned.
 - `solvableFilter`: Optional function to filter on the `solvable` property, eg `>=(1)`.
 - `labelFilter`: Optional function to filter on label e.g., `contains(r"x1")`.
-- `tagsFilter`: Optional function to filter on tags, eg. `⊇([:x1])`.
+- `tagsFilter`: Optional function to filter on tags, eg. `⊇([:POSE])`.
 - `typeFilter`: Optional function to filter on the variable type.
 
 Returns
@@ -343,10 +341,13 @@ function isConnected end
 """
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
-Implement `listNeighbors(dfg::AbstractDFG, label::Symbol; solvable::Int = 0)`
+Implement `listNeighbors(dfg::AbstractDFG, label::Symbol; solvableFilter, tagsFilter)`
 """
 function listNeighbors end
 
+function listNeighbors(dfg::AbstractDFG, node::AbstractGraphNode; kwargs...)
+    return listNeighbors(dfg, node.label; kwargs...)
+end
 ##------------------------------------------------------------------------------
 ## copy and duplication
 ##------------------------------------------------------------------------------
@@ -354,26 +355,6 @@ function listNeighbors end
 ##------------------------------------------------------------------------------
 ## CRUD Aliases
 ##------------------------------------------------------------------------------
-
-#TODO should this signiture be standardized or removed?
-"""
-    $(SIGNATURES)
-Get a VariableDFG with a specific solver key.
-In memory types still return a reference, other types returns a variable with only stateLabel.
-"""
-function getVariable(dfg::AbstractDFG, label::Symbol, stateLabel::Symbol)
-    # TODO maybe change stateLabel param to stateLabelFilter 
-    # function getVariable(dfg::AbstractDFG, label::Symbol; stateLabelFilter::Union{Nothing, ...} = nothing) 
-    var = getVariable(dfg, label)
-
-    if isa(var, VariableDFG) && !haskey(var.states, stateLabel)
-        throw(LabelNotFoundError("VariableNode", stateLabel))
-    elseif !isa(var, VariableDFG)
-        @warn "getVariable(dfg, label, stateLabel) only supported for type VariableDFG."
-    end
-
-    return var
-end
 
 function deleteVariable!(dfg::AbstractDFG, variable::AbstractGraphVariable)
     return deleteVariable!(dfg, variable.label)
@@ -599,9 +580,11 @@ function isPathFactorsHomogeneous(dfg::AbstractDFG, from::Symbol, to::Symbol)
     return (length(utyp) == 1), utyp
 end
 
+#TODO add pruning filters that is applied during traversal.
 """
     $(SIGNATURES)
-Build a list of all unique neighbors inside 'distance'
+Build a list of all unique neighbors inside 'distance'. Neighbors can be filtered by using keyword arguments, eg. [`tagsFilter`] and [`solvableFilter`].
+Filters are applied to final neighborhood result.
 
 Notes
 - Returns `Vector{Symbol}`
@@ -612,7 +595,7 @@ Related:
 - [`deepcopyGraph`](@ref)
 - [`mergeGraph!`](@ref)
 """
-function listNeighborhood(dfg::AbstractDFG, label::Symbol, distance::Int)
+function listNeighborhood(dfg::AbstractDFG, label::Symbol, distance::Int; filters...)
     neighborList = Set{Symbol}([label])
     curList = Set{Symbol}([label])
 
@@ -620,43 +603,38 @@ function listNeighborhood(dfg::AbstractDFG, label::Symbol, distance::Int)
         newNeighbors = Set{Symbol}()
         for node in curList
             neighbors = listNeighbors(dfg, node)
-            for neighbor in neighbors
-                push!(neighborList, neighbor)
-                push!(newNeighbors, neighbor)
-            end
+            union!(neighborList, neighbors)
+            union!(newNeighbors, neighbors)
         end
         curList = newNeighbors
     end
-    return collect(neighborList)
+
+    variableLabels = intersect(listVariables(dfg; filters...), neighborList)
+    factorLabels = intersect(listFactors(dfg; filters...), neighborList)
+
+    return variableLabels, factorLabels
 end
 
 function listNeighborhood(
     dfg::AbstractDFG,
     variableFactorLabels::Vector{Symbol},
     distance::Int;
-    solvable::Int = 0,
+    filters...,
 )
-    # find neighbors at distance to add
-    neighbors = Set{Symbol}()
     if distance > 0
+        variableLabels = Symbol[]
+        factorLabels = Symbol[]
         for l in variableFactorLabels
-            union!(neighbors, listNeighborhood(dfg, l, distance))
+            varls, facls = listNeighborhood(dfg, l, distance; filters...)
+            union!(variableLabels, varls)
+            union!(factorLabels, facls)
         end
+    else
+        variableLabels = intersect(listVariables(dfg; filters...), variableFactorLabels)
+        factorLabels = intersect(listFactors(dfg; filters...), variableFactorLabels)
     end
 
-    allvarfacs = union(variableFactorLabels, neighbors)
-
-    solvable != 0 && filter!(nlbl -> (getSolvable(dfg, nlbl) >= solvable), allvarfacs)
-
-    return allvarfacs
-end
-
-function listNeighbors(
-    dfg::AbstractDFG,
-    node::AbstractGraphNode;
-    solvable::Union{Nothing, Int} = nothing,
-)
-    return listNeighbors(dfg, node.label; solvable)
+    return variableLabels, factorLabels
 end
 
 """
@@ -676,16 +654,25 @@ function buildSubgraph(
     dfg::AbstractDFG,
     variableFactorLabels::Vector{Symbol},
     distance::Int = 0;
-    solvable::Int = 0,
+    solvableFilter::Union{Nothing, Function} = nothing,
+    tagsFilter::Union{Nothing, Function} = nothing,
     graphLabel::Symbol = Symbol(getGraphLabel(dfg), "_sub_$(string(uuid4())[1:6])"),
+    solvable = nothing, #TODO deprecated in v0.29
     kwargs...,
 ) where {G <: AbstractDFG}
-
+    if !isnothing(solvable)
+        Base.depwarn(
+            "solvable kwarg is deprecated, use kwarg `solvableFilter = (>=solvable)` instead", #v0.29
+            :listNeighbors,
+        )
+        !isnothing(solvableFilter) &&
+            error("Cannot use both solvable and solvableFilter kwargs.")
+        solvableFilter = >=(solvable)
+    end
     #build up the neighborhood from variableFactorLabels
-    allvarfacs = listNeighborhood(dfg, variableFactorLabels, distance; solvable = solvable)
+    variableLabels, factorLabels =
+        listNeighborhood(dfg, variableFactorLabels, distance; solvableFilter, tagsFilter)
 
-    variableLabels = intersect(allvarfacs, listVariables(dfg))
-    factorLabels = intersect(allvarfacs, listFactors(dfg))
     # Copy the section of graph we want
     destDFG = deepcopyGraph(G, dfg, variableLabels, factorLabels; graphLabel, kwargs...)
     return destDFG
@@ -718,20 +705,19 @@ function mergeGraph!(
     variableLabels::Vector{Symbol} = ls(sourceDFG),
     factorLabels::Vector{Symbol} = lsf(sourceDFG),
     distance::Int = 0;
-    solvable::Int = 0,
+    solvableFilter = nothing,
+    tagsFilter = nothing,
     kwargs...,
 )
 
     # find neighbors at distance to add
-    allvarfacs = listNeighborhood(
+    sourceVariables, sourceFactors = listNeighborhood(
         sourceDFG,
         union(variableLabels, factorLabels),
         distance;
-        solvable = solvable,
+        solvableFilter,
+        tagsFilter,
     )
-
-    sourceVariables = intersect(listVariables(sourceDFG), allvarfacs)
-    sourceFactors = intersect(listFactors(sourceDFG), allvarfacs)
 
     copyGraph!(
         destDFG,

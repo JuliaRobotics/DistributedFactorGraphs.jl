@@ -104,10 +104,16 @@ macro defStateTypeN(structname, manifold, point_identity)
     )
 end
 
+#TODO why this convert? rather enforce explicit use of getManifold
 function Base.convert(
     ::Type{<:AbstractManifold},
     ::Union{<:T, Type{<:T}},
 ) where {T <: StateType}
+    #TODO Deprecate v0.29
+    Base.depwarn(
+        "convert(AbstractManifold, StateType) is deprecated, use getManifold instead",
+        :convert,
+    )
     return getManifold(T)
 end
 
@@ -383,6 +389,9 @@ end
 ## CRUD: get, add, update, delete
 ##------------------------------------------------------------------------------
 hasState(v::VariableDFG, label::Symbol) = haskey(v.states, label)
+function hasState(dfg::AbstractDFG, variableLabel::Symbol, label::Symbol)
+    return hasState(getVariable(dfg, variableLabel), label)
+end
 
 function getState(v::VariableDFG, label::Symbol)
     !haskey(refStates(v), label) && throw(LabelNotFoundError("State", label))

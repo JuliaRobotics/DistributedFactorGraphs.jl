@@ -57,7 +57,7 @@ function saveDFG(folder::AbstractString, dfg::AbstractDFG)
     next!(p)
     JSON.json("$savepath/solverparams.json", dfg.solverParams; style = DFGJSONStyle())
     next!(p)
-    JSON.json("$savepath/blobstores.json", dfg.blobStores; style = DFGJSONStyle())
+    JSON.json("$savepath/blobstores.json", dfg.blobstores; style = DFGJSONStyle())
     next!(p)
 
     savedir = dirname(savepath) # is this a path of just local name? #344 -- workaround with unique names
@@ -187,14 +187,14 @@ function loadDFG(file::AbstractString)
         style = DFGJSONStyle(),
     )
     next!(progess)
-    blobStores = JSON.parsefile(
+    blobstores = JSON.parsefile(
         joinpath(loaddir, "blobstores.json"),
         Dict{Symbol, AbstractBlobstore};
         style = DFGJSONStyle(),
     )
     next!(progess)
 
-    dfg = GraphsDFG(; agent, graph, solverParams, blobStores)
+    dfg = GraphsDFG(; agent, graph, solverParams, blobstores)
 
     @debug "DFG.loadDFG is deleting a temp folder created during unzip, $loaddir"
     # cleanup temporary folder

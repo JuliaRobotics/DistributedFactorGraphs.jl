@@ -72,9 +72,9 @@ function Blobentry(
     size::Int64 = entry.size,
     origin::String = entry.origin,
     description::String = entry.description,
-    mimetype::String = entry.mimetype,
+    mimetype::MIME = entry.mimetype,
     metadata::JSONText = entry.metadata,
-    timestamp::ZonedDateTime = entry.timestamp,
+    timestamp::TimeDateZone = entry.timestamp,
     version = entry.version,
 )
     return Blobentry(;

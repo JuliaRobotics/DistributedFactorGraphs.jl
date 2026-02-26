@@ -362,3 +362,10 @@ end
     args...;
     kwargs...,
 )
+
+function getVariable(dfg::AbstractDFG, label::Symbol, stateLabel::Symbol)
+    Base.depwarn("getVariable with stateLabel is deprecated", :getVariable)
+    #TODO DFG v1.x will maybe use getVariable(dfg, label; stateLabelFilter) instead.
+    return getVariable(dfg, label)
+    # return getVariable(dfg, label; stateLabelFilter = ==(stateLabel))
+end

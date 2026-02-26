@@ -76,4 +76,17 @@ include("services/GraphsDFG.jl")
 # Exports
 export GraphsDFG
 
+#FIXME maybe add a trait based on solver data for rebuilding factor cache and dispatch on it.
+function DFG.rebuildFactorCache!(
+    dfg::GraphsDFG{NoSolverParams},
+    factor::FactorDFG,
+    neighbors = [],
+)
+    @warn(
+        "FactorCache not build, rebuildFactorCache! is not implemented for $(typeof(dfg)). `rebuildFactorCache!` is available in IncrementalInference.",
+        maxlog = 1
+    )
+    return nothing
+end
+
 end

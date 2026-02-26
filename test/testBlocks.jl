@@ -446,7 +446,7 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
         f2_mod = typeof(f2)(f2.label, (:a,))
     end
 
-    @test_throws ErrorException mergeFactor!(fg, f2_mod)
+    @test_throws DomainError mergeFactor!(fg, f2_mod)
     @test issetequal(lsf(fg), [:bcf1, :abf1])
 
     # Extra timestamp functions https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/315
@@ -472,20 +472,8 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     @test ndel == 1
 
     @test getVariable(fg, :a) == v1
-    @test getVariable(fg, :a, :default) == v1
 
     @test addFactor!(fg, f0) == f0
-
-    if isa(v1, VariableDFG)
-        #TODO decide if this should be @error or other type
-        @test_throws LabelNotFoundError getVariable(fg, :a, :missingfoo)
-    else
-        @test_logs (:warn, r"supported for type VariableDFG") getVariable(
-            fg,
-            :a,
-            :missingfoo,
-        )
-    end
 
     @test getFactor(fg, :abf1) == f1
 
@@ -1397,19 +1385,19 @@ function BuildingSubgraphs(testDFGAPI; VARTYPE = VariableDFG, FACTYPE = FactorCo
     # Subgraphs
     dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [verts[1].label], 2)
     # Only returns x1 and x2
-    @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+    @test issetequal([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
     #
     dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [:x1, :x2, :x1x2f1])
     # Only returns x1 and x2
-    @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+    @test issetequal([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
 
     dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [:x1x2f1], 1)
     # Only returns x1 and x2
-    @test symdiff([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...]) == []
+    @test issetequal([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
 
     #TODO if not a GraphsDFG with and summary or skeleton
     if VARTYPE == VariableDFG
-        dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [:x8], 2; solvable = 1)
+        dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [:x8], 2; solvableFilter = >=(1))
         @test issetequal([:x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
         #end if not a GraphsDFG with and summary or skeleton
     end

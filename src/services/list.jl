@@ -121,16 +121,23 @@ function ls(dfg::AbstractDFG, ::Type{T}) where {T <: AbstractObservation}
     return lsf(dfg, T)
 end
 
+# TODO listNeighborsSecondary or listNeighborsOfNeighbors
 """
     $(SIGNATURES)
-Helper to return neighbors at distance 2 around a given node.
+List the second order neighbors of a given node.
 """
-function ls2(dfg::AbstractDFG, label::Symbol)
-    l2 = listNeighborhood(dfg, label, 2)
-    l1 = listNeighborhood(dfg, label, 1)
+function listNeighborsSecondary(dfg::AbstractDFG, label::Symbol)
+    varls2, facls2 = listNeighborhood(dfg, label, 2)
+    varls1, facls1 = listNeighborhood(dfg, label, 1)
+    l1 = union(varls1, facls1)
+    l2 = union(varls2, facls2)
     return setdiff(l2, l1)
 end
-ls2(dfg::AbstractDFG, v::AbstractGraphNode) = ls2(dfg, getLabel(v))
+function listNeighborsSecondary(dfg::AbstractDFG, v::AbstractGraphNode)
+    return listNeighborsSecondary(dfg, getLabel(v))
+end
+
+ls2(args...) = listNeighborsSecondary(args...)
 
 """
     $SIGNATURES
