@@ -1,5 +1,53 @@
 
-function stringVariableType(varT::AbstractStateType{N}) where {N}
+function lowerStateKind(varT::AbstractStateType{N}) where {N}
+    typemeta = TypeMetadata(typeof(varT))
+    if N == Any
+        return typemeta
+        # return string(parentmodule(T), ".", nameof(T))
+    elseif N isa Integer
+        return TypeMetadata(
+            typemeta.pkg,
+            Symbol(typemeta.name, "{", N, "}"),
+            typemeta.version,
+        )
+        # return string(parentmodule(T), ".", nameof(T), "{", join(N, ","), "}")
+    else
+        throw(
+            SerializationError(
+                "Serializing Variable State type only supports an integer parameter, got '$(T)'.",
+            ),
+        )
+    end
+end
+
+#NOTE Cannot resolve with `resolveType` because of the N parameter
+# tried resolveType(JSON.Object(:type=>obj))
+function liftStateKind(type::DFG.JSON.Object)
+    pkg = Base.require(Main, Symbol(type.pkg))
+    if !isdefined(Main, Symbol(type.pkg))
+        throw(SerializationError("Module $(pkg) is available, but not loaded in `Main`."))
+    end
+    m = match(r"{(\d+)}", type.name)
+    if !isnothing(m) #parameters in type
+        param = parse(Int, m[1])
+        typeString = type.name[1:(m.offset - 1)]
+        return getfield(pkg, Symbol(typeString)){param}()
+    else
+        typeString = type.name
+        return getfield(pkg, Symbol(typeString))()
+    end
+end
+
+StructUtils.structlike(::Type{<:AbstractStateType}) = false
+StructUtils.lower(T::AbstractStateType) = lowerStateKind(T)
+StructUtils.lift(::Type{AbstractStateType}, s) = liftStateKind(s)
+
+##==============================================================================
+## OLD State Packing and unpacking
+##==============================================================================
+
+# State Kind is handled seperately because it includes the N parameter.
+function stringStateKind(varT::AbstractStateType{N}) where {N}
     T = typeof(varT)
     if N == Any
         return string(parentmodule(T), ".", nameof(T))
@@ -14,7 +62,7 @@ function stringVariableType(varT::AbstractStateType{N}) where {N}
     end
 end
 
-function parseVariableType(_typeString::AbstractString)
+function parseStateKind(_typeString::AbstractString)
     m = match(r"{(\d+)}", _typeString)
     if !isnothing(m) #parameters in type
         param = parse(Int, m[1])
@@ -46,16 +94,13 @@ function parseVariableType(_typeString::AbstractString)
 
     if isnothing(param)
         # no parameters, just return the type
-        return subtype
+        return subtype()
     else
         # return the type with parameters
-        return subtype{param}
+        return subtype{param}()
     end
 end
 
-##==============================================================================
-## State Packing and unpacking
-##==============================================================================
 # Old PackedState struct fields
 # id::Union{UUID, Nothing}
 # vecval::Vector{Float64}
@@ -78,73 +123,10 @@ end
 # covar::Vector{Float64}
 # _version::VersionNumber = _getDFGVersion()
 
-# returns a named tuple until State serialization is fully consolidated
-function packState(state::State{T}) where {T <: StateType}
-    castval = if 0 < length(state.val)
-        precast = getCoordinates.(T, state.val)
-        @cast castval[i, j] := precast[j][i]
-        castval
-    else
-        zeros(1, 0)
-    end
-
-    length(state.covar) > 1 && @warn(
-        "Packing of more than one parametric covariance is NOT supported yet, only packing first."
-    )
-
-    return (
-        label = state.label,
-        vecval = castval[:],
-        dimval = size(castval, 1),
-        vecbw = state.bw[:],
-        dimbw = size(state.bw, 1),
-        separator = state.separator,
-        statetype = stringVariableType(getStateKind(state)),
-        initialized = state.initialized,
-        observability = state.observability,
-        marginalized = state.marginalized,
-        solves = state.solves,
-        covar = isempty(state.covar) ? Float64[] : vec(state.covar[1]),
-        version = version(State),
-    )
-end
-
-function unpackState(obj)
-    T = parseVariableType(obj.statetype)
-    r3 = obj.dimval
-    c3 = r3 > 0 ? floor(Int, length(obj.vecval) / r3) : 0
-    M3 = reshape(obj.vecval, r3, c3)
-    @cast val_[j][i] := M3[i, j]
-    vals = Vector{getPointType(T)}(undef, length(val_))
-    # vals = getPoint.(T, val_)
-    for (i, v) in enumerate(val_)
-        vals[i] = getPoint(T, v)
-    end
-
-    r4 = obj.dimbw
-    c4 = r4 > 0 ? floor(Int, length(obj.vecbw) / r4) : 0
-    BW = reshape(obj.vecbw, r4, c4)
-
-    # 
-    N = getDimension(T)
-    return State{T, getPointType(T), N}(;
-        label = Symbol(obj.label),
-        val = vals,
-        bw = BW,
-        #TODO only one covar is currently supported in packed VND
-        covar = isempty(obj.covar) ? SMatrix{N, N, Float64}[] : [obj.covar],
-        separator = Symbol.(obj.separator),
-        initialized = obj.initialized,
-        observability = obj.observability,
-        marginalized = obj.marginalized,
-        solves = obj.solves,
-    )
-end
-
 function unpackOldState(d)
     @debug "Dispatching conversion packed variable -> variable for type $(string(d.variableType))"
     # Figuring out the variableType
-    T = parseVariableType(d.variableType)
+    T = parseStateKind(d.variableType)
 
     r3 = d.dimval
     c3 = r3 > 0 ? floor(Int, length(d.vecval) / r3) : 0
@@ -161,13 +143,22 @@ function unpackOldState(d)
     BW = reshape(d.vecbw, r4, c4)
 
     # 
-    N = getDimension(T)
-    return State{T, getPointType(T), N}(;
-        label = Symbol(d.solveKey),
-        val = vals,
-        bw = BW,
-        #TODO only one covar is currently supported in packed VND
-        covar = isempty(d.covar) ? SMatrix{N, N, Float64}[] : [d.covar],
+    label = Symbol(d.solveKey)
+    !isempty(d.covar) && error("covar field is not suppoted")
+    if label == :parametric
+        belief =
+            BeliefRepresentation(GaussianDensityKind(), T; means = vals, covariances = [BW])
+    else
+        belief = BeliefRepresentation(
+            NonparametricDensityKind(),
+            T;
+            points = vals,
+            bandwidth = BW,
+        )
+    end
+    return State{T, getPointType(T)}(;
+        label,
+        belief,
         separator = Symbol.(d.separator),
         initialized = d.initialized,
         observability = d.infoPerCoord,

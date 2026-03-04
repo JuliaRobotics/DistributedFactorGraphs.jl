@@ -84,7 +84,7 @@ end
 
 function getTypeFromSerializationModule(::AbstractString)
     return error(
-        "getTypeFromSerializationModule is obsolete, use DFG.parseVariableType or IIF.getTypeFromSerializationModule.",
+        "getTypeFromSerializationModule is obsolete, use DFG.parseStateKind or IIF.getTypeFromSerializationModule.",
     )
 end
 
@@ -129,7 +129,7 @@ end
 
 function getVariableTypeName(v::VariableSummary)
     Base.depwarn("getVariableTypeName is deprecated.", :getVariableTypeName)
-    return v.statetype
+    return v.statekindsymbol
 end
 
 function getMetadata(dfg::AbstractDFG, label::Symbol, key::Symbol)

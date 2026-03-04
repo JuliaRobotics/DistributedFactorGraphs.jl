@@ -6,6 +6,104 @@ abstract type AbstractStateType{N} end
 const StateType = AbstractStateType
 
 ##==============================================================================
+## BeliefRepresentation
+##==============================================================================
+abstract type AbstractDensityKind end
+
+"""Single Gaussian (mean + covariance)."""
+struct GaussianDensityKind <: AbstractDensityKind end
+
+"""Kernel density / particle-based (points + shared bandwidth)."""
+struct NonparametricDensityKind <: AbstractDensityKind end
+
+"""Homotopy between particles and Gaussian."""
+struct HomotopyDensityKind <: AbstractDensityKind end
+
+function StructUtils.lower(::StructUtils.StructStyle, p::AbstractDensityKind)
+    return StructUtils.lower(Packed(p))
+end
+@choosetype AbstractDensityKind resolvePackedType
+
+# TODO naming? Density, DensityRepresentation, BeliefRepresentation, BeliefState, etc?
+# TODO flatten in State? likeley not for easier serialization of points.
+@kwdef struct BeliefRepresentation{T <: StateType, P}
+    statekind::T = T()# NOTE duplication for serialization, TODO maybe only in State and therefore belief cannot deserialize seperately.
+    """Discriminator for which representation is active."""
+    densitykind::AbstractDensityKind = NonparametricDensityKind()
+
+    #--- Parametric fields (Gaussian / GMM / Homotopy leading modes) ---
+    """On-manifold component means.
+    Gaussian: length 1. Homotopy: leading (tree_kernel) means."""
+    means::Vector{P} = P[] # previously `val[1]` for Gaussian
+    """Component covariances, matching `means`."""
+    covariances::Vector{Matrix{Float64}} = Matrix{Float64}[] # previously `covar` existed but was stored in `bw` (hacky)
+    "Component weights, matching `means`."
+    weights::Vector{Float64} = Float64[]
+
+    #--- Non-parametric / Homotopy leaves ---
+    """On-manifold sample points. For KDE/HomotopyDensity, these are the leaf kernel means."""
+    points::Vector{P} = P[] # previously `val`
+    """Shared kernel bandwidth matrix used with ManifoldKernelDensity, see field `covar` for the parametric covariance"""
+    bandwidth::Union{Nothing, Matrix{Float64}} = zeros(getDimension(T), getDimension(T)) #previously `bw` ---
+    # bandwidth::Matrix{Float64} = zeros(getDimension(T), getDimension(T))
+    # TODO is bandwidth[s] matrix or vector or ::Vector{Matrix{Float64} or ::Vector{Vector{Float64}?
+    # JSON.parse(JSON.json(zeros(0, 0)), Matrix{Float64}) errors, so trying with nothing union
+end
+
+# # we can also do somthing like this:
+# getComponent(state::State, i) = (
+#     mean = refMeans(state)[i],
+#     cov = refCovariances(state)[i],
+#     weight = refWeights(state)[i],
+# )
+
+JSON.omit_empty(::Type{<:BeliefRepresentation}) = true
+
+function BeliefRepresentation(T::AbstractStateType)
+    return BeliefRepresentation{typeof(T), getPointType(T)}(; statekind = T)
+end
+
+function BeliefRepresentation(::NonparametricDensityKind, T::AbstractStateType; kwargs...)
+    return BeliefRepresentation{typeof(T), getPointType(T)}(;
+        statekind = T,
+        densitykind = NonparametricDensityKind(),
+        bandwidth = zeros(getDimension(T), getDimension(T)),
+        kwargs...,
+    )
+end
+
+function BeliefRepresentation(::GaussianDensityKind, T::AbstractStateType; kwargs...)
+    return BeliefRepresentation{typeof(T), getPointType(T)}(;
+        statekind = T,
+        densitykind = GaussianDensityKind(),
+        bandwidth = nothing,
+        kwargs...,
+    )
+end
+
+function StructUtils.fielddefaults(
+    ::StructUtils.StructStyle,
+    ::Type{BeliefRepresentation{T, P}},
+) where {T, P}
+    return (
+        statekind = T(),
+        densitykind = NonparametricDensityKind(),
+        means = P[],
+        covariances = Matrix{Float64}[],
+        weights = Float64[],
+        points = P[],
+        bandwidth = nothing,
+    )
+end
+
+function resolveBeliefRepresentationType(lazyobj)
+    statekind = liftStateKind(lazyobj.statekind[])
+    return BeliefRepresentation{typeof(statekind), getPointType(statekind)}
+end
+
+@choosetype BeliefRepresentation resolveBeliefRepresentationType
+
+##==============================================================================
 ## State
 ##==============================================================================
 
@@ -16,67 +114,51 @@ Data container for solver-specific data.
   ---
 T: Variable type, such as Position1, or RoME.Pose2, etc.
 P: Variable point type, the type of the manifold point.
-N: Manifold dimension.
 Fields:
 $(TYPEDFIELDS)
 """
-@kwdef mutable struct State{T <: StateType, P, N}
-    """
-    Identifier associated with this State object.
-    """
+@kwdef mutable struct State{T <: StateType, P}
+    """Identifier associated with this State object."""
     label::Symbol # TODO renamed from solveKey
+    """Singleton type for the state, eg. Pose{3}(), Position{2}(), etc. Used for dispatch and serialization."""
+    statekind::T = T()
     """
-    Vector of on-manifold points used to represent a ManifoldKernelDensity (or parametric) belief.
+    Generic Belief representation for this state, including the discriminator for which representation is active 
+    and the associated fields for each representation kind.
     """
-    val::Vector{P} = Vector{P}()
-    """
-    Common kernel bandwith parameter used with ManifoldKernelDensity, see field `covar` for the parametric covariance.
-    """
-    bw::Matrix{Float64} = zeros(0, 0)
-    "Parametric (Gaussian) covariance."
-    covar::Vector{SMatrix{N, N, Float64}} =
-        SMatrix{getDimension(T), getDimension(T), Float64}[]
-    # BayesNetOutVertIDs::Vector{Symbol} = Symbol[] #TODO looks unused?
-
-    # dims::Int = getDimension(T) #TODO should we deprecate in favor of N
-    # """
-    # Flag used by junction (Bayes) tree construction algorithm to know whether this variable has yet been included in the tree construction.
-    # """
-    # eliminated::Bool = false
-    # BayesNetVertID::Symbol = :NOTHING #  Union{Nothing, } #TODO deprecate
+    belief::BeliefRepresentation{T, P} = BeliefRepresentation{T, P}()#; statekind = T())
+    """List of symbols for separator variables for this state, used in variable elimination and inference computations."""
     separator::Vector{Symbol} = Symbol[]
-    """
-    False if initial numerical values are not yet available or stored values are not ready for further processing yet.
-    """
+    """False if initial numerical values are not yet available or stored values are not ready for further processing yet."""
     initialized::Bool = false
-    """
-    Stores the amount information (per measurement dimension) captured in each coordinate dimension.
-    """
-    observability::Vector{Float64} = Float64[]#zeros(getDimension(T)) #TODO renamed from infoPerCoord
-    """
-    Should this state be treated as marginalized in inference computations.
-    """
-    marginalized::Bool = false #TODO renamed from ismargin 
-    # """
-    # Should this variable solveKey always be kept fluid and not be automatically marginalized.
-    # """
-    # dontmargin::Bool = false
-    """
-    How many times has a solver updated this state estimate.
-    """
-    solves::Int = 0 # TODO renamed from solvedCount
-    # """
-    # Future proofing field for when more multithreading operations on graph nodes are implemented, these conditions are meant to be used for atomic write transactions to this VND.
-    # """
-    # events::Dict{Symbol, Threads.Condition} = Dict{Symbol, Threads.Condition}()
-    #
-    statetype::Symbol = Symbol(stringVariableType(T()))
+    """Stores the amount information (per measurement dimension) captured in each coordinate dimension."""
+    observability::Vector{Float64} = Float64[]#zeros(getDimension(T)) #TODO renamed from infoPerCoord in v0.29
+    """Should this state be treated as marginalized in inference computations."""
+    marginalized::Bool = false #TODO renamed from ismargin v0.29
+    """How many times has a solver updated this state estimate."""
+    solves::Int = 0 # TODO renamed from solvedCount v0.29
+
+    #TODO belief cache that can be used for caching HomotopyDensity (StateCache or BeliefCache)
+    # abstract type AbstractStateCache end
+    # const StateCache = AbstractStateCache
+    # solvercache::Base.RefValue{<:StateCache} = Ref{StateCache}() & (ignore = true,)
 end
+
+# OLD deprecated fields, removed in v0.29, kept here for reference during transition
+# val::Vector{P} = Vector{P}()
+# bw::Matrix{Float64} = zeros(0, 0)
+# covar::Vector{Matrix{Float64}} = Matrix{Float64}[]
+# BayesNetOutVertIDs::Vector{Symbol} = Symbol[]
+# dims::Int = getDimension(T) 
+# eliminated::Bool = false
+# BayesNetVertID::Symbol = :NOTHING #  Union{Nothing, }
+# events::Dict{Symbol, Threads.Condition} = Dict{Symbol, Threads.Condition}()    
+# dontmargin::Bool = false
 
 ##------------------------------------------------------------------------------
 ## Constructors
 function State{T}(; kwargs...) where {T <: StateType}
-    return State{T, getPointType(T), getDimension(T)}(; kwargs...)
+    return State{T, getPointType(T)}(; kwargs...)
 end
 function State(label::Symbol, variableType::StateType; kwargs...)
     return State{typeof(variableType)}(; label, kwargs...)
@@ -89,13 +171,34 @@ function State(state::State; kwargs...)
     )
 end
 
-StructUtils.structlike(::Type{<:State}) = false
-StructUtils.lower(state::State) = DFG.packState(state)
-StructUtils.lift(::Type{<:State}, obj) = DFG.unpackState(obj)
+# TODO consider omitting empty fields in State, needs constructor that can take nothing.
+# JSON.omit_empty(::Type{<:State}) = true
+
+# Field defaults and tags for State, not through @kwarg macro due to error with State{T, P, N}
+function StructUtils.fielddefaults(
+    ::StructUtils.StructStyle,
+    ::Type{State{T, P}},
+) where {T, P}
+    return (
+        belief = BeliefRepresentation{T, P}(; statekind = T()),
+        separator = Symbol[],
+        initialized = false,
+        observability = Float64[],
+        marginalized = false,
+        solves = 0,
+        statekind = T(),
+    )
+end
+
+refMeans(state::State) = state.belief.means
+refCovariances(state::State) = state.belief.covariances
+refWeights(state::State) = state.belief.weights
+refPoints(state::State) = state.belief.points
+refBandwidth(state::State) = state.belief.bandwidth
 
 ##------------------------------------------------------------------------------
 ## States - OrderedDict{Symbol, State}
-const States = OrderedDict{Symbol, State{T, P, N}} where {T <: AbstractStateType, P, N}
+const States = OrderedDict{Symbol, State{T, P}} where {T <: AbstractStateType, P}
 
 StructUtils.dictlike(::Type{<:States}) = false
 StructUtils.structlike(::Type{<:States}) = false
@@ -103,18 +206,26 @@ StructUtils.arraylike(::Type{<:States}) = false
 
 function StructUtils.lower(states::States)
     return map(collect(values(states))) do (state)
-        return StructUtils.lower(state)
+        return state
     end
 end
 
+# Lazy lift: receives the LazyValue directly and parses each element lazily.
+# States is lowered as a JSON array, so on deserialization StructUtils sees a
+# Vector and needs lift to reconstruct the OrderedDict.  Dispatching on
+# JSON.LazyValue keeps every element lazy so nested matrices parse correctly
+# (avoids StructUtils.MultiDimClosure receiving String keys from eager objects).
 function StructUtils.lift(
-    ::StructUtils.StructStyle,
+    style::StructUtils.StructStyle,
     S::Type{<:States{T}},
-    json_vector::Vector,
+    lazystates::JSON.LazyValue,
+    tags::NamedTuple = (;),
 ) where {T}
+    StateT = State{T, getPointType(T)}
     states = S()
-    foreach(json_vector) do obj
-        return push!(states, Symbol(obj.label) => StructUtils.make(State{T}, obj))
+    StructUtils.applyeach(lazystates) do i, lazy_element
+        state = JSON.parse(lazy_element, StateT; style = style)
+        return push!(states, state.label => state)
     end
     return states, nothing
 end
@@ -145,7 +256,7 @@ Complete variable structure for a DistributedFactorGraph variable.
 Fields:
 $(TYPEDFIELDS)
 """
-@kwdef struct VariableDFG{T <: StateType, P, N} <: AbstractGraphVariable
+@kwdef struct VariableDFG{T <: StateType, P} <: AbstractGraphVariable
     """Variable label, e.g. :x1.
     Accessor: [`getLabel`](@ref)"""
     label::Symbol
@@ -160,7 +271,7 @@ $(TYPEDFIELDS)
     tags::Set{Symbol} = Set{Symbol}()
     """Dictionary of state data. May be a subset of all solutions if a solver label was specified in the get call.
     Accessors: [`addState!`](@ref), [`mergeState!`](@ref), and [`deleteState!`](@ref)"""
-    states::OrderedDict{Symbol, State{T, P, N}} = OrderedDict{Symbol, State{T, P, N}}() #NOTE field renamed from solverDataDict in v0.29
+    states::OrderedDict{Symbol, State{T, P}} = OrderedDict{Symbol, State{T, P}}() #NOTE field renamed from solverDataDict in v0.29
     """Dictionary of small data associated with this variable.
     Accessors: [`getBloblet`](@ref), [`addBloblet!`](@ref)"""
     bloblets::Bloblets = Bloblets() #NOTE changed from smallData in v0.29
@@ -170,8 +281,8 @@ $(TYPEDFIELDS)
     """Solvable flag for the variable.
     Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)"""
     solvable::Base.RefValue{Int} = Ref{Int}(1) #& (lower = getindex,)
-    statetype::Symbol = Symbol(stringVariableType(T()))
-    # TODO autotype or version and statetype
+    statekind::T = T()
+    # TODO autotype or version and statekind
     _autotype::Nothing = nothing #& (name = :type, lower = _ -> TypeMetadata(VariableDFG))
 end
 version(::Type{<:VariableDFG}) = v"0.29"
@@ -180,12 +291,12 @@ refStates(v::VariableDFG) = v.states
 #NOTE fielddefaults and fieldtags not through @kwarg macro due to error with State{T, P, N}
 function StructUtils.fielddefaults(
     ::StructUtils.StructStyle,
-    ::Type{VariableDFG{T, P, N}},
-) where {T, P, N}
+    ::Type{VariableDFG{T, P}},
+) where {T, P}
     return (
         timestamp = now_tdz(),
         tags = Set{Symbol}(),
-        # states = OrderedDict{Symbol, State{T, P, N}}(),
+        states = OrderedDict{Symbol, State{T, P}}(),
         bloblets = Bloblets(),
         blobentries = Blobentries(),
         solvable = Ref(1),
@@ -200,12 +311,12 @@ function StructUtils.fieldtags(::StructUtils.StructStyle, ::Type{<:VariableDFG})
     )
 end
 
-function resolveVariableType(lazyobj)
-    T = parseVariableType(lazyobj.statetype[])
-    return VariableDFG{T, getPointType(T), getDimension(T)}
+function resolveVariableDFGType(lazyobj)
+    statekind = liftStateKind(lazyobj.statekind[])
+    return VariableDFG{typeof(statekind), getPointType(statekind)}
 end
 
-@choosetype VariableDFG resolveVariableType
+@choosetype VariableDFG resolveVariableDFGType
 
 # JSON.omit_empty(::DistributedFactorGraphs.DFGJSONStyle, ::Type{<:VariableDFG}) = true
 
@@ -220,7 +331,7 @@ The default VariableDFG constructor.
 #IIF like contruction helper for VariableDFG
 function VariableDFG(
     label::Symbol,
-    statetype::Union{T, Type{T}};
+    statekind::Union{T, Type{T}};
     tags::Union{Set{Symbol}, Vector{Symbol}} = Set{Symbol}(),
     timestamp::Union{TimeDateZone, ZonedDateTime} = now_tdz(),
     solvable::Union{Int, Base.RefValue{Int}} = Ref{Int}(1),
@@ -247,9 +358,8 @@ function VariableDFG(
     end
     union!(tags, [:VARIABLE])
 
-    N = getDimension(T)
     P = getPointType(T)
-    return VariableDFG{T, P, N}(; label, solvable, tags, timestamp, kwargs...)
+    return VariableDFG{T, P}(; label, solvable, tags, timestamp, kwargs...)
 end
 
 function VariableDFG(label::Symbol, state::State; kwargs...)
@@ -301,7 +411,7 @@ $(TYPEDFIELDS)
     Accessors: [`listTags`](@ref), [`mergeTags!`](@ref), and [`deleteTags!`](@ref)"""
     tags::Set{Symbol}
     """Symbol for the state type for the underlying variable."""
-    statetype::Symbol
+    statekind::AbstractStateType
     """Dictionary of large data associated with this variable.
     Accessors: [`addBlobentry!`](@ref), [`getBlobentry`](@ref), [`mergeBlobentry!`](@ref), and [`deleteBlobentry!`](@ref)"""
     blobentries::Blobentries
@@ -337,13 +447,7 @@ end
 ##==============================================================================
 
 function VariableSummary(v::VariableDFG{T}) where {T}
-    return VariableSummary(
-        v.label,
-        v.timestamp,
-        copy(v.tags),
-        Symbol(stringVariableType(T())),
-        copy(v.blobentries),
-    )
+    return VariableSummary(v.label, v.timestamp, copy(v.tags), T(), copy(v.blobentries))
 end
 
 function VariableSkeleton(v::AbstractGraphVariable)
