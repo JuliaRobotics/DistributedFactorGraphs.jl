@@ -50,13 +50,6 @@ end
     # JSON.parse(JSON.json(zeros(0, 0)), Matrix{Float64}) errors, so trying with nothing union
 end
 
-# # we can also do somthing like this:
-# getComponent(state::State, i) = (
-#     mean = refMeans(state)[i],
-#     cov = refCovariances(state)[i],
-#     weight = refWeights(state)[i],
-# )
-
 JSON.omit_empty(::Type{<:BeliefRepresentation}) = true
 
 function BeliefRepresentation(T::AbstractStateType)
@@ -195,6 +188,17 @@ refCovariances(state::State) = state.belief.covariances
 refWeights(state::State) = state.belief.weights
 refPoints(state::State) = state.belief.points
 refBandwidth(state::State) = state.belief.bandwidth
+
+getDensityKind(state::State) = state.belief.densitykind
+
+# we can also do somthing like this:
+function getComponent(state::State, i)
+    return (
+        mean = refMeans(state)[i],
+        cov = refCovariances(state)[i],
+        weight = refWeights(state)[i],
+    )
+end
 
 ##------------------------------------------------------------------------------
 ## States - OrderedDict{Symbol, State}
