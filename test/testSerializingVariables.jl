@@ -13,6 +13,7 @@ DFG.@defStateTypeN Pose{N} SpecialEuclideanGroup(N; variant = :right) ArrayParti
     zeros(SVector{N, Float64}),
     SMatrix{N, N, Float64}(I),
 )
+Pose2 = Pose{2}
 
 ## Build a test variable with states, bloblets, and blobentries
 function make_test_variable()
@@ -105,7 +106,6 @@ end
 
 # TODO deprecated v0.29, remove this test and unpackOldState
 @testset "Serializing Old State" begin
-    Pose2 = Pose{2}
     oldstates = JSON.parsefile(@__DIR__() * "/data/oldstate.json")
     states = DFG.unpackOldState.(oldstates)
     # just a spot check
