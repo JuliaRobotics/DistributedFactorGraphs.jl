@@ -47,13 +47,17 @@ end
 # Complex Serialization
 StructUtils.structlike(::DFGJSONStyle, ::Type{<:Complex}) = false
 StructUtils.lower(::DFGJSONStyle, x::Complex) = (real(x), imag(x))
-function StructUtils.lift(::DFGJSONStyle, ::Type{T}, x::JSON.LazyValue) where T <: Complex 
+function StructUtils.lift(::DFGJSONStyle, ::Type{T}, x::JSON.LazyValue) where {T <: Complex}
     return T(x[1][], x[2][]), nothing
 end
 
 # Above does not work for Arrya{ComplexF64, 0}
 StructUtils.lower(::DFGJSONStyle, x::AbstractArray{<:Complex, 0}) = (real(x), imag(x))
-function StructUtils.lift(::DFGJSONStyle, ::Type{A}, x::JSON.LazyValue) where A <: AbstractArray{T,0} where T <: Complex 
+function StructUtils.lift(
+    ::DFGJSONStyle,
+    ::Type{A},
+    x::JSON.LazyValue,
+) where {A <: AbstractArray{T, 0}} where {T <: Complex}
     m = A(undef)
     m[] = (T(x[1][], x[2][]))
     return m, nothing
