@@ -102,3 +102,12 @@ end
         @test vsk.tags == v.tags
     end
 end
+
+# TODO deprecated v0.29, remove this test and unpackOldState
+@testset "Serializing Old State" begin
+    Pose2 = Pose{2}
+    oldstates = JSON.parsefile(@__DIR__() * "/data/oldstate.json")
+    states = DFG.unpackOldState.(oldstates)
+    # just a spot check
+    @test issetequal(getLabel.(states), [:default, :parametric, :graphinit])
+end

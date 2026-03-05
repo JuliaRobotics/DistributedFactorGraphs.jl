@@ -43,24 +43,8 @@ StructUtils.lower(T::AbstractStateType) = lowerStateKind(T)
 StructUtils.lift(::Type{AbstractStateType}, s) = liftStateKind(s)
 
 ##==============================================================================
-## OLD State Packing and unpacking
+## OLD State Packing and unpacking - Deprecated v0.29 - kept for migration
 ##==============================================================================
-
-# State Kind is handled seperately because it includes the N parameter.
-function stringStateKind(varT::AbstractStateType{N}) where {N}
-    T = typeof(varT)
-    if N == Any
-        return string(parentmodule(T), ".", nameof(T))
-    elseif N isa Integer
-        return string(parentmodule(T), ".", nameof(T), "{", join(N, ","), "}")
-    else
-        throw(
-            SerializationError(
-                "Serializing Variable State type only supports an integer parameter, got '$(T)'.",
-            ),
-        )
-    end
-end
 
 function parseStateKind(_typeString::AbstractString)
     m = match(r"{(\d+)}", _typeString)
@@ -156,7 +140,7 @@ function unpackOldState(d)
             bandwidth = BW,
         )
     end
-    return State{T, getPointType(T)}(;
+    return State{typeof(T), getPointType(T)}(;
         label,
         belief,
         separator = Symbol.(d.separator),
