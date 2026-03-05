@@ -2,46 +2,17 @@
 # VARTYPE = VariableSummary
 # FACTYPE = FactorSummary
 
-dfg = GraphsDFG{NoSolverParams, VARTYPE, FACTYPE}()
-function DistributedFactorGraphs.VariableSummary(label::Symbol)
-    return VariableSummary(
-        label,
-        TimeDateZone("2025-11-13T15:21:57.474125421+01:00"),
-        Set{Symbol}(),
-        :Pose2,
-        DFG.Blobentries(),
-    )
-end
-
-function DistributedFactorGraphs.VariableSummary(label::Symbol, ::State{T}) where {T}
-    return VariableSummary(
-        label,
-        TimeDateZone("2025-11-13T15:21:57.474125421+01:00"),
-        Set{Symbol}(),
-        Symbol(T),
-        DFG.Blobentries(),
-    )
-end
-
-function DistributedFactorGraphs.VariableSkeleton(label::Symbol, args...)
-    return VariableSkeleton(label)
-end
-
-function DistributedFactorGraphs.VariableSkeleton(label::Symbol, ::State{T}) where {T}
-    return VariableSkeleton(label, Set{Symbol}())
-end
+# generate variables and factors
+var1, var2, var3, vorphan, v1_tags = DFGVariableSCA()
+fac0, fac1, fac2 = DFGFactorSCA()
 
 dfg = GraphsDFG{NoSolverParams, VARTYPE, FACTYPE}()
-v1 = VARTYPE(:a)
-v2 = VARTYPE(:b)
-v3 = VARTYPE(:c)
-f0 = FACTYPE(:af1, [:a])
-f1 = FACTYPE(:abf1, [:a, :b])
-f2 = FACTYPE(:bcf1, [:b, :c])
-
-union!(v1.tags, [:VARIABLE, :POSE])
-union!(v2.tags, [:VARIABLE, :LANDMARK])
-union!(f1.tags, [:FACTOR])
+v1 = VARTYPE(var1)
+v2 = VARTYPE(var2)
+v3 = VARTYPE(var3)
+f0 = FACTYPE(fac0)
+f1 = FACTYPE(fac1)
+f2 = FACTYPE(fac2)
 
 if false
     #TODO add to tests
@@ -105,42 +76,22 @@ end
 
 @testset "Adjacency Matrices" begin
     fg = GraphsDFG{NoSolverParams, VARTYPE, FACTYPE}()
-    addVariable!(fg, VARTYPE(:a))
-    addVariable!(fg, VARTYPE(:b))
-    addFactor!(fg, FACTYPE(:abf1, [:a, :b]))
-    addVariable!(fg, VARTYPE(:orphan))
+    addVariable!(fg, VARTYPE(var1))
+    addVariable!(fg, VARTYPE(var2))
+    addFactor!(fg, FACTYPE(fac1))
+    addVariable!(fg, VARTYPE(vorphan))
 
     AdjacencyMatricesTestBlock(fg)
 end
 
 @testset "Getting Neighbors" begin
-    GettingNeighbors(
-        GraphsDFG{NoSolverParams, VARTYPE, FACTYPE};
-        VARTYPE = VARTYPE,
-        FACTYPE = FACTYPE,
-    )
+    GettingNeighbors(GraphsDFG; VARTYPE = VARTYPE, FACTYPE = FACTYPE)
 end
 
 @testset "Building Subgraphs" begin
-    BuildingSubgraphs(
-        GraphsDFG{NoSolverParams, VARTYPE, FACTYPE};
-        VARTYPE = VARTYPE,
-        FACTYPE = FACTYPE,
-    )
-end
-
-@testset "Producing Dot Files" begin
-    ProducingDotFiles(
-        GraphsDFG{NoSolverParams, VARTYPE, FACTYPE};
-        VARTYPE = VARTYPE,
-        FACTYPE = FACTYPE,
-    )
+    BuildingSubgraphs(GraphsDFG; VARTYPE = VARTYPE, FACTYPE = FACTYPE)
 end
 
 @testset "Connectivity Test" begin
-    ConnectivityTest(
-        GraphsDFG{NoSolverParams, VARTYPE, FACTYPE};
-        VARTYPE = VARTYPE,
-        FACTYPE = FACTYPE,
-    )
+    ConnectivityTest(GraphsDFG; VARTYPE = VARTYPE, FACTYPE = FACTYPE)
 end

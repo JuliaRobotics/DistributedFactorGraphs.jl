@@ -13,10 +13,10 @@ vnd2 = deepcopy(vnd1)
 vnd3 = State(:default, TestVariableType2())
 
 @test vnd1 == vnd2
-push!(vnd1.val, [1.0;])
-push!(vnd2.val, [1.0;])
+push!(DFG.refPoints(vnd1), [1.0;])
+push!(DFG.refPoints(vnd2), [1.0;])
 @test vnd1 == vnd2
-vnd2.val[1] = [0.1;]
+DFG.refPoints(vnd2)[1] = [0.1;]
 @test !(vnd1 == vnd2)
 @test !(vnd1 == vnd3)
 
@@ -54,9 +54,9 @@ vnd3 = State(:default, TestVariableType2())
 @test !compare(vnd1, vnd3)
 
 @test compare(vnd1, vnd2)
-push!(vnd1.val, [1.0;])
-push!(vnd2.val, [1.0;])
+push!(DFG.refPoints(vnd1), [1.0;])
+push!(DFG.refPoints(vnd2), [1.0;])
 @test compare(vnd1, vnd2)
-vnd2.val[1][1] = 0.1
+DFG.refPoints(vnd2)[1] = [0.1;]
 @test !compare(vnd1, vnd2)
 @test !compare(vnd1, vnd3)

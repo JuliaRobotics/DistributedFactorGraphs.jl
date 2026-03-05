@@ -84,7 +84,7 @@ end
 
 function getTypeFromSerializationModule(::AbstractString)
     return error(
-        "getTypeFromSerializationModule is obsolete, use DFG.parseVariableType or IIF.getTypeFromSerializationModule.",
+        "getTypeFromSerializationModule is obsolete, use DFG.parseStateKind or IIF.getTypeFromSerializationModule.",
     )
 end
 
@@ -129,7 +129,7 @@ end
 
 function getVariableTypeName(v::VariableSummary)
     Base.depwarn("getVariableTypeName is deprecated.", :getVariableTypeName)
-    return v.statetype
+    return v.statekind
 end
 
 function getMetadata(dfg::AbstractDFG, label::Symbol, key::Symbol)
@@ -368,4 +368,59 @@ function getVariable(dfg::AbstractDFG, label::Symbol, stateLabel::Symbol)
     #TODO DFG v1.x will maybe use getVariable(dfg, label; stateLabelFilter) instead.
     return getVariable(dfg, label)
     # return getVariable(dfg, label; stateLabelFilter = ==(stateLabel))
+end
+
+# Deprecated with new State serialization.
+# """
+#     $SIGNATURES
+
+# Default escalzation from coordinates to a group representation point.  Override if defaults are not correct.
+# E.g. coords -> se(2) -> SE(2).
+
+# DevNotes
+# - TODO Likely remove as part of serialization updates, see #590
+# - Used in transition period for Serialization.  This function will likely be changed or deprecated entirely.
+
+# Related
+
+# [`getCoordinates`](@ref)
+# """
+function getPoint(
+    ::Type{T},
+    v::AbstractVector,
+    basis = ManifoldsBase.DefaultOrthogonalBasis(),
+) where {T <: StateType}
+    Base.depwarn("getPoint is deprecated. Use get_vector and exp directly.", :getPoint)
+    M = getManifold(T)
+    p0 = getPointIdentity(T)
+    X = ManifoldsBase.get_vector(M, p0, v, basis)
+    return ManifoldsBase.exp(M, p0, X)
+end
+
+# """
+#     $SIGNATURES
+
+# Default reduction of a variable point value (a group element) into coordinates as `Vector`.  Override if defaults are not correct.
+
+# DevNotes
+# - TODO Likely remove as part of serialization updates, see #590
+# - Used in transition period for Serialization.  This function will likely be changed or deprecated entirely.
+
+# Related
+
+# [`getPoint`](@ref)
+# """
+function getCoordinates(
+    ::Type{T},
+    p,
+    basis = ManifoldsBase.DefaultOrthogonalBasis(),
+) where {T <: StateType}
+    Base.depwarn(
+        "getCoordinates is deprecated. Use log and get_coordinates directly.",
+        :getCoordinates,
+    )
+    M = getManifold(T)
+    p0 = getPointIdentity(T)
+    X = ManifoldsBase.log(M, p0, p)
+    return ManifoldsBase.get_coordinates(M, p0, X, basis)
 end

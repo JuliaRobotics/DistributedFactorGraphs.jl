@@ -19,6 +19,7 @@ implement compare if needed.
 
 # Generate compares automatically for all in this union
 const GeneratedCompareUnion = Union{
+    BeliefRepresentation,
     State,
     Blobentry,
     Bloblet,
@@ -208,8 +209,10 @@ end
 
 #Compare State
 function compare(a::State, b::State)
-    a.val != b.val && @debug("val is not equal") === nothing && return false
-    a.bw != b.bw && @debug("bw is not equal") === nothing && return false
+    refPoints(a) != refPoints(b) && @debug("val is not equal") === nothing && return false
+    refBandwidth(a) != refBandwidth(b) &&
+        @debug("bw is not equal") === nothing &&
+        return false
     # a.BayesNetOutVertIDs != b.BayesNetOutVertIDs &&
     #     @debug("BayesNetOutVertIDs is not equal") === nothing &&
     #     return false
@@ -255,7 +258,7 @@ function compareVariable(
     #
     skiplist = union([:states, :atzone, :inzone, :blobentries, :bloblets], skip)
     TP = compareAll(A, B; skip = skiplist, show = show)
-    varskiplist = skipsamples ? [:val; :bw] : Symbol[]
+    varskiplist = skipsamples ? [:belief] : Symbol[]
     skiplist = union([:variableType;], varskiplist)
     union!(skiplist, skip)
     # TP = TP && compareAll(A.states, B.states; skip = skiplist, show = show)

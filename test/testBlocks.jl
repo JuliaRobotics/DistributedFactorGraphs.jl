@@ -343,9 +343,9 @@ function DFGFactorSCA()
 
     obs = TestFunctorInferenceType1()
 
-    f1 = FactorCompute(f1_lbl, [:a, :b], obs; tags = f1_tags, solvable = 0)
+    f1 = FactorDFG(f1_lbl, [:a, :b], obs; tags = f1_tags, solvable = 0)
 
-    f2 = FactorCompute(
+    f2 = FactorDFG(
         :bcf1,
         [:b, :c],
         TestFunctorInferenceType1();
@@ -388,7 +388,7 @@ function DFGFactorSCA()
     @test getSolvable(f1) == 1
 
     # create f0 here for a later timestamp
-    f0 = FactorCompute(:af1, [:a], obs_prior; tags = Set([:PRIOR]))
+    f0 = FactorDFG(:af1, [:a], obs_prior; tags = Set([:PRIOR]))
 
     @test DFG.calcDeltatime(f1, f2) isa Real
     #fill in undefined fields
@@ -431,8 +431,8 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     @test_throws LabelExistsError addFactor!(fg, f2)
     #TODO Graphs.jl, but look at refactoring absract @test_throws LabelExistsError addFactor!(fg, f2)
 
-    if f2 isa FactorCompute
-        f2_mod = FactorCompute(
+    if f2 isa FactorDFG
+        f2_mod = FactorDFG(
             f2.label,
             (:a,),
             f2.observation,
@@ -506,7 +506,7 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     @test isFactor(fg, :abf1)
     @test !isFactor(fg, :a)
 
-    if f0 isa FactorCompute
+    if f0 isa FactorDFG
         @test isPrior(fg, :af1)
         @test !isPrior(fg, :abf1)
     end
@@ -528,7 +528,7 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     end
 
     # simple broadcast test
-    if f0 isa FactorCompute
+    if f0 isa FactorDFG
         @test issetequal(
             getObservation.(fg, lsf(fg)),
             [TestFunctorInferenceType1(), TestAbstractPrior()],
@@ -1228,9 +1228,9 @@ end
 
 # Now make a complex graph for connectivity tests
 function connectivityTestGraph(
-    ::Type{T};
-    VARTYPE = VariableDFG,
-    FACTYPE = FactorCompute,
+    ::Type{T},
+    ::Type{<:VariableDFG},
+    ::Type{<:FactorDFG},
 ) where {T <: AbstractDFG}#InMemoryDFGTypes
     #settings
     numNodesType1 = 5
@@ -1240,11 +1240,11 @@ function connectivityTestGraph(
 
     vars = vcat(
         map(
-            n -> VARTYPE(Symbol("x$n"), State{TestVariableType1}(; label = :default)),
+            n -> VariableDFG(Symbol("x$n"), State{TestVariableType1}(; label = :default)),
             1:numNodesType1,
         ),
         map(
-            n -> VARTYPE(
+            n -> VariableDFG(
                 Symbol("x$(numNodesType1+n)"),
                 State{TestVariableType2}(; label = :default),
             ),
@@ -1254,51 +1254,51 @@ function connectivityTestGraph(
 
     addVariables!(dfg, vars)
 
-    if FACTYPE == FactorCompute
-        #change ready and solveInProgress for x7,x8 for improved tests on x7x8f1
-        #NOTE because defaults changed
-        setSolvable!(dfg, :x8, 0)
-        setSolvable!(dfg, :x9, 0)
+    #change ready and solveInProgress for x7,x8 for improved tests on x7x8f1
+    #NOTE because defaults changed
+    setSolvable!(dfg, :x8, 0)
+    setSolvable!(dfg, :x9, 0)
 
-        state = DFG.Recipestate(; eliminated = true, potentialused = true)
-        hyper = DFG.Recipehyper(; multihypo = Float64[], inflation = 1.0)
-        f_tags = Set([:FACTOR])
+    state = DFG.Recipestate(; eliminated = true, potentialused = true)
+    hyper = DFG.Recipehyper(; multihypo = Float64[], inflation = 1.0)
+    f_tags = Set([:FACTOR])
 
-        facs = map(
-            n -> addFactor!(
-                dfg,
-                FactorCompute(
-                    Symbol("x$(n)x$(n+1)f1"),
-                    [vars[n].label, vars[n + 1].label],
-                    TestFunctorInferenceType1(),
-                    deepcopy(hyper),
-                    deepcopy(state);
-                    tags = copy(f_tags),
-                ),
+    facs = map(
+        n -> addFactor!(
+            dfg,
+            FactorDFG(
+                Symbol("x$(n)x$(n+1)f1"),
+                [vars[n].label, vars[n + 1].label],
+                TestFunctorInferenceType1(),
+                deepcopy(hyper),
+                deepcopy(state);
+                tags = copy(f_tags),
             ),
-            1:(length(vars) - 1),
-        )
-        setSolvable!(dfg, :x7x8f1, 0)
-
-    else
-        facs = map(
-            n -> addFactor!(
-                dfg,
-                FACTYPE(Symbol("x$(n)x$(n+1)f1"), [vars[n].label, vars[n + 1].label]),
-            ),
-            1:(length(vars) - 1),
-        )
-    end
+        ),
+        1:(length(vars) - 1),
+    )
+    setSolvable!(dfg, :x7x8f1, 0)
 
     return (dfg = dfg, variables = vars, factors = facs)
 end
 
+function connectivityTestGraph(
+    ::Type{T},
+    ::Type{<:GraphVariable},
+    ::Type{<:GraphFactor},
+) where {T <: AbstractDFG}#InMemoryDFGTypes
+    (; dfg, variables, factors) = connectivityTestGraph(T, VariableDFG, FactorDFG)
+    sfg = T()
+    addVariables!(sfg, variables)
+    addFactors!(sfg, factors)
+    return (dfg = dfg, variables = getVariables(sfg), factors = getFactors(sfg))
+end
+
 # dfg, verts, facs = connectivityTestGraph(testDFGAPI)
 
-function GettingNeighbors(testDFGAPI; VARTYPE = VariableDFG, FACTYPE = FactorCompute)
+function GettingNeighbors(testDFGAPI; VARTYPE = VariableDFG, FACTYPE = FactorDFG)
     # "Getting Neighbors"
-    dfg, verts, facs =
-        connectivityTestGraph(testDFGAPI; VARTYPE = VARTYPE, FACTYPE = FACTYPE)
+    dfg, verts, facs = connectivityTestGraph(testDFGAPI, VARTYPE, FACTYPE)
     # Trivial test to validate that intersect([], []) returns order of first parameter
     @test intersect([:x3, :x2, :x1], [:x1, :x2]) == [:x2, :x1]
     # Get neighbors tests
@@ -1327,7 +1327,7 @@ function GettingNeighbors(testDFGAPI; VARTYPE = VariableDFG, FACTYPE = FactorCom
 end
 
 #TODO confirm these tests are covered somewhere then delete
-# function  GettingSubgraphs(testDFGAPI; VARTYPE=VariableDFG, FACTYPE=FactorCompute)
+# function  GettingSubgraphs(testDFGAPI; VARTYPE=VariableDFG, FACTYPE=FactorDFG)
 #
 #     # "Getting Subgraphs"
 #     dfg, verts, facs = connectivityTestGraph(testDFGAPI, VARTYPE=VARTYPE, FACTYPE=FACTYPE)
@@ -1377,11 +1377,10 @@ end
 #
 # end
 
-function BuildingSubgraphs(testDFGAPI; VARTYPE = VariableDFG, FACTYPE = FactorCompute)
+function BuildingSubgraphs(testDFGAPI; VARTYPE = VariableDFG, FACTYPE = FactorDFG)
 
     # "Getting Subgraphs"
-    dfg, verts, facs =
-        connectivityTestGraph(testDFGAPI; VARTYPE = VARTYPE, FACTYPE = FACTYPE)
+    dfg, verts, facs = connectivityTestGraph(testDFGAPI, VARTYPE, FACTYPE)
     # Subgraphs
     dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [verts[1].label], 2)
     # Only returns x1 and x2
@@ -1431,7 +1430,7 @@ end
 #TODO Summaries and Summary Graphs
 function Summaries(testDFGAPI)
     # "Summaries and Summary Graphs"
-    dfg, verts, facs = connectivityTestGraph(testDFGAPI)
+    dfg, verts, facs = connectivityTestGraph(testDFGAPI, VariableDFG, FactorDFG)
     #TODO for summary
     # if VARTYPE == VariableSummary
     # factorFields = fieldnames(FACTYPE)
@@ -1463,7 +1462,7 @@ function ProducingDotFiles(
     v2 = nothing,
     f1 = nothing;
     VARTYPE = VariableDFG,
-    FACTYPE = FactorCompute,
+    FACTYPE = FactorDFG,
 )
     # "Producing Dot Files"
     # create a simpler graph for dot testing
@@ -1476,8 +1475,8 @@ function ProducingDotFiles(
         v2 = VARTYPE(:b, State{TestVariableType1}(; label = :default))
     end
     if f1 === nothing
-        if (FACTYPE == FactorCompute)
-            f1 = FactorCompute(:abf1, [:a, :b], TestFunctorInferenceType1())
+        if (FACTYPE == FactorDFG)
+            f1 = FactorDFG(:abf1, [:a, :b], TestFunctorInferenceType1())
         else
             f1 = FACTYPE(:abf1, [:a, :b])
         end
@@ -1487,7 +1486,7 @@ function ProducingDotFiles(
     addVariable!(dotdfg, v2)
     # FIXME, fix deprecation
     # ┌ Warning: addFactor!(dfg, variables, factor) is deprecated, use addFactor!(dfg, factor)
-    # │   caller = ProducingDotFiles(testDFGAPI::Type{GraphsDFG}, v1::Nothing, v2::Nothing, f1::Nothing; VARTYPE::Type{VariableDFG}, FACTYPE::Type{FactorCompute}) at testBlocks.jl:1440
+    # │   caller = ProducingDotFiles(testDFGAPI::Type{GraphsDFG}, v1::Nothing, v2::Nothing, f1::Nothing; VARTYPE::Type{VariableDFG}, FACTYPE::Type{FactorDFG}) at testBlocks.jl:1440
     # └ @ Main ~/.julia/dev/DistributedFactorGraphs/test/testBlocks.jl:1440
     addFactor!(dotdfg, f1)
     #NOTE hardcoded toDot will have different results so test Graphs seperately
@@ -1508,8 +1507,8 @@ function ProducingDotFiles(
     return Base.rm("something.dot")
 end
 
-function ConnectivityTest(testDFGAPI; kwargs...)
-    dfg, verts, facs = connectivityTestGraph(testDFGAPI; kwargs...)
+function ConnectivityTest(testDFGAPI; VARTYPE = VariableDFG, FACTYPE = FactorDFG)
+    dfg, verts, facs = connectivityTestGraph(testDFGAPI, VARTYPE, FACTYPE)
     @test isConnected(dfg) == true
     # @test @test_deprecated isFullyConnected(dfg) == true
     # @test @test_deprecated hasOrphans(dfg) == false
@@ -1521,12 +1520,12 @@ function ConnectivityTest(testDFGAPI; kwargs...)
     @test isConnected(dfg) == false
 end
 
-function CopyFunctionsTest(testDFGAPI; kwargs...)
+function CopyFunctionsTest(testDFGAPI; VARTYPE = VariableDFG, FACTYPE = FactorDFG)
 
     # testDFGAPI = GraphsDFG
     # kwargs = ()
 
-    dfg, verts, facs = connectivityTestGraph(testDFGAPI; kwargs...)
+    dfg, verts, facs = connectivityTestGraph(testDFGAPI, VARTYPE, FACTYPE)
 
     varlbls = ls(dfg)
     faclbls = lsf(dfg)
@@ -1615,12 +1614,12 @@ function CopyFunctionsTest(testDFGAPI; kwargs...)
 
 end
 
-function FileDFGTestBlock(testDFGAPI; kwargs...)
+function FileDFGTestBlock(testDFGAPI; VARTYPE = VariableDFG, FACTYPE = FactorDFG)
 
     # testDFGAPI = GraphsDFG
     # kwargs = ()
     # filename = "/tmp/fileDFG"
-    dfg, verts, facs = connectivityTestGraph(testDFGAPI; kwargs...)
+    dfg, verts, facs = connectivityTestGraph(testDFGAPI, VARTYPE, FACTYPE)
     v4 = getVariable(dfg, :x4)
     vnd = getState(v4, :default)
     # set everything

@@ -26,6 +26,10 @@ DFG.@usingDFG true
         include("compareTests.jl")
     end
 
+    @testset "Testing Serialization of Variables" begin
+        include("testSerializingVariables.jl")
+    end
+
     @testset "Testing GraphsDFG.FactorGraphs functions" begin
         include("FactorGraphsTests.jl")
     end

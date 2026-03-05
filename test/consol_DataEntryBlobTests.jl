@@ -19,7 +19,7 @@ testDFGAPI = GraphsDFG
 ## DataEntry Blobs
 ##==============================================================================
 
-dfg, verts, facs = connectivityTestGraph(testDFGAPI)
+dfg, verts, facs = connectivityTestGraph(testDFGAPI, VariableDFG, FactorDFG)
 
 dataset1 = rand(UInt8, 1000)
 dataset2 = rand(UInt8, 1000)

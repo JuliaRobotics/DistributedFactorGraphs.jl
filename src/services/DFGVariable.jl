@@ -156,55 +156,6 @@ Notes
 function getPointIdentity end
 getPointIdentity(::T) where {T <: StateType} = getPointIdentity(T)
 
-"""
-    $SIGNATURES
-
-Default escalzation from coordinates to a group representation point.  Override if defaults are not correct.
-E.g. coords -> se(2) -> SE(2).
-
-DevNotes
-- TODO Likely remove as part of serialization updates, see #590
-- Used in transition period for Serialization.  This function will likely be changed or deprecated entirely.
-
-Related
-
-[`getCoordinates`](@ref)
-"""
-function getPoint(
-    ::Type{T},
-    v::AbstractVector,
-    basis = ManifoldsBase.DefaultOrthogonalBasis(),
-) where {T <: StateType}
-    M = getManifold(T)
-    p0 = getPointIdentity(T)
-    X = ManifoldsBase.get_vector(M, p0, v, basis)
-    return ManifoldsBase.exp(M, p0, X)
-end
-
-"""
-    $SIGNATURES
-
-Default reduction of a variable point value (a group element) into coordinates as `Vector`.  Override if defaults are not correct.
-
-DevNotes
-- TODO Likely remove as part of serialization updates, see #590
-- Used in transition period for Serialization.  This function will likely be changed or deprecated entirely.
-
-Related
-
-[`getPoint`](@ref)
-"""
-function getCoordinates(
-    ::Type{T},
-    p,
-    basis = ManifoldsBase.DefaultOrthogonalBasis(),
-) where {T <: StateType}
-    M = getManifold(T)
-    p0 = getPointIdentity(T)
-    X = ManifoldsBase.log(M, p0, p)
-    return ManifoldsBase.get_coordinates(M, p0, X, basis)
-end
-
 ##------------------------------------------------------------------------------
 ## solvedCount
 ##------------------------------------------------------------------------------

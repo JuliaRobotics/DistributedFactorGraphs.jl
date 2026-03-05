@@ -57,15 +57,16 @@ function printVariable(
             println(ioc, "    :default <-- State")
             println(ioc, "      initialized:        ", isInitialized(vert, :default))
             println(ioc, "      marginalized:      ", isMarginalized(vert, :default))
-            println(ioc, "      size bel. samples: ", size(vnd.val))
+            println(ioc, "      size bel. samples: ", size(vnd.belief.points))
             print(ioc, "      kde bandwidths:    ")
-            0 < length(vnd.bw) ? println(ioc, round.(vnd.bw[1]; digits = 4)) : nothing
+            bandwidth = vnd.belief.bandwidth
+            if !isnothing(bandwidth) && 0 < length(bandwidth)
+                println(ioc, round.(bandwidth; digits = 4))
+            end
             printstyled(ioc, "     VNDs: "; bold = true)
             println(ioc, solk[smsk], 4 < lsolk ? "..." : "")
         end
         println(ioc, "  # Blobentries:      (", length(listBlobentries(vert)), ")")
-        printstyled(ioc, "  VariableType: "; color = :blue, bold = true)
-        println(ioc, vari)
         # println(ioc, "kde max: $(round.(getKDEMax(getBelief(vnd)),digits=4))")
         # println(ioc, "kde max: $(round.(getKDEMax(getBelief(vnd)),digits=4))")
     else
