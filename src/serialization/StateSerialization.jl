@@ -110,8 +110,9 @@ end
 function unpackOldState(d)
     @debug "Dispatching conversion packed variable -> variable for type $(string(d.variableType))"
     # Figuring out the variableType
-    T = parseStateKind(d.variableType)
-
+    statekind = parseStateKind(d.variableType)
+    T = typeof(statekind)
+    
     r3 = d.dimval
     c3 = r3 > 0 ? floor(Int, length(d.vecval) / r3) : 0
     M3 = reshape(d.vecval, r3, c3)
@@ -131,16 +132,16 @@ function unpackOldState(d)
     !isempty(d.covar) && error("covar field is not supported")
     if label == :parametric
         belief =
-            BeliefRepresentation(GaussianDensityKind(), T; means = vals, covariances = [BW])
+            BeliefRepresentation(GaussianDensityKind(), statekind; means = vals, covariances = [BW])
     else
         belief = BeliefRepresentation(
             NonparametricDensityKind(),
-            T;
+            statekind;
             points = vals,
             bandwidth = BW,
         )
     end
-    return State{typeof(T), getPointType(T)}(;
+    return State{T, getPointType(T)}(;
         label,
         belief,
         separator = Symbol.(d.separator),
