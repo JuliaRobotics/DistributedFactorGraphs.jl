@@ -14,7 +14,7 @@ function lowerStateKind(varT::AbstractStateType{N}) where {N}
     else
         throw(
             SerializationError(
-                "Serializing Variable State type only supports an integer parameter, got '$(T)'.",
+                "Serializing Variable State type only supports an integer parameter, got '$(N)'.",
             ),
         )
     end
@@ -128,7 +128,7 @@ function unpackOldState(d)
 
     # 
     label = Symbol(d.solveKey)
-    !isempty(d.covar) && error("covar field is not suppoted")
+    !isempty(d.covar) && error("covar field is not supported")
     if label == :parametric
         belief =
             BeliefRepresentation(GaussianDensityKind(), T; means = vals, covariances = [BW])

@@ -129,7 +129,7 @@ end
 
 function getVariableTypeName(v::VariableSummary)
     Base.depwarn("getVariableTypeName is deprecated.", :getVariableTypeName)
-    return v.statekindsymbol
+    return v.statekind
 end
 
 function getMetadata(dfg::AbstractDFG, label::Symbol, key::Symbol)
