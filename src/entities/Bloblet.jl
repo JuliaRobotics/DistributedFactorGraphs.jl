@@ -89,14 +89,13 @@ end
     $(SIGNATURES)
 """
 function deleteBloblet!(node, label::Symbol)
-    !haskey(refBloblets(node), label) && throw(LabelNotFoundError("Bloblet", label))
+    !haskey(refBloblets(node), label) && return 0
     pop!(refBloblets(node), label)
     return 1
 end
 
 function deleteBloblets!(node, labels::Vector{Symbol})
-    deleteBloblet!.(node, labels)
-    return length(labels)
+    return sum(deleteBloblet!.(node, labels))
 end
 
 """

@@ -509,7 +509,7 @@ const unstable_functions::Vector{Symbol} = [
     :unpackDistribution,
     :hasTagsNeighbors,
     # :updateBlobstore!,## TODO deprecated or obsolete
-    :emptyMetadata!, #TODO maybe deprecate for just deleteMetadata!
+    # :emptyMetadata!, #TODO maybe deprecate for just deleteMetadata!
     # :emptyBlobstore!, #TODO maybe deprecate for just deleteBlobstore!
     :MetadataTypes, #maybe make public after metadata stable
     :getVariableTypeName,

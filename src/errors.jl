@@ -93,3 +93,17 @@ end
 function Base.showerror(io::IO, ex::SerializationError)
     return print(io, "SerializationError: ", ex.msg)
 end
+
+#http error 409
+"""
+    MergeConflictError(msg)
+
+Error thrown when a merge conflict occurs.
+"""
+struct MergeConflictError <: Exception
+    msg::String
+end
+
+function Base.showerror(io::IO, ex::MergeConflictError)
+    return print(io, "MergeConflictError: ", ex.msg)
+end

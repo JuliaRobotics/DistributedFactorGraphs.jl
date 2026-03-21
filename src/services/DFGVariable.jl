@@ -457,9 +457,7 @@ function deleteState!(dfg::GraphsDFG, variableLabel::Symbol, label::Symbol)
 end
 
 function deleteState!(v::VariableDFG, label::Symbol)
-    if !haskey(v.states, label)
-        throw(LabelNotFoundError("State", label))
-    end
+    !haskey(v.states, label) && return 0
     delete!(v.states, label)
     return 1
 end

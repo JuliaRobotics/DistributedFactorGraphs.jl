@@ -151,7 +151,7 @@ function GraphAgentBloblets!(fg::AbstractDFG)
     @test agent_blob.label in listAgentBloblets(fg)
     @test deleteAgentBloblet!(fg, agent_blob.label) == 1
     @test_throws DFG.LabelNotFoundError getAgentBloblet(fg, agent_blob.label)
-    @test_throws DFG.LabelNotFoundError deleteAgentBloblet!(fg, agent_blob.label)
+    @test deleteAgentBloblet!(fg, agent_blob.label) == 0
 
     # Graph-level bloblets
     graph_blob = Bloblet(:graph_blob, "running")
@@ -163,7 +163,7 @@ function GraphAgentBloblets!(fg::AbstractDFG)
     @test graph_blob.label in listGraphBloblets(fg)
     @test deleteGraphBloblet!(fg, graph_blob.label) == 1
     @test_throws DFG.LabelNotFoundError getGraphBloblet(fg, graph_blob.label)
-    @test_throws DFG.LabelNotFoundError deleteGraphBloblet!(fg, graph_blob.label)
+    @test deleteGraphBloblet!(fg, graph_blob.label) == 0
 end
 
 # User, Robot, Session Data Blob Entries
@@ -183,7 +183,7 @@ function GraphAgentBlobentries!(fg::AbstractDFG)
     @test de == 1
     @test hasAgentBlobentry(fg, :key1) == false
     @test_throws DFG.LabelNotFoundError getAgentBlobentry(fg, :key1)
-    @test_throws DFG.LabelNotFoundError deleteAgentBlobentry!(fg, :key1)
+    @test deleteAgentBlobentry!(fg, :key1) == 0
     @test addAgentBlobentries!(fg, [be]) == [be]
     @test deleteAgentBlobentries!(fg, [:key1]) == 1
     @test mergeAgentBlobentries!(fg, [be]) == 1
@@ -202,7 +202,7 @@ function GraphAgentBlobentries!(fg::AbstractDFG)
     @test de == 1
     @test hasGraphBlobentry(fg, :key1) == false
     @test_throws DFG.LabelNotFoundError getGraphBlobentry(fg, :key1)
-    @test_throws DFG.LabelNotFoundError deleteGraphBlobentry!(fg, :key1)
+    @test deleteGraphBlobentry!(fg, :key1) == 0
     @test addGraphBlobentries!(fg, [be]) == [be]
     @test deleteGraphBlobentries!(fg, [:key1]) == 1
     @test mergeGraphBlobentries!(fg, [be]) == 1
@@ -456,14 +456,14 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     delfacCompare = getFactor(fg, :bcf1)
     ndel = deleteVariable!(fg, v3)
     @test ndel == 2
-    @test_throws LabelNotFoundError deleteVariable!(fg, v3)
+    @test deleteVariable!(fg, v3) == 0
     @test setdiff(ls(fg), [:a, :b]) == []
 
     @test addVariable!(fg, v3) === v3
     @test addFactor!(fg, f2) === f2
 
     @test deleteFactor!(fg, f2) == 1
-    @test_throws LabelNotFoundError deleteFactor!(fg, f2)
+    @test deleteFactor!(fg, f2) == 0
     @test lsf(fg) == [:abf1]
 
     delvarCompare = getVariable(fg, :c)
@@ -783,7 +783,7 @@ function DataEntriesTestBlock!(fg, v2)
     @test mergeVariableBlobentries!(fg, :a, [de1, de2]) == 2
     @test deleteVariableBlobentries!(fg, :a, [:key1]) == 1
 
-    @test_throws LabelNotFoundError deleteVariableBlobentries!(fg, :a, [:key1])
+    @test deleteVariableBlobentries!(fg, :a, [:key1]) == 0
     @test_throws LabelExistsError addVariableBlobentries!(fg, :a, [de2])
     @test deleteVariableBlobentries!(fg, :a, [:key2]) == 1
 
@@ -797,7 +797,7 @@ function DataEntriesTestBlock!(fg, v2)
     @test mergeFactorBlobentry!(fg, :abf1, de2_update) == 1
     @test listFactorBlobentries(fg, :abf1) == [getLabel(de1), getLabel(de2_update)]
     @test deleteFactorBlobentry!(fg, :abf1, getLabel(de2_update)) == 1
-    @test_throws LabelNotFoundError deleteFactorBlobentry!(fg, :abf1, getLabel(de2_update))
+    @test deleteFactorBlobentry!(fg, :abf1, getLabel(de2_update)) == 0
     @test getFactorBlobentries(fg, :abf1) == [de1]
     @test getLabel.(addFactorBlobentries!(fg, :abf1, [de2])) == [getLabel(de2)]
     @test mergeFactorBlobentries!(fg, :abf1, [de1, de2_update]) == 2
@@ -812,7 +812,7 @@ function DataEntriesTestBlock!(fg, v2)
     @test mergeGraphBlobentry!(fg, de2_update) == 1
     @test listGraphBlobentries(fg) == [getLabel(de1), getLabel(de2_update)]
     @test deleteGraphBlobentry!(fg, getLabel(de2_update)) == 1
-    @test_throws LabelNotFoundError deleteGraphBlobentry!(fg, getLabel(de2_update))
+    @test deleteGraphBlobentry!(fg, getLabel(de2_update)) == 0
     @test getGraphBlobentries(fg) == [de1]
     @test addGraphBlobentries!(fg, [de2]) == [de2]
     @test mergeGraphBlobentries!(fg, [de1, de2_update]) == 2
@@ -827,7 +827,7 @@ function DataEntriesTestBlock!(fg, v2)
     @test mergeAgentBlobentry!(fg, de2_update) == 1
     @test listAgentBlobentries(fg) == [getLabel(de1), getLabel(de2_update)]
     @test deleteAgentBlobentry!(fg, getLabel(de2_update)) == 1
-    @test_throws LabelNotFoundError deleteAgentBlobentry!(fg, getLabel(de2_update))
+    @test deleteAgentBlobentry!(fg, getLabel(de2_update))
     @test getAgentBlobentries(fg) == [de1]
     @test addAgentBlobentries!(fg, [de2]) == [de2]
     @test mergeAgentBlobentries!(fg, [de1, de2_update]) == 2
@@ -937,7 +937,7 @@ function blobsStoresTestBlock!(fg)
     @test_throws DFG.IdExistsError addBlob!(fs, blobid, testData)
     @test getBlob(fs, blobid) == testData
     @test_throws DFG.IdNotFoundError getBlob(fs, uuid4())
-    @test_throws DFG.IdNotFoundError deleteBlob!(fs, uuid4())
+    @test deleteBlob!(fs, uuid4()) == 0
     @test deleteBlob!(fs, blobid) == 1
     @test_throws DFG.IdNotFoundError getBlob(fs, blobid)
     @test deleteBlob!(fs, blobid) == 0

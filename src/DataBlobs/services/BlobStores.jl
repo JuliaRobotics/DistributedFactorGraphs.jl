@@ -172,15 +172,12 @@ function deleteBlob!(store::FolderStore{T}, blobid::UUID) where {T}
         rm(blobfilename)
         # Create a tombstone marker
         open(tombstonefile, "w") do f
-            return write(f, "deleted")
+            return write(f, string("DELETED: ", now(UTC)))
         end
         return 1
-    elseif isfile(tombstonefile)
-        # Already deleted
-        return 0
     else
-        # Not found
-        throw(IdNotFoundError("Blob", blobid))
+        # Already deleted or doesn't exist
+        return 0
     end
 end
 
@@ -235,9 +232,7 @@ function addBlob!(store::InMemoryBlobstore{T}, blobid::UUID, data::T) where {T}
 end
 
 function deleteBlob!(store::InMemoryBlobstore, blobid::UUID)
-    if !haskey(store.blobs, blobid)
-        throw(IdNotFoundError("Blob", blobid))
-    end
+    !haskey(store.blobs, blobid) && return 0
     pop!(store.blobs, blobid)
     return 1
 end
@@ -372,9 +367,7 @@ function addBlob!(store::RowBlobstore{T}, blobid::UUID, blob::T) where {T}
 end
 
 function deleteBlob!(store::RowBlobstore, blobid::UUID)
-    if !haskey(store.blobs, blobid)
-        throw(IdNotFoundError("Blob", blobid))
-    end
+    !haskey(store.blobs, blobid) && return 0
     pop!(store.blobs, blobid)
     return 1
 end

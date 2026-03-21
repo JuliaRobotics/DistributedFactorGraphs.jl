@@ -205,6 +205,80 @@ function FactorDFG(
     )
 end
 
+#TODO do we change Recipehyper to be immutable and replace the entire object?
+#TODO Should we call this copyto! or patch!, going with patch! to not confuse possible expected behaviour of copyto!.
+function patch!(dest::Recipehyper, src::Recipehyper)
+    resize!(dest.multihypo, length(src.multihypo))
+    copyto!(dest.multihypo, src.multihypo)
+    dest.nullhypo = src.nullhypo
+    dest.inflation = src.inflation
+    return dest
+end
+
+function patch!(dest::Recipestate, src::Recipestate)
+    dest.eliminated = src.eliminated
+    dest.potentialused = src.potentialused
+    return dest
+end
+
+# we can only use this fallback once all patch! methods are defined
+# function patch!(dest::D, src::S) where {D <: AbstractGraphNode, S <: AbstractGraphNode}
+function patch!(dest::FactorDFG, src::FactorDFG)
+    throw(
+        ArgumentError(
+            "Type mismatch in patch!: Cannot patch a $(typeof(src)) into a $(typeof(dest)). ",
+        ),
+    )
+end
+
+"""
+    $SIGNATURES
+
+Merge the contents of `src` into `dest` by only patching child collections/containers.
+Notes:
+- Cascades into collections (`tags`, `blobentries`, `bloblets`).
+- Assumes `label`, `timestamp`, and `statekind` are immutable and does not update them.
+"""
+function patch!(dest::FactorDFG{T, N}, src::FactorDFG{T, N}) where {T, N}
+    dest === src && return dest # avoid unnecessary work if same object
+
+    dest.label !== src.label && throw(
+        MergeConflictError("Conflicting Factor labels: $(dest.label) vs $(src.label)"),
+    )
+    dest.timestamp !== src.timestamp && throw(
+        MergeConflictError(
+            "Factor $(dest.label) has conflicting timestamps: $(dest.timestamp) vs $(src.timestamp)",
+        ),
+    )
+
+    if DFG.getVariableOrder(dfg, label) != DFG.getVariableOrder(factor)
+        throw(
+            MergeConflictError(
+                """
+                    Cannot merge factor with label $(label): factor neighbors differ.
+                    Existing neighbors: $(DFG.getVariableOrder(dfg, label)),
+                    new neighbors: $(DFG.getVariableOrder(factor)).
+                """,
+            ),
+        )
+    end
+
+    dest.observation != src.observation &&
+        throw(MergeConflictError("Conflict in observations for factor $(label)."))
+
+    union!(dest.tags, src.tags)
+    merge!(dest.blobentries, src.blobentries)
+    merge!(dest.bloblets, src.bloblets)
+    dest.solvable[] = src.solvable[]
+
+    patch!(dest.hyper, src.hyper)
+    patch!(dest.state, src.state)
+
+    #TODO Confirm solvercache merge policy, overwriting seems logical.
+    dest.solvercache[] = src.solvercache[]
+
+    return dest
+end
 ##------------------------------------------------------------------------------
 ## FactorSummary lv1
 ##------------------------------------------------------------------------------
