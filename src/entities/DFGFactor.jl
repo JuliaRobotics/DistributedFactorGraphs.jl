@@ -223,13 +223,13 @@ end
 
 # we can only use this fallback once all patch! methods are defined
 # function patch!(dest::D, src::S) where {D <: AbstractGraphNode, S <: AbstractGraphNode}
-function patch!(dest::FactorDFG, src::FactorDFG)
-    throw(
-        ArgumentError(
-            "Type mismatch in patch!: Cannot patch a $(typeof(src)) into a $(typeof(dest)). ",
-        ),
-    )
-end
+# function patch!(dest::FactorDFG, src::FactorDFG)
+#     throw(
+#         MergeConflictError(
+#             "Type mismatch in patch!: Cannot patch a $(typeof(src)) into a $(typeof(dest)). ",
+#         ),
+#     )
+# end
 
 """
     $SIGNATURES
@@ -238,33 +238,38 @@ Merge the contents of `src` into `dest` by only patching child collections/conta
 Notes:
 - Cascades into collections (`tags`, `blobentries`, `bloblets`).
 - Assumes `label`, `timestamp`, and `statekind` are immutable and does not update them.
+- Throws `MergeConflictError` when factor types differ (different observation or arity).
 """
-function patch!(dest::FactorDFG{T, N}, src::FactorDFG{T, N}) where {T, N}
+function patch!(dest::FactorDFG, src::FactorDFG)
     dest === src && return dest # avoid unnecessary work if same object
+
+    # Catch mismatched factor types (different observation T or arity N).
+    # @TODO maybe revert to dispatch as it was before to shorten this method.
+    typeof(dest) !== typeof(src) && throw(
+        MergeConflictError(
+            "Cannot merge factors of different types: $(typeof(dest)) vs $(typeof(src)).",
+        ),
+    )
 
     dest.label !== src.label && throw(
         MergeConflictError("Conflicting Factor labels: $(dest.label) vs $(src.label)"),
     )
-    dest.timestamp !== src.timestamp && throw(
+    dest.timestamp != src.timestamp && throw(
         MergeConflictError(
             "Factor $(dest.label) has conflicting timestamps: $(dest.timestamp) vs $(src.timestamp)",
         ),
     )
 
-    if DFG.getVariableOrder(dfg, label) != DFG.getVariableOrder(factor)
+    if DFG.getVariableOrder(dest) != DFG.getVariableOrder(src)
         throw(
             MergeConflictError(
-                """
-                    Cannot merge factor with label $(label): factor neighbors differ.
-                    Existing neighbors: $(DFG.getVariableOrder(dfg, label)),
-                    new neighbors: $(DFG.getVariableOrder(factor)).
-                """,
+                "Cannot merge factor $(dest.label): variable order differs. Existing: $(dest.variableorder), new: $(src.variableorder).",
             ),
         )
     end
 
     dest.observation != src.observation &&
-        throw(MergeConflictError("Conflict in observations for factor $(label)."))
+        throw(MergeConflictError("Conflict in observations for factor $(dest.label)."))
 
     union!(dest.tags, src.tags)
     merge!(dest.blobentries, src.blobentries)
@@ -275,7 +280,9 @@ function patch!(dest::FactorDFG{T, N}, src::FactorDFG{T, N}) where {T, N}
     patch!(dest.state, src.state)
 
     #TODO Confirm solvercache merge policy, overwriting seems logical.
-    dest.solvercache[] = src.solvercache[]
+    if isassigned(src.solvercache)
+        dest.solvercache[] = src.solvercache[]
+    end
 
     return dest
 end
@@ -360,4 +367,41 @@ end
 
 function FactorSkeleton(f::AbstractGraphFactor)
     return FactorSkeleton(f.label, copy(f.tags), f.variableorder)
+end
+
+##==============================================================================
+## patch! for Summary/Skeleton types
+##==============================================================================
+
+function patch!(dest::FactorSummary, src::FactorSummary)
+    dest === src && return dest
+    dest.label !== src.label && throw(
+        MergeConflictError("Conflicting Factor labels: $(dest.label) vs $(src.label)"),
+    )
+    dest.timestamp != src.timestamp && throw(
+        MergeConflictError(
+            "Factor $(dest.label) has conflicting timestamps: $(dest.timestamp) vs $(src.timestamp)",
+        ),
+    )
+    dest.variableorder != src.variableorder && throw(
+        MergeConflictError(
+            "Cannot merge factor $(dest.label): variable order differs. Existing: $(dest.variableorder), new: $(src.variableorder).",
+        ),
+    )
+    union!(dest.tags, src.tags)
+    return dest
+end
+
+function patch!(dest::FactorSkeleton, src::FactorSkeleton)
+    dest === src && return dest
+    dest.label !== src.label && throw(
+        MergeConflictError("Conflicting Factor labels: $(dest.label) vs $(src.label)"),
+    )
+    dest.variableorder != src.variableorder && throw(
+        MergeConflictError(
+            "Cannot merge factor $(dest.label): variable order differs. Existing: $(dest.variableorder), new: $(src.variableorder).",
+        ),
+    )
+    union!(dest.tags, src.tags)
+    return dest
 end

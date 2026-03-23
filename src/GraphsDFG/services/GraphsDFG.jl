@@ -118,7 +118,7 @@ function deleteVariable!(dfg::GraphsDFG, label::Symbol)#::Tuple{AbstractGraphVar
     del_facs = map(l -> deleteFactor!(dfg, l), listNeighbors(dfg, label))
 
     rem_vertex!(dfg.g, dfg.g.labels[label])
-    return sum(del_facs) + 1
+    return sum(del_facs; init = 0) + 1
 end
 
 function deleteFactor!(dfg::GraphsDFG, label::Symbol)

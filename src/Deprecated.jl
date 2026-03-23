@@ -625,3 +625,5 @@ function mergeGraph!(
 
     return destDFG
 end
+
+@deprecate buildSubgraph(args...; kwargs...) getSubgraph(args...; kwargs...)

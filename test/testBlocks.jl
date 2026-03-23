@@ -446,7 +446,7 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
         f2_mod = typeof(f2)(f2.label, (:a,))
     end
 
-    @test_throws DomainError mergeFactor!(fg, f2_mod)
+    @test_throws DFG.MergeConflictError mergeFactor!(fg, f2_mod)
     @test issetequal(lsf(fg), [:bcf1, :abf1])
 
     # Extra timestamp functions https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/315
@@ -543,8 +543,10 @@ function tagsTestBlock!(fg, v1, v1_tags)
     v1Tags = deepcopy(DFG.refTags(v1))
     @test issetequal(v1Tags, v1_tags)
     @test issetequal(listTags(fg, :a), v1Tags)
-    @test issetequal(mergeTags!(fg, :a, [:TAG]), v1Tags ∪ [:TAG])
-    @test issetequal(deleteTags!(fg, :a, [:TAG]), v1Tags)
+    @test mergeTags!(fg, :a, [:TAG]) == 1
+    @test issetequal(listTags(fg, :a), v1Tags ∪ [:TAG])
+    @test deleteTags!(fg, :a, [:TAG]) == 1
+    @test issetequal(listTags(fg, :a), v1Tags)
     @test emptyTags!(fg, :a) == Set{Symbol}()
 
     v2Tags = listTags(fg, :b)
@@ -705,6 +707,140 @@ function blobletTestBlock!(fg)
     @test length(listVariableBloblets(fg, :a)) == 9
     # emptyVariableBloblets!(fg, :a)
     # @test length(listVariableBloblets(fg, :a)) == 0
+
+    # has bloblet
+    @test hasVariableBloblet(fg, :a, :small)
+    @test !hasVariableBloblet(fg, :a, :nonexistent)
+
+    # delete non-existent returns 0
+    @test deleteVariableBloblet!(fg, :a, :nonexistent) == 0
+
+    # Bulk operations
+    bulk_bloblets = [Bloblet(:bulk1, 1), Bloblet(:bulk2, 2)]
+    @test addVariableBloblets!(fg, :a, bulk_bloblets) == bulk_bloblets
+    @test hasVariableBloblet(fg, :a, :bulk1)
+    @test hasVariableBloblet(fg, :a, :bulk2)
+    @test mergeVariableBloblets!(fg, :a, [Bloblet(:bulk1, 10), Bloblet(:bulk2, 20)]) == 2
+    @test deleteVariableBloblets!(fg, :a, [:bulk1, :bulk2]) == 2
+    @test !hasVariableBloblet(fg, :a, :bulk1)
+
+    # get non-existent throws
+    @test_throws LabelNotFoundError getVariableBloblet(fg, :a, :nonexistent)
+end
+
+function factorBlobletTestBlock!(fg)
+    # Factor bloblet CRUD
+    @test listFactorBloblets(fg, :abf1) == Symbol[]
+    @test addFactorBloblet!(fg, :abf1, Bloblet(:fbl1, "factor_data")) ==
+          Bloblet(:fbl1, "factor_data")
+    @test_throws LabelExistsError addFactorBloblet!(fg, :abf1, Bloblet(:fbl1, "dup"))
+    @test hasFactorBloblet(fg, :abf1, :fbl1)
+    @test !hasFactorBloblet(fg, :abf1, :nonexistent)
+    @test getFactorBloblet(fg, :abf1, :fbl1) == Bloblet(:fbl1, "factor_data")
+    @test_throws LabelNotFoundError getFactorBloblet(fg, :abf1, :nonexistent)
+    @test mergeFactorBloblet!(fg, :abf1, Bloblet(:fbl1, "updated")) == 1
+    @test getFactorBloblet(fg, :abf1, :fbl1) == Bloblet(:fbl1, "updated")
+    @test :fbl1 in listFactorBloblets(fg, :abf1)
+
+    # Bulk operations
+    @test addFactorBloblets!(fg, :abf1, [Bloblet(:fbl2, 1), Bloblet(:fbl3, 2)]) ==
+          [Bloblet(:fbl2, 1), Bloblet(:fbl3, 2)]
+    @test length(getFactorBloblets(fg, :abf1)) == 3
+    @test mergeFactorBloblets!(fg, :abf1, [Bloblet(:fbl2, 10), Bloblet(:fbl3, 20)]) == 2
+    @test deleteFactorBloblets!(fg, :abf1, [:fbl2, :fbl3]) == 2
+    @test deleteFactorBloblet!(fg, :abf1, :fbl1) == 1
+    @test listFactorBloblets(fg, :abf1) == Symbol[]
+end
+
+function hasBlobletTestBlock!(fg)
+    # Agent bloblets has
+    addAgentBloblet!(fg, Bloblet(:agent_has_test, "data"))
+    @test hasAgentBloblet(fg, :agent_has_test)
+    @test !hasAgentBloblet(fg, :nonexistent)
+    deleteAgentBloblet!(fg, :agent_has_test)
+    @test !hasAgentBloblet(fg, :agent_has_test)
+
+    # Graph bloblets has
+    addGraphBloblet!(fg, Bloblet(:graph_has_test, "data"))
+    @test hasGraphBloblet(fg, :graph_has_test)
+    @test !hasGraphBloblet(fg, :nonexistent)
+    deleteGraphBloblet!(fg, :graph_has_test)
+    @test !hasGraphBloblet(fg, :graph_has_test)
+end
+
+function statesExtendedTestBlock!(fg)
+    # hasState
+    @test hasState(fg, :a, :default)
+    @test !hasState(fg, :a, :nonexistent)
+
+    # getStates returns Vector
+    states = getStates(fg, :a)
+    @test states isa Vector
+    @test length(states) >= 1
+
+    # addStates! bulk
+    s1 = State{TestVariableType1}(; label = :bulk_s1)
+    s2 = State{TestVariableType1}(; label = :bulk_s2)
+    @test addStates!(fg, :a, [s1, s2]) == 2
+    @test hasState(fg, :a, :bulk_s1)
+    @test hasState(fg, :a, :bulk_s2)
+
+    # addStates! with pair syntax
+    s3 = State{TestVariableType2}(; label = :bulk_s3)
+    @test addStates!(fg, [:b => s3]) == 1
+    @test hasState(fg, :b, :bulk_s3)
+
+    # deleteStates! bulk
+    @test deleteStates!(fg, :a, [:bulk_s1, :bulk_s2]) == 2
+    @test !hasState(fg, :a, :bulk_s1)
+    @test !hasState(fg, :a, :bulk_s2)
+
+    # deleteStates! with pair syntax
+    @test deleteStates!(fg, [:b => :bulk_s3]) == 1
+    @test !hasState(fg, :b, :bulk_s3)
+
+    # deleteState! non-existent returns 0
+    @test deleteState!(fg, :a, :nonexistent) == 0
+
+    # listStates with filters
+    @test :default in listStates(fg, :a)
+    @test listStates(fg, :a; labelFilter = ==(Symbol("default")) ∘ identity) == [:default]
+
+    # listStates across dfg returns Vector
+    all_states = listStates(fg)
+    @test all_states isa AbstractVector
+    @test :default in all_states
+
+    # LabelNotFoundError for getState on missing state
+    @test_throws LabelNotFoundError getState(fg, :a, :nonexistent)
+
+    # mergeStates! bulk
+    s4 = State{TestVariableType1}(; label = :merge_bulk)
+    @test mergeStates!(fg, :a, [s4]) == 1
+    @test hasState(fg, :a, :merge_bulk)
+    @test mergeStates!(fg, :a, [s4]) == 1  # idempotent
+    deleteState!(fg, :a, :merge_bulk)
+    return nothing
+end
+
+function blobstoreExtendedTestBlock!(fg)
+    store = DFG.InMemoryBlobstore(:mergestore)
+    @test addBlobstore!(fg, store) isa Any
+    @test_throws LabelExistsError addBlobstore!(fg, store)
+
+    # mergeStorelinks!
+    store2 = DFG.InMemoryBlobstore(:mergestore2)
+    @test DFG.mergeStorelinks!(fg, [store2]) == 1
+    @test :mergestore2 in listBlobstores(fg)
+    # merge again is idempotent
+    @test DFG.mergeStorelinks!(fg, [store2]) == 0
+
+    @test_throws LabelNotFoundError getBlobstore(fg, :nonexistent)
+
+    # cleanup
+    @test deleteBlobstore!(fg, :mergestore) == 1
+    @test deleteBlobstore!(fg, :mergestore2) == 1
+    @test deleteBlobstore!(fg, :nonexistent) == 0
 end
 
 function DataEntriesTestBlock!(fg, v2)
@@ -827,7 +963,7 @@ function DataEntriesTestBlock!(fg, v2)
     @test mergeAgentBlobentry!(fg, de2_update) == 1
     @test listAgentBlobentries(fg) == [getLabel(de1), getLabel(de2_update)]
     @test deleteAgentBlobentry!(fg, getLabel(de2_update)) == 1
-    @test deleteAgentBlobentry!(fg, getLabel(de2_update))
+    @test deleteAgentBlobentry!(fg, getLabel(de2_update)) == 0
     @test getAgentBlobentries(fg) == [de1]
     @test addAgentBlobentries!(fg, [de2]) == [de2]
     @test mergeAgentBlobentries!(fg, [de1, de2_update]) == 2

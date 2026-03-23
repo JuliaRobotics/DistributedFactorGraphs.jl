@@ -181,7 +181,7 @@ export listFactors
 export listStates
 
 ##
-export getObservation
+public getObservation
 
 ##------------------------------------------------------------------------------
 # Tags
@@ -307,10 +307,10 @@ export listFactorBloblets
 export listGraphBloblets
 export listAgentBloblets
 
-# export hasVariableBloblet
-# export hasFactorBloblet
-# export hasGraphBloblet
-# export hasAgentBloblet
+export hasVariableBloblet
+export hasFactorBloblet
+export hasGraphBloblet
+export hasAgentBloblet
 
 ## v1 name, signiture, and return
 
@@ -485,7 +485,7 @@ const unstable_functions::Vector{Symbol} = [
     :natural_lt, #TODO do we export stable functions such as natural_lt or just mark as public
     :sortDFG, #TODO do we export stable functions such as natural_lt or just mark as public
     :mergeGraph!,
-    :buildSubgraph,
+    :getSubgraph,
     :incrDataLabelSuffix,# TODO somewhat used, do we deprecate?
 
     # set # TODO what to do here, maybe `ref` verb + setproperty.  

@@ -404,10 +404,10 @@ function patch!(dest::VariableDFG{T}, src::VariableDFG{T}) where {T}
     dest === src && return dest # avoid unnecessary work if same object
 
     dest.label !== src.label && throw(
-        ArgumentError("Variables has different labels: $(dest.label) vs $(src.label)"),
+        MergeConflictError("Variables has different labels: $(dest.label) vs $(src.label)"),
     )
-    dest.timestamp !== src.timestamp && throw(
-        ArgumentError(
+    dest.timestamp != src.timestamp && throw(
+        MergeConflictError(
             "Variables has different timestamps: $(dest.timestamp) vs $(src.timestamp).",
         ),
     )
@@ -488,4 +488,32 @@ end
 
 function VariableSkeleton(v::AbstractGraphVariable)
     return VariableSkeleton(v.label, copy(v.tags))
+end
+
+##==============================================================================
+## patch! for Summary/Skeleton types
+##==============================================================================
+
+function patch!(dest::VariableSummary, src::VariableSummary)
+    dest === src && return dest
+    dest.label !== src.label && throw(
+        MergeConflictError("Variables has different labels: $(dest.label) vs $(src.label)"),
+    )
+    dest.timestamp != src.timestamp && throw(
+        MergeConflictError(
+            "Variables has different timestamps: $(dest.timestamp) vs $(src.timestamp).",
+        ),
+    )
+    union!(dest.tags, src.tags)
+    merge!(dest.blobentries, src.blobentries)
+    return dest
+end
+
+function patch!(dest::VariableSkeleton, src::VariableSkeleton)
+    dest === src && return dest
+    dest.label !== src.label && throw(
+        MergeConflictError("Variables has different labels: $(dest.label) vs $(src.label)"),
+    )
+    union!(dest.tags, src.tags)
+    return dest
 end

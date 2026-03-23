@@ -388,14 +388,16 @@ NOTE: If an error occurs while adding one of the states, previously added states
 """
 function addStates!(dfg::AbstractDFG, variableLabel::Symbol, states::Vector{<:State})
     cnt = asyncmap(states) do state
-        return addState!(dfg, variableLabel, state)
+        addState!(dfg, variableLabel, state)
+        return 1
     end
     return sum(cnt)
 end
 
 function addStates!(dfg::AbstractDFG, varLabel_state_pairs::Vector{<:Pair{Symbol, <:State}})
     cnt = asyncmap(varLabel_state_pairs) do (varLabel, state)
-        return addState!(dfg, varLabel, state)
+        addState!(dfg, varLabel, state)
+        return 1
     end
     return sum(cnt)
 end
@@ -527,5 +529,5 @@ function listStates(
     for vl in vls
         union!(labels, listStates(dfg, vl; labelFilter))
     end
-    return labels
+    return collect(labels)
 end

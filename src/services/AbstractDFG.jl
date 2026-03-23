@@ -103,21 +103,56 @@ function getBlobstore(dfg::AbstractDFG, storeLabel::Symbol)
     return store
 end
 
+function getBlobstores(dfg::AbstractDFG)
+    stores = map(listBlobstores(dfg)) do label
+        return getBlobstore(dfg, label)
+    end
+    return isempty(stores) ? AbstractBlobstore[] : stores
+end
+
 function addBlobstore!(dfg::AbstractDFG, store::AbstractBlobstore)
     label = getLabel(store)
     haskey(refBlobstores(dfg), label) && throw(LabelExistsError("Blobstore", label))
     return push!(refBlobstores(dfg), label => store)
 end
-function mergeBlobstore!(dfg::AbstractDFG, store::AbstractBlobstore)
-    push!(refBlobstores(dfg), getLabel(store) => store)
+
+# TODO edge api is a work in progress and only internal 
+function mergeStorelink!(dfg::AbstractDFG, link_to_store::AbstractBlobstore)
+    # we currenlty onlly have a label for a storelink, so we do not know if it is the same link
+    # so we have to look at the Blobstore node to find out. we only merge if the label=>store matches
+    # 
+    label = getLabel(link_to_store) # the edge in this case is from the virtual dfg object to the Blobstore, so simply label.
+    if hasBlobstore(dfg, label)
+        existing_store = getBlobstore(dfg, label)
+        if existing_store != link_to_store
+            throw(MergeConflictError("Blobstore", label))
+        else
+            return 0 # no merge needed, they are the same store
+        end
+    else
+        push!(refBlobstores(dfg), label => link_to_store)
+    end
     return 1
 end
+
 function deleteBlobstore!(dfg::AbstractDFG, key::Symbol)
     !haskey(refBlobstores(dfg), key) && return 0
     pop!(refBlobstores(dfg), key)
     return 1
 end
 listBlobstores(dfg::AbstractDFG) = collect(keys(refBlobstores(dfg)))
+
+function mergeStorelinks!(destDFG::AbstractDFG, blobstores::Vector{<:AbstractBlobstore})
+    count = 0
+    for store in blobstores
+        count += mergeStorelink!(destDFG, store)
+    end
+    return count
+end
+
+function hasBlobstore(dfg::AbstractDFG, label::Symbol)
+    return haskey(refBlobstores(dfg), label)
+end
 
 #TODO empty as verb or only `deleteNouns!`
 # emptyBlobstore!(dfg::AbstractDFG) = empty!(refBlobstores(dfg))
@@ -242,7 +277,7 @@ function mergeVariable! end
 
 function mergeVariables!(dfg::AbstractDFG, variables::Vector{<:AbstractGraphVariable})
     counts = asyncmap(v->mergeVariable!(dfg, v), variables)
-    return sum(counts)
+    return sum(counts; init = 0)
 end
 
 """
@@ -255,7 +290,7 @@ function mergeFactor! end
 
 function mergeFactors!(dfg::AbstractDFG, factors::Vector{<:AbstractGraphFactor})
     counts = asyncmap(f->mergeFactor!(dfg, f), factors)
-    return sum(counts)
+    return sum(counts; init = 0)
 end
 
 """
@@ -508,7 +543,7 @@ Related:
 Dev Notes
 - Bulk vs node for node: a list of labels are compiled and the sugraph is copied in bulk.
 """
-function buildSubgraph(
+function getSubgraph(
     ::Type{G},
     dfg::AbstractDFG,
     variableFactorLabels::Vector{Symbol},
@@ -546,12 +581,12 @@ function buildSubgraph(
     return buildSubgraph(LocalDFG, dfg, variableFactorLabels, distance; kwargs...)
 end
 
-function mergeGraph!(srcDFG::AbstractDFG, destDFG::AbstractDFG)
+function mergeGraph!(destDFG::AbstractDFG, srcDFG::AbstractDFG)
     patch!(destDFG.graph, srcDFG.graph)
-    mergeAgent!(destDFG.agent, srcDFG.agent)
-    mergeBlobstores!(destDFG, srcDFG)
     mergeVariables!(destDFG, getVariables(srcDFG))
     mergeFactors!(destDFG, getFactors(srcDFG))
+    mergeAgent!(destDFG.agent, srcDFG.agent)
+    mergeStorelinks!(destDFG, getBlobstores(srcDFG))
     return destDFG
 end
 

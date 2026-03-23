@@ -134,15 +134,16 @@ function listTags(dfg::AbstractDFG, sym::Symbol)
     return listTags(getFnc(dfg, sym))
 end
 
-#TODO FIXME for DFGv1, merge and delete should return the number of tags added/removed.
 function mergeTags!(dfg::InMemoryDFGTypes, sym::Symbol, tags)
     getFnc = isVariable(dfg, sym) ? getVariable : getFactor
-    return union!(refTags(getFnc(dfg, sym)), tags)
+    union!(refTags(getFnc(dfg, sym)), tags)
+    return length(tags)
 end
 
 function deleteTags!(dfg::InMemoryDFGTypes, sym::Symbol, tags)
     getFnc = isVariable(dfg, sym) ? getVariable : getFactor
-    return setdiff!(refTags(getFnc(dfg, sym)), tags)
+    setdiff!(refTags(getFnc(dfg, sym)), tags)
+    return length(tags)
 end
 
 function emptyTags!(dfg::InMemoryDFGTypes, sym::Symbol)
