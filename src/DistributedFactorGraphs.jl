@@ -77,7 +77,7 @@ export AbstractStateType, StateType
 ##------------------------------------------------------------------------------
 ## Types
 ##------------------------------------------------------------------------------
-#TODO types are not yet stable - also, we might not export types such as VariableCompute
+#TODO types are not yet stable - also, we might not export all types
 # Variables
 export VariableDFG
 export VariableSummary

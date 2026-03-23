@@ -27,9 +27,7 @@ using ...DistributedFactorGraphs:
     FolderStore,
     refTags,
     listTags,
-    patch!,
-    getVariableOrder,
-    getObservation
+    patch!
 
 # import DFG functions to extend
 import ...DistributedFactorGraphs:
@@ -57,7 +55,6 @@ import ...DistributedFactorGraphs:
     isConnected,
     listNeighbors,
     buildSubgraph,
-    copyGraph!,
     getBiadjacencyMatrix,
     toDot,
     toDotFile,

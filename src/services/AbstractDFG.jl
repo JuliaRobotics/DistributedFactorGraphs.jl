@@ -118,7 +118,7 @@ end
 
 # TODO edge api is a work in progress and only internal 
 function mergeStorelink!(dfg::AbstractDFG, link_to_store::AbstractBlobstore)
-    # we currenlty onlly have a label for a storelink, so we do not know if it is the same link
+    # we currently only have a label for a storelink, so we do not know if it is the same link
     # so we have to look at the Blobstore node to find out. we only merge if the label=>store matches
     # 
     label = getLabel(link_to_store) # the edge in this case is from the virtual dfg object to the Blobstore, so simply label.
