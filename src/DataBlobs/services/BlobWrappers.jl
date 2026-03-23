@@ -63,6 +63,27 @@ $(METHODLIST)
 """
 function deleteBlob_Agent! end
 
+"""
+Convenience wrapper to load a Blob for a given factor and Blobentry label.
+
+$(METHODLIST)
+"""
+function loadBlob_Factor end
+
+"""
+Convenience wrapper to save a Blob to a Blobstore and a Blobentry to a factor.
+
+$(METHODLIST)
+"""
+function saveBlob_Factor! end
+
+"""
+Convenience wrapper to delete a Blob from a Blobstore and its Blobentry from a factor.
+
+$(METHODLIST)
+"""
+function deleteBlob_Factor! end
+
 function loadBlob_Variable(
     dfg::AbstractDFG,
     variable_label::Symbol,
@@ -166,6 +187,42 @@ function deleteBlob_Agent!(dfg::AbstractDFG, entry_label::Symbol)
     return 2
 end
 
+function loadBlob_Factor(dfg::AbstractDFG, factor_label::Symbol, entry_label::Symbol)
+    entry = getFactorBlobentry(dfg, factor_label, entry_label)
+    blob = getBlob(dfg, entry)
+    return entry, blob
+end
+
+function saveBlob_Factor!(
+    dfg::AbstractDFG,
+    factor_label::Symbol,
+    blob::Vector{UInt8},
+    entry::Blobentry,
+)
+    addFactorBlobentry!(dfg, factor_label, entry)
+    addBlob!(dfg, entry, blob)
+    return entry
+end
+
+function saveBlob_Factor!(
+    dfg::AbstractDFG,
+    factor_label::Symbol,
+    blob::Vector{UInt8},
+    entry_label::Symbol,
+    blobstore::Symbol = :default;
+    blobentry_kwargs...,
+)
+    entry = Blobentry(entry_label, blobstore; blobentry_kwargs...)
+    return saveBlob_Factor!(dfg, factor_label, blob, entry)
+end
+
+function deleteBlob_Factor!(dfg::AbstractDFG, factor_label::Symbol, entry_label::Symbol)
+    entry = getFactorBlobentry(dfg, factor_label, entry_label)
+    deleteFactorBlobentry!(dfg, factor_label, entry_label)
+    deleteBlob!(dfg, entry)
+    return 2
+end
+
 function saveImage_Variable!(
     dfg::AbstractDFG,
     variable_label::Symbol,
@@ -175,7 +232,7 @@ function saveImage_Variable!(
     entry_kwargs...,
 )
     mimeType = get(entry_kwargs, :mimeType, MIME("image/png"))
-    format = _MIMETypes[mimeType]
+    format = mime_to_format(mimeType)
 
     blob, mimeType = packBlob(format, img)
 

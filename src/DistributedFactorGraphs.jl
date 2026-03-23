@@ -31,6 +31,7 @@ using TensorCast
 using ProgressMeter
 using SHA
 using FileIO
+using MIMEs: mime_from_extension, extension_from_mime
 
 import Distributions #TODO this was unused before (if we move SerializingDistributions.jl out we can maybe remove the Distributions dependency?)
 import Tar
@@ -478,6 +479,9 @@ const unstable_functions::Vector{Symbol} = [
     :packBlob,
     :hasTags,
     :unpackBlob,
+    :format_to_mime,
+    :mime_to_format,
+    :getMimetype,
     :emptyTags!,
     :ls,
     :lsf,
