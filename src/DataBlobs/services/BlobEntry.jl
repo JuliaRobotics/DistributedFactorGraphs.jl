@@ -63,8 +63,7 @@ end
 deleteBlobentry!(node, entry) = deleteBlobentry!(node, getLabel(entry))
 
 function deleteBlobentries!(node, labels::Vector{Symbol})
-    deleteBlobentry!.(node, labels)
-    return length(labels)
+    return sum(deleteBlobentry!.(node, labels))
 end
 
 """
