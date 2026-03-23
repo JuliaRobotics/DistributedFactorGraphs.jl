@@ -8,63 +8,63 @@ testDFGAPI = GraphsDFG
 ## LinkStore
 ##==============================================================================
 @testset "LinkStore" begin
-    csvfile = joinpath(tempdir(), "linkstore_test_$(uuid4()).csv")
+    tmpdir = mktempdir()
+    try
+        csvfile = joinpath(tmpdir, "linkstore_test_$(uuid4()).csv")
 
-    # Create new LinkStore (file does not exist)
-    ls = DFG.LinkStore(:links, csvfile)
-    @test ls.label == :links
-    @test ls.csvfile == csvfile
-    @test isempty(ls.cache)
-    @test isfile(csvfile)
+        # Create new LinkStore (file does not exist)
+        ls = DFG.LinkStore(:links, csvfile)
+        @test ls.label == :links
+        @test ls.csvfile == csvfile
+        @test isempty(ls.cache)
+        @test isfile(csvfile)
 
-    # Write a temporary data file to link to
-    datafile = joinpath(tempdir(), "linkstore_data_$(uuid4()).bin")
-    test_data = rand(UInt8, 100)
-    write(datafile, test_data)
+        # Write a temporary data file to link to
+        datafile = joinpath(tmpdir, "linkstore_data_$(uuid4()).bin")
+        test_data = rand(UInt8, 100)
+        write(datafile, test_data)
 
-    # addBlob! with a link
-    blobid = uuid4()
-    @test addBlob!(ls, blobid, datafile) == blobid
-    @test haskey(ls.cache, blobid)
+        # addBlob! with a link
+        blobid = uuid4()
+        @test addBlob!(ls, blobid, datafile) == blobid
+        @test haskey(ls.cache, blobid)
 
-    # addBlob! duplicate throws
-    @test_throws DFG.IdExistsError addBlob!(ls, blobid, datafile)
+        # addBlob! duplicate throws
+        @test_throws DFG.IdExistsError addBlob!(ls, blobid, datafile)
 
-    # getBlob reads through the link
-    retrieved = getBlob(ls, blobid)
-    @test retrieved == test_data
+        # getBlob reads through the link
+        retrieved = getBlob(ls, blobid)
+        @test retrieved == test_data
 
-    # getBlob for missing id throws
-    @test_throws DFG.IdNotFoundError getBlob(ls, uuid4())
+        # getBlob for missing id throws
+        @test_throws DFG.IdNotFoundError getBlob(ls, uuid4())
 
-    # deleteBlob! is not supported
-    @test_throws ErrorException deleteBlob!(ls)
-    @test_throws ErrorException deleteBlob!(ls, uuid4())
-    @test_throws ErrorException deleteBlob!(ls, Blobentry(:test))
+        # deleteBlob! is not supported
+        @test_throws ErrorException deleteBlob!(ls)
+        @test_throws ErrorException deleteBlob!(ls, uuid4())
+        @test_throws ErrorException deleteBlob!(ls, Blobentry(:test))
 
-    # Re-open existing CSV to test loading from file
-    ls2 = DFG.LinkStore(:links, csvfile)
-    @test haskey(ls2.cache, blobid)
-    @test ls2.cache[blobid] == datafile
-    @test getBlob(ls2, blobid) == test_data
+        # Re-open existing CSV to test loading from file
+        ls2 = DFG.LinkStore(:links, csvfile)
+        @test haskey(ls2.cache, blobid)
+        @test ls2.cache[blobid] == datafile
+        @test getBlob(ls2, blobid) == test_data
 
-    # Multiple entries
-    datafile2 = joinpath(tempdir(), "linkstore_data2_$(uuid4()).bin")
-    test_data2 = rand(UInt8, 50)
-    write(datafile2, test_data2)
-    blobid2 = uuid4()
-    addBlob!(ls, blobid2, datafile2)
+        # Multiple entries
+        datafile2 = joinpath(tmpdir, "linkstore_data2_$(uuid4()).bin")
+        test_data2 = rand(UInt8, 50)
+        write(datafile2, test_data2)
+        blobid2 = uuid4()
+        addBlob!(ls, blobid2, datafile2)
 
-    # Re-open and verify both entries are loaded
-    ls3 = DFG.LinkStore(:links, csvfile)
-    @test length(ls3.cache) == 2
-    @test getBlob(ls3, blobid) == test_data
-    @test getBlob(ls3, blobid2) == test_data2
-
-    # Cleanup
-    rm(csvfile; force = true)
-    rm(datafile; force = true)
-    rm(datafile2; force = true)
+        # Re-open and verify both entries are loaded
+        ls3 = DFG.LinkStore(:links, csvfile)
+        @test length(ls3.cache) == 2
+        @test getBlob(ls3, blobid) == test_data
+        @test getBlob(ls3, blobid2) == test_data2
+    finally
+        rm(tmpdir; force = true, recursive = true)
+    end
 end
 
 ##==============================================================================

@@ -48,9 +48,12 @@ using FileIO
     @testset "_MIMEOverrides extensibility" begin
         # Extensions (like BlobArrow) can add to _MIMEOverrides
         push!(_MIMEOverrides, DataFormat{:TestFormat} => MIME("application/x-test-format"))
-        @test format_to_mime(DataFormat{:TestFormat}) == MIME("application/x-test-format")
-        @test mime_to_format(MIME("application/x-test-format")) == DataFormat{:TestFormat}
-        delete!(_MIMEOverrides, DataFormat{:TestFormat})
+        try
+            @test format_to_mime(DataFormat{:TestFormat}) == MIME("application/x-test-format")
+            @test mime_to_format(MIME("application/x-test-format")) == DataFormat{:TestFormat}
+        finally
+            delete!(_MIMEOverrides, DataFormat{:TestFormat})
+        end
     end
 
     ##==========================================================================
