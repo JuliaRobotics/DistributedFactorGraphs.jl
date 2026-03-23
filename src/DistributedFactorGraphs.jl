@@ -80,11 +80,11 @@ export AbstractStateType, StateType
 #TODO types are not yet stable - also, we might not export all types
 # Variables
 export VariableDFG
-export VariableSummary
+# export VariableSummary #TODO not finalized yet.
 export VariableSkeleton
 # Factors
 export FactorDFG
-export FactorSummary
+# export FactorSummary TODO not finalized yet.
 export FactorSkeleton
 
 export Blobentry
@@ -417,6 +417,8 @@ public pack, unpack
 # list of unstable functions not exported any more
 # will move to public or deprecate over time
 const unstable_functions::Vector{Symbol} = [
+    :VariableSummary,
+    :FactorSummary,
     :listNeighborhood,
     :listNeighbors,
     :InMemoryBlobstore,

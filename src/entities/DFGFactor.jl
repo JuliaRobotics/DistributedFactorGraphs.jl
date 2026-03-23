@@ -311,6 +311,10 @@ $(TYPEDFIELDS)
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref)"""
     timestamp::TimeDateZone
+    """Solvable flag for the factor.
+    Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)"""
+    solvable::Base.RefValue{Int} = Ref{Int}(1) #& (lower = getindex, lift = Ref)
+    #TODO factorkind for isKind(Pose2Pose2) like queries and filters.
 end
 
 function FactorSummary(
@@ -318,8 +322,9 @@ function FactorSummary(
     variableorder::Union{Vector{Symbol}, Tuple};
     timestamp::TimeDateZone = now_tdz(),
     tags::Set{Symbol} = Set{Symbol}(),
+    solvable::Int = 1,
 )
-    return FactorSummary(label, tags, Tuple(variableorder), timestamp)
+    return FactorSummary(label, tags, Tuple(variableorder), timestamp, Ref(solvable))
 end
 
 ##------------------------------------------------------------------------------
@@ -362,7 +367,13 @@ end
 ##==============================================================================
 
 function FactorSummary(f::FactorDFG)
-    return FactorSummary(f.label, copy(f.tags), f.variableorder, f.timestamp)
+    return FactorSummary(
+        f.label,
+        copy(f.tags),
+        f.variableorder,
+        f.timestamp,
+        deepcopy(f.solvable),
+    )
 end
 
 function FactorSkeleton(f::AbstractGraphFactor)
@@ -389,6 +400,7 @@ function patch!(dest::FactorSummary, src::FactorSummary)
         ),
     )
     union!(dest.tags, src.tags)
+    dest.solvable[] = src.solvable[]
     return dest
 end
 

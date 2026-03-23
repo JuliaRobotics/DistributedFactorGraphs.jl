@@ -23,9 +23,7 @@ const GeneratedCompareUnion = Union{
     State,
     Blobentry,
     Bloblet,
-    VariableSummary,
     VariableSkeleton,
-    FactorSummary,
     FactorSkeleton,
     Recipehyper,
     Recipestate,
@@ -35,7 +33,7 @@ const GeneratedCompareUnion = Union{
     return mapreduce(n -> :(x.$n == y.$n), (a, b) -> :($a && $b), fieldnames(x))
 end
 
-function ==(x::FactorDFG, y::FactorDFG)
+function ==(x::T, y::T) where {T <: AbstractGraphFactor}
     ignored = [:solvercache, :solvable]
     tp = mapreduce(
         n -> getproperty(x, n) == getproperty(y, n),
@@ -45,7 +43,7 @@ function ==(x::FactorDFG, y::FactorDFG)
     return tp && getSolvable(x) == getSolvable(y)
 end
 
-function ==(x::VariableDFG, y::VariableDFG)
+function ==(x::T, y::T) where {T <: AbstractGraphVariable}
     ignored = [:solvable]
     tp = mapreduce(
         n -> getproperty(x, n) == getproperty(y, n),
