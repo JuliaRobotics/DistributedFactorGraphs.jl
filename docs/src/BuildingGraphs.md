@@ -116,7 +116,7 @@ To list all variables or factors (instead of just their labels), use the
 Traversing and Querying functions for finding the relationships and building subtraphs include:  
 
 - [`listNeighbors`](@ref)
-- [`buildSubgraph`](@ref)
+- [`getSubgraph`](@ref)
 - [`getBiadjacencyMatrix`](@ref)
 
 ## Getting (Reading) Variables and Factors

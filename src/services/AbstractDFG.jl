@@ -484,9 +484,7 @@ Notes
 - Returns a tuple `(variableLabels, factorLabels)`, where each element is a `Vector{Symbol}`.
 
 Related:
-- [`copyGraph!`](@ref)
-- [`buildSubgraph`](@ref)
-- [`deepcopyGraph`](@ref)
+- [`getSubgraph`](@ref)
 - [`mergeGraph!`](@ref)
 """
 function listNeighborhood(dfg::AbstractDFG, label::Symbol, distance::Int; filters...)
@@ -536,9 +534,7 @@ end
 Build a deep subgraph copy from the DFG given a list of variables and factors and an optional distance.
 Note: Orphaned factors (where the subgraph does not contain all the related variables) are not returned.
 Related:
-- [`copyGraph!`](@ref)
 - [`listNeighborhood`](@ref)
-- [`deepcopyGraph`](@ref)
 - [`mergeGraph!`](@ref)
 Dev Notes
 - Bulk vs node for node: a list of labels are compiled and the sugraph is copied in bulk.
@@ -581,6 +577,16 @@ function buildSubgraph(
     return buildSubgraph(LocalDFG, dfg, variableFactorLabels, distance; kwargs...)
 end
 
+"""
+    $(SIGNATURES)
+Merge the source DFG into the destination DFG cascading down the hierarchy of DFG nodes.
+Merge rules:
+- Variables, Factors, Agent, and Graphroot, with the same label are merged if they are equal.
+    - On conflicts, a `MergeConflictError` is thrown.
+    - Child nodes (eg. tags, Bloblets, Blobentries, States, etc.) are using `merge!`.
+- The Blobstore links are merged provided they point to the same blobstore.
+    - On conflicts, a `MergeConflictError` is thrown.
+"""
 function mergeGraph!(destDFG::AbstractDFG, srcDFG::AbstractDFG)
     patch!(destDFG.graph, srcDFG.graph)
     mergeVariables!(destDFG, getVariables(srcDFG))
@@ -634,7 +640,7 @@ Notes
 function toDot(dfg::AbstractDFG)
     #convert to GraphsDFG
     ldfg = GraphsDFG{NoSolverParams}()
-    copyGraph!(ldfg, dfg, listVariables(dfg), listFactors(dfg))
+    copyGraph!(ldfg, dfg, listVariables(dfg), listFactors(dfg)) #fixme, this is probably copyto!/sync!
     return toDot(ldfg)
 end
 
