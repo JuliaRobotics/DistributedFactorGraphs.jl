@@ -125,7 +125,7 @@ function mergeStorelink!(dfg::AbstractDFG, link_to_store::AbstractBlobstore)
     if hasBlobstore(dfg, label)
         existing_store = getBlobstore(dfg, label)
         if existing_store != link_to_store
-            throw(MergeConflictError("Blobstore", label))
+            throw(MergeConflictError("Merge conflict for Blobstore with label $(label)"))
         else
             return 0 # no merge needed, they are the same store
         end
