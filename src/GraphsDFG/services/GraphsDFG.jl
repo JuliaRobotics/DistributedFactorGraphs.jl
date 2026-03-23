@@ -86,8 +86,17 @@ function mergeVariable!(dfg::GraphsDFG, variable::AbstractGraphVariable)
     if !haskey(dfg.g.variables, variable.label)
         addVariable!(dfg, variable)
     else
-        dfg.g.variables[variable.label] = variable
+        patch!(dfg.g.variables[variable.label], variable)
     end
+    # metrics = (;
+    #     tags = length(variable.tags),
+    #     states = length(variable.states),
+    #     bloblets = length(variable.bloblets),
+    #     blobentries = length(variable.blobentries),
+    # )
+    #TODO return metrics or 1 to keep it simple?
+    # if 1, the merge result does not include the children.
+    # if metrics, the merge result includes the children counts
     return 1
 end
 
@@ -95,40 +104,25 @@ function mergeFactor!(dfg::GraphsDFG, factor::AbstractGraphFactor)
     label = getLabel(factor)
     if !haskey(dfg.g.factors, label)
         addFactor!(dfg, factor)
-    elseif DFG.getVariableOrder(dfg, label) != DFG.getVariableOrder(factor)
-        throw(
-            DomainError(
-                factor.variableorder,
-                "Cannot merge factor with label $(label): factor neighbors differ. " *
-                "Existing neighbors: $(DFG.getVariableOrder(dfg, label)), " *
-                "new neighbors: $(DFG.getVariableOrder(factor)), " *
-                "To mutate factor neighbors, delete and re-add the factor.",
-            ),
-        )
     else
-        dfg.g.factors[label] = factor
+        patch!(dfg.g.factors[label], factor)
     end
-
+    #TODO also same metrics consideration as mergeVariable!
     return 1
 end
 
 function deleteVariable!(dfg::GraphsDFG, label::Symbol)#::Tuple{AbstractGraphVariable, Vector{<:AbstractGraphFactor}}
-    if !haskey(dfg.g.variables, label)
-        throw(LabelNotFoundError("Variable", label))
-    end
+    !haskey(dfg.g.variables, label) && return 0
 
-    deleteNeighbors = true # reserved, orphaned factors are not supported at this time
-    if deleteNeighbors
-        del_facs = map(l -> deleteFactor!(dfg, l), listNeighbors(dfg, label))
-    end
+    # orphaned factors are not supported.
+    del_facs = map(l -> deleteFactor!(dfg, l), listNeighbors(dfg, label))
+
     rem_vertex!(dfg.g, dfg.g.labels[label])
-    return sum(del_facs) + 1
+    return sum(del_facs; init = 0) + 1
 end
 
 function deleteFactor!(dfg::GraphsDFG, label::Symbol)
-    if !haskey(dfg.g.factors, label)
-        throw(LabelNotFoundError("Factor", label))
-    end
+    !haskey(dfg.g.factors, label) && return 0
     rem_vertex!(dfg.g, dfg.g.labels[label])
     return 1
 end
@@ -190,7 +184,7 @@ function getFactors(
     filterDFG!(factors, labelFilter, getLabel)
     filterDFG!(factors, solvableFilter, getSolvable)
     filterDFG!(factors, tagsFilter, refTags)
-    filterDFG!(factors, typeFilter, typeof ∘ getObservation)
+    filterDFG!(factors, typeFilter, typeof ∘ DFG.getObservation)
     return factors
 end
 
@@ -591,17 +585,13 @@ function DFG.deleteFactorBlobentry!(dfg::GraphsDFG, label::Symbol, entryLabel::S
 end
 
 function DFG.deleteGraphBlobentry!(dfg::GraphsDFG, label::Symbol)
-    if !haskey(dfg.graph.blobentries, label)
-        throw(LabelNotFoundError("Blobentry", label))
-    end
+    !haskey(dfg.graph.blobentries, label) && return 0
     delete!(dfg.graph.blobentries, label)
     return 1
 end
 
 function DFG.deleteAgentBlobentry!(dfg::GraphsDFG, label::Symbol)
-    if !haskey(dfg.agent.blobentries, label)
-        throw(LabelNotFoundError("Blobentry", label))
-    end
+    !haskey(dfg.agent.blobentries, label) && return 0
     delete!(dfg.agent.blobentries, label)
     return 1
 end

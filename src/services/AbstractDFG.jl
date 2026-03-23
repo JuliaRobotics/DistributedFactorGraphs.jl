@@ -103,20 +103,56 @@ function getBlobstore(dfg::AbstractDFG, storeLabel::Symbol)
     return store
 end
 
+function getBlobstores(dfg::AbstractDFG)
+    stores = map(listBlobstores(dfg)) do label
+        return getBlobstore(dfg, label)
+    end
+    return isempty(stores) ? AbstractBlobstore[] : stores
+end
+
 function addBlobstore!(dfg::AbstractDFG, store::AbstractBlobstore)
     label = getLabel(store)
     haskey(refBlobstores(dfg), label) && throw(LabelExistsError("Blobstore", label))
     return push!(refBlobstores(dfg), label => store)
 end
-function mergeBlobstore!(dfg::AbstractDFG, store::AbstractBlobstore)
-    push!(refBlobstores(dfg), getLabel(store) => store)
+
+# TODO edge api is a work in progress and only internal 
+function mergeStorelink!(dfg::AbstractDFG, link_to_store::AbstractBlobstore)
+    # we currently only have a label for a storelink, so we do not know if it is the same link
+    # so we have to look at the Blobstore node to find out. we only merge if the label=>store matches
+    # 
+    label = getLabel(link_to_store) # the edge in this case is from the virtual dfg object to the Blobstore, so simply label.
+    if hasBlobstore(dfg, label)
+        existing_store = getBlobstore(dfg, label)
+        if existing_store != link_to_store
+            throw(MergeConflictError("Merge conflict for Blobstore with label $(label)"))
+        else
+            return 0 # no merge needed, they are the same store
+        end
+    else
+        push!(refBlobstores(dfg), label => link_to_store)
+    end
     return 1
 end
+
 function deleteBlobstore!(dfg::AbstractDFG, key::Symbol)
+    !haskey(refBlobstores(dfg), key) && return 0
     pop!(refBlobstores(dfg), key)
     return 1
 end
 listBlobstores(dfg::AbstractDFG) = collect(keys(refBlobstores(dfg)))
+
+function mergeStorelinks!(destDFG::AbstractDFG, blobstores::Vector{<:AbstractBlobstore})
+    count = 0
+    for store in blobstores
+        count += mergeStorelink!(destDFG, store)
+    end
+    return count
+end
+
+function hasBlobstore(dfg::AbstractDFG, label::Symbol)
+    return haskey(refBlobstores(dfg), label)
+end
 
 #TODO empty as verb or only `deleteNouns!`
 # emptyBlobstore!(dfg::AbstractDFG) = empty!(refBlobstores(dfg))
@@ -241,7 +277,7 @@ function mergeVariable! end
 
 function mergeVariables!(dfg::AbstractDFG, variables::Vector{<:AbstractGraphVariable})
     counts = asyncmap(v->mergeVariable!(dfg, v), variables)
-    return sum(counts)
+    return sum(counts; init = 0)
 end
 
 """
@@ -254,7 +290,7 @@ function mergeFactor! end
 
 function mergeFactors!(dfg::AbstractDFG, factors::Vector{<:AbstractGraphFactor})
     counts = asyncmap(f->mergeFactor!(dfg, f), factors)
-    return sum(counts)
+    return sum(counts; init = 0)
 end
 
 """
@@ -416,148 +452,6 @@ function exists(dfg::AbstractDFG, node::AbstractGraphNode)
 end
 
 ##==============================================================================
-## Copy Functions #TODO replace with sync
-##==============================================================================
-
-"""
-    $(SIGNATURES)
-Common function for copying nodes from one graph into another graph.
-This is overridden in specialized implementations for performance.
-Orphaned factors are not added, with a warning if verbose.
-Set `overwriteDest` to overwrite existing variables and factors in the destination DFG.
-NOTE: `copyGraphMetadata` is deprecated – use agent/graph Bloblets instead.
-Related:
-- [`deepcopyGraph`](@ref)
-- [`deepcopyGraph!`](@ref)
-- [`buildSubgraph`](@ref)
-- [`listNeighborhood`](@ref)
-- [`mergeGraph!`](@ref)
-"""
-function copyGraph!(
-    destDFG::AbstractDFG,
-    sourceDFG::AbstractDFG,
-    variableLabels::AbstractVector{Symbol} = listVariables(sourceDFG),
-    factorLabels::AbstractVector{Symbol} = listFactors(sourceDFG);
-    copyGraphMetadata::Bool = false,
-    overwriteDest::Bool = false,
-    deepcopyNodes::Bool = false,
-    verbose::Bool = false,
-    showprogress::Bool = verbose,
-)
-    # Split into variables and factors
-    sourceVariables = getVariables(sourceDFG, variableLabels)
-    sourceFactors = getFactors(sourceDFG, factorLabels)
-    # Now we have to add all variables first,
-    @showprogress desc = "copy variables" enabled = showprogress for variable in
-                                                                     sourceVariables
-
-        variableCopy = deepcopyNodes ? deepcopy(variable) : variable
-        if !hasVariable(destDFG, variable.label)
-            addVariable!(destDFG, variableCopy)
-        elseif overwriteDest
-            mergeVariable!(destDFG, variableCopy)
-        else
-            throw(LabelExistsError("Variable", variable.label))
-        end
-    end
-    # And then all factors to the destDFG.
-    @showprogress desc = "copy factors" enabled = showprogress for factor in sourceFactors
-        # Get the original factor variables (we need them to create it)
-        sourceFactorVariableIds = collect(factor.variableorder)
-        # Find the labels and associated variables in our new subgraph
-        factVariableIds = Symbol[]
-        for variable in sourceFactorVariableIds
-            if hasVariable(destDFG, variable)
-                push!(factVariableIds, variable)
-            end
-        end
-        # Only if we have all of them should we add it (otherwise strange things may happen on evaluation)
-        if length(factVariableIds) == length(sourceFactorVariableIds)
-            factorCopy = deepcopyNodes ? deepcopy(factor) : factor
-            if !hasFactor(destDFG, factor.label)
-                addFactor!(destDFG, factorCopy)
-            elseif overwriteDest
-                mergeFactor!(destDFG, factorCopy)
-            else
-                throw(LabelExistsError("Factor", factor.label))
-            end
-        elseif verbose
-            @warn "Factor $(factor.label) will be an orphan in the destination graph, and therefore not added."
-        end
-    end
-
-    if copyGraphMetadata
-        error(
-            "copyGraphMetadata keyword has been removed – metadata APIs were replaced by Bloblets. " *
-            "Copy agent/graph Bloblets manually before calling copyGraph!",
-        )
-    end
-    return nothing
-end
-
-"""
-    $(SIGNATURES)
-Copy nodes from one graph into another graph by making deepcopies.
-see [`copyGraph!`](@ref) for more detail.
-Related:
-- [`deepcopyGraph`](@ref)
-- [`buildSubgraph`](@ref)
-- [`listNeighborhood`](@ref)
-- [`mergeGraph!`](@ref)
-"""
-function deepcopyGraph!(
-    destDFG::AbstractDFG,
-    sourceDFG::AbstractDFG,
-    variableLabels::Vector{Symbol} = ls(sourceDFG),
-    factorLabels::Vector{Symbol} = lsf(sourceDFG);
-    kwargs...,
-)
-    return copyGraph!(
-        destDFG,
-        sourceDFG,
-        variableLabels,
-        factorLabels;
-        deepcopyNodes = true,
-        kwargs...,
-    )
-end
-
-"""
-    $(SIGNATURES)
-Copy nodes from one graph into a new graph by making deepcopies.
-see [`copyGraph!`](@ref) for more detail.
-Related:
-- [`deepcopyGraph!`](@ref)
-- [`buildSubgraph`](@ref)
-- [`listNeighborhood`](@ref)
-- [`mergeGraph!`](@ref)
-"""
-function deepcopyGraph(
-    ::Type{T},
-    sourceDFG::AbstractDFG,
-    variableLabels::Vector{Symbol} = ls(sourceDFG),
-    factorLabels::Vector{Symbol} = lsf(sourceDFG);
-    graphLabel::Symbol = Symbol(getGraphLabel(sourceDFG), "_cp_$(string(uuid4())[1:6])"),
-    kwargs...,
-) where {T <: AbstractDFG}
-    destDFG = T(;
-        solverParams = getSolverParams(sourceDFG),
-        graph = sourceDFG.graph,
-        agent = sourceDFG.agent,
-        graphLabel,
-    )
-    copyGraph!(
-        destDFG,
-        sourceDFG,
-        variableLabels,
-        factorLabels;
-        deepcopyNodes = true,
-        kwargs...,
-    )
-    return destDFG
-end
-
-##==============================================================================
 ## Subgraphs and Neighborhoods
 ##==============================================================================
 
@@ -590,9 +484,7 @@ Notes
 - Returns a tuple `(variableLabels, factorLabels)`, where each element is a `Vector{Symbol}`.
 
 Related:
-- [`copyGraph!`](@ref)
-- [`buildSubgraph`](@ref)
-- [`deepcopyGraph`](@ref)
+- [`getSubgraph`](@ref)
 - [`mergeGraph!`](@ref)
 """
 function listNeighborhood(dfg::AbstractDFG, label::Symbol, distance::Int; filters...)
@@ -642,14 +534,12 @@ end
 Build a deep subgraph copy from the DFG given a list of variables and factors and an optional distance.
 Note: Orphaned factors (where the subgraph does not contain all the related variables) are not returned.
 Related:
-- [`copyGraph!`](@ref)
 - [`listNeighborhood`](@ref)
-- [`deepcopyGraph`](@ref)
 - [`mergeGraph!`](@ref)
 Dev Notes
 - Bulk vs node for node: a list of labels are compiled and the sugraph is copied in bulk.
 """
-function buildSubgraph(
+function getSubgraph(
     ::Type{G},
     dfg::AbstractDFG,
     variableFactorLabels::Vector{Symbol},
@@ -689,46 +579,20 @@ end
 
 """
     $(SIGNATURES)
-Merger sourceDFG to destDFG given an optional list of variables and factors and distance.
-Notes:
-- Nodes already in the destination graph are updated from sourceDFG.
-- Orphaned factors (where the subgraph does not contain all the related variables) are not included.
-Related:
-- [`copyGraph!`](@ref)
-- [`buildSubgraph`](@ref)
-- [`listNeighborhood`](@ref)
-- [`deepcopyGraph`](@ref)
+Merge the source DFG into the destination DFG cascading down the hierarchy of DFG nodes.
+Merge rules:
+- Variables, Factors, Agent, and Graphroot, with the same label are merged if they are equal.
+    - On conflicts, a `MergeConflictError` is thrown.
+    - Child nodes (eg. tags, Bloblets, Blobentries, States, etc.) are using `merge!`.
+- The Blobstore links are merged provided they point to the same blobstore.
+    - On conflicts, a `MergeConflictError` is thrown.
 """
-function mergeGraph!(
-    destDFG::AbstractDFG,
-    sourceDFG::AbstractDFG,
-    variableLabels::Vector{Symbol} = ls(sourceDFG),
-    factorLabels::Vector{Symbol} = lsf(sourceDFG),
-    distance::Int = 0;
-    solvableFilter = nothing,
-    tagsFilter = nothing,
-    kwargs...,
-)
-
-    # find neighbors at distance to add
-    sourceVariables, sourceFactors = listNeighborhood(
-        sourceDFG,
-        union(variableLabels, factorLabels),
-        distance;
-        solvableFilter,
-        tagsFilter,
-    )
-
-    copyGraph!(
-        destDFG,
-        sourceDFG,
-        sourceVariables,
-        sourceFactors;
-        deepcopyNodes = true,
-        overwriteDest = true,
-        kwargs...,
-    )
-
+function mergeGraph!(destDFG::AbstractDFG, srcDFG::AbstractDFG)
+    patch!(destDFG.graph, srcDFG.graph)
+    mergeVariables!(destDFG, getVariables(srcDFG))
+    mergeFactors!(destDFG, getFactors(srcDFG))
+    mergeAgent!(destDFG.agent, srcDFG.agent)
+    mergeStorelinks!(destDFG, getBlobstores(srcDFG))
     return destDFG
 end
 
@@ -776,7 +640,7 @@ Notes
 function toDot(dfg::AbstractDFG)
     #convert to GraphsDFG
     ldfg = GraphsDFG{NoSolverParams}()
-    copyGraph!(ldfg, dfg, listVariables(dfg), listFactors(dfg))
+    copyGraph!(ldfg, dfg, listVariables(dfg), listFactors(dfg)) #fixme, this is probably copyto!/sync!
     return toDot(ldfg)
 end
 

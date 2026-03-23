@@ -81,7 +81,7 @@ function mergeBloblet!(node, bloblet::Bloblet)
 end
 
 function mergeBloblets!(node, bloblets::Vector{Bloblet})
-    mergeBloblet!.(node, bloblets)
+    foreach(bl -> mergeBloblet!(node, bl), bloblets)
     return length(bloblets)
 end
 
@@ -89,14 +89,13 @@ end
     $(SIGNATURES)
 """
 function deleteBloblet!(node, label::Symbol)
-    !haskey(refBloblets(node), label) && throw(LabelNotFoundError("Bloblet", label))
+    !haskey(refBloblets(node), label) && return 0
     pop!(refBloblets(node), label)
     return 1
 end
 
 function deleteBloblets!(node, labels::Vector{Symbol})
-    deleteBloblet!.(node, labels)
-    return length(labels)
+    return sum(l -> deleteBloblet!(node, l), labels)
 end
 
 """
@@ -106,3 +105,9 @@ List all Bloblet keys for a variable `label` in `dfg`
 function listBloblets(node)
     return collect(keys(refBloblets(node)))
 end
+
+"""
+    $(SIGNATURES)
+Check if a Bloblet with the given label exists on the node.
+"""
+hasBloblet(node, label::Symbol) = haskey(refBloblets(node), label)

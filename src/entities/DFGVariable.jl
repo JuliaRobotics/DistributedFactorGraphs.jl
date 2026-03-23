@@ -252,6 +252,7 @@ variable_timestamp_note = """
     your state type rather than relying on this metadata field.
 """
 
+#TODO move solvable to State, and update filters
 """
 $(TYPEDEF)
 Complete variable structure for a DistributedFactorGraph variable.
@@ -335,7 +336,7 @@ The default VariableDFG constructor.
 #IIF like contruction helper for VariableDFG
 function VariableDFG(
     label::Symbol,
-    statekind::Union{T, Type{T}};
+    ::Union{T, Type{T}}; # statekind
     tags::Union{Set{Symbol}, Vector{Symbol}} = Set{Symbol}(),
     timestamp::Union{TimeDateZone, ZonedDateTime} = now_tdz(),
     solvable::Union{Int, Base.RefValue{Int}} = Ref{Int}(1),
@@ -390,6 +391,37 @@ end
 #         setfield!(x, f, val)
 #     end
 # end
+
+"""
+    $SIGNATURES
+
+Merge the contents of `src` into `dest` by only patching child collections/containers.
+Notes:
+- Cascades into collections (`tags`, `states`, `blobentries`, `bloblets`).
+- Assumes `label`, `timestamp`, and `statekind` are immutable and does not update them.
+"""
+function patch!(dest::VariableDFG{T}, src::VariableDFG{T}) where {T}
+    dest === src && return dest # avoid unnecessary work if same object
+
+    dest.label !== src.label && throw(
+        MergeConflictError("Variables has different labels: $(dest.label) vs $(src.label)"),
+    )
+    dest.timestamp != src.timestamp && throw(
+        MergeConflictError(
+            "Variables has different timestamps: $(dest.timestamp) vs $(src.timestamp).",
+        ),
+    )
+    # you will get a method error if statekind is different, so maybe we don't need to check that here.
+
+    union!(dest.tags, src.tags)
+    merge!(dest.states, src.states)
+    merge!(dest.blobentries, src.blobentries)
+    merge!(dest.bloblets, src.bloblets)
+
+    dest.solvable[] = src.solvable[]
+
+    return dest
+end
 
 ##------------------------------------------------------------------------------
 ## VariableSummary lv1
@@ -456,4 +488,32 @@ end
 
 function VariableSkeleton(v::AbstractGraphVariable)
     return VariableSkeleton(v.label, copy(v.tags))
+end
+
+##==============================================================================
+## patch! for Summary/Skeleton types
+##==============================================================================
+
+function patch!(dest::VariableSummary, src::VariableSummary)
+    dest === src && return dest
+    dest.label !== src.label && throw(
+        MergeConflictError("Variables has different labels: $(dest.label) vs $(src.label)"),
+    )
+    dest.timestamp != src.timestamp && throw(
+        MergeConflictError(
+            "Variables has different timestamps: $(dest.timestamp) vs $(src.timestamp).",
+        ),
+    )
+    union!(dest.tags, src.tags)
+    merge!(dest.blobentries, src.blobentries)
+    return dest
+end
+
+function patch!(dest::VariableSkeleton, src::VariableSkeleton)
+    dest === src && return dest
+    dest.label !== src.label && throw(
+        MergeConflictError("Variables has different labels: $(dest.label) vs $(src.label)"),
+    )
+    union!(dest.tags, src.tags)
+    return dest
 end

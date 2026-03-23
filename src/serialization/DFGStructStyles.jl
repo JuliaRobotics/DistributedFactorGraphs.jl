@@ -14,6 +14,7 @@ function StructUtils.lift(::DFGJSONStyle, ::Type{TimeDateZone}, x::AbstractStrin
     return TimeDateZone(x), nothing
 end
 
+#TODO StructUtils v2.7 adds support for StaticArrays, update, test, and remove these overloads if they work as expected
 # SArray serialization overloads
 StructUtils.lower(::DFGJSONStyle, x::SArray) = x
 

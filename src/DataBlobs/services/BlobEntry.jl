@@ -46,6 +46,7 @@ function mergeBlobentry!(node, entry::Blobentry)
 end
 
 function mergeBlobentries!(node, entries::Vector{Blobentry})
+    #TODO optimize with something like: merge!(refBlobentries(node), entries)
     mergeBlobentry!.(node, entries)
     return length(entries)
 end
@@ -54,7 +55,7 @@ end
     $(SIGNATURES)
 """
 function deleteBlobentry!(node, label::Symbol)
-    !haskey(refBlobentries(node), label) && throw(LabelNotFoundError("Blobentry", label))
+    !haskey(refBlobentries(node), label) && return 0
     pop!(refBlobentries(node), label)
     return 1
 end
@@ -62,8 +63,7 @@ end
 deleteBlobentry!(node, entry) = deleteBlobentry!(node, getLabel(entry))
 
 function deleteBlobentries!(node, labels::Vector{Symbol})
-    deleteBlobentry!.(node, labels)
-    return length(labels)
+    return sum(deleteBlobentry!.(node, labels))
 end
 
 """

@@ -75,12 +75,11 @@ end
     @test mergeFactor!(dfg2, f2) == 1
     @test_throws LabelExistsError addFactor!(dfg2, f2)
 
-    dv3 = deleteVariable!(dfg2, v3)
-    @test dv3 == 2
-    @test_throws LabelNotFoundError deleteVariable!(dfg2, v3)
+    @test deleteVariable!(dfg2, v3) == 2
+    @test deleteVariable!(dfg2, v3) == 0
 
     @test issetequal(ls(dfg2), [:a, :b])
-    @test_throws LabelNotFoundError deleteFactor!(dfg2, f2)
+    @test deleteFactor!(dfg2, f2) == 0
 
     @test lsf(dfg2) == [:abf1]
 end

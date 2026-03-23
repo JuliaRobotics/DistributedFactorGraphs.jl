@@ -11,6 +11,7 @@ using ...DistributedFactorGraphs:
     Agent,
     LabelNotFoundError,
     LabelExistsError,
+    MergeConflictError,
     Graphroot,
     AbstractGraphVariable,
     AbstractGraphFactor,
@@ -25,7 +26,8 @@ using ...DistributedFactorGraphs:
     Blobentries,
     FolderStore,
     refTags,
-    listTags
+    listTags,
+    patch!
 
 # import DFG functions to extend
 import ...DistributedFactorGraphs:
@@ -53,7 +55,6 @@ import ...DistributedFactorGraphs:
     isConnected,
     listNeighbors,
     buildSubgraph,
-    copyGraph!,
     getBiadjacencyMatrix,
     toDot,
     toDotFile,

@@ -4,6 +4,7 @@
 export FactorCompute
 const FactorCompute = FactorDFG
 
+#TODO maybe keep for Bloblet type assert later.
 const MetadataTypes = Union{
     Int,
     Float64,
@@ -424,3 +425,205 @@ function getCoordinates(
     X = ManifoldsBase.log(M, p0, p)
     return ManifoldsBase.get_coordinates(M, p0, X, basis)
 end
+
+# old merge and copy functions, will be replaced by cleaner merge!, sync!, and copyto! functions
+
+# """
+#     $(SIGNATURES)
+# Merger sourceDFG to destDFG given an optional list of variables and factors and distance.
+# Notes:
+# - Nodes already in the destination graph are updated from sourceDFG.
+# - Orphaned factors (where the subgraph does not contain all the related variables) are not included.
+# Related:
+# - [`copyGraph!`](@ref)
+# - [`buildSubgraph`](@ref)
+# - [`listNeighborhood`](@ref)
+# - [`deepcopyGraph`](@ref)
+# """
+
+##==============================================================================
+## Copy Functions #TODO replace with sync
+##==============================================================================
+
+"""
+    $(SIGNATURES)
+Common function for copying nodes from one graph into another graph.
+This is overridden in specialized implementations for performance.
+Orphaned factors are not added, with a warning if verbose.
+Set `overwriteDest` to overwrite existing variables and factors in the destination DFG.
+NOTE: `copyGraphMetadata` is deprecated – use agent/graph Bloblets instead.
+Related:
+- [`deepcopyGraph`](@ref)
+- [`deepcopyGraph!`](@ref)
+- [`buildSubgraph`](@ref)
+- [`listNeighborhood`](@ref)
+- [`mergeGraph!`](@ref)
+"""
+#
+function copyGraph!(
+    destDFG::AbstractDFG,
+    sourceDFG::AbstractDFG,
+    variableLabels::AbstractVector{Symbol} = listVariables(sourceDFG),
+    factorLabels::AbstractVector{Symbol} = listFactors(sourceDFG);
+    copyGraphMetadata::Bool = false,
+    overwriteDest::Bool = false,
+    deepcopyNodes::Bool = false,
+    verbose::Bool = false,
+    showprogress::Bool = verbose,
+)
+    # Split into variables and factors
+    sourceVariables = getVariables(sourceDFG, variableLabels)
+    sourceFactors = getFactors(sourceDFG, factorLabels)
+    # Now we have to add all variables first,
+    @showprogress desc = "copy variables" enabled = showprogress for variable in
+                                                                     sourceVariables
+
+        variableCopy = deepcopyNodes ? deepcopy(variable) : variable
+        if !hasVariable(destDFG, variable.label)
+            addVariable!(destDFG, variableCopy)
+        elseif overwriteDest
+            mergeVariable!(destDFG, variableCopy)
+        else
+            throw(LabelExistsError("Variable", variable.label))
+        end
+    end
+    # And then all factors to the destDFG.
+    @showprogress desc = "copy factors" enabled = showprogress for factor in sourceFactors
+        # Get the original factor variables (we need them to create it)
+        sourceFactorVariableIds = collect(factor.variableorder)
+        # Find the labels and associated variables in our new subgraph
+        factVariableIds = Symbol[]
+        for variable in sourceFactorVariableIds
+            if hasVariable(destDFG, variable)
+                push!(factVariableIds, variable)
+            end
+        end
+        # Only if we have all of them should we add it (otherwise strange things may happen on evaluation)
+        if length(factVariableIds) == length(sourceFactorVariableIds)
+            factorCopy = deepcopyNodes ? deepcopy(factor) : factor
+            if !hasFactor(destDFG, factor.label)
+                addFactor!(destDFG, factorCopy)
+            elseif overwriteDest
+                mergeFactor!(destDFG, factorCopy)
+            else
+                throw(LabelExistsError("Factor", factor.label))
+            end
+        elseif verbose
+            @warn "Factor $(factor.label) will be an orphan in the destination graph, and therefore not added."
+        end
+    end
+
+    if copyGraphMetadata
+        error(
+            "copyGraphMetadata keyword has been removed – metadata APIs were replaced by Bloblets. " *
+            "Copy agent/graph Bloblets manually before calling copyGraph!",
+        )
+    end
+    return nothing
+end
+
+"""
+    $(SIGNATURES)
+Copy nodes from one graph into another graph by making deepcopies.
+see [`copyGraph!`](@ref) for more detail.
+Related:
+- [`deepcopyGraph`](@ref)
+- [`buildSubgraph`](@ref)
+- [`listNeighborhood`](@ref)
+- [`mergeGraph!`](@ref)
+"""
+#
+function deepcopyGraph!(
+    destDFG::AbstractDFG,
+    sourceDFG::AbstractDFG,
+    variableLabels::Vector{Symbol} = ls(sourceDFG),
+    factorLabels::Vector{Symbol} = lsf(sourceDFG);
+    kwargs...,
+)
+    return copyGraph!(
+        destDFG,
+        sourceDFG,
+        variableLabels,
+        factorLabels;
+        deepcopyNodes = true,
+        kwargs...,
+    )
+end
+
+"""
+    $(SIGNATURES)
+Copy nodes from one graph into a new graph by making deepcopies.
+see [`copyGraph!`](@ref) for more detail.
+Related:
+- [`deepcopyGraph!`](@ref)
+- [`buildSubgraph`](@ref)
+- [`listNeighborhood`](@ref)
+- [`mergeGraph!`](@ref)
+"""
+#
+function deepcopyGraph(
+    ::Type{T},
+    sourceDFG::AbstractDFG,
+    variableLabels::Vector{Symbol} = ls(sourceDFG),
+    factorLabels::Vector{Symbol} = lsf(sourceDFG);
+    graphLabel::Symbol = Symbol(getGraphLabel(sourceDFG), "_cp_$(string(uuid4())[1:6])"),
+    kwargs...,
+) where {T <: AbstractDFG}
+    destDFG = T(;
+        solverParams = getSolverParams(sourceDFG),
+        graph = sourceDFG.graph,
+        agent = sourceDFG.agent,
+        graphLabel,
+    )
+    copyGraph!(
+        destDFG,
+        sourceDFG,
+        variableLabels,
+        factorLabels;
+        deepcopyNodes = true,
+        kwargs...,
+    )
+    return destDFG
+end
+
+function mergeGraph!(
+    destDFG::AbstractDFG,
+    sourceDFG::AbstractDFG,
+    variableLabels::Vector{Symbol},
+    factorLabels::Vector{Symbol} = lsf(sourceDFG),
+    distance::Int = 0;
+    solvableFilter = nothing,
+    tagsFilter = nothing,
+    kwargs...,
+)
+    Base.depwarn(
+        """
+            mergeGraph! with variableLabels, factorLabels, and distance is deprecated. 
+            For now use function composition ending with mergeGraph!,
+            syncGraph!(Coming soon) will replace this functionality.
+        """,
+        :mergeGraph!,
+    )
+    # find neighbors at distance to add
+    sourceVariables, sourceFactors = listNeighborhood(
+        sourceDFG,
+        union(variableLabels, factorLabels),
+        distance;
+        solvableFilter,
+        tagsFilter,
+    )
+
+    copyGraph!(
+        destDFG,
+        sourceDFG,
+        sourceVariables,
+        sourceFactors;
+        deepcopyNodes = true,
+        overwriteDest = true,
+        kwargs...,
+    )
+
+    return destDFG
+end
+
+@deprecate buildSubgraph(args...; kwargs...) getSubgraph(args...; kwargs...)

@@ -127,12 +127,27 @@ end
     blobletTestBlock!(fg1)
 end
 
+@testset "Factor Bloblet CRUD" begin
+    factorBlobletTestBlock!(fg1)
+end
+
+@testset "Has Bloblet" begin
+    hasBlobletTestBlock!(fg1)
+end
+
+@testset "States Extended" begin
+    statesExtendedTestBlock!(fg1)
+end
+
 @testset "Data Entries and Blobs" begin
     if typeof(fg1) <: InMemoryDFGTypes
         DataEntriesTestBlock!(fg1, var2)
     end
     @testset "Data blob tests" begin
         blobsStoresTestBlock!(fg1)
+    end
+    @testset "Blobstore Extended" begin
+        blobstoreExtendedTestBlock!(fg1)
     end
 end
 

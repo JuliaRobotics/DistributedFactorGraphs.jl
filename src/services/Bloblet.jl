@@ -69,6 +69,13 @@ function listVariableBloblets(dfg::GraphsDFG, var_label::Symbol)
     return listBloblets(getVariable(dfg, var_label))
 end
 
+"""
+    $(SIGNATURES)
+"""
+function hasVariableBloblet(dfg::GraphsDFG, var_label::Symbol, label::Symbol)
+    return hasBloblet(getVariable(dfg, var_label), label)
+end
+
 ## ==============================================================================
 ## Factor Bloblets
 ## ==============================================================================
@@ -135,6 +142,13 @@ function listFactorBloblets(dfg::GraphsDFG, fac_label::Symbol)
     return listBloblets(getFactor(dfg, fac_label))
 end
 
+"""
+    $(SIGNATURES)
+"""
+function hasFactorBloblet(dfg::GraphsDFG, fac_label::Symbol, label::Symbol)
+    return hasBloblet(getFactor(dfg, fac_label), label)
+end
+
 ##==============================================================================
 ## Agent Bloblets
 ##==============================================================================
@@ -180,6 +194,10 @@ end
     $(SIGNATURES)
 """
 listAgentBloblets(dfg::GraphsDFG) = listBloblets(dfg.agent)
+"""
+    $(SIGNATURES)
+"""
+hasAgentBloblet(dfg::GraphsDFG, label::Symbol) = hasBloblet(dfg.agent, label)
 
 ##==============================================================================
 ## Graph Bloblets
@@ -226,3 +244,7 @@ end
     $(SIGNATURES)
 """
 listGraphBloblets(dfg::GraphsDFG) = listBloblets(dfg.graph)
+"""
+    $(SIGNATURES)
+"""
+hasGraphBloblet(dfg::GraphsDFG, label::Symbol) = hasBloblet(dfg.graph, label)
