@@ -65,7 +65,7 @@ StructUtils.@kwarg struct FactorDFG{T <: AbstractObservation, N} <: AbstractGrap
     tags::Set{Symbol} = Set{Symbol}([:FACTOR])
     """Ordered list of the neighbor variables.
     Accessors: [`getVariableOrder`](@ref)"""
-    variableorder::NTuple{N, Symbol} & (choosetype = x->NTuple{length(x), Symbol},) # NOTE v0.29 renamed from _variableOrderSymbols
+    variableorder::NTuple{N, Symbol} & (choosetype = x -> NTuple{length(x), Symbol},) # NOTE v0.29 renamed from _variableOrderSymbols
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref)"""
     timestamp::TimeDateZone = now_tdz() # NOTE v0.29 changed from ZonedDateTime
@@ -307,7 +307,7 @@ $(TYPEDFIELDS)
     tags::Set{Symbol}
     """Ordered list of the neighbor variables.
     Accessors: [`getVariableOrder`](@ref)"""
-    variableorder::Tuple{Vararg{Symbol}} & (choosetype = x->NTuple{length(x), Symbol},) #TODO changed to NTuple
+    variableorder::Tuple{Vararg{Symbol}} & (choosetype = x -> NTuple{length(x), Symbol},) #TODO changed to NTuple
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref)"""
     timestamp::TimeDateZone
@@ -348,7 +348,7 @@ $(TYPEDFIELDS)
     tags::Set{Symbol}
     """Ordered list of the neighbor variables.
     Accessors: [`getVariableOrder`](@ref)"""
-    variableorder::Tuple{Vararg{Symbol}} & (choosetype = x->NTuple{length(x), Symbol},)
+    variableorder::Tuple{Vararg{Symbol}} & (choosetype = x -> NTuple{length(x), Symbol},)
 end
 
 ##------------------------------------------------------------------------------

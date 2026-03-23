@@ -2,7 +2,7 @@ module BlobArrow
 
 using Arrow
 using DistributedFactorGraphs
-using DistributedFactorGraphs: _MIMEOverrides, format_to_mime
+using DistributedFactorGraphs: _MIMEOverrides, getMimetype
 
 function __init__()
     @info "Including Arrow blobs support in DFG."
@@ -15,7 +15,7 @@ function DFG.packBlob(::Type{format"Arrow"}, data; kwargs...)
     io = IOBuffer()
     Arrow.write(io, data; kwargs...)
     blob = take!(io)
-    mimetype = format_to_mime(format"Arrow")
+    mimetype = getMimetype(format"Arrow")
     return blob, mimetype
 end
 

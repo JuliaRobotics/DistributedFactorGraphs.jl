@@ -12,7 +12,7 @@ const _MIMEOverrides = OrderedDict{DataType, MIME}(
 )
 
 """
-    format_to_mime(::Type{DataFormat{S}}) -> MIME
+    getMimetype(::Type{DataFormat{S}}) -> MIME
 
 Get the MIME type for a FileIO `DataFormat`. Uses FileIO's extension registry
 and MIMEs.jl for standard types, falls back to `_MIMEOverrides` for
@@ -20,11 +20,11 @@ domain-specific formats.
 
 # Examples
 ```julia
-format_to_mime(format"PNG")  # MIME("image/png")
-format_to_mime(format"JSON") # MIME("application/json")
+getMimetype(format"PNG")  # MIME("image/png")
+getMimetype(format"JSON") # MIME("application/json")
 ```
 """
-function format_to_mime(::Type{DataFormat{S}}) where {S}
+function getMimetype(::Type{DataFormat{S}}) where {S}
     T = DataFormat{S}
     haskey(_MIMEOverrides, T) && return _MIMEOverrides[T]
     try
@@ -39,7 +39,7 @@ function format_to_mime(::Type{DataFormat{S}}) where {S}
 end
 
 """
-    mime_to_format(::MIME) -> Union{Type{DataFormat{S}}, Nothing}
+    getDataFormat(::MIME) -> Union{Type{DataFormat{S}}, Nothing}
 
 Get the FileIO `DataFormat` for a MIME type. Uses MIMEs.jl and FileIO's extension
 registry, falls back to `_MIMEOverrides`.
@@ -48,11 +48,11 @@ Returns `nothing` if no matching format is found.
 
 # Examples
 ```julia
-mime_to_format(MIME("image/png"))        # format"PNG"
-mime_to_format(MIME("application/json")) # format"JSON"
+getDataFormat(MIME("image/png"))        # format"PNG"
+getDataFormat(MIME("application/json")) # format"JSON"
 ```
 """
-function mime_to_format(m::MIME)
+function getDataFormat(m::MIME)
     for (fmt, mime) in _MIMEOverrides
         mime == m && return fmt
     end
@@ -78,14 +78,14 @@ function unpackBlob end
 unpackBlob(mime::String, blob) = unpackBlob(MIME(mime), blob)
 
 function unpackBlob(T::MIME, blob)
-    dataformat = mime_to_format(T)
+    dataformat = getDataFormat(T)
     isnothing(dataformat) && error("Format not found for MIME type $(T)")
     return unpackBlob(dataformat, blob)
 end
 
 # 1. JSON strings are saved as is
 function packBlob(::Type{format"JSON"}, json_str::String)
-    mimetype = format_to_mime(format"JSON")
+    mimetype = getMimetype(format"JSON")
     blob = Vector{UInt8}(json_str)
     return blob, mimetype
 end
@@ -102,7 +102,7 @@ function packBlob(::Type{T}, data::Any; kwargs...) where {T <: DataFormat}
     io = IOBuffer()
     save(Stream{T}(io), data; kwargs...)
     blob = take!(io)
-    mimetype = format_to_mime(T)
+    mimetype = getMimetype(T)
     return blob, mimetype
 end
 
@@ -119,5 +119,5 @@ Detect the MIME type of data in an IO stream using FileIO's format detection.
 function getMimetype(io::IO)
     _getFormat(s::FileIO.Stream{T}) where {T} = T
     stream = FileIO.query(io)
-    return format_to_mime(_getFormat(stream))
+    return getMimetype(_getFormat(stream))
 end

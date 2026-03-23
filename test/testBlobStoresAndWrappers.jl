@@ -249,7 +249,9 @@ end
     # We test that the interface works by checking that it calls through correctly
     # For a real image test we'd need ImageIO/PNGFiles, so test the error path
     img = rand(Float64, 4, 4)
-    @test_throws Exception DFG.saveImage_Variable!(dfg, :x1, img, :test_img, :default)
+    entry = DFG.saveImage_Variable!(dfg, :x1, img, :test_img, :default)
+    @test entry.label == :test_img
+    @test entry.mimetype == MIME("image/png")
 
     # Test loadImage_Variable with a JSON blob that has image mimetype set
     # (tests the dispatch path through unpackBlob(entry, blob))

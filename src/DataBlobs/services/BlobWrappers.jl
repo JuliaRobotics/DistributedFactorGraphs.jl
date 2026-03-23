@@ -231,19 +231,19 @@ function saveImage_Variable!(
     blobstore::Symbol = :default;
     entry_kwargs...,
 )
-    mimeType = get(entry_kwargs, :mimeType, MIME("image/png"))
-    format = mime_to_format(mimeType)
+    mimetype = get(entry_kwargs, :mimeType, MIME("image/png"))
+    format = getDataFormat(mimetype)
+    isnothing(format) &&
+        throw(ArgumentError("Unsupported MIME type for image: $(mimetype)"))
+    blob, mimetype = packBlob(format, img)
 
-    blob, mimeType = packBlob(format, img)
-
-    size = string(length(blob))
     entry = Blobentry(
         entry_label,
         blobstore;
         blobid = uuid4(),
         entry_kwargs...,
-        size,
-        mimeType = string(mimeType),
+        size = length(blob),
+        mimetype,
     )
 
     return saveBlob_Variable!(dfg, variable_label, blob, entry)

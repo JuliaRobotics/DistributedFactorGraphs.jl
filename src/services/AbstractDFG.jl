@@ -276,7 +276,7 @@ Implement `mergeVariable!(dfg::AbstractDFG, variable::AbstractGraphVariable)`
 function mergeVariable! end
 
 function mergeVariables!(dfg::AbstractDFG, variables::Vector{<:AbstractGraphVariable})
-    counts = asyncmap(v->mergeVariable!(dfg, v), variables)
+    counts = asyncmap(v -> mergeVariable!(dfg, v), variables)
     return sum(counts; init = 0)
 end
 
@@ -289,7 +289,7 @@ Implement `mergeFactor!(dfg::AbstractDFG, factor::AbstractGraphFactor)`
 function mergeFactor! end
 
 function mergeFactors!(dfg::AbstractDFG, factors::Vector{<:AbstractGraphFactor})
-    counts = asyncmap(f->mergeFactor!(dfg, f), factors)
+    counts = asyncmap(f -> mergeFactor!(dfg, f), factors)
     return sum(counts; init = 0)
 end
 

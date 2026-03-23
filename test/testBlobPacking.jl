@@ -1,45 +1,45 @@
 using Test
 using DistributedFactorGraphs
-using DistributedFactorGraphs: format_to_mime, mime_to_format, _MIMEOverrides
+using DistributedFactorGraphs: getMimetype, getDataFormat, _MIMEOverrides
 using FileIO
 
 @testset "BlobPacking" begin
 
     ##==========================================================================
-    ## format_to_mime
+    ## getMimetype
     ##==========================================================================
-    @testset "format_to_mime" begin
+    @testset "getMimetype" begin
         # Standard types auto-detected via FileIO + MIMEs.jl
-        @test format_to_mime(format"PNG") == MIME("image/png")
-        @test format_to_mime(format"JPEG") == MIME("image/jpeg")
+        @test getMimetype(format"PNG") == MIME("image/png")
+        @test getMimetype(format"JPEG") == MIME("image/jpeg")
 
         # Override types from _MIMEOverrides
-        @test format_to_mime(format"JSON") == MIME("application/json")
-        @test format_to_mime(format"BSON") == MIME("application/bson")
-        @test format_to_mime(format"LAS") == MIME("application/vnd.las")
-        @test format_to_mime(format"Parquet") == MIME("application/vnd.apache.parquet")
+        @test getMimetype(format"JSON") == MIME("application/json")
+        @test getMimetype(format"BSON") == MIME("application/bson")
+        @test getMimetype(format"LAS") == MIME("application/vnd.las")
+        @test getMimetype(format"Parquet") == MIME("application/vnd.apache.parquet")
 
         # Unknown format falls back to application/octet-stream
-        @test format_to_mime(DataFormat{:SomeUnknownFormat12345}) ==
+        @test getMimetype(DataFormat{:SomeUnknownFormat12345}) ==
               MIME("application/octet-stream")
     end
 
     ##==========================================================================
-    ## mime_to_format
+    ## getDataFormat
     ##==========================================================================
-    @testset "mime_to_format" begin
+    @testset "getDataFormat" begin
         # Standard types auto-detected via MIMEs.jl + FileIO
-        @test mime_to_format(MIME("image/png")) == format"PNG"
-        @test mime_to_format(MIME("image/jpeg")) == format"JPEG"
+        @test getDataFormat(MIME("image/png")) == format"PNG"
+        @test getDataFormat(MIME("image/jpeg")) == format"JPEG"
 
         # Override types
-        @test mime_to_format(MIME("application/json")) == format"JSON"
-        @test mime_to_format(MIME("application/bson")) == format"BSON"
-        @test mime_to_format(MIME("application/vnd.las")) == format"LAS"
-        @test mime_to_format(MIME("application/vnd.apache.parquet")) == format"Parquet"
+        @test getDataFormat(MIME("application/json")) == format"JSON"
+        @test getDataFormat(MIME("application/bson")) == format"BSON"
+        @test getDataFormat(MIME("application/vnd.las")) == format"LAS"
+        @test getDataFormat(MIME("application/vnd.apache.parquet")) == format"Parquet"
 
         # Unknown MIME returns nothing
-        @test mime_to_format(MIME("application/x-totally-unknown-12345")) === nothing
+        @test getDataFormat(MIME("application/x-totally-unknown-12345")) === nothing
     end
 
     ##==========================================================================
@@ -49,8 +49,9 @@ using FileIO
         # Extensions (like BlobArrow) can add to _MIMEOverrides
         push!(_MIMEOverrides, DataFormat{:TestFormat} => MIME("application/x-test-format"))
         try
-            @test format_to_mime(DataFormat{:TestFormat}) == MIME("application/x-test-format")
-            @test mime_to_format(MIME("application/x-test-format")) == DataFormat{:TestFormat}
+            @test getMimetype(DataFormat{:TestFormat}) == MIME("application/x-test-format")
+            @test getDataFormat(MIME("application/x-test-format")) ==
+                  DataFormat{:TestFormat}
         finally
             delete!(_MIMEOverrides, DataFormat{:TestFormat})
         end
@@ -149,13 +150,13 @@ using FileIO
         # Test that the generic FileIO method dispatches and returns correct MIME
         # We define a custom DataFormat for testing without needing external packages
         # The generic method calls save(Stream{T}(io), data) and load(Stream{T}(io))
-        # Test that format_to_mime is called correctly in the generic path
+        # Test that getMimetype is called correctly in the generic path
         # by verifying the returned mimetype for a known format
-        @test DFG.format_to_mime(format"JPEG") == MIME("image/jpeg")
-        @test DFG.format_to_mime(format"PNG") == MIME("image/png")
-        @test DFG.format_to_mime(format"BSON") == MIME("application/bson")
+        @test DFG.getMimetype(format"JPEG") == MIME("image/jpeg")
+        @test DFG.getMimetype(format"PNG") == MIME("image/png")
+        @test DFG.getMimetype(format"BSON") == MIME("application/bson")
 
-        # Test the generic path uses format_to_mime
+        # Test the generic path uses getMimetype
         # by adding a custom format to overrides and round-tripping JSON through generic
         # (JSON has its own specialization, but BSON/LAS/Parquet would use generic)
 

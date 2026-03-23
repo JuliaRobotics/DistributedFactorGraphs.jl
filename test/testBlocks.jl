@@ -1200,8 +1200,8 @@ function testGroup!(fg, v1, v2, f0, f1)
         @test lsf(fg; tagsFilter = ⊇([:PRIOR])) == [:af1]
 
         # Regexes
-        @test ls(fg, labelFilter = contains(r"a")) == [v1.label]
-        @test lsf(fg, labelFilter = contains(r"abf*")) == [f1.label]
+        @test ls(fg; labelFilter = contains(r"a")) == [v1.label]
+        @test lsf(fg; labelFilter = contains(r"abf*")) == [f1.label]
 
         #TODO test filters and options
         # regexFilter::Union{Nothing, Regex}=nothing;
