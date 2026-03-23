@@ -127,6 +127,6 @@ DevNotes
 
 Related
 
-[`findFactorsBetweenNaive`](@ref), `Graphs.dijkstra_shortest_paths`
+`Graphs.dijkstra_shortest_paths`
 """
 function findShortestPathDijkstra end
