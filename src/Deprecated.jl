@@ -636,7 +636,7 @@ end
 # the `search` verb can also come ito play, but it is more for knn search type functions.
 
 function findFactorsBetweenNaive(args...)
-    return error("findFactorsBetweenNaive is obsolete, use DFG.getPath[s] instead.")
+    return error("findFactorsBetweenNaive is obsolete, use DFG.findPath[s] instead.")
 end
 
 #TODO deprecate `is` is the correct verb, but rather isHomogeneous(path::Path) the form is isAdjective
@@ -660,7 +660,7 @@ function isPathFactorsHomogeneous(dfg::AbstractDFG, from::Symbol, to::Symbol)
     return (length(utyp) == 1), utyp
 end
 
-# deprecated use filter and path seperately.
+# deprecated use filter and path separately.
 function findShortestPathDijkstra(
     dfg::GraphsDFG,
     from::Symbol,
@@ -675,7 +675,7 @@ function findShortestPathDijkstra(
     initialized::Union{Nothing, Bool} = nothing,
 )
     Base.depwarn(
-        "findShortestPathDijkstra is deprecated, use getPath with `variableLabels`/`factorLabels` kwargs instead.",
+        "findShortestPathDijkstra is deprecated, use findPath with `variableLabels`/`factorLabels` kwargs instead.",
         :findShortestPathDijkstra,
     )
     any_active_filters = any(
@@ -710,8 +710,8 @@ function findShortestPathDijkstra(
             dfg,
             restrict_labels,
         )
-        return getPath(subdfg, from, to).path
+        return findPath(subdfg, from, to).path
     else
-        return getPath(dfg, from, to).path
+        return findPath(dfg, from, to).path
     end
 end

@@ -359,15 +359,15 @@ function toDot(dfg::GraphsDFG)
 end
 
 #API design NOTE:
-# Do not create new Verbs or Nouns for metric vs. topological pathfinding. getPaths is the universal router... getPaths(..., metric)
+# Do not create new Verbs or Nouns for metric vs. topological pathfinding. findPaths is the universal router... findPaths(..., metric)
 # for now we only look at topological paths.
 
-function getPaths(::typeof(all_simple_paths), dfg, from::Symbol, to::Symbol; kwargs...)
+function findPaths(::typeof(all_simple_paths), dfg, from::Symbol, to::Symbol; kwargs...)
     gpaths = Graphs.all_simple_paths(dfg.g, dfg.g.labels[from], dfg.g.labels[to]; kwargs...)
     return map(p -> (path = map(i -> dfg.g.labels[i], p), dist = length(p) - 1), gpaths)
 end
 
-function getPaths(
+function findPaths(
     ::typeof(yen_k_shortest_paths),
     dfg::GraphsDFG,
     from::Symbol,
@@ -390,12 +390,11 @@ function getPaths(
 end
 
 # note with default heuristic this is just dijkstra's algorithm
-function getPaths(
+function findPaths(
     ::typeof(a_star),
     dfg::GraphsDFG,
     from::Symbol,
-    to::Symbol,
-    ::Int;
+    to::Symbol;
     distmx::AbstractMatrix{T} = weights(dfg.g),
     heuristic = nothing,
 ) where {T}
@@ -417,13 +416,12 @@ function getPaths(
     return [(path = path, dist = dist)]
 end
 
-#TODO Move getPaths and getPath to AbstractDFG services as default implementations.
-function getPaths(
+#TODO Move findPaths and findPath to AbstractDFG services as default implementations.
+function findPaths(
     dfg::AbstractDFG,
     from::Symbol,
     to::Symbol,
     k::Int;
-    algorithm = k == 1 ? a_star : yen_k_shortest_paths,
     variableLabels::Union{Nothing, Vector{Symbol}} = nothing,
     factorLabels::Union{Nothing, Vector{Symbol}} = nothing,
     kwargs...,
@@ -449,10 +447,15 @@ function getPaths(
         !hasFactor(active_dfg, to) &&
         throw(DFG.LabelNotFoundError(to))
 
-    return getPaths(algorithm, active_dfg, from, to, k; kwargs...)
+    # optimization for k=1 since A* is more efficient than Yen's for single shortest path
+    if k == 1
+        return findPaths(a_star, active_dfg, from, to; kwargs...)
+    else
+        return findPaths(yen_k_shortest_paths, active_dfg, from, to, k; kwargs...)
+    end
 end
 
-function getPath(
+function findPath(
     dfg::AbstractDFG,
     from::Symbol,
     to::Symbol;
@@ -460,16 +463,13 @@ function getPath(
     factorLabels::Union{Nothing, Vector{Symbol}} = nothing,
     kwargs...,
 )
-    paths = getPaths(dfg, from, to, 1; variableLabels, factorLabels, kwargs...)
+    paths = findPaths(dfg, from, to, 1; variableLabels, factorLabels, kwargs...)
 
-    # Adhere strictly to the "getSingular = Error" rule
     if isempty(paths)
-        error(
-            "No path found between :$(from) and :$(to). If a disconnected graph is expected, use `getPaths` instead.",
-        )
+        return nothing
+    else
+        return first(paths)
     end
-
-    return first(paths)
 end
 
 export bfs_tree

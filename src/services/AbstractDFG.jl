@@ -382,7 +382,7 @@ Implement `listNeighbors(dfg::AbstractDFG, label::Symbol; solvableFilter, tagsFi
 function listNeighbors end
 
 """
-    getPaths(dfg, from::Symbol, to::Symbol, k::Int; variableLabels, factorLabels, kwargs...)
+    findPaths(dfg, from::Symbol, to::Symbol, k::Int; variableLabels, factorLabels, kwargs...)
 
 Return the `k` shortest paths between `from` and `to` in the factor graph.
 Each result is a `(path = Vector{Symbol}, dist)` named tuple.
@@ -395,22 +395,22 @@ Typical usage with filters:
 ```julia
 vars = listVariables(dfg; solvableFilter = >=(1))
 facs = listFactors(dfg; solvableFilter = >=(1))
-getPaths(dfg, :x1, :x5, 3; variableLabels = vars, factorLabels = facs)
+findPaths(dfg, :x1, :x5, 3; variableLabels = vars, factorLabels = facs)
 ```
 
-See also: [`getPath`](@ref), [`listVariables`](@ref), [`listFactors`](@ref)
+See also: [`findPath`](@ref), [`listVariables`](@ref), [`listFactors`](@ref)
 """
-function getPaths end
+function findPaths end
 
 """
-    getPath(dfg, from::Symbol, to::Symbol; variableLabels, factorLabels, kwargs...)
+    findPath(dfg, from::Symbol, to::Symbol; variableLabels, factorLabels, kwargs...)
 
 Return the single shortest path between `from` and `to`.
-Errors if no path exists (use `getPaths` for graphs that may be disconnected).
+Errors if no path exists (use `findPaths` for graphs that may be disconnected).
 
-Accepts the same restriction keywords as [`getPaths`](@ref).
+Accepts the same restriction keywords as [`findPaths`](@ref).
 """
-function getPath end
+function findPath end
 
 function listNeighbors(dfg::AbstractDFG, node::AbstractGraphNode; kwargs...)
     return listNeighbors(dfg, getLabel(node); kwargs...)

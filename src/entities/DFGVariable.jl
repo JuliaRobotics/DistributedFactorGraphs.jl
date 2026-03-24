@@ -27,7 +27,7 @@ end
 # TODO naming? Density, DensityRepresentation, BeliefRepresentation, BeliefState, etc?
 # TODO flatten in State? likeley not for easier serialization of points.
 @kwdef struct BeliefRepresentation{T <: StateType, P}
-    statekind::T = T()# NOTE duplication for serialization, TODO maybe only in State and therefore belief cannot deserialize seperately.
+    statekind::T = T()# NOTE duplication for serialization, TODO maybe only in State and therefore belief cannot deserialize separately.
     """Discriminator for which representation is active."""
     densitykind::AbstractDensityKind = NonparametricDensityKind()
 
