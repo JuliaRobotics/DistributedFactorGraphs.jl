@@ -53,6 +53,14 @@ DFG.@usingDFG true
         include("consol_DataEntryBlobTests.jl")
     end
 
+    @testset "BlobPacking Tests" begin
+        include("testBlobPacking.jl")
+    end
+
+    @testset "BlobStores and Wrappers Tests" begin
+        include("testBlobStoresAndWrappers.jl")
+    end
+
     @testset "GraphsDFG subtype tests" begin
         for type in [
             (var = VariableSummary, fac = FactorSummary),

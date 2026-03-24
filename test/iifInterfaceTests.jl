@@ -397,14 +397,24 @@ end
     # Check all fields are equal for all variables
     for v in ls(summaryGraph)
         for field in variableFields
-            @test getproperty(getVariable(dfg, v), field) ==
-                  getfield(getVariable(summaryGraph, v), field)
+            a = getproperty(getVariable(dfg, v), field)
+            b = getproperty(getVariable(summaryGraph, v), field)
+            if field == :solvable
+                @test a[] == b[]
+            else
+                @test a == b
+            end
         end
     end
     for f in lsf(summaryGraph)
         for field in factorFields
-            @test getproperty(getFactor(dfg, f), field) ==
-                  getfield(getFactor(summaryGraph, f), field)
+            a = getproperty(getFactor(dfg, f), field)
+            b = getproperty(getFactor(summaryGraph, f), field)
+            if field == :solvable
+                @test a[] == b[]
+            else
+                @test a == b
+            end
         end
     end
 end

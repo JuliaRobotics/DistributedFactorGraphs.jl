@@ -20,23 +20,23 @@ StructUtils.@kwarg struct Blobentry
     """ (Optional) crc32c hash value to ensure data consistency which must correspond to the stored hash upon retrieval."""
     crchash::Union{UInt32, Nothing} =
         nothing & (
-            json=(
-                lower = h->isnothing(h) ? nothing : string(h, base = 16),
-                lift = s->isnothing(s) ? nothing : parse(UInt32, s; base = 16),
+            json = (
+                lower = h -> isnothing(h) ? nothing : string(h; base = 16),
+                lift = s -> isnothing(s) ? nothing : parse(UInt32, s; base = 16),
             )
         )
     """ (Optional) sha256 hash value to ensure data consistency which must correspond to the stored hash upon retrieval."""
     shahash::Union{Vector{UInt8}, Nothing} =
         nothing & (
-            json=(
-                lower = h->isnothing(h) ? nothing : bytes2hex(h),
-                lift = s->isnothing(s) ? nothing : hex2bytes(s),
+            json = (
+                lower = h -> isnothing(h) ? nothing : bytes2hex(h),
+                lift = s -> isnothing(s) ? nothing : hex2bytes(s),
             )
         )
     """ Source system or application where the blob was created (e.g., webapp, sdk, robot)"""
     origin::String = ""
     """Number of bytes in blob serialized as a string"""
-    size::Int64 = -1 & (json=(lower = string, lift = x->parse(Int64, x)))
+    size::Int64 = -1 & (json = (lower = string, lift = x -> parse(Int64, x)))
     """ Additional information that can help a different user of the Blob. """
     description::String = ""
     """ MIME description describing the format of binary data in the `Blob`, e.g. 'image/png' or 'application/json'. """

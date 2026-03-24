@@ -276,7 +276,7 @@ Implement `mergeVariable!(dfg::AbstractDFG, variable::AbstractGraphVariable)`
 function mergeVariable! end
 
 function mergeVariables!(dfg::AbstractDFG, variables::Vector{<:AbstractGraphVariable})
-    counts = asyncmap(v->mergeVariable!(dfg, v), variables)
+    counts = asyncmap(v -> mergeVariable!(dfg, v), variables)
     return sum(counts; init = 0)
 end
 
@@ -289,7 +289,7 @@ Implement `mergeFactor!(dfg::AbstractDFG, factor::AbstractGraphFactor)`
 function mergeFactor! end
 
 function mergeFactors!(dfg::AbstractDFG, factors::Vector{<:AbstractGraphFactor})
-    counts = asyncmap(f->mergeFactor!(dfg, f), factors)
+    counts = asyncmap(f -> mergeFactor!(dfg, f), factors)
     return sum(counts; init = 0)
 end
 
@@ -454,25 +454,6 @@ end
 ##==============================================================================
 ## Subgraphs and Neighborhoods
 ##==============================================================================
-
-"""
-    $SIGNATURES
-Return (::Bool,::Vector{TypeName}) of types between two nodes in the factor graph 
-
-DevNotes
-- Only works on LigthDFG at the moment.
-
-Related
-
-[`findShortestPathDijkstra`](@ref)
-"""
-function isPathFactorsHomogeneous(dfg::AbstractDFG, from::Symbol, to::Symbol)
-    # FIXME, must consider all paths, not just shortest...
-    pth = intersect(findShortestPathDijkstra(dfg, from, to), lsf(dfg))
-    types = getObservation.(dfg, pth) .|> typeof .|> x -> (x).name #TODO this might not be correct in julia 1.6
-    utyp = unique(types)
-    return (length(utyp) == 1), utyp
-end
 
 #TODO add pruning filters that is applied during traversal.
 """

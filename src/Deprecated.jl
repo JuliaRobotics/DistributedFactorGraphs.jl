@@ -627,3 +627,66 @@ function mergeGraph!(
 end
 
 @deprecate buildSubgraph(args...; kwargs...) getSubgraph(args...; kwargs...)
+
+#TODO deprecate
+# - the verb is not correct and should be `list` as the function returns a list of factors
+# - The noun is also not correct and algorithm details are used in the name
+# - A better noun is maybe Path or simply listFactors with a fancy filter, something like:
+#     - [list/get]Path(dfg, from, to; algorithm...)
+# the `search` verb can also come ito play, but it is more for knn search type functions.
+"""
+    $SIGNATURES
+
+Relatively naive function counting linearly from-to
+
+DevNotes
+- Convert to using Graphs shortest path methods instead.
+"""
+#
+function findFactorsBetweenNaive(
+    dfg::AbstractDFG,
+    from::Symbol,
+    to::Symbol,
+    assertSingles::Bool = false,
+)
+    #
+    @info "findFactorsBetweenNaive is naive linear number method -- improvements welcome"
+    SRT = getVariableLabelNumber(from)
+    STP = getVariableLabelNumber(to)
+    prefix = string(from)[1]
+    @assert prefix == string(to)[1] "from-to prefixes must match, one is $prefix, other $(string(to)[1])"
+    prev = from
+    fctlist = Symbol[]
+    for num = (SRT + 1):STP
+        next = Symbol(prefix, num)
+        fct = intersect(ls(dfg, prev), ls(dfg, next))
+        if assertSingles
+            @assert length(fct) == 1 "assertSingles=true, won't return multiple factors joining variables at this time"
+        end
+        union!(fctlist, fct)
+        prev = next
+    end
+
+    return fctlist
+end
+
+#TODO deprecate `is` is the correct verb, but rather isHomogeneous(path::Path) the form is isAdjective
+"""
+    $SIGNATURES
+Return (::Bool,::Vector{TypeName}) of types between two nodes in the factor graph 
+
+DevNotes
+- Only works on LigthDFG at the moment.
+
+Related
+
+[`findShortestPathDijkstra`](@ref)
+"""
+#
+function isPathFactorsHomogeneous(dfg::AbstractDFG, from::Symbol, to::Symbol)
+    # FIXME, must consider all paths, not just shortest...
+    pth = intersect(findShortestPathDijkstra(dfg, from, to), lsf(dfg))
+    types = getObservation.(dfg, pth) .|> typeof .|> x -> (x).name #TODO this might not be correct in julia 1.6
+    utyp = unique(types)
+    return (length(utyp) == 1), utyp
+end

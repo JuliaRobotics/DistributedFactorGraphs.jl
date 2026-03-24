@@ -269,7 +269,7 @@ $(TYPEDFIELDS)
     $variable_timestamp_note
     Accessors: [`getTimestamp`](@ref)"""
     timestamp::TimeDateZone = now_tdz() #NOTE changed to TimeDateZone in v0.29
-    # """Nanoseconds since a user-understood epoch (i.e unix epoch, robot boot time, etc.)"""
+    # """Nanoseconds since a user-understood epoch (e.g unix epoch, robot boot time, etc.)"""
     # nstime::String = "0" #NOTE deprecated field in v0.29
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
     Accessors: [`listTags`](@ref), [`mergeTags!`](@ref), and [`deleteTags!`](@ref)"""
@@ -446,11 +446,11 @@ $(TYPEDFIELDS)
     """Variable tags, e.g [:POSE, :VARIABLE, and :LANDMARK].
     Accessors: [`listTags`](@ref), [`mergeTags!`](@ref), and [`deleteTags!`](@ref)"""
     tags::Set{Symbol}
+    """Solvable flag for the variable.
+    Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)"""
+    solvable::Base.RefValue{Int}
     """Symbol for the state type for the underlying variable."""
     statekind::AbstractStateType
-    """Dictionary of large data associated with this variable.
-    Accessors: [`addBlobentry!`](@ref), [`getBlobentry`](@ref), [`mergeBlobentry!`](@ref), and [`deleteBlobentry!`](@ref)"""
-    blobentries::Blobentries
 end
 
 ##------------------------------------------------------------------------------
@@ -483,7 +483,7 @@ end
 ##==============================================================================
 
 function VariableSummary(v::VariableDFG{T}) where {T}
-    return VariableSummary(v.label, v.timestamp, copy(v.tags), T(), copy(v.blobentries))
+    return VariableSummary(v.label, v.timestamp, copy(v.tags), deepcopy(v.solvable), T())
 end
 
 function VariableSkeleton(v::AbstractGraphVariable)
@@ -504,8 +504,15 @@ function patch!(dest::VariableSummary, src::VariableSummary)
             "Variables has different timestamps: $(dest.timestamp) vs $(src.timestamp).",
         ),
     )
+    dest.statekind !== src.statekind && throw(
+        MergeConflictError(
+            "Variables has different statekinds: $(dest.statekind) vs $(src.statekind).",
+        ),
+    )
+
     union!(dest.tags, src.tags)
-    merge!(dest.blobentries, src.blobentries)
+    dest.solvable[] = src.solvable[]
+
     return dest
 end
 

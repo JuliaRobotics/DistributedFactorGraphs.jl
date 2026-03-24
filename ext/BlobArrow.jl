@@ -2,11 +2,12 @@ module BlobArrow
 
 using Arrow
 using DistributedFactorGraphs
-using DistributedFactorGraphs: _MIMETypes
+using DistributedFactorGraphs: _MIMEOverrides, getMimetype
 
 function __init__()
     @info "Including Arrow blobs support in DFG."
-    return push!(_MIMETypes, MIME("application/vnd.apache.arrow.file") => format"Arrow") # see issue #507
+    push!(_MIMEOverrides, format"Arrow" => MIME("application/vnd.apache.arrow.file"))
+    return nothing
 end
 
 # kwargs: compress = :lz4,
@@ -14,7 +15,7 @@ function DFG.packBlob(::Type{format"Arrow"}, data; kwargs...)
     io = IOBuffer()
     Arrow.write(io, data; kwargs...)
     blob = take!(io)
-    mimetype = findfirst(==(format"Arrow"), _MIMETypes)
+    mimetype = getMimetype(format"Arrow")
     return blob, mimetype
 end
 

@@ -214,7 +214,7 @@ function Timestamp(epoch::Val{:unix}, t::Float64, zone = tz"UTC")
 end
 Timestamp(t::Float64, zone = tz"UTC") = Timestamp(Val(:unix), t, zone)
 function Timestamp(epoch::Val{:rata}, t::Float64, zone = tz"UTC")
-    return TimeDateZone(convert(DateTime, Millisecond(t*10^3)), zone)
+    return TimeDateZone(convert(DateTime, Millisecond(t * 10^3)), zone)
 end
 
 function now_tdz(zone = tz"UTC")

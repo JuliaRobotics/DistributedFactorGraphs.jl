@@ -119,7 +119,7 @@ function loadDFG!(
     variablefiles = readdir(joinpath(loaddir, "variables"); sort = false, join = true)
 
     # type instability on `variables` as either `::Vector{Variable}` or `::Vector{VariableDFG{<:}}` (vector of abstract)
-    variables = @showprogress dt=1 desc = "loading variables" asyncmap(
+    variables = @showprogress dt = 1 desc = "loading variables" asyncmap(
         variablefiles,
     ) do file
         v = JSON.parsefile(file, V; style = DFGJSONStyle())
@@ -130,7 +130,7 @@ function loadDFG!(
 
     factorfiles = readdir(joinpath(loaddir, "factors"); sort = false, join = true)
 
-    factors = @showprogress dt=1 desc = "loading factors" asyncmap(factorfiles) do file
+    factors = @showprogress dt = 1 desc = "loading factors" asyncmap(factorfiles) do file
         f = JSON.parsefile(file, F; style = DFGJSONStyle())
         return addFactor!(dfgLoadInto, f)
     end
@@ -139,7 +139,7 @@ function loadDFG!(
 
     if isa(dfgLoadInto, GraphsDFG) && getTypeDFGFactors(dfgLoadInto) <: FactorDFG
         # Finally, rebuild the CCW's for the factors to completely reinflate them
-        @showprogress dt=1 desc = "Rebuilding factor solver cache" for factor in factors
+        @showprogress dt = 1 desc = "Rebuilding factor solver cache" for factor in factors
             rebuildFactorCache!(dfgLoadInto, factor)
         end
     end

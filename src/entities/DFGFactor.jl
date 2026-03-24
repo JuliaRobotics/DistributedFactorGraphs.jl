@@ -65,7 +65,7 @@ StructUtils.@kwarg struct FactorDFG{T <: AbstractObservation, N} <: AbstractGrap
     tags::Set{Symbol} = Set{Symbol}([:FACTOR])
     """Ordered list of the neighbor variables.
     Accessors: [`getVariableOrder`](@ref)"""
-    variableorder::NTuple{N, Symbol} & (choosetype = x->NTuple{length(x), Symbol},) # NOTE v0.29 renamed from _variableOrderSymbols
+    variableorder::NTuple{N, Symbol} & (choosetype = x -> NTuple{length(x), Symbol},) # NOTE v0.29 renamed from _variableOrderSymbols
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref)"""
     timestamp::TimeDateZone = now_tdz() # NOTE v0.29 changed from ZonedDateTime
@@ -307,10 +307,14 @@ $(TYPEDFIELDS)
     tags::Set{Symbol}
     """Ordered list of the neighbor variables.
     Accessors: [`getVariableOrder`](@ref)"""
-    variableorder::Tuple{Vararg{Symbol}} & (choosetype = x->NTuple{length(x), Symbol},) #TODO changed to NTuple
+    variableorder::Tuple{Vararg{Symbol}} & (choosetype = x -> NTuple{length(x), Symbol},) #TODO changed to NTuple
     """Variable timestamp.
     Accessors: [`getTimestamp`](@ref)"""
     timestamp::TimeDateZone
+    """Solvable flag for the factor.
+    Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)"""
+    solvable::Base.RefValue{Int} = Ref{Int}(1) #& (lower = getindex, lift = Ref)
+    #TODO factorkind for isKind(Pose2Pose2) like queries and filters.
 end
 
 function FactorSummary(
@@ -318,8 +322,9 @@ function FactorSummary(
     variableorder::Union{Vector{Symbol}, Tuple};
     timestamp::TimeDateZone = now_tdz(),
     tags::Set{Symbol} = Set{Symbol}(),
+    solvable::Int = 1,
 )
-    return FactorSummary(label, tags, Tuple(variableorder), timestamp)
+    return FactorSummary(label, tags, Tuple(variableorder), timestamp, Ref(solvable))
 end
 
 ##------------------------------------------------------------------------------
@@ -343,7 +348,7 @@ $(TYPEDFIELDS)
     tags::Set{Symbol}
     """Ordered list of the neighbor variables.
     Accessors: [`getVariableOrder`](@ref)"""
-    variableorder::Tuple{Vararg{Symbol}} & (choosetype = x->NTuple{length(x), Symbol},)
+    variableorder::Tuple{Vararg{Symbol}} & (choosetype = x -> NTuple{length(x), Symbol},)
 end
 
 ##------------------------------------------------------------------------------
@@ -362,7 +367,13 @@ end
 ##==============================================================================
 
 function FactorSummary(f::FactorDFG)
-    return FactorSummary(f.label, copy(f.tags), f.variableorder, f.timestamp)
+    return FactorSummary(
+        f.label,
+        copy(f.tags),
+        f.variableorder,
+        f.timestamp,
+        deepcopy(f.solvable),
+    )
 end
 
 function FactorSkeleton(f::AbstractGraphFactor)
@@ -389,6 +400,7 @@ function patch!(dest::FactorSummary, src::FactorSummary)
         ),
     )
     union!(dest.tags, src.tags)
+    dest.solvable[] = src.solvable[]
     return dest
 end
 

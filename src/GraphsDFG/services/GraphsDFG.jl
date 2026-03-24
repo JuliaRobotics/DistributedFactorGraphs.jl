@@ -239,8 +239,8 @@ function listNeighbors(
 
     # Additional filtering
     # solvable != 0 && filter!(lbl -> _isSolvable(dfg, lbl, solvable), neighbors_ll)
-    filterDFG!(neighbors_ll, solvableFilter, l->getSolvable(dfg, l))
-    filterDFG!(neighbors_ll, tagsFilter, l->listTags(dfg, l))
+    filterDFG!(neighbors_ll, solvableFilter, l -> getSolvable(dfg, l))
+    filterDFG!(neighbors_ll, tagsFilter, l -> listTags(dfg, l))
 
     # Variable sorting (order is important)
     if haskey(dfg.g.factors, label)
@@ -278,8 +278,8 @@ function listNeighborhood(
 
     allvarfacs = [dfg.g.labels[id] for id in nbhood]
 
-    filterDFG!(allvarfacs, solvableFilter, l->getSolvable(dfg, l))
-    filterDFG!(allvarfacs, tagsFilter, l->listTags(dfg, l))
+    filterDFG!(allvarfacs, solvableFilter, l -> getSolvable(dfg, l))
+    filterDFG!(allvarfacs, tagsFilter, l -> listTags(dfg, l))
 
     variableLabels = intersect(listVariables(dfg), allvarfacs)
     factorLabels = intersect(listFactors(dfg), allvarfacs)
