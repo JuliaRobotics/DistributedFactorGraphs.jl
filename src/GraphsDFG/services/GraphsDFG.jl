@@ -404,11 +404,11 @@ function getPaths(
     edgepath = Graphs.a_star(dfg.g, dfg.g.labels[from], dfg.g.labels[to], distmx, heuristic)
 
     if isempty(edgepath)
-        return @NamedTuple{path::Vector{Symbol}, dist::Int64}[]
+        return @NamedTuple{path::Vector{Symbol}, dist::T}[]
     end
 
     path = [dfg.g.labels[edgepath[1].src]]
-    dist = 0
+    dist = zero(T)
     for (; dst, src) in edgepath
         push!(path, dfg.g.labels[dst])
         dist += distmx[src, dst]
@@ -429,18 +429,26 @@ function getPaths(
     kwargs...,
 )
     # If the user provided restricted lists, build the subgraph automatically
-    active_dfg = if variableLabels === nothing && factorLabels === nothing
-        dfg
-    else
-        vlabels = something(variableLabels, listVariables(dfg))
-        flabels = something(factorLabels, listFactors(dfg))
-        labels = vcat(vlabels, flabels)
-        DFG.getSubgraph(
-            GraphsDFG{NoSolverParams, VariableSkeleton, FactorSkeleton},
-            dfg,
-            labels,
-        )
-    end
+    active_dfg =
+        if isa(dfg, GraphsDFG) && isnothing(variableLabels) && isnothing(factorLabels)
+            dfg
+        else
+            vlabels = something(variableLabels, listVariables(dfg))
+            flabels = something(factorLabels, listFactors(dfg))
+            labels = vcat(vlabels, flabels)
+            DFG.getSubgraph(
+                GraphsDFG{NoSolverParams, VariableSkeleton, FactorSkeleton},
+                dfg,
+                labels,
+            )
+        end
+    !hasVariable(active_dfg, from) &&
+        !hasFactor(active_dfg, from) &&
+        throw(DFG.LabelNotFoundError(from))
+    !hasVariable(active_dfg, to) &&
+        !hasFactor(active_dfg, to) &&
+        throw(DFG.LabelNotFoundError(to))
+
     return getPaths(algorithm, active_dfg, from, to, k; kwargs...)
 end
 

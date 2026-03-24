@@ -56,7 +56,7 @@ import ...DistributedFactorGraphs:
     listNeighbors,
     getPaths,
     getPath,
-    buildSubgraph,
+    getSubgraph,
     getBiadjacencyMatrix,
     toDot,
     toDotFile,

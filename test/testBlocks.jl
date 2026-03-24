@@ -1518,21 +1518,21 @@ function BuildingSubgraphs(testDFGAPI; VARTYPE = VariableDFG, FACTYPE = FactorDF
     # "Getting Subgraphs"
     dfg, verts, facs = connectivityTestGraph(testDFGAPI, VARTYPE, FACTYPE)
     # Subgraphs
-    dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [verts[1].label], 2)
+    dfgSubgraph = getSubgraph(testDFGAPI, dfg, [verts[1].label], 2)
     # Only returns x1 and x2
     @test issetequal([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
     #
-    dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [:x1, :x2, :x1x2f1])
+    dfgSubgraph = getSubgraph(testDFGAPI, dfg, [:x1, :x2, :x1x2f1])
     # Only returns x1 and x2
     @test issetequal([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
 
-    dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [:x1x2f1], 1)
+    dfgSubgraph = getSubgraph(testDFGAPI, dfg, [:x1x2f1], 1)
     # Only returns x1 and x2
     @test issetequal([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
 
     #TODO if not a GraphsDFG with and summary or skeleton
     if VARTYPE == VariableDFG
-        dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [:x8], 2; solvableFilter = >=(1))
+        dfgSubgraph = getSubgraph(testDFGAPI, dfg, [:x8], 2; solvableFilter = >=(1))
         @test issetequal([:x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
         #end if not a GraphsDFG with and summary or skeleton
     end
@@ -1540,25 +1540,25 @@ function BuildingSubgraphs(testDFGAPI; VARTYPE = VariableDFG, FACTYPE = FactorDF
     # REF: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/95
     for fId in listVariables(dfg)
         # Get a subgraph of this and it's related factors+variables
-        dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [fId], 2)
+        dfgSubgraph = getSubgraph(testDFGAPI, dfg, [fId], 2)
         # For each factor check that the order the copied graph == original
         for fact in getFactors(dfgSubgraph)
             @test fact.variableorder == getFactor(dfg, fact.label).variableorder
         end
     end
 
-    #TODO buildSubgraph default constructors for skeleton and summary
+    #TODO getSubgraph default constructors for skeleton and summary
     if VARTYPE == VariableDFG
-        dfgSubgraph = buildSubgraph(dfg, [:x1, :x2, :x1x2f1])
+        dfgSubgraph = getSubgraph(dfg, [:x1, :x2, :x1x2f1])
         @test issetequal([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
 
-        dfgSubgraph = buildSubgraph(dfg, [:x2, :x3], 2)
+        dfgSubgraph = getSubgraph(dfg, [:x2, :x3], 2)
         @test issetequal(
             [:x2, :x3, :x1, :x4, :x3x4f1, :x1x2f1, :x2x3f1],
             [ls(dfgSubgraph)..., lsf(dfgSubgraph)...],
         )
 
-        dfgSubgraph = buildSubgraph(dfg, [:x1x2f1], 1)
+        dfgSubgraph = getSubgraph(dfg, [:x1x2f1], 1)
         @test issetequal([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
     end
 end
@@ -1893,14 +1893,14 @@ function PathFindingTests(testDFGAPI)
 
     # --- Restrict with factorLabels only (all variables kept) ---
     # Only allow the first 4 factors, path x1→x5 should still work
-    facs_first4 = listFactors(dfg; labelFilter = contains(r"x[1-4]"))
+    facs_first4 = listFactors(dfg; labelFilter = contains(r"x[1-4](?!\d)"))
     result_fac = getPath(dfg, :x1, :x5; factorLabels = facs_first4)
     @test first(result_fac.path) == :x1
     @test last(result_fac.path) == :x5
 
     # --- Restrict with both variableLabels and factorLabels ---
     vars_1to5 = listVariables(dfg; typeFilter = ==(TestVariableType1()))
-    facs_1to4 = listFactors(dfg; labelFilter = contains(r"x[1-4]"))
+    facs_1to4 = listFactors(dfg; labelFilter = contains(r"x[1-4](?!\d)"))
     result_both =
         getPath(dfg, :x1, :x5; variableLabels = vars_1to5, factorLabels = facs_1to4)
     @test first(result_both.path) == :x1

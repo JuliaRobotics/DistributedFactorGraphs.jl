@@ -436,7 +436,7 @@ end
 # - Orphaned factors (where the subgraph does not contain all the related variables) are not included.
 # Related:
 # - [`copyGraph!`](@ref)
-# - [`buildSubgraph`](@ref)
+# - [`getSubgraph`](@ref)
 # - [`listNeighborhood`](@ref)
 # - [`deepcopyGraph`](@ref)
 # """
@@ -455,7 +455,7 @@ NOTE: `copyGraphMetadata` is deprecated – use agent/graph Bloblets instead.
 Related:
 - [`deepcopyGraph`](@ref)
 - [`deepcopyGraph!`](@ref)
-- [`buildSubgraph`](@ref)
+- [`getSubgraph`](@ref)
 - [`listNeighborhood`](@ref)
 - [`mergeGraph!`](@ref)
 """
@@ -528,7 +528,7 @@ Copy nodes from one graph into another graph by making deepcopies.
 see [`copyGraph!`](@ref) for more detail.
 Related:
 - [`deepcopyGraph`](@ref)
-- [`buildSubgraph`](@ref)
+- [`getSubgraph`](@ref)
 - [`listNeighborhood`](@ref)
 - [`mergeGraph!`](@ref)
 """
@@ -556,7 +556,7 @@ Copy nodes from one graph into a new graph by making deepcopies.
 see [`copyGraph!`](@ref) for more detail.
 Related:
 - [`deepcopyGraph!`](@ref)
-- [`buildSubgraph`](@ref)
+- [`getSubgraph`](@ref)
 - [`listNeighborhood`](@ref)
 - [`mergeGraph!`](@ref)
 """

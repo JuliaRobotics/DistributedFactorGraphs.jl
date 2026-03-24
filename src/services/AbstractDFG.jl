@@ -565,7 +565,7 @@ function getSubgraph(
     if !isnothing(solvable)
         Base.depwarn(
             "solvable kwarg is deprecated, use kwarg `solvableFilter = (>=solvable)` instead", #v0.29
-            :buildSubgraph,
+            :getSubgraph,
         )
         !isnothing(solvableFilter) &&
             error("Cannot use both solvable and solvableFilter kwargs.")
