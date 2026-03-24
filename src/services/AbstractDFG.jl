@@ -381,6 +381,37 @@ Implement `listNeighbors(dfg::AbstractDFG, label::Symbol; solvableFilter, tagsFi
 """
 function listNeighbors end
 
+"""
+    getPaths(dfg, from::Symbol, to::Symbol, k::Int; variableLabels, factorLabels, kwargs...)
+
+Return the `k` shortest paths between `from` and `to` in the factor graph.
+Each result is a `(path = Vector{Symbol}, dist)` named tuple.
+
+Optional keyword arguments restrict which variables and/or factors may appear on
+the path.  When neither is given the full graph is used.  When only one is
+provided the other defaults to all labels of that kind in `dfg`.
+
+Typical usage with filters:
+```julia
+vars = listVariables(dfg; solvableFilter = >=(1))
+facs = listFactors(dfg; solvableFilter = >=(1))
+getPaths(dfg, :x1, :x5, 3; variableLabels = vars, factorLabels = facs)
+```
+
+See also: [`getPath`](@ref), [`listVariables`](@ref), [`listFactors`](@ref)
+"""
+function getPaths end
+
+"""
+    getPath(dfg, from::Symbol, to::Symbol; variableLabels, factorLabels, kwargs...)
+
+Return the single shortest path between `from` and `to`.
+Errors if no path exists (use `getPaths` for graphs that may be disconnected).
+
+Accepts the same restriction keywords as [`getPaths`](@ref).
+"""
+function getPath end
+
 function listNeighbors(dfg::AbstractDFG, node::AbstractGraphNode; kwargs...)
     return listNeighbors(dfg, getLabel(node); kwargs...)
 end
@@ -549,13 +580,13 @@ function getSubgraph(
     return destDFG
 end
 
-function buildSubgraph(
+function getSubgraph(
     dfg::AbstractDFG,
     variableFactorLabels::Vector{Symbol},
     distance::Int = 0;
     kwargs...,
 )
-    return buildSubgraph(LocalDFG, dfg, variableFactorLabels, distance; kwargs...)
+    return getSubgraph(LocalDFG, dfg, variableFactorLabels, distance; kwargs...)
 end
 
 """

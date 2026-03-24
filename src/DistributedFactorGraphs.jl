@@ -422,6 +422,8 @@ const unstable_functions::Vector{Symbol} = [
     :FactorSummary,
     :listNeighborhood,
     :listNeighbors,
+    :getPath,
+    :getPaths,
     :InMemoryBlobstore,
     :exists,
     :compare,
@@ -442,7 +444,7 @@ const unstable_functions::Vector{Symbol} = [
     :findClosestTimestamp,
     :findVariablesNearTimestamp,
     :findShortestPathDijkstra,
-    :findFactorsBetweenNaive,
+    :findFactorsBetweenNaive, # TODO not really used
     :getAgentLabel, #TODO check and mark as public
     :getGraphLabel, #TODO check and mark as public
     :getDescription,

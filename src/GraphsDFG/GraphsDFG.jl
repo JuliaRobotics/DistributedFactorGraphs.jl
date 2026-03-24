@@ -54,6 +54,8 @@ import ...DistributedFactorGraphs:
     lsf,
     isConnected,
     listNeighbors,
+    getPaths,
+    getPath,
     buildSubgraph,
     getBiadjacencyMatrix,
     toDot,

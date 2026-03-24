@@ -358,74 +358,110 @@ function toDot(dfg::GraphsDFG)
     return String(data)
 end
 
-function findShortestPathDijkstra(
+#API design NOTE:
+# Do not create new Verbs or Nouns for metric vs. topological pathfinding. getPaths is the universal router... getPaths(..., metric)
+# for now we only look at topological paths.
+
+function getPaths(::typeof(all_simple_paths), dfg, from::Symbol, to::Symbol; kwargs...)
+    gpaths = Graphs.all_simple_paths(dfg.g, dfg.g.labels[from], dfg.g.labels[to]; kwargs...)
+    return map(p -> (path = map(i -> dfg.g.labels[i], p), dist = length(p) - 1), gpaths)
+end
+
+function getPaths(
+    ::typeof(yen_k_shortest_paths),
     dfg::GraphsDFG,
     from::Symbol,
-    to::Symbol;
-    labelFilterVariables::Union{Function, Nothing} = nothing,
-    labelFilterFactors::Union{Function, Nothing} = nothing,
-    tagsFilterVariables::Union{Function, Nothing} = nothing,
-    tagsFilterFactors::Union{Function, Nothing} = nothing,
-    typeFilterVariables::Union{Function, Nothing} = nothing,
-    typeFilterFactors::Union{Function, Nothing} = nothing,
-    solvableFilter::Union{Function, Nothing} = nothing,
-    initialized::Union{Nothing, Bool} = nothing,
+    to::Symbol,
+    k::Int;
+    distmx = weights(dfg.g),
+    kwargs...,
 )
-    duplicate =
-        !isnothing(labelFilterVariables) ||
-        !isnothing(labelFilterFactors) ||
-        !isnothing(tagsFilterVariables) ||
-        !isnothing(tagsFilterFactors) ||
-        !isnothing(typeFilterVariables) ||
-        !isnothing(typeFilterFactors) ||
-        !isnothing(initialized) ||
-        !isnothing(solvableFilter)
+    (; paths, dists) = Graphs.yen_k_shortest_paths(
+        dfg.g,
+        dfg.g.labels[from],
+        dfg.g.labels[to],
+        distmx,
+        k;
+        kwargs...,
+    )
+    return map(zip(paths, dists)) do (path, dist)
+        return (path = map(i -> dfg.g.labels[i], path), dist = dist)
+    end
+end
 
-    dfg_ = if duplicate
-        # use copy if filter is being applied
-        varList = ls(
-            dfg;
-            labelFilter = labelFilterVariables,
-            tagsFilter = tagsFilterVariables,
-            typeFilter = typeFilterVariables,
-            solvableFilter,
-        )
-        fctList = lsf(
-            dfg;
-            labelFilter = labelFilterFactors,
-            tagsFilter = tagsFilterFactors,
-            typeFilter = typeFilterFactors,
-            solvableFilter,
-        )
+# note with default heuristic this is just dijkstra's algorithm
+function getPaths(
+    ::typeof(a_star),
+    dfg::GraphsDFG,
+    from::Symbol,
+    to::Symbol,
+    ::Int;
+    distmx::AbstractMatrix{T} = weights(dfg.g),
+    heuristic = nothing,
+) where {T}
+    #TODO make it easier to use label in the heuristic 
+    heuristic = something(heuristic, (n) -> zero(T))
+    edgepath = Graphs.a_star(dfg.g, dfg.g.labels[from], dfg.g.labels[to], distmx, heuristic)
 
-        varList = if initialized !== nothing
-            initmask = isInitialized.(dfg, varList) .== initialized
-            varList[initmask]
-        else
-            varList
-        end
-        DFG.deepcopyGraph(typeof(dfg), dfg, varList, fctList)
-    else
-        # no filter can be used directly
+    if isempty(edgepath)
+        return @NamedTuple{path::Vector{Symbol}, dist::Int64}[]
+    end
+
+    path = [dfg.g.labels[edgepath[1].src]]
+    dist = 0
+    for (; dst, src) in edgepath
+        push!(path, dfg.g.labels[dst])
+        dist += distmx[src, dst]
+    end
+
+    return [(path = path, dist = dist)]
+end
+
+#TODO Move getPaths and getPath to AbstractDFG services as default implementations.
+function getPaths(
+    dfg::AbstractDFG,
+    from::Symbol,
+    to::Symbol,
+    k::Int;
+    algorithm = k == 1 ? a_star : yen_k_shortest_paths,
+    variableLabels::Union{Nothing, Vector{Symbol}} = nothing,
+    factorLabels::Union{Nothing, Vector{Symbol}} = nothing,
+    kwargs...,
+)
+    # If the user provided restricted lists, build the subgraph automatically
+    active_dfg = if variableLabels === nothing && factorLabels === nothing
         dfg
+    else
+        vlabels = something(variableLabels, listVariables(dfg))
+        flabels = something(factorLabels, listFactors(dfg))
+        labels = vcat(vlabels, flabels)
+        DFG.getSubgraph(
+            GraphsDFG{NoSolverParams, VariableSkeleton, FactorSkeleton},
+            dfg,
+            labels,
+        )
+    end
+    return getPaths(algorithm, active_dfg, from, to, k; kwargs...)
+end
+
+function getPath(
+    dfg::AbstractDFG,
+    from::Symbol,
+    to::Symbol;
+    variableLabels::Union{Nothing, Vector{Symbol}} = nothing,
+    factorLabels::Union{Nothing, Vector{Symbol}} = nothing,
+    kwargs...,
+)
+    paths = getPaths(dfg, from, to, 1; variableLabels, factorLabels, kwargs...)
+
+    # Adhere strictly to the "getSingular = Error" rule
+    if isempty(paths)
+        error(
+            "No path found between :$(from) and :$(to). If a disconnected graph is expected, use `getPaths` instead.",
+        )
     end
 
-    if !(hasVariable(dfg_, from) || hasFactor(dfg_, from)) ||
-       !(hasVariable(dfg_, to) || hasFactor(dfg_, to))
-        # assume filters excluded either `to` or `from` and hence no shortest path
-        return Symbol[]
-    end
-    # GraphsDFG internally uses Integers 
-    frI = dfg_.g.labels[from]
-    toI = dfg_.g.labels[to]
-
-    # get shortest path from graph provider
-    path_state = Graphs.dijkstra_shortest_paths(dfg_.g.graph, [frI;])
-    path = Graphs.enumerate_paths(path_state, toI)
-    dijkpath = map(x -> dfg_.g.labels[x], path)
-
-    # return the list of symbols
-    return dijkpath
+    return first(paths)
 end
 
 export bfs_tree

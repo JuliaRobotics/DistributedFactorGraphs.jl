@@ -231,6 +231,10 @@ end
     end
 end
 
+@testset "Path Finding" begin
+    PathFindingTests(testDFGAPI)
+end
+
 # FIXME this will likeley become obsolete with new pack/unpack system
 # @testset "Mixing Compute and DFG graph nodes" begin
 #     com_fg = testDFGAPI()
