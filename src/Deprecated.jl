@@ -436,7 +436,7 @@ end
 # - Orphaned factors (where the subgraph does not contain all the related variables) are not included.
 # Related:
 # - [`copyGraph!`](@ref)
-# - [`buildSubgraph`](@ref)
+# - [`getSubgraph`](@ref)
 # - [`listNeighborhood`](@ref)
 # - [`deepcopyGraph`](@ref)
 # """
@@ -455,7 +455,7 @@ NOTE: `copyGraphMetadata` is deprecated – use agent/graph Bloblets instead.
 Related:
 - [`deepcopyGraph`](@ref)
 - [`deepcopyGraph!`](@ref)
-- [`buildSubgraph`](@ref)
+- [`getSubgraph`](@ref)
 - [`listNeighborhood`](@ref)
 - [`mergeGraph!`](@ref)
 """
@@ -528,7 +528,7 @@ Copy nodes from one graph into another graph by making deepcopies.
 see [`copyGraph!`](@ref) for more detail.
 Related:
 - [`deepcopyGraph`](@ref)
-- [`buildSubgraph`](@ref)
+- [`getSubgraph`](@ref)
 - [`listNeighborhood`](@ref)
 - [`mergeGraph!`](@ref)
 """
@@ -556,7 +556,7 @@ Copy nodes from one graph into a new graph by making deepcopies.
 see [`copyGraph!`](@ref) for more detail.
 Related:
 - [`deepcopyGraph!`](@ref)
-- [`buildSubgraph`](@ref)
+- [`getSubgraph`](@ref)
 - [`listNeighborhood`](@ref)
 - [`mergeGraph!`](@ref)
 """
@@ -634,40 +634,9 @@ end
 # - A better noun is maybe Path or simply listFactors with a fancy filter, something like:
 #     - [list/get]Path(dfg, from, to; algorithm...)
 # the `search` verb can also come ito play, but it is more for knn search type functions.
-"""
-    $SIGNATURES
 
-Relatively naive function counting linearly from-to
-
-DevNotes
-- Convert to using Graphs shortest path methods instead.
-"""
-#
-function findFactorsBetweenNaive(
-    dfg::AbstractDFG,
-    from::Symbol,
-    to::Symbol,
-    assertSingles::Bool = false,
-)
-    #
-    @info "findFactorsBetweenNaive is naive linear number method -- improvements welcome"
-    SRT = getVariableLabelNumber(from)
-    STP = getVariableLabelNumber(to)
-    prefix = string(from)[1]
-    @assert prefix == string(to)[1] "from-to prefixes must match, one is $prefix, other $(string(to)[1])"
-    prev = from
-    fctlist = Symbol[]
-    for num = (SRT + 1):STP
-        next = Symbol(prefix, num)
-        fct = intersect(ls(dfg, prev), ls(dfg, next))
-        if assertSingles
-            @assert length(fct) == 1 "assertSingles=true, won't return multiple factors joining variables at this time"
-        end
-        union!(fctlist, fct)
-        prev = next
-    end
-
-    return fctlist
+function findFactorsBetweenNaive(args...)
+    return error("findFactorsBetweenNaive is obsolete, use DFG.findPath[s] instead.")
 end
 
 #TODO deprecate `is` is the correct verb, but rather isHomogeneous(path::Path) the form is isAdjective
@@ -689,4 +658,60 @@ function isPathFactorsHomogeneous(dfg::AbstractDFG, from::Symbol, to::Symbol)
     types = getObservation.(dfg, pth) .|> typeof .|> x -> (x).name #TODO this might not be correct in julia 1.6
     utyp = unique(types)
     return (length(utyp) == 1), utyp
+end
+
+# deprecated use filter and path separately.
+function findShortestPathDijkstra(
+    dfg::GraphsDFG,
+    from::Symbol,
+    to::Symbol;
+    labelFilterVariables::Union{Function, Nothing} = nothing,
+    labelFilterFactors::Union{Function, Nothing} = nothing,
+    tagsFilterVariables::Union{Function, Nothing} = nothing,
+    tagsFilterFactors::Union{Function, Nothing} = nothing,
+    typeFilterVariables::Union{Function, Nothing} = nothing,
+    typeFilterFactors::Union{Function, Nothing} = nothing,
+    solvableFilter::Union{Function, Nothing} = nothing,
+    initialized::Union{Nothing, Bool} = nothing,
+)
+    Base.depwarn(
+        "findShortestPathDijkstra is deprecated, use findPath with `variableLabels`/`factorLabels` kwargs instead.",
+        :findShortestPathDijkstra,
+    )
+    any_active_filters = any(
+        .!isnothing.([labelFilterVariables, labelFilterFactors, tagsFilterVariables, tagsFilterFactors, typeFilterVariables, typeFilterFactors, initialized, solvableFilter]),
+    )
+
+    if any_active_filters
+        varList = listVariables(
+            dfg;
+            labelFilter = labelFilterVariables,
+            tagsFilter = tagsFilterVariables,
+            typeFilter = typeFilterVariables,
+            solvableFilter,
+        )
+        fctList = listFactors(
+            dfg;
+            labelFilter = labelFilterFactors,
+            tagsFilter = tagsFilterFactors,
+            typeFilter = typeFilterFactors,
+            solvableFilter,
+        )
+
+        varList = if initialized !== nothing
+            initmask = isInitialized.(dfg, varList) .== initialized
+            varList[initmask]
+        else
+            varList
+        end
+        restrict_labels = vcat(varList, fctList)
+        subdfg = DFG.getSubgraph(
+            GraphsDFG{NoSolverParams, VariableSkeleton, FactorSkeleton},
+            dfg,
+            restrict_labels,
+        )
+        return findPath(subdfg, from, to).path
+    else
+        return findPath(dfg, from, to).path
+    end
 end

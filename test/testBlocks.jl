@@ -1518,21 +1518,21 @@ function BuildingSubgraphs(testDFGAPI; VARTYPE = VariableDFG, FACTYPE = FactorDF
     # "Getting Subgraphs"
     dfg, verts, facs = connectivityTestGraph(testDFGAPI, VARTYPE, FACTYPE)
     # Subgraphs
-    dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [verts[1].label], 2)
+    dfgSubgraph = getSubgraph(testDFGAPI, dfg, [verts[1].label], 2)
     # Only returns x1 and x2
     @test issetequal([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
     #
-    dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [:x1, :x2, :x1x2f1])
+    dfgSubgraph = getSubgraph(testDFGAPI, dfg, [:x1, :x2, :x1x2f1])
     # Only returns x1 and x2
     @test issetequal([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
 
-    dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [:x1x2f1], 1)
+    dfgSubgraph = getSubgraph(testDFGAPI, dfg, [:x1x2f1], 1)
     # Only returns x1 and x2
     @test issetequal([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
 
     #TODO if not a GraphsDFG with and summary or skeleton
     if VARTYPE == VariableDFG
-        dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [:x8], 2; solvableFilter = >=(1))
+        dfgSubgraph = getSubgraph(testDFGAPI, dfg, [:x8], 2; solvableFilter = >=(1))
         @test issetequal([:x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
         #end if not a GraphsDFG with and summary or skeleton
     end
@@ -1540,25 +1540,25 @@ function BuildingSubgraphs(testDFGAPI; VARTYPE = VariableDFG, FACTYPE = FactorDF
     # REF: https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/95
     for fId in listVariables(dfg)
         # Get a subgraph of this and it's related factors+variables
-        dfgSubgraph = buildSubgraph(testDFGAPI, dfg, [fId], 2)
+        dfgSubgraph = getSubgraph(testDFGAPI, dfg, [fId], 2)
         # For each factor check that the order the copied graph == original
         for fact in getFactors(dfgSubgraph)
             @test fact.variableorder == getFactor(dfg, fact.label).variableorder
         end
     end
 
-    #TODO buildSubgraph default constructors for skeleton and summary
+    #TODO getSubgraph default constructors for skeleton and summary
     if VARTYPE == VariableDFG
-        dfgSubgraph = buildSubgraph(dfg, [:x1, :x2, :x1x2f1])
+        dfgSubgraph = getSubgraph(dfg, [:x1, :x2, :x1x2f1])
         @test issetequal([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
 
-        dfgSubgraph = buildSubgraph(dfg, [:x2, :x3], 2)
+        dfgSubgraph = getSubgraph(dfg, [:x2, :x3], 2)
         @test issetequal(
             [:x2, :x3, :x1, :x4, :x3x4f1, :x1x2f1, :x2x3f1],
             [ls(dfgSubgraph)..., lsf(dfgSubgraph)...],
         )
 
-        dfgSubgraph = buildSubgraph(dfg, [:x1x2f1], 1)
+        dfgSubgraph = getSubgraph(dfg, [:x1x2f1], 1)
         @test issetequal([:x1, :x1x2f1, :x2], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
     end
 end
@@ -1635,7 +1635,7 @@ function ProducingDotFiles(
     # │   caller = ProducingDotFiles(testDFGAPI::Type{GraphsDFG}, v1::Nothing, v2::Nothing, f1::Nothing; VARTYPE::Type{VariableDFG}, FACTYPE::Type{FactorDFG}) at testBlocks.jl:1440
     # └ @ Main ~/.julia/dev/DistributedFactorGraphs/test/testBlocks.jl:1440
     addFactor!(dotdfg, f1)
-    #NOTE hardcoded toDot will have different results so test Graphs seperately
+    #NOTE hardcoded toDot will have different results so test Graphs separately
     if testDFGAPI <: GraphsDFG || testDFGAPI <: GraphsDFG
         todotstr = DFG.toDot(dotdfg)
         todota =
@@ -1846,4 +1846,137 @@ function FileDFGTestBlock(testDFGAPI; VARTYPE = VariableDFG, FACTYPE = FactorDFG
 
     @test issetequal(ls(dfg), ls(skeletondfg))
     @test issetequal(lsf(dfg), lsf(skeletondfg))
+end
+
+function PathFindingTests(testDFGAPI)
+    # Graph layout (connectivityTestGraph):
+    # x1 - x1x2f1 - x2 - x2x3f1 - x3 - x3x4f1 - x4 - x4x5f1 - x5
+    #   - x5x6f1 - x6 - x6x7f1 - x7 - x7x8f1 - x8 - x8x9f1 - x9 - x9x10f1 - x10
+    # Variable types: x1..x5 = TestVariableType1, x6..x10 = TestVariableType2
+    # Solvable defaults: x8=0, x9=0, x7x8f1=0; rest = 1
+    dfg, verts, facs = connectivityTestGraph(testDFGAPI, VariableDFG, FactorDFG)
+
+    # Add cross-link factors to create loops for multi-path testing
+    # x1 -- x1x3f1 -- x3  (shortcut bypassing x2)
+    # x2 -- x2x4f1 -- x4  (shortcut bypassing x3)
+    addFactor!(dfg, FactorDFG(:x1x3f1, [:x1, :x3], TestFunctorInferenceType1()))
+    addFactor!(dfg, FactorDFG(:x2x4f1, [:x2, :x4], TestFunctorInferenceType1()))
+
+    # --- Basic findPaths / findPath (no restrictions) ---
+    result = findPath(dfg, :x1, :x3)
+    # shortest path should be via the direct link x1-x1x3f1-x3 (dist=2) not via x2 (dist=4)
+    @test result.path == [:x1, :x1x3f1, :x3]
+    @test result.dist == 2
+
+    # Multiple paths from x1 to x4:
+    # 1) x1-x1x2f1-x2-x2x4f1-x4  (dist=4)
+    # 2) x1-x1x3f1-x3-x3x4f1-x4  (dist=4)
+    # 3) x1-x1x2f1-x2-x2x3f1-x3-x3x4f1-x4  (dist=6)
+    # 4) x1-x1x3f1-x3-x2x3f1-x2-x2x4f1-x4  (dist=6)
+    results = findPaths(dfg, :x1, :x4, 4)
+    @test length(results) >= 2
+    @test results[1].dist <= results[end].dist  # sorted by distance
+
+    # path across the whole graph
+    full_path = findPath(dfg, :x1, :x10)
+    @test :x1 == first(full_path.path)
+    @test :x10 == last(full_path.path)
+
+    # --- Restrict with variableLabels only (all factors kept) ---
+    # Restrict to x1..x5 variables.  Factors connecting only those vars are auto-included.
+    vars_subset = listVariables(dfg; typeFilter = ==(TestVariableType1()))
+    result_restricted = findPath(dfg, :x1, :x5; variableLabels = vars_subset)
+    @test first(result_restricted.path) == :x1
+    @test last(result_restricted.path) == :x5
+    # x6..x10 should NOT appear on the path
+    @test isempty(intersect(result_restricted.path, [:x6, :x7, :x8, :x9, :x10]))
+
+    # --- Restrict with factorLabels only (all variables kept) ---
+    # Only allow the first 4 factors, path x1→x5 should still work
+    facs_first4 = listFactors(dfg; labelFilter = contains(r"x[1-4](?!\d)"))
+    result_fac = findPath(dfg, :x1, :x5; factorLabels = facs_first4)
+    @test first(result_fac.path) == :x1
+    @test last(result_fac.path) == :x5
+
+    # --- Restrict with both variableLabels and factorLabels ---
+    vars_1to5 = listVariables(dfg; typeFilter = ==(TestVariableType1()))
+    facs_1to4 = listFactors(dfg; labelFilter = contains(r"x[1-4](?!\d)"))
+    result_both =
+        findPath(dfg, :x1, :x5; variableLabels = vars_1to5, factorLabels = facs_1to4)
+    @test first(result_both.path) == :x1
+    @test last(result_both.path) == :x5
+
+    # --- With solvableFilter ---
+    # Only solvable >= 1 variables (excludes x8, x9)
+    solvable_vars = listVariables(dfg; solvableFilter = >=(1))
+    solvable_facs = listFactors(dfg; solvableFilter = >=(1))
+    # Path from x1 to x7 should work (all solvable)
+    result_solvable = findPath(
+        dfg,
+        :x1,
+        :x7;
+        variableLabels = solvable_vars,
+        factorLabels = solvable_facs,
+    )
+    @test first(result_solvable.path) == :x1
+    @test last(result_solvable.path) == :x7
+    # x8 and x9 (unsolvable) should not appear
+    @test :x8 ∉ result_solvable.path
+    @test :x9 ∉ result_solvable.path
+
+    # Path from x1 to x10 with solvable filter should fail (x8, x9, x7x8f1 block the way)
+    paths_blocked = findPaths(
+        dfg,
+        :x1,
+        :x10,
+        1;
+        variableLabels = solvable_vars,
+        factorLabels = solvable_facs,
+    )
+    @test isempty(paths_blocked)
+
+    # And the singular findPath should return nothing
+    @test isnothing(
+        findPath(
+            dfg,
+            :x1,
+            :x10;
+            variableLabels = solvable_vars,
+            factorLabels = solvable_facs,
+        ),
+    )
+
+    # --- With tagsFilter ---
+    # By default all variables have :VARIABLE tag. Tag some for testing.
+    mergeTags!(dfg, :x3, Set([:LANDMARK]))
+    mergeTags!(dfg, :x4, Set([:LANDMARK]))
+    landmark_vars = listVariables(dfg; tagsFilter = ⊇([:LANDMARK]))
+    @test :x3 ∈ landmark_vars
+    @test :x4 ∈ landmark_vars
+    # Restrict to only LANDMARK variables - x1 is not a LANDMARK, so include it to enable the path
+    vars_with_x1 = union([:x1, :x2], landmark_vars)
+    result_tags = findPath(dfg, :x1, :x4; variableLabels = vars_with_x1)
+    @test first(result_tags.path) == :x1
+    @test last(result_tags.path) == :x4
+    # x5..x10 should not be on this path
+    @test isempty(intersect(result_tags.path, [:x5, :x6, :x7, :x8, :x9, :x10]))
+
+    # --- findPaths with k > 1 on looped graph ---
+    # With cross-links x1x3f1 and x2x4f1. Multiple paths exist from x1 to x4.
+    results_multi = findPaths(dfg, :x1, :x4, 5)
+    @test length(results_multi) >= 2
+    # All paths should start at x1 and end at x4
+    for r in results_multi
+        @test first(r.path) == :x1
+        @test last(r.path) == :x4
+    end
+    # Distances should be non-decreasing
+    @test issorted([r.dist for r in results_multi])
+
+    # --- Error: no path exists ---
+    # Disconnect x10 by removing the factor
+    deleteFactor!(dfg, :x9x10f1)
+    @test isnothing(findPath(dfg, :x1, :x10))
+    empty_paths = findPaths(dfg, :x1, :x10, 1)
+    @test isempty(empty_paths)
 end

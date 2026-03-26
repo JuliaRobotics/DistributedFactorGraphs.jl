@@ -251,11 +251,16 @@ Implement `getFactor(dfg::AbstractDFG, label::Symbol)`
 """
 function getFactor end
 
+#TODO implement
+function getFactorSkeleton end
+function getFactorSummary end
 """
     $(SIGNATURES)
 Get the skeleton factors from a DFG as a Vector{FactorSkeleton}.
 """
 function getFactorsSkeleton end
+#TODO implement
+function getFactorsSummary end
 
 function Base.getindex(dfg::AbstractDFG, lbl::Symbol)
     if isVariable(dfg, lbl)
@@ -380,6 +385,37 @@ Retrieve a list of labels of the immediate neighbors around a given variable or 
 Implement `listNeighbors(dfg::AbstractDFG, label::Symbol; solvableFilter, tagsFilter)`
 """
 function listNeighbors end
+
+"""
+    findPaths(dfg, from::Symbol, to::Symbol, k::Int; variableLabels, factorLabels, kwargs...)
+
+Return the `k` shortest paths between `from` and `to` in the factor graph.
+Each result is a `(path = Vector{Symbol}, dist)` named tuple.
+
+Optional keyword arguments restrict which variables and/or factors may appear on
+the path.  When neither is given the full graph is used.  When only one is
+provided the other defaults to all labels of that kind in `dfg`.
+
+Typical usage with filters:
+```julia
+vars = listVariables(dfg; solvableFilter = >=(1))
+facs = listFactors(dfg; solvableFilter = >=(1))
+findPaths(dfg, :x1, :x5, 3; variableLabels = vars, factorLabels = facs)
+```
+
+See also: [`findPath`](@ref), [`listVariables`](@ref), [`listFactors`](@ref)
+"""
+function findPaths end
+
+"""
+    findPath(dfg, from::Symbol, to::Symbol; variableLabels, factorLabels, kwargs...)
+
+Return the single shortest path between `from` and `to`.
+Errors if no path exists (use `findPaths` for graphs that may be disconnected).
+
+Accepts the same restriction keywords as [`findPaths`](@ref).
+"""
+function findPath end
 
 function listNeighbors(dfg::AbstractDFG, node::AbstractGraphNode; kwargs...)
     return listNeighbors(dfg, getLabel(node); kwargs...)
@@ -534,7 +570,7 @@ function getSubgraph(
     if !isnothing(solvable)
         Base.depwarn(
             "solvable kwarg is deprecated, use kwarg `solvableFilter = (>=solvable)` instead", #v0.29
-            :buildSubgraph,
+            :getSubgraph,
         )
         !isnothing(solvableFilter) &&
             error("Cannot use both solvable and solvableFilter kwargs.")
@@ -549,13 +585,13 @@ function getSubgraph(
     return destDFG
 end
 
-function buildSubgraph(
+function getSubgraph(
     dfg::AbstractDFG,
     variableFactorLabels::Vector{Symbol},
     distance::Int = 0;
     kwargs...,
 )
-    return buildSubgraph(LocalDFG, dfg, variableFactorLabels, distance; kwargs...)
+    return getSubgraph(LocalDFG, dfg, variableFactorLabels, distance; kwargs...)
 end
 
 """
