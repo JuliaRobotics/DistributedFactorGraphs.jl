@@ -251,11 +251,16 @@ Implement `getFactor(dfg::AbstractDFG, label::Symbol)`
 """
 function getFactor end
 
+#TODO implement
+function getFactorSkeleton end
+function getFactorSummary end
 """
     $(SIGNATURES)
 Get the skeleton factors from a DFG as a Vector{FactorSkeleton}.
 """
 function getFactorsSkeleton end
+#TODO implement
+function getFactorsSummary end
 
 function Base.getindex(dfg::AbstractDFG, lbl::Symbol)
     if isVariable(dfg, lbl)
