@@ -1449,10 +1449,7 @@ function GettingNeighbors(testDFGAPI; VARTYPE = VariableDFG, FACTYPE = FactorDFG
     #TODO if not a GraphsDFG with and summary or skeleton
     if VARTYPE == VariableDFG
         @test listNeighbors(dfg, :x5; whereSolvable = >=(2)) == Symbol[]
-        @test issetequal(
-            listNeighbors(dfg, :x5; whereSolvable = >=(0)),
-            [:x4x5f1, :x5x6f1],
-        )
+        @test issetequal(listNeighbors(dfg, :x5; whereSolvable = >=(0)), [:x4x5f1, :x5x6f1])
         @test issetequal(listNeighbors(dfg, :x5), [:x4x5f1, :x5x6f1])
         @test listNeighbors(dfg, :x7x8f1; whereSolvable = >=(0)) == [:x7, :x8]
         @test listNeighbors(dfg, :x7x8f1; whereSolvable = >=(1)) == [:x7]

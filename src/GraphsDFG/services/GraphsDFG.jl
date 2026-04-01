@@ -511,10 +511,7 @@ function getGraphBlobentries(fg::GraphsDFG; whereLabel::Union{Nothing, Function}
     return entries
 end
 
-function listGraphBlobentries(
-    fg::GraphsDFG;
-    whereLabel::Union{Nothing, Function} = nothing,
-)
+function listGraphBlobentries(fg::GraphsDFG; whereLabel::Union{Nothing, Function} = nothing)
     labels = collect(keys(fg.graph.blobentries))
     filterDFG!(labels, whereLabel, string)
     return labels
