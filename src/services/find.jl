@@ -49,14 +49,14 @@ ls, listVariables, findClosestTimestamp
 function findVariablesNearTimestamp(
     dfg::AbstractDFG,
     query_timestamp::TimeDateZone;
-    labelFilter::Union{Nothing, Function} = nothing,
-    tagsFilter::Union{Nothing, Function} = nothing,
-    solvableFilter::Union{Nothing, Function} = nothing,
+    whereLabel::Union{Nothing, Function} = nothing,
+    whereTags::Union{Nothing, Function} = nothing,
+    whereSolvable::Union{Nothing, Function} = nothing,
     number::Int = 1,
 )
     #
     # get the variable labels based on filters
-    vls = listVariables(dfg; labelFilter, tagsFilter, solvableFilter)
+    vls = listVariables(dfg; whereLabel, whereTags, whereSolvable)
     # compile timestamps with label
     # vars = map( x->getVariable(dfg, x), vls )
     timeset = map(x -> (getTimestamp(getVariable(dfg, x)), x), vls)

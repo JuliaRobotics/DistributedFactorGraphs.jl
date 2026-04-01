@@ -523,7 +523,7 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
 
     if getVariable(fg, ls(fg)[1]) isa VariableDFG
         @test :default in DFG.listStates(fg)
-        @test :default in DFG.listStates(fg; labelFilter = contains("default") ∘ string)
+        @test :default in DFG.listStates(fg; whereLabel = contains("default") ∘ string)
         @test :default in DFG.listStates(fg)
     end
 
@@ -554,8 +554,8 @@ function tagsTestBlock!(fg, v1, v1_tags)
     @test hasTags(fg, :b, [:LANDMARK])
     @test !hasTags(fg, :b, [:LANDMARK, :TAG])
 
-    @test listNeighbors(fg, :abf1; tagsFilter = ⊇([:LANDMARK])) == [:b]
-    @test isempty(listNeighbors(fg, :abf1; tagsFilter = ⊇([:LANDMARK, :TAG])))
+    @test listNeighbors(fg, :abf1; whereTags = ⊇([:LANDMARK])) == [:b]
+    @test isempty(listNeighbors(fg, :abf1; whereTags = ⊇([:LANDMARK, :TAG])))
 
     # Test specific type tag accessors
     @test issetequal(listVariableTags(fg, :a), listTags(fg, :a))
@@ -804,7 +804,7 @@ function statesExtendedTestBlock!(fg)
 
     # listStates with filters
     @test :default in listStates(fg, :a)
-    @test listStates(fg, :a; labelFilter = ==(Symbol("default")) ∘ identity) == [:default]
+    @test listStates(fg, :a; whereLabel = ==(Symbol("default")) ∘ identity) == [:default]
 
     # listStates across dfg returns Vector
     all_states = listStates(fg)
@@ -1036,8 +1036,8 @@ function blobsStoresTestBlock!(fg)
     # test collecting blobentries with filters
     gathered = DFG.gatherBlobentries(
         fg;
-        variableLabelFilter = contains("a"),
-        labelFilter = contains("1"),
+        whereVariableLabel = contains("a"),
+        whereLabel = contains("1"),
     )
     @test first(gathered[1]) == :a
     @test last(gathered[1])[1] == getVariableBlobentry(fg, :a, :label1)
@@ -1164,44 +1164,44 @@ function testGroup!(fg, v1, v2, f0, f1)
 
         ## SORT copied from CRUD
         @test all(
-            getVariables(fg; labelFilter = contains(r"a")) .== [getVariable(fg, v1.label)],
+            getVariables(fg; whereLabel = contains(r"a")) .== [getVariable(fg, v1.label)],
         )
-        @test all(getVariables(fg; solvableFilter = >=(1)) .== [getVariable(fg, v2.label)])
-        @test getVariables(fg; labelFilter = contains(r"a"), solvableFilter = >=(1)) == []
-        @test getVariables(fg; tagsFilter = ⊇([:LANDMARK]))[1] == getVariable(fg, v2.label)
+        @test all(getVariables(fg; whereSolvable = >=(1)) .== [getVariable(fg, v2.label)])
+        @test getVariables(fg; whereLabel = contains(r"a"), whereSolvable = >=(1)) == []
+        @test getVariables(fg; whereTags = ⊇([:LANDMARK]))[1] == getVariable(fg, v2.label)
 
-        @test getFactors(fg; labelFilter = contains(r"nope")) == []
-        @test issetequal(getLabel.(getFactors(fg; solvableFilter = >=(1))), [:af1, :abf1])
-        @test getFactors(fg; solvableFilter = >=(2)) == []
-        @test getFactors(fg; tagsFilter = ⊇([:tag1]))[1] == f1
-        @test getFactors(fg; tagsFilter = ⊇([:PRIOR]))[1] == f0
+        @test getFactors(fg; whereLabel = contains(r"nope")) == []
+        @test issetequal(getLabel.(getFactors(fg; whereSolvable = >=(1))), [:af1, :abf1])
+        @test getFactors(fg; whereSolvable = >=(2)) == []
+        @test getFactors(fg; whereTags = ⊇([:tag1]))[1] == f1
+        @test getFactors(fg; whereTags = ⊇([:PRIOR]))[1] == f0
         ##/SORT
 
         # Additional testing for https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/201
         # list solvable
-        @test symdiff([:a, :b], listVariables(fg; solvableFilter = >=(0))) == []
-        @test listVariables(fg; solvableFilter = >=(1)) == [:b]
+        @test symdiff([:a, :b], listVariables(fg; whereSolvable = >=(0))) == []
+        @test listVariables(fg; whereSolvable = >=(1)) == [:b]
 
-        @test issetequal(listFactors(fg; solvableFilter = >=(1)), [:af1, :abf1])
-        @test issetequal(listFactors(fg; solvableFilter = >=(0)), [:af1, :abf1])
-        @test all([f in [f0, f1] for f in getFactors(fg; solvableFilter = >=(1))])
+        @test issetequal(listFactors(fg; whereSolvable = >=(1)), [:af1, :abf1])
+        @test issetequal(listFactors(fg; whereSolvable = >=(0)), [:af1, :abf1])
+        @test all([f in [f0, f1] for f in getFactors(fg; whereSolvable = >=(1))])
 
         @test lsf(fg, :b) == [f1.label]
 
         # Tags
-        @test ls(fg; tagsFilter = ⊇([:POSE])) == []
+        @test ls(fg; whereTags = ⊇([:POSE])) == []
         @test issetequal(
-            ls(fg; tagsFilter = !isdisjoint([:POSE, :LANDMARK])),
-            ls(fg; tagsFilter = ⊇([:VARIABLE])),
+            ls(fg; whereTags = !isdisjoint([:POSE, :LANDMARK])),
+            ls(fg; whereTags = ⊇([:VARIABLE])),
         )
 
-        @test lsf(fg; tagsFilter = !isdisjoint([:NONE])) == []
-        @test lsf(fg; tagsFilter = ⊇([:NONE])) == []
-        @test lsf(fg; tagsFilter = ⊇([:PRIOR])) == [:af1]
+        @test lsf(fg; whereTags = !isdisjoint([:NONE])) == []
+        @test lsf(fg; whereTags = ⊇([:NONE])) == []
+        @test lsf(fg; whereTags = ⊇([:PRIOR])) == [:af1]
 
         # Regexes
-        @test ls(fg; labelFilter = contains(r"a")) == [v1.label]
-        @test lsf(fg; labelFilter = contains(r"abf*")) == [f1.label]
+        @test ls(fg; whereLabel = contains(r"a")) == [v1.label]
+        @test lsf(fg; whereLabel = contains(r"abf*")) == [f1.label]
 
         #TODO test filters and options
         # regexFilter::Union{Nothing, Regex}=nothing;
@@ -1349,13 +1349,13 @@ function AdjacencyMatricesTestBlock(fg)
     # Only do solvable tests on VariableDFG
     if isa(getVariable(fg, :a), VariableDFG)
         # Filtered - REF DFG #201
-        adjMat, v_ll, f_ll = getBiadjacencyMatrix(fg; solvableFilter = >=(0))
+        adjMat, v_ll, f_ll = getBiadjacencyMatrix(fg; whereSolvable = >=(0))
         @test size(adjMat) == (1, 3)
         @test symdiff(v_ll, [:a, :b, :orphan]) == Symbol[]
         @test symdiff(f_ll, [:abf1]) == Symbol[]
 
         # sparse
-        adjMat, v_ll, f_ll = getBiadjacencyMatrix(fg; solvableFilter = >=(1))
+        adjMat, v_ll, f_ll = getBiadjacencyMatrix(fg; whereSolvable = >=(1))
         @test size(adjMat) == (1, 2)
         @test issetequal(v_ll, [:a, :b])
         @test f_ll == [:abf1]
@@ -1448,16 +1448,13 @@ function GettingNeighbors(testDFGAPI; VARTYPE = VariableDFG, FACTYPE = FactorDFG
     # Solvable
     #TODO if not a GraphsDFG with and summary or skeleton
     if VARTYPE == VariableDFG
-        @test listNeighbors(dfg, :x5; solvableFilter = >=(2)) == Symbol[]
-        @test issetequal(
-            listNeighbors(dfg, :x5; solvableFilter = >=(0)),
-            [:x4x5f1, :x5x6f1],
-        )
+        @test listNeighbors(dfg, :x5; whereSolvable = >=(2)) == Symbol[]
+        @test issetequal(listNeighbors(dfg, :x5; whereSolvable = >=(0)), [:x4x5f1, :x5x6f1])
         @test issetequal(listNeighbors(dfg, :x5), [:x4x5f1, :x5x6f1])
-        @test listNeighbors(dfg, :x7x8f1; solvableFilter = >=(0)) == [:x7, :x8]
-        @test listNeighbors(dfg, :x7x8f1; solvableFilter = >=(1)) == [:x7]
-        @test listNeighbors(dfg, verts[1]; solvableFilter = >=(0)) == [:x1x2f1]
-        @test listNeighbors(dfg, verts[1]; solvableFilter = >=(2)) == Symbol[]
+        @test listNeighbors(dfg, :x7x8f1; whereSolvable = >=(0)) == [:x7, :x8]
+        @test listNeighbors(dfg, :x7x8f1; whereSolvable = >=(1)) == [:x7]
+        @test listNeighbors(dfg, verts[1]; whereSolvable = >=(0)) == [:x1x2f1]
+        @test listNeighbors(dfg, verts[1]; whereSolvable = >=(2)) == Symbol[]
         @test listNeighbors(dfg, verts[1]) == [:x1x2f1]
     end
 end
@@ -1532,7 +1529,7 @@ function BuildingSubgraphs(testDFGAPI; VARTYPE = VariableDFG, FACTYPE = FactorDF
 
     #TODO if not a GraphsDFG with and summary or skeleton
     if VARTYPE == VariableDFG
-        dfgSubgraph = getSubgraph(testDFGAPI, dfg, [:x8], 2; solvableFilter = >=(1))
+        dfgSubgraph = getSubgraph(testDFGAPI, dfg, [:x8], 2; whereSolvable = >=(1))
         @test issetequal([:x7], [ls(dfgSubgraph)..., lsf(dfgSubgraph)...])
         #end if not a GraphsDFG with and summary or skeleton
     end
@@ -1884,7 +1881,7 @@ function PathFindingTests(testDFGAPI)
 
     # --- Restrict with variableLabels only (all factors kept) ---
     # Restrict to x1..x5 variables.  Factors connecting only those vars are auto-included.
-    vars_subset = listVariables(dfg; typeFilter = ==(TestVariableType1()))
+    vars_subset = listVariables(dfg; whereType = ==(TestVariableType1()))
     result_restricted = findPath(dfg, :x1, :x5; variableLabels = vars_subset)
     @test first(result_restricted.path) == :x1
     @test last(result_restricted.path) == :x5
@@ -1893,23 +1890,23 @@ function PathFindingTests(testDFGAPI)
 
     # --- Restrict with factorLabels only (all variables kept) ---
     # Only allow the first 4 factors, path x1→x5 should still work
-    facs_first4 = listFactors(dfg; labelFilter = contains(r"x[1-4](?!\d)"))
+    facs_first4 = listFactors(dfg; whereLabel = contains(r"x[1-4](?!\d)"))
     result_fac = findPath(dfg, :x1, :x5; factorLabels = facs_first4)
     @test first(result_fac.path) == :x1
     @test last(result_fac.path) == :x5
 
     # --- Restrict with both variableLabels and factorLabels ---
-    vars_1to5 = listVariables(dfg; typeFilter = ==(TestVariableType1()))
-    facs_1to4 = listFactors(dfg; labelFilter = contains(r"x[1-4](?!\d)"))
+    vars_1to5 = listVariables(dfg; whereType = ==(TestVariableType1()))
+    facs_1to4 = listFactors(dfg; whereLabel = contains(r"x[1-4](?!\d)"))
     result_both =
         findPath(dfg, :x1, :x5; variableLabels = vars_1to5, factorLabels = facs_1to4)
     @test first(result_both.path) == :x1
     @test last(result_both.path) == :x5
 
-    # --- With solvableFilter ---
+    # --- With whereSolvable ---
     # Only solvable >= 1 variables (excludes x8, x9)
-    solvable_vars = listVariables(dfg; solvableFilter = >=(1))
-    solvable_facs = listFactors(dfg; solvableFilter = >=(1))
+    solvable_vars = listVariables(dfg; whereSolvable = >=(1))
+    solvable_facs = listFactors(dfg; whereSolvable = >=(1))
     # Path from x1 to x7 should work (all solvable)
     result_solvable = findPath(
         dfg,
@@ -1946,11 +1943,11 @@ function PathFindingTests(testDFGAPI)
         ),
     )
 
-    # --- With tagsFilter ---
+    # --- With whereTags ---
     # By default all variables have :VARIABLE tag. Tag some for testing.
     mergeTags!(dfg, :x3, Set([:LANDMARK]))
     mergeTags!(dfg, :x4, Set([:LANDMARK]))
-    landmark_vars = listVariables(dfg; tagsFilter = ⊇([:LANDMARK]))
+    landmark_vars = listVariables(dfg; whereTags = ⊇([:LANDMARK]))
     @test :x3 ∈ landmark_vars
     @test :x4 ∈ landmark_vars
     # Restrict to only LANDMARK variables - x1 is not a LANDMARK, so include it to enable the path
