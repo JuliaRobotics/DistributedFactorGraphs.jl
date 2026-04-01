@@ -222,7 +222,7 @@ function listNeighbors(
 )
     if !isnothing(solvable)
         Base.depwarn(
-            "solvable kwarg is deprecated, use kwarg `whereSolvable = (>=solvable)` instead", #v0.29
+            "solvable kwarg is deprecated, use kwarg `whereSolvable = >=(solvable)` instead", #v0.29
             :listNeighbors,
         )
         !isnothing(whereSolvable) &&
@@ -261,7 +261,7 @@ function listNeighborhood(
 )
     if !isnothing(solvable)
         Base.depwarn(
-            "solvable kwarg is deprecated, use kwarg `whereSolvable = (>=solvable)` instead", #v0.29
+            "solvable kwarg is deprecated, use kwarg `whereSolvable = >=(solvable)` instead", #v0.29
             :listNeighborhood,
         )
         !isnothing(whereSolvable) &&

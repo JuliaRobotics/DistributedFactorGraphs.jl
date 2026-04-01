@@ -567,7 +567,7 @@ function getSubgraph(
 ) where {G <: AbstractDFG}
     if !isnothing(solvable)
         Base.depwarn(
-            "solvable kwarg is deprecated, use kwarg `whereSolvable = (>=solvable)` instead", #v0.29
+            "solvable kwarg is deprecated, use kwarg `whereSolvable = >=(solvable)` instead", #v0.29
             :getSubgraph,
         )
         !isnothing(whereSolvable) &&
