@@ -279,7 +279,7 @@ function hasTagsNeighbors(
 )
     #
     Base.depwarn(
-        "hasTagsNeighbors is deprecated, use listNeighbors with tagsFilter instead",
+        "hasTagsNeighbors is deprecated, use listNeighbors with whereTags instead",
         :hasTagsNeighbors,
     )
     # assume only variables or factors are neighbors
@@ -337,11 +337,11 @@ end
 # Deprecated in favor of getBiadjacencyMatrix as it is not efficient for large graphs.
 function getAdjacencyMatrixSymbols(
     dfg::AbstractDFG;
-    solvableFilter::Union{Nothing, Function} = nothing,
+    whereSolvable::Union{Nothing, Function} = nothing,
 )
     #
-    varLabels = sort(map(v -> v.label, getVariables(dfg; solvableFilter)))
-    factLabels = sort(map(f -> f.label, getFactors(dfg; solvableFilter)))
+    varLabels = sort(map(v -> v.label, getVariables(dfg; whereSolvable)))
+    factLabels = sort(map(f -> f.label, getFactors(dfg; whereSolvable)))
     vDict = Dict(varLabels .=> [1:length(varLabels)...] .+ 1)
 
     adjMat = Matrix{Union{Nothing, Symbol}}(
@@ -592,8 +592,8 @@ function mergeGraph!(
     variableLabels::Vector{Symbol},
     factorLabels::Vector{Symbol} = lsf(sourceDFG),
     distance::Int = 0;
-    solvableFilter = nothing,
-    tagsFilter = nothing,
+    whereSolvable = nothing,
+    whereTags = nothing,
     kwargs...,
 )
     Base.depwarn(
@@ -609,8 +609,8 @@ function mergeGraph!(
         sourceDFG,
         union(variableLabels, factorLabels),
         distance;
-        solvableFilter,
-        tagsFilter,
+        whereSolvable,
+        whereTags,
     )
 
     copyGraph!(
@@ -665,13 +665,13 @@ function findShortestPathDijkstra(
     dfg::GraphsDFG,
     from::Symbol,
     to::Symbol;
-    labelFilterVariables::Union{Function, Nothing} = nothing,
-    labelFilterFactors::Union{Function, Nothing} = nothing,
-    tagsFilterVariables::Union{Function, Nothing} = nothing,
-    tagsFilterFactors::Union{Function, Nothing} = nothing,
-    typeFilterVariables::Union{Function, Nothing} = nothing,
-    typeFilterFactors::Union{Function, Nothing} = nothing,
-    solvableFilter::Union{Function, Nothing} = nothing,
+    whereVariableLabel::Union{Function, Nothing} = nothing,
+    whereFactorLabel::Union{Function, Nothing} = nothing,
+    whereVariableTags::Union{Function, Nothing} = nothing,
+    whereFactorTags::Union{Function, Nothing} = nothing,
+    whereVariableType::Union{Function, Nothing} = nothing,
+    whereFactorType::Union{Function, Nothing} = nothing,
+    whereSolvable::Union{Function, Nothing} = nothing,
     initialized::Union{Nothing, Bool} = nothing,
 )
     Base.depwarn(
@@ -679,23 +679,23 @@ function findShortestPathDijkstra(
         :findShortestPathDijkstra,
     )
     any_active_filters = any(
-        .!isnothing.([labelFilterVariables, labelFilterFactors, tagsFilterVariables, tagsFilterFactors, typeFilterVariables, typeFilterFactors, initialized, solvableFilter]),
+        .!isnothing.([whereVariableLabel, whereFactorLabel, whereVariableTags, whereFactorTags, whereVariableType, whereFactorType, initialized, whereSolvable]),
     )
 
     if any_active_filters
         varList = listVariables(
             dfg;
-            labelFilter = labelFilterVariables,
-            tagsFilter = tagsFilterVariables,
-            typeFilter = typeFilterVariables,
-            solvableFilter,
+            whereLabel = whereVariableLabel,
+            whereTags = whereVariableTags,
+            whereType = whereVariableType,
+            whereSolvable,
         )
         fctList = listFactors(
             dfg;
-            labelFilter = labelFilterFactors,
-            tagsFilter = tagsFilterFactors,
-            typeFilter = typeFilterFactors,
-            solvableFilter,
+            whereLabel = whereFactorLabel,
+            whereTags = whereFactorTags,
+            whereType = whereFactorType,
+            whereSolvable,
         )
 
         varList = if initialized !== nothing

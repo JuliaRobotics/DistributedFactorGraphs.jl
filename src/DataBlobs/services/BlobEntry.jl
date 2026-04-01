@@ -12,12 +12,12 @@ end
 
 function getBlobentries(
     node;
-    labelFilter::Union{Nothing, Function} = nothing,
-    blobidFilter::Union{Nothing, Function} = nothing,
+    whereLabel::Union{Nothing, Function} = nothing,
+    whereBlobid::Union{Nothing, Function} = nothing,
 )
     entries = collect(values(refBlobentries(node)))
-    filterDFG!(entries, labelFilter, getLabel)
-    filterDFG!(entries, blobidFilter, x -> string(x.blobid))
+    filterDFG!(entries, whereLabel, getLabel)
+    filterDFG!(entries, whereBlobid, x -> string(x.blobid))
     return entries
 end
 
@@ -207,10 +207,10 @@ end
 function getVariableBlobentries(
     dfg::AbstractDFG,
     variableLabel::Symbol;
-    labelFilter::Union{Nothing, Function} = nothing,
-    blobidFilter::Union{Nothing, Function} = nothing,
+    whereLabel::Union{Nothing, Function} = nothing,
+    whereBlobid::Union{Nothing, Function} = nothing,
 )
-    return getBlobentries(getVariable(dfg, variableLabel); labelFilter, blobidFilter)
+    return getBlobentries(getVariable(dfg, variableLabel); whereLabel, whereBlobid)
 end
 
 function listVariableBlobentries(dfg::AbstractDFG, variableLabel::Symbol)
@@ -228,10 +228,10 @@ end
 function getFactorBlobentries(
     dfg::AbstractDFG,
     factorLabel::Symbol;
-    labelFilter::Union{Nothing, Function} = nothing,
-    blobidFilter::Union{Nothing, Function} = nothing,
+    whereLabel::Union{Nothing, Function} = nothing,
+    whereBlobid::Union{Nothing, Function} = nothing,
 )
-    return getBlobentries(getFactor(dfg, factorLabel); labelFilter, blobidFilter)
+    return getBlobentries(getFactor(dfg, factorLabel); whereLabel, whereBlobid)
 end
 
 function listFactorBlobentries(dfg::AbstractDFG, factorLabel::Symbol)
@@ -328,22 +328,22 @@ end
 
 function gatherBlobentries(
     dfg::AbstractDFG;
-    labelFilter::Union{Nothing, Function} = nothing,
-    blobidFilter::Union{Nothing, Function} = nothing,
-    solvableFilter::Union{Nothing, Function} = nothing,
-    tagsFilter::Union{Nothing, Function} = nothing,
-    typeFilter::Union{Nothing, Function} = nothing,
-    variableLabelFilter::Union{Nothing, Function} = nothing,
+    whereLabel::Union{Nothing, Function} = nothing,
+    whereBlobid::Union{Nothing, Function} = nothing,
+    whereSolvable::Union{Nothing, Function} = nothing,
+    whereTags::Union{Nothing, Function} = nothing,
+    whereType::Union{Nothing, Function} = nothing,
+    whereVariableLabel::Union{Nothing, Function} = nothing,
 )
     vls = listVariables(
         dfg;
-        solvableFilter,
-        tagsFilter,
-        typeFilter,
-        labelFilter = variableLabelFilter,
+        whereSolvable,
+        whereTags,
+        whereType,
+        whereLabel = whereVariableLabel,
     )
     return map(vls) do vl
-        return vl => getVariableBlobentries(dfg, vl; labelFilter, blobidFilter)
+        return vl => getVariableBlobentries(dfg, vl; whereLabel, whereBlobid)
     end
 end
 const collectBlobentries = gatherBlobentries
@@ -356,12 +356,12 @@ Also see: [`getBlobentry`](@ref)
 """
 function getfirstBlobentry(
     node;
-    labelFilter::Union{Nothing, Function} = nothing,
-    blobidFilter::Union{Nothing, Function} = nothing,
+    whereLabel::Union{Nothing, Function} = nothing,
+    whereBlobid::Union{Nothing, Function} = nothing,
     sortby::Function = getLabel,
     sortlt::Function = natural_lt,
 )
-    entries = getBlobentries(node; labelFilter, blobidFilter)
+    entries = getBlobentries(node; whereLabel, whereBlobid)
     if isempty(entries)
         return nothing
     else
@@ -372,10 +372,10 @@ end
 function getfirstVariableBlobentry(
     dfg::AbstractDFG,
     label::Symbol;
-    labelFilter::Union{Nothing, Function} = nothing,
-    blobidFilter::Union{Nothing, Function} = nothing,
+    whereLabel::Union{Nothing, Function} = nothing,
+    whereBlobid::Union{Nothing, Function} = nothing,
 )
-    return getfirstBlobentry(getVariable(dfg, label); labelFilter, blobidFilter)
+    return getfirstBlobentry(getVariable(dfg, label); whereLabel, whereBlobid)
 end
 
 ## =============================================================================
@@ -430,7 +430,7 @@ function incrDataLabelSuffix(
     hasund = false
     len = 0
     try
-        de = getfirstVariableBlobentry(dfg, vla; labelFilter = contains(string(bllb)))
+        de = getfirstVariableBlobentry(dfg, vla; whereLabel = contains(string(bllb)))
         isnothing(de) && return Symbol(bllb) # no match, return as is
         bllb = string(bllb)
         # bllb *= bllb[end] != '_' ? "_" : ""

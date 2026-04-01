@@ -497,37 +497,37 @@ end
     $(SIGNATURES)
 List all the variable state labels.
 """
-function listStates(v::VariableDFG; labelFilter::Union{Nothing, Function} = nothing)
+function listStates(v::VariableDFG; whereLabel::Union{Nothing, Function} = nothing)
     labels = collect(keys(v.states))
-    return filterDFG!(labels, labelFilter)
+    return filterDFG!(labels, whereLabel)
 end
 
 function listStates(
     dfg::AbstractDFG,
     lbl::Symbol;
-    labelFilter::Union{Nothing, Function} = nothing,
+    whereLabel::Union{Nothing, Function} = nothing,
 )
-    return listStates(getVariable(dfg, lbl); labelFilter)
+    return listStates(getVariable(dfg, lbl); whereLabel)
 end
 
 function listStates(
     dfg::AbstractDFG;
-    labelFilter::Union{Nothing, Function} = nothing,
-    solvableFilter::Union{Nothing, Function} = nothing,
-    tagsFilter::Union{Nothing, Function} = nothing,
-    typeFilter::Union{Nothing, Function} = nothing,
-    variableLabelFilter::Union{Nothing, Function} = nothing,
+    whereLabel::Union{Nothing, Function} = nothing,
+    whereSolvable::Union{Nothing, Function} = nothing,
+    whereTags::Union{Nothing, Function} = nothing,
+    whereType::Union{Nothing, Function} = nothing,
+    whereVariableLabel::Union{Nothing, Function} = nothing,
 )
     labels = Set{Symbol}()
     vls = listVariables(
         dfg;
-        solvableFilter,
-        tagsFilter,
-        typeFilter,
-        labelFilter = variableLabelFilter,
+        whereSolvable,
+        whereTags,
+        whereType,
+        whereLabel = whereVariableLabel,
     )
     for vl in vls
-        union!(labels, listStates(dfg, vl; labelFilter))
+        union!(labels, listStates(dfg, vl; whereLabel))
     end
     return collect(labels)
 end

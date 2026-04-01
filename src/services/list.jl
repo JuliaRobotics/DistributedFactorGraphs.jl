@@ -50,12 +50,12 @@ Notes:
 """
 function ls(
     dfg::AbstractDFG;
-    solvableFilter::Union{Nothing, Function} = nothing,
-    tagsFilter::Union{Nothing, Function} = nothing,
-    typeFilter::Union{Nothing, Function} = nothing,
-    labelFilter::Union{Nothing, Function} = nothing,
+    whereSolvable::Union{Nothing, Function} = nothing,
+    whereTags::Union{Nothing, Function} = nothing,
+    whereType::Union{Nothing, Function} = nothing,
+    whereLabel::Union{Nothing, Function} = nothing,
 )
-    return listVariables(dfg; solvableFilter, tagsFilter, typeFilter, labelFilter)
+    return listVariables(dfg; whereSolvable, whereTags, whereType, whereLabel)
 end
 
 #TODO tags kwarg
@@ -69,12 +69,12 @@ Notes
 """
 function lsf(
     dfg::AbstractDFG;
-    solvableFilter::Union{Nothing, Function} = nothing,
-    tagsFilter::Union{Nothing, Function} = nothing,
-    typeFilter::Union{Nothing, Function} = nothing,
-    labelFilter::Union{Nothing, Function} = nothing,
+    whereSolvable::Union{Nothing, Function} = nothing,
+    whereTags::Union{Nothing, Function} = nothing,
+    whereType::Union{Nothing, Function} = nothing,
+    whereLabel::Union{Nothing, Function} = nothing,
 )
-    return listFactors(dfg; solvableFilter, tagsFilter, typeFilter, labelFilter)
+    return listFactors(dfg; whereSolvable, whereTags, whereType, whereLabel)
 end
 
 """
@@ -100,7 +100,7 @@ end
 ##--------------
 
 function ls(dfg::AbstractDFG, ::Type{T}) where {T <: StateType}
-    return listVariables(dfg; typeFilter = ==(T()))
+    return listVariables(dfg; whereType = ==(T()))
 end
 
 """
@@ -113,8 +113,8 @@ Notes
 - Return `Vector{Symbol}`
 """
 function lsf(dfg::AbstractDFG, ::Type{T}) where {T <: AbstractObservation}
-    typeFilter = isconcretetype(T) ? x -> x == T : x -> x <: T
-    return listFactors(dfg; typeFilter)
+    whereType = isconcretetype(T) ? x -> x == T : x -> x <: T
+    return listFactors(dfg; whereType)
 end
 
 function ls(dfg::AbstractDFG, ::Type{T}) where {T <: AbstractObservation}
@@ -148,7 +148,7 @@ Notes:
 - Returns `Vector{Symbol}`
 """
 function lsfPriors(dfg::AbstractDFG)
-    return listFactors(dfg; typeFilter = isPrior)
+    return listFactors(dfg; whereType = isPrior)
 end
 
 ## Listing DataTypes in a DFG

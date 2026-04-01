@@ -2,6 +2,13 @@ Listing news on any major breaking changes in DFG.  For regular changes, see int
 
 # v0.29
 - `AbstractPointParametricEst` (`MeanMaxPPE`) and related `PPE` functions are obsolete, see #1133.
+- Rename filter keyword arguments to `where`-prefixed form:
+  - `solvableFilter` -> `whereSolvable`
+  - `labelFilter` -> `whereLabel`
+  - `tagsFilter` -> `whereTags`
+  - `typeFilter` -> `whereType`
+  - `blobidFilter` -> `whereBlobid`
+  - `variableLabelFilter` -> `whereVariableLabel`
 
 # v0.28
 - Reading or deserialzing of factor graphs created prior to v0.25 are no longer suppoted with the complete removal of User/Robot/Session

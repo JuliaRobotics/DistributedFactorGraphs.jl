@@ -315,13 +315,11 @@ function deleteFactor! end
     $(SIGNATURES)
 Get the variables in the DFG as a Vector, supporting various filters.
 
-Arguments
-- `regexFilt`: Optional Regex to filter variable labels (deprecated, use `labelFilter` instead).
 Keyword arguments
-- `solvableFilter`: Optional function to filter on the `solvable` property, eg `>=(1)`.
-- `labelFilter`: Optional function to filter on label e.g., `contains(r"x1")`.
-- `tagsFilter`: Optional function to filter on tags, eg. `⊇([:POSE])`.
-- `typeFilter`: Optional function to filter on the variable type.
+- `whereSolvable`: Optional function to filter on the `solvable` property, eg `>=(1)`.
+- `whereLabel`: Optional function to filter on label e.g., `contains(r"x1")`.
+- `whereTags`: Optional function to filter on tags, eg. `⊇([:POSE])`.
+- `whereType`: Optional function to filter on the variable type.
 
 Returns
 - `Vector{<:AbstractGraphVariable}` matching the filters.
@@ -382,7 +380,7 @@ function isConnected end
 """
     $(SIGNATURES)
 Retrieve a list of labels of the immediate neighbors around a given variable or factor specified by its label.
-Implement `listNeighbors(dfg::AbstractDFG, label::Symbol; solvableFilter, tagsFilter)`
+Implement `listNeighbors(dfg::AbstractDFG, label::Symbol; whereSolvable, whereTags)`
 """
 function listNeighbors end
 
@@ -398,8 +396,8 @@ provided the other defaults to all labels of that kind in `dfg`.
 
 Typical usage with filters:
 ```julia
-vars = listVariables(dfg; solvableFilter = >=(1))
-facs = listFactors(dfg; solvableFilter = >=(1))
+vars = listVariables(dfg; whereSolvable = >=(1))
+facs = listFactors(dfg; whereSolvable = >=(1))
 findPaths(dfg, :x1, :x5, 3; variableLabels = vars, factorLabels = facs)
 ```
 
@@ -494,7 +492,7 @@ end
 #TODO add pruning filters that is applied during traversal.
 """
     $(SIGNATURES)
-Build a list of all unique neighbors inside 'distance'. Neighbors can be filtered by using keyword arguments, eg. [`tagsFilter`] and [`solvableFilter`].
+Build a list of all unique neighbors inside 'distance'. Neighbors can be filtered by using keyword arguments, eg. [`whereTags`] and [`whereSolvable`].
 Filters are applied to final neighborhood result.
 
 Notes
@@ -561,24 +559,24 @@ function getSubgraph(
     dfg::AbstractDFG,
     variableFactorLabels::Vector{Symbol},
     distance::Int = 0;
-    solvableFilter::Union{Nothing, Function} = nothing,
-    tagsFilter::Union{Nothing, Function} = nothing,
+    whereSolvable::Union{Nothing, Function} = nothing,
+    whereTags::Union{Nothing, Function} = nothing,
     graphLabel::Symbol = Symbol(getGraphLabel(dfg), "_sub_$(string(uuid4())[1:6])"),
     solvable = nothing, #TODO deprecated in v0.29
     kwargs...,
 ) where {G <: AbstractDFG}
     if !isnothing(solvable)
         Base.depwarn(
-            "solvable kwarg is deprecated, use kwarg `solvableFilter = (>=solvable)` instead", #v0.29
+            "solvable kwarg is deprecated, use kwarg `whereSolvable = (>=solvable)` instead", #v0.29
             :getSubgraph,
         )
-        !isnothing(solvableFilter) &&
-            error("Cannot use both solvable and solvableFilter kwargs.")
-        solvableFilter = >=(solvable)
+        !isnothing(whereSolvable) &&
+            error("Cannot use both solvable and whereSolvable kwargs.")
+        whereSolvable = >=(solvable)
     end
     #build up the neighborhood from variableFactorLabels
     variableLabels, factorLabels =
-        listNeighborhood(dfg, variableFactorLabels, distance; solvableFilter, tagsFilter)
+        listNeighborhood(dfg, variableFactorLabels, distance; whereSolvable, whereTags)
 
     # Copy the section of graph we want
     destDFG = deepcopyGraph(G, dfg, variableLabels, factorLabels; graphLabel, kwargs...)
@@ -629,16 +627,16 @@ Notes
 -  Returns `::NamedTuple{(:B, :varLabels, :facLabels), Tuple{SparseMatrixCSC, Vector{Symbol}, Vector{Symbol}}}`
 """
 function getBiadjacencyMatrix(dfg::AbstractDFG; solvable::Int = 0)
-    solvableFilter = >=(solvable) #FIXME solvableFilter should be kwarg
-    varLabels = map(v -> v.label, getVariables(dfg; solvableFilter))
-    factLabels = map(f -> f.label, getFactors(dfg; solvableFilter))
+    whereSolvable = >=(solvable) #FIXME whereSolvable should be kwarg
+    varLabels = map(v -> v.label, getVariables(dfg; whereSolvable))
+    factLabels = map(f -> f.label, getFactors(dfg; whereSolvable))
 
     vDict = Dict(varLabels .=> [1:length(varLabels)...])
 
     adjMat = spzeros(Int, length(factLabels), length(varLabels))
 
     for (fIndex, factLabel) in enumerate(factLabels)
-        factVars = listNeighbors(dfg, getFactor(dfg, factLabel); solvableFilter)
+        factVars = listNeighbors(dfg, getFactor(dfg, factLabel); whereSolvable)
         map(vLabel -> adjMat[fIndex, vDict[vLabel]] = 1, factVars)
     end
     return (B = adjMat, varLabels = varLabels, facLabels = factLabels)

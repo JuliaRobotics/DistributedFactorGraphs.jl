@@ -91,25 +91,25 @@ end
     @test symdiff([:a, :b], listVariables(dfg)) == []
     @test listFactors(dfg) == [:abf1] # Unless we add the prior!
     # Additional testing for https://github.com/JuliaRobotics/DistributedFactorGraphs.jl/issues/201
-    @test symdiff([:a, :b], listVariables(dfg; solvableFilter = >=(0))) == []
-    @test listVariables(dfg; solvableFilter = >=(1)) == [:b]
-    @test map(v -> v.label, getVariables(dfg; solvableFilter = >=(1))) == [:b]
+    @test symdiff([:a, :b], listVariables(dfg; whereSolvable = >=(0))) == []
+    @test listVariables(dfg; whereSolvable = >=(1)) == [:b]
+    @test map(v -> v.label, getVariables(dfg; whereSolvable = >=(1))) == [:b]
     @test listFactors(dfg) == [:abf1]
-    @test listFactors(dfg; solvableFilter = >=(1)) == []
-    @test listFactors(dfg; solvableFilter = >=(0)) == [:abf1]
-    @test map(f -> f.label, getFactors(dfg; solvableFilter = >=(0))) == [:abf1]
-    @test map(f -> f.label, getFactors(dfg; solvableFilter = >=(1))) == []
+    @test listFactors(dfg; whereSolvable = >=(1)) == []
+    @test listFactors(dfg; whereSolvable = >=(0)) == [:abf1]
+    @test map(f -> f.label, getFactors(dfg; whereSolvable = >=(0))) == [:abf1]
+    @test map(f -> f.label, getFactors(dfg; whereSolvable = >=(1))) == []
     #
     @test lsf(dfg, :a) == [f1.label]
     # Tags
-    @test ls(dfg; tagsFilter = ⊇([:POSE])) == [:a]
+    @test ls(dfg; whereTags = ⊇([:POSE])) == [:a]
     @test symdiff(
-        ls(dfg; tagsFilter = !isdisjoint([:POSE, :LANDMARK])),
-        ls(dfg; tagsFilter = ⊇([:VARIABLE])),
+        ls(dfg; whereTags = !isdisjoint([:POSE, :LANDMARK])),
+        ls(dfg; whereTags = ⊇([:VARIABLE])),
     ) == []
     # Regexes
-    @test ls(dfg; labelFilter = contains(r"a")) == [v1.label]
-    @test lsf(dfg; labelFilter = contains(r"abf.*")) == [f1.label]
+    @test ls(dfg; whereLabel = contains(r"a")) == [v1.label]
+    @test lsf(dfg; whereLabel = contains(r"abf.*")) == [f1.label]
 
     # Accessors
     @test getDescription(dfg) !== nothing
@@ -281,11 +281,11 @@ end
     @test symdiff(f_ll, [:abf1, :abf1, :abf1]) == Symbol[]
 
     # Filtered - REF DFG #201
-    adjMat, v_ll, f_ll = getBiadjacencyMatrix(dfg; solvableFilter = >=(1))
+    adjMat, v_ll, f_ll = getBiadjacencyMatrix(dfg; whereSolvable = >=(1))
     @test size(adjMat) == (0, 1)
 
     # sparse
-    adjMat, v_ll, f_ll = getBiadjacencyMatrix(dfg; solvableFilter = >=(1))
+    adjMat, v_ll, f_ll = getBiadjacencyMatrix(dfg; whereSolvable = >=(1))
     @test size(adjMat) == (0, 1)
     @test issetequal(v_ll, [:b])
     @test f_ll == []
@@ -339,13 +339,13 @@ facts = map(
     @test listNeighbors(dfg, :x1x2f1) == ls(dfg, :x1x2f1)
 
     # solvable checks
-    @test listNeighbors(dfg, :x5; solvableFilter = >=(1)) == Symbol[]
-    @test symdiff(listNeighbors(dfg, :x5; solvableFilter = >=(0)), [:x4x5f1, :x5x6f1]) == []
+    @test listNeighbors(dfg, :x5; whereSolvable = >=(1)) == Symbol[]
+    @test symdiff(listNeighbors(dfg, :x5; whereSolvable = >=(0)), [:x4x5f1, :x5x6f1]) == []
     @test symdiff(listNeighbors(dfg, :x5), [:x4x5f1, :x5x6f1]) == []
-    @test listNeighbors(dfg, :x7x8f1; solvableFilter = >=(0)) == [:x7, :x8]
-    @test listNeighbors(dfg, :x7x8f1; solvableFilter = >=(1)) == [:x7]
-    @test listNeighbors(dfg, verts[1]; solvableFilter = >=(0)) == [:x1x2f1]
-    @test listNeighbors(dfg, verts[1]; solvableFilter = >=(1)) == Symbol[]
+    @test listNeighbors(dfg, :x7x8f1; whereSolvable = >=(0)) == [:x7, :x8]
+    @test listNeighbors(dfg, :x7x8f1; whereSolvable = >=(1)) == [:x7]
+    @test listNeighbors(dfg, verts[1]; whereSolvable = >=(0)) == [:x1x2f1]
+    @test listNeighbors(dfg, verts[1]; whereSolvable = >=(1)) == Symbol[]
     @test listNeighbors(dfg, verts[1]) == [:x1x2f1]
 end
 

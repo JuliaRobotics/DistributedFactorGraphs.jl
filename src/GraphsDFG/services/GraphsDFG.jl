@@ -128,82 +128,82 @@ function deleteFactor!(dfg::GraphsDFG, label::Symbol)
 end
 
 # """
-# tagsFilter = ⊇([:x1])
-# tagsFilter([:x1, :x2])
+# whereTags = ⊇([:x1])
+# whereTags([:x1, :x2])
 # true
-# tagsFilter = Base.Fix1(in, :x1)
-# tagsFilter([:x1, :x2])
+# whereTags = Base.Fix1(in, :x1)
+# whereTags([:x1, :x2])
 # true
 # """
 
 function getVariables(
     dfg::GraphsDFG;
-    solvableFilter::Union{Nothing, Function} = nothing,
-    labelFilter::Union{Nothing, Function} = nothing,
-    tagsFilter::Union{Nothing, Function} = nothing,
-    typeFilter::Union{Nothing, Function} = nothing,
+    whereSolvable::Union{Nothing, Function} = nothing,
+    whereLabel::Union{Nothing, Function} = nothing,
+    whereTags::Union{Nothing, Function} = nothing,
+    whereType::Union{Nothing, Function} = nothing,
 )
     variables = collect(values(dfg.g.variables))
 
-    filterDFG!(variables, labelFilter, getLabel)
-    filterDFG!(variables, solvableFilter, getSolvable)
-    filterDFG!(variables, tagsFilter, refTags)
-    filterDFG!(variables, typeFilter, getStateKind)
+    filterDFG!(variables, whereLabel, getLabel)
+    filterDFG!(variables, whereSolvable, getSolvable)
+    filterDFG!(variables, whereTags, refTags)
+    filterDFG!(variables, whereType, getStateKind)
 
     return variables
 end
 
 function listVariables(
     dfg::GraphsDFG;
-    solvableFilter::Union{Nothing, Function} = nothing,
-    tagsFilter::Union{Nothing, Function} = nothing,
-    typeFilter::Union{Nothing, Function} = nothing,
-    labelFilter::Union{Nothing, Function} = nothing,
+    whereSolvable::Union{Nothing, Function} = nothing,
+    whereTags::Union{Nothing, Function} = nothing,
+    whereType::Union{Nothing, Function} = nothing,
+    whereLabel::Union{Nothing, Function} = nothing,
 )
-    if !isnothing(solvableFilter) || !isnothing(tagsFilter) || !isnothing(typeFilter)
+    if !isnothing(whereSolvable) || !isnothing(whereTags) || !isnothing(whereType)
         return map(
             getLabel,
-            getVariables(dfg; solvableFilter, tagsFilter, typeFilter, labelFilter),
+            getVariables(dfg; whereSolvable, whereTags, whereType, whereLabel),
         )::Vector{Symbol}
     else
         # Is it ok to continue using the internal keys property? collect(keys(dfg.g.variables)) allowcates a lot.
         labels = copy(dfg.g.variables.keys)
-        filterDFG!(labels, labelFilter, string)
+        filterDFG!(labels, whereLabel, string)
         return labels
     end
 end
 
 function getFactors(
     dfg::GraphsDFG;
-    solvableFilter::Union{Nothing, Function} = nothing,
-    tagsFilter::Union{Nothing, Function} = nothing,
-    typeFilter::Union{Nothing, Function} = nothing,
-    labelFilter::Union{Nothing, Function} = nothing,
+    whereSolvable::Union{Nothing, Function} = nothing,
+    whereTags::Union{Nothing, Function} = nothing,
+    whereType::Union{Nothing, Function} = nothing,
+    whereLabel::Union{Nothing, Function} = nothing,
 )
     factors = collect(values(dfg.g.factors))
-    filterDFG!(factors, labelFilter, getLabel)
-    filterDFG!(factors, solvableFilter, getSolvable)
-    filterDFG!(factors, tagsFilter, refTags)
-    filterDFG!(factors, typeFilter, typeof ∘ DFG.getObservation)
+    filterDFG!(factors, whereLabel, getLabel)
+    filterDFG!(factors, whereSolvable, getSolvable)
+    filterDFG!(factors, whereTags, refTags)
+    filterDFG!(factors, whereType, typeof ∘ DFG.getObservation)
     return factors
 end
 
 function listFactors(
     dfg::GraphsDFG;
-    solvableFilter::Union{Nothing, Function} = nothing,
-    tagsFilter::Union{Nothing, Function} = nothing,
-    typeFilter::Union{Nothing, Function} = nothing,
-    labelFilter::Union{Nothing, Function} = nothing,
+    whereSolvable::Union{Nothing, Function} = nothing,
+    whereTags::Union{Nothing, Function} = nothing,
+    whereType::Union{Nothing, Function} = nothing,
+    whereLabel::Union{Nothing, Function} = nothing,
 )
-    if !isnothing(solvableFilter) || !isnothing(tagsFilter) || !isnothing(typeFilter)
+    if !isnothing(whereSolvable) || !isnothing(whereTags) || !isnothing(whereType)
         return map(
             getLabel,
-            getFactors(dfg; solvableFilter, tagsFilter, typeFilter, labelFilter),
+            getFactors(dfg; whereSolvable, whereTags, whereType, whereLabel),
         )::Vector{Symbol}
     else
         # Is it ok to continue using the internal keys property? collect(keys(dfg.g.factors)) allowcates a lot.
         labels = copy(dfg.g.factors.keys)
-        filterDFG!(labels, labelFilter, string)
+        filterDFG!(labels, whereLabel, string)
         return labels
     end
 end
@@ -216,18 +216,18 @@ end
 function listNeighbors(
     dfg::GraphsDFG,
     label::Symbol;
-    solvableFilter::Union{Nothing, Function} = nothing,
-    tagsFilter::Union{Nothing, Function} = nothing,
-    solvable::Union{Nothing, Int} = nothing, #TODO deprecated for solvableFilter v0.29
+    whereSolvable::Union{Nothing, Function} = nothing,
+    whereTags::Union{Nothing, Function} = nothing,
+    solvable::Union{Nothing, Int} = nothing, #TODO deprecated for whereSolvable v0.29
 )
     if !isnothing(solvable)
         Base.depwarn(
-            "solvable kwarg is deprecated, use kwarg `solvableFilter = (>=solvable)` instead", #v0.29
+            "solvable kwarg is deprecated, use kwarg `whereSolvable = (>=solvable)` instead", #v0.29
             :listNeighbors,
         )
-        !isnothing(solvableFilter) &&
-            error("Cannot use both solvable and solvableFilter kwargs.")
-        solvableFilter = >=(solvable)
+        !isnothing(whereSolvable) &&
+            error("Cannot use both solvable and whereSolvable kwargs.")
+        whereSolvable = >=(solvable)
     end
 
     if !(hasVariable(dfg, label) || hasFactor(dfg, label))
@@ -239,8 +239,8 @@ function listNeighbors(
 
     # Additional filtering
     # solvable != 0 && filter!(lbl -> _isSolvable(dfg, lbl, solvable), neighbors_ll)
-    filterDFG!(neighbors_ll, solvableFilter, l -> getSolvable(dfg, l))
-    filterDFG!(neighbors_ll, tagsFilter, l -> listTags(dfg, l))
+    filterDFG!(neighbors_ll, whereSolvable, l -> getSolvable(dfg, l))
+    filterDFG!(neighbors_ll, whereTags, l -> listTags(dfg, l))
 
     # Variable sorting (order is important)
     if haskey(dfg.g.factors, label)
@@ -255,18 +255,18 @@ function listNeighborhood(
     dfg::GraphsDFG,
     variableFactorLabels::Vector{Symbol},
     distance::Int;
-    solvableFilter::Union{Nothing, Function} = nothing,
-    tagsFilter::Union{Nothing, Function} = nothing,
-    solvable::Union{Nothing, Int} = nothing, #TODO deprecated for solvableFilter v0.29
+    whereSolvable::Union{Nothing, Function} = nothing,
+    whereTags::Union{Nothing, Function} = nothing,
+    solvable::Union{Nothing, Int} = nothing, #TODO deprecated for whereSolvable v0.29
 )
     if !isnothing(solvable)
         Base.depwarn(
-            "solvable kwarg is deprecated, use kwarg `solvableFilter = (>=solvable)` instead", #v0.29
+            "solvable kwarg is deprecated, use kwarg `whereSolvable = (>=solvable)` instead", #v0.29
             :listNeighborhood,
         )
-        !isnothing(solvableFilter) &&
-            error("Cannot use both solvable and solvableFilter kwargs.")
-        solvableFilter = >=(solvable)
+        !isnothing(whereSolvable) &&
+            error("Cannot use both solvable and whereSolvable kwargs.")
+        whereSolvable = >=(solvable)
     end
 
     # find neighbors at distance to add
@@ -278,8 +278,8 @@ function listNeighborhood(
 
     allvarfacs = [dfg.g.labels[id] for id in nbhood]
 
-    filterDFG!(allvarfacs, solvableFilter, l -> getSolvable(dfg, l))
-    filterDFG!(allvarfacs, tagsFilter, l -> listTags(dfg, l))
+    filterDFG!(allvarfacs, whereSolvable, l -> getSolvable(dfg, l))
+    filterDFG!(allvarfacs, whereTags, l -> listTags(dfg, l))
 
     variableLabels = intersect(listVariables(dfg), allvarfacs)
     factorLabels = intersect(listFactors(dfg), allvarfacs)
@@ -305,10 +305,10 @@ end
 #  Biadjacency Matrix https://en.wikipedia.org/wiki/Adjacency_matrix#Of_a_bipartite_graph
 function getBiadjacencyMatrix(
     dfg::GraphsDFG;
-    solvable::Union{Nothing, Int} = nothing, #TODO deprecated for solvableFilter v0.29
-    solvableFilter = isnothing(solvable) ? nothing : >=(solvable),
-    varLabels = listVariables(dfg; solvableFilter),
-    factLabels = listFactors(dfg; solvableFilter),
+    solvable::Union{Nothing, Int} = nothing, #TODO deprecated for whereSolvable v0.29
+    whereSolvable = isnothing(solvable) ? nothing : >=(solvable),
+    varLabels = listVariables(dfg; whereSolvable),
+    factLabels = listFactors(dfg; whereSolvable),
 )
     varIndex = [dfg.g.labels[s] for s in varLabels]
     factIndex = [dfg.g.labels[s] for s in factLabels]
@@ -505,18 +505,18 @@ function getGraphBlobentry(fg::GraphsDFG, label::Symbol)
     return fg.graph.blobentries[label]
 end
 
-function getGraphBlobentries(fg::GraphsDFG; labelFilter::Union{Nothing, Function} = nothing)
+function getGraphBlobentries(fg::GraphsDFG; whereLabel::Union{Nothing, Function} = nothing)
     entries = collect(values(fg.graph.blobentries))
-    filterDFG!(entries, labelFilter, getLabel)
+    filterDFG!(entries, whereLabel, getLabel)
     return entries
 end
 
 function listGraphBlobentries(
     fg::GraphsDFG;
-    labelFilter::Union{Nothing, Function} = nothing,
+    whereLabel::Union{Nothing, Function} = nothing,
 )
     labels = collect(keys(fg.graph.blobentries))
-    filterDFG!(labels, labelFilter, string)
+    filterDFG!(labels, whereLabel, string)
     return labels
 end
 
@@ -561,10 +561,10 @@ end
 
 function DFG.getAgentBlobentries(
     fg::GraphsDFG;
-    labelFilter::Union{Nothing, Function} = nothing,
+    whereLabel::Union{Nothing, Function} = nothing,
 )
     entries = collect(values(fg.agent.blobentries))
-    filterDFG!(entries, labelFilter, getLabel)
+    filterDFG!(entries, whereLabel, getLabel)
     return entries
 end
 
