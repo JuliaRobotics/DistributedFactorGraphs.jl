@@ -54,8 +54,8 @@ function listGraphTags(dfg::InMemoryDFGTypes)
     return listTags(dfg.graph)
 end
 
-function listAgentTags(dfg::InMemoryDFGTypes)
-    return listTags(dfg.agent)
+function listAgentTags(dfg::InMemoryDFGTypes, agentlabel::Symbol)
+    return listTags(getAgent(dfg, agentlabel))
 end
 
 # function mergeVariableTags!(dfg::AbstractDFG, sym::Symbol, tags)
@@ -85,8 +85,8 @@ function mergeGraphTags!(dfg::InMemoryDFGTypes, tags)
     return length(tags)
 end
 
-function mergeAgentTags!(dfg::InMemoryDFGTypes, tags)
-    mergeTags!(dfg.agent, tags)
+function mergeAgentTags!(dfg::InMemoryDFGTypes, agentlabel::Symbol, tags)
+    mergeTags!(getAgent(dfg, agentlabel), tags)
     return length(tags)
 end
 
@@ -105,8 +105,8 @@ function deleteGraphTags!(dfg::InMemoryDFGTypes, tags)
     return length(tags)
 end
 
-function deleteAgentTags!(dfg::InMemoryDFGTypes, tags)
-    deleteTags!(dfg.agent, tags)
+function deleteAgentTags!(dfg::InMemoryDFGTypes, agentlabel::Symbol, tags)
+    deleteTags!(getAgent(dfg, agentlabel), tags)
     return length(tags)
 end
 
@@ -124,8 +124,8 @@ function hasGraphTags(dfg::AbstractDFG, tags::Vector{Symbol})
     return tags ⊆ listGraphTags(dfg)
 end
 
-function hasAgentTags(dfg::AbstractDFG, tags::Vector{Symbol})
-    return tags ⊆ listAgentTags(dfg)
+function hasAgentTags(dfg::AbstractDFG, agentlabel::Symbol, tags::Vector{Symbol})
+    return tags ⊆ listAgentTags(dfg, agentlabel)
 end
 
 ##

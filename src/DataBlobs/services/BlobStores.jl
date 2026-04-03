@@ -3,7 +3,7 @@
 ##==============================================================================
 
 """
-Get the data blob for the specified blobstore or dfg.
+Get the data blob for the specified Blobstore or DFG.
 
 Related
 [`getBlobentry`](@ref)
@@ -15,7 +15,7 @@ $(METHODLIST)
 function getBlob end
 
 """
-Adds a blob to the blob store or dfg with the blobid.
+Adds a blob to the Blobstore with the blobid.
 
 Related
 [`addBlobentry!`](@ref)
@@ -53,9 +53,9 @@ function hasBlob end
 ##==============================================================================
 ## AbstractBlobstore derived CRUD for Blob 
 ##==============================================================================
-#TODO maybe we should generalize and move the cached blobstore to DFG.
+#TODO maybe we should generalize and move the cached Blobstore to DFG.
 function getBlob(dfg::AbstractDFG, entry::Blobentry)
-    storeLabel = entry.blobstore
+    storeLabel = entry.storelabel
     store = getBlobstore(dfg, storeLabel)
     return getBlob(store, entry.blobid)
 end
@@ -66,7 +66,7 @@ end
 
 #add 
 function addBlob!(dfg::AbstractDFG, entry::Blobentry, data)
-    return addBlob!(getBlobstore(dfg, entry.blobstore), entry, data)
+    return addBlob!(getBlobstore(dfg, entry.storelabel), entry, data)
 end
 
 function addBlob!(store::AbstractBlobstore{T}, entry::Blobentry, data::T) where {T}
@@ -78,7 +78,7 @@ addBlob!(store::AbstractBlobstore, data) = addBlob!(store, uuid4(), data)
 
 #delete
 function deleteBlob!(dfg::AbstractDFG, entry::Blobentry)
-    return deleteBlob!(getBlobstore(dfg, entry.blobstore), entry)
+    return deleteBlob!(getBlobstore(dfg, entry.storelabel), entry)
 end
 
 function deleteBlob!(store::AbstractBlobstore, entry::Blobentry)
@@ -90,7 +90,7 @@ function hasBlob(store::AbstractBlobstore, entry::Blobentry)
     return hasBlob(store, entry.blobid)
 end
 function hasBlob(dfg::AbstractDFG, entry::Blobentry)
-    return hasBlob(getBlobstore(dfg, entry.blobstore), entry.blobid)
+    return hasBlob(getBlobstore(dfg, entry.storelabel), entry.blobid)
 end
 
 #TODO
@@ -123,7 +123,7 @@ end
 
 FolderStore(label::Symbol, folder::String) = FolderStore{Vector{UInt8}}(label, folder)
 
-function FolderStore(foldername::String; label::Symbol = :default, createfolder = true)
+function FolderStore(foldername::String; label::Symbol = :primary, createfolder = true)
     storepath = expanduser(joinpath(foldername, string(label)))
     if createfolder && !isdir(storepath)
         @info "Folder '$storepath' doesn't exist - creating."
@@ -212,7 +212,7 @@ end
 function InMemoryBlobstore{T}(storeKey::Symbol) where {T}
     return InMemoryBlobstore{T}(storeKey, Dict{UUID, T}())
 end
-function InMemoryBlobstore(storeKey::Symbol = :default_inmemory_store)
+function InMemoryBlobstore(storeKey::Symbol = :primary)
     return InMemoryBlobstore{Vector{UInt8}}(storeKey)
 end
 

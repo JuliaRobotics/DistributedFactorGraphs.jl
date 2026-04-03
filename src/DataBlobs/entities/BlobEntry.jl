@@ -8,13 +8,13 @@ A `Blobentry` is a small about of structured data that holds reference informati
 can exist on different graph nodes spanning Agents and Factor Graphs which can all reference the same `Blob`.
 
 Notes:
-- `blobid`s should be unique within a blobstore and are immutable.
+- `blobid`s should be unique within a Blobstore and are immutable.
 """
 StructUtils.@kwarg struct Blobentry
     """ Human friendly label of the `Blob` and also used as unique identifier per node on which a `Blobentry` is added.  E.g. do "LEFTCAM_1", "LEFTCAM_2", ... of you need to repeat a label on the same variable. """
     label::Symbol
-    """ The label of the `Blobstore` in which the `Blob` is stored.  Default is `:default`."""
-    blobstore::Symbol = :default
+    """ The label of the `Blobstore` in which the `Blob` is stored.  Default is `:primary`."""
+    storelabel::Symbol = :primary
     """ Machine friendly and unique within a `Blobstore` identifier of the 'Blob'."""
     blobid::UUID = uuid4() # was blobId
     """ (Optional) crc32c hash value to ensure data consistency which must correspond to the stored hash upon retrieval."""
@@ -52,21 +52,21 @@ version(::Type{Blobentry}) = v"0.1.0"
 
 function Blobentry(
     label::Symbol,
-    blobstore = :default;
+    storelabel = :primary;
     metadata::Union{JSONText, AbstractDict, NamedTuple} = JSONText("{}"),
     kwargs...,
 )
     if !(metadata isa JSONText)
         metadata = JSONText(JSON.json(metadata))
     end
-    return Blobentry(; label, blobstore, metadata, kwargs...)
+    return Blobentry(; label, storelabel, metadata, kwargs...)
 end
 # construction helper from existing Blobentry for user overriding via kwargs
 function Blobentry(
     entry::Blobentry;
     blobid::UUID = entry.blobid,
     label::Symbol = entry.label,
-    blobstore::Symbol = entry.blobstore,
+    storelabel::Symbol = entry.storelabel,
     crchash = entry.crchash,
     shahash = entry.shahash,
     size::Int64 = entry.size,
@@ -76,10 +76,15 @@ function Blobentry(
     metadata::JSONText = entry.metadata,
     timestamp::TimeDateZone = entry.timestamp,
     version = entry.version,
+    blobstore = nothing, # TODO note deprecated in v0.29
 )
+    !isnothing(blobstore) && Base.depwarn(
+        "The `blobstore` keyword argument has been renamed to `storelabel`",
+        :Blobentry,
+    )
     return Blobentry(;
         label,
-        blobstore,
+        storelabel,
         blobid,
         crchash,
         shahash,

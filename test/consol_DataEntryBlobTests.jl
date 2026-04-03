@@ -111,7 +111,7 @@ DFG.deleteBlob_Variable!(dfg, :x2, :random)
 #test default folder store
 dfs = FolderStore("/tmp/defaultfolderstore")
 @test dfs.folder == "/tmp/defaultfolderstore"
-@test getLabel(dfs) == :default
+@test getLabel(dfs) == :primary
 @test dfs isa FolderStore{Vector{UInt8}}
 
 ##==============================================================================
@@ -122,14 +122,14 @@ dfs = FolderStore("/tmp/defaultfolderstore")
 ds = InMemoryBlobstore()
 addBlobstore!(dfg, ds)
 
-ade = DFG.saveBlob_Variable!(dfg, :x1, dataset1, :random, :default_inmemory_store)
+ade = DFG.saveBlob_Variable!(dfg, :x1, dataset1, :random, :primary)
 gde, gdb = DFG.loadBlob_Variable(dfg, :x1, :random)
 @test DFG.deleteBlob_Variable!(dfg, :x1, :random) == 2
 
 @test ade == gde
 @test dataset1 == gdb
 
-ade2 = DFG.saveBlob_Variable!(dfg, :x2, dataset1, :random, :default_inmemory_store)
+ade2 = DFG.saveBlob_Variable!(dfg, :x2, dataset1, :random, :primary)
 # ade3,adb3 = updateBlob!(dfg, :x2, deepcopy(ade), dataset1)
 
 @test hasBlob(dfg, ade2)

@@ -113,10 +113,10 @@ function saveBlob_Variable!(
     variable_label::Symbol,
     blob::Vector{UInt8},
     entry_label::Symbol,
-    blobstore::Symbol = :default;
+    storelabel::Symbol = :primary;
     blobentry_kwargs...,
 )
-    entry = Blobentry(entry_label, blobstore; blobentry_kwargs...)
+    entry = Blobentry(entry_label, storelabel; blobentry_kwargs...)
     return saveBlob_Variable!(dfg, variable_label, blob, entry)
 end
 
@@ -143,10 +143,10 @@ function saveBlob_Graph!(
     dfg::AbstractDFG,
     blob::Vector{UInt8},
     entry_label::Symbol,
-    blobstore::Symbol = :default;
+    storelabel::Symbol = :primary;
     blobentry_kwargs...,
 )
-    entry = Blobentry(entry_label, blobstore; blobentry_kwargs...)
+    entry = Blobentry(entry_label, storelabel; blobentry_kwargs...)
     return saveBlob_Graph!(dfg, blob, entry)
 end
 
@@ -157,32 +157,38 @@ function deleteBlob_Graph!(dfg::AbstractDFG, entry_label::Symbol)
     return 2
 end
 
-function loadBlob_Agent(dfg::AbstractDFG, entry_label::Symbol;)
-    entry = getAgentBlobentry(dfg, entry_label)
+function loadBlob_Agent(dfg::AbstractDFG, agentlabel::Symbol, entry_label::Symbol;)
+    entry = getAgentBlobentry(dfg, agentlabel, entry_label)
     blob = getBlob(dfg, entry)
     return entry, blob
 end
 
-function saveBlob_Agent!(dfg::AbstractDFG, blob::Vector{UInt8}, entry::Blobentry)
-    addAgentBlobentry!(dfg, entry)
+function saveBlob_Agent!(
+    dfg::AbstractDFG,
+    agentlabel::Symbol,
+    blob::Vector{UInt8},
+    entry::Blobentry,
+)
+    addAgentBlobentry!(dfg, agentlabel, entry)
     addBlob!(dfg, entry, blob)
     return entry
 end
 
 function saveBlob_Agent!(
     dfg::AbstractDFG,
+    agentlabel::Symbol,
     blob::Vector{UInt8},
     entry_label::Symbol,
-    blobstore::Symbol = :default;
+    storelabel::Symbol = :primary;
     blobentry_kwargs...,
 )
-    entry = Blobentry(entry_label, blobstore; blobentry_kwargs...)
-    return saveBlob_Agent!(dfg, blob, entry)
+    entry = Blobentry(entry_label, storelabel; blobentry_kwargs...)
+    return saveBlob_Agent!(dfg, agentlabel, blob, entry)
 end
 
-function deleteBlob_Agent!(dfg::AbstractDFG, entry_label::Symbol)
-    entry = getAgentBlobentry(dfg, entry_label)
-    deleteAgentBlobentry!(dfg, entry_label)
+function deleteBlob_Agent!(dfg::AbstractDFG, agentlabel::Symbol, entry_label::Symbol)
+    entry = getAgentBlobentry(dfg, agentlabel, entry_label)
+    deleteAgentBlobentry!(dfg, agentlabel, entry_label)
     deleteBlob!(dfg, entry)
     return 2
 end
@@ -209,10 +215,10 @@ function saveBlob_Factor!(
     factor_label::Symbol,
     blob::Vector{UInt8},
     entry_label::Symbol,
-    blobstore::Symbol = :default;
+    storelabel::Symbol = :primary;
     blobentry_kwargs...,
 )
-    entry = Blobentry(entry_label, blobstore; blobentry_kwargs...)
+    entry = Blobentry(entry_label, storelabel; blobentry_kwargs...)
     return saveBlob_Factor!(dfg, factor_label, blob, entry)
 end
 
@@ -228,7 +234,7 @@ function saveImage_Variable!(
     variable_label::Symbol,
     img::AbstractMatrix,
     entry_label::Symbol,
-    blobstore::Symbol = :default;
+    storelabel::Symbol = :primary;
     entry_kwargs...,
 )
     mimetype = get(entry_kwargs, :mimeType, MIME("image/png"))
@@ -239,7 +245,7 @@ function saveImage_Variable!(
 
     entry = Blobentry(
         entry_label,
-        blobstore;
+        storelabel;
         blobid = uuid4(),
         entry_kwargs...,
         size = length(blob),

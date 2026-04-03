@@ -517,8 +517,8 @@ function listGraphBlobentries(fg::GraphsDFG; whereLabel::Union{Nothing, Function
     return labels
 end
 
-function listAgentBlobentries(fg::GraphsDFG)
-    return collect(keys(fg.agent.blobentries))
+function listAgentBlobentries(fg::GraphsDFG, agentlabel::Symbol)
+    return collect(keys(fg.agents[agentlabel].blobentries))
 end
 
 function addGraphBlobentry!(fg::GraphsDFG, entry::Blobentry)
@@ -535,32 +535,37 @@ function addGraphBlobentries!(fg::GraphsDFG, entries::Vector{Blobentry})
     end
 end
 
-function DFG.addAgentBlobentry!(fg::GraphsDFG, entry::Blobentry)
-    if haskey(fg.agent.blobentries, entry.label)
+function DFG.addAgentBlobentry!(fg::GraphsDFG, agentlabel::Symbol, entry::Blobentry)
+    if haskey(fg.agents[agentlabel].blobentries, entry.label)
         throw(LabelExistsError("Blobentry", entry.label))
     end
-    push!(fg.agent.blobentries, entry.label => entry)
+    push!(fg.agents[agentlabel].blobentries, entry.label => entry)
     return entry
 end
 
-function DFG.addAgentBlobentries!(fg::GraphsDFG, entries::Vector{Blobentry})
+function DFG.addAgentBlobentries!(
+    fg::GraphsDFG,
+    agentlabel::Symbol,
+    entries::Vector{Blobentry},
+)
     return map(entries) do entry
-        return addAgentBlobentry!(fg, entry)
+        return addAgentBlobentry!(fg, agentlabel, entry)
     end
 end
 
-function DFG.getAgentBlobentry(fg::GraphsDFG, label::Symbol)
-    if !haskey(fg.agent.blobentries, label)
+function DFG.getAgentBlobentry(fg::GraphsDFG, agentlabel::Symbol, label::Symbol)
+    if !haskey(fg.agents[agentlabel].blobentries, label)
         throw(LabelNotFoundError("Blobentry", label))
     end
-    return fg.agent.blobentries[label]
+    return fg.agents[agentlabel].blobentries[label]
 end
 
 function DFG.getAgentBlobentries(
-    fg::GraphsDFG;
+    fg::GraphsDFG,
+    agentlabel::Symbol;
     whereLabel::Union{Nothing, Function} = nothing,
 )
-    entries = collect(values(fg.agent.blobentries))
+    entries = collect(values(fg.agents[agentlabel].blobentries))
     filterDFG!(entries, whereLabel, getLabel)
     return entries
 end
@@ -570,8 +575,8 @@ function DFG.mergeGraphBlobentry!(dfg::GraphsDFG, entry::Blobentry)
     return 1
 end
 
-function DFG.mergeAgentBlobentry!(dfg::GraphsDFG, entry::Blobentry)
-    DFG.refBlobentries(dfg.agent)[getLabel(entry)] = entry
+function DFG.mergeAgentBlobentry!(dfg::GraphsDFG, agentlabel::Symbol, entry::Blobentry)
+    DFG.refBlobentries(dfg.agents[agentlabel])[getLabel(entry)] = entry
     return 1
 end
 
@@ -582,9 +587,13 @@ function DFG.mergeGraphBlobentries!(dfg::GraphsDFG, entries::Vector{Blobentry})
     return sum(cnts)
 end
 
-function DFG.mergeAgentBlobentries!(dfg::GraphsDFG, entries::Vector{Blobentry})
+function DFG.mergeAgentBlobentries!(
+    dfg::GraphsDFG,
+    agentlabel::Symbol,
+    entries::Vector{Blobentry},
+)
     cnts = map(entries) do entry
-        return mergeAgentBlobentry!(dfg, entry)
+        return mergeAgentBlobentry!(dfg, agentlabel, entry)
     end
     return sum(cnts)
 end
@@ -631,9 +640,9 @@ function DFG.deleteGraphBlobentry!(dfg::GraphsDFG, label::Symbol)
     return 1
 end
 
-function DFG.deleteAgentBlobentry!(dfg::GraphsDFG, label::Symbol)
-    !haskey(dfg.agent.blobentries, label) && return 0
-    delete!(dfg.agent.blobentries, label)
+function DFG.deleteAgentBlobentry!(dfg::GraphsDFG, agentlabel::Symbol, label::Symbol)
+    !haskey(dfg.agents[agentlabel].blobentries, label) && return 0
+    delete!(dfg.agents[agentlabel].blobentries, label)
     return 1
 end
 
@@ -641,6 +650,6 @@ function DFG.hasGraphBlobentry(dfg::GraphsDFG, label::Symbol)
     return haskey(dfg.graph.blobentries, label)
 end
 
-function DFG.hasAgentBlobentry(dfg::GraphsDFG, label::Symbol)
-    return haskey(dfg.agent.blobentries, label)
+function DFG.hasAgentBlobentry(dfg::GraphsDFG, agentlabel::Symbol, label::Symbol)
+    return haskey(dfg.agents[agentlabel].blobentries, label)
 end

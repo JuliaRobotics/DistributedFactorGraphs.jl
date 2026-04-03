@@ -77,8 +77,8 @@ function DFGStructureAndAccessors(
     fg = T(; solverParams = solparams)
     #TODO test something better
     @test isa(fg, T)
-    @test getAgentLabel(fg) == :DefaultAgent
-    @test string(getGraphLabel(fg))[1:6] == "graph_"
+    @test isempty(listAgents(fg))
+    @test getGraphLabel(fg) == :workspace
 
     # Test the validation of the robot, session, and user IDs.
     notAllowedList = [
@@ -94,7 +94,6 @@ function DFGStructureAndAccessors(
 
     for s in notAllowedList
         @test_throws ArgumentError T(solverParams = solparams, graphLabel = s)
-        @test_throws ArgumentError T(solverParams = solparams, agentLabel = s)
     end
 
     des = "description for runtest"
@@ -104,23 +103,21 @@ function DFGStructureAndAccessors(
     sd = DFG.Bloblets(:sd => DFG.Bloblet(:sd, "sdEntry"))
     fg = T(;
         graphDescription = des,
-        agentLabel = rId,
         graphLabel = sId,
-        agentBloblets = rd,
         graphBloblets = sd,
         solverParams = solparams,
     )
+    addAgent!(fg, Agent(; label = rId, bloblets = rd))
 
     # accesssors
     # get
     @test getDescription(fg) == des
-    @test getAgentLabel(fg) == rId
     @test getGraphLabel(fg) == sId
 
     @test getSolverParams(fg) == NoSolverParams()
 
     #FIXME test bloblets
-    @test DFG.getAgentBloblet(fg, :rd) == rd[:rd]
+    @test DFG.getAgentBloblet(fg, rId, :rd) == rd[:rd]
     @test DFG.getGraphBloblet(fg, :sd) == sd[:sd]
 
     # NOTE see note in AbstractDFG.jl setSolverParams!
@@ -141,17 +138,23 @@ end
 
 # User, Robot, Session Data
 function GraphAgentBloblets!(fg::AbstractDFG)
+    # First add an agent to test with
+    agentlabel = :testAgent
+    addAgent!(fg, Agent(; label = agentlabel))
+
     # Agent-level bloblets
     agent_blob = Bloblet(:agent_blob, "ready")
-    @test addAgentBloblet!(fg, agent_blob) == agent_blob
-    @test getAgentBloblet(fg, agent_blob.label) == agent_blob
+    @test addAgentBloblet!(fg, agentlabel, agent_blob) == agent_blob
+    @test getAgentBloblet(fg, agentlabel, agent_blob.label) == agent_blob
     updated_agent_blob = Bloblet(agent_blob.label, "updated")
-    @test mergeAgentBloblet!(fg, updated_agent_blob) == 1
-    @test getAgentBloblet(fg, agent_blob.label) == updated_agent_blob
-    @test agent_blob.label in listAgentBloblets(fg)
-    @test deleteAgentBloblet!(fg, agent_blob.label) == 1
-    @test_throws DFG.LabelNotFoundError getAgentBloblet(fg, agent_blob.label)
-    @test deleteAgentBloblet!(fg, agent_blob.label) == 0
+    @test mergeAgentBloblet!(fg, agentlabel, updated_agent_blob) == 1
+    @test getAgentBloblet(fg, agentlabel, agent_blob.label) == updated_agent_blob
+    @test agent_blob.label in listAgentBloblets(fg, agentlabel)
+    @test deleteAgentBloblet!(fg, agentlabel, agent_blob.label) == 1
+    @test_throws DFG.LabelNotFoundError getAgentBloblet(fg, agentlabel, agent_blob.label)
+    @test deleteAgentBloblet!(fg, agentlabel, agent_blob.label) == 0
+
+    deleteAgent!(fg, agentlabel)
 
     # Graph-level bloblets
     graph_blob = Bloblet(:graph_blob, "running")
@@ -168,26 +171,30 @@ end
 
 # User, Robot, Session Data Blob Entries
 function GraphAgentBlobentries!(fg::AbstractDFG)
-    be = Blobentry(; label = :key1, blobstore = :b)
+    be = Blobentry(; label = :key1, storelabel = :b)
+
+    # First add an agent to test with
+    agentlabel = :testBlobentryAgent
+    addAgent!(fg, Agent(; label = agentlabel))
 
     # Agent Blob Entries
-    ae = addAgentBlobentry!(fg, be)
+    ae = addAgentBlobentry!(fg, agentlabel, be)
     @test ae == be
-    @test_throws DFG.LabelExistsError addAgentBlobentry!(fg, be)
-    ge = getAgentBlobentry(fg, :key1)
+    @test_throws DFG.LabelExistsError addAgentBlobentry!(fg, agentlabel, be)
+    ge = getAgentBlobentry(fg, agentlabel, :key1)
     @test ge == be
-    @test hasAgentBlobentry(fg, :key1)
-    me = mergeAgentBlobentry!(fg, be)
+    @test hasAgentBlobentry(fg, agentlabel, :key1)
+    me = mergeAgentBlobentry!(fg, agentlabel, be)
     @test me == 1
-    de = deleteAgentBlobentry!(fg, :key1)
+    de = deleteAgentBlobentry!(fg, agentlabel, :key1)
     @test de == 1
-    @test hasAgentBlobentry(fg, :key1) == false
-    @test_throws DFG.LabelNotFoundError getAgentBlobentry(fg, :key1)
-    @test deleteAgentBlobentry!(fg, :key1) == 0
-    @test addAgentBlobentries!(fg, [be]) == [be]
-    @test deleteAgentBlobentries!(fg, [:key1]) == 1
-    @test mergeAgentBlobentries!(fg, [be]) == 1
-    @test deleteAgentBlobentries!(fg, [:key1]) == 1
+    @test hasAgentBlobentry(fg, agentlabel, :key1) == false
+    @test_throws DFG.LabelNotFoundError getAgentBlobentry(fg, agentlabel, :key1)
+    @test deleteAgentBlobentry!(fg, agentlabel, :key1) == 0
+    @test addAgentBlobentries!(fg, agentlabel, [be]) == [be]
+    @test deleteAgentBlobentries!(fg, agentlabel, [:key1]) == 1
+    @test mergeAgentBlobentries!(fg, agentlabel, [be]) == 1
+    @test deleteAgentBlobentries!(fg, agentlabel, [:key1]) == 1
 
     # Graph Blob Entries
     ae = addGraphBlobentry!(fg, be)
@@ -208,21 +215,21 @@ function GraphAgentBlobentries!(fg::AbstractDFG)
     @test mergeGraphBlobentries!(fg, [be]) == 1
     @test deleteGraphBlobentries!(fg, [:key1]) == 1
 
-    be2 = Blobentry(; blobid = uuid4(), label = :key2, blobstore = :b)
+    be2 = Blobentry(; blobid = uuid4(), label = :key2, storelabel = :b)
 
     bes = [be, be2]
 
-    ae = addAgentBlobentries!(fg, bes)
+    ae = addAgentBlobentries!(fg, agentlabel, bes)
     @test length(ae) == 2
-    @test_throws DFG.LabelExistsError addAgentBlobentries!(fg, bes)
-    besr = getAgentBlobentries(fg)
+    @test_throws DFG.LabelExistsError addAgentBlobentries!(fg, agentlabel, bes)
+    besr = getAgentBlobentries(fg, agentlabel)
     @test length(besr) == 2
-    me = mergeAgentBlobentries!(fg, bes)
+    me = mergeAgentBlobentries!(fg, agentlabel, bes)
     @test me == 2
-    de = deleteAgentBlobentries!(fg, [:key1, :key2])
+    de = deleteAgentBlobentries!(fg, agentlabel, [:key1, :key2])
     @test de == 2
-    @test_throws DFG.LabelNotFoundError getAgentBlobentry(fg, :key1)
-    @test_throws DFG.LabelNotFoundError getAgentBlobentry(fg, :key2)
+    @test_throws DFG.LabelNotFoundError getAgentBlobentry(fg, agentlabel, :key1)
+    @test_throws DFG.LabelNotFoundError getAgentBlobentry(fg, agentlabel, :key2)
 
     ae = addGraphBlobentries!(fg, bes)
     @test length(ae) == 2
@@ -580,16 +587,20 @@ function tagsTestBlock!(fg, v1, v1_tags)
     @test deleteGraphTags!(fg, [:GRAPH_TAG]) == 1
     @test !hasGraphTags(fg, [:GRAPH_TAG])
 
-    @test mergeAgentTags!(fg, [:AGENT_TAG]) == 1
-    @test :AGENT_TAG ∈ listAgentTags(fg)
-    @test hasAgentTags(fg, [:AGENT_TAG])
-    @test deleteAgentTags!(fg, [:AGENT_TAG]) == 1
-    @test !hasAgentTags(fg, [:AGENT_TAG])
+    agentlabel = :testTagAgent
+    addAgent!(fg, Agent(; label = agentlabel))
+    @test mergeAgentTags!(fg, agentlabel, [:AGENT_TAG]) == 1
+    @test :AGENT_TAG ∈ listAgentTags(fg, agentlabel)
+    @test hasAgentTags(fg, agentlabel, [:AGENT_TAG])
+    @test deleteAgentTags!(fg, agentlabel, [:AGENT_TAG]) == 1
+    @test !hasAgentTags(fg, agentlabel, [:AGENT_TAG])
 
     @test listVariableTags(fg, :a) isa Vector{Symbol}
     @test listFactorTags(fg, :abf1) isa Vector{Symbol}
     @test listGraphTags(fg) isa Vector{Symbol}
-    @test listAgentTags(fg) isa Vector{Symbol}
+    @test listAgentTags(fg, agentlabel) isa Vector{Symbol}
+    deleteAgent!(fg, agentlabel)
+    return nothing
 end
 
 function VSDTestBlock!(fg, v1)
@@ -754,11 +765,14 @@ end
 
 function hasBlobletTestBlock!(fg)
     # Agent bloblets has
-    addAgentBloblet!(fg, Bloblet(:agent_has_test, "data"))
-    @test hasAgentBloblet(fg, :agent_has_test)
-    @test !hasAgentBloblet(fg, :nonexistent)
-    deleteAgentBloblet!(fg, :agent_has_test)
-    @test !hasAgentBloblet(fg, :agent_has_test)
+    agentlabel = :testHasBlobletAgent
+    addAgent!(fg, Agent(; label = agentlabel))
+    addAgentBloblet!(fg, agentlabel, Bloblet(:agent_has_test, "data"))
+    @test hasAgentBloblet(fg, agentlabel, :agent_has_test)
+    @test !hasAgentBloblet(fg, agentlabel, :nonexistent)
+    deleteAgentBloblet!(fg, agentlabel, :agent_has_test)
+    @test !hasAgentBloblet(fg, agentlabel, :agent_has_test)
+    deleteAgent!(fg, agentlabel)
 
     # Graph bloblets has
     addGraphBloblet!(fg, Bloblet(:graph_has_test, "data"))
@@ -854,22 +868,22 @@ function DataEntriesTestBlock!(fg, v2)
     # listBlobentries
     # emptyDataEntries
     # mergeDataEntries
-    storeEntry = Blobentry(; blobid = uuid4(), label = :a, blobstore = :b)
+    storeEntry = Blobentry(; blobid = uuid4(), label = :a, storelabel = :b)
     @test getLabel(storeEntry) == storeEntry.label
     @test getTimestamp(storeEntry) == storeEntry.timestamp
 
     # oid = zeros(UInt8,12); oid[12] = 0x01
     # de1 = MongodbDataEntry(:key1, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
-    de1 = Blobentry(; blobid = uuid4(), label = :key1, blobstore = :b)
+    de1 = Blobentry(; blobid = uuid4(), label = :key1, storelabel = :b)
 
     # oid = zeros(UInt8,12); oid[12] = 0x02
     # de2 = MongodbDataEntry(:key2, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
-    de2 = Blobentry(; blobid = uuid4(), label = :key2, blobstore = :b)
+    de2 = Blobentry(; blobid = uuid4(), label = :key2, storelabel = :b)
 
     # oid = zeros(UInt8,12); oid[12] = 0x03
     # de2_update = MongodbDataEntry(:key2, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
     de2_update =
-        Blobentry(; blobid = uuid4(), label = :key2, blobstore = :b, description = "Yay")
+        Blobentry(; blobid = uuid4(), label = :key2, storelabel = :b, description = "Yay")
 
     #add
     v1 = getVariable(fg, :a)
@@ -956,26 +970,31 @@ function DataEntriesTestBlock!(fg, v2)
     @test listGraphBlobentries(fg) == Symbol[]
 
     # agent blobentries
-    @test addAgentBlobentry!(fg, de1) == de1
-    @test_throws LabelExistsError addAgentBlobentry!(fg, de1)
-    @test de1 == getAgentBlobentry(fg, getLabel(de1))
-    @test_throws LabelNotFoundError getAgentBlobentry(fg, :nope)
-    @test mergeAgentBlobentry!(fg, de2_update) == 1
-    @test listAgentBlobentries(fg) == [getLabel(de1), getLabel(de2_update)]
-    @test deleteAgentBlobentry!(fg, getLabel(de2_update)) == 1
-    @test deleteAgentBlobentry!(fg, getLabel(de2_update)) == 0
-    @test getAgentBlobentries(fg) == [de1]
-    @test addAgentBlobentries!(fg, [de2]) == [de2]
-    @test mergeAgentBlobentries!(fg, [de1, de2_update]) == 2
-    @test deleteAgentBlobentries!(fg, [getLabel(de1), getLabel(de2_update)]) == 2
-    @test listAgentBlobentries(fg) == Symbol[]
+    agentlabel = :testBEAgent
+    addAgent!(fg, Agent(; label = agentlabel))
+    @test addAgentBlobentry!(fg, agentlabel, de1) == de1
+    @test_throws LabelExistsError addAgentBlobentry!(fg, agentlabel, de1)
+    @test de1 == getAgentBlobentry(fg, agentlabel, getLabel(de1))
+    @test_throws LabelNotFoundError getAgentBlobentry(fg, agentlabel, :nope)
+    @test mergeAgentBlobentry!(fg, agentlabel, de2_update) == 1
+    @test listAgentBlobentries(fg, agentlabel) == [getLabel(de1), getLabel(de2_update)]
+    @test deleteAgentBlobentry!(fg, agentlabel, getLabel(de2_update)) == 1
+    @test deleteAgentBlobentry!(fg, agentlabel, getLabel(de2_update)) == 0
+    @test getAgentBlobentries(fg, agentlabel) == [de1]
+    @test addAgentBlobentries!(fg, agentlabel, [de2]) == [de2]
+    @test mergeAgentBlobentries!(fg, agentlabel, [de1, de2_update]) == 2
+    @test deleteAgentBlobentries!(fg, agentlabel, [getLabel(de1), getLabel(de2_update)]) ==
+          2
+    @test listAgentBlobentries(fg, agentlabel) == Symbol[]
+    deleteAgent!(fg, agentlabel)
+    return nothing
 end
 
 function blobsStoresTestBlock!(fg)
     de1 = Blobentry(;
         blobid = uuid4(),
         label = :label1,
-        blobstore = :store1,
+        storelabel = :store1,
         crchash = 0xAAAA,
         origin = "origin1",
         description = "description1",
@@ -984,7 +1003,7 @@ function blobsStoresTestBlock!(fg)
     de2 = Blobentry(;
         blobid = uuid4(),
         label = :label2,
-        blobstore = :store2,
+        storelabel = :store2,
         crchash = 0xFFFF,
         origin = "origin2",
         description = "description2",
@@ -994,7 +1013,7 @@ function blobsStoresTestBlock!(fg)
     de2_update = Blobentry(;
         blobid = uuid4(),
         label = :label2,
-        blobstore = :store2,
+        storelabel = :store2,
         crchash = 0x0123,
         origin = "origin2",
         description = "description2",
@@ -1101,14 +1120,23 @@ function blobsStoresTestBlock!(fg)
     @test_throws DFG.LabelNotFoundError DFG.loadBlob_Graph(fg, :testing)
 
     # on Agent
-    newentry = DFG.saveBlob_Agent!(fg, testData, :testing, fs.label)
-    @test_throws DFG.LabelExistsError DFG.saveBlob_Agent!(fg, testData, :testing, fs.label)
-    @test :testing in listAgentBlobentries(fg)
-    be, blob = DFG.loadBlob_Agent(fg, :testing)
+    agentlabel = :testBlobWrapperAgent
+    addAgent!(fg, Agent(; label = agentlabel))
+    newentry = DFG.saveBlob_Agent!(fg, agentlabel, testData, :testing, fs.label)
+    @test_throws DFG.LabelExistsError DFG.saveBlob_Agent!(
+        fg,
+        agentlabel,
+        testData,
+        :testing,
+        fs.label,
+    )
+    @test :testing in listAgentBlobentries(fg, agentlabel)
+    be, blob = DFG.loadBlob_Agent(fg, agentlabel, :testing)
     @test newentry == be
     @test blob == testData
-    @test DFG.deleteBlob_Agent!(fg, :testing) == 2
-    @test_throws DFG.LabelNotFoundError DFG.loadBlob_Agent(fg, :testing)
+    @test DFG.deleteBlob_Agent!(fg, agentlabel, :testing) == 2
+    @test_throws DFG.LabelNotFoundError DFG.loadBlob_Agent(fg, agentlabel, :testing)
+    deleteAgent!(fg, agentlabel)
     return nothing
 end
 

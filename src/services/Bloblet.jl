@@ -155,49 +155,63 @@ end
 """
     $(SIGNATURES)
 """
-getAgentBloblet(dfg::GraphsDFG, label::Symbol) = getBloblet(dfg.agent, label)
-"""
-    $(SIGNATURES)
-"""
-addAgentBloblet!(dfg::GraphsDFG, bloblet::Bloblet) = addBloblet!(dfg.agent, bloblet)
-"""
-    $(SIGNATURES)
-"""
-mergeAgentBloblet!(dfg::GraphsDFG, bloblet::Bloblet) = mergeBloblet!(dfg.agent, bloblet)
-"""
-    $(SIGNATURES)
-"""
-deleteAgentBloblet!(dfg::GraphsDFG, label::Symbol) = deleteBloblet!(dfg.agent, label)
-"""
-    $(SIGNATURES)
-"""
-getAgentBloblets(dfg::GraphsDFG) = getBloblets(dfg.agent)
-"""
-    $(SIGNATURES)
-"""
-function addAgentBloblets!(dfg::GraphsDFG, bloblets::Vector{Bloblet})
-    return addBloblets!(dfg.agent, bloblets)
+function getAgentBloblet(dfg::GraphsDFG, agentlabel::Symbol, label::Symbol)
+    return getBloblet(getAgent(dfg, agentlabel), label)
 end
 """
     $(SIGNATURES)
 """
-function mergeAgentBloblets!(dfg::GraphsDFG, bloblets::Vector{Bloblet})
-    return mergeBloblets!(dfg.agent, bloblets)
+function addAgentBloblet!(dfg::GraphsDFG, agentlabel::Symbol, bloblet::Bloblet)
+    return addBloblet!(getAgent(dfg, agentlabel), bloblet)
 end
 """
     $(SIGNATURES)
 """
-function deleteAgentBloblets!(dfg::GraphsDFG, labels::Vector{Symbol})
-    return deleteBloblets!(dfg.agent, labels)
+function mergeAgentBloblet!(dfg::GraphsDFG, agentlabel::Symbol, bloblet::Bloblet)
+    return mergeBloblet!(getAgent(dfg, agentlabel), bloblet)
 end
 """
     $(SIGNATURES)
 """
-listAgentBloblets(dfg::GraphsDFG) = listBloblets(dfg.agent)
+function deleteAgentBloblet!(dfg::GraphsDFG, agentlabel::Symbol, label::Symbol)
+    return deleteBloblet!(getAgent(dfg, agentlabel), label)
+end
 """
     $(SIGNATURES)
 """
-hasAgentBloblet(dfg::GraphsDFG, label::Symbol) = hasBloblet(dfg.agent, label)
+function getAgentBloblets(dfg::GraphsDFG, agentlabel::Symbol)
+    return getBloblets(getAgent(dfg, agentlabel))
+end
+"""
+    $(SIGNATURES)
+"""
+function addAgentBloblets!(dfg::GraphsDFG, agentlabel::Symbol, bloblets::Vector{Bloblet})
+    return addBloblets!(getAgent(dfg, agentlabel), bloblets)
+end
+"""
+    $(SIGNATURES)
+"""
+function mergeAgentBloblets!(dfg::GraphsDFG, agentlabel::Symbol, bloblets::Vector{Bloblet})
+    return mergeBloblets!(getAgent(dfg, agentlabel), bloblets)
+end
+"""
+    $(SIGNATURES)
+"""
+function deleteAgentBloblets!(dfg::GraphsDFG, agentlabel::Symbol, labels::Vector{Symbol})
+    return deleteBloblets!(getAgent(dfg, agentlabel), labels)
+end
+"""
+    $(SIGNATURES)
+"""
+function listAgentBloblets(dfg::GraphsDFG, agentlabel::Symbol)
+    return listBloblets(getAgent(dfg, agentlabel))
+end
+"""
+    $(SIGNATURES)
+"""
+function hasAgentBloblet(dfg::GraphsDFG, agentlabel::Symbol, label::Symbol)
+    return hasBloblet(getAgent(dfg, agentlabel), label)
+end
 
 ##==============================================================================
 ## Graph Bloblets

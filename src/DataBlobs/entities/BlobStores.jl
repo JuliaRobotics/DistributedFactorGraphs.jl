@@ -1,7 +1,7 @@
 """
     AbstractBlobstore{T}
 
-Abstract supertype for all blobstore implementations.
+Abstract supertype for all Blobstore implementations.
 
 # Usage
 
@@ -16,9 +16,9 @@ The parameter `T` represents the type of blobs stored (e.g., `Vector{UInt8}` or 
 See concrete implementations for details.
 
 Design Notes
-- `blobid` is not considered unique across blobstores with different labels only within a single blobstore.
-- We cannot guarantee that `blobid` is unique across different blobstores with the same label and this is up to the end user.
-- Within a single blobstore `addBlob!` will fail if there is a UUID collision.
+- `blobid` is not considered unique across Blobstores with different labels only within a single Blobstore.
+- We cannot guarantee that `blobid` is unique across different Blobstores with the same label and this is up to the end user.
+- Within a single Blobstore `addBlob!` will fail if there is a UUID collision.
 - TODO: We should consider using uuid7 for `blobid`s (requires jl v1.12).
 - `Blobstrores`are identified by a `label::Symbol`, which allows for multiple blobstores to coexist in the same system.
 
