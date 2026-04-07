@@ -161,13 +161,13 @@ end
 ##==============================================================================
 @testset "loadBlob/saveBlob/deleteBlob Factor" begin
     dfg, _, _ = connectivityTestGraph(testDFGAPI, VariableDFG, FactorDFG)
-    ds = InMemoryBlobstore(:default)
+    ds = InMemoryBlobstore(:primary)
     addBlobstore!(dfg, ds)
 
     dataset = rand(UInt8, 200)
 
     # saveBlob_Factor! with entry_label
-    entry = DFG.saveBlob_Factor!(dfg, :x1x2f1, dataset, :factor_data, :default)
+    entry = DFG.saveBlob_Factor!(dfg, :x1x2f1, dataset, :factor_data, :primary)
     @test entry isa Blobentry
     @test entry.label == :factor_data
 
@@ -177,7 +177,7 @@ end
     @test loaded_blob == dataset
 
     # saveBlob_Factor! with explicit Blobentry
-    entry2 = Blobentry(:factor_data_2, :default)
+    entry2 = Blobentry(:factor_data_2, :primary)
     DFG.saveBlob_Factor!(dfg, :x1x2f1, dataset, entry2)
     loaded_entry2, loaded_blob2 = DFG.loadBlob_Factor(dfg, :x1x2f1, :factor_data_2)
     @test loaded_entry2.label == :factor_data_2
@@ -188,7 +188,7 @@ end
     @test !hasFactorBlobentry(dfg, :x1x2f1, :factor_data)
 
     # Multiple factors can have blobs
-    DFG.saveBlob_Factor!(dfg, :x2x3f1, dataset, :another_blob, :default)
+    DFG.saveBlob_Factor!(dfg, :x2x3f1, dataset, :another_blob, :primary)
     e, b = DFG.loadBlob_Factor(dfg, :x2x3f1, :another_blob)
     @test b == dataset
     @test DFG.deleteBlob_Factor!(dfg, :x2x3f1, :another_blob) == 2
@@ -202,7 +202,7 @@ end
 ##==============================================================================
 @testset "loadBlob/saveBlob/deleteBlob Variable (expanded)" begin
     dfg, _, _ = connectivityTestGraph(testDFGAPI, VariableDFG, FactorDFG)
-    ds = InMemoryBlobstore(:default)
+    ds = InMemoryBlobstore(:primary)
     addBlobstore!(dfg, ds)
 
     dataset = rand(UInt8, 300)
@@ -213,7 +213,7 @@ end
         :x1,
         dataset,
         :var_blob,
-        :default;
+        :primary;
         description = "test blob",
     )
     @test entry.label == :var_blob
@@ -225,7 +225,7 @@ end
     @test loaded_blob == dataset
 
     # saveBlob_Variable! with explicit Blobentry
-    entry2 = Blobentry(:var_blob_2, :default)
+    entry2 = Blobentry(:var_blob_2, :primary)
     DFG.saveBlob_Variable!(dfg, :x1, dataset, entry2)
     _, blob2 = DFG.loadBlob_Variable(dfg, :x1, :var_blob_2)
     @test blob2 == dataset
@@ -240,7 +240,7 @@ end
 ##==============================================================================
 @testset "saveImage_Variable! / loadImage_Variable" begin
     dfg, _, _ = connectivityTestGraph(testDFGAPI, VariableDFG, FactorDFG)
-    ds = InMemoryBlobstore(:default)
+    ds = InMemoryBlobstore(:primary)
     addBlobstore!(dfg, ds)
 
     # Create a small test "image" (matrix of floats, like a grayscale image)
@@ -249,7 +249,7 @@ end
     # We test that the interface works by checking that it calls through correctly
     # For a real image test we'd need ImageIO/PNGFiles, so test the error path
     img = rand(Float64, 4, 4)
-    entry = DFG.saveImage_Variable!(dfg, :x1, img, :test_img, :default)
+    entry = DFG.saveImage_Variable!(dfg, :x1, img, :test_img, :primary)
     @test entry.label == :test_img
     @test entry.mimetype == MIME("image/png")
 
@@ -257,7 +257,7 @@ end
     # (tests the dispatch path through unpackBlob(entry, blob))
     json_str = """{"px":[1,2,3]}"""
     blob, _ = DFG.packBlob(format"JSON", json_str)
-    entry = Blobentry(:json_as_img, :default; mimetype = MIME("application/json"))
+    entry = Blobentry(:json_as_img, :primary; mimetype = MIME("application/json"))
     DFG.saveBlob_Variable!(dfg, :x1, blob, entry)
     loaded_entry, loaded_data = DFG.loadImage_Variable(dfg, :x1, :json_as_img)
     @test loaded_entry.label == :json_as_img

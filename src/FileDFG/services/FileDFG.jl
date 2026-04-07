@@ -53,7 +53,7 @@ function saveDFG(folder::AbstractString, dfg::AbstractDFG)
     p = Progress(4; desc = "Saving DFG Nodes")
     JSON.json("$savepath/graphroot.json", dfg.graph; style = DFGJSONStyle())
     next!(p)
-    JSON.json("$savepath/agent.json", dfg.agent; style = DFGJSONStyle())
+    JSON.json("$savepath/agents.json", dfg.agents; style = DFGJSONStyle())
     next!(p)
     JSON.json("$savepath/solverparams.json", dfg.solverParams; style = DFGJSONStyle())
     next!(p)
@@ -168,12 +168,24 @@ function loadDFG(file::AbstractString)
     # only extract the json files needed to rebuild DFG object
     tar_gz = open(file)
     tar = CodecZlib.GzipDecompressorStream(tar_gz)
-    dfgnodenames = r"^(agent\.json|blobstores\.json|graphroot\.json|solverparams\.json)$"
+    dfgnodenames = r"^(agents?\.json|blobstores\.json|graphroot\.json|solverparams\.json)$"
     loaddir = Tar.extract(hdr -> contains(hdr.path, dfgnodenames), tar)
     close(tar)
 
     progess = Progress(4; desc = "Loading DFG Nodes")
-    agent = JSON.parsefile(joinpath(loaddir, "agent.json"), Agent; style = DFGJSONStyle())
+    agents = if isfile(joinpath(loaddir, "agents.json"))
+        JSON.parsefile(
+            joinpath(loaddir, "agents.json"),
+            OrderedDict{Symbol, Agent};
+            style = DFGJSONStyle(),
+        )
+    elseif isfile(joinpath(loaddir, "agent.json"))
+        # backward compat: load old single-agent format
+        agent = JSON.parsefile(joinpath(loaddir, "agent.json"), Agent; style = DFGJSONStyle())
+        OrderedDict{Symbol, Agent}(agent.label => agent)
+    else
+        OrderedDict{Symbol, Agent}()
+    end
     next!(progess)
     graph = JSON.parsefile(
         joinpath(loaddir, "graphroot.json"),
@@ -194,7 +206,7 @@ function loadDFG(file::AbstractString)
     )
     next!(progess)
 
-    dfg = GraphsDFG(; agent, graph, solverParams, blobstores)
+    dfg = GraphsDFG(; agents, graph, solverParams, blobstores)
 
     @debug "DFG.loadDFG is deleting a temp folder created during unzip, $loaddir"
     # cleanup temporary folder

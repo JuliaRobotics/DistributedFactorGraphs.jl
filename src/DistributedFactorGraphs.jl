@@ -392,11 +392,16 @@ export loadDFG
 ## Other utility functions
 ##------------------------------------------------------------------------------
 
+## Agent CRUD (now in AbstractDFG services)
+export addAgent!
+export deleteAgent!
+export listAgents
+export getAgent
+export hasAgent
+# export mergeAgent!
+# public refAgents
+
 ## TODO maybe move to DFG from SDK
-# addAgent!
-# deleteAgent!
-# listAgents
-# getAgents
 # addGraph!
 # deleteGraph!
 # listGraphs
@@ -445,7 +450,6 @@ const unstable_functions::Vector{Symbol} = [
     :findVariablesNearTimestamp,
     :findShortestPathDijkstra,
     :findFactorsBetweenNaive, # TODO not really used
-    :getAgentLabel, #TODO check and mark as public
     :getGraphLabel, #TODO check and mark as public
     :getDescription,
     :getSolverParams,

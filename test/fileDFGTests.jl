@@ -28,7 +28,7 @@ using UUIDs
                 Blobentry(;
                     blobid = uuid4(),
                     label = :testing,
-                    blobstore = :store,
+                    storelabel = :store,
                     # timestamp = now(localzone()),
                     timestamp = DFG.TimeDateZone(now(localzone())),
                 ),
@@ -41,7 +41,7 @@ using UUIDs
                 Blobentry(;
                     blobid = uuid4(),
                     label = :testing2,
-                    blobstore = :store,
+                    storelabel = :store,
                     # timestamp = ZonedDateTime(2014, 5, 30, 21, tz"UTC-4"),
                     timestamp = DFG.TimeDateZone(ZonedDateTime(2014, 5, 30, 21, tz"UTC-4")),
                 ),
@@ -79,18 +79,21 @@ using UUIDs
         be = Blobentry(;
             blobid = uuid4(),
             label = :testing2,
-            blobstore = :store,
+            storelabel = :store,
             # timestamp = ZonedDateTime(2023, 2, 3, 20, tz"UTC+1"),
             timestamp = DFG.TimeDateZone(ZonedDateTime(2023, 2, 3, 20, tz"UTC+1")),
         )
 
         addGraphBlobentry!(dfg, be)
 
+        agentlabel = :testFileAgent
+        !DFG.hasAgent(dfg, agentlabel) &&
+            DFG.addAgent!(dfg, DFG.Agent(; label = agentlabel))
         agentBloblets = [Bloblet(:a, "43"), Bloblet(:b, "small_robot")]
         graphBloblets = [Bloblet(:a, "44"), Bloblet(:b, "small_session")]
 
-        DFG.addAgentBloblets!(dfg, agentBloblets)
-        DFG.addGraphBloblets!(dfg, graphBloblets)
+        DFG.mergeAgentBloblets!(dfg, agentlabel, agentBloblets)
+        DFG.mergeGraphBloblets!(dfg, graphBloblets)
 
         # Save and load the graph to test.
         saveDFG(filename, dfg)

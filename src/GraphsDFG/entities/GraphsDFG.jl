@@ -12,14 +12,13 @@ mutable struct GraphsDFG{
     F <: AbstractGraphFactor,
 } <: AbstractDFG{V, F}
     g::FactorGraph{Int, V, F}
-    # addHistory::Vector{Symbol} #TODO: Discuss more - is this an audit trail?
-    solverParams::T # Solver parameters
-    blobstores::Dict{Symbol, AbstractBlobstore} #TODO note v0.29 changed from camelCase  blobStores
+    solverParams::T # Solver parameters #TODO resolve #1205 first
+    blobstores::OrderedDict{Symbol, AbstractBlobstore} #TODO note v0.29 changed from camelCase  blobStores
     graph::Graphroot
-    agent::Agent
+    agents::OrderedDict{Symbol, Agent} #TODO note v0.29 added multiple agents, agent -> agents
 end
 
-DFG.getAgent(dfg::GraphsDFG) = dfg.agent
+DFG.refAgents(dfg::GraphsDFG) = dfg.agents
 DFG.getGraphLabel(dfg::GraphsDFG) = dfg.graph.label
 DFG.getDescription(dfg::GraphsDFG) = dfg.graph.description
 
@@ -35,51 +34,45 @@ function GraphsDFG{T, V, F}(
     g::FactorGraph{Int, V, F} = FactorGraph{Int, V, F}();
     # addHistory::Vector{Symbol} = Symbol[],
     solverParams::T = T(),
-    blobstores = Dict{Symbol, AbstractBlobstore}(),
+    blobstores = OrderedDict{Symbol, AbstractBlobstore}(),
     # graph
-    graphLabel::Symbol = Symbol("graph_", string(uuid4())[1:6]),
+    graphLabel::Symbol = :workspace,
     graphDescription::String = "",
     graphTags::Union{Set{Symbol}, Vector{Symbol}} = Set{Symbol}(),
     graphBloblets::Bloblets = Bloblets(),
-    graphBlobEntries = Blobentries(),
+    graphBlobentries = Blobentries(),
     graph::Graphroot = Graphroot(
         graphLabel,
         graphDescription,
         graphTags,
         graphBloblets,
-        graphBlobEntries,
+        graphBlobentries,
     ),
-    # agent
-    agentLabel::Symbol = :DefaultAgent,
-    agentDescription::String = "",
-    agentTags::Union{Set{Symbol}, Vector{Symbol}} = Set{Symbol}(),
-    agentBloblets::Bloblets = Bloblets(),
-    agentBlobEntries = Blobentries(),
-    agent::Agent = Agent(
-        agentLabel,
-        agentDescription,
-        agentTags,
-        agentBloblets,
-        agentBlobEntries,
-    ),
+    agents::OrderedDict{Symbol, Agent} = OrderedDict{Symbol, Agent}(),
     #TODO deprecated v0.29
     graphMetadata = nothing,
     agentMetadata = nothing,
+    kwargs...,
 ) where {T <: AbstractDFGParams, V <: AbstractGraphVariable, F <: AbstractGraphFactor}
-    if !isnothing(graphMetadata)
-        @warn "The `graphMetadata` keyword argument is obsolete, use graphBloblets."
-    end
-    if !isnothing(agentMetadata)
-        @warn "The `agentMetadata` keyword argument is obsolete, use agentBloblets."
-    end
+    !isnothing(graphMetadata) && Base.depwarn(
+        "The `graphMetadata` keyword argument is obsolete, use graphBloblets.",
+        :GraphsDFG,
+    )
+    !isnothing(agentMetadata) && Base.depwarn(
+        "The `agentMetadata` keyword argument is obsolete, use agentBloblets.",
+        :GraphsDFG,
+    )
 
-    # Validate the graphLabel and agentLabel
+    !isempty(kwargs) && Base.depwarn(
+        "`agent...` keyword arguments are deprecated, use the `agents` kwargs or addAgent!",
+        :GraphsDFG,
+    )
+
+    #TODO move to Graphroot constructor.
     !DFG.isValidLabel(graphLabel) &&
         throw(ArgumentError("'$graphLabel' is not a valid label"))
-    !DFG.isValidLabel(agentLabel) &&
-        throw(ArgumentError("'$agentLabel' is not a valid label"))
 
-    return GraphsDFG{T, V, F}(g, solverParams, blobstores, graph, agent)
+    return GraphsDFG{T, V, F}(g, solverParams, blobstores, graph, agents)
 end
 
 # GraphsDFG{T}(; kwargs...) where T <: AbstractDFGParams = GraphsDFG{T,VariableDFG,FactorDFG}(;kwargs...)
@@ -104,7 +97,7 @@ function GraphsDFG(
     solverParams = fg.solverParams,
     blobstores = fg.blobstores,
     graph = fg.graph,
-    agent = fg.agent,
+    agents = fg.agents,
 )
-    return GraphsDFG(g, solverParams, blobstores, graph, agent)
+    return GraphsDFG(g, solverParams, blobstores, graph, agents)
 end

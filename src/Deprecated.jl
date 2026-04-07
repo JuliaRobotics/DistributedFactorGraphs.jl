@@ -117,7 +117,7 @@ function _getDuplicatedEmptyDFG(
 ) where {P <: AbstractDFGParams, V <: AbstractGraphVariable, F <: AbstractGraphFactor}
     Base.depwarn("_getDuplicatedEmptyDFG is deprecated.", :_getDuplicatedEmptyDFG)
     newDfg = GraphsDFG{P, V, F}(;
-        agentLabel = getAgentLabel(dfg),
+        agents = deepcopy(dfg.agents),
         graphLabel = getGraphLabel(dfg),
         solverParams = deepcopy(dfg.solverParams),
     )
@@ -184,7 +184,9 @@ end
 # Function to generate source string - agentLabel|graphLabel|varLabel
 # """
 function buildSourceString(dfg::AbstractDFG, label::Symbol)
-    return "$(getAgentLabel(dfg))|$(getGraphLabel(dfg))|$label"
+    return error(
+        "buildSourceString is deprecated. Use agents with `listAgents(dfg)` and `getAgent(dfg, agentlabel)` instead.",
+    )
 end
 
 getAgentMetadata(args...) = error("getAgentMetadata is obsolete, use Bloblets instead.")
@@ -572,7 +574,7 @@ function deepcopyGraph(
     destDFG = T(;
         solverParams = getSolverParams(sourceDFG),
         graph = sourceDFG.graph,
-        agent = sourceDFG.agent,
+        agents = deepcopy(sourceDFG.agents),
         graphLabel,
     )
     copyGraph!(

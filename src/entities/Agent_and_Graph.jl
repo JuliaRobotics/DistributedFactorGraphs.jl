@@ -15,6 +15,11 @@ end
     blobentries::Blobentries = Blobentries()
 end
 
+#TODO
+# Validate the graphLabel and agentLabel
+# !DFG.isValidLabel(graphLabel) &&
+# throw(ArgumentError("'$graphLabel' is not a valid label"))
+
 # Patching (for merge!)
 # standard patch description merging
 function patch(dest::String, src::String)

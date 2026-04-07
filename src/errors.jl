@@ -107,3 +107,17 @@ end
 function Base.showerror(io::IO, ex::MergeConflictError)
     return print(io, "MergeConflictError: ", ex.msg)
 end
+
+"""
+    LinkConstraintError(msg)
+
+Error thrown when an operation violates a structural dependency,
+e.g., deleting a graph that is still in use by a model.
+"""
+struct LinkConstraintError <: Exception
+    msg::String
+end
+
+function Base.showerror(io::IO, ex::LinkConstraintError)
+    return print(io, "LinkConstraintError: ", ex.msg)
+end

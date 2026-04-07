@@ -19,7 +19,7 @@ using ...DistributedFactorGraphs:
     filterDFG!,
     getSolvable,
     getStateKind,
-    getAgentLabel,
+    getAgent,
     getGraphLabel,
     isInitialized,
     Bloblets,

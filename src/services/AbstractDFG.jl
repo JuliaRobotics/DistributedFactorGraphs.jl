@@ -26,17 +26,7 @@ function getId end
 """
     $(SIGNATURES)
 """
-function getAgent end
-
-"""
-    $(SIGNATURES)
-"""
 function getGraph end
-
-"""
-    $(SIGNATURES)
-"""
-getAgentLabel(dfg::AbstractDFG) = getLabel(getAgent(dfg))
 
 """
     $(SIGNATURES)
@@ -86,6 +76,88 @@ function setSolverParams!(dfg::AbstractDFG, solverParams::AbstractDFGParams)
     return dfg.solverParams = solverParams
 end
 
+## =============================================================================
+## Agent in DFG CRUD
+## =============================================================================
+"""
+    $(SIGNATURES)
+"""
+function refAgents end
+
+"""
+    $(SIGNATURES)
+"""
+function getAgent(dfg::AbstractDFG, label::Symbol)
+    agent = get(refAgents(dfg), label, nothing)
+    if isnothing(agent)
+        available = listAgents(dfg)
+        isempty(available) &&
+            @info "No agents in graph: `$(getGraphLabel(dfg))`. Use `addAgent!(dfg, Agent(; label=:myAgent))` to add one"
+        throw(LabelNotFoundError("Agent", label, available))
+    end
+    return agent
+end
+
+function getAgents(dfg::AbstractDFG)
+    return map(listAgents(dfg)) do label
+        return getAgent(dfg, label)
+    end
+end
+
+"""
+    $(SIGNATURES)
+"""
+function addAgent!(dfg::AbstractDFG, agent::Agent)
+    label = getLabel(agent)
+    haskey(refAgents(dfg), label) && throw(LabelExistsError("Agent", label))
+    push!(refAgents(dfg), label => agent)
+    return agent
+end
+
+"""
+    $(SIGNATURES)
+"""
+function deleteAgent!(dfg::AbstractDFG, label::Symbol)
+    !haskey(refAgents(dfg), label) && return 0
+    pop!(refAgents(dfg), label)
+    return 1
+end
+
+"""
+    $(SIGNATURES)
+"""
+function listAgents(dfg::AbstractDFG)
+    return collect(keys(refAgents(dfg)))
+end
+
+"""
+    $(SIGNATURES)
+"""
+function hasAgent(dfg::AbstractDFG, label::Symbol)
+    return haskey(refAgents(dfg), label)
+end
+
+"""
+    $(SIGNATURES)
+"""
+function mergeAgent!(dfg::AbstractDFG, agent::Agent)
+    label = getLabel(agent)
+    if hasAgent(dfg, label)
+        mergeAgent!(refAgents(dfg)[label], agent)
+    else
+        addAgent!(dfg, agent)
+    end
+    return 1
+end
+
+function mergeAgents!(dfg::AbstractDFG, agents::Vector{Agent})
+    count = 0
+    for agent in agents
+        count += mergeAgent!(dfg, agent)
+    end
+    return count
+end
+
 ##==============================================================================
 ## AbstractBlobstore  CRUD
 ##==============================================================================
@@ -96,6 +168,8 @@ refBlobstores(dfg::AbstractDFG) = dfg.blobstores
 function getBlobstore(dfg::AbstractDFG, storeLabel::Symbol)
     store = get(refBlobstores(dfg), storeLabel, nothing)
     if isnothing(store)
+        isempty(refBlobstores(dfg)) &&
+            @info "No blobstores in graph: `$(getGraphLabel(dfg))`. Use `addBlobstore!(dfg, FolderStore(\"path/to/store\"))` to add one."
         throw(
             LabelNotFoundError("Blobstore", storeLabel, collect(keys(refBlobstores(dfg)))),
         )
@@ -596,17 +670,17 @@ end
     $(SIGNATURES)
 Merge the source DFG into the destination DFG cascading down the hierarchy of DFG nodes.
 Merge rules:
-- Variables, Factors, Agent, and Graphroot, with the same label are merged if they are equal.
+- Variables, Factors, Agents, and Graphroot, with the same label are merged if they are equal.
     - On conflicts, a `MergeConflictError` is thrown.
     - Child nodes (eg. tags, Bloblets, Blobentries, States, etc.) are using `merge!`.
-- The Blobstore links are merged provided they point to the same blobstore.
+- The Blobstore links are merged provided they point to the same Blobstore.
     - On conflicts, a `MergeConflictError` is thrown.
 """
 function mergeGraph!(destDFG::AbstractDFG, srcDFG::AbstractDFG)
     patch!(destDFG.graph, srcDFG.graph)
     mergeVariables!(destDFG, getVariables(srcDFG))
     mergeFactors!(destDFG, getFactors(srcDFG))
-    mergeAgent!(destDFG.agent, srcDFG.agent)
+    mergeAgents!(destDFG, getAgents(srcDFG))
     mergeStorelinks!(destDFG, getBlobstores(srcDFG))
     return destDFG
 end
@@ -694,7 +768,7 @@ function getSummaryGraph(dfg::G) where {G <: AbstractDFG}
     #TODO fix deprecated constructor
     summaryDfg = GraphsDFG{NoSolverParams, VariableSummary, FactorSummary}(;
         graphDescription = "Summary of $(getDescription(dfg))",
-        agent = dfg.agent,
+        agents = deepcopy(dfg.agents),
         graphLabel = Symbol(getGraphLabel(dfg), "_summary_$(string(uuid4())[1:6])"),
     )
     deepcopyGraph!(summaryDfg, dfg)

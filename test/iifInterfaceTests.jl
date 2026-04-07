@@ -199,23 +199,25 @@ end
     @test_throws LabelNotFoundError isInitialized(v2, :second)
 
     # Graph and Agent small data tests
+    agentlabel = :testAgent
+    DFG.addAgent!(dfg, DFG.Agent(; label = agentlabel))
     agentBloblets = [Bloblet(:a, "43"), Bloblet(:b, "Hello")]
     graphBloblets = [Bloblet(:c, "44"), Bloblet(:d, "Hello")]
-    DFG.addAgentBloblets!(dfg, agentBloblets)
+    DFG.addAgentBloblets!(dfg, agentlabel, agentBloblets)
     DFG.addGraphBloblets!(dfg, graphBloblets)
-    @test DFG.listAgentBloblets(dfg) == [:a, :b]
+    @test DFG.listAgentBloblets(dfg, agentlabel) == [:a, :b]
     @test DFG.listGraphBloblets(dfg) == [:c, :d]
 end
 
 @testset "Data Entries" begin
-    de1 = Blobentry(; blobid = uuid4(), label = :key1, blobstore = :test)
+    de1 = Blobentry(; blobid = uuid4(), label = :key1, storelabel = :test)
 
-    de2 = Blobentry(; blobid = uuid4(), label = :key2, blobstore = :test)
+    de2 = Blobentry(; blobid = uuid4(), label = :key2, storelabel = :test)
 
     de2_update = Blobentry(;
         blobid = uuid4(),
         label = :key2,
-        blobstore = :test,
+        storelabel = :test,
         mimetype = MIME("image/jpg"),
     )
 

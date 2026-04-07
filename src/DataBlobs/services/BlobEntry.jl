@@ -111,7 +111,7 @@ function Base.show(io::IO, ::MIME"text/plain", entry::Blobentry)
     println(io, "Blobentry {")
     println(io, "  blobid:        ", entry.blobid)
     println(io, "  label:         ", entry.label)
-    println(io, "  blobstore:     ", entry.blobstore)
+    println(io, "  storelabel:     ", entry.storelabel)
     println(io, "  origin:        ", entry.origin)
     println(io, "  description:   ", entry.description)
     println(io, "  mimetype:      ", entry.mimetype)
@@ -255,8 +255,12 @@ function addFactorBlobentries!(dfg::AbstractDFG, fLbl::Symbol, entries::Vector{B
     return entries
 end
 
-function addAgentBlobentries!(dfg::AbstractDFG, entries::Vector{Blobentry})
-    addAgentBlobentry!.(dfg, entries)
+function addAgentBlobentries!(
+    dfg::AbstractDFG,
+    agentlabel::Symbol,
+    entries::Vector{Blobentry},
+)
+    addAgentBlobentry!.(dfg, agentlabel, entries)
     return entries
 end
 
@@ -277,8 +281,12 @@ function mergeFactorBlobentries!(dfg::AbstractDFG, fLbl::Symbol, entries::Vector
     mergeFactorBlobentry!.(dfg, fLbl, entries)
     return length(entries)
 end
-function mergeAgentBlobentries!(dfg::AbstractDFG, entries::Vector{Blobentry})
-    mergeAgentBlobentry!.(dfg, entries)
+function mergeAgentBlobentries!(
+    dfg::AbstractDFG,
+    agentlabel::Symbol,
+    entries::Vector{Blobentry},
+)
+    mergeAgentBlobentry!.(dfg, agentlabel, entries)
     return length(entries)
 end
 function mergeGraphBlobentries!(dfg::AbstractDFG, entries::Vector{Blobentry})
@@ -308,9 +316,13 @@ function deleteFactorBlobentries!(
     return sum(cnts)
 end
 
-function deleteAgentBlobentries!(dfg::AbstractDFG, labels::Vector{Symbol})
+function deleteAgentBlobentries!(
+    dfg::AbstractDFG,
+    agentlabel::Symbol,
+    labels::Vector{Symbol},
+)
     cnts = map(labels) do label
-        return deleteAgentBlobentry!(dfg, label)
+        return deleteAgentBlobentry!(dfg, agentlabel, label)
     end
     return sum(cnts)
 end
