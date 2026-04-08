@@ -23,38 +23,66 @@ Modules = [DistributedFactorGraphs]
 Pages = ["entities/AbstractDFG.jl"]
 ```
 
-### Summary DFG
-
-```@autodocs
-Modules = [DistributedFactorGraphs]
-Pages = ["entities/AbstractDFGSummary.jl"]
-```
-
 ### DFG Variable Nodes
 
 ```@autodocs
 Modules = [DistributedFactorGraphs]
-Pages = ["entities/DFGVariable.jl"]
+Pages = ["entities/Variable.jl"]
 ```
 
 ### DFG Factor Nodes
 
 ```@autodocs
 Modules = [DistributedFactorGraphs]
-Pages = ["entities/DFGFactor.jl"]
+Pages = ["entities/Factor.jl"]
+```
+
+### State
+
+```@autodocs
+Modules = [DistributedFactorGraphs]
+Pages = ["entities/State.jl"]
+```
+
+### Agent and Graph
+
+```@autodocs
+Modules = [DistributedFactorGraphs]
+Pages = ["entities/Agent_and_Graph.jl"]
+```
+
+### Tags
+
+```@autodocs
+Modules = [DistributedFactorGraphs]
+Pages = ["entities/Tags.jl"]
+```
+
+### Timestamp
+
+```@autodocs
+Modules = [DistributedFactorGraphs]
+Pages = ["entities/Timestamp.jl"]
+```
+
+### Equality
+
+```@autodocs
+Modules = [DistributedFactorGraphs]
+Pages = ["entities/equality.jl"]
 ```
 
 ### Error Types
 ```@autodocs
 Modules = [DistributedFactorGraphs]
-Pages = ["errors.jl"]
+Pages = ["entities/Error.jl"]
 ```
 
 ## DFG Plots [GraphMakie.jl]
 
 ```@autodocs
 Modules = [DistributedFactorGraphs]
-Pages = ["weakdeps_prototypes.jl"]
+Pages = ["extension_stubs.jl"]
 ```
 
 ## Drivers
@@ -69,5 +97,5 @@ Modules = [GraphsDFGs]
 
 ```@autodocs
 Modules = [DistributedFactorGraphs]
-Pages = ["FileDFG.jl"]
+Pages = ["FileDFG/FileDFG.jl", "FileDFG/services/FileDFG.jl"]
 ```

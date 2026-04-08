@@ -12,8 +12,8 @@ Depth = 3
 Modules = [DistributedFactorGraphs]
 
 Pages = [
-    "DataBlobs/entities/BlobEntry.jl",
-    "DataBlobs/entities/BlobStores.jl",
+    "entities/Blobentry.jl",
+    "entities/Blobstore.jl",
 ]
 
 ```
@@ -23,10 +23,11 @@ Pages = [
 Modules = [DistributedFactorGraphs]
 
 Pages = [
-    "DataBlobs/services/BlobEntry.jl",
-    "DataBlobs/services/BlobStores.jl",
-    "DataBlobs/services/BlobPacking.jl",
-    "DataBlobs/services/BlobWrappers.jl",
+    "services/blobentry_ops.jl",
+    "services/blobstore_ops.jl",
+    "Serialization/BlobPacking.jl",
+    "services/blob_save_load.jl",
+    "Blobstores/Blobstores.jl",
 ]
 
 ```
