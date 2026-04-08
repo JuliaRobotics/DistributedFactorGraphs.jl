@@ -9,6 +9,8 @@ using OrderedCollections
 using ...DistributedFactorGraphs
 using ...DistributedFactorGraphs:
     Agent,
+    refAgents,
+    getAgent,
     LabelNotFoundError,
     LabelExistsError,
     MergeConflictError,
@@ -19,54 +21,30 @@ using ...DistributedFactorGraphs:
     filterDFG!,
     getSolvable,
     getStateKind,
-    getAgent,
     getGraphLabel,
     isInitialized,
     Bloblets,
+    addBloblet!,
+    addBloblets!,
+    getBloblet,
+    getBloblets,
+    mergeBloblet!,
+    mergeBloblets!,
+    deleteBloblet!,
+    deleteBloblets!,
+    listBloblets,
+    listNeighbors,
+    hasBloblet,
     Blobentries,
-    FolderStore,
     refTags,
     listTags,
-    patch!
-
-# import DFG functions to extend
-import ...DistributedFactorGraphs:
-    setSolverParams!,
-    getFactor,
-    # getLabelDict,
-    addVariable!,
-    getVariable,
-    addFactor!,
-    getSolverParams,
-    hasVariable,
-    hasFactor,
-    isVariable,
-    isFactor,
-    mergeVariable!,
-    mergeFactor!,
-    deleteVariable!,
-    deleteFactor!,
-    getVariables,
-    listVariables,
-    ls,
-    getFactors,
-    listFactors,
-    lsf,
-    isConnected,
-    listNeighbors,
-    findPaths,
-    findPath,
-    getSubgraph,
-    getBiadjacencyMatrix,
-    toDot,
-    toDotFile,
-    findShortestPathDijkstra,
-    getGraphBlobentry,
-    getGraphBlobentries,
-    addGraphBlobentry!,
-    addGraphBlobentries!,
-    listGraphBlobentries,
-    listAgentBlobentries
+    patch!,
+    mergeTags!,
+    deleteTags!,
+    refStates,
+    refBlobstores,
+    hasBlobentry,
+    hasBlobstore
 
 include("FactorGraphs/FactorGraphs.jl")
 using .FactorGraphs
@@ -74,7 +52,15 @@ using .FactorGraphs
 # export SymbolEdge, is_directed, has_edge
 # Imports
 include("entities/GraphsDFG.jl")
-include("services/GraphsDFG.jl")
+include("services/agent_ops.jl")
+include("services/graph_ops.jl")
+include("services/state_ops.jl")
+include("services/variable_ops.jl")
+include("services/factor_ops.jl")
+include("services/blobentry_ops.jl")
+include("services/bloblet_ops.jl")
+include("services/blobstore_ops.jl")
+include("services/tag_ops.jl")
 
 # Exports
 export GraphsDFG

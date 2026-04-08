@@ -1,6 +1,6 @@
-##==============================================================================
-## Blobentry
-##==============================================================================
+# ==============================================================================
+#  Blobentry
+# ==============================================================================
 """
     $(TYPEDEF)
 
@@ -134,3 +134,135 @@ function StructUtils.makedict(s::StructUtils.StructStyle, T::Type{Blobentries}, 
     end
     return entries, nothing
 end
+
+# ==============================================================================
+# Blobentry - Generic node CRUD
+# ==============================================================================
+
+"""
+    $(SIGNATURES)
+"""
+function getBlobentry(node, label::Symbol)
+    !haskey(refBlobentries(node), label) && throw(LabelNotFoundError("Blobentry", label))
+    return refBlobentries(node)[label]
+end
+
+function getBlobentries(
+    node;
+    whereLabel::Union{Nothing, Function} = nothing,
+    whereBlobid::Union{Nothing, Function} = nothing,
+)
+    entries = collect(values(refBlobentries(node)))
+    filterDFG!(entries, whereLabel, getLabel)
+    filterDFG!(entries, whereBlobid, x -> string(x.blobid))
+    return entries
+end
+
+"""
+    $(SIGNATURES)
+"""
+function addBlobentry!(node, entry::Blobentry)
+    label = getLabel(entry)
+    haskey(refBlobentries(node), label) && throw(LabelExistsError("Blobentry", label))
+    refBlobentries(node)[label] = entry
+    return entry
+end
+
+function addBlobentries!(node, entries::Vector{Blobentry})
+    addBlobentry!.(node, entries)
+    return entries
+end
+
+"""
+    $(SIGNATURES)
+"""
+function mergeBlobentry!(node, entry::Blobentry)
+    label = getLabel(entry)
+    refBlobentries(node)[label] = entry
+    return 1
+end
+
+function mergeBlobentries!(node, entries::Vector{Blobentry})
+    #TODO optimize with something like: merge!(refBlobentries(node), entries)
+    mergeBlobentry!.(node, entries)
+    return length(entries)
+end
+
+"""
+    $(SIGNATURES)
+"""
+function deleteBlobentry!(node, label::Symbol)
+    !haskey(refBlobentries(node), label) && return 0
+    pop!(refBlobentries(node), label)
+    return 1
+end
+
+deleteBlobentry!(node, entry) = deleteBlobentry!(node, getLabel(entry))
+
+function deleteBlobentries!(node, labels::Vector{Symbol})
+    return sum(deleteBlobentry!.(node, labels))
+end
+
+"""
+    $(SIGNATURES)
+List all Blobentry keys for a variable `label` in `dfg`
+"""
+function listBlobentries(node)
+    return collect(keys(refBlobentries(node)))
+end
+
+"""
+    $SIGNATURES
+
+Does a blob entry exist with `label`.
+"""
+hasBlobentry(node, label::Symbol) = haskey(refBlobentries(node), label)
+
+# ==============================================================================
+# Blobentry - utils
+# ==============================================================================
+
+"""
+    checkHash(entry::Blobentry, blob) -> Union{Bool,Nothing}
+
+Checks the integrity of a blob against the hashes (crc32c, sha256) stored in the given `Blobentry`.
+
+- Returns `true` if all present hashes (`crchash`, `shahash`) match the computed values from `blob`.
+- Returns `false` if any present hash does not match.
+- Returns `nothing` if no hashes are stored in the `Blobentry` to check against.
+"""
+function checkHash(entry::Blobentry, blob)
+    if !isnothing(entry.crchash)
+        crc32c(blob) != entry.crchash && return false
+    end
+    if entry.shahash != ""
+        sha256(blob) != entry.shahash && return false
+    end
+    if isnothing(entry.crchash) && entry.shahash == ""
+        return nothing
+    end
+    return true
+end
+
+function Base.show(io::IO, ::MIME"text/plain", entry::Blobentry)
+    println(io, "Blobentry {")
+    println(io, "  blobid:        ", entry.blobid)
+    println(io, "  label:         ", entry.label)
+    println(io, "  storelabel:     ", entry.storelabel)
+    println(io, "  origin:        ", entry.origin)
+    println(io, "  description:   ", entry.description)
+    println(io, "  mimetype:      ", entry.mimetype)
+    println(io, "  timestamp      ", entry.timestamp)
+    println(io, "  version:       ", entry.version)
+    return println(io, "}")
+end
+
+# TODO Consider autogenerating all methods of the form:
+# verbNoun(dfg::VariableCompute, label::Symbol, args...; kwargs...) = verbNoun(getVariable(dfg, label), args...; kwargs...)
+# with something like:
+# getvariablemethod = [
+#     :getfirstBlobentry,
+# ]
+# for met in methodstooverload  
+#     @eval DistributedFactorGraphs $met(dfg::AbstractDFG, label::Symbol, args...; kwargs...) = $met(getVariable(dfg, label), args...; kwargs...)
+# end

@@ -12,7 +12,7 @@ if false
     include("testBlocks.jl")
 
     testDFGAPI = GraphsDFG
-
+    DFG.@usingDFG true
     # Enable debug logging
     using Logging
     logger = SimpleLogger(stdout, Logging.Debug)

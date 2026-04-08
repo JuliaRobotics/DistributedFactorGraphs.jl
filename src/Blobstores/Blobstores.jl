@@ -1,121 +1,8 @@
-##==============================================================================
-## Blob CRUD interface
-##==============================================================================
 
-"""
-Get the data blob for the specified Blobstore or DFG.
-
-Related
-[`getBlobentry`](@ref)
-Implement 
-`getBlob(store::AbstractBlobstore, blobid::UUID)`
-
-$(METHODLIST)
-"""
-function getBlob end
-
-"""
-Adds a blob to the Blobstore with the blobid.
-
-Related
-[`addBlobentry!`](@ref)
-Implement
-`addBlob!(store::AbstractBlobstore, blobid::UUID, data)`
-$(METHODLIST)
-"""
-function addBlob! end
-
-"""
-Delete a blob from the blob store or dfg with the given entry.
-
-Related
-[`deleteBlobentry!`](@ref)
-Implement
-`deleteBlob!(store::AbstractBlobstore, blobid::UUID)`
-$(METHODLIST)
-"""
-function deleteBlob! end
-
-"""
-    $(SIGNATURES)
-List all `blobid`s in the blob store.
-Implement
-`listBlobs(store::AbstractBlobstore)`
-"""
-function listBlobs end
-
-"""
-    $(SIGNATURES)
-Check if the blob store has a blob with the given `blobid`.
-"""
-function hasBlob end
-
-##==============================================================================
-## AbstractBlobstore derived CRUD for Blob 
-##==============================================================================
-#TODO maybe we should generalize and move the cached Blobstore to DFG.
-function getBlob(dfg::AbstractDFG, entry::Blobentry)
-    storeLabel = entry.storelabel
-    store = getBlobstore(dfg, storeLabel)
-    return getBlob(store, entry.blobid)
-end
-
-function getBlob(store::AbstractBlobstore, entry::Blobentry)
-    return getBlob(store, entry.blobid)
-end
-
-#add 
-function addBlob!(dfg::AbstractDFG, entry::Blobentry, data)
-    return addBlob!(getBlobstore(dfg, entry.storelabel), entry, data)
-end
-
-function addBlob!(store::AbstractBlobstore{T}, entry::Blobentry, data::T) where {T}
-    return addBlob!(store, entry.blobid, data)
-end
-
-# also creates an blobid as uuid4
-addBlob!(store::AbstractBlobstore, data) = addBlob!(store, uuid4(), data)
-
-#delete
-function deleteBlob!(dfg::AbstractDFG, entry::Blobentry)
-    return deleteBlob!(getBlobstore(dfg, entry.storelabel), entry)
-end
-
-function deleteBlob!(store::AbstractBlobstore, entry::Blobentry)
-    return deleteBlob!(store, entry.blobid)
-end
-
-#has
-function hasBlob(store::AbstractBlobstore, entry::Blobentry)
-    return hasBlob(store, entry.blobid)
-end
-function hasBlob(dfg::AbstractDFG, entry::Blobentry)
-    return hasBlob(getBlobstore(dfg, entry.storelabel), entry.blobid)
-end
-
-#TODO
-# """
-#     $(SIGNATURES)
-# Copies all the entries from the source into the destination.
-# Can specify which entries to copy with the `sourceEntries` parameter.
-# Returns the list of copied entries.
-# """
-# function copyBlobstore(sourceStore::D1, destStore::D2; sourceEntries=listEntries(sourceStore))::Vector{E} where {T, D1 <: AbstractDataStore{T}, D2 <: AbstractDataStore{T}, E <: Blobentry}
-#     # Quick check
-#     destEntries = listBlobs(destStore)
-#     typeof(sourceEntries) != typeof(destEntries) && error("Can't copy stores, source has entries of type $(typeof(sourceEntries)), destination has entries of type $(typeof(destEntries)).")
-#     # Same source/destination check
-#     sourceStore == destStore && error("Can't specify same store for source and destination.")
-#     # Otherwise, continue
-#     for sourceEntry in sourceEntries
-#         addBlob!(destStore, deepcopy(sourceEntry), getBlob(sourceStore, sourceEntry))
-#     end
-#     return sourceEntries
-# end
-
-##==============================================================================
-## FolderStore
-##==============================================================================
+# ==============================================================================
+# FolderStore
+# TODO rename to FolderBlobstore
+# ==============================================================================
 struct FolderStore{T} <: AbstractBlobstore{T}
     label::Symbol
     folder::String
@@ -200,9 +87,10 @@ function listBlobs(store::FolderStore)
     return blobids
 end
 
-##==============================================================================
-## InMemoryBlobstore
-##==============================================================================
+# ==============================================================================
+# InMemoryBlobstore
+# TODO rename to MemoryBlobstore
+# ==============================================================================
 
 struct InMemoryBlobstore{T} <: AbstractBlobstore{T}
     label::Symbol
@@ -241,9 +129,10 @@ hasBlob(store::InMemoryBlobstore, blobid::UUID) = haskey(store.blobs, blobid)
 
 listBlobs(store::InMemoryBlobstore) = collect(keys(store.blobs))
 
-##==============================================================================
-## LinkStore Link blobid to a existing local folder
-##==============================================================================
+# ==============================================================================
+# LinkStore Link blobid to a existing local folder
+# TODO Rename to LinkBlobstore
+# ==============================================================================
 #TODO consider using a deterministic blobid (uuid5) with ns stored in the csv?
 @tags struct LinkStore <: AbstractBlobstore{String}
     label::Symbol
@@ -292,9 +181,9 @@ end
 deleteBlob!(store::LinkStore, ::Blobentry) = deleteBlob!(store)
 deleteBlob!(store::LinkStore, ::UUID) = deleteBlob!(store)
 
-##==============================================================================
-## RowBlobstore Ordered Dict Row Table Blob Store
-##==============================================================================
+# ==============================================================================
+# RowBlobstore Ordered Dict Row Table Blob Store
+# ==============================================================================
 
 # RowBlob
 # T must be compatable with the AbstactRow iterator
@@ -320,7 +209,7 @@ function Tables.columnnames(row::RowBlob)
     return (:id, Tables.columnnames(getfield(row, :blob))...)
 end
 
-## RowBlobstore
+#  RowBlobstore
 
 struct RowBlobstore{T} <: AbstractBlobstore{T}
     label::Symbol
@@ -350,7 +239,7 @@ Tables.rows(store::RowBlobstore) = values(store.blobs)
 #TODO
 # Tables.materializer(::Type{RowBlobstore{T}}) where T = Tables.rowtable
 
-##
+# 
 function getBlob(store::RowBlobstore, blobid::UUID)
     if !haskey(store.blobs, blobid)
         throw(IdNotFoundError("Blob", blobid))
@@ -377,7 +266,7 @@ hasBlob(store::RowBlobstore, blobid::UUID) = haskey(store.blobs, blobid)
 listBlobs(store::RowBlobstore) = collect(keys(store.blobs))
 
 # TODO also see about wrapping a table directly
-##
+# 
 if false
     rb = RowBlob(uuid4(), (a = [1, 2], b = [3, 4]))
 
@@ -399,7 +288,7 @@ if false
 
     # Tables.materializer(tstore)
 
-    ##
+    # 
     struct Foo
         a::Float64
         b::Float64
@@ -413,5 +302,5 @@ if false
 
     Tables.rowtable(sstore)
 end
-##
-##
+# 
+# 

@@ -175,23 +175,3 @@ end
 ## Overloading show
 ##==============================================================================
 # Base.show_default(io, v)
-function Base.show(io::IO, ::MIME"text/plain", v::VariableDFG)
-    return printVariable(io, v; short = true, limit = false)
-end
-
-function Base.show(io::IO, ::MIME"text/plain", f::FactorDFG)
-    return printFactor(io, f; short = true, limit = false)
-end
-
-function Base.show(io::IO, ::MIME"text/plain", dfg::AbstractDFG)
-    summary(io, dfg)
-    println(io)
-    println(io, "  GraphLabel: ", getGraphLabel(dfg))
-    println(io, "  Description: ", getDescription(dfg))
-    println(io, "  Nr variables: ", length(ls(dfg)))
-    println(io, "  Nr factors: ", length(lsf(dfg)))
-    println(io, "  Graph Bloblets: ", listGraphBloblets(dfg))
-    println(io, "  Agents: ", listAgents(dfg))
-    println(io, "  Blobstores: ", listBlobstores(dfg))
-    return
-end

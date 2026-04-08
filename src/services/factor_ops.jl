@@ -1,3 +1,91 @@
+"""
+    $(SIGNATURES)
+Add a FactorDFG to a DFG.
+Implement `addFactor!(dfg::AbstractDFG, factor::AbstractGraphFactor)`
+"""
+function addFactor! end
+
+"""
+    $(SIGNATURES)
+Add a Vector{FactorDFG} to a DFG.
+"""
+function addFactors! end
+
+"""
+    $(SIGNATURES)
+Get a FactorDFG from a DFG using its label.
+Implement `getFactor(dfg::AbstractDFG, label::Symbol)`
+"""
+function getFactor end
+
+"""
+    $(SIGNATURES)
+List the DFGFactors in the DFG.
+Optionally specify a label regular expression to retrieves a subset of the factors.
+"""
+function getFactors end
+
+"""
+    $(SIGNATURES)
+Merge a factor into the DFG. If a factor with the same label exists, it will be overwritten; 
+otherwise, the factor will be added to the graph.
+Implement `mergeFactor!(dfg::AbstractDFG, factor::AbstractGraphFactor)`
+"""
+function mergeFactor! end
+
+function mergeFactors! end
+
+"""
+    $(SIGNATURES)
+Delete a FactorDFG from the DFG using its label.
+Implement `deleteFactor!(dfg::AbstractDFG, label::Symbol)`
+"""
+function deleteFactor! end
+
+"""
+    $(SIGNATURES)
+Delete Factors from the DFG using their labels or filters.
+"""
+function deleteFactors! end
+
+"""
+    $(SIGNATURES)
+Get a list of the labels of the DFGFactors in the DFG.
+Optionally specify a label regular expression to retrieves a subset of the factors.
+"""
+function listFactors end
+
+"""
+    $(SIGNATURES)
+True if the factor exists in the graph.
+Implement `hasFactor(dfg::AbstractDFG, label::Symbol)`
+"""
+function hasFactor end
+
+# ==============================================================================
+#TODO implement
+function getFactorSkeleton end
+function getFactorSummary end
+"""
+    $(SIGNATURES)
+Get the skeleton factors from a DFG as a Vector{FactorSkeleton}.
+"""
+function getFactorsSkeleton end
+#TODO implement
+function getFactorsSummary end
+
+# =======================================================================================
+function getFactors(dfg::AbstractDFG, labels::Vector{Symbol})
+    return map(label -> getFactor(dfg, label), labels)
+end
+
+function deleteFactor!(dfg::AbstractDFG, factor::AbstractGraphFactor)
+    return deleteFactor!(dfg, factor.label)
+end
+
+# =======================================================================================
+# =======================================================================================
+
 ##==============================================================================
 ## Accessors
 ##==============================================================================
@@ -195,11 +283,3 @@ end
 
 isPrior(f::AbstractGraphFactor) = isPrior(getObservation(f))
 isPrior(dfg::AbstractDFG, fl::Symbol) = isPrior(getFactor(dfg, fl))
-
-##==============================================================================
-## Layer 2 CRUD (none) and Sets
-##==============================================================================
-
-##==============================================================================
-## TAGS - See CommonAccessors
-##==============================================================================

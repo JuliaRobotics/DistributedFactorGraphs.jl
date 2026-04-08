@@ -22,14 +22,6 @@ DFG.refAgents(dfg::GraphsDFG) = dfg.agents
 DFG.getGraphLabel(dfg::GraphsDFG) = dfg.graph.label
 DFG.getDescription(dfg::GraphsDFG) = dfg.graph.description
 
-"""
-    $(SIGNATURES)
-
-Create an in-memory GraphsDFG with the following parameters:
-- T: Solver parameters (defaults to `NoSolverParams()`)
-- V: Variable type
-- F: Factor type
-"""
 function GraphsDFG{T, V, F}(
     g::FactorGraph{Int, V, F} = FactorGraph{Int, V, F}();
     # addHistory::Vector{Symbol} = Symbol[],

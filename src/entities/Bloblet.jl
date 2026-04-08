@@ -45,6 +45,24 @@ end
 """
     $(SIGNATURES)
 """
+function addBloblet!(node, bloblet::Bloblet)
+    label = getLabel(bloblet)
+    haskey(refBloblets(node), label) && throw(LabelExistsError("Bloblet", label))
+    refBloblets(node)[label] = bloblet
+    return bloblet
+end
+
+"""
+    $(SIGNATURES)
+"""
+function addBloblets!(node, bloblets::Vector{Bloblet})
+    foreach(bl -> addBloblet!(node, bl), bloblets)
+    return bloblets
+end
+
+"""
+    $(SIGNATURES)
+"""
 function getBloblet(node, label::Symbol)
     !haskey(refBloblets(node), label) && throw(LabelNotFoundError("Bloblet", label))
     return refBloblets(node)[label]
@@ -55,21 +73,6 @@ end
 """
 function getBloblets(node)
     return collect(values(refBloblets(node)))
-end
-
-"""
-    $(SIGNATURES)
-"""
-function addBloblet!(node, bloblet::Bloblet)
-    label = getLabel(bloblet)
-    haskey(refBloblets(node), label) && throw(LabelExistsError("Bloblet", label))
-    refBloblets(node)[label] = bloblet
-    return bloblet
-end
-
-function addBloblets!(node, bloblets::Vector{Bloblet})
-    foreach(bl -> addBloblet!(node, bl), bloblets)
-    return bloblets
 end
 
 """

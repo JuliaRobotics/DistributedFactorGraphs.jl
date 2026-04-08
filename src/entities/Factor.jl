@@ -417,3 +417,7 @@ function patch!(dest::FactorSkeleton, src::FactorSkeleton)
     union!(dest.tags, src.tags)
     return dest
 end
+
+function Base.show(io::IO, ::MIME"text/plain", f::FactorDFG)
+    return printFactor(io, f; short = true, limit = false)
+end

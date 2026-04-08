@@ -5,33 +5,6 @@
 ##------------------------------------------------------------------------------
 ## Overwrite in driver for performance
 ##------------------------------------------------------------------------------
-"""
-    $(SIGNATURES)
-Get a list of labels of the DFGVariables in the graph.
-Supports optional arguments to filter the variables returned.
-
-Notes
-- Returns `::Vector{Symbol}`
-
-Example
-```julia
-listVariables(dfg)
-```
-
-See also: [`ls`](@ref)
-"""
-function listVariables(dfg::AbstractDFG, args...; kwargs...)
-    return map(getLabel, getVariables(dfg, args...; kwargs...))::Vector{Symbol}
-end
-
-"""
-    $(SIGNATURES)
-Get a list of the labels of the DFGFactors in the DFG.
-Optionally specify a label regular expression to retrieves a subset of the factors.
-"""
-function listFactors(dfg::AbstractDFG, args...; kwargs...)
-    return map(getLabel, getFactors(dfg, args...; kwargs...))::Vector{Symbol}
-end
 
 ##------------------------------------------------------------------------------
 ## Aliases and Other filtered lists

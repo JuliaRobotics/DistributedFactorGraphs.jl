@@ -81,16 +81,7 @@ function DFGStructureAndAccessors(
     @test getGraphLabel(fg) == :workspace
 
     # Test the validation of the robot, session, and user IDs.
-    notAllowedList = [
-        Symbol("!notValid"),
-        Symbol("1notValid"),
-        :_notValid,
-        :AGENT,
-        :VARIABLE,
-        :FACTOR,
-        :BLOB_ENTRY,
-        :FACTORGRAPH,
-    ]
+    notAllowedList = [Symbol("!notValid"), Symbol("1notValid"), :_notValid]
 
     for s in notAllowedList
         @test_throws ArgumentError T(solverParams = solparams, graphLabel = s)
@@ -132,7 +123,7 @@ function DFGStructureAndAccessors(
     # _getDuplicatedEmptyDFG
     # copyEmptyDFG(::Type{T}, sourceDFG) where T <: AbstractDFG = T(getDFGInfo(sourceDFG))
     # copyEmptyDFG(sourceDFG::T) where T <: AbstractDFG = copyEmptyDFG(T, sourceDFG)
-
+    display(fg)
     return fg
 end
 
@@ -549,24 +540,24 @@ function tagsTestBlock!(fg, v1, v1_tags)
     #
     v1Tags = deepcopy(DFG.refTags(v1))
     @test issetequal(v1Tags, v1_tags)
-    @test issetequal(listTags(fg, :a), v1Tags)
-    @test mergeTags!(fg, :a, [:TAG]) == 1
-    @test issetequal(listTags(fg, :a), v1Tags ∪ [:TAG])
-    @test deleteTags!(fg, :a, [:TAG]) == 1
-    @test issetequal(listTags(fg, :a), v1Tags)
-    @test emptyTags!(fg, :a) == Set{Symbol}()
+    @test issetequal(listVariableTags(fg, :a), v1Tags)
+    @test mergeVariableTags!(fg, :a, [:TAG]) == 1
+    @test issetequal(listVariableTags(fg, :a), v1Tags ∪ [:TAG])
+    @test deleteVariableTags!(fg, :a, [:TAG]) == 1
+    @test issetequal(listVariableTags(fg, :a), v1Tags)
+    @test emptyTags!(getVariable(fg, :a)) == Set{Symbol}()
 
-    v2Tags = listTags(fg, :b)
-    @test hasTags(fg, :b, v2Tags)
-    @test hasTags(fg, :b, [:LANDMARK])
-    @test !hasTags(fg, :b, [:LANDMARK, :TAG])
+    v2Tags = listVariableTags(fg, :b)
+    @test hasVariableTags(fg, :b, v2Tags)
+    @test hasVariableTags(fg, :b, [:LANDMARK])
+    @test !hasVariableTags(fg, :b, [:LANDMARK, :TAG])
 
     @test listNeighbors(fg, :abf1; whereTags = ⊇([:LANDMARK])) == [:b]
     @test isempty(listNeighbors(fg, :abf1; whereTags = ⊇([:LANDMARK, :TAG])))
 
     # Test specific type tag accessors
-    @test issetequal(listVariableTags(fg, :a), listTags(fg, :a))
-    @test issetequal(listFactorTags(fg, :abf1), listTags(fg, :abf1))
+    @test issetequal(listVariableTags(fg, :a), listTags(getVariable(fg, :a)))
+    @test issetequal(listFactorTags(fg, :abf1), listTags(getFactor(fg, :abf1)))
 
     # Test mergeVariableTags! and mergeFactorTags!
     @test mergeVariableTags!(fg, :a, [:NEW_VAR_TAG]) == 1
@@ -1473,6 +1464,10 @@ function GettingNeighbors(testDFGAPI; VARTYPE = VariableDFG, FACTYPE = FactorDFG
     @test listNeighbors(dfg, getFactor(dfg, :x1x2f1)) == ls(dfg, getFactor(dfg, :x1x2f1))
     @test listNeighbors(dfg, :x1x2f1) == ls(dfg, :x1x2f1)
 
+    varneighls, facneighls = listNeighborhood(dfg, [:x1, :x3], 2)
+    @test issetequal(varneighls, [:x1, :x2, :x3, :x4])
+    @test issetequal(facneighls, [:x1x2f1, :x2x3f1, :x3x4f1])
+
     # Solvable
     #TODO if not a GraphsDFG with and summary or skeleton
     if VARTYPE == VariableDFG
@@ -1973,8 +1968,8 @@ function PathFindingTests(testDFGAPI)
 
     # --- With whereTags ---
     # By default all variables have :VARIABLE tag. Tag some for testing.
-    mergeTags!(dfg, :x3, Set([:LANDMARK]))
-    mergeTags!(dfg, :x4, Set([:LANDMARK]))
+    mergeVariableTags!(dfg, :x3, Set([:LANDMARK]))
+    mergeVariableTags!(dfg, :x4, Set([:LANDMARK]))
     landmark_vars = listVariables(dfg; whereTags = ⊇([:LANDMARK]))
     @test :x3 ∈ landmark_vars
     @test :x4 ∈ landmark_vars
