@@ -78,7 +78,14 @@ function findPaths(
     if k == 1
         return findPaths(GraphsDFGs.a_star, active_dfg, from, to; kwargs...)
     else
-        return findPaths(GraphsDFGs.yen_k_shortest_paths, active_dfg, from, to, k; kwargs...)
+        return findPaths(
+            GraphsDFGs.yen_k_shortest_paths,
+            active_dfg,
+            from,
+            to,
+            k;
+            kwargs...,
+        )
     end
 end
 
