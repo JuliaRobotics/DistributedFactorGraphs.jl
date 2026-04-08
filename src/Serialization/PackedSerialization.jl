@@ -114,7 +114,7 @@ This is equivalent to writing:
 end
 ```
 
-See also: [`Packed`](@ref), [`pack`](@ref), [`unpack`](@ref), [`resolvePackedType`](@ref)
+See also: `Packed`, `pack`, `unpack`, `resolvePackedType`
 """
 macro packed()
     return esc(:(lower = DFG.Packed, choosetype = DFG.resolvePackedType))

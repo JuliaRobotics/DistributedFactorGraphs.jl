@@ -52,7 +52,7 @@ function StructUtils.lift(::DFGJSONStyle, ::Type{T}, x::JSON.LazyValue) where {T
     return T(x[1][], x[2][]), nothing
 end
 
-# Above does not work for Arrya{ComplexF64, 0}
+# Above does not work for Array{ComplexF64, 0}
 StructUtils.lower(::DFGJSONStyle, x::AbstractArray{<:Complex, 0}) = (real(x), imag(x))
 function StructUtils.lift(
     ::DFGJSONStyle,

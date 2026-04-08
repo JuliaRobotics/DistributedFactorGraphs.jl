@@ -1,6 +1,5 @@
-
 # TODO consider enforcing the full structure.
-# This is not explicitly inforced, but surves as extra information of how the structure is put together.
+# This is not explicitly enforced, but serves as extra information of how the structure is put together.
 # AbstractDFGNode are all nodes that make up a DFG, including Agent, Graph, Variable, Factor, Blobstore, Blobentry etc.
 # abstract type AbstractDFGNode end
 # any DFGNode shall have a label. 
@@ -54,3 +53,75 @@ function StructUtils.lower(::StructUtils.StructStyle, p::AbstractDFGParams)
     return StructUtils.lower(Packed(p))
 end
 @choosetype AbstractDFGParams resolvePackedType
+
+##==============================================================================
+## AbstractDFG
+##==============================================================================
+##------------------------------------------------------------------------------
+## Broadcasting
+##------------------------------------------------------------------------------
+# to allow stuff like `getObservation.(dfg, [:x1x2f1;:x10l3f2])`
+# https://docs.julialang.org/en/v1/manual/interfaces/#
+Base.Broadcast.broadcastable(dfg::AbstractDFG) = Ref(dfg)
+
+# ------------------------------------------------------------------------------
+# References to containers
+# ------------------------------------------------------------------------------
+
+refTags(node) = node.tags
+refBlobentries(node) = node.blobentries
+refBloblets(node) = node.bloblets
+refSolvable(node) = node.solvable
+
+"""
+    $(SIGNATURES)
+"""
+function refAgents end
+function refGraph end
+
+# =============================================================================
+
+"""
+    $(SIGNATURES)
+Get the label of the node.
+"""
+getLabel(node) = node.label
+
+"""
+$SIGNATURES
+
+Get the timestamp of a AbstractGraphNode.
+"""
+getTimestamp(node) = node.timestamp
+
+"""
+    $(SIGNATURES)
+"""
+getDescription(node) = node.description
+
+function Base.show(io::IO, ::MIME"text/plain", dfg::AbstractDFG)
+    summary(io, dfg)
+    println(io)
+    println(io, "  GraphLabel: ", getGraphLabel(dfg))
+    println(io, "  Description: ", getDescription(dfg))
+    println(io, "  Nr variables: ", length(ls(dfg)))
+    println(io, "  Nr factors: ", length(lsf(dfg)))
+    println(io, "  Graph Bloblets: ", listGraphBloblets(dfg))
+    println(io, "  Agents: ", listAgents(dfg))
+    println(io, "  Blobstores: ", listBlobstores(dfg))
+    return
+end
+
+# ==============================================================================
+# Validation of labels.
+# ==============================================================================
+
+"""
+$(SIGNATURES)
+
+Returns true if the label is valid for node.
+"""
+function isValidLabel(label::Union{Symbol, String})
+    validLabelRegex::Regex = r"^[a-zA-Z][\w]*$"
+    return occursin(validLabelRegex, string(label))
+end

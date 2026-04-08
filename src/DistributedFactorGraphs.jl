@@ -402,10 +402,6 @@ export hasAgent
 # public refAgents
 
 ## TODO maybe move to DFG from SDK
-# addGraph!
-# deleteGraph!
-# listGraphs
-# getGraphs
 # getModel
 # getModels
 # addModel!
@@ -423,6 +419,7 @@ public pack, unpack
 # list of unstable functions not exported any more
 # will move to public or deprecate over time
 const unstable_functions::Vector{Symbol} = [
+    :getGraph,
     :VariableSummary,
     :FactorSummary,
     :listNeighborhood,
@@ -466,7 +463,6 @@ const unstable_functions::Vector{Symbol} = [
     :getPointIdentity,
     :getPoint,
     :getCoordinates,
-    :getVariableLabelNumber,# TODO somewhat used, do we deprecate?
     :getfirstBlobentry,# TODO somewhat used, do we deprecate?
     :isVariable,
     :isFactor,
@@ -509,6 +505,7 @@ const unstable_functions::Vector{Symbol} = [
     # no set on these
 
     #deprecated in v0.29
+    :getVariableLabelNumber,# TODO somewhat used, deprecated
     :setTags!,
     :VariableCompute,
     :AbstractPackedBelief,
@@ -550,44 +547,42 @@ end
 ##==============================================================================
 
 # Entities
-include("errors.jl")
-
 include("entities/AbstractDFG.jl")
+include("entities/Error.jl")
+include("entities/Blobstore.jl")
 include("entities/Bloblet.jl")
-
-# Data Blob extensions
-include("DataBlobs/entities/BlobEntry.jl")
-include("DataBlobs/entities/BlobStores.jl")
-
-include("serialization/DFGStructStyles.jl")
-include("serialization/PackedSerialization.jl")
-include("serialization/DistributionSerialization.jl")
-
-include("entities/DFGFactor.jl")
-# include("serialization/FactorSerialization.jl")
-
-include("entities/DFGVariable.jl")
-include("serialization/StateSerialization.jl")
-
+include("entities/Blobentry.jl")
+include("entities/Tags.jl")
+include("entities/Timestamp.jl")
 include("entities/Agent_and_Graph.jl")
-
+include("entities/Factor.jl")
+include("entities/State.jl")
+include("entities/Variable.jl")
+include("entities/equality.jl")
+# Services
 include("services/AbstractDFG.jl")
+include("services/blob_save_load.jl")
+include("services/blobentry_ops.jl")
+include("services/bloblet_ops.jl")
+include("services/tag_ops.jl")
+include("services/blobstore_ops.jl")
+include("services/compare.jl")
+include("services/factor_ops.jl")
 include("services/list.jl")
-include("services/find.jl")
-include("services/CommonAccessors.jl")
-include("Common.jl")
+include("services/agent_ops.jl")
+include("services/graph_ops.jl")
+include("services/print.jl")
+include("services/state_ops.jl")
+include("services/discovery.jl")
+include("services/variable_ops.jl")
 
-#Blobs
-include("DataBlobs/services/BlobEntry.jl")
-include("DataBlobs/services/BlobStores.jl")
-include("DataBlobs/services/BlobPacking.jl")
-include("DataBlobs/services/BlobWrappers.jl")
+# Modules and Drivers
+include("Serialization/BlobPacking.jl")
+include("Serialization/DFGStructStyles.jl")
+include("Serialization/DistributionSerialization.jl")
+include("Serialization/PackedSerialization.jl")
+include("Serialization/StateSerialization.jl")
 
-#FIXME
-function getSolvable end
-function getStateKind end
-function isInitialized end
-function listTags end
 # In Memory Types
 include("GraphsDFG/GraphsDFG.jl")
 using .GraphsDFGs
@@ -596,23 +591,13 @@ using .GraphsDFGs
 const InMemoryDFGTypes = Union{GraphsDFG}
 const LocalDFG = GraphsDFG
 
-include("services/Tags.jl")
-include("services/Bloblet.jl")
-
-# Common includes
-include("services/DFGVariable.jl")
-include("services/DFGFactor.jl")
-include("Deprecated.jl")
-include("services/CompareUtils.jl")
-
-# include("services/Sync.jl")
-
 # Include the FilesDFG API.
 include("FileDFG/FileDFG.jl")
+# Blobstore implementations
+include("Blobstores/Blobstores.jl")
 
-# Custom show and printing for variable factor etc.
-include("services/CustomPrinting.jl")
+include("extension_stubs.jl")
 
-include("weakdeps_prototypes.jl")
+include("Deprecated.jl")
 
 end

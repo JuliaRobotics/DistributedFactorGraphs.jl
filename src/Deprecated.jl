@@ -717,3 +717,24 @@ function findShortestPathDijkstra(
         return findPath(dfg, from, to).path
     end
 end
+
+# """
+#     $SIGNATURES
+
+# Small utility to return `::Int`, e.g. `0` from `getVariableLabelNumber(:x0)`
+
+# Examples
+# --------
+# ```julia
+# getVariableLabelNumber(:l10)          # 10
+# getVariableLabelNumber(:x1)           # 1
+# getVariableLabelNumber(:x1_10, "x1_") # 10
+# ```
+
+# DevNotes
+# - make prefix Regex based for longer -- i.e. `:apriltag578`, `:lm1_4`
+
+# """
+function getVariableLabelNumber(vs::Symbol, prefix = string(vs)[1])
+    return parse(Int, string(vs)[(length(prefix) + 1):end])
+end
