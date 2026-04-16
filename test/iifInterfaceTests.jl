@@ -153,8 +153,8 @@ end
     @test issetequal(ls(dfg, Position{1}), [:a, :b])
 
     varNearTs = findVariablesNearTimestamp(dfg, now())
-    # TODO
-    @test_skip varNearTs[1][1] == [:b]
+
+    @test varNearTs[1][1] == [:b]
 end
 
 # Gets

@@ -112,5 +112,4 @@ end
 
     #TODO add proper subraph tests here (or remove testset), spot check for now.
     @test issetequal(listVariables(sfg), [:x0; :x1])
-
 end
