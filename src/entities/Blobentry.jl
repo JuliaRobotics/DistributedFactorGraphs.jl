@@ -225,7 +225,7 @@ Checks the integrity of a blob against the hashes stored in the given `Blobentry
 - Additionally verifies the `crchash` (crc32c) if present.
 - Returns `true` if all present hashes match.
 - Returns `false` if any hash does not match.
-- Returns `nothing` if only the multihash is present but the algorithm is unregistered.
+- Returns `nothing` if  the multihash algorithm is unregistered.
 """
 function checkHash(entry::Blobentry, blob)
     # Reverse lookup: multicodec code -> hash function
@@ -235,6 +235,7 @@ function checkHash(entry::Blobentry, blob)
     func = get(code_to_func, code, nothing)
     if isnothing(func)
         @warn "checkHash: unregistered multihash algorithm code $(repr(code)), skipping multihash check"
+        return nothing
     else
         func(blob) != stored_digest && return false
     end

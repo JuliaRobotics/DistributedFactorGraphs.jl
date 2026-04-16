@@ -168,7 +168,7 @@ function fetchBlob(store::CachedBlobprovider, m::Multihash)
     !isnothing(blob) && return blob
     blob = fetchBlob(store.remote_provider, m)
     if !isnothing(blob)
-        putBlob!(store.local_provider, blob)
+        putBlob!(store.local_provider, m, blob)
     end
     return blob
 end

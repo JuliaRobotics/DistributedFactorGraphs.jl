@@ -20,7 +20,7 @@ Listing news on any major breaking changes in DFG.  For regular changes, see int
   - `saveBlob_Variable!` → `saveVariableBlob!`, `loadBlob_Variable` → `loadVariableBlob`
   - Same pattern for Factor, Graph, Agent variants.
   - Old names kept as `const` aliases for backward compatibility.
-  - `deleteBlob_Variable` and similar wrappers no longer exist. Use `deleteVariableBlobentry!` (metadata) and `purgeBlob!(provider, multihash)` (physical) directly. Warning: be carefull when deleting blobs to make sure they are no longer in use anywhere because the multihash id can be shared by multiple blobs.
+  - `deleteBlob_Variable` and similar wrappers no longer exist. Use `deleteVariableBlobentry!` (metadata) and `purgeBlob!(provider, multihash)` (physical) directly. Warning: be careful when deleting blobs to make sure they are no longer in use anywhere because the multihash id can be shared by multiple blobs.
 
 # v0.28
 - Reading or deserialzing of factor graphs created prior to v0.25 are no longer suppoted with the complete removal of User/Robot/Session

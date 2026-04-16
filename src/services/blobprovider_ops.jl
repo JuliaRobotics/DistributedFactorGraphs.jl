@@ -119,9 +119,10 @@ function getBlob(dfg::AbstractDFG, entry::Blobentry)
     providers = refBlobproviders(dfg)
 
     if isempty(providers)
-        error(
+        @warn(
             "No Blobproviders mounted on DFG. Add one with `addBlobprovider!(dfg, FolderBlobprovider(path))` before storing blobs. Cannot retrieve multihash: $(entry.multihash)",
         )
+        throw(LabelNotFoundError("Blobprovider", entry.provider, collect(keys(providers))))
     end
 
     # 1. Build the search order: Hinted provider first, followed by the rest
@@ -170,11 +171,9 @@ function hasBlob(provider::AbstractBlobprovider, entry::Blobentry)
 end
 function hasBlob(dfg::AbstractDFG, entry::Blobentry)
     # CAS: check all providers — the blob may have been stored via a different route
+    #TODO check entry.provider first
     for (_, provider) in refBlobproviders(dfg)
-        try
-            hasBlob(provider, entry.multihash) && return true
-        catch
-        end
+        hasBlob(provider, entry.multihash) && return true
     end
     return false
 end

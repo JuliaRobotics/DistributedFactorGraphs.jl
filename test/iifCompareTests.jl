@@ -110,6 +110,6 @@ end
 
     sfg = getSubgraph(GraphsDFG, fg, [:x0; :x1])
 
-    #TODO add proper subraph tests here (or remove testset), spot check for now.
+    #TODO add proper subgraph tests here (or remove testset), spot check for now.
     @test issetequal(listVariables(sfg), [:x0; :x1])
 end
