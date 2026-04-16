@@ -1,238 +1,155 @@
 using Test
 using UUIDs
-using DistributedFactorGraphs: Tables
+using SHA
 
 testDFGAPI = GraphsDFG
 
+# Helper: compute a Multihash for given data
+_mhash(data) = DFG.Multihash(sha2_256, data)
+
 ##==============================================================================
-## LinkStore
+## LinkBlobprovider
 ##==============================================================================
-@testset "LinkStore" begin
+@testset "LinkBlobprovider" begin
     tmpdir = mktempdir()
     try
-        csvfile = joinpath(tmpdir, "linkstore_test_$(uuid4()).csv")
+        link_folder = joinpath(tmpdir, "cas_links")
+        source_dir = joinpath(tmpdir, "source_files")
+        mkpath(source_dir)
 
-        # Create new LinkStore (file does not exist)
-        ls = DFG.LinkStore(:links, csvfile)
-        @test ls.label == :links
-        @test ls.csvfile == csvfile
-        @test isempty(ls.cache)
-        @test isfile(csvfile)
+        # Create new LinkBlobprovider
+        lp = DFG.LinkBlobprovider(link_folder; label = :links)
+        @test lp.label == :links
+        @test isdir(link_folder)
 
-        # Write a temporary data file to link to
-        datafile = joinpath(tmpdir, "linkstore_data_$(uuid4()).bin")
+        # Write a source data file
+        datafile = joinpath(source_dir, "data1.bin")
         test_data = rand(UInt8, 100)
         write(datafile, test_data)
 
-        # addBlob! with a link
-        blobid = uuid4()
-        @test addBlob!(ls, blobid, datafile) == blobid
-        @test haskey(ls.cache, blobid)
+        # putBlob! with a file path — streams hash, creates hardlink
+        m = DFG.putBlob!(lp, datafile)
+        @test m isa DFG.Multihash
 
-        # addBlob! duplicate throws
-        @test_throws DFG.IdExistsError addBlob!(ls, blobid, datafile)
+        # putBlob! is idempotent
+        m2 = DFG.putBlob!(lp, datafile)
+        @test m == m2
 
-        # getBlob reads through the link
-        retrieved = getBlob(ls, blobid)
+        # fetchBlob reads through the CAS layout
+        retrieved = fetchBlob(lp, m)
         @test retrieved == test_data
 
-        # getBlob for missing id throws
-        @test_throws DFG.IdNotFoundError getBlob(ls, uuid4())
+        # fetchBlob for missing hash returns nothing
+        @test isnothing(fetchBlob(lp, _mhash(UInt8[0])))
 
-        # deleteBlob! is not supported
-        @test_throws ErrorException deleteBlob!(ls)
-        @test_throws ErrorException deleteBlob!(ls, uuid4())
-        @test_throws ErrorException deleteBlob!(ls, Blobentry(:test))
+        # hasBlob
+        @test hasBlob(lp, m)
+        @test !hasBlob(lp, _mhash(UInt8[0]))
 
-        # Re-open existing CSV to test loading from file
-        ls2 = DFG.LinkStore(:links, csvfile)
-        @test haskey(ls2.cache, blobid)
-        @test ls2.cache[blobid] == datafile
-        @test getBlob(ls2, blobid) == test_data
+        # listBlobs
+        hashes = listBlobs(lp)
+        @test length(hashes) == 1
+        @test m in hashes
+
+        # The CAS file is a hardlink to the original (same inode)
+        cas_path = DFG.blobfilename(lp, m)
+        @test stat(cas_path).inode == stat(datafile).inode
+
+        # purgeBlob! removes the CAS copy but the original still exists
+        @test purgeBlob!(lp, m) == 1
+        @test !hasBlob(lp, m)
+        @test isfile(datafile)  # original untouched
 
         # Multiple entries
-        datafile2 = joinpath(tmpdir, "linkstore_data2_$(uuid4()).bin")
+        datafile2 = joinpath(source_dir, "data2.bin")
         test_data2 = rand(UInt8, 50)
         write(datafile2, test_data2)
-        blobid2 = uuid4()
-        addBlob!(ls, blobid2, datafile2)
+        m3 = DFG.putBlob!(lp, datafile2)
 
-        # Re-open and verify both entries are loaded
-        ls3 = DFG.LinkStore(:links, csvfile)
-        @test length(ls3.cache) == 2
-        @test getBlob(ls3, blobid) == test_data
-        @test getBlob(ls3, blobid2) == test_data2
+        m_re = DFG.putBlob!(lp, datafile)  # re-link first file
+        @test m_re == m
+        @test length(listBlobs(lp)) == 2
+        @test fetchBlob(lp, m) == test_data
+        @test fetchBlob(lp, m3) == test_data2
     finally
         rm(tmpdir; force = true, recursive = true)
     end
 end
 
 ##==============================================================================
-## RowBlobstore
+## save/load FactorBlob wrappers
 ##==============================================================================
-@testset "RowBlobstore" begin
-    NT = @NamedTuple{a::Vector{Int}, b::Vector{Int}}
-
-    @testset "Construction" begin
-        store = DFG.RowBlobstore(:test_rows, NT)
-        @test store.label == :test_rows
-        @test isempty(store.blobs)
-        @test store isa DFG.RowBlobstore{NT}
-    end
-
-    @testset "CRUD operations" begin
-        store = DFG.RowBlobstore(:test_rows, NT)
-
-        # addBlob!
-        id1 = uuid4()
-        blob1 = (a = [1, 2], b = [3, 4])
-        @test addBlob!(store, id1, blob1) == id1
-
-        id2 = uuid4()
-        blob2 = (a = [5, 6], b = [7, 8])
-        addBlob!(store, id2, blob2)
-
-        # addBlob! duplicate throws
-        @test_throws DFG.IdExistsError addBlob!(store, id1, blob1)
-
-        # getBlob
-        @test getBlob(store, id1) == blob1
-        @test getBlob(store, id2) == blob2
-        @test_throws DFG.IdNotFoundError getBlob(store, uuid4())
-
-        # hasBlob
-        @test hasBlob(store, id1)
-        @test !hasBlob(store, uuid4())
-
-        # listBlobs
-        ids = listBlobs(store)
-        @test length(ids) == 2
-        @test id1 in ids
-        @test id2 in ids
-
-        # deleteBlob!
-        @test deleteBlob!(store, id1) == 1
-        @test !hasBlob(store, id1)
-        @test length(listBlobs(store)) == 1
-        @test deleteBlob!(store, uuid4()) == 0
-    end
-
-    @testset "RowBlob Tables interface" begin
-        rb = DFG.RowBlob(uuid4(), (a = [1, 2], b = [3, 4]))
-        @test Tables.columnnames(rb) == (:id, :a, :b)
-        @test Tables.getcolumn(rb, 1) isa UUID
-        @test Tables.getcolumn(rb, 2) == [1, 2]
-        @test Tables.getcolumn(rb, :id) isa UUID
-        @test Tables.getcolumn(rb, :a) == [1, 2]
-        @test Tables.getcolumn(rb, :b) == [3, 4]
-    end
-
-    @testset "Tables integration" begin
-        store = DFG.RowBlobstore(:test_rows, NT)
-        addBlob!(store, uuid4(), (a = [1, 2], b = [3, 4]))
-        addBlob!(store, uuid4(), (a = [5, 6], b = [7, 8]))
-        addBlob!(store, uuid4(), (a = [9, 10], b = [11, 12]))
-
-        @test Tables.istable(typeof(store))
-        @test Tables.rowaccess(typeof(store))
-
-        rowtbl = Tables.rowtable(store)
-        @test length(rowtbl) == 3
-
-        coltbl = Tables.columntable(rowtbl)
-        @test length(coltbl.id) == 3
-        @test length(coltbl.a) == 3
-    end
-
-    @testset "Construct from table" begin
-        # Build a table, then construct RowBlobstore from it
-        ids = [uuid4(), uuid4()]
-        source =
-            [(id = ids[1], a = [1, 2], b = [3, 4]), (id = ids[2], a = [5, 6], b = [7, 8])]
-        store = DFG.RowBlobstore(:from_table, NT, source)
-        @test length(listBlobs(store)) == 2
-        @test getBlob(store, ids[1]) == (a = [1, 2], b = [3, 4])
-        @test getBlob(store, ids[2]) == (a = [5, 6], b = [7, 8])
-    end
-end
-
-##==============================================================================
-## loadBlob / saveBlob / deleteBlob wrappers for Factors
-##==============================================================================
-@testset "loadBlob/saveBlob/deleteBlob Factor" begin
+@testset "saveFactorBlob! / loadFactorBlob" begin
     dfg, _, _ = connectivityTestGraph(testDFGAPI, VariableDFG, FactorDFG)
-    ds = InMemoryBlobstore(:primary)
-    addBlobstore!(dfg, ds)
+    ds = DFG.MemoryBlobprovider()  # defaults to :default
+    addBlobprovider!(dfg, ds)
 
     dataset = rand(UInt8, 200)
 
-    # saveBlob_Factor! with entry_label
-    entry = DFG.saveBlob_Factor!(dfg, :x1x2f1, dataset, :factor_data, :primary)
+    # saveFactorBlob! with entry_label (uses :default provider implicitly)
+    entry = DFG.saveFactorBlob!(dfg, :x1x2f1, dataset, :factor_data)
     @test entry isa Blobentry
     @test entry.label == :factor_data
+    @test entry.provider == :default
 
-    # loadBlob_Factor
-    loaded_entry, loaded_blob = DFG.loadBlob_Factor(dfg, :x1x2f1, :factor_data)
+    # loadFactorBlob
+    loaded_entry, loaded_blob = DFG.loadFactorBlob(dfg, :x1x2f1, :factor_data)
     @test loaded_entry == entry
     @test loaded_blob == dataset
 
-    # saveBlob_Factor! with explicit Blobentry
-    entry2 = Blobentry(:factor_data_2, :primary)
-    DFG.saveBlob_Factor!(dfg, :x1x2f1, dataset, entry2)
-    loaded_entry2, loaded_blob2 = DFG.loadBlob_Factor(dfg, :x1x2f1, :factor_data_2)
+    # saveFactorBlob! with explicit Blobentry
+    mh = _mhash(dataset)
+    entry2 = Blobentry(:factor_data_2, mh, :default)
+    DFG.saveFactorBlob!(dfg, :x1x2f1, dataset, entry2)
+    loaded_entry2, loaded_blob2 = DFG.loadFactorBlob(dfg, :x1x2f1, :factor_data_2)
     @test loaded_entry2.label == :factor_data_2
     @test loaded_blob2 == dataset
 
-    # deleteBlob_Factor!
-    @test DFG.deleteBlob_Factor!(dfg, :x1x2f1, :factor_data) == 2
+    # Delete blobentry (no Layer 3 delete — just remove the pointer)
+    deleteFactorBlobentry!(dfg, :x1x2f1, :factor_data)
     @test !hasFactorBlobentry(dfg, :x1x2f1, :factor_data)
 
     # Multiple factors can have blobs
-    DFG.saveBlob_Factor!(dfg, :x2x3f1, dataset, :another_blob, :primary)
-    e, b = DFG.loadBlob_Factor(dfg, :x2x3f1, :another_blob)
+    DFG.saveFactorBlob!(dfg, :x2x3f1, dataset, :another_blob)
+    e, b = DFG.loadFactorBlob(dfg, :x2x3f1, :another_blob)
     @test b == dataset
-    @test DFG.deleteBlob_Factor!(dfg, :x2x3f1, :another_blob) == 2
+    deleteFactorBlobentry!(dfg, :x2x3f1, :another_blob)
 
     # Cleanup
-    DFG.deleteBlob_Factor!(dfg, :x1x2f1, :factor_data_2)
+    deleteFactorBlobentry!(dfg, :x1x2f1, :factor_data_2)
 end
 
 ##==============================================================================
-## loadBlob / saveBlob / deleteBlob wrappers - Variable (expanded)
+## saveVariableBlob! / loadVariableBlob wrappers (expanded)
 ##==============================================================================
-@testset "loadBlob/saveBlob/deleteBlob Variable (expanded)" begin
+@testset "saveVariableBlob! / loadVariableBlob (expanded)" begin
     dfg, _, _ = connectivityTestGraph(testDFGAPI, VariableDFG, FactorDFG)
-    ds = InMemoryBlobstore(:primary)
-    addBlobstore!(dfg, ds)
+    ds = DFG.MemoryBlobprovider()  # defaults to :default
+    addBlobprovider!(dfg, ds)
 
     dataset = rand(UInt8, 300)
 
-    # saveBlob_Variable! with entry_label and kwargs
-    entry = DFG.saveBlob_Variable!(
-        dfg,
-        :x1,
-        dataset,
-        :var_blob,
-        :primary;
-        description = "test blob",
-    )
+    # saveVariableBlob! with entry_label and kwargs (uses :default implicitly)
+    entry = DFG.saveVariableBlob!(dfg, :x1, dataset, :var_blob; description = "test blob")
     @test entry.label == :var_blob
     @test entry.description == "test blob"
+    @test entry.provider == :default
 
-    # loadBlob_Variable
-    loaded_entry, loaded_blob = DFG.loadBlob_Variable(dfg, :x1, :var_blob)
+    # loadVariableBlob
+    loaded_entry, loaded_blob = DFG.loadVariableBlob(dfg, :x1, :var_blob)
     @test loaded_entry == entry
     @test loaded_blob == dataset
 
-    # saveBlob_Variable! with explicit Blobentry
-    entry2 = Blobentry(:var_blob_2, :primary)
-    DFG.saveBlob_Variable!(dfg, :x1, dataset, entry2)
-    _, blob2 = DFG.loadBlob_Variable(dfg, :x1, :var_blob_2)
+    # saveVariableBlob! with explicit Blobentry
+    mh = _mhash(dataset)
+    entry2 = Blobentry(:var_blob_2, mh, :default)
+    DFG.saveVariableBlob!(dfg, :x1, dataset, entry2)
+    _, blob2 = DFG.loadVariableBlob(dfg, :x1, :var_blob_2)
     @test blob2 == dataset
 
-    # deleteBlob_Variable!
-    @test DFG.deleteBlob_Variable!(dfg, :x1, :var_blob) == 2
-    @test DFG.deleteBlob_Variable!(dfg, :x1, :var_blob_2) == 2
+    # Delete blobentries (no Layer 3 delete — just remove the pointer)
+    deleteVariableBlobentry!(dfg, :x1, :var_blob)
+    deleteVariableBlobentry!(dfg, :x1, :var_blob_2)
 end
 
 ##==============================================================================
@@ -240,28 +157,361 @@ end
 ##==============================================================================
 @testset "saveImage_Variable! / loadImage_Variable" begin
     dfg, _, _ = connectivityTestGraph(testDFGAPI, VariableDFG, FactorDFG)
-    ds = InMemoryBlobstore(:primary)
-    addBlobstore!(dfg, ds)
+    ds = DFG.MemoryBlobprovider()  # defaults to :default
+    addBlobprovider!(dfg, ds)
 
-    # Create a small test "image" (matrix of floats, like a grayscale image)
-    # Use N0f8-like values via simple UInt8 matrix to avoid needing Images.jl
-    # saveImage_Variable! calls packBlob which needs FileIO save support
-    # We test that the interface works by checking that it calls through correctly
-    # For a real image test we'd need ImageIO/PNGFiles, so test the error path
     img = rand(Float64, 4, 4)
-    entry = DFG.saveImage_Variable!(dfg, :x1, img, :test_img, :primary)
+    entry = DFG.saveImage_Variable!(dfg, :x1, img, :test_img)  # uses :default implicitly
     @test entry.label == :test_img
     @test entry.mimetype == MIME("image/png")
+    @test entry.provider == :default
 
-    # Test loadImage_Variable with a JSON blob that has image mimetype set
-    # (tests the dispatch path through unpackBlob(entry, blob))
+    # Test loadImage_Variable with a JSON blob
     json_str = """{"px":[1,2,3]}"""
     blob, _ = DFG.packBlob(format"JSON", json_str)
-    entry = Blobentry(:json_as_img, :primary; mimetype = MIME("application/json"))
-    DFG.saveBlob_Variable!(dfg, :x1, blob, entry)
+    mh = _mhash(blob)
+    entry = Blobentry(:json_as_img, mh, :default; mimetype = MIME("application/json"))
+    DFG.saveVariableBlob!(dfg, :x1, blob, entry)
     loaded_entry, loaded_data = DFG.loadImage_Variable(dfg, :x1, :json_as_img)
     @test loaded_entry.label == :json_as_img
     @test loaded_data == json_str
 
-    DFG.deleteBlob_Variable!(dfg, :x1, :json_as_img)
+    deleteVariableBlobentry!(dfg, :x1, :json_as_img)
+end
+
+##==============================================================================
+## CachedBlobprovider
+##==============================================================================
+@testset "CachedBlobprovider" begin
+    @testset "Construction" begin
+        local_store = DFG.MemoryBlobprovider(; label = :local)
+        remote_store = DFG.MemoryBlobprovider(; label = :remote)
+        cached = DFG.CachedBlobprovider(local_store, remote_store; label = :cached)
+        @test cached.label == :cached
+        @test cached.local_provider === local_store
+        @test cached.remote_provider === remote_store
+
+        # Default label
+        cached2 = DFG.CachedBlobprovider(local_store, remote_store)
+        @test cached2.label == :default
+    end
+
+    @testset "putBlob! writes to both" begin
+        local_store = DFG.MemoryBlobprovider(; label = :local)
+        remote_store = DFG.MemoryBlobprovider(; label = :remote)
+        cached = DFG.CachedBlobprovider(local_store, remote_store)
+
+        data = rand(UInt8, 100)
+        m = putBlob!(cached, data)
+        @test m isa DFG.Multihash
+
+        # Both stores have the blob
+        @test hasBlob(local_store, m)
+        @test hasBlob(remote_store, m)
+        @test fetchBlob(local_store, m) == data
+        @test fetchBlob(remote_store, m) == data
+
+        # Idempotent
+        @test putBlob!(cached, data) == m
+    end
+
+    @testset "fetchBlob caches on miss" begin
+        local_store = DFG.MemoryBlobprovider(; label = :local)
+        remote_store = DFG.MemoryBlobprovider(; label = :remote)
+        cached = DFG.CachedBlobprovider(local_store, remote_store)
+
+        data = rand(UInt8, 80)
+        # Put directly into remote only
+        m = putBlob!(remote_store, data)
+        @test !hasBlob(local_store, m)
+
+        # fetchBlob through cache should fetch and cache locally
+        blob = fetchBlob(cached, m)
+        @test blob == data
+        @test hasBlob(local_store, m)
+    end
+
+    @testset "fetchBlob serves from local first" begin
+        local_store = DFG.MemoryBlobprovider(; label = :local)
+        remote_store = DFG.MemoryBlobprovider(; label = :remote)
+        cached = DFG.CachedBlobprovider(local_store, remote_store)
+
+        data = rand(UInt8, 60)
+        m = putBlob!(cached, data)
+
+        # Remove from remote — local should still serve
+        purgeBlob!(remote_store, m)
+        @test !hasBlob(remote_store, m)
+        @test fetchBlob(cached, m) == data
+    end
+
+    @testset "purgeBlob! removes from both" begin
+        local_store = DFG.MemoryBlobprovider(; label = :local)
+        remote_store = DFG.MemoryBlobprovider(; label = :remote)
+        cached = DFG.CachedBlobprovider(local_store, remote_store)
+
+        data = rand(UInt8, 40)
+        m = putBlob!(cached, data)
+        @test purgeBlob!(cached, m) == 2  # purged from both local and remote
+        @test !hasBlob(local_store, m)
+        @test !hasBlob(remote_store, m)
+    end
+
+    @testset "hasBlob checks both stores" begin
+        local_store = DFG.MemoryBlobprovider(; label = :local)
+        remote_store = DFG.MemoryBlobprovider(; label = :remote)
+        cached = DFG.CachedBlobprovider(local_store, remote_store)
+
+        data = rand(UInt8, 30)
+        m = putBlob!(remote_store, data)
+
+        # Only in remote
+        @test hasBlob(cached, m)
+        # In neither
+        @test !hasBlob(cached, _mhash(UInt8[0]))
+    end
+
+    @testset "listBlobs delegates to remote" begin
+        local_store = DFG.MemoryBlobprovider(; label = :local)
+        remote_store = DFG.MemoryBlobprovider(; label = :remote)
+        cached = DFG.CachedBlobprovider(local_store, remote_store)
+
+        d1 = rand(UInt8, 20)
+        d2 = rand(UInt8, 25)
+        m1 = putBlob!(cached, d1)
+        m2 = putBlob!(cached, d2)
+        hashes = listBlobs(cached)
+        @test length(hashes) == 2
+        @test m1 in hashes
+        @test m2 in hashes
+    end
+
+    @testset "Integration with DFG" begin
+        dfg, _, _ = connectivityTestGraph(testDFGAPI, VariableDFG, FactorDFG)
+        local_store = DFG.MemoryBlobprovider(; label = :local)
+        remote_store = DFG.MemoryBlobprovider(; label = :remote)
+        cached = DFG.CachedBlobprovider(local_store, remote_store)  # defaults to :default
+        addBlobprovider!(dfg, cached)
+
+        dataset = rand(UInt8, 150)
+        entry = DFG.saveVariableBlob!(dfg, :x1, dataset, :cached_blob)  # uses :default
+        @test entry isa Blobentry
+        @test entry.label == :cached_blob
+        @test entry.provider == :default
+
+        loaded_entry, loaded_blob = DFG.loadVariableBlob(dfg, :x1, :cached_blob)
+        @test loaded_blob == dataset
+        @test loaded_entry == entry
+
+        deleteVariableBlobentry!(dfg, :x1, :cached_blob)
+    end
+
+    @testset "CachedBlobprovider with FolderBlobprovider" begin
+        tmpdir = mktempdir()
+        try
+            folder_store = DFG.FolderBlobprovider(tmpdir; label = :folder)
+            remote_store = DFG.MemoryBlobprovider(; label = :remote)
+            cached = DFG.CachedBlobprovider(folder_store, remote_store; label = :hybrid)
+
+            data = rand(UInt8, 200)
+            m = putBlob!(cached, data)
+
+            @test hasBlob(folder_store, m)
+            @test hasBlob(remote_store, m)
+            @test fetchBlob(cached, m) == data
+
+            # Simulate cache eviction: delete from folder, fetch from remote
+            purgeBlob!(folder_store, m)
+            @test !hasBlob(folder_store, m)
+            blob = fetchBlob(cached, m)
+            @test blob == data
+            @test hasBlob(folder_store, m)  # re-cached
+        finally
+            rm(tmpdir; force = true, recursive = true)
+        end
+    end
+end
+
+##==============================================================================
+## New-User Flow (Architecture.md §6)
+##==============================================================================
+@testset "New-User Flow hints" begin
+    @testset "Part 1: No providers → helpful error" begin
+        dfg, _, _ = connectivityTestGraph(testDFGAPI, VariableDFG, FactorDFG)
+        # No blobproviders added — should throw and log a helpful hint
+        err = @test_logs (:info, r"no Blobproviders configured.*Hint") try
+            getBlobprovider(dfg, :default)
+            nothing
+        catch e
+            e
+        end
+        @test err isa DFG.LabelNotFoundError
+        @test occursin("not found", sprint(showerror, err))
+    end
+
+    @testset "Part 2: Duplicate :default → helpful error" begin
+        dfg, _, _ = connectivityTestGraph(testDFGAPI, VariableDFG, FactorDFG)
+        addBlobprovider!(dfg, DFG.FolderBlobprovider(mktempdir()))
+        err = @test_logs (:info, r"Hint") try
+            addBlobprovider!(dfg, DFG.MemoryBlobprovider())  # also :default
+            nothing
+        catch e
+            e
+        end
+        @test err isa DFG.LabelExistsError
+    end
+
+    @testset "Part 3: CachedBlobprovider on :default" begin
+        dfg, _, _ = connectivityTestGraph(testDFGAPI, VariableDFG, FactorDFG)
+        local_store = DFG.FolderBlobprovider(mktempdir())
+        remote_store = DFG.MemoryBlobprovider(; label = :remote_backing)
+        smart_cache = DFG.CachedBlobprovider(local_store, remote_store)
+        addBlobprovider!(dfg, smart_cache)
+
+        data = rand(UInt8, 100)
+        entry = DFG.saveVariableBlob!(dfg, :x1, data, :test_blob)  # uses :default
+        @test entry.provider == :default
+        loaded_entry, loaded_blob = DFG.loadVariableBlob(dfg, :x1, :test_blob)
+        @test loaded_blob == data
+        deleteVariableBlobentry!(dfg, :x1, :test_blob)
+    end
+
+    @testset "Part 4: No :default — explicit routing required" begin
+        # Advanced user with only named providers (no :default)
+        dfg, _, _ = connectivityTestGraph(testDFGAPI, VariableDFG, FactorDFG)
+        addBlobprovider!(dfg, DFG.MemoryBlobprovider(; label = :local))
+        addBlobprovider!(dfg, DFG.MemoryBlobprovider(; label = :remote))
+
+        data = rand(UInt8, 80)
+
+        # Implicit :default target should error — forces user to be explicit
+        @test_throws DFG.LabelNotFoundError DFG.saveVariableBlob!(dfg, :x1, data, :blob)
+
+        # Explicit routing works
+        entry = DFG.saveVariableBlob!(dfg, :x1, data, :blob_local, :local)
+        @test entry.provider == :local
+        _, blob = DFG.loadVariableBlob(dfg, :x1, :blob_local)
+        @test blob == data
+
+        entry2 = DFG.saveVariableBlob!(dfg, :x1, data, :blob_remote, :remote)
+        @test entry2.provider == :remote
+        _, blob2 = DFG.loadVariableBlob(dfg, :x1, :blob_remote)
+        @test blob2 == data
+
+        deleteVariableBlobentry!(dfg, :x1, :blob_local)
+        deleteVariableBlobentry!(dfg, :x1, :blob_remote)
+    end
+end
+
+##==============================================================================
+## Fallback Routing (provider as hint)
+##==============================================================================
+@testset "Fallback routing (provider as hint)" begin
+    @testset "getBlob falls back to other providers" begin
+        dfg, _, _ = connectivityTestGraph(testDFGAPI, VariableDFG, FactorDFG)
+        store_a = DFG.MemoryBlobprovider(; label = :store_a)
+        store_b = DFG.MemoryBlobprovider(; label = :store_b)
+        addBlobprovider!(dfg, store_a)
+        addBlobprovider!(dfg, store_b)
+
+        data = rand(UInt8, 50)
+        # Put blob only in store_b
+        mh = putBlob!(store_b, data)
+
+        # Create entry that hints at :store_a (which does NOT have the blob)
+        entry = Blobentry(:test_fallback, mh, :store_a)
+        addVariableBlobentry!(dfg, :x1, entry)
+
+        # getBlob should fall back to store_b and find it
+        blob = getBlob(dfg, entry)
+        @test blob == data
+    end
+
+    @testset "hasBlob checks all providers" begin
+        dfg, _, _ = connectivityTestGraph(testDFGAPI, VariableDFG, FactorDFG)
+        store_a = DFG.MemoryBlobprovider(; label = :store_a)
+        store_b = DFG.MemoryBlobprovider(; label = :store_b)
+        addBlobprovider!(dfg, store_a)
+        addBlobprovider!(dfg, store_b)
+
+        data = rand(UInt8, 50)
+        mh = putBlob!(store_b, data)
+
+        # Entry hints at :store_a
+        entry = Blobentry(:test_has, mh, :store_a)
+
+        # hasBlob should find it via fallback
+        @test hasBlob(dfg, entry)
+
+        # Missing from all providers → false
+        fake_entry = Blobentry(:nope, _mhash(UInt8[99]), :store_a)
+        @test !hasBlob(dfg, fake_entry)
+    end
+
+    @testset "Layer 1 purgeBlob! on provider" begin
+        store = DFG.MemoryBlobprovider(; label = :store)
+        data = rand(UInt8, 50)
+        mh = putBlob!(store, data)
+        @test hasBlob(store, mh)
+        @test purgeBlob!(store, mh) == 1
+        @test !hasBlob(store, mh)
+    end
+
+    @testset "Hint provider is tried first" begin
+        dfg, _, _ = connectivityTestGraph(testDFGAPI, VariableDFG, FactorDFG)
+        store_a = DFG.MemoryBlobprovider(; label = :store_a)
+        store_b = DFG.MemoryBlobprovider(; label = :store_b)
+        addBlobprovider!(dfg, store_a)
+        addBlobprovider!(dfg, store_b)
+
+        data = rand(UInt8, 50)
+        # Put blob in BOTH providers
+        mh_a = putBlob!(store_a, data)
+        mh_b = putBlob!(store_b, data)
+        @test mh_a == mh_b  # CAS: same content → same hash
+
+        # Entry hints at :store_a → should resolve to store_a
+        entry = Blobentry(:test_hint_first, mh_a, :store_a)
+        blob = getBlob(dfg, entry)
+        @test blob == data
+    end
+
+    @testset "Fallback with missing hint provider" begin
+        dfg, _, _ = connectivityTestGraph(testDFGAPI, VariableDFG, FactorDFG)
+        store_a = DFG.MemoryBlobprovider(; label = :store_a)
+        addBlobprovider!(dfg, store_a)
+
+        data = rand(UInt8, 50)
+        mh = putBlob!(store_a, data)
+
+        # Entry hints at :nonexistent provider
+        entry = Blobentry(:test_missing_hint, mh, :nonexistent)
+
+        # Should still find the blob via fallback through :store_a
+        blob = getBlob(dfg, entry)
+        @test blob == data
+    end
+
+    @testset "Layer 3 wrappers use fallback" begin
+        dfg, _, _ = connectivityTestGraph(testDFGAPI, VariableDFG, FactorDFG)
+        store_a = DFG.MemoryBlobprovider(; label = :store_a)
+        store_b = DFG.MemoryBlobprovider(; label = :store_b)
+        addBlobprovider!(dfg, store_a)
+        addBlobprovider!(dfg, store_b)
+
+        data = rand(UInt8, 80)
+        # Save via store_a
+        entry = DFG.saveVariableBlob!(dfg, :x1, data, :routed_blob, :store_a)
+        @test entry.provider == :store_a
+
+        # Manually move blob: delete from store_a, put in store_b
+        purgeBlob!(store_a, entry.multihash)
+        putBlob!(store_b, data)
+
+        # loadVariableBlob should fall back to store_b
+        loaded_entry, loaded_blob = DFG.loadVariableBlob(dfg, :x1, :routed_blob)
+        @test loaded_blob == data
+
+        deleteVariableBlobentry!(dfg, :x1, :routed_blob)
+    end
 end

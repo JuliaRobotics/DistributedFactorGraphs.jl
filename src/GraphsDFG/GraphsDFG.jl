@@ -42,9 +42,9 @@ using ...DistributedFactorGraphs:
     mergeTags!,
     deleteTags!,
     refStates,
-    refBlobstores,
+    refBlobproviders,
     hasBlobentry,
-    hasBlobstore
+    hasBlobprovider
 
 include("FactorGraphs/FactorGraphs.jl")
 using .FactorGraphs
@@ -59,7 +59,7 @@ include("services/variable_ops.jl")
 include("services/factor_ops.jl")
 include("services/blobentry_ops.jl")
 include("services/bloblet_ops.jl")
-include("services/blobstore_ops.jl")
+include("services/blobprovider_ops.jl")
 include("services/tag_ops.jl")
 
 # Exports

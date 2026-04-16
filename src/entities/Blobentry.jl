@@ -6,17 +6,14 @@
 
 A `Blobentry` is a small about of structured data that holds reference information to find an actual blob. Many `Blobentry`s 
 can exist on different graph nodes spanning Agents and Factor Graphs which can all reference the same `Blob`.
-
-Notes:
-- `blobid`s should be unique within a Blobstore and are immutable.
 """
 StructUtils.@kwarg struct Blobentry
     """ Human friendly label of the `Blob` and also used as unique identifier per node on which a `Blobentry` is added.  E.g. do "LEFTCAM_1", "LEFTCAM_2", ... of you need to repeat a label on the same variable. """
     label::Symbol
-    """ The label of the `Blobstore` in which the `Blob` is stored.  Default is `:primary`."""
-    storelabel::Symbol = :primary
-    """ Machine friendly and unique within a `Blobstore` identifier of the 'Blob'."""
-    blobid::UUID = uuid4() # was blobId
+    """ Self-describing content hash (Multihash standard)."""
+    multihash::Multihash
+    """ The label of the `Blobprovider` as a routing hint of where to look for the blob first.  Default is `:default`."""
+    provider::Symbol = :default
     """ (Optional) crc32c hash value to ensure data consistency which must correspond to the stored hash upon retrieval."""
     crchash::Union{UInt32, Nothing} =
         nothing & (
@@ -25,20 +22,13 @@ StructUtils.@kwarg struct Blobentry
                 lift = s -> isnothing(s) ? nothing : parse(UInt32, s; base = 16),
             )
         )
-    """ (Optional) sha256 hash value to ensure data consistency which must correspond to the stored hash upon retrieval."""
-    shahash::Union{Vector{UInt8}, Nothing} =
-        nothing & (
-            json = (
-                lower = h -> isnothing(h) ? nothing : bytes2hex(h),
-                lift = s -> isnothing(s) ? nothing : hex2bytes(s),
-            )
-        )
     """ Source system or application where the blob was created (e.g., webapp, sdk, robot)"""
     origin::String = ""
     """Number of bytes in blob serialized as a string"""
     size::Int64 = -1 & (json = (lower = string, lift = x -> parse(Int64, x)))
     """ Additional information that can help a different user of the Blob. """
     description::String = ""
+    #TODO Look into multicodec in addition to (or instead of) mimetype to encode the type of the blob content.
     """ MIME description describing the format of binary data in the `Blob`, e.g. 'image/png' or 'application/json'. """
     mimetype::MIME = MIME("application/octet-stream")
     """ Storage for a couple of bytes directly in the graph. Use with caution and keep it small and simple."""
@@ -52,23 +42,23 @@ version(::Type{Blobentry}) = v"0.1.0"
 
 function Blobentry(
     label::Symbol,
-    storelabel = :primary;
+    multihash::Multihash,
+    provider::Symbol = :default;
     metadata::Union{JSONText, AbstractDict, NamedTuple} = JSONText("{}"),
     kwargs...,
 )
     if !(metadata isa JSONText)
         metadata = JSONText(JSON.json(metadata))
     end
-    return Blobentry(; label, storelabel, metadata, kwargs...)
+    return Blobentry(; label, multihash, provider, metadata, kwargs...)
 end
 # construction helper from existing Blobentry for user overriding via kwargs
 function Blobentry(
     entry::Blobentry;
-    blobid::UUID = entry.blobid,
     label::Symbol = entry.label,
-    storelabel::Symbol = entry.storelabel,
+    multihash = entry.multihash,
+    provider::Symbol = entry.provider,
     crchash = entry.crchash,
-    shahash = entry.shahash,
     size::Int64 = entry.size,
     origin::String = entry.origin,
     description::String = entry.description,
@@ -79,15 +69,14 @@ function Blobentry(
     blobstore = nothing, # TODO note deprecated in v0.29
 )
     !isnothing(blobstore) && Base.depwarn(
-        "The `blobstore` keyword argument has been renamed to `storelabel`",
+        "The `blobstore` keyword argument has been renamed to `provider`",
         :Blobentry,
     )
     return Blobentry(;
         label,
-        storelabel,
-        blobid,
+        multihash,
+        provider,
         crchash,
-        shahash,
         origin,
         size,
         description,
@@ -103,16 +92,20 @@ function Base.getproperty(x::Blobentry, f::Symbol)
     if f in [:id, :createdTimestamp, :lastUpdatedTimestamp]
         error("Blobentry field $f has been deprecated")
     elseif f == :hash
-        error("Blobentry field :hash has been deprecated; use :crchash or :shahash instead")
-    elseif f == :blobId
-        @warn "Blobentry field :blobId has been renamed to :blobid"
-        return getfield(x, :blobid)
+        error(
+            "Blobentry field :hash has been deprecated; use :crchash or :multihash instead",
+        )
+    elseif f == :blobId || f == :blobid
+        error("Blobentry field :blobId is obsolete; use :multihash instead")
     elseif f == :mimeType
         @warn "Blobentry field :mimeType has been renamed to :mimetype"
         return getfield(x, :mimetype)
     elseif f == :_version
         @warn "Blobentry field :_version has been renamed to :version"
         return getfield(x, :version)
+    elseif f == :blobstore
+        @warn "Blobentry field :blobstore has been renamed to :provider"
+        return getfield(x, :provider)
     else
         getfield(x, f)
     end
@@ -150,11 +143,11 @@ end
 function getBlobentries(
     node;
     whereLabel::Union{Nothing, Function} = nothing,
-    whereBlobid::Union{Nothing, Function} = nothing,
+    whereMultihash::Union{Nothing, Function} = nothing,
 )
     entries = collect(values(refBlobentries(node)))
     filterDFG!(entries, whereLabel, getLabel)
-    filterDFG!(entries, whereBlobid, x -> string(x.blobid))
+    filterDFG!(entries, whereMultihash, x -> string(x.multihash))
     return entries
 end
 
@@ -225,30 +218,39 @@ hasBlobentry(node, label::Symbol) = haskey(refBlobentries(node), label)
 """
     checkHash(entry::Blobentry, blob) -> Union{Bool,Nothing}
 
-Checks the integrity of a blob against the hashes (crc32c, sha256) stored in the given `Blobentry`.
+Checks the integrity of a blob against the hashes stored in the given `Blobentry`.
 
-- Returns `true` if all present hashes (`crchash`, `shahash`) match the computed values from `blob`.
-- Returns `false` if any present hash does not match.
-- Returns `nothing` if no hashes are stored in the `Blobentry` to check against.
+- Verifies the `multihash` by decoding its algorithm code, recomputing the digest
+  from `blob`, and comparing it to the stored digest.
+- Additionally verifies the `crchash` (crc32c) if present.
+- Returns `true` if all present hashes match.
+- Returns `false` if any hash does not match.
+- Returns `nothing` if only the multihash is present but the algorithm is unregistered.
 """
 function checkHash(entry::Blobentry, blob)
+    # Reverse lookup: multicodec code -> hash function
+    code_to_func = Dict{UInt64, Function}(v => k for (k, v) in MULTIHASH_FUNCTIONS)
+
+    code, stored_digest = decode(entry.multihash)
+    func = get(code_to_func, code, nothing)
+    if isnothing(func)
+        @warn "checkHash: unregistered multihash algorithm code $(repr(code)), skipping multihash check"
+    else
+        func(blob) != stored_digest && return false
+    end
+
     if !isnothing(entry.crchash)
         crc32c(blob) != entry.crchash && return false
     end
-    if entry.shahash != ""
-        sha256(blob) != entry.shahash && return false
-    end
-    if isnothing(entry.crchash) && entry.shahash == ""
-        return nothing
-    end
+
     return true
 end
 
 function Base.show(io::IO, ::MIME"text/plain", entry::Blobentry)
     println(io, "Blobentry {")
-    println(io, "  blobid:        ", entry.blobid)
     println(io, "  label:         ", entry.label)
-    println(io, "  storelabel:     ", entry.storelabel)
+    println(io, "  multihash:     ", entry.multihash)
+    println(io, "  provider:      ", entry.provider)
     println(io, "  origin:        ", entry.origin)
     println(io, "  description:   ", entry.description)
     println(io, "  mimetype:      ", entry.mimetype)

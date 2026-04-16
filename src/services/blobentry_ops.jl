@@ -73,7 +73,7 @@ function hasModelBlobentry end
 function gatherBlobentries(
     dfg::AbstractDFG;
     whereLabel::Union{Nothing, Function} = nothing,
-    whereBlobid::Union{Nothing, Function} = nothing,
+    whereMultihash::Union{Nothing, Function} = nothing,
     whereSolvable::Union{Nothing, Function} = nothing,
     whereTags::Union{Nothing, Function} = nothing,
     whereType::Union{Nothing, Function} = nothing,
@@ -87,7 +87,7 @@ function gatherBlobentries(
         whereLabel = whereVariableLabel,
     )
     return map(vls) do vl
-        return vl => getVariableBlobentries(dfg, vl; whereLabel, whereBlobid)
+        return vl => getVariableBlobentries(dfg, vl; whereLabel, whereMultihash)
     end
 end
 const collectBlobentries = gatherBlobentries
@@ -101,11 +101,11 @@ Also see: [`getBlobentry`](@ref)
 function getfirstBlobentry(
     node;
     whereLabel::Union{Nothing, Function} = nothing,
-    whereBlobid::Union{Nothing, Function} = nothing,
+    whereMultihash::Union{Nothing, Function} = nothing,
     sortby::Function = getLabel,
     sortlt::Function = natural_lt,
 )
-    entries = getBlobentries(node; whereLabel, whereBlobid)
+    entries = getBlobentries(node; whereLabel, whereMultihash)
     if isempty(entries)
         return nothing
     else
@@ -117,9 +117,9 @@ function getfirstVariableBlobentry(
     dfg::AbstractDFG,
     label::Symbol;
     whereLabel::Union{Nothing, Function} = nothing,
-    whereBlobid::Union{Nothing, Function} = nothing,
+    whereMultihash::Union{Nothing, Function} = nothing,
 )
-    return getfirstBlobentry(getVariable(dfg, label); whereLabel, whereBlobid)
+    return getfirstBlobentry(getVariable(dfg, label); whereLabel, whereMultihash)
 end
 
 ## =============================================================================

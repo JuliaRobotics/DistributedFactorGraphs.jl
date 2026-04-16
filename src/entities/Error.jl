@@ -50,12 +50,12 @@ Error thrown when a requested Id is not found.
 """
 struct IdNotFoundError <: Exception
     name::String
-    Id::UUID
-    available::Vector{UUID}
+    Id::Any
+    available::Vector
 end
 
-IdNotFoundError(name::String, Id::UUID) = IdNotFoundError(name, Id, UUID[])
-IdNotFoundError(Id::UUID) = IdNotFoundError("Node", Id, UUID[])
+IdNotFoundError(name::String, Id) = IdNotFoundError(name, Id, [])
+IdNotFoundError(Id) = IdNotFoundError("Node", Id, [])
 
 function Base.showerror(io::IO, ex::IdNotFoundError)
     print(io, "IdNotFoundError: ", ex.name, " Id '", ex.Id, "' not found.")
@@ -120,4 +120,26 @@ end
 
 function Base.showerror(io::IO, ex::LinkConstraintError)
     return print(io, "LinkConstraintError: ", ex.msg)
+end
+
+"""
+    HashMismatchError(expected, actual)
+
+The blob's computed Multihash does not match the one stored in the Blobentry.
+This indicates data corruption or a stale entry.
+"""
+struct HashMismatchError <: Exception
+    expected::Multihash
+    actual::Multihash
+end
+
+function Base.showerror(io::IO, ex::HashMismatchError)
+    return print(
+        io,
+        "HashMismatchError: Blobentry multihash does not match blob content.",
+        "\n  expected: ",
+        ex.expected,
+        "\n  actual:   ",
+        ex.actual,
+    )
 end

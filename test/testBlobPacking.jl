@@ -83,7 +83,11 @@ using FileIO
         @test result3 == json_str
 
         # unpackBlob via Blobentry
-        entry = Blobentry(:test_json; mimetype = MIME("application/json"))
+        entry = Blobentry(
+            :test_json,
+            DFG.Multihash(sha2_256, rand(UInt8, 32));
+            mimetype = MIME("application/json"),
+        )
         result5 = DFG.unpackBlob(entry, blob)
         @test result5 == json_str
 
@@ -129,17 +133,25 @@ using FileIO
     ##==========================================================================
     @testset "Blobentry mimetype integration" begin
         # Default MIME type
-        entry = Blobentry(:default_mime)
+        entry = Blobentry(:default_mime, DFG.Multihash(sha2_256, rand(UInt8, 32)))
         @test entry.mimetype == MIME("application/octet-stream")
 
         # Custom MIME type
-        entry_json = Blobentry(:json_data; mimetype = MIME("application/json"))
+        entry_json = Blobentry(
+            :json_data,
+            DFG.Multihash(sha2_256, rand(UInt8, 32));
+            mimetype = MIME("application/json"),
+        )
         @test entry_json.mimetype == MIME("application/json")
 
         # JSON round-trip through Blobentry
         json_str = """{"key":"value"}"""
         blob, mimetype = DFG.packBlob(format"JSON", json_str)
-        entry_with_mime = Blobentry(:my_json; mimetype = mimetype)
+        entry_with_mime = Blobentry(
+            :my_json,
+            DFG.Multihash(sha2_256, rand(UInt8, 32));
+            mimetype = mimetype,
+        )
         @test DFG.unpackBlob(entry_with_mime, blob) == json_str
     end
 

@@ -210,14 +210,14 @@ end
 end
 
 @testset "Data Entries" begin
-    de1 = Blobentry(; blobid = uuid4(), label = :key1, storelabel = :test)
+    de1 = Blobentry(:key1, DFG.Multihash(sha2_256, rand(UInt8, 32)), :test)
 
-    de2 = Blobentry(; blobid = uuid4(), label = :key2, storelabel = :test)
+    de2 = Blobentry(:key2, DFG.Multihash(sha2_256, rand(UInt8, 32)), :test)
 
-    de2_update = Blobentry(;
-        blobid = uuid4(),
-        label = :key2,
-        storelabel = :test,
+    de2_update = Blobentry(
+        :key2,
+        DFG.Multihash(sha2_256, rand(UInt8, 32)),
+        :test;
         mimetype = MIME("image/jpg"),
     )
 

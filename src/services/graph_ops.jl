@@ -118,7 +118,7 @@ Merge rules:
 - Variables, Factors, Agents, and Graphroot, with the same label are merged if they are equal.
     - On conflicts, a `MergeConflictError` is thrown.
     - Child nodes (eg. tags, Bloblets, Blobentries, States, etc.) are using `merge!`.
-- The Blobstore links are merged provided they point to the same Blobstore.
+- The Blobprovider links are merged provided they point to the same Blobprovider.
     - On conflicts, a `MergeConflictError` is thrown.
 """
 function mergeGraph!(destDFG::AbstractDFG, srcDFG::AbstractDFG)
@@ -126,6 +126,6 @@ function mergeGraph!(destDFG::AbstractDFG, srcDFG::AbstractDFG)
     mergeVariables!(destDFG, getVariables(srcDFG))
     mergeFactors!(destDFG, getFactors(srcDFG))
     mergeAgents!(destDFG, getAgents(srcDFG))
-    mergeStorelinks!(destDFG, getBlobstores(srcDFG))
+    mergeBlobproviders!(destDFG, getBlobproviders(srcDFG))
     return destDFG
 end

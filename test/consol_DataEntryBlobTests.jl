@@ -79,16 +79,16 @@ dataset2 = rand(UInt8, 1000)
 # deleteBlob!(dfg, :x2, :random)
 
 ##==============================================================================
-## FolderStore
+## FolderBlobprovider
 ##==============================================================================
 
 # Create a data store and add it to DFG
-ds = FolderStore("/tmp/dfgFolderStore"; label = :filestore)
-addBlobstore!(dfg, ds)
+ds = DFG.FolderBlobprovider("/tmp/dfgFolderStore"; label = :filestore)
+addBlobprovider!(dfg, ds)
 
-ade = DFG.saveBlob_Variable!(dfg, :x1, dataset1, :random, :filestore)
-_ = DFG.saveBlob_Variable!(dfg, :x1, dataset1, :another_1, :filestore)
-gde, gdb = DFG.loadBlob_Variable(dfg, :x1, :random)
+ade = DFG.saveVariableBlob!(dfg, :x1, dataset1, :random, :filestore)
+_ = DFG.saveVariableBlob!(dfg, :x1, dataset1, :another_1, :filestore)
+gde, gdb = DFG.loadVariableBlob(dfg, :x1, :random)
 
 @test hasBlob(dfg, ade)
 
@@ -97,57 +97,57 @@ gde, gdb = DFG.loadBlob_Variable(dfg, :x1, :random)
 @test incrDataLabelSuffix(dfg, :x1, :another) == :another_2
 @test incrDataLabelSuffix(dfg, :x1, "random") == :random_1
 
-@test DFG.deleteBlob_Variable!(dfg, :x1, :random) == 2
-@test DFG.deleteBlob_Variable!(dfg, :x1, :another_1) == 2
+deleteVariableBlobentry!(dfg, :x1, :random)
+deleteVariableBlobentry!(dfg, :x1, :another_1)
 
 @test ade == gde
 @test dataset1 == gdb
 
-ade2 = DFG.saveBlob_Variable!(dfg, :x2, dataset1, :random, :filestore)
+ade2 = DFG.saveVariableBlob!(dfg, :x2, dataset1, :random, :filestore)
 # ade3,adb3 = updateBlob!(dfg, :x2, deepcopy(ade), dataset1)
 
-DFG.deleteBlob_Variable!(dfg, :x2, :random)
+deleteVariableBlobentry!(dfg, :x2, :random)
 
 #test default folder store
-dfs = FolderStore("/tmp/defaultfolderstore")
+dfs = DFG.FolderBlobprovider("/tmp/defaultfolderstore")
 @test dfs.folder == "/tmp/defaultfolderstore"
-@test getLabel(dfs) == :primary
-@test dfs isa FolderStore{Vector{UInt8}}
+@test getLabel(dfs) == :default
+@test dfs isa FolderBlobprovider
 
 ##==============================================================================
-## InMemoryBlobstore
+## MemoryBlobprovider
 ##==============================================================================
 
 # Create a data store and add it to DFG
-ds = InMemoryBlobstore()
-addBlobstore!(dfg, ds)
+ds = DFG.MemoryBlobprovider()
+addBlobprovider!(dfg, ds)
 
-ade = DFG.saveBlob_Variable!(dfg, :x1, dataset1, :random, :primary)
-gde, gdb = DFG.loadBlob_Variable(dfg, :x1, :random)
-@test DFG.deleteBlob_Variable!(dfg, :x1, :random) == 2
+ade = DFG.saveVariableBlob!(dfg, :x1, dataset1, :random, :default)
+gde, gdb = DFG.loadVariableBlob(dfg, :x1, :random)
+deleteVariableBlobentry!(dfg, :x1, :random)
 
 @test ade == gde
 @test dataset1 == gdb
 
-ade2 = DFG.saveBlob_Variable!(dfg, :x2, dataset1, :random, :primary)
-# ade3,adb3 = updateBlob!(dfg, :x2, deepcopy(ade), dataset1)
+ade2 = DFG.saveVariableBlob!(dfg, :x2, dataset1, :random, :default)
 
 @test hasBlob(dfg, ade2)
-@test hasBlob(ds, ade2.blobid)
+@test hasBlob(ds, ade2.multihash)
 
 @test length(listBlobs(ds)) == 1
 
-@test DFG.deleteBlob_Variable!(dfg, :x2, :random) == 2
+deleteVariableBlobentry!(dfg, :x2, :random)
 
 ##==============================================================================
 ## Unimplemented store
 ##==============================================================================
-struct TestStore{T} <: DFG.AbstractBlobstore{T} end
+struct TestStore{T} <: DFG.AbstractBlobprovider end
 
 store = TestStore{Int}()
 
-@test_throws MethodError getBlob(store, ade)
-@test_throws MethodError addBlob!(store, ade, 1)
-@test_throws MethodError deleteBlob!(store, ade)
+test_mh = DFG.Multihash(sha2_256, rand(UInt8, 32))
+@test_throws MethodError fetchBlob(store, test_mh)
+@test_throws MethodError putBlob!(store, rand(UInt8, 10))
+@test_throws MethodError purgeBlob!(store, test_mh)
 @test_throws MethodError listBlobs(store)
-@test_throws MethodError hasBlob(store, uuid4())
+@test_throws MethodError hasBlob(store, test_mh)

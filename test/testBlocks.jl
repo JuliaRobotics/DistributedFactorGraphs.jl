@@ -162,7 +162,7 @@ end
 
 # User, Robot, Session Data Blob Entries
 function GraphAgentBlobentries!(fg::AbstractDFG)
-    be = Blobentry(; label = :key1, storelabel = :b)
+    be = Blobentry(:key1, DFG.Multihash(sha2_256, rand(UInt8, 32)), :b)
 
     # First add an agent to test with
     agentlabel = :testBlobentryAgent
@@ -206,7 +206,7 @@ function GraphAgentBlobentries!(fg::AbstractDFG)
     @test mergeGraphBlobentries!(fg, [be]) == 1
     @test deleteGraphBlobentries!(fg, [:key1]) == 1
 
-    be2 = Blobentry(; blobid = uuid4(), label = :key2, storelabel = :b)
+    be2 = Blobentry(:key2, DFG.Multihash(sha2_256, rand(UInt8, 32)), :b)
 
     bes = [be, be2]
 
@@ -829,23 +829,23 @@ function statesExtendedTestBlock!(fg)
 end
 
 function blobstoreExtendedTestBlock!(fg)
-    store = DFG.InMemoryBlobstore(:mergestore)
-    @test addBlobstore!(fg, store) isa Any
-    @test_throws LabelExistsError addBlobstore!(fg, store)
+    store = DFG.MemoryBlobprovider(; label = :mergestore)
+    @test addBlobprovider!(fg, store) isa Any
+    @test_throws LabelExistsError addBlobprovider!(fg, store)
 
-    # mergeStorelinks!
-    store2 = DFG.InMemoryBlobstore(:mergestore2)
-    @test DFG.mergeStorelinks!(fg, [store2]) == 1
-    @test :mergestore2 in listBlobstores(fg)
+    # mergeBlobproviders!
+    store2 = DFG.MemoryBlobprovider(; label = :mergestore2)
+    @test DFG.mergeBlobproviders!(fg, [store2]) == 1
+    @test :mergestore2 in listBlobproviders(fg)
     # merge again is idempotent
-    @test DFG.mergeStorelinks!(fg, [store2]) == 0
+    @test DFG.mergeBlobproviders!(fg, [store2]) == 0
 
-    @test_throws LabelNotFoundError getBlobstore(fg, :nonexistent)
+    @test_throws LabelNotFoundError getBlobprovider(fg, :nonexistent)
 
     # cleanup
-    @test deleteBlobstore!(fg, :mergestore) == 1
-    @test deleteBlobstore!(fg, :mergestore2) == 1
-    @test deleteBlobstore!(fg, :nonexistent) == 0
+    @test DFG.deleteBlobprovider!(fg, :mergestore) == 1
+    @test DFG.deleteBlobprovider!(fg, :mergestore2) == 1
+    @test DFG.deleteBlobprovider!(fg, :nonexistent) == 0
 end
 
 function DataEntriesTestBlock!(fg, v2)
@@ -859,22 +859,16 @@ function DataEntriesTestBlock!(fg, v2)
     # listBlobentries
     # emptyDataEntries
     # mergeDataEntries
-    storeEntry = Blobentry(; blobid = uuid4(), label = :a, storelabel = :b)
+    storeEntry = Blobentry(:a, DFG.Multihash(sha2_256, rand(UInt8, 32)), :b)
     @test getLabel(storeEntry) == storeEntry.label
     @test getTimestamp(storeEntry) == storeEntry.timestamp
 
-    # oid = zeros(UInt8,12); oid[12] = 0x01
-    # de1 = MongodbDataEntry(:key1, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
-    de1 = Blobentry(; blobid = uuid4(), label = :key1, storelabel = :b)
+    de1 = Blobentry(:key1, DFG.Multihash(sha2_256, rand(UInt8, 32)), :b)
 
-    # oid = zeros(UInt8,12); oid[12] = 0x02
-    # de2 = MongodbDataEntry(:key2, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
-    de2 = Blobentry(; blobid = uuid4(), label = :key2, storelabel = :b)
+    de2 = Blobentry(:key2, DFG.Multihash(sha2_256, rand(UInt8, 32)), :b)
 
-    # oid = zeros(UInt8,12); oid[12] = 0x03
-    # de2_update = MongodbDataEntry(:key2, uuid4(), NTuple{12,UInt8}(oid), "", now(localzone()))
     de2_update =
-        Blobentry(; blobid = uuid4(), label = :key2, storelabel = :b, description = "Yay")
+        Blobentry(:key2, DFG.Multihash(sha2_256, rand(UInt8, 32)), :b; description = "Yay")
 
     #add
     v1 = getVariable(fg, :a)
@@ -982,29 +976,29 @@ function DataEntriesTestBlock!(fg, v2)
 end
 
 function blobsStoresTestBlock!(fg)
-    de1 = Blobentry(;
-        blobid = uuid4(),
-        label = :label1,
-        storelabel = :store1,
+    de1 = Blobentry(
+        :label1,
+        DFG.Multihash(sha2_256, rand(UInt8, 32)),
+        :store1;
         crchash = 0xAAAA,
         origin = "origin1",
         description = "description1",
         mimetype = MIME("mimetype1"),
     )
-    de2 = Blobentry(;
-        blobid = uuid4(),
-        label = :label2,
-        storelabel = :store2,
+    de2 = Blobentry(
+        :label2,
+        DFG.Multihash(sha2_256, rand(UInt8, 32)),
+        :store2;
         crchash = 0xFFFF,
         origin = "origin2",
         description = "description2",
         mimetype = MIME("mimetype2"),
         timestamp = DFG.TimeDateZone("2020-08-12T12:00:00.000Z"),
     )
-    de2_update = Blobentry(;
-        blobid = uuid4(),
-        label = :label2,
-        storelabel = :store2,
+    de2_update = Blobentry(
+        :label2,
+        DFG.Multihash(sha2_256, rand(UInt8, 32)),
+        :store2;
         crchash = 0x0123,
         origin = "origin2",
         description = "description2",
@@ -1060,61 +1054,62 @@ function blobsStoresTestBlock!(fg)
     var1 = getVariable(fg, :a)
     @test listBlobentries(var1) == Symbol[]
 
-    # Blobstore functions
-    fs = FolderStore("/tmp/$(string(uuid4())[1:8])")
+    # Blobprovider functions
+    fs = DFG.FolderBlobprovider("/tmp/$(string(uuid4())[1:8])")
     # Adding
-    addBlobstore!(fg, fs)
+    addBlobprovider!(fg, fs)
     # Listing
-    @test listBlobstores(fg) == [fs.label]
+    @test listBlobproviders(fg) == [fs.label]
     # Getting
-    @test getBlobstore(fg, fs.label) == fs
-    @test_throws LabelNotFoundError getBlobstore(fg, :notfound)
+    @test getBlobprovider(fg, fs.label) == fs
+    @test_throws LabelNotFoundError getBlobprovider(fg, :notfound)
     # Deleting
-    @test deleteBlobstore!(fg, fs.label) == 1
+    @test DFG.deleteBlobprovider!(fg, fs.label) == 1
     # Add it back
-    addBlobstore!(fg, fs)
+    addBlobprovider!(fg, fs)
 
-    # Blob 
+    # Blob (CAS)
     testData = rand(UInt8, 50)
-    blobid = addBlob!(fs, testData)
-    @test blobid isa UUID
-    @test hasBlob(fs, blobid)
-    @test listBlobs(fs) == [blobid]
-    @test_throws DFG.IdExistsError addBlob!(fs, blobid, testData)
-    @test getBlob(fs, blobid) == testData
-    @test_throws DFG.IdNotFoundError getBlob(fs, uuid4())
-    @test deleteBlob!(fs, uuid4()) == 0
-    @test deleteBlob!(fs, blobid) == 1
-    @test_throws DFG.IdNotFoundError getBlob(fs, blobid)
-    @test deleteBlob!(fs, blobid) == 0
-    @test listBlobs(fs) == UUID[]
+    mhash = putBlob!(fs, testData)
+    @test mhash isa DFG.Multihash
+    @test hasBlob(fs, mhash)
+    @test listBlobs(fs) == [mhash]
+    # putBlob! is idempotent
+    @test putBlob!(fs, testData) == mhash
+    @test fetchBlob(fs, mhash) == testData
+    @test isnothing(fetchBlob(fs, DFG.Multihash(sha2_256, rand(UInt8, 32))))
+    @test purgeBlob!(fs, DFG.Multihash(sha2_256, rand(UInt8, 32))) == 0
+    @test purgeBlob!(fs, mhash) == 1
+    @test isnothing(fetchBlob(fs, mhash))
+    @test purgeBlob!(fs, mhash) == 0
+    @test isempty(listBlobs(fs))
 
     # Blob Wrappers
     # on Variable
-    newentry = DFG.saveBlob_Variable!(fg, :a, testData, :testing, fs.label)
-    @test_throws DFG.LabelExistsError DFG.saveBlob_Variable!(fg, :a, testData, :testing)
+    newentry = DFG.saveVariableBlob!(fg, :a, testData, :testing, fs.label)
+    @test_throws DFG.LabelExistsError DFG.saveVariableBlob!(fg, :a, testData, :testing)
     @test :testing in listVariableBlobentries(fg, :a)
-    be, blob = DFG.loadBlob_Variable(fg, :a, :testing)
+    be, blob = DFG.loadVariableBlob(fg, :a, :testing)
     @test newentry == be
     @test blob == testData
-    @test DFG.deleteBlob_Variable!(fg, :a, :testing) == 2
-    @test_throws DFG.LabelNotFoundError DFG.loadBlob_Variable(fg, :a, :testing)
+    deleteVariableBlobentry!(fg, :a, :testing)
+    @test_throws DFG.LabelNotFoundError DFG.loadVariableBlob(fg, :a, :testing)
 
     # on Graph
-    newentry = DFG.saveBlob_Graph!(fg, testData, :testing, fs.label)
-    @test_throws DFG.LabelExistsError DFG.saveBlob_Graph!(fg, testData, :testing, fs.label)
+    newentry = DFG.saveGraphBlob!(fg, testData, :testing, fs.label)
+    @test_throws DFG.LabelExistsError DFG.saveGraphBlob!(fg, testData, :testing, fs.label)
     @test :testing in listGraphBlobentries(fg)
-    be, blob = DFG.loadBlob_Graph(fg, :testing)
+    be, blob = DFG.loadGraphBlob(fg, :testing)
     @test newentry == be
     @test blob == testData
-    @test DFG.deleteBlob_Graph!(fg, :testing) == 2
-    @test_throws DFG.LabelNotFoundError DFG.loadBlob_Graph(fg, :testing)
+    deleteGraphBlobentry!(fg, :testing)
+    @test_throws DFG.LabelNotFoundError DFG.loadGraphBlob(fg, :testing)
 
     # on Agent
     agentlabel = :testBlobWrapperAgent
     addAgent!(fg, Agent(; label = agentlabel))
-    newentry = DFG.saveBlob_Agent!(fg, agentlabel, testData, :testing, fs.label)
-    @test_throws DFG.LabelExistsError DFG.saveBlob_Agent!(
+    newentry = DFG.saveAgentBlob!(fg, agentlabel, testData, :testing, fs.label)
+    @test_throws DFG.LabelExistsError DFG.saveAgentBlob!(
         fg,
         agentlabel,
         testData,
@@ -1122,17 +1117,17 @@ function blobsStoresTestBlock!(fg)
         fs.label,
     )
     @test :testing in listAgentBlobentries(fg, agentlabel)
-    be, blob = DFG.loadBlob_Agent(fg, agentlabel, :testing)
+    be, blob = DFG.loadAgentBlob(fg, agentlabel, :testing)
     @test newentry == be
     @test blob == testData
-    @test DFG.deleteBlob_Agent!(fg, agentlabel, :testing) == 2
-    @test_throws DFG.LabelNotFoundError DFG.loadBlob_Agent(fg, agentlabel, :testing)
+    deleteAgentBlobentry!(fg, agentlabel, :testing)
+    @test_throws DFG.LabelNotFoundError DFG.loadAgentBlob(fg, agentlabel, :testing)
     deleteAgent!(fg, agentlabel)
     return nothing
 end
 
 function testGroup!(fg, v1, v2, f0, f1)
-    # "TODO Sorteer groep"
+    # "TODO split and sort these tests"
 
     @testset "Listing Variables and Factors with filters" begin
         @test issetequal([:a, :b], listVariables(fg))

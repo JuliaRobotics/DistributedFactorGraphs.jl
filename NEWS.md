@@ -10,6 +10,18 @@ Listing news on any major breaking changes in DFG.  For regular changes, see int
   - `blobidFilter` -> `whereBlobid`
   - `variableLabelFilter` -> `whereVariableLabel`
 
+- The Blob system was redesigned and refactored to a Content-Addressable Storage (CAS) model with Multihash keys, and renamed to Blobprovider to better reflect the abstraction. See #1157 for full discussion and design details.
+  - Renamed Blobstore → Blobprovider
+  - `AbstractBlobStore` → `AbstractBlobprovider`; concrete types renamed accordingly (`FolderBlobprovider`, `MemoryBlobprovider`, `CachedBlobprovider`).
+  - All CRUD helpers renamed: `addBlobstore!` → `addBlobprovider!`, `getBlobstore` → `getBlobprovider`, `deleteBlobstore!` → `deleteBlobprovider!`, etc.
+  - `putBlob!` now returns a `Multihash` and `fetchBlob` / `purgeBlob!` take a `Multihash` key.
+  - Layer 1 verbs renamed: `getBlob(provider, hash)` → `fetchBlob` (returns `nothing` on miss), `deleteBlob!` → `purgeBlob!`.
+  - `checkHash` decodes multihash to verify blob integrity.
+  - `saveBlob_Variable!` → `saveVariableBlob!`, `loadBlob_Variable` → `loadVariableBlob`
+  - Same pattern for Factor, Graph, Agent variants.
+  - Old names kept as `const` aliases for backward compatibility.
+  - `deleteBlob_Variable` and similar wrappers no longer exist. Use `deleteVariableBlobentry!` (metadata) and `purgeBlob!(provider, multihash)` (physical) directly. Warning: be carefull when deleting blobs to make sure they are no longer in use anywhere because the multihash id can be shared by multiple blobs.
+
 # v0.28
 - Reading or deserialzing of factor graphs created prior to v0.25 are no longer suppoted with the complete removal of User/Robot/Session
 - Deprecated AbstractRelativeMinimize and AbstractManifoldsMinimize
