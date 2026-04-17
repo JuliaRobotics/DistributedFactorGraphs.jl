@@ -55,7 +55,16 @@ listBlobproviders(dfg)                        # lists all mounted labels
 abstract type AbstractBlobprovider end
 const Blobprovider = AbstractBlobprovider
 
-function StructUtils.lower(::StructUtils.StructStyle, store::AbstractBlobprovider)
-    return StructUtils.lower(Packed(store))
+# --- Polymorphic serialization via Packed envelope ---
+# Any AbstractBlobprovider is serialized through Packed(provider), which:
+#   1. Calls pack(provider)  — returns a serialization-safe packed struct
+#      (identity by default; override for types with non-serializable fields).
+#   2. Wraps in Packed{PackedT}(TypeMetadata, packed_provider).
+#   3. Flattens to JSON with a "type" header for deserialization dispatch.
+# On deserialization, resolvePackedType reads the header, make() builds the
+# packed struct, and unpack() reconstructs the live type.
+# See: pack, unpack, Packed, DFGJSONStyle
+function StructUtils.lower(::StructUtils.StructStyle, provider::AbstractBlobprovider)
+    return StructUtils.lower(Packed(provider))
 end
 @choosetype AbstractBlobprovider resolvePackedType

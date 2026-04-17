@@ -1,3 +1,41 @@
+"""
+    DFGJSONStyle <: JSON.JSONStyle
+
+Custom JSON serialization style used throughout DFG for `JSON.json` / `JSON.parse`.
+
+This style adds handling for types that don't round-trip through plain JSON:
+`Complex`, `SArray`, `ArrayPartition`, `RefValue{Int}`, `TimeDateZone`, etc.
+
+# Polymorphic abstract types — `pack`/`unpack`
+
+Abstract types like `AbstractBlobprovider` and `AbstractObservation` are serialized through the
+[`Packed`](@ref) envelope.  Each concrete subtype can define a lightweight
+"packed" companion struct and overload [`pack`](@ref) / [`unpack`](@ref).
+The default `pack(x) = x` works for structs whose fields are all plain data.
+
+When a type contains **non-serializable fields** (clients, connections, caches),
+define a packed companion:
+
+```julia
+struct PackedMytype
+    label::Symbol
+end
+DFG.pack(s::Mytype) = PackedMytype(s.label)
+DFG.unpack(p::PackedMytype) = Mytype(reconnect_client(), p.label)
+```
+
+JSON emitted with `style = DFGJSONStyle()` embeds a `"type"` header
+so the deserializer can locate the packed type and call `unpack`.
+
+# Usage
+
+```julia
+json_str = JSON.json(value; style = DFGJSONStyle())
+value    = JSON.parse(json_str, T; style = DFGJSONStyle())
+```
+
+See also: [`pack`](@ref), [`unpack`](@ref), [`Packed`](@ref), [`@packed`](@ref)
+"""
 struct DFGJSONStyle <: JSON.JSONStyle end
 
 # Base.RefValue{Int} serialization
