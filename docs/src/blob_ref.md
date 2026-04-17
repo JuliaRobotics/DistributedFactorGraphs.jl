@@ -13,7 +13,7 @@ Modules = [DistributedFactorGraphs]
 
 Pages = [
     "entities/Blobentry.jl",
-    "entities/Blobstore.jl",
+    "entities/Blobprovider.jl",
 ]
 
 ```
@@ -24,10 +24,10 @@ Modules = [DistributedFactorGraphs]
 
 Pages = [
     "services/blobentry_ops.jl",
-    "services/blobstore_ops.jl",
+    "services/blobprovider_ops.jl",
     "Serialization/BlobPacking.jl",
     "services/blob_save_load.jl",
-    "Blobstores/Blobstores.jl",
+    "Blobproviders/Blobproviders.jl",
 ]
 
 ```

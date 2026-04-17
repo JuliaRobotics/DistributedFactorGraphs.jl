@@ -1,240 +1,230 @@
 ##==============================================================================
-## Blob + Blobentry CRUD interface
+## Blob + Blobentry CRUD interface (Layer 3 — The VBS Router)
+##
+## API Pattern: [save|load] + [Node] + Blob
+## No Layer 3 delete — users call deleteVariableBlobentry! etc. directly.
+## Physical blob GC is handled separately.
 ##==============================================================================
 
 """
-Convenience wrapper to load a Blob for a given variable and Blobentry label.
+Load a Blob for a given variable and Blobentry label.
 
 $(METHODLIST)
 """
-function loadBlob_Variable end
+function loadVariableBlob end
 
 """
-Convenience wrapper to save a Blob to a Blobstore and a Blobentry to a variable.
+Save a Blob to a Blobprovider and attach a Blobentry to a variable.
 $(METHODLIST)
 """
-function saveBlob_Variable! end
+function saveVariableBlob! end
 
 """
-Convenience wrapper to delete a Blob form a Blobstore and its Blobentry from a variable.
-$(METHODLIST)
-"""
-function deleteBlob_Variable! end
-
-"""
-Convenience wrapper to load a Blob for a given graph and Blobentry label.
+Load a Blob for a given graph and Blobentry label.
 
 $(METHODLIST)
 """
-function loadBlob_Graph end
+function loadGraphBlob end
 
 """
-Convenience wrapper to save a Blob to a Blobstore and a Blobentry to a graph.
+Save a Blob to a Blobprovider and attach a Blobentry to a graph.
 
 $(METHODLIST)
 """
-function saveBlob_Graph! end
+function saveGraphBlob! end
 
 """
-Convenience wrapper to delete a Blob from a Blobstore and its Blobentry from a graph.
+Load a Blob for a given agent and Blobentry label.
 
 $(METHODLIST)
 """
-function deleteBlob_Graph! end
+function loadAgentBlob end
 
 """
-Convenience wrapper to load a Blob for a given agent and Blobentry label.
+Save a Blob to a Blobprovider and attach a Blobentry to an agent.
 
 $(METHODLIST)
 """
-function loadBlob_Agent end
+function saveAgentBlob! end
 
 """
-Convenience wrapper to save a Blob to a Blobstore and a Blobentry to an agent.
+Load a Blob for a given factor and Blobentry label.
 
 $(METHODLIST)
 """
-function saveBlob_Agent! end
+function loadFactorBlob end
 
 """
-Convenience wrapper to delete a Blob from a Blobstore and its Blobentry from an agent.
+Save a Blob to a Blobprovider and attach a Blobentry to a factor.
 
 $(METHODLIST)
 """
-function deleteBlob_Agent! end
+function saveFactorBlob! end
 
-"""
-Convenience wrapper to load a Blob for a given factor and Blobentry label.
+# ==============================================================================
+# Variable
+# ==============================================================================
 
-$(METHODLIST)
-"""
-function loadBlob_Factor end
-
-"""
-Convenience wrapper to save a Blob to a Blobstore and a Blobentry to a factor.
-
-$(METHODLIST)
-"""
-function saveBlob_Factor! end
-
-"""
-Convenience wrapper to delete a Blob from a Blobstore and its Blobentry from a factor.
-
-$(METHODLIST)
-"""
-function deleteBlob_Factor! end
-
-function loadBlob_Variable(
-    dfg::AbstractDFG,
-    variable_label::Symbol,
-    entry_label::Symbol;
-    # hashfunction = sha256,
-    # checkhash::Bool = true,
-)
+function loadVariableBlob(dfg::AbstractDFG, variable_label::Symbol, entry_label::Symbol)
     entry = getVariableBlobentry(dfg, variable_label, entry_label)
     blob = getBlob(dfg, entry)
-    # checkhash && assertHash(de, db; hashfunction)
+    actual_crc = crc32c(blob)
+    actual_crc == entry.crc32csum ||
+        throw(ValidationError(:crc32csum, entry.crc32csum, actual_crc))
     return entry, blob
 end
 
-function saveBlob_Variable!(
+function saveVariableBlob!(
     dfg::AbstractDFG,
     variable_label::Symbol,
     blob::Vector{UInt8},
     entry::Blobentry,
 )
+    m = putBlob!(getBlobprovider(dfg, entry.provider), blob)
+    m == entry.multihash || throw(ValidationError(:multihash, entry.multihash, m))
+    entry = Blobentry(entry; crc32csum = crc32c(blob), size = length(blob))
     addVariableBlobentry!(dfg, variable_label, entry)
-    addBlob!(dfg, entry, blob)
     return entry
 end
 
-function saveBlob_Variable!(
+function saveVariableBlob!(
     dfg::AbstractDFG,
     variable_label::Symbol,
     blob::Vector{UInt8},
     entry_label::Symbol,
-    storelabel::Symbol = :primary;
+    provider::Symbol = :default;
     blobentry_kwargs...,
 )
-    entry = Blobentry(entry_label, storelabel; blobentry_kwargs...)
-    return saveBlob_Variable!(dfg, variable_label, blob, entry)
+    multihash = putBlob!(getBlobprovider(dfg, provider), blob)
+    entry = Blobentry(entry_label, blob; multihash, provider, blobentry_kwargs...)
+    addVariableBlobentry!(dfg, variable_label, entry)
+    return entry
 end
 
-function deleteBlob_Variable!(dfg::AbstractDFG, variable_label::Symbol, entry_label::Symbol)
-    entry = getVariableBlobentry(dfg, variable_label, entry_label)
-    deleteVariableBlobentry!(dfg, variable_label, entry_label)
-    deleteBlob!(dfg, entry)
-    return 2
-end
+# ==============================================================================
+# Graph
+# ==============================================================================
 
-function loadBlob_Graph(dfg::AbstractDFG, entry_label::Symbol;)
+function loadGraphBlob(dfg::AbstractDFG, entry_label::Symbol)
     entry = getGraphBlobentry(dfg, entry_label)
     blob = getBlob(dfg, entry)
+    actual_crc = crc32c(blob)
+    actual_crc == entry.crc32csum ||
+        throw(ValidationError(:crc32csum, entry.crc32csum, actual_crc))
     return entry, blob
 end
 
-function saveBlob_Graph!(dfg::AbstractDFG, blob::Vector{UInt8}, entry::Blobentry)
+function saveGraphBlob!(dfg::AbstractDFG, blob::Vector{UInt8}, entry::Blobentry)
+    m = putBlob!(getBlobprovider(dfg, entry.provider), blob)
+    m == entry.multihash || throw(ValidationError(:multihash, entry.multihash, m))
+    entry = Blobentry(entry; crc32csum = crc32c(blob), size = length(blob))
     addGraphBlobentry!(dfg, entry)
-    addBlob!(dfg, entry, blob)
     return entry
 end
 
-function saveBlob_Graph!(
+function saveGraphBlob!(
     dfg::AbstractDFG,
     blob::Vector{UInt8},
     entry_label::Symbol,
-    storelabel::Symbol = :primary;
+    provider::Symbol = :default;
     blobentry_kwargs...,
 )
-    entry = Blobentry(entry_label, storelabel; blobentry_kwargs...)
-    return saveBlob_Graph!(dfg, blob, entry)
+    multihash = putBlob!(getBlobprovider(dfg, provider), blob)
+    entry = Blobentry(entry_label, blob; multihash, provider, blobentry_kwargs...)
+    addGraphBlobentry!(dfg, entry)
+    return entry
 end
 
-function deleteBlob_Graph!(dfg::AbstractDFG, entry_label::Symbol)
-    entry = getGraphBlobentry(dfg, entry_label)
-    deleteGraphBlobentry!(dfg, entry_label)
-    deleteBlob!(dfg, entry)
-    return 2
-end
+# ==============================================================================
+# Agent
+# ==============================================================================
 
-function loadBlob_Agent(dfg::AbstractDFG, agentlabel::Symbol, entry_label::Symbol;)
+function loadAgentBlob(dfg::AbstractDFG, agentlabel::Symbol, entry_label::Symbol)
     entry = getAgentBlobentry(dfg, agentlabel, entry_label)
     blob = getBlob(dfg, entry)
+    actual_crc = crc32c(blob)
+    actual_crc == entry.crc32csum ||
+        throw(ValidationError(:crc32csum, entry.crc32csum, actual_crc))
     return entry, blob
 end
 
-function saveBlob_Agent!(
+function saveAgentBlob!(
     dfg::AbstractDFG,
     agentlabel::Symbol,
     blob::Vector{UInt8},
     entry::Blobentry,
 )
+    m = putBlob!(getBlobprovider(dfg, entry.provider), blob)
+    m == entry.multihash || throw(ValidationError(:multihash, entry.multihash, m))
+    entry = Blobentry(entry; crc32csum = crc32c(blob), size = length(blob))
     addAgentBlobentry!(dfg, agentlabel, entry)
-    addBlob!(dfg, entry, blob)
     return entry
 end
 
-function saveBlob_Agent!(
+function saveAgentBlob!(
     dfg::AbstractDFG,
     agentlabel::Symbol,
     blob::Vector{UInt8},
     entry_label::Symbol,
-    storelabel::Symbol = :primary;
+    provider::Symbol = :default;
     blobentry_kwargs...,
 )
-    entry = Blobentry(entry_label, storelabel; blobentry_kwargs...)
-    return saveBlob_Agent!(dfg, agentlabel, blob, entry)
+    multihash = putBlob!(getBlobprovider(dfg, provider), blob)
+    entry = Blobentry(entry_label, blob; multihash, provider, blobentry_kwargs...)
+    addAgentBlobentry!(dfg, agentlabel, entry)
+    return entry
 end
 
-function deleteBlob_Agent!(dfg::AbstractDFG, agentlabel::Symbol, entry_label::Symbol)
-    entry = getAgentBlobentry(dfg, agentlabel, entry_label)
-    deleteAgentBlobentry!(dfg, agentlabel, entry_label)
-    deleteBlob!(dfg, entry)
-    return 2
-end
+# ==============================================================================
+# Factor
+# ==============================================================================
 
-function loadBlob_Factor(dfg::AbstractDFG, factor_label::Symbol, entry_label::Symbol)
+function loadFactorBlob(dfg::AbstractDFG, factor_label::Symbol, entry_label::Symbol)
     entry = getFactorBlobentry(dfg, factor_label, entry_label)
     blob = getBlob(dfg, entry)
+    actual_crc = crc32c(blob)
+    actual_crc == entry.crc32csum ||
+        throw(ValidationError(:crc32csum, entry.crc32csum, actual_crc))
     return entry, blob
 end
 
-function saveBlob_Factor!(
+function saveFactorBlob!(
     dfg::AbstractDFG,
     factor_label::Symbol,
     blob::Vector{UInt8},
     entry::Blobentry,
 )
+    m = putBlob!(getBlobprovider(dfg, entry.provider), blob)
+    m == entry.multihash || throw(ValidationError(:multihash, entry.multihash, m))
+    entry = Blobentry(entry; crc32csum = crc32c(blob), size = length(blob))
     addFactorBlobentry!(dfg, factor_label, entry)
-    addBlob!(dfg, entry, blob)
     return entry
 end
 
-function saveBlob_Factor!(
+function saveFactorBlob!(
     dfg::AbstractDFG,
     factor_label::Symbol,
     blob::Vector{UInt8},
     entry_label::Symbol,
-    storelabel::Symbol = :primary;
+    provider::Symbol = :default;
     blobentry_kwargs...,
 )
-    entry = Blobentry(entry_label, storelabel; blobentry_kwargs...)
-    return saveBlob_Factor!(dfg, factor_label, blob, entry)
+    multihash = putBlob!(getBlobprovider(dfg, provider), blob)
+    entry = Blobentry(entry_label, blob; multihash, provider, blobentry_kwargs...)
+    addFactorBlobentry!(dfg, factor_label, entry)
+    return entry
 end
 
-function deleteBlob_Factor!(dfg::AbstractDFG, factor_label::Symbol, entry_label::Symbol)
-    entry = getFactorBlobentry(dfg, factor_label, entry_label)
-    deleteFactorBlobentry!(dfg, factor_label, entry_label)
-    deleteBlob!(dfg, entry)
-    return 2
-end
+# ==============================================================================
+# Layer 4: Application Domain (Images)
+# ==============================================================================
 
 function saveImage_Variable!(
     dfg::AbstractDFG,
     variable_label::Symbol,
     img::AbstractMatrix,
     entry_label::Symbol,
-    storelabel::Symbol = :primary;
+    provider::Symbol = :default;
     entry_kwargs...,
 )
     mimetype = get(entry_kwargs, :mimeType, MIME("image/png"))
@@ -243,19 +233,25 @@ function saveImage_Variable!(
         throw(ArgumentError("Unsupported MIME type for image: $(mimetype)"))
     blob, mimetype = packBlob(format, img)
 
-    entry = Blobentry(
-        entry_label,
-        storelabel;
-        blobid = uuid4(),
-        entry_kwargs...,
-        size = length(blob),
-        mimetype,
-    )
-
-    return saveBlob_Variable!(dfg, variable_label, blob, entry)
+    multihash = putBlob!(getBlobprovider(dfg, provider), blob)
+    entry = Blobentry(entry_label, blob; multihash, provider, mimetype, entry_kwargs...)
+    addVariableBlobentry!(dfg, variable_label, entry)
+    return entry
 end
 
 function loadImage_Variable(dfg::AbstractDFG, variable_label::Symbol, entry_label::Symbol)
-    entry, blob = loadBlob_Variable(dfg, variable_label, entry_label)
+    entry, blob = loadVariableBlob(dfg, variable_label, entry_label)
     return entry, unpackBlob(entry, blob)
 end
+
+# ==============================================================================
+# Aliases for old names (Layer 3)
+# ==============================================================================
+const saveBlob_Variable! = saveVariableBlob!
+const loadBlob_Variable = loadVariableBlob
+const saveBlob_Factor! = saveFactorBlob!
+const loadBlob_Factor = loadFactorBlob
+const saveBlob_Graph! = saveGraphBlob!
+const loadBlob_Graph = loadGraphBlob
+const saveBlob_Agent! = saveAgentBlob!
+const loadBlob_Agent = loadAgentBlob

@@ -13,7 +13,7 @@ mutable struct GraphsDFG{
 } <: AbstractDFG{V, F}
     g::FactorGraph{Int, V, F}
     solverParams::T # Solver parameters #TODO resolve #1205 first
-    blobstores::OrderedDict{Symbol, AbstractBlobstore} #TODO note v0.29 changed from camelCase  blobStores
+    blobproviders::OrderedDict{Symbol, AbstractBlobprovider} #TODO note v0.29 changed from blobstores
     graph::Graphroot
     agents::OrderedDict{Symbol, Agent} #TODO note v0.29 added multiple agents, agent -> agents
 end
@@ -26,7 +26,7 @@ function GraphsDFG{T, V, F}(
     g::FactorGraph{Int, V, F} = FactorGraph{Int, V, F}();
     # addHistory::Vector{Symbol} = Symbol[],
     solverParams::T = T(),
-    blobstores = OrderedDict{Symbol, AbstractBlobstore}(),
+    blobproviders = OrderedDict{Symbol, AbstractBlobprovider}(),
     # graph
     graphLabel::Symbol = :workspace,
     graphDescription::String = "",
@@ -64,7 +64,7 @@ function GraphsDFG{T, V, F}(
     !DFG.isValidLabel(graphLabel) &&
         throw(ArgumentError("'$graphLabel' is not a valid label"))
 
-    return GraphsDFG{T, V, F}(g, solverParams, blobstores, graph, agents)
+    return GraphsDFG{T, V, F}(g, solverParams, blobproviders, graph, agents)
 end
 
 # GraphsDFG{T}(; kwargs...) where T <: AbstractDFGParams = GraphsDFG{T,VariableDFG,FactorDFG}(;kwargs...)
@@ -87,9 +87,9 @@ function GraphsDFG(
     fg::GraphsDFG;
     g = fg.g,
     solverParams = fg.solverParams,
-    blobstores = fg.blobstores,
+    blobproviders = fg.blobproviders,
     graph = fg.graph,
     agents = fg.agents,
 )
-    return GraphsDFG(g, solverParams, blobstores, graph, agents)
+    return GraphsDFG(g, solverParams, blobproviders, graph, agents)
 end

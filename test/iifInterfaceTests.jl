@@ -153,8 +153,8 @@ end
     @test issetequal(ls(dfg, Position{1}), [:a, :b])
 
     varNearTs = findVariablesNearTimestamp(dfg, now())
-    # TODO
-    @test_skip varNearTs[1][1] == [:b]
+
+    @test varNearTs[1][1] == [:b]
 end
 
 # Gets
@@ -210,16 +210,11 @@ end
 end
 
 @testset "Data Entries" begin
-    de1 = Blobentry(; blobid = uuid4(), label = :key1, storelabel = :test)
+    de1 = Blobentry(:key1, UInt8[]; provider = :test)
 
-    de2 = Blobentry(; blobid = uuid4(), label = :key2, storelabel = :test)
+    de2 = Blobentry(:key2, UInt8[]; provider = :test)
 
-    de2_update = Blobentry(;
-        blobid = uuid4(),
-        label = :key2,
-        storelabel = :test,
-        mimetype = MIME("image/jpg"),
-    )
+    de2_update = Blobentry(:key2, UInt8[]; provider = :test, mimetype = MIME("image/jpg"))
 
     #add
     v1 = getVariable(dfg, :a)

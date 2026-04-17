@@ -57,7 +57,7 @@ function saveDFG(folder::AbstractString, dfg::AbstractDFG)
     next!(p)
     JSON.json("$savepath/solverparams.json", dfg.solverParams; style = DFGJSONStyle())
     next!(p)
-    JSON.json("$savepath/blobstores.json", dfg.blobstores; style = DFGJSONStyle())
+    JSON.json("$savepath/blobproviders.json", dfg.blobproviders; style = DFGJSONStyle())
     next!(p)
 
     savedir = dirname(savepath) # is this a path of just local name? #344 -- workaround with unique names
@@ -168,7 +168,8 @@ function loadDFG(file::AbstractString)
     # only extract the json files needed to rebuild DFG object
     tar_gz = open(file)
     tar = CodecZlib.GzipDecompressorStream(tar_gz)
-    dfgnodenames = r"^(agents?\.json|blobstores\.json|graphroot\.json|solverparams\.json)$"
+    dfgnodenames =
+        r"^(agents?\.json|blobproviders\.json|graphroot\.json|solverparams\.json)$"
     loaddir = Tar.extract(hdr -> contains(hdr.path, dfgnodenames), tar)
     close(tar)
 
@@ -199,14 +200,25 @@ function loadDFG(file::AbstractString)
         style = DFGJSONStyle(),
     )
     next!(progess)
-    blobstores = JSON.parsefile(
-        joinpath(loaddir, "blobstores.json"),
-        Dict{Symbol, AbstractBlobstore};
-        style = DFGJSONStyle(),
-    )
+    blobproviders = if isfile(joinpath(loaddir, "blobproviders.json"))
+        JSON.parsefile(
+            joinpath(loaddir, "blobproviders.json"),
+            Dict{Symbol, AbstractBlobprovider};
+            style = DFGJSONStyle(),
+        )
+    elseif isfile(joinpath(loaddir, "blobstores.json"))
+        # backward compat: load old blobstores.json format
+        JSON.parsefile(
+            joinpath(loaddir, "blobstores.json"),
+            Dict{Symbol, AbstractBlobprovider};
+            style = DFGJSONStyle(),
+        )
+    else
+        OrderedDict{Symbol, AbstractBlobprovider}()
+    end
     next!(progess)
 
-    dfg = GraphsDFG(; agents, graph, solverParams, blobstores)
+    dfg = GraphsDFG(; agents, graph, solverParams, blobproviders)
 
     @debug "DFG.loadDFG is deleting a temp folder created during unzip, $loaddir"
     # cleanup temporary folder

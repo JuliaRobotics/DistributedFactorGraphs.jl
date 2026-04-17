@@ -17,9 +17,7 @@ const MetadataTypes = Union{
 }
 
 function getHash(entry::Blobentry)
-    return error(
-        "Blobentry field :hash has been deprecated; use :crchash or :shahash instead",
-    )
+    return error("Blobentry field :hash has been deprecated; use :multihash instead")
 end
 
 function getMetadata(node)
@@ -738,3 +736,20 @@ end
 function getVariableLabelNumber(vs::Symbol, prefix = string(vs)[1])
     return parse(Int, string(vs)[(length(prefix) + 1):end])
 end
+
+@deprecate FolderStore FolderBlobprovider
+
+# Blobstore → Blobprovider renames
+@deprecate InMemoryBlobstore MemoryBlobprovider
+@deprecate getBlobstore getBlobprovider
+@deprecate getBlobstores getBlobproviders
+@deprecate addBlobstore! addBlobprovider!
+@deprecate listBlobstores listBlobproviders
+@deprecate hasBlobstore hasBlobprovider
+@deprecate refBlobstores refBlobproviders
+@deprecate deleteBlobstore! deleteBlobprovider!
+@deprecate deleteBlobstorelink! deleteBlobprovider!
+@deprecate mergeStorelink! mergeBlobprovider!
+@deprecate mergeStorelinks! mergeBlobproviders!
+@deprecate addBlob! putBlob!
+@deprecate LinkStore LinkBlobprovider

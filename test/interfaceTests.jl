@@ -107,7 +107,7 @@ end
     @test printNode(fg1, :abf1) === nothing
 
     #Blobentry
-    be = DFG.Blobentry(:testbe; metadata = Dict("key1" => "value1", "key2" => 42))
+    be = DFG.Blobentry(:testbe, UInt8[]; metadata = Dict("key1" => "value1", "key2" => 42))
     @test show(iobuf, MIME("text/plain"), be) === nothing
     disp_entry = String(take!(iobuf))
     @test occursin(r"Blobentry", disp_entry)
@@ -149,13 +149,14 @@ end
     @testset "Blobstore Extended" begin
         blobstoreExtendedTestBlock!(fg1)
     end
+    @testset "stash / apply Blobproviders" begin
+        stashApplyBlobprovidersTestBlock!(fg1)
+    end
 end
 
 @testset "TODO Sorteer groep" begin
     if typeof(fg1) <: InMemoryDFGTypes
         testGroup!(fg1, var1, var2, fac0, fac1)
-    else
-        @test_skip testGroup!(fg1, var1, var2, fac0, fac1)
     end
 end
 
@@ -226,8 +227,6 @@ end
     rand(7)
     if testDFGAPI <: InMemoryDFGTypes
         FileDFGTestBlock(testDFGAPI)
-    else
-        @test_skip FileDFGTestBlock(testDFGAPI)
     end
 end
 

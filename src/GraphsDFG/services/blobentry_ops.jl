@@ -176,9 +176,9 @@ function DFG.getVariableBlobentries(
     dfg::GraphsDFG,
     variableLabel::Symbol;
     whereLabel::Union{Nothing, Function} = nothing,
-    whereBlobid::Union{Nothing, Function} = nothing,
+    whereMultihash::Union{Nothing, Function} = nothing,
 )
-    return DFG.getBlobentries(getVariable(dfg, variableLabel); whereLabel, whereBlobid)
+    return DFG.getBlobentries(getVariable(dfg, variableLabel); whereLabel, whereMultihash)
 end
 
 function DFG.mergeVariableBlobentry!(dfg::GraphsDFG, label::Symbol, entry::Blobentry)
@@ -242,9 +242,9 @@ function DFG.getFactorBlobentries(
     dfg::GraphsDFG,
     factorLabel::Symbol;
     whereLabel::Union{Nothing, Function} = nothing,
-    whereBlobid::Union{Nothing, Function} = nothing,
+    whereMultihash::Union{Nothing, Function} = nothing,
 )
-    return getBlobentries(getFactor(dfg, factorLabel); whereLabel, whereBlobid)
+    return getBlobentries(getFactor(dfg, factorLabel); whereLabel, whereMultihash)
 end
 
 function DFG.mergeFactorBlobentry!(dfg::GraphsDFG, label::Symbol, entry::Blobentry)

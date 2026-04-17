@@ -1,6 +1,6 @@
 # TODO consider enforcing the full structure.
 # This is not explicitly enforced, but serves as extra information of how the structure is put together.
-# AbstractDFGNode are all nodes that make up a DFG, including Agent, Graph, Variable, Factor, Blobstore, Blobentry etc.
+# AbstractDFGNode are all nodes that make up a DFG, including Agent, Graph, Variable, Factor, Blobprovider, Blobentry etc.
 # abstract type AbstractDFGNode end
 # any DFGNode shall have a label. 
 # abstract type AbstractGraphNode end <: AbstractDFGNode
@@ -108,7 +108,7 @@ function Base.show(io::IO, ::MIME"text/plain", dfg::AbstractDFG)
     println(io, "  Nr factors: ", length(lsf(dfg)))
     println(io, "  Graph Bloblets: ", listGraphBloblets(dfg))
     println(io, "  Agents: ", listAgents(dfg))
-    println(io, "  Blobstores: ", listBlobstores(dfg))
+    println(io, "  Blobproviders: ", listBlobproviders(dfg))
     return
 end
 

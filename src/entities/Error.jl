@@ -121,3 +121,14 @@ end
 function Base.showerror(io::IO, ex::LinkConstraintError)
     return print(io, "LinkConstraintError: ", ex.msg)
 end
+
+struct ValidationError{T} <: Exception
+    property::Symbol  # e.g., :crc32csum, :multihash, :variable_label
+    expected::T
+    computed::T
+end
+
+function Base.showerror(io::IO, e::ValidationError)
+    print(io, "ValidationError: Integrity check failed for property '", e.property, "'. ")
+    return print(io, "Expected ", e.expected, " but computed ", e.computed, ".")
+end

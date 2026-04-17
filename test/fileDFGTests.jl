@@ -25,11 +25,10 @@ using UUIDs
         map(
             v -> addBlobentry!(
                 v,
-                Blobentry(;
-                    blobid = uuid4(),
-                    label = :testing,
-                    storelabel = :store,
-                    # timestamp = now(localzone()),
+                Blobentry(
+                    :testing,
+                    UInt8[];
+                    provider = :store,
                     timestamp = DFG.TimeDateZone(now(localzone())),
                 ),
             ),
@@ -38,11 +37,10 @@ using UUIDs
         map(
             v -> addBlobentry!(
                 v,
-                Blobentry(;
-                    blobid = uuid4(),
-                    label = :testing2,
-                    storelabel = :store,
-                    # timestamp = ZonedDateTime(2014, 5, 30, 21, tz"UTC-4"),
+                Blobentry(
+                    :testing2,
+                    UInt8[];
+                    provider = :store,
                     timestamp = DFG.TimeDateZone(ZonedDateTime(2014, 5, 30, 21, tz"UTC-4")),
                 ),
             ),
@@ -76,11 +74,10 @@ using UUIDs
         #test user/robot/session metadata
 
         #test user/robot/session blob entries
-        be = Blobentry(;
-            blobid = uuid4(),
-            label = :testing2,
-            storelabel = :store,
-            # timestamp = ZonedDateTime(2023, 2, 3, 20, tz"UTC+1"),
+        be = Blobentry(
+            :testing2,
+            UInt8[];
+            provider = :store,
             timestamp = DFG.TimeDateZone(ZonedDateTime(2023, 2, 3, 20, tz"UTC+1")),
         )
 

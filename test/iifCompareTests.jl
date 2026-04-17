@@ -92,6 +92,7 @@ using Test
     )
 end
 
+#TODO test subgraph looks well covered without the iif specific test. Maybe just remove the testset
 @testset "test subgraph functions..." begin
     fg = initfg()
 
@@ -109,8 +110,6 @@ end
 
     sfg = getSubgraph(GraphsDFG, fg, [:x0; :x1])
 
-    @warn "FIXME This is NOT supposed to pass"
-    @test_skip compareFactorGraphs(fg, sfg, skip = [:labelDict; :addHistory; :logpath])
-    # drawGraph(sfg)
-
+    #TODO add proper subgraph tests here (or remove testset), spot check for now.
+    @test issetequal(listVariables(sfg), [:x0; :x1])
 end

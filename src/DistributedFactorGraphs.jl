@@ -30,6 +30,7 @@ using Pkg
 using TensorCast
 using ProgressMeter
 using SHA
+using CRC32c: crc32c
 using FileIO
 using MIMEs: mime_from_extension, extension_from_mime
 
@@ -39,8 +40,9 @@ import CodecZlib
 
 using OrderedCollections: OrderedDict, LittleDict
 
-using CSV
 using Tables
+
+import Base.Filesystem: hardlink
 
 # used for @defStateType
 import ManifoldsBase
@@ -65,7 +67,7 @@ public @kwarg
 ##------------------------------------------------------------------------------
 export AbstractDFG
 export AbstractDFGParams, DFGParams
-export AbstractBlobstore, Blobstore
+export AbstractBlobprovider, Blobprovider
 export AbstractGraphNode, GraphNode
 export AbstractGraphVariable, GraphVariable
 export AbstractGraphFactor, GraphFactor
@@ -318,23 +320,19 @@ export hasAgentBloblet
 ## v1 name only
 
 ##------------------------------------------------------------------------------
-## Blobstores and Blobs
+## Blobproviders and Blobs
 ##------------------------------------------------------------------------------
-export getBlobstore
-export addBlobstore!
-export deleteBlobstore!
-export listBlobstores
+export getBlobprovider
+export addBlobprovider!
+export listBlobproviders
 
-# TODO get,add,delete|Blob still needs immutability discussion. but errors checked, tests needs updating though.
-export getBlob
-# getBlob TODO do we want all of them easy portable vs convenience?
-# getBlob(::AbstractBlobstore, ::UUID)
-# getBlob(::AbstractBlobstore, ::Blobentry)
-# getBlob(::AbstractDFG, ::Blobentry)
-export addBlob!
-export deleteBlob!
-export listBlobs
-export hasBlob
+# public getBlob
+# public fetchBlob
+# public putBlob!
+# public purgeBlob!
+# public listBlobs
+# public hasBlob
+# public verifyBlob
 
 ##------------------------------------------------------------------------------
 
@@ -360,7 +358,9 @@ public getId
 ##------------------------------------------------------------------------------
 public InMemoryDFGTypes
 public LocalDFG
-public FolderStore
+# public FolderBlobprovider
+# public MemoryBlobprovider
+# public CachedBlobprovider
 
 ##------------------------------------------------------------------------------
 ## Tags
@@ -419,6 +419,26 @@ public pack, unpack
 # list of unstable functions not exported any more
 # will move to public or deprecate over time
 const unstable_functions::Vector{Symbol} = [
+    # Blobprovider types (public, not exported)
+    :FolderBlobprovider,
+    :MemoryBlobprovider,
+    :CachedBlobprovider,
+    # Blobprovider operations (not exported)
+    :deleteBlobprovider!,
+    :mergeBlobprovider!,
+    :mergeBlobproviders!,
+    :hasBlobprovider,
+    :refBlobproviders,
+    :getBlobproviders,
+    #
+    :getBlob,
+    :fetchBlob,
+    :putBlob!,
+    :purgeBlob!,
+    :listBlobs,
+    :hasBlob,
+    :verifyBlob,
+    #
     :getGraph,
     :VariableSummary,
     :FactorSummary,
@@ -548,8 +568,9 @@ end
 
 # Entities
 include("entities/AbstractDFG.jl")
+include("entities/Multihash.jl")
 include("entities/Error.jl")
-include("entities/Blobstore.jl")
+include("entities/Blobprovider.jl")
 include("entities/Bloblet.jl")
 include("entities/Blobentry.jl")
 include("entities/Tags.jl")
@@ -565,7 +586,7 @@ include("services/blob_save_load.jl")
 include("services/blobentry_ops.jl")
 include("services/bloblet_ops.jl")
 include("services/tag_ops.jl")
-include("services/blobstore_ops.jl")
+include("services/blobprovider_ops.jl")
 include("services/compare.jl")
 include("services/factor_ops.jl")
 include("services/list.jl")
@@ -593,8 +614,8 @@ const LocalDFG = GraphsDFG
 
 # Include the FilesDFG API.
 include("FileDFG/FileDFG.jl")
-# Blobstore implementations
-include("Blobstores/Blobstores.jl")
+# Blobprovider implementations
+include("Blobproviders/Blobproviders.jl")
 
 include("extension_stubs.jl")
 
