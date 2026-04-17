@@ -34,7 +34,8 @@ function make_test_variable()
         v,
         DFG.Blobentry(
             :bel,
-            DFG.Multihash(sha2_256, rand(UInt8, 32));
+            DFG.Multihash(sha2_256, rand(UInt8, 32)),
+            UInt32(0);
             metadata = (start = 54, N = 20, s = :test),
         ),
     )

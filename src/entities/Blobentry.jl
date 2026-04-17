@@ -12,16 +12,11 @@ StructUtils.@kwarg struct Blobentry
     label::Symbol
     """ Self-describing content hash (Multihash standard)."""
     multihash::Multihash
+    """ CRC-32C checksum for fast integrity verification on retrieval."""
+    crc32csum::UInt32 &
+    (json = (lower = h -> string(h; base = 16), lift = s -> parse(UInt32, s; base = 16)))
     """ The label of the `Blobprovider` as a routing hint of where to look for the blob first.  Default is `:default`."""
     provider::Symbol = :default
-    """ (Optional) crc32c hash value to ensure data consistency which must correspond to the stored hash upon retrieval."""
-    crchash::Union{UInt32, Nothing} =
-        nothing & (
-            json = (
-                lower = h -> isnothing(h) ? nothing : string(h; base = 16),
-                lift = s -> isnothing(s) ? nothing : parse(UInt32, s; base = 16),
-            )
-        )
     """ Source system or application where the blob was created (e.g., webapp, sdk, robot)"""
     origin::String = ""
     """Number of bytes in blob serialized as a string"""
@@ -43,6 +38,7 @@ version(::Type{Blobentry}) = v"0.1.0"
 function Blobentry(
     label::Symbol,
     multihash::Multihash,
+    crc32csum::UInt32,
     provider::Symbol = :default;
     metadata::Union{JSONText, AbstractDict, NamedTuple} = JSONText("{}"),
     kwargs...,
@@ -50,7 +46,7 @@ function Blobentry(
     if !(metadata isa JSONText)
         metadata = JSONText(JSON.json(metadata))
     end
-    return Blobentry(; label, multihash, provider, metadata, kwargs...)
+    return Blobentry(; label, multihash, crc32csum, provider, metadata, kwargs...)
 end
 # construction helper from existing Blobentry for user overriding via kwargs
 function Blobentry(
@@ -58,7 +54,7 @@ function Blobentry(
     label::Symbol = entry.label,
     multihash = entry.multihash,
     provider::Symbol = entry.provider,
-    crchash = entry.crchash,
+    crc32csum = entry.crc32csum,
     size::Int64 = entry.size,
     origin::String = entry.origin,
     description::String = entry.description,
@@ -76,7 +72,7 @@ function Blobentry(
         label,
         multihash,
         provider,
-        crchash,
+        crc32csum,
         origin,
         size,
         description,
@@ -92,9 +88,7 @@ function Base.getproperty(x::Blobentry, f::Symbol)
     if f in [:id, :createdTimestamp, :lastUpdatedTimestamp]
         error("Blobentry field $f has been deprecated")
     elseif f == :hash
-        error(
-            "Blobentry field :hash has been deprecated; use :crchash or :multihash instead",
-        )
+        error("Blobentry field :hash has been deprecated; use :multihash instead")
     elseif f == :blobId || f == :blobid
         error("Blobentry field :blobId is obsolete; use :multihash instead")
     elseif f == :mimeType
@@ -216,33 +210,31 @@ hasBlobentry(node, label::Symbol) = haskey(refBlobentries(node), label)
 # ==============================================================================
 
 """
-    checkHash(entry::Blobentry, blob) -> Union{Bool,Nothing}
+    verifyBlob(entry::Blobentry, blob) -> Union{Bool,Nothing}
 
 Checks the integrity of a blob against the hashes stored in the given `Blobentry`.
 
 - Verifies the `multihash` by decoding its algorithm code, recomputing the digest
   from `blob`, and comparing it to the stored digest.
-- Additionally verifies the `crchash` (crc32c) if present.
+- Additionally verifies the `crc32csum` checksum.
 - Returns `true` if all present hashes match.
 - Returns `false` if any hash does not match.
 - Returns `nothing` if  the multihash algorithm is unregistered.
 """
-function checkHash(entry::Blobentry, blob)
+function verifyBlob(entry::Blobentry, blob)
     # Reverse lookup: multicodec code -> hash function
     code_to_func = Dict{UInt64, Function}(v => k for (k, v) in MULTIHASH_FUNCTIONS)
 
     code, stored_digest = decode(entry.multihash)
     func = get(code_to_func, code, nothing)
     if isnothing(func)
-        @warn "checkHash: unregistered multihash algorithm code $(repr(code)), skipping multihash check"
+        @warn "verifyBlob: unregistered multihash algorithm code $(repr(code)), skipping multihash check"
         return nothing
     else
         func(blob) != stored_digest && return false
     end
 
-    if !isnothing(entry.crchash)
-        crc32c(blob) != entry.crchash && return false
-    end
+    crc32c(blob) != entry.crc32csum && return false
 
     return true
 end
@@ -251,12 +243,12 @@ function Base.show(io::IO, ::MIME"text/plain", entry::Blobentry)
     println(io, "Blobentry {")
     println(io, "  label:         ", entry.label)
     println(io, "  multihash:     ", entry.multihash)
+    println(io, "  crc32csum:     ", string(entry.crc32csum; base = 16))
     println(io, "  provider:      ", entry.provider)
     println(io, "  origin:        ", entry.origin)
     println(io, "  description:   ", entry.description)
     println(io, "  mimetype:      ", entry.mimetype)
     println(io, "  timestamp      ", entry.timestamp)
-    println(io, "  version:       ", entry.version)
     return println(io, "}")
 end
 

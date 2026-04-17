@@ -7,6 +7,7 @@ using TimeZones
 using TimesDates
 using SHA
 using UUIDs
+using CRC32c: crc32c
 using Aqua
 
 using DistributedFactorGraphs: ArrayPartition, OrderedDict

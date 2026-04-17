@@ -50,12 +50,12 @@ Error thrown when a requested Id is not found.
 """
 struct IdNotFoundError <: Exception
     name::String
-    Id::Any
-    available::Vector
+    Id::UUID
+    available::Vector{UUID}
 end
 
-IdNotFoundError(name::String, Id) = IdNotFoundError(name, Id, [])
-IdNotFoundError(Id) = IdNotFoundError("Node", Id, [])
+IdNotFoundError(name::String, Id::UUID) = IdNotFoundError(name, Id, UUID[])
+IdNotFoundError(Id::UUID) = IdNotFoundError("Node", Id, UUID[])
 
 function Base.showerror(io::IO, ex::IdNotFoundError)
     print(io, "IdNotFoundError: ", ex.name, " Id '", ex.Id, "' not found.")
@@ -122,24 +122,13 @@ function Base.showerror(io::IO, ex::LinkConstraintError)
     return print(io, "LinkConstraintError: ", ex.msg)
 end
 
-"""
-    HashMismatchError(expected, actual)
-
-The blob's computed Multihash does not match the one stored in the Blobentry.
-This indicates data corruption or a stale entry.
-"""
-struct HashMismatchError <: Exception
-    expected::Multihash
-    actual::Multihash
+struct ValidationError{T} <: Exception
+    property::Symbol  # e.g., :crc32csum, :multihash, :variable_label
+    expected::T
+    computed::T
 end
 
-function Base.showerror(io::IO, ex::HashMismatchError)
-    return print(
-        io,
-        "HashMismatchError: Blobentry multihash does not match blob content.",
-        "\n  expected: ",
-        ex.expected,
-        "\n  actual:   ",
-        ex.actual,
-    )
+function Base.showerror(io::IO, e::ValidationError)
+    print(io, "ValidationError: Integrity check failed for property '", e.property, "'. ")
+    return print(io, "Expected ", e.expected, " but computed ", e.computed, ".")
 end

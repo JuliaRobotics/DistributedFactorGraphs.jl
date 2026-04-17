@@ -68,6 +68,9 @@ function saveFactorBlob! end
 function loadVariableBlob(dfg::AbstractDFG, variable_label::Symbol, entry_label::Symbol)
     entry = getVariableBlobentry(dfg, variable_label, entry_label)
     blob = getBlob(dfg, entry)
+    actual_crc = crc32c(blob)
+    actual_crc == entry.crc32csum ||
+        throw(ValidationError(:crc32csum, entry.crc32csum, actual_crc))
     return entry, blob
 end
 
@@ -78,7 +81,8 @@ function saveVariableBlob!(
     entry::Blobentry,
 )
     m = putBlob!(getBlobprovider(dfg, entry.provider), blob)
-    m == entry.multihash || throw(HashMismatchError(entry.multihash, m))
+    m == entry.multihash || throw(ValidationError(:multihash, entry.multihash, m))
+    entry = Blobentry(entry; crc32csum = crc32c(blob), size = length(blob))
     addVariableBlobentry!(dfg, variable_label, entry)
     return entry
 end
@@ -95,6 +99,7 @@ function saveVariableBlob!(
     entry = Blobentry(
         entry_label,
         multihash,
+        crc32c(blob),
         provider;
         size = length(blob),
         blobentry_kwargs...,
@@ -110,12 +115,16 @@ end
 function loadGraphBlob(dfg::AbstractDFG, entry_label::Symbol)
     entry = getGraphBlobentry(dfg, entry_label)
     blob = getBlob(dfg, entry)
+    actual_crc = crc32c(blob)
+    actual_crc == entry.crc32csum ||
+        throw(ValidationError(:crc32csum, entry.crc32csum, actual_crc))
     return entry, blob
 end
 
 function saveGraphBlob!(dfg::AbstractDFG, blob::Vector{UInt8}, entry::Blobentry)
     m = putBlob!(getBlobprovider(dfg, entry.provider), blob)
-    m == entry.multihash || throw(HashMismatchError(entry.multihash, m))
+    m == entry.multihash || throw(ValidationError(:multihash, entry.multihash, m))
+    entry = Blobentry(entry; crc32csum = crc32c(blob), size = length(blob))
     addGraphBlobentry!(dfg, entry)
     return entry
 end
@@ -131,6 +140,7 @@ function saveGraphBlob!(
     entry = Blobentry(
         entry_label,
         multihash,
+        crc32c(blob),
         provider;
         size = length(blob),
         blobentry_kwargs...,
@@ -146,6 +156,9 @@ end
 function loadAgentBlob(dfg::AbstractDFG, agentlabel::Symbol, entry_label::Symbol)
     entry = getAgentBlobentry(dfg, agentlabel, entry_label)
     blob = getBlob(dfg, entry)
+    actual_crc = crc32c(blob)
+    actual_crc == entry.crc32csum ||
+        throw(ValidationError(:crc32csum, entry.crc32csum, actual_crc))
     return entry, blob
 end
 
@@ -156,7 +169,8 @@ function saveAgentBlob!(
     entry::Blobentry,
 )
     m = putBlob!(getBlobprovider(dfg, entry.provider), blob)
-    m == entry.multihash || throw(HashMismatchError(entry.multihash, m))
+    m == entry.multihash || throw(ValidationError(:multihash, entry.multihash, m))
+    entry = Blobentry(entry; crc32csum = crc32c(blob), size = length(blob))
     addAgentBlobentry!(dfg, agentlabel, entry)
     return entry
 end
@@ -173,6 +187,7 @@ function saveAgentBlob!(
     entry = Blobentry(
         entry_label,
         multihash,
+        crc32c(blob),
         provider;
         size = length(blob),
         blobentry_kwargs...,
@@ -188,6 +203,9 @@ end
 function loadFactorBlob(dfg::AbstractDFG, factor_label::Symbol, entry_label::Symbol)
     entry = getFactorBlobentry(dfg, factor_label, entry_label)
     blob = getBlob(dfg, entry)
+    actual_crc = crc32c(blob)
+    actual_crc == entry.crc32csum ||
+        throw(ValidationError(:crc32csum, entry.crc32csum, actual_crc))
     return entry, blob
 end
 
@@ -198,7 +216,8 @@ function saveFactorBlob!(
     entry::Blobentry,
 )
     m = putBlob!(getBlobprovider(dfg, entry.provider), blob)
-    m == entry.multihash || throw(HashMismatchError(entry.multihash, m))
+    m == entry.multihash || throw(ValidationError(:multihash, entry.multihash, m))
+    entry = Blobentry(entry; crc32csum = crc32c(blob), size = length(blob))
     addFactorBlobentry!(dfg, factor_label, entry)
     return entry
 end
@@ -215,6 +234,7 @@ function saveFactorBlob!(
     entry = Blobentry(
         entry_label,
         multihash,
+        crc32c(blob),
         provider;
         size = length(blob),
         blobentry_kwargs...,
@@ -245,6 +265,7 @@ function saveImage_Variable!(
     entry = Blobentry(
         entry_label,
         multihash,
+        crc32c(blob),
         provider;
         entry_kwargs...,
         size = length(blob),

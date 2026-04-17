@@ -30,6 +30,7 @@ using Pkg
 using TensorCast
 using ProgressMeter
 using SHA
+using CRC32c: crc32c
 using FileIO
 using MIMEs: mime_from_extension, extension_from_mime
 
@@ -331,6 +332,7 @@ export listBlobproviders
 # public purgeBlob!
 # public listBlobs
 # public hasBlob
+# public verifyBlob
 
 ##------------------------------------------------------------------------------
 
@@ -435,6 +437,7 @@ const unstable_functions::Vector{Symbol} = [
     :purgeBlob!,
     :listBlobs,
     :hasBlob,
+    :verifyBlob,
     #
     :getGraph,
     :VariableSummary,

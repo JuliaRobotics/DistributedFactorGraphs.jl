@@ -162,7 +162,7 @@ end
 
 # User, Robot, Session Data Blob Entries
 function GraphAgentBlobentries!(fg::AbstractDFG)
-    be = Blobentry(:key1, DFG.Multihash(sha2_256, rand(UInt8, 32)), :b)
+    be = Blobentry(:key1, DFG.Multihash(sha2_256, rand(UInt8, 32)), UInt32(0), :b)
 
     # First add an agent to test with
     agentlabel = :testBlobentryAgent
@@ -206,7 +206,7 @@ function GraphAgentBlobentries!(fg::AbstractDFG)
     @test mergeGraphBlobentries!(fg, [be]) == 1
     @test deleteGraphBlobentries!(fg, [:key1]) == 1
 
-    be2 = Blobentry(:key2, DFG.Multihash(sha2_256, rand(UInt8, 32)), :b)
+    be2 = Blobentry(:key2, DFG.Multihash(sha2_256, rand(UInt8, 32)), UInt32(0), :b)
 
     bes = [be, be2]
 
@@ -859,16 +859,21 @@ function DataEntriesTestBlock!(fg, v2)
     # listBlobentries
     # emptyDataEntries
     # mergeDataEntries
-    storeEntry = Blobentry(:a, DFG.Multihash(sha2_256, rand(UInt8, 32)), :b)
+    storeEntry = Blobentry(:a, DFG.Multihash(sha2_256, rand(UInt8, 32)), UInt32(0), :b)
     @test getLabel(storeEntry) == storeEntry.label
     @test getTimestamp(storeEntry) == storeEntry.timestamp
 
-    de1 = Blobentry(:key1, DFG.Multihash(sha2_256, rand(UInt8, 32)), :b)
+    de1 = Blobentry(:key1, DFG.Multihash(sha2_256, rand(UInt8, 32)), UInt32(0), :b)
 
-    de2 = Blobentry(:key2, DFG.Multihash(sha2_256, rand(UInt8, 32)), :b)
+    de2 = Blobentry(:key2, DFG.Multihash(sha2_256, rand(UInt8, 32)), UInt32(0), :b)
 
-    de2_update =
-        Blobentry(:key2, DFG.Multihash(sha2_256, rand(UInt8, 32)), :b; description = "Yay")
+    de2_update = Blobentry(
+        :key2,
+        DFG.Multihash(sha2_256, rand(UInt8, 32)),
+        UInt32(0),
+        :b;
+        description = "Yay",
+    )
 
     #add
     v1 = getVariable(fg, :a)
@@ -979,8 +984,8 @@ function blobsStoresTestBlock!(fg)
     de1 = Blobentry(
         :label1,
         DFG.Multihash(sha2_256, rand(UInt8, 32)),
+        UInt32(0xAAAA),
         :store1;
-        crchash = 0xAAAA,
         origin = "origin1",
         description = "description1",
         mimetype = MIME("mimetype1"),
@@ -988,8 +993,8 @@ function blobsStoresTestBlock!(fg)
     de2 = Blobentry(
         :label2,
         DFG.Multihash(sha2_256, rand(UInt8, 32)),
+        UInt32(0xFFFF),
         :store2;
-        crchash = 0xFFFF,
         origin = "origin2",
         description = "description2",
         mimetype = MIME("mimetype2"),
@@ -998,8 +1003,8 @@ function blobsStoresTestBlock!(fg)
     de2_update = Blobentry(
         :label2,
         DFG.Multihash(sha2_256, rand(UInt8, 32)),
+        UInt32(0x0123),
         :store2;
-        crchash = 0x0123,
         origin = "origin2",
         description = "description2",
         mimetype = MIME("mimetype2"),
@@ -1083,6 +1088,10 @@ function blobsStoresTestBlock!(fg)
     @test code == 0x12  # sha2_256
     @test length(digest) == 32
     @test DFG.Multihash(code, digest) == mhash
+    # verifyBlob(entry, blob)
+    entry = Blobentry(:vb_test, mhash, crc32c(testData))
+    @test DFG.verifyBlob(entry, testData) == true
+    @test DFG.verifyBlob(entry, rand(UInt8, 50)) == false
     @test hasBlob(fs, mhash)
     @test listBlobs(fs) == [mhash]
     # putBlob! is idempotent

@@ -109,7 +109,8 @@ end
     #Blobentry
     be = DFG.Blobentry(
         :testbe,
-        DFG.Multihash(sha2_256, rand(UInt8, 32));
+        DFG.Multihash(sha2_256, rand(UInt8, 32)),
+        UInt32(0);
         metadata = Dict("key1" => "value1", "key2" => 42),
     )
     @test show(iobuf, MIME("text/plain"), be) === nothing
