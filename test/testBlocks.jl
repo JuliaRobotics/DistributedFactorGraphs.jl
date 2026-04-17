@@ -162,7 +162,7 @@ end
 
 # User, Robot, Session Data Blob Entries
 function GraphAgentBlobentries!(fg::AbstractDFG)
-    be = Blobentry(:key1, DFG.Multihash(sha2_256, rand(UInt8, 32)), UInt32(0), :b)
+    be = Blobentry(:key1, UInt8[]; provider = :b)
 
     # First add an agent to test with
     agentlabel = :testBlobentryAgent
@@ -206,7 +206,7 @@ function GraphAgentBlobentries!(fg::AbstractDFG)
     @test mergeGraphBlobentries!(fg, [be]) == 1
     @test deleteGraphBlobentries!(fg, [:key1]) == 1
 
-    be2 = Blobentry(:key2, DFG.Multihash(sha2_256, rand(UInt8, 32)), UInt32(0), :b)
+    be2 = Blobentry(:key2, UInt8[]; provider = :b)
 
     bes = [be, be2]
 
@@ -848,6 +848,45 @@ function blobstoreExtendedTestBlock!(fg)
     @test DFG.deleteBlobprovider!(fg, :nonexistent) == 0
 end
 
+function stashApplyBlobprovidersTestBlock!(fg)
+    # Start clean
+    for lbl in listBlobproviders(fg)
+        DFG.deleteBlobprovider!(fg, lbl)
+    end
+    @test isempty(listBlobproviders(fg))
+
+    # Add providers and stash
+    fp = DFG.FolderBlobprovider(mktempdir(); label = :local_fast)
+    addBlobprovider!(fg, fp)
+    @test DFG.stashBlobproviders!(fg) == 1
+    @test DFG.hasGraphBloblet(fg, DFG.BLOBPROVIDERS_STASH_KEY)
+
+    # Clear local dict, then apply from bloblet
+    DFG.deleteBlobprovider!(fg, :local_fast)
+    @test isempty(listBlobproviders(fg))
+    @test DFG.applyBlobproviders!(fg) == 1
+    @test :local_fast in listBlobproviders(fg)
+    applied = getBlobprovider(fg, :local_fast)
+    @test applied isa DFG.FolderBlobprovider
+    @test applied.folder == fp.folder
+
+    # apply merges (doesn't overwrite existing providers)
+    mp = DFG.MemoryBlobprovider(; label = :mem)
+    addBlobprovider!(fg, mp)
+    @test DFG.applyBlobproviders!(fg) == 1    # stash still has :local_fast
+    @test :mem in listBlobproviders(fg)        # mem not clobbered
+    @test :local_fast in listBlobproviders(fg) # stashed provider merged
+
+    # applyBlobproviders! returns 0 when no bloblet exists
+    DFG.deleteGraphBloblet!(fg, DFG.BLOBPROVIDERS_STASH_KEY)
+    for lbl in listBlobproviders(fg)
+        DFG.deleteBlobprovider!(fg, lbl)
+    end
+    @test DFG.applyBlobproviders!(fg) == 0
+
+    return nothing
+end
+
 function DataEntriesTestBlock!(fg, v2)
     # "Data Entries"
 
@@ -859,21 +898,15 @@ function DataEntriesTestBlock!(fg, v2)
     # listBlobentries
     # emptyDataEntries
     # mergeDataEntries
-    storeEntry = Blobentry(:a, DFG.Multihash(sha2_256, rand(UInt8, 32)), UInt32(0), :b)
+    storeEntry = Blobentry(:a, UInt8[]; provider = :b)
     @test getLabel(storeEntry) == storeEntry.label
     @test getTimestamp(storeEntry) == storeEntry.timestamp
 
-    de1 = Blobentry(:key1, DFG.Multihash(sha2_256, rand(UInt8, 32)), UInt32(0), :b)
+    de1 = Blobentry(:key1, UInt8[]; provider = :b)
 
-    de2 = Blobentry(:key2, DFG.Multihash(sha2_256, rand(UInt8, 32)), UInt32(0), :b)
+    de2 = Blobentry(:key2, UInt8[]; provider = :b)
 
-    de2_update = Blobentry(
-        :key2,
-        DFG.Multihash(sha2_256, rand(UInt8, 32)),
-        UInt32(0),
-        :b;
-        description = "Yay",
-    )
+    de2_update = Blobentry(:key2, UInt8[]; provider = :b, description = "Yay")
 
     #add
     v1 = getVariable(fg, :a)
@@ -983,18 +1016,18 @@ end
 function blobsStoresTestBlock!(fg)
     de1 = Blobentry(
         :label1,
-        DFG.Multihash(sha2_256, rand(UInt8, 32)),
-        UInt32(0xAAAA),
-        :store1;
+        UInt8[];
+        crc32csum = UInt32(0xAAAA),
+        provider = :store1,
         origin = "origin1",
         description = "description1",
         mimetype = MIME("mimetype1"),
     )
     de2 = Blobentry(
         :label2,
-        DFG.Multihash(sha2_256, rand(UInt8, 32)),
-        UInt32(0xFFFF),
-        :store2;
+        UInt8[];
+        crc32csum = UInt32(0xFFFF),
+        provider = :store2,
         origin = "origin2",
         description = "description2",
         mimetype = MIME("mimetype2"),
@@ -1002,9 +1035,9 @@ function blobsStoresTestBlock!(fg)
     )
     de2_update = Blobentry(
         :label2,
-        DFG.Multihash(sha2_256, rand(UInt8, 32)),
-        UInt32(0x0123),
-        :store2;
+        UInt8[];
+        crc32csum = UInt32(0x0123),
+        provider = :store2,
         origin = "origin2",
         description = "description2",
         mimetype = MIME("mimetype2"),
@@ -1089,9 +1122,32 @@ function blobsStoresTestBlock!(fg)
     @test length(digest) == 32
     @test DFG.Multihash(code, digest) == mhash
     # verifyBlob(entry, blob)
-    entry = Blobentry(:vb_test, mhash, crc32c(testData))
+    entry = Blobentry(:vb_test, testData)
     @test DFG.verifyBlob(entry, testData) == true
     @test DFG.verifyBlob(entry, rand(UInt8, 50)) == false
+
+    # Blobentry(label, blob) helper constructor
+    auto_entry = Blobentry(:auto_test, testData)
+    @test auto_entry.label == :auto_test
+    @test auto_entry.multihash == mhash
+    @test auto_entry.crc32csum == crc32c(testData)
+    @test auto_entry.size == length(testData)
+    @test auto_entry.mimetype == MIME("application/octet-stream")
+    @test DFG.verifyBlob(auto_entry, testData) == true
+    # with kwargs override
+    json_blob = Vector{UInt8}("""{"a":1}""")
+    json_entry = Blobentry(
+        :json_auto,
+        json_blob;
+        mimetype = MIME("application/json"),
+        description = "test",
+    )
+    @test json_entry.mimetype == MIME("application/json")
+    @test json_entry.description == "test"
+    @test json_entry.multihash == DFG.Multihash(sha2_256, json_blob)
+    @test json_entry.crc32csum == crc32c(json_blob)
+    @test json_entry.size == length(json_blob)
+
     @test hasBlob(fs, mhash)
     @test listBlobs(fs) == [mhash]
     # putBlob! is idempotent

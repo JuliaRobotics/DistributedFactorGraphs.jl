@@ -17,9 +17,7 @@ const MetadataTypes = Union{
 }
 
 function getHash(entry::Blobentry)
-    return error(
-        "Blobentry field :hash has been deprecated; use :multihash instead",
-    )
+    return error("Blobentry field :hash has been deprecated; use :multihash instead")
 end
 
 function getMetadata(node)

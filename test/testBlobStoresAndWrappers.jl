@@ -98,8 +98,7 @@ end
     @test loaded_blob == dataset
 
     # saveFactorBlob! with explicit Blobentry
-    mh = _mhash(dataset)
-    entry2 = Blobentry(:factor_data_2, mh, UInt32(0))
+    entry2 = Blobentry(:factor_data_2, dataset)
     DFG.saveFactorBlob!(dfg, :x1x2f1, dataset, entry2)
     loaded_entry2, loaded_blob2 = DFG.loadFactorBlob(dfg, :x1x2f1, :factor_data_2)
     @test loaded_entry2.label == :factor_data_2
@@ -141,8 +140,7 @@ end
     @test loaded_blob == dataset
 
     # saveVariableBlob! with explicit Blobentry
-    mh = _mhash(dataset)
-    entry2 = Blobentry(:var_blob_2, mh, UInt32(0))
+    entry2 = Blobentry(:var_blob_2, dataset)
     DFG.saveVariableBlob!(dfg, :x1, dataset, entry2)
     _, blob2 = DFG.loadVariableBlob(dfg, :x1, :var_blob_2)
     @test blob2 == dataset
@@ -169,8 +167,7 @@ end
     # Test loadImage_Variable with a JSON blob
     json_str = """{"px":[1,2,3]}"""
     blob, _ = DFG.packBlob(format"JSON", json_str)
-    mh = _mhash(blob)
-    entry = Blobentry(:json_as_img, mh, UInt32(0); mimetype = MIME("application/json"))
+    entry = Blobentry(:json_as_img, blob; mimetype = MIME("application/json"))
     DFG.saveVariableBlob!(dfg, :x1, blob, entry)
     loaded_entry, loaded_data = DFG.loadImage_Variable(dfg, :x1, :json_as_img)
     @test loaded_entry.label == :json_as_img
@@ -419,7 +416,7 @@ end
         mh = putBlob!(store_b, data)
 
         # Create entry that hints at :store_a (which does NOT have the blob)
-        entry = Blobentry(:test_fallback, mh, UInt32(0), :store_a)
+        entry = Blobentry(:test_fallback, data; provider = :store_a)
         addVariableBlobentry!(dfg, :x1, entry)
 
         # getBlob should fall back to store_b and find it
@@ -438,13 +435,13 @@ end
         mh = putBlob!(store_b, data)
 
         # Entry hints at :store_a
-        entry = Blobentry(:test_has, mh, UInt32(0), :store_a)
+        entry = Blobentry(:test_has, data; provider = :store_a)
 
         # hasBlob should find it via fallback
         @test hasBlob(dfg, entry)
 
         # Missing from all providers → false
-        fake_entry = Blobentry(:nope, _mhash(UInt8[99]), UInt32(0), :store_a)
+        fake_entry = Blobentry(:nope, UInt8[99]; provider = :store_a)
         @test !hasBlob(dfg, fake_entry)
     end
 
@@ -471,7 +468,7 @@ end
         @test mh_a == mh_b  # CAS: same content → same hash
 
         # Entry hints at :store_a → should resolve to store_a
-        entry = Blobentry(:test_hint_first, mh_a, UInt32(0), :store_a)
+        entry = Blobentry(:test_hint_first, data; provider = :store_a)
         blob = getBlob(dfg, entry)
         @test blob == data
     end
@@ -485,7 +482,7 @@ end
         mh = putBlob!(store_a, data)
 
         # Entry hints at :nonexistent provider
-        entry = Blobentry(:test_missing_hint, mh, UInt32(0), :nonexistent)
+        entry = Blobentry(:test_missing_hint, data; provider = :nonexistent)
 
         # Should still find the blob via fallback through :store_a
         blob = getBlob(dfg, entry)

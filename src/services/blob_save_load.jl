@@ -96,14 +96,7 @@ function saveVariableBlob!(
     blobentry_kwargs...,
 )
     multihash = putBlob!(getBlobprovider(dfg, provider), blob)
-    entry = Blobentry(
-        entry_label,
-        multihash,
-        crc32c(blob),
-        provider;
-        size = length(blob),
-        blobentry_kwargs...,
-    )
+    entry = Blobentry(entry_label, blob; multihash, provider, blobentry_kwargs...)
     addVariableBlobentry!(dfg, variable_label, entry)
     return entry
 end
@@ -137,14 +130,7 @@ function saveGraphBlob!(
     blobentry_kwargs...,
 )
     multihash = putBlob!(getBlobprovider(dfg, provider), blob)
-    entry = Blobentry(
-        entry_label,
-        multihash,
-        crc32c(blob),
-        provider;
-        size = length(blob),
-        blobentry_kwargs...,
-    )
+    entry = Blobentry(entry_label, blob; multihash, provider, blobentry_kwargs...)
     addGraphBlobentry!(dfg, entry)
     return entry
 end
@@ -184,14 +170,7 @@ function saveAgentBlob!(
     blobentry_kwargs...,
 )
     multihash = putBlob!(getBlobprovider(dfg, provider), blob)
-    entry = Blobentry(
-        entry_label,
-        multihash,
-        crc32c(blob),
-        provider;
-        size = length(blob),
-        blobentry_kwargs...,
-    )
+    entry = Blobentry(entry_label, blob; multihash, provider, blobentry_kwargs...)
     addAgentBlobentry!(dfg, agentlabel, entry)
     return entry
 end
@@ -231,14 +210,7 @@ function saveFactorBlob!(
     blobentry_kwargs...,
 )
     multihash = putBlob!(getBlobprovider(dfg, provider), blob)
-    entry = Blobentry(
-        entry_label,
-        multihash,
-        crc32c(blob),
-        provider;
-        size = length(blob),
-        blobentry_kwargs...,
-    )
+    entry = Blobentry(entry_label, blob; multihash, provider, blobentry_kwargs...)
     addFactorBlobentry!(dfg, factor_label, entry)
     return entry
 end
@@ -262,15 +234,7 @@ function saveImage_Variable!(
     blob, mimetype = packBlob(format, img)
 
     multihash = putBlob!(getBlobprovider(dfg, provider), blob)
-    entry = Blobentry(
-        entry_label,
-        multihash,
-        crc32c(blob),
-        provider;
-        entry_kwargs...,
-        size = length(blob),
-        mimetype,
-    )
+    entry = Blobentry(entry_label, blob; multihash, provider, mimetype, entry_kwargs...)
     addVariableBlobentry!(dfg, variable_label, entry)
     return entry
 end

@@ -15,12 +15,12 @@ StructUtils.@kwarg struct Blobentry
     """ CRC-32C checksum for fast integrity verification on retrieval."""
     crc32csum::UInt32 &
     (json = (lower = h -> string(h; base = 16), lift = s -> parse(UInt32, s; base = 16)))
+    """Number of bytes in blob serialized as a string"""
+    size::Int64 & (json = (lower = string, lift = x -> parse(Int64, x)))
     """ The label of the `Blobprovider` as a routing hint of where to look for the blob first.  Default is `:default`."""
     provider::Symbol = :default
     """ Source system or application where the blob was created (e.g., webapp, sdk, robot)"""
     origin::String = ""
-    """Number of bytes in blob serialized as a string"""
-    size::Int64 = -1 & (json = (lower = string, lift = x -> parse(Int64, x)))
     """ Additional information that can help a different user of the Blob. """
     description::String = ""
     #TODO Look into multicodec in addition to (or instead of) mimetype to encode the type of the blob content.
@@ -35,52 +35,27 @@ StructUtils.@kwarg struct Blobentry
 end
 version(::Type{Blobentry}) = v"0.1.0"
 
+# construction helper from existing Blobentry for user overriding via kwargs
+function Blobentry(entry::Blobentry; kwargs...)
+    old_kwargs = (; (f => getfield(entry, f) for f in fieldnames(Blobentry))...)
+    return Blobentry(; merge(old_kwargs, values(kwargs))...)
+end
+
 function Blobentry(
     label::Symbol,
-    multihash::Multihash,
-    crc32csum::UInt32,
-    provider::Symbol = :default;
+    blob::Vector{UInt8};
+    hash_func::Function = sha2_256,
+    multihash::Multihash = Multihash(hash_func, blob),
+    crc32csum = crc32c(blob),
+    size = length(blob),
+    mimetype::MIME = getMimetype(IOBuffer(blob)),
     metadata::Union{JSONText, AbstractDict, NamedTuple} = JSONText("{}"),
     kwargs...,
 )
     if !(metadata isa JSONText)
         metadata = JSONText(JSON.json(metadata))
     end
-    return Blobentry(; label, multihash, crc32csum, provider, metadata, kwargs...)
-end
-# construction helper from existing Blobentry for user overriding via kwargs
-function Blobentry(
-    entry::Blobentry;
-    label::Symbol = entry.label,
-    multihash = entry.multihash,
-    provider::Symbol = entry.provider,
-    crc32csum = entry.crc32csum,
-    size::Int64 = entry.size,
-    origin::String = entry.origin,
-    description::String = entry.description,
-    mimetype::MIME = entry.mimetype,
-    metadata::JSONText = entry.metadata,
-    timestamp::TimeDateZone = entry.timestamp,
-    version = entry.version,
-    blobstore = nothing, # TODO note deprecated in v0.29
-)
-    !isnothing(blobstore) && Base.depwarn(
-        "The `blobstore` keyword argument has been renamed to `provider`",
-        :Blobentry,
-    )
-    return Blobentry(;
-        label,
-        multihash,
-        provider,
-        crc32csum,
-        origin,
-        size,
-        description,
-        mimetype,
-        metadata,
-        timestamp,
-        version,
-    )
+    return Blobentry(; label, multihash, crc32csum, size, mimetype, metadata, kwargs...)
 end
 
 #TODO deprecated in v0.29
@@ -241,14 +216,15 @@ end
 
 function Base.show(io::IO, ::MIME"text/plain", entry::Blobentry)
     println(io, "Blobentry {")
-    println(io, "  label:         ", entry.label)
-    println(io, "  multihash:     ", entry.multihash)
-    println(io, "  crc32csum:     ", string(entry.crc32csum; base = 16))
-    println(io, "  provider:      ", entry.provider)
-    println(io, "  origin:        ", entry.origin)
-    println(io, "  description:   ", entry.description)
-    println(io, "  mimetype:      ", entry.mimetype)
-    println(io, "  timestamp      ", entry.timestamp)
+    println(io, "  label:      ", entry.label)
+    println(io, "  multihash:  ", string(entry.multihash))
+    println(io, "  crc32csum:  ", string(entry.crc32csum; base = 16))
+    println(io, "  provider:   ", entry.provider)
+    println(io, "  mimetype:   ", entry.mimetype)
+    println(io, "  size:       ", Base.format_bytes(entry.size))
+    println(io, "  timestamp:  ", entry.timestamp)
+    !isempty(entry.origin) && println(io, "  origin:        ", entry.origin)
+    !isempty(entry.description) && println(io, "  description:   ", entry.description)
     return println(io, "}")
 end
 

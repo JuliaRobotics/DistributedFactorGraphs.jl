@@ -107,12 +107,7 @@ end
     @test printNode(fg1, :abf1) === nothing
 
     #Blobentry
-    be = DFG.Blobentry(
-        :testbe,
-        DFG.Multihash(sha2_256, rand(UInt8, 32)),
-        UInt32(0);
-        metadata = Dict("key1" => "value1", "key2" => 42),
-    )
+    be = DFG.Blobentry(:testbe, UInt8[]; metadata = Dict("key1" => "value1", "key2" => 42))
     @test show(iobuf, MIME("text/plain"), be) === nothing
     disp_entry = String(take!(iobuf))
     @test occursin(r"Blobentry", disp_entry)
@@ -153,6 +148,9 @@ end
     end
     @testset "Blobstore Extended" begin
         blobstoreExtendedTestBlock!(fg1)
+    end
+    @testset "stash / apply Blobproviders" begin
+        stashApplyBlobprovidersTestBlock!(fg1)
     end
 end
 

@@ -178,6 +178,45 @@ function hasBlob(dfg::AbstractDFG, entry::Blobentry)
     return false
 end
 
+# ==============================================================================
+# Stash / Apply — persist provider configs via graph bloblets
+# ==============================================================================
+
+const BLOBPROVIDERS_STASH_KEY = :__blobproviders__
+
+"""
+    stashBlobproviders!(dfg::AbstractDFG)
+
+Serialize the current blobprovider dict and store it as a graph bloblet
+under the reserved key `$BLOBPROVIDERS_STASH_KEY`.  Existing bloblet is overwritten.
+
+See also: [`applyBlobproviders!`](@ref)
+"""
+function stashBlobproviders!(dfg::AbstractDFG)
+    providers = refBlobproviders(dfg)
+    json_str = JSON.json(providers; style = DFGJSONStyle())
+    mergeGraphBloblet!(dfg, Bloblet(BLOBPROVIDERS_STASH_KEY, json_str))
+    return length(providers)
+end
+
+"""
+    applyBlobproviders!(dfg::AbstractDFG)
+
+Read the `$BLOBPROVIDERS_STASH_KEY` graph bloblet, deserialize the provider configs,
+and `merge!` them into `dfg.blobproviders`.  Returns the number of providers
+applied.  Returns 0 if no stashed config exists.
+
+See also: [`stashBlobproviders!`](@ref)
+"""
+function applyBlobproviders!(dfg::AbstractDFG)
+    hasGraphBloblet(dfg, BLOBPROVIDERS_STASH_KEY) || return 0
+    bloblet = getGraphBloblet(dfg, BLOBPROVIDERS_STASH_KEY)
+    stashed =
+        JSON.parse(bloblet.val, Dict{Symbol, AbstractBlobprovider}; style = DFGJSONStyle())
+    merge!(refBlobproviders(dfg), stashed)
+    return length(stashed)
+end
+
 # NOTE: purgeBlob! only exists at Layer 1 (provider, multihash).
 # Users should call deleteVariableBlobentry! etc. to remove metadata pointers.
 # Physical blob GC is handled asynchronously — we never delete blobs from the

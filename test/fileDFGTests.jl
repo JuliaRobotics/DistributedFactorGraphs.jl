@@ -27,9 +27,8 @@ using UUIDs
                 v,
                 Blobentry(
                     :testing,
-                    DFG.Multihash(sha2_256, rand(UInt8, 32)),
-                    UInt32(0),
-                    :store;
+                    UInt8[];
+                    provider = :store,
                     timestamp = DFG.TimeDateZone(now(localzone())),
                 ),
             ),
@@ -40,9 +39,8 @@ using UUIDs
                 v,
                 Blobentry(
                     :testing2,
-                    DFG.Multihash(sha2_256, rand(UInt8, 32)),
-                    UInt32(0),
-                    :store;
+                    UInt8[];
+                    provider = :store,
                     timestamp = DFG.TimeDateZone(ZonedDateTime(2014, 5, 30, 21, tz"UTC-4")),
                 ),
             ),
@@ -78,9 +76,8 @@ using UUIDs
         #test user/robot/session blob entries
         be = Blobentry(
             :testing2,
-            DFG.Multihash(sha2_256, rand(UInt8, 32)),
-            UInt32(0),
-            :store;
+            UInt8[];
+            provider = :store,
             timestamp = DFG.TimeDateZone(ZonedDateTime(2023, 2, 3, 20, tz"UTC+1")),
         )
 

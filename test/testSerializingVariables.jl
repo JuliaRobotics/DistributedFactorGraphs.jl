@@ -32,12 +32,7 @@ function make_test_variable()
     DFG.addBloblet!(v, DFG.Bloblet(:b, "2"))
     addBlobentry!(
         v,
-        DFG.Blobentry(
-            :bel,
-            DFG.Multihash(sha2_256, rand(UInt8, 32)),
-            UInt32(0);
-            metadata = (start = 54, N = 20, s = :test),
-        ),
+        DFG.Blobentry(:bel, UInt8[]; metadata = (start = 54, N = 20, s = :test)),
     )
 
     return v

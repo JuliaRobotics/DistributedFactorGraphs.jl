@@ -210,17 +210,11 @@ end
 end
 
 @testset "Data Entries" begin
-    de1 = Blobentry(:key1, DFG.Multihash(sha2_256, rand(UInt8, 32)), UInt32(0), :test)
+    de1 = Blobentry(:key1, UInt8[]; provider = :test)
 
-    de2 = Blobentry(:key2, DFG.Multihash(sha2_256, rand(UInt8, 32)), UInt32(0), :test)
+    de2 = Blobentry(:key2, UInt8[]; provider = :test)
 
-    de2_update = Blobentry(
-        :key2,
-        DFG.Multihash(sha2_256, rand(UInt8, 32)),
-        UInt32(0),
-        :test;
-        mimetype = MIME("image/jpg"),
-    )
+    de2_update = Blobentry(:key2, UInt8[]; provider = :test, mimetype = MIME("image/jpg"))
 
     #add
     v1 = getVariable(dfg, :a)
