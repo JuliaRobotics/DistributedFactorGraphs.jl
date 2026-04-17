@@ -1072,6 +1072,17 @@ function blobsStoresTestBlock!(fg)
     testData = rand(UInt8, 50)
     mhash = putBlob!(fs, testData)
     @test mhash isa DFG.Multihash
+    # show(io, MIME"text/plain"(), ::Multihash)
+    iobuf = IOBuffer()
+    show(iobuf, MIME"text/plain"(), mhash)
+    showstr = String(take!(iobuf))
+    @test startswith(showstr, "multihash:")
+    @test length(showstr) > length("multihash:")
+    # decode(::Multihash)
+    code, digest = DFG.decode(mhash)
+    @test code == 0x12  # sha2_256
+    @test length(digest) == 32
+    @test DFG.Multihash(code, digest) == mhash
     @test hasBlob(fs, mhash)
     @test listBlobs(fs) == [mhash]
     # putBlob! is idempotent
