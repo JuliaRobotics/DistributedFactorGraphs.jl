@@ -567,7 +567,7 @@ end
 include("entities/AbstractDFG.jl")
 include("entities/Multihash.jl")
 include("entities/Error.jl")
-include("entities/Blobprovider.jl")
+include("entities/Blobstore.jl")
 include("entities/Bloblet.jl")
 include("entities/Blobentry.jl")
 include("entities/Tags.jl")
@@ -583,7 +583,7 @@ include("services/blob_save_load.jl")
 include("services/blobentry_ops.jl")
 include("services/bloblet_ops.jl")
 include("services/tag_ops.jl")
-include("services/blobprovider_ops.jl")
+include("services/blobstore_ops.jl")
 include("services/compare.jl")
 include("services/factor_ops.jl")
 include("services/list.jl")
@@ -612,7 +612,7 @@ const LocalDFG = GraphsDFG
 # Include the FilesDFG API.
 include("FileDFG/FileDFG.jl")
 # Blobprovider implementations
-include("Blobproviders/Blobproviders.jl")
+include("Blobstores/Blobstores.jl")
 
 include("extension_stubs.jl")
 
