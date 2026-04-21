@@ -53,6 +53,10 @@ function DFG.mergeAgents!(dfg::GraphsDFG, agents::Vector{Agent})
     return count
 end
 
+function DFG.addAgents!(dfg::GraphsDFG, agents::Vector{Agent})
+    return map(agent -> addAgent!(dfg, agent), agents)
+end
+
 """
     $(SIGNATURES)
 """
@@ -60,6 +64,10 @@ function DFG.deleteAgent!(dfg::GraphsDFG, label::Symbol)
     !haskey(refAgents(dfg), label) && return 0
     pop!(refAgents(dfg), label)
     return 1
+end
+
+function DFG.deleteAgents!(dfg::GraphsDFG, labels::Vector{Symbol})
+    return sum(label -> deleteAgent!(dfg, label), labels; init = 0)
 end
 
 """

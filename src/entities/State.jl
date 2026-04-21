@@ -6,7 +6,7 @@ abstract type AbstractStateType{N} end
 const StateType = AbstractStateType
 
 ##==============================================================================
-## BeliefRepresentation
+## StoredBelief
 ##==============================================================================
 abstract type AbstractDensityKind end
 
@@ -24,9 +24,9 @@ function StructUtils.lower(::StructUtils.StructStyle, p::AbstractDensityKind)
 end
 @choosetype AbstractDensityKind resolvePackedType
 
-# TODO naming? Density, DensityRepresentation, BeliefRepresentation, BeliefState, etc?
+# TODO naming? Density, DensityRepresentation, StoredBelief, BeliefState, etc?
 # TODO flatten in State? likeley not for easier serialization of points.
-@kwdef struct BeliefRepresentation{T <: StateType, P}
+@kwdef struct StoredBelief{T <: StateType, P}
     statekind::T = T()# NOTE duplication for serialization, TODO maybe only in State and therefore belief cannot deserialize separately.
     """Discriminator for which representation is active."""
     densitykind::AbstractDensityKind = NonparametricDensityKind()
@@ -50,14 +50,17 @@ end
     # JSON.parse(JSON.json(zeros(0, 0)), Matrix{Float64}) errors, so trying with nothing union
 end
 
-JSON.omit_empty(::Type{<:BeliefRepresentation}) = true
+#FIXME remove old name before v0.29
+const BeliefRepresentation = StoredBelief
 
-function BeliefRepresentation(T::AbstractStateType)
-    return BeliefRepresentation{typeof(T), getPointType(T)}(; statekind = T)
+JSON.omit_empty(::Type{<:StoredBelief}) = true
+
+function StoredBelief(T::AbstractStateType)
+    return StoredBelief{typeof(T), getPointType(T)}(; statekind = T)
 end
 
-function BeliefRepresentation(::NonparametricDensityKind, T::AbstractStateType; kwargs...)
-    return BeliefRepresentation{typeof(T), getPointType(T)}(;
+function StoredBelief(::NonparametricDensityKind, T::AbstractStateType; kwargs...)
+    return StoredBelief{typeof(T), getPointType(T)}(;
         statekind = T,
         densitykind = NonparametricDensityKind(),
         bandwidth = zeros(getDimension(T), getDimension(T)),
@@ -65,8 +68,8 @@ function BeliefRepresentation(::NonparametricDensityKind, T::AbstractStateType; 
     )
 end
 
-function BeliefRepresentation(::GaussianDensityKind, T::AbstractStateType; kwargs...)
-    return BeliefRepresentation{typeof(T), getPointType(T)}(;
+function StoredBelief(::GaussianDensityKind, T::AbstractStateType; kwargs...)
+    return StoredBelief{typeof(T), getPointType(T)}(;
         statekind = T,
         densitykind = GaussianDensityKind(),
         bandwidth = nothing,
@@ -76,7 +79,7 @@ end
 
 function StructUtils.fielddefaults(
     ::StructUtils.StructStyle,
-    ::Type{BeliefRepresentation{T, P}},
+    ::Type{StoredBelief{T, P}},
 ) where {T, P}
     return (
         statekind = T(),
@@ -89,12 +92,12 @@ function StructUtils.fielddefaults(
     )
 end
 
-function resolveBeliefRepresentationType(lazyobj)
+function resolveStoredBeliefType(lazyobj)
     statekind = liftStateKind(lazyobj.statekind[])
-    return BeliefRepresentation{typeof(statekind), getPointType(statekind)}
+    return StoredBelief{typeof(statekind), getPointType(statekind)}
 end
 
-@choosetype BeliefRepresentation resolveBeliefRepresentationType
+@choosetype StoredBelief resolveStoredBeliefType
 
 ##==============================================================================
 ## State
@@ -116,10 +119,9 @@ $(TYPEDFIELDS)
     """Singleton type for the state, eg. Pose{3}(), Position{2}(), etc. Used for dispatch and serialization."""
     statekind::T = T()
     """
-    Generic Belief representation for this state, including the discriminator for which representation is active 
-    and the associated fields for each representation kind.
+    Generic stored belief for this state.
     """
-    belief::BeliefRepresentation{T, P} = BeliefRepresentation{T, P}()#; statekind = T())
+    belief::StoredBelief{T, P} = StoredBelief{T, P}()#; statekind = T())
     """List of symbols for separator variables for this state, used in variable elimination and inference computations."""
     separator::Vector{Symbol} = Symbol[]
     """False if initial numerical values are not yet available or stored values are not ready for further processing yet."""
@@ -131,10 +133,13 @@ $(TYPEDFIELDS)
     """How many times has a solver updated this state estimate."""
     solves::Int = 0 # TODO renamed from solvedCount v0.29
 
-    #TODO belief cache that can be used for caching HomotopyDensity (StateCache or BeliefCache)
-    # abstract type AbstractStateCache end
-    # const StateCache = AbstractStateCache
-    # solvercache::Base.RefValue{<:StateCache} = Ref{StateCache}() & (ignore = true,)
+    #TODO belief container that can be used for active solver beliefs such as a HomotopyDensity
+    # The type is defined by a trait saved in the StoredBelief and 
+    # verbs such as `hydrate!(state)` `persist!(state)` can be used at data at checkpoints.
+    # Forcing an explicit `persist!` acts as a state checkpoint, 
+    #ensuring the graph only ever stores fully committed solver results rather than half-computed intermediate math.
+    # abstract type AbstractActiveBelief end
+    # active_belief::Base.RefValue{<:AbstractActiveBelief} = Ref{AbstractActiveBelief}() & (ignore = true,)
 end
 
 # OLD deprecated fields, removed in v0.29, kept here for reference during transition
@@ -173,7 +178,7 @@ function StructUtils.fielddefaults(
     ::Type{State{T, P}},
 ) where {T, P}
     return (
-        belief = BeliefRepresentation{T, P}(; statekind = T()),
+        belief = StoredBelief{T, P}(; statekind = T()),
         separator = Symbol[],
         initialized = false,
         observability = Float64[],

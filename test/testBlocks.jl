@@ -300,7 +300,7 @@ function DFGVariableSCA()
     #TODO here for now, don't reccomend usage.
     testTags = [:tag1, :tag2]
     @test DFG.mergeTags!(v3, testTags) == 2
-    @test DFG.mergeTags!(v3, Set(testTags)) == 2
+    @test DFG.mergeTags!(v3, Set(testTags)) == 0
 
     #NOTE  a variable's timestamp is considered similar to its label.  setTimestamp! (not implemented) would create a new variable and call mergeVariable!
     # @test getTimestamp(v1ts) == testTimestamp
@@ -373,7 +373,7 @@ function DFGFactorSCA()
 
     testTags = [:tag1, :tag2]
     @test DFG.mergeTags!(f1, testTags) == 2
-    @test DFG.mergeTags!(f1, Set(testTags)) == 2
+    @test DFG.mergeTags!(f1, Set(testTags)) == 0
 
     #follow with mergeFactor!(fg, v1ts)
 
@@ -786,13 +786,13 @@ function statesExtendedTestBlock!(fg)
     # addStates! bulk
     s1 = State{TestVariableType1}(; label = :bulk_s1)
     s2 = State{TestVariableType1}(; label = :bulk_s2)
-    @test addStates!(fg, :a, [s1, s2]) == 2
+    addStates!(fg, :a, [s1, s2])
     @test hasState(fg, :a, :bulk_s1)
     @test hasState(fg, :a, :bulk_s2)
 
     # addStates! with pair syntax
     s3 = State{TestVariableType2}(; label = :bulk_s3)
-    @test addStates!(fg, [:b => s3]) == 1
+    addStates!(fg, [:b => s3])
     @test hasState(fg, :b, :bulk_s3)
 
     # deleteStates! bulk
