@@ -7,22 +7,20 @@ function DFG.addState!(dfg::GraphsDFG, variableLabel::Symbol, state::State)
 end
 
 function DFG.addStates!(dfg::GraphsDFG, variableLabel::Symbol, states::Vector{<:State})
-    cnt = asyncmap(states) do state
-        addState!(dfg, variableLabel, state)
-        return 1
+    s = asyncmap(states) do state
+        return addState!(dfg, variableLabel, state)
     end
-    return sum(cnt)
+    return s
 end
 
 function DFG.addStates!(
     dfg::GraphsDFG,
     varLabel_state_pairs::Vector{<:Pair{Symbol, <:State}},
 )
-    cnt = asyncmap(varLabel_state_pairs) do (varLabel, state)
-        addState!(dfg, varLabel, state)
-        return 1
+    s = asyncmap(varLabel_state_pairs) do (varLabel, state)
+        return addState!(dfg, varLabel, state)
     end
-    return sum(cnt)
+    return s
 end
 
 # =============================================================================

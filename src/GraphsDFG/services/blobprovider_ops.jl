@@ -35,7 +35,8 @@ function DFG.addBlobprovider!(dfg::GraphsDFG, provider::AbstractBlobprovider)
         )
         throw(LabelExistsError("Blobprovider", label))
     end
-    return push!(refBlobproviders(dfg), label => provider)
+    push!(refBlobproviders(dfg), label => provider)
+    return provider
 end
 
 # TODO edge api is a work in progress and only internal 

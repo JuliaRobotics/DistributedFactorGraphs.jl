@@ -15,6 +15,13 @@ DFG.@defStateTypeN Pose{N} SpecialEuclideanGroup(N; variant = :right) ArrayParti
 )
 Pose2 = Pose{2}
 
+# Complex scalar point type (CircleGroup identity is ComplexF64)
+DFG.@defStateType CircleState CircleGroup() (1.0 + 0.0im)
+
+# Complex 0-dimensional array point type (circle manifold)
+const MB = DFG.ManifoldsBase
+DFG.@defStateType CCircle MB.DefaultManifold(1; field = MB.ℂ) fill(1.0 + 0.0im)
+
 ## Build a test variable with states, bloblets, and blobentries
 function make_test_variable()
     v = DFG.VariableDFG(:x1, Pose{3}())
@@ -39,27 +46,27 @@ function make_test_variable()
 end
 
 @testset "Serializing Variables" begin
-    @testset "BeliefRepresentation round-trip" begin
-        bel = DFG.BeliefRepresentation(Pose{3}())
+    @testset "StoredBelief round-trip" begin
+        bel = DFG.StoredBelief(Pose{3}())
         push!(bel.points, DFG.getPointIdentity(Pose{3}()))
         G = DFG.getManifold(Pose{3}())
         push!(bel.points, rand(G, ArrayPartition))
 
         jstr = JSON.json(bel; pretty = true, style = DFG.DFGJSONStyle())
-        parsed = JSON.parse(jstr, DFG.BeliefRepresentation; style = DFG.DFGJSONStyle())
+        parsed = JSON.parse(jstr, DFG.StoredBelief; style = DFG.DFGJSONStyle())
         @test bel == parsed
     end
 
     @testset "GaussianDensityKind round-trip" begin
         dim = DFG.getDimension(Pose{3}())
-        bel = DFG.BeliefRepresentation(
+        bel = DFG.StoredBelief(
             DFG.GaussianDensityKind(),
             Pose{3}();
             means = [DFG.getPointIdentity(Pose{3}())],
             covariances = [diagm(ones(dim))],
         )
         jstr = JSON.json(bel; pretty = true, style = DFG.DFGJSONStyle())
-        parsed = JSON.parse(jstr, DFG.BeliefRepresentation; style = DFG.DFGJSONStyle())
+        parsed = JSON.parse(jstr, DFG.StoredBelief; style = DFG.DFGJSONStyle())
         @test bel == parsed
     end
 
@@ -104,6 +111,38 @@ end
         vsk = VariableSkeleton(v)
         @test vsk.label == :x1
         @test vsk.tags == v.tags
+    end
+
+    @testset "Complex (CircleGroup) end-to-end" begin
+        # CircleState uses ComplexF64 as point type
+        @test DFG.getPointType(CircleState) == ComplexF64
+        @test DFG.getPointIdentity(CircleState) == 1.0 + 0.0im
+
+        v = DFG.VariableDFG(:c1, CircleState())
+        state = addState!(v, State(:default, CircleState()))
+        push!(state.belief.points, 1.0 + 0.0im)
+        push!(state.belief.points, 0.5 + 0.866im)
+        DFG.addBloblet!(v, DFG.Bloblet(:meta, "circle"))
+
+        jstr = JSON.json(v; pretty = true, style = DFG.DFGJSONStyle())
+        parsed = JSON.parse(jstr, DFG.VariableDFG; style = DFG.DFGJSONStyle())
+        @test v == parsed
+    end
+
+    @testset "AbstractArray{<:Complex, 0} (CCircle) end-to-end" begin
+        # CCircle uses Array{ComplexF64, 0} as point type
+        @test DFG.getPointType(CCircle) == Array{ComplexF64, 0}
+        @test DFG.getPointIdentity(CCircle) == fill(1.0 + 0.0im)
+
+        v = DFG.VariableDFG(:z1, CCircle())
+        state = addState!(v, State(:default, CCircle()))
+        push!(state.belief.points, fill(1.0 + 0.0im))
+        push!(state.belief.points, fill(0.5 + 0.5im))
+        DFG.addBloblet!(v, DFG.Bloblet(:meta, "ccircle"))
+
+        jstr = JSON.json(v; pretty = true, style = DFG.DFGJSONStyle())
+        parsed = JSON.parse(jstr, DFG.VariableDFG; style = DFG.DFGJSONStyle())
+        @test v == parsed
     end
 end
 

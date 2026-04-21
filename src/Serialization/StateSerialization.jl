@@ -131,14 +131,10 @@ function unpackOldState(d)
     label = Symbol(d.solveKey)
     !isempty(d.covar) && error("covar field is not supported")
     if label == :parametric
-        belief = BeliefRepresentation(
-            GaussianDensityKind(),
-            statekind;
-            means = vals,
-            covariances = [BW],
-        )
+        belief =
+            StoredBelief(GaussianDensityKind(), statekind; means = vals, covariances = [BW])
     else
-        belief = BeliefRepresentation(
+        belief = StoredBelief(
             NonparametricDensityKind(),
             statekind;
             points = vals,

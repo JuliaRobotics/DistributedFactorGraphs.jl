@@ -10,9 +10,9 @@ The package supplies:
 """
 module DistributedFactorGraphs
 
-##==============================================================================
-## imports
-##==============================================================================
+# ==============================================================================
+# imports
+# ==============================================================================
 
 using Base
 using Base64
@@ -22,7 +22,6 @@ using Random
 using TimeZones
 using TimesDates
 using JSON
-export StructUtils # export for use in macros
 using LinearAlgebra
 using SparseArrays
 using UUIDs
@@ -47,24 +46,54 @@ import Base.Filesystem: hardlink
 # used for @defStateType
 import ManifoldsBase
 using ManifoldsBase: AbstractManifold, manifold_dimension
-export AbstractManifold
 
 using RecursiveArrayTools: ArrayPartition
-export ArrayPartition
 using StaticArrays
 
 using InteractiveUtils: subtypes
 
 using StructUtils: @kwarg, @tags
-public @tags
-public @kwarg
 
-##==============================================================================
-# Exports
-##==============================================================================
-##------------------------------------------------------------------------------
-## Abstract types and their aliases
-##------------------------------------------------------------------------------
+# ==============================================================================
+# Exports - DFG not part of the cross language API but we export it for convenience in Julia
+# ==============================================================================
+# Re-exports
+export StructUtils # export for use in macros
+export AbstractManifold
+export ArrayPartition
+public @format_str   # from FileIO
+
+# DFG exports
+const DFG = DistributedFactorGraphs
+export DFG               # module alias for DistributedFactorGraphs
+export getLabel #TODO move
+public @defStateType # macro to define custom variable types
+
+# ------------------------------------------------------------------------------
+#  Types
+# ------------------------------------------------------------------------------
+export GraphsDFG         # in-memory driver type
+# Variables
+export VariableDFG
+# export VariableSummary #TODO not finalized yet.
+export VariableSkeleton
+# Factors
+export FactorDFG
+# export FactorSummary #TODO not finalized yet.
+export FactorSkeleton
+
+export State
+export Blobentry
+export Bloblet
+
+export Agent
+
+# ==============================================================================
+# Exports — cross-language CRUD API
+# ==============================================================================
+# ------------------------------------------------------------------------------
+#  Abstract types and their aliases
+# ------------------------------------------------------------------------------
 export AbstractDFG
 export AbstractDFGParams, DFGParams
 export AbstractBlobprovider, Blobprovider
@@ -77,367 +106,167 @@ export AbstractRelativeObservation, RelativeObservation
 export AbstractFactorCache, FactorCache
 export AbstractStateType, StateType
 
-##------------------------------------------------------------------------------
-## Types
-##------------------------------------------------------------------------------
-#TODO types are not yet stable - also, we might not export all types
-# Variables
-export VariableDFG
-# export VariableSummary #TODO not finalized yet.
-export VariableSkeleton
-# Factors
-export FactorDFG
-# export FactorSummary TODO not finalized yet.
-export FactorSkeleton
-
-export Blobentry
-
-export State
-export Agent
-
-##------------------------------------------------------------------------------
-## Functions
-##------------------------------------------------------------------------------
-##==============================================================================
-## CRUD Matrix
-# export addVariable!,          getVariable,          mergeVariable!,          deleteVariable!
-# export addVariables!,         getVariables,         mergeVariables!,         deleteVariables!
-# export addFactor!,            getFactor,            mergeFactor!,            deleteFactor!
-# export addFactors!,           getFactors,           mergeFactors!,           deleteFactors!
-
-# export addState!,             getState,             mergeState!,             deleteState!
-# export addStates!,            getStates,            mergeStates!,            deleteStates!
-
-# export addVariableBlobentry!,   getVariableBlobentry,   mergeVariableBlobentry!,   deleteVariableBlobentry!
-# export addVariableBlobentries!, getVariableBlobentries, mergeVariableBlobentries!, deleteVariableBlobentries!
-# export addGraphBlobentry!,    getGraphBlobentry,    mergeGraphBlobentry!,    deleteGraphBlobentry!
-# export addGraphBlobentries!,  getGraphBlobentries,  mergeGraphBlobentries!,  deleteGraphBlobentries!
-# export addAgentBlobentry!,    getAgentBlobentry,    mergeAgentBlobentry!,    deleteAgentBlobentry!
-# export addAgentBlobentries!,  getAgentBlobentries,  mergeAgentBlobentries!,  deleteAgentBlobentries!
-# export addFactorBlobentry!,   getFactorBlobentry,   mergeFactorBlobentry!,   deleteFactorBlobentry!
-# export addFactorBlobentries!, getFactorBlobentries, mergeFactorBlobentries!, deleteFactorBlobentries!
-
-# export addVariableBloblet!,  getVariableBloblet,  mergeVariableBloblet!,  deleteVariableBloblet!
-# export addVariableBloblets!, getVariableBloblets, mergeVariableBloblets!, deleteVariableBloblets!
-# export addFactorBloblet!,    getFactorBloblet,    mergeFactorBloblet!,    deleteFactorBloblet!
-# export addFactorBloblets!,   getFactorBloblets,   mergeFactorBloblets!,   deleteFactorBloblets!
-# export addAgentBloblet!,     getAgentBloblet,     mergeAgentBloblet!,     deleteAgentBloblet!
-# export addAgentBloblets!,    getAgentBloblets,    mergeAgentBloblets!,    deleteAgentBloblets!
-# export addGraphBloblet!,     getGraphBloblet,     mergeGraphBloblet!,     deleteGraphBloblet!
-# export addGraphBloblets!,    getGraphBloblets,    mergeGraphBloblets!,    deleteGraphBloblets!
-
-# list
-# export listVariables, listFactors, listStates, listVariableBlobentries, listFactorBlobEntries, listGraphBlobentries, listAgentBlobentries
-# export listVariableBloblets, listFactorBloblets, listAgentBloblets, listGraphBloblets
-
-# tags
-# export listVariableTags, mergeVariableTags!, deleteVariableTags!
-# export listFactorTags, mergeFactorTags!, deleteFactorTags!
-# export listGraphTags, mergeGraphTags!, deleteGraphTags!
-# export listAgentTags, mergeAgentTags!, deleteAgentTags!
-
-# has
-# export hasVariable, hasFactor, hasState
-# export hasVariableBlobentry, hasFactorBlobentry, hasGraphBlobentry, hasAgentBlobentry
-# export hasVariableBloblet, hasFactorBloblet, hasGraphBloblet, hasAgentBloblet
-# export hasVariableTags, hasFactorTags, hasGraphTags, hasAgentTags
-
-# v1 name, signiture, return, and error checked
-export addVariable!
-export getVariable
-export mergeVariable!
-export deleteVariable!
-
-export addVariables!
-export getVariables
-export mergeVariables!
-export deleteVariables!
-
-export addFactor!
-export getFactor
-export deleteFactor!
-export mergeFactor!
-
-export addFactors!
-export getFactors
-export mergeFactors!
-export deleteFactors!
-
-export addState!
-export getState
-export mergeState!
-export deleteState!
-
-export addStates!
-export getStates # TODO state filters not implemented yet
-export mergeStates!
-export deleteStates!
-
-# has
+# -----------------------------------------------------------------------------
+#  Variable CRUD
+# ------------------------------------------------------------------------------
+export addVariable!, getVariable, mergeVariable!, deleteVariable!
+export addVariables!, getVariables, mergeVariables!, deleteVariables!
+export listVariables
 export hasVariable
-export hasState
+
+# Factor CRUD
+export addFactor!, getFactor, mergeFactor!, deleteFactor!
+export addFactors!, getFactors, mergeFactors!, deleteFactors!
+export listFactors
 export hasFactor
 
-## list
-export listVariables
-export listFactors
+# State CRUD
+export addState!, getState, mergeState!, deleteState!
+export addStates!, getStates, mergeStates!, deleteStates!
 export listStates
+export hasState
 
-##
-public getObservation
+# Agent CRUD
+export addAgent!, getAgent, mergeAgent!, deleteAgent!
+export addAgents!, getAgents, mergeAgents!, deleteAgents!
+export listAgents
+export hasAgent
 
-##------------------------------------------------------------------------------
-# Tags
-export listVariableTags
-export mergeVariableTags!
-export deleteVariableTags!
-export hasVariableTags
-
-export listFactorTags
-export mergeFactorTags!
-export deleteFactorTags!
-export hasFactorTags
-
-export listGraphTags
-export mergeGraphTags!
-export deleteGraphTags!
-export hasGraphTags
-
-export listAgentTags
-export mergeAgentTags!
-export deleteAgentTags!
-export hasAgentTags
-
-##------------------------------------------------------------------------------
-## Blobentries
-##------------------------------------------------------------------------------
-export addVariableBlobentry!
-export getVariableBlobentry
-export mergeVariableBlobentry!
-export deleteVariableBlobentry!
-
-export addVariableBlobentries!
-export getVariableBlobentries
-export mergeVariableBlobentries!
-export deleteVariableBlobentries!
-
-export addFactorBlobentry!
-export getFactorBlobentry
-export mergeFactorBlobentry!
-export deleteFactorBlobentry!
-
-export addFactorBlobentries!
-export getFactorBlobentries
-export mergeFactorBlobentries!
-export deleteFactorBlobentries!
-
-export addGraphBlobentry!
-export getGraphBlobentry
-export mergeGraphBlobentry!
-export deleteGraphBlobentry!
-
-export addGraphBlobentries!
-export getGraphBlobentries
-export mergeGraphBlobentries!
-export deleteGraphBlobentries!
-
-export addAgentBlobentry!
-export getAgentBlobentry
-export mergeAgentBlobentry!
-export deleteAgentBlobentry!
-
-export addAgentBlobentries!
-export getAgentBlobentries
-export mergeAgentBlobentries!
-export deleteAgentBlobentries!
-
+# ------------------------------------------------------------------------------
+# Variable Blobentries
+# ------------------------------------------------------------------------------
+export addVariableBlobentry!,
+    getVariableBlobentry, mergeVariableBlobentry!, deleteVariableBlobentry!
+export addVariableBlobentries!,
+    getVariableBlobentries, mergeVariableBlobentries!, deleteVariableBlobentries!
 export listVariableBlobentries
-export listFactorBlobentries
-export listGraphBlobentries
-export listAgentBlobentries
-
 export hasVariableBlobentry
+
+# Factor Blobentries
+export addFactorBlobentry!,
+    getFactorBlobentry, mergeFactorBlobentry!, deleteFactorBlobentry!
+export addFactorBlobentries!,
+    getFactorBlobentries, mergeFactorBlobentries!, deleteFactorBlobentries!
+export listFactorBlobentries
 export hasFactorBlobentry
+
+# Graph Blobentries
+export addGraphBlobentry!, getGraphBlobentry, mergeGraphBlobentry!, deleteGraphBlobentry!
+export addGraphBlobentries!,
+    getGraphBlobentries, mergeGraphBlobentries!, deleteGraphBlobentries!
+export listGraphBlobentries
 export hasGraphBlobentry
+
+# Agent Blobentries
+export addAgentBlobentry!, getAgentBlobentry, mergeAgentBlobentry!, deleteAgentBlobentry!
+export addAgentBlobentries!,
+    getAgentBlobentries, mergeAgentBlobentries!, deleteAgentBlobentries!
+export listAgentBlobentries
 export hasAgentBlobentry
 
-##------------------------------------------------------------------------------
-## Bloblets
-##------------------------------------------------------------------------------
-export Bloblet
-export getVariableBloblet
-export addVariableBloblet!
-export mergeVariableBloblet!
-export deleteVariableBloblet!
+# Model blobentries: interface defined in services/blobentry_ops.jl but no GraphsDFG implementation yet
+# downstream libraries can still implement these and then export. Only export here once we have a stable API and GraphsDFG implementation.
+# export addModelBlobentry!,  getModelBlobentry,  mergeModelBlobentry!,  deleteModelBlobentry!
+# export addModelBlobentries!, getModelBlobentries, mergeModelBlobentries!, deleteModelBlobentries!
+# export listModelBlobentries, hasModelBlobentry
 
-export addVariableBloblets!
-export getVariableBloblets
-export mergeVariableBloblets!
-export deleteVariableBloblets!
-
-export addFactorBloblet!
-export getFactorBloblet
-export mergeFactorBloblet!
-export deleteFactorBloblet!
-
-export addFactorBloblets!
-export getFactorBloblets
-export mergeFactorBloblets!
-export deleteFactorBloblets!
-
-export getGraphBloblet
-export addGraphBloblet!
-export mergeGraphBloblet!
-export deleteGraphBloblet!
-
-export addGraphBloblets!
-export getGraphBloblets
-export mergeGraphBloblets!
-export deleteGraphBloblets!
-
-export getAgentBloblet
-export addAgentBloblet!
-export mergeAgentBloblet!
-export deleteAgentBloblet!
-
-export addAgentBloblets!
-export getAgentBloblets
-export mergeAgentBloblets!
-export deleteAgentBloblets!
-
+# ------------------------------------------------------------------------------
+# Bloblet
+# ------------------------------------------------------------------------------
+# Variable Bloblets
+export addVariableBloblet!,
+    getVariableBloblet, mergeVariableBloblet!, deleteVariableBloblet!
+export addVariableBloblets!,
+    getVariableBloblets, mergeVariableBloblets!, deleteVariableBloblets!
 export listVariableBloblets
-export listFactorBloblets
-export listGraphBloblets
-export listAgentBloblets
-
 export hasVariableBloblet
+
+# Factor Bloblets
+export addFactorBloblet!, getFactorBloblet, mergeFactorBloblet!, deleteFactorBloblet!
+export addFactorBloblets!, getFactorBloblets, mergeFactorBloblets!, deleteFactorBloblets!
+export listFactorBloblets
 export hasFactorBloblet
+
+# Graph Bloblets
+export addGraphBloblet!, getGraphBloblet, mergeGraphBloblet!, deleteGraphBloblet!
+export addGraphBloblets!, getGraphBloblets, mergeGraphBloblets!, deleteGraphBloblets!
+export listGraphBloblets
 export hasGraphBloblet
+
+# Agent Bloblets
+export addAgentBloblet!, getAgentBloblet, mergeAgentBloblet!, deleteAgentBloblet!
+export addAgentBloblets!, getAgentBloblets, mergeAgentBloblets!, deleteAgentBloblets!
+export listAgentBloblets
 export hasAgentBloblet
 
-## v1 name, signiture, and return
+# ------------------------------------------------------------------------------
+# Tags (set semantics: merge/delete/list/has)
+# ------------------------------------------------------------------------------
+export mergeVariableTags!, deleteVariableTags!, listVariableTags, hasVariableTags
+export mergeFactorTags!, deleteFactorTags!, listFactorTags, hasFactorTags
+export mergeGraphTags!, deleteGraphTags!, listGraphTags, hasGraphTags
+export mergeAgentTags!, deleteAgentTags!, listAgentTags, hasAgentTags
 
-## v1 name only
-
-##------------------------------------------------------------------------------
-## Blobproviders and Blobs
-##------------------------------------------------------------------------------
-export getBlobprovider
-export addBlobprovider!
+# ------------------------------------------------------------------------------
+# Blobprovider CRUD
+# ------------------------------------------------------------------------------
+export addBlobprovider!, getBlobprovider, mergeBlobprovider!, deleteBlobprovider!
+export getBlobproviders, mergeBlobproviders!
 export listBlobproviders
+export hasBlobprovider
 
-# public getBlob
-# public fetchBlob
-# public putBlob!
-# public purgeBlob!
-# public listBlobs
-# public hasBlob
-# public verifyBlob
+# ==============================================================================
+# Public — stable API, not cross-language or advanced use
+# ==============================================================================
+# Julia re-exports needed for macros and type definitions
+public @tags, @kwarg
 
-##------------------------------------------------------------------------------
+# Julia-specific driver types and aliases
+public GraphsDFGs        # submodule
+public InMemoryDFGTypes  # Union{GraphsDFG}
+public LocalDFG          # alias for GraphsDFG
 
-##
-const DFG = DistributedFactorGraphs
-export DFG
-
-export GraphsDFGs
-export GraphsDFG
-
-##==============================================================================
-## Common Accessors 
-##==============================================================================
-export getLabel
-
+# Common accessors (Julia convenience, other langs use field access)
 public getId
+public getObservation
+public getStateKind
+public refStates
 
-##==============================================================================
-## Internal or not yet ready
-##==============================================================================
-##------------------------------------------------------------------------------
-## Types
-##------------------------------------------------------------------------------
-public InMemoryDFGTypes
-public LocalDFG
-# public FolderBlobprovider
-# public MemoryBlobprovider
-# public CachedBlobprovider
-
-##------------------------------------------------------------------------------
-## Tags
-##------------------------------------------------------------------------------
-# tags is a set: get/list, merge, delete (we don't have add but merge)
-
+# Node-level tag operations (generic, used internally by scoped tag exports)
 public listTags
 public mergeTags!
 public deleteTags!
-# public emptyTags!
 
-##------------------------------------------------------------------------------
-## FileDFG
-##------------------------------------------------------------------------------
-# File import and export
-export saveDFG
-export loadDFG!
-export loadDFG
+# Blob operations (cross-language concept, export later if needed)
+public getBlob       # DFG-level: searches all mounted providers
+public fetchBlob     # provider-level: fetch by multihash
+public putBlob!      # provider-level: CAS write
+public purgeBlob!    # provider-level: physical remove
+public listBlobs     # provider-level: list all multihashes
+public hasBlob       # provider/DFG-level: check existence
+public verifyBlob    # utility: verify blob against blobentry hashes
 
-##------------------------------------------------------------------------------
-## Aliases
-##------------------------------------------------------------------------------
-#TODO is ls alias or more of a shorthand with extra functionality?
-# if shorthand kind of function it is likeley only DFG
-# public ls # alias for listVariables
-# public lsf # alias for listFactors
+# Blobprovider types
+public FolderBlobprovider
+public MemoryBlobprovider
+public CachedBlobprovider
+# Blobprovider internals
+public refBlobproviders
+public stashBlobproviders!   # persist provider configs as graph bloblet
+public applyBlobproviders!   # restore provider configs from graph bloblet
 
-##------------------------------------------------------------------------------
-## Other utility functions
-##------------------------------------------------------------------------------
-
-## Agent CRUD (now in AbstractDFG services)
-export addAgent!
-export deleteAgent!
-export listAgents
-export getAgent
-export hasAgent
-# export mergeAgent!
-# public refAgents
-
-## TODO maybe move to DFG from SDK
-# getModel
-# getModels
-# addModel!
-
-##==============================================================================
-export @format_str # exported from FileIO
-
-export @defStateType #TODO Should this be exported?
-
-public refStates
-public getStateKind
-
+# Serialization helpers
 public pack, unpack
 
+# ==============================================================================
 # list of unstable functions not exported any more
 # will move to public or deprecate over time
 const unstable_functions::Vector{Symbol} = [
-    # Blobprovider types (public, not exported)
-    :FolderBlobprovider,
-    :MemoryBlobprovider,
-    :CachedBlobprovider,
-    # Blobprovider operations (not exported)
-    :deleteBlobprovider!,
-    :mergeBlobprovider!,
-    :mergeBlobproviders!,
-    :hasBlobprovider,
-    :refBlobproviders,
-    :getBlobproviders,
-    #
-    :getBlob,
-    :fetchBlob,
-    :putBlob!,
-    :purgeBlob!,
-    :listBlobs,
-    :hasBlob,
-    :verifyBlob,
+    # FileDFG — Julia-specific serialization
+    #TODO these use the wrong signature and we can just overload julia's write/read or FileIo save/load, deprecate these in favor of read/write or save/load.
+    :saveDFG,
+    :loadDFG!,
+    :loadDFG,
     #
     :getGraph,
     :VariableSummary,
@@ -446,7 +275,6 @@ const unstable_functions::Vector{Symbol} = [
     :listNeighbors,
     :findPath,
     :findPaths,
-    :InMemoryBlobstore,
     :exists,
     :compare,
     :compareField,
@@ -467,7 +295,7 @@ const unstable_functions::Vector{Symbol} = [
     :findVariablesNearTimestamp,
     :findShortestPathDijkstra,
     :findFactorsBetweenNaive, # TODO not really used
-    :getGraphLabel, #TODO check and mark as public
+    :getGraphLabel, #TODO check and maybe mark as public
     :getDescription,
     :getSolverParams,
     :getHash,
@@ -532,12 +360,12 @@ const unstable_functions::Vector{Symbol} = [
     :PackedBelief,
     :AbstractPackedObservation,
     :PackedObservation,
-    :updateMetadata!,## TODO deprecated or obsolete
+    :updateMetadata!,# TODO deprecated or obsolete
     :getFactorState, # FIXME getFactorState were questioned and being reviewed again for name, other than that they are checked.
     :packDistribution,
     :unpackDistribution,
     :hasTagsNeighbors,
-    # :updateBlobstore!,## TODO deprecated or obsolete
+    # :updateBlobstore!,# TODO deprecated or obsolete
     # :emptyMetadata!, #TODO maybe deprecate for just deleteMetadata!
     # :emptyBlobstore!, #TODO maybe deprecate for just deleteBlobstore!
     :MetadataTypes, #maybe make public after metadata stable
@@ -560,11 +388,9 @@ macro usingDFG(unstable = false)
     return Expr(:using, Expr(:(:), Expr(:(.), :DistributedFactorGraphs), syms...))
 end
 
-##==============================================================================
-
-##==============================================================================
-## Files Includes
-##==============================================================================
+# ==============================================================================
+# Files Includes
+# ==============================================================================
 
 # Entities
 include("entities/AbstractDFG.jl")

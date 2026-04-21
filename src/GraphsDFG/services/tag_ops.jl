@@ -2,13 +2,11 @@
 # Agent Tags
 # ==============================================================================
 function DFG.mergeAgentTags!(dfg::GraphsDFG, agentlabel::Symbol, tags)
-    mergeTags!(getAgent(dfg, agentlabel), tags)
-    return length(tags)
+    return mergeTags!(getAgent(dfg, agentlabel), tags)
 end
 
 function DFG.deleteAgentTags!(dfg::GraphsDFG, agentlabel::Symbol, tags)
-    deleteTags!(getAgent(dfg, agentlabel), tags)
-    return length(tags)
+    return deleteTags!(getAgent(dfg, agentlabel), tags)
 end
 
 function DFG.listAgentTags(dfg::GraphsDFG, agentlabel::Symbol)
@@ -23,13 +21,11 @@ end
 # Graph Tags
 # ==============================================================================
 function DFG.mergeGraphTags!(dfg::GraphsDFG, tags)
-    mergeTags!(dfg.graph, tags)
-    return length(tags)
+    return mergeTags!(dfg.graph, tags)
 end
 
 function DFG.deleteGraphTags!(dfg::GraphsDFG, tags)
-    deleteTags!(dfg.graph, tags)
-    return length(tags)
+    return deleteTags!(dfg.graph, tags)
 end
 
 function DFG.listGraphTags(dfg::GraphsDFG)
