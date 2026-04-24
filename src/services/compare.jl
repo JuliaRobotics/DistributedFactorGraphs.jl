@@ -155,7 +155,7 @@ end
 #Compare State
 function compare(a::State, b::State)
     refPoints(a) != refPoints(b) && @debug("val is not equal") === nothing && return false
-    refBandwidth(a) != refBandwidth(b) &&
+    refBandwidths(a) != refBandwidths(b) &&
         @debug("bw is not equal") === nothing &&
         return false
     # a.BayesNetOutVertIDs != b.BayesNetOutVertIDs &&

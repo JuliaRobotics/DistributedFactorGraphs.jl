@@ -46,27 +46,27 @@ function make_test_variable()
 end
 
 @testset "Serializing Variables" begin
-    @testset "StoredBelief round-trip" begin
-        bel = DFG.StoredBelief(Pose{3}())
+    @testset "StoredHomotopyBelief round-trip" begin
+        bel = DFG.StoredHomotopyBelief(Pose{3}())
         push!(bel.points, DFG.getPointIdentity(Pose{3}()))
         G = DFG.getManifold(Pose{3}())
         push!(bel.points, rand(G, ArrayPartition))
 
         jstr = JSON.json(bel; pretty = true, style = DFG.DFGJSONStyle())
-        parsed = JSON.parse(jstr, DFG.StoredBelief; style = DFG.DFGJSONStyle())
+        parsed = JSON.parse(jstr, DFG.StoredHomotopyBelief; style = DFG.DFGJSONStyle())
         @test bel == parsed
     end
 
-    @testset "GaussianDensityKind round-trip" begin
+    @testset "RootsOnlyTopology round-trip" begin
         dim = DFG.getDimension(Pose{3}())
-        bel = DFG.StoredBelief(
-            DFG.GaussianDensityKind(),
+        bel = DFG.StoredHomotopyBelief(
+            DFG.RootsOnlyTopology(),
             Pose{3}();
             means = [DFG.getPointIdentity(Pose{3}())],
-            covariances = [diagm(ones(dim))],
+            shapes = [diagm(ones(dim))],
         )
         jstr = JSON.json(bel; pretty = true, style = DFG.DFGJSONStyle())
-        parsed = JSON.parse(jstr, DFG.StoredBelief; style = DFG.DFGJSONStyle())
+        parsed = JSON.parse(jstr, DFG.StoredHomotopyBelief; style = DFG.DFGJSONStyle())
         @test bel == parsed
     end
 

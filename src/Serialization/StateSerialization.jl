@@ -131,14 +131,18 @@ function unpackOldState(d)
     label = Symbol(d.solveKey)
     !isempty(d.covar) && error("covar field is not supported")
     if label == :parametric
-        belief =
-            StoredBelief(GaussianDensityKind(), statekind; means = vals, covariances = [BW])
+        belief = StoredHomotopyBelief(
+            RootsOnlyTopology(),
+            statekind;
+            means = vals,
+            shapes = [BW],
+        )
     else
-        belief = StoredBelief(
-            NonparametricDensityKind(),
+        belief = StoredHomotopyBelief(
+            LeavesOnlyTopology(),
             statekind;
             points = vals,
-            bandwidth = BW,
+            bandwidths = [BW],
         )
     end
     return State{T, getPointType(T)}(;
