@@ -58,9 +58,9 @@ function printVariable(
             println(ioc, "      initialized:        ", isInitialized(vert, :default))
             println(ioc, "      marginalized:      ", isMarginalized(vert, :default))
             println(ioc, "      size bel. samples: ", size(vnd.belief.points))
-            print(ioc, "      kde bandwidths:    ")
-            bws = vnd.belief.bandwidths
+            bws = refBandwidths(vnd)
             if !isempty(bws)
+                print(ioc, "      kde bandwidths:    ")
                 println(ioc, round.(bws[1]; digits = 4))
             end
             printstyled(ioc, "     VNDs: "; bold = true)
