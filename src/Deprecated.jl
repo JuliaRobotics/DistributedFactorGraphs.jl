@@ -569,8 +569,10 @@ function deepcopyGraph(
     graphLabel::Symbol = Symbol(getGraphLabel(sourceDFG), "_cp_$(string(uuid4())[1:6])"),
     kwargs...,
 ) where {T <: AbstractDFG}
+    sp = getSolverParams(sourceDFG)
+    sp_kw = sp isa fieldtype(T, :solverParams) ? (; solverParams = sp) : (;)
     destDFG = T(;
-        solverParams = getSolverParams(sourceDFG),
+        sp_kw...,
         graph = sourceDFG.graph,
         agents = deepcopy(sourceDFG.agents),
         graphLabel,
@@ -710,9 +712,15 @@ function findShortestPathDijkstra(
             dfg,
             restrict_labels,
         )
-        return findPath(subdfg, from, to).path
+        result = try
+            findPath(subdfg, from, to)
+        catch ex
+            ex isa DFG.LabelNotFoundError ? nothing : rethrow()
+        end
+        return result === nothing ? Symbol[] : result.path
     else
-        return findPath(dfg, from, to).path
+        result = findPath(dfg, from, to)
+        return result === nothing ? Symbol[] : result.path
     end
 end
 
