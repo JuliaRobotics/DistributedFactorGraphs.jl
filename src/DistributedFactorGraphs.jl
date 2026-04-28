@@ -61,13 +61,13 @@ using StructUtils: @kwarg, @tags
 export StructUtils # export for use in macros
 export AbstractManifold
 export ArrayPartition
-public @format_str   # from FileIO
+export @format_str   # from FileIO
 
 # DFG exports
 const DFG = DistributedFactorGraphs
 export DFG               # module alias for DistributedFactorGraphs
 export getLabel #TODO move
-public @defStateType # macro to define custom variable types
+export @defStateType # macro to define custom variable types
 
 # ------------------------------------------------------------------------------
 #  Types
