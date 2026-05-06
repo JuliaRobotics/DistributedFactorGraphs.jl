@@ -142,7 +142,7 @@ getManifold(repr::HomotopyRepr) = getManifold(repr.statekind)
 # @choosetype AbstractHomotopyTopology resolvePackedType
 
 """
-    HomotopyDensityDFG{T <: StateType, P}
+    HomotopyDensityDFG{H <: HomotopyRepr, P}
 
 Hybrid belief representation with natural transition between (non)parametric representations.
 
