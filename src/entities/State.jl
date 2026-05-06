@@ -27,7 +27,7 @@ $(TYPEDFIELDS)
     """
     Generic stored belief for this state.
     """
-    belief::StoredHomotopyBelief{T, P} = StoredHomotopyBelief{T, P}()#; statekind = T())
+    belief::HomotopyDensityDFG{T, P} = HomotopyDensityDFG{T, P}()#; statekind = T())
     """List of symbols for separator variables for this state, used in variable elimination and inference computations."""
     separator::Vector{Symbol} = Symbol[]
     """False if initial numerical values are not yet available or stored values are not ready for further processing yet."""
@@ -53,7 +53,7 @@ end
 # ==============================================================================
 #  FUTURE VIEW WRAPPER (Internal DFG Placeholder)
 # ==============================================================================
-# NOTE: The `StoredHomotopyBelief` is currently expressive and fast enough that 
+# NOTE: The `HomotopyDensityDFG` is currently expressive and fast enough that 
 # DFG does not need to store a resolved view next to it in memory. 
 #
 # If future profiling requires it, DFG will introduce a verbose View wrapper 
@@ -62,7 +62,7 @@ end
 # abstract type AbstractHomotopyBeliefView end
 # 
 # struct HomotopyBeliefView{T, P, M} <: AbstractHomotopyBeliefView
-#     stored::StoredHomotopyBelief{T, P}
+#     stored::HomotopyDensityDFG{T, P}
 #     math_engine::M # Read-only instantiated solver object (e.g., AMP.HomotopyDensity)
 # end
 
@@ -91,7 +91,7 @@ function StructUtils.fielddefaults(
     ::Type{State{T, P}},
 ) where {T, P}
     return (
-        belief = StoredHomotopyBelief{T, P}(; statekind = T()),
+        belief = HomotopyDensityDFG{T, P}(; statekind = T()),
         separator = Symbol[],
         initialized = false,
         observability = Float64[],

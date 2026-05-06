@@ -20,7 +20,7 @@ implement compare if needed.
 const GeneratedCompareUnion = Union{
     Agent,
     Graphroot,
-    StoredHomotopyBelief,
+    HomotopyDensityDFG,
     State,
     Blobentry,
     Bloblet,
