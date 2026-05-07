@@ -78,7 +78,7 @@ foundational ecosystem.
 struct HomotopyRepr{
   topology <: AbstractHomotopyTopology,
   reprtype <: AbstractDensityBasis, 
-  statetype <: AbstractStateType,
+  statetype <: Union{<:AbstractStateType, <:AbstractManifold}, # AbstractManifold used by AMP, but only StateType supports serde
   L <: AbstractPartialLegacyCompat, # FIXME use <:AbstractPartialTraits
 } 
   """ 
