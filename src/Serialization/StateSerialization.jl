@@ -1,4 +1,62 @@
 
+
+
+function lowerHomotopyReprKind(
+    varT::HomotopyRepr{R,K,T,L}
+) where {
+    R <: AbstractHomotopyTopology,
+    K <: AbstractDensityBasis,
+    T <: AbstractStateType,
+    L <: AbstractPartialLegacyCompat, # FIXME use <:AbstractPartialTraits
+}
+    typemeta = TypeMetadata(typeof(varT))
+    # if N == Any
+    #     return typemeta
+    #     # return string(parentmodule(T), ".", nameof(T))
+    # elseif N isa Integer
+    #     return TypeMetadata(
+    #         typemeta.pkg,
+    #         Symbol(typemeta.name, "{", N, "}"),
+    #         typemeta.version,
+    #     )
+    #     # return string(parentmodule(T), ".", nameof(T), "{", join(N, ","), "}")
+    # else
+    #     throw(
+    #         SerializationError(
+    #             "Serializing Variable State type only supports an integer parameter, got '$(N)'.",
+    #         ),
+    #     )
+    # end
+end
+
+#NOTE Cannot resolve with `resolveType` because of the N parameter
+# tried resolveType(JSON.Object(:type=>obj))
+function liftHomotopyReprKind(type::DFG.JSON.Object)
+    pkg = Base.require(Main, Symbol(type.pkg))
+    if !isdefined(Main, Symbol(type.pkg))
+        throw(SerializationError("Module $(pkg) is available, but not loaded in `Main`."))
+    end
+    m = match(r"{(\d+)}", type.name)
+    if !isnothing(m) #parameters in type
+        param = parse(Int, m[1])
+        typeString = type.name[1:(m.offset - 1)]
+        return getfield(pkg, Symbol(typeString)){param}()
+    else
+        typeString = type.name
+        return getfield(pkg, Symbol(typeString))()
+    end
+end
+
+# StructUtils.structlike(::Type{<:HomotopyDensityDFG}) = false
+# StructUtils.lower(T::HomotopyDensityDFG) = lowerStateKind(T)
+# StructUtils.lift(::Type{HomotopyDensityDFG}, s) = liftStateKind(s)
+
+
+## ====================================================================================================
+##
+## ====================================================================================================
+
+
 function lowerStateKind(varT::AbstractStateType{N}) where {N}
     typemeta = TypeMetadata(typeof(varT))
     if N == Any

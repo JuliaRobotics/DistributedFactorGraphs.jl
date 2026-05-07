@@ -106,6 +106,10 @@ export AbstractRelativeObservation, RelativeObservation
 export AbstractFactorCache, FactorCache
 export AbstractStateType, StateType
 
+# Related to HomotopyDensity
+export AbstractPartialTraits, AbstractHomotopyTopology, MajorMaxDepth
+export getStateType, getManifold, getReprType, getTopology, getPartial
+
 # -----------------------------------------------------------------------------
 #  Variable CRUD
 # ------------------------------------------------------------------------------
