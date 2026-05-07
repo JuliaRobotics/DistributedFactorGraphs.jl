@@ -17,9 +17,9 @@ abstract type AbstractPartialTraits end
 abstract type AbstractDensityBasis end
 
 
-# DO NOT EXPORT AbstractPartialLegacyCompat 
-const AbstractPartialLegacyCompat = Union{<:DistributedFactorGraphs.AbstractPartialTraits, Nothing, Tuple, Vector{Int}} 
+# DO NOT EXPORT AbstractPartialLegacyCompat -- THIS MUST BE DEPRECATED AFTER DFG v0.29
 # FIXME, drop Nothing, <:Tuple for type refactor compat period
+const AbstractPartialLegacyCompat = Union{<:DistributedFactorGraphs.AbstractPartialTraits, Nothing, Tuple, Vector{Int}} 
 
 
 # ==============================================================================
@@ -55,7 +55,7 @@ Comments on type parameters:
 - reprtype is the type of the density basis, 
   e.g. ConcentratedGaussianKernel and is expected to evolve into continuous eigen vectors and wavelets.
 - truncation type relates to model order reduction technique embedded in the HomotopyDensity, 
-  e.g. MajorMaxDepth is a simple binary tree truncation with N major levels.
+  e.g. BinaryTruncFixedDepth is a simple binary tree truncation with N major levels.
 
 
 **Role of the HomotopyRepr Trait:**

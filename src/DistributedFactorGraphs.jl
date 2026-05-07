@@ -107,7 +107,7 @@ export AbstractFactorCache, FactorCache
 export AbstractStateType, StateType
 
 # Related to HomotopyDensity
-export AbstractPartialTraits, AbstractHomotopyTopology, MajorMaxDepth
+export AbstractPartialTraits, AbstractHomotopyTopology
 export getStateType, getManifold, getReprType, getTopology, getPartial
 
 # -----------------------------------------------------------------------------
