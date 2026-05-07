@@ -1,3 +1,57 @@
+
+
+
+refMeans(state::State) = state.belief.principal_elements
+refCovariances(state::State) = state.belief.principal_details
+refWeights(state::State) = state.belief.weights
+refPoints(state::State) = state.belief.points
+refBandwidth(state::State) = state.belief.trailing_details[1]
+refBandwidths(state::State) = values(state.belief.trailing_details) # FIXME, unordered will be a problem
+getTopologyKind(state::State) = state.belief.topologykind
+
+
+# # TODO deprecate
+import Base: getproperty, setproperty!
+
+function getproperty(obj::HomotopyDensityDFG, f::Symbol)
+  showerr = true
+  ret = if f === :means
+    getfield(obj, :principal_elements)
+  elseif f === :shapes
+    getfield(obj, :principal_details)
+  elseif f === :bandwidths
+    getfield(obj, :trailing_details)
+  else
+    showerr = false
+    getfield(obj, f)
+  end
+
+  showerr && @error("HomotopyDensityDFG field access with $(f) is deprecated")
+  return ret
+end
+
+function setproperty!(obj::HomotopyDensityDFG, f::Symbol, val)
+  showerr = true
+  ret = if f === :means
+    setfield!(obj, :principal_elements, val)
+  elseif f === :shapes
+    setfield!(obj, :principal_details, val)
+  elseif f === :bandwidths
+    setfield!(obj, :trailing_details, val)
+  else
+    showerr = false
+    setfield!(obj, f, val)
+  end
+
+  showerr && @error("HomotopyDensityDFG field access with $(f) is deprecated")
+  return ret
+end
+
+
+
+
+
+
 ## ================================================================================
 ## Deprecated in v0.29
 ##=================================================================================
@@ -761,3 +815,20 @@ end
 @deprecate mergeStorelinks! mergeBlobproviders!
 @deprecate addBlob! putBlob!
 @deprecate LinkStore LinkBlobprovider
+
+"""
+    $(SIGNATURES)
+
+!!! warning "Deprecated"
+    `getSolverParams(dfg)` is deprecated in DFG v0.29 Pass `SolverParams` directly
+    to `solveTree!()` as a keyword argument instead.
+"""
+function getSolverParams(dfg::AbstractDFG)
+    #FIXME uncomment before committing only temp for spamming 
+    # Base.depwarn(
+    #     "getSolverParams(dfg) is deprecated. SolverParams will be removed from the DFG object. " *
+    #     "Pass SolverParams directly to solveTree!() as a keyword argument instead.",
+    #     :getSolverParams,
+    # )
+    return dfg.solverParams
+end

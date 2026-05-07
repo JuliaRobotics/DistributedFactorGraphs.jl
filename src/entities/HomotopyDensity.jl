@@ -8,12 +8,12 @@ abstract type AbstractStateType{N} end
 const StateType = AbstractStateType
 
 # ==============================================================================
-#  StoredHomotopyBelief
+#  HomotopyDensityDFG
 # ==============================================================================
 """
     AbstractHomotopyTopology
 
-Describes the physical layout of the nodes within a `StoredHomotopyBelief`.
+Describes the physical layout of the nodes within a `HomotopyDensityDFG`.
 
 Since all beliefs in the Caesar ecosystem are fundamentally Homotopy densities, 
 this trait acts as a lightweight dispatch hint (a "Lens Selector"). It indicates 
@@ -59,79 +59,200 @@ function StructUtils.lower(::StructUtils.StructStyle, p::AbstractHomotopyTopolog
 end
 @choosetype AbstractHomotopyTopology resolvePackedType
 
+abstract type AbstractDensityForm end
+function StructUtils.lower(::StructUtils.StructStyle, p::AbstractDensityForm)
+    return StructUtils.lower(Packed(p))
+end
+@choosetype AbstractDensityForm resolvePackedType
+
+struct DefaultFormKind <: AbstractDensityForm end
+
+struct DefaultTopologyKind <: AbstractHomotopyTopology end
+
+
+
+# FROM AMP
+# abstract type AbstractBinaryTreeDensity <: AbstractHomotopyTopology end
+# const BinaryTreeDensity = AbstractBinaryTreeDensity
+# struct BinaryTruncFixedDepth{N} <: AbstractBinaryTreeDensity end
+
+
+# abstract type AbstractKernel <: AbstractDensityForm end
+# @kwdef struct ConcentratedGaussianKernel{
+#     partial, # partial info for compiler, usually a value e.g. nothing or (1,3)
+#     K <: Distributions.MvNormal, # kernel info for compiler
+#     T  # additional parameters
+# } <: AbstractKernel
+
+
+
+# Go with Option A in DFG v0.29, 
+# Acknowledge design compromises (previous DFG v0.29 objective was to collect breaking changes on types, get as close to DFG v1-alpha):
+# - HomotopyDensityDFG/Live converters/packers (DataLevel 3.5)
+# - HomotopyDensityDFG.reprkind::HomotopyReprDFG
+# - HomotopyReprDFG/Live converters/packers (DataLevel 3.5)
+# - HomotopyReprDFG.partial has Legacy in AMP v0.15 through Caesar that needs something better by DFG v0.30
+#   - DFG v0.29 will JSON ignore HomotopyReprDFG.partial field
+##OPTION A
+#  Pros 
+#   - state container is type stable, 
+#   - fields can be singleton so easier to serde
+#  Cons 
+#   - not itself a singleton type (not important?)
+# DOCS FORCE FIELDS TO BE SINGLETON
+mutable struct HomotopyReprDFG{T <: StateType}
+  topologykind::AbstractHomotopyTopology  # bitmap, jpeg, png
+  reprkind::AbstractDensityForm      # RGB24, YCbCr, fullcov, uppercov, LieExpGaussianWrappedKind, ConcentrGaussKernelKind
+  statekind::T                        # Position{2}
+end
+
+# # UX -- DataLevel 3 if OPTION A
+# X1 = getState(:naive).belief      ::HomotopyDensityDFG{Pose2}
+# X1 = getState(:research1).belief  ::HomotopyDensityDFG{Pose2}   # principals look completely different
+# # is this dynamic -- 
+# plot(X1::HomotopyDensityDFG) = plot(what_topology(X1), X1)
+
+
+# struct HomotopyReprLive{O <: AbstractHomotopyTopology, R <: AbstractDensityForm, T <: StateType}
+#   ...
+# end
+
+# struct FancyStats{S}
+#     x::Vector{Float64}
+#     y::Vector{S}
+# end
+
+# struct SecondOrderStats{P, S} 
+#     m0::Vector{Float64}
+#     m1::Vector{P}
+#     m2::Vector{S}
+# end
+# struct HomotopyDensityDFG{T <: StateType, A, B}
+#     principal::A
+#     trailing::B
+#     ....
+# end
+
+# struct FancyPrincipalTrailingSecondOrder <: AbstractHomotopyTopology end
+# repr = HomotopyDensityLive{HomotopyReprLive{FancyPrincipalTrailingSecondOrder, , }}
+# dothis(getReprType(repr), repr)  -->  (prinicipal::FancyStats, trailing::SecondOrderStats)
+
+
+
+# typeof(Pose2()) = Pose2
+# getKind(...) -> Pose2()
+
+# getType(::Kind) = ....
+# getType(ConcentratedGaussianKernelKind) = ConcentratedGaussianKernel
+
+# ConcentratedGaussianKernel(w...; kw...)  # this calls the constructor to make a new object
+# # AbstractDensityForm tells compiler what to do here
+# howthis(ConcGaussKind)(w...; kw...) -->  ::ConcentratedGaussianKernel{A,B,C} # this is functional programming to call the constructor
+# howthis(ConcGaussKind, w...; kw...) -->  ::ConcentratedGaussianKernel{A,B,C} # this is manual dispatch to create a new object
+
+# # 
+
+# dothis(::ConcGaussKind, w...; kw...) -->  ::ConcentratedGaussianKernel{A,B,C} # this is manual dispatch to create a new object
+# dothis(repr::HomotopyReprDFG) = dothis(getReprType(repr), repr)
+
+# dothis(getReprType(belief), belief)
+# dothis(getReprType(belief))(belief) # manual obj constructor rather than using JSON for details
+
+# LieExpWrappedKind <: AbstractDensityForm
+# ConcGaussianKernelKind <: AbstractDensityForm
+# SecondOrderStatsKind <: AbstractDensityForm
+
+
+# # this is a good "reprtype", what Dehann is trying
+# {
+#     "topology": "BinaryTruncFixedDepth{3}",
+#     "reprtype": "ConcentratedGaussianKernelKind",
+#     "statetype": "Pose2",
+# }
+
+
+# # this is a bad "reprtype", what Dehann already avoided
+# {
+#     "topology": "BinaryTruncFixedDepth{3}",
+#     "reprtype": "ConcentratedGaussianKernel{this, that, whatever}",
+#     "statetype": "Pose2",
+# }
+
+
+
+
 """
-    StoredHomotopyBelief{T <: StateType, P}
+    HomotopyDensityDFG{H <: HomotopyRepr, P}
 
-A multi-resolution "Grove of Trees" representing a manifold belief.
-Each tree can be as deep (ExplicitTreeTopology) or as shallow (RootsOnlyTopology) 
-as the evidence requires, but they all speak the same language of Nodes and Parents.
+Hybrid belief representation with natural transition between (non)parametric representations.
 
-These are the internal raw beliefs and need to be viewed through a lens such as 
-provided by AMP for features like pdf evaluation. Organized into structural 
-Tree/Branch layers (L1) and empirical Leaf layers (L2).
+**THIS IS IMPORTANT**: Fundamentally related to `HomotopyDensity` definition in AMP.jl.
 
 !!! warning "Raw Data Container"
-    `StoredHomotopyBelief` is the raw data schema used for database storage and serialization.
+    `HomotopyDensityDFG` is the raw data schema used for database storage and serialization.
     Mutating this structure in-place is discouraged. Rather, construct a new `State` object 
     and call `addState!` or `mergeState!`.
+
+Notes:
+- These are the internal raw beliefs and need to be viewed through a lens such as 
+provided by AMP for features like pdf evaluation. 
+- Allows partials as identified by list of coordinate dimensions via `.reprkind{...L}.partial`
+  - e.g. legacy `partial = [1;3] or (1,3)`
+    - When building a partial belief, use full points with necessary information in the specified partial coords.
+- Replaces ManellicTree, ManifoldKernelDensity, KernelDensityEstimate, GaussianMixtureModel, PCA, Mixtures
+  - a.k.a. model order reduction given a topology selection
 """
-@kwdef struct StoredHomotopyBelief{T <: StateType, P}
+@kwdef struct HomotopyDensityDFG{T <: StateType, P}
     statekind::T = T()# NOTE duplication for serialization and self description.
+    reprkind::HomotopyReprDFG{T} = HomotopyReprDFG{T}(DefaultTopologyKind(), DefaultFormKind(), T()) # NOTE duplication for serialization and self description. FIXME this is redundant with statekind, but we need it to be a struct for serde, so we duplicate the statekind info here for now. Future refactor could unify these concepts better.
     """A hint for downstream solvers on how to interpret this data (The 'How')"""
     topologykind::AbstractHomotopyTopology = LeavesOnlyTopology()
 
-    # L1 Nodes
-    """
-    [Order 0] The relative importance or probability of each node in L1.
-    """
+    points::Vector{P} = P[] # previously `val`
     weights::Vector{Float64} = Float64[]
     """
-    [Order 1] The location/center of each node, stored directly on the manifold.
+    In model order reduction, PCA, and modal analysis, the terms for the eigenvectors associated with the largest and smallest eigenvalues are commonly:
+      Major eigenvectors are often called "dominant eigenvectors," or simply "leading modes." In Principal Component Analysis (PCA), these are the "principal components."
+      Minor eigenvectors are sometimes called "trailing eigenvectors," or "residual modes." In PCA, these correspond to the components with the smallest variance.
     """
-    means::Vector{P} = P[] # previously `val[1]` for Gaussian
+    principal_coeffs::Vector{Float64} = Vector{Float64}() # FIXME getMajorsLength(reprkind))
+    principal_elements::Vector{P} = P[] # previously `val[1]` for Gaussian
+    principal_details::Vector{Matrix{Float64}} = Matrix{Float64}[] # previously `covar` existed but was stored in `bw` (hacky)
     """
-    [Order 2] The spread/curvature of each node (e.g., Covariance or Precision matrix). 
+    Store minor eigenvalue details such as leaf bandwidth or reconstruction vectors.
+    - When lifted for compute efficiency, this field is likely to hold something like PDMats.
+    - When lowered or for serde, this field is likely to hold Dict{Int, Vector{Float64}}.
     """
-    shapes::Vector{Matrix{Float64}} = Matrix{Float64}[] # previously `covar` existed but was stored in `bw` (hacky)
-
-    # L2 Nodes
+    trailing_details::Dict{Int,Matrix{Float64}} = Dict(
+      # 1 => Matrix{Float64}(I, manifold_dimension(getManifold(statekind)), manifold_dimension(getManifold(statekind)))
+    )
+        #Matrix{Float64}[] #previously `bw` ---
     """
-    The raw empirical samples on the manifold. Used for KDE and particle representations.
+    Geometric points permute field, allows fast binary tree operations and geometric points splits for manellic (ball) trees. 
+    - Geometric split reqs at least 2*(N+1)-1 points -- e.g. when nodes have only right children, points=[1,2,-3].
     """
-    points::Vector{P} = P[] # previously `val`
-    """
-    The second-order bandwidths for the non-parametric points, supports variable bandwidth kernels.
-    """
-    bandwidths::Vector{Matrix{Float64}} = Matrix{Float64}[] #previously `bw` ---
-
-    # --- Topology (The Hierarchy) ---
-    """
-    L1 Internal Topology: mean_parents[i] = j means means[i] is a child of means[j]. A value of 0 indicates a Root node.
-    """
-    mean_parents::Vector{Int} = Int[]
-    """
-    L2-to-L1 Bridge: point_parents[i] = j means points[i] is governed by means[j]. Points are leaves.
-    """
-    point_parents::Vector{Int} = Int[]
+    structure::Dict{Int,Vector{Int}} = Dict(
+      1 => collect(1:length(points))
+    )
 end
 
-JSON.omit_empty(::Type{<:StoredHomotopyBelief}) = true
+JSON.omit_empty(::Type{<:HomotopyDensityDFG}) = true
 
-function StoredHomotopyBelief(T::AbstractStateType)
-    return StoredHomotopyBelief{typeof(T), getPointType(T)}(; statekind = T)
+function HomotopyDensityDFG(T::AbstractStateType)
+    return HomotopyDensityDFG{typeof(T), getPointType(T)}(; statekind = T)
 end
 
-function StoredHomotopyBelief(::LeavesOnlyTopology, T::AbstractStateType; kwargs...)
-    return StoredHomotopyBelief{typeof(T), getPointType(T)}(;
+function HomotopyDensityDFG(::LeavesOnlyTopology, T::AbstractStateType; kwargs...)
+    return HomotopyDensityDFG{typeof(T), getPointType(T)}(;
         statekind = T,
         topologykind = LeavesOnlyTopology(),
-        bandwidths = [zeros(getDimension(T), getDimension(T))],
+        trailing_details = Dict{Int, Matrix{Float64}}(),
         kwargs...,
     )
 end
 
-function StoredHomotopyBelief(::RootsOnlyTopology, T::AbstractStateType; kwargs...)
-    return StoredHomotopyBelief{typeof(T), getPointType(T)}(;
+function HomotopyDensityDFG(::RootsOnlyTopology, T::AbstractStateType; kwargs...)
+    return HomotopyDensityDFG{typeof(T), getPointType(T)}(;
         statekind = T,
         topologykind = RootsOnlyTopology(),
         kwargs...,
@@ -140,24 +261,24 @@ end
 
 function StructUtils.fielddefaults(
     ::StructUtils.StructStyle,
-    ::Type{StoredHomotopyBelief{T, P}},
+    ::Type{HomotopyDensityDFG{T, P}},
 ) where {T, P}
     return (
         statekind = T(),
         topologykind = LeavesOnlyTopology(),
-        means = P[],
-        shapes = Matrix{Float64}[],
+        principal_coeffs = Float64[],
+        principal_elements = P[],
+        principal_details = Matrix{Float64}[],
         weights = Float64[],
         points = P[],
-        bandwidths = Matrix{Float64}[],
-        mean_parents = Int[],
-        point_parents = Int[],
+        trailing_details = Dict{Int, Matrix{Float64}}(),
     )
 end
 
-function resolveStoredBeliefType(lazyobj)
+function resolveHomotopyDensityDFGType(lazyobj)
     statekind = liftStateKind(lazyobj.statekind[])
-    return StoredHomotopyBelief{typeof(statekind), getPointType(statekind)}
+    return HomotopyDensityDFG{typeof(statekind), getPointType(statekind)}
 end
 
-@choosetype StoredHomotopyBelief resolveStoredBeliefType
+@choosetype HomotopyDensityDFG resolveHomotopyDensityDFGType
+
