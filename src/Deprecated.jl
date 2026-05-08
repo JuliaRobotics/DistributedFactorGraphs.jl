@@ -1,6 +1,4 @@
 
-
-
 refMeans(state::State) = state.belief.principal_elements
 refCovariances(state::State) = state.belief.principal_forms
 refWeights(state::State) = state.belief.weights
@@ -9,48 +7,42 @@ refBandwidth(state::State) = state.belief.trailing_forms[1]
 refBandwidths(state::State) = values(state.belief.trailing_forms) # FIXME, unordered will be a problem
 getTopologyKind(state::State) = state.belief.topologykind
 
-
 # # TODO deprecate
 import Base: getproperty, setproperty!
 
 function getproperty(obj::HomotopyDensityDFG, f::Symbol)
-  showerr = true
-  ret = if f === :means
-    getfield(obj, :principal_elements)
-  elseif f === :shapes
-    getfield(obj, :principal_forms)
-  elseif f === :bandwidths
-    getfield(obj, :trailing_forms)
-  else
-    showerr = false
-    getfield(obj, f)
-  end
+    showerr = true
+    ret = if f === :means
+        getfield(obj, :principal_elements)
+    elseif f === :shapes
+        getfield(obj, :principal_forms)
+    elseif f === :bandwidths
+        getfield(obj, :trailing_forms)
+    else
+        showerr = false
+        getfield(obj, f)
+    end
 
-  showerr && @error("HomotopyDensityDFG field access with $(f) is deprecated")
-  return ret
+    showerr && @error("HomotopyDensityDFG field access with $(f) is deprecated")
+    return ret
 end
 
 function setproperty!(obj::HomotopyDensityDFG, f::Symbol, val)
-  showerr = true
-  ret = if f === :means
-    setfield!(obj, :principal_elements, val)
-  elseif f === :shapes
-    setfield!(obj, :principal_forms, val)
-  elseif f === :bandwidths
-    setfield!(obj, :trailing_forms, val)
-  else
-    showerr = false
-    setfield!(obj, f, val)
-  end
+    showerr = true
+    ret = if f === :means
+        setfield!(obj, :principal_elements, val)
+    elseif f === :shapes
+        setfield!(obj, :principal_forms, val)
+    elseif f === :bandwidths
+        setfield!(obj, :trailing_forms, val)
+    else
+        showerr = false
+        setfield!(obj, f, val)
+    end
 
-  showerr && @error("HomotopyDensityDFG field access with $(f) is deprecated")
-  return ret
+    showerr && @error("HomotopyDensityDFG field access with $(f) is deprecated")
+    return ret
 end
-
-
-
-
-
 
 ## ================================================================================
 ## Deprecated in v0.29

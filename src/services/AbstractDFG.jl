@@ -24,7 +24,6 @@ function getGraph end
 """
 getGraphLabel(dfg::AbstractDFG) = getLabel(getGraph(dfg))
 
-
 """
     $(SIGNATURES)
 

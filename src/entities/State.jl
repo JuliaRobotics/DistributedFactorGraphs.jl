@@ -95,7 +95,6 @@ function StructUtils.fielddefaults(
     )
 end
 
-
 # we can also do somthing like this:
 function getComponent(state::State, i)
     return (

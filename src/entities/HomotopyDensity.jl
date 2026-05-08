@@ -1,12 +1,10 @@
 
-
 ##==============================================================================
 ## Abstract Types
 ##==============================================================================
 
 abstract type AbstractStateType{N} end
 const StateType = AbstractStateType
-
 
 """
     AbstractHomotopyTopology
@@ -70,7 +68,6 @@ function StructUtils.lower(::StructUtils.StructStyle, p::AbstractPartialTrait)
 end
 @choosetype AbstractPartialTrait resolvePackedType
 
-
 struct DefaultFormKind <: AbstractDensityForm end
 
 struct DefaultTopologyKind <: AbstractHomotopyTopology end
@@ -81,12 +78,10 @@ struct DefaultPartialKind <: AbstractPartialTrait end
 #  HomotopyDensityDFG
 # ==============================================================================
 
-
 # FROM AMP
 # abstract type AbstractBinaryTreeDensity <: AbstractHomotopyTopology end
 # const BinaryTreeDensity = AbstractBinaryTreeDensity
 # struct BinaryTruncFixedDepth{N} <: AbstractBinaryTreeDensity end
-
 
 # abstract type AbstractKernel <: AbstractDensityForm end
 # @kwdef struct ConcentratedGaussianKernel{
@@ -94,8 +89,6 @@ struct DefaultPartialKind <: AbstractPartialTrait end
 #     K <: Distributions.MvNormal, # kernel info for compiler
 #     T  # additional parameters
 # } <: AbstractKernel
-
-
 
 # Go with Option A in DFG v0.29, 
 # Acknowledge design compromises (previous DFG v0.29 objective was to collect breaking changes on types, get as close to DFG v1-alpha):
@@ -112,10 +105,10 @@ struct DefaultPartialKind <: AbstractPartialTrait end
 #   - not itself a singleton type (not important?)
 # DOCS FORCE FIELDS TO BE SINGLETON
 @tags mutable struct HomotopyReprDFG{T <: StateType}
-  topologykind::AbstractHomotopyTopology  # bitmap, jpeg, png
-  reprkind::AbstractDensityForm           # RGB24, YCbCr, fullcov, uppercov, LieExpGaussianWrappedKind, ConcentrGaussKernelKind
-  statekind::T                            # Position{2}
-  partial::AbstractPartialTrait #& (json = (ignore = true,),)          # partials field needed for AMP v0.15, will be JSON ignored in DFG v0.29, needs better solution by DFG v0.30
+    topologykind::AbstractHomotopyTopology  # bitmap, jpeg, png
+    reprkind::AbstractDensityForm           # RGB24, YCbCr, fullcov, uppercov, LieExpGaussianWrappedKind, ConcentrGaussKernelKind
+    statekind::T                            # Position{2}
+    partial::AbstractPartialTrait #& (json = (ignore = true,),)          # partials field needed for AMP v0.15, will be JSON ignored in DFG v0.29, needs better solution by DFG v0.30
 end
 
 # # UX -- DataLevel 3 if OPTION A
@@ -123,7 +116,6 @@ end
 # X1 = getState(:research1).belief  ::HomotopyDensityDFG{Pose2}   # principals look completely different
 # # is this dynamic -- 
 # plot(X1::HomotopyDensityDFG) = plot(what_topology(X1), X1)
-
 
 # struct HomotopyReprLive{O <: AbstractHomotopyTopology, R <: AbstractDensityForm, T <: StateType}
 #   ...
@@ -149,8 +141,6 @@ end
 # repr = HomotopyDensityLive{HomotopyReprLive{FancyPrincipalTrailingSecondOrder, , }}
 # dothis(getReprType(repr), repr)  -->  (prinicipal::FancyStats, trailing::SecondOrderStats)
 
-
-
 # typeof(Pose2()) = Pose2
 # getKind(...) -> Pose2()
 
@@ -174,7 +164,6 @@ end
 # ConcGaussianKernelKind <: AbstractDensityForm
 # SecondOrderStatsKind <: AbstractDensityForm
 
-
 # # this is a good "reprtype", what Dehann is trying
 # {
 #     "topology": "BinaryTruncFixedDepth{3}",
@@ -182,16 +171,12 @@ end
 #     "statetype": "Pose2",
 # }
 
-
 # # this is a bad "reprtype", what Dehann already avoided
 # {
 #     "topology": "BinaryTruncFixedDepth{3}",
 #     "reprtype": "ConcentratedGaussianKernel{this, that, whatever}",
 #     "statetype": "Pose2",
 # }
-
-
-
 
 """
     HomotopyDensityDFG{H <: HomotopyRepr, P}
@@ -217,10 +202,10 @@ provided by AMP for features like pdf evaluation.
 @kwdef struct HomotopyDensityDFG{T <: StateType, P}
     statekind::T = T()# NOTE duplication for serialization and self description.
     reprkind::HomotopyReprDFG{T} = HomotopyReprDFG{T}(
-        DefaultTopologyKind(), 
-        DefaultFormKind(), 
-        T(), 
-        DefaultPartialKind()
+        DefaultTopologyKind(),
+        DefaultFormKind(),
+        T(),
+        DefaultPartialKind(),
     ) # NOTE duplication for serialization and self description. FIXME this is redundant with statekind, but we need it to be a struct for serde, so we duplicate the statekind info here for now. Future refactor could unify these concepts better.
     """A hint for downstream solvers on how to interpret this data (The 'How')"""
     topologykind::AbstractHomotopyTopology = LeavesOnlyTopology()
@@ -240,17 +225,15 @@ provided by AMP for features like pdf evaluation.
     - When lifted for compute efficiency, this field is likely to hold something like PDMats.
     - When lowered or for serde, this field is likely to hold Dict{Int, Vector{Float64}}.
     """
-    trailing_forms::Dict{Int,Matrix{Float64}} = Dict(
-      # 1 => Matrix{Float64}(I, manifold_dimension(getManifold(statekind)), manifold_dimension(getManifold(statekind)))
+    trailing_forms::Dict{Int, Matrix{Float64}} = Dict(
+    # 1 => Matrix{Float64}(I, manifold_dimension(getManifold(statekind)), manifold_dimension(getManifold(statekind)))
     )
-        #Matrix{Float64}[] #previously `bw` ---
+    #Matrix{Float64}[] #previously `bw` ---
     """
     Geometric points permute field, allows fast binary tree operations and geometric points splits for manellic (ball) trees. 
     - Geometric split reqs at least 2*(N+1)-1 points -- e.g. when nodes have only right children, points=[1,2,-3].
     """
-    structure::Dict{Int,Vector{Int}} = Dict(
-      1 => collect(1:length(points))
-    )
+    structure::Dict{Int, Vector{Int}} = Dict(1 => collect(1:length(points)))
 end
 
 JSON.omit_empty(::Type{<:HomotopyDensityDFG}) = true
@@ -298,4 +281,3 @@ function resolveHomotopyDensityDFGType(lazyobj)
 end
 
 @choosetype HomotopyDensityDFG resolveHomotopyDensityDFGType
-
