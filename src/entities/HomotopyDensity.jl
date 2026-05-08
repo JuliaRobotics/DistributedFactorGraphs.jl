@@ -7,9 +7,7 @@
 abstract type AbstractStateType{N} end
 const StateType = AbstractStateType
 
-# ==============================================================================
-#  HomotopyDensityDFG
-# ==============================================================================
+
 """
     AbstractHomotopyTopology
 
@@ -65,10 +63,23 @@ function StructUtils.lower(::StructUtils.StructStyle, p::AbstractDensityForm)
 end
 @choosetype AbstractDensityForm resolvePackedType
 
+# TBD for best future looking structure here
+abstract type AbstractPartialTrait end
+function StructUtils.lower(::StructUtils.StructStyle, p::AbstractPartialTrait)
+    return StructUtils.lower(Packed(p))
+end
+@choosetype AbstractPartialTrait resolvePackedType
+
+
 struct DefaultFormKind <: AbstractDensityForm end
 
 struct DefaultTopologyKind <: AbstractHomotopyTopology end
 
+struct DefaultPartialKind <: AbstractPartialTrait end
+
+# ==============================================================================
+#  HomotopyDensityDFG
+# ==============================================================================
 
 
 # FROM AMP
@@ -100,10 +111,11 @@ struct DefaultTopologyKind <: AbstractHomotopyTopology end
 #  Cons 
 #   - not itself a singleton type (not important?)
 # DOCS FORCE FIELDS TO BE SINGLETON
-mutable struct HomotopyReprDFG{T <: StateType}
+@tags mutable struct HomotopyReprDFG{T <: StateType}
   topologykind::AbstractHomotopyTopology  # bitmap, jpeg, png
-  reprkind::AbstractDensityForm      # RGB24, YCbCr, fullcov, uppercov, LieExpGaussianWrappedKind, ConcentrGaussKernelKind
-  statekind::T                        # Position{2}
+  reprkind::AbstractDensityForm           # RGB24, YCbCr, fullcov, uppercov, LieExpGaussianWrappedKind, ConcentrGaussKernelKind
+  statekind::T                            # Position{2}
+  partial::AbstractPartialTrait #& (json = (ignore = true,),)          # partials field needed for AMP v0.15, will be JSON ignored in DFG v0.29, needs better solution by DFG v0.30
 end
 
 # # UX -- DataLevel 3 if OPTION A
@@ -204,7 +216,12 @@ provided by AMP for features like pdf evaluation.
 """
 @kwdef struct HomotopyDensityDFG{T <: StateType, P}
     statekind::T = T()# NOTE duplication for serialization and self description.
-    reprkind::HomotopyReprDFG{T} = HomotopyReprDFG{T}(DefaultTopologyKind(), DefaultFormKind(), T()) # NOTE duplication for serialization and self description. FIXME this is redundant with statekind, but we need it to be a struct for serde, so we duplicate the statekind info here for now. Future refactor could unify these concepts better.
+    reprkind::HomotopyReprDFG{T} = HomotopyReprDFG{T}(
+        DefaultTopologyKind(), 
+        DefaultFormKind(), 
+        T(), 
+        DefaultPartialKind()
+    ) # NOTE duplication for serialization and self description. FIXME this is redundant with statekind, but we need it to be a struct for serde, so we duplicate the statekind info here for now. Future refactor could unify these concepts better.
     """A hint for downstream solvers on how to interpret this data (The 'How')"""
     topologykind::AbstractHomotopyTopology = LeavesOnlyTopology()
 
@@ -217,13 +234,13 @@ provided by AMP for features like pdf evaluation.
     """
     principal_coeffs::Vector{Float64} = Vector{Float64}() # FIXME getMajorsLength(reprkind))
     principal_elements::Vector{P} = P[] # previously `val[1]` for Gaussian
-    principal_details::Vector{Matrix{Float64}} = Matrix{Float64}[] # previously `covar` existed but was stored in `bw` (hacky)
+    principal_forms::Vector{Matrix{Float64}} = Matrix{Float64}[] # previously `covar` existed but was stored in `bw` (hacky)
     """
     Store minor eigenvalue details such as leaf bandwidth or reconstruction vectors.
     - When lifted for compute efficiency, this field is likely to hold something like PDMats.
     - When lowered or for serde, this field is likely to hold Dict{Int, Vector{Float64}}.
     """
-    trailing_details::Dict{Int,Matrix{Float64}} = Dict(
+    trailing_forms::Dict{Int,Matrix{Float64}} = Dict(
       # 1 => Matrix{Float64}(I, manifold_dimension(getManifold(statekind)), manifold_dimension(getManifold(statekind)))
     )
         #Matrix{Float64}[] #previously `bw` ---
@@ -246,7 +263,7 @@ function HomotopyDensityDFG(::LeavesOnlyTopology, T::AbstractStateType; kwargs..
     return HomotopyDensityDFG{typeof(T), getPointType(T)}(;
         statekind = T,
         topologykind = LeavesOnlyTopology(),
-        trailing_details = Dict{Int, Matrix{Float64}}(),
+        trailing_forms = Dict{Int, Matrix{Float64}}(),
         kwargs...,
     )
 end
@@ -268,10 +285,10 @@ function StructUtils.fielddefaults(
         topologykind = LeavesOnlyTopology(),
         principal_coeffs = Float64[],
         principal_elements = P[],
-        principal_details = Matrix{Float64}[],
+        principal_forms = Matrix{Float64}[],
         weights = Float64[],
         points = P[],
-        trailing_details = Dict{Int, Matrix{Float64}}(),
+        trailing_forms = Dict{Int, Matrix{Float64}}(),
     )
 end
 

@@ -63,7 +63,7 @@ end
             DFG.RootsOnlyTopology(),
             Pose{3}();
             principal_elements = [DFG.getPointIdentity(Pose{3}())],
-            principal_details = [diagm(ones(dim))],
+            principal_forms = [diagm(ones(dim))],
         )
         jstr = JSON.json(bel; pretty = true, style = DFG.DFGJSONStyle())
         parsed = JSON.parse(jstr, DFG.HomotopyDensityDFG; style = DFG.DFGJSONStyle())

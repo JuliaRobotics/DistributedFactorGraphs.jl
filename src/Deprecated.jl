@@ -2,11 +2,11 @@
 
 
 refMeans(state::State) = state.belief.principal_elements
-refCovariances(state::State) = state.belief.principal_details
+refCovariances(state::State) = state.belief.principal_forms
 refWeights(state::State) = state.belief.weights
 refPoints(state::State) = state.belief.points
-refBandwidth(state::State) = state.belief.trailing_details[1]
-refBandwidths(state::State) = values(state.belief.trailing_details) # FIXME, unordered will be a problem
+refBandwidth(state::State) = state.belief.trailing_forms[1]
+refBandwidths(state::State) = values(state.belief.trailing_forms) # FIXME, unordered will be a problem
 getTopologyKind(state::State) = state.belief.topologykind
 
 
@@ -18,9 +18,9 @@ function getproperty(obj::HomotopyDensityDFG, f::Symbol)
   ret = if f === :means
     getfield(obj, :principal_elements)
   elseif f === :shapes
-    getfield(obj, :principal_details)
+    getfield(obj, :principal_forms)
   elseif f === :bandwidths
-    getfield(obj, :trailing_details)
+    getfield(obj, :trailing_forms)
   else
     showerr = false
     getfield(obj, f)
@@ -35,9 +35,9 @@ function setproperty!(obj::HomotopyDensityDFG, f::Symbol, val)
   ret = if f === :means
     setfield!(obj, :principal_elements, val)
   elseif f === :shapes
-    setfield!(obj, :principal_details, val)
+    setfield!(obj, :principal_forms, val)
   elseif f === :bandwidths
-    setfield!(obj, :trailing_details, val)
+    setfield!(obj, :trailing_forms, val)
   else
     showerr = false
     setfield!(obj, f, val)

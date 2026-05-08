@@ -135,14 +135,14 @@ function unpackOldState(d)
             RootsOnlyTopology(),
             statekind;
             principal_elements = vals,
-            principal_details = [BW],
+            principal_forms = [BW],
         )
     else
         belief = HomotopyDensityDFG(
             LeavesOnlyTopology(),
             statekind;
             points = vals,
-            trailing_details = Dict(1 => BW),
+            trailing_forms = Dict(1 => BW),
         )
     end
     return State{T, getPointType(T)}(;
