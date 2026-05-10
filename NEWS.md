@@ -1,6 +1,9 @@
 Listing news on any major breaking changes in DFG.  For regular changes, see integrated Github.com project milestones for DFG.
 
 # v0.29
+- Breaking: Serialized types finalized toward DFG v1, see #1177 and sub-issues.
+  Serialization is breaking from v0.28 towards a version to remain stable within v1.
+  `State.belief` fields and related abstract types are still considered **unstable** and will be finalized in a future releases.
 - `AbstractPointParametricEst` (`MeanMaxPPE`) and related `PPE` functions are obsolete, see #1133.
 - Rename filter keyword arguments to `where`-prefixed form:
   - `solvableFilter` -> `whereSolvable`
