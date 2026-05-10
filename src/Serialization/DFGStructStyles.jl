@@ -53,6 +53,7 @@ function StructUtils.lift(::DFGJSONStyle, ::Type{TimeDateZone}, x::AbstractStrin
 end
 
 #TODO StructUtils v2.7 adds support for StaticArrays, update, test, and remove these overloads if they work as expected
+# does not work in v2.7.0 without these overloads.
 # SArray serialization overloads
 StructUtils.lower(::DFGJSONStyle, x::SArray) = x
 
@@ -106,3 +107,17 @@ end
 # function StructUtils.lift(::DFGJSONStyle, ::Type{T}, x::JSON.LazyValue) where T <: Complex 
 #     return T(x.re[], x.im[]), nothing
 # end
+
+# SparseVector — serialize as struct (n, nzind, nzval fields).
+# Must override arraylike since SparseVector <: AbstractVector.
+# lower avoids isassigned dispatch going through getindex→zero(eltype).
+StructUtils.structlike(::DFGJSONStyle, ::Type{<:SparseVector}) = true
+StructUtils.arraylike(::DFGJSONStyle, ::Type{<:SparseVector}) = false
+
+function StructUtils.lower(::DFGJSONStyle, x::SparseVector)
+    return (
+        n = length(x),
+        nzind = SparseArrays.nonzeroinds(x),
+        nzval = SparseArrays.nonzeros(x),
+    )
+end

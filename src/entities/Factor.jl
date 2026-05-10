@@ -30,7 +30,7 @@ end
     eliminated::Bool = false
     potentialused::Bool = false
 end
-
+#TODO add `tension` and consider keying as per variable statelabel
 ##==============================================================================
 ## Factors
 ##==============================================================================

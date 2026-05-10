@@ -1,49 +1,3 @@
-
-refMeans(state::State) = state.belief.principal_elements
-refCovariances(state::State) = state.belief.principal_forms
-refWeights(state::State) = state.belief.weights
-refPoints(state::State) = state.belief.points
-refBandwidth(state::State) = state.belief.trailing_forms[1]
-refBandwidths(state::State) = values(state.belief.trailing_forms) # FIXME, unordered will be a problem
-getTopologyKind(state::State) = state.belief.topologykind
-
-# # TODO deprecate
-import Base: getproperty, setproperty!
-
-function getproperty(obj::HomotopyDensityDFG, f::Symbol)
-    showerr = true
-    ret = if f === :means
-        getfield(obj, :principal_elements)
-    elseif f === :shapes
-        getfield(obj, :principal_forms)
-    elseif f === :bandwidths
-        getfield(obj, :trailing_forms)
-    else
-        showerr = false
-        getfield(obj, f)
-    end
-
-    showerr && @error("HomotopyDensityDFG field access with $(f) is deprecated")
-    return ret
-end
-
-function setproperty!(obj::HomotopyDensityDFG, f::Symbol, val)
-    showerr = true
-    ret = if f === :means
-        setfield!(obj, :principal_elements, val)
-    elseif f === :shapes
-        setfield!(obj, :principal_forms, val)
-    elseif f === :bandwidths
-        setfield!(obj, :trailing_forms, val)
-    else
-        showerr = false
-        setfield!(obj, f, val)
-    end
-
-    showerr && @error("HomotopyDensityDFG field access with $(f) is deprecated")
-    return ret
-end
-
 ## ================================================================================
 ## Deprecated in v0.29
 ##=================================================================================
@@ -816,11 +770,31 @@ end
     to `solveTree!()` as a keyword argument instead.
 """
 function getSolverParams(dfg::AbstractDFG)
-    #FIXME uncomment before committing only temp for spamming 
-    # Base.depwarn(
-    #     "getSolverParams(dfg) is deprecated. SolverParams will be removed from the DFG object. " *
-    #     "Pass SolverParams directly to solveTree!() as a keyword argument instead.",
-    #     :getSolverParams,
-    # )
+    Base.depwarn(
+        "getSolverParams(dfg) is deprecated. SolverParams will be removed from the DFG object. " *
+        "Pass SolverParams directly to solveTree!() as a keyword argument instead.",
+        :getSolverParams,
+    )
     return dfg.solverParams
 end
+
+# TODO
+# The `ref*` accessors use topology-specific lens names while the fields use topology-neutral homotopy names:
+# Something like:
+# refPrincipalElements(state::State) = state.belief.principal_elements
+# refPrincipalForms(state::State) = state.belief.principal_forms
+# refTrailingForms(state::State) = state.belief.trailing_forms
+# Then IIF defines the lens-specific wrappers with topology dispatch, something like:
+# refMeans(state) = refPrincipalElements(state)          # RootsOnly view
+# refCovariances(state) = refPrincipalForms(state)       # RootsOnly view  
+# refBandwidth(state) = refTrailingForms(state)[1]       # LeavesOnly view
+# But my (JT) preference is for HomotopyBeliefDFG to contain a neutral homotopy tree of nodes
+# and use tree accessors on the node level and not raw references. 
+
+refMeans(state::State) = state.belief.principal_elements
+refCovariances(state::State) = state.belief.principal_forms
+refWeights(state::State) = state.belief.weights
+refPoints(state::State) = state.belief.points
+refBandwidth(state::State) = state.belief.trailing_forms[1]
+refBandwidths(state::State) = SparseArrays.nonzeros(state.belief.trailing_forms)
+getTopologyKind(state::State) = state.belief.topologykind

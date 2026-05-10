@@ -155,12 +155,16 @@ end
 #Compare State
 function compare(a::State, b::State)
     refPoints(a) != refPoints(b) && @debug("val is not equal") === nothing && return false
-    TP = true
-    for (k, v) in refBandwidths(a)
-        TP = TP && haskey(refBandwidths(b), k)
-        TP = TP && isapprox(v, refBandwidths(b)[k]; rtol = 1e-8)
+    bwa = a.belief.trailing_forms
+    bwb = b.belief.trailing_forms
+    SparseArrays.nonzeroinds(bwa) != SparseArrays.nonzeroinds(bwb) &&
+        @debug("bw indices not equal") === nothing &&
+        return false
+    for (va, vb) in zip(SparseArrays.nonzeros(bwa), SparseArrays.nonzeros(bwb))
+        !isapprox(va, vb; rtol = 1e-8) &&
+            @debug("bw is not equal") === nothing &&
+            return false
     end
-    !TP && @debug("bw is not equal") === nothing && return false
     # a.BayesNetOutVertIDs != b.BayesNetOutVertIDs &&
     #     @debug("BayesNetOutVertIDs is not equal") === nothing &&
     #     return false

@@ -85,7 +85,7 @@ function StructUtils.fielddefaults(
     ::Type{State{T, P}},
 ) where {T, P}
     return (
-        belief = HomotopyDensityDFG{T, P}(; statekind = T()),
+        belief = HomotopyDensityDFG{T, P}(),
         separator = Symbol[],
         initialized = false,
         observability = Float64[],

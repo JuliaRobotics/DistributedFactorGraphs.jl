@@ -59,9 +59,7 @@ end
 
     @testset "RootsOnlyTopology round-trip" begin
         dim = DFG.getDimension(Pose{3}())
-        bel = DFG.HomotopyDensityDFG(
-            DFG.RootsOnlyTopology(),
-            Pose{3}();
+        bel = DFG.HomotopyDensityDFG{typeof(Pose{3}()), DFG.getPointType(Pose{3}())}(;
             principal_elements = [DFG.getPointIdentity(Pose{3}())],
             principal_forms = [diagm(ones(dim))],
         )
@@ -100,7 +98,7 @@ end
 
     @testset "VariableSummary from VariableDFG" begin
         v = make_test_variable()
-        vs = VariableSummary(v)
+        vs = DFG.VariableSummary(v)
         @test vs.label == :x1
         @test vs.tags == v.tags
         @test vs.solvable[] == v.solvable[]
