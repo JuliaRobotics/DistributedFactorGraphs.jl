@@ -61,7 +61,7 @@ function printVariable(
             bws = refBandwidths(vnd)
             if !isempty(bws)
                 print(ioc, "      kde bandwidths:    ")
-                println(ioc, round.(bws[1]; digits = 4))
+                println(ioc, round.(first(bws); digits = 4))
             end
             printstyled(ioc, "     VNDs: "; bold = true)
             println(ioc, solk[smsk], 4 < lsolk ? "..." : "")

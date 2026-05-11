@@ -27,22 +27,6 @@ getGraphLabel(dfg::AbstractDFG) = getLabel(getGraph(dfg))
 """
     $(SIGNATURES)
 
-!!! warning "Deprecated"
-    `getSolverParams(dfg)` is deprecated in DFG v0.29 Pass `SolverParams` directly
-    to `solveTree!()` as a keyword argument instead.
-"""
-function getSolverParams(dfg::AbstractDFG)
-    Base.depwarn(
-        "getSolverParams(dfg) is deprecated. SolverParams will be removed from the DFG object. " *
-        "Pass SolverParams directly to solveTree!() as a keyword argument instead.",
-        :getSolverParams,
-    )
-    return dfg.solverParams
-end
-
-"""
-    $(SIGNATURES)
-
 Method must be overloaded by the user for Serialization to work.
 """
 function rebuildFactorCache!(dfg::AbstractDFG, factor::AbstractGraphFactor, neighbors = [])

@@ -131,18 +131,14 @@ function unpackOldState(d)
     label = Symbol(d.solveKey)
     !isempty(d.covar) && error("covar field is not supported")
     if label == :parametric
-        belief = StoredHomotopyBelief(
-            RootsOnlyTopology(),
-            statekind;
-            means = vals,
-            shapes = [BW],
+        belief = HomotopyDensityDFG{T, getPointType(T)}(;
+            principal_elements = vals,
+            principal_forms = [BW],
         )
     else
-        belief = StoredHomotopyBelief(
-            LeavesOnlyTopology(),
-            statekind;
+        belief = HomotopyDensityDFG{T, getPointType(T)}(;
             points = vals,
-            bandwidths = [BW],
+            trailing_forms = sparsevec(Dict(1 => BW)),
         )
     end
     return State{T, getPointType(T)}(;

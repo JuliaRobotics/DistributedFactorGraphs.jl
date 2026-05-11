@@ -46,27 +46,25 @@ function make_test_variable()
 end
 
 @testset "Serializing Variables" begin
-    @testset "StoredHomotopyBelief round-trip" begin
-        bel = DFG.StoredHomotopyBelief(Pose{3}())
+    @testset "HomotopyDensityDFG round-trip" begin
+        bel = DFG.HomotopyDensityDFG(Pose{3}())
         push!(bel.points, DFG.getPointIdentity(Pose{3}()))
         G = DFG.getManifold(Pose{3}())
         push!(bel.points, rand(G, ArrayPartition))
 
         jstr = JSON.json(bel; pretty = true, style = DFG.DFGJSONStyle())
-        parsed = JSON.parse(jstr, DFG.StoredHomotopyBelief; style = DFG.DFGJSONStyle())
+        parsed = JSON.parse(jstr, DFG.HomotopyDensityDFG; style = DFG.DFGJSONStyle())
         @test bel == parsed
     end
 
-    @testset "RootsOnlyTopology round-trip" begin
+    @testset "HomotopyDensityDFG round-trip with roots only" begin
         dim = DFG.getDimension(Pose{3}())
-        bel = DFG.StoredHomotopyBelief(
-            DFG.RootsOnlyTopology(),
-            Pose{3}();
-            means = [DFG.getPointIdentity(Pose{3}())],
-            shapes = [diagm(ones(dim))],
+        bel = DFG.HomotopyDensityDFG{typeof(Pose{3}()), DFG.getPointType(Pose{3}())}(;
+            principal_elements = [DFG.getPointIdentity(Pose{3}())],
+            principal_forms = [diagm(ones(dim))],
         )
         jstr = JSON.json(bel; pretty = true, style = DFG.DFGJSONStyle())
-        parsed = JSON.parse(jstr, DFG.StoredHomotopyBelief; style = DFG.DFGJSONStyle())
+        parsed = JSON.parse(jstr, DFG.HomotopyDensityDFG; style = DFG.DFGJSONStyle())
         @test bel == parsed
     end
 
@@ -100,7 +98,7 @@ end
 
     @testset "VariableSummary from VariableDFG" begin
         v = make_test_variable()
-        vs = VariableSummary(v)
+        vs = DFG.VariableSummary(v)
         @test vs.label == :x1
         @test vs.tags == v.tags
         @test vs.solvable[] == v.solvable[]

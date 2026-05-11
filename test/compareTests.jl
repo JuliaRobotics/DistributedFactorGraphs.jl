@@ -6,6 +6,8 @@ using Dates
 # TestFunctorInferenceType1
 # TestCCW1
 
+DistributedFactorGraphs.@usingDFG true
+
 ## Generated compare functions
 # State
 vnd1 = State(:default, TestVariableType1())
