@@ -21,12 +21,8 @@ function StructUtils.lower(::StructUtils.StructStyle, p::AbstractDensityForm)
 end
 @choosetype AbstractDensityForm resolvePackedType
 
-# TBD for best future looking structure here
+# TBD for best future looking structure here. ignore = true, so no serialization
 abstract type AbstractPartialTrait end
-function StructUtils.lower(::StructUtils.StructStyle, p::AbstractPartialTrait)
-    return StructUtils.lower(Packed(p))
-end
-@choosetype AbstractPartialTrait resolvePackedType
 
 # ==============================================================================
 #  HomotopyDensityDFG
@@ -109,17 +105,6 @@ JSON.omit_empty(::Type{<:HomotopyDensityDFG}) = true
 
 function HomotopyDensityDFG(T::AbstractStateType)
     return HomotopyDensityDFG{typeof(T), getPointType(T)}()
-end
-
-function HomotopyDensityDFG(
-    topology::AbstractHomotopyTopology,
-    T::AbstractStateType;
-    kwargs...,
-)
-    return HomotopyDensityDFG{typeof(T), getPointType(T)}(;
-        topologykind = topology,
-        kwargs...,
-    )
 end
 
 function StructUtils.fielddefaults(
