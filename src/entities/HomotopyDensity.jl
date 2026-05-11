@@ -56,7 +56,7 @@ end
 @choosetype HomotopyReprDFG resolveHomotopyReprDFGType
 
 """
-    HomotopyDensityDFG{H <: HomotopyRepr, P}
+    HomotopyDensityDFG{T <: StateType, P}
 
 Hybrid belief representation with natural transition between (non)parametric representations.
 

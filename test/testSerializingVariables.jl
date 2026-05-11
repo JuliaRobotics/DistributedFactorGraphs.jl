@@ -57,7 +57,7 @@ end
         @test bel == parsed
     end
 
-    @testset "RootsOnlyTopology round-trip" begin
+    @testset "HomotopyDensityDFG round-trip with roots only" begin
         dim = DFG.getDimension(Pose{3}())
         bel = DFG.HomotopyDensityDFG{typeof(Pose{3}()), DFG.getPointType(Pose{3}())}(;
             principal_elements = [DFG.getPointIdentity(Pose{3}())],
