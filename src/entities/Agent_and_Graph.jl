@@ -5,6 +5,8 @@
     tags::Set{Symbol} = Set{Symbol}()
     bloblets::Bloblets = Bloblets()
     blobentries::Blobentries = Blobentries()
+    """ DFG types serialization format version."""
+    version::VersionNumber = DFG.DFG_TYPES_VERSION
 end
 
 @kwdef mutable struct Graphroot
@@ -13,6 +15,8 @@ end
     tags::Set{Symbol} = Set{Symbol}()
     bloblets::Bloblets = Bloblets()
     blobentries::Blobentries = Blobentries()
+    """ DFG types serialization format version."""
+    version::VersionNumber = DFG.DFG_TYPES_VERSION
 end
 
 #TODO

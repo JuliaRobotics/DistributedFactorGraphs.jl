@@ -91,14 +91,12 @@ StructUtils.@kwarg struct FactorDFG{T <: AbstractObservation, N} <: AbstractGrap
     solvercache::Base.RefValue{<:FactorCache} = Ref{FactorCache}() & (ignore = true,)#TODO easy of use vs. performance as container is abstract in any case.
     """Blobentries associated with this factor."""
     blobentries::Blobentries = Blobentries() #NOTE v0.29 added
-    """Internal: used for automatic type metadata generation."""
-    _autotype::Nothing = nothing & (name = :type, lower = _ -> TypeMetadata(FactorDFG))
+    """ DFG types serialization format version."""
+    version::VersionNumber = DFG.DFG_TYPES_VERSION
 end
 
-version(::Type{<:FactorDFG}) = v"0.29.0"
-
-##------------------------------------------------------------------------------
-## Constructors - IIF like
+#------------------------------------------------------------------------------
+# Constructors - IIF like
 function FactorDFG(
     variableorder::Union{<:Tuple, Vector{Symbol}},
     observation::AbstractObservation;
@@ -201,7 +199,7 @@ function FactorDFG(
         state,
         solvercache,
         blobentries,
-        nothing,
+        DFG_TYPES_VERSION,
     )
 end
 

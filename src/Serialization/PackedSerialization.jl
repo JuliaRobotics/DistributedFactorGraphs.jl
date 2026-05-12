@@ -69,8 +69,17 @@ See also: [`pack`](@ref), [`Packed`](@ref)
 """
 function unpack end
 
-version(::Type{T}) where {T} = pkgversion(parentmodule(T))
-# version(node) = node.version
+"""
+    DFG_TYPES_VERSION
+
+DFG types serialization format version, tracked separately from `pkgversion(DistributedFactorGraphs)`.
+All independently serialized DFG CRUD nodes (`VariableDFG`, `FactorDFG`, `State`, `Blobentry`,
+`Agent`, `Graphroot`) embed this version so that serialized data remains compatible
+across minor/patch releases of the DFG package.
+
+Bump this when any serialized DFG type changes its field layout.
+"""
+const DFG_TYPES_VERSION::VersionNumber = v"0.1"
 
 """
     TypeMetadata(pkg, name, version)
@@ -91,7 +100,8 @@ struct TypeMetadata
 end
 
 function TypeMetadata(::Type{T}) where {T}
-    return TypeMetadata(fullname(parentmodule(T))[1], nameof(T), version(T))
+    mod = parentmodule(T)
+    return TypeMetadata(fullname(mod)[1], nameof(T), pkgversion(mod))
 end
 
 """

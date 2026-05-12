@@ -30,10 +30,10 @@ StructUtils.@kwarg struct Blobentry
     metadata::JSONText = JSONText("{}")
     """ When the Blob itself was first created. Serialized as an ISO 8601 string."""
     timestamp::TimeDateZone = now_tdz()
-    """ Type version of this Blobentry."""
-    version::VersionNumber = DFG.version(Blobentry)
+    """ DFG serialization format version."""
+    """ DFG types serialization format version."""
+    version::VersionNumber = DFG.DFG_TYPES_VERSION
 end
-version(::Type{Blobentry}) = v"0.1.0"
 
 # construction helper from existing Blobentry for user overriding via kwargs
 function Blobentry(entry::Blobentry; kwargs...)
