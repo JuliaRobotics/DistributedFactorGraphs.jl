@@ -80,8 +80,6 @@ provided by AMP for features like pdf evaluation.
     how to interpret this object.  By analogy, and image is an image, but might be stored bitmap, jpeg, png, and use RGB24, YCbCr, etc."""
     reprkind::HomotopyReprDFG{T} =
         HomotopyReprDFG(DefaultTopologyKind(), DefaultFormKind(), T(), nothing)
-    """A hint for downstream solvers on how to interpret this data (The 'How')"""
-    topologykind::AbstractHomotopyTopology = DefaultTopologyKind()
     """Stores the amount of information captured in each coordinate dimension."""
     observability::Vector{Float64} = Float64[] #zeros(getDimension(T)) #TODO renamed from infoPerCoord in v0.29
     """
@@ -122,7 +120,6 @@ function StructUtils.fielddefaults(
     ::Type{HomotopyDensityDFG{T, P}},
 ) where {T, P}
     return (
-        topologykind = DefaultTopologyKind(),
         observability = Float64[],
         principal_coeffs = Float64[],
         principal_elements = P[],
