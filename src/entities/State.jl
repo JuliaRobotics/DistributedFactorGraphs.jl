@@ -26,8 +26,6 @@ $(TYPEDFIELDS)
     separator::Vector{Symbol} = Symbol[]
     """False if initial numerical values are not yet available or stored values are not ready for further processing yet."""
     initialized::Bool = false
-    """Stores the amount of information captured in each coordinate dimension."""
-    observability::Vector{Float64} = Float64[]#zeros(getDimension(T)) #TODO renamed from infoPerCoord in v0.29
     """Should this state be treated as marginalized in inference computations."""
     marginalized::Bool = false #TODO renamed from ismargin v0.29
     """How many times has a solver updated this state estimate."""
@@ -88,7 +86,6 @@ function StructUtils.fielddefaults(
         belief = HomotopyDensityDFG{T, P}(),
         separator = Symbol[],
         initialized = false,
-        observability = Float64[],
         marginalized = false,
         solves = 0,
         statekind = T(),
