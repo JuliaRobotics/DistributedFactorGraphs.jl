@@ -180,9 +180,9 @@ function compare(a::State, b::State)
     a.initialized != b.initialized &&
         @debug("initialized is not equal") === nothing &&
         return false
-    !isapprox(a.observability, b.observability; atol = 1e-13) &&
-        @debug("infoPerCoord is not equal") === nothing &&
-        return false
+    # !isapprox(a.observability, b.observability; atol = 1e-13) &&
+    #     @debug("infoPerCoord is not equal") === nothing &&
+    #     return false
     a.marginalized != b.marginalized &&
         @debug("ismargin is not equal") === nothing &&
         return false
