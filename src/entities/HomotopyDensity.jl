@@ -54,14 +54,17 @@ end
 """
     HomotopyDensityDFG{T <: StateType, P}
 
-Hybrid belief representation with natural transition between (non)parametric representations.
+Hybrid belief representation with natural transition between hybrid-(non)parametric representations.
+This type better allows apples to apples comparisons between divergent beliefs, by means of
+ a powerful enough density representation.
 
 **THIS IS IMPORTANT**: Fundamentally related to `HomotopyDensity` definition in AMP.jl.
 
 !!! warning "Raw Data Container"
     `HomotopyDensityDFG` is the raw data schema used for database storage and serialization.
     Mutating this structure in-place is discouraged. Rather, construct a new `State` object 
-    and call `addState!` or `mergeState!`.
+    and call `addState!` or `mergeState!`.  Interaction should use API from HomotopyDensity provider
+    rather than raw reference access.
 
 Notes:
 - These are the internal raw beliefs and need to be viewed through a lens such as 
@@ -73,30 +76,37 @@ provided by AMP for features like pdf evaluation.
   - a.k.a. model order reduction given a topology selection
 """
 @kwdef struct HomotopyDensityDFG{T <: StateType, P}
+    """To make apples vs apples comparison of one belief to another, only the reprkind between densities are needed for understanding
+    how to interpret this object.  By analogy, and image is an image, but might be stored bitmap, jpeg, png, and use RGB24, YCbCr, etc."""
     reprkind::HomotopyReprDFG{T} =
         HomotopyReprDFG(DefaultTopologyKind(), DefaultFormKind(), T(), nothing)
     """A hint for downstream solvers on how to interpret this data (The 'How')"""
     topologykind::AbstractHomotopyTopology = DefaultTopologyKind()
-
-    points::Vector{P} = P[] # previously `val`
-    weights::Vector{Float64} = Float64[]
+    """Stores the amount of information captured in each coordinate dimension."""
+    observability::Vector{Float64} = Float64[] #zeros(getDimension(T)) #TODO renamed from infoPerCoord in v0.29
     """
     In model order reduction, PCA, and modal analysis, the terms for the eigenvectors associated with the largest and smallest eigenvalues are commonly:
-      Major eigenvectors are often called "dominant eigenvectors," or simply "leading modes." In Principal Component Analysis (PCA), these are the "principal components."
-      Minor eigenvectors are sometimes called "trailing eigenvectors," or "residual modes." In PCA, these correspond to the components with the smallest variance.
+      Principal/major/dominant/leading recon-basis/eigen vectors. In Principal Component Analysis (PCA), these are the "principal components."
+      Trailing/minor/residual recon-basis/eigen vectors. In PCA, these correspond to the components with the smallest variance.
     """
     principal_coeffs::Vector{Float64} = Vector{Float64}() # FIXME getMajorsLength(reprkind))
-    principal_elements::Vector{P} = P[] # previously `val[1]` for Gaussian
-    principal_forms::Vector{Matrix{Float64}} = Matrix{Float64}[] # previously `covar` existed but was stored in `bw` (hacky)
+    principal_elements::Vector{P} = P[] # FIXME, use ArrayPartion instead.  previously `val[1]` for Gaussian
+    principal_forms::Vector{Matrix{Float64}} = Matrix{Float64}[] # FIXME, use ArrayPartition instead # previously `covar` existed but was stored in `bw` (hacky)
+    """Input points may be weighted, and/or reused as part of reconstruction in the trailing forms."""
+    weights::Vector{Float64} = Float64[]
+    """Hard decision that input data are sample points from some manifold, but note the reconstruction might not use points at all."""
+    points::Vector{P} = P[] # previously `val`
     """
     Store minor eigenvalue details such as leaf bandwidth or reconstruction vectors.
-    - When lifted for compute efficiency, this field is likely to hold something like PDMats.
-    - When lowered or for serde, this field is likely to hold Dict{Int, Vector{Float64}}.
+    - Live compute version may hold something like PDMats/Cholesky.
+    - Stored version might be similar to a Gaussian splat
     """
-    trailing_forms::SparseVector{Matrix{Float64}, Int} = spzeros(Matrix{Float64}, 1) #previously `bw`
+    trailing_forms::SparseVector{Matrix{Float64}, Int} = spzeros(Matrix{Float64}, 1) # FIXME use ArrayPartion instead # previously `bw`
+
     """
     Geometric points permute field, allows fast binary tree operations and geometric points splits for manellic (ball) trees. 
-    - Geometric split reqs at least 2*(N+1)-1 points -- e.g. when nodes have only right children, points=[1,2,-3].
+    - Balanced split reqs at least 2*(N+1)-1 points, incl. right-only case -- e.g. when nodes have only right children, points=[1,2,-3].
+    - Unclear at time of writing whether DFG v1.X will exceed binary tree representations, but at least `.structure` allows for e.g. n-many child topologies.
     """
     structure::SparseVector{Vector{Int}, Int} = spzeros(Vector{Int}, 1)
 end
@@ -113,6 +123,7 @@ function StructUtils.fielddefaults(
 ) where {T, P}
     return (
         topologykind = DefaultTopologyKind(),
+        observability = Float64[],
         principal_coeffs = Float64[],
         principal_elements = P[],
         principal_forms = Matrix{Float64}[],

@@ -797,4 +797,5 @@ refWeights(state::State) = state.belief.weights
 refPoints(state::State) = state.belief.points
 refBandwidth(state::State) = state.belief.trailing_forms[1]
 refBandwidths(state::State) = SparseArrays.nonzeros(state.belief.trailing_forms)
+refObservability(state::State) = state.belief.observability
 getTopologyKind(state::State) = state.belief.topologykind
