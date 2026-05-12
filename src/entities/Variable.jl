@@ -52,10 +52,9 @@ $(TYPEDFIELDS)
     Accessors: [`getSolvable`](@ref), [`setSolvable!`](@ref)"""
     solvable::Base.RefValue{Int} = Ref{Int}(1) #& (lower = getindex,)
     statekind::T = T()
-    # TODO autotype or version and statekind
-    _autotype::Nothing = nothing #& (name = :type, lower = _ -> TypeMetadata(VariableDFG))
+    """ DFG types serialization format version."""
+    version::VersionNumber = DFG.DFG_TYPES_VERSION
 end
-version(::Type{<:VariableDFG}) = v"0.29"
 refStates(v::VariableDFG) = v.states
 
 #NOTE fielddefaults and fieldtags not through @kwarg macro due to error with State{T, P, N}
@@ -70,16 +69,15 @@ function StructUtils.fielddefaults(
         bloblets = Bloblets(),
         blobentries = Blobentries(),
         solvable = Ref(1),
-        _autotype = nothing,
+        version = DFG.DFG_TYPES_VERSION,
     )
 end
 
-function StructUtils.fieldtags(::StructUtils.StructStyle, ::Type{<:VariableDFG})
-    return (
-        _autotype = (name = :type, lower = _ -> TypeMetadata(VariableDFG)),
-        # solvable = (lower = getindex,),
-    )
-end
+# function StructUtils.fieldtags(::StructUtils.StructStyle, ::Type{<:VariableDFG})
+#     return (
+#         solvable = (lower = getindex,),
+#     )
+# end
 
 function resolveVariableDFGType(lazyobj)
     statekind = liftStateKind(lazyobj.statekind[])

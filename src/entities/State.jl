@@ -30,6 +30,8 @@ $(TYPEDFIELDS)
     marginalized::Bool = false #TODO renamed from ismargin v0.29
     """How many times has a solver updated this state estimate."""
     solves::Int = 0 # TODO renamed from solvedCount v0.29
+    """ DFG types serialization format version."""
+    version::VersionNumber = DFG.DFG_TYPES_VERSION
 end
 # OLD deprecated fields, removed in v0.29, kept here for reference during transition
 # val::Vector{P} = Vector{P}()
@@ -89,6 +91,7 @@ function StructUtils.fielddefaults(
         marginalized = false,
         solves = 0,
         statekind = T(),
+        version = DFG_TYPES_VERSION,
     )
 end
 

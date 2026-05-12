@@ -33,12 +33,12 @@ function GraphsDFG{T, V, F}(
     graphTags::Union{Set{Symbol}, Vector{Symbol}} = Set{Symbol}(),
     graphBloblets::Bloblets = Bloblets(),
     graphBlobentries = Blobentries(),
-    graph::Graphroot = Graphroot(
-        graphLabel,
-        graphDescription,
-        graphTags,
-        graphBloblets,
-        graphBlobentries,
+    graph::Graphroot = Graphroot(;
+        label = graphLabel,
+        description = graphDescription,
+        tags = graphTags,
+        bloblets = graphBloblets,
+        blobentries = graphBlobentries,
     ),
     agents::OrderedDict{Symbol, Agent} = OrderedDict{Symbol, Agent}(),
     #TODO deprecated v0.29
