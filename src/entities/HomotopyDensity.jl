@@ -77,26 +77,29 @@ provided by AMP for features like pdf evaluation.
         HomotopyReprDFG(DefaultTopologyKind(), DefaultFormKind(), T(), nothing)
     """A hint for downstream solvers on how to interpret this data (The 'How')"""
     topologykind::AbstractHomotopyTopology = DefaultTopologyKind()
-
+    """Stores the amount of information captured in each coordinate dimension."""
+    observability::Vector{Float64} = Float64[] #zeros(getDimension(T)) #TODO renamed from infoPerCoord in v0.29
+    """Hard decision that input data are sample points from some manifold, but note the reconstruction might not use points at all."""
     points::Vector{P} = P[] # previously `val`
+    """Input points may be weighted, and/or reused as part of reconstruction in the trailing forms."""
     weights::Vector{Float64} = Float64[]
     """
     In model order reduction, PCA, and modal analysis, the terms for the eigenvectors associated with the largest and smallest eigenvalues are commonly:
-      Major eigenvectors are often called "dominant eigenvectors," or simply "leading modes." In Principal Component Analysis (PCA), these are the "principal components."
-      Minor eigenvectors are sometimes called "trailing eigenvectors," or "residual modes." In PCA, these correspond to the components with the smallest variance.
+      Principal/major/dominant/leading recon-basis/eigen vectors. In Principal Component Analysis (PCA), these are the "principal components."
+      Trailing/minor/residual recon-basis/eigen vectors. In PCA, these correspond to the components with the smallest variance.
     """
     principal_coeffs::Vector{Float64} = Vector{Float64}() # FIXME getMajorsLength(reprkind))
     principal_elements::Vector{P} = P[] # previously `val[1]` for Gaussian
     principal_forms::Vector{Matrix{Float64}} = Matrix{Float64}[] # previously `covar` existed but was stored in `bw` (hacky)
     """
     Store minor eigenvalue details such as leaf bandwidth or reconstruction vectors.
-    - When lifted for compute efficiency, this field is likely to hold something like PDMats.
-    - When lowered or for serde, this field is likely to hold Dict{Int, Vector{Float64}}.
+    - Live compute version may hold something like PDMats/Cholesky.
     """
     trailing_forms::SparseVector{Matrix{Float64}, Int} = spzeros(Matrix{Float64}, 1) #previously `bw`
     """
     Geometric points permute field, allows fast binary tree operations and geometric points splits for manellic (ball) trees. 
-    - Geometric split reqs at least 2*(N+1)-1 points -- e.g. when nodes have only right children, points=[1,2,-3].
+    - Balanced split reqs at least 2*(N+1)-1 points, incl. right-only case -- e.g. when nodes have only right children, points=[1,2,-3].
+    - Unclear at time of writing whether DFG v1.X will exceed binary tree representations, but at least `.structure` allows for e.g. n-many child topologies.
     """
     structure::SparseVector{Vector{Int}, Int} = spzeros(Vector{Int}, 1)
 end
