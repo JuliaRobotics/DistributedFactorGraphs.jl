@@ -130,15 +130,17 @@ function unpackOldState(d)
     # 
     label = Symbol(d.solveKey)
     !isempty(d.covar) && error("covar field is not supported")
-    if label == :parametric
-        belief = HomotopyDensityDFG{T, getPointType(T)}(;
+    belief = if label == :parametric
+        HomotopyDensityDFG{T, getPointType(T)}(;
             principal_elements = vals,
             principal_forms = [BW],
+            observability = d.infoPerCoord,
         )
     else
-        belief = HomotopyDensityDFG{T, getPointType(T)}(;
+        HomotopyDensityDFG{T, getPointType(T)}(;
             points = vals,
             trailing_forms = sparsevec(Dict(1 => BW)),
+            observability = d.infoPerCoord,
         )
     end
     return State{T, getPointType(T)}(;
@@ -146,7 +148,6 @@ function unpackOldState(d)
         belief,
         separator = Symbol.(d.separator),
         initialized = d.initialized,
-        observability = d.infoPerCoord,
         marginalized = d.ismargin,
         solves = d.solvedCount,
     )

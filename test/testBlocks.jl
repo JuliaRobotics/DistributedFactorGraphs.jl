@@ -1865,7 +1865,7 @@ function FileDFGTestBlock(testDFGAPI; VARTYPE = VariableDFG, FACTYPE = FactorDFG
     # vnd.bw[1] = [1.0;]
     # vnd.dontmargin = true
     # vnd.eliminated = true
-    vnd.observability .= Float64[1.5;]
+    # vnd.observability .= Float64[1.5;]
     vnd.initialized = true
     vnd.marginalized = true
     push!(vnd.separator, :sep)
