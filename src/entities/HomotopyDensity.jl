@@ -90,7 +90,6 @@ provided by AMP for features like pdf evaluation.
     principal_coeffs::Vector{Float64} = Vector{Float64}() # FIXME getMajorsLength(reprkind))
     principal_elements::Vector{P} = P[] # previously `val[1]` for Gaussian
     principal_forms::Vector{Matrix{Float64}} = Matrix{Float64}[] # previously `covar` existed but was stored in `bw` (hacky)
-    
     """Input points may be weighted, and/or reused as part of reconstruction in the trailing forms."""
     weights::Vector{Float64} = Float64[]
     """Hard decision that input data are sample points from some manifold, but note the reconstruction might not use points at all."""
