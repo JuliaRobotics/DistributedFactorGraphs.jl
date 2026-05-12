@@ -116,6 +116,7 @@ function StructUtils.fielddefaults(
 ) where {T, P}
     return (
         topologykind = DefaultTopologyKind(),
+        observability = Float64[],
         principal_coeffs = Float64[],
         principal_elements = P[],
         principal_forms = Matrix{Float64}[],
