@@ -55,6 +55,8 @@ end
     HomotopyDensityDFG{T <: StateType, P}
 
 Hybrid belief representation with natural transition between hybrid-(non)parametric representations.
+This type better allows apples to apples comparisons between divergent beliefs, by means of
+ a powerful enough density representation.
 
 **THIS IS IMPORTANT**: Fundamentally related to `HomotopyDensity` definition in AMP.jl.
 
@@ -88,8 +90,8 @@ provided by AMP for features like pdf evaluation.
       Trailing/minor/residual recon-basis/eigen vectors. In PCA, these correspond to the components with the smallest variance.
     """
     principal_coeffs::Vector{Float64} = Vector{Float64}() # FIXME getMajorsLength(reprkind))
-    principal_elements::Vector{P} = P[] # previously `val[1]` for Gaussian
-    principal_forms::Vector{Matrix{Float64}} = Matrix{Float64}[] # previously `covar` existed but was stored in `bw` (hacky)
+    principal_elements::Vector{P} = P[] # FIXME, use ArrayPartion instead.  previously `val[1]` for Gaussian
+    principal_forms::Vector{Matrix{Float64}} = Matrix{Float64}[] # FIXME, use ArrayPartition instead # previously `covar` existed but was stored in `bw` (hacky)
     """Input points may be weighted, and/or reused as part of reconstruction in the trailing forms."""
     weights::Vector{Float64} = Float64[]
     """Hard decision that input data are sample points from some manifold, but note the reconstruction might not use points at all."""
@@ -97,8 +99,9 @@ provided by AMP for features like pdf evaluation.
     """
     Store minor eigenvalue details such as leaf bandwidth or reconstruction vectors.
     - Live compute version may hold something like PDMats/Cholesky.
+    - Stored version might be similar to a Gaussian splat
     """
-    trailing_forms::SparseVector{Matrix{Float64}, Int} = spzeros(Matrix{Float64}, 1) #previously `bw`
+    trailing_forms::SparseVector{Matrix{Float64}, Int} = spzeros(Matrix{Float64}, 1) # FIXME use ArrayPartion instead # previously `bw`
 
     """
     Geometric points permute field, allows fast binary tree operations and geometric points splits for manellic (ball) trees. 
