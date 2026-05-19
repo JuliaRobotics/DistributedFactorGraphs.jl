@@ -124,6 +124,7 @@ function VariableDFG(
     if solvable isa Int
         solvable = Ref(solvable)
     end
+    tags = tags isa Set ? tags : Set{Symbol}(tags)
     union!(tags, [:VARIABLE])
 
     P = getPointType(T)
