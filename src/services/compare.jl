@@ -219,7 +219,7 @@ function compareVariable(
     if !hasState(A, :default) && !hasState(B, :default)
         return false
     end
-    Ad = getState(A, :default) 
+    Ad = getState(A, :default)
     Bd = getState(B, :default)
 
     # TP = TP && compareAll(A.attributes, B.attributes, skip=[:variableType;], show=show)

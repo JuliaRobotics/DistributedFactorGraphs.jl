@@ -138,9 +138,15 @@ function FactorDFG(
         )
     end
     if length(variableorder) == 1 && observation isa AbstractRelativeObservation
-        throw(ArgumentError("Relative observation $(typeof(observation)) requires at least two variables, but only one was provided: $variableorder. Use a subtype of AbstractPriorObservation for single-variable factors."))
+        throw(
+            ArgumentError(
+                "Relative observation $(typeof(observation)) requires at least two variables, but only one was provided: $variableorder. Use a subtype of AbstractPriorObservation for single-variable factors.",
+            ),
+        )
     end
-    allunique(variableorder) || throw(ArgumentError("Variable order must be unique, got duplicates in $variableorder"))
+    allunique(variableorder) || throw(
+        ArgumentError("Variable order must be unique, got duplicates in $variableorder"),
+    )
 
     # create factor data
     hyper = Recipehyper(; multihypo, nullhypo, inflation)
