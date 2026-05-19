@@ -215,7 +215,11 @@ function compareVariable(
     union!(skiplist, skip)
     # TP = TP && compareAll(A.states, B.states; skip = skiplist, show = show)
 
-    Ad = getState(A, :default) #FIXME why onlly comparing default?
+    #FIXME why only comparing hardcoded default?
+    if !hasState(A, :default) && !hasState(B, :default)
+        return false
+    end
+    Ad = getState(A, :default) 
     Bd = getState(B, :default)
 
     # TP = TP && compareAll(A.attributes, B.attributes, skip=[:variableType;], show=show)

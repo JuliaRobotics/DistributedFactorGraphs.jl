@@ -128,6 +128,20 @@ function FactorDFG(
         timestamp = TimeDateZone(timestamp.utc_datetime)
     end
 
+    #TODO move to core constructor
+    if !isempty(multihypo) && length(multihypo) != length(variableorder)
+        throw(
+            ArgumentError(
+                "multihypo length ($(length(multihypo))) must match the number of variables ($(length(variableorder))). " *
+                "See fractional data-association uncertainty docs.",
+            ),
+        )
+    end
+    if length(variableorder) == 1 && observation isa AbstractRelativeObservation
+        throw(ArgumentError("Relative observation $(typeof(observation)) requires at least two variables, but only one was provided: $variableorder. Use a subtype of AbstractPriorObservation for single-variable factors."))
+    end
+    allunique(variableorder) || throw(ArgumentError("Variable order must be unique, got duplicates in $variableorder"))
+
     # create factor data
     hyper = Recipehyper(; multihypo, nullhypo, inflation)
     state = Recipestate()
