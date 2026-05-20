@@ -76,8 +76,9 @@ provided by AMP for features like pdf evaluation.
   - a.k.a. model order reduction given a topology selection
 """
 @kwdef struct HomotopyDensityDFG{T <: StateType, P}
-    """To make apples vs apples comparison of one belief to another, only the reprkind between densities are needed for understanding
-    how to interpret this object.  By analogy, and image is an image, but might be stored bitmap, jpeg, png, and use RGB24, YCbCr, etc."""
+    """reprkind allows for apples vs apples comparison between density representations.  This allows for easy dispatch
+    or interpretation of the overall density object.  By analogy, an image is an image, but might be stored
+    as a bitmap, jpeg, png, and use RGB24, YCbCr, etc."""
     reprkind::HomotopyReprDFG{T} =
         HomotopyReprDFG(DefaultTopologyKind(), DefaultFormKind(), T(), nothing)
     """Stores the amount of information captured in each coordinate dimension."""
