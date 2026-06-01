@@ -74,17 +74,41 @@ function DFG.listNeighborhood(
         whereSolvable = >=(solvable)
     end
 
-    # find neighbors at distance to add
-    nbhood = Int[]
+    # Filter-aware BFS: listNeighbors applies filterDFG! so filtered-out nodes are
+    # never added to the frontier, consistently breaking the traversal chain.
+    # Fast path (no filters): neighborhood() from the graph library is used directly.
+    allvarfacs = if isnothing(whereSolvable) && isnothing(whereTags)
+        nbhood = Int[]
+        for l in variableFactorLabels
+            union!(nbhood, neighborhood(dfg.g, dfg.g.labels[l], distance))
+        end
+        [dfg.g.labels[id] for id in nbhood]
+    else
+        visited = Set{Symbol}(variableFactorLabels)
+        included = copy(variableFactorLabels)
+        frontier = Symbol[]
+        # Seed frontier with starting nodes that pass the filter (they are always
+        # expansion roots regardless, but only passed to listNeighbors if they exist).
+        filterDFG!(included, whereSolvable, l -> getSolvable(dfg, l))
+        filterDFG!(included, whereTags, l -> listTags(dfg, l))
+        append!(frontier, included)
 
-    for l in variableFactorLabels
-        union!(nbhood, neighborhood(dfg.g, dfg.g.labels[l], distance))
+        for _ = 1:distance
+            isempty(frontier) && break
+            next_frontier = Symbol[]
+            for node in frontier
+                for nl in listNeighbors(dfg, node; whereSolvable, whereTags)
+                    if !(nl in visited)
+                        push!(visited, nl)
+                        push!(included, nl)
+                        push!(next_frontier, nl)
+                    end
+                end
+            end
+            frontier = next_frontier
+        end
+        included
     end
-
-    allvarfacs = [dfg.g.labels[id] for id in nbhood]
-
-    filterDFG!(allvarfacs, whereSolvable, l -> getSolvable(dfg, l))
-    filterDFG!(allvarfacs, whereTags, l -> listTags(dfg, l))
 
     variableLabels = intersect(listVariables(dfg), allvarfacs)
     factorLabels = intersect(listFactors(dfg), allvarfacs)
