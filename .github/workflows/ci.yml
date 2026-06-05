@@ -44,7 +44,7 @@ jobs:
           arch: ${{ matrix.arch }}
       
       - name: Cache Artifacts
-        uses: julia-actions/cache@v2
+        uses: julia-actions/cache@v3
 
       - name: Julia Build Pkg
         uses: julia-actions/julia-buildpkg@latest
