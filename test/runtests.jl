@@ -76,8 +76,7 @@ DFG.@usingDFG true
         end
     end
 
-    if get(ENV, "IIF_TEST", "true") == "true"    
-
+    if get(ENV, "IIF_TEST", "true") == "true"
         @info "------------------------------------------------------------------------"
         @info "These tests are using IncrementalInference to do additional driver tests"
         @info "------------------------------------------------------------------------"
