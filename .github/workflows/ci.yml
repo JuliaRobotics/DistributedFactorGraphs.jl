@@ -35,16 +35,16 @@ jobs:
           - x64
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Julia
-        uses: julia-actions/setup-julia@v2
+        uses: julia-actions/setup-julia@v3
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
       
       - name: Cache Artifacts
-        uses: julia-actions/cache@v2
+        uses: julia-actions/cache@v3
 
       - name: Julia Build Pkg
         uses: julia-actions/julia-buildpkg@latest
@@ -69,10 +69,10 @@ jobs:
     continue-on-error: true
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
 
       - name: Setup julia
-        uses: julia-actions/setup-julia@v2
+        uses: julia-actions/setup-julia@v3
         with:
           version: '1.12'
           arch: x64

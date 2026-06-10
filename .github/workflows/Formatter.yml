@@ -10,11 +10,11 @@ jobs:
     name: "Format Check"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: julia-actions/setup-julia@v1
+      - uses: actions/checkout@v6
+      - uses: julia-actions/setup-julia@v3
         with:
           version: 1
-      - uses: julia-actions/cache@v1
+      - uses: julia-actions/cache@v3
       - name: Install JuliaFormatter and format
         run: |
           using Pkg

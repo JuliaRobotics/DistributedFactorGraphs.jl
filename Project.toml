@@ -58,11 +58,11 @@ LieGroups = "0.1"
 LinearAlgebra = "1.11"
 MIMEs = "1.1"
 ManifoldsBase = "1, 2"
-OrderedCollections = "1.4"
+OrderedCollections = "1.4, 2"
 Pkg = "1.4, 1.5"
 ProgressMeter = "1"
 Random = "1.11"
-RecursiveArrayTools = "3"
+RecursiveArrayTools = "3, 4"
 SHA = "0.7, 1"
 SparseArrays = "1.11"
 StaticArrays = "1"
@@ -88,3 +88,6 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
 test = ["Aqua", "Test", "GraphMakie", "LinearAlgebra", "Pkg", "Statistics", "LieGroups"]
+
+[workspace]
+projects = ["test"]
