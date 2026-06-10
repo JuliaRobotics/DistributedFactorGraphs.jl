@@ -74,6 +74,9 @@ provided by AMP for features like pdf evaluation.
     - When building a partial belief, use full points with necessary information in the specified partial coords.
 - Replaces ManellicTree, ManifoldKernelDensity, KernelDensityEstimate, GaussianMixtureModel, PCA, Mixtures
   - a.k.a. model order reduction given a topology selection
+
+DevNotes:
+- Missing field? When joint tree belief message over Bayes/junction tree separator, we still need to name the dimensions, (x1,x3, l5, ...) 
 """
 @kwdef struct HomotopyDensityDFG{T <: StateType, P}
     """reprkind allows for apples vs apples comparison between density representations.  This allows for easy dispatch

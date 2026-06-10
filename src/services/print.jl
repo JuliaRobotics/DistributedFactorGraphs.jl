@@ -58,11 +58,11 @@ function printVariable(
             println(ioc, "      initialized:        ", isInitialized(vert, :default))
             println(ioc, "      marginalized:      ", isMarginalized(vert, :default))
             println(ioc, "      size bel. samples: ", size(vnd.belief.points))
-            bws = refBandwidths(vnd)
-            if !isempty(bws)
-                print(ioc, "      kde bandwidths:    ")
-                println(ioc, round.(first(bws); digits = 4))
-            end
+            # bws = refBandwidths(vnd)
+            # if !isempty(bws)
+            #     print(ioc, "      kde bandwidths:    ")
+            #     println(ioc, round.(first(bws); digits = 4))
+            # end
             printstyled(ioc, "     VNDs: "; bold = true)
             println(ioc, solk[smsk], 4 < lsolk ? "..." : "")
         end
