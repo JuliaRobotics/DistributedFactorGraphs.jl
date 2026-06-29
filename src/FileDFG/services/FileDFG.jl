@@ -117,6 +117,7 @@ function loadDFG!(
 
     # extract the factor graph from fileDFG folder
     variablefiles = readdir(joinpath(loaddir, "variables"); sort = false, join = true)
+    sort!(variablefiles; lt = natural_lt)
 
     # type instability on `variables` as either `::Vector{Variable}` or `::Vector{VariableDFG{<:}}` (vector of abstract)
     variables = @showprogress dt = 1 desc = "loading variables" asyncmap(
@@ -129,6 +130,7 @@ function loadDFG!(
     @debug "Loaded $(length(variables)) variables"
 
     factorfiles = readdir(joinpath(loaddir, "factors"); sort = false, join = true)
+    sort!(factorfiles; lt = natural_lt)
 
     factors = @showprogress dt = 1 desc = "loading factors" asyncmap(factorfiles) do file
         f = JSON.parsefile(file, F; style = DFGJSONStyle())
@@ -203,14 +205,14 @@ function loadDFG(file::AbstractString)
     blobproviders = if isfile(joinpath(loaddir, "blobproviders.json"))
         JSON.parsefile(
             joinpath(loaddir, "blobproviders.json"),
-            Dict{Symbol, AbstractBlobprovider};
+            OrderedDict{Symbol, AbstractBlobprovider};
             style = DFGJSONStyle(),
         )
     elseif isfile(joinpath(loaddir, "blobstores.json"))
         # backward compat: load old blobstores.json format
         JSON.parsefile(
             joinpath(loaddir, "blobstores.json"),
-            Dict{Symbol, AbstractBlobprovider};
+            OrderedDict{Symbol, AbstractBlobprovider};
             style = DFGJSONStyle(),
         )
     else
