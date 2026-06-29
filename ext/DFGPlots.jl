@@ -61,13 +61,20 @@ function plotDFG(dfg::GraphsDFG; p::DFGPlotProps = DFGPlotProps(), interactive::
         0;
         text = "",
         font = :bold,
-        fontsize = 30,
+        fontsize = 20,
         glowcolor = (:white, 1),
         glowwidth = 3,
     )
 
-    ax.aspect = GraphMakie.DataAspect()
+    ax.aspect = nothing
+    ax.autolimitaspect = 1
     if interactive
+        node_hover_labels = map(dfg.g.labels) do label
+            tags = sort(DFG.listTags(dfg, label))
+            tags_str = isempty(tags) ? "[]" : "[" * join(string.(tags), ", ") * "]"
+            return string(label, "\ntags: ", tags_str)
+        end
+
         function node_drag_action(state, idx, event, axis)
             p[:node_pos][][idx] = event.data
             return p[:node_pos][] = p[:node_pos][]
@@ -79,8 +86,7 @@ function plotDFG(dfg::GraphsDFG; p::DFGPlotProps = DFGPlotProps(), interactive::
         GraphMakie.register_interaction!(ax, :ndrag, ndrag)
 
         function node_hover_action(state, idx, event, axis)
-            label = dfg.g.labels[idx]
-            label_text.text[] = state ? string(label) : ""
+            label_text.text[] = state ? node_hover_labels[idx] : ""
             return label_text.transformation.translation[] = (event.data..., 0)
         end
         nhover = NodeHoverHandler(node_hover_action)
