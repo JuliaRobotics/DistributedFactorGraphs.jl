@@ -74,10 +74,9 @@ function DFG.deleteFactor!(dfg::GraphsDFG, label::Symbol)
 end
 
 function DFG.deleteFactors!(dfg::AbstractDFG, labels::Vector{Symbol})
-    counts = asyncmap(labels) do l
-        return deleteFactor!(dfg, l)
-    end
-    return sum(counts)
+    count = sum(map(l->hasFactor(dfg, l), labels); init = 0)
+    rem_vertices!(dfg.g, map(l->dfg.g.labels[l], labels))
+    return count
 end
 
 function DFG.deleteFactors!(dfg::AbstractDFG; kwargs...)

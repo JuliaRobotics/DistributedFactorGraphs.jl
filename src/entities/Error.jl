@@ -44,41 +44,41 @@ function Base.showerror(io::IO, ex::LabelExistsError)
 end
 
 """
-    IdNotFoundError(Id, available)
+    IdNotFoundError(id, available)
 
-Error thrown when a requested Id is not found.
+Error thrown when a requested id is not found.
 """
-struct IdNotFoundError <: Exception
+struct IdNotFoundError{T} <: Exception
     name::String
-    Id::UUID
-    available::Vector{UUID}
+    id::T
+    available::Vector{T}
 end
 
-IdNotFoundError(name::String, Id::UUID) = IdNotFoundError(name, Id, UUID[])
-IdNotFoundError(Id::UUID) = IdNotFoundError("Node", Id, UUID[])
+IdNotFoundError(name::String, id::T) where {T} = IdNotFoundError(name, id, T[])
+IdNotFoundError(id::T) where {T} = IdNotFoundError("Node", id, T[])
 
 function Base.showerror(io::IO, ex::IdNotFoundError)
-    print(io, "IdNotFoundError: ", ex.name, " Id '", ex.Id, "' not found.")
+    print(io, "IdNotFoundError: ", ex.name, " id '", ex.id, "' not found.")
     if !isempty(ex.available)
-        println(io, " Available Ids:")
+        println(io, " Available ids:")
         show(io, ex.available)
     end
 end
 
 """
-    IdExistsError(Id)
+    IdExistsError(id)
 
-Error thrown when attempting to add an Id that already exists in the collection.
+Error thrown when attempting to add an id that already exists in the collection.
 """
-struct IdExistsError <: Exception
+struct IdExistsError{T} <: Exception
     name::String
-    Id::UUID
+    id::T
 end
 
-IdExistsError(Id::UUID) = IdExistsError("Node", Id)
+IdExistsError(id) = IdExistsError("Node", id)
 
 function Base.showerror(io::IO, ex::IdExistsError)
-    return print(io, "IdExistsError: ", ex.name, " Id '", ex.Id, "' already exists.")
+    return print(io, "IdExistsError: ", ex.name, " id '", ex.id, "' already exists.")
 end
 
 """

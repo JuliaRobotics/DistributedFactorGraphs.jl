@@ -77,10 +77,23 @@ function DFG.deleteVariable!(dfg::GraphsDFG, label::Symbol)#::Tuple{AbstractGrap
     !haskey(dfg.g.variables, label) && return 0
 
     # orphaned factors are not supported.
-    del_facs = map(l -> deleteFactor!(dfg, l), listNeighbors(dfg, label))
+    del_facs = deleteFactors!(dfg, listNeighbors(dfg, label))
 
     rem_vertex!(dfg.g, dfg.g.labels[label])
     return sum(del_facs; init = 0) + 1
+end
+
+function DFG.deleteVariables!(dfg::GraphsDFG, labels::Vector{Symbol})
+    # collect factor neighbors for all variables before any deletion
+    fac_labels = mapreduce(l -> listNeighbors(dfg, l), union, labels; init = Symbol[])
+    fac_labels = filter(l -> hasFactor(dfg, l), fac_labels)
+
+    var_labels = filter(l -> hasVariable(dfg, l), labels)
+
+    count = length(var_labels) + length(fac_labels)
+    vs = map(l -> dfg.g.labels[l], [var_labels; fac_labels])
+    rem_vertices!(dfg.g, vs)
+    return count
 end
 
 function DFG.listVariables(

@@ -18,6 +18,7 @@ import Graphs:
     add_vertex!,
     add_edge!,
     rem_vertex!,
+    rem_vertices!,
     rem_edge!,
     has_vertex,
     has_edge,
@@ -168,6 +169,29 @@ function rem_vertex!(g::FactorGraph{T, V, F}, v::Integer) where {T, V, F}
         delete!(g.labels, v)
     end
 
+    return true
+end
+
+function Graphs.rem_vertices!(g::FactorGraph{T, V, F}, vs::Vector{Int}) where {T, V, F}
+    for v in sort(vs; rev = true)
+        v in vertices(g) || continue
+        lastv = nv(g)
+
+        rem_vertex!(g.graph, v) || continue
+
+        label = g.labels[v]
+        delete!(g.variables, label)
+        delete!(g.factors, label)
+
+        if v != lastv
+            g.labels[v] = g.labels[lastv] #lastSym
+        else
+            delete!(g.labels, v)
+        end
+    end
+
+    OrderedCollections.rehash!(g.variables)
+    OrderedCollections.rehash!(g.factors)
     return true
 end
 
