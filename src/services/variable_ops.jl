@@ -121,7 +121,7 @@ function deleteVariables!(dfg::AbstractDFG, labels::Vector{Symbol})
     counts = asyncmap(labels) do l
         return deleteVariable!(dfg, l)
     end
-    return sum(counts)
+    return sum(counts; init = 0)
 end
 
 function deleteVariables!(dfg::AbstractDFG; kwargs...)
