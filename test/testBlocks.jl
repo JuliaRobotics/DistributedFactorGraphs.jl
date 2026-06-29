@@ -460,14 +460,19 @@ function VariablesandFactorsCRUD_SET!(fg, v1, v2, v3, f0, f1, f2)
     @test addVariable!(fg, v3) === v3
     @test addFactor!(fg, f2) === f2
 
-    @test deleteFactor!(fg, f2) == 1
+    @test deleteFactors!(fg, [getLabel(f2)]) == 1
+    @test addFactor!(fg, f2) === f2
+    @test deleteFactors!(fg; whereLabel = ==(string(getLabel(f2)))) == 1
+    @test deleteFactors!(fg; whereLabel = ==("doesnotexist")) == 0
+
+    @test addFactor!(fg, f2) === f2
+    @test deleteVariables!(fg, [getLabel(v3)]) == 2
+    @test addVariable!(fg, v3) === v3
+    @test deleteVariables!(fg; whereLabel = ==(string(getLabel(v3)))) == 1
+    @test deleteVariables!(fg; whereLabel = ==("doesnotexist")) == 0
+
     @test deleteFactor!(fg, f2) == 0
     @test lsf(fg) == [:abf1]
-
-    delvarCompare = getVariable(fg, :c)
-    delfacCompare = []
-    ndel = deleteVariable!(fg, v3)
-    @test ndel == 1
 
     @test getVariable(fg, :a) == v1
 

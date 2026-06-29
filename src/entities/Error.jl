@@ -54,8 +54,8 @@ struct IdNotFoundError{T} <: Exception
     available::Vector{T}
 end
 
-IdNotFoundError(name::String, id::T) where T = IdNotFoundError(name, id, T[])
-IdNotFoundError(id::T) where T = IdNotFoundError("Node", id, T[])
+IdNotFoundError(name::String, id::T) where {T} = IdNotFoundError(name, id, T[])
+IdNotFoundError(id::T) where {T} = IdNotFoundError("Node", id, T[])
 
 function Base.showerror(io::IO, ex::IdNotFoundError)
     print(io, "IdNotFoundError: ", ex.name, " id '", ex.id, "' not found.")

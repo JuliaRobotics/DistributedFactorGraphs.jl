@@ -173,7 +173,7 @@ function rem_vertex!(g::FactorGraph{T, V, F}, v::Integer) where {T, V, F}
 end
 
 function Graphs.rem_vertices!(g::FactorGraph{T, V, F}, vs::Vector{Int}) where {T, V, F}
-    for v in sort(vs, rev = true)
+    for v in sort(vs; rev = true)
         v in vertices(g) || continue
         lastv = nv(g)
 
