@@ -3,11 +3,7 @@
 # ==============================================================================
 
 function DFG.addAgentBlobentry!(fg::GraphsDFG, agentlabel::Symbol, entry::Blobentry)
-    if haskey(fg.agents[agentlabel].blobentries, entry.label)
-        throw(LabelExistsError("Blobentry", entry.label))
-    end
-    push!(fg.agents[agentlabel].blobentries, entry.label => entry)
-    return entry
+    return DFG.addBlobentry!(getAgent(fg, agentlabel), entry)
 end
 
 function DFG.addAgentBlobentries!(
@@ -21,25 +17,20 @@ function DFG.addAgentBlobentries!(
 end
 
 function DFG.getAgentBlobentry(fg::GraphsDFG, agentlabel::Symbol, label::Symbol)
-    if !haskey(fg.agents[agentlabel].blobentries, label)
-        throw(LabelNotFoundError("Blobentry", label))
-    end
-    return fg.agents[agentlabel].blobentries[label]
+    return DFG.getBlobentry(getAgent(fg, agentlabel), label)
 end
 
 function DFG.getAgentBlobentries(
     fg::GraphsDFG,
     agentlabel::Symbol;
     whereLabel::Union{Nothing, Function} = nothing,
+    whereMultihash::Union{Nothing, Function} = nothing,
 )
-    entries = collect(values(fg.agents[agentlabel].blobentries))
-    filterDFG!(entries, whereLabel, getLabel)
-    return entries
+    return DFG.getBlobentries(getAgent(fg, agentlabel); whereLabel, whereMultihash)
 end
 
 function DFG.mergeAgentBlobentry!(dfg::GraphsDFG, agentlabel::Symbol, entry::Blobentry)
-    DFG.refBlobentries(dfg.agents[agentlabel])[getLabel(entry)] = entry
-    return 1
+    return DFG.mergeBlobentry!(getAgent(dfg, agentlabel), entry)
 end
 
 function DFG.mergeAgentBlobentries!(
@@ -50,13 +41,11 @@ function DFG.mergeAgentBlobentries!(
     cnts = map(entries) do entry
         return DFG.mergeAgentBlobentry!(dfg, agentlabel, entry)
     end
-    return sum(cnts)
+    return sum(cnts; init = 0)
 end
 
 function DFG.deleteAgentBlobentry!(dfg::GraphsDFG, agentlabel::Symbol, label::Symbol)
-    !haskey(dfg.agents[agentlabel].blobentries, label) && return 0
-    delete!(dfg.agents[agentlabel].blobentries, label)
-    return 1
+    return DFG.deleteBlobentry!(getAgent(dfg, agentlabel), label)
 end
 
 function DFG.deleteAgentBlobentries!(
@@ -67,15 +56,15 @@ function DFG.deleteAgentBlobentries!(
     cnts = map(labels) do label
         return deleteAgentBlobentry!(dfg, agentlabel, label)
     end
-    return sum(cnts)
+    return sum(cnts; init = 0)
 end
 
 function DFG.listAgentBlobentries(fg::GraphsDFG, agentlabel::Symbol)
-    return collect(keys(fg.agents[agentlabel].blobentries))
+    return DFG.listBlobentries(getAgent(fg, agentlabel))
 end
 
 function DFG.hasAgentBlobentry(dfg::GraphsDFG, agentlabel::Symbol, label::Symbol)
-    return haskey(dfg.agents[agentlabel].blobentries, label)
+    return DFG.hasBlobentry(getAgent(dfg, agentlabel), label)
 end
 
 # ==============================================================================
@@ -120,7 +109,7 @@ function DFG.mergeGraphBlobentries!(dfg::GraphsDFG, entries::Vector{Blobentry})
     cnts = map(entries) do entry
         return DFG.mergeGraphBlobentry!(dfg, entry)
     end
-    return sum(cnts)
+    return sum(cnts; init = 0)
 end
 
 function DFG.deleteGraphBlobentry!(dfg::GraphsDFG, label::Symbol)
@@ -133,7 +122,7 @@ function DFG.deleteGraphBlobentries!(dfg::GraphsDFG, labels::Vector{Symbol})
     cnts = map(labels) do label
         return deleteGraphBlobentry!(dfg, label)
     end
-    return sum(cnts)
+    return sum(cnts; init = 0)
 end
 
 function DFG.listGraphBlobentries(
@@ -193,7 +182,7 @@ function DFG.mergeVariableBlobentries!(
     cnts = map(entries) do entry
         return DFG.mergeVariableBlobentry!(dfg, vLbl, entry)
     end
-    return sum(cnts)
+    return sum(cnts; init = 0)
 end
 
 function DFG.deleteVariableBlobentry!(dfg::GraphsDFG, label::Symbol, entryLabel::Symbol)
@@ -208,7 +197,7 @@ function DFG.deleteVariableBlobentries!(
     cnts = map(labels) do label
         return deleteVariableBlobentry!(dfg, varLabel, label)
     end
-    return sum(cnts)
+    return sum(cnts; init = 0)
 end
 
 function DFG.listVariableBlobentries(dfg::GraphsDFG, variableLabel::Symbol)
@@ -259,7 +248,7 @@ function DFG.mergeFactorBlobentries!(
     cnts = map(entries) do entry
         return DFG.mergeFactorBlobentry!(dfg, fLbl, entry)
     end
-    return sum(cnts)
+    return sum(cnts; init = 0)
 end
 
 function DFG.deleteFactorBlobentry!(dfg::GraphsDFG, label::Symbol, entryLabel::Symbol)
@@ -274,7 +263,7 @@ function DFG.deleteFactorBlobentries!(
     cnts = map(labels) do label
         return DFG.deleteFactorBlobentry!(dfg, facLabel, label)
     end
-    return sum(cnts)
+    return sum(cnts; init = 0)
 end
 
 function DFG.listFactorBlobentries(dfg::GraphsDFG, factorLabel::Symbol)

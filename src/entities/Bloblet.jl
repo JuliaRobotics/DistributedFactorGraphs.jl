@@ -98,7 +98,7 @@ function deleteBloblet!(node, label::Symbol)
 end
 
 function deleteBloblets!(node, labels::Vector{Symbol})
-    return sum(l -> deleteBloblet!(node, l), labels)
+    return sum(l -> deleteBloblet!(node, l), labels; init = 0)
 end
 
 """

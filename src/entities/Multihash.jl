@@ -9,6 +9,8 @@ const MULTIHASH_FUNCTIONS = Dict{Function, UInt64}(
     sha3_512 => 0x14,
     sha3_256 => 0x16,
 )
+# Reverse lookup: multicodec code -> hash function
+const MULTIHASH_CODES = Dict{UInt64, Function}(v => k for (k, v) in MULTIHASH_FUNCTIONS)
 
 @nonstruct struct Multihash
     bytes::Vector{UInt8}

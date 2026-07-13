@@ -49,14 +49,14 @@ function DFG.mergeStates!(
     cnt = asyncmap(varLabel_state_pairs) do (varLabel, state)
         return mergeState!(dfg, varLabel, state)
     end
-    return sum(cnt)
+    return sum(cnt; init = 0)
 end
 
 function DFG.mergeStates!(dfg::GraphsDFG, variableLabel::Symbol, states::Vector{<:State})
     cnt = asyncmap(states) do state
         return mergeState!(dfg, variableLabel, state)
     end
-    return sum(cnt)
+    return sum(cnt; init = 0)
 end
 
 # =============================================================================
@@ -72,7 +72,7 @@ function DFG.deleteStates!(dfg::GraphsDFG, variableLabel::Symbol, labels::Vector
     cnt = asyncmap(labels) do label
         return deleteState!(dfg, variableLabel, label)
     end
-    return sum(cnt)
+    return sum(cnt; init = 0)
 end
 
 function DFG.deleteStates!(
@@ -82,7 +82,7 @@ function DFG.deleteStates!(
     cnt = asyncmap(varLabel_stateLabel_pairs) do (varLabel, stateLabel)
         return deleteState!(dfg, varLabel, stateLabel)
     end
-    return sum(cnt)
+    return sum(cnt; init = 0)
 end
 
 # =============================================================================
