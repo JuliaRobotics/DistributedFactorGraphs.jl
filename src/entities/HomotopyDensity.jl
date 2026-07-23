@@ -37,8 +37,9 @@ abstract type AbstractPartialTrait end
     topologykind::HT
     formkind::RF
     statekind::T
-    partial::PT = nothing & (ignore = true,) #TODO deprecated field, still needed for AMP.  
-    # partials field needed for AMP v0.15, will be JSON ignored in DFG v0.29, needs better solution by DFG v0.30
+    # FIXME, rename to subbmersion or deprecate completely?
+    """ partials field needed for AMP v0.15, will be JSON ignored in DFG v0.29, needs better solution by DFG v0.30 """
+    partial::PT = nothing & (ignore = true,)
 end
 
 StructUtils.structlike(::StructUtils.StructStyle, ::Type{<:HomotopyReprDFG}) = true

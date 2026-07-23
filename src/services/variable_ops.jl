@@ -211,7 +211,11 @@ isSolved, setSolvedCount!
 """
 getSolvedCount(v::State) = v.solves
 function getSolvedCount(v::VariableDFG, solveKey::Symbol = :default)
-    return getState(v, solveKey) |> getSolvedCount
+    if hasState(v, solveKey)
+        return getState(v, solveKey) |> getSolvedCount
+    else
+        return 0
+    end
 end
 function getSolvedCount(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol = :default)
     return getSolvedCount(getVariable(dfg, sym), solveKey)
@@ -250,7 +254,11 @@ getSolved, setSolved!
 """
 isSolved(v::State) = 0 < v.solves
 function isSolved(v::VariableDFG, solveKey::Symbol = :default)
-    return getState(v, solveKey) |> isSolved
+    if hasState(v, solveKey)
+        return getState(v, solveKey) |> isSolved
+    else
+        return false
+    end
 end
 function isSolved(dfg::AbstractDFG, sym::Symbol, solveKey::Symbol = :default)
     return isSolved(getVariable(dfg, sym), solveKey)
