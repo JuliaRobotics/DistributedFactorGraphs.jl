@@ -30,7 +30,6 @@ StructUtils.@kwarg struct Blobentry
     metadata::JSONText = JSONText("{}")
     """ When the Blob itself was first created. Serialized as an ISO 8601 string."""
     timestamp::TimeDateZone = now_tdz()
-    """ DFG serialization format version."""
     """ DFG types serialization format version."""
     version::VersionNumber = DFG.DFG_TYPES_VERSION
 end
@@ -162,7 +161,7 @@ end
 deleteBlobentry!(node, entry) = deleteBlobentry!(node, getLabel(entry))
 
 function deleteBlobentries!(node, labels::Vector{Symbol})
-    return sum(deleteBlobentry!.(node, labels))
+    return sum(deleteBlobentry!.(node, labels); init = 0)
 end
 
 """
@@ -197,11 +196,8 @@ Checks the integrity of a blob against the hashes stored in the given `Blobentry
 - Returns `nothing` if  the multihash algorithm is unregistered.
 """
 function verifyBlob(entry::Blobentry, blob)
-    # Reverse lookup: multicodec code -> hash function
-    code_to_func = Dict{UInt64, Function}(v => k for (k, v) in MULTIHASH_FUNCTIONS)
-
     code, stored_digest = decode(entry.multihash)
-    func = get(code_to_func, code, nothing)
+    func = get(MULTIHASH_CODES, code, nothing)
     if isnothing(func)
         @warn "verifyBlob: unregistered multihash algorithm code $(repr(code)), skipping multihash check"
         return nothing

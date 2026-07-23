@@ -331,7 +331,6 @@ const unstable_functions::Vector{Symbol} = [
     :unpackBlob,
     :getMimetype,
     :getDataFormat,
-    :getMimetype,
     :emptyTags!,
     :ls,
     :lsf,
@@ -370,7 +369,7 @@ const unstable_functions::Vector{Symbol} = [
     # :emptyBlobstore!, #TODO maybe deprecate for just deleteBlobstore!
     :MetadataTypes, #maybe make public after metadata stable
     :getVariableTypeName,
-    :getStateKind,
+    # NOTE :getStateKind is declared `public` above, not unstable
     :setTimestamp,
     :setAgentMetadata!,
     :setGraphMetadata!,

@@ -84,11 +84,12 @@ function DFG.deleteVariable!(dfg::GraphsDFG, label::Symbol)#::Tuple{AbstractGrap
 end
 
 function DFG.deleteVariables!(dfg::GraphsDFG, labels::Vector{Symbol})
-    # collect factor neighbors for all variables before any deletion
-    fac_labels = mapreduce(l -> listNeighbors(dfg, l), union, labels; init = Symbol[])
-    fac_labels = filter(l -> hasFactor(dfg, l), fac_labels)
-
+    # skip labels that do not exist, consistent with deleteVariable!
     var_labels = filter(l -> hasVariable(dfg, l), labels)
+
+    # collect factor neighbors for all variables before any deletion
+    fac_labels = mapreduce(l -> listNeighbors(dfg, l), union, var_labels; init = Symbol[])
+    fac_labels = filter(l -> hasFactor(dfg, l), fac_labels)
 
     count = length(var_labels) + length(fac_labels)
     vs = map(l -> dfg.g.labels[l], [var_labels; fac_labels])

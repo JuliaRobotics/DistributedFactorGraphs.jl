@@ -73,10 +73,10 @@ function DFG.deleteFactor!(dfg::GraphsDFG, label::Symbol)
     return 1
 end
 
-function DFG.deleteFactors!(dfg::AbstractDFG, labels::Vector{Symbol})
-    count = sum(map(l->hasFactor(dfg, l), labels); init = 0)
-    rem_vertices!(dfg.g, map(l->dfg.g.labels[l], labels))
-    return count
+function DFG.deleteFactors!(dfg::GraphsDFG, labels::Vector{Symbol})
+    fac_labels = filter(l -> hasFactor(dfg, l), labels)
+    rem_vertices!(dfg.g, map(l -> dfg.g.labels[l], fac_labels))
+    return length(fac_labels)
 end
 
 function DFG.deleteFactors!(dfg::AbstractDFG; kwargs...)

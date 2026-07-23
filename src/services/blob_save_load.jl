@@ -227,7 +227,7 @@ function saveImage_Variable!(
     provider::Symbol = :default;
     entry_kwargs...,
 )
-    mimetype = get(entry_kwargs, :mimeType, MIME("image/png"))
+    mimetype = get(entry_kwargs, :mimetype, MIME("image/png"))
     format = getDataFormat(mimetype)
     isnothing(format) &&
         throw(ArgumentError("Unsupported MIME type for image: $(mimetype)"))
