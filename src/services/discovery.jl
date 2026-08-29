@@ -118,10 +118,11 @@ end
 """
     $(SIGNATURES)
 Build a list of all unique neighbors inside 'distance'. Neighbors can be filtered by using keyword arguments, eg. [`whereTags`] and [`whereSolvable`].
-Filters are applied to final neighborhood result.
+Filters break the traversal chain: nodes that do not pass the filter are excluded from the result and their neighbors are not explored further.
 
 Notes
 - Returns a tuple `(variableLabels, factorLabels)`, where each element is a `Vector{Symbol}`.
+- The starting `label` itself is subject to filtering.
 
 Related:
 - [`getSubgraph`](@ref)
@@ -134,7 +135,9 @@ function listNeighborhood(dfg::AbstractDFG, label::Symbol, distance::Int; filter
     for dist = 1:distance
         newNeighbors = Set{Symbol}()
         for node in curList
-            neighbors = listNeighbors(dfg, node)
+            # Apply filters during traversal so that filtered-out nodes break the chain:
+            # only neighbors passing the filter are added to the result and frontier.
+            neighbors = listNeighbors(dfg, node; filters...)
             union!(neighborList, neighbors)
             union!(newNeighbors, neighbors)
         end

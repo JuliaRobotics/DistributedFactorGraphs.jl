@@ -1547,6 +1547,16 @@ function GettingNeighbors(testDFGAPI; VARTYPE = VariableDFG, FACTYPE = FactorDFG
     # Solvable
     #TODO if not a GraphsDFG with and summary or skeleton
     if VARTYPE == VariableDFG
+        # Chain-breaking: x7x8f1 is solvable=0; x8x9f1 is only reachable through x8 (solvable=0).
+        # With the filter applied during traversal, x8x9f1 must NOT appear in the result.
+        varnh, facnh = listNeighborhood(dfg, [:x7], 4; whereSolvable = >=(1))
+        @test issetequal(varnh, [:x5, :x6, :x7])
+        @test issetequal(facnh, [:x5x6f1, :x6x7f1])
+        @test :x8x9f1 ∉ facnh   # chain-breaking: not reachable through solvable=0 x7x8f1/x8
+        @test :x8 ∉ varnh
+    end
+
+    if VARTYPE == VariableDFG
         @test listNeighbors(dfg, :x5; whereSolvable = >=(2)) == Symbol[]
         @test issetequal(listNeighbors(dfg, :x5; whereSolvable = >=(0)), [:x4x5f1, :x5x6f1])
         @test issetequal(listNeighbors(dfg, :x5), [:x4x5f1, :x5x6f1])
